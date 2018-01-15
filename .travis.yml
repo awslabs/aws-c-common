@@ -4,7 +4,7 @@ osx_image: xcode8
 
 #run builds for linux and osx. will add windows shortly
 os:
-  - osx
+#  - osx add osx back when travis fixes their mac os scaling problems.
   - linux
 
 #run builds on both gcc and clang
