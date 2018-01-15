@@ -2,18 +2,22 @@ language: c
 
 osx_image: xcode8
 
+#run builds for linux and osx. will add windows shortly
 os:
   - osx
   - linux
 
+#run builds on both gcc and clang
 compiler:
   - gcc
   - clang
 
+#run cmake first, then execute the script.
 before_script:
   - mkdir build
   - cd build
   - cmake ..
 
+#execute build
 script: make && make test
 
