@@ -82,12 +82,16 @@ AWS_COMMON_API void aws_reset_error(void);
 AWS_COMMON_API void aws_restore_error(int err);
 
 /*
- * Sets an application wide error handler function. This will be overridden by the thread local handler
+ * Sets an application wide error handler function. This will be overridden by the thread local handler.
+ * The previous handler is returned, this can be used for restoring an error handler if it needs to be overridden
+ * temporarily. Setting this to NULL will turn off this error callback after it has been enabled.
  */
 AWS_COMMON_API aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx);
 
 /*
- * Sets a thread-local error handler function. This will override the global handler.
+ * Sets a thread-local error handler function. This will override the global handler. The previous handler is returned,
+ * this can be used for restoring an error handler if it needs to be overridden temporarily. Setting this to NULL will
+ * turn off this error callback after it has been enabled.
  */
 AWS_COMMON_API aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx);
 
