@@ -29,17 +29,14 @@ AWS_THREAD_LOCAL void *thread_handler_context = NULL;
 #define AWS_MAX_ERROR_SLOTS 16
 #endif
 
-/* to multiply by 16, you shift left by 5 */
-#define SLOT_MULTIPLIER_SHIFTS 0x05
-
 /* Since slot size is 00000100 00000000, to divide, we need to shift right by 10 bits to find the slot,
- * and to find the modulus, we use a binary and with 00000011 11111111 to find the index in that slot the next three
+ * and to find the modulus, we use a binary and with 00000011 11111111 to find the index in that slot. The next three
  * values define those constants */
 #define AWS_ERROR_SLOT_SIZE 0x0400
 #define SLOT_DIV_SHIFT 0x0A
 #define SLOT_MASK 0x03FF
 
-static const int max_error_code = AWS_ERROR_SLOT_SIZE << SLOT_MULTIPLIER_SHIFTS;
+static const int max_error_code = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
 
 static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = { 0 };
 
