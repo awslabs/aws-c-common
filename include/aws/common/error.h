@@ -97,7 +97,7 @@ AWS_COMMON_API aws_error_handler aws_set_thread_local_error_handler_fn(aws_error
  */
 AWS_COMMON_API void aws_register_error_info(const struct aws_error_info_list *error_info);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

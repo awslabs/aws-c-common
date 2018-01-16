@@ -16,15 +16,9 @@ compiler:
 install:
   - sudo apt-get install -qq cppcheck
 
-#run cmake first, then execute the script.
-before_script:
-  - mkdir build
-  - cd build
-  - cmake ..
-
 #execute build
 script:
-  - cppcheck ./
+  - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction -I include --force -q --error-exitcode=-1 ./
   - mkdir build
   - cd build
   - cmake ..

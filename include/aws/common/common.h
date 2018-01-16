@@ -52,7 +52,7 @@ AWS_COMMON_API void aws_mem_release(struct aws_allocator *allocator, void *ptr);
  */
 AWS_COMMON_API void aws_load_error_strings(void);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 
