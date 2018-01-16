@@ -48,7 +48,7 @@ static int raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
     struct aws_error_info test_error_1 = errors[0];
     struct aws_error_info test_error_2 = errors[1];
 
-    aws_raise_error(test_error_1.error_code);
+    ASSERT_INT_EQUALS(-1, aws_raise_error(test_error_1.error_code), "Raise error should return failure code.");
     error = aws_last_error();
     ASSERT_INT_EQUALS(test_error_1.error_code, error, "Expected error code %d, but was %d",
                       test_error_1.error_code, error);
@@ -58,7 +58,7 @@ static int raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
     ASSERT_STR_EQUALS(test_error_1.lib_name, aws_error_lib_name(error), "Expected error libname %s, but got %s",
                       test_error_1.lib_name, aws_error_lib_name(error));
 
-    aws_raise_error(test_error_2.error_code);
+    ASSERT_INT_EQUALS(-1, aws_raise_error(test_error_2.error_code), "Raise error should return failure code.");
     error = aws_last_error();
 
     ASSERT_INT_EQUALS(test_error_2.error_code, error, "Expected error code %d, but was %d",
@@ -128,13 +128,13 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
     struct aws_error_info test_error_1 = errors[0];
     struct aws_error_info test_error_2 = errors[1];
 
-    aws_set_global_error_handler_fn(error_test_global_cb, &cb_data);
-
+    aws_error_handler old_fn = aws_set_global_error_handler_fn(error_test_global_cb, &cb_data);
+    ASSERT_NULL(old_fn, "setting the global error callback the first time should return null");
     aws_raise_error(test_error_1.error_code);
 
     ASSERT_NOT_NULL(cb_data.last_seen, "last error should not have been null");
     ASSERT_TRUE(cb_data.global_cb_called, "Global Callback should have been invoked");
-    ASSERT_FALSE(cb_data.tl_cb_called, "Global Callback should not have been invoked");
+    ASSERT_FALSE(cb_data.tl_cb_called, "Thread Local Callback should not have been invoked");
 
     ASSERT_INT_EQUALS(test_error_1.error_code, cb_data.last_seen, "Expected error code %d, but was %d",
                       test_error_1.error_code, cb_data.last_seen);
@@ -145,7 +145,8 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
 
     cb_data.last_seen = 0;
     cb_data.global_cb_called = 0;
-    aws_set_thread_local_error_handler_fn(error_test_thread_local_cb, &cb_data);
+    old_fn = aws_set_thread_local_error_handler_fn(error_test_thread_local_cb, &cb_data);
+    ASSERT_NULL(old_fn, "setting the global error callback the first time should return null");
 
     aws_raise_error(test_error_2.error_code);
     ASSERT_INT_EQUALS(test_error_2.error_code, aws_last_error(), "Expected error code %d, but was %d",
@@ -154,7 +155,7 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
 
     ASSERT_NOT_NULL(cb_data.last_seen, "last error should not have been null");
     ASSERT_FALSE(cb_data.global_cb_called, "Global Callback should not have been invoked");
-    ASSERT_TRUE(cb_data.tl_cb_called, "Global Callback should have been invoked");
+    ASSERT_TRUE(cb_data.tl_cb_called, "Thread local Callback should have been invoked");
 
     ASSERT_INT_EQUALS(test_error_2.error_code, cb_data.last_seen, "Expected error code %d, but was %d",
                       test_error_2.error_code, cb_data.last_seen);
@@ -163,9 +164,13 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
     ASSERT_STR_EQUALS(test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen), "Expected error libname %s, but got %s",
                       test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen));
 
+    old_fn = aws_set_thread_local_error_handler_fn(NULL, NULL);
+    ASSERT_INT_EQUALS(error_test_thread_local_cb, old_fn, "Setting a new thread local error callback should have returned the most recent value");
+    old_fn = aws_set_global_error_handler_fn(NULL, NULL);
+    ASSERT_INT_EQUALS(error_test_global_cb, old_fn, "Setting a new global error callback should have returned the most recent value");
+
     return 0;
 }
-
 
 static int unknown_error_code_in_slot_test_fn(struct aws_allocator *config, void *ctx) {
 
@@ -242,6 +247,8 @@ static int unknown_error_code_range_too_large_test_fn(struct aws_allocator *conf
 
     return 0;
 }
+
+/* TODO: after adding threading abstraction, add a test to make sure thread local apis work as expected */
 
 AWS_TEST_CASE_FIXTURE(raise_errors_test, setup_errors_test_fn, raise_errors_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(error_callback_test, setup_errors_test_fn, error_callback_test_fn, teardown_errors_test_fn, NULL)

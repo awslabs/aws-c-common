@@ -17,12 +17,12 @@
 #include <aws/common/common.h>
 #include <assert.h>
 
-AWS_THREAD_LOCAL int last_error = 0;
+static AWS_THREAD_LOCAL int last_error = 0;
 
 static aws_error_handler global_handler = NULL;
 static void *global_error_context = NULL;
 
-AWS_THREAD_LOCAL aws_error_handler thread_handler = NULL;
+static AWS_THREAD_LOCAL aws_error_handler thread_handler = NULL;
 AWS_THREAD_LOCAL void *thread_handler_context = NULL;
 
 #ifndef AWS_MAX_ERROR_SLOTS
@@ -90,7 +90,7 @@ const char *aws_error_debug_str(int err) {
     return "Unknown Error Code";
 }
 
-void aws_raise_error(int err) {
+int aws_raise_error(int err) {
     last_error = err;
 
     if(thread_handler) {
@@ -100,6 +100,7 @@ void aws_raise_error(int err) {
         global_handler(last_error, global_error_context);
     }
 
+    return -1;
 }
 
 void aws_reset_error(void) {
@@ -110,14 +111,20 @@ void aws_restore_error(int err) {
     last_error = err;
 }
 
-void aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx) {
+aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx) {
+    aws_error_handler old_handler = global_handler;
     global_handler = handler;
     global_error_context = ctx;
+
+    return old_handler;
 }
 
-void aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx) {
+aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx) {
+    aws_error_handler old_handler = thread_handler;
     thread_handler = handler;
     thread_handler_context = ctx;
+
+    return old_handler;
 }
 
 void aws_register_error_info(const struct aws_error_info_list *error_info) {

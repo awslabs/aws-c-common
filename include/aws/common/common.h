@@ -79,7 +79,7 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
 typedef enum aws_common_error {
-    AWS_ERROR_SUCCESS,
+    AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
     AWS_ERROR_INVALID_BUFFER_SIZE,
     AWS_ERROR_INVALID_HEX_STR,

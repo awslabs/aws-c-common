@@ -40,14 +40,14 @@ static void *mem_acquire_malloc(struct aws_allocator *config, size_t size) {
     test_config->allocated += size;
     struct memory_test_tracker *memory = (struct memory_test_tracker *) malloc(size + sizeof(struct memory_test_tracker));
     memory->size = size;
-    memory->blob = memory + sizeof(struct memory_test_tracker);
+    memory->blob = (uint8_t *)memory + sizeof(struct memory_test_tracker);
     return memory->blob;
 }
 
 static void mem_release_free(struct aws_allocator *config, void *ptr) {
     struct memory_test_config *test_config = (struct memory_test_config *)config;
 
-    struct memory_test_tracker *memory = (struct memory_test_tracker *) (ptr - sizeof(struct memory_test_tracker));
+    struct memory_test_tracker *memory = (struct memory_test_tracker *) ((uint8_t *)ptr - sizeof(struct memory_test_tracker));
     test_config->freed += memory->size;
 
     free(memory);
