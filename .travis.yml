@@ -1,3 +1,4 @@
+sudo: true
 language: c
 
 osx_image: xcode8
@@ -12,6 +13,9 @@ compiler:
   - gcc
   - clang
 
+install:
+  - sudo apt-get install -qq cppcheck
+
 #run cmake first, then execute the script.
 before_script:
   - mkdir build
@@ -19,5 +23,10 @@ before_script:
   - cmake ..
 
 #execute build
-script: make && make test
+script:
+  - cppcheck ./
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make && make test
 

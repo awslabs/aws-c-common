@@ -10,8 +10,11 @@ This library is licensed under the Apache 2.0 License.
 The error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries 
 have pre-slotted error codes for each library. The currently allocated error ranges are:
 
-* aws-c-common, [0, 1000)
-* aws-c-io, [1000, 2000)
-* aws-c-http, [2000, 3000)
+| Range | Library Name |
+| --- | --- |
+| [0, 0x0400) | aws-c-common |
+| [0x0400, 0x0800) | aws-c-io |
+| [0x0800, 0x1000) | aws-c-http |
+| [0x1000, 0x2000) |aws-c-amazon-flow | 
 
 Each library should begin its error codes at the beginning of its range and follow in sequence (don't skip codes).

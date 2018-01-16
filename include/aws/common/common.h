@@ -89,7 +89,7 @@ typedef enum aws_common_error {
     AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
     AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
 
-    AWS_ERROR_END_COMMON_RANGE = 999
+    AWS_ERROR_END_COMMON_RANGE = 0x03FF
 } aws_common_error;
 
 #define AWS_LIB_NAME "libaws-c-common"

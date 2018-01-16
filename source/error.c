@@ -26,26 +26,36 @@ static AWS_THREAD_LOCAL aws_error_handler thread_handler = NULL;
 AWS_THREAD_LOCAL void *thread_handler_context = NULL;
 
 #ifndef AWS_MAX_ERROR_SLOTS
-#define AWS_MAX_ERROR_SLOTS 10
+#define AWS_MAX_ERROR_SLOTS 16
 #endif
 
-#define AWS_ERROR_SLOT_SIZE 1000
+/* to multiply by 16, you shift left by 5 */
+#define SLOT_MULTIPLIER_SHIFTS 0x05
 
-static volatile const struct aws_error_info_list *error_slots[AWS_MAX_ERROR_SLOTS] = { 0 };
+/* Since slot size is 00000100 00000000, to divide, we need to shift right by 10 bits to find the slot,
+ * and to find the modulus, we use a binary and with 00000011 11111111 to find the index in that slot the next three
+ * values define those constants */
+#define AWS_ERROR_SLOT_SIZE 0x0400
+#define SLOT_DIV_SHIFT 0x0A
+#define SLOT_MASK 0x03FF
+
+static const int max_error_code = AWS_ERROR_SLOT_SIZE << SLOT_MULTIPLIER_SHIFTS;
+
+static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = { 0 };
 
 int aws_last_error(void) {
     return last_error;
 }
 
 static const struct aws_error_info *get_error_by_code(int err) {
-    if(err >= AWS_MAX_ERROR_SLOTS * AWS_ERROR_SLOT_SIZE) {
+    if(err >= max_error_code) {
         return NULL;
     }
 
-    int slot_index = err / AWS_ERROR_SLOT_SIZE;
-    int error_index = err % AWS_ERROR_SLOT_SIZE;
+    int slot_index = err >> SLOT_DIV_SHIFT;
+    int error_index = err & SLOT_MASK;
 
-    volatile const struct aws_error_info_list *error_slot = error_slots[slot_index];
+    const struct aws_error_info_list *error_slot = error_slots[slot_index];
 
     if(!error_slot || error_index >= error_slot->count) {
         return NULL;
@@ -134,7 +144,7 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
 
     int min_range = error_info->error_list[0].error_code;
 
-    int slot_index = min_range / AWS_ERROR_SLOT_SIZE;
+    int slot_index = min_range >> SLOT_DIV_SHIFT;
     assert(slot_index < AWS_MAX_ERROR_SLOTS);
 
 
