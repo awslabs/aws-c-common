@@ -1,0 +1,26 @@
+sudo: true
+language: c
+
+osx_image: xcode8
+
+#run builds for linux and osx. will add windows shortly
+os:
+#  - osx add osx back when travis fixes their mac os scaling problems.
+  - linux
+
+#run builds on both gcc and clang
+compiler:
+  - gcc
+  - clang
+
+install:
+  - sudo apt-get install -qq cppcheck
+
+#execute build
+script:
+  - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction -I include --force -q --error-exitcode=-1 ./
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make && make test
+
