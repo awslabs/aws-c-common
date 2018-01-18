@@ -150,3 +150,4 @@ int aws_thread_join(struct aws_thread *thread) {
 uint64_t aws_thread_current_thread_id() {
     return (uint64_t)pthread_self();
 }
+
