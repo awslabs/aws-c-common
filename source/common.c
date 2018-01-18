@@ -59,6 +59,7 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_mutex_timeout, AWS_ERROR_MUTEX_TIMEOUT, "mutex operation timed out", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_mutex_caller_not_owner, AWS_ERROR_MUTEX_CALLER_NOT_OWNER, "the caller of a mutex operation was not the owner", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_mutex_failed, AWS_ERROR_MUTEX_FAILED, "mutex operation failed", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_clock_failure, AWS_ERROR_CLOCK_FAILURE, "clock get ticks operation failed", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_empty, AWS_ERROR_LIST_EMPTY, "empty list", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_dest_copy_too_small, AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, "destination of list copy is too small", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_exceeds_max_size, AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
