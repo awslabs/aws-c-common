@@ -26,7 +26,7 @@
 struct aws_mutex {
     struct aws_allocator *allocator;
 #ifdef _WIN32
-    HANDLE mutex_handle;
+    CRITICAL_SECTION mutex_handle;
 #else
     pthread_mutex_t mutex_handle;
 #endif
