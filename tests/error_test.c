@@ -13,6 +13,7 @@
  *  permissions and limitations under the License.
  */
 
+#include <aws/common/thread.h>
 #include <aws_test_harness.h>
 
 static struct aws_error_info errors[] = {
@@ -248,7 +249,78 @@ static int unknown_error_code_range_too_large_test_fn(struct aws_allocator *conf
     return 0;
 }
 
-/* TODO: after adding threading abstraction, add a test to make sure thread local apis work as expected */
+struct error_thread_test_data {
+    int thread_1_code;
+    int thread_1_get_last_code;
+    uint64_t thread_1_id;
+    int thread_1_encountered_count;
+    int thread_2_code;
+    int thread_2_get_last_code;
+    int thread_2_encountered_count;
+    uint64_t thread_2_id;
+};
+
+
+static void error_thread_test_thread_local_cb(int err, void *ctx) {
+    struct error_thread_test_data *cb_data = (struct error_thread_test_data *)ctx;
+
+    uint64_t thread_id = aws_thread_current_thread_id();
+
+    if(thread_id == cb_data->thread_1_id) {
+        cb_data->thread_1_code = err;
+        cb_data->thread_1_get_last_code = aws_last_error();
+        cb_data->thread_1_encountered_count += 1;
+        return;
+    }
+
+    cb_data->thread_2_code = err;
+    cb_data->thread_2_get_last_code = aws_last_error();
+    cb_data->thread_2_id = aws_thread_current_thread_id();
+    cb_data->thread_2_encountered_count += 1;
+}
+
+
+static void error_thread_fn(void *arg) {
+    aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, arg);
+
+    aws_raise_error(15);
+}
+
+static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
+
+    struct error_thread_test_data test_data = {
+            .thread_1_code = 0,
+            .thread_1_get_last_code = 0,
+            .thread_1_id = aws_thread_current_thread_id(),
+            .thread_1_encountered_count = 0,
+            .thread_2_code = 0,
+            .thread_2_get_last_code = 0,
+            .thread_2_encountered_count = 0,
+            .thread_2_id = 0
+    };
+
+    aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, &test_data);
+
+    int thread_1_error_code_expected = 5;
+    aws_raise_error(thread_1_error_code_expected);
+
+    struct aws_thread thread;
+    aws_thread_init(&thread, allocator);
+    ASSERT_SUCCESS(aws_thread_create(&thread, error_thread_fn, &test_data, NULL), "Thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error %d", aws_last_error());
+    aws_thread_clean_up(&thread);
+    ASSERT_INT_EQUALS(1, test_data.thread_1_encountered_count, "The thread local CB should only have triggered for the first thread once.");
+    ASSERT_INT_EQUALS(1, test_data.thread_2_encountered_count, "The thread local CB should only have triggered for the second thread once.");
+    ASSERT_FALSE(test_data.thread_2_id == 0, "thread 2 id should have been set to something other than 0");
+    ASSERT_FALSE(test_data.thread_2_id == test_data.thread_1_id, "threads 1 and 2 should be different ids");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, aws_last_error(), "Thread 1's error should not have changed when thread 2 raised an error.");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_code, "Thread 1 code should have matched the original error.");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_get_last_code, "Thread 1 get last error code should have matched the original error.");
+    ASSERT_INT_EQUALS(15, test_data.thread_2_code, "Thread 2 code should have matched the thread 2 error.");
+    ASSERT_INT_EQUALS(15, test_data.thread_2_get_last_code, "Thread 2 get last error code should have matched the thread 2 error.");
+
+    return 0;
+}
 
 AWS_TEST_CASE_FIXTURE(raise_errors_test, setup_errors_test_fn, raise_errors_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(error_callback_test, setup_errors_test_fn, error_callback_test_fn, teardown_errors_test_fn, NULL)
@@ -256,3 +328,4 @@ AWS_TEST_CASE_FIXTURE(reset_errors_test, setup_errors_test_fn, reset_errors_test
 AWS_TEST_CASE_FIXTURE(unknown_error_code_in_slot_test, setup_errors_test_fn, unknown_error_code_in_slot_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(unknown_error_code_no_slot_test, setup_errors_test_fn, unknown_error_code_no_slot_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(unknown_error_code_range_too_large_test, setup_errors_test_fn, unknown_error_code_range_too_large_test_fn, teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(error_code_cross_thread_test, setup_errors_test_fn, error_code_cross_thread_test_fn, teardown_errors_test_fn, NULL)

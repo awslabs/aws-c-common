@@ -120,6 +120,7 @@ add_test(mutex_aquire_release_test ${TEST_BINARY_NAME} mutex_aquire_release_test
 add_test(mutex_is_actually_mutex_test ${TEST_BINARY_NAME} mutex_is_actually_mutex_test)
 add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
 add_test(sys_clock_increments_test ${TEST_BINARY_NAME} sys_clock_increments_test)
+add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(
