@@ -17,12 +17,19 @@
 
 #include <limits.h>
 #include <errno.h>
+#include <time.h>
 
+struct thread_wrapper {
+    struct aws_allocator *allocator;
+    void(*func)(void *arg);
+    void *arg;
+};
 
-static void *thread_wrapper_fn (void *arg_pass) {
-    struct aws_thread_wrapper *wrapper = (struct aws_thread_wrapper *)arg_pass;
+static void *thread_fn(void *arg) {
+    struct thread_wrapper *wrapper = (struct thread_wrapper *)arg;
     wrapper->func(wrapper->arg);
-    return 0;
+    aws_mem_release(wrapper->allocator, wrapper);
+    return NULL;
 }
 
 void aws_thread_clean_up (struct aws_thread *thread) {
@@ -35,7 +42,7 @@ int aws_thread_init (struct aws_thread *thread, struct aws_allocator *allocator)
     thread->allocator = allocator;
     thread->thread_id = 0;
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *context, struct aws_thread_options *options) {
@@ -77,10 +84,19 @@ int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *
             }
         }
     }
+    
+    int allocation_failed = 0;
+    struct thread_wrapper *wrapper = (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+    
+    if(!wrapper) {
+        allocation_failed = 1;
+        goto cleanup;
+    }
 
-    thread->thread_wrapper.func = func;
-    thread->thread_wrapper.arg = context;
-    attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_wrapper_fn, &thread->thread_wrapper);
+    wrapper->allocator = thread->allocator;
+    wrapper->func = func;
+    wrapper->arg = context;
+    attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if(attr_return) {
         goto cleanup;
@@ -102,11 +118,11 @@ int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *
         return aws_raise_error(AWS_ERROR_THREAD_NO_PERMISSIONS);
     }
 
-    if(attr_return == ENOMEM) {
-        return AWS_ERROR_OOM;
+    if(allocation_failed || attr_return == ENOMEM) {
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 
@@ -126,7 +142,7 @@ int aws_thread_detach(struct aws_thread *thread) {
         }
     }
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_thread_join(struct aws_thread *thread) {
@@ -144,10 +160,23 @@ int aws_thread_join(struct aws_thread *thread) {
         }
     }
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 uint64_t aws_thread_current_thread_id() {
     return (uint64_t)pthread_self();
 }
+
+void aws_thread_current_sleep(uint32_t millis) {
+    uint32_t seconds = millis / 1000;
+    uint64_t nano = (millis % 1000) * 1000;
+    struct timespec tm = {
+        .tv_sec = seconds,
+        .tv_nsec = nano,
+    };
+    struct timespec output;
+
+    nanosleep(&tm, &output);
+}
+
 

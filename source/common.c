@@ -16,8 +16,10 @@
 #include <aws/common/common.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER 
 #pragma warning( push )
 #pragma warning( disable : 4100)
+#endif
 
 void *default_malloc(struct aws_allocator *allocator, size_t size) {
     return malloc(size);
