@@ -21,18 +21,6 @@ void aws_mutex_clean_up(struct aws_mutex *mutex) {
     pthread_mutex_destroy(&mutex->mutex_handle);
 }
 
-int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
-
-    mutex->allocator = allocator;
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL);
-    pthread_mutex_init(&mutex->mutex_handle, &attr);
-    pthread_mutexattr_destroy(&attr);
-
-    return AWS_OP_SUCCESS;
-}
-
 static int convert_and_raise_error_code (int error_code) {
     switch (error_code) {
         case 0:
@@ -50,6 +38,27 @@ static int convert_and_raise_error_code (int error_code) {
         default:
             return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
     }
+}
+
+int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
+
+    mutex->allocator = allocator;
+    pthread_mutexattr_t attr;
+    int err_code = pthread_mutexattr_init(&attr);
+    int return_code = AWS_OP_SUCCESS;
+
+    if(!err_code) {
+        if((err_code = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||
+            (err_code = pthread_mutex_init(&mutex->mutex_handle, &attr))) {
+            return_code = convert_and_raise_error_code(err_code);
+        }
+        pthread_mutexattr_destroy(&attr);
+    }
+    else {
+        return_code = convert_and_raise_error_code(err_code);
+    }
+
+    return return_code;
 }
 
 int aws_mutex_acquire(struct aws_mutex *mutex) {

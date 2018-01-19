@@ -58,16 +58,13 @@ int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *
         }
 
         attributes_ptr = &attributes;
-        int detach_state = 0;
+        int detach_state = PTHREAD_CREATE_JOINABLE;
 
-        if(options->detach_state == AWS_THREAD_JOINABLE) {
-            detach_state = PTHREAD_CREATE_JOINABLE;
-        }
-        else if(options->detach_state == AWS_THREAD_DETACHED) {
+        if(options->detach_state == AWS_THREAD_DETACHED) {
             detach_state = PTHREAD_CREATE_DETACHED;
         }
 
-        if(detach_state != 0) {
+        if(detach_state != PTHREAD_CREATE_JOINABLE) {
             attr_return = pthread_attr_setdetachstate(attributes_ptr, detach_state);
 
             if(attr_return) {
