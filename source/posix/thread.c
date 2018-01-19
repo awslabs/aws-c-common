@@ -127,17 +127,7 @@ uint64_t aws_thread_get_id (struct aws_thread *thread) {
 }
 
 int aws_thread_detach(struct aws_thread *thread) {
-    int err_no = pthread_detach(thread->thread_id);
-
-    if (err_no) {
-        if (err_no == EINVAL) {
-            return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
-        }
-        else if (err_no == ESRCH) {
-            return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
-        }
-    }
-
+    pthread_detach(thread->thread_id);
     return AWS_OP_SUCCESS;
 }
 
