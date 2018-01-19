@@ -35,15 +35,9 @@ struct aws_thread_options {
     size_t stack_size;
 };
 
-struct aws_thread_wrapper {
-    void (*func)(void *arg);
-    void *arg;
-};
-
 struct aws_thread {
     struct aws_allocator *allocator;
 
-    struct aws_thread_wrapper thread_wrapper;
 #ifdef _WIN32
     HWND thread_handle;
     DWORD thread_id;
@@ -56,7 +50,7 @@ struct aws_thread {
 extern "C" {
 #endif
 /**
- * Allocates a new platform specific thread object struct (not the os-level thread itself).
+ * Initializes a new platform specific thread object struct (not the os-level thread itself).
  */
 AWS_COMMON_API int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator);
 
@@ -84,7 +78,7 @@ AWS_COMMON_API int aws_thread_detach(struct aws_thread *thread);
 AWS_COMMON_API int aws_thread_join(struct aws_thread *thread);
 
 /**
- * Cleans up the os-level thread, and deallocates itself.
+ * Cleans up the thread handle, if thread is still running, it will continue doing so.
  */
 AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
 
@@ -92,6 +86,11 @@ AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
  * returns the thread id of the calling thread.
  */
 AWS_COMMON_API uint64_t aws_thread_current_thread_id();
+
+/**
+ * Sleeps the current thread by millis.
+ */
+AWS_COMMON_API void aws_thread_current_sleep(uint32_t millis);
 
 #ifdef __cplusplus
 }

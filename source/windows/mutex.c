@@ -17,30 +17,30 @@
 
 int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
     mutex->allocator = allocator;
-    InitializeCriticalSection(&mutex->mutex_handle);
-    return AWS_ERROR_SUCCESS;
+    mutex->mutex_handle.Ptr = 0;
+    return AWS_OP_SUCCESS;
 }
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
-    DeleteCriticalSection(&mutex->mutex_handle);
+    mutex->mutex_handle.Ptr = 0;
 }
 
 int aws_mutex_acquire(struct aws_mutex *mutex) {
-    EnterCriticalSection(&mutex->mutex_handle);
-    return 0;
+    AcquireSRWLockExclusive(&mutex->mutex_handle);
+    return AWS_OP_SUCCESS;
 }
 
 int aws_mutex_try_acquire(struct aws_mutex *mutex) {
-    BOOL res = TryEnterCriticalSection(&mutex->mutex_handle);
+    BOOL res = TryAcquireSRWLockExclusive(&mutex->mutex_handle);
 
     if (!res) {
-        return AWS_ERROR_SUCCESS;
+        return AWS_OP_SUCCESS;
     }
 
     return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
 }
 
 int aws_mutex_release(struct aws_mutex *mutex) {
-    LeaveCriticalSection(&mutex->mutex_handle);
-    return 0;
+    ReleaseSRWLockExclusive(&mutex->mutex_handle);
+    return AWS_OP_SUCCESS;
 }

@@ -16,18 +16,18 @@
 #include <aws/common/clock.h>
 #include <Windows.h>
 
-static const LONGLONG MUS_PER_SEC = 1000000;
-static const LONGLONG NS_PER_MUS = 1000;
-static const LONGLONG FILE_TIME_TO_NS = 100;
-static const LONGLONG EC_TO_UNIX_EPOCH = 11644473600LL;
-static const LONGLONG WINDOWS_TICK = 10000000;
+static const uint64_t MUS_PER_SEC = 1000000;
+static const uint64_t NS_PER_MUS = 1000;
+static const uint64_t FILE_TIME_TO_NS = 100;
+static const uint64_t EC_TO_UNIX_EPOCH = 11644473600LL;
+static const uint64_t WINDOWS_TICK = 10000000;
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
     if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
-        *timestamp = (uint64_t)((ticks.QuadPart * MUS_PER_SEC) / frequency.QuadPart) * NS_PER_MUS;
-        return 0;
+        *timestamp = (((uint64_t)ticks.QuadPart * MUS_PER_SEC) / (uint64_t)frequency.QuadPart) * NS_PER_MUS;
+        return AWS_OP_SUCCESS;
     }
 
     return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
@@ -44,6 +44,6 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     int_conv.LowPart = ticks.dwLowDateTime;
     int_conv.HighPart = ticks.dwHighDateTime;
 
-    *timestamp = (uint64_t)((int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS);
-    return 0;
+    *timestamp = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS;
+    return AWS_OP_SUCCESS;
 }
