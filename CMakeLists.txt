@@ -42,13 +42,17 @@ if (WIN32)
 
     set(PLATFORM_LIBS "Kernel32")
 else ()
-    file(GLOB AWS_COMMON_OS_SRC
-            "source/posix/*.c"
-            )
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
+        file(GLOB AWS_COMMON_OS_SRC
+                "source/posix/*.c"
+                "source/unix/*.c"
+                )
         set(PLATFORM_LIBS "pthread" "rt")
     elseif (APPLE)
+        file(GLOB AWS_COMMON_OS_SRC
+                "source/posix/*.c"
+                "source/darwin/*.c"
+                )
         set(PLATFORM_LIBS "pthread")
     endif ()
 endif ()
