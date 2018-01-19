@@ -88,9 +88,9 @@ AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
 AWS_COMMON_API uint64_t aws_thread_current_thread_id();
 
 /**
- * Sleeps the current thread by millis.
+ * Sleeps the current thread by nanos.
  */
-AWS_COMMON_API void aws_thread_current_sleep(uint32_t millis);
+AWS_COMMON_API void aws_thread_current_sleep(uint64_t nanos);
 
 #ifdef __cplusplus
 }

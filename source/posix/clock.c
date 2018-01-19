@@ -26,7 +26,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_sys_clock_get_ticks(uint64_t *timestamp) {
@@ -37,6 +37,6 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 

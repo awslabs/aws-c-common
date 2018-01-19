@@ -85,6 +85,9 @@ uint64_t aws_thread_current_thread_id() {
     return (uint64_t)GetCurrentThreadId();
 }
 
-void aws_thread_current_sleep(uint32_t millis) {
-    Sleep(millis);
+void aws_thread_current_sleep(uint64_t nanos) {
+    /* We don't really have a better option here for windows that isn't super complex AND we don't have a use case
+     * yet where we should have sleeps anywhere other than for context switches and testing. When that time arises
+     * put the effort in here. */
+    Sleep(nanos / 1000000);
 }

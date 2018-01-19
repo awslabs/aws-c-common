@@ -33,8 +33,7 @@ static void *thread_fn(void *arg) {
 }
 
 void aws_thread_clean_up (struct aws_thread *thread) {
-    /* this likely won't do anything if the thread has already terminated, but it shouldn't hurt to send a cancel signal just in case.
-       should we join here? */
+    /* this likely won't do anything if the thread has already terminated, but it shouldn't hurt to send a cancel signal just in case.*/
     pthread_cancel(thread->thread_id);
 }
 
@@ -48,7 +47,7 @@ int aws_thread_init (struct aws_thread *thread, struct aws_allocator *allocator)
 int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *context, struct aws_thread_options *options) {
 
     pthread_attr_t attributes;
-    pthread_attr_t *attributes_ptr = 0;
+    pthread_attr_t *attributes_ptr = NULL;
     int attr_return = 0;
 
     if(options) {
@@ -167,9 +166,10 @@ uint64_t aws_thread_current_thread_id() {
     return (uint64_t)pthread_self();
 }
 
-void aws_thread_current_sleep(uint32_t millis) {
-    uint32_t seconds = millis / 1000;
-    uint64_t nano = (millis % 1000) * 1000;
+void aws_thread_current_sleep(uint64_t nanos) {
+    uint64_t seconds = nanos / 1000000000;
+    uint64_t nano = nanos % 1000000000;
+
     struct timespec tm = {
         .tv_sec = seconds,
         .tv_nsec = nano,

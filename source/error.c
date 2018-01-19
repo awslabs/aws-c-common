@@ -107,7 +107,7 @@ int aws_raise_error(int err) {
         global_handler(last_error, global_error_context);
     }
 
-    return -1;
+    return AWS_OP_ERR;
 }
 
 void aws_reset_error(void) {

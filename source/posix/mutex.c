@@ -30,19 +30,23 @@ int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
     pthread_mutex_init(&mutex->mutex_handle, &attr);
     pthread_mutexattr_destroy(&attr);
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 static int convert_and_raise_error_code (int error_code) {
     switch (error_code) {
         case 0:
-            return AWS_ERROR_SUCCESS;
+            return AWS_OP_SUCCESS;
         case EINVAL:
             return aws_raise_error(AWS_ERROR_MUTEX_NOT_INIT);
         case EBUSY:
             return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
         case EPERM:
             return aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
+        case ENOMEM:
+            return aws_raise_error(AWS_ERROR_OOM);
+        case EDEADLK:
+            return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
         default:
             return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
     }
