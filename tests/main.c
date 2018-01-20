@@ -15,9 +15,25 @@
  */
 
 #include <error_test.c>
+#include <array_list_test.c>
 
 int main(int argc, char *argv[]) {
 
-    AWS_RUN_TEST_CASES(&raise_errors_test, &reset_errors_test, &error_callback_test, &unknown_error_code_in_slot_test,
-                       &unknown_error_code_no_slot_test, &unknown_error_code_range_too_large_test)
+    AWS_RUN_TEST_CASES(&raise_errors_test,
+                       &reset_errors_test,
+                       &error_callback_test,
+                       &unknown_error_code_in_slot_test,
+                       &unknown_error_code_no_slot_test,
+                       &unknown_error_code_range_too_large_test,
+                       &array_list_order_push_back_pop_front_test,
+                       &array_list_order_push_back_pop_back_test,
+                       &array_list_exponential_mem_model_test,
+                       &array_list_iteration_test,
+                       &array_list_preallocated_iteration_test,
+                       &array_list_preallocated_push_test,
+                       &array_list_shrink_to_fit_test,
+                       &array_list_shrink_to_fit_static_test,
+                       &array_list_clear_test,
+                       &array_list_copy_test,
+                       &array_list_not_enough_space_test)
 }
