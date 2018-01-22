@@ -14,6 +14,12 @@
 */
 
 #include <aws/common/thread.h>
+#include <assert.h>
+
+static struct aws_thread_options default_options = {
+    /* zero will make sure whatever the default for that version of windows is used. */
+    .stack_size = 0
+};
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
@@ -21,22 +27,27 @@ struct thread_wrapper {
     void *arg;
 };
 
-static DWORD thread_wrapper_fn(LPVOID arg) {
-    struct thread_wrapper *thread_wrapper = (struct thread_wrapper *)arg;
-    thread_wrapper->func(thread_wrapper->arg);
-    aws_mem_release(thread_wrapper->allocator, thread_wrapper);
+static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
+    struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
+    aws_mem_release(thread_wrapper.allocator, (void *)arg);
+    thread_wrapper.func(thread_wrapper.arg);
     return 0;
+}
+
+struct aws_thread_options *aws_default_thread_options(void) {
+    return &default_options;
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->thread_handle = 0;    
     thread->thread_id = 0;
     thread->allocator = allocator;
+    thread->detach_state = AWS_THREAD_NOT_CREATED;
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg), void *context, struct aws_thread_options *options) {
+int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
 
@@ -46,7 +57,7 @@ int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg), void *c
 
     struct thread_wrapper *thread_wrapper = (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
     thread_wrapper->allocator = thread->allocator;
-    thread_wrapper->arg = context;
+    thread_wrapper->arg = arg;
     thread_wrapper->func = func;
     thread->thread_handle = CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
@@ -54,6 +65,7 @@ int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg), void *c
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
+    thread->detach_state = AWS_THREAD_JOINABLE;
     return AWS_OP_SUCCESS;
 }
 
@@ -61,9 +73,14 @@ uint64_t aws_thread_get_id(struct aws_thread *thread) {
     return thread->thread_id;
 }
 
+aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
+    return thread->detach_state;
+}
+
 int aws_thread_detach(struct aws_thread *thread) {
 
     if (thread->thread_handle) {
+        thread->detach_state = AWS_THREAD_DETACHED;
         CloseHandle(thread->thread_handle);
         thread->thread_handle = 0;
     }
@@ -71,13 +88,18 @@ int aws_thread_detach(struct aws_thread *thread) {
 }
 
 int aws_thread_join(struct aws_thread *thread) {
+    if (thread->detach_state == AWS_THREAD_JOINABLE) {
+        WaitForSingleObject(thread->thread_handle, INFINITE);
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
+        return AWS_OP_SUCCESS;
+    }
 
-    WaitForSingleObject(thread->thread_handle, INFINITE);
-
-    return AWS_OP_SUCCESS;
+    return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
 }
 
 void aws_thread_clean_up(struct aws_thread *thread) {
+    /* cleaning up a joinable thread is undefined. Don't do it. Either join or detach. The cpp stdlib actually calls std::terminate in this case */
+    assert(thread->detach_state != AWS_THREAD_JOINABLE);
     aws_thread_detach(thread);
 }
 
@@ -89,5 +111,5 @@ void aws_thread_current_sleep(uint64_t nanos) {
     /* We don't really have a better option here for windows that isn't super complex AND we don't have a use case
      * yet where we should have sleeps anywhere other than for context switches and testing. When that time arises
      * put the effort in here. */
-    Sleep(nanos / 1000000);
+    Sleep((DWORD)(nanos / 1000000));
 }

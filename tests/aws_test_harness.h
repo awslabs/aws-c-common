@@ -88,8 +88,8 @@ static int total_failures;
 #define ASSERT_FALSE(condition, format, ...) do { if(condition) { FAIL(format, ## __VA_ARGS__); } } while(0)
 
 #define ASSERT_SUCCESS(condition, format, ...) do { if(condition) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_FAILS(condition, format, ...) do { if(condition == -1) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_ERROR(error, condition, format, ...) do { if(condition == -1) { FAIL(format, ## __VA_ARGS__); } if(aws_last_error_code() != error) { FAIL(format, ## __VA_ARGS__) } } while(0)
+#define ASSERT_FAILS(condition, format, ...) do { if(condition != -1) { FAIL(format, ## __VA_ARGS__); } } while(0)
+#define ASSERT_ERROR(error, condition, format, ...) do { if(condition != -1) { FAIL(format, ## __VA_ARGS__); } if(aws_last_error_code() != error) { FAIL(format, ## __VA_ARGS__) } } while(0)
 #define ASSERT_NULL(ptr, format, ...) do { if(ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_NOT_NULL(ptr, format, ...) do { if(!ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_INT_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
@@ -116,16 +116,19 @@ struct aws_test_harness {
     struct memory_test_config config;
     void *ctx;
     const char *test_name;
+    int suppress_memcheck;
 };
 
-#define AWS_TEST_CASE(name, fn)                                                                                        \
+#define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static struct aws_test_harness name = { .on_before = NULL, .run = fn, .on_after = NULL,                            \
-         .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name };
+         .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                  \
 
-
-#define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c)                                                                      \
+#define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
     static struct aws_test_harness name = { .on_before = b, .run = fn, .on_after = af,                                 \
-        .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name };                                           \
+        .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                   \
+
+#define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
+#define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
 static int aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
@@ -141,9 +144,11 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     }
 
     if(!ret_val) {
-        ASSERT_INT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
+        if (!harness->suppress_memcheck) {
+            ASSERT_INT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
                 "Memory Leak Detected %d bytes were allocated, "
                 "but only %d were freed.", harness->test_name, harness->config.allocated, harness->config.freed);
+        }
 
         RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
     }

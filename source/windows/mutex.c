@@ -17,6 +17,8 @@
 
 int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
     mutex->allocator = allocator;
+    /* A more efficient variant of InitializeSRWLock.
+       See https://msdn/microsoft.com/en-us/library/windows/desktop/ms683483(v=vs.85).aspx */
     mutex->mutex_handle.Ptr = 0;
     return AWS_OP_SUCCESS;
 }

@@ -27,19 +27,20 @@
 
 typedef enum aws_thread_detach_state {
     AWS_THREAD_JOINABLE = 1,
-    AWS_THREAD_DETACHED = 2,
+    AWS_THREAD_DETACHED,
+    AWS_THREAD_NOT_CREATED,
+    AWS_THREAD_JOIN_COMPLETED
 } aws_thread_detach_state;
 
 struct aws_thread_options {
-    aws_thread_detach_state detach_state;
     size_t stack_size;
 };
 
 struct aws_thread {
     struct aws_allocator *allocator;
-
+    aws_thread_detach_state detach_state;
 #ifdef _WIN32
-    HWND thread_handle;
+    HANDLE thread_handle;
     DWORD thread_id;
 #else
     pthread_t thread_id;
@@ -49,6 +50,12 @@ struct aws_thread {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Returns an instance of system default thread options.
+ */
+AWS_COMMON_API struct aws_thread_options *aws_default_thread_options(void);
+
 /**
  * Initializes a new platform specific thread object struct (not the os-level thread itself).
  */
@@ -57,9 +64,10 @@ AWS_COMMON_API int aws_thread_init(struct aws_thread *thread, struct aws_allocat
 /**
  * Creates an OS level thread and associates it with func. context will be passed to func when it is executed.
  * options will be applied to the thread if they are applicable for the platform.
+ * You must either call join or detach after creating the thread and before calling clean_up. 
  */
 AWS_COMMON_API int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg),
-                                                      void *context, struct aws_thread_options *options);
+                                                      void *arg, struct aws_thread_options *options);
 
 /**
  * Gets the id of thread
@@ -67,7 +75,12 @@ AWS_COMMON_API int aws_thread_create(struct aws_thread *thread, void(*func)(void
 AWS_COMMON_API uint64_t aws_thread_get_id(struct aws_thread *thread);
 
 /**
- * Detaches thread from this instance of thread. You probably want to call aws_core_thread_destroy()
+ * Gets the detach state of the thread. For example, is it safe to call join on this thread? Has it been detached()?
+ */
+AWS_COMMON_API aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
+
+/**
+ * Detaches thread from this instance of thread. You probably want to call aws_core_thread_clean_up()
  * immediately afterwards.
  */
 AWS_COMMON_API int aws_thread_detach(struct aws_thread *thread);
@@ -78,7 +91,8 @@ AWS_COMMON_API int aws_thread_detach(struct aws_thread *thread);
 AWS_COMMON_API int aws_thread_join(struct aws_thread *thread);
 
 /**
- * Cleans up the thread handle, if thread is still running, it will continue doing so.
+ * Cleans up the thread handle. Either detach or join must be called
+ * before calling this function. 
  */
 AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
 

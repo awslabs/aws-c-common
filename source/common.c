@@ -16,6 +16,7 @@
 #include <aws/common/common.h>
 #include <stdlib.h>
 
+/* turn off unused named parameter warning on msvc.*/
 #ifdef _MSC_VER 
 #pragma warning( push )
 #pragma warning( disable : 4100)
