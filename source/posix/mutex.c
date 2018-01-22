@@ -17,7 +17,6 @@
 #include <errno.h>
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
-    aws_mutex_release(mutex);
     pthread_mutex_destroy(&mutex->mutex_handle);
 }
 

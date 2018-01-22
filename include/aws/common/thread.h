@@ -26,9 +26,9 @@
 #endif
 
 typedef enum aws_thread_detach_state {
-    AWS_THREAD_JOINABLE = 1,
+    AWS_THREAD_NOT_CREATED = 1,
+    AWS_THREAD_JOINABLE,
     AWS_THREAD_DETACHED,
-    AWS_THREAD_NOT_CREATED,
     AWS_THREAD_JOIN_COMPLETED
 } aws_thread_detach_state;
 

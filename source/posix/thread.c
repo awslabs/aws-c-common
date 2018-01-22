@@ -18,6 +18,12 @@
 #include <limits.h>
 #include <errno.h>
 #include <time.h>
+#include <assert.h>
+
+static struct aws_thread_options default_options = {
+        /* this will make sure platform default stack size is used. */
+        .stack_size = 0
+};
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
@@ -26,25 +32,31 @@ struct thread_wrapper {
 };
 
 static void *thread_fn(void *arg) {
-    struct thread_wrapper *wrapper = (struct thread_wrapper *)arg;
-    wrapper->func(wrapper->arg);
-    aws_mem_release(wrapper->allocator, wrapper);
+    struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
+    aws_mem_release(wrapper.allocator, arg);
+
+    wrapper.func(wrapper.arg);
     return NULL;
 }
 
+struct aws_thread_options *aws_default_thread_options(void) {
+    return &default_options;
+}
+
 void aws_thread_clean_up (struct aws_thread *thread) {
-    /* this likely won't do anything if the thread has already terminated, but it shouldn't hurt to send a cancel signal just in case.*/
-    pthread_cancel(thread->thread_id);
+    /* don't call cleanup if you haven't either joined or detached!*/
+    assert(thread->detach_state != AWS_THREAD_JOINABLE);
 }
 
 int aws_thread_init (struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->allocator = allocator;
     thread->thread_id = 0;
+    thread->detach_state = AWS_THREAD_NOT_CREATED;
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *context, struct aws_thread_options *options) {
+int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
 
     pthread_attr_t attributes;
     pthread_attr_t *attributes_ptr = NULL;
@@ -58,19 +70,6 @@ int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *
         }
 
         attributes_ptr = &attributes;
-        int detach_state = PTHREAD_CREATE_JOINABLE;
-
-        if(options->detach_state == AWS_THREAD_DETACHED) {
-            detach_state = PTHREAD_CREATE_DETACHED;
-        }
-
-        if(detach_state != PTHREAD_CREATE_JOINABLE) {
-            attr_return = pthread_attr_setdetachstate(attributes_ptr, detach_state);
-
-            if(attr_return) {
-                goto cleanup;
-            }
-        }
 
         if(options->stack_size > PTHREAD_STACK_MIN ) {
             attr_return = pthread_attr_setstacksize(attributes_ptr, options->stack_size);
@@ -91,12 +90,14 @@ int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *
 
     wrapper->allocator = thread->allocator;
     wrapper->func = func;
-    wrapper->arg = context;
+    wrapper->arg = arg;
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if(attr_return) {
         goto cleanup;
     }
+
+    thread->detach_state = AWS_THREAD_JOINABLE;
 
     cleanup:
     if(attributes_ptr) {
@@ -126,27 +127,35 @@ uint64_t aws_thread_get_id (struct aws_thread *thread) {
     return (uint64_t)thread->thread_id;
 }
 
+aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
+    return thread->detach_state;
+}
+
 int aws_thread_detach(struct aws_thread *thread) {
     pthread_detach(thread->thread_id);
+    thread->detach_state = AWS_THREAD_DETACHED;
     return AWS_OP_SUCCESS;
 }
 
 int aws_thread_join(struct aws_thread *thread) {
-    int err_no = pthread_join(thread->thread_id, 0);
+    if(thread->detach_state == AWS_THREAD_JOINABLE) {
+        int err_no = pthread_join(thread->thread_id, 0);
 
-    if (err_no) {
-        if (err_no == EINVAL) {
-            return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+        if (err_no) {
+            if (err_no == EINVAL) {
+                return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+            } else if (err_no == ESRCH) {
+                return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
+            } else if (err_no == EDEADLK) {
+                return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
+            }
         }
-        else if (err_no == ESRCH) {
-            return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
-        }
-        else if (err_no == EDEADLK) {
-            return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
-        }
+
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
+        return AWS_OP_SUCCESS;
     }
 
-    return AWS_OP_SUCCESS;
+    return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
 }
 
 uint64_t aws_thread_current_thread_id() {
