@@ -28,7 +28,7 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
         if (!list->data) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
-        memset(list->data, 0, list->current_size);
+        memset(list->data, 0, allocation_size);
         list->current_size = allocation_size;
     }
 
