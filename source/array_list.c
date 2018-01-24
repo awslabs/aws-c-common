@@ -21,6 +21,7 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
     list->alloc = alloc;
     size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
+    list->item_size = item_size;
 
     if (allocation_size > 0) {
         list->data = aws_mem_acquire(list->alloc, allocation_size);
@@ -37,7 +38,7 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
 
 int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t array_size, size_t item_size) {
     assert(raw_array);
-    assert(array_size > item_size);
+    assert(array_size >= item_size);
     list->current_size = array_size;
     list->item_size = item_size;
     list->length = 0;
@@ -99,6 +100,7 @@ int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
     }
 
     memcpy((void *)((uint8_t *)list->data + filled_space), val, list->item_size);
+    list->length++;
     return AWS_OP_SUCCESS;
 }
 
@@ -164,9 +166,9 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *list) {
             }
 
             memcpy(raw_data, list->data, ideal_size);
-            aws_mem_release(list->alloc, (void *)list->data);
+            aws_mem_release(list->alloc, list->data);
             list->data = raw_data;
-            list->current_size = list->length;
+            list->current_size = ideal_size;
         }
         return AWS_OP_SUCCESS;
     }

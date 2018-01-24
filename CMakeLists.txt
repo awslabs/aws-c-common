@@ -126,6 +126,7 @@ add_test(array_list_shrink_to_fit_static_test ${TEST_BINARY_NAME} array_list_shr
 add_test(array_list_clear_test ${TEST_BINARY_NAME} array_list_clear_test)
 add_test(array_list_copy_test ${TEST_BINARY_NAME} array_list_copy_test)
 add_test(array_list_not_enough_space_test ${TEST_BINARY_NAME} array_list_not_enough_space_test)
+add_test(array_list_not_enough_space_test_failure ${TEST_BINARY_NAME} array_list_not_enough_space_test_failure)
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(

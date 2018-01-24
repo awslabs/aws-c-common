@@ -35,5 +35,6 @@ int main(int argc, char *argv[]) {
                        &array_list_shrink_to_fit_static_test,
                        &array_list_clear_test,
                        &array_list_copy_test,
-                       &array_list_not_enough_space_test)
+                       &array_list_not_enough_space_test,
+                       &array_list_not_enough_space_test_failure)
 }

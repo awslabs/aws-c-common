@@ -89,7 +89,7 @@ static int total_failures;
 
 #define ASSERT_SUCCESS(condition, format, ...) do { if(condition) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_FAILS(condition, format, ...) do { if(!condition) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_ERROR(error, condition, format, ...) do { if(condition == -1) { FAIL(format, ## __VA_ARGS__); } if(aws_last_error_code() != error) { FAIL(format, ## __VA_ARGS__) } } while(0)
+#define ASSERT_ERROR(error, condition, format, ...) do { if(condition != AWS_OP_ERR) { FAIL(format, ## __VA_ARGS__); } if(aws_last_error() != error) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_NULL(ptr, format, ...) do { if(ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_NOT_NULL(ptr, format, ...) do { if(!ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_INT_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \

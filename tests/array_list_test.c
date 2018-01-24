@@ -24,7 +24,7 @@ static int array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc, 
 
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, list_size, sizeof(int)), "List setup should have been successful. err code %d", aws_last_error());
     ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(list_size, list.current_size, "Allocated list size should be %d.", (int)list_size);
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
@@ -96,7 +96,7 @@ static int array_list_order_push_back_pop_back_fn(struct aws_allocator *alloc, v
     ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
     ASSERT_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 3);
-    ASSERT_INT_EQUALS(list_size, list.current_size, "Allocated list size should be %d.", (int)list_size * sizeof(int));
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
@@ -151,7 +151,7 @@ static int array_list_exponential_mem_model_test_fn(struct aws_allocator *alloc,
     ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
 
     ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(list_size << 2, list.current_size, "Allocated list size should be %d.", (int)list_size << 2);
+    ASSERT_INT_EQUALS(list_size << 2, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)(list_size << 2) * sizeof(int));
 
     aws_array_list_clean_up(&list);
     return 0;
@@ -293,8 +293,9 @@ AWS_TEST_CASE(array_list_shrink_to_fit_test, array_list_shrink_to_fit_test_fn)
 static int array_list_shrink_to_fit_static_test_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list;
 
-    static const size_t list_size = 4;
     static int list_data[4];
+    static const size_t list_size = sizeof(list_data);
+
     ASSERT_SUCCESS(aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int)), "Static list init failed with error code %d", aws_last_error());
 
     int first = 1, second = 2;
@@ -394,8 +395,9 @@ static int array_list_not_enough_space_test_fn(struct aws_allocator *alloc, void
     ASSERT_SUCCESS(aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
 
-    ASSERT_FAILS(aws_array_list_copy(&list_a, &list_b), "Copy from list_a to list_b should have failed");
-    ASSERT_INT_EQUALS(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, aws_last_error(), "List copy should have failed since list_b doesn't have enough space.");
+    ASSERT_SUCCESS(aws_array_list_copy(&list_a, &list_b), "Copy from list_a to list_b should have succeeded");
+    ASSERT_INT_EQUALS(list_a.length, list_b.length, "List b should have grown to the length of list a");
+    ASSERT_INT_EQUALS(2 * sizeof(int), list_b.current_size, "List b should have grown to the size of the number of elements in list a");
 
     aws_array_list_clean_up(&list_a);
     aws_array_list_clean_up(&list_b);
@@ -404,3 +406,29 @@ static int array_list_not_enough_space_test_fn(struct aws_allocator *alloc, void
 }
 
 AWS_TEST_CASE(array_list_not_enough_space_test, array_list_not_enough_space_test_fn)
+
+static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_array_list list_a;
+    struct aws_array_list list_b;
+
+    static size_t list_size = 4;
+    int static_list[1];
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_a, alloc, list_size, sizeof(int)), "List initialization failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_init_static(&list_b, static_list, sizeof(static_list), sizeof(int)), "List initialization failed with error %d", aws_last_error());
+
+    int first = 1, second = 2;
+
+    ASSERT_SUCCESS(aws_array_list_push_back(&list_a, (void *)&first), "List push failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
+    ASSERT_SUCCESS(aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
+    ASSERT_ERROR(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, aws_array_list_copy(&list_a, &list_b),
+                 "Copying to a static list too small should have failed with TOO_SMALL but got %d instead", aws_last_error());
+
+    aws_array_list_clean_up(&list_a);
+    aws_array_list_clean_up(&list_b);
+
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_not_enough_space_test_failure, array_list_not_enough_space_test_failure_fn)
