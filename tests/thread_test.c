@@ -32,7 +32,7 @@ static int test_thread_creation_join_fn(struct aws_allocator *allocator, void *c
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
 
-    ASSERT_SUCCESS(aws_thread_create(&thread, thread_fn, (void *)&test_data, 0), "thread creation failed");
+    ASSERT_SUCCESS(aws_thread_launch(&thread, thread_fn, (void *)&test_data, 0), "thread creation failed");
     ASSERT_INT_EQUALS(AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
     ASSERT_INT_EQUALS(test_data.thread_id, aws_thread_get_id(&thread), "get_thread_id should have returned the same id as the thread calling current_thread_id");
@@ -44,26 +44,3 @@ static int test_thread_creation_join_fn(struct aws_allocator *allocator, void *c
 }
 
 AWS_TEST_CASE(thread_creation_join_test, test_thread_creation_join_fn)
-
-static int test_thread_creation_detach_fn(struct aws_allocator *allocator, void *ctx) {
-    struct thread_test_data test_data;
-    test_data.thread_id = 0;
-
-    struct aws_thread thread;
-    aws_thread_init(&thread, allocator);
-
-    ASSERT_SUCCESS(aws_thread_create(&thread, thread_fn, (void *)&test_data, 0), "thread creation failed");
-    ASSERT_INT_EQUALS(AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
-    ASSERT_SUCCESS(aws_thread_detach(&thread), "thread detach failed");
-    ASSERT_INT_EQUALS(AWS_THREAD_DETACHED, aws_thread_get_detach_state(&thread), "thread state should have returned DETACHED");
-    ASSERT_SUCCESS(aws_thread_detach(&thread), "thread detach should be idempotent");
-    ASSERT_INT_EQUALS(AWS_THREAD_DETACHED, aws_thread_get_detach_state(&thread), "thread state should have returned DETACHED");
-    ASSERT_FAILS(aws_thread_join(&thread), "join of a detached thread should have failed");
-    ASSERT_INT_EQUALS(AWS_ERROR_THREAD_NOT_JOINABLE, aws_last_error(), "Calling join on a detached thread should have raised NOT_JOINABLE error");
-
-    aws_thread_clean_up(&thread);
-
-    return 0;
-}
-
-AWS_TEST_CASE_SUPRESSION(thread_creation_detach_test, test_thread_creation_detach_fn, 1)

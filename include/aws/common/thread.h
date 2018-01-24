@@ -28,7 +28,6 @@
 typedef enum aws_thread_detach_state {
     AWS_THREAD_NOT_CREATED = 1,
     AWS_THREAD_JOINABLE,
-    AWS_THREAD_DETACHED,
     AWS_THREAD_JOIN_COMPLETED
 } aws_thread_detach_state;
 
@@ -54,7 +53,7 @@ extern "C" {
 /**
  * Returns an instance of system default thread options.
  */
-AWS_COMMON_API struct aws_thread_options *aws_default_thread_options(void);
+AWS_COMMON_API const struct aws_thread_options *aws_default_thread_options(void);
 
 /**
  * Initializes a new platform specific thread object struct (not the os-level thread itself).
@@ -66,7 +65,7 @@ AWS_COMMON_API int aws_thread_init(struct aws_thread *thread, struct aws_allocat
  * options will be applied to the thread if they are applicable for the platform.
  * You must either call join or detach after creating the thread and before calling clean_up. 
  */
-AWS_COMMON_API int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg),
+AWS_COMMON_API int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg),
                                                       void *arg, struct aws_thread_options *options);
 
 /**
@@ -78,12 +77,6 @@ AWS_COMMON_API uint64_t aws_thread_get_id(struct aws_thread *thread);
  * Gets the detach state of the thread. For example, is it safe to call join on this thread? Has it been detached()?
  */
 AWS_COMMON_API aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
-
-/**
- * Detaches thread from this instance of thread. You probably want to call aws_core_thread_clean_up()
- * immediately afterwards.
- */
-AWS_COMMON_API int aws_thread_detach(struct aws_thread *thread);
 
 /**
  * Joins the calling thread to a thread instance. Returns when thread is finished.

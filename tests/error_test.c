@@ -306,7 +306,7 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(aws_thread_create(&thread, error_thread_fn, &test_data, NULL), "Thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_thread_launch(&thread, error_thread_fn, &test_data, NULL), "Thread creation failed with error %d", aws_last_error());
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error %d", aws_last_error());
     aws_thread_clean_up(&thread);
     ASSERT_INT_EQUALS(1, test_data.thread_1_encountered_count, "The thread local CB should only have triggered for the first thread once.");

@@ -34,7 +34,7 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     return 0;
 }
 
-struct aws_thread_options *aws_default_thread_options(void) {
+const struct aws_thread_options *aws_default_thread_options(void) {
     return &default_options;
 }
 
@@ -47,7 +47,7 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_create(struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
+int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
 
@@ -77,30 +77,18 @@ aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
     return thread->detach_state;
 }
 
-int aws_thread_detach(struct aws_thread *thread) {
-
-    if (thread->thread_handle) {
-        thread->detach_state = AWS_THREAD_DETACHED;
-        CloseHandle(thread->thread_handle);
-        thread->thread_handle = 0;
-    }
-    return AWS_OP_SUCCESS;
-}
-
 int aws_thread_join(struct aws_thread *thread) {
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
         WaitForSingleObject(thread->thread_handle, INFINITE);
-        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
-        return AWS_OP_SUCCESS;
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;        
     }
 
-    return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+    return AWS_OP_SUCCESS;
 }
 
 void aws_thread_clean_up(struct aws_thread *thread) {
-    /* cleaning up a joinable thread is undefined. Don't do it. Either join or detach. The cpp stdlib actually calls std::terminate in this case */
-    assert(thread->detach_state != AWS_THREAD_JOINABLE);
-    aws_thread_detach(thread);
+    CloseHandle(thread->thread_handle);
+    thread->thread_handle = 0;
 }
 
 uint64_t aws_thread_current_thread_id() {

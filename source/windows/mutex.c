@@ -17,22 +17,25 @@
 
 int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
     mutex->allocator = allocator;
-    /* A more efficient variant of InitializeSRWLock.
-       See https://msdn/microsoft.com/en-us/library/windows/desktop/ms683483(v=vs.85).aspx */
-    mutex->mutex_handle.Ptr = 0;
+    InitializeSRWLock(&mutex->mutex_handle);
     return AWS_OP_SUCCESS;
 }
 
+/* turn off unused named parameter warning on msvc.*/
+#ifdef _MSC_VER 
+#pragma warning( push )
+#pragma warning( disable : 4100)
+#endif
+
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
-    mutex->mutex_handle.Ptr = 0;
 }
 
-int aws_mutex_acquire(struct aws_mutex *mutex) {
+int aws_mutex_lock(struct aws_mutex *mutex) {
     AcquireSRWLockExclusive(&mutex->mutex_handle);
     return AWS_OP_SUCCESS;
 }
 
-int aws_mutex_try_acquire(struct aws_mutex *mutex) {
+int aws_mutex_try_lock(struct aws_mutex *mutex) {
     BOOL res = TryAcquireSRWLockExclusive(&mutex->mutex_handle);
 
     if (!res) {
@@ -42,7 +45,7 @@ int aws_mutex_try_acquire(struct aws_mutex *mutex) {
     return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
 }
 
-int aws_mutex_release(struct aws_mutex *mutex) {
+int aws_mutex_unlock(struct aws_mutex *mutex) {
     ReleaseSRWLockExclusive(&mutex->mutex_handle);
     return AWS_OP_SUCCESS;
 }

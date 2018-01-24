@@ -23,6 +23,6 @@ int main(int argc, char *argv[]) {
 
     AWS_RUN_TEST_CASES(&raise_errors_test, &reset_errors_test, &error_callback_test, &unknown_error_code_in_slot_test,
                        &unknown_error_code_no_slot_test, &unknown_error_code_range_too_large_test, &error_code_cross_thread_test,
-                       &thread_creation_join_test, &thread_creation_detach_test, &mutex_aquire_release_test, &mutex_is_actually_mutex_test, 
+                       &thread_creation_join_test, &mutex_aquire_release_test, &mutex_is_actually_mutex_test, 
                        &high_res_clock_increments_test, &sys_clock_increments_test)
 }

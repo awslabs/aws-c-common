@@ -21,8 +21,8 @@ static int test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx
     struct aws_mutex mutex;
     aws_mutex_init(&mutex, allocator);
 
-    ASSERT_SUCCESS(aws_mutex_acquire(&mutex), "Mutex acquire should have returned success.");
-    ASSERT_SUCCESS(aws_mutex_release(&mutex),"Mutex release should have returned success.");
+    ASSERT_SUCCESS(aws_mutex_lock(&mutex), "Mutex acquire should have returned success.");
+    ASSERT_SUCCESS(aws_mutex_unlock(&mutex),"Mutex release should have returned success.");
 
     aws_mutex_clean_up(&mutex);
 
@@ -40,7 +40,7 @@ static void mutex_thread_fn(void *mutex_data) {
     struct thread_mutex_data *p_mutex = (struct thread_mutex_data *)mutex_data;
     int finished = 0;
     while (!finished) {
-        aws_mutex_acquire(&p_mutex->mutex);
+        aws_mutex_lock(&p_mutex->mutex);
         if (p_mutex->counter != p_mutex->max_counts) {
             int counter = p_mutex->counter + 1;
             p_mutex->counter = counter;
@@ -50,7 +50,7 @@ static void mutex_thread_fn(void *mutex_data) {
         else {
             finished = 1;
         }
-        aws_mutex_release(&p_mutex->mutex);
+        aws_mutex_unlock(&p_mutex->mutex);
 
     }
 }
@@ -67,14 +67,14 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(aws_thread_create(&thread, mutex_thread_fn, &mutex_data, 0), "thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_thread_launch(&thread, mutex_thread_fn, &mutex_data, 0), "thread creation failed with error %d", aws_last_error());
     int finished = 0;
     int increments = 0;
     while (!finished) {
-        aws_mutex_acquire(&mutex_data.mutex);
+        aws_mutex_lock(&mutex_data.mutex);
         /*add some fairness for thread startup time.*/
         if (!mutex_data.thread_fn_increments) {
-            aws_mutex_release(&mutex_data.mutex);
+            aws_mutex_unlock(&mutex_data.mutex);
             continue;
         }
 
@@ -88,7 +88,7 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
             finished = 1;
             break;
         }   
-        aws_mutex_release(&mutex_data.mutex);
+        aws_mutex_unlock(&mutex_data.mutex);
 
     }
 
