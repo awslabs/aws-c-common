@@ -39,13 +39,14 @@ static void *thread_fn(void *arg) {
     return NULL;
 }
 
-struct aws_thread_options *aws_default_thread_options(void) {
+const struct aws_thread_options *aws_default_thread_options(void) {
     return &default_options;
 }
 
 void aws_thread_clean_up (struct aws_thread *thread) {
-    /* don't call cleanup if you haven't either joined or detached!*/
-    assert(thread->detach_state != AWS_THREAD_JOINABLE);
+    if(thread->detach_state == AWS_THREAD_JOINABLE) {
+        pthread_detach(thread->thread_id);
+    }
 }
 
 int aws_thread_init (struct aws_thread *thread, struct aws_allocator *allocator) {
@@ -56,7 +57,7 @@ int aws_thread_init (struct aws_thread *thread, struct aws_allocator *allocator)
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_create (struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
+int aws_thread_launch (struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
 
     pthread_attr_t attributes;
     pthread_attr_t *attributes_ptr = NULL;
@@ -131,12 +132,6 @@ aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
     return thread->detach_state;
 }
 
-int aws_thread_detach(struct aws_thread *thread) {
-    pthread_detach(thread->thread_id);
-    thread->detach_state = AWS_THREAD_DETACHED;
-    return AWS_OP_SUCCESS;
-}
-
 int aws_thread_join(struct aws_thread *thread) {
     if(thread->detach_state == AWS_THREAD_JOINABLE) {
         int err_no = pthread_join(thread->thread_id, 0);
@@ -152,10 +147,9 @@ int aws_thread_join(struct aws_thread *thread) {
         }
 
         thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
-        return AWS_OP_SUCCESS;
     }
 
-    return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+    return AWS_OP_SUCCESS;
 }
 
 uint64_t aws_thread_current_thread_id() {

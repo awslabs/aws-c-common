@@ -60,17 +60,17 @@ int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
     return return_code;
 }
 
-int aws_mutex_acquire(struct aws_mutex *mutex) {
+int aws_mutex_lock(struct aws_mutex *mutex) {
 
     return convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
 }
 
-int aws_mutex_try_acquire(struct aws_mutex *mutex) {
+int aws_mutex_try_lock(struct aws_mutex *mutex) {
 
     return convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
 }
 
-int aws_mutex_release(struct aws_mutex *mutex) {
+int aws_mutex_unlock(struct aws_mutex *mutex) {
 
     return convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
 }
