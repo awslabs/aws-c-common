@@ -236,3 +236,4 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
     }
     return aws_raise_error(AWS_ERROR_INVALID_INDEX);
 }
+
