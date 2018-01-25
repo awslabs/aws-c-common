@@ -42,13 +42,15 @@ if (WIN32)
 
     set(PLATFORM_LIBS "Kernel32")
 else ()
-    file(GLOB AWS_COMMON_OS_SRC
-            "source/posix/*.c"
-            )
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
+        file(GLOB AWS_COMMON_OS_SRC
+                "source/posix/*.c"
+                )
         set(PLATFORM_LIBS "pthread" "rt")
     elseif (APPLE)
+        file(GLOB AWS_COMMON_OS_SRC
+                "source/posix/*.c"
+                )
         set(PLATFORM_LIBS "pthread")
     endif ()
 endif ()
@@ -115,6 +117,13 @@ add_test(error_callback_test ${TEST_BINARY_NAME} error_callback_test)
 add_test(unknown_error_code_in_slot_test ${TEST_BINARY_NAME} unknown_error_code_in_slot_test)
 add_test(unknown_error_code_no_slot_test ${TEST_BINARY_NAME} unknown_error_code_no_slot_test)
 add_test(unknown_error_code_range_too_large_test ${TEST_BINARY_NAME} unknown_error_code_range_too_large_test)
+add_test(thread_creation_join_test ${TEST_BINARY_NAME} thread_creation_join_test)
+add_test(thread_creation_detach_test ${TEST_BINARY_NAME} thread_creation_detach_test)
+add_test(mutex_aquire_release_test ${TEST_BINARY_NAME} mutex_aquire_release_test)
+add_test(mutex_is_actually_mutex_test ${TEST_BINARY_NAME} mutex_is_actually_mutex_test)
+add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
+add_test(sys_clock_increments_test ${TEST_BINARY_NAME} sys_clock_increments_test)
+add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(

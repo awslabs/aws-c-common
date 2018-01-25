@@ -18,7 +18,7 @@ install:
 
 #execute build
 script:
-  - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction -I include --force -q --error-exitcode=-1 ./
+  - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction -I include --force --error-exitcode=-1 ./
   - mkdir build
   - cd build
   - cmake ..
