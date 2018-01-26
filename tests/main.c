@@ -19,6 +19,7 @@
 #include <mutex_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
+#include <linked_list_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -34,12 +35,6 @@ int main(int argc, char *argv[]) {
                        &mutex_is_actually_mutex_test,
                        &high_res_clock_increments_test,
                        &sys_clock_increments_test,
-                       &raise_errors_test,
-                       &reset_errors_test,
-                       &error_callback_test,
-                       &unknown_error_code_in_slot_test,
-                       &unknown_error_code_no_slot_test,
-                       &unknown_error_code_range_too_large_test,
                        &array_list_order_push_back_pop_front_test,
                        &array_list_order_push_back_pop_back_test,
                        &array_list_exponential_mem_model_test,
@@ -53,5 +48,7 @@ int main(int argc, char *argv[]) {
                        &array_list_clear_test,
                        &array_list_copy_test,
                        &array_list_not_enough_space_test,
-                       &array_list_not_enough_space_test_failure)
+                       &array_list_not_enough_space_test_failure,
+                       &linked_list_push_back_pop_front,
+                       &linked_list_push_front_pop_back)
 }
