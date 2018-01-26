@@ -46,7 +46,7 @@ extern "C" {
     /**
     * Initializes an array list with a preallocated array of void *. array_size is the total allocation size of raw_array (not the number of elements),
     * and item_size is the size in bytes of each element. Mixing items types is not supported
-    * by this API. Once this list is full, new items will be rejected.
+    * by this API. Note, array_size must be a multiple of item_size or an error will be raised. Once this list is full, new items will be rejected.
     */
     AWS_COMMON_API int aws_array_list_init_static(struct aws_array_list *list,
         void *raw_array, size_t array_size, size_t item_size);

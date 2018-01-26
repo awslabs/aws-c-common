@@ -39,11 +39,19 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
 int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t array_size, size_t item_size) {
     assert(raw_array);
     assert(array_size >= item_size);
+
+    list->alloc = NULL;
+
+    size_t size_ratio = array_size % item_size;
+    if(size_ratio != 0) {
+        assert(0);
+        return aws_raise_error(AWS_ERROR_LIST_STATIC_ILLEGAL_SIZE);
+    }
+
     list->current_size = array_size;
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
-    list->alloc = NULL;
     return AWS_OP_SUCCESS;
 }
 
