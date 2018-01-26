@@ -16,6 +16,12 @@
 #include <aws/common/common.h>
 #include <stdlib.h>
 
+/* turn off unused named parameter warning on msvc.*/
+#ifdef _MSC_VER 
+#pragma warning( push )
+#pragma warning( disable : 4100)
+#endif
+
 void *default_malloc(struct aws_allocator *allocator, size_t size) {
     return malloc(size);
 }
@@ -49,6 +55,17 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_buffer_size, AWS_ERROR_INVALID_BUFFER_SIZE, "invalid buffer size", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_hex_str, AWS_ERROR_INVALID_HEX_STR, "invalid hex string", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_index, AWS_ERROR_INVALID_INDEX, "invalid index for list access", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_invalid_settings, AWS_ERROR_THREAD_INVALID_SETTINGS, "invalid thread settings", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_insufficient_resource, AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE, "thread, insufficient resources", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_no_permissions, AWS_ERROR_THREAD_NO_PERMISSIONS, "insufficient permissions for thread operation", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_not_joinable, AWS_ERROR_THREAD_NOT_JOINABLE, "thread not join-able", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_no_such_thread_id, AWS_ERROR_THREAD_NO_SUCH_THREAD_ID, "no such thread id", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_thread_deadlock_detected, AWS_ERROR_THREAD_DEADLOCK_DETECTED, "deadlock detected", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_mutex_not_init, AWS_ERROR_MUTEX_NOT_INIT, "mutex not initialized", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_mutex_timeout, AWS_ERROR_MUTEX_TIMEOUT, "mutex operation timed out", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_mutex_caller_not_owner, AWS_ERROR_MUTEX_CALLER_NOT_OWNER, "the caller of a mutex operation was not the owner", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_mutex_failed, AWS_ERROR_MUTEX_FAILED, "mutex operation failed", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_clock_failure, AWS_ERROR_CLOCK_FAILURE, "clock get ticks operation failed", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_empty, AWS_ERROR_LIST_EMPTY, "empty list", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_dest_copy_too_small, AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, "destination of list copy is too small", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_exceeds_max_size, AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
