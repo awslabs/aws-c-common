@@ -14,8 +14,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(aws-c-common)
 
-set(PROJECT_NAME aws-c-common)
-
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         )
@@ -71,68 +69,40 @@ if (BUILD_SHARED_LIBS)
     endif ()
 endif ()
 
-add_library(${PROJECT_NAME} ${LIBTYPE} ${COMMON_HEADERS} ${COMMON_SRC})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_HEADERS} ${COMMON_SRC})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 
 #set warnings
 if (MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
 else ()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
 endif ()
 
 if (BUILD_SHARED_LIBS AND WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "-DAWS_COMMON_EXPORTS")
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DAWS_COMMON_EXPORTS")
 endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES DEBUG)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
 endif ()
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(${PROJECT_NAME} ${PLATFORM_LIBS})
-
-
-file(GLOB TEST_SRC "tests/*.c")
-file(GLOB TEST_HDRS "tests/*.h")
-file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
-
-set(TEST_BINARY_NAME ${PROJECT_NAME}-tests)
-
-add_executable(${TEST_BINARY_NAME} ${TESTS})
-target_link_libraries(${TEST_BINARY_NAME} ${PROJECT_NAME})
-set_target_properties(${TEST_BINARY_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-
-target_include_directories(${TEST_BINARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tests>)
-
-include(CTest)
-enable_testing()
-
-add_test(raise_errors_test ${TEST_BINARY_NAME} raise_errors_test)
-add_test(reset_errors_test ${TEST_BINARY_NAME} reset_errors_test)
-add_test(error_callback_test ${TEST_BINARY_NAME} error_callback_test)
-add_test(unknown_error_code_in_slot_test ${TEST_BINARY_NAME} unknown_error_code_in_slot_test)
-add_test(unknown_error_code_no_slot_test ${TEST_BINARY_NAME} unknown_error_code_no_slot_test)
-add_test(unknown_error_code_range_too_large_test ${TEST_BINARY_NAME} unknown_error_code_range_too_large_test)
-add_test(thread_creation_join_test ${TEST_BINARY_NAME} thread_creation_join_test)
-add_test(thread_creation_detach_test ${TEST_BINARY_NAME} thread_creation_detach_test)
-add_test(mutex_aquire_release_test ${TEST_BINARY_NAME} mutex_aquire_release_test)
-add_test(mutex_is_actually_mutex_test ${TEST_BINARY_NAME} mutex_is_actually_mutex_test)
-add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
-add_test(sys_clock_increments_test ${TEST_BINARY_NAME} sys_clock_increments_test)
-add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(
-        TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-config
+    TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         COMPONENT library
 )
 
-export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}-config.cmake)
-install(EXPORT ${PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/cmake/")
+export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
+install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
 
+include(CTest)
+add_subdirectory(tests)
