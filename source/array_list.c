@@ -16,6 +16,8 @@
 #include <aws/common/array_list.h>
 #include <assert.h>
 
+#define SENTINAL 0xDD
+
 int aws_array_list_init_dynamic(struct aws_array_list *list,
     struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size) {
     list->alloc = alloc;
@@ -29,26 +31,23 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
         if (!list->data) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
-        memset(list->data, 0, allocation_size);
+#ifdef DEBUG_BUILD
+        memset(list->data, SENTINAL, allocation_size);
+#endif
         list->current_size = allocation_size;
     }
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t array_size, size_t item_size) {
+int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t item_count, size_t item_size) {
     assert(raw_array);
-    assert(array_size >= item_size);
+    assert(item_count);
+    assert(item_size);
 
     list->alloc = NULL;
 
-    size_t size_ratio = array_size % item_size;
-    if(size_ratio != 0) {
-        assert(0);
-        return aws_raise_error(AWS_ERROR_LIST_STATIC_ILLEGAL_SIZE);
-    }
-
-    list->current_size = array_size;
+    list->current_size = item_count * item_size;
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
@@ -64,52 +63,17 @@ void aws_array_list_clean_up(struct aws_array_list *list) {
     list->item_size = 0;
     list->length = 0;
     list->data = NULL;
-    list->alloc = 0;
+    list->alloc = NULL;
 }
 
 int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
+    int err_code = aws_array_list_set_at(list, val, list->length);
 
-    size_t filled_space = list->length  * list->item_size;
-    if (filled_space == list->current_size) {
-        if (list->alloc) {
-            size_t new_size = list->current_size << 1;
-            if (new_size == 0) {
-                new_size = 2;
-            }
-
-            if (new_size < list->current_size) {
-                /* this means new_size overflowed. The only way this happens is on a 32-bit system
-                 * where size_t is 32 bits, in which case we're out of addressable memory anyways, or
-                 * we're on a 64 bit system and we're most certainly out of addressable memory.
-                 * But since we're simply going to fail fast and say, sorry can't do it, we'll just tell
-                 * the user they can't grow the list anymore. */
-                return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
-            }
-
-            void *temp = aws_mem_acquire(list->alloc, new_size);
-
-            if (!temp) {
-                return aws_raise_error(AWS_ERROR_OOM);
-            }
-
-            memset((uint8_t *)temp + list->length, 0, new_size - list->current_size);
-
-            if (list->data) {
-                memcpy(temp, list->data, list->current_size);
-                aws_mem_release(list->alloc, list->data);
-            }
-
-            list->data = temp;
-            list->current_size = new_size;
-        }
-        else {
-            return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
-        }
+    if(err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
+        return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 
-    memcpy((void *)((uint8_t *)list->data + filled_space), val, list->item_size);
-    list->length++;
-    return AWS_OP_SUCCESS;
+    return err_code;
 }
 
 int aws_array_list_front(const struct aws_array_list *list, void *val) {
@@ -126,7 +90,9 @@ int aws_array_list_pop_front(struct aws_array_list *list) {
     if (list->length > 0) {
         size_t last_bytes = list->item_size * (list->length - 1);
         memmove(list->data, (void *)((uint8_t *)list->data + list->item_size), last_bytes);
-        memset((void *)((uint8_t *)list->data + last_bytes), 0, list->item_size);
+#ifdef DEBUG_BUILD
+        memset((void *)((uint8_t *)list->data + last_bytes), SENTINAL, list->item_size);
+#endif
         list->length--;
         return AWS_OP_SUCCESS;
     }
@@ -159,7 +125,9 @@ int aws_array_list_pop_back(struct aws_array_list *list) {
 
 void aws_array_list_clear(struct aws_array_list *list) {
     if (list->length > 0) {
-        memset(list->data, 0, list->current_size);
+#ifdef DEBUG_BUILD
+        memset(list->data, SENTINAL, list->current_size);
+#endif
         list->length = 0;
     }
 }
@@ -232,16 +200,63 @@ int aws_array_list_get_at(const struct aws_array_list *list, void *val, size_t i
     return aws_raise_error(AWS_ERROR_INVALID_INDEX);
 }
 
-int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index) {
-    if (list->current_size > index * list->item_size) {
-        memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
+int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, size_t index) {
 
-        /* this isn't perfect but its the best I can come up with for detecting length changes*/
-        if (index >= list->length) {
-            list->length = index + 1;
-        }
+    if (list->length > index) {
+        *val = (void *)((uint8_t *)list->data + (list->item_size * index));
         return AWS_OP_SUCCESS;
     }
     return aws_raise_error(AWS_ERROR_INVALID_INDEX);
+}
+
+int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index) {
+    size_t necessary_size = index * list->item_size;
+
+    if (list->current_size <= necessary_size) {
+        if (!list->alloc) {
+            return aws_raise_error(AWS_ERROR_INVALID_INDEX);
+        }
+
+        /* this will double capacity if the index isn't bigger than what the next allocation would be,
+         * but allocates the exact requested size if it is. This is largely because we don't have a
+         * good way to predict the usage pattern to make a smart decision about it. However, if the user
+         * is doing this in an iterative fashion, necessary_size will never be used.*/
+        size_t next_allocation_size = list->current_size << 1;
+        size_t new_size = 0;
+        AWS_MAX(necessary_size, next_allocation_size, new_size);
+
+        if (new_size < list->current_size) {
+            /* this means new_size overflowed. The only way this happens is on a 32-bit system
+             * where size_t is 32 bits, in which case we're out of addressable memory anyways, or
+             * we're on a 64 bit system and we're most certainly out of addressable memory.
+             * But since we're simply going to fail fast and say, sorry can't do it, we'll just tell
+             * the user they can't grow the list anymore. */
+            return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
+        }
+
+        void *temp = aws_mem_acquire(list->alloc, new_size);
+
+        if(!temp) {
+            return aws_raise_error(AWS_ERROR_OOM);
+        }
+
+        memcpy(temp, list->data, list->current_size);
+
+#ifdef DEBUG_BUILD
+        memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
+#endif
+        aws_mem_release(list->alloc, list->data);
+        list->data = temp;
+        list->current_size = new_size;
+    }
+
+    memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
+
+    /* this isn't perfect but its the best I can come up with for detecting length changes*/
+    if (index >= list->length) {
+        list->length = index + 1;
+    }
+
+    return AWS_OP_SUCCESS;
 }
 

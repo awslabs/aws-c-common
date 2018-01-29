@@ -20,6 +20,7 @@
 #include <aws/common/error.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 struct aws_array_list {
     struct aws_allocator *alloc;
@@ -44,12 +45,12 @@ extern "C" {
         struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size);
 
     /**
-    * Initializes an array list with a preallocated array of void *. array_size is the total allocation size of raw_array (not the number of elements),
+    * Initializes an array list with a preallocated array of void *. item_count is the number of elements in the array,
     * and item_size is the size in bytes of each element. Mixing items types is not supported
-    * by this API. Note, array_size must be a multiple of item_size or an error will be raised. Once this list is full, new items will be rejected.
+    * by this API. Once this list is full, new items will be rejected.
     */
     AWS_COMMON_API int aws_array_list_init_static(struct aws_array_list *list,
-        void *raw_array, size_t array_size, size_t item_size);
+        void *raw_array, size_t item_count, size_t item_size);
 
     /**
     * Deallocates any memory that was allocated for this list, and resets list for reuse or deletion.
@@ -62,7 +63,7 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_push_back(struct aws_array_list *list, const void *val);
 
     /**
-    * Returns the element at the front of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised
+    * copies the element at the front of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised
     */
     AWS_COMMON_API int aws_array_list_front(const struct aws_array_list *list, void *val);
 
@@ -74,7 +75,7 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
 
     /**
-     * Returns the element at the end of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised.
+     * Copies the element at the end of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised.
      */
     AWS_COMMON_API int aws_array_list_back(const struct aws_array_list *list, void *val);
 
@@ -94,7 +95,8 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_shrink_to_fit(struct aws_array_list *list);
 
     /**
-     * Copies the elements from from to to. If to is in static mode, it must at least be the same length as from.
+     * Copies the elements from from to to. If to is in static mode, it must at least be the same length as from. Any data
+     * in to will be overwritten in this copy.
      */ 
     AWS_COMMON_API int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to);
 
@@ -110,12 +112,18 @@ extern "C" {
     AWS_COMMON_API size_t aws_array_list_length(const struct aws_array_list *list); 
      
     /**
-     * Copies the memory at index to val.
+     * Copies the memory at index to val. If element does not exist, AWS_ERROR_INVALID_INDEX will be raised.
      */
     AWS_COMMON_API int aws_array_list_get_at(const struct aws_array_list *list, void *val, size_t index);
 
     /**
-     * Copies the the memory pointed to by val into the array at index.
+     * Copies the memory address of the element at index to *val. If element does not exist, AWS_ERROR_INVALID_INDEX will be raised.
+     */
+    int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, size_t index);
+
+    /**
+     * Copies the the memory pointed to by val into the array at index. If in dynamic mode, the size will grow by a factor of two
+     * when the array is full. In static mode, AWS_ERROR_INVALID_INDEX will be raised if the index is past the bounds of the array.
      */
     AWS_COMMON_API int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index);
 

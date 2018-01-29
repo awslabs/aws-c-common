@@ -70,7 +70,6 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_list_dest_copy_too_small, AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, "destination of list copy is too small", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_exceeds_max_size, AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_static_mode_cant_shrink, AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK, "attempt to shrink a list in static mode", AWS_LIB_NAME),
-        AWS_DEFINE_ERROR_INFO(aws_error_list_static_illegal_size, AWS_ERROR_LIST_STATIC_ILLEGAL_SIZE, "attempt to use static list mode with an array_size that isn't a multiple of item_size", AWS_LIB_NAME),
 };
 
 static struct aws_error_info_list list = {
