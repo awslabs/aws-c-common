@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
     /**
-    * Initializes an array list with an array of void *. In this mode, the array size will grow
+    * Initializes an array list with an array of size initial_item_allocation * item_size. In this mode, the array size will grow
     * by a factor of 2 upon insertion if space is not available. initial_item_allocation is the number of elements
     * you want space allocated for. item_size is the size of each element in bytes. Mixing items types is not supported
     * by this API.
