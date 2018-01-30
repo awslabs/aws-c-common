@@ -19,6 +19,7 @@
 #include <mutex_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
+#include <encoding_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -53,5 +54,18 @@ int main(int argc, char *argv[]) {
                        &array_list_clear_test,
                        &array_list_copy_test,
                        &array_list_not_enough_space_test,
-                       &array_list_not_enough_space_test_failure)
+                       &array_list_not_enough_space_test_failure,
+                       &hex_encoding_test_case_f_test,
+                       &hex_encoding_test_case_fo_test,
+                       &hex_encoding_test_case_foo_test,
+                       &hex_encoding_test_case_foob_test,
+                       &hex_encoding_test_case_fooba_test,
+                       &hex_encoding_test_case_foobar_test,
+                       &base64_encoding_test_case_f_test,
+                       &base64_encoding_test_case_fo_test,
+                       &base64_encoding_test_case_foo_test,
+                       &base64_encoding_test_case_foob_test,
+                       &base64_encoding_test_case_fooba_test,
+                       &base64_encoding_test_case_foobar_test,
+                       &uint64_buffer_test)
 }
