@@ -55,17 +55,27 @@ int main(int argc, char *argv[]) {
                        &array_list_copy_test,
                        &array_list_not_enough_space_test,
                        &array_list_not_enough_space_test_failure,
+                       &hex_encoding_test_case_empty_test,
                        &hex_encoding_test_case_f_test,
                        &hex_encoding_test_case_fo_test,
                        &hex_encoding_test_case_foo_test,
                        &hex_encoding_test_case_foob_test,
                        &hex_encoding_test_case_fooba_test,
                        &hex_encoding_test_case_foobar_test,
+                       &hex_encoding_invalid_buffer_size_test,
+                       &base64_encoding_test_case_empty_test,
                        &base64_encoding_test_case_f_test,
                        &base64_encoding_test_case_fo_test,
                        &base64_encoding_test_case_foo_test,
                        &base64_encoding_test_case_foob_test,
                        &base64_encoding_test_case_fooba_test,
                        &base64_encoding_test_case_foobar_test,
-                       &uint64_buffer_test)
+                       &base64_encoding_invalid_buffer_size_test,
+                       &uint64_buffer_test,
+                       &uint32_buffer_test,
+                       &uint24_buffer_test,
+                       &uint16_buffer_test,
+                       &uint16_buffer_signed_positive_test,
+                       &uint16_buffer_signed_negative_test)
+
 }

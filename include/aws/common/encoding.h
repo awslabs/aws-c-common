@@ -69,7 +69,8 @@ AWS_COMMON_API uint8_t *aws_add_uint32_to_buffer(uint8_t *buffer, uint32_t value
 AWS_COMMON_API uint32_t aws_uint32_from_buffer(const uint8_t *buffer);
 
 /*Add a 24 bit unsigned integer to the buffer, ensuring network - byte order
-    * return the new position in the buffer for the next operation. */
+    * return the new position in the buffer for the next operation.
+    * Note, since this uses uint32_t for storage, the 3 least significant bytes will be used.*/
 AWS_COMMON_API uint8_t *aws_add_uint24_to_buffer(uint8_t *buffer, uint32_t value);
 
 /*

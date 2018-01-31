@@ -33,20 +33,22 @@ static const uint8_t mask = 0xff;
 
 
 int aws_hex_encode(const uint8_t *to_encode, size_t to_encode_len, char *output, size_t *output_size) {
-    if(!to_encode_len) {
-        *output_size = 0;
-        return AWS_OP_SUCCESS;
-    }
 
     size_t encoded_len = (to_encode_len << 1) + 1;
 
     if (!output) {
-        *output_size = (to_encode_len << 1) + 1;
+        *output_size = encoded_len;
         return AWS_OP_SUCCESS;
     }
 
     if (*output_size < encoded_len) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+    }
+
+    /* empty string should have output of "" */
+    if(encoded_len == 1 && *to_encode == '\0') {
+        *output_size = 1;
+        *output = '\0';
     }
 
     *output_size = 0;
@@ -112,10 +114,10 @@ static size_t calculate_base64_decoded_length(const char *input, size_t len) {
 
     size_t padding = 0;
 
-    if (input[len - 1] == '=' && input[len - 2] == '=') {//last two chars are =
+    if (input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     }
-    else if (input[len - 1] == '=') {//last char is =
+    else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
     }
 
@@ -297,7 +299,7 @@ uint32_t aws_uint24_from_buffer(const uint8_t *buffer) {
     return value;
 }
 
-uint8_t *aws_core_add_uint16_to_buffer(uint8_t *buffer, uint16_t value) {
+uint8_t *aws_add_uint16_to_buffer(uint8_t *buffer, uint16_t value) {
     buffer[0] = (uint8_t)(value >> bytes_1) & mask;
     buffer[1] = (uint8_t)(value)& mask;
 

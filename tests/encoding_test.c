@@ -50,6 +50,16 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
     return 0;
 }
 
+static int hex_encoding_test_case_empty(struct aws_allocator *alloc, void *ctx) {
+    char test_data[] = "";
+    char expected[] = "";
+
+    return run_hex_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+}
+
+AWS_TEST_CASE(hex_encoding_test_case_empty_test, hex_encoding_test_case_empty)
+
+
 static int hex_encoding_test_case_f(struct aws_allocator *alloc, void *ctx) {
     char test_data[] = "f";
     char expected[] = "66";
@@ -110,6 +120,24 @@ static int hex_encoding_test_case_foobar(struct aws_allocator *alloc, void *ctx)
 
 AWS_TEST_CASE(hex_encoding_test_case_foobar_test, hex_encoding_test_case_foobar)
 
+static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    char test_data[] = "foobar";
+    size_t size_too_small = 2;
+    char  output_buff[] = {0, 0};
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_hex_encode((const uint8_t *)test_data, sizeof(test_data),
+                                                               output_buff, &size_too_small),
+        "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_hex_decode(test_data, sizeof(test_data),
+                                                               test_data, &size_too_small),
+                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+    return 0;
+}
+
+AWS_TEST_CASE(hex_encoding_invalid_buffer_size_test, hex_encoding_invalid_buffer_size_test_fn)
+
 /*base64 encoding test cases */
 static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char *test_str, size_t test_str_size,
                                       const char *expected, size_t expected_size) {
@@ -141,6 +169,16 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
     aws_mem_release(alloc, (void *)output_str);
     return 0;
 }
+
+static int base64_encoding_test_case_empty(struct aws_allocator *alloc, void *ctx) {
+    char test_data[] = "";
+    char expected[] = "";
+
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+}
+
+AWS_TEST_CASE(base64_encoding_test_case_empty_test, base64_encoding_test_case_empty)
+
 
 static int base64_encoding_test_case_f(struct aws_allocator *alloc, void *ctx) {
     char test_data[] = "f";
@@ -202,6 +240,24 @@ static int base64_encoding_test_case_foobar(struct aws_allocator *alloc, void *c
 
 AWS_TEST_CASE(base64_encoding_test_case_foobar_test, base64_encoding_test_case_foobar)
 
+static int base64_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    char test_data[] = "foobar";
+    size_t size_too_small = 2;
+    char  output_buff[] = {0, 0};
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_base64_encode((const uint8_t *)test_data, sizeof(test_data),
+                                                                  output_buff, &size_too_small),
+                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_base64_decode(test_data, sizeof(test_data),
+                                                                  test_data, &size_too_small),
+                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+    return 0;
+}
+
+AWS_TEST_CASE(base64_encoding_invalid_buffer_size_test, base64_encoding_invalid_buffer_size_test_fn)
+
 static int uint64_buffer_test_fn(struct aws_allocator *alloc, void *ctx) {
 
     uint64_t test_value = 0x1020304050607080;
@@ -219,3 +275,94 @@ static int uint64_buffer_test_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(uint64_buffer_test, uint64_buffer_test_fn)
+
+static int uint32_buffer_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    uint32_t test_value = 0x10203040;
+    uint8_t buffer[4] = { 0 };
+    uint8_t *new_ptr = aws_add_uint32_to_buffer(buffer, test_value);
+
+    uint8_t expected[] = { 0x10, 0x20, 0x30, 0x40 };
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint32_t to buffer failed");
+    ASSERT_INT_EQUALS(buffer + sizeof(uint32_t), new_ptr, "Buffer offset was incorrect");
+
+    uint32_t unmarshalled_value = aws_uint32_from_buffer(buffer);
+    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+
+    return 0;
+}
+
+AWS_TEST_CASE(uint32_buffer_test, uint32_buffer_test_fn)
+
+static int uint24_buffer_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    uint32_t test_value = 0x102030;
+    uint8_t buffer[3] = { 0 };
+    uint8_t *new_ptr = aws_add_uint24_to_buffer(buffer, test_value);
+
+    uint8_t expected[] = { 0x10, 0x20, 0x30 };
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "24 bit int to buffer failed");
+    ASSERT_INT_EQUALS(buffer + 3, new_ptr, "Buffer offset was incorrect");
+
+    uint32_t unmarshalled_value = aws_uint24_from_buffer(buffer);
+    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+
+    return 0;
+}
+
+AWS_TEST_CASE(uint24_buffer_test, uint24_buffer_test_fn)
+
+static int uint16_buffer_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    uint16_t test_value = 0x1020;
+    uint8_t buffer[2] = { 0 };
+    uint8_t *new_ptr = aws_add_uint16_to_buffer(buffer, test_value);
+
+    uint8_t expected[] = { 0x10, 0x20 };
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERT_INT_EQUALS(buffer + sizeof(uint16_t), new_ptr, "Buffer offset was incorrect");
+
+    uint16_t unmarshalled_value = aws_uint16_from_buffer(buffer);
+    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+
+    return 0;
+}
+
+AWS_TEST_CASE(uint16_buffer_test, uint16_buffer_test_fn)
+
+/* sanity check that signed/unsigned work the same */
+static int uint16_buffer_signed_positive_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    int16_t test_value = 0x4030;
+    uint8_t buffer[2] = { 0 };
+    uint8_t *new_ptr = aws_add_uint16_to_buffer(buffer, (uint16_t)test_value);
+
+    uint8_t expected[] = { 0x40, 0x30 };
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERT_INT_EQUALS(buffer + sizeof(uint16_t), new_ptr, "Buffer offset was incorrect");
+
+    int16_t unmarshalled_value = (int16_t)aws_uint16_from_buffer(buffer);
+    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+
+    return 0;
+}
+
+AWS_TEST_CASE(uint16_buffer_signed_positive_test, uint16_buffer_signed_positive_test_fn)
+
+static int uint16_buffer_signed_negative_test_fn(struct aws_allocator *alloc, void *ctx) {
+
+    int16_t test_value = -2;
+    uint8_t buffer[2] = { 0 };
+    uint8_t *new_ptr = aws_add_uint16_to_buffer(buffer, (uint16_t)test_value);
+
+    uint8_t expected[] = { 0xFF, 0xFE };
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERT_INT_EQUALS(buffer + sizeof(uint16_t), new_ptr, "Buffer offset was incorrect");
+
+    int16_t unmarshalled_value = (int16_t)aws_uint16_from_buffer(buffer);
+    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+
+    return 0;
+}
+
+AWS_TEST_CASE(uint16_buffer_signed_negative_test, uint16_buffer_signed_negative_test_fn)
