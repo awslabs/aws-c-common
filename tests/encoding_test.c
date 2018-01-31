@@ -131,7 +131,7 @@ static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloc,
         "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
 
     ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_hex_decode(test_data, sizeof(test_data),
-                                                               test_data, &size_too_small),
+                                                               (uint8_t *)output_buff, &size_too_small),
                  "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
     return 0;
 }
@@ -251,7 +251,7 @@ static int base64_encoding_invalid_buffer_size_test_fn(struct aws_allocator *all
                  "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
 
     ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_base64_decode(test_data, sizeof(test_data),
-                                                                  test_data, &size_too_small),
+                                                                   (uint8_t *)output_buff, &size_too_small),
                  "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
     return 0;
 }
