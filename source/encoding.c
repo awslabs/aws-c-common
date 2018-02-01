@@ -49,12 +49,6 @@ int aws_hex_encode(const uint8_t *to_encode, size_t to_encode_len, char *output,
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
-    /* empty string should have output of "" */
-    if(encoded_len == 1 && *to_encode == '\0') {
-        *output_size = 1;
-        *output = '\0';
-    }
-
     size_t written = 0;
     for (size_t i = 0; i < to_encode_len; ++i) {
 
