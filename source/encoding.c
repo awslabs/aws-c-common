@@ -36,6 +36,10 @@ int aws_hex_encode(const uint8_t *to_encode, size_t to_encode_len, char *output,
 
     size_t encoded_len = (to_encode_len << 1) + 1;
 
+    if(encoded_len <= to_encode_len) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+
     if (!output) {
         *output_size = encoded_len;
         return AWS_OP_SUCCESS;
@@ -51,15 +55,15 @@ int aws_hex_encode(const uint8_t *to_encode, size_t to_encode_len, char *output,
         *output = '\0';
     }
 
-    *output_size = 0;
-
+    size_t written = 0;
     for (size_t i = 0; i < to_encode_len; ++i) {
 
-        output[(*output_size)++] = hex_chars[to_encode[i] >> 4 & 0x0f];
-        output[(*output_size)++] = hex_chars[to_encode[i] & 0x0f];
+        output[written++] = hex_chars[to_encode[i] >> 4 & 0x0f];
+        output[written++] = hex_chars[to_encode[i] & 0x0f];
     }
 
-    output[(*output_size)++] = '\0';
+    output[written++] = '\0';
+    *output_size = written;
 
     return AWS_OP_SUCCESS;
 }
@@ -88,21 +92,23 @@ int aws_hex_decode(const char *to_decode, size_t to_decode_len, uint8_t *output,
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
-    *output_size = 0;
+    size_t written = 0;
 
     size_t i = 0;
 
     //if the buffer isn't even, prepend a 0 to the buffer.
     if (to_decode_len & 0x01) {
         i = 1;
-        output[(*output_size)++] = char_to_int(to_decode[i]);
+        output[written++] = char_to_int(to_decode[i]);
     }
 
     for (; i < to_decode_len; i += 2) {
         uint8_t value = char_to_int(to_decode[i]) << 4;
         value |= char_to_int(to_decode[i + 1]);
-        output[(*output_size)++] = value;
+        output[written++] = value;
     }
+
+    *output_size = written;
 
     return AWS_OP_SUCCESS;
 }
@@ -114,7 +120,7 @@ static size_t calculate_base64_decoded_length(const char *input, size_t len) {
 
     size_t padding = 0;
 
-    if (input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
+    if (len >= 2 && input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     }
     else if (input[len - 1] == '=') { /*last char is = */

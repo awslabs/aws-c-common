@@ -52,6 +52,7 @@ static int8_t error_strings_loaded = 0;
 static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_success, AWS_ERROR_SUCCESS, "success", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_oom, AWS_ERROR_OOM, "out-of-memory", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_overflow, AWS_ERROR_OVERFLOW_DETECTED, "fixed size value overflow was detected", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_buffer_size, AWS_ERROR_INVALID_BUFFER_SIZE, "invalid buffer size", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_hex_str, AWS_ERROR_INVALID_HEX_STR, "invalid hex string", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_index, AWS_ERROR_INVALID_INDEX, "invalid index for list access", AWS_LIB_NAME),

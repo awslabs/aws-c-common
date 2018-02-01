@@ -87,6 +87,7 @@ AWS_COMMON_API void aws_load_error_strings(void);
 typedef enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
+    AWS_ERROR_OVERFLOW_DETECTED,
     AWS_ERROR_INVALID_BUFFER_SIZE,
     AWS_ERROR_INVALID_HEX_STR,
     AWS_ERROR_INVALID_INDEX,
