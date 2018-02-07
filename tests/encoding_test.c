@@ -23,7 +23,8 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
                                       const char *expected, size_t expected_size) {
     size_t output_size = 0;
 
-    output_size = aws_compute_hex_encoded_len(test_str_size - 1);
+    ASSERT_SUCCESS(aws_compute_hex_encoded_len(test_str_size - 1, &output_size),
+                   "compute hex encoded len failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
     char *allocation = (char *)aws_mem_acquire(alloc, output_size + 2);
@@ -36,7 +37,8 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
     ASSERT_INT_EQUALS(*allocation, (char)0xdd, "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(*(allocation + output_size + 1), (char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    output_size = aws_compute_hex_decoded_len(expected_size - 1);
+    ASSERT_SUCCESS(aws_compute_hex_decoded_len(expected_size - 1, &output_size),
+                   "compute hex decoded len failed with error %d", aws_last_error());
     memset(allocation, 0xdd, output_size + 2);
 
     ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
