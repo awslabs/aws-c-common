@@ -55,6 +55,7 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_overflow, AWS_ERROR_OVERFLOW_DETECTED, "fixed size value overflow was detected", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_buffer_size, AWS_ERROR_INVALID_BUFFER_SIZE, "invalid buffer size", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_hex_str, AWS_ERROR_INVALID_HEX_STR, "invalid hex string", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_invalid_base64_str, AWS_ERROR_INVALID_BASE64_STR, "invalid base64 string", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_invalid_index, AWS_ERROR_INVALID_INDEX, "invalid index for list access", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_thread_invalid_settings, AWS_ERROR_THREAD_INVALID_SETTINGS, "invalid thread settings", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_thread_insufficient_resource, AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE, "thread, insufficient resources", AWS_LIB_NAME),

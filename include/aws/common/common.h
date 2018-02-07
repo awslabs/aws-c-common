@@ -61,10 +61,14 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #if defined(_MSC_VER )
 #define AWS_ALIGN(alignment) __declspec(align(alignment))
 #define AWS_TYPE_OF(a) __decltype(a)
+#define AWS_LIKELY(x) x
+#define AWS_UNLIKELY(x) x
 #else
 #if defined(__GNUC__) || defined(__clang__)
 #define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
 #define AWS_TYPE_OF(a) __typeof__(a)
+#define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #endif
 #endif
 
@@ -90,6 +94,7 @@ typedef enum aws_common_error {
     AWS_ERROR_OVERFLOW_DETECTED,
     AWS_ERROR_INVALID_BUFFER_SIZE,
     AWS_ERROR_INVALID_HEX_STR,
+    AWS_ERROR_INVALID_BASE64_STR,
     AWS_ERROR_INVALID_INDEX,
     AWS_ERROR_THREAD_INVALID_SETTINGS,
     AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE,
