@@ -95,6 +95,8 @@ static int total_failures;
 #define ASSERT_NOT_NULL(ptr, format, ...) do { if(!ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_INT_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
     if (a != b) { FAIL("Expected:%lld got:%lld - " message, a, b, ## __VA_ARGS__); } } while(0)
+#define ASSERT_PTR_EQUALS(expected, got, message, ...) do { void *a = (void *) (expected); void *b = (void *) (got); \
+    if (a != b) { FAIL("Expected:%lld got:%lld - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_STR_EQUALS(expected, got, message, ...) do { if (strcmp(expected, got)) { FAIL("Expected:%x got:%x - " message, expected, got, ## __VA_ARGS__); } } while(0)
 #define ASSERT_BYTE_HEX_EQUALS(expected, got, message, ...) do { uint8_t a = (uint8_t) (expected); uint8_t b = (uint8_t) (got); \
     if (a != b) { FAIL("Expected:%x got:%x - " message, a, b, ## __VA_ARGS__); } } while(0)
@@ -168,16 +170,19 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     }                                                                                                                  \
                                                                                                                        \
     size_t test_count = sizeof(tests) / sizeof(struct aws_test_harness*);                                              \
-                                                                                                                       \
-    for(size_t i = 0; i < test_count; ++i) {                                                                           \
-        if(test_name) {                                                                                                \
-            if(!strcmp(test_name, tests[i]->test_name)) return aws_run_test_case(tests[i]);                            \
+    if(test_name) {                                                                                                    \
+        for(size_t i = 0; i < test_count; ++i) {                                                                       \
+            if(!strcmp(test_name, tests[i]->test_name)) {                                                              \
+                return aws_run_test_case(tests[i]);                                                                    \
+            }                                                                                                          \
         }                                                                                                              \
-        else {                                                                                                         \
+        return -1;                                                                                                     \
+    }                                                                                                                  \
+    else {                                                                                                             \
+        for(size_t i = 0; i < test_count; ++i) {                                                                       \
             ret_val |= aws_run_test_case(tests[i]);                                                                    \
         }                                                                                                              \
     }                                                                                                                  \
-                                                                                                                       \
     return ret_val;                                                                                                    \
 
 #endif /* AWS_TEST_HARNESS_H _*/
