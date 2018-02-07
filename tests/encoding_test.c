@@ -180,7 +180,7 @@ static int hex_encoding_invalid_string_test_fn(struct aws_allocator *alloc, void
     char bad_input[] = "666f6f6x6172";
     uint8_t output[sizeof(bad_input)] = { 0 };
 
-    ASSERT_ERROR(AWS_ERROR_INVALID_HEX_STR, aws_hex_decode((const uint8_t *)bad_input, sizeof(bad_input) - 1,
+    ASSERT_ERROR(AWS_ERROR_INVALID_HEX_STR, aws_hex_decode((const char *)bad_input, sizeof(bad_input) - 1,
                                                            output, sizeof(output)),
                  "An invalid string should have failed with AWS_ERROR_INVALID_HEX_STR");
 
