@@ -22,6 +22,7 @@
 #include <encoding_test.c>
 #include <linked_list_test.c>
 #include <priority_queue_test.c>
+#include <task_scheduler_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -90,5 +91,9 @@ int main(int argc, char *argv[]) {
                        &uint16_buffer_test,
                        &uint16_buffer_non_aligned_test,
                        &uint16_buffer_signed_positive_test,
-                       &uint16_buffer_signed_negative_test);
+                       &uint16_buffer_signed_negative_test,
+                       &scheduler_rejects_xthread_access_test,
+                       &scheduler_pops_task_late_test,
+                       &scheduler_task_timestamp_test,
+                       &scheduler_ordering_test);
 }

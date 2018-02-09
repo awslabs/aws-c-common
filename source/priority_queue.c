@@ -120,6 +120,9 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
 }
 
 int aws_priority_queue_top(struct aws_priority_queue *queue, void **item) {
+    if(0 == aws_array_list_length(&queue->container)) {
+        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
+    }
     return aws_array_list_get_at_ptr(&queue->container, item, 0);
 }
 
