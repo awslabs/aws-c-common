@@ -41,6 +41,10 @@ add_test(array_list_clear_test ${TEST_BINARY_NAME} array_list_clear_test)
 add_test(array_list_copy_test ${TEST_BINARY_NAME} array_list_copy_test)
 add_test(array_list_not_enough_space_test ${TEST_BINARY_NAME} array_list_not_enough_space_test)
 add_test(array_list_not_enough_space_test_failure ${TEST_BINARY_NAME} array_list_not_enough_space_test_failure)
+add_test(priority_queue_push_pop_order_test ${TEST_BINARY_NAME} priority_queue_push_pop_order_test)
+add_test(priority_queue_random_values_test ${TEST_BINARY_NAME} priority_queue_random_values_test)
+add_test(priority_queue_size_and_capacity_test ${TEST_BINARY_NAME} priority_queue_size_and_capacity_test)
 
 add_test(linked_list_push_back_pop_front ${TEST_BINARY_NAME} linked_list_push_back_pop_front)
 add_test(linked_list_push_front_pop_back ${TEST_BINARY_NAME} linked_list_push_front_pop_back)
+

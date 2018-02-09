@@ -75,7 +75,7 @@ static void cunit_failure_message(const char *function, const char *file, int li
     snprintf(buffer2, sizeof(buffer2), " [%s():%s@#%d]", function, file, line);
     buffer2[sizeof(buffer2) - 1] = 0;
 
-    printf("%s%s\n", buffer1, buffer2);
+    fprintf(stderr, "%s%s\n", buffer1, buffer2);
 }
 
 static int total_failures;

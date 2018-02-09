@@ -20,6 +20,7 @@
 #include <clock_test.c>
 #include <array_list_test.c>
 #include <linked_list_test.c>
+#include <priority_queue_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -50,5 +51,8 @@ int main(int argc, char *argv[]) {
                        &array_list_not_enough_space_test,
                        &array_list_not_enough_space_test_failure,
                        &linked_list_push_back_pop_front,
-                       &linked_list_push_front_pop_back)
+                       &linked_list_push_front_pop_back,
+                       &priority_queue_push_pop_order_test,
+                       &priority_queue_size_and_capacity_test,
+                       &priority_queue_random_values_test);
 }

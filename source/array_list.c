@@ -184,8 +184,9 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
     return aws_raise_error(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL);
 }
 
-size_t aws_array_list_size(const struct aws_array_list *list) {
-    return list->current_size;
+size_t aws_array_list_capacity(const struct aws_array_list *list) {
+    assert(list->item_size);
+    return list->current_size / list->item_size;
 }
 
 size_t aws_array_list_length(const struct aws_array_list *list) {
@@ -258,5 +259,38 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
     }
 
     return AWS_OP_SUCCESS;
+}
+
+void aws_array_list_mem_swap(void * restrict item1, void * restrict item2, size_t item_size) {
+    enum { SLICE = 128 };
+
+    /* copy SLICE sized bytes at a time */
+    size_t slice_count = item_size / SLICE;
+    uint8_t temp[SLICE];
+    for(size_t i = 0; i < slice_count; i++) {
+        memcpy((void *)temp, (void *)item1, SLICE);
+        memcpy((void *)item1, (void *)item2, SLICE);
+        memcpy((void *)item2, (void *)temp, SLICE);
+        item1 = (uint8_t*)item1 + SLICE;
+        item2 = (uint8_t*)item2 + SLICE;
+    }
+
+    size_t remainder = item_size & (SLICE - 1); /* item_size % SLICE */
+    memcpy((void *)temp, (void *)item1, remainder);
+    memcpy((void *)item1, (void *)item2, remainder);
+    memcpy((void *)item2, (void *)temp, remainder);
+}
+
+void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
+    assert(a < list->length);
+    assert(b < list->length);
+    if(a == b) {
+        return;
+    }
+
+    void *item1, *item2;
+    aws_array_list_get_at_ptr(list, &item1, a);
+    aws_array_list_get_at_ptr(list, &item2, b);
+    aws_array_list_mem_swap(item1, item2, list->item_size);
 }
 
