@@ -63,24 +63,24 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_push_back(struct aws_array_list *list, const void *val);
 
     /**
-    * copies the element at the front of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised
+    * Copies the element at the front of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised
     */
     AWS_COMMON_API int aws_array_list_front(const struct aws_array_list *list, void *val);
 
     /**
-    * Deletes the element at the front of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised.
+    * Deletes the element at the front of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
     * This call results in shifting all of the elements at the end of the array to the front. Avoid this call unless that is intended
     * behavior.
     */
     AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
 
     /**
-     * Copies the element at the end of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised.
+     * Copies the element at the end of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
      */
     AWS_COMMON_API int aws_array_list_back(const struct aws_array_list *list, void *val);
 
     /**
-    * Deletes the element at the end of the list if it exists. If list is empty, AWS_CORE_LIST_ERROR_EMPTY will be raised.
+    * Deletes the element at the end of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
     */
     AWS_COMMON_API int aws_array_list_pop_back(struct aws_array_list *list);
 
@@ -101,10 +101,10 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to);
 
     /**
-     * Returns the current allocated size of the internal array. If list is initialized in dynamic mode, this size changes
-     * over time.
+     * Returns the number of elements that can fit in the internal array. If list is initialized in dynamic mode,
+     * the capacity changes over time.
      */
-    AWS_COMMON_API size_t aws_array_list_size(const struct aws_array_list *list);
+    AWS_COMMON_API size_t aws_array_list_capacity(const struct aws_array_list *list);
 
     /**
      * Returns the number of elements in the internal array.
@@ -126,6 +126,11 @@ extern "C" {
      * when the array is full. In static mode, AWS_ERROR_INVALID_INDEX will be raised if the index is past the bounds of the array.
      */
     AWS_COMMON_API int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index);
+
+    /**
+     * Swap elements at the specified indices.
+     */
+    void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
 
 #ifdef __cplusplus
 }
