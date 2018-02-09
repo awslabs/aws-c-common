@@ -34,7 +34,7 @@ extern "C" {
  * computes the length necessary to store the result of aws_hex_encode(). returns -1 on failure, and 0 on success.
  * encoded_length will be set on success.
  */
-AWS_COMMON_API int aws_compute_hex_encoded_len(size_t to_encode_len, size_t *encoded_length);
+AWS_COMMON_API int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length);
 
 /*
  * Base 16 (hex) encodes the contents of to_encode and stores the result in output.
@@ -46,7 +46,7 @@ AWS_COMMON_API int aws_hex_encode(const uint8_t *restrict to_encode, size_t to_e
  * computes the length necessary to store the result of aws_hex_decode(). returns -1 on failure, and 0 on success.
  * decoded_len will be set on success.
  */
-AWS_COMMON_API int aws_compute_hex_decoded_len(size_t to_decode_len, size_t *decoded_len);
+AWS_COMMON_API int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len);
 
 /*
  * Base 16 (hex) decodes the contents of to_decode and stores the result in output.
@@ -58,7 +58,7 @@ AWS_COMMON_API int aws_hex_decode(const char *restrict to_decode, size_t to_deco
  * Computes the length necessary to store the output of aws_base64_encode call. returns -1 on failure, and 0 on success.
  * encoded_length will be set on success.
  */
-AWS_COMMON_API int aws_compute_base64_encoded_len(size_t to_encode_len, size_t *encoded_len);
+AWS_COMMON_API int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len);
 
 /*
  * Base 64 encodes the contents of to_encode and stores the result in output.
@@ -70,7 +70,8 @@ AWS_COMMON_API int aws_base64_encode(const uint8_t *restrict to_encode, size_t t
  * Computes the length necessary to store the output of aws_base64_decode call. returns -1 on failure, and 0 on success.
  * decoded_len will be set on success.
  */
-AWS_COMMON_API int aws_compute_base64_decoded_len(const char *input, size_t len, size_t *decoded_len);
+AWS_COMMON_API int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len);
+
 /*
  * Base 64 decodes the contents of to_decode and stores the result in output.
  * If output is NULL, output_size will be set to what the output_size should be.

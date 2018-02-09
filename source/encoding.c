@@ -22,16 +22,27 @@ static const char *hex_chars = "0123456789abcdef";
 static const uint8_t base64_sentinal_value = 0xff;
 static const char base64_encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static uint8_t base64_decoding_table[256] = { 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-            61, 0, 0, 0, 255, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-            23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-            46, 47, 48, 49, 50, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+/* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
+ * per row. */
+static uint8_t base64_decoding_table[256] = {
+            64, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 62, 0xDD, 0xDD, 0xDD, 63,
+            52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0xDD, 0xDD, 0xDD, 255, 0xDD, 0xDD,
+            0xDD, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+            15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+            41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+            0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD };
 
-int aws_compute_hex_encoded_len(size_t to_encode_len, size_t *encoded_length) {
+int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     assert(encoded_length);
 
     size_t temp = (to_encode_len << 1) + 1;
@@ -51,7 +62,7 @@ int aws_hex_encode(const uint8_t *restrict to_encode, size_t to_encode_len, char
 
     size_t encoded_len = 0;
 
-    if (AWS_UNLIKELY(aws_compute_hex_encoded_len(to_encode_len, &encoded_len))) {
+    if (AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode_len, &encoded_len))) {
         return AWS_OP_ERR;
     }
 
@@ -90,7 +101,7 @@ static int hex_decode_char_to_int(char character, uint8_t *int_val) {
     return AWS_OP_ERR;
 }
 
-int aws_compute_hex_decoded_len(size_t to_decode_len, size_t *decoded_len) {
+int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     assert(decoded_len);
 
     size_t temp = (to_decode_len + 1);
@@ -109,7 +120,7 @@ int aws_hex_decode(const char *restrict to_decode, size_t to_decode_len, uint8_t
 
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_compute_hex_decoded_len(to_decode_len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode_len, &decoded_length))) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
@@ -145,7 +156,7 @@ int aws_hex_decode(const char *restrict to_decode, size_t to_decode_len, uint8_t
     return AWS_OP_SUCCESS;
 }
 
-int aws_compute_base64_encoded_len(size_t to_encode_len, size_t *encoded_len) {
+int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     assert(encoded_len);
 
     size_t tmp = to_encode_len + 2;
@@ -168,7 +179,7 @@ int aws_compute_base64_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 }
 
 
-int aws_compute_base64_decoded_len(const char *input, size_t len, size_t *decoded_len) {
+int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len) {
     assert(input);
     assert(decoded_len);
 
@@ -205,7 +216,7 @@ int aws_base64_encode(const uint8_t *restrict to_encode, size_t to_encode_len, c
     assert(output);
 
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(aws_compute_base64_encoded_len(to_encode_len, &encoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode_len, &encoded_length))) {
         return AWS_OP_ERR;
     }
 
@@ -256,8 +267,9 @@ int aws_base64_encode(const uint8_t *restrict to_encode, size_t to_encode_len, c
 }
 
 static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_t allow_sentinal) {
-    if (isalnum(to_decode) || to_decode == '/' || to_decode == '+' || (allow_sentinal && to_decode == '=')) {
-        *value = base64_decoding_table[(size_t)to_decode];
+    uint8_t decode_value = base64_decoding_table[(size_t)to_decode];
+    if (decode_value != 0xDD && (decode_value != base64_sentinal_value || allow_sentinal)) {
+        *value = decode_value;
         return AWS_OP_SUCCESS;
     }
 
@@ -267,7 +279,7 @@ static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_
 int aws_base64_decode(const char *restrict to_decode, size_t to_decode_len, uint8_t *restrict output, size_t output_size) {
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_compute_base64_decoded_len(to_decode, to_decode_len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, to_decode_len, &decoded_length))) {
         return AWS_OP_ERR;
     }
 

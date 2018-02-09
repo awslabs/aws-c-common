@@ -69,6 +69,8 @@ add_test(base64_encoding_buffer_size_overflow_test ${TEST_BINARY_NAME} base64_en
 add_test(base64_encoding_buffer_size_invalid_test ${TEST_BINARY_NAME} base64_encoding_buffer_size_invalid_test)
 add_test(base64_encoding_invalid_buffer_test ${TEST_BINARY_NAME} base64_encoding_invalid_buffer_test)
 add_test(base64_encoding_invalid_padding_test ${TEST_BINARY_NAME} base64_encoding_invalid_padding_test)
+add_test(base64_encoding_test_zeros ${TEST_BINARY_NAME} base64_encoding_test_zeros)
+add_test(base64_encoding_test_all_values ${TEST_BINARY_NAME} base64_encoding_test_all_values)
 add_test(uint64_buffer_test ${TEST_BINARY_NAME} uint64_buffer_test)
 add_test(uint64_buffer_non_aligned_test ${TEST_BINARY_NAME} uint64_buffer_non_aligned_test)
 add_test(uint32_buffer_test ${TEST_BINARY_NAME} uint32_buffer_test)

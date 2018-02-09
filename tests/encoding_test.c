@@ -23,7 +23,7 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
                                       const char *expected, size_t expected_size) {
     size_t output_size = 0;
 
-    ASSERT_SUCCESS(aws_compute_hex_encoded_len(test_str_size - 1, &output_size),
+    ASSERT_SUCCESS(aws_hex_compute_encoded_len(test_str_size - 1, &output_size),
                    "compute hex encoded len failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
@@ -37,7 +37,7 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
     ASSERT_INT_EQUALS(*allocation, (char)0xdd, "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(*(allocation + output_size + 1), (char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    ASSERT_SUCCESS(aws_compute_hex_decoded_len(expected_size - 1, &output_size),
+    ASSERT_SUCCESS(aws_hex_compute_decoded_len(expected_size - 1, &output_size),
                    "compute hex decoded len failed with error %d", aws_last_error());
     memset(allocation, 0xdd, output_size + 2);
 
@@ -194,7 +194,7 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
                                       const char *expected, size_t expected_size) {
     size_t output_size = 0;
 
-    ASSERT_SUCCESS(aws_compute_base64_encoded_len(test_str_size - 1, &output_size),
+    ASSERT_SUCCESS(aws_base64_compute_encoded_len(test_str_size, &output_size),
                    "Compute base64 encoded length failed with %d", aws_last_error());
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
@@ -202,21 +202,21 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
     memset(allocation, 0xdd, output_size + 2);
     char *output_str = allocation + 1;
 
-    ASSERT_SUCCESS(aws_base64_encode((uint8_t *)test_str, test_str_size - 1, output_str, output_size), "encode call should have succeeded");
+    ASSERT_SUCCESS(aws_base64_encode((uint8_t *)test_str, test_str_size, output_str, output_size), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output_str, output_size, "Encode output should have been %s.", expected);
     ASSERT_INT_EQUALS(*allocation, (char)0xdd, "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(*(allocation + output_size + 1), (char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    ASSERT_SUCCESS(aws_compute_base64_decoded_len(expected, expected_size - 1, &output_size),
+    ASSERT_SUCCESS(aws_base64_compute_decoded_len(expected, expected_size - 1, &output_size),
                   "Compute base64 decoded length failed with %d", aws_last_error());
-    ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
+    ASSERT_INT_EQUALS(test_str_size, output_size, "Output size on string should be %d", test_str_size);
 
     memset(allocation, 0xdd, output_size + 2);
 
     ASSERT_SUCCESS(aws_base64_decode(expected, expected_size - 1, (uint8_t *)output_str, output_size), "decode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size - 1, output_str, output_size, "Decode output should have been %s.", test_str);
+    ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size, output_str, output_size, "Decode output should have been %s.", test_str);
     ASSERT_INT_EQUALS(*allocation, (char)0xdd, "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(*(allocation + output_size + 1), (char)0xdd, "Write should not have occurred after the start of the buffer.");
 
@@ -228,7 +228,7 @@ static int base64_encoding_test_case_empty(struct aws_allocator *alloc, void *ct
     char test_data[] = "";
     char expected[] = "";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_empty_test, base64_encoding_test_case_empty)
@@ -238,7 +238,7 @@ static int base64_encoding_test_case_f(struct aws_allocator *alloc, void *ctx) {
     char test_data[] = "f";
     char expected[] = "Zg==";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_f_test, base64_encoding_test_case_f)
@@ -247,7 +247,7 @@ static int base64_encoding_test_case_fo(struct aws_allocator *alloc, void *ctx) 
     char test_data[] = "fo";
     char expected[] = "Zm8=";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_fo_test, base64_encoding_test_case_fo)
@@ -257,7 +257,7 @@ static int base64_encoding_test_case_foo(struct aws_allocator *alloc, void *ctx)
     char test_data[] = "foo";
     char expected[] = "Zm9v";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foo_test, base64_encoding_test_case_foo)
@@ -268,7 +268,7 @@ static int base64_encoding_test_case_foob(struct aws_allocator *alloc, void *ctx
     char test_data[] = "foob";
     char expected[] = "Zm9vYg==";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foob_test, base64_encoding_test_case_foob)
@@ -279,7 +279,7 @@ static int base64_encoding_test_case_fooba(struct aws_allocator *alloc, void *ct
     char test_data[] = "fooba";
     char expected[] = "Zm9vYmE=";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_fooba_test, base64_encoding_test_case_fooba)
@@ -289,10 +289,42 @@ static int base64_encoding_test_case_foobar(struct aws_allocator *alloc, void *c
     char test_data[] = "foobar";
     char expected[] = "Zm9vYmFy";
 
-    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data), expected, sizeof(expected));
+    return run_base64_encoding_test_case(alloc, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foobar_test, base64_encoding_test_case_foobar)
+
+static int base64_encoding_test_zeros_fn(struct aws_allocator *alloc, void *ctx) {
+
+    uint8_t test_data[6] = {0};
+    char expected[] = "AAAAAAAA";
+
+    return run_base64_encoding_test_case(alloc, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
+}
+
+AWS_TEST_CASE(base64_encoding_test_zeros, base64_encoding_test_zeros_fn)
+
+/* this test is here because I manually touched the decoding table with sentinal values for efficiency reasons
+ * and I want to make sure it matches the encoded string. This checks that none of those values that were previously 0 which
+ * I moved to a sentinal value of 0xDD, were actually supposed to be a 0 other than character value of 65 -> "A" -> 0.
+ */
+static int base64_encoding_test_all_values_fn(struct aws_allocator *alloc, void *ctx) {
+
+    uint8_t test_data[255] = {0};
+
+    for(uint8_t i = 0; i < sizeof(test_data); ++i) {
+        test_data[i] = i;
+    }
+
+    char expected[] =    "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERU"
+                         "ZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM"
+                         "jY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0t"
+                         "PU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+";
+
+    return run_base64_encoding_test_case(alloc, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
+}
+
+AWS_TEST_CASE(base64_encoding_test_all_values, base64_encoding_test_all_values_fn)
 
 static int base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *alloc, void *ctx) {
 

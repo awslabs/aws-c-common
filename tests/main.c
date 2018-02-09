@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
                        &base64_encoding_test_case_foob_test,
                        &base64_encoding_test_case_fooba_test,
                        &base64_encoding_test_case_foobar_test,
+                       &base64_encoding_test_zeros,
+                       &base64_encoding_test_all_values,
                        &base64_encoding_buffer_size_too_small_test,
                        &base64_encoding_buffer_size_overflow_test,
                        &base64_encoding_buffer_size_invalid_test,
