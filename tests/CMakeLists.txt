@@ -90,3 +90,8 @@ add_test(uint16_buffer_non_aligned_test ${TEST_BINARY_NAME} uint16_buffer_non_al
 add_test(uint16_buffer_signed_positive_test ${TEST_BINARY_NAME} uint16_buffer_signed_positive_test)
 add_test(uint16_buffer_signed_negative_test ${TEST_BINARY_NAME} uint16_buffer_signed_negative_test)
 
+add_test(scheduler_rejects_xthread_access_test ${TEST_BINARY_NAME} scheduler_rejects_xthread_access_test)
+add_test(scheduler_ordering_test ${TEST_BINARY_NAME} scheduler_ordering_test)
+add_test(scheduler_pops_task_late_test ${TEST_BINARY_NAME} scheduler_pops_task_late_test)
+add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timestamp_test)
+

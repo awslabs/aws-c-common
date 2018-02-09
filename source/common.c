@@ -72,6 +72,12 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_list_dest_copy_too_small, AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, "destination of list copy is too small", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_exceeds_max_size, AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_list_static_mode_cant_shrink, AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK, "attempt to shrink a list in static mode", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_priority_queue_full, AWS_ERROR_PRIORITY_QUEUE_FULL, "attempt to add items to a full preallocated queue in static mode.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_priority_queue_empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY, "attempt to pop an item from an empty queue.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_no_more_tasks, AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS, "current task is the last one. next_run_time not populated.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_no_tasks, AWS_ERROR_TASK_SCHEDULER_NO_TASKS, "no tasks scheduled available.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_no_ready_tasks, AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, "none of the tasks scheduled is due to run now.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_xthread_access, AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS, "Scheduler is being used from a thread different from its owner.", AWS_LIB_NAME),
 };
 
 static struct aws_error_info_list list = {
