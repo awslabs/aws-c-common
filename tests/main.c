@@ -19,6 +19,7 @@
 #include <mutex_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
+#include <encoding_test.c>
 #include <linked_list_test.c>
 #include <priority_queue_test.c>
 
@@ -54,5 +55,40 @@ int main(int argc, char *argv[]) {
                        &linked_list_push_front_pop_back,
                        &priority_queue_push_pop_order_test,
                        &priority_queue_size_and_capacity_test,
-                       &priority_queue_random_values_test);
+                       &priority_queue_random_values_test,
+                       &hex_encoding_test_case_empty_test,
+                       &hex_encoding_test_case_f_test,
+                       &hex_encoding_test_case_fo_test,
+                       &hex_encoding_test_case_foo_test,
+                       &hex_encoding_test_case_foob_test,
+                       &hex_encoding_test_case_fooba_test,
+                       &hex_encoding_test_case_foobar_test,
+                       &hex_encoding_test_case_missing_leading_zero,
+                       &hex_encoding_invalid_buffer_size_test,
+                       &hex_encoding_overflow_test,
+                       &hex_encoding_invalid_string_test,
+                       &base64_encoding_test_case_empty_test,
+                       &base64_encoding_test_case_f_test,
+                       &base64_encoding_test_case_fo_test,
+                       &base64_encoding_test_case_foo_test,
+                       &base64_encoding_test_case_foob_test,
+                       &base64_encoding_test_case_fooba_test,
+                       &base64_encoding_test_case_foobar_test,
+                       &base64_encoding_test_zeros,
+                       &base64_encoding_test_all_values,
+                       &base64_encoding_buffer_size_too_small_test,
+                       &base64_encoding_buffer_size_overflow_test,
+                       &base64_encoding_buffer_size_invalid_test,
+                       &base64_encoding_invalid_buffer_test,
+                       &base64_encoding_invalid_padding_test,
+                       &uint64_buffer_test,
+                       &uint64_buffer_non_aligned_test,
+                       &uint32_buffer_test,
+                       &uint32_buffer_non_aligned_test,
+                       &uint24_buffer_test,
+                       &uint24_buffer_non_aligned_test,
+                       &uint16_buffer_test,
+                       &uint16_buffer_non_aligned_test,
+                       &uint16_buffer_signed_positive_test,
+                       &uint16_buffer_signed_negative_test);
 }

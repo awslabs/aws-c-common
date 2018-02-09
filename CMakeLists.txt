@@ -38,7 +38,7 @@ if (WIN32)
         source_group("Source Files\\windows" FILES ${AWS_COMMON_OS_SRC})
     endif ()
 
-    set(PLATFORM_LIBS "Kernel32")
+    set(PLATFORM_LIBS "Kernel32 Ws2_32")
 else ()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
         file(GLOB AWS_COMMON_OS_SRC
