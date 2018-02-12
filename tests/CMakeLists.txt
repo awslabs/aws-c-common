@@ -95,3 +95,7 @@ add_test(scheduler_ordering_test ${TEST_BINARY_NAME} scheduler_ordering_test)
 add_test(scheduler_pops_task_late_test ${TEST_BINARY_NAME} scheduler_pops_task_late_test)
 add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timestamp_test)
 
+add_test(test_u64_saturating ${TEST_BINARY_NAME} test_u64_saturating)
+add_test(test_u32_saturating ${TEST_BINARY_NAME} test_u32_saturating)
+add_test(test_u64_checked ${TEST_BINARY_NAME} test_u64_checked)
+add_test(test_u32_checked ${TEST_BINARY_NAME} test_u32_checked)
