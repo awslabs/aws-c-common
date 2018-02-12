@@ -110,8 +110,8 @@ static int total_failures;
 #define ASSERT_HEX_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
     if (a != b) { FAIL("Expected:%llX got:%llX - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, message, ... ) for (size_t i = 0; i < expected_size; ++i){ \
-    if (expected[i] != got[i]) {\
-        FAIL("Expected:%02x got:%02x - " message, expected[i], got[i], ## __VA_ARGS__);\
+    if ((expected)[i] != (got)[i]) {\
+        FAIL("Expected:%02x got:%02x - " message, (expected)[i], (got)[i], ## __VA_ARGS__);\
     }\
 }
 
