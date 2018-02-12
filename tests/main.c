@@ -23,6 +23,7 @@
 #include <linked_list_test.c>
 #include <priority_queue_test.c>
 #include <task_scheduler_test.c>
+#include <math_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -95,5 +96,10 @@ int main(int argc, char *argv[]) {
                        &scheduler_rejects_xthread_access_test,
                        &scheduler_pops_task_late_test,
                        &scheduler_task_timestamp_test,
-                       &scheduler_ordering_test);
+                       &scheduler_ordering_test,
+                       &test_u64_saturating,
+                       &test_u32_saturating,
+                       &test_u64_checked,
+                       &test_u32_checked
+                       );
 }
