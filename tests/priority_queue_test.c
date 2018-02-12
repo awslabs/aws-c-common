@@ -103,7 +103,7 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
     int storage[SIZE], err;
     aws_priority_queue_static_init(&queue, storage, SIZE, sizeof(int), compare_ints);
     int values[SIZE];
-    srand((unsigned)&queue);
+    srand((size_t)&queue);
     for(int i = 0; i < SIZE; i++) {
         values[i] = rand() % 1000;
         err = aws_priority_queue_push(&queue, &values[i]);
