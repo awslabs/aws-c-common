@@ -1,6 +1,6 @@
 enable_testing()
 
-file(GLOB TEST_SRC "*.c")
+file(GLOB TEST_SRC "main.c")
 file(GLOB TEST_HDRS "*.h")
 file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 
@@ -9,8 +9,12 @@ set(TEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-tests)
 add_executable(${TEST_BINARY_NAME} ${TESTS})
 target_link_libraries(${TEST_BINARY_NAME} ${CMAKE_PROJECT_NAME})
 set_target_properties(${TEST_BINARY_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-
 target_include_directories(${TEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+if (MSVC)
+    target_compile_options(${TEST_BINARY_NAME} PRIVATE /W4 /WX)
+else ()
+    target_compile_options(${TEST_BINARY_NAME} PRIVATE -Wall -Wno-long-long -Werror)
+endif ()
 
 add_test(raise_errors_test ${TEST_BINARY_NAME} raise_errors_test)
 add_test(reset_errors_test ${TEST_BINARY_NAME} reset_errors_test)
