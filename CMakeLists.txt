@@ -97,10 +97,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tests>
-        $<INSTALL_INTERFACE:tests>)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
