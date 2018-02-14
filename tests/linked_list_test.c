@@ -14,7 +14,7 @@
  */
 
 #include <aws/common/linked_list.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 aws_linked_list_of(int, int_value);
 

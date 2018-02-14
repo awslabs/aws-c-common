@@ -15,7 +15,7 @@
 
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 static int test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx) {
     struct aws_mutex mutex;

@@ -14,7 +14,7 @@
 */
 
 #include <aws/common/array_list.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 static int array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list;

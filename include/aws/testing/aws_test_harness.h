@@ -24,6 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef AWS_UNSTABLE_TESTING_API
+#error                                                                                                                 \
+The AWS Test Fixture is designed only for use by AWS owned libraries for the AWS C99 SDK. You are welcome to use it,   \
+but you should be aware we make no promises on the stability of this API.  To enable use of the aws test fixtures, set \
+the AWS_UNSTABLE_TESTING_API compiler flag
+#endif
+
 struct memory_test_config {
     void *(*mem_acquire)(struct aws_allocator *config, size_t size);
     void(*mem_release)(struct aws_allocator *config, void *ptr);

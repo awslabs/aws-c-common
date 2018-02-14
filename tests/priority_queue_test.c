@@ -14,7 +14,7 @@
  */
 
 #include <aws/common/priority_queue.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 #include <stdlib.h>
 
 static int compare_ints(const void* a, const void* b)

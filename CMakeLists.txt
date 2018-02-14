@@ -18,6 +18,10 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         )
 
+file(GLOB AWS_TEST_HEADERS
+        "include/aws/testing/*.h"
+        )
+
 file(GLOB AWS_COMMON_PRIV_HEADERS
         "include/aws/common/private/*.h"
         )
@@ -34,6 +38,7 @@ if (WIN32)
     if (MSVC)
         source_group("Header Files\\aws\\common" FILES ${AWS_COMMON_HEADERS})
         source_group("Header Files\\aws\\common\\private" FILES ${AWS_COMMON_PRIV_HEADERS})
+        source_group("Header Files\\aws\\testing" FILES ${AWS_TEST_HEADERS})
         source_group("Source Files" FILES ${AWS_COMMON_SRC})
         source_group("Source Files\\windows" FILES ${AWS_COMMON_OS_SRC})
     endif ()
@@ -56,6 +61,7 @@ endif ()
 file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
+        ${AWS_TEST_HEADERS}
         )
 
 file(GLOB COMMON_SRC
@@ -91,9 +97,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tests>
+        $<INSTALL_INTERFACE:tests>)
+
 target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
+install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/testing")
+
 install(
     TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib

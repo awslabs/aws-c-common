@@ -14,7 +14,7 @@
  */
 
 #include <aws/common/thread.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 struct thread_test_data {
     uint64_t thread_id;
