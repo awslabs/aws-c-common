@@ -190,6 +190,9 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
             ret_val |= aws_run_test_case(tests[i]);                                                                    \
         }                                                                                                              \
     }                                                                                                                  \
+                                                                                                                       \
+    fflush(stdout);                                                                                                    \
+    fflush(stderr);                                                                                                    \
     return ret_val;                                                                                                    \
 
 #endif /* AWS_TEST_HARNESS_H _*/
