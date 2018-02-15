@@ -15,7 +15,7 @@
 
 #include <aws/common/clock.h>
 #include <aws/common/thread.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 static int test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
     uint64_t ticks = 0, prev = 0;

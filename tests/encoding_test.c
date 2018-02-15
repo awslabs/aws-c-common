@@ -15,7 +15,7 @@
 
 
 #include <aws/common/encoding.h>
-#include <aws_test_harness.h>
+#include <aws/testing/aws_test_harness.h>
 
 /* Test cases from rfc4648 for Base 16 Encoding */
 
