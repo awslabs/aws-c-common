@@ -119,7 +119,7 @@ extern "C" {
     /**
      * Copies the memory address of the element at index to *val. If element does not exist, AWS_ERROR_INVALID_INDEX will be raised.
      */
-    int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, size_t index);
+    AWS_COMMON_API int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, size_t index);
 
     /**
      * Copies the the memory pointed to by val into the array at index. If in dynamic mode, the size will grow by a factor of two
@@ -130,7 +130,7 @@ extern "C" {
     /**
      * Swap elements at the specified indices.
      */
-    void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
+    AWS_COMMON_API void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
 
 #ifdef __cplusplus
 }

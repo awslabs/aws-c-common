@@ -261,7 +261,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
     return AWS_OP_SUCCESS;
 }
 
-void aws_array_list_mem_swap(void * restrict item1, void * restrict item2, size_t item_size) {
+void aws_array_list_mem_swap(void * AWS_RESTRICT item1, void * AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
     /* copy SLICE sized bytes at a time */
