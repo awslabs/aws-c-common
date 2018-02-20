@@ -72,6 +72,23 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #endif
 #endif
 
+/* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
+ * If visual C++ building in C mode, the restrict definition is __restrict.
+ * This just figures all of that out based on who's including this header file. */
+#if defined (__cplusplus)
+#define AWS_RESTRICT
+#else
+#if defined (_MSC_VER )
+#define AWS_RESTRICT __restrict
+#else
+#if  defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define AWS_RESTRICT restrict
+#else
+#define AWS_RESTRICT
+#endif
+#endif
+#endif
+
 /*
  * The next two macros don't do braced-group expressions since it breaks ISO-C rules. Instead just write the result to a variable.
  */
