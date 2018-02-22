@@ -1,5 +1,5 @@
 ---
-Language:        C
+Language:        Cpp
 BasedOnStyle:  LLVM
 AllowShortFunctionsOnASingleLine: None
 ColumnLimit:     120
