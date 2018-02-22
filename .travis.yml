@@ -8,6 +8,14 @@ os:
 #  - osx add osx back when travis fixes their mac os scaling problems.
   - linux
 
+addons:
+  apt:
+    sources:
+    # add PPAs with more up-to-date toolchains
+    - llvm-toolchain-precise-3.8
+    packages:
+    - clang-format-3.8
+
 #run builds on both gcc and clang
 compiler:
   - gcc
@@ -19,6 +27,7 @@ install:
 #execute build
 script:
   - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction -I include --force --error-exitcode=-1 ./
+  - CI/format-check.sh
   - mkdir build
   - cd build
   - cmake ..
