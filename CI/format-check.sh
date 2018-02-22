@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+# set -ex
 
 if type clang-format-3.8 2> /dev/null ; then
     CLANG_FORMAT=clang-format-3.8
@@ -12,10 +12,16 @@ else
     exit 1
 fi
 
-find source include tests -type f -name '*.h' -o -name '*.c' | xargs -I{} $CLANG_FORMAT -output-replacements-xml {} | grep -c "<replacement " > /dev/null
-if [ $? -ne 1 ]
-then
-    echo "Failed clang-format check."
-    exit 1
-fi
+FAIL=0
+SOURCE_FILES=`find source include tests -type f -name '*.h' -o -name '*.c'`
+for i in $SOURCE_FILES
+do
+    $CLANG_FORMAT -output-replacements-xml $i | grep -c "<replacement " > /dev/null
+    if [ $? -ne 1 ]
+    then
+        echo "$i failed clang-format check."
+        FAIL=1
+    fi
+done
 
+exit $FAIL
