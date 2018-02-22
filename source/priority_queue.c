@@ -26,11 +26,11 @@ static void sift_down(struct aws_priority_queue *queue) {
     size_t len = aws_array_list_length(&queue->container);
     void *right_item, *left_item, *root_item;
 
-    while(left < len) {
+    while (left < len) {
         aws_array_list_get_at_ptr(&queue->container, &left_item, left);
 
         size_t right = left + 1;
-        if(right < len) {
+        if (right < len) {
             aws_array_list_get_at_ptr(&queue->container, &right_item, right);
 
             /* choose the larger/smaller of the two in case of a max/min heap respectively */
@@ -41,12 +41,11 @@ static void sift_down(struct aws_priority_queue *queue) {
         }
 
         aws_array_list_get_at_ptr(&queue->container, &root_item, root);
-        if(queue->pred(root_item, left_item) > 0) {
+        if (queue->pred(root_item, left_item) > 0) {
             aws_array_list_swap(&queue->container, left, root);
             root = left;
             left = left_of(root);
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -56,7 +55,7 @@ static void sift_down(struct aws_priority_queue *queue) {
 static void sift_up(struct aws_priority_queue *queue, size_t index) {
     void *parent_item, *child_item;
     size_t parent = parent_of(index);
-    while(index) {
+    while (index) {
         aws_array_list_get_at_ptr(&queue->container, &parent_item, parent);
         aws_array_list_get_at_ptr(&queue->container, &child_item, index);
 
@@ -64,8 +63,7 @@ static void sift_up(struct aws_priority_queue *queue, size_t index) {
             aws_array_list_swap(&queue->container, index, parent);
             index = parent;
             parent = parent_of(index);
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -78,8 +76,8 @@ int aws_priority_queue_dynamic_init(struct aws_priority_queue *queue, struct aws
     return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
 }
 
-void aws_priority_queue_static_init(struct aws_priority_queue *queue,
-    void *heap, size_t item_count, size_t item_size, aws_priority_queue_compare pred) {
+void aws_priority_queue_static_init(struct aws_priority_queue *queue, void *heap, size_t item_count, size_t item_size,
+                                    aws_priority_queue_compare pred) {
 
     queue->pred = pred;
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
@@ -91,7 +89,7 @@ void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
 
 int aws_priority_queue_push(struct aws_priority_queue *queue, void *item) {
     int err = aws_array_list_push_back(&queue->container, item);
-    if(err) {
+    if (err) {
         return err;
     }
 
@@ -101,17 +99,17 @@ int aws_priority_queue_push(struct aws_priority_queue *queue, void *item) {
 }
 
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
-    if(0 == aws_array_list_length(&queue->container)) {
+    if (0 == aws_array_list_length(&queue->container)) {
         return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
     }
 
     /* in this case aws_raise_error(..) has already been called */
-    if(aws_array_list_get_at(&queue->container, item, 0)) {
+    if (aws_array_list_get_at(&queue->container, item, 0)) {
         return AWS_OP_ERR;
     }
 
     aws_array_list_swap(&queue->container, 0, aws_array_list_length(&queue->container) - 1);
-    if(aws_array_list_pop_back(&queue->container)) {
+    if (aws_array_list_pop_back(&queue->container)) {
         return AWS_OP_ERR;
     }
 
@@ -120,7 +118,7 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
 }
 
 int aws_priority_queue_top(struct aws_priority_queue *queue, void **item) {
-    if(0 == aws_array_list_length(&queue->container)) {
+    if (0 == aws_array_list_length(&queue->container)) {
         return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
     }
     return aws_array_list_get_at_ptr(&queue->container, item, 0);
@@ -133,4 +131,3 @@ size_t aws_priority_queue_size(struct aws_priority_queue *queue) {
 size_t aws_priority_queue_capacity(struct aws_priority_queue *queue) {
     return aws_array_list_capacity(&queue->container);
 }
-

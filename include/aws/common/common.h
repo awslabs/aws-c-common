@@ -19,7 +19,7 @@
 #include <aws/common/error.h>
 #include <stddef.h>
 
-#if defined(_MSC_VER )
+#if defined(_MSC_VER)
 #define AWS_THREAD_LOCAL __declspec(thread)
 #else
 #define AWS_THREAD_LOCAL __thread
@@ -28,7 +28,7 @@
 /* Allocator structure. An instance of this will be passed around for anything needing memory allocation */
 struct aws_allocator {
     void *(*mem_acquire)(struct aws_allocator *allocator, size_t size);
-    void(*mem_release)(struct aws_allocator *allocator, void *ptr);
+    void (*mem_release)(struct aws_allocator *allocator, void *ptr);
 };
 
 #ifdef __cplusplus
@@ -58,14 +58,14 @@ AWS_COMMON_API void aws_load_error_strings(void);
 
 #define AWS_CACHE_LINE 64
 
-#if defined(_MSC_VER )
+#if defined(_MSC_VER)
 #define AWS_ALIGN(alignment) __declspec(align(alignment))
 #define AWS_TYPE_OF(a) __decltype(a)
 #define AWS_LIKELY(x) x
 #define AWS_UNLIKELY(x) x
 #else
 #if defined(__GNUC__) || defined(__clang__)
-#define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
+#define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
 #define AWS_TYPE_OF(a) __typeof__(a)
 #define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -90,15 +90,22 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #endif
 
 /*
- * The next two macros don't do braced-group expressions since it breaks ISO-C rules. Instead just write the result to a variable.
+ * The next two macros don't do braced-group expressions since it breaks ISO-C rules. Instead just write the result to a
+ * variable.
  */
-#define AWS_MIN(a, b, o) do { AWS_TYPE_OF (a) _a = (a); \
-                         AWS_TYPE_OF (b) _b = (b); \
-                         o = _a < _b ? _a : _b; } while(0);
+#define AWS_MIN(a, b, o)                                                                                               \
+    do {                                                                                                               \
+        AWS_TYPE_OF(a) _a = (a);                                                                                       \
+        AWS_TYPE_OF(b) _b = (b);                                                                                       \
+        o = _a < _b ? _a : _b;                                                                                         \
+    } while (0);
 
-#define AWS_MAX(a, b, o) do { AWS_TYPE_OF (a) _a = (a); \
-                         AWS_TYPE_OF (b) _b = (b); \
-                         o = _a > _b ? _a : _b; } while(0);
+#define AWS_MAX(a, b, o)                                                                                               \
+    do {                                                                                                               \
+        AWS_TYPE_OF(a) _a = (a);                                                                                       \
+        AWS_TYPE_OF(b) _b = (b);                                                                                       \
+        o = _a > _b ? _a : _b;                                                                                         \
+    } while (0);
 
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
@@ -139,8 +146,5 @@ typedef enum aws_common_error {
 } aws_common_error;
 
 #define AWS_LIB_NAME "libaws-c-common"
-
-
-
 
 #endif /* AWS_COMMON_H_ */
