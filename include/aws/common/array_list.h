@@ -36,8 +36,7 @@ extern "C" {
 
 /**
 * Initializes an array list with an array of size initial_item_allocation * item_size. In this mode, the array size will
-* grow
-* by a factor of 2 upon insertion if space is not available. initial_item_allocation is the number of elements
+* grow by a factor of 2 upon insertion if space is not available. initial_item_allocation is the number of elements
 * you want space allocated for. item_size is the size of each element in bytes. Mixing items types is not supported
 * by this API.
 */
@@ -70,8 +69,7 @@ AWS_COMMON_API int aws_array_list_front(const struct aws_array_list *list, void 
 /**
 * Deletes the element at the front of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
 * This call results in shifting all of the elements at the end of the array to the front. Avoid this call unless that is
-* intended
-* behavior.
+* intended behavior.
 */
 AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
 
@@ -125,9 +123,8 @@ AWS_COMMON_API int aws_array_list_get_at_ptr(const struct aws_array_list *list, 
 
 /**
  * Copies the the memory pointed to by val into the array at index. If in dynamic mode, the size will grow by a factor
- * of two
- * when the array is full. In static mode, AWS_ERROR_INVALID_INDEX will be raised if the index is past the bounds of the
- * array.
+ * of two when the array is full. In static mode, AWS_ERROR_INVALID_INDEX will be raised if the index is past the bounds
+ * of the array.
  */
 AWS_COMMON_API int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index);
 

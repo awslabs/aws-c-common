@@ -86,7 +86,7 @@ AWS_COMMON_API int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t 
 }
 #endif
 
-/* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order
+/* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order.
  * Assumes the buffer size is at least 8 bytes.
  */
 static inline void aws_write_u64(uint8_t *buffer, uint64_t value) {
@@ -98,8 +98,8 @@ static inline void aws_write_u64(uint8_t *buffer, uint64_t value) {
 }
 
 /*
- * Extracts a 64 bit unsigned integer from buffer. Ensures conversion from network byte order to
- * host byte order. Assumes buffer size is at least 8 bytes.
+ * Extracts a 64 bit unsigned integer from buffer. Ensures conversion from network byte order to host byte order.
+ * Assumes buffer size is at least 8 bytes.
  */
 static inline uint64_t aws_read_u64(const uint8_t *buffer) {
     uint64_t value = 0;
