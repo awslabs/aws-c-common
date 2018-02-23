@@ -58,7 +58,8 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
+int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output,
+                   size_t output_size) {
     assert(to_encode);
     assert(output);
 
@@ -114,7 +115,8 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
+int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output,
+                   size_t output_size) {
     assert(to_decode);
     assert(output);
 
@@ -211,7 +213,8 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
+int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output,
+                      size_t output_size) {
     assert(to_encode);
     assert(output);
 
@@ -271,7 +274,8 @@ static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_
     return AWS_OP_ERR;
 }
 
-int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
+int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output,
+                      size_t output_size) {
     size_t decoded_length = 0;
 
     if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, to_decode_len, &decoded_length))) {

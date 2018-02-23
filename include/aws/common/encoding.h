@@ -40,7 +40,8 @@ AWS_COMMON_API int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *enc
  * Base 16 (hex) encodes the contents of to_encode and stores the result in output.
  * If output is NULL, output_size will be set to what the output_size should be.
  */
-AWS_COMMON_API int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size);
+AWS_COMMON_API int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len,
+                                  char *AWS_RESTRICT output, size_t output_size);
 
 /*
  * computes the length necessary to store the result of aws_hex_decode(). returns -1 on failure, and 0 on success.
@@ -52,7 +53,8 @@ AWS_COMMON_API int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *dec
  * Base 16 (hex) decodes the contents of to_decode and stores the result in output.
  * If output is NULL, output_size will be set to what the output_size should be.
  */
-AWS_COMMON_API int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size);
+AWS_COMMON_API int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len,
+                                  uint8_t *AWS_RESTRICT output, size_t output_size);
 
 /*
  * Computes the length necessary to store the output of aws_base64_encode call. returns -1 on failure, and 0 on success.
@@ -64,7 +66,8 @@ AWS_COMMON_API int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *
  * Base 64 encodes the contents of to_encode and stores the result in output.
  * If output is NULL, output_size will be set to what the output_size should be.
  */
-AWS_COMMON_API int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size);
+AWS_COMMON_API int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len,
+                                     char *AWS_RESTRICT output, size_t output_size);
 
 /*
  * Computes the length necessary to store the output of aws_base64_decode call. returns -1 on failure, and 0 on success.
@@ -76,7 +79,8 @@ AWS_COMMON_API int aws_base64_compute_decoded_len(const char *input, size_t len,
  * Base 64 decodes the contents of to_decode and stores the result in output.
  * If output is NULL, output_size will be set to what the output_size should be.
  */
-AWS_COMMON_API int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size);
+AWS_COMMON_API int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len,
+                                     uint8_t *AWS_RESTRICT output, size_t output_size);
 
 #ifdef __cplusplus
 }
