@@ -45,7 +45,8 @@ static void sift_down(struct aws_priority_queue *queue) {
             aws_array_list_swap(&queue->container, left, root);
             root = left;
             left = left_of(root);
-        } else {
+        }
+        else {
             break;
         }
     }
@@ -63,7 +64,8 @@ static void sift_up(struct aws_priority_queue *queue, size_t index) {
             aws_array_list_swap(&queue->container, index, parent);
             index = parent;
             parent = parent_of(index);
-        } else {
+        }
+        else {
             break;
         }
     }

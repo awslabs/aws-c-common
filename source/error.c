@@ -102,7 +102,8 @@ int aws_raise_error(int err) {
 
     if (thread_handler) {
         thread_handler(last_error, thread_handler_context);
-    } else if (global_handler) {
+    }
+    else if (global_handler) {
         global_handler(last_error, global_error_context);
     }
 

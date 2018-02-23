@@ -269,7 +269,8 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
             }                                                                                                          \
         }                                                                                                              \
         return -1;                                                                                                     \
-    } else {                                                                                                           \
+    }                                                                                                                  \
+    else {                                                                                                             \
         for (size_t i = 0; i < test_count; ++i) {                                                                      \
             ret_val |= aws_run_test_case(tests[i]);                                                                    \
         }                                                                                                              \

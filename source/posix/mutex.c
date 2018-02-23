@@ -52,7 +52,8 @@ int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
             return_code = convert_and_raise_error_code(err_code);
         }
         pthread_mutexattr_destroy(&attr);
-    } else {
+    }
+    else {
         return_code = convert_and_raise_error_code(err_code);
     }
 

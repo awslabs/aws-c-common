@@ -46,7 +46,8 @@ static void mutex_thread_fn(void *mutex_data) {
             p_mutex->counter = counter;
             p_mutex->thread_fn_increments += 1;
             finished = p_mutex->counter == p_mutex->max_counts;
-        } else {
+        }
+        else {
             finished = 1;
         }
         aws_mutex_unlock(&p_mutex->mutex);
@@ -80,7 +81,8 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
             int counter = mutex_data.counter + 1;
             mutex_data.counter = counter;
             finished = mutex_data.counter == mutex_data.max_counts;
-        } else {
+        }
+        else {
             finished = 1;
             break;
         }

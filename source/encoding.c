@@ -89,12 +89,10 @@ static int hex_decode_char_to_int(char character, uint8_t *int_val) {
         *int_val = (uint8_t)(10 + (character - 'a'));
         return 0;
     }
-
     else if (character >= 'A' && character <= 'F') {
         *int_val = (uint8_t)(10 + (character - 'A'));
         return 0;
     }
-
     else if (character >= '0' && character <= '9') {
         *int_val = (uint8_t)(character - '0');
         return 0;
@@ -198,7 +196,8 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
 
     if (len >= 2 && input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
-    } else if (input[len - 1] == '=') { /*last char is = */
+    }
+    else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
     }
 
