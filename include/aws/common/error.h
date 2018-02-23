@@ -34,15 +34,9 @@ struct aws_error_info_list {
 };
 
 #define AWS_DEFINE_ERROR_INFO(NAME, C, ES, LN)                                                                         \
-{                                                                                                                      \
-    .literal_name = #C,                                                                                                \
-    .error_code = C,                                                                                                   \
-    .error_str = ES,                                                                                                   \
-    .lib_name = LN,                                                                                                    \
-    .formatted_name = LN ": " #C ", " ES                                                                               \
-}
+    { .literal_name = #C, .error_code = C, .error_str = ES, .lib_name = LN, .formatted_name = LN ": " #C ", " ES }
 
-typedef void(*aws_error_handler)(int err, void *ctx);
+typedef void (*aws_error_handler)(int err, void *ctx);
 
 #ifdef __cplusplus
 extern "C" {

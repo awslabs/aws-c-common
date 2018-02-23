@@ -38,14 +38,14 @@ AWS_THREAD_LOCAL void *thread_handler_context = NULL;
 
 static const int max_error_code = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
 
-static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = { 0 };
+static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = {0};
 
 int aws_last_error(void) {
     return last_error;
 }
 
 static const struct aws_error_info *get_error_by_code(int err) {
-    if(err >= max_error_code) {
+    if (err >= max_error_code) {
         return NULL;
     }
 
@@ -54,7 +54,7 @@ static const struct aws_error_info *get_error_by_code(int err) {
 
     const struct aws_error_info_list *error_slot = error_slots[slot_index];
 
-    if(!error_slot || error_index >= error_slot->count) {
+    if (!error_slot || error_index >= error_slot->count) {
         return NULL;
     }
 
@@ -66,7 +66,7 @@ const char *aws_error_str(int err) {
 
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->error_str;
     }
 
@@ -78,7 +78,7 @@ const char *aws_error_lib_name(int err) {
 
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->lib_name;
     }
 
@@ -90,7 +90,7 @@ const char *aws_error_debug_str(int err) {
 
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->formatted_name;
     }
 
@@ -100,10 +100,10 @@ const char *aws_error_debug_str(int err) {
 int aws_raise_error(int err) {
     last_error = err;
 
-    if(thread_handler) {
+    if (thread_handler) {
         thread_handler(last_error, thread_handler_context);
     }
-    else if(global_handler) {
+    else if (global_handler) {
         global_handler(last_error, global_error_context);
     }
 
@@ -143,7 +143,6 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
 
     int slot_index = min_range >> SLOT_DIV_SHIFT;
     assert(slot_index < AWS_MAX_ERROR_SLOTS);
-
 
     error_slots[slot_index] = error_info;
 }
