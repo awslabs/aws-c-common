@@ -24,7 +24,6 @@ static const char base64_encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
  * per row. */
-/* clang-format off */
 static uint8_t base64_decoding_table[256] = {
             64, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
@@ -42,7 +41,6 @@ static uint8_t base64_decoding_table[256] = {
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD };
-/* clang-format on */
 
 int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     assert(encoded_length);
@@ -58,8 +56,7 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output,
-                   size_t output_size) {
+int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
     assert(to_encode);
     assert(output);
 
@@ -90,10 +87,12 @@ static int hex_decode_char_to_int(char character, uint8_t *int_val) {
         *int_val = (uint8_t)(10 + (character - 'a'));
         return 0;
     }
+
     else if (character >= 'A' && character <= 'F') {
         *int_val = (uint8_t)(10 + (character - 'A'));
         return 0;
     }
+
     else if (character >= '0' && character <= '9') {
         *int_val = (uint8_t)(character - '0');
         return 0;
@@ -115,8 +114,7 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output,
-                   size_t output_size) {
+int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
     assert(to_decode);
     assert(output);
 
@@ -146,8 +144,7 @@ int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uin
     }
 
     for (; i < to_decode_len; i += 2) {
-        if (AWS_UNLIKELY(hex_decode_char_to_int(to_decode[i], &high_value) ||
-                         hex_decode_char_to_int(to_decode[i + 1], &low_value))) {
+        if (AWS_UNLIKELY(hex_decode_char_to_int(to_decode[i], &high_value) || hex_decode_char_to_int(to_decode[i + 1], &low_value))) {
             return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
         }
 
@@ -181,6 +178,7 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     return AWS_OP_SUCCESS;
 }
 
+
 int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len) {
     assert(input);
     assert(decoded_len);
@@ -213,8 +211,7 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output,
-                      size_t output_size) {
+int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
     assert(to_encode);
     assert(output);
 
@@ -232,17 +229,20 @@ int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_le
     size_t remainder_count = (buffer_length % 3);
     size_t str_index = 0;
 
-    for (size_t i = 0; i < to_encode_len; i += 3) {
-        uint32_t block = to_encode[i];
+    for (size_t i = 0; i < to_encode_len; i += 3 )
+    {
+        uint32_t block = to_encode[ i ];
 
         block <<= 8;
-        if (AWS_LIKELY(i + 1 < buffer_length)) {
-            block = block | to_encode[i + 1];
+        if (AWS_LIKELY(i + 1 < buffer_length))
+        {
+            block = block | to_encode[ i + 1 ];
         }
 
         block <<= 8;
-        if (AWS_LIKELY(i + 2 < to_encode_len)) {
-            block = block | to_encode[i + 2];
+        if (AWS_LIKELY(i + 2 < to_encode_len))
+        {
+            block = block | to_encode[ i + 2 ];
         }
 
         output[str_index++] = base64_encoding_table[(block >> 18) & 0x3F];
@@ -251,9 +251,11 @@ int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_le
         output[str_index++] = base64_encoding_table[block & 0x3F];
     }
 
-    if (remainder_count > 0) {
+    if(remainder_count > 0)
+    {
         output[block_count * 4 - 1] = '=';
-        if (remainder_count == 1) {
+        if(remainder_count == 1)
+        {
             output[block_count * 4 - 2] = '=';
         }
     }
@@ -274,8 +276,7 @@ static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_
     return AWS_OP_ERR;
 }
 
-int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output,
-                      size_t output_size) {
+int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
     size_t decoded_length = 0;
 
     if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, to_decode_len, &decoded_length))) {
@@ -291,11 +292,12 @@ int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, 
     uint8_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
     int64_t buffer_index = 0;
 
-    for (int32_t i = 0; i < block_count - 1; ++i) {
+    for(int32_t i = 0; i < block_count - 1; ++i)
+    {
         if (AWS_UNLIKELY(base64_get_decoded_value(to_decode[string_index++], &value1, 0) ||
-                         base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
-                         base64_get_decoded_value(to_decode[string_index++], &value3, 0) ||
-                         base64_get_decoded_value(to_decode[string_index++], &value4, 0))) {
+                base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
+                base64_get_decoded_value(to_decode[string_index++], &value3, 0) ||
+                base64_get_decoded_value(to_decode[string_index++], &value4, 0))) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
@@ -308,22 +310,24 @@ int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, 
     buffer_index = (block_count - 1) * 3;
 
     if (buffer_index >= 0) {
-        if (base64_get_decoded_value(to_decode[string_index++], &value1, 0) ||
-            base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
-            base64_get_decoded_value(to_decode[string_index++], &value3, 1) ||
-            base64_get_decoded_value(to_decode[string_index], &value4, 1)) {
+        if(base64_get_decoded_value(to_decode[string_index++], &value1, 0) ||
+           base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
+           base64_get_decoded_value(to_decode[string_index++], &value3, 1) ||
+           base64_get_decoded_value(to_decode[string_index], &value4, 1)) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
-        output[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
+        output[buffer_index++] = (uint8_t) ((value1 << 2) | ((value2 >> 4) & 0x03));
 
         if (value3 != base64_sentinal_value) {
-            output[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
+            output[buffer_index++] = (uint8_t) (((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
             if (value4 != base64_sentinal_value) {
-                output[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
+                output[buffer_index] = (uint8_t) ((value3 & 0x03) << 6 | value4);
             }
         }
     }
 
     return AWS_OP_SUCCESS;
 }
+
+
