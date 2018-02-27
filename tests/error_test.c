@@ -22,7 +22,8 @@ static struct aws_error_info errors[] = {
 };
 
 static struct aws_error_info_list errors_list = {
-    .error_list = errors, .count = sizeof(errors) / sizeof(struct aws_error_info),
+        .error_list = errors,
+        .count = sizeof(errors) / sizeof(struct aws_error_info),
 };
 
 static void setup_errors_test_fn(struct aws_allocator *config, void *ctx) {
@@ -50,8 +51,8 @@ static int raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
 
     ASSERT_INT_EQUALS(-1, aws_raise_error(test_error_1.error_code), "Raise error should return failure code.");
     error = aws_last_error();
-    ASSERT_INT_EQUALS(test_error_1.error_code, error, "Expected error code %d, but was %d", test_error_1.error_code,
-                      error);
+    ASSERT_INT_EQUALS(test_error_1.error_code, error, "Expected error code %d, but was %d",
+                      test_error_1.error_code, error);
 
     ASSERT_STR_EQUALS(test_error_1.error_str, aws_error_str(error), "Expected error string %s, but got %s",
                       test_error_1.error_str, aws_error_str(error));
@@ -61,8 +62,8 @@ static int raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
     ASSERT_INT_EQUALS(-1, aws_raise_error(test_error_2.error_code), "Raise error should return failure code.");
     error = aws_last_error();
 
-    ASSERT_INT_EQUALS(test_error_2.error_code, error, "Expected error code %d, but was %d", test_error_2.error_code,
-                      error);
+    ASSERT_INT_EQUALS(test_error_2.error_code, error, "Expected error code %d, but was %d",
+                      test_error_2.error_code, error);
 
     error = aws_last_error();
     ASSERT_NOT_NULL(error, "last error should not have been null");
@@ -78,6 +79,7 @@ static int raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
     return 0;
 }
 
+
 static int reset_errors_test_fn(struct aws_allocator *config, void *ctx) {
 
     struct aws_error_info test_error_1 = errors[0];
@@ -88,8 +90,8 @@ static int reset_errors_test_fn(struct aws_allocator *config, void *ctx) {
 
     int error = aws_last_error();
     ASSERT_NOT_NULL(error, "last error should not have been null");
-    ASSERT_INT_EQUALS(test_error_1.error_code, error, "Expected error code %d, but was %d", test_error_1.error_code,
-                      error);
+    ASSERT_INT_EQUALS(test_error_1.error_code, error, "Expected error code %d, but was %d",
+                      test_error_1.error_code, error);
     ASSERT_STR_EQUALS(test_error_1.error_str, aws_error_str(error), "Expected error string %s, but got %s",
                       test_error_1.error_str, aws_error_str(error));
     ASSERT_STR_EQUALS(test_error_1.lib_name, aws_error_lib_name(error), "Expected error libname %s, but got %s",
@@ -118,7 +120,11 @@ static void error_test_thread_local_cb(int err, void *ctx) {
 
 static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
 
-    struct error_test_cb_data cb_data = {.last_seen = 0, .global_cb_called = 0, .tl_cb_called = 0};
+    struct error_test_cb_data cb_data = {
+            .last_seen = 0,
+            .global_cb_called = 0,
+            .tl_cb_called = 0
+    };
 
     struct aws_error_info test_error_1 = errors[0];
     struct aws_error_info test_error_2 = errors[1];
@@ -135,9 +141,8 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
                       test_error_1.error_code, cb_data.last_seen);
     ASSERT_STR_EQUALS(test_error_1.error_str, aws_error_str(cb_data.last_seen), "Expected error string %s, but got %s",
                       test_error_1.error_str, aws_error_str(cb_data.last_seen));
-    ASSERT_STR_EQUALS(test_error_1.lib_name, aws_error_lib_name(cb_data.last_seen),
-                      "Expected error libname %s, but got %s", test_error_1.lib_name,
-                      aws_error_lib_name(cb_data.last_seen));
+    ASSERT_STR_EQUALS(test_error_1.lib_name, aws_error_lib_name(cb_data.last_seen), "Expected error libname %s, but got %s",
+                      test_error_1.lib_name, aws_error_lib_name(cb_data.last_seen));
 
     cb_data.last_seen = 0;
     cb_data.global_cb_called = 0;
@@ -148,6 +153,7 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
     ASSERT_INT_EQUALS(test_error_2.error_code, aws_last_error(), "Expected error code %d, but was %d",
                       test_error_2.error_code, aws_last_error());
 
+
     ASSERT_NOT_NULL(cb_data.last_seen, "last error should not have been null");
     ASSERT_FALSE(cb_data.global_cb_called, "Global Callback should not have been invoked");
     ASSERT_TRUE(cb_data.tl_cb_called, "Thread local Callback should have been invoked");
@@ -156,16 +162,13 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
                       test_error_2.error_code, cb_data.last_seen);
     ASSERT_STR_EQUALS(test_error_2.error_str, aws_error_str(cb_data.last_seen), "Expected error string %s, but got %s",
                       test_error_2.error_str, aws_error_str(cb_data.last_seen));
-    ASSERT_STR_EQUALS(test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen),
-                      "Expected error libname %s, but got %s", test_error_2.lib_name,
-                      aws_error_lib_name(cb_data.last_seen));
+    ASSERT_STR_EQUALS(test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen), "Expected error libname %s, but got %s",
+                      test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen));
 
     old_fn = aws_set_thread_local_error_handler_fn(NULL, NULL);
-    ASSERT_INT_EQUALS(error_test_thread_local_cb, old_fn,
-                      "Setting a new thread local error callback should have returned the most recent value");
+    ASSERT_INT_EQUALS(error_test_thread_local_cb, old_fn, "Setting a new thread local error callback should have returned the most recent value");
     old_fn = aws_set_global_error_handler_fn(NULL, NULL);
-    ASSERT_INT_EQUALS(error_test_global_cb, old_fn,
-                      "Setting a new global error callback should have returned the most recent value");
+    ASSERT_INT_EQUALS(error_test_global_cb, old_fn, "Setting a new global error callback should have returned the most recent value");
 
     return 0;
 }
@@ -207,8 +210,8 @@ static int unknown_error_code_no_slot_test_fn(struct aws_allocator *config, void
     aws_raise_error(non_slotted_error_code);
     error = aws_last_error();
     /* error code should still propogate */
-    ASSERT_INT_EQUALS(non_slotted_error_code, error, "Expected error code %d, but was %d", non_slotted_error_code,
-                      error);
+    ASSERT_INT_EQUALS(non_slotted_error_code, error, "Expected error code %d, but was %d",
+                      non_slotted_error_code, error);
 
     /* string should be invalid though */
     ASSERT_STR_EQUALS("Unknown Error Code", aws_error_str(error), "Expected error string %s, but got %s",
@@ -232,7 +235,8 @@ static int unknown_error_code_range_too_large_test_fn(struct aws_allocator *conf
     aws_raise_error(oor_error_code);
     error = aws_last_error();
     /* error code should still propogate */
-    ASSERT_INT_EQUALS(oor_error_code, error, "Expected error code %d, but was %d", oor_error_code, error);
+    ASSERT_INT_EQUALS(oor_error_code, error, "Expected error code %d, but was %d",
+                      oor_error_code, error);
 
     /* string should be invalid though */
     ASSERT_STR_EQUALS("Unknown Error Code", aws_error_str(error), "Expected error string %s, but got %s",
@@ -256,12 +260,13 @@ struct error_thread_test_data {
     uint64_t thread_2_id;
 };
 
+
 static void error_thread_test_thread_local_cb(int err, void *ctx) {
     struct error_thread_test_data *cb_data = (struct error_thread_test_data *)ctx;
 
     uint64_t thread_id = aws_thread_current_thread_id();
 
-    if (thread_id == cb_data->thread_1_id) {
+    if(thread_id == cb_data->thread_1_id) {
         cb_data->thread_1_code = err;
         cb_data->thread_1_get_last_code = aws_last_error();
         cb_data->thread_1_encountered_count += 1;
@@ -274,6 +279,7 @@ static void error_thread_test_thread_local_cb(int err, void *ctx) {
     cb_data->thread_2_encountered_count += 1;
 }
 
+
 static void error_thread_fn(void *arg) {
     aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, arg);
 
@@ -282,14 +288,16 @@ static void error_thread_fn(void *arg) {
 
 static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
 
-    struct error_thread_test_data test_data = {.thread_1_code = 0,
-                                               .thread_1_get_last_code = 0,
-                                               .thread_1_id = aws_thread_current_thread_id(),
-                                               .thread_1_encountered_count = 0,
-                                               .thread_2_code = 0,
-                                               .thread_2_get_last_code = 0,
-                                               .thread_2_encountered_count = 0,
-                                               .thread_2_id = 0};
+    struct error_thread_test_data test_data = {
+            .thread_1_code = 0,
+            .thread_1_get_last_code = 0,
+            .thread_1_id = aws_thread_current_thread_id(),
+            .thread_1_encountered_count = 0,
+            .thread_2_code = 0,
+            .thread_2_get_last_code = 0,
+            .thread_2_encountered_count = 0,
+            .thread_2_id = 0
+    };
 
     aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, &test_data);
 
@@ -298,25 +306,18 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(aws_thread_launch(&thread, error_thread_fn, &test_data, NULL),
-                   "Thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_thread_launch(&thread, error_thread_fn, &test_data, NULL), "Thread creation failed with error %d", aws_last_error());
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error %d", aws_last_error());
     aws_thread_clean_up(&thread);
-    ASSERT_INT_EQUALS(1, test_data.thread_1_encountered_count,
-                      "The thread local CB should only have triggered for the first thread once.");
-    ASSERT_INT_EQUALS(1, test_data.thread_2_encountered_count,
-                      "The thread local CB should only have triggered for the second thread once.");
+    ASSERT_INT_EQUALS(1, test_data.thread_1_encountered_count, "The thread local CB should only have triggered for the first thread once.");
+    ASSERT_INT_EQUALS(1, test_data.thread_2_encountered_count, "The thread local CB should only have triggered for the second thread once.");
     ASSERT_FALSE(test_data.thread_2_id == 0, "thread 2 id should have been set to something other than 0");
     ASSERT_FALSE(test_data.thread_2_id == test_data.thread_1_id, "threads 1 and 2 should be different ids");
-    ASSERT_INT_EQUALS(thread_1_error_code_expected, aws_last_error(),
-                      "Thread 1's error should not have changed when thread 2 raised an error.");
-    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_code,
-                      "Thread 1 code should have matched the original error.");
-    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_get_last_code,
-                      "Thread 1 get last error code should have matched the original error.");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, aws_last_error(), "Thread 1's error should not have changed when thread 2 raised an error.");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_code, "Thread 1 code should have matched the original error.");
+    ASSERT_INT_EQUALS(thread_1_error_code_expected, test_data.thread_1_get_last_code, "Thread 1 get last error code should have matched the original error.");
     ASSERT_INT_EQUALS(15, test_data.thread_2_code, "Thread 2 code should have matched the thread 2 error.");
-    ASSERT_INT_EQUALS(15, test_data.thread_2_get_last_code,
-                      "Thread 2 get last error code should have matched the thread 2 error.");
+    ASSERT_INT_EQUALS(15, test_data.thread_2_get_last_code, "Thread 2 get last error code should have matched the thread 2 error.");
 
     return 0;
 }
@@ -324,11 +325,7 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
 AWS_TEST_CASE_FIXTURE(raise_errors_test, setup_errors_test_fn, raise_errors_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(error_callback_test, setup_errors_test_fn, error_callback_test_fn, teardown_errors_test_fn, NULL)
 AWS_TEST_CASE_FIXTURE(reset_errors_test, setup_errors_test_fn, reset_errors_test_fn, teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(unknown_error_code_in_slot_test, setup_errors_test_fn, unknown_error_code_in_slot_test_fn,
-                      teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(unknown_error_code_no_slot_test, setup_errors_test_fn, unknown_error_code_no_slot_test_fn,
-                      teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(unknown_error_code_range_too_large_test, setup_errors_test_fn,
-                      unknown_error_code_range_too_large_test_fn, teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(error_code_cross_thread_test, setup_errors_test_fn, error_code_cross_thread_test_fn,
-                      teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(unknown_error_code_in_slot_test, setup_errors_test_fn, unknown_error_code_in_slot_test_fn, teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(unknown_error_code_no_slot_test, setup_errors_test_fn, unknown_error_code_no_slot_test_fn, teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(unknown_error_code_range_too_large_test, setup_errors_test_fn, unknown_error_code_range_too_large_test_fn, teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(error_code_cross_thread_test, setup_errors_test_fn, error_code_cross_thread_test_fn, teardown_errors_test_fn, NULL)

@@ -34,7 +34,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     struct timeval tv;
     ret_val = gettimeofday(&tv, NULL);
 
-    if (ret_val) {
+    if(ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
@@ -44,8 +44,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 
     ret_val = clock_gettime(HIGH_RES_CLOCK, &ts);
 
-    if (ret_val) {
+    if(ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
+
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
@@ -62,7 +63,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 
     struct timespec ts;
     ret_val = clock_gettime(CLOCK_REALTIME, &ts);
-    if (ret_val) {
+    if(ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
@@ -71,3 +72,4 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 
     return AWS_OP_SUCCESS;
 }
+

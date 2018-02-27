@@ -18,8 +18,8 @@
 
 #define SENTINAL 0xDD
 
-int aws_array_list_init_dynamic(struct aws_array_list *list, struct aws_allocator *alloc,
-                                size_t initial_item_allocation, size_t item_size) {
+int aws_array_list_init_dynamic(struct aws_array_list *list,
+    struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size) {
     list->alloc = alloc;
     size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
@@ -69,7 +69,7 @@ void aws_array_list_clean_up(struct aws_array_list *list) {
 int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
     int err_code = aws_array_list_set_at(list, val, list->length);
 
-    if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
+    if(err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 
@@ -237,7 +237,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
 
         void *temp = aws_mem_acquire(list->alloc, new_size);
 
-        if (!temp) {
+        if(!temp) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
 
@@ -261,18 +261,18 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
     return AWS_OP_SUCCESS;
 }
 
-void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {
+void aws_array_list_mem_swap(void * AWS_RESTRICT item1, void * AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
     /* copy SLICE sized bytes at a time */
     size_t slice_count = item_size / SLICE;
     uint8_t temp[SLICE];
-    for (size_t i = 0; i < slice_count; i++) {
+    for(size_t i = 0; i < slice_count; i++) {
         memcpy((void *)temp, (void *)item1, SLICE);
         memcpy((void *)item1, (void *)item2, SLICE);
         memcpy((void *)item2, (void *)temp, SLICE);
-        item1 = (uint8_t *)item1 + SLICE;
-        item2 = (uint8_t *)item2 + SLICE;
+        item1 = (uint8_t*)item1 + SLICE;
+        item2 = (uint8_t*)item2 + SLICE;
     }
 
     size_t remainder = item_size & (SLICE - 1); /* item_size % SLICE */
@@ -284,7 +284,7 @@ void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2,
 void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
     assert(a < list->length);
     assert(b < list->length);
-    if (a == b) {
+    if(a == b) {
         return;
     }
 
@@ -293,3 +293,4 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
     aws_array_list_get_at_ptr(list, &item2, b);
     aws_array_list_mem_swap(item1, item2, list->item_size);
 }
+

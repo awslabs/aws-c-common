@@ -21,10 +21,8 @@ static int test_high_res_clock_increments(struct aws_allocator *allocator, void 
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
-        ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&ticks), "High res get ticks failed with error %d",
-                       aws_last_error());
-        ASSERT_TRUE(ticks >= prev,
-                    "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
+        ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&ticks), "High res get ticks failed with error %d", aws_last_error());
+        ASSERT_TRUE(ticks >= prev, "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
                     (long long unsigned int)prev, (long long unsigned int)ticks);
         aws_thread_current_sleep(1000000);
         prev = ticks;
@@ -37,10 +35,8 @@ static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx)
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
-        ASSERT_SUCCESS(aws_sys_clock_get_ticks(&ticks), "Sys clock res get ticks failed with error %d",
-                       aws_last_error());
-        ASSERT_TRUE(ticks >= prev,
-                    "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
+        ASSERT_SUCCESS(aws_sys_clock_get_ticks(&ticks), "Sys clock res get ticks failed with error %d", aws_last_error());
+        ASSERT_TRUE(ticks >= prev, "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
                     (long long unsigned int)prev, (long long unsigned int)ticks);
         aws_thread_current_sleep(1000000);
         prev = ticks;

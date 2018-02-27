@@ -23,14 +23,13 @@
 extern "C" {
 #endif
 /**
- * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This
- * clock has no bearing on the actual system time. On success, timestamp will be set.
+ * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This clock has no bearing on the actual
+ * system time. On success, timestamp will be set.
  */
 AWS_COMMON_API int aws_high_res_clock_get_ticks(uint64_t *timestamp);
 
 /**
- * Get ticks in nanoseconds (usually 100 nanosecond precision) on the system clock. Reflects actual system time via
- * nanoseconds since unix epoch.
+ * Get ticks in nanoseconds (usually 100 nanosecond precision) on the system clock. Reflects actual system time via nanoseconds since unix epoch.
  * Use with care since an inaccurately set clock will probably cause bugs. On success, timestamp will be set.
  */
 AWS_COMMON_API int aws_sys_clock_get_ticks(uint64_t *timestamp);

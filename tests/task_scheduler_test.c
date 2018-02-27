@@ -40,8 +40,8 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
 
     /* run 250 ms in the future. */
     uint64_t task2_timestamp = 250;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp),
-                   "Schedule task in %lluns in the future failed", task2_timestamp);
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp), 
+            "Schedule task in %lluns in the future failed", task2_timestamp);
 
     struct aws_task task1;
     task1.fn = (aws_task_fn)1;
@@ -56,25 +56,25 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
 
     /* run 500 ms in the future. */
     uint64_t task3_timestamp = 500;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp),
-                   "Schedule task in %lluns in the future failed.", task3_timestamp);
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp), 
+            "Schedule task in %lluns in the future failed.", task3_timestamp);
 
     struct aws_task task_to_run;
 
     uint64_t timestamp = 0;
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp),
-                   "Task pop on a now() task, should return on the first try");
-    ASSERT_INT_EQUALS(task2_timestamp, timestamp, "Timestamp should for next run should be %llu",
-                      (long long unsigned)task2_timestamp);
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), 
+            "Task pop on a now() task, should return on the first try");
+    ASSERT_INT_EQUALS(task2_timestamp, timestamp, "Timestamp should for next run should be %llu", 
+            (long long unsigned)task2_timestamp);
 
     ASSERT_TRUE(task1.fn == task_to_run.fn, "Popped task should have been task 1.");
     ASSERT_TRUE(task1.arg == task_to_run.arg, "Popped task arg should have been task 1.");
 
     set_fake_clock(250);
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp),
-                   "Task pop should return on the first try");
-    ASSERT_INT_EQUALS(task3_timestamp, timestamp, "Timestamp should for next run should be %llu",
-                      (long long unsigned)task3_timestamp);
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), 
+            "Task pop should return on the first try");
+    ASSERT_INT_EQUALS(task3_timestamp, timestamp, "Timestamp should for next run should be %llu", 
+            (long long unsigned)task3_timestamp);
 
     ASSERT_TRUE(task2.fn == task_to_run.fn, "Popped task should have been task 2.");
     ASSERT_TRUE(task2.arg == task_to_run.arg, "Popped task arg should have been task 2.");
@@ -82,8 +82,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     set_fake_clock(555);
     int err = aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp);
     ASSERT_FAILS(err, "scheduler should return error code when no more tasks are available");
-    ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS, aws_last_error(),
-                      "scheduler returned unexpected error code");
+    ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS, aws_last_error(), "scheduler returned unexpected error code");
 
     ASSERT_TRUE(task3.fn == task_to_run.fn, "Popped task should have been task 3.");
     ASSERT_TRUE(task3.arg == task_to_run.arg, "Popped task arg should have been task 3.");
@@ -104,12 +103,12 @@ static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void 
     task2.arg = (void *)2;
 
     uint64_t run_at_or_after = 0;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task1, run_at_or_after),
-                   "Schedule task1 in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task1, run_at_or_after), 
+            "Schedule task1 in %lluns in the future failed", run_at_or_after);
 
     run_at_or_after = 10;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, run_at_or_after),
-                   "Schedule task2 in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, run_at_or_after), 
+            "Schedule task2 in %lluns in the future failed", run_at_or_after);
 
     uint64_t timestamp = 0;
     struct aws_task task_to_run;
@@ -132,14 +131,13 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
 
     uint64_t run_at_or_after = 10;
 
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task, run_at_or_after),
-                   "Schedule task in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task, run_at_or_after), 
+            "Schedule task in %lluns in the future failed", run_at_or_after);
 
     struct aws_task task_to_run = {.fn = 0, .arg = 0};
 
     uint64_t timestamp = 0;
-    ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp),
-                 "Next task should have returned error");
+    ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "Next task should have returned error");
     int lasterror = aws_last_error();
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, lasterror, "Status should be no ready tasks.");
     ASSERT_TRUE(task_to_run.fn == 0, "Popped task should have been null since it is not time for it to run.");
@@ -191,10 +189,10 @@ static int test_scheduler_rejects_xthread_access(struct aws_allocator *alloc, vo
     aws_thread_clean_up(&thread);
 
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS, thread_args.schedule_ret_val,
-                      "Another thread should not have been able to mutate the scheduler.");
+            "Another thread should not have been able to mutate the scheduler.");
 
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS, thread_args.pop_ret_val,
-                      "Another thread should not have been able to mutate the scheduler.");
+            "Another thread should not have been able to mutate the scheduler.");
 
     aws_task_scheduler_clean_up(&scheduler);
     return 0;

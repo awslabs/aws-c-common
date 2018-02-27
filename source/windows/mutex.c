@@ -22,9 +22,9 @@ int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
 }
 
 /* turn off unused named parameter warning on msvc.*/
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4100)
+#ifdef _MSC_VER 
+#pragma warning( push )
+#pragma warning( disable : 4100)
 #endif
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {

@@ -14,7 +14,7 @@
 * express or implied. See the License for the specific language governing
 * permissions and limitations under the License.
 */
-#if defined(USE_WINDOWS_DLL_SEMANTICS) || defined(WIN32)
+#if defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32)
 #ifdef USE_IMPORT_EXPORT
 #ifdef AWS_COMMON_EXPORTS
 #define AWS_COMMON_API __declspec(dllexport)
