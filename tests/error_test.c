@@ -291,13 +291,14 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
     struct error_thread_test_data test_data = {
             .thread_1_code = 0,
             .thread_1_get_last_code = 0,
-            .thread_1_id = aws_thread_current_thread_id(),
             .thread_1_encountered_count = 0,
             .thread_2_code = 0,
             .thread_2_get_last_code = 0,
             .thread_2_encountered_count = 0,
             .thread_2_id = 0
     };
+
+    test_data.thread_1_id = aws_thread_current_thread_id();
 
     aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, &test_data);
 

@@ -14,12 +14,16 @@
  *  permissions and limitations under the License.
  */
 
+#if _MSC_VER
+#pragma warning(disable:4100)
+#endif
+
+#include <encoding_test.c>
 #include <error_test.c>
 #include <thread_test.c>
 #include <mutex_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
-#include <encoding_test.c>
 #include <linked_list_test.c>
 #include <priority_queue_test.c>
 #include <task_scheduler_test.c>

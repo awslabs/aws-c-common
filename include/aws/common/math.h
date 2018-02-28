@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(_M_X64) || defined(_M_IX86) || defined(_M_ARM)
+#include <intrin.h>
+#include <immintrin.h>
+#endif
+
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -23,7 +28,7 @@
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
 static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     // We can use inline assembly to do this efficiently on x86-64 and x86.
 
     // we specify rdx as an output, rather than a clobber, because we want to
@@ -40,6 +45,10 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
     );
     (void)rdx; // suppress unused warnings
     return a;
+#elif defined(_M_X64) || defined(_M_ARM)
+    uint64_t out;
+    uint64_t ret_val = _umul128(a, b, &out);
+    return out == 0 ? ret_val : ~(uint64_t)0;
 #else
     uint64_t x = a * b;
     if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
@@ -55,7 +64,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
  * overflows, returns 0, else returns 1.
  */
 static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     // We can use inline assembly to do this efficiently on x86-64 and x86.
 
     int flag;
@@ -71,6 +80,11 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
     );
     *r = result;
     return flag;
+#elif defined(_M_X64) || defined(_M_ARM)
+    uint64_t out;
+    *r = _umul128(a, b, &out);
+
+    return out == 0;
 #else
     uint64_t x = a * b;
     *r = x;
@@ -86,7 +100,7 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
 static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
-#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__)
+#if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
     // We can use inline assembly to do this efficiently on x86-64 and x86.
 
     // we specify edx as an output, rather than a clobber, because we want to allow it
@@ -113,6 +127,10 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
     );
     (void)edx; // suppress unused warnings
     return a;
+#elif defined(_M_X64) || defined(_M_IX86)
+    uint32_t out;
+    uint32_t ret_val = _mulx_u32(a, b, &out);
+    return out == 0 ? ret_val : ~(uint32_t)0;
 #else
     uint32_t x = a * b;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
@@ -128,7 +146,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
  * returns 0, else returns 1.
  */
 static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__)
+#if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
     // We can use inline assembly to do this efficiently on x86-64 and x86.
     uint32_t result;
     int flag;
@@ -146,6 +164,11 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
     );
     *r = result;
     return flag;
+#elif defined(_M_X64) || defined(_M_IX86)
+    uint32_t out;
+    *r = _mulx_u32(a, b, &out);
+
+    return out == 0;
 #else
     uint32_t x = a * b;
     *r = x;
@@ -157,33 +180,40 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
 #endif
 }
 
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4127) /*Disable "conditional expression is constant" */
+#endif /* _MSC_VER */
 
 static inline size_t aws_common_mul_size_saturating(size_t a, size_t b) {
-    // static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)
+    /* static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)*/
     char assert_sizet_is_32_or_64_bit[
         (((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) ||
         ((uint64_t)SIZE_MAX == (uint64_t)~(uint64_t)0))
         ? 1 : -1
     ];
-    // suppress unused variable warning
+    /* suppress unused variable warning */
     (void)assert_sizet_is_32_or_64_bit;
 
+
+
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
-        return aws_common_mul_u32_saturating(a, b);
+        return (size_t)aws_common_mul_u32_saturating((uint32_t)a, (uint32_t)b);
     } else {
-        return aws_common_mul_u64_saturating(a, b);
+        return (size_t)aws_common_mul_u64_saturating(a, b);
     }
 }
 
 static inline int aws_common_mul_size_checked(size_t a, size_t b, size_t *r) {
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
-        return aws_common_mul_u32_checked(a, b, (uint32_t*)r);
+        return (int)aws_common_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t*)r);
     } else {
-        return aws_common_mul_u64_checked(a, b, (uint64_t*)r);
+        return (int)aws_common_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t*)r);
     }
 }
 
-
-
+#if _MSC_VER
+#pragma warning(pop)
+#endif /* _MSC_VER */
 
 #endif

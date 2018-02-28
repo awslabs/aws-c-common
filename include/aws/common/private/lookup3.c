@@ -46,10 +46,17 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #include <stdio.h>      /* defines printf for tests */
 #include <time.h>       /* defines time_t for timings in the test */
 #include <stdint.h>     /* defines uint32_t etc */
+#ifndef _MSC_VER
 #include <sys/param.h>  /* attempt to define endianness */
+#endif
 #ifdef linux
 # include <endian.h>    /* attempt to define endianness */
 #endif
+
+#if _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4127) /*Disable "conditional expression is constant" */
+#endif /* _MSC_VER */
 
 /*
  * My best guess at if you are big-endian or little-endian.  This may
@@ -1013,3 +1020,8 @@ int main()
 }
 
 #endif  /* SELF_TEST */
+
+
+#if _MSC_VER
+#pragma warning(pop)
+#endif /* _MSC_VER */

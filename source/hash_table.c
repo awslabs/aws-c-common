@@ -13,10 +13,10 @@
 * permissions and limitations under the License.
 */
 
-// For more information on how the RH hash works and in particular how we do
-// deletions, see:
-// http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
-
+/* For more information on how the RH hash works and in particular how we do
+ * deletions, see:
+ * http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
+ */
 #include <aws/common/hash_table.h>
 #include <aws/common/common.h>
 #include <aws/common/math.h>
@@ -26,12 +26,13 @@
 #include <stdio.h>
 #include <limits.h>
 
-// Include lookup3.c so we can (potentially) inline it and make use of the mix() macro.
-#include "private/lookup3.c"
+/* Include lookup3.c so we can (potentially) inline it and make use of the mix() macro. */
+#include <aws/common/private/lookup3.c>
 
 static void suppress_unused_lookup3_func_warnings() {
-    // We avoid making changes to lookup3 if we can avoid it, but since it has functions
-    // we're not using, reference them somewhere to suppress the unused function warning.
+    /* We avoid making changes to lookup3 if we can avoid it, but since it has functions
+     * we're not using, reference them somewhere to suppress the unused function warning.
+     */
     (void)hashword;
     (void)hashword2;
     (void)hashlittle;
@@ -40,7 +41,7 @@ static void suppress_unused_lookup3_func_warnings() {
 
 struct hash_table_entry {
     struct aws_common_hash_element element;
-    uint64_t hash_code; // hash code (0 signals empty)
+    uint64_t hash_code; /* hash code (0 signals empty) */
 };
 
 struct hash_table_state {
@@ -51,10 +52,10 @@ struct hash_table_state {
 
     size_t size, entry_count;
     size_t max_load;
-    // We AND a hash value with mask to get the slot index
+    /* We AND a hash value with mask to get the slot index */
     uint64_t  mask;
     double max_load_factor;
-    // actually variable length
+    /* actually variable length */
     struct hash_table_entry slots[1];
 };
 
@@ -74,7 +75,7 @@ static int index_for(struct hash_table_state *map, struct hash_table_entry *entr
 }
 
 #if 0
-// Useful debugging code for anyone working on this in the future
+/* Useful debugging code for anyone working on this in the future */
 static uint64_t distance(struct hash_table_state *state, int index) {
     return (index - state->slots[index].hash_code) & state->mask;
 }
@@ -99,7 +100,7 @@ void hash_dump(struct aws_common_hash_table *tbl) {
 #endif
 
 #if 0
-// Not currently exposed as an API. Should we have something like this? Useful for benchmarks
+/* Not currently exposed as an API. Should we have something like this? Useful for benchmarks */
 AWS_COMMON_API void aws_common_hash_table_print_stats(struct aws_common_hash_table *table) {
     struct hash_table_state *state = table->pImpl;
     uint64_t total_disp = 0;
@@ -145,8 +146,9 @@ AWS_COMMON_API void aws_common_hash_table_print_stats(struct aws_common_hash_tab
 }
 #endif
 
-// Given a header template, allocates space for a hash table of the appropriate size, and copies the state header
-// into this allocated memory, which is returned.
+/* Given a header template, allocates space for a hash table of the appropriate size, and copies the state header
+ * into this allocated memory, which is returned.
+ */
 static struct hash_table_state *alloc_state(const struct hash_table_state *template) {
     size_t elemsize;
 
@@ -172,7 +174,7 @@ static struct hash_table_state *alloc_state(const struct hash_table_state *templ
     return state;
 }
 
-// Computes the correct size and max_load based on a requested size.
+/* Computes the correct size and max_load based on a requested size. */
 static int update_template_size(struct hash_table_state *template, size_t expected_elements) {
     size_t min_size = expected_elements;
 
@@ -186,24 +188,24 @@ static int update_template_size(struct hash_table_state *template, size_t expect
         mask = mask << 1;
 
         if (size == 0) {
-            // Overflow
+            /* Overflow */
             return AWS_ERROR_OOM;
         }
     }
     mask = ~mask;
 
-    // Cross-check - make sure we didn't just overflow somehow.
+    /* Cross-check - make sure we didn't just overflow somehow. */
     if (size < expected_elements) {
         return AWS_ERROR_OOM;
     }
 
     template->size = size;
-    template->max_load = template->max_load_factor * template->size;
+    template->max_load = (size_t)(template->max_load_factor * template->size);
     if (template->max_load >= size) {
         template->max_load = size - 1;
     }
 
-    // Make sure we don't overflow when computing memory requirements either
+    /* Make sure we don't overflow when computing memory requirements either */
     size_t required_mem = aws_common_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
     if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
         return AWS_ERROR_OOM;
@@ -226,7 +228,7 @@ int aws_common_hash_table_init(struct aws_common_hash_table *map,
     template.alloc = alloc;
 
     template.entry_count = 0;
-    template.max_load_factor = 0.95; // TODO - make configurable?
+    template.max_load_factor = 0.95; /* TODO - make configurable? */
 
     update_template_size(&template, size);
     map->pImpl = alloc_state(&template);
@@ -243,17 +245,17 @@ void aws_common_hash_table_clean_up(struct aws_common_hash_table *map) {
     aws_mem_release(((struct hash_table_state *)map->pImpl)->alloc, map->pImpl);
 }
 
-// Tries to find where the requested key is or where it should go if put.
-// Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
-// or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
-// in *entry). Note that this does not take care of displacing whatever was in that entry before.
-
-// probe_idx is set to the probe index of the entry.
+/* Tries to find where the requested key is or where it should go if put.
+ * Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
+ * or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
+ * in *entry). Note that this does not take care of displacing whatever was in that entry before.
+ */
+/* probe_idx is set to the probe index of the entry. */
 
 static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx);
 
-// Inlined fast path: Check the first slot, only.
-static int find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) __attribute__((always_inline));
+/* Inlined fast path: Check the first slot, only. */
+static int AWS_FORCE_INLINE find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx);
 static int find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) {
     struct hash_table_entry *entry = &state->slots[hash_code & state->mask];
 
@@ -274,14 +276,15 @@ static int find_entry(struct hash_table_state *state, uint64_t hash_code, const 
 
 static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) {
     int probe_idx = 1;
-    // If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to see if it already exists,
-    // but if not we'll overwrite the deleted entry).
+    /* If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to see if it already exists,
+     * but if not we'll overwrite the deleted entry).
+     */
     int probe_cap = INT_MAX;
 
     int rv;
     struct hash_table_entry *entry;
     do {
-        int index = (hash_code + probe_idx) & state->mask;
+        uint64_t index = (hash_code + probe_idx) & state->mask;
         entry = &state->slots[index];
         if (!entry->hash_code) {
             rv = AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
@@ -293,12 +296,13 @@ static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const
             break;
         }
 
-        int entry_probe = (index - entry->hash_code) & state->mask;
+        uint64_t entry_probe = (index - entry->hash_code) & state->mask;
 
         if (entry_probe < probe_idx) {
-            // We now know that our target entry cannot exist; if it did exist, it would be at the current location
-            // as it has a higher probe length than the entry we are examining and thus would have preempted that
-            // item
+            /* We now know that our target entry cannot exist; if it did exist, it would be at the current location
+             * as it has a higher probe length than the entry we are examining and thus would have preempted that
+             * item
+             */
             rv = AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
             break;
         }
@@ -339,10 +343,10 @@ static struct hash_table_entry *emplace_item(struct hash_table_state *state, str
     struct hash_table_entry *initial_placement = NULL;
 
     while (entry.hash_code) {
-        int index = (entry.hash_code + probe_idx) & state->mask;
+        int index = (int)(entry.hash_code + probe_idx) & state->mask;
         struct hash_table_entry *victim = &state->slots[index];
 
-        int victim_probe_idx = (index - victim->hash_code) & state->mask;
+        int victim_probe_idx = (int)(index - victim->hash_code) & state->mask;
 
         if (!victim->hash_code || victim_probe_idx < probe_idx) {
             if (!initial_placement) {
@@ -376,7 +380,7 @@ static int expand_table(struct aws_common_hash_table *map) {
     for (int i = 0; i < old_state->size; i++) {
         struct hash_table_entry entry = old_state->slots[i];
         if (entry.hash_code) {
-            // We can directly emplace since we know we won't put the same item twice
+            /* We can directly emplace since we know we won't put the same item twice */
             emplace_item(new_state, entry, 0);
         }
     }
@@ -409,19 +413,19 @@ int aws_common_hash_table_create(struct aws_common_hash_table *map,
         return AWS_ERROR_SUCCESS;
     }
 
-    // Okay, we need to add an entry. Check the load factor first.
+    /* Okay, we need to add an entry. Check the load factor first. */
     if (state->entry_count + 1 > state->max_load) {
         rv = expand_table(map);
         if (rv != AWS_ERROR_SUCCESS) {
             return rv;
         }
         state = map->pImpl;
-        // If we expanded the table, we need to discard the probe index returned from find_entry,
-        // as it's likely that we can find a more desirable slot. If we don't, then later gets will
-        // terminate before reaching our probe index.
+        /* If we expanded the table, we need to discard the probe index returned from find_entry,
+         * as it's likely that we can find a more desirable slot. If we don't, then later gets will
+         * terminate before reaching our probe index.
 
-        // n.b. currently we ignore this probe_idx subsequently, but leaving this here so we don't
-        // forget when we optimize later.
+         * n.b. currently we ignore this probe_idx subsequently, but leaving this here so we don't
+         * forget when we optimize later. */
         probe_idx = 0;
     }
 
@@ -442,31 +446,34 @@ int aws_common_hash_table_create(struct aws_common_hash_table *map,
     return AWS_ERROR_SUCCESS;
 }
 
-// Clears an entry. Does _not_ invoke destructor callbacks.
-// Returns the last slot touched (note that if we wrap, we'll report an index lower than the
-// original entry's index)
+/* Clears an entry. Does _not_ invoke destructor callbacks.
+ * Returns the last slot touched (note that if we wrap, we'll report an index lower than the
+ * original entry's index)
+ */
 static int remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
     state->entry_count--;
 
-    // Shift subsequent entries back until we find an entry that belongs at its current position.
-    // This is important to ensure that subsequent searches don't terminate at the removed element.
+    /* Shift subsequent entries back until we find an entry that belongs at its current position.
+     * This is important to ensure that subsequent searches don't terminate at the removed element.
+     */
     int index = index_for(state, entry);
     while (1) {
         int next_index = (index + 1) & state->mask;
 
-        // If we hit an empty slot, stop
+        /* If we hit an empty slot, stop */
         if (!state->slots[next_index].hash_code) break;
-        // If the next slot is at the start of the probe sequence, stop.
-        // We know that nothing with an earlier home slot is after this; otherwise
-        // this index-zero entry would have been evicted from its home.
+        /* If the next slot is at the start of the probe sequence, stop.
+         * We know that nothing with an earlier home slot is after this; otherwise
+         * this index-zero entry would have been evicted from its home.
+         */
         if ((state->slots[next_index].hash_code & state->mask) == next_index) break;
 
-        // Okay, shift this one back
+        /* Okay, shift this one back */
         memcpy(&state->slots[index], &state->slots[next_index], sizeof(*state->slots));
         index = next_index;
     }
 
-    // Clear the entry we shifted out of
+    /* Clear the entry we shifted out of */
     memset(&state->slots[index], 0, sizeof(*entry));
 
     return index;
@@ -500,7 +507,7 @@ int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
     int (*callback)(void *baton, struct aws_common_hash_element *pElement), void *baton)
 {
     struct hash_table_state *state = map->pImpl;
-    int limit = state->size;
+    size_t limit = state->size;
 
     for (int i = 0; i < limit; i++) {
         struct hash_table_entry *entry = &state->slots[i];
@@ -511,20 +518,21 @@ int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
 
         switch (callback(baton, &entry->element)) {
             case AWS_COMMON_HASH_TABLE_ITER_CONTINUE:
-                break; // out of switch
+                break; /* out of switch */
             case AWS_COMMON_HASH_TABLE_ITER_DELETE: {
                 int last_index = remove_entry(state, entry);
-                // Removing an entry will shift back subsequent elements,
-                // so we must revisit this slot.
+                /* Removing an entry will shift back subsequent elements,
+                 * so we must revisit this slot.
+                 */
                 i--;
-                // If we shifted elements outside of our current limit, then that means
-                // that (exactly) one element that we've previously visited is now inside
-                // our horizon set by limit, so decrement limit to compensate
+                /* If we shifted elements outside of our current limit, then that means
+                 * that (exactly) one element that we've previously visited is now inside
+                 * our horizon set by limit, so decrement limit to compensate */
                 if (last_index < i || last_index >= limit) {
                     limit--;
                 }
 
-                break; // out of switch
+                break; /* out of switch */
             }
             case AWS_COMMON_HASH_TABLE_ITER_STOP:
                 return AWS_ERROR_SUCCESS;
@@ -546,14 +554,14 @@ void aws_common_hash_table_clear(struct aws_common_hash_table *map) {
         }
     }
 
-    // Since hash code 0 represents an empty slot we can just zero out the entire table.
+    /* Since hash code 0 represents an empty slot we can just zero out the entire table. */
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 }
 
 uint64_t aws_common_hash_string(const void *item) {
     const char *str = item;
 
-    // first digits of pi in hex
+    /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(str, strlen(str), &c, &b);
 
@@ -561,8 +569,8 @@ uint64_t aws_common_hash_string(const void *item) {
 }
 
 uint64_t aws_common_hash_ptr(const void *item) {
-    // first digits of e in hex
-    // 2.b7e 1516 28ae d2a6
+    /* first digits of e in hex
+     * 2.b7e 1516 28ae d2a6 */
     uint32_t b = 0x2b7e1516, c = 0x28aed2a6;
 
     hashlittle2(&item, sizeof(item), &c, &b);

@@ -24,6 +24,7 @@ file(GLOB AWS_TEST_HEADERS
 
 file(GLOB AWS_COMMON_PRIV_HEADERS
         "include/aws/common/private/*.h"
+        "include/aws/common/private/*.c"
         )
 
 file(GLOB AWS_COMMON_SRC
@@ -43,18 +44,18 @@ if (WIN32)
         source_group("Source Files\\windows" FILES ${AWS_COMMON_OS_SRC})
     endif ()
 
-    set(PLATFORM_LIBS "Kernel32 Ws2_32")
+    set(PLATFORM_LIBS Kernel32 Ws2_32)
 else ()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
         file(GLOB AWS_COMMON_OS_SRC
                 "source/posix/*.c"
                 )
-        set(PLATFORM_LIBS "pthread" "rt")
+        set(PLATFORM_LIBS pthread rt)
     elseif (APPLE)
         file(GLOB AWS_COMMON_OS_SRC
                 "source/posix/*.c"
                 )
-        set(PLATFORM_LIBS "pthread")
+        set(PLATFORM_LIBS pthread)
     endif ()
 endif ()
 

@@ -16,7 +16,6 @@
 #include <aws/common/hash_table.h>
 #include <aws/testing/aws_test_harness.h>
 #include <stdio.h>
-#include <sys/time.h>
 
 static const char *test_str_1 = "test 1";
 static const char *test_str_2 = "test 2";
@@ -42,7 +41,7 @@ static int test_hash_table_put_get_fn(struct aws_allocator *alloc, void *ctx) {
         "Hash Map put should have created a new element.");
     pElem->value = (void *)test_val_str_1;
 
-    // Try passing a NULL was_created this time
+    /* Try passing a NULL was_created this time */
     err_code = aws_common_hash_table_create(&hash_table, (void *)test_str_2, &pElem, NULL);
     ASSERT_INT_EQUALS(AWS_ERROR_SUCCESS, err_code,
         "Hash Map put should have succeeded.");
@@ -170,7 +169,7 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
         "Hash Map put should have succeeded.");
     pElem->value = (void *)test_val_str_2;
 
-    // Create a second time; this should not invoke destroy
+    /* Create a second time; this should not invoke destroy */
     err_code = aws_common_hash_table_create(&hash_table, (void *)test_str_2, &pElem, NULL);
     ASSERT_INT_EQUALS(AWS_ERROR_SUCCESS, err_code,
         "Hash Map put should have succeeded.");
@@ -299,10 +298,9 @@ static int qsort_churn_entry(const void *a, const void *b) {
 }
 
 static long timestamp() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-    return ((long)tv.tv_sec * 1000000) + tv.tv_usec;
+    uint64_t time = 0;
+    aws_sys_clock_get_ticks(&time);
+    return (long)(time / 1000);
 }
 
 AWS_TEST_CASE(test_hash_churn, test_hash_churn_fn)
@@ -317,8 +315,8 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
         FAIL("hash table creation failed: %d", err_code);
     }
 
-    // Probability that we deliberately try to overwrite.
-    // Note that random collisions can occur, and are not explicitly avoided.
+    /* Probability that we deliberately try to overwrite.
+       Note that random collisions can occur, and are not explicitly avoided. */
     double pOverwrite = 0.05;
     double pDelete = 0.05;
 
@@ -330,10 +328,10 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
         permuted[i] = e;
         e->original_index = i;
 
-        int mode = 0; // 0 = new entry, 1 = overwrite, 2 = delete
+        int mode = 0; /* 0 = new entry, 1 = overwrite, 2 = delete */
 
         if (i != 0) {
-            double p = drand48();
+            double p = (double)rand();
             if (p < pOverwrite) {
                 mode = 1;
             } else if (p < pOverwrite + pDelete) {
@@ -343,13 +341,13 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
 
         e->is_removed = 0;
         if (mode == 0) {
-            e->key = (void *)(uintptr_t)lrand48();
-            e->value = (void *)(uintptr_t)lrand48();
+            e->key = (void *)(uintptr_t)rand();
+            e->value = (void *)(uintptr_t)rand();
         } else if (mode == 1) {
-            e->key = entries[(size_t)lrand48() % i].key; // not evenly distributed but close enough
-            e->value = (void *)(uintptr_t)lrand48();
+            e->key = entries[(size_t)rand() % i].key; /* not evenly distributed but close enough */
+            e->value = (void *)(uintptr_t)rand();
         } else if (mode == 2) {
-            e->key = entries[(size_t)lrand48() % i].key; // not evenly distributed but close enough
+            e->key = entries[(size_t)rand() % i].key; /* not evenly distributed but close enough */
             e->value = 0;
             e->is_removed = 1;
         }

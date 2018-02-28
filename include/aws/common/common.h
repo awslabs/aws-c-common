@@ -60,15 +60,16 @@ AWS_COMMON_API void aws_load_error_strings(void);
 
 #if defined(_MSC_VER )
 #define AWS_ALIGN(alignment) __declspec(align(alignment))
-#define AWS_TYPE_OF(a) __decltype(a)
 #define AWS_LIKELY(x) x
 #define AWS_UNLIKELY(x) x
+#define AWS_FORCE_INLINE __forceinline
 #else
 #if defined(__GNUC__) || defined(__clang__)
 #define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
 #define AWS_TYPE_OF(a) __typeof__(a)
 #define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define AWS_FORCE_INLINE __attribute__((always_inline))
 #endif
 #endif
 
@@ -88,17 +89,6 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #endif
 #endif
 #endif
-
-/*
- * The next two macros don't do braced-group expressions since it breaks ISO-C rules. Instead just write the result to a variable.
- */
-#define AWS_MIN(a, b, o) do { AWS_TYPE_OF (a) _a = (a); \
-                         AWS_TYPE_OF (b) _b = (b); \
-                         o = _a < _b ? _a : _b; } while(0);
-
-#define AWS_MAX(a, b, o) do { AWS_TYPE_OF (a) _a = (a); \
-                         AWS_TYPE_OF (b) _b = (b); \
-                         o = _a > _b ? _a : _b; } while(0);
 
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
