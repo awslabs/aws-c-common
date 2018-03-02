@@ -192,6 +192,12 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
         return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
     }
 
+    size_t tmp = len * 3;
+
+    if (AWS_UNLIKELY(tmp < len)) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+
     size_t padding = 0;
 
     if (len >= 2 && input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
@@ -199,12 +205,6 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
     }
     else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
-    }
-
-    size_t tmp = len * 3;
-
-    if (AWS_UNLIKELY(tmp < len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
     *decoded_len = (tmp / 4 - padding);
