@@ -17,10 +17,10 @@
 #include <ctype.h>
 #include <assert.h>
 
-static const char *hex_chars = "0123456789abcdef";
+static const uint8_t *hex_chars = (const uint8_t *)"0123456789abcdef";
 
 static const uint8_t base64_sentinal_value = 0xff;
-static const char base64_encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const uint8_t base64_encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
  * per row. */
@@ -56,28 +56,28 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
-    assert(to_encode);
-    assert(output);
+int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
+    assert(to_encode->buffer);
+    assert(output->buffer);
 
     size_t encoded_len = 0;
 
-    if (AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode_len, &encoded_len))) {
+    if (AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode->len, &encoded_len))) {
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output_size < encoded_len)) {
+    if (AWS_UNLIKELY(output->len < encoded_len)) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
     size_t written = 0;
-    for (size_t i = 0; i < to_encode_len; ++i) {
+    for (size_t i = 0; i < to_encode->len; ++i) {
 
-        output[written++] = hex_chars[to_encode[i] >> 4 & 0x0f];
-        output[written++] = hex_chars[to_encode[i] & 0x0f];
+        output->buffer[written++] = hex_chars[to_encode->buffer[i] >> 4 & 0x0f];
+        output->buffer[written++] = hex_chars[to_encode->buffer[i] & 0x0f];
     }
 
-    output[written] = '\0';
+    output->buffer[written] = '\0';
 
     return AWS_OP_SUCCESS;
 }
@@ -114,17 +114,17 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
-    assert(to_decode);
-    assert(output);
+int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
+    assert(to_decode->buffer);
+    assert(output->buffer);
 
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode_len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode->len, &decoded_length))) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    if (AWS_UNLIKELY(output_size < decoded_length)) {
+    if (AWS_UNLIKELY(output->len < decoded_length)) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
@@ -134,23 +134,24 @@ int aws_hex_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uin
     uint8_t low_value = 0;
 
     /* if the buffer isn't even, prepend a 0 to the buffer. */
-    if (AWS_UNLIKELY(to_decode_len & 0x01)) {
+    if (AWS_UNLIKELY(to_decode->len & 0x01)) {
         i = 1;
-        if (hex_decode_char_to_int(to_decode[0], &low_value)) {
+        if (hex_decode_char_to_int(to_decode->buffer[0], &low_value)) {
             return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
         }
 
-        output[written++] = low_value;
+        output->buffer[written++] = low_value;
     }
 
-    for (; i < to_decode_len; i += 2) {
-        if (AWS_UNLIKELY(hex_decode_char_to_int(to_decode[i], &high_value) || hex_decode_char_to_int(to_decode[i + 1], &low_value))) {
+    for (; i < to_decode->len; i += 2) {
+        if (AWS_UNLIKELY(hex_decode_char_to_int(to_decode->buffer[i], &high_value) ||
+                                 hex_decode_char_to_int(to_decode->buffer[i + 1], &low_value))) {
             return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
         }
 
         uint8_t value = high_value << 4;
         value |= low_value;
-        output[written++] = value;
+        output->buffer[written++] = value;
     }
 
     return AWS_OP_SUCCESS;
@@ -211,57 +212,57 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_encode(const uint8_t *AWS_RESTRICT to_encode, size_t to_encode_len, char *AWS_RESTRICT output, size_t output_size) {
-    assert(to_encode);
-    assert(output);
+int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
+    assert(to_encode->buffer);
+    assert(output->buffer);
 
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode_len, &encoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output_size < encoded_length)) {
+    if (AWS_UNLIKELY(output->len< encoded_length)) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
-    size_t buffer_length = to_encode_len;
+    size_t buffer_length = to_encode->len;
     size_t block_count = (buffer_length + 2) / 3;
     size_t remainder_count = (buffer_length % 3);
     size_t str_index = 0;
 
-    for (size_t i = 0; i < to_encode_len; i += 3 )
+    for (size_t i = 0; i < to_encode->len; i += 3 )
     {
-        uint32_t block = to_encode[ i ];
+        uint32_t block = to_encode->buffer[ i ];
 
         block <<= 8;
         if (AWS_LIKELY(i + 1 < buffer_length))
         {
-            block = block | to_encode[ i + 1 ];
+            block = block | to_encode->buffer[ i + 1 ];
         }
 
         block <<= 8;
-        if (AWS_LIKELY(i + 2 < to_encode_len))
+        if (AWS_LIKELY(i + 2 < to_encode->len))
         {
-            block = block | to_encode[ i + 2 ];
+            block = block | to_encode->buffer[ i + 2 ];
         }
 
-        output[str_index++] = base64_encoding_table[(block >> 18) & 0x3F];
-        output[str_index++] = base64_encoding_table[(block >> 12) & 0x3F];
-        output[str_index++] = base64_encoding_table[(block >> 6) & 0x3F];
-        output[str_index++] = base64_encoding_table[block & 0x3F];
+        output->buffer[str_index++] = base64_encoding_table[(block >> 18) & 0x3F];
+        output->buffer[str_index++] = base64_encoding_table[(block >> 12) & 0x3F];
+        output->buffer[str_index++] = base64_encoding_table[(block >> 6) & 0x3F];
+        output->buffer[str_index++] = base64_encoding_table[block & 0x3F];
     }
 
     if(remainder_count > 0)
     {
-        output[block_count * 4 - 1] = '=';
+        output->buffer[block_count * 4 - 1] = '=';
         if(remainder_count == 1)
         {
-            output[block_count * 4 - 2] = '=';
+            output->buffer[block_count * 4 - 2] = '=';
         }
     }
 
     /* it's a string add the null terminator. */
-    output[encoded_length - 1] = 0;
+    output->buffer[encoded_length - 1] = 0;
 
     return AWS_OP_SUCCESS;
 }
@@ -276,53 +277,53 @@ static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_
     return AWS_OP_ERR;
 }
 
-int aws_base64_decode(const char *AWS_RESTRICT to_decode, size_t to_decode_len, uint8_t *AWS_RESTRICT output, size_t output_size) {
+int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, to_decode_len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_decoded_len((char *)to_decode->buffer, to_decode->len, &decoded_length))) {
         return AWS_OP_ERR;
     }
 
-    if (output_size < decoded_length) {
+    if (output->len < decoded_length) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
-    int64_t block_count = (int)to_decode_len / 4;
+    int64_t block_count = (int)to_decode->len / 4;
     size_t string_index = 0;
     uint8_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
     int64_t buffer_index = 0;
 
     for(int32_t i = 0; i < block_count - 1; ++i)
     {
-        if (AWS_UNLIKELY(base64_get_decoded_value(to_decode[string_index++], &value1, 0) ||
-                base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
-                base64_get_decoded_value(to_decode[string_index++], &value3, 0) ||
-                base64_get_decoded_value(to_decode[string_index++], &value4, 0))) {
+        if (AWS_UNLIKELY(base64_get_decoded_value(to_decode->buffer[string_index++], &value1, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value2, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value3, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value4, 0))) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
         buffer_index = i * 3;
-        output[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
-        output[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
-        output[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
+        output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
+        output->buffer[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
+        output->buffer[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
     }
 
     buffer_index = (block_count - 1) * 3;
 
     if (buffer_index >= 0) {
-        if(base64_get_decoded_value(to_decode[string_index++], &value1, 0) ||
-           base64_get_decoded_value(to_decode[string_index++], &value2, 0) ||
-           base64_get_decoded_value(to_decode[string_index++], &value3, 1) ||
-           base64_get_decoded_value(to_decode[string_index], &value4, 1)) {
+        if(base64_get_decoded_value(to_decode->buffer[string_index++], &value1, 0) ||
+           base64_get_decoded_value(to_decode->buffer[string_index++], &value2, 0) ||
+           base64_get_decoded_value(to_decode->buffer[string_index++], &value3, 1) ||
+           base64_get_decoded_value(to_decode->buffer[string_index], &value4, 1)) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
-        output[buffer_index++] = (uint8_t) ((value1 << 2) | ((value2 >> 4) & 0x03));
+        output->buffer[buffer_index++] = (uint8_t) ((value1 << 2) | ((value2 >> 4) & 0x03));
 
         if (value3 != base64_sentinal_value) {
-            output[buffer_index++] = (uint8_t) (((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
+            output->buffer[buffer_index++] = (uint8_t) (((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
             if (value4 != base64_sentinal_value) {
-                output[buffer_index] = (uint8_t) ((value3 & 0x03) << 6 | value4);
+                output->buffer[buffer_index] = (uint8_t) ((value3 & 0x03) << 6 | value4);
             }
         }
     }
