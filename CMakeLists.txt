@@ -76,7 +76,7 @@ if (BUILD_SHARED_LIBS)
     endif ()
 endif ()
 
-add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_HEADERS} ${COMMON_SRC})
+add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 
 #set warnings
