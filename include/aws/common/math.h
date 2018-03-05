@@ -35,11 +35,11 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
     // allow it to be allocated as an input register
 
     uint64_t rdx;
-    __asm__(
+    __asm__ (
         "mulq %q2\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
         "cmovc %q3, %%rax\n"
         : /* in/out: %rax = a, out: rdx (ignored) */ "+a" (a), "=d" (rdx)
-        : /* in: anything (imm/reg/memory) */ "g" (b),
+        : /* in: register */ "r" (b),
           /* in: saturation value (reg/memory) */ "rm" (~0LL)
         : /* clobbers: cc */ "cc"
     );
@@ -70,12 +70,12 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
     int flag;
     uint64_t result;
     __asm__(
-        "mulq %q3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
+        "mulq %3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
         "setno %b1\n" // rdx = (OF = 0)
         "and $0xFF, %1\n" // mask out flag
         : /* out: %rax */ "=a" (result), "=d" (flag)
-        : /* in: reg or memory (possibly rax/rdx), imm/reg/memory for 2nd operand */
-          "a" (a), "g" (b)
+        : /* in: reg or memory (possibly rax/rdx), reg for 2nd operand */
+          "a" (a), "r" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
@@ -118,7 +118,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
 #endif
         : /* out: %rax = result/a, out: rdx (ignored) */ "=a" (a), "=d" (edx)
         : /* in: operand 1 in eax */ "a" (a),
-          /* in: operand 2 (imm/reg/memory) */ "g" (b)
+          /* in: operand 2 in reg */ "r" (b)
 #ifdef __x86_64__
         // Saturation value for CMOV to use
             , "r" (0xFFFFFFFF)
@@ -159,7 +159,7 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
         "and $0xFF, %%edx\n" // flag = flag & 0xFF
         // we allocate flag to EDX since it'll be clobbered by MUL anyway
         : /* in/out: %eax = a, %dl = flag */ "=a" (result), "=d" (flag)
-        : /* in: eax = a, anything (imm/reg/memory) = b */ "a" (a), "g" (b)
+        : /* in: eax = a, anything reg = b */ "a" (a), "r" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
