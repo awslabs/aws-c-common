@@ -255,8 +255,7 @@ void aws_common_hash_table_clean_up(struct aws_common_hash_table *map) {
 static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx);
 
 /* Inlined fast path: Check the first slot, only. */
-static int AWS_FORCE_INLINE find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx);
-static int find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) {
+static int inline find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) {
     struct hash_table_entry *entry = &state->slots[hash_code & state->mask];
 
     if (entry->hash_code == 0) {

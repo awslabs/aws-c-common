@@ -362,12 +362,8 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
             printf("Put progress: %d/%d\n", i, nentries);
         }
         struct churn_entry *e = &entries[i];
-        int expected = AWS_ERROR_SUCCESS;
         if (e->is_removed) {
             err_code = aws_common_hash_table_remove(&hash_table, e->key, NULL);
-            if (i == 0 && entries[i - 1].key == e->key && entries[i - 1].is_removed) {
-                expected = AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
-            }
         } else {
             struct aws_common_hash_element *pElem;
             int was_created;
