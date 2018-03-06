@@ -287,7 +287,7 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
         return;
     }
 
-    void *item1, *item2;
+    void *item1 =NULL, *item2 = NULL;
     aws_array_list_get_at_ptr(list, &item1, a);
     aws_array_list_get_at_ptr(list, &item2, b);
     aws_array_list_mem_swap(item1, item2, list->item_size);

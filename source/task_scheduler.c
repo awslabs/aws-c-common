@@ -124,7 +124,7 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
 
 int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler) {
     while(1) {
-        struct aws_task task_to_run;
+        struct aws_task task_to_run = {0};
         int err = aws_task_scheduler_next_task(scheduler, &task_to_run, 0);
         if(AWS_OP_SUCCESS != err) {
             return err;
