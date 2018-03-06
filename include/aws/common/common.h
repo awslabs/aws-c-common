@@ -131,6 +131,8 @@ typedef enum aws_common_error {
 
 #define AWS_LIB_NAME "libaws-c-common"
 
+#define AWS_ENABLE_HW_OPTIMIZATION 1
+
 
 
 

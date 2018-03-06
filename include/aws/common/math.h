@@ -27,12 +27,13 @@
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
+#if (AWS_ENABLE_HW_OPTIMIZATION)
 static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
-    // We can use inline assembly to do this efficiently on x86-64 and x86.
+    /* We can use inline assembly to do this efficiently on x86-64 and x86.
 
-    // we specify rdx as an output, rather than a clobber, because we want to
-    // allow it to be allocated as an input register
+    we specify rdx as an output, rather than a clobber, because we want to
+    allow it to be allocated as an input register */
 
     uint64_t rdx;
     __asm__ (
@@ -50,12 +51,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t ret_val = _umul128(a, b, &out);
     return out == 0 ? ret_val : ~(uint64_t)0;
 #else
-    uint64_t x = a * b;
-    if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
-        return ~(uint64_t)0;
-    } else {
-        return x;
-    }
+#error "not supported."
 #endif
 }
 
@@ -70,7 +66,7 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
     int flag;
     uint64_t result;
     __asm__(
-        "mulq %3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
+        "mulq %q3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
         "setno %b1\n" // rdx = (OF = 0)
         "and $0xFF, %1\n" // mask out flag
         : /* out: %rax */ "=a" (result), "=d" (flag)
@@ -86,13 +82,7 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
 
     return out == 0;
 #else
-    uint64_t x = a * b;
-    *r = x;
-    if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
-        return 0;
-    } else {
-        return 1;
-    }
+#error "Not supported."
 #endif
 }
 
@@ -132,12 +122,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t ret_val = _mulx_u32(a, b, &out);
     return out == 0 ? ret_val : ~(uint32_t)0;
 #else
-    uint32_t x = a * b;
-    if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
-        return ~(uint32_t)0;
-    } else {
-        return x;
-    }
+#error "Not supported."
 #endif
 }
 
@@ -170,6 +155,55 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
 
     return out == 0;
 #else
+#error "Not supported."
+#endif
+}
+
+#else /* AWS_ENABLE_HW_OPTIMIZATION */
+
+/**
+ * Multiplies a * b. If the result overflows, returns 2^64 - 1.
+ */
+static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
+    uint64_t x = a * b;
+    if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
+        return ~(uint64_t)0;
+    } else {
+        return x;
+    }
+}
+
+/**
+ * Multiplies a * b and returns the truncated result in *r. If the result
+ * overflows, returns 0, else returns 1.
+ */
+static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+    uint64_t x = a * b;
+    *r = x;
+    if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+/**
+ * Multiplies a * b. If the result overflows, returns 2^32 - 1.
+ */
+static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
+    uint32_t x = a * b;
+    if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
+        return ~(uint32_t)0;
+    } else {
+        return x;
+    }
+}
+
+/**
+ * Multiplies a * b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     uint32_t x = a * b;
     *r = x;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
@@ -177,8 +211,8 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
     } else {
         return 1;
     }
-#endif
 }
+#endif /* AWS_ENABLE_HW_OPTIMIZATION */
 
 #if _MSC_VER
 #pragma warning(push)
@@ -216,4 +250,4 @@ static inline int aws_common_mul_size_checked(size_t a, size_t b, size_t *r) {
 #pragma warning(pop)
 #endif /* _MSC_VER */
 
-#endif
+#endif /* AWS_COMMON_math_H */

@@ -102,6 +102,8 @@ static int total_failures;
 #define ASSERT_NOT_NULL(ptr, format, ...) do { if(!ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_INT_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
     if (a != b) { FAIL("Expected:%lld got:%lld - " message, a, b, ## __VA_ARGS__); } } while(0)
+#define ASSERT_UINT_EQUALS(expected, got, message, ...) do { unsigned long long a = (unsigned long long) (expected); unsigned long long b = (unsigned long long) (got); \
+    if (a != b) { FAIL("Expected:%llu got:%llu - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_PTR_EQUALS(expected, got, message, ...) do { void *a = (void *) (expected); void *b = (void *) (got); \
     if (a != b) { FAIL("Expected:%lld got:%lld - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_STR_EQUALS(expected, got, message, ...) do { if (strcmp(expected, got)) { FAIL("Expected:%x got:%x - " message, expected, got, ## __VA_ARGS__); } } while(0)
