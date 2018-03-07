@@ -20,9 +20,8 @@
 #include <aws/common/error.h>
 #include <stdint.h>
 
-#define AWS_COMMON_HASH_TABLE_ITER_CONTINUE 0
-#define AWS_COMMON_HASH_TABLE_ITER_DELETE 1
-#define AWS_COMMON_HASH_TABLE_ITER_STOP 2
+#define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
+#define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
 
 /**
  * Hash table data structure. This module provides an automatically resizing
@@ -127,9 +126,9 @@ extern "C" {
 
     /**
      * Attempts to locate an element at key.  If the element is found, a
-     * pointer to the value is placed in *pElem, and AWS_ERROR_SUCCESS is
+     * pointer to the value is placed in *pElem, and AWS_OP_SUCCESS is
      * returned. Otherwise, *pElem is unchanged, and
-     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is returned.
+     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is raised (returning AWS_OP_ERROR)
      *
      * This method does not change the state of the hash table. Therefore, it
      * is safe to call _find from multiple threads on the same hash table,
@@ -153,8 +152,8 @@ extern "C" {
      * If was_created is non-NULL, *was_created is set to 0 if an existing
      * element was found, or 1 is a new element was created.
      *
-     * Returns AWS_ERROR_SUCCESS if an item was found or created.
-     * Returns AWS_ERROR_OOM if hash table expansion was required and memory
+     * Returns AWS_OP_SUCCESS if an item was found or created.
+     * Raises AWS_ERROR_OOM if hash table expansion was required and memory
      * allocation failed.
      */
     AWS_COMMON_API int aws_common_hash_table_create(
@@ -165,8 +164,8 @@ extern "C" {
 
     /**
      * Removes element at key. If the element is not found,
-     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is returned; otherwise
-     * AWS_ERROR_SUCCESS is returned.
+     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is raised; otherwise
+     * AWS_OP_SUCCESS is returned.
      *
      * If pValue is non-NULL, the existing value (if any) is moved into
      * (*value) before removing from the table, and destroy_fn is _not_
@@ -180,7 +179,8 @@ extern "C" {
 
     /**
      * Iterates through every element in the map and invokes the callback on
-     * that item.
+     * that item. Iteration is performed in an arbitrary, implementation-defined
+     * order, and is not guaranteed to be consistent across invocations.
      *
      * The callback may change the value associated with the key by overwriting
      * the value pointed-to by value. In this case, the on_element_removed
@@ -188,13 +188,13 @@ extern "C" {
      * AWS_COMMON_HASH_TABLE_ITER_DELETE (in which case the on_element_removed
      * is given the updated value).
      *
-     * The callback must return one of the following values:
+     * The callback must return a bitmask of zero or more of the following values
+     * ORed together:
+     * 
      * # AWS_COMMON_HASH_TABLE_ITER_CONTINUE - Continues iteration to the next
-     *     element
+     *     element (if not set, iteration stops)
      * # AWS_COMMON_HASH_TABLE_ITER_DELETE   - Deletes the current value and
      *     continues iteration.  destroy_fn will NOT be invoked.
-     * # AWS_COMMON_HASH_TABLE_ITER_STOP     - Stops iterating through the hash
-     *     table
      *
      * Invoking any method which may change the contents of the hashtable
      * during iteration results in undefined behavior. However, you may safely

@@ -17,6 +17,7 @@
  * deletions, see:
  * http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
  */
+
 #include <aws/common/hash_table.h>
 #include <aws/common/common.h>
 #include <aws/common/math.h>
@@ -152,6 +153,7 @@ AWS_COMMON_API void aws_common_hash_table_print_stats(struct aws_common_hash_tab
 static struct hash_table_state *alloc_state(const struct hash_table_state *template) {
     size_t elemsize;
 
+    /* We use size - 1 because the first slot is inlined into the hash_table_state structure. */
     if (!aws_common_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
         return NULL;
     }
@@ -189,14 +191,14 @@ static int update_template_size(struct hash_table_state *template, size_t expect
 
         if (size == 0) {
             /* Overflow */
-            return AWS_ERROR_OOM;
+            return aws_raise_error(AWS_ERROR_OOM);
         }
     }
     mask = ~mask;
 
     /* Cross-check - make sure we didn't just overflow somehow. */
     if (size < expected_elements) {
-        return AWS_ERROR_OOM;
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
     template->size = size;
@@ -208,13 +210,13 @@ static int update_template_size(struct hash_table_state *template, size_t expect
     /* Make sure we don't overflow when computing memory requirements either */
     size_t required_mem = aws_common_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
     if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
-        return AWS_ERROR_OOM;
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
     template->size = size;
     template->mask = mask;
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_common_hash_table_init(struct aws_common_hash_table *map,
@@ -234,10 +236,10 @@ int aws_common_hash_table_init(struct aws_common_hash_table *map,
     map->pImpl = alloc_state(&template);
 
     if (!map->pImpl) {
-        return AWS_ERROR_OOM;
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 void aws_common_hash_table_clean_up(struct aws_common_hash_table *map) {
@@ -249,12 +251,14 @@ void aws_common_hash_table_clean_up(struct aws_common_hash_table *map) {
  * Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
  * or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
  * in *entry). Note that this does not take care of displacing whatever was in that entry before.
+ *
+ * probe_idx is set to the probe index of the entry found.
  */
-/* probe_idx is set to the probe index of the entry. */
 
 static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx);
 
 /* Inlined fast path: Check the first slot, only. */
+/* TODO: Force inlining? */
 static int inline find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key, struct hash_table_entry **p_entry, int *p_probe_idx) {
     struct hash_table_entry *entry = &state->slots[hash_code & state->mask];
 
@@ -267,7 +271,7 @@ static int inline find_entry(struct hash_table_state *state, uint64_t hash_code,
     if (entry->hash_code == hash_code && state->equals_fn(key, entry->element.key)) {
         if (p_probe_idx) *p_probe_idx = 0;
         *p_entry = entry;
-        return AWS_ERROR_SUCCESS;
+        return AWS_OP_SUCCESS;
     }
 
     return find_entry1(state, hash_code, key, p_entry, p_probe_idx);
@@ -330,9 +334,10 @@ int aws_common_hash_table_find(struct aws_common_hash_table *map,
 
     if (rv == AWS_ERROR_SUCCESS) {
         *pElem = &entry->element;
+        return AWS_OP_SUCCESS;
     }
 
-    return rv;
+    return aws_raise_error(rv);
 }
 
 /*
@@ -373,7 +378,7 @@ static int expand_table(struct aws_common_hash_table *map) {
 
     struct hash_table_state *new_state = alloc_state(&template);
     if (!new_state) {
-        return AWS_ERROR_OOM;
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
     for (int i = 0; i < old_state->size; i++) {
@@ -387,7 +392,7 @@ static int expand_table(struct aws_common_hash_table *map) {
     map->pImpl = new_state;
     aws_mem_release(new_state->alloc, old_state);
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_common_hash_table_create(struct aws_common_hash_table *map,
@@ -409,13 +414,14 @@ int aws_common_hash_table_create(struct aws_common_hash_table *map,
             *pElem = &entry->element;
         }
         *was_created = 0;
-        return AWS_ERROR_SUCCESS;
+        return AWS_OP_SUCCESS;
     }
 
     /* Okay, we need to add an entry. Check the load factor first. */
     if (state->entry_count + 1 > state->max_load) {
         rv = expand_table(map);
-        if (rv != AWS_ERROR_SUCCESS) {
+        if (rv != AWS_OP_SUCCESS) {
+            /* Any error was already raised in expand_table */
             return rv;
         }
         state = map->pImpl;
@@ -442,7 +448,7 @@ int aws_common_hash_table_create(struct aws_common_hash_table *map,
 
     *was_created = 1;
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 /* Clears an entry. Does _not_ invoke destructor callbacks.
@@ -488,7 +494,7 @@ int aws_common_hash_table_remove(struct aws_common_hash_table *map,
     int rv = find_entry(state, hash_code, key, &entry, NULL);
 
     if (rv != AWS_ERROR_SUCCESS) {
-        return rv;
+        return aws_raise_error(rv);
     }
 
     if (pValue) {
@@ -499,7 +505,7 @@ int aws_common_hash_table_remove(struct aws_common_hash_table *map,
 
     remove_entry(state, entry);
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
@@ -515,30 +521,29 @@ int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
             continue;
         }
 
-        switch (callback(baton, &entry->element)) {
-            case AWS_COMMON_HASH_TABLE_ITER_CONTINUE:
-                break; /* out of switch */
-            case AWS_COMMON_HASH_TABLE_ITER_DELETE: {
-                int last_index = remove_entry(state, entry);
-                /* Removing an entry will shift back subsequent elements,
-                 * so we must revisit this slot.
-                 */
-                i--;
-                /* If we shifted elements outside of our current limit, then that means
-                 * that (exactly) one element that we've previously visited is now inside
-                 * our horizon set by limit, so decrement limit to compensate */
-                if (last_index < i || last_index >= limit) {
-                    limit--;
-                }
+        int rv = callback(baton, &entry->element);
 
-                break; /* out of switch */
+        if (rv & AWS_COMMON_HASH_TABLE_ITER_DELETE) {
+            int last_index = remove_entry(state, entry);
+            /* Removing an entry will shift back subsequent elements,
+             * so we must revisit this slot.
+             */
+            i--;
+            /* If we shifted elements outside of our current limit, then that means
+             * that (exactly) one element that we've previously visited is now inside
+             * our horizon set by limit, so decrement limit to compensate
+             */
+            if (last_index < i || last_index >= limit) {
+                limit--;
             }
-            case AWS_COMMON_HASH_TABLE_ITER_STOP:
-                return AWS_ERROR_SUCCESS;
+        }
+
+        if (!(rv & AWS_COMMON_HASH_TABLE_ITER_CONTINUE)) {
+            break;
         }
     }
 
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 void aws_common_hash_table_clear(struct aws_common_hash_table *map) {
