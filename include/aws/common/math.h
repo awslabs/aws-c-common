@@ -41,7 +41,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
         "cmovc %q3, %%rax\n"
         : /* in/out: %rax = a, out: rdx (ignored) */ "+a" (a), "=d" (rdx)
         : /* in: register */ "r" (b),
-          /* in: saturation value (reg/memory) */ "rm" (~0LL)
+          /* in: saturation value (must specify a register to avoid using rax/rdx) */ "c" (~0LL)
         : /* clobbers: cc */ "cc"
     );
     (void)rdx; // suppress unused warnings
