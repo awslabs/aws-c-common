@@ -31,11 +31,11 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
 
     uint64_t rdx;
     __asm__(
-        "mulq %q2\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
-        "cmovc %q3, %%rax\n"
-        : /* in/out: %rax = a, out: rdx (ignored) */ "+a" (a), "=d" (rdx)
-        : /* in: anything (imm/reg/memory) */ "g" (b),
-          /* in: saturation value (reg/memory) */ "rm" (~0LL)
+        "mulq %q[arg2]\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
+        "cmovc %q[saturate], %%rax\n"
+        : /* in/out: %rax = a, out: rdx (ignored) */ "+&a" (a), "=&d" (rdx)
+        : /* in: anything (imm/reg/memory) */ [arg2] "g" (b),
+          /* in: saturation value (reg/memory) */ [saturate] "rm" (~0LL)
         : /* clobbers: cc */ "cc"
     );
     (void)rdx; // suppress unused warnings
@@ -59,14 +59,14 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
     // We can use inline assembly to do this efficiently on x86-64 and x86.
 
     int flag;
-    uint64_t result;
+    uint64_t result = a;
     __asm__(
-        "mulq %q3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
-        "setno %b1\n" // rdx = (OF = 0)
-        "and $0xFF, %1\n" // mask out flag
-        : /* out: %rax */ "=a" (result), "=d" (flag)
-        : /* in: reg or memory (possibly rax/rdx), imm/reg/memory for 2nd operand */
-          "a" (a), "g" (b)
+        "mulq %q[arg2]\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
+        "setno %%dl\n" // rdx = (OF = 0)
+        "and $0xFF, %%edx\n" // mask out flag
+        : /* in/out: %rax (with first operand) */ "+&a" (result), "=&d" (flag)
+        : /* in: imm/reg/memory for 2nd operand */
+          [arg2] "g" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
@@ -93,21 +93,20 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
     // to be allocated as an input register
     uint32_t edx;
     __asm__(
-        "mull %k3\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
+        "mull %k[arg2]\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
 #ifdef __x86_64__
-        "cmovc %k4, %%eax\n"
+        "cmovc %k[saturate], %%eax\n"
 #else
         // cmov isn't guaranteed to be available on x86-32
         "jno .1f\n"
         "mov $0xFFFFFFFF, %%eax\n"
         ".1f:"
 #endif
-        : /* out: %rax = result/a, out: rdx (ignored) */ "=a" (a), "=d" (edx)
-        : /* in: operand 1 in eax */ "a" (a),
-          /* in: operand 2 (imm/reg/memory) */ "g" (b)
+        : /* in/out: %rax = result/a, out: rdx (ignored) */ "+&a" (a), "=&d" (edx)
+        : /* in: operand 2 (imm/reg/memory) */ [arg2] "g" (b)
 #ifdef __x86_64__
         // Saturation value for CMOV to use
-            , "r" (0xFFFFFFFF)
+            , [saturate] "r" (0xFFFFFFFF)
 #endif
         : /* clobbers: cc */ "cc"
     );
@@ -130,18 +129,18 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
 static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 #if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__)
     // We can use inline assembly to do this efficiently on x86-64 and x86.
-    uint32_t result;
+    uint32_t result = a;
     int flag;
     // Note: We use SETNO which only takes a byte register. To make this easy,
     // we'll write it to dl (which we throw away anyway) and mask off the high
     // bits.
     __asm__(
-        "mull %k3\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
+        "mull %k[arg2]\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
         "setno %%dl\n" // flag = !OF ^ (junk in top 24 bits)
         "and $0xFF, %%edx\n" // flag = flag & 0xFF
         // we allocate flag to EDX since it'll be clobbered by MUL anyway
-        : /* in/out: %eax = a, %dl = flag */ "=a" (result), "=d" (flag)
-        : /* in: eax = a, anything (imm/reg/memory) = b */ "a" (a), "g" (b)
+        : /* in/out: %eax = a, %dl = flag */ "+&a" (result), "=&d" (flag)
+        : /* imm/reg/memory = b */ [arg2] "g" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
