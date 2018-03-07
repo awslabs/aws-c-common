@@ -194,7 +194,6 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
     ASSERT_PTR_EQUALS(test_val_str_2, pElem->value, "Wrong value returned from second get");
 
     // If we delete and discard the element, destroy_fn should be invoked
-    elem = *pElem; // save to compare later
     err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_2, NULL, NULL);
     ASSERT_SUCCESS(err_code,
         "Remove should have succeeded.");
@@ -477,6 +476,7 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
             struct aws_common_hash_element *pElem;
             int was_created;
             err_code = aws_common_hash_table_create(&hash_table, e->key, &pElem, &was_created);
+            ASSERT_SUCCESS(err_code, "Unexpected failure adding element");
 
             pElem->value = e->value;
         }
@@ -509,6 +509,7 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
     long end = timestamp();
 
     free(entries);
+    free(permuted);
 
     RETURN_SUCCESS("%s() pass elapsed=%ld us", "test_hash_churn", end - start);
 }
