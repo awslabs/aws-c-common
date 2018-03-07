@@ -218,7 +218,7 @@ static inline size_t aws_common_mul_size_saturating(size_t a, size_t b) {
         (((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) ||
         ((uint64_t)SIZE_MAX == (uint64_t)~(uint64_t)0))
         ? 1 : -1
-    ];
+    ] = {0};
     /* suppress unused variable warning */
     (void)assert_sizet_is_32_or_64_bit;
 
