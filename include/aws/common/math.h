@@ -91,10 +91,10 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
  */
 static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
 #if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
-    // We can use inline assembly to do this efficiently on x86-64 and x86.
+    /* We can use inline assembly to do this efficiently on x86-64 and x86.
 
-    // we specify edx as an output, rather than a clobber, because we want to allow it
-    // to be allocated as an input register
+     we specify edx as an output, rather than a clobber, because we want to allow it
+    to be allocated as an input register */
     uint32_t edx;
     __asm__(
         "mull %k3\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
@@ -115,7 +115,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
 #endif
         : /* clobbers: cc */ "cc"
     );
-    (void)edx; // suppress unused warnings
+    (void)edx;  /* suppress unused warnings */
     return a;
 #elif defined(_M_X64) || defined(_M_IX86)
     uint32_t out;
@@ -132,17 +132,18 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
  */
 static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 #if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
-    // We can use inline assembly to do this efficiently on x86-64 and x86.
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
     uint32_t result;
     int flag;
-    // Note: We use SETNO which only takes a byte register. To make this easy,
-    // we'll write it to dl (which we throw away anyway) and mask off the high
-    // bits.
+    /**
+     * Note: We use SETNO which only takes a byte register. To make this easy,
+     * we'll write it to dl (which we throw away anyway) and mask off the high bits. 
+     */
     __asm__(
-        "mull %k3\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
-        "setno %%dl\n" // flag = !OF ^ (junk in top 24 bits)
-        "and $0xFF, %%edx\n" // flag = flag & 0xFF
-        // we allocate flag to EDX since it'll be clobbered by MUL anyway
+        "mull %k3\n"  /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
+        "setno %%dl\n"  /* flag = !OF ^ (junk in top 24 bits) */
+        "and $0xFF, %%edx\n"  /* flag = flag & 0xFF */
+        /* we allocate flag to EDX since it'll be clobbered by MUL anyway */
         : /* in/out: %eax = a, %dl = flag */ "=a" (result), "=d" (flag)
         : /* in: eax = a, anything reg = b */ "a" (a), "r" (b)
         : /* clobbers: cc */ "cc"
