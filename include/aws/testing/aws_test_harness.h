@@ -95,11 +95,11 @@ static int total_failures;
 #define ASSERT_TRUE(condition, format, ...) do { if(!(condition)) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_FALSE(condition, format, ...) do { if(condition) { FAIL(format, ## __VA_ARGS__); } } while(0)
 
-#define ASSERT_SUCCESS(condition, format, ...) do { if(condition != AWS_OP_SUCCESS) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_FAILS(condition, format, ...) do { if(condition != AWS_OP_ERR) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_ERROR(error, condition, format, ...) do { if(condition != -1) { FAIL(format, ## __VA_ARGS__); } if(aws_last_error() != error) { FAIL(format, ## __VA_ARGS__); } } while(0)
+#define ASSERT_SUCCESS(condition, format, ...) do { if((condition) != AWS_OP_SUCCESS) { FAIL(format, ## __VA_ARGS__); } } while(0)
+#define ASSERT_FAILS(condition, format, ...) do { if((condition) != AWS_OP_ERR) { FAIL(format, ## __VA_ARGS__); } } while(0)
+#define ASSERT_ERROR(error, condition, format, ...) do { if((condition) != AWS_OP_ERR) { FAIL("Expected error but no error occurred: " format, ## __VA_ARGS__); } if(aws_last_error() != (error)) { FAIL("Bad error code; got %d but expected %d: " format, aws_last_error(), (error), ## __VA_ARGS__); } } while(0)
 #define ASSERT_NULL(ptr, format, ...) do { if(ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
-#define ASSERT_NOT_NULL(ptr, format, ...) do { if(!ptr) { FAIL(format, ## __VA_ARGS__); } } while(0)
+#define ASSERT_NOT_NULL(ptr, format, ...) do { if(!(ptr)) { FAIL(format, ## __VA_ARGS__); } } while(0)
 #define ASSERT_INT_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
     if (a != b) { FAIL("Expected:%lld got:%lld - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_PTR_EQUALS(expected, got, message, ...) do { void *a = (void *) (expected); void *b = (void *) (got); \
@@ -110,8 +110,8 @@ static int total_failures;
 #define ASSERT_HEX_EQUALS(expected, got, message, ...) do { long long a = (long long) (expected); long long b = (long long) (got); \
     if (a != b) { FAIL("Expected:%llX got:%llX - " message, a, b, ## __VA_ARGS__); } } while(0)
 #define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, message, ... ) for (size_t i = 0; i < expected_size; ++i){ \
-    if (expected[i] != got[i]) {\
-        FAIL("Expected:%02x got:%02x - " message, expected[i], got[i], ## __VA_ARGS__);\
+    if ((expected)[i] != (got)[i]) {\
+        FAIL("Expected:%02x got:%02x - " message, (expected)[i], (got)[i], ## __VA_ARGS__);\
     }\
 }
 
@@ -130,10 +130,14 @@ struct aws_test_harness {
 };
 
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
+    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     static struct aws_test_harness name = { .on_before = NULL, .run = fn, .on_after = NULL,                            \
          .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                  \
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
+    static void b(struct aws_allocator *allocator, void *ctx);                                                         \
+    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
+    static void af(struct aws_allocator *allocator, void *ctx);                                                        \
     static struct aws_test_harness name = { .on_before = b, .run = fn, .on_after = af,                                 \
         .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                   \
 
