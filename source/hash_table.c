@@ -334,10 +334,11 @@ int aws_common_hash_table_find(struct aws_common_hash_table *map,
 
     if (rv == AWS_ERROR_SUCCESS) {
         *pElem = &entry->element;
-        return AWS_OP_SUCCESS;
+    } else {
+        *pElem = NULL;
     }
 
-    return aws_raise_error(rv);
+    return AWS_OP_SUCCESS;
 }
 
 /*
@@ -485,17 +486,26 @@ static int remove_entry(struct hash_table_state *state, struct hash_table_entry 
 }
 
 int aws_common_hash_table_remove(struct aws_common_hash_table *map,
-    const void *key, struct aws_common_hash_element *pValue
+    const void *key, struct aws_common_hash_element *pValue,
+    int *was_present
 ) {
     struct hash_table_state *state = map->pImpl;
     uint64_t hash_code = hash_for(state, key);
     struct hash_table_entry *entry;
+    int ignored;
+
+    if (!was_present) {
+        was_present = &ignored;
+    }
 
     int rv = find_entry(state, hash_code, key, &entry, NULL);
 
     if (rv != AWS_ERROR_SUCCESS) {
-        return aws_raise_error(rv);
+        *was_present = 0;
+        return AWS_OP_SUCCESS;
     }
+
+    *was_present = 1;
 
     if (pValue) {
         *pValue = entry->element;

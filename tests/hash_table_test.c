@@ -154,6 +154,7 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
     struct aws_common_hash_element *pElem, elem;
     int err_code = aws_common_hash_table_init(&hash_table, alloc, 10, aws_common_hash_string,
         aws_common_string_eq, destroy_fn);
+    int was_present = 42;
 
     reset_destroy_ck();
 
@@ -176,14 +177,15 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
 
     ASSERT_INT_EQUALS(0, removal_counter, "No elements should be destroyed at this point");
 
-    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_1, &elem);
+    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_1, &elem, &was_present);
     ASSERT_SUCCESS(err_code,
         "Hash Map remove should have succeeded.");
     ASSERT_INT_EQUALS(0, removal_counter, "No elements should be destroyed at this point");
+    ASSERT_INT_EQUALS(1, was_present, "Item should have been removed");
 
     err_code = aws_common_hash_table_find(&hash_table, (void *)test_str_1, &pElem);
-    ASSERT_ERROR(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, err_code,
-        "Hash Map get for non-existent element should have failed.");
+    ASSERT_SUCCESS(err_code, "Find for nonexistent item should still succeed");
+    ASSERT_NULL(pElem, "Expected item to be nonexistent");
 
     err_code = aws_common_hash_table_find(&hash_table, (void *)test_str_2, &pElem);
     ASSERT_SUCCESS(err_code,
@@ -193,16 +195,16 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
 
     // If we delete and discard the element, destroy_fn should be invoked
     elem = *pElem; // save to compare later
-    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_2, NULL);
+    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_2, NULL, NULL);
     ASSERT_SUCCESS(err_code,
         "Remove should have succeeded.");
     ASSERT_INT_EQUALS(1, removal_counter, "One element should be destroyed at this point");
     ASSERT_PTR_EQUALS(last_removed.value, test_val_str_2, "Wrong element destroyed");
 
     // If we delete an element that's not there, we shouldn't invoke destroy_fn
-    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_1, NULL);
-    ASSERT_ERROR(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, err_code,
-        "Remove should have indicated item not found.");
+    err_code = aws_common_hash_table_remove(&hash_table, (void *)test_str_1, NULL, &was_present);
+    ASSERT_SUCCESS(err_code, "Remove still should succeed on nonexistent items");
+    ASSERT_INT_EQUALS(0, was_present, "Remove should indicate item not present");
     ASSERT_INT_EQUALS(1, removal_counter, "We shouldn't delete an item if none was found");
 
     aws_common_hash_table_clean_up(&hash_table);
@@ -230,9 +232,10 @@ static int test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *al
     aws_common_hash_table_clear(&hash_table);
     ASSERT_INT_EQUALS(2, removal_counter, "Clear should destroy all items");
 
-    err_code = aws_common_hash_table_find(&hash_table, (void *)test_str_1, NULL);
-    ASSERT_ERROR(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, err_code,
-        "Hash Map get should fail after clear");
+    struct aws_common_hash_element *pElem;
+    err_code = aws_common_hash_table_find(&hash_table, (void *)test_str_1, &pElem);
+    ASSERT_SUCCESS(err_code, "Find should still succeed after clear");
+    ASSERT_NULL(pElem, "Element should not be found");
 
     reset_destroy_ck();
 
@@ -463,11 +466,12 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
         }
         struct churn_entry *e = &entries[i];
         if (e->is_removed) {
-            err_code = aws_common_hash_table_remove(&hash_table, e->key, NULL);
+            int was_present;
+            err_code = aws_common_hash_table_remove(&hash_table, e->key, NULL, &was_present);
             if (i == 0 && entries[i - 1].key == e->key && entries[i - 1].is_removed) {
-                ASSERT_ERROR(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, err_code, "Expected item to be missing");
+                ASSERT_INT_EQUALS(0, was_present,"Expected item to be missing");
             } else {
-                ASSERT_SUCCESS(err_code, "Expected item to be present");
+                ASSERT_INT_EQUALS(1, was_present, "Expected item to be present");
             }
         } else {
             struct aws_common_hash_element *pElem;
@@ -490,12 +494,12 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
         }
 
         struct aws_common_hash_element *pElem;
-        err_code = aws_common_hash_table_find(&hash_table, e->key, &pElem);
+        aws_common_hash_table_find(&hash_table, e->key, &pElem);
 
         if (e->is_removed) {
-            ASSERT_ERROR(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, err_code, "expected item to be deleted");
+            ASSERT_NULL(pElem, "expected item to be deleted");
         } else {
-            ASSERT_SUCCESS(err_code, "expected item to be present");
+            ASSERT_NOT_NULL(pElem, "expected item to be present");
             ASSERT_PTR_EQUALS(e->value, pElem->value, "wrong value for item");
         }
     }

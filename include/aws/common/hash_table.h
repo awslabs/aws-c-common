@@ -126,9 +126,8 @@ extern "C" {
 
     /**
      * Attempts to locate an element at key.  If the element is found, a
-     * pointer to the value is placed in *pElem, and AWS_OP_SUCCESS is
-     * returned. Otherwise, *pElem is unchanged, and
-     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is raised (returning AWS_OP_ERROR)
+     * pointer to the value is placed in *pElem; if it is not found,
+     * *pElem is set to NULL. Either way, AWS_OP_SUCCESS is returned.
      *
      * This method does not change the state of the hash table. Therefore, it
      * is safe to call _find from multiple threads on the same hash table,
@@ -163,18 +162,20 @@ extern "C" {
     );
 
     /**
-     * Removes element at key. If the element is not found,
-     * AWS_ERROR_HASHTBL_ITEM_NOT_FOUND is raised; otherwise
-     * AWS_OP_SUCCESS is returned.
+     * Removes element at key. Always returns AWS_OP_SUCCESS.
      *
      * If pValue is non-NULL, the existing value (if any) is moved into
      * (*value) before removing from the table, and destroy_fn is _not_
      * invoked. If pValue is NULL, then (if the element existed) destroy_fn
      * will be invoked on the element being removed.
+     *
+     * If was_present is non-NULL, it is set to 0 if the element was
+     * not present, or 1 if it was present (and is now removed).
      */
     AWS_COMMON_API int aws_common_hash_table_remove(
         struct aws_common_hash_table *map,
-        const void *key, struct aws_common_hash_element *pValue
+        const void *key, struct aws_common_hash_element *pValue,
+        int *was_present
     );
 
     /**
