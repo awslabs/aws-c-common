@@ -62,6 +62,7 @@ int aws_thread_launch (struct aws_thread *thread, void(*func)(void *arg), void *
     pthread_attr_t attributes;
     pthread_attr_t *attributes_ptr = NULL;
     int attr_return = 0;
+    int allocation_failed = 0;
 
     if(options) {
         attr_return = pthread_attr_init(&attributes);
@@ -81,7 +82,6 @@ int aws_thread_launch (struct aws_thread *thread, void(*func)(void *arg), void *
         }
     }
     
-    int allocation_failed = 0;
     struct thread_wrapper *wrapper = (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
     
     if(!wrapper) {
