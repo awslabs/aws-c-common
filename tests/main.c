@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
                        &test_hash_table_hash_clear_allows_cleanup,
                        &test_hash_table_on_resize_returns_correct_entry,
                        &test_hash_churn,
+                       &test_hash_table_foreach,
                        &test_u64_saturating,
                        &test_u32_saturating,
                        &test_u64_checked,
