@@ -313,7 +313,7 @@ static int foreach_cb_cutoff_del(void *context, struct aws_common_hash_element *
     if (--*pRemain) {
         return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
     } else {
-        *pRemain = (int)pElement->key;
+        *pRemain = (int)(intptr_t)pElement->key;
         return AWS_COMMON_HASH_TABLE_ITER_DELETE;
     }
 }
