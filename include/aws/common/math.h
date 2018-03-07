@@ -37,14 +37,14 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
 
     uint64_t rdx;
     __asm__ (
-        "mulq %q2\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
+        "mulq %q2\n"  /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
         "cmovc %q3, %%rax\n"
-        : /* in/out: %rax = a, out: rdx (ignored) */ "+a" (a), "=d" (rdx)
+        : /* in/out: %rax = a, out: rdx (ignored) */ "+&a" (a), "=&d" (rdx)
         : /* in: register */ "r" (b),
-          /* in: saturation value (must specify a register to avoid using rax/rdx) */ "c" (~0LL)
+          /* in: saturation value (any register) */ "r" (~0LL)
         : /* clobbers: cc */ "cc"
     );
-    (void)rdx; // suppress unused warnings
+    (void)rdx;  /* suppress unused warnings */
     return a;
 #elif defined(_M_X64) || defined(_M_ARM)
     uint64_t out;
@@ -61,14 +61,14 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
  */
 static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
-    // We can use inline assembly to do this efficiently on x86-64 and x86.
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
     int flag;
     uint64_t result;
     __asm__(
-        "mulq %q3\n" // rax * b, result is in RDX:RAX, OF=CF=(RDX != 0)
-        "setno %b1\n" // rdx = (OF = 0)
-        "and $0xFF, %1\n" // mask out flag
+        "mulq %q3\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
+        "setno %b1\n" /* rdx = (OF = 0) */
+        "and $0xFF, %1\n" /* mask out flag */
         : /* out: %rax */ "=a" (result), "=d" (flag)
         : /* in: reg or memory (possibly rax/rdx), reg for 2nd operand */
           "a" (a), "r" (b)
@@ -97,14 +97,13 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
     to be allocated as an input register */
     uint32_t edx;
     __asm__(
-        "mull %k3\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
+        "mull %k2\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
         /* cmov isn't guaranteed to be available on x86-32 */
         "jnc .1f%=\n"
-        "mov $0xFFFFFFFF, %%eax\n"
+        "mov $0xFFFFFFFF, %%rax\n"
         ".1f%=:"
-        : /* out: %eax = result/a, out: edx (ignored) */ "=a" (a), "=d" (edx)
-        : /* in: operand 1 in eax */ "a" (a),
-          /* in: operand 2 in reg */ "r" (b)
+        : /* in/out: %eax = result/a, out: edx (ignored) */ "+&a" (a), "=&d" (edx)
+        : /* in: operand 2 in reg */ "r" (b)
         : /* clobbers: cc */ "cc"
     );
     (void)edx;  /* suppress unused warnings */
