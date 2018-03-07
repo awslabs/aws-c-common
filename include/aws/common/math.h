@@ -97,22 +97,14 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
     to be allocated as an input register */
     uint32_t edx;
     __asm__(
-        "mull %k3\n" // eax * b, result is in EDX:EAX, OF=CF=(EDX != 0)
-#ifdef __x86_64__
-        "cmovc %k4, %%eax\n"
-#else
-        // cmov isn't guaranteed to be available on x86-32
-        "jno .1f\n"
+        "mull %k3\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
+        /* cmov isn't guaranteed to be available on x86-32 */
+        "jnc .1f%=\n"
         "mov $0xFFFFFFFF, %%eax\n"
-        ".1f:"
-#endif
-        : /* out: %rax = result/a, out: rdx (ignored) */ "=a" (a), "=d" (edx)
+        ".1f%=:"
+        : /* out: %eax = result/a, out: edx (ignored) */ "=a" (a), "=d" (edx)
         : /* in: operand 1 in eax */ "a" (a),
           /* in: operand 2 in reg */ "r" (b)
-#ifdef __x86_64__
-        // Saturation value for CMOV to use
-            , "r" (0xFFFFFFFF)
-#endif
         : /* clobbers: cc */ "cc"
     );
     (void)edx;  /* suppress unused warnings */
