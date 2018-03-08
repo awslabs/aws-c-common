@@ -103,7 +103,7 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
     int storage[SIZE], err;
     aws_priority_queue_static_init(&queue, storage, SIZE, sizeof(int), compare_ints);
     int values[SIZE];
-    srand((size_t)&queue);
+    srand((unsigned)(uintptr_t)&queue);
     for(int i = 0; i < SIZE; i++) {
         values[i] = rand() % 1000;
         err = aws_priority_queue_push(&queue, &values[i]);
@@ -146,7 +146,7 @@ static int test_priority_queue_size_and_capacity(struct aws_allocator *alloc, vo
     struct aws_priority_queue queue;
     int err = aws_priority_queue_dynamic_init(&queue, alloc, 5, sizeof(int), compare_ints);
     ASSERT_SUCCESS(err, "Dynamic init failed with error %d", err);
-    int capacity = aws_priority_queue_capacity(&queue);
+    size_t capacity = aws_priority_queue_capacity(&queue);
     ASSERT_INT_EQUALS(5, capacity, "Expected Capacity %d but was %d", 5, capacity);
 
     for(int i = 0; i < 15; i++) {
@@ -154,7 +154,7 @@ static int test_priority_queue_size_and_capacity(struct aws_allocator *alloc, vo
         ASSERT_SUCCESS(err, "Push operation failed with error %d", err);
     }
 
-    int size = aws_priority_queue_size(&queue);
+    size_t size = aws_priority_queue_size(&queue);
     ASSERT_INT_EQUALS(15, size, "Expected Size %d but was %d", 15, capacity);
 
     capacity = aws_priority_queue_capacity(&queue);

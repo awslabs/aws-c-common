@@ -18,7 +18,7 @@
 
 aws_linked_list_of(int, int_value);
 
-static int test_linked_list_order_push_back_pop_front() {
+static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
     struct aws_linked_list_node list, *head;
 
     head = &list;
@@ -54,7 +54,7 @@ static int test_linked_list_order_push_back_pop_front() {
     return 0;
 }
 
-static int test_linked_list_order_push_front_pop_back() {
+static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
     struct aws_linked_list_node list, *head;
 
     head = &list;

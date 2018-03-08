@@ -14,15 +14,21 @@
  *  permissions and limitations under the License.
  */
 
+#if _MSC_VER
+#pragma warning(disable:4100)
+#endif
+
+#include <encoding_test.c>
 #include <error_test.c>
 #include <thread_test.c>
 #include <mutex_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
-#include <encoding_test.c>
 #include <linked_list_test.c>
 #include <priority_queue_test.c>
 #include <task_scheduler_test.c>
+#include <hash_table_test.c>
+#include <math_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -95,5 +101,18 @@ int main(int argc, char *argv[]) {
                        &scheduler_rejects_xthread_access_test,
                        &scheduler_pops_task_late_test,
                        &scheduler_task_timestamp_test,
-                       &scheduler_ordering_test);
+                       &scheduler_ordering_test,
+                       &test_hash_table_put_get,
+                       &test_hash_table_hash_collision,
+                       &test_hash_table_hash_overwrite,
+                       &test_hash_table_hash_remove,
+                       &test_hash_table_hash_clear_allows_cleanup,
+                       &test_hash_table_on_resize_returns_correct_entry,
+                       &test_hash_churn,
+                       &test_hash_table_foreach,
+                       &test_u64_saturating,
+                       &test_u32_saturating,
+                       &test_u64_checked,
+                       &test_u32_checked
+                       );
 }

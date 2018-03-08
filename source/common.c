@@ -78,6 +78,7 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_no_tasks, AWS_ERROR_TASK_SCHEDULER_NO_TASKS, "no tasks scheduled available.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_no_ready_tasks, AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, "none of the tasks scheduled is due to run now.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(aws_error_task_scheduler_xthread_access, AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS, "Scheduler is being used from a thread different from its owner.", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(aws_error_hashtbl_item_not_found, AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)
 };
 
 static struct aws_error_info_list list = {

@@ -223,8 +223,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
          * good way to predict the usage pattern to make a smart decision about it. However, if the user
          * is doing this in an iterative fashion, necessary_size will never be used.*/
         size_t next_allocation_size = list->current_size << 1;
-        size_t new_size = 0;
-        AWS_MAX(necessary_size, next_allocation_size, new_size);
+        size_t new_size = next_allocation_size > necessary_size ? next_allocation_size : necessary_size;
 
         if (new_size < list->current_size) {
             /* this means new_size overflowed. The only way this happens is on a 32-bit system
@@ -288,7 +287,7 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
         return;
     }
 
-    void *item1, *item2;
+    void *item1 =NULL, *item2 = NULL;
     aws_array_list_get_at_ptr(list, &item1, a);
     aws_array_list_get_at_ptr(list, &item2, b);
     aws_array_list_mem_swap(item1, item2, list->item_size);
