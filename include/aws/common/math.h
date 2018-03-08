@@ -40,7 +40,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
         "mulq %q[arg2]\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
         "cmovc %q[saturate], %%rax\n"
         : /* in/out: %rax = a, out: rdx (ignored) */ "+&a" (a), "=&d" (rdx)
-        : /* in: anything (imm/reg/memory) */ [arg2] "g" (b),
+        : /* in: register only */ [arg2] "r" (b),
           /* in: saturation value (reg/memory) */ [saturate] "rm" (~0LL)
         : /* clobbers: cc */ "cc"
     );
@@ -70,8 +70,8 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
         "setno %%dl\n" /* rdx = (OF = 0) */
         "and $0xFF, %%edx\n" /* mask out flag */
         : /* in/out: %rax (with first operand) */ "+&a" (result), "=&d" (flag)
-        : /* in: imm/reg/memory for 2nd operand */
-          [arg2] "g" (b)
+        : /* in: reg for 2nd operand */
+          [arg2] "r" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
@@ -136,7 +136,7 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
         "and $0xFF, %%edx\n" /* flag = flag & 0xFF */
         /* we allocate flag to EDX since it'll be clobbered by MUL anyway */
         : /* in/out: %eax = a, %dl = flag */ "+&a" (result), "=&d" (flag)
-        : /* imm/reg/memory = b */ [arg2] "g" (b)
+        : /* reg = b */ [arg2] "r" (b)
         : /* clobbers: cc */ "cc"
     );
     *r = result;
