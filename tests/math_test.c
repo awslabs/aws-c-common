@@ -77,7 +77,7 @@ static int test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
 #define CHECK_OVF_0(fn, type, a, b) \
     do { \
         type result_val; \
-        ASSERT_FALSE(fn((a), (b), &result_val), "Expected overflow"); \
+        ASSERT_FALSE(fn((a), (b), &result_val)); \
     } while (0)
 
 #define CHECK_OVF(fn, type, a, b) \
@@ -90,7 +90,7 @@ static int test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
 #define CHECK_NO_OVF_0(fn, type, a, b, r) \
     do { \
         type result_val; \
-        ASSERT_TRUE(fn((a), (b), &result_val), "Expected no overflow"); \
+        ASSERT_TRUE(fn((a), (b), &result_val)); \
         ASSERT_INT_EQUALS((uint64_t)result_val, (uint64_t)(r), "Expected %s(%016llx, %016llx) = %016llx; got %016llx", \
             #fn, \
             (unsigned long long)(a), \
