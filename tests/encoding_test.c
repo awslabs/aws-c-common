@@ -471,7 +471,7 @@ static int uint64_buffer_non_aligned_test_fn(struct aws_allocator *alloc, void *
     aws_write_u64(buffer + 1, test_value);
 
     uint8_t expected[] = { 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80 };
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 1), sizeof(buffer) - 1, "Uint64_t to buffer failed");
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 1), sizeof(expected), "Uint64_t to buffer failed");
 
     uint64_t unmarshalled_value = aws_read_u64(buffer + 1);
     ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
@@ -510,7 +510,7 @@ static int uint32_buffer_non_aligned_test_fn(struct aws_allocator *alloc, void *
     aws_write_u32(buffer + 5, test_value);
 
     uint8_t expected[] = { 0x10, 0x20, 0x30, 0x40 };
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 5), sizeof(buffer) - 5, "Uint32_t to buffer failed");
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 5), sizeof(expected), "Uint32_t to buffer failed");
 
     uint64_t unmarshalled_value = aws_read_u32(buffer + 5);
     ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
@@ -548,7 +548,7 @@ static int uint24_buffer_non_aligned_test_fn(struct aws_allocator *alloc, void *
     aws_write_u24(buffer + 6, test_value);
 
     uint8_t expected[] = { 0x10, 0x20, 0x30 };
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 6), sizeof(buffer) - 6, "24 bit int to buffer failed");
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 6), sizeof(expected), "24 bit int to buffer failed");
 
     uint32_t unmarshalled_value = aws_read_u24(buffer + 6);
     ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
@@ -585,7 +585,7 @@ static int uint16_buffer_non_aligned_test_fn(struct aws_allocator *alloc, void *
     aws_write_u16(buffer + 7, test_value);
 
     uint8_t expected[] = { 0x10, 0x20 };
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 7), sizeof(buffer) - 7, "16 bit int to buffer failed");
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 7), sizeof(expected), "16 bit int to buffer failed");
 
     uint16_t unmarshalled_value = aws_read_u16(buffer + 7);
     ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
