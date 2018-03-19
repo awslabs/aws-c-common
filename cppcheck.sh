@@ -13,5 +13,6 @@ cppcheck                                                    \
 --suppress=missingInclude                                   \
 --suppress=memleak:tests/hash_table_test.c                  \
 --suppress=unreadVariable:tests/hash_table_test.c           \
+--suppress=staticStringCompare:tests/assert_test.c          \
                                                             \
 -q .

@@ -100,9 +100,8 @@ int test_asserts(int *index) {
 
     TEST_SUCCESS(assert_null)    { ASSERT_NULL(NULL); }
     {
-        void *nullp1 = NULL;
         const struct forward_decl *nullp2 = NULL;
-        TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp1); }
+        TEST_SUCCESS(assert_null)    { void *nullp = NULL; ASSERT_NULL(nullp); }
         TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp2); }
         TEST_SUCCESS(assert_null_sideeffects) { ASSERT_NULL((side_effect(), nullp2)); }
     }
