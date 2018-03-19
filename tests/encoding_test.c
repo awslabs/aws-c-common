@@ -157,13 +157,13 @@ static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloc,
     struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, sizeof(test_data));
     struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, size_too_small);
 
-    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_hex_encode(&test_buf,
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_hex_encode(&test_buf,
                                                                &output_buf),
-        "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+        "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
 
-    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_hex_decode(&test_buf,
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_hex_decode(&test_buf,
                                                                &output_buf),
-                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+                 "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
     return 0;
 }
 
@@ -355,15 +355,15 @@ static int base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *a
     struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, sizeof(test_data) - 1);
     struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, size_too_small);
 
-    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_base64_encode(&test_buf,
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_base64_encode(&test_buf,
                                                                   &output_buf),
-                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+                 "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
 
     struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, sizeof(encoded_data) - 1);
 
-    ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_base64_decode(&encoded_buf,
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_base64_decode(&encoded_buf,
                                                                    &output_buf),
-                 "Invalid buffer size should have failed with AWS_ERROR_INVALID_BUFFER_SIZE");
+                 "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
     return 0;
 }
 
