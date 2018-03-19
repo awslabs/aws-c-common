@@ -18,7 +18,7 @@ install:
 
 #execute build
 script:
-  - cppcheck --enable=all --std=c99 --language=c --suppress=unusedFunction --suppress=missingInclude -I include --force --error-exitcode=-1 -USELF_TEST  -UCLOCK_MONOTONIC_RAW --suppress=memleak:tests/hash_table_test.c --suppress=unreadVariable:tests/hash_table_test.c -q ./
+  - ./cppcheck.sh
   - mkdir build
   - cd build
   - cmake ..
