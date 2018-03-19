@@ -16,6 +16,7 @@
 */
 
 #include <aws/common/common.h>
+#include <aws/common/array_list.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -38,6 +39,50 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, siz
 static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t c_str[], size_t len) {
     return (struct aws_byte_buf){.buffer = (uint8_t *)&c_str[0], .len = len};
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * No copies, no string allocations. Fills in output with a list of aws_byte_buf instances where buffer is
+ * an offset into the input_str and len is the length of that string in the original buffer.
+ *
+ * Edge case rules are as follows:
+ * if the string begins with split_on, an empty string will be the first entry in output
+ * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
+ * if the input string ends with split_on, it will be ignored.
+ *
+ * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
+ * is your most likely guess for the upper bound of the number of elements resulting from the split.
+ *
+ * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
+ */
+AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on,
+                                            struct aws_array_list *output);
+
+/**
+ * No copies, no string allocations. Fills in output with a list of aws_byte_buf instances where buffer is
+ * an offset into the input_str and len is the length of that string in the original buffer.
+ *
+ * Edge case rules are as follows:
+ * if the string begins with split_on, an empty string will be the first entry in output
+ * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
+ * if the input string ends with split_on, it will be ignored.
+ *
+ * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
+ * is your most likely guess for the upper bound of the number of elements resulting from the split.
+ *
+ * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
+ *
+ * We assume split_on is a literal and will call strlen() on it.
+ */
+AWS_COMMON_API int aws_string_split_on_str(struct aws_byte_buf *input_str, char *split_on,
+                                            struct aws_array_list *output);
+#ifdef __cplusplus
+}
+#endif
+
 
 /**
  * Represents a movable pointer within a larger binary string or buffer.
@@ -102,10 +147,10 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * Because there's no standard SIZE_BIT in C99, we'll divide by a mask with
      * just the top bit set instead.
      */
-    
+
     combined_mask = (~combined_mask) / (SIZE_MAX - (SIZE_MAX >> 1));
 
-    /* 
+    /*
      * Now multiply it to replicate it across all bits.
      *
      * Note that GCC is smart enough to optimize the divide-and-multiply into
