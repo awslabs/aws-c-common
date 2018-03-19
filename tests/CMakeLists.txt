@@ -17,6 +17,23 @@ else ()
     target_compile_options(${TEST_BINARY_NAME} PRIVATE -Wall -Wno-long-long -Werror)
 endif ()
 
+file(GLOB META_TESTS "assert_test.c")
+
+set(METATEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-assert-tests)
+
+add_executable(${METATEST_BINARY_NAME} ${META_TESTS})
+target_link_libraries(${METATEST_BINARY_NAME} ${CMAKE_PROJECT_NAME})
+set_target_properties(${METATEST_BINARY_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
+target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+if (MSVC)
+    target_compile_options(${METATEST_BINARY_NAME} PRIVATE /W4 /WX)
+else ()
+    target_compile_options(${METATEST_BINARY_NAME} PRIVATE -Wall -Wno-long-long -Werror)
+endif ()
+
+add_test(assert_test ${METATEST_BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/metatest.tmp)
+
 add_test(raise_errors_test ${TEST_BINARY_NAME} raise_errors_test)
 add_test(reset_errors_test ${TEST_BINARY_NAME} reset_errors_test)
 add_test(error_callback_test ${TEST_BINARY_NAME} error_callback_test)
