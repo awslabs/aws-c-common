@@ -99,18 +99,20 @@ int test_asserts(int *index) {
     TEST_FAILURE(assert_error)   { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo"); }
 
     TEST_SUCCESS(assert_null)    { ASSERT_NULL(NULL); }
-    void *nullp1 = NULL;
-    const struct forward_decl *nullp2 = NULL;
-    TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp1); }
-    TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp2); }
-    TEST_SUCCESS(assert_null_sideeffects) { ASSERT_NULL((side_effect(), nullp2)); }
+    {
+        void *nullp1 = NULL;
+        const struct forward_decl *nullp2 = NULL;
+        TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp1); }
+        TEST_SUCCESS(assert_null)    { ASSERT_NULL(nullp2); }
+        TEST_SUCCESS(assert_null_sideeffects) { ASSERT_NULL((side_effect(), nullp2)); }
+    }
     TEST_SUCCESS(assert_null)    { ASSERT_NULL(0, "foo"); }
     TEST_FAILURE(assert_null)    { ASSERT_NULL("hello world", "foo"); }
 
     TEST_SUCCESS(inteq)          { ASSERT_INT_EQUALS(4321, 4321); }
     TEST_SUCCESS(inteq)          { ASSERT_INT_EQUALS(4321, 4321, "foo"); }
-    int increment = 4321;
     TEST_SUCCESS(inteq_side_effects) {
+        int increment = 4321;
         ASSERT_INT_EQUALS(4321, increment++, "foo");
         ASSERT_INT_EQUALS(4322, increment++, "foo");
     }
@@ -123,12 +125,12 @@ int test_asserts(int *index) {
     TEST_FAILURE(hex) { ASSERT_HEX_EQUALS((uint64_t)-1, 0); }
 
 
-    char str_x[2] = "x";
-
     TEST_SUCCESS(streq) {
         ASSERT_STR_EQUALS((side_effect(), "x"), "x");
     }
     TEST_SUCCESS(streq) {
+        char str_x[2] = "x";
+
         ASSERT_STR_EQUALS("x", (side_effect(), str_x), "foo");
     }
     TEST_FAILURE(streq) {
@@ -140,7 +142,6 @@ int test_asserts(int *index) {
 
     uint8_t bin1[] = { 0, 1, 2 };
     uint8_t bin2[] = { 0, 1, 2 };
-    uint8_t bin3[] = { 0, 1, 3 };
 
     TEST_SUCCESS(bineq) {
         ASSERT_BIN_ARRAYS_EQUALS((side_effect(), bin1), 3, bin2, 3);
@@ -152,6 +153,7 @@ int test_asserts(int *index) {
         ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin2, (side_effect(), 3));
     }
     TEST_FAILURE(bineq_samesize) {
+        uint8_t bin3[] = { 0, 1, 3 };
         ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin3, 3, "foo");
     }
     TEST_FAILURE(bineq_diffsize) {
@@ -232,10 +234,9 @@ int main(int argc, char **argv) {
     }
 
     index = 0;
-    int rv = 0;
     for (;;) {
         reset();
-        rv = test_asserts(&index);
+        int rv = test_asserts(&index);
         if (rv == NO_MORE_TESTS) {
             break;
         }
