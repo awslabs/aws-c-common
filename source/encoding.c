@@ -67,7 +67,7 @@ int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws
     }
 
     if (AWS_UNLIKELY(output->len < encoded_len)) {
-        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
     size_t written = 0;
@@ -125,7 +125,7 @@ int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws
     }
 
     if (AWS_UNLIKELY(output->len < decoded_length)) {
-        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
     size_t written = 0;
@@ -222,7 +222,7 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
     }
 
     if (AWS_UNLIKELY(output->len< encoded_length)) {
-        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
     size_t buffer_length = to_encode->len;
@@ -285,7 +285,7 @@ int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct 
     }
 
     if (output->len < decoded_length) {
-        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
     int64_t block_count = (int)to_decode->len / 4;
