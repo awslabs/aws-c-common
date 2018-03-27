@@ -64,20 +64,6 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * It is critical that we avoid any branches in this logic.
      */
 
-     /*
-      * We need to know the number of bits in a size_t for this. Unfortunately
-      * there doesn't seem to be a standard define for this...
-      */
-# if (UINTPTR_MAX >> 63 == 1)
-    int size_bits = 64;
-# else
-#  if (UINTPTR_MAX >> 31 == 1)
-    int size_bits = 32;
-#  else
-#   error Unknown number of bits for size_t
-#  endif
-# endif
-
     /*
      * Hide the index value from the optimizer. This helps ensure that all this
      * logic doesn't get eliminated.
@@ -108,17 +94,14 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
 
     /*
      * combined_mask needs to have its sign bit OFF for us to be in range.
-     * Invert it and sign-extend it across the entire field.
+     * We'd like to expand this to a mask we can AND into our index, so flip
+     * that bit (and everything else), shift it over so it's the only bit in the
+     * ones position, and multiply across the entire register.
      *
-     * Note that this technically depends on UB - we need right-shift to
-     * perform sign extension on a negative input - but in practice most
-     * architectures and compilers do this. As an alternative we could do a
-     * multiply, if it were to be necessary.
-     *
-     * Note: We'd like to use a signed size_t, but such a type doesn't exist
-     * in standard C99, so we'll use int64_t instead.
+     * Note that GCC is smart enough to optimize this multiply into an arithmetic
+     * right shift operation on x86.
      */
-    combined_mask = ~(int64_t)combined_mask >> (size_bits - 1);
+    combined_mask = ((~combined_mask) >> (AWS_SIZE_BITS - 1)) * ~(size_t)0;
 
     return index & combined_mask;
 }
