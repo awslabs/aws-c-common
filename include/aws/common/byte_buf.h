@@ -98,10 +98,20 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * that bit (and everything else), shift it over so it's the only bit in the
      * ones position, and multiply across the entire register.
      *
-     * Note that GCC is smart enough to optimize this multiply into an arithmetic
-     * right shift operation on x86.
+     * First, extract the (inverse) top bit and move it to the lowest bit.
+     * Because there's no standard SIZE_BIT in C99, we'll divide by a mask with
+     * just the top bit set instead.
      */
-    combined_mask = ((~combined_mask) >> (AWS_SIZE_BITS - 1)) * ~(size_t)0;
+    
+    combined_mask = (~combined_mask) / (~(size_t)0 - ((~(size_t)0) >> 1));
+
+    /* 
+     * Now multiply it to replicate it across all bits.
+     *
+     * Note that GCC is smart enough to optimize the divide-and-multiply into
+     * an arithmetic right shift operation on x86.
+     */
+    combined_mask = combined_mask * ~(size_t)0;
 
     return index & combined_mask;
 }

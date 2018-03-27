@@ -135,17 +135,4 @@ typedef enum aws_common_error {
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 
-#if (UINTPTR_MAX >> 63 == 1)
-# define AWS_SIZE_BITS 64
-#else
-# if (UINTPTR_MAX >> 31 == 1)
-#  define AWS_SIZE_BITS 32
-# else
-#  error Unknown number of bits for size_t
-# endif
-#endif
-
-
-
-
 #endif /* AWS_COMMON_H_ */
