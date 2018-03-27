@@ -103,7 +103,7 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * just the top bit set instead.
      */
     
-    combined_mask = (~combined_mask) / (~(size_t)0 - ((~(size_t)0) >> 1));
+    combined_mask = (~combined_mask) / (SIZE_MAX - (SIZE_MAX >> 1));
 
     /* 
      * Now multiply it to replicate it across all bits.
@@ -111,7 +111,7 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * Note that GCC is smart enough to optimize the divide-and-multiply into
      * an arithmetic right shift operation on x86.
      */
-    combined_mask = combined_mask * ~(size_t)0;
+    combined_mask = combined_mask * SIZE_MAX;
 
     return index & combined_mask;
 }
