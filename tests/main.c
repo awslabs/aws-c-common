@@ -119,19 +119,11 @@ int main(int argc, char *argv[]) {
                        &nospec_index_test,
                        &test_byte_cursor_advance,
                        &test_byte_cursor_advance_nospec,
-                       &test_u32_checked,
                        &test_char_split_happy_path,
                        &test_char_split_ends_with_token,
                        &test_char_split_token_not_present,
                        &test_char_split_empty,
                        &test_char_split_adj_tokens,
                        &test_char_split_begins_with_token,
-                       &test_str_split_happy_path,
-                       &test_str_split_ends_with_token,
-                       &test_str_split_token_not_present,
-                       &test_str_split_empty,
-                       &test_str_split_partial_token,
-                       &test_str_split_adj_tokens,
-                       &test_str_split_begins_with_token
                        );
 }

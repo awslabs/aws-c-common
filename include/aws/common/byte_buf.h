@@ -56,29 +56,13 @@ extern "C" {
  * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
  * is your most likely guess for the upper bound of the number of elements resulting from the split.
  *
+ * The type that will be stored in output is struct aws_byte_buf (you'll need this for the item size param).
+ *
  * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
  */
 AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on,
                                             struct aws_array_list *output);
 
-/**
- * No copies, no string allocations. Fills in output with a list of aws_byte_buf instances where buffer is
- * an offset into the input_str and len is the length of that string in the original buffer.
- *
- * Edge case rules are as follows:
- * if the string begins with split_on, an empty string will be the first entry in output
- * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
- * if the input string ends with split_on, it will be ignored.
- *
- * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
- * is your most likely guess for the upper bound of the number of elements resulting from the split.
- *
- * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
- *
- * We assume split_on is a literal and will call strlen() on it.
- */
-AWS_COMMON_API int aws_string_split_on_str(struct aws_byte_buf *input_str, char *split_on,
-                                            struct aws_array_list *output);
 #ifdef __cplusplus
 }
 #endif

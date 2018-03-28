@@ -21,83 +21,29 @@ int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on, stru
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_buf));
 
-    size_t current_pos = 0;
     size_t last_offset = 0;
+    uint8_t *new_location = NULL;
 
-    for(; current_pos < input_str->len; ++current_pos) {
-        if(current_pos < input_str->len - 2 && input_str->buffer[current_pos] == (uint8_t)split_on) {
-            struct aws_byte_buf buffer = {
-                    .buffer = input_str->buffer + last_offset,
-                    .len = current_pos - last_offset,
-            };
+    while ((new_location = memchr(input_str->buffer + last_offset, split_on, input_str->len - last_offset))) {
 
-            if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
-                return AWS_OP_ERR;
-            }
+        size_t distance_from_origin = new_location - input_str->buffer;
 
-            last_offset = current_pos + 1;
-        }
-    }
-
-    if (last_offset < input_str->len) {
         struct aws_byte_buf buffer = {
                 .buffer = input_str->buffer + last_offset,
-                .len = current_pos - last_offset,
+                .len = distance_from_origin - last_offset,
         };
 
         if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
             return AWS_OP_ERR;
         }
+
+        last_offset = distance_from_origin + 1;
     }
 
-    return AWS_OP_SUCCESS;
-}
-
-int aws_string_split_on_str(struct aws_byte_buf *input_str, char *split_on,
-                            struct aws_array_list *output) {
-    assert(input_str);
-    assert(output);
-    assert(output->item_size >= sizeof(struct aws_byte_buf));
-    assert(split_on);
-    size_t token_len = strlen(split_on);
-    assert(token_len);
-
-    size_t current_pos = 0;
-    size_t last_offset = 0;
-
-    int8_t possible_match_idx = 0;
-
-    for(; current_pos < input_str->len; ++current_pos) {
-
-        if (current_pos < input_str->len - 2 && input_str->buffer[current_pos] == (uint8_t)split_on[possible_match_idx]) {
-
-            possible_match_idx += 1;
-            if (possible_match_idx == token_len) {
-
-                struct aws_byte_buf buffer = {
-                        .buffer = input_str->buffer + last_offset,
-                        /* we read the entire token so that needs to be accounted for. */
-                        .len = current_pos - last_offset - (token_len - 1),
-                };
-
-                if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
-                    return AWS_OP_ERR;
-                }
-
-                last_offset = current_pos + 1;
-                possible_match_idx = 0;
-            }
-        }
-        else {
-            possible_match_idx = 0;
-        }
-    }
-
-    /* in this case we're only here if we didn't read the entire split token so we don't account for the token length */
     if (last_offset < input_str->len) {
         struct aws_byte_buf buffer = {
-                .buffer = input_str->buffer + last_offset,
-                .len = current_pos - last_offset,
+            .buffer = input_str->buffer + last_offset,
+            .len = input_str->len - last_offset,
         };
 
         if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
