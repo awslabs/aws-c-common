@@ -135,7 +135,4 @@ typedef enum aws_common_error {
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 
-
-
-
 #endif /* AWS_COMMON_H_ */

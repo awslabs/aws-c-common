@@ -19,6 +19,7 @@
 #endif
 
 #include <encoding_test.c>
+#include <cursor_test.c>
 #include <error_test.c>
 #include <thread_test.c>
 #include <mutex_test.c>
@@ -113,6 +114,9 @@ int main(int argc, char *argv[]) {
                        &test_u64_saturating,
                        &test_u32_saturating,
                        &test_u64_checked,
-                       &test_u32_checked
+                       &test_u32_checked,
+                       &nospec_index_test,
+                       &test_byte_cursor_advance,
+                       &test_byte_cursor_advance_nospec
                        );
 }
