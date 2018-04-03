@@ -35,8 +35,8 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, siz
     return (struct aws_byte_buf){.buffer = (uint8_t *)c_str, .len = len};
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t c_str[], size_t len) {
-    return (struct aws_byte_buf){.buffer = (uint8_t *)&c_str[0], .len = len};
+static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, size_t len) {
+    return (struct aws_byte_buf){.buffer = (uint8_t *)c_str, .len = len};
 }
 
 /**
@@ -51,7 +51,7 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_b
     return (struct aws_byte_cursor){.ptr = buf->buffer, .len = buf->len};
 }
 
-static inline struct aws_byte_cursor aws_byte_cursor_from_array(const uint8_t c_str[], size_t len) {
+static inline struct aws_byte_cursor aws_byte_cursor_from_array(const uint8_t *c_str, size_t len) {
     return (struct aws_byte_cursor){.ptr = (uint8_t *)c_str, .len=len};
 }
 
