@@ -27,6 +27,19 @@ struct aws_byte_buf {
     size_t len;
 };
 
+static inline int aws_byte_buf_alloc(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
+    buf->buffer = allocator->mem_acquire(allocator, len);
+    if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
+    buf->len = len;
+    return AWS_OP_SUCCESS;
+}
+
+static inline void aws_byte_buf_free(struct aws_allocator * allocator, struct aws_byte_buf * buf) {
+    if (buf->buffer) allocator->mem_release(allocator, buf->buffer);
+    buf->buffer = NULL;
+    buf->len = 0;
+}
+
 static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)literal;
