@@ -89,8 +89,16 @@ extern "C" {
 
     /**
      * Sequentially execute all tasks that are ready until either the queue is empty or no ready tasks are available.
+     * time before next task is the time in nanoseconds (based on the configured aws_task_scheduler_clock) before the
+     * next task will be ready for execution.
+     *
+     * This function protects against reentrancy by pegging the comparision timestamp before checking the queue,
+     * therefore if a task schedules another task, it will not be executed until the next call to this function.
+     *
+     * Differently than the aws_task_scheduler_next_task() fn, this function will return AWS_OP_SUCCESS even if
+     * no tasks are scheduled. AWS_OP_ERR is only returned if an actual error condition occurs (OOM, Clock failure etc...).
      */
-    AWS_COMMON_API int aws_task_scheduler_run_all(struct aws_task_scheduler *queue);
+    AWS_COMMON_API int aws_task_scheduler_run_all(struct aws_task_scheduler *queue, uint64_t *next_task_time);
 
 #ifdef __cplusplus
 }

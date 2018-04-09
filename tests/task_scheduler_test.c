@@ -198,7 +198,61 @@ static int test_scheduler_rejects_xthread_access(struct aws_allocator *alloc, vo
     return 0;
 }
 
+struct task_scheduler_reentrancy_args {
+    struct aws_task_scheduler *scheduler;
+    int executed;
+    struct task_scheduler_reentrancy_args *reentrant_args;
+};
+
+static void reentrancy_fn(void *arg) {
+
+    struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
+
+    if (reentrancy_args->reentrant_args) {
+        struct aws_task task;
+        task.fn = reentrancy_fn;
+        task.arg = reentrancy_args->reentrant_args;
+
+        aws_task_scheduler_schedule_now(reentrancy_args->scheduler, &task);
+    }
+
+    reentrancy_args->executed = 1;
+}
+
+static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx) {
+    struct aws_task_scheduler scheduler;
+    aws_task_scheduler_init(&scheduler, alloc, aws_high_res_clock_get_ticks);
+
+    struct task_scheduler_reentrancy_args task2_args;
+    task2_args.scheduler = &scheduler;
+    task2_args.executed = 0;
+    task2_args.reentrant_args = NULL;
+
+    struct task_scheduler_reentrancy_args task1_args;
+    task1_args.scheduler = &scheduler;
+    task1_args.executed = 0;
+    task1_args.reentrant_args = &task2_args;
+
+    struct aws_task task;
+    task.arg = &task1_args;
+    task.fn = reentrancy_fn;
+
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task), "Failed while scheduling task.");
+
+    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL), "Executing tasks failed.");
+
+    ASSERT_TRUE(task1_args.executed, "Task 1 should have been executed but was not.");
+    ASSERT_FALSE(task2_args.executed, "Task 2 should not have been executed but was.");
+
+    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL), "Executing tasks failed.");
+    ASSERT_TRUE(task2_args.executed, "Task 2 should not have been executed but was.");
+
+    aws_task_scheduler_clean_up(&scheduler);
+    return 0;
+}
+
 AWS_TEST_CASE(scheduler_rejects_xthread_access_test, test_scheduler_rejects_xthread_access);
 AWS_TEST_CASE(scheduler_pops_task_late_test, test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_task_timestamp_test, test_scheduler_next_task_timestamp);
+AWS_TEST_CASE(scheduler_reentrant_safe, test_scheduler_reentrant_safe);
