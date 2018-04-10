@@ -139,8 +139,11 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
 
         if (get_next_task(scheduler, &task_to_run,  now, next_task_time)) {
             int err_code = aws_last_error();
-            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS || err_code == AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS
-                    || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS  || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+                return AWS_OP_SUCCESS;
+            }
+            else if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS) {
+                task_to_run.fn(task_to_run.arg);
                 return AWS_OP_SUCCESS;
             }
             return AWS_OP_ERR;
