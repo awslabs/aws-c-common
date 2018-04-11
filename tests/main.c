@@ -30,6 +30,7 @@
 #include <task_scheduler_test.c>
 #include <hash_table_test.c>
 #include <math_test.c>
+#include <byte_order_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -117,6 +118,7 @@ int main(int argc, char *argv[]) {
                        &test_u32_checked,
                        &nospec_index_test,
                        &test_byte_cursor_advance,
-                       &test_byte_cursor_advance_nospec
+                       &test_byte_cursor_advance_nospec,
+                       &byte_swap_test
                        );
 }
