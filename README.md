@@ -16,5 +16,6 @@ have pre-slotted error codes for each library. The currently allocated error ran
 | [0x0400, 0x0800) | aws-c-io |
 | [0x0800, 0x1000) | aws-c-http |
 | [0x1000, 0x2000) |aws-c-amazon-flow | 
+| [0x2000, 0x2800) | (reserved for future project) |
 
 Each library should begin its error codes at the beginning of its range and follow in sequence (don't skip codes).
