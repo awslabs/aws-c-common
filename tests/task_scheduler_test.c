@@ -198,20 +198,22 @@ static int test_scheduler_rejects_xthread_access(struct aws_allocator *alloc, vo
     return 0;
 }
 
+/* container for running the test making sure a recursive call to aws_task_scheduler_schedule_now
+ * does not break the fairness of the task scheduler. */
 struct task_scheduler_reentrancy_args {
     struct aws_task_scheduler *scheduler;
     int executed;
-    struct task_scheduler_reentrancy_args *reentrant_args;
+    struct task_scheduler_reentrancy_args *next_task_args;
 };
 
 static void reentrancy_fn(void *arg) {
 
     struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
 
-    if (reentrancy_args->reentrant_args) {
+    if (reentrancy_args->next_task_args) {
         struct aws_task task;
         task.fn = reentrancy_fn;
-        task.arg = reentrancy_args->reentrant_args;
+        task.arg = reentrancy_args->next_task_args;
 
         aws_task_scheduler_schedule_now(reentrancy_args->scheduler, &task);
     }
@@ -226,12 +228,12 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx)
     struct task_scheduler_reentrancy_args task2_args;
     task2_args.scheduler = &scheduler;
     task2_args.executed = 0;
-    task2_args.reentrant_args = NULL;
+    task2_args.next_task_args = NULL;
 
     struct task_scheduler_reentrancy_args task1_args;
     task1_args.scheduler = &scheduler;
     task1_args.executed = 0;
-    task1_args.reentrant_args = &task2_args;
+    task1_args.next_task_args = &task2_args;
 
     struct aws_task task;
     task.arg = &task1_args;

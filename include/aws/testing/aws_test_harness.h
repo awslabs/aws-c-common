@@ -36,7 +36,7 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #define AWS_TESTING_REPORT_FD stderr
 #endif
 
-static struct aws_mutex mutex;
+static struct aws_mutex allocator_lock;
 
 struct memory_test_config {
     void *(*mem_acquire)(struct aws_allocator *config, size_t size);
@@ -53,12 +53,12 @@ struct memory_test_tracker {
 static void *mem_acquire_malloc(struct aws_allocator *config, size_t size) {
     struct memory_test_config *test_config = (struct memory_test_config *)config;
 
-    aws_mutex_lock(&mutex);
+    aws_mutex_lock(&allocator_lock);
     test_config->allocated += size;
     struct memory_test_tracker *memory = (struct memory_test_tracker *) malloc(size + sizeof(struct memory_test_tracker));
     memory->size = size;
     memory->blob = (uint8_t *)memory + sizeof(struct memory_test_tracker);
-    aws_mutex_unlock(&mutex);
+    aws_mutex_unlock(&allocator_lock);
     return memory->blob;
 }
 
@@ -66,9 +66,9 @@ static void mem_release_free(struct aws_allocator *config, void *ptr) {
     struct memory_test_config *test_config = (struct memory_test_config *)config;
 
     struct memory_test_tracker *memory = (struct memory_test_tracker *) ((uint8_t *)ptr - sizeof(struct memory_test_tracker));
-    aws_mutex_lock(&mutex);
+    aws_mutex_lock(&allocator_lock);
     test_config->freed += memory->size;
-    aws_mutex_unlock(&mutex);
+    aws_mutex_unlock(&allocator_lock);
     free(memory);
 }
 
@@ -329,7 +329,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
 
 #define AWS_RUN_TEST_CASES(...)                                                                                        \
     struct aws_test_harness *tests[] = { __VA_ARGS__ };                                                                \
-    aws_mutex_init(&mutex, aws_default_allocator());                                                                   \
+    aws_mutex_init(&allocator_lock, aws_default_allocator());                                                          \
     int ret_val = 0;                                                                                                   \
                                                                                                                        \
     const char *test_name = NULL;                                                                                      \
@@ -353,7 +353,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
         }                                                                                                              \
     }                                                                                                                  \
                                                                                                                        \
-    aws_mutex_clean_up(&mutex);                                                                                        \
+    aws_mutex_clean_up(&allocator_lock);                                                                               \
     fflush(stdout);                                                                                                    \
     fflush(AWS_TESTING_REPORT_FD);                                                                                     \
     return ret_val;                                                                                                    \
