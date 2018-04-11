@@ -75,10 +75,11 @@ static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws
     }
 
     *task = container.task;
-    if(next_run_time) {
+    if (next_run_time) {
         if(aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
+            *next_run_time = 0;
             if(AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
-                return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS);
+                return AWS_OP_SUCCESS;
             }
             return AWS_OP_ERR;
         }
@@ -142,10 +143,7 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
             if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS  || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
                 return AWS_OP_SUCCESS;
             }
-            else if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS) {
-                task_to_run.fn(task_to_run.arg);
-                return AWS_OP_SUCCESS;
-            }
+
             return AWS_OP_ERR;
         }
 

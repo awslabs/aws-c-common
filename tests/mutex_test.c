@@ -19,7 +19,7 @@
 
 static int test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx) {
     struct aws_mutex mutex;
-    aws_mutex_init(&mutex, allocator);
+    aws_mutex_init(&mutex);
 
     ASSERT_SUCCESS(aws_mutex_lock(&mutex), "Mutex acquire should have returned success.");
     ASSERT_SUCCESS(aws_mutex_unlock(&mutex),"Mutex release should have returned success.");
@@ -63,7 +63,7 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
         .thread_fn_increments = 0,
     };
 
-    aws_mutex_init(&mutex_data.mutex, allocator);    
+    aws_mutex_init(&mutex_data.mutex);
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);

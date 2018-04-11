@@ -24,7 +24,6 @@
 #endif
 
 struct aws_mutex {
-    struct aws_allocator *allocator;
 #ifdef _WIN32
     SRWLOCK mutex_handle;
 #else
@@ -36,10 +35,12 @@ struct aws_mutex {
 extern "C" {
 #endif
 
+AWS_COMMON_API struct aws_mutex aws_mutex_static_init (void);
+
 /**
  * Initializes a new platform instance of mutex.
  */
-AWS_COMMON_API int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator);
+AWS_COMMON_API int aws_mutex_init(struct aws_mutex *mutex);
 
 /**
  * Cleans up internal resources.

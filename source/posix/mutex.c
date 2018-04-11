@@ -39,9 +39,15 @@ static int convert_and_raise_error_code (int error_code) {
     }
 }
 
-int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
+struct aws_mutex aws_mutex_static_init (void) {
+    struct aws_mutex mutex = {
+        .mutex_handle = PTHREAD_MUTEX_INITIALIZER
+    };
 
-    mutex->allocator = allocator;
+    return mutex;
+}
+
+int aws_mutex_init(struct aws_mutex *mutex) {
     pthread_mutexattr_t attr;
     int err_code = pthread_mutexattr_init(&attr);
     int return_code = AWS_OP_SUCCESS;
