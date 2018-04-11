@@ -88,7 +88,7 @@ extern "C" {
 
     /**
      * Sequentially execute all tasks that are ready until either the queue is empty or no ready tasks are available.
-     * time before next task is the time in nanoseconds (based on the configured aws_task_scheduler_clock) before the
+     * next_task_time is the time in nanoseconds (based on the configured aws_task_scheduler_clock) when the
      * next task will be ready for execution.
      *
      * This function protects against reentrancy by pegging the comparision timestamp before checking the queue,
