@@ -37,7 +37,7 @@ static int byte_swap_test_fn(struct aws_allocator *alloc, void *ctx) {
         ASSERT_UINT_EQUALS(hton32(y), y);
 
         ASSERT_UINT_EQUALS(ntoh16(z), z);
-        ASSERT_UINT_EQUALS(ntoh16(z), z);
+        ASSERT_UINT_EQUALS(hton16(z), z);
     } else {
         ASSERT_UINT_EQUALS(ntoh64(x), rev_x);
         ASSERT_UINT_EQUALS(hton64(x), rev_x);
@@ -46,7 +46,7 @@ static int byte_swap_test_fn(struct aws_allocator *alloc, void *ctx) {
         ASSERT_UINT_EQUALS(hton32(y), rev_y);
 
         ASSERT_UINT_EQUALS(ntoh16(z), rev_z);
-        ASSERT_UINT_EQUALS(ntoh16(z), rev_z);
+        ASSERT_UINT_EQUALS(hton16(z), rev_z);
     }
 
     return 0;
