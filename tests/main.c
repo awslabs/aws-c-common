@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
                        &scheduler_pops_task_late_test,
                        &scheduler_task_timestamp_test,
                        &scheduler_ordering_test,
+                       &scheduler_reentrant_safe,
                        &test_hash_table_put_get,
                        &test_hash_table_hash_collision,
                        &test_hash_table_hash_overwrite,

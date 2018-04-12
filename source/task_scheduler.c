@@ -47,9 +47,8 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
     scheduler->owning_thread = 0;
 }
 
-int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler, 
-        struct aws_task *task, uint64_t *next_run_time) {
-
+static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t run_before,
+                                uint64_t *next_run_time) {
     if (aws_thread_current_thread_id() != scheduler->owning_thread) {
         return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS);
     }
@@ -66,12 +65,7 @@ int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler,
         *next_run_time = possible_task->timestamp;
     }
 
-    uint64_t now;
-    if(scheduler->clock(&now)) {
-        return AWS_OP_ERR;
-    }
-
-    if (possible_task->timestamp > now) {
+    if (possible_task->timestamp > run_before) {
         return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS);
     }
 
@@ -81,16 +75,28 @@ int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler,
     }
 
     *task = container.task;
-    if(next_run_time) {
+    if (next_run_time) {
         if(aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
+            *next_run_time = 0;
             if(AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
-                return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS);
+                return AWS_OP_SUCCESS;
             }
             return AWS_OP_ERR;
         }
         *next_run_time = possible_task->timestamp;
     }
     return AWS_OP_SUCCESS;
+}
+
+int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler, 
+        struct aws_task *task, uint64_t *next_run_time) {
+
+    uint64_t now;
+    if(scheduler->clock(&now)) {
+        return AWS_OP_ERR;
+    }
+
+    return get_next_task(scheduler, task, now, next_run_time);
 }
 
 int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler,
@@ -122,14 +128,25 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
     return AWS_OP_SUCCESS;
 }
 
-int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler) {
+int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
+
+    uint64_t now;
+    if(scheduler->clock(&now)) {
+        return AWS_OP_ERR;
+    }
+
     while(1) {
         struct aws_task task_to_run = {0};
-        int err = aws_task_scheduler_next_task(scheduler, &task_to_run, 0);
-        if(AWS_OP_SUCCESS != err) {
-            return err;
+
+        if (get_next_task(scheduler, &task_to_run,  now, next_task_time)) {
+            int err_code = aws_last_error();
+            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS  || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+                return AWS_OP_SUCCESS;
+            }
+
+            return AWS_OP_ERR;
         }
+
         task_to_run.fn(task_to_run.arg);
     }
-    return AWS_OP_SUCCESS;
 }

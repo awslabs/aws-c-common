@@ -111,6 +111,7 @@ add_test(scheduler_rejects_xthread_access_test ${TEST_BINARY_NAME} scheduler_rej
 add_test(scheduler_ordering_test ${TEST_BINARY_NAME} scheduler_ordering_test)
 add_test(scheduler_pops_task_late_test ${TEST_BINARY_NAME} scheduler_pops_task_late_test)
 add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timestamp_test)
+add_test(scheduler_reentrant_safe, ${TEST_BINARY_NAME} scheduler_reentrant_safe)
 
 add_test(test_hash_table_put_get ${TEST_BINARY_NAME} test_hash_table_put_get)
 add_test(test_hash_table_hash_collision ${TEST_BINARY_NAME} test_hash_table_hash_collision)
