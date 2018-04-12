@@ -8,7 +8,7 @@ This library is licensed under the Apache 2.0 License.
 
 ## Usage
 ### Building
-aws-c-common uses CMake for setting up build environments. This library has now non-kernel dependencies so the build is quite
+aws-c-common uses CMake for setting up build environments. This library has no non-kernel dependencies so the build is quite
 simple. 
 
 For example:
@@ -82,7 +82,7 @@ a thread barrier it should be a complete ownership hand-off. Bias towards, "if I
 ### Error Handling
 * For APIs returning an `int` error code. The only acceptable return types are `AWS_OP_SUCCESS` and `AWS_OP_ERR`. Before
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.
-* For APIs returning an allocated instance of an object, Return the memory on success, and `NULL` on failure. Before
+* For APIs returning an allocated instance of an object, return the memory on success, and `NULL` on failure. Before
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.
 
 #### Error Codes
