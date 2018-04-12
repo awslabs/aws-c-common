@@ -66,7 +66,7 @@ extern "C" {
      * Gets the next task that is ready for execution. Tasks in the future will not be returned, 
      * even if they are the highest priority. next_run_time, if it is not null, and there are any tasks scheduled
      * will be set to the timestamp for the highest priority task. This is a useful hint for setting timeouts on
-     * event loops, or thread sleeps. If no tasks are scheduled, this value will be set to -0.
+     * event loops, or thread sleeps. If no tasks are scheduled, this value will be set to 0.
      * If no tasks are ready for execution AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS error will be raised.
      *
      * If no tasks are scheduled AWS_ERROR_TASK_SCHEDULER_NO_TASKS error will be raised.

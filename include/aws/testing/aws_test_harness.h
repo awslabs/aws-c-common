@@ -77,6 +77,7 @@ static void mem_release_free(struct aws_allocator *config, void *ptr) {
         .mem_release = mem_release_free,                                                                               \
         .allocated = 0,                                                                                                \
         .freed = 0,                                                                                                    \
+        .mutex = AWS_MUTEX_INIT                                                                                        \
   }                                                                                                                    \
 
 /** Prints a message to stdout using printf format that appends the function, file and line number.
@@ -301,7 +302,6 @@ struct aws_test_harness {
 
 static int aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
-    harness->config.mutex = aws_mutex_static_init();
 
     if(harness->on_before) {
         harness->on_before((struct aws_allocator *)&harness->config, harness->ctx);

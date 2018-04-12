@@ -31,11 +31,17 @@ struct aws_mutex {
 #endif
 };
 
+#ifdef _WIN32
+#define AWS_MUTEX_INIT                                                                                                 \
+{ .mutex_handle = SRWLOCK_INIT }
+#else
+#define AWS_MUTEX_INIT                                                                                                 \
+{ .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-AWS_COMMON_API struct aws_mutex aws_mutex_static_init (void);
 
 /**
  * Initializes a new platform instance of mutex.

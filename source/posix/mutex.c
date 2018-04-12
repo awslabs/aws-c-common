@@ -39,14 +39,6 @@ static int convert_and_raise_error_code (int error_code) {
     }
 }
 
-struct aws_mutex aws_mutex_static_init (void) {
-    struct aws_mutex mutex = {
-        .mutex_handle = PTHREAD_MUTEX_INITIALIZER
-    };
-
-    return mutex;
-}
-
 int aws_mutex_init(struct aws_mutex *mutex) {
     pthread_mutexattr_t attr;
     int err_code = pthread_mutexattr_init(&attr);
