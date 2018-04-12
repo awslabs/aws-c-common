@@ -101,7 +101,8 @@ Each library should begin its error codes at the beginning of its range and foll
 adding an AWS maintained library, an error code range must be approved and added to the above table.
 
 ### Testing
-PRs without unit tests will not be acknowledged. A couple of tips:
+We have a high bar for test coverage, and PRs fixing bugs or introducing new functionality need to have tests before 
+they will be accepted. A couple of tips:
 
 #### Aws Test Harness
 We provide a test harness for writing unit tests. This includes an allocator that will fail your test if you have any 
@@ -134,7 +135,7 @@ memory leaks, as well as some `ASSERT` macros. To write a test:
 not always required if a conflict is not likely and it provides better ergonomics.
 * Avoid c-strings, and don't write code that depends on `NULL` terminators. Expose `struct aws_byte_buf` APIs
 and let the user figure it out.
-* There is only one valid character encoding (UTF-8). Try not to ever need to care about character encodings, but
+* There is only one valid character encoding-- UTF-8. Try not to ever need to care about character encodings, but
 where you do, the working assumption should always be UTF-8 unless it's something we don't get a choice in (e.g. a protocol
 explicitly mandates a character set).
 * If you are adding/using a compiler specific keyword, macro, or intrinsic, hide it behind a platform independent macro
