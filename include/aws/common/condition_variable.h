@@ -33,34 +33,50 @@ struct aws_condition_variable {
 #endif
 };
 
+/**
+ * Static initializer for condition variable.
+ * You can do something like struct aws_condition_variable var = AWS_CONDITION_VARIABLE_INIT;
+ */
 #ifdef _WIN32
 #define AWS_CONDITION_VARIABLE_INIT                                                                                    \
 { .condition_handle = CONDITION_VARIABLE_INIT }
 #else
-#define AWS_MUTEX_INIT                                                                                                 \
+#define AWS_CONDITION_VARIABLE_INIT                                                                                    \
 { .condition_handle = PTHREAD_COND_INITIALIZER }
 #endif
-
-typedef bool(aws_condition_variable_predicate)(struct aws_condition_variable *condition_variable, void *ctx);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * Initializes a condition variable.
+ */
 AWS_COMMON_API int aws_condition_variable_init (struct aws_condition_variable *condition_variable);
 
+/**
+ * Cleans up a condition variable.
+ */
 AWS_COMMON_API void aws_condition_variable_clean_up (struct aws_condition_variable *condition_variable);
 
+/**
+ * Notifies/Wakes one waiting thread
+ */
 AWS_COMMON_API int aws_condition_variable_notify_one (struct aws_condition_variable *condition_variable);
 
+/**
+ * Notifies/Wakes all waiting threads.
+ */
 AWS_COMMON_API int aws_condition_variable_notify_all (struct aws_condition_variable *condition_variable);
 
+/**
+ * Waits the calling thread on a notification from another thread.
+ */
 AWS_COMMON_API int aws_condition_variable_wait (struct aws_condition_variable *condition_variable, struct aws_mutex *mutex);
 
-AWS_COMMON_API int aws_condition_variable_wait_for (struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
-                                                    aws_condition_variable_predicate predicate, void *ctx);
-
-
+/**
+ * Waits the calling thread on a notification from another thread. Times out after time_to_wait. time_to_wait is in nanoseconds.
+ */
 AWS_COMMON_API int aws_condition_variable_wait_until (struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
                                                     uint64_t time_to_wait);
 
