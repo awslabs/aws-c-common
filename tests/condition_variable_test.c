@@ -127,13 +127,14 @@ static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(conditional_notify_all, test_conditional_notify_all_fn)
 
-
 static int test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
 
     struct aws_mutex mutex = AWS_MUTEX_INIT;
     struct aws_condition_variable condition_variable = AWS_CONDITION_VARIABLE_INIT;
 
-    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_until(&condition_variable, &mutex, 1000));
+    ASSERT_SUCCESS(aws_mutex_lock(&mutex));
+
+    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_until(&condition_variable, &mutex, 1000000));
 
     return AWS_OP_SUCCESS;
 }

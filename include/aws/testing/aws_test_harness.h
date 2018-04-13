@@ -120,14 +120,14 @@ static int total_failures;
 } while (0)
 
 #define FAIL(format, ...)  \
-    do { PRINT_FAIL_INTERNAL(format, ## __VA_ARGS__); POSTFAIL_INTERNAL(); } while (0)
+    do { PRINT_FAIL_INTERNAL0(format, ## __VA_ARGS__); POSTFAIL_INTERNAL(); } while (0)
 
 
 #define ASSERT_TRUE(condition, ...) \
     do { \
         if(!(condition)) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected condition to be true: " #condition); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected condition to be true: " #condition); \
             } \
             POSTFAIL_INTERNAL(); \
         } \
@@ -136,8 +136,8 @@ static int total_failures;
 #define ASSERT_FALSE(condition, ...) \
     do { \
         if((condition)) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected condition to be false: " #condition); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected condition to be false: " #condition); \
             } \
             POSTFAIL_INTERNAL(); \
         } \
@@ -147,8 +147,8 @@ static int total_failures;
     do { \
         int assert_rv = (condition); \
         if (assert_rv != AWS_OP_SUCCESS) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected success at %s; got return value %d with last error 0x%04x\n", \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected success at %s; got return value %d with last error 0x%04x\n", \
                     #condition, assert_rv, aws_last_error()); \
             } \
             POSTFAIL_INTERNAL(); \
@@ -159,8 +159,8 @@ static int total_failures;
     do { \
         int assert_rv = (condition); \
         if (assert_rv != AWS_OP_ERR) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected failure at %s; got return value %d with last error 0x%04x\n", \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected failure at %s; got return value %d with last error 0x%04x\n", \
                     #condition, assert_rv, aws_last_error()); \
             } \
             POSTFAIL_INTERNAL(); \
