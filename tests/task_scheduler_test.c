@@ -48,7 +48,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     task1.arg = (void *)1;
 
     /* run now. */
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task1), "");
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task1));
 
     struct aws_task task3;
     task3.fn = (aws_task_fn)3;
@@ -67,8 +67,8 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     ASSERT_INT_EQUALS(task2_timestamp, timestamp, "Timestamp should for next run should be %llu", 
             (long long unsigned)task2_timestamp);
 
-    ASSERT_TRUE(task1.fn == task_to_run.fn, "");
-    ASSERT_TRUE(task1.arg == task_to_run.arg, "");
+    ASSERT_TRUE(task1.fn == task_to_run.fn);
+    ASSERT_TRUE(task1.arg == task_to_run.arg);
 
     set_fake_clock(250);
     ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), 
@@ -76,14 +76,14 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     ASSERT_INT_EQUALS(task3_timestamp, timestamp, "Timestamp should for next run should be %llu", 
             (long long unsigned)task3_timestamp);
 
-    ASSERT_TRUE(task2.fn == task_to_run.fn, "");
-    ASSERT_TRUE(task2.arg == task_to_run.arg, "");
+    ASSERT_TRUE(task2.fn == task_to_run.fn);
+    ASSERT_TRUE(task2.arg == task_to_run.arg);
 
     set_fake_clock(555);
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "");
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
 
-    ASSERT_TRUE(task3.fn == task_to_run.fn, "");
-    ASSERT_TRUE(task3.arg == task_to_run.arg, "");
+    ASSERT_TRUE(task3.fn == task_to_run.fn,);
+    ASSERT_TRUE(task3.arg == task_to_run.arg);
     ASSERT_INT_EQUALS(0, timestamp, "When the last task is popped, the timestamp should be 0");
 
     ASSERT_ERROR(AWS_ERROR_TASK_SCHEDULER_NO_TASKS, aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
@@ -113,7 +113,7 @@ static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void 
 
     uint64_t timestamp = 0;
     struct aws_task task_to_run;
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "");
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
     ASSERT_INT_EQUALS(run_at_or_after, timestamp);
 
     aws_task_scheduler_clean_up(&scheduler);
@@ -138,16 +138,16 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     struct aws_task task_to_run = {.fn = 0, .arg = 0};
 
     uint64_t timestamp = 0;
-    ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "");
+    ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
     int lasterror = aws_last_error();
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, lasterror);
     ASSERT_TRUE(task_to_run.fn == 0, "Popped task should have been null since it is not time for it to run.");
     ASSERT_INT_EQUALS(run_at_or_after, timestamp, "Timestamp should for next run should be %llu", run_at_or_after);
 
     set_fake_clock(100);
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, 0), "");
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, 0));
 
-    ASSERT_TRUE(task.fn == task_to_run.fn, "");
+    ASSERT_TRUE(task.fn == task_to_run.fn);
 
     aws_task_scheduler_clean_up(&scheduler);
     return 0;
@@ -240,15 +240,15 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx)
     task.arg = &task1_args;
     task.fn = reentrancy_fn;
 
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task), "");
+    ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task));
 
-    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL), "");
+    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL));
 
-    ASSERT_TRUE(task1_args.executed, "");
-    ASSERT_FALSE(task2_args.executed, "");
+    ASSERT_TRUE(task1_args.executed);
+    ASSERT_FALSE(task2_args.executed);
 
-    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL), "");
-    ASSERT_TRUE(task2_args.executed, "");
+    ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL));
+    ASSERT_TRUE(task2_args.executed);
 
     aws_task_scheduler_clean_up(&scheduler);
     return 0;
