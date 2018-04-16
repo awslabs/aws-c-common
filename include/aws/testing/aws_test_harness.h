@@ -112,7 +112,7 @@ static int total_failures;
     cunit_failure_message(__FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define PRINT_FAIL_INTERNAL0(...) \
-    cunit_failure_message0("", __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
+    cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define POSTFAIL_INTERNAL() do {\
     total_failures++; \
