@@ -214,8 +214,6 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx)
     return 0;
 }
 
-/* container for running the test making sure a recursive call to aws_task_scheduler_schedule_now
- * does not break the fairness of the task scheduler. */
 struct cancellation_args {
     aws_task_status status;
 };
