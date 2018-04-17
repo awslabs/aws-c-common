@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
                        &uint16_buffer_non_aligned_test,
                        &uint16_buffer_signed_positive_test,
                        &uint16_buffer_signed_negative_test,
-                       &scheduler_rejects_xthread_access_test,
+                       &scheduler_cleanup_cancellation,
                        &scheduler_pops_task_late_test,
                        &scheduler_task_timestamp_test,
                        &scheduler_ordering_test,
