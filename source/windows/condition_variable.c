@@ -47,7 +47,7 @@ int aws_condition_variable_wait(struct aws_condition_variable *condition_variabl
 }
 
 int aws_condition_variable_wait_until(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
-    uint64_t time_to_wait) {
+    int64_t time_to_wait) {
     DWORD time_ms = (DWORD)(time_to_wait / MILLIS_PER_SEC);
     if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {
         return AWS_OP_SUCCESS;
