@@ -17,15 +17,25 @@
 #include <aws/common/condition_variable.h>
 #include <aws/common/thread.h>
 
+struct condition_predicate_args {
+    int call_count;
+};
+
 struct conditional_test_data {
     struct aws_mutex mutex;
     struct aws_condition_variable condition_variable_1;
     struct aws_condition_variable condition_variable_2;
-
+    struct condition_predicate_args *predicate_args;
     int thread_1;
     int thread_2;
     int thread_3;
 };
+
+static bool conditional_predicate(void *arg) {
+    struct condition_predicate_args *condition_predicate_args = (struct condition_predicate_args *)arg;
+    condition_predicate_args->call_count++;
+    return condition_predicate_args->call_count % 2 == 0;
+}
 
 static void conditional_thread_2_fn(void *arg) {
     struct conditional_test_data *test_data = (struct conditional_test_data *)arg;
@@ -33,7 +43,8 @@ static void conditional_thread_2_fn(void *arg) {
     aws_mutex_lock(&test_data->mutex);
 
     while (!test_data->thread_1) {
-        aws_condition_variable_wait(&test_data->condition_variable_1, &test_data->mutex);
+        aws_condition_variable_wait_pred(&test_data->condition_variable_1, &test_data->mutex,
+                                         conditional_predicate, test_data->predicate_args);
     }
 
     test_data->thread_2 = 1;
@@ -47,7 +58,8 @@ static void conditional_thread_3_fn(void *arg) {
     aws_mutex_lock(&test_data->mutex);
 
     while (!test_data->thread_1) {
-        aws_condition_variable_wait(&test_data->condition_variable_1, &test_data->mutex);
+        aws_condition_variable_wait_pred(&test_data->condition_variable_1, &test_data->mutex,
+                                    conditional_predicate, test_data->predicate_args);
     }
 
     test_data->thread_3 = 1;
@@ -56,10 +68,15 @@ static void conditional_thread_3_fn(void *arg) {
 }
 
 static int test_conditional_notify_one_fn(struct aws_allocator *allocator, void *ctx) {
+    struct condition_predicate_args predicate_args = {
+            .call_count = 0
+    };
+
     struct conditional_test_data test_data = {
             .condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
             .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
             .mutex = AWS_MUTEX_INIT,
+            .predicate_args = &predicate_args,
             .thread_1 = 0,
             .thread_2 = 0,
             .thread_3 = 0
@@ -75,13 +92,15 @@ static int test_conditional_notify_one_fn(struct aws_allocator *allocator, void 
     ASSERT_SUCCESS(aws_condition_variable_notify_one(&test_data.condition_variable_1));
 
     while (!test_data.thread_2) {
-        ASSERT_SUCCESS(aws_condition_variable_wait(&test_data.condition_variable_2, &test_data.mutex));
+        ASSERT_SUCCESS(aws_condition_variable_wait_pred(&test_data.condition_variable_2, &test_data.mutex,
+                                                   conditional_predicate, &predicate_args));
     }
 
     ASSERT_SUCCESS(aws_mutex_unlock(&test_data.mutex));
 
     aws_thread_join(&thread);
     aws_thread_clean_up(&thread);
+    ASSERT_TRUE(predicate_args.call_count >= 2);
 
     return AWS_OP_SUCCESS;
 }
@@ -89,10 +108,15 @@ static int test_conditional_notify_one_fn(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(conditional_notify_one, test_conditional_notify_one_fn)
 
 static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void *ctx) {
+    struct condition_predicate_args predicate_args = {
+            .call_count = 0
+    };
+
     struct conditional_test_data test_data = {
             .condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
             .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
             .mutex = AWS_MUTEX_INIT,
+            .predicate_args = &predicate_args,
             .thread_1 = 0,
             .thread_2 = 0,
             .thread_3 = 0
@@ -112,7 +136,8 @@ static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void 
     ASSERT_SUCCESS(aws_condition_variable_notify_all(&test_data.condition_variable_1));
 
     while (!test_data.thread_2 && !test_data.thread_3) {
-        ASSERT_SUCCESS(aws_condition_variable_wait(&test_data.condition_variable_2, &test_data.mutex));
+        ASSERT_SUCCESS(aws_condition_variable_wait_pred(&test_data.condition_variable_2, &test_data.mutex,
+                                                   conditional_predicate, &predicate_args));
     }
 
     ASSERT_SUCCESS(aws_mutex_unlock(&test_data.mutex));
@@ -122,6 +147,8 @@ static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void 
     aws_thread_clean_up(&thread_2);
     aws_thread_clean_up(&thread_3);
 
+    ASSERT_TRUE(predicate_args.call_count >= 2);
+
     return AWS_OP_SUCCESS;
 }
 
@@ -129,12 +156,18 @@ AWS_TEST_CASE(conditional_notify_all, test_conditional_notify_all_fn)
 
 static int test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
 
+    struct condition_predicate_args predicate_args = {
+            .call_count = 0
+    };
+
     struct aws_mutex mutex = AWS_MUTEX_INIT;
     struct aws_condition_variable condition_variable = AWS_CONDITION_VARIABLE_INIT;
 
     ASSERT_SUCCESS(aws_mutex_lock(&mutex));
 
-    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_until(&condition_variable, &mutex, 1000000));
+    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_for_pred(&condition_variable, &mutex, 1000000,
+                                                                                    conditional_predicate, &predicate_args));
+    ASSERT_TRUE(predicate_args.call_count >= 1);
 
     return AWS_OP_SUCCESS;
 }

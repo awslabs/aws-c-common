@@ -73,8 +73,8 @@ int aws_condition_variable_wait (struct aws_condition_variable *condition_variab
     return AWS_OP_SUCCESS;
 }
 
-int aws_condition_variable_wait_until (struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
-                                                      uint64_t time_to_wait) {
+int aws_condition_variable_wait_for(struct aws_condition_variable *condition_variable,
+                                    struct aws_mutex *mutex, int64_t time_to_wait) {
 
     struct timespec ts;
     ts.tv_sec = time_to_wait / NANOS_PER_SEC;
