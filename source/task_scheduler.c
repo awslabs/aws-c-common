@@ -30,29 +30,37 @@ static int compare_timestamps(const void *a, const void *b) {
     return a_time > b_time; /* min-heap */
 }
 
+static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t run_before,
+                                uint64_t *next_run_time);
+
 int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_allocator *alloc, 
         aws_task_scheduler_clock clock) {
     scheduler->alloc = alloc;
     scheduler->clock = clock;
-    scheduler->owning_thread = aws_thread_current_thread_id();
-    return aws_priority_queue_dynamic_init(&scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container), 
+    return aws_priority_queue_dynamic_init(&scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container),
             &compare_timestamps);
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
-     /* do we want to add a xthread check here? what happens if another thread attempts to clean up? */
+    uint64_t everything_in_past = UINT64_MAX;
+
+    while(1) {
+        struct aws_task task_to_run = {0};
+
+        if (get_next_task(scheduler, &task_to_run, everything_in_past, NULL)) {
+            break;
+        }
+
+        task_to_run.fn(task_to_run.arg, AWS_TASK_STATUS_CANCELED);
+    }
+
     aws_priority_queue_clean_up(&scheduler->queue);
     scheduler->alloc = NULL;
     scheduler->clock = NULL;
-    scheduler->owning_thread = 0;
 }
 
 static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t run_before,
                                 uint64_t *next_run_time) {
-    if (aws_thread_current_thread_id() != scheduler->owning_thread) {
-        return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS);
-    }
-
     struct task_container *possible_task;
     if(aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
         if(AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
@@ -112,10 +120,6 @@ int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler,
 int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler, 
         struct aws_task *task, uint64_t time_to_run) {
 
-    if (aws_thread_current_thread_id() != scheduler->owning_thread) {
-        return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS);
-    }
-
     struct task_container container;
 
     container.task = *task;
@@ -147,6 +151,6 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
             return AWS_OP_ERR;
         }
 
-        task_to_run.fn(task_to_run.arg);
+        task_to_run.fn(task_to_run.arg, AWS_TASK_STATUS_RUN_READY);
     }
 }
