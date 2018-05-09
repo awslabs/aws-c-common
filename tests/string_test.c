@@ -22,24 +22,24 @@ static int test_char_split_happy_path_fn(struct aws_allocator *allocator, void *
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(3, aws_array_list_length(&output), "Split should have returned %d elements", 3);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
 
     struct aws_byte_buf value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0), "Retrieving element at 0 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
 
     char *expected = "testa";
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 0 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1), "Retrieving element at 1 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
     expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 1 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2), "Retrieving element at 2 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
     expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 2 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -54,24 +54,26 @@ static int test_char_split_ends_with_token_fn(struct aws_allocator *allocator, v
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(3, aws_array_list_length(&output), "Split should have returned %d elements", 3);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
 
     struct aws_byte_buf value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0), "Retrieving element at 0 failed.");
-
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
     char *expected = "testa";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 0 should have been %s", expected);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1), "Retrieving element at 1 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
     expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 1 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2), "Retrieving element at 2 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
     expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 2 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
+    expected = "";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer, value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -86,28 +88,28 @@ static int test_char_split_begins_with_token_fn(struct aws_allocator *allocator,
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&output), "Split should have returned %d elements", 3);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
 
     struct aws_byte_buf value = {0};
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0), "Retrieving element at 0 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
     char *expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 0 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1), "Retrieving element at 1 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
     expected = "testa";
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 1 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2), "Retrieving element at 2 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
     expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 2 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3), "Retrieving element at 3 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
     expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 3 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -122,16 +124,16 @@ static int test_char_split_token_not_present_fn(struct aws_allocator *allocator,
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(1, aws_array_list_length(&output), "Split should have returned %d elements", 1);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
 
     struct aws_byte_buf value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0), "Retrieving element at 0 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
 
     char *expected = "testa";
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 0 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -146,9 +148,9 @@ static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) 
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&output), "Split should have returned %d elements", 0);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&output));
 
     aws_array_list_clean_up(&output);
 
@@ -163,28 +165,28 @@ static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)), "Array list init failed!");
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output), "String split failed");
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&output), "Split should have returned %d elements", 4);
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
 
     struct aws_byte_buf value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0), "Retrieving element at 0 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
 
     char *expected = "testa";
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 0 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1), "Retrieving element at 1 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
     expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 1 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2), "Retrieving element at 2 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
     expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 2 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3), "Retrieving element at 3 failed.");
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
     expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len, "Value 3 should have been %s", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer,  value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -192,3 +194,50 @@ static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *
 }
 
 AWS_TEST_CASE(test_char_split_adj_tokens, test_char_split_adj_tokens_fn)
+
+static int test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
+    const char str_to_split[] = ";testa;testb;testc";
+
+    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+
+    struct aws_array_list output;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_buf)));
+    ASSERT_SUCCESS(aws_string_split_on_char_n(&to_split, ';', &output, 2));
+    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
+
+    struct aws_byte_buf value = { 0 };
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    char *expected = "";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer, value.len);
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
+    expected = "testa";
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer, value.len);
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
+    expected = "testb;testc";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.buffer, value.len);   
+
+    aws_array_list_clean_up(&output);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_char_split_with_max_splits, test_char_split_with_max_splits_fn)
+
+static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+    const char str_to_split[] = "testa;testb;testc;";
+
+    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+
+    struct aws_array_list output;
+    struct aws_byte_buf output_array[3] = { 0 };
+    ASSERT_SUCCESS(aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_buf)));
+    ASSERT_ERROR(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, aws_string_split_on_char(&to_split, ';', &output));
+   
+    return 0;
+}
+
+AWS_TEST_CASE(test_char_split_output_too_small, test_char_split_output_too_small_fn)

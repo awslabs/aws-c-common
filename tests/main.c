@@ -131,6 +131,8 @@ int main(int argc, char *argv[]) {
                        &test_char_split_token_not_present,
                        &test_char_split_empty,
                        &test_char_split_adj_tokens,
+                       &test_char_split_with_max_splits,
                        &test_char_split_begins_with_token,
+                       &test_char_split_output_too_small,
                        );
 }
