@@ -233,7 +233,7 @@ static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, 
     struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
 
     struct aws_array_list output;
-    struct aws_byte_buf output_array[3] = { 0 };
+    struct aws_byte_buf output_array[3] = {{0}};
     ASSERT_SUCCESS(aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_buf)));
     ASSERT_ERROR(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, aws_string_split_on_char(&to_split, ';', &output));
    
@@ -241,3 +241,4 @@ static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, 
 }
 
 AWS_TEST_CASE(test_char_split_output_too_small, test_char_split_output_too_small_fn)
+
