@@ -23,6 +23,7 @@
 #include <error_test.c>
 #include <thread_test.c>
 #include <mutex_test.c>
+#include <condition_variable_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
 #include <linked_list_test.c>
@@ -43,6 +44,9 @@ int main(int argc, char *argv[]) {
                        &thread_creation_join_test,
                        &mutex_aquire_release_test,
                        &mutex_is_actually_mutex_test,
+                       &conditional_notify_one,
+                       &conditional_notify_all,
+                       &conditional_wait_timeout,
                        &high_res_clock_increments_test,
                        &sys_clock_increments_test,
                        &array_list_order_push_back_pop_front_test,

@@ -42,8 +42,14 @@ add_test(unknown_error_code_no_slot_test ${TEST_BINARY_NAME} unknown_error_code_
 add_test(unknown_error_code_range_too_large_test ${TEST_BINARY_NAME} unknown_error_code_range_too_large_test)
 
 add_test(thread_creation_join_test ${TEST_BINARY_NAME} thread_creation_join_test)
+
 add_test(mutex_aquire_release_test ${TEST_BINARY_NAME} mutex_aquire_release_test)
 add_test(mutex_is_actually_mutex_test ${TEST_BINARY_NAME} mutex_is_actually_mutex_test)
+
+add_test(conditional_notify_one ${TEST_BINARY_NAME} conditional_notify_one)
+add_test(conditional_notify_all ${TEST_BINARY_NAME} conditional_notify_all)
+add_test(conditional_wait_timeout ${TEST_BINARY_NAME} conditional_wait_timeout)
+
 add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 
 add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
