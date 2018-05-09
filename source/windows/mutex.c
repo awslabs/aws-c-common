@@ -15,8 +15,7 @@
 
 #include <aws/common/mutex.h>
 
-int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator) {
-    mutex->allocator = allocator;
+int aws_mutex_init(struct aws_mutex *mutex) {
     InitializeSRWLock(&mutex->mutex_handle);
     return AWS_OP_SUCCESS;
 }

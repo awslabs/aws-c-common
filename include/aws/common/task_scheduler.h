@@ -21,10 +21,15 @@
 #include <stdint.h>
 
 
+typedef enum aws_task_status {
+    AWS_TASK_STATUS_RUN_READY,
+    AWS_TASK_STATUS_CANCELED
+} aws_task_status;
+
 /**
  * Pointer to the scheduled function
  */
-typedef void(*aws_task_fn)(void *arg);
+typedef void(*aws_task_fn)(void *arg, aws_task_status);
 
 /**
  * Monotonic clock function
@@ -39,7 +44,6 @@ struct aws_task {
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue queue;
-    uint64_t owning_thread;
     aws_task_scheduler_clock clock;
 };
 
@@ -50,14 +54,12 @@ extern "C" {
     /**
      * Initializes a task scheduler instance with a clock function and an allocator.
      * The recommended clock functions are in <aws/common/clock.h>
-     *
-     * Note: This needs to be called from the thread that will own the scheduler. Cross-thread access is not allowed 
-     * and will always raise AWS_ERROR_TASK_SCHEDULER_ILLEGAL_XTHREAD_ACCESS error.
      */
     AWS_COMMON_API int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, 
             struct aws_allocator *alloc, aws_task_scheduler_clock clock);
 
     /**
+     * Empties and executes all queued tasks, passing the AWS_TASK_STATUS_CANCELED status to the task function.
      * Cleans up any memory allocated, and prepares the instance for reuse or deletion.
      */
     AWS_COMMON_API void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler);
@@ -68,8 +70,7 @@ extern "C" {
      * will be set to the timestamp for the highest priority task. This is a useful hint for setting timeouts on
      * event loops, or thread sleeps. If no tasks are scheduled, this value will be set to 0.
      * If no tasks are ready for execution AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS error will be raised.
-     * If only one task is left and is ready AWS_ERROR_TASK_SCHEDULER_NO_MORE_TASKS error will be raised and the value
-     * of next_run_time will not be set.
+     *
      * If no tasks are scheduled AWS_ERROR_TASK_SCHEDULER_NO_TASKS error will be raised.
      * task is copied.
      */
@@ -89,8 +90,18 @@ extern "C" {
 
     /**
      * Sequentially execute all tasks that are ready until either the queue is empty or no ready tasks are available.
+     * AWS_TASK_STATUS_RUN_READY will be passed to the task function as the task status.
+     *
+     * next_task_time is the time in nanoseconds (based on the configured aws_task_scheduler_clock) when the
+     * next task will be ready for execution.
+     *
+     * This function protects against reentrancy by pegging the comparision timestamp before checking the queue,
+     * therefore if a task schedules another task, it will not be executed until the next call to this function.
+     *
+     * Differently than the aws_task_scheduler_next_task() fn, this function will return AWS_OP_SUCCESS even if
+     * no tasks are scheduled. AWS_OP_ERR is only returned if an actual error condition occurs (OOM, Clock failure etc...).
      */
-    AWS_COMMON_API int aws_task_scheduler_run_all(struct aws_task_scheduler *queue);
+    AWS_COMMON_API int aws_task_scheduler_run_all(struct aws_task_scheduler *queue, uint64_t *next_task_time);
 
 #ifdef __cplusplus
 }

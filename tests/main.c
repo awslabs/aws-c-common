@@ -16,6 +16,8 @@
 
 #if _MSC_VER
 #pragma warning(disable:4100)
+#pragma warning(disable:4221)
+#pragma warning(disable:4204)
 #endif
 
 #include <encoding_test.c>
@@ -23,6 +25,7 @@
 #include <error_test.c>
 #include <thread_test.c>
 #include <mutex_test.c>
+#include <condition_variable_test.c>
 #include <clock_test.c>
 #include <array_list_test.c>
 #include <linked_list_test.c>
@@ -44,6 +47,9 @@ int main(int argc, char *argv[]) {
                        &thread_creation_join_test,
                        &mutex_aquire_release_test,
                        &mutex_is_actually_mutex_test,
+                       &conditional_notify_one,
+                       &conditional_notify_all,
+                       &conditional_wait_timeout,
                        &high_res_clock_increments_test,
                        &sys_clock_increments_test,
                        &array_list_order_push_back_pop_front_test,
@@ -100,10 +106,11 @@ int main(int argc, char *argv[]) {
                        &uint16_buffer_non_aligned_test,
                        &uint16_buffer_signed_positive_test,
                        &uint16_buffer_signed_negative_test,
-                       &scheduler_rejects_xthread_access_test,
+                       &scheduler_cleanup_cancellation,
                        &scheduler_pops_task_late_test,
                        &scheduler_task_timestamp_test,
                        &scheduler_ordering_test,
+                       &scheduler_reentrant_safe,
                        &test_hash_table_put_get,
                        &test_hash_table_hash_collision,
                        &test_hash_table_hash_overwrite,

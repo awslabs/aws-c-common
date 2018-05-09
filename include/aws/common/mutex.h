@@ -24,13 +24,20 @@
 #endif
 
 struct aws_mutex {
-    struct aws_allocator *allocator;
 #ifdef _WIN32
     SRWLOCK mutex_handle;
 #else
     pthread_mutex_t mutex_handle;
 #endif
 };
+
+#ifdef _WIN32
+#define AWS_MUTEX_INIT                                                                                                 \
+{ .mutex_handle = SRWLOCK_INIT }
+#else
+#define AWS_MUTEX_INIT                                                                                                 \
+{ .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,7 +46,7 @@ extern "C" {
 /**
  * Initializes a new platform instance of mutex.
  */
-AWS_COMMON_API int aws_mutex_init(struct aws_mutex *mutex, struct aws_allocator *allocator);
+AWS_COMMON_API int aws_mutex_init(struct aws_mutex *mutex);
 
 /**
  * Cleans up internal resources.

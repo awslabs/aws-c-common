@@ -47,40 +47,17 @@ struct aws_linked_list_node {
     struct aws_linked_list_node *prev;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    /**
-     * Initializes a circular doubly-linked list.
-     */
-    static inline AWS_COMMON_API void aws_linked_list_init(struct aws_linked_list_node *head);
-
-    /**
-     * Adds a node after the specified head.
-     */
-    static inline AWS_COMMON_API void aws_linked_list_insert_after(struct aws_linked_list_node *head, struct aws_linked_list_node *new_node);
-
-    /**
-     * Tests if the list is empty.
-     */
-    static inline AWS_COMMON_API int aws_linked_list_empty(struct aws_linked_list_node *head);
-
-    /**
-     * Removes the specified node from the list (prev/next point to each other) and returns the next node in the list.
-     * If the list is empty, this function returns NULL.
-     */
-    static inline AWS_COMMON_API struct aws_linked_list_node* aws_linked_list_remove(struct aws_linked_list_node *head);
-
-#ifdef __cplusplus
-}
-#endif
-
+/**
+ * Initializes a circular doubly-linked list.
+ */
 static inline void aws_linked_list_init(struct aws_linked_list_node *head) {
     head->next = head;
     head->prev = head;
 }
 
+/**
+ * Adds new_node between prev and next.
+ */
 static inline void aws_linked_list_add(struct aws_linked_list_node *new_node,
         struct aws_linked_list_node *prev,
         struct aws_linked_list_node *next) {
@@ -91,11 +68,19 @@ static inline void aws_linked_list_add(struct aws_linked_list_node *new_node,
     prev->next = new_node;
 }
 
-void aws_linked_list_insert_after(struct aws_linked_list_node *head, struct aws_linked_list_node *new_node) {
+/**
+ * Adds a node after the specified head.
+ */
+static inline void aws_linked_list_insert_after(struct aws_linked_list_node *head, struct aws_linked_list_node *new_node) {
     aws_linked_list_add(new_node, head, head->next);
 }
 
-struct aws_linked_list_node *aws_linked_list_remove(struct aws_linked_list_node *head) {
+
+/**
+ * Removes the specified node from the list (prev/next point to each other) and returns the next node in the list.
+ * If the list is empty, this function returns NULL.
+ */
+static inline struct aws_linked_list_node *aws_linked_list_remove(struct aws_linked_list_node *head) {
     head->prev->next = head->next;
     head->next->prev = head->prev;
     struct aws_linked_list_node *next = head->next;
@@ -104,7 +89,10 @@ struct aws_linked_list_node *aws_linked_list_remove(struct aws_linked_list_node 
     return next;
 }
 
-int aws_linked_list_empty(struct aws_linked_list_node *head) {
+/**
+ * Tests if the list is empty.
+ */
+static inline int aws_linked_list_empty(struct aws_linked_list_node *head) {
     return head->next == head;
 }
 

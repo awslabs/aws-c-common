@@ -28,16 +28,38 @@ struct aws_byte_buf {
     size_t len;
 };
 
+static inline int aws_byte_buf_alloc(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
+    buf->buffer = allocator->mem_acquire(allocator, len);
+    if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
+    buf->len = len;
+    return AWS_OP_SUCCESS;
+}
+
+static inline void aws_byte_buf_free(struct aws_allocator * allocator, struct aws_byte_buf * buf) {
+    if (buf->buffer) allocator->mem_release(allocator, buf->buffer);
+    buf->buffer = NULL;
+    buf->len = 0;
+}
+
 static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {
-    return (struct aws_byte_buf){ .buffer = (uint8_t *)literal, .len = strlen(literal)};
+    struct aws_byte_buf buf;
+    buf.buffer = (uint8_t *)literal;
+    buf.len = strlen(literal);
+    return buf;
 }
 
 static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, size_t len) {
-    return (struct aws_byte_buf){.buffer = (uint8_t *)c_str, .len = len};
+    struct aws_byte_buf buf;
+    buf.buffer = (uint8_t *)c_str;
+    buf.len = len;
+    return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t c_str[], size_t len) {
-    return (struct aws_byte_buf){.buffer = (uint8_t *)&c_str[0], .len = len};
+static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, size_t len) {
+    struct aws_byte_buf buf;
+    buf.buffer = (uint8_t *)c_str;
+    buf.len = len;
+    return buf;
 }
 
 #ifdef __cplusplus
@@ -77,7 +99,17 @@ struct aws_byte_cursor {
 };
 
 static inline struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *buf) {
-    return (struct aws_byte_cursor){.ptr = buf->buffer, .len = buf->len};
+    struct aws_byte_cursor cur;
+    cur.ptr = buf->buffer;
+    cur.len = buf->len;
+    return cur;
+}
+
+static inline struct aws_byte_cursor aws_byte_cursor_from_array(const uint8_t *c_str, size_t len) {
+    struct aws_byte_cursor cur;
+    cur.ptr = (uint8_t *)c_str;
+    cur.len = len;
+    return cur;
 }
 
 /**

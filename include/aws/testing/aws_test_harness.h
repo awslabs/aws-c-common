@@ -17,6 +17,7 @@
 
 #include <aws/common/common.h>
 #include <aws/common/error.h>
+#include <aws/common/mutex.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -40,6 +41,7 @@ struct memory_test_config {
     void(*mem_release)(struct aws_allocator *config, void *ptr);
     size_t allocated;
     size_t freed;
+    struct aws_mutex mutex;
 };
 
 struct memory_test_tracker {
@@ -49,10 +51,13 @@ struct memory_test_tracker {
 
 static void *mem_acquire_malloc(struct aws_allocator *config, size_t size) {
     struct memory_test_config *test_config = (struct memory_test_config *)config;
+
+    aws_mutex_lock(&test_config->mutex);
     test_config->allocated += size;
     struct memory_test_tracker *memory = (struct memory_test_tracker *) malloc(size + sizeof(struct memory_test_tracker));
     memory->size = size;
     memory->blob = (uint8_t *)memory + sizeof(struct memory_test_tracker);
+    aws_mutex_unlock(&test_config->mutex);
     return memory->blob;
 }
 
@@ -60,8 +65,9 @@ static void mem_release_free(struct aws_allocator *config, void *ptr) {
     struct memory_test_config *test_config = (struct memory_test_config *)config;
 
     struct memory_test_tracker *memory = (struct memory_test_tracker *) ((uint8_t *)ptr - sizeof(struct memory_test_tracker));
+    aws_mutex_lock(&test_config->mutex);
     test_config->freed += memory->size;
-
+    aws_mutex_unlock(&test_config->mutex);
     free(memory);
 }
 
@@ -70,8 +76,9 @@ static void mem_release_free(struct aws_allocator *config, void *ptr) {
         .mem_acquire = mem_acquire_malloc,                                                                             \
         .mem_release = mem_release_free,                                                                               \
         .allocated = 0,                                                                                                \
-        .freed = 0                                                                                                     \
-  }
+        .freed = 0,                                                                                                    \
+        .mutex = AWS_MUTEX_INIT                                                                                        \
+  }                                                                                                                    \
 
 /** Prints a message to stdout using printf format that appends the function, file and line number.
   * If format is null, returns 0 without printing anything; otherwise returns 1.
@@ -105,7 +112,7 @@ static int total_failures;
     cunit_failure_message(__FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define PRINT_FAIL_INTERNAL0(...) \
-    cunit_failure_message0("", __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
+    cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define POSTFAIL_INTERNAL() do {\
     total_failures++; \
@@ -113,14 +120,14 @@ static int total_failures;
 } while (0)
 
 #define FAIL(format, ...)  \
-    do { PRINT_FAIL_INTERNAL(format, ## __VA_ARGS__); POSTFAIL_INTERNAL(); } while (0)
+    do { PRINT_FAIL_INTERNAL0(format, ## __VA_ARGS__); POSTFAIL_INTERNAL(); } while (0)
 
 
 #define ASSERT_TRUE(condition, ...) \
     do { \
         if(!(condition)) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected condition to be true: " #condition); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected condition to be true: " #condition); \
             } \
             POSTFAIL_INTERNAL(); \
         } \
@@ -129,8 +136,8 @@ static int total_failures;
 #define ASSERT_FALSE(condition, ...) \
     do { \
         if((condition)) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected condition to be false: " #condition); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected condition to be false: " #condition); \
             } \
             POSTFAIL_INTERNAL(); \
         } \
@@ -140,8 +147,8 @@ static int total_failures;
     do { \
         int assert_rv = (condition); \
         if (assert_rv != AWS_OP_SUCCESS) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected success at %s; got return value %d with last error 0x%04x\n", \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected success at %s; got return value %d with last error 0x%04x\n", \
                     #condition, assert_rv, aws_last_error()); \
             } \
             POSTFAIL_INTERNAL(); \
@@ -152,8 +159,8 @@ static int total_failures;
     do { \
         int assert_rv = (condition); \
         if (assert_rv != AWS_OP_ERR) { \
-            if (!PRINT_FAIL_INTERNAL(__VA_ARGS__)) { \
-                PRINT_FAIL_INTERNAL("Expected failure at %s; got return value %d with last error 0x%04x\n", \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("Expected failure at %s; got return value %d with last error 0x%04x\n", \
                     #condition, assert_rv, aws_last_error()); \
             } \
             POSTFAIL_INTERNAL(); \
@@ -331,12 +338,13 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
                                                                                                                        \
     size_t test_count = sizeof(tests) / sizeof(struct aws_test_harness*);                                              \
     if(test_name) {                                                                                                    \
+        ret_val = -1;                                                                                                  \
         for(size_t i = 0; i < test_count; ++i) {                                                                       \
             if(!strcmp(test_name, tests[i]->test_name)) {                                                              \
-                return aws_run_test_case(tests[i]);                                                                    \
+                ret_val = aws_run_test_case(tests[i]);                                                                 \
+                break;                                                                                                 \
             }                                                                                                          \
         }                                                                                                              \
-        return -1;                                                                                                     \
     }                                                                                                                  \
     else {                                                                                                             \
         for(size_t i = 0; i < test_count; ++i) {                                                                       \
@@ -345,7 +353,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     }                                                                                                                  \
                                                                                                                        \
     fflush(stdout);                                                                                                    \
-    fflush(AWS_TESTING_REPORT_FD);                                                                                                    \
+    fflush(AWS_TESTING_REPORT_FD);                                                                                     \
     return ret_val;                                                                                                    \
 
 #endif /* AWS_TEST_HARNESS_H _*/

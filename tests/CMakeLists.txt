@@ -42,8 +42,14 @@ add_test(unknown_error_code_no_slot_test ${TEST_BINARY_NAME} unknown_error_code_
 add_test(unknown_error_code_range_too_large_test ${TEST_BINARY_NAME} unknown_error_code_range_too_large_test)
 
 add_test(thread_creation_join_test ${TEST_BINARY_NAME} thread_creation_join_test)
+
 add_test(mutex_aquire_release_test ${TEST_BINARY_NAME} mutex_aquire_release_test)
 add_test(mutex_is_actually_mutex_test ${TEST_BINARY_NAME} mutex_is_actually_mutex_test)
+
+add_test(conditional_notify_one ${TEST_BINARY_NAME} conditional_notify_one)
+add_test(conditional_notify_all ${TEST_BINARY_NAME} conditional_notify_all)
+add_test(conditional_wait_timeout ${TEST_BINARY_NAME} conditional_wait_timeout)
+
 add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 
 add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
@@ -107,10 +113,11 @@ add_test(uint16_buffer_non_aligned_test ${TEST_BINARY_NAME} uint16_buffer_non_al
 add_test(uint16_buffer_signed_positive_test ${TEST_BINARY_NAME} uint16_buffer_signed_positive_test)
 add_test(uint16_buffer_signed_negative_test ${TEST_BINARY_NAME} uint16_buffer_signed_negative_test)
 
-add_test(scheduler_rejects_xthread_access_test ${TEST_BINARY_NAME} scheduler_rejects_xthread_access_test)
+add_test(scheduler_cleanup_cancellation ${TEST_BINARY_NAME} scheduler_cleanup_cancellation)
 add_test(scheduler_ordering_test ${TEST_BINARY_NAME} scheduler_ordering_test)
 add_test(scheduler_pops_task_late_test ${TEST_BINARY_NAME} scheduler_pops_task_late_test)
 add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timestamp_test)
+add_test(scheduler_reentrant_safe, ${TEST_BINARY_NAME} scheduler_reentrant_safe)
 
 add_test(test_hash_table_put_get ${TEST_BINARY_NAME} test_hash_table_put_get)
 add_test(test_hash_table_hash_collision ${TEST_BINARY_NAME} test_hash_table_hash_collision)
