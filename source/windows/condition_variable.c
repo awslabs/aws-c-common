@@ -46,7 +46,7 @@ int aws_condition_variable_wait(struct aws_condition_variable *condition_variabl
     return aws_raise_error(AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN);
 }
 
-int aws_condition_variable_wait_until(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
+int aws_condition_variable_wait_for(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex,
     int64_t time_to_wait) {
     DWORD time_ms = (DWORD)(time_to_wait / MILLIS_PER_SEC);
     if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {

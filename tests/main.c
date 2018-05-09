@@ -16,6 +16,8 @@
 
 #if _MSC_VER
 #pragma warning(disable:4100)
+#pragma warning(disable:4221)
+#pragma warning(disable:4204)
 #endif
 
 #include <encoding_test.c>
