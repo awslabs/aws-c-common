@@ -134,5 +134,9 @@ int main(int argc, char *argv[]) {
                        &test_char_split_with_max_splits,
                        &test_char_split_begins_with_token,
                        &test_char_split_output_too_small,
+                       &test_buffer_cat,
+                       &test_buffer_cat_dest_too_small,
+                       &test_buffer_cpy,
+                       &test_buffer_cpy_dest_too_small
                        );
 }

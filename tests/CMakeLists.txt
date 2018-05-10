@@ -144,3 +144,7 @@ add_test(test_char_split_adj_tokens ${TEST_BINARY_NAME} test_char_split_adj_toke
 add_test(test_char_split_begins_with_token ${TEST_BINARY_NAME} test_char_split_begins_with_token)
 add_test(test_char_split_with_max_splits ${TEST_BINARY_NAME} test_char_split_with_max_splits)
 add_test(test_char_split_output_too_small ${TEST_BINARY_NAME} test_char_split_output_too_small)
+add_test(test_buffer_cat ${TEST_BINARY_NAME} test_buffer_cat)
+add_test(test_buffer_cat_dest_too_small ${TEST_BINARY_NAME} test_buffer_cat_dest_too_small)
+add_test(test_buffer_cpy ${TEST_BINARY_NAME} test_buffer_cpy)
+add_test(test_buffer_cpy_dest_too_small ${TEST_BINARY_NAME} test_buffer_cpy_dest_too_small)

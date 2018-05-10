@@ -15,6 +15,7 @@
 
 #include <aws/common/byte_buf.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4204)
@@ -64,6 +65,44 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
 
     return AWS_OP_SUCCESS;
 }
+
 int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
     return aws_string_split_on_char_n(input_str, split_on, output, 0);
+}
+
+int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
+    assert(dest);
+    assert(number_of_args > 1);
+
+    va_list ap;
+    va_start(ap, number_of_args);
+
+    struct aws_byte_cursor dest_cursor = aws_byte_cursor_from_buf(dest);
+
+    for (size_t i = 0; i < number_of_args; ++i ) {
+        struct aws_byte_buf *buffer = va_arg(ap, struct aws_byte_buf *);
+
+        if (buffer->len > dest_cursor.len) {
+            va_end(ap);
+            return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+        }
+
+        memcpy(dest_cursor.ptr, buffer->buffer, buffer->len);
+        aws_byte_cursor_advance(&dest_cursor, buffer->len);
+    }
+
+    va_end(ap);
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from) {
+    assert(from->buffer);
+    assert(to->buffer);
+
+    if (to->len < from->len) {
+        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+    }
+
+    memcpy(to->buffer, from->buffer, from->len);
+    return AWS_OP_SUCCESS;
 }

@@ -67,7 +67,7 @@ extern "C" {
 #endif
 
 /**
- * No copies, no string allocations. Fills in output with a list of aws_byte_buf instances where buffer is
+ * No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
  * an offset into the input_str and len is the length of that string in the original buffer.
  *
  * Edge case rules are as follows:
@@ -78,7 +78,7 @@ extern "C" {
  * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
  * is your most likely guess for the upper bound of the number of elements resulting from the split.
  *
- * The type that will be stored in output is struct aws_byte_buf (you'll need this for the item size param).
+ * The type that will be stored in output is struct aws_byte_cursor (you'll need this for the item size param).
  *
  * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
  */
@@ -86,7 +86,7 @@ AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char
                                             struct aws_array_list *output);
 
 /**
-* No copies, no string allocations. Fills in output with a list of aws_byte_buf instances where buffer is
+* No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
 * an offset into the input_str and len is the length of that string in the original buffer. N is the max number of splits,
 * if this value is zero, it will add all splits to the output.
 *
@@ -98,12 +98,23 @@ AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char
 * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
 * is your most likely guess for the upper bound of the number of elements resulting from the split.
 *
-* The type that will be stored in output is struct aws_byte_buf (you'll need this for the item size param).
+* The type that will be stored in output is struct aws_byte_cursor (you'll need this for the item size param).
 *
 * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
 */
 AWS_COMMON_API int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     struct aws_array_list *output, size_t n);
+
+/**
+ * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ */
+AWS_COMMON_API int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from);
+
+/**
+ * Concatenates a variable number of struct aws_byte_buf * into destination. Number of args must be
+ * greater than 1. If dest is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ */
+AWS_COMMON_API int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
 
 #ifdef __cplusplus
 }
