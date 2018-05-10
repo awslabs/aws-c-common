@@ -31,15 +31,16 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     size_t last_offset = 0, split_count = 0;
     uint8_t *new_location = NULL;
 
+    struct aws_byte_cursor current_pos = aws_byte_cursor_from_buf(input_str);
+
     while (split_count < max_splits &&
-        (new_location = memchr(input_str->buffer + last_offset, split_on, input_str->len - last_offset))) {
+        (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
 
-        size_t distance_from_origin = new_location - input_str->buffer;
+        size_t distance_from_origin = new_location - current_pos.ptr;
 
-        struct aws_byte_buf buffer = {
-            .buffer = input_str->buffer + last_offset,
-            .len = distance_from_origin - last_offset,
-        };
+        struct aws_byte_cursor buffer = aws_byte_cursor_advance(&current_pos, distance_from_origin);
+        /* skip ahead by one to jump over the split_on character.*/
+        aws_byte_cursor_advance(&current_pos, 1);
 
         if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
             return AWS_OP_ERR;
@@ -49,29 +50,14 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
         split_count += 1;
     }
 
-    if (split_count == max_splits && last_offset < input_str->len) {
-        struct aws_byte_buf buffer = {
-            .buffer = input_str->buffer + last_offset,
-            .len = input_str->len - last_offset,
-        };
-
-        return aws_array_list_push_back(output, (const void *)&buffer);       
-    }
-
     if (last_offset < input_str->len) {
-        struct aws_byte_buf buffer = {
-            .buffer = input_str->buffer + last_offset,
-            .len = input_str->len - last_offset,
-        };
-
-        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
-            return AWS_OP_ERR;
-        }
+        return aws_array_list_push_back(output, (const void *)&current_pos);
     }
-    else if (input_str->buffer[input_str->len - 1] == split_on) {
-        struct aws_byte_buf buffer = aws_byte_buf_from_literal("");
 
-        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
+    if (input_str->buffer[input_str->len - 1] == split_on) {
+        struct aws_byte_cursor cursor = aws_byte_cursor_from_array(NULL, 0);
+
+        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&cursor))) {
             return AWS_OP_ERR;
         }
     }
