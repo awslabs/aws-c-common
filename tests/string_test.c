@@ -293,7 +293,7 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_buf destination;
 
     ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len + 10));
-    ASSERT_SUCCESS(aws_byte_buf_copy(&destination, &from));
+    ASSERT_SUCCESS(aws_byte_buf_copy(&destination, 0, &from, 0));
 
     ASSERT_INT_EQUALS(from.len, destination.len);
     ASSERT_INT_EQUALS(from.len + 10, destination.size);
@@ -307,12 +307,33 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_cpy, test_buffer_cpy_fn)
 
+static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx) {
+    struct aws_byte_buf from = aws_byte_buf_from_literal("testa");
+    struct aws_byte_buf destination;
+
+    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len + 10));
+    ASSERT_SUCCESS(aws_byte_buf_copy(&destination, 0, &from, 2));
+
+    ASSERT_INT_EQUALS(from.len - 2, destination.len);
+    ASSERT_INT_EQUALS(from.len + 10, destination.size);
+
+    char expected[] = "sta";
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
+
+    aws_byte_buf_free(allocator, &destination);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_cpy_offsets, test_buffer_cpy_offsets_fn)
+
 static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_buf from = aws_byte_buf_from_literal("testa");
     struct aws_byte_buf destination;
 
     ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len - 1));
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_copy(&destination, &from));
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_copy(&destination, 0, &from, 0));
     ASSERT_INT_EQUALS(0, destination.len);
 
     aws_byte_buf_free(allocator, &destination);
@@ -321,3 +342,18 @@ static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, vo
 }
 
 AWS_TEST_CASE(test_buffer_cpy_dest_too_small, test_buffer_cpy_dest_too_small_fn)
+
+static int test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+    struct aws_byte_buf from = aws_byte_buf_from_literal("testa");
+    struct aws_byte_buf destination;
+
+    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len));
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_copy(&destination, 1, &from, 0));
+    ASSERT_INT_EQUALS(0, destination.len);
+
+    aws_byte_buf_free(allocator, &destination);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_cpy_offsets_dest_too_small, test_buffer_cpy_offsets_dest_too_small_fn)

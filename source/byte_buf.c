@@ -98,16 +98,16 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from) {
+int aws_byte_buf_copy(struct aws_byte_buf *to, size_t to_offset, struct aws_byte_buf *from, size_t from_offset) {
     assert(from->buffer);
     assert(to->buffer);
 
     to->len = 0;
-    if (to->size < from->len) {
+    if (to->size - to_offset < from->len - from_offset) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
-    memcpy(to->buffer, from->buffer, from->len);
-    to->len = from->len;
+    memcpy(to->buffer + to_offset, from->buffer + from_offset, from->len - from_offset);
+    to->len = from->len - from_offset;
     return AWS_OP_SUCCESS;
 }

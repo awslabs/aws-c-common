@@ -137,6 +137,8 @@ int main(int argc, char *argv[]) {
                        &test_buffer_cat,
                        &test_buffer_cat_dest_too_small,
                        &test_buffer_cpy,
-                       &test_buffer_cpy_dest_too_small
+                       &test_buffer_cpy_dest_too_small,
+                       &test_buffer_cpy_offsets,
+                       &test_buffer_cpy_offsets_dest_too_small,
                        );
 }
