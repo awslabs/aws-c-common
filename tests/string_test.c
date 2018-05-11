@@ -150,7 +150,11 @@ static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
     ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&output));
+    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
+
+    struct aws_byte_cursor value = {0};
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    ASSERT_INT_EQUALS(0, value.len);
 
     aws_array_list_clean_up(&output);
 
@@ -251,9 +255,11 @@ static int test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     const char expected[] = "testa;testb;testc";
 
     struct aws_byte_buf destination;
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, str1.len + str2.len + str3.len));
+    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, str1.len + str2.len + str3.len + 10));
     ASSERT_SUCCESS(aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
 
+    ASSERT_INT_EQUALS(strlen(expected),destination.len);
+    ASSERT_INT_EQUALS(strlen(expected) + 10, destination.size);
     ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
 
     aws_byte_buf_free(allocator, &destination);
@@ -270,6 +276,9 @@ static int test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, vo
 
     struct aws_byte_buf destination;
     ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, str1.len + str2.len));
+    ASSERT_INT_EQUALS(str1.len + str2.len, destination.len);
+    ASSERT_INT_EQUALS(str1.len + str2.len, destination.size);
+
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
 
     aws_byte_buf_free(allocator, &destination);
@@ -283,8 +292,11 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_buf from = aws_byte_buf_from_literal("testa");
     struct aws_byte_buf destination;
 
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len));
+    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len + 10));
     ASSERT_SUCCESS(aws_byte_buf_copy(&destination, &from));
+
+    ASSERT_INT_EQUALS(from.len, destination.len);
+    ASSERT_INT_EQUALS(from.len + 10, destination.size);
 
     ASSERT_BIN_ARRAYS_EQUALS(from.buffer, from.len, destination.buffer, destination.len);
 

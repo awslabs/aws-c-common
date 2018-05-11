@@ -18,6 +18,7 @@
 #include <stdarg.h>
 
 #ifdef _MSC_VER
+/* disables warning non const declared initializers for Microsoft compilers */
 #pragma warning(disable:4204)
 #pragma warning(disable:4706)
 #endif
@@ -26,7 +27,7 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     struct aws_array_list *output, size_t n) {
     assert(input_str);
     assert(output);
-    assert(output->item_size >= sizeof(struct aws_byte_buf));
+    assert(output->item_size >= sizeof(struct aws_byte_cursor));
 
     size_t max_splits = n > 0 ? n : SIZE_MAX;
     size_t last_offset = 0, split_count = 0;
@@ -55,12 +56,11 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
         return aws_array_list_push_back(output, (const void *)&current_pos);
     }
 
-    if (input_str->buffer[input_str->len - 1] == split_on) {
-        struct aws_byte_cursor cursor = aws_byte_cursor_from_array(NULL, 0);
+    /* if we get here, we either hit the end and we need to add an empty split */
+    struct aws_byte_cursor cursor = aws_byte_cursor_from_array(NULL, 0);
 
-        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&cursor))) {
-            return AWS_OP_ERR;
-        }
+    if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&cursor))) {
+        return AWS_OP_ERR;
     }
 
     return AWS_OP_SUCCESS;
@@ -77,7 +77,9 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     va_list ap;
     va_start(ap, number_of_args);
 
+    dest->len = dest->size;
     struct aws_byte_cursor dest_cursor = aws_byte_cursor_from_buf(dest);
+    dest->len = 0;
 
     for (size_t i = 0; i < number_of_args; ++i ) {
         struct aws_byte_buf *buffer = va_arg(ap, struct aws_byte_buf *);
@@ -89,6 +91,7 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 
         memcpy(dest_cursor.ptr, buffer->buffer, buffer->len);
         aws_byte_cursor_advance(&dest_cursor, buffer->len);
+        dest->len += buffer->len;
     }
 
     va_end(ap);
@@ -99,10 +102,11 @@ int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from) {
     assert(from->buffer);
     assert(to->buffer);
 
-    if (to->len < from->len) {
+    if (to->size < from->len) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
     memcpy(to->buffer, from->buffer, from->len);
+    to->len = from->len;
     return AWS_OP_SUCCESS;
 }
