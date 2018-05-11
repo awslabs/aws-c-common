@@ -313,6 +313,7 @@ static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, vo
 
     ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len - 1));
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_copy(&destination, &from));
+    ASSERT_INT_EQUALS(0, destination.len);
 
     aws_byte_buf_free(allocator, &destination);
 

@@ -113,12 +113,14 @@ AWS_COMMON_API int aws_string_split_on_char_n(struct aws_byte_buf *input_str, ch
 
 /**
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ * dest->len will contain the amount of data actually copied to dest.
  */
 AWS_COMMON_API int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from);
 
 /**
  * Concatenates a variable number of struct aws_byte_buf * into destination. Number of args must be
- * greater than 1. If dest is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ * greater than 1. If dest is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len
+ * will contain the amount of data actually copied to dest.
  */
 AWS_COMMON_API int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
 

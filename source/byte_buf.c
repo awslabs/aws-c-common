@@ -102,6 +102,7 @@ int aws_byte_buf_copy(struct aws_byte_buf *to, struct aws_byte_buf *from) {
     assert(from->buffer);
     assert(to->buffer);
 
+    to->len = 0;
     if (to->size < from->len) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
