@@ -18,14 +18,9 @@
 
 #include <aws/common/common.h>
 #include <aws/common/byte_buf.h>
+#include <aws/common/byte_order.h>
 #include <stdint.h>
 #include <memory.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <netinet/in.h>
-#endif /*_WIN32 */
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,11 +79,9 @@ AWS_COMMON_API int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_
  * Assumes the buffer size is at least 8 bytes.
  */
 static inline void aws_write_u64(uint8_t *buffer, uint64_t value) {
+    value = aws_hton64(value);
 
-    uint32_t low = htonl((uint32_t)value);
-    uint32_t high = htonl((uint32_t)(value >> 32));
-    memcpy((void *)buffer, (void *)&high, sizeof(high));
-    memcpy((void *)(buffer + sizeof(high)), (void *)&low, sizeof(low));
+    memcpy((void *)buffer, &value, sizeof(value));
 }
 
 /*
@@ -97,25 +90,18 @@ static inline void aws_write_u64(uint8_t *buffer, uint64_t value) {
  */
 static inline uint64_t aws_read_u64(const uint8_t *buffer) {
     uint64_t value = 0;
+    memcpy((void *)&value, (void *)buffer, sizeof(value));
 
-    uint32_t low = 0;
-    uint32_t high = 0;
-    memcpy((void *)&high, (void *)buffer, sizeof(high));
-    memcpy((void *)&low, (void *)(buffer + sizeof(high)), sizeof(low));
-
-    value = (uint64_t)ntohl(high) << 32;
-    value |= (uint64_t)ntohl(low);
-
-    return value;
+    return aws_ntoh64(value);
 }
 
 /* Add a 32 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 4 bytes.
  */
 static inline void aws_write_u32(uint8_t *buffer, uint32_t value) {
-    uint32_t be_value = htonl(value);
+    value = aws_hton32(value);
 
-    memcpy((void *)buffer, (void *)&be_value, sizeof(be_value));
+    memcpy((void *)buffer, (void *)&value, sizeof(value));
 }
 
 /*
@@ -126,7 +112,7 @@ static inline uint32_t aws_read_u32(const uint8_t *buffer) {
     uint32_t value = 0;
     memcpy((void *)&value, (void *)buffer, sizeof(value));
 
-    return ntohl(value);
+    return aws_ntoh32(value);
 }
 
 /* Add a 24 bit unsigned integer to the buffer, ensuring network - byte order
@@ -135,8 +121,8 @@ static inline uint32_t aws_read_u32(const uint8_t *buffer) {
  * Assumes buffer is at least 3 bytes long.
  */
 static inline void aws_write_u24(uint8_t *buffer, uint32_t value) {
-    uint32_t be_value = htonl(value);
-    memcpy((void *)buffer, (void *)((uint8_t *)&be_value + 1), sizeof(be_value) - 1);
+    value = aws_hton32(value);
+    memcpy((void *)buffer, (void *)((uint8_t *)&value + 1), sizeof(value) - 1);
 }
 
 /*
@@ -147,7 +133,7 @@ static inline uint32_t aws_read_u24(const uint8_t *buffer) {
     uint32_t value = 0;
     memcpy((void *)((uint8_t *)&value + 1), (void *)buffer, sizeof(value) - 1);
 
-    return ntohl(value);
+    return aws_ntoh32(value);
 }
 
 /* Add a 16 bit unsigned integer to the buffer, ensuring network-byte order
@@ -155,9 +141,9 @@ static inline uint32_t aws_read_u24(const uint8_t *buffer) {
  * Assumes buffer is at least 2 bytes long.
  */
 static inline void aws_write_u16(uint8_t *buffer, uint16_t value) {
-    uint16_t be_value = htons(value);
+    value = aws_hton16(value);
 
-    memcpy((void *)buffer, (void *)&be_value, sizeof(be_value));
+    memcpy((void *)buffer, (void *)&value, sizeof(value));
 }
 
 /*
@@ -168,7 +154,7 @@ static inline uint16_t aws_read_u16(const uint8_t *buffer) {
     uint16_t value = 0;
     memcpy((void *)&value, (void *)buffer, sizeof(value));
 
-    return ntohs(value);
+    return aws_ntoh16(value);
 }
 
 #endif /*AWS_COMMON_ENCODING_H*/
