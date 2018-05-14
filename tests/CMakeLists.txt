@@ -131,3 +131,5 @@ add_test(test_u64_saturating ${TEST_BINARY_NAME} test_u64_saturating)
 add_test(test_u32_saturating ${TEST_BINARY_NAME} test_u32_saturating)
 add_test(test_u64_checked ${TEST_BINARY_NAME} test_u64_checked)
 add_test(test_u32_checked ${TEST_BINARY_NAME} test_u32_checked)
+
+add_test(byte_swap_test ${TEST_BINARY_NAME} byte_swap_test)
