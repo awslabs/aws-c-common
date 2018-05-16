@@ -28,7 +28,7 @@ struct aws_byte_buf {
 };
 
 static inline int aws_byte_buf_alloc(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
-    buf->buffer = allocator->mem_acquire(allocator, len);
+    buf->buffer = (uint8_t*)allocator->mem_acquire(allocator, len);
     if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
     buf->len = len;
     return AWS_OP_SUCCESS;
