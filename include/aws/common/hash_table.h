@@ -55,7 +55,7 @@
  * memory barrier must be used when transitioning from single-threaded mutating
  * usage to multithreaded usage.
  */
-struct aws_common_hash_table {
+struct aws_hash_table {
     void *pImpl;
 };
 
@@ -70,7 +70,7 @@ struct aws_common_hash_table {
  * delete, clear, and clean_up), regardless of whether the number of elements
  * actually changes.
  */
-struct aws_common_hash_element {
+struct aws_hash_element {
     const void *key;
     void *value;
 };
@@ -94,7 +94,7 @@ typedef int (*aws_equals_fn_t)(const void *a, const void *b);
  * calling code, calling code must destroy it.
  */
 typedef void (*aws_hash_element_destroy_t)(
-    struct aws_common_hash_element element
+    struct aws_hash_element element
 );
 
 #ifdef __cplusplus
@@ -109,8 +109,8 @@ extern "C" {
      * callback is not desired in this case.
      */
 
-    AWS_COMMON_API int aws_common_hash_table_init(
-        struct aws_common_hash_table *map,
+    AWS_COMMON_API int aws_hash_table_init(
+        struct aws_hash_table *map,
         struct aws_allocator *alloc, size_t size,
         aws_hash_fn_t hash_fn,
         aws_equals_fn_t equals_fn,
@@ -118,11 +118,11 @@ extern "C" {
 
     /**
      * Deletes every element from map and frees all associated memory.
-     * destroy_fn will be called for each element.  aws_common_hash_table_init
+     * destroy_fn will be called for each element.  aws_hash_table_init
      * must be called before reusing the hash table.
      */
-    AWS_COMMON_API void aws_common_hash_table_clean_up(
-        struct aws_common_hash_table *map);
+    AWS_COMMON_API void aws_hash_table_clean_up(
+        struct aws_hash_table *map);
 
     /**
      * Attempts to locate an element at key.  If the element is found, a
@@ -139,9 +139,9 @@ extern "C" {
      * _clean_up.
      */
 
-    AWS_COMMON_API int aws_common_hash_table_find(
-        struct aws_common_hash_table *map,
-        const void *key, struct aws_common_hash_element **pElem);
+    AWS_COMMON_API int aws_hash_table_find(
+        const struct aws_hash_table *map,
+        const void *key, struct aws_hash_element **pElem);
 
     /**
      * Attempts to locate an element at key. If no such element was found,
@@ -155,9 +155,9 @@ extern "C" {
      * Raises AWS_ERROR_OOM if hash table expansion was required and memory
      * allocation failed.
      */
-    AWS_COMMON_API int aws_common_hash_table_create(
-        struct aws_common_hash_table *map,
-        const void *key, struct aws_common_hash_element **pElem,
+    AWS_COMMON_API int aws_hash_table_create(
+        struct aws_hash_table *map,
+        const void *key, struct aws_hash_element **pElem,
         int *was_created
     );
 
@@ -172,9 +172,9 @@ extern "C" {
      * If was_present is non-NULL, it is set to 0 if the element was
      * not present, or 1 if it was present (and is now removed).
      */
-    AWS_COMMON_API int aws_common_hash_table_remove(
-        struct aws_common_hash_table *map,
-        const void *key, struct aws_common_hash_element *pValue,
+    AWS_COMMON_API int aws_hash_table_remove(
+        struct aws_hash_table *map,
+        const void *key, struct aws_hash_element *pValue,
         int *was_present
     );
 
@@ -206,39 +206,39 @@ extern "C" {
      * and is safe to invoke in parallel with other non-mutating operations.
      */
 
-    AWS_COMMON_API int aws_common_hash_table_foreach(
-        struct aws_common_hash_table *map,
-        int (*callback)(void *context, struct aws_common_hash_element *pElement),
+    AWS_COMMON_API int aws_hash_table_foreach(
+        struct aws_hash_table *map,
+        int (*callback)(void *context, struct aws_hash_element *pElement),
         void *context);
 
     /**
      * Removes every element from the hash map. destroy_fn will be called for
      * each element.
      */
-    AWS_COMMON_API void aws_common_hash_table_clear(
-        struct aws_common_hash_table *map);
+    AWS_COMMON_API void aws_hash_table_clear(
+        struct aws_hash_table *map);
 
     /**
      * Convenience hash function for NUL-terminated strings
      */
-    AWS_COMMON_API uint64_t aws_common_hash_string(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
 
     /**
      * Convenience eq function for NUL-terminated strings
      */
-    AWS_COMMON_API int aws_common_string_eq(const void *a, const void *b);
+    AWS_COMMON_API int aws_string_eq(const void *a, const void *b);
 
     /**
      * Convenience hash function which hashes the pointer value directly,
      * without dereferencing.  This can be used in cases where pointer identity
      * is desired, or where a uintptr_t is encoded into a const void *.
      */
-    AWS_COMMON_API uint64_t aws_common_hash_ptr(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_ptr(const void *a);
 
     /**
      * Equality function which compares pointer equality.
      */
-    AWS_COMMON_API int aws_common_ptr_eq(const void *a, const void *b);
+    AWS_COMMON_API int aws_ptr_eq(const void *a, const void *b);
 
 #ifdef _cplusplus
 }

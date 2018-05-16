@@ -41,7 +41,7 @@ static void suppress_unused_lookup3_func_warnings() {
 }
 
 struct hash_table_entry {
-    struct aws_common_hash_element element;
+    struct aws_hash_element element;
     uint64_t hash_code; /* hash code (0 signals empty) */
 };
 
@@ -81,7 +81,7 @@ static uint64_t distance(struct hash_table_state *state, int index) {
     return (index - state->slots[index].hash_code) & state->mask;
 }
 
-void hash_dump(struct aws_common_hash_table *tbl) {
+void hash_dump(struct aws_hash_table *tbl) {
     struct hash_table_state *state = tbl->pImpl;
 
     printf("Dumping hash table contents:\n");
@@ -102,7 +102,7 @@ void hash_dump(struct aws_common_hash_table *tbl) {
 
 #if 0
 /* Not currently exposed as an API. Should we have something like this? Useful for benchmarks */
-AWS_COMMON_API void aws_common_hash_table_print_stats(struct aws_common_hash_table *table) {
+AWS_COMMON_API void aws_hash_table_print_stats(struct aws_hash_table *table) {
     struct hash_table_state *state = table->pImpl;
     uint64_t total_disp = 0;
     uint64_t max_disp = 0;
@@ -154,7 +154,7 @@ static struct hash_table_state *alloc_state(const struct hash_table_state *templ
     size_t elemsize;
 
     /* We use size - 1 because the first slot is inlined into the hash_table_state structure. */
-    if (!aws_common_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
+    if (!aws_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
         return NULL;
     }
 
@@ -208,7 +208,7 @@ static int update_template_size(struct hash_table_state *template, size_t expect
     }
 
     /* Make sure we don't overflow when computing memory requirements either */
-    size_t required_mem = aws_common_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
+    size_t required_mem = aws_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
     if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
         return aws_raise_error(AWS_ERROR_OOM);
     }
@@ -219,7 +219,7 @@ static int update_template_size(struct hash_table_state *template, size_t expect
     return AWS_OP_SUCCESS;
 }
 
-int aws_common_hash_table_init(struct aws_common_hash_table *map,
+int aws_hash_table_init(struct aws_hash_table *map,
     struct aws_allocator *alloc, size_t size,
     aws_hash_fn_t hash_fn, aws_equals_fn_t equals_fn, aws_hash_element_destroy_t destroy_fn) {
 
@@ -242,8 +242,8 @@ int aws_common_hash_table_init(struct aws_common_hash_table *map,
     return AWS_OP_SUCCESS;
 }
 
-void aws_common_hash_table_clean_up(struct aws_common_hash_table *map) {
-    aws_common_hash_table_clear(map);
+void aws_hash_table_clean_up(struct aws_hash_table *map) {
+    aws_hash_table_clear(map);
     aws_mem_release(((struct hash_table_state *)map->pImpl)->alloc, map->pImpl);
 }
 
@@ -324,8 +324,8 @@ static int find_entry1(struct hash_table_state *state, uint64_t hash_code, const
     return rv;
 }
 
-int aws_common_hash_table_find(struct aws_common_hash_table *map,
-    const void *key, struct aws_common_hash_element **pElem) {
+int aws_hash_table_find(const struct aws_hash_table *map,
+    const void *key, struct aws_hash_element **pElem) {
     struct hash_table_state *state = map->pImpl;
     uint64_t hash_code = hash_for(state, key);
     struct hash_table_entry *entry;
@@ -371,7 +371,7 @@ static struct hash_table_entry *emplace_item(struct hash_table_state *state, str
     return initial_placement;
 }
 
-static int expand_table(struct aws_common_hash_table *map) {
+static int expand_table(struct aws_hash_table *map) {
     struct hash_table_state *old_state = map->pImpl;
     struct hash_table_state template = *old_state;
 
@@ -396,8 +396,8 @@ static int expand_table(struct aws_common_hash_table *map) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_common_hash_table_create(struct aws_common_hash_table *map,
-    const void *key, struct aws_common_hash_element **pElem, int *was_created
+int aws_hash_table_create(struct aws_hash_table *map,
+    const void *key, struct aws_hash_element **pElem, int *was_created
 ) {
     struct hash_table_state *state = map->pImpl;
     uint64_t hash_code = hash_for(state, key);
@@ -485,8 +485,8 @@ static int remove_entry(struct hash_table_state *state, struct hash_table_entry 
     return index;
 }
 
-int aws_common_hash_table_remove(struct aws_common_hash_table *map,
-    const void *key, struct aws_common_hash_element *pValue,
+int aws_hash_table_remove(struct aws_hash_table *map,
+    const void *key, struct aws_hash_element *pValue,
     int *was_present
 ) {
     struct hash_table_state *state = map->pImpl;
@@ -518,8 +518,8 @@ int aws_common_hash_table_remove(struct aws_common_hash_table *map,
     return AWS_OP_SUCCESS;
 }
 
-int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
-    int (*callback)(void *baton, struct aws_common_hash_element *pElement), void *baton)
+int aws_hash_table_foreach(struct aws_hash_table *map,
+    int (*callback)(void *baton, struct aws_hash_element *pElement), void *baton)
 {
     struct hash_table_state *state = map->pImpl;
     size_t limit = state->size;
@@ -556,7 +556,7 @@ int aws_common_hash_table_foreach(struct aws_common_hash_table *map,
     return AWS_OP_SUCCESS;
 }
 
-void aws_common_hash_table_clear(struct aws_common_hash_table *map) {
+void aws_hash_table_clear(struct aws_hash_table *map) {
     struct hash_table_state *state = map->pImpl;
     if (state->destroy_fn) {
         for (size_t i = 0; i < state->size; ++i) {
@@ -572,7 +572,7 @@ void aws_common_hash_table_clear(struct aws_common_hash_table *map) {
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 }
 
-uint64_t aws_common_hash_string(const void *item) {
+uint64_t aws_hash_string(const void *item) {
     const char *str = item;
 
     /* first digits of pi in hex */
@@ -582,7 +582,7 @@ uint64_t aws_common_hash_string(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-uint64_t aws_common_hash_ptr(const void *item) {
+uint64_t aws_hash_ptr(const void *item) {
     /* first digits of e in hex
      * 2.b7e 1516 28ae d2a6 */
     uint32_t b = 0x2b7e1516, c = 0x28aed2a6;
@@ -592,13 +592,13 @@ uint64_t aws_common_hash_ptr(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-int aws_common_string_eq(const void *a, const void *b) {
+int aws_string_eq(const void *a, const void *b) {
     return !strcmp((const char *)a, (const char *)b);
 }
 
 /**
 * Convenience eq function for int.
 */
-int aws_common_ptr_eq(const void *a, const void *b) {
+int aws_ptr_eq(const void *a, const void *b) {
     return a == b;
 }
