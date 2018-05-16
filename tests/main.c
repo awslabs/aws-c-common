@@ -33,6 +33,7 @@
 #include <task_scheduler_test.c>
 #include <hash_table_test.c>
 #include <math_test.c>
+#include <misc_test.c>
 #include <byte_order_test.c>
 
 int main(int argc, char *argv[]) {
@@ -126,6 +127,7 @@ int main(int argc, char *argv[]) {
                        &nospec_index_test,
                        &test_byte_cursor_advance,
                        &test_byte_cursor_advance_nospec,
+                       &test_secure_zero,
                        &byte_swap_test
                        );
 }
