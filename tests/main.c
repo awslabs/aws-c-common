@@ -34,6 +34,8 @@
 #include <hash_table_test.c>
 #include <math_test.c>
 #include <string_test.c>
+#include <misc_test.c>
+#include <byte_order_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -140,5 +142,8 @@ int main(int argc, char *argv[]) {
                        &test_buffer_cpy_dest_too_small,
                        &test_buffer_cpy_offsets,
                        &test_buffer_cpy_offsets_dest_too_small,
+                       &test_secure_zero,
+                       &byte_swap_test
                        );
 }
+

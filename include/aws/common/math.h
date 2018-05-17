@@ -28,7 +28,7 @@
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
 #if (AWS_ENABLE_HW_OPTIMIZATION)
-static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
+static inline uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86.
 
@@ -59,7 +59,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
  * Multiplies a * b and returns the truncated result in *r. If the result
  * overflows, returns 0, else returns 1.
  */
-static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
@@ -89,7 +89,7 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
-static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
+static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
 #if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86.
 
@@ -121,7 +121,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
  * Multiplies a * b and returns the result in *r. If the result overflows,
  * returns 0, else returns 1.
  */
-static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 #if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
     uint32_t result = a;
@@ -156,7 +156,7 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
-static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
+static inline uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t x = a * b;
     if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
         return ~(uint64_t)0;
@@ -169,7 +169,7 @@ static inline uint64_t aws_common_mul_u64_saturating(uint64_t a, uint64_t b) {
  * Multiplies a * b and returns the truncated result in *r. If the result
  * overflows, returns 0, else returns 1.
  */
-static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint64_t x = a * b;
     *r = x;
     if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
@@ -182,7 +182,7 @@ static inline int aws_common_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
-static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
+static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t x = a * b;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
         return ~(uint32_t)0;
@@ -195,7 +195,7 @@ static inline uint32_t aws_common_mul_u32_saturating(uint32_t a, uint32_t b) {
  * Multiplies a * b and returns the result in *r. If the result overflows,
  * returns 0, else returns 1.
  */
-static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     uint32_t x = a * b;
     *r = x;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
@@ -211,7 +211,7 @@ static inline int aws_common_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r
 #pragma warning(disable:4127) /*Disable "conditional expression is constant" */
 #endif /* _MSC_VER */
 
-static inline size_t aws_common_mul_size_saturating(size_t a, size_t b) {
+static inline size_t aws_mul_size_saturating(size_t a, size_t b) {
     /* static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)*/
     char assert_sizet_is_32_or_64_bit[
         (((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) ||
@@ -224,17 +224,17 @@ static inline size_t aws_common_mul_size_saturating(size_t a, size_t b) {
 
 
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
-        return (size_t)aws_common_mul_u32_saturating((uint32_t)a, (uint32_t)b);
+        return (size_t)aws_mul_u32_saturating((uint32_t)a, (uint32_t)b);
     } else {
-        return (size_t)aws_common_mul_u64_saturating(a, b);
+        return (size_t)aws_mul_u64_saturating(a, b);
     }
 }
 
-static inline int aws_common_mul_size_checked(size_t a, size_t b, size_t *r) {
+static inline int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
-        return (int)aws_common_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t*)r);
+        return (int)aws_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t*)r);
     } else {
-        return (int)aws_common_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t*)r);
+        return (int)aws_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t*)r);
     }
 }
 

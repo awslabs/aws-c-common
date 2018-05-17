@@ -18,6 +18,11 @@
 
 #include <aws/common/error.h>
 #include <stddef.h>
+#include <string.h>
+
+#if defined(_MSC_VER )
+#include <Windows.h> // for SecureZeroMemory
+#endif
 
 #if defined(_MSC_VER )
 #define AWS_THREAD_LOCAL __declspec(thread)
@@ -131,6 +136,48 @@ typedef enum aws_common_error {
 
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
 } aws_common_error;
+
+/**
+ * Securely zeroes a memory buffer. This function will attempt to ensure that
+ * the compiler will not optimize away this zeroing operation.
+ */
+static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
+#if defined(_MSC_VER)
+    SecureZeroMemory(pBuf, bufsize);
+#else
+    /* We cannot use memset_s, even on a C11 compiler, because that would require
+     * that __STDC_WANT_LIB_EXT1__ be defined before the _first_ inclusion of string.h.
+     *
+     * We'll try to work around this by using inline asm on GCC-like compilers, and
+     * by exposing the buffer pointer in a volatile local pointer elsewhere.
+     */
+# if defined(__GNUC__) || defined(__clang__)
+     memset(pBuf, 0, bufsize);
+     /* This inline asm serves to convince the compiler that the buffer is (somehow) still
+      * used after the zero, and therefore that the optimizer can't eliminate the memset.
+      */
+     __asm__ __volatile__("" /* The asm doesn't actually do anything. */
+        : /* no outputs */
+        /* Tell the compiler that the asm code has access to the pointer to the buffer,
+         * and therefore it might be reading the (now-zeroed) buffer.
+         * Without this. clang/LLVM 9.0.0 optimizes away a memset of a stack buffer.
+         */
+        : "r" (pBuf)
+        /* Also clobber memory. While this seems like it might be unnecessary - after all,
+         * it's enough that the asm might read the buffer, right? - in practice GCC 7.3.0
+         * seems to optimize a zero of a stack buffer without it.
+         */
+        : "memory"
+    );
+# else // not GCC/clang
+    /* We don't have access to inline asm, since we're on a non-GCC platform. Move the pointer
+     * through a volatile pointer in an attempt to confuse the optimizer.
+     */
+    volatile void *pVolBuf = pBuf;
+    memset(pVolBuf, 0, bufsize);
+# endif // #else not GCC/clang
+#endif  // #else not windows
+}
 
 #define AWS_LIB_NAME "libaws-c-common"
 
