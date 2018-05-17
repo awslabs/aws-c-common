@@ -15,6 +15,11 @@
 
 #include <aws/common/clock.h>
 #include <time.h>
+
+#if defined(__MACH__)
+#include <AvailabilityMacros.h>
+#endif
+
 #if defined(__MACH__) && MAC_OS_X_VERSION_MAX_ALLOWED < 101200
 #include <sys/time.h>
 #endif /*defined(__MACH__) && MAC_OS_X_VERSION_MAX_ALLOWED < 101200*/
