@@ -63,31 +63,10 @@ static inline struct aws_linked_list_node *aws_linked_list_end(struct aws_linked
 }
 
 /**
- * Returns a reverse iteration pointer for the last element in the list.
- */
-static inline struct aws_linked_list_node *aws_linked_list_rbegin(struct aws_linked_list *list) {
-    return list->tail.prev;
-}
-
-/**
- * Returns a reverse iteration pointer for one past the first element in the list.
- */
-static inline struct aws_linked_list_node *aws_linked_list_rend(struct aws_linked_list *list) {
-    return &list->head;
-}
-
-/**
  * Returns the next element in the list.
  */
 static inline struct aws_linked_list_node *aws_linked_list_next(struct aws_linked_list_node *node) {
     return node->next;
-}
-
-/**
- * Returns the previous element in the list.
- */
-static inline struct aws_linked_list_node *aws_linked_list_prev(struct aws_linked_list_node *node) {
-    return node->prev;
 }
 
 /**
