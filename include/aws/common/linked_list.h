@@ -99,7 +99,6 @@ static inline bool aws_linked_list_empty(struct aws_linked_list *list) {
 
 /**
  * Removes the specified node from the list (prev/next point to each other) and returns the next node in the list.
- * If the list is empty, this function returns NULL.
  */
 static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
     node->prev->next = node->next;
