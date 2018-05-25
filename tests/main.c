@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
                        &array_list_not_enough_space_test_failure,
                        &linked_list_push_back_pop_front,
                        &linked_list_push_front_pop_back,
+                       &linked_list_iteration,
+                       &linked_list_reverse_iteration,
                        &priority_queue_push_pop_order_test,
                        &priority_queue_size_and_capacity_test,
                        &priority_queue_random_values_test,

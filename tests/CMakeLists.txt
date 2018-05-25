@@ -75,6 +75,8 @@ add_test(priority_queue_size_and_capacity_test ${TEST_BINARY_NAME} priority_queu
 
 add_test(linked_list_push_back_pop_front ${TEST_BINARY_NAME} linked_list_push_back_pop_front)
 add_test(linked_list_push_front_pop_back ${TEST_BINARY_NAME} linked_list_push_front_pop_back)
+add_test(linked_list_iteration ${TEST_BINARY_NAME} linked_list_iteration)
+add_test(linked_list_reverse_iteration ${TEST_BINARY_NAME} linked_list_reverse_iteration)
 
 add_test(hex_encoding_test_case_empty_test ${TEST_BINARY_NAME} hex_encoding_test_case_empty_test)
 add_test(hex_encoding_test_case_f_test ${TEST_BINARY_NAME} hex_encoding_test_case_f_test)
