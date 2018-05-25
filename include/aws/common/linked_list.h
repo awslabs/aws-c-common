@@ -18,6 +18,7 @@
 
 #include <aws/common/common.h>
 #include <stddef.h>
+#include <assert.h>
 
 /**
  * from a pointer and a type of the struct containing the node
