@@ -18,6 +18,7 @@
 
 #include <aws/common/common.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <assert.h>
 
 /**
@@ -92,7 +93,7 @@ static inline void aws_linked_list_insert_before(struct aws_linked_list_node *be
 /**
  * Tests if the list is empty.
  */
-static inline int aws_linked_list_empty(struct aws_linked_list *list) {
+static inline bool aws_linked_list_empty(struct aws_linked_list *list) {
     return list->head.next == &list->tail;
 }
 
