@@ -16,79 +16,85 @@
 #include <aws/common/linked_list.h>
 #include <aws/testing/aws_test_harness.h>
 
-aws_linked_list_of(int, int_value);
+struct int_value {
+    int value;
+    struct aws_linked_list_node node;
+};
 
 static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
-    struct aws_linked_list_node list, *head;
+    struct aws_linked_list list;
 
-    head = &list;
-    aws_linked_list_init(head);
+    aws_linked_list_init(&list);
+    ASSERT_TRUE(aws_linked_list_empty(&list));
 
     struct int_value first = (struct int_value){.value = 1};
     struct int_value second = (struct int_value){.value = 2};
     struct int_value third = (struct int_value){.value = 3};
     struct int_value fourth = (struct int_value){.value = 4};
 
-    aws_linked_list_push_back(head, &first.list);
-    aws_linked_list_push_back(head, &second.list);
-    aws_linked_list_push_back(head, &third.list);
-    aws_linked_list_push_back(head, &fourth.list);
+    aws_linked_list_push_back(&list, &first.node);
+    aws_linked_list_push_back(&list, &second.node);
+    aws_linked_list_push_back(&list, &third.node);
+    aws_linked_list_push_back(&list, &fourth.node);
 
     int item;
-    aws_linked_list_pop_front(head);
-    item = aws_container_of(head, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(first.value, item, "Item should have been the first item.");
+    struct aws_linked_list_node *node = aws_linked_list_pop_front(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(first.value, item);
 
-    aws_linked_list_pop_front(head);
-    item = aws_container_of(head, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(second.value, item, "Item should have been the second item.");
+    node = aws_linked_list_pop_front(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(second.value, item);
 
-    aws_linked_list_pop_front(head);
-    item = aws_container_of(head, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(third.value, item, "Item should have been the third item.");
+    node = aws_linked_list_pop_front(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(third.value, item);
 
-    aws_linked_list_pop_front(head);
-    item = aws_container_of(head, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(fourth.value, item, "Item should have been the fourth item.");
+    node = aws_linked_list_pop_front(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(fourth.value, item);
 
+    ASSERT_TRUE(aws_linked_list_empty(&list));
     return 0;
 }
 
 static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
-    struct aws_linked_list_node list, *head;
+    struct aws_linked_list list;
 
-    head = &list;
-    aws_linked_list_init(head);
+    aws_linked_list_init(&list);
 
-    ASSERT_TRUE(aws_linked_list_empty(head), "List should be empty before adding any items.");
+    ASSERT_TRUE(aws_linked_list_empty(&list));
 
     struct int_value first = (struct int_value){.value = 1};
     struct int_value second = (struct int_value){.value = 2};
     struct int_value third = (struct int_value){.value = 3};
     struct int_value fourth = (struct int_value){.value = 4};
 
-    aws_linked_list_push_front(head, &first.list);
-    aws_linked_list_push_front(head, &second.list);
-    aws_linked_list_push_front(head, &third.list);
-    aws_linked_list_push_front(head, &fourth.list);
+    aws_linked_list_push_front(&list, &first.node);
+    aws_linked_list_push_front(&list, &second.node);
+    aws_linked_list_push_front(&list, &third.node);
+    aws_linked_list_push_front(&list, &fourth.node);
 
-    ASSERT_FALSE(aws_linked_list_empty(head), "List should not be empty after adding items.");
+    ASSERT_FALSE(aws_linked_list_empty(&list));
 
     int item;
-    aws_linked_list_pop_back(head);
-    item = aws_container_of(head->prev, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(second.value, item, "Item should have been the second item.");
+    struct aws_linked_list_node *node = aws_linked_list_pop_back(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(first.value, item);
 
-    aws_linked_list_pop_back(head);
-    item = aws_container_of(head->prev, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(third.value, item, "Item should have been the third item.");
+    node = aws_linked_list_pop_back(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(second.value, item);
 
-    aws_linked_list_pop_back(head);
-    item = aws_container_of(head->prev, struct int_value, list)->value;
-    ASSERT_INT_EQUALS(fourth.value, item, "Item should have been the fourth item.");
+    node = aws_linked_list_pop_back(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(third.value, item);
 
-    aws_linked_list_pop_back(head);
-    ASSERT_TRUE(aws_linked_list_empty(head), "List should be after removing all items.");
+    node = aws_linked_list_pop_back(&list);
+    item = aws_container_of(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(fourth.value, item);
+
+    ASSERT_TRUE(aws_linked_list_empty(&list));
 
     return 0;
 }
