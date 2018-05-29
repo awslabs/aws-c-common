@@ -56,7 +56,7 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
         return aws_array_list_push_back(output, (const void *)&current_pos);
     }
 
-    /* if we get here, we either hit the end and we need to add an empty split */
+    /* if we get here, we hit the end and we need to add an empty split */
     struct aws_byte_cursor cursor = aws_byte_cursor_from_array(NULL, 0);
 
     if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&cursor))) {
@@ -77,37 +77,29 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     va_list ap;
     va_start(ap, number_of_args);
 
-    dest->len = dest->size;
-    struct aws_byte_cursor dest_cursor = aws_byte_cursor_from_buf(dest);
-    dest->len = 0;
-
     for (size_t i = 0; i < number_of_args; ++i ) {
         struct aws_byte_buf *buffer = va_arg(ap, struct aws_byte_buf *);
+        struct aws_byte_cursor cursor = aws_byte_cursor_from_buf(buffer);
 
-        if (buffer->len > dest_cursor.len) {
+        if (aws_byte_buf_append(dest, &cursor)) {
             va_end(ap);
-            return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+            return AWS_OP_ERR;
         }
-
-        memcpy(dest_cursor.ptr, buffer->buffer, buffer->len);
-        aws_byte_cursor_advance(&dest_cursor, buffer->len);
-        dest->len += buffer->len;
     }
 
     va_end(ap);
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_copy(struct aws_byte_buf *to, size_t to_offset, struct aws_byte_buf *from, size_t from_offset) {
-    assert(from->buffer);
+int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from) {
+    assert(from->ptr);
     assert(to->buffer);
 
-    to->len = 0;
-    if (to->size - to_offset < from->len - from_offset) {
+    if (to->size - to->len < from->len) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
-    memcpy(to->buffer + to_offset, from->buffer + from_offset, from->len - from_offset);
-    to->len = from->len - from_offset;
+    memcpy(to->buffer + to->len, from->ptr, from->len);
+    to->len += from->len;
     return AWS_OP_SUCCESS;
 }
