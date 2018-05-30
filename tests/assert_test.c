@@ -11,6 +11,13 @@ FILE *test_filedes;
 #define NO_MORE_TESTS 12345
 #define BAILED_OUT 98765
 
+#ifdef _MSC_VER
+/* disable warning about fopen() this is just a test */
+#pragma warning(disable:4996)
+/* disable warning about unreferenced formal parameter */
+#pragma warning(disable:4100)
+#endif
+
 const char *test_filename;
 int cur_line;
 int expected_return;

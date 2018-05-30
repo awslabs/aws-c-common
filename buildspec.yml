@@ -14,9 +14,9 @@ phases:
       - cd build
       - cmake -G "Visual Studio 14 2015 Win64" ../ 
       - msbuild.exe aws-c-common.vcxproj
-      - msbuild.exe tests/aws-c-common-assert-tests.vcxproj
-      - msbuild.exe tests/aws-c-common-tests.vcxproj
-      - msbuild.exe tests/RUN_TESTS.vcxproj
+      - msbuild.exe aws-c-common-assert-tests.vcxproj
+      - msbuild.exe aws-c-common-tests.vcxproj
+      - msbuild.exe RUN_TESTS.vcxproj
   post_build:
     commands:
       - echo Build completed on `date`
