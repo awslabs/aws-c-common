@@ -16,6 +16,7 @@ phases:
       - msbuild.exe aws-c-common.vcxproj
       - msbuild.exe tests/aws-c-common-assert-tests.vcxproj
       - msbuild.exe tests/aws-c-common-tests.vcxproj
+      - cd tests
       - msbuild.exe RUN_TESTS.vcxproj
   post_build:
     commands:
