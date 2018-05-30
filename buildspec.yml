@@ -12,8 +12,8 @@ phases:
       - echo Build started on `date`
       - mkdir build
       - cd build
-      - cmake -G "Visual Studio 14 2015 Win64" ../
-      - msbuild.exe RUN_TESTS.vcxproj
+      - cmake -G "Visual Studio 14 2015 Win64" ../ 
+      - msbuild.exe tests/RUN_TESTS.vcxproj
   post_build:
     commands:
       - echo Build completed on `date`
