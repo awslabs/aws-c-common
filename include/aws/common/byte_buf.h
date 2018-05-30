@@ -16,8 +16,10 @@
 */
 
 #include <aws/common/common.h>
+#include <aws/common/byte_order.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * Represents a length-delimited binary string or buffer.
@@ -204,6 +206,161 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
     }
 
     return rv;
+}
+
+/**
+ * Reads specified length of data from byte cursor and copies it to the destination array.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read(struct aws_byte_cursor * restrict cur, void * restrict dest, size_t len) {
+    struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
+
+    if (slice.ptr) {
+        memcpy(dest, slice.ptr, len);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Reads as many bytes from cursor as size of buffer, and copies them to buffer.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor * restrict cur, struct aws_byte_buf * restrict dest) {
+    return aws_byte_cursor_read(cur, dest->buffer, dest->len);
+}
+
+/**
+ * Reads a single byte from cursor, placing it in *var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read_u8(struct aws_byte_cursor * restrict cur, uint8_t * restrict var) {
+    return aws_byte_cursor_read(cur, var, 1);
+}
+
+/**
+ * Reads a 16-bit value in network byte order from cur, and places it in host byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
+    bool rv = aws_byte_cursor_read(cur, var, 2);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh16(*var);
+    }
+
+    return rv;
+}
+
+/**
+ * Reads a 32-bit value in network byte order from cur, and places it in host byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
+    bool rv = aws_byte_cursor_read(cur, var, 4);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh32(*var);
+    }
+
+    return rv;
+}
+
+/**
+ * Reads a 64-bit value in network byte order from cur, and places it in host byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(*var));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh64(*var);
+    }
+
+    return rv;
+}
+
+/**
+ * Write specified number of bytes from array to byte cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write(struct aws_byte_cursor * restrict cur, const uint8_t * restrict src, size_t len) {
+    struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
+
+    if (slice.ptr) {
+        memcpy(slice.ptr, src, len);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Copies all bytes from buffer to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_cursor * restrict cur, const struct aws_byte_buf * restrict src) {
+    return aws_byte_cursor_write(cur, src->buffer, src->len);
+}
+
+/**
+ * Copies one byte to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor * restrict cur, uint8_t c) {
+    return aws_byte_cursor_write(cur, &c, 1);
+}
+
+/**
+ * Writes a 16-bit integer in network byte order (big endian) to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_be16(struct aws_byte_cursor *cur, uint16_t x) {
+    x = aws_hton16(x);
+    return aws_byte_cursor_write(cur, (uint8_t *) &x, 2);
+}
+
+/**
+ * Writes a 32-bit integer in network byte order (big endian) to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_be32(struct aws_byte_cursor *cur, uint32_t x) {
+    x = aws_hton32(x);
+    return aws_byte_cursor_write(cur, (uint8_t *) &x, 4);
+}
+
+/**
+ * Writes a 64-bit integer in network byte order (big endian) to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_be64(struct aws_byte_cursor *cur, uint64_t x) {
+    x = aws_hton64(x);
+    return aws_byte_cursor_write(cur, (uint8_t *) &x, 8);
 }
 
 
