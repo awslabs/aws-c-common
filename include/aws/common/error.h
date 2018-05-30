@@ -33,7 +33,7 @@ struct aws_error_info_list {
     uint16_t count;
 };
 
-#define AWS_DEFINE_ERROR_INFO(NAME, C, ES, LN)                                                                         \
+#define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                                                               \
 {                                                                                                                      \
     .literal_name = #C,                                                                                                \
     .error_code = C,                                                                                                   \

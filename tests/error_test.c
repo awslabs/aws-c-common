@@ -17,8 +17,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static struct aws_error_info errors[] = {
-    AWS_DEFINE_ERROR_INFO(test_error_1, 1024, "test error 1", "test lib"),
-    AWS_DEFINE_ERROR_INFO(test_error_2, 1025, "test error 2", "test lib"),
+    AWS_DEFINE_ERROR_INFO(1024, "test error 1", "test lib"),
+    AWS_DEFINE_ERROR_INFO(1025, "test error 2", "test lib"),
 };
 
 static struct aws_error_info_list errors_list = {
