@@ -12,12 +12,11 @@ phases:
       - echo Build started on `date`
       - mkdir build
       - cd build
-      - cmake -G "Visual Studio 14 2015 Win64" ../ 
-      - msbuild.exe aws-c-common.vcxproj
-      - msbuild.exe tests/aws-c-common-assert-tests.vcxproj
-      - msbuild.exe tests/aws-c-common-tests.vcxproj
-      - cd tests
-      - msbuild.exe RUN_TESTS.vcxproj
+      - cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE="Release" ../ 
+      - msbuild.exe aws-c-common.vcxproj /p:Configuration=Release
+      - msbuild.exe tests/aws-c-common-assert-tests.vcxproj /p:Configuration=Release
+      - msbuild.exe tests/aws-c-common-tests.vcxproj /p:Configuration:Release
+      - msbuild.exe RUN_TESTS.vcxproj /p:Configuration:Release
   post_build:
     commands:
       - echo Build completed on `date`

@@ -1,6 +1,9 @@
-escape=`
+# escape=`
 
 FROM microsoft/windowsservercore
+
+ADD https://download.microsoft.com/download/6/A/A/6AA4EDFF-645B-48C5-81CC-ED5963AEAD48/vc_redist.x64.exe /vc_redist.x64.exe
+RUN start /wait C:\vc_redist.x64.exe /quiet /norestart
 
 # Install chocolatey
 RUN @powershell -NoProfile -ExecutionPolicy unrestricted -Command "(iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))) >$null 2>&1"
