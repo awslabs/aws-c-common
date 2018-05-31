@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 #ifdef _WIN32
-#include <winsock2.h>
+#include <windows.h>
 #else
 #include <netinet/in.h>
 #endif /*_WIN32 */
@@ -45,8 +45,8 @@ static inline uint64_t aws_hton64(uint64_t x) {
     __asm__("bswap %q0" : "=r" (v) : "0" (x));
     return v;
 #else
-    uint32_t low = x;
-    uint32_t high = x >> 32;
+    uint32_t low = (uint32_t)x;
+    uint32_t high = (uint32_t)(x >> 32);
     return ((uint64_t)htonl(low)) << 32 | htonl(high);
 #endif
 }

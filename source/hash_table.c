@@ -19,9 +19,7 @@
  */
 
 #include <aws/common/hash_table.h>
-#include <aws/common/common.h>
 #include <aws/common/math.h>
-#include <aws/common/linked_list.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
