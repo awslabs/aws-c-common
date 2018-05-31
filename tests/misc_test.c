@@ -39,7 +39,7 @@ static int test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
         if (i < sizeof(buf) / 2) {
             ASSERT_INT_EQUALS(0, buf[i]);
         } else {
-            ASSERT_INT_EQUALS((unsigned char)0xDD, buf[i]);
+            ASSERT_INT_EQUALS((unsigned char)0xDD, (unsigned char)buf[i]);
         }
     }
 
