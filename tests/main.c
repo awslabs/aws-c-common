@@ -35,6 +35,7 @@
 #include <math_test.c>
 #include <misc_test.c>
 #include <byte_order_test.c>
+#include <byte_buf_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -129,6 +130,9 @@ int main(int argc, char *argv[]) {
                        &test_byte_cursor_advance,
                        &test_byte_cursor_advance_nospec,
                        &test_secure_zero,
-                       &byte_swap_test
+                       &byte_swap_test,
+                       &byte_cursor_write_tests,
+                       &byte_cursor_read_tests,
+                       &byte_cursor_limit_tests
                        );
 }
