@@ -128,7 +128,7 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
        if the clock tick is on the same nanosecond (with microsecond precision) as the run was kicked
        off, it will still be run. As a result, if time_to_run is before or on the same clock tick, increment it
        by one nanosecond to avoid the issue. */
-    if (AWS_UNLIKELY(time_to_run <= scheduler->min_run_time)) {
+    if (AWS_UNLIKELY(time_to_run < scheduler->min_run_time)) {
         time_to_run = scheduler->min_run_time;
     }
 
