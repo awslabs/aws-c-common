@@ -45,6 +45,7 @@ struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue queue;
     aws_task_scheduler_clock clock;
+    uint64_t latest_run_time;
 };
 
 #ifdef __cplusplus
