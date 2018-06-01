@@ -17,6 +17,7 @@ phases:
       - msbuild.exe tests/aws-c-common-assert-tests.vcxproj /p:Configuration=Release
       - msbuild.exe tests/aws-c-common-tests.vcxproj /p:Configuration=Release
       - msbuild.exe RUN_TESTS.vcxproj /p:Configuration=Release
+      - ctest -V
   post_build:
     commands:
       - echo Build completed on `date`
