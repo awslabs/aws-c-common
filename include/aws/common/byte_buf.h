@@ -40,6 +40,7 @@ static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws
 
 static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
     if (buf->allocator && buf->buffer) buf->allocator->mem_release(buf->allocator, buf->buffer);
+    buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;
 }
