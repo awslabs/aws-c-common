@@ -56,19 +56,19 @@ static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal)
     return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_c_str(struct aws_allocator * allocator, const char *c_str, size_t len) {
+static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, size_t len) {
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
-    buf.allocator = allocator;
+    buf.allocator = NULL;
     return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_array(struct aws_allocator * allocator, const uint8_t *c_str, size_t len) {
+static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, size_t len) {
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
-    buf.allocator = allocator;
+    buf.allocator = NULL;
     return buf;
 }
 

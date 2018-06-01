@@ -31,8 +31,8 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
     char *output_str = allocation + 1;
     memset(allocation, 0xdd, output_size + 2);
 
-    struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(NULL, test_str, test_str_size - 1);
-    struct aws_byte_buf output = aws_byte_buf_from_c_str(NULL, output_str, output_size);
+    struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(test_str, test_str_size - 1);
+    struct aws_byte_buf output = aws_byte_buf_from_c_str(output_str, output_size);
     ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output_str, output_size, "Encode output should have been %s.", expected);
@@ -45,8 +45,8 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
 
     ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
 
-    struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(NULL, expected, expected_size - 1);
-    output = aws_byte_buf_from_c_str(NULL, output_str, output_size);
+    struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected, expected_size - 1);
+    output = aws_byte_buf_from_c_str(output_str, output_size);
     ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size - 1, output_str, output_size, "Decode output should have been %s.", test_str);
@@ -135,8 +135,8 @@ static int hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *
 
     uint8_t output[sizeof(expected)] = { 0 };
 
-    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(NULL, test_data, sizeof(test_data) - 1);
-    struct aws_byte_buf output_buf = aws_byte_buf_from_array(NULL, output, sizeof(expected));
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, sizeof(test_data) - 1);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_array(output, sizeof(expected));
 
     ASSERT_SUCCESS(aws_hex_decode(&test_buf, &output_buf), "Hex decoding failed with "
         "error code %d", aws_last_error());
@@ -154,8 +154,8 @@ static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloc,
     size_t size_too_small = 2;
     char  output[] = {0, 0};
 
-    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(NULL, test_data, sizeof(test_data));
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, size_too_small);
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, sizeof(test_data));
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, size_too_small);
 
     ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_hex_encode(&test_buf,
                                                                &output_buf),
@@ -176,8 +176,8 @@ static int hex_encoding_overflow_test_fn(struct aws_allocator *alloc, void *ctx)
     size_t overflow = (SIZE_MAX - 1);
     char  output[] = {0, 0};
 
-    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(NULL, test_data, overflow);
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, sizeof(output));
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, overflow);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_OVERFLOW_DETECTED, aws_hex_encode(&test_buf,
                                                                 &output_buf),
@@ -193,8 +193,8 @@ static int hex_encoding_invalid_string_test_fn(struct aws_allocator *alloc, void
     char bad_input[] = "666f6f6x6172";
     uint8_t output[sizeof(bad_input)] = { 0 };
 
-    struct aws_byte_buf bad_buf = aws_byte_buf_from_c_str(NULL, bad_input, sizeof(bad_input) - 1);
-    struct aws_byte_buf output_buf = aws_byte_buf_from_array(NULL, output, sizeof(output));
+    struct aws_byte_buf bad_buf = aws_byte_buf_from_c_str(bad_input, sizeof(bad_input) - 1);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_array(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_INVALID_HEX_STR, aws_hex_decode(&bad_buf ,
                                                            &output_buf),
@@ -218,8 +218,8 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
     memset(allocation, 0xdd, output_size + 2);
     char *output_str = allocation + 1;
 
-    struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(NULL, test_str, test_str_size);
-    struct aws_byte_buf output = aws_byte_buf_from_c_str(NULL, output_str, output_size);
+    struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(test_str, test_str_size);
+    struct aws_byte_buf output = aws_byte_buf_from_c_str(output_str, output_size);
     ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output_str, output_size, "Encode output should have been %s.", expected);
@@ -232,7 +232,7 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
 
     memset(allocation, 0xdd, output_size + 2);
 
-    struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(NULL, expected, expected_size - 1);
+    struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size, output_str, output_size, "Decode output should have been %s.", test_str);
@@ -352,14 +352,14 @@ static int base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *a
     size_t size_too_small = 4;
     char  output[] = {0, 0};
 
-    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(NULL, test_data, sizeof(test_data) - 1);
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, size_too_small);
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, sizeof(test_data) - 1);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, size_too_small);
 
     ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_base64_encode(&test_buf,
                                                                   &output_buf),
                  "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
 
-    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(NULL, encoded_data, sizeof(encoded_data) - 1);
+    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, sizeof(encoded_data) - 1);
 
     ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_base64_decode(&encoded_buf,
                                                                    &output_buf),
@@ -378,14 +378,14 @@ static int base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *al
     size_t overflow = (SIZE_MAX - 1) & ~0x03;
     char  output[] = {0, 0};
 
-    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(NULL, test_data, overflow + 2);
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, sizeof(output));
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_data, overflow + 2);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_OVERFLOW_DETECTED, aws_base64_encode(&test_buf,
                                                                   &output_buf),
                  "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
 
-    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(NULL, encoded_data, overflow);
+    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, overflow);
 
     ASSERT_ERROR(AWS_ERROR_OVERFLOW_DETECTED, aws_base64_decode(&encoded_buf,
                                                                   &output_buf),
@@ -401,8 +401,8 @@ static int base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *all
     /* kill off the last two bits, so the not a multiple of 4 check doesn't trigger first */
     char output[] = {0, 0};
 
-    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(NULL, encoded_data, sizeof(encoded_data));
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, sizeof(output));
+    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, sizeof(encoded_data));
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_INVALID_BASE64_STR, aws_base64_decode(&encoded_buf, &output_buf),
                  "Non multiple of 4 buffer size should have failed with AWS_ERROR_INVALID_BASE64_STR");
@@ -416,8 +416,8 @@ static int base64_encoding_invalid_buffer_test_fn(struct aws_allocator *alloc, v
     char encoded_data[] = "Z\n9vYmFy";
     char output[sizeof(encoded_data)] = {0};
 
-    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(NULL, encoded_data, sizeof(encoded_data));
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, sizeof(output));
+    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, sizeof(encoded_data));
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_INVALID_BASE64_STR, aws_base64_decode(&encoded_buf,
                                                                  &output_buf),
@@ -432,8 +432,8 @@ static int base64_encoding_invalid_padding_test_fn(struct aws_allocator *alloc, 
     char encoded_data[] = "Zm9vY===";
     char output[sizeof(encoded_data)] = {0};
 
-    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(NULL, encoded_data, sizeof(encoded_data));
-    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(NULL, output, sizeof(output));
+    struct aws_byte_buf encoded_buf = aws_byte_buf_from_c_str(encoded_data, sizeof(encoded_data));
+    struct aws_byte_buf output_buf = aws_byte_buf_from_c_str(output, sizeof(output));
 
     ASSERT_ERROR(AWS_ERROR_INVALID_BASE64_STR, aws_base64_decode(&encoded_buf,
                                                                  &output_buf),
