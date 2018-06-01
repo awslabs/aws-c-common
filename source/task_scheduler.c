@@ -37,6 +37,7 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
         aws_task_scheduler_clock clock) {
     scheduler->alloc = alloc;
     scheduler->clock = clock;
+    scheduler->latest_run_time = 0;
     return aws_priority_queue_dynamic_init(&scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container),
             &compare_timestamps);
 }
@@ -114,6 +115,7 @@ int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler,
     if(scheduler->clock(&now)) {
         return AWS_OP_ERR;
     }
+
     return aws_task_scheduler_schedule_future(scheduler, task, now);
 }
 
@@ -121,6 +123,16 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
         struct aws_task *task, uint64_t time_to_run) {
 
     struct task_container container;
+
+    /* this serves the purpose of handling reentrant scheduling while the tasks are being run.
+       if the clock tick is on the same nanosecond (with microsecond precision) as the run was kicked
+       off, it will still be run. As a result, if time_to_run is before or on the same clock tick, increment it
+       by one nanosecond to avoid the issue. However this does assume that the clock ticks are at least greater than 0. Seeing as how
+       boot times take longer than 1 nanosecond and a system clock will always be greater than 0, I think this is a safe assumption 
+       in a real world scenario. */
+    if (AWS_UNLIKELY(time_to_run <= scheduler->latest_run_time)) {
+        time_to_run = scheduler->latest_run_time + 1;
+    }
 
     container.task = *task;
     container.timestamp = time_to_run;
@@ -139,6 +151,7 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
         return AWS_OP_ERR;
     }
 
+    scheduler->latest_run_time = now;
     while(1) {
         struct aws_task task_to_run = {0};
 

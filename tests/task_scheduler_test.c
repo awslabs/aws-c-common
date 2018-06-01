@@ -32,7 +32,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, alloc, fake_clock);
 
-    set_fake_clock(0);
+    set_fake_clock(1);
 
     struct aws_task task2;
     task2.fn = (aws_task_fn)2;
@@ -98,7 +98,7 @@ static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void 
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, alloc, fake_clock);
 
-    set_fake_clock(0);
+    set_fake_clock(1);
     struct aws_task task1, task2;
     task1.fn = null_fn;
     task1.arg = (void *)1;
@@ -126,7 +126,7 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, alloc, fake_clock);
 
-    set_fake_clock(0);
+    set_fake_clock(1);
 
     struct aws_task task;
     task.fn = (aws_task_fn)0;
