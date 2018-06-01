@@ -206,9 +206,6 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx)
 
     ASSERT_FALSE(task2_args.executed);
 
-    /* these clocks are REALLLY fast on windows depending on the hardware, 
-        sleep a nanosecond to make sure the reentrant task is in the past*/
-    aws_thread_current_sleep(1);
     ASSERT_SUCCESS(aws_task_scheduler_run_all(&scheduler, NULL));
     ASSERT_TRUE(task2_args.executed);
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task2_args.status);
