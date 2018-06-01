@@ -36,6 +36,7 @@
 #include <string_test.c>
 #include <misc_test.c>
 #include <byte_order_test.c>
+#include <byte_buf_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -144,7 +145,10 @@ int main(int argc, char *argv[]) {
                        &test_buffer_cpy_offsets,
                        &test_buffer_cpy_offsets_dest_too_small,
                        &test_secure_zero,
-                       &byte_swap_test
+                       &byte_swap_test,
+                       &byte_cursor_write_tests,
+                       &byte_cursor_read_tests,
+                       &byte_cursor_limit_tests
                        );
 }
 
