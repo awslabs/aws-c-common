@@ -101,7 +101,7 @@ AWS_COMMON_API int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_
 #endif
 
 static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
-    buf->buffer = (uint8_t*)allocator->mem_acquire(allocator, len);
+    buf->buffer = (uint8_t*)aws_mem_acquire(allocator, len);
     if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
     buf->len = 0;
     buf->size = len;
@@ -110,7 +110,7 @@ static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws
 }
 
 static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
-    if (buf->allocator && buf->buffer) buf->allocator->mem_release(buf->allocator, buf->buffer);
+    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;

@@ -240,7 +240,23 @@ static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, 
     struct aws_byte_buf output_array[3] = {{0}};
     ASSERT_SUCCESS(aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_cursor)));
     ASSERT_ERROR(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, aws_string_split_on_char(&to_split, ';', &output));
-   
+    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
+
+    struct aws_byte_cursor value = { 0 };
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    char *expected = "testa";
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
+    expected = "testb";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
+
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
+    expected = "testc";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
+
     return 0;
 }
 
@@ -255,14 +271,14 @@ static int test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     const char expected[] = "testa;testb;testc";
 
     struct aws_byte_buf destination;
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, str1.len + str2.len + str3.len + 10));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, str1.len + str2.len + str3.len + 10));
     ASSERT_SUCCESS(aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
 
     ASSERT_INT_EQUALS(strlen(expected),destination.len);
     ASSERT_INT_EQUALS(strlen(expected) + 10, destination.size);
     ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
@@ -275,13 +291,13 @@ static int test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, vo
     struct aws_byte_buf str3 = aws_byte_buf_from_literal(";testc");
 
     struct aws_byte_buf destination;
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, str1.len + str2.len));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, str1.len + str2.len));
     ASSERT_INT_EQUALS(0, destination.len);
     ASSERT_INT_EQUALS(str1.len + str2.len, destination.size);
 
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
@@ -293,7 +309,7 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
     struct aws_byte_buf destination;
 
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len + 10));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len + 10));
     ASSERT_SUCCESS(aws_byte_buf_append(&destination, &from));
 
     ASSERT_INT_EQUALS(from.len, destination.len);
@@ -301,7 +317,7 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_BIN_ARRAYS_EQUALS(from.ptr, from.len, destination.buffer, destination.len);
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
@@ -314,7 +330,7 @@ static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx
     aws_byte_cursor_advance(&from, 2);
     struct aws_byte_buf destination;
 
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from_buf.len + 10));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from_buf.len + 10));
     ASSERT_SUCCESS(aws_byte_buf_append(&destination, &from));
 
     ASSERT_INT_EQUALS(from_buf.len - 2, destination.len);
@@ -324,7 +340,7 @@ static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx
 
     ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
@@ -337,11 +353,11 @@ static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, vo
 
     struct aws_byte_buf destination;
 
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len - 1));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len - 1));
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append(&destination, &from));
     ASSERT_INT_EQUALS(0, destination.len);
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
@@ -353,12 +369,12 @@ static int test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *alloc
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
     struct aws_byte_buf destination;
 
-    ASSERT_SUCCESS(aws_byte_buf_alloc(allocator, &destination, from.len));
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len));
     destination.len = 1;
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append(&destination, &from));
     ASSERT_INT_EQUALS(1, destination.len);
 
-    aws_byte_buf_free(allocator, &destination);
+    aws_byte_buf_clean_up(&destination);
 
     return 0;
 }
