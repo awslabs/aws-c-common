@@ -149,7 +149,13 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
         return AWS_OP_ERR;
     }
 
+    /* allow mulitple runs in the same clock tick. */
+    if (now < scheduler->min_run_time) {
+        now = scheduler->min_run_time;
+    }
+
     scheduler->min_run_time = now + 1;
+
     while(1) {
         struct aws_task task_to_run = {0};
 
