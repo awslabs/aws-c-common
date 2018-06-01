@@ -9,7 +9,7 @@ In powershell, in the directory containing a Dockerfile.
 
     docker build -t <nameOfImage>:latest -m 2GB .
 
-this will take a while, so go grab a cup of coffee or something.
+this will take a while, so go grab a beer or 10... you deserve it..
 
 After the build finishes, you can run and test the image by running:
 
