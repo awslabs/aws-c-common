@@ -33,6 +33,7 @@
 #include <task_scheduler_test.c>
 #include <hash_table_test.c>
 #include <math_test.c>
+#include <string_test.c>
 #include <misc_test.c>
 #include <byte_order_test.c>
 #include <byte_buf_test.c>
@@ -129,6 +130,20 @@ int main(int argc, char *argv[]) {
                        &nospec_index_test,
                        &test_byte_cursor_advance,
                        &test_byte_cursor_advance_nospec,
+                       &test_char_split_happy_path,
+                       &test_char_split_ends_with_token,
+                       &test_char_split_token_not_present,
+                       &test_char_split_empty,
+                       &test_char_split_adj_tokens,
+                       &test_char_split_with_max_splits,
+                       &test_char_split_begins_with_token,
+                       &test_char_split_output_too_small,
+                       &test_buffer_cat,
+                       &test_buffer_cat_dest_too_small,
+                       &test_buffer_cpy,
+                       &test_buffer_cpy_dest_too_small,
+                       &test_buffer_cpy_offsets,
+                       &test_buffer_cpy_offsets_dest_too_small,
                        &test_secure_zero,
                        &byte_swap_test,
                        &byte_cursor_write_tests,
@@ -136,3 +151,4 @@ int main(int argc, char *argv[]) {
                        &byte_cursor_limit_tests
                        );
 }
+

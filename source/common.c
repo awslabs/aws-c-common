@@ -74,7 +74,7 @@ static struct aws_error_info errors[] = {
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN, "condition variable unknown error.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_CLOCK_FAILURE, "clock get ticks operation failed", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_EMPTY, "empty list", AWS_LIB_NAME),
-        AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, "destination of list copy is too small", AWS_LIB_NAME),
+        AWS_DEFINE_ERROR_INFO(AWS_ERROR_DEST_COPY_TOO_SMALL, "destination of copy is too small", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK, "attempt to shrink a list in static mode", AWS_LIB_NAME),
         AWS_DEFINE_ERROR_INFO(AWS_ERROR_PRIORITY_QUEUE_FULL, "attempt to add items to a full preallocated queue in static mode.", AWS_LIB_NAME),

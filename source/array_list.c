@@ -181,7 +181,7 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
         return AWS_OP_SUCCESS;
     }
 
-    return aws_raise_error(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL);
+    return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
 }
 
 size_t aws_array_list_capacity(const struct aws_array_list *list) {

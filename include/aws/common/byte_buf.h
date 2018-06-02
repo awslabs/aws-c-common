@@ -16,7 +16,9 @@
 */
 
 #include <aws/common/common.h>
+#include <aws/common/array_list.h>
 #include <aws/common/byte_order.h>
+
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -30,21 +32,92 @@ struct aws_byte_buf {
     struct aws_allocator * allocator;
     uint8_t *buffer;
     size_t len;
+    size_t size;
 };
 
+/**
+ * Represents a movable pointer within a larger binary string or buffer.
+ */
+struct aws_byte_cursor {
+    uint8_t *ptr;
+    size_t len;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+ * an offset into the input_str and len is the length of that string in the original buffer.
+ *
+ * Edge case rules are as follows:
+ * if the string begins with split_on, an empty string will be the first entry in output
+ * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
+ * if the input string ends with split_on, an empty string will be appended to the output.
+ *
+ * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
+ * is your most likely guess for the upper bound of the number of elements resulting from the split.
+ *
+ * The type that will be stored in output is struct aws_byte_cursor (you'll need this for the item size param).
+ *
+ * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
+ */
+AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on,
+                                            struct aws_array_list *output);
+
+/**
+* No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+* an offset into the input_str and len is the length of that string in the original buffer. N is the max number of splits,
+* if this value is zero, it will add all splits to the output.
+*
+* Edge case rules are as follows:
+* if the string begins with split_on, an empty string will be the first entry in output
+* if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
+* if the input string ends with split_on, an empty string will be appended to the output.
+*
+* It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
+* is your most likely guess for the upper bound of the number of elements resulting from the split.
+*
+* The type that will be stored in output is struct aws_byte_cursor (you'll need this for the item size param).
+*
+* It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
+*/
+AWS_COMMON_API int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
+    struct aws_array_list *output, size_t n);
+
+/**
+ * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ * dest->len will contain the amount of data actually copied to dest.
+ */
+AWS_COMMON_API int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from);
+
+/**
+ * Concatenates a variable number of struct aws_byte_buf * into destination. Number of args must be
+ * greater than 1. If dest is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len
+ * will contain the amount of data actually copied to dest.
+ */
+AWS_COMMON_API int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
 static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
-    buf->buffer = (uint8_t*)allocator->mem_acquire(allocator, len);
+    buf->buffer = (uint8_t*)aws_mem_acquire(allocator, len);
     if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
-    buf->len = len;
+    buf->len = 0;
+    buf->size = len;
     buf->allocator = allocator;
     return AWS_OP_SUCCESS;
 }
 
 static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
-    if (buf->allocator && buf->buffer) buf->allocator->mem_release(buf->allocator, buf->buffer);
+    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;
+    buf->size = 0;
 }
 
 /**
@@ -54,6 +127,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal)
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)literal;
     buf.len = strlen(literal);
+    buf.size = buf.len;
     buf.allocator = NULL;
     return buf;
 }
@@ -62,6 +136,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, siz
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
+    buf.size = len;
     buf.allocator = NULL;
     return buf;
 }
@@ -70,17 +145,10 @@ static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, 
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
+    buf.size = len;
     buf.allocator = NULL;
     return buf;
 }
-
-/**
- * Represents a movable pointer within a larger binary string or buffer.
- */
-struct aws_byte_cursor {
-    uint8_t *ptr;
-    size_t len;
-};
 
 static inline struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *buf) {
     struct aws_byte_cursor cur;
@@ -147,10 +215,10 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * Because there's no standard SIZE_BIT in C99, we'll divide by a mask with
      * just the top bit set instead.
      */
-    
+
     combined_mask = (~combined_mask) / (SIZE_MAX - (SIZE_MAX >> 1));
 
-    /* 
+    /*
      * Now multiply it to replicate it across all bits.
      *
      * Note that GCC is smart enough to optimize the divide-and-multiply into
@@ -334,7 +402,8 @@ static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_curso
 /**
  * Copies one byte to cursor.
  *
- * On success, returns true and updates the cursor pointer/length accordingly.
+ * On success, returns true and updates the cursor pointer/length accordingly.<<<<<< str-split
+
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor * AWS_RESTRICT cur, uint8_t c) {

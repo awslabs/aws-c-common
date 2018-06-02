@@ -499,7 +499,7 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
     ASSERT_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
     ASSERT_SUCCESS(aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
-    ASSERT_ERROR(AWS_ERROR_LIST_DEST_COPY_TOO_SMALL, aws_array_list_copy(&list_a, &list_b),
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_array_list_copy(&list_a, &list_b),
                  "Copying to a static list too small should have failed with TOO_SMALL but got %d instead", aws_last_error());
 
     aws_array_list_clean_up(&list_a);
