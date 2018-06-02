@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apt-get install gcc g++ glibc cmake -y 
+  pre_build:
+    commands:
+      - export CC=gcc
+      - export CXX=g++
+  build:
+    commands:
+      - echo Build started on `date`
+      - mkdir build
+      - cd build
+      - cmake ../ 
+      - make
+      - make test
+  post_build:
+    commands:
+      - echo Build completed on `date`
+

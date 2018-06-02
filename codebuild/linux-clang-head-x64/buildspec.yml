@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apt-get install clang-3.8 -y
+  pre_build:
+    commands:
+      - export CC=clang
+      - export CXX=clang++
+  build:
+    commands:
+      - echo Build started on `date`
+      - mkdir build
+      - cd build
+      - cmake ../ 
+      - make -j 4
+      - make test 
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
