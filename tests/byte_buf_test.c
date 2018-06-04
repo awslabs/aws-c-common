@@ -116,7 +116,7 @@ static int byte_cursor_limit_tests_fn(struct aws_allocator *alloc, void *ctx) {
 
     ASSERT_TRUE(aws_byte_cursor_read(&cur, arr, 0));
     ASSERT_TRUE(aws_byte_cursor_write(&cur, arr, 0));
-    arrbuf.len = 0;
+    arrbuf.capacity = 0;
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &arrbuf));
     ASSERT_TRUE(aws_byte_cursor_write_from_whole_buffer(&cur, &arrbuf));
     ASSERT_UINT_EQUALS(0, arr[0]); ASSERT_UINT_EQUALS(0, arr[1]);

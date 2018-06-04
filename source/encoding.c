@@ -66,7 +66,7 @@ int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output->len < encoded_len)) {
+    if (AWS_UNLIKELY(output->capacity < encoded_len)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
@@ -124,7 +124,7 @@ int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    if (AWS_UNLIKELY(output->len < decoded_length)) {
+    if (AWS_UNLIKELY(output->capacity < decoded_length)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
@@ -221,7 +221,7 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output->size < encoded_length)) {
+    if (AWS_UNLIKELY(output->capacity < encoded_length)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
@@ -285,7 +285,7 @@ int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct 
         return AWS_OP_ERR;
     }
 
-    if (output->size < decoded_length) {
+    if (output->capacity < decoded_length) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
