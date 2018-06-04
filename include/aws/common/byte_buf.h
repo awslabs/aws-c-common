@@ -311,7 +311,11 @@ static inline bool aws_byte_cursor_read(struct aws_byte_cursor * AWS_RESTRICT cu
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor * AWS_RESTRICT cur, struct aws_byte_buf * AWS_RESTRICT dest) {
-    return aws_byte_cursor_read(cur, dest->buffer, dest->len);
+    if (aws_byte_cursor_read(cur, dest->buffer, dest->size)) {
+        dest->len = dest->size;
+        return true;
+    }
+    return false;
 }
 
 /**
