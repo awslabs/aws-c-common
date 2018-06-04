@@ -3,7 +3,9 @@ version: 0.2
 phases:
   install:
     commands:
-      - apt-get install clang-3.8 -y
+      - sudo apt-get update -y
+      - sudo apt-get update
+      - sudo apt-get install clang cmake3 cppcheck -y 
   pre_build:
     commands:
       - export CC=clang
@@ -11,11 +13,12 @@ phases:
   build:
     commands:
       - echo Build started on `date`
+      - ./cppcheck.sh
       - mkdir build
       - cd build
       - cmake ../ 
-      - make -j 4
-      - make test 
+      - make
+      - make test
   post_build:
     commands:
       - echo Build completed on `date`
