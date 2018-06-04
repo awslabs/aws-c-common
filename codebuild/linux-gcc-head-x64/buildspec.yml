@@ -3,7 +3,9 @@ version: 0.2
 phases:
   install:
     commands:
-      - apt-get install gcc g++ cmake -y 
+      - sudo apt-get update -y
+      - sudo apt-get update
+      - sudo apt-get install gcc g++ cmake cppcheck -y 
   pre_build:
     commands:
       - export CC=gcc
@@ -11,6 +13,7 @@ phases:
   build:
     commands:
       - echo Build started on `date`
+      - ./cppcheck.sh
       - mkdir build
       - cd build
       - cmake ../ 
