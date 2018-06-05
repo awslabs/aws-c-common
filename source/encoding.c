@@ -78,6 +78,7 @@ int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws
     }
 
     output->buffer[written] = '\0';
+    output->len = encoded_len;
 
     return AWS_OP_SUCCESS;
 }
@@ -153,6 +154,8 @@ int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws
         value |= low_value;
         output->buffer[written++] = value;
     }
+
+    output->len = decoded_length;
 
     return AWS_OP_SUCCESS;
 }
