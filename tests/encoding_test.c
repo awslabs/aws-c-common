@@ -27,33 +27,39 @@ static int run_hex_encoding_test_case(struct aws_allocator *alloc, const char *t
                    "compute hex encoded len failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
-    char *allocation = (char *)aws_mem_acquire(alloc, output_size + 2);
-    char *output_str = allocation + 1;
-    memset(allocation, 0xdd, output_size + 2);
-
     struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(test_str, test_str_size - 1);
-    struct aws_byte_buf output = aws_byte_buf_from_c_str(output_str, output_size);
+
+    struct aws_byte_buf allocation;
+    ASSERT_SUCCESS(aws_byte_buf_init(alloc, &allocation, output_size + 2));
+    memset(allocation.buffer, 0xdd, allocation.capacity);
+
+    struct aws_byte_buf output = aws_byte_buf_from_array(allocation.buffer + 1, output_size);
+    output.len = 0;
+
     ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output_str, output_size, "Encode output should have been %s.", expected);
-    ASSERT_INT_EQUALS((unsigned char)*allocation, (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS((unsigned char)*(allocation + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
+    ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output.buffer, output_size, "Encode output should have been %s.", expected);
+    ASSERT_INT_EQUALS(output_size, output.len);
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer), (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
 
     ASSERT_SUCCESS(aws_hex_compute_decoded_len(expected_size - 1, &output_size),
                    "compute hex decoded len failed with error %d", aws_last_error());
-    memset(allocation, 0xdd, output_size + 2);
+    memset(allocation.buffer, 0xdd, allocation.capacity);
 
     ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
 
+    output.capacity = output_size;
+    output.len = 0;
     struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected, expected_size - 1);
-    output = aws_byte_buf_from_c_str(output_str, output_size);
     ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size - 1, output_str, output_size, "Decode output should have been %s.", test_str);
-    ASSERT_INT_EQUALS((unsigned char)*allocation, (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS((unsigned char)*(allocation + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
+    ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size - 1, output.buffer, output_size, "Decode output should have been %s.", test_str);
+    ASSERT_INT_EQUALS(output_size, output.len);
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer), (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    aws_mem_release(alloc, (void *)allocation);
+    aws_byte_buf_clean_up(&allocation);
     return 0;
 }
 
@@ -216,14 +222,20 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
     struct aws_byte_buf to_encode = aws_byte_buf_from_c_str(test_str, test_str_size);
-    struct aws_byte_buf output;
-    ASSERT_SUCCESS(aws_byte_buf_init(aws_default_allocator(), &output, output_size), "Memory allocation of output should have succeeded");
+    struct aws_byte_buf allocation;
+    ASSERT_SUCCESS(aws_byte_buf_init(alloc, &allocation, output_size + 2));
+    memset(allocation.buffer, 0xdd, allocation.capacity);
+
+    struct aws_byte_buf output = aws_byte_buf_from_array(allocation.buffer + 1, output_size);
+    output.len = 0;
 
     ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output.buffer, output_size, "Encode output should have been %s.", expected);
+    ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, output.buffer, output.len, "Encode output should have been %s.", expected);
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer), (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    aws_byte_buf_clean_up(&output);
+    aws_byte_buf_clean_up(&allocation);
 
     /* Part 2: decoding */
 
@@ -231,14 +243,22 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
                   "Compute base64 decoded length failed with %d", aws_last_error());
     ASSERT_INT_EQUALS(test_str_size, output_size, "Output size on string should be %d", test_str_size);
 
-    ASSERT_SUCCESS(aws_byte_buf_init(aws_default_allocator(), &output, output_size), "Memory allocation of output should have succeeded");
+    ASSERT_SUCCESS(aws_byte_buf_init(alloc, &allocation, output_size + 2));
+    memset(allocation.buffer, 0xdd, allocation.capacity);
+
+    output = aws_byte_buf_from_array(allocation.buffer + 1, output_size);
+    output.len = 0;
+
+    ASSERT_SUCCESS(aws_byte_buf_init(aws_default_allocator(), &output, output_size));
 
     struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(test_str, test_str_size, output.buffer, output_size, "Decode output should have been %s.", test_str);
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer), (unsigned char)0xdd, "Write should not have occurred before the start of the buffer.");
+    ASSERT_INT_EQUALS((unsigned char)*(allocation.buffer + output_size + 1), (unsigned char)0xdd, "Write should not have occurred after the start of the buffer.");
 
-    aws_byte_buf_clean_up(&output);
+    aws_byte_buf_clean_up(&allocation);
 
     return 0;
 }

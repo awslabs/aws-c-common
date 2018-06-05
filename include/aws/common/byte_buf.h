@@ -32,7 +32,7 @@ struct aws_byte_buf {
     struct aws_allocator * allocator;
     uint8_t *buffer;
     size_t len;
-    size_t size;
+    size_t capacity;
 };
 
 /**
@@ -107,7 +107,7 @@ static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws
     buf->buffer = (uint8_t*)aws_mem_acquire(allocator, len);
     if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
     buf->len = 0;
-    buf->size = len;
+    buf->capacity = len;
     buf->allocator = allocator;
     return AWS_OP_SUCCESS;
 }
@@ -117,7 +117,7 @@ static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;
-    buf->size = 0;
+    buf->capacity = 0;
 }
 
 /**
@@ -127,7 +127,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal)
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)literal;
     buf.len = strlen(literal);
-    buf.size = buf.len;
+    buf.capacity = buf.len;
     buf.allocator = NULL;
     return buf;
 }
@@ -136,7 +136,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, siz
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
-    buf.size = len;
+    buf.capacity = len;
     buf.allocator = NULL;
     return buf;
 }
@@ -145,7 +145,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, 
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)c_str;
     buf.len = len;
-    buf.size = len;
+    buf.capacity = len;
     buf.allocator = NULL;
     return buf;
 }
@@ -311,8 +311,8 @@ static inline bool aws_byte_cursor_read(struct aws_byte_cursor * AWS_RESTRICT cu
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor * AWS_RESTRICT cur, struct aws_byte_buf * AWS_RESTRICT dest) {
-    if (aws_byte_cursor_read(cur, dest->buffer, dest->size)) {
-        dest->len = dest->size;
+    if (aws_byte_cursor_read(cur, dest->buffer, dest->capacity)) {
+        dest->len = dest->capacity;
         return true;
     }
     return false;
