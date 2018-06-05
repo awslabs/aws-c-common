@@ -21,13 +21,14 @@
 int aws_array_list_init_dynamic(struct aws_array_list *list,
     struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size) {
     list->alloc = alloc;
-    size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
     list->item_size = item_size;
+    list->length = 0;
+    list->current_size = 0;
 
-    if (allocation_size > 0) {
+    if (initial_item_allocation > 0) {
+        size_t allocation_size = initial_item_allocation * item_size;
         list->data = aws_mem_acquire(list->alloc, allocation_size);
-        list->length = 0;
         if (!list->data) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
@@ -88,16 +89,29 @@ int aws_array_list_front(const struct aws_array_list *list, void *val) {
 
 int aws_array_list_pop_front(struct aws_array_list *list) {
     if (list->length > 0) {
-        size_t last_bytes = list->item_size * (list->length - 1);
-        memmove(list->data, (void *)((uint8_t *)list->data + list->item_size), last_bytes);
-#ifdef DEBUG_BUILD
-        memset((void *)((uint8_t *)list->data + last_bytes), SENTINAL, list->item_size);
-#endif
-        list->length--;
+        aws_array_list_pop_front_n(list, 1);
         return AWS_OP_SUCCESS;
     }
 
     return aws_raise_error(AWS_ERROR_LIST_EMPTY);
+}
+
+void aws_array_list_pop_front_n(struct aws_array_list *list, size_t n) {
+    if (n >= list->length) {
+        aws_array_list_clear(list);
+        return;
+    }
+
+    if (n > 0) {
+        size_t popping_bytes = list->item_size * n;
+        size_t remaining_items = list->length - n;
+        size_t remaining_bytes = remaining_items * list->item_size;
+        memmove(list->data, (uint8_t *)list->data + popping_bytes, remaining_bytes);
+        list->length = remaining_items;
+#ifdef DEBUG_BUILD
+        memset((uint8_t *)list->data + remaining_bytes, SENTINAL, popping_bytes);
+#endif
+    }
 }
 
 int aws_array_list_back(const struct aws_array_list *list, void *val) {
@@ -184,6 +198,17 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
     return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
 }
 
+void aws_array_list_swap_contents(struct aws_array_list *list_a, struct aws_array_list *list_b) {
+    assert(list_a->alloc);
+    assert(list_a->alloc == list_b->alloc);
+    assert(list_a->item_size == list_b->item_size);
+    assert(list_a != list_b);
+
+    struct aws_array_list tmp = *list_a;
+    *list_a = *list_b;
+    *list_b = tmp;
+}
+
 size_t aws_array_list_capacity(const struct aws_array_list *list) {
     assert(list->item_size);
     return list->current_size / list->item_size;
@@ -211,9 +236,9 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, siz
 }
 
 int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index) {
-    size_t necessary_size = index * list->item_size;
+    size_t necessary_size = (index + 1) * list->item_size;
 
-    if (list->current_size <= necessary_size) {
+    if (list->current_size < necessary_size) {
         if (!list->alloc) {
             return aws_raise_error(AWS_ERROR_INVALID_INDEX);
         }
@@ -240,12 +265,14 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
             return aws_raise_error(AWS_ERROR_OOM);
         }
 
-        memcpy(temp, list->data, list->current_size);
-
+        if (list->data) {
+            memcpy(temp, list->data, list->current_size);
 #ifdef DEBUG_BUILD
-        memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
+            memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
 #endif
-        aws_mem_release(list->alloc, list->data);
+            aws_mem_release(list->alloc, list->data);
+        }
+
         list->data = temp;
         list->current_size = new_size;
     }
