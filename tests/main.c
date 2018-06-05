@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
                        &sys_clock_increments_test,
                        &array_list_order_push_back_pop_front_test,
                        &array_list_order_push_back_pop_back_test,
-                       &array_list_zero_capacity_test,
                        &array_list_pop_front_n_test,
                        &array_list_exponential_mem_model_test,
                        &array_list_exponential_mem_model_iteration_test,

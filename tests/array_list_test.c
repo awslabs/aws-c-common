@@ -116,38 +116,10 @@ static int array_list_order_push_back_pop_back_fn(struct aws_allocator *alloc, v
 
 AWS_TEST_CASE(array_list_order_push_back_pop_back_test, array_list_order_push_back_pop_back_fn)
 
-static int array_list_zero_capacity_test_fn(struct aws_allocator *alloc, void *ctx) {
-    struct aws_array_list list;
-
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, 0, sizeof(int)), "List initialization failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(0, aws_array_list_capacity(&list), "Zero capacity list should have 0 capacity");
-    ASSERT_PTR_EQUALS(NULL, list.data, "Zero capacity list should have no data allocated");
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&list), "Zero capacity list should have 0 length");
-
-    int first = 1;
-    int item;
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &first), "Failed to push item into initially-empty list");
-    ASSERT_TRUE(0 < aws_array_list_capacity(&list), "Pushing item into initially-empty list should give it capacity");
-    ASSERT_INT_EQUALS(1, aws_array_list_length(&list), "Pushing item into initially-empty list should make its length 1");
-    ASSERT_SUCCESS(aws_array_list_back(&list, &item), "Failed to query back of list after pushing in 1 item");
-    ASSERT_INT_EQUALS(first, item, "Item pushed into initially empty list has wrong value");
-
-    aws_array_list_clean_up(&list);
-
-    /* ensure a list which never allocates cleans up ok */
-    struct aws_array_list never_allocated_list;
-    aws_array_list_init_dynamic(&never_allocated_list, alloc, 0, sizeof(int));
-    aws_array_list_clean_up(&never_allocated_list);
-
-    return 0;
-}
-
-AWS_TEST_CASE(array_list_zero_capacity_test, array_list_zero_capacity_test_fn)
-
 static int array_list_pop_front_n_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list;
 
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, 0, sizeof(int)));
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, 8, sizeof(int)));
 
     int first = 1, second = 2, third = 3, fourth = 4;
     int item;
@@ -156,23 +128,28 @@ static int array_list_pop_front_n_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&third));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&fourth));
 
+    /* Popping 0 front elements should have no effect */
     aws_array_list_pop_front_n(&list, 0);
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&list), "Popping 0 front elements should have no effect");
+    ASSERT_INT_EQUALS(4, aws_array_list_length(&list));
 
+    /* Pop 2/4 front elements. Third item should be in front. */
     aws_array_list_pop_front_n(&list, 2);
-    ASSERT_INT_EQUALS(2, aws_array_list_length(&list), "After popping front 2/4 elements, list size should be 2");
-    ASSERT_SUCCESS(aws_array_list_front(&list, &item), "List front failed after pop_front_n with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "After popping front 2, front should have been the third item");
+    ASSERT_INT_EQUALS(2, aws_array_list_length(&list));
+    ASSERT_SUCCESS(aws_array_list_front(&list, &item));
+    ASSERT_INT_EQUALS(third, item);
 
+    /* Pop last 2/2 elements. List should be empty. */
     aws_array_list_pop_front_n(&list, 2);
     ASSERT_INT_EQUALS(0, aws_array_list_length(&list), "List should be empty after popping last 2 items");
 
+    /* Put some elements into list again.
+     * Popping more items than list contains should just clear the list */
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&third));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&fourth));
     aws_array_list_pop_front_n(&list, 99);
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&list), "Popping more front items than list contains should just clear the list");
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
 
     aws_array_list_clean_up(&list);
 
@@ -193,6 +170,7 @@ static int array_list_exponential_mem_model_test_fn(struct aws_allocator *alloc,
     ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first), "array list push back failed with error %d", aws_last_error());
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second), "array list push back failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(list_size << 1, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)(list_size << 1) * sizeof(int));
@@ -237,6 +215,7 @@ static int array_list_exponential_mem_model_iteration_test_fn(struct aws_allocat
     ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&first, 0), "array list push back failed with error %d", aws_last_error());
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&second, 1), "array list push back failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(list_size << 1, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)(list_size << 1) * sizeof(int));
@@ -523,7 +502,7 @@ static int array_list_copy_test_fn(struct aws_allocator *alloc, void *ctx) {
 AWS_TEST_CASE(array_list_copy_test, array_list_copy_test_fn)
 
 static int array_list_swap_contents_test_fn(struct aws_allocator *alloc, void *ctx) {
-    /* setup */
+    /* build lists */
     struct aws_array_list list_a;
     int a_1 = 1;
     int a_capacity = 1;

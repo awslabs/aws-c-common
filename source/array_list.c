@@ -21,14 +21,13 @@
 int aws_array_list_init_dynamic(struct aws_array_list *list,
     struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size) {
     list->alloc = alloc;
+    size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
     list->item_size = item_size;
-    list->length = 0;
-    list->current_size = 0;
 
-    if (initial_item_allocation > 0) {
-        size_t allocation_size = initial_item_allocation * item_size;
+    if (allocation_size > 0) {
         list->data = aws_mem_acquire(list->alloc, allocation_size);
+        list->length = 0;
         if (!list->data) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
@@ -236,9 +235,9 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, siz
 }
 
 int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index) {
-    size_t necessary_size = (index + 1) * list->item_size;
+    size_t necessary_size = index * list->item_size;
 
-    if (list->current_size < necessary_size) {
+    if (list->current_size <= necessary_size) {
         if (!list->alloc) {
             return aws_raise_error(AWS_ERROR_INVALID_INDEX);
         }
@@ -265,14 +264,12 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
             return aws_raise_error(AWS_ERROR_OOM);
         }
 
-        if (list->data) {
-            memcpy(temp, list->data, list->current_size);
-#ifdef DEBUG_BUILD
-            memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
-#endif
-            aws_mem_release(list->alloc, list->data);
-        }
+        memcpy(temp, list->data, list->current_size);
 
+#ifdef DEBUG_BUILD
+        memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
+#endif
+        aws_mem_release(list->alloc, list->data);
         list->data = temp;
         list->current_size = new_size;
     }
