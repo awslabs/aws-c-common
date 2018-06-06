@@ -116,6 +116,48 @@ static int array_list_order_push_back_pop_back_fn(struct aws_allocator *alloc, v
 
 AWS_TEST_CASE(array_list_order_push_back_pop_back_test, array_list_order_push_back_pop_back_fn)
 
+static int array_list_pop_front_n_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_array_list list;
+
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, 8, sizeof(int)));
+
+    int first = 1, second = 2, third = 3, fourth = 4;
+    int item;
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&third));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&fourth));
+
+    /* Popping 0 front elements should have no effect */
+    aws_array_list_pop_front_n(&list, 0);
+    ASSERT_INT_EQUALS(4, aws_array_list_length(&list));
+
+    /* Pop 2/4 front elements. Third item should be in front. */
+    aws_array_list_pop_front_n(&list, 2);
+    ASSERT_INT_EQUALS(2, aws_array_list_length(&list));
+    ASSERT_SUCCESS(aws_array_list_front(&list, &item));
+    ASSERT_INT_EQUALS(third, item);
+
+    /* Pop last 2/2 elements. List should be empty. */
+    aws_array_list_pop_front_n(&list, 2);
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list), "List should be empty after popping last 2 items");
+
+    /* Put some elements into list again.
+     * Popping more items than list contains should just clear the list */
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&third));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&fourth));
+    aws_array_list_pop_front_n(&list, 99);
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
+
+    aws_array_list_clean_up(&list);
+
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_pop_front_n_test, array_list_pop_front_n_fn)
+
 static int array_list_exponential_mem_model_test_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list;
 
@@ -128,6 +170,7 @@ static int array_list_exponential_mem_model_test_fn(struct aws_allocator *alloc,
     ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first), "array list push back failed with error %d", aws_last_error());
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second), "array list push back failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(list_size << 1, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)(list_size << 1) * sizeof(int));
@@ -172,6 +215,7 @@ static int array_list_exponential_mem_model_iteration_test_fn(struct aws_allocat
     ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&first, 0), "array list push back failed with error %d", aws_last_error());
+    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
     ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&second, 1), "array list push back failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(list_size << 1, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)(list_size << 1) * sizeof(int));
@@ -456,6 +500,61 @@ static int array_list_copy_test_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(array_list_copy_test, array_list_copy_test_fn)
+
+static int array_list_swap_contents_test_fn(struct aws_allocator *alloc, void *ctx) {
+    /* build lists */
+    struct aws_array_list list_a;
+    int a_1 = 1;
+    int a_capacity = 1;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_a, alloc, a_capacity, sizeof(int)));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list_a, (void *)&a_1));
+
+    struct aws_array_list list_b;
+    int b_1 = 5;
+    int b_2 = 6;
+    int b_capacity = 3;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_b, alloc, b_capacity, sizeof(int)));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list_b, (void *)&b_1));
+    ASSERT_SUCCESS(aws_array_list_push_back(&list_b, (void *)&b_2));
+
+    void *a_buffer;
+    ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_a, &a_buffer, 0));
+
+    void *b_buffer;
+    ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_b, &b_buffer, 0));
+
+    /* swap */
+    aws_array_list_swap_contents(&list_a, &list_b);
+
+    /* compare state after swap */
+    void *a_buffer_after_swap;
+    ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_a, &a_buffer_after_swap, 0));
+    ASSERT_PTR_EQUALS(b_buffer, a_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
+
+    void *b_buffer_after_swap;
+    ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_b, &b_buffer_after_swap, 0));
+    ASSERT_PTR_EQUALS(a_buffer, b_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
+
+    int item;
+    ASSERT_INT_EQUALS(2, aws_array_list_length(&list_a), "List A should have taken B's old length");
+    ASSERT_INT_EQUALS(b_capacity, aws_array_list_capacity(&list_a), "List A should have taken B's old capacity");
+    ASSERT_SUCCESS(aws_array_list_get_at(&list_a, &item, 0), "List A should have B's old first item");
+    ASSERT_INT_EQUALS(b_1, item, "List A should have B's old first item");
+    ASSERT_SUCCESS(aws_array_list_get_at(&list_a, &item, 1), "List A should have B's old second item");
+    ASSERT_INT_EQUALS(b_2, item, "List A should have B's old second item");
+
+    ASSERT_INT_EQUALS(1, aws_array_list_length(&list_b), "List B should have taken A's old length");
+    ASSERT_INT_EQUALS(a_capacity, aws_array_list_capacity(&list_b), "List B should have taken A's old capacity");
+    ASSERT_SUCCESS(aws_array_list_get_at(&list_b, &item, 0), "List B should have A's old first item");
+    ASSERT_INT_EQUALS(a_1, item, "List B should have A's old first item");
+
+    aws_array_list_clean_up(&list_a);
+    aws_array_list_clean_up(&list_b);
+
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_swap_contents_test, array_list_swap_contents_test_fn)
 
 static int array_list_not_enough_space_test_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list_a;

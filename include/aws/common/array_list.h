@@ -75,6 +75,14 @@ extern "C" {
     AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
 
     /**
+     * Delete N elements from the front of the list.
+     * Remaining elements are shifted to the front of the list.
+     * If the list has less than N elements, the list is cleared.
+     * This call is more efficient than calling aws_array_list_pop_front() N times.
+     */
+    AWS_COMMON_API void aws_array_list_pop_front_n(struct aws_array_list *list, size_t n);
+
+    /**
      * Copies the element at the end of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
      */
     AWS_COMMON_API int aws_array_list_back(const struct aws_array_list *list, void *val);
@@ -99,6 +107,11 @@ extern "C" {
      * in to will be overwritten in this copy.
      */ 
     AWS_COMMON_API int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to);
+
+    /**
+     * Swap contents between two dynamic lists. Both lists must use the same allocator.
+     */
+    AWS_COMMON_API void aws_array_list_swap_contents(struct aws_array_list *list_a, struct aws_array_list *list_b);
 
     /**
      * Returns the number of elements that can fit in the internal array. If list is initialized in dynamic mode,
