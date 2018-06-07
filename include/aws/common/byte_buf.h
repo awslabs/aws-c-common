@@ -121,6 +121,32 @@ static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
 }
 
 /**
+ * Constructor for a byte buffer that is dynamically allocated. (The entire byte buffer object,
+ * not just the data bytes.) Must be deallocated with aws_byte_buf_destroy.
+ */
+static inline struct aws_byte_buf * aws_byte_buf_new(struct aws_allocator * allocator, size_t len) {
+    struct aws_byte_buf * buf = aws_mem_acquire(allocator, sizeof(struct aws_byte_buf));
+    if (!buf) { aws_raise_error(AWS_ERROR_OOM); return NULL; }
+    if (aws_byte_buf_init(allocator, buf, len)) {
+        return NULL;
+    }
+    return buf;
+}
+
+/**
+ * Destructor for dynamically allocated byte buffer. Safe to call on statically allocated byte buffers.
+ * Takes a void * so that it can be used as a destroy function in aws_hash_table.
+ */
+static inline void aws_byte_buf_destroy(void * buf) {
+    struct aws_byte_buf * my_buf = (struct aws_byte_buf *) buf;
+    struct aws_allocator * allocator = my_buf->allocator;
+    if (allocator) {
+        aws_byte_buf_clean_up(my_buf);
+        aws_mem_release(allocator, buf);
+    }
+}
+
+/**
  * For creating a byte buffer from a constant string. (With no nulls, else strlen will not work.)
  */
 static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {

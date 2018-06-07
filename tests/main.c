@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
                        &scheduler_ordering_test,
                        &scheduler_reentrant_safe,
                        &test_hash_table_put_get,
+                       &test_hash_table_byte_buf_put_get,
                        &test_hash_table_hash_collision,
                        &test_hash_table_hash_overwrite,
                        &test_hash_table_hash_remove,
