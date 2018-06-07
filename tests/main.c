@@ -37,6 +37,7 @@
 #include <misc_test.c>
 #include <byte_order_test.c>
 #include <byte_buf_test.c>
+#include <system_info_tests.c>
 
 int main(int argc, char *argv[]) {
 
@@ -150,7 +151,8 @@ int main(int argc, char *argv[]) {
                        &byte_swap_test,
                        &byte_cursor_write_tests,
                        &byte_cursor_read_tests,
-                       &byte_cursor_limit_tests
+                       &byte_cursor_limit_tests,
+                       &test_cpu_count_at_least_works_superficially,
                        );
 }
 
