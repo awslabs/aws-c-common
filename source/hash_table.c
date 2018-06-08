@@ -600,7 +600,7 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 }
 
-uint64_t aws_hash_string(const void *item) {
+uint64_t aws_hash_c_string(const void *item) {
     const char *str = item;
 
     /* first digits of pi in hex */
@@ -610,12 +610,12 @@ uint64_t aws_hash_string(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-uint64_t aws_hash_byte_buf(const void *item) {
-    const struct aws_byte_buf *buf = item;
+uint64_t aws_hash_string(const void *item) {
+    const struct aws_string * str = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
-    hashlittle2(buf->buffer, buf->len, &c, &b);
+    hashlittle2(aws_string_bytes(str), str->len, &c, &b);
 
     return ((uint64_t)b << 32) | c;
 }
@@ -630,14 +630,16 @@ uint64_t aws_hash_ptr(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-bool aws_string_eq(const void *a, const void *b) {
+bool aws_c_string_eq(const void *a, const void *b) {
     return !strcmp((const char *)a, (const char *)b);
 }
 
-bool aws_byte_buf_eq(const void *a, const void *b) {
-    const struct aws_byte_buf * buf_a = (const struct aws_byte_buf *) a;
-    const struct aws_byte_buf * buf_b = (const struct aws_byte_buf *) b;
-    return buf_a->len == buf_b->len && !memcmp(buf_a->buffer, buf_b->buffer, buf_a->len);
+bool aws_string_eq(const void *a, const void *b) {
+    const struct aws_string * str_a = a;
+    const struct aws_string * str_b = b;
+    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a),
+                                               aws_string_bytes(str_b),
+                                               str_a->len);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {

@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/hash_table.h>
 #include <aws/testing/aws_test_harness.h>
 
 static const uint8_t test_vector[] = {
@@ -120,6 +121,51 @@ static int byte_cursor_limit_tests_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &arrbuf));
     ASSERT_TRUE(aws_byte_cursor_write_from_whole_buffer(&cur, &arrbuf));
     ASSERT_UINT_EQUALS(0, arr[0]); ASSERT_UINT_EQUALS(0, arr[1]);
+
+    return 0;
+}
+
+AWS_TEST_CASE(string_tests, string_tests_fn);
+static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
+    /* Test: static string creation from macro works. */
+    AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
+    ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
+    ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_1), test_string_1->len, "foofaraw", 8,
+                             "Data bytes should have been set correctly.");
+
+    /* Test: string creation works. */
+    const struct aws_string * test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw", 8);
+    ASSERT_NOT_NULL(test_string_2, "Memory allocation of dynamic byte buffer should have succeeded.");
+    ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
+    ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_2), test_string_2->len, "foofaraw", 8,
+                             "Data bytes should have been set correctly.");
+    
+    /* Test: strings from first two tests are equal and have same hashes. */
+    ASSERT_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
+    ASSERT_INT_EQUALS(aws_hash_string(test_string_1), aws_hash_string(test_string_2),
+                      "Hash values of byte buffers should be equal.");
+
+    /* Test: write from string to byte cursor works. */
+    uint8_t dest[8] = {0};
+    struct aws_byte_cursor dest_cur = aws_byte_cursor_from_array(dest, 8);
+
+    ASSERT_TRUE(aws_byte_cursor_write_from_whole_string(&dest_cur, test_string_2),
+                "Write from whole string should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
+
+    /* Test: write from string fails cleanly when byte cursor too short. */
+    uint8_t short_dest[7] = {0};
+    struct aws_byte_cursor short_dest_cur = aws_byte_cursor_from_array(short_dest, 7);
+
+    ASSERT_FALSE(aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),
+                 "Write from whole buffer should have failed.");
+    ASSERT_INT_EQUALS(short_dest_cur.len, 7, "Destination cursor length should be unchanged.");
+    ASSERT_INT_EQUALS(0, short_dest_cur.ptr[0], "Destination cursor should not have received data.");
+
+    /* Test: all allocated memory is deallocated properly. */
+    aws_string_destroy((void *)test_string_2);
 
     return 0;
 }
