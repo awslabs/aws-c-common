@@ -249,8 +249,6 @@ static int run_base64_encoding_test_case(struct aws_allocator *alloc, const char
     output = aws_byte_buf_from_array(allocation.buffer + 1, output_size);
     output.len = 0;
 
-    ASSERT_SUCCESS(aws_byte_buf_init(aws_default_allocator(), &output, output_size));
-
     struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
