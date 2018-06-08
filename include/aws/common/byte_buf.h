@@ -1,5 +1,5 @@
-#ifndef AWS_STRING_H
-#define AWS_STRING_H
+#ifndef AWS_COMMON_BYTE_BUF_H
+#define AWS_COMMON_BYTE_BUF_H
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 *
@@ -27,6 +27,10 @@
  * Represents a length-delimited binary string or buffer. If byte buffer points to constant
  * memory or memory that should otherwise not be freed by this struct, set allocator to NULL
  * and free function will be a no-op.
+ *
+ * Note that this structure allocates memory at the buffer pointer only. The struct itself
+ * does not get dynamically allocated and must be either maintained or copied to avoid losing
+ * access to the memory.
  */
 struct aws_byte_buf {
     struct aws_allocator * allocator;
@@ -34,6 +38,65 @@ struct aws_byte_buf {
     size_t len;
     size_t capacity;
 };
+
+/**
+ * Represents an immutable string holding either text or binary data. If the string is in constant
+ * memory or memory that should otherwise not be freed by this struct, set allocator to NULL
+ * and destroy function will be a no-op.
+ *
+ * This is for use cases where the entire struct and the data bytes themselves need to be
+ * held in dynamic memory, such as when held by a struct aws_hash_table. The data bytes
+ * themselves are always held in contiguous memory immediately after the end of the
+ * struct aws_string, and the memory for both the header and the data bytes
+ * is allocated together. (So we cannot have arrays of strings!)
+ *
+ * Use the aws_string_bytes function to access the data bytes.
+ */
+struct aws_string {
+    struct aws_allocator * allocator;
+    size_t len;
+};
+
+static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
+    return (const uint8_t *)(hdr + 1);
+}
+
+static inline const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, uint8_t * bytes, size_t len) {
+    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
+    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
+    hdr->allocator = allocator;
+    hdr->len = len;
+    memcpy((void *)aws_string_bytes(hdr), bytes, len);
+    return hdr;
+}
+
+static inline const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, char * bytes, size_t len) {
+    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
+    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
+    hdr->allocator = allocator;
+    hdr->len = len;
+    memcpy((void *)aws_string_bytes(hdr), bytes, len);
+    return hdr;
+}
+
+/**
+ * Defines a (static const struct aws_string *) with name specified in first argument
+ * that points to constant memory and has data bytes containing the string literal in the second argument.
+ */
+#define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                              \
+    static const struct { struct aws_string hdr; uint8_t data[strlen(literal)]; }  \
+        _ ## name ## _s = {                                                        \
+            {NULL,                                                                 \
+             strlen(literal)},                                                     \
+            {literal}                                                              \
+            };                                                                     \
+static const struct aws_string * name = & _ ## name ## _s.hdr
+
+
+/* Takes a void * so it can be used as a destructor function for struct aws_hash_table.
+ * That is also why it is not inlined.
+ */
+void aws_string_destroy(void * buf);
 
 /**
  * Represents a movable pointer within a larger binary string or buffer.
@@ -63,8 +126,8 @@ extern "C" {
  *
  * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
  */
-AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on,
-                                            struct aws_array_list *output);
+AWS_COMMON_API int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on,
+                                              struct aws_array_list *output);
 
 /**
 * No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
@@ -83,8 +146,8 @@ AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char
 *
 * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
 */
-AWS_COMMON_API int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
-    struct aws_array_list *output, size_t n);
+AWS_COMMON_API int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
+                                                struct aws_array_list *output, size_t n);
 
 /**
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
@@ -118,32 +181,6 @@ static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
     buf->buffer = NULL;
     buf->len = 0;
     buf->capacity = 0;
-}
-
-/**
- * Constructor for a byte buffer that is dynamically allocated. (The entire byte buffer object,
- * not just the data bytes.) Must be deallocated with aws_byte_buf_destroy.
- */
-static inline struct aws_byte_buf * aws_byte_buf_new(struct aws_allocator * allocator, size_t len) {
-    struct aws_byte_buf * buf = aws_mem_acquire(allocator, sizeof(struct aws_byte_buf));
-    if (!buf) { aws_raise_error(AWS_ERROR_OOM); return NULL; }
-    if (aws_byte_buf_init(allocator, buf, len)) {
-        return NULL;
-    }
-    return buf;
-}
-
-/**
- * Destructor for dynamically allocated byte buffer. Safe to call on statically allocated byte buffers.
- * Takes a void * so that it can be used as a destroy function in aws_hash_table.
- */
-static inline void aws_byte_buf_destroy(void * buf) {
-    struct aws_byte_buf * my_buf = (struct aws_byte_buf *) buf;
-    struct aws_allocator * allocator = my_buf->allocator;
-    if (allocator) {
-        aws_byte_buf_clean_up(my_buf);
-        aws_mem_release(allocator, buf);
-    }
 }
 
 /**
@@ -430,6 +467,16 @@ static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_curso
 }
 
 /**
+ * Copies all bytes from dynamic buffer to cursor.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ */
+static inline bool aws_byte_cursor_write_from_whole_string(struct aws_byte_cursor * AWS_RESTRICT cur, const struct aws_string * AWS_RESTRICT src) {
+    return aws_byte_cursor_write(cur, aws_string_bytes(src), src->len);
+}
+
+/**
  * Copies one byte to cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.<<<<<< str-split
@@ -473,5 +520,4 @@ static inline bool aws_byte_cursor_write_be64(struct aws_byte_cursor *cur, uint6
     return aws_byte_cursor_write(cur, (uint8_t *) &x, 8);
 }
 
-
-#endif /* AWS_STRING_H */
+#endif /* AWS_COMMON_BYTE_BUF_H */

@@ -220,16 +220,15 @@ extern "C" {
         struct aws_hash_table *map);
 
     /**
-     * Convenience hash function for NUL-terminated strings
+     * Convenience hash function for NULL-terminated C-strings
      */
-    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_c_string(const void *a);
 
     /**
-     * Convenience hash function for struct aws_byte_bufs.
-     * Hash is only calculated on the first len bytes of buffer, not size,
-     * and formula is same as used on the string bytes by aws_hash_string.
+     * Convenience hash function for struct aws_strings.
+     * Hash is same as used on the string bytes by aws_hash_c_string.
      */
-    AWS_COMMON_API uint64_t aws_hash_byte_buf(const void *item);
+    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
 
     /**
      * Convenience hash function which hashes the pointer value directly,
@@ -239,14 +238,14 @@ extern "C" {
     AWS_COMMON_API uint64_t aws_hash_ptr(const void *a);
 
     /**
-     * Convenience eq function for NUL-terminated strings
+     * Convenience eq function for NULL-terminated C-strings
      */
-    AWS_COMMON_API bool aws_string_eq(const void *a, const void *b);
+    AWS_COMMON_API bool aws_c_string_eq(const void *a, const void *b);
 
     /**
-     * Convenience eq function for struct aws_byte_bufs.
+     * Convenience eq function for struct aws_strings.
      */
-    AWS_COMMON_API bool aws_byte_buf_eq(const void *a, const void *b);
+    AWS_COMMON_API bool aws_string_eq(const void *a, const void *b);
 
     /**
      * Equality function which compares pointer equality.
