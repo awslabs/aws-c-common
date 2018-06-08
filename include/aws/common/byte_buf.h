@@ -1,5 +1,5 @@
-#ifndef AWS_STRING_H
-#define AWS_STRING_H
+#ifndef AWS_COMMON_BYTE_BUF_H
+#define AWS_COMMON_BYTE_BUF_H
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 *
@@ -27,6 +27,10 @@
  * Represents a length-delimited binary string or buffer. If byte buffer points to constant
  * memory or memory that should otherwise not be freed by this struct, set allocator to NULL
  * and free function will be a no-op.
+ *
+ * Note that this structure allocates memory at the buffer pointer only. The struct itself
+ * does not get dynamically allocated and must be either maintained or copied to avoid losing
+ * access to the memory.
  */
 struct aws_byte_buf {
     struct aws_allocator * allocator;
@@ -48,13 +52,13 @@ extern "C" {
 #endif
 
 /**
- * No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+ * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
  * an offset into the input_str and len is the length of that string in the original buffer.
  *
  * Edge case rules are as follows:
- * if the string begins with split_on, an empty string will be the first entry in output
- * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
- * if the input string ends with split_on, an empty string will be appended to the output.
+ * if the input begins with split_on, an empty cursor will be the first entry in output.
+ * if the input has two adjacent split_on tokens, an empty cursor will be inserted into the output.
+ * if the input ends with split_on, an empty cursor will be appended to the output.
  *
  * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
  * is your most likely guess for the upper bound of the number of elements resulting from the split.
@@ -63,18 +67,18 @@ extern "C" {
  *
  * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
  */
-AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on,
-                                            struct aws_array_list *output);
+AWS_COMMON_API int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on,
+                                              struct aws_array_list *output);
 
 /**
-* No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+* No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
 * an offset into the input_str and len is the length of that string in the original buffer. N is the max number of splits,
 * if this value is zero, it will add all splits to the output.
 *
 * Edge case rules are as follows:
-* if the string begins with split_on, an empty string will be the first entry in output
-* if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
-* if the input string ends with split_on, an empty string will be appended to the output.
+* if the input begins with split_on, an empty cursor will be the first entry in output
+* if the input has two adjacent split_on tokens, an empty cursor will be inserted into the output.
+* if the input ends with split_on, an empty cursor will be appended to the output.
 *
 * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
 * is your most likely guess for the upper bound of the number of elements resulting from the split.
@@ -83,8 +87,8 @@ AWS_COMMON_API int aws_string_split_on_char(struct aws_byte_buf *input_str, char
 *
 * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
 */
-AWS_COMMON_API int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
-    struct aws_array_list *output, size_t n);
+AWS_COMMON_API int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
+                                                struct aws_array_list *output, size_t n);
 
 /**
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
@@ -121,7 +125,7 @@ static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
 }
 
 /**
- * For creating a byte buffer from a constant string. (With no nulls, else strlen will not work.)
+ * For creating a byte buffer from a null-terminated string literal.
  */
 static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {
     struct aws_byte_buf buf;
@@ -447,5 +451,4 @@ static inline bool aws_byte_cursor_write_be64(struct aws_byte_cursor *cur, uint6
     return aws_byte_cursor_write(cur, (uint8_t *) &x, 8);
 }
 
-
-#endif /* AWS_STRING_H */
+#endif /* AWS_COMMON_BYTE_BUF_H */

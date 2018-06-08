@@ -18,6 +18,7 @@
 
 #include <aws/common/common.h>
 #include <aws/common/error.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
@@ -86,16 +87,14 @@ typedef uint64_t (*aws_hash_fn_t)(const void *key);
  * Equality functions used in a hash table must be reflexive (i.e., a == b if
  * and only if b == a), and must be consistent with the hash function in use.
  */
-typedef int (*aws_equals_fn_t)(const void *a, const void *b);
+typedef bool (*aws_equals_fn_t)(const void *a, const void *b);
 
 /*
  * This callback is used to destroy elements that are not returned to the
  * calling code during destruction.  In general, if the element is returned to
  * calling code, calling code must destroy it.
  */
-typedef void (*aws_hash_element_destroy_t)(
-    struct aws_hash_element element
-);
+typedef void (*aws_hash_element_destroy_t)(void * key_or_value);
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,9 +103,10 @@ extern "C" {
     /**
      * Initializes a hash map with initial capacity for 'size' elements
      * without resizing. Uses hash_fn to compute the hash of each element.
-     * equals_fn to compute equality of two keys.  destroy_fn is called whenver
-     * an element is removed without being returned, and may be NULL if a
-     * callback is not desired in this case.
+     * equals_fn to compute equality of two keys.  Whenver an elements is
+     * removed without being returned, destroy_key_fn is run on the pointer
+     * to the key and destroy_value_fn is run on the pointer to the value.
+     * Either or both may be NULL if a callback is not desired in this case.
      */
 
     AWS_COMMON_API int aws_hash_table_init(
@@ -114,7 +114,8 @@ extern "C" {
         struct aws_allocator *alloc, size_t size,
         aws_hash_fn_t hash_fn,
         aws_equals_fn_t equals_fn,
-        aws_hash_element_destroy_t destroy_fn);
+        aws_hash_element_destroy_t destroy_key_fn,
+        aws_hash_element_destroy_t destroy_value_fn);
 
     /**
      * Deletes every element from map and frees all associated memory.
@@ -219,14 +220,15 @@ extern "C" {
         struct aws_hash_table *map);
 
     /**
-     * Convenience hash function for NUL-terminated strings
+     * Convenience hash function for NULL-terminated C-strings
      */
-    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_c_string(const void *a);
 
     /**
-     * Convenience eq function for NUL-terminated strings
+     * Convenience hash function for struct aws_strings.
+     * Hash is same as used on the string bytes by aws_hash_c_string.
      */
-    AWS_COMMON_API int aws_string_eq(const void *a, const void *b);
+    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
 
     /**
      * Convenience hash function which hashes the pointer value directly,
@@ -236,9 +238,19 @@ extern "C" {
     AWS_COMMON_API uint64_t aws_hash_ptr(const void *a);
 
     /**
+     * Convenience eq function for NULL-terminated C-strings
+     */
+    AWS_COMMON_API bool aws_c_string_eq(const void *a, const void *b);
+
+    /**
+     * Convenience eq function for struct aws_strings.
+     */
+    AWS_COMMON_API bool aws_string_eq(const void *a, const void *b);
+
+    /**
      * Equality function which compares pointer equality.
      */
-    AWS_COMMON_API int aws_ptr_eq(const void *a, const void *b);
+    AWS_COMMON_API bool aws_ptr_eq(const void *a, const void *b);
 
 #ifdef _cplusplus
 }

@@ -23,7 +23,7 @@
 #pragma warning(disable:4706)
 #endif
 
-int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
+int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     struct aws_array_list *output, size_t n) {
     assert(input_str);
     assert(output);
@@ -66,8 +66,8 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     return AWS_OP_SUCCESS;
 }
 
-int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
-    return aws_string_split_on_char_n(input_str, split_on, output, 0);
+int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
+    return aws_byte_buf_split_on_char_n(input_str, split_on, output, 0);
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {

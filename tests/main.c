@@ -33,6 +33,7 @@
 #include <task_scheduler_test.c>
 #include <hash_table_test.c>
 #include <math_test.c>
+#include <split_test.c>
 #include <string_test.c>
 #include <misc_test.c>
 #include <byte_order_test.c>
@@ -118,6 +119,8 @@ int main(int argc, char *argv[]) {
                        &scheduler_ordering_test,
                        &scheduler_reentrant_safe,
                        &test_hash_table_put_get,
+                       &test_hash_table_string_put_get,
+                       &test_hash_table_string_clean_up,
                        &test_hash_table_hash_collision,
                        &test_hash_table_hash_overwrite,
                        &test_hash_table_hash_remove,
@@ -150,7 +153,8 @@ int main(int argc, char *argv[]) {
                        &byte_swap_test,
                        &byte_cursor_write_tests,
                        &byte_cursor_read_tests,
-                       &byte_cursor_limit_tests
-                       );
+                       &byte_cursor_limit_tests,
+                       &string_tests
+        );
 }
 

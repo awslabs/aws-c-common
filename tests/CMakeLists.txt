@@ -123,6 +123,8 @@ add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timest
 add_test(scheduler_reentrant_safe, ${TEST_BINARY_NAME} scheduler_reentrant_safe)
 
 add_test(test_hash_table_put_get ${TEST_BINARY_NAME} test_hash_table_put_get)
+add_test(test_hash_table_string_put_get ${TEST_BINARY_NAME} test_hash_table_string_put_get)
+add_test(test_hash_table_string_clean_up ${TEST_BINARY_NAME} test_hash_table_string_clean_up)
 add_test(test_hash_table_hash_collision ${TEST_BINARY_NAME} test_hash_table_hash_collision)
 add_test(test_hash_table_hash_overwrite ${TEST_BINARY_NAME} test_hash_table_hash_overwrite)
 add_test(test_hash_table_hash_remove ${TEST_BINARY_NAME} test_hash_table_hash_remove)
@@ -138,6 +140,11 @@ add_test(test_u32_checked ${TEST_BINARY_NAME} test_u32_checked)
 add_test(nospec_index_test ${TEST_BINARY_NAME} nospec_index_test)
 add_test(test_byte_cursor_advance ${TEST_BINARY_NAME} test_byte_cursor_advance)
 add_test(test_byte_cursor_advance_nospec ${TEST_BINARY_NAME} test_byte_cursor_advance_nospec)
+
+add_test(byte_cursor_write_tests ${TEST_BINARY_NAME} byte_cursor_write_tests)
+add_test(byte_cursor_read_tests ${TEST_BINARY_NAME} byte_cursor_read_tests)
+add_test(byte_cursor_limit_tests ${TEST_BINARY_NAME} byte_cursor_limit_tests)
+add_test(string_tests ${TEST_BINARY_NAME} string_tests)
 
 add_test(test_char_split_happy_path ${TEST_BINARY_NAME} test_char_split_happy_path)
 add_test(test_char_split_ends_with_token ${TEST_BINARY_NAME} test_char_split_ends_with_token)

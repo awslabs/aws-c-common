@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/hash_table.h>
+#include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 #include <stdio.h>
 
@@ -26,8 +27,7 @@ static const char *test_val_str_2 = "value 2";
 AWS_TEST_CASE(test_hash_table_put_get, test_hash_table_put_get_fn)
 static int test_hash_table_put_get_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string,
-        aws_string_eq, NULL);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_c_string, aws_c_string_eq, NULL, NULL);
     struct aws_hash_element *pElem;
     int was_created;
 
@@ -60,7 +60,132 @@ static int test_hash_table_put_get_fn(struct aws_allocator *alloc, void *ctx) {
         "Returned value for %s, should have been %s", test_str_2, test_val_str_2);
 
     aws_hash_table_clean_up(&hash_table);
-    RETURN_SUCCESS("%s() pass", "test_hash_table_put_get");
+    return 0;
+}
+
+AWS_TEST_CASE(test_hash_table_string_put_get, test_hash_table_string_put_get_fn)
+static int test_hash_table_string_put_get_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_hash_table hash_table;
+    struct aws_hash_element *pElem;
+    int was_created;
+
+    int ret = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string, aws_string_eq,
+                                  aws_string_destroy, aws_string_destroy);
+    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
+
+    /* First element of hash, both key and value are statically allocated strings */
+    AWS_STATIC_STRING_FROM_LITERAL(key_1, "tweedle dee", 11);
+    AWS_STATIC_STRING_FROM_LITERAL(val_1, "tweedle dum", 11);
+
+    /* Second element of hash, only value is dynamically allocated string */
+    AWS_STATIC_STRING_FROM_LITERAL(key_2, "what's for dinner?", 18);
+    const struct aws_string * val_2 = aws_string_from_c_str_new(alloc, "deadbeef", 8);
+
+    /* Third element of hash, only key is dynamically allocated string */
+    uint8_t bytes[] = {0x88, 0x00, 0xaa, 0x13, 0xb7, 0x93, 0x7f, 0xdd, 0xbb, 0x62};
+    const struct aws_string * key_3 = aws_string_from_array_new(alloc, bytes, 10);
+    AWS_STATIC_STRING_FROM_LITERAL(val_3, "hunter2", 7);
+
+    ret = aws_hash_table_create(&hash_table, (void *)key_1, &pElem, &was_created);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    ASSERT_INT_EQUALS(1, was_created, "Hash Map put should have created a new element.");
+    pElem->value = (void *)val_1;
+
+    /* Try passing a NULL was_created this time */
+    ret = aws_hash_table_create(&hash_table, (void *)key_2, &pElem, NULL);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    pElem->value = (void *)val_2;
+
+    ret = aws_hash_table_create(&hash_table, (void *)key_3, &pElem, NULL);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    pElem->value = (void *)val_3;
+
+    ret = aws_hash_table_find(&hash_table, (void *)key_1, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS("tweedle dee", strlen("tweedle dee"), aws_string_bytes(pElem->key),
+                             ((struct aws_string *)pElem->key)->len,
+                             "Returned key for %s, should have been %s", "tweedle dee", "tweedle dee");
+    ASSERT_BIN_ARRAYS_EQUALS("tweedle dum", strlen("tweedle dum"), aws_string_bytes(pElem->value),
+                             ((struct aws_string *)pElem->value)->len,
+                             "Returned value for %s, should have been %s", "tweedle dee", "tweedle dum");
+
+    ret = aws_hash_table_find(&hash_table, (void *)key_2, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS("what's for dinner?", strlen("what's for dinner?"), aws_string_bytes(pElem->key),
+                             ((struct aws_string *)pElem->key)->len,
+                             "Returned key for %s, should have been %s", "what's for dinner?", "what's for dinner?");
+    ASSERT_BIN_ARRAYS_EQUALS("deadbeef", strlen("deadbeef"), aws_string_bytes(pElem->value),
+                             ((struct aws_string *)pElem->value)->len,
+                             "Returned value for %s, should have been %s", "what's for dinner?", "deadbeef");
+
+    ret = aws_hash_table_find(&hash_table, (void *)key_3, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(bytes, 10, aws_string_bytes(pElem->key),
+                             ((struct aws_string *)pElem->key)->len,
+                             "Returned key for %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx should have been same",
+                             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9]);
+    ASSERT_BIN_ARRAYS_EQUALS("hunter2", strlen("hunter2"), aws_string_bytes(pElem->value),
+                             ((struct aws_string *)pElem->value)->len,
+                             "Returned value for binary bytes should have been %s", "hunter2");
+    aws_hash_table_clean_up(&hash_table);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_hash_table_string_clean_up, test_hash_table_string_clean_up_fn)
+static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void *ctx) {
+    /* Verify that clean up happens properly when a destructor function is used only on keys or only on values. */
+    struct aws_hash_table hash_table;
+    struct aws_hash_element *pElem;
+    int was_created;
+
+    const struct aws_string * key_1 = aws_string_from_literal_new(alloc, "Once upon a midnight dreary,");
+    AWS_STATIC_STRING_FROM_LITERAL(val_1, "while I pondered, weak and weary,", 64);
+    const struct aws_string * key_2 = aws_string_from_literal_new(alloc, "Over many a quaint and curious");
+    AWS_STATIC_STRING_FROM_LITERAL(val_2, "volume of forgotten lore--", 64);
+    const struct aws_string * key_3 = aws_string_from_literal_new(alloc, "While I nodded, nearly napping,");
+    AWS_STATIC_STRING_FROM_LITERAL(val_3, "suddenly there came a tapping,", 64);
+
+    const struct aws_string * dyn_keys[] = {key_1, key_2, key_3};
+    const struct aws_string * static_vals[] = {val_1, val_2, val_3};
+
+    int ret = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string, aws_string_eq,
+                                  aws_string_destroy, NULL); /* destroy keys not values */
+    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
+
+    for (int idx = 0 ; idx < 3 ; ++idx) {
+        ret = aws_hash_table_create(&hash_table, (void *)dyn_keys[idx], &pElem, &was_created);
+        ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+        ASSERT_INT_EQUALS(1, was_created, "Hash Map put should have created a new element.");
+        pElem->value = (void *)static_vals[idx];
+    }
+
+    aws_hash_table_clean_up(&hash_table);
+
+    AWS_STATIC_STRING_FROM_LITERAL(key_4, "As of some one gently rapping,", 64);
+    const struct aws_string * val_4 = aws_string_from_literal_new(alloc, "rapping at my chamber door.");
+    AWS_STATIC_STRING_FROM_LITERAL(key_5, "\"'Tis some visitor,\" I muttered,", 64);
+    const struct aws_string * val_5 = aws_string_from_literal_new(alloc, "\"tapping at my chamber door--");
+    AWS_STATIC_STRING_FROM_LITERAL(key_6, "Only this and nothing more.\"", 64);
+    const struct aws_string * val_6 = aws_string_from_literal_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
+
+    const struct aws_string * static_keys[] = {key_4, key_5, key_6};
+    const struct aws_string * dyn_vals[] = {val_4, val_5, val_6};
+
+    ret = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string, aws_string_eq,
+                              NULL, aws_string_destroy); /* destroy values not keys */
+    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
+
+    for (int idx = 0 ; idx < 3 ; ++idx) {
+        ret = aws_hash_table_create(&hash_table, (void *)static_keys[idx], &pElem, &was_created);
+        ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+        ASSERT_INT_EQUALS(1, was_created, "Hash Map put should have created a new element.");
+        pElem->value = (void *)dyn_vals[idx];
+    }
+
+    aws_hash_table_clean_up(&hash_table);
+
+    return 0;
 }
 
 static uint64_t hash_collide(const void *a) {
@@ -71,8 +196,7 @@ AWS_TEST_CASE(test_hash_table_hash_collision, test_hash_table_hash_collision_fn)
 static int test_hash_table_hash_collision_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, hash_collide,
-        aws_string_eq, NULL);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, hash_collide, aws_c_string_eq, NULL, NULL);
 
     ASSERT_SUCCESS(err_code,
         "Hash Map init should have succeeded.");
@@ -100,15 +224,14 @@ static int test_hash_table_hash_collision_fn(struct aws_allocator *alloc, void *
         "Returned value for %s, should have been %s", test_str_2, test_val_str_2);
 
     aws_hash_table_clean_up(&hash_table);
-    RETURN_SUCCESS("%s() pass", "test_hash_table_hash_collision");
+    return 0;
 }
 
 AWS_TEST_CASE(test_hash_table_hash_overwrite, test_hash_table_hash_overwrite_fn)
 static int test_hash_table_hash_overwrite_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string,
-        aws_string_eq, NULL);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_c_string, aws_c_string_eq, NULL, NULL);
     int was_created = 42;
 
     ASSERT_SUCCESS(err_code,
@@ -134,40 +257,46 @@ static int test_hash_table_hash_overwrite_fn(struct aws_allocator *alloc, void *
     ASSERT_PTR_EQUALS(test_val_str_2, pElem->value, "The new value should have been preserved on get");
 
     aws_hash_table_clean_up(&hash_table);
-    RETURN_SUCCESS("%s() pass", "test_hash_table_hash_overwrite");
+    return 0;
 }
 
-static struct aws_hash_element last_removed;
-static int removal_counter = 0;
-static void destroy_fn(struct aws_hash_element element) {
-    last_removed = element;
-    removal_counter++;
+static void * last_removed_key;
+static void * last_removed_value;
+static int key_removal_counter = 0;
+static int value_removal_counter = 0;
+
+static void destroy_key_fn(void * key) {
+    last_removed_key = key;
+    ++key_removal_counter;
+}
+static void destroy_value_fn(void * value) {
+    last_removed_value = value;
+    ++value_removal_counter;
 }
 static void reset_destroy_ck() {
-    removal_counter = 0;
-    memset(&last_removed, 0, sizeof(last_removed));
+    key_removal_counter = 0;
+    value_removal_counter = 0;
+    last_removed_key = NULL;
+    last_removed_value = NULL;
 }
 
 AWS_TEST_CASE(test_hash_table_hash_remove, test_hash_table_hash_remove_fn)
 static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem, elem;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string,
-        aws_string_eq, destroy_fn);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_c_string,
+                                       aws_c_string_eq, destroy_key_fn, destroy_value_fn);
     int was_present = 42;
 
     reset_destroy_ck();
 
-    ASSERT_SUCCESS(err_code,
-        "Hash Map init should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map init should have succeeded.");
 
     err_code = aws_hash_table_create(&hash_table, (void *)test_str_1, NULL, NULL);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map put should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map put should have succeeded.");
 
     err_code = aws_hash_table_create(&hash_table, (void *)test_str_2, &pElem, NULL);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map put should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map put should have succeeded.");
     pElem->value = (void *)test_val_str_2;
 
     /* Create a second time; this should not invoke destroy */
@@ -175,12 +304,13 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
     ASSERT_SUCCESS(err_code,
         "Hash Map put should have succeeded.");
 
-    ASSERT_INT_EQUALS(0, removal_counter, "No elements should be destroyed at this point");
+    ASSERT_INT_EQUALS(0, key_removal_counter, "No keys should be destroyed at this point");
+    ASSERT_INT_EQUALS(0, value_removal_counter, "No values should be destroyed at this point");
 
     err_code = aws_hash_table_remove(&hash_table, (void *)test_str_1, &elem, &was_present);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map remove should have succeeded.");
-    ASSERT_INT_EQUALS(0, removal_counter, "No elements should be destroyed at this point");
+    ASSERT_SUCCESS(err_code, "Hash Map remove should have succeeded.");
+    ASSERT_INT_EQUALS(0, key_removal_counter, "No keys should be destroyed at this point");
+    ASSERT_INT_EQUALS(0, value_removal_counter, "No values should be destroyed at this point");
     ASSERT_INT_EQUALS(1, was_present, "Item should have been removed");
 
     err_code = aws_hash_table_find(&hash_table, (void *)test_str_1, &pElem);
@@ -188,33 +318,33 @@ static int test_hash_table_hash_remove_fn(struct aws_allocator *alloc, void *ctx
     ASSERT_NULL(pElem, "Expected item to be nonexistent");
 
     err_code = aws_hash_table_find(&hash_table, (void *)test_str_2, &pElem);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map get should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map get should have succeeded.");
 
     ASSERT_PTR_EQUALS(test_val_str_2, pElem->value, "Wrong value returned from second get");
 
-    // If we delete and discard the element, destroy_fn should be invoked
+    /* If we delete and discard the element, destroy_fn should be invoked */
     err_code = aws_hash_table_remove(&hash_table, (void *)test_str_2, NULL, NULL);
-    ASSERT_SUCCESS(err_code,
-        "Remove should have succeeded.");
-    ASSERT_INT_EQUALS(1, removal_counter, "One element should be destroyed at this point");
-    ASSERT_PTR_EQUALS(last_removed.value, test_val_str_2, "Wrong element destroyed");
+    ASSERT_SUCCESS(err_code, "Remove should have succeeded.");
+    ASSERT_INT_EQUALS(1, key_removal_counter, "One key should be destroyed at this point");
+    ASSERT_INT_EQUALS(1, value_removal_counter, "One value should be destroyed at this point");
+    ASSERT_PTR_EQUALS(last_removed_value, test_val_str_2, "Wrong element destroyed");
 
-    // If we delete an element that's not there, we shouldn't invoke destroy_fn
+    /* If we delete an element that's not there, we shouldn't invoke destroy_fn */
     err_code = aws_hash_table_remove(&hash_table, (void *)test_str_1, NULL, &was_present);
     ASSERT_SUCCESS(err_code, "Remove still should succeed on nonexistent items");
     ASSERT_INT_EQUALS(0, was_present, "Remove should indicate item not present");
-    ASSERT_INT_EQUALS(1, removal_counter, "We shouldn't delete an item if none was found");
+    ASSERT_INT_EQUALS(1, key_removal_counter, "We shouldn't delete an item if none was found");
+    ASSERT_INT_EQUALS(1, value_removal_counter, "We shouldn't delete an item if none was found");
 
     aws_hash_table_clean_up(&hash_table);
-    RETURN_SUCCESS("%s() pass", "test_hash_table_hash_remove");
+    return 0;
 }
 
 AWS_TEST_CASE(test_hash_table_hash_clear_allows_cleanup, test_hash_table_hash_clear_allows_cleanup_fn)
 static int test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string,
-        aws_string_eq, destroy_fn);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_c_string,
+                                       aws_c_string_eq, destroy_key_fn, destroy_value_fn);
 
     ASSERT_SUCCESS(err_code,
         "Hash Map init should have succeeded.");
@@ -229,7 +359,8 @@ static int test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *al
         "Hash Map put should have succeeded.");
 
     aws_hash_table_clear(&hash_table);
-    ASSERT_INT_EQUALS(2, removal_counter, "Clear should destroy all items");
+    ASSERT_INT_EQUALS(2, key_removal_counter, "Clear should destroy all keys");
+    ASSERT_INT_EQUALS(2, value_removal_counter, "Clear should destroy all values");
 
     struct aws_hash_element *pElem;
     err_code = aws_hash_table_find(&hash_table, (void *)test_str_1, &pElem);
@@ -246,16 +377,16 @@ static int test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *al
         "Hash Map put should have succeeded.");
 
     aws_hash_table_clean_up(&hash_table);
-    ASSERT_INT_EQUALS(2, removal_counter, "Cleanup should destroy all items");
+    ASSERT_INT_EQUALS(2, key_removal_counter, "Cleanup should destroy all keys");
+    ASSERT_INT_EQUALS(2, value_removal_counter, "Cleanup should destroy all values");
 
-    RETURN_SUCCESS("%s() pass", "test_hash_table_hash_clear_allows_cleanup");
+    return 0;
 }
 
 AWS_TEST_CASE(test_hash_table_on_resize_returns_correct_entry, test_hash_table_on_resize_returns_correct_entry_fn)
 static int test_hash_table_on_resize_returns_correct_entry_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
-    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_ptr,
-        aws_ptr_eq, NULL);
+    int err_code = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_ptr, aws_ptr_eq, NULL, NULL);
 
     ASSERT_SUCCESS(err_code,
         "Hash Map init should have succeeded.");
@@ -272,7 +403,7 @@ static int test_hash_table_on_resize_returns_correct_entry_fn(struct aws_allocat
     }
 
     aws_hash_table_clean_up(&hash_table);
-    RETURN_SUCCESS("%s() pass", "test_hash_table_on_resize_returns_correct_entry");
+    return 0;
 }
 
 static int foreach_cb_tomask(void *context, struct aws_hash_element *pElement) {
@@ -321,7 +452,7 @@ static int foreach_cb_cutoff_del(void *context, struct aws_hash_element *pElemen
 AWS_TEST_CASE(test_hash_table_foreach, test_hash_table_foreach_fn)
 static int test_hash_table_foreach_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
-    ASSERT_SUCCESS(aws_hash_table_init(&hash_table, alloc, 10, aws_hash_ptr, aws_ptr_eq, NULL),
+    ASSERT_SUCCESS(aws_hash_table_init(&hash_table, alloc, 10, aws_hash_ptr, aws_ptr_eq, NULL, NULL),
         "hash table init"
     );
 
@@ -372,7 +503,7 @@ static int test_hash_table_foreach_fn(struct aws_allocator *alloc, void *ctx) {
 
     aws_hash_table_clean_up(&hash_table);
 
-    RETURN_SUCCESS("%s() pass", "test_hash_table_foreach");
+    return 0;
 }
 
 struct churn_entry {
@@ -410,8 +541,7 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
     int i = 0;
     struct aws_hash_table hash_table;
     int nentries = 2 * 512 * 1024;
-    int err_code = aws_hash_table_init(&hash_table, alloc, nentries, aws_hash_ptr,
-        aws_ptr_eq, NULL);
+    int err_code = aws_hash_table_init(&hash_table, alloc, nentries, aws_hash_ptr, aws_ptr_eq, NULL, NULL);
 
     if(AWS_ERROR_SUCCESS != err_code) {
         FAIL("hash table creation failed: %d", err_code);
@@ -511,5 +641,6 @@ static int test_hash_churn_fn(struct aws_allocator *alloc, void *ctx) {
     free(entries);
     free(permuted);
 
-    RETURN_SUCCESS("%s() pass elapsed=%ld us", "test_hash_churn", end - start);
+    printf("elapsed=%ld us\n", end - start);
+    return 0;
 }

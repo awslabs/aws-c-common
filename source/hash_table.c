@@ -20,7 +20,7 @@
 
 #include <aws/common/hash_table.h>
 #include <aws/common/math.h>
-#include <string.h>
+#include <aws/common/string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -46,7 +46,8 @@ struct hash_table_entry {
 struct hash_table_state {
     aws_hash_fn_t hash_fn;
     aws_equals_fn_t equals_fn;
-    aws_hash_element_destroy_t destroy_fn;
+    aws_hash_element_destroy_t destroy_key_fn;
+    aws_hash_element_destroy_t destroy_value_fn;
     struct aws_allocator *alloc;
 
     size_t size, entry_count;
@@ -218,13 +219,18 @@ static int update_template_size(struct hash_table_state *template, size_t expect
 }
 
 int aws_hash_table_init(struct aws_hash_table *map,
-    struct aws_allocator *alloc, size_t size,
-    aws_hash_fn_t hash_fn, aws_equals_fn_t equals_fn, aws_hash_element_destroy_t destroy_fn) {
+                        struct aws_allocator *alloc,
+                        size_t size,
+                        aws_hash_fn_t hash_fn,
+                        aws_equals_fn_t equals_fn,
+                        aws_hash_element_destroy_t destroy_key_fn,
+                        aws_hash_element_destroy_t destroy_value_fn) {
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
     template.equals_fn = equals_fn;
-    template.destroy_fn = destroy_fn;
+    template.destroy_key_fn = destroy_key_fn;
+    template.destroy_value_fn = destroy_value_fn;
     template.alloc = alloc;
 
     template.entry_count = 0;
@@ -507,10 +513,14 @@ int aws_hash_table_remove(struct aws_hash_table *map,
 
     if (pValue) {
         *pValue = entry->element;
-    } else if (state->destroy_fn) {
-        state->destroy_fn(entry->element);
+    } else {
+        if (state->destroy_key_fn) {
+            state->destroy_key_fn((void *)entry->element.key);
+        }
+        if (state->destroy_value_fn) {
+            state->destroy_value_fn(entry->element.value);
+        }
     }
-
     remove_entry(state, entry);
 
     return AWS_OP_SUCCESS;
@@ -556,12 +566,31 @@ int aws_hash_table_foreach(struct aws_hash_table *map,
 
 void aws_hash_table_clear(struct aws_hash_table *map) {
     struct hash_table_state *state = map->pImpl;
-    if (state->destroy_fn) {
+    if (state->destroy_key_fn) {
+        if (state->destroy_value_fn) {
+            for (size_t i = 0; i < state->size; ++i) {
+                struct hash_table_entry *entry = &state->slots[i];
+
+                if (entry->hash_code) {
+                    state->destroy_key_fn((void *)entry->element.key);
+                    state->destroy_value_fn(entry->element.value);
+                }
+            }
+        } else {
+            for (size_t i = 0; i < state->size; ++i) {
+                struct hash_table_entry *entry = &state->slots[i];
+
+                if (entry->hash_code) {
+                    state->destroy_key_fn((void *)entry->element.key);
+                }
+            }
+        }
+    } else if (state->destroy_value_fn) {
         for (size_t i = 0; i < state->size; ++i) {
             struct hash_table_entry *entry = &state->slots[i];
 
             if (entry->hash_code) {
-                state->destroy_fn(entry->element);
+                state->destroy_value_fn(entry->element.value);
             }
         }
     }
@@ -570,12 +599,22 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 }
 
-uint64_t aws_hash_string(const void *item) {
+uint64_t aws_hash_c_string(const void *item) {
     const char *str = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(str, strlen(str), &c, &b);
+
+    return ((uint64_t)b << 32) | c;
+}
+
+uint64_t aws_hash_string(const void *item) {
+    const struct aws_string * str = item;
+
+    /* first digits of pi in hex */
+    uint32_t b = 0x3243F6A8, c = 0x885A308D;
+    hashlittle2(aws_string_bytes(str), str->len, &c, &b);
 
     return ((uint64_t)b << 32) | c;
 }
@@ -590,13 +629,18 @@ uint64_t aws_hash_ptr(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-int aws_string_eq(const void *a, const void *b) {
+bool aws_c_string_eq(const void *a, const void *b) {
     return !strcmp((const char *)a, (const char *)b);
 }
 
-/**
-* Convenience eq function for int.
-*/
-int aws_ptr_eq(const void *a, const void *b) {
+bool aws_string_eq(const void *a, const void *b) {
+    const struct aws_string * str_a = a;
+    const struct aws_string * str_b = b;
+    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a),
+                                               aws_string_bytes(str_b),
+                                               str_a->len);
+}
+
+bool aws_ptr_eq(const void *a, const void *b) {
     return a == b;
 }
