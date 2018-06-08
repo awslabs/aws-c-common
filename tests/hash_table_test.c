@@ -13,8 +13,8 @@
 * permissions and limitations under the License.
 */
 
-#include <aws/common/byte_buf.h>
 #include <aws/common/hash_table.h>
+#include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 #include <stdio.h>
 

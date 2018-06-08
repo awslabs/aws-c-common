@@ -23,11 +23,6 @@
 #pragma warning(disable:4706)
 #endif
 
-void aws_string_destroy(void * str) {
-    struct aws_string * self = str;
-    if (self && self->allocator) aws_mem_release(self->allocator, self);
-}
-
 int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     struct aws_array_list *output, size_t n) {
     assert(input_str);

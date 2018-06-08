@@ -18,10 +18,9 @@
  * http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
  */
 
-#include <aws/common/byte_buf.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/math.h>
-#include <string.h>
+#include <aws/common/string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>

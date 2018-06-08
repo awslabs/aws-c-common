@@ -34,6 +34,7 @@
 #include <hash_table_test.c>
 #include <math_test.c>
 #include <split_test.c>
+#include <string_test.c>
 #include <misc_test.c>
 #include <byte_order_test.c>
 #include <byte_buf_test.c>

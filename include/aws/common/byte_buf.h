@@ -40,76 +40,6 @@ struct aws_byte_buf {
 };
 
 /**
- * Represents an immutable string holding either text or binary data. If the string is in constant
- * memory or memory that should otherwise not be freed by this struct, set allocator to NULL
- * and destroy function will be a no-op.
- *
- * This is for use cases where the entire struct and the data bytes themselves need to be
- * held in dynamic memory, such as when held by a struct aws_hash_table. The data bytes
- * themselves are always held in contiguous memory immediately after the end of the
- * struct aws_string, and the memory for both the header and the data bytes
- * is allocated together. (So we cannot have arrays of strings!)
- *
- * Use the aws_string_bytes function to access the data bytes.
- */
-struct aws_string {
-    struct aws_allocator * allocator;
-    size_t len;
-};
-
-static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
-    return (const uint8_t *)(hdr + 1);
-}
-
-static inline const struct aws_string * aws_string_from_literal_new(struct aws_allocator * allocator, const char * literal) {
-    size_t len = strlen(literal);
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), literal, len);
-    return hdr;
-}
-
-static inline const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len) {
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), bytes, len);
-    return hdr;
-}
-
-static inline const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * bytes, size_t len) {
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), bytes, len);
-    return hdr;
-}
-
-/**
- * Defines a (static const struct aws_string *) with name specified in first argument
- * that points to constant memory and has data bytes containing the string literal in the second argument.
- * Due to a limitation of static declarations in C, length must be a literal constant, not a call to strlen.
- */
-#define AWS_STATIC_STRING_FROM_LITERAL(name, literal, length)                      \
-    static const struct { struct aws_string hdr; uint8_t data[length]; }           \
-        _ ## name ## _s = {                                                        \
-            {NULL,                                                                 \
-             length},                                                              \
-            {literal}                                                              \
-        };                                                                         \
-    static const struct aws_string * name = & _ ## name ## _s.hdr
-
-
-/* Takes a void * so it can be used as a destructor function for struct aws_hash_table.
- * That is also why it is not inlined.
- */
-void aws_string_destroy(void * buf);
-
-/**
  * Represents a movable pointer within a larger binary string or buffer.
  */
 struct aws_byte_cursor {
@@ -122,13 +52,13 @@ extern "C" {
 #endif
 
 /**
- * No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+ * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
  * an offset into the input_str and len is the length of that string in the original buffer.
  *
  * Edge case rules are as follows:
- * if the string begins with split_on, an empty string will be the first entry in output
- * if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
- * if the input string ends with split_on, an empty string will be appended to the output.
+ * if the input begins with split_on, an empty cursor will be the first entry in output.
+ * if the input has two adjacent split_on tokens, an empty cursor will be inserted into the output.
+ * if the input ends with split_on, an empty cursor will be appended to the output.
  *
  * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
  * is your most likely guess for the upper bound of the number of elements resulting from the split.
@@ -141,14 +71,14 @@ AWS_COMMON_API int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, ch
                                               struct aws_array_list *output);
 
 /**
-* No copies, no string allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
+* No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
 * an offset into the input_str and len is the length of that string in the original buffer. N is the max number of splits,
 * if this value is zero, it will add all splits to the output.
 *
 * Edge case rules are as follows:
-* if the string begins with split_on, an empty string will be the first entry in output
-* if the input string has two adjacent split_on tokens, an empty string will be inserted into the output.
-* if the input string ends with split_on, an empty string will be appended to the output.
+* if the input begins with split_on, an empty cursor will be the first entry in output
+* if the input has two adjacent split_on tokens, an empty cursor will be inserted into the output.
+* if the input ends with split_on, an empty cursor will be appended to the output.
 *
 * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from output
 * is your most likely guess for the upper bound of the number of elements resulting from the split.
@@ -195,7 +125,7 @@ static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
 }
 
 /**
- * For creating a byte buffer from a constant string. (With no nulls, else strlen will not work.)
+ * For creating a byte buffer from a null-terminated string literal.
  */
 static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {
     struct aws_byte_buf buf;
@@ -475,16 +405,6 @@ static inline bool aws_byte_cursor_write(struct aws_byte_cursor * AWS_RESTRICT c
  */
 static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_cursor * AWS_RESTRICT cur, const struct aws_byte_buf * AWS_RESTRICT src) {
     return aws_byte_cursor_write(cur, src->buffer, src->len);
-}
-
-/**
- * Copies all bytes from dynamic buffer to cursor.
- *
- * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
- */
-static inline bool aws_byte_cursor_write_from_whole_string(struct aws_byte_cursor * AWS_RESTRICT cur, const struct aws_string * AWS_RESTRICT src) {
-    return aws_byte_cursor_write(cur, aws_string_bytes(src), src->len);
 }
 
 /**
