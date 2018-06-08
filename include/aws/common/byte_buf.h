@@ -92,15 +92,16 @@ static inline const struct aws_string * aws_string_from_c_str_new(struct aws_all
 /**
  * Defines a (static const struct aws_string *) with name specified in first argument
  * that points to constant memory and has data bytes containing the string literal in the second argument.
+ * Due to a limitation of static declarations in C, length must be a literal constant, not a call to strlen.
  */
-#define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                              \
-    static const struct { struct aws_string hdr; uint8_t data[strlen(literal)]; }  \
+#define AWS_STATIC_STRING_FROM_LITERAL(name, literal, length)                      \
+    static const struct { struct aws_string hdr; uint8_t data[length]; }           \
         _ ## name ## _s = {                                                        \
             {NULL,                                                                 \
-             strlen(literal)},                                                     \
+             length},                                                              \
             {literal}                                                              \
-            };                                                                     \
-static const struct aws_string * name = & _ ## name ## _s.hdr
+        };                                                                         \
+    static const struct aws_string * name = & _ ## name ## _s.hdr
 
 
 /* Takes a void * so it can be used as a destructor function for struct aws_hash_table.
