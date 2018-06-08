@@ -162,3 +162,5 @@ add_test(test_buffer_cpy_offsets ${TEST_BINARY_NAME} test_buffer_cpy_offsets)
 add_test(test_buffer_cpy_offsets_dest_too_small ${TEST_BINARY_NAME} test_buffer_cpy_offsets_dest_too_small)
 
 add_test(byte_swap_test ${TEST_BINARY_NAME} byte_swap_test)
+
+add_test(test_cpu_count_at_least_works_superficially ${TEST_BINARY_NAME} test_cpu_count_at_least_works_superficially)
