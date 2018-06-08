@@ -123,7 +123,8 @@ add_test(scheduler_task_timestamp_test ${TEST_BINARY_NAME} scheduler_task_timest
 add_test(scheduler_reentrant_safe, ${TEST_BINARY_NAME} scheduler_reentrant_safe)
 
 add_test(test_hash_table_put_get ${TEST_BINARY_NAME} test_hash_table_put_get)
-add_test(test_hash_table_string_put_get_put_get ${TEST_BINARY_NAME} test_hash_table_string_put_get_put_get)
+add_test(test_hash_table_string_put_get ${TEST_BINARY_NAME} test_hash_table_string_put_get)
+add_test(test_hash_table_string_clean_up ${TEST_BINARY_NAME} test_hash_table_string_clean_up)
 add_test(test_hash_table_hash_collision ${TEST_BINARY_NAME} test_hash_table_hash_collision)
 add_test(test_hash_table_hash_overwrite ${TEST_BINARY_NAME} test_hash_table_hash_overwrite)
 add_test(test_hash_table_hash_remove ${TEST_BINARY_NAME} test_hash_table_hash_remove)

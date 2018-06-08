@@ -61,7 +61,17 @@ static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
     return (const uint8_t *)(hdr + 1);
 }
 
-static inline const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, uint8_t * bytes, size_t len) {
+static inline const struct aws_string * aws_string_from_literal_new(struct aws_allocator * allocator, const char * literal) {
+    size_t len = strlen(literal);
+    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
+    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
+    hdr->allocator = allocator;
+    hdr->len = len;
+    memcpy((void *)aws_string_bytes(hdr), literal, len);
+    return hdr;
+}
+
+static inline const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len) {
     struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
     if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
     hdr->allocator = allocator;
@@ -70,7 +80,7 @@ static inline const struct aws_string * aws_string_from_array_new(struct aws_all
     return hdr;
 }
 
-static inline const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, char * bytes, size_t len) {
+static inline const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * bytes, size_t len) {
     struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
     if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
     hdr->allocator = allocator;
