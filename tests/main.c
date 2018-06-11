@@ -20,6 +20,7 @@
 #pragma warning(disable:4204)
 #endif
 
+#include <aws/common/logger.h>
 #include <encoding_test.c>
 #include <cursor_test.c>
 #include <error_test.c>
