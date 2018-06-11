@@ -78,7 +78,7 @@ void aws_string_destroy(void * buf);
  * that points to constant memory and has data bytes containing the string literal in the second argument.
  */
 #define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                              \
-    static const struct {struct aws_string hdr; uint8_t data[sizeof(literal)-1];}  \
+    static const struct {struct aws_string hdr; uint8_t data[sizeof(literal)];}    \
         _ ## name ## _s = {                                                        \
         {NULL,                                                                     \
          sizeof(literal) - 1},                                                     \
