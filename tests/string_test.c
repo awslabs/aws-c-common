@@ -20,7 +20,7 @@
 AWS_TEST_CASE(string_tests, string_tests_fn);
 static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     /* Test: static string creation from macro works. */
-    AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw", 8);
+    AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
     ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
     ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
     ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_1), test_string_1->len, "foofaraw", 8,

@@ -74,17 +74,17 @@ static int test_hash_table_string_put_get_fn(struct aws_allocator *alloc, void *
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
     /* First element of hash, both key and value are statically allocated strings */
-    AWS_STATIC_STRING_FROM_LITERAL(key_1, "tweedle dee", 11);
-    AWS_STATIC_STRING_FROM_LITERAL(val_1, "tweedle dum", 11);
+    AWS_STATIC_STRING_FROM_LITERAL(key_1, "tweedle dee");
+    AWS_STATIC_STRING_FROM_LITERAL(val_1, "tweedle dum");
 
     /* Second element of hash, only value is dynamically allocated string */
-    AWS_STATIC_STRING_FROM_LITERAL(key_2, "what's for dinner?", 18);
+    AWS_STATIC_STRING_FROM_LITERAL(key_2, "what's for dinner?");
     const struct aws_string * val_2 = aws_string_from_c_str_new(alloc, "deadbeef", 8);
 
     /* Third element of hash, only key is dynamically allocated string */
     uint8_t bytes[] = {0x88, 0x00, 0xaa, 0x13, 0xb7, 0x93, 0x7f, 0xdd, 0xbb, 0x62};
     const struct aws_string * key_3 = aws_string_from_array_new(alloc, bytes, 10);
-    AWS_STATIC_STRING_FROM_LITERAL(val_3, "hunter2", 7);
+    AWS_STATIC_STRING_FROM_LITERAL(val_3, "hunter2");
 
     ret = aws_hash_table_create(&hash_table, (void *)key_1, &pElem, &was_created);
     ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
@@ -140,11 +140,11 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
     int was_created;
 
     const struct aws_string * key_1 = aws_string_from_literal_new(alloc, "Once upon a midnight dreary,");
-    AWS_STATIC_STRING_FROM_LITERAL(val_1, "while I pondered, weak and weary,", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(val_1, "while I pondered, weak and weary,");
     const struct aws_string * key_2 = aws_string_from_literal_new(alloc, "Over many a quaint and curious");
-    AWS_STATIC_STRING_FROM_LITERAL(val_2, "volume of forgotten lore--", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(val_2, "volume of forgotten lore--");
     const struct aws_string * key_3 = aws_string_from_literal_new(alloc, "While I nodded, nearly napping,");
-    AWS_STATIC_STRING_FROM_LITERAL(val_3, "suddenly there came a tapping,", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(val_3, "suddenly there came a tapping,");
 
     const struct aws_string * dyn_keys[] = {key_1, key_2, key_3};
     const struct aws_string * static_vals[] = {val_1, val_2, val_3};
@@ -162,11 +162,11 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
 
     aws_hash_table_clean_up(&hash_table);
 
-    AWS_STATIC_STRING_FROM_LITERAL(key_4, "As of some one gently rapping,", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(key_4, "As of some one gently rapping,");
     const struct aws_string * val_4 = aws_string_from_literal_new(alloc, "rapping at my chamber door.");
-    AWS_STATIC_STRING_FROM_LITERAL(key_5, "\"'Tis some visitor,\" I muttered,", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(key_5, "\"'Tis some visitor,\" I muttered,");
     const struct aws_string * val_5 = aws_string_from_literal_new(alloc, "\"tapping at my chamber door--");
-    AWS_STATIC_STRING_FROM_LITERAL(key_6, "Only this and nothing more.\"", 64);
+    AWS_STATIC_STRING_FROM_LITERAL(key_6, "Only this and nothing more.\"");
     const struct aws_string * val_6 = aws_string_from_literal_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
 
     const struct aws_string * static_keys[] = {key_4, key_5, key_6};
