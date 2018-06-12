@@ -566,35 +566,31 @@ int aws_hash_table_foreach(struct aws_hash_table *map,
 
 void aws_hash_table_clear(struct aws_hash_table *map) {
     struct hash_table_state *state = map->pImpl;
-    if (state->destroy_key_fn) {
+    if (state->destroy_key_fn) { /* Check whether we have destructors once before traversing table. */
         if (state->destroy_value_fn) {
             for (size_t i = 0; i < state->size; ++i) {
                 struct hash_table_entry *entry = &state->slots[i];
-
                 if (entry->hash_code) {
                     state->destroy_key_fn((void *)entry->element.key);
                     state->destroy_value_fn(entry->element.value);
                 }
             }
-        } else {
+        } else { /* destroy_value_fn is not defined but destroy_key_fn is. */
             for (size_t i = 0; i < state->size; ++i) {
                 struct hash_table_entry *entry = &state->slots[i];
-
                 if (entry->hash_code) {
                     state->destroy_key_fn((void *)entry->element.key);
                 }
             }
         }
-    } else if (state->destroy_value_fn) {
+    } else if (state->destroy_value_fn) { /* destroy_key_fn is not defined but destroy_value_fn is. */
         for (size_t i = 0; i < state->size; ++i) {
             struct hash_table_entry *entry = &state->slots[i];
-
             if (entry->hash_code) {
                 state->destroy_value_fn(entry->element.value);
             }
         }
     }
-
     /* Since hash code 0 represents an empty slot we can just zero out the entire table. */
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 }
