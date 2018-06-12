@@ -240,7 +240,7 @@ int aws_hash_table_init(struct aws_hash_table *map,
     map->pImpl = alloc_state(&template);
 
     if (!map->pImpl) {
-        return aws_raise_error(AWS_ERROR_OOM);
+        return AWS_OP_ERR;
     }
 
     return AWS_OP_SUCCESS;
@@ -383,7 +383,7 @@ static int expand_table(struct aws_hash_table *map) {
 
     struct hash_table_state *new_state = alloc_state(&template);
     if (!new_state) {
-        return aws_raise_error(AWS_ERROR_OOM);
+        return AWS_OP_ERR;
     }
 
     for (int i = 0; i < old_state->size; i++) {

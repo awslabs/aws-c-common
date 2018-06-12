@@ -40,7 +40,10 @@ struct aws_allocator *aws_default_allocator() {
 }
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
-    return allocator->mem_acquire(allocator, size);
+    void * mem = allocator->mem_acquire(allocator, size);
+    if (!mem)
+        aws_raise_error(AWS_ERROR_OOM);
+    return mem;
 }
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {

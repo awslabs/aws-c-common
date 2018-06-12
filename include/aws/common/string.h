@@ -40,38 +40,16 @@ static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
     return (const uint8_t *)(hdr + 1);
 }
 
-static inline const struct aws_string * aws_string_from_literal_new(struct aws_allocator * allocator, const char * literal) {
-    size_t len = strlen(literal);
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), literal, len);
-    return hdr;
-}
-
-static inline const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len) {
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), bytes, len);
-    return hdr;
-}
-
-static inline const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * bytes, size_t len) {
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr) {aws_raise_error(AWS_ERROR_OOM); return NULL;}
-    hdr->allocator = allocator;
-    hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), bytes, len);
-    return hdr;
-}
-
-/* Takes a void * so it can be used as a destructor function for struct aws_hash_table.
- * That is also why it is not inlined.
+/**
+ * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
-void aws_string_destroy(void * buf);
+const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * c_str);
+const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const void * bytes, size_t len);
+
+/**
+ * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
+ */
+void aws_string_destroy(void * str);
 
 /**
  * Defines a (static const struct aws_string *) with name specified in first argument
@@ -79,12 +57,12 @@ void aws_string_destroy(void * buf);
  */
 #define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                              \
     static const struct {struct aws_string hdr; uint8_t data[sizeof(literal)];}    \
-        _ ## name ## _s = {                                                        \
+        name ## _s = {                                                             \
         {NULL,                                                                     \
          sizeof(literal) - 1},                                                     \
         {literal}                                                                  \
     };                                                                             \
-    static const struct aws_string * name = & _ ## name ## _s.hdr
+    static const struct aws_string * name = & name ## _s.hdr
 
 /**
  * Copies all bytes from string to cursor.

@@ -27,7 +27,7 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
                              "Data bytes should have been set correctly.");
 
     /* Test: string creation works. */
-    const struct aws_string * test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw", 8);
+    const struct aws_string * test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw");
     ASSERT_NOT_NULL(test_string_2, "Memory allocation of dynamic byte buffer should have succeeded.");
     ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
     ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
@@ -48,7 +48,7 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
 
     /* Test: write from string fails cleanly when byte cursor too short. */
-    uint8_t short_dest[7] = {0};
+    int8_t short_dest[7] = {0};
     struct aws_byte_cursor short_dest_cur = aws_byte_cursor_from_array(short_dest, 7);
 
     ASSERT_FALSE(aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),

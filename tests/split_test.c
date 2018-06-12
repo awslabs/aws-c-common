@@ -20,7 +20,7 @@ AWS_TEST_CASE(test_char_split_happy_path, test_char_split_happy_path_fn)
 static int test_char_split_happy_path_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "testa;testb;testc";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -51,7 +51,7 @@ AWS_TEST_CASE(test_char_split_ends_with_token, test_char_split_ends_with_token_f
 static int test_char_split_ends_with_token_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "testa;testb;testc;";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -84,7 +84,7 @@ AWS_TEST_CASE(test_char_split_begins_with_token, test_char_split_begins_with_tok
 static int test_char_split_begins_with_token_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = ";testa;testb;testc";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -119,7 +119,7 @@ AWS_TEST_CASE(test_char_split_token_not_present, test_char_split_token_not_prese
 static int test_char_split_token_not_present_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "testa";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -142,7 +142,7 @@ AWS_TEST_CASE(test_char_split_empty, test_char_split_empty_fn)
 static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -162,7 +162,7 @@ AWS_TEST_CASE(test_char_split_adj_tokens, test_char_split_adj_tokens_fn)
 static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "testa;;testb;testc";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -197,7 +197,7 @@ AWS_TEST_CASE(test_char_split_with_max_splits, test_char_split_with_max_splits_f
 static int test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = ";testa;testb;testc";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
@@ -228,7 +228,7 @@ AWS_TEST_CASE(test_char_split_output_too_small, test_char_split_output_too_small
 static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     const char str_to_split[] = "testa;testb;testc;";
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
 
     struct aws_array_list output;
     struct aws_byte_buf output_array[3] = {{0}};

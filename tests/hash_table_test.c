@@ -79,7 +79,7 @@ static int test_hash_table_string_put_get_fn(struct aws_allocator *alloc, void *
 
     /* Second element of hash, only value is dynamically allocated string */
     AWS_STATIC_STRING_FROM_LITERAL(key_2, "what's for dinner?");
-    const struct aws_string * val_2 = aws_string_from_c_str_new(alloc, "deadbeef", 8);
+    const struct aws_string * val_2 = aws_string_from_c_str_new(alloc, "deadbeef");
 
     /* Third element of hash, only key is dynamically allocated string */
     uint8_t bytes[] = {0x88, 0x00, 0xaa, 0x13, 0xb7, 0x93, 0x7f, 0xdd, 0xbb, 0x62};
@@ -139,11 +139,11 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
     struct aws_hash_element *pElem;
     int was_created;
 
-    const struct aws_string * key_1 = aws_string_from_literal_new(alloc, "Once upon a midnight dreary,");
+    const struct aws_string * key_1 = aws_string_from_c_str_new(alloc, "Once upon a midnight dreary,");
     AWS_STATIC_STRING_FROM_LITERAL(val_1, "while I pondered, weak and weary,");
-    const struct aws_string * key_2 = aws_string_from_literal_new(alloc, "Over many a quaint and curious");
+    const struct aws_string * key_2 = aws_string_from_c_str_new(alloc, "Over many a quaint and curious");
     AWS_STATIC_STRING_FROM_LITERAL(val_2, "volume of forgotten lore--");
-    const struct aws_string * key_3 = aws_string_from_literal_new(alloc, "While I nodded, nearly napping,");
+    const struct aws_string * key_3 = aws_string_from_c_str_new(alloc, "While I nodded, nearly napping,");
     AWS_STATIC_STRING_FROM_LITERAL(val_3, "suddenly there came a tapping,");
 
     const struct aws_string * dyn_keys[] = {key_1, key_2, key_3};
@@ -163,11 +163,11 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
     aws_hash_table_clean_up(&hash_table);
 
     AWS_STATIC_STRING_FROM_LITERAL(key_4, "As of some one gently rapping,");
-    const struct aws_string * val_4 = aws_string_from_literal_new(alloc, "rapping at my chamber door.");
+    const struct aws_string * val_4 = aws_string_from_c_str_new(alloc, "rapping at my chamber door.");
     AWS_STATIC_STRING_FROM_LITERAL(key_5, "\"'Tis some visitor,\" I muttered,");
-    const struct aws_string * val_5 = aws_string_from_literal_new(alloc, "\"tapping at my chamber door--");
+    const struct aws_string * val_5 = aws_string_from_c_str_new(alloc, "\"tapping at my chamber door--");
     AWS_STATIC_STRING_FROM_LITERAL(key_6, "Only this and nothing more.\"");
-    const struct aws_string * val_6 = aws_string_from_literal_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
+    const struct aws_string * val_6 = aws_string_from_c_str_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
 
     const struct aws_string * static_keys[] = {key_4, key_5, key_6};
     const struct aws_string * dyn_vals[] = {val_4, val_5, val_6};

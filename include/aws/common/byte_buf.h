@@ -51,6 +51,9 @@ struct aws_byte_cursor {
 extern "C" {
 #endif
 
+AWS_COMMON_API int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len);
+AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf * buf);
+
 /**
  * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
  * an offset into the input_str and len is the length of that string in the original buffer.
@@ -107,47 +110,21 @@ AWS_COMMON_API int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_
 }
 #endif
 
-static inline int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
-    buf->buffer = (uint8_t*)aws_mem_acquire(allocator, len);
-    if (!buf->buffer) return aws_raise_error(AWS_ERROR_OOM);
-    buf->len = 0;
-    buf->capacity = len;
-    buf->allocator = allocator;
-    return AWS_OP_SUCCESS;
-}
-
-static inline void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
-    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
-    buf->allocator = NULL;
-    buf->buffer = NULL;
-    buf->len = 0;
-    buf->capacity = 0;
-}
-
 /**
  * For creating a byte buffer from a null-terminated string literal.
  */
-static inline struct aws_byte_buf aws_byte_buf_from_literal(const char *literal) {
+static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char * c_str) {
     struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)literal;
-    buf.len = strlen(literal);
+    buf.buffer = (uint8_t *)c_str;
+    buf.len = strlen(c_str);
     buf.capacity = buf.len;
     buf.allocator = NULL;
     return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str, size_t len) {
+static inline struct aws_byte_buf aws_byte_buf_from_array(const void * bytes, size_t len) {
     struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)c_str;
-    buf.len = len;
-    buf.capacity = len;
-    buf.allocator = NULL;
-    return buf;
-}
-
-static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *c_str, size_t len) {
-    struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)c_str;
+    buf.buffer = (uint8_t *)bytes;
     buf.len = len;
     buf.capacity = len;
     buf.allocator = NULL;
@@ -161,9 +138,9 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_b
     return cur;
 }
 
-static inline struct aws_byte_cursor aws_byte_cursor_from_array(const uint8_t *c_str, size_t len) {
+static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void * bytes, size_t len) {
     struct aws_byte_cursor cur;
-    cur.ptr = (uint8_t *)c_str;
+    cur.ptr = (uint8_t *)bytes;
     cur.len = len;
     return cur;
 }
