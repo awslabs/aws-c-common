@@ -1,382 +1,83 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
+#include <aws/common/string.h>
+#include <aws/common/hash_table.h>
 #include <aws/testing/aws_test_harness.h>
-#include <aws/common/byte_buf.h>
 
-static int test_char_split_happy_path_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "testa;testb;testc";
+AWS_TEST_CASE(string_tests, string_tests_fn);
+static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
+    /* Test: static string creation from macro works. */
+    AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
+    ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
+    ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_1), test_string_1->len, "foofaraw", 8,
+                             "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(aws_string_bytes(test_string_1)[test_string_1->len], '\0',
+                      "Static string should have null byte at end.");
 
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
+    /* Test: string creation works. */
+    const struct aws_string *test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw");
+    ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
+    ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
+    ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_2), test_string_2->len, "foofaraw", 8,
+                             "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(aws_string_bytes(test_string_2)[test_string_2->len], '\0',
+                      "String from C-string should have null byte at end.");
 
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
+    /* Test: strings from first two tests are equal and have same hashes. */
+    ASSERT_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
+    ASSERT_INT_EQUALS(aws_hash_string(test_string_1), aws_hash_string(test_string_2),
+                      "Hash values of byte buffers should be equal.");
 
-    struct aws_byte_cursor value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    /* Test: write from string to byte cursor works. */
+    uint8_t dest[8] = {0};
+    struct aws_byte_cursor dest_cur = aws_byte_cursor_from_array(dest, 8);
 
-    char *expected = "testa";
+    ASSERT_TRUE(aws_byte_cursor_write_from_whole_string(&dest_cur, test_string_2),
+                "Write from whole string should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
+    /* Test: write from string fails cleanly when byte cursor too short. */
+    int8_t short_dest[7] = {0};
+    struct aws_byte_cursor short_dest_cur = aws_byte_cursor_from_array(short_dest, 7);
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
+    ASSERT_FALSE(aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),
+                 "Write from whole buffer should have failed.");
+    ASSERT_INT_EQUALS(short_dest_cur.len, 7, "Destination cursor length should be unchanged.");
+    ASSERT_INT_EQUALS(0, short_dest_cur.ptr[0], "Destination cursor should not have received data.");
 
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    aws_array_list_clean_up(&output);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_happy_path, test_char_split_happy_path_fn)
-
-static int test_char_split_ends_with_token_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "testa;testb;testc;";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-    char *expected = "testa";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
-    expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    aws_array_list_clean_up(&output);
+    /* Test: all allocated memory is deallocated properly. */
+    aws_string_destroy((void *)test_string_2);
 
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_ends_with_token, test_char_split_ends_with_token_fn)
+AWS_TEST_CASE(binary_string_test, binary_string_test_fn);
+static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
+    uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
+    size_t len = sizeof(test_array);
+    const struct aws_string *binary_string = aws_string_from_array_new(alloc, test_array, len);
 
-static int test_char_split_begins_with_token_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = ";testa;testb;testc";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = {0};
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-    char *expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "testa";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
-    expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    aws_array_list_clean_up(&output);
-
+    ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
+    ASSERT_PTR_EQUALS(alloc, binary_string->allocator, "Allocator should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(test_array, len, aws_string_bytes(binary_string), binary_string->len,
+                             "Binary string bytes should be same as source array.");
+    ASSERT_INT_EQUALS(aws_string_bytes(binary_string)[binary_string->len], 0x00,
+                      "String from binary array should have null byte at end");
+    aws_string_destroy((void *)binary_string);
     return 0;
 }
-
-AWS_TEST_CASE(test_char_split_begins_with_token, test_char_split_begins_with_token_fn)
-
-static int test_char_split_token_not_present_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "testa";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-
-    char *expected = "testa";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    aws_array_list_clean_up(&output);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_token_not_present, test_char_split_token_not_present_fn)
-
-static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-    ASSERT_INT_EQUALS(0, value.len);
-
-    aws_array_list_clean_up(&output);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_empty, test_char_split_empty_fn)
-
-static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "testa;;testb;testc";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(4, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = {0};
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-
-    char *expected = "testa";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 3));
-    expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr,  value.len);
-
-    aws_array_list_clean_up(&output);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_adj_tokens, test_char_split_adj_tokens_fn)
-
-static int test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = ";testa;testb;testc";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_string_split_on_char_n(&to_split, ';', &output, 2));
-    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = { 0 };
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-    char *expected = "";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "testa";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testb;testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    aws_array_list_clean_up(&output);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_with_max_splits, test_char_split_with_max_splits_fn)
-
-static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    const char str_to_split[] = "testa;testb;testc;";
-
-    struct aws_byte_buf to_split = aws_byte_buf_from_literal(str_to_split);
-
-    struct aws_array_list output;
-    struct aws_byte_buf output_array[3] = {{0}};
-    ASSERT_SUCCESS(aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_cursor)));
-    ASSERT_ERROR(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, aws_string_split_on_char(&to_split, ';', &output));
-    ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
-
-    struct aws_byte_cursor value = { 0 };
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
-    char *expected = "testa";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 1));
-    expected = "testb";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 2));
-    expected = "testc";
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), value.ptr, value.len);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_char_split_output_too_small, test_char_split_output_too_small_fn)
-
-static int test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf str1 = aws_byte_buf_from_literal("testa");
-    struct aws_byte_buf str2 = aws_byte_buf_from_literal(";testb");
-    struct aws_byte_buf str3 = aws_byte_buf_from_literal(";testc");
-
-
-    const char expected[] = "testa;testb;testc";
-
-    struct aws_byte_buf destination;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, str1.len + str2.len + str3.len + 10));
-    ASSERT_SUCCESS(aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
-
-    ASSERT_INT_EQUALS(strlen(expected),destination.len);
-    ASSERT_INT_EQUALS(strlen(expected) + 10, destination.capacity);
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cat, test_buffer_cat_fn)
-
-static int test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf str1 = aws_byte_buf_from_literal("testa");
-    struct aws_byte_buf str2 = aws_byte_buf_from_literal(";testb");
-    struct aws_byte_buf str3 = aws_byte_buf_from_literal(";testc");
-
-    struct aws_byte_buf destination;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, str1.len + str2.len));
-    ASSERT_INT_EQUALS(0, destination.len);
-    ASSERT_INT_EQUALS(str1.len + str2.len, destination.capacity);
-
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_cat(&destination, 3, &str1, &str2, &str3));
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cat_dest_too_small, test_buffer_cat_dest_too_small_fn)
-
-static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf from_buf = aws_byte_buf_from_literal("testa");
-    struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
-    struct aws_byte_buf destination;
-
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len + 10));
-    ASSERT_SUCCESS(aws_byte_buf_append(&destination, &from));
-
-    ASSERT_INT_EQUALS(from.len, destination.len);
-    ASSERT_INT_EQUALS(from.len + 10, destination.capacity);
-
-    ASSERT_BIN_ARRAYS_EQUALS(from.ptr, from.len, destination.buffer, destination.len);
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cpy, test_buffer_cpy_fn)
-
-static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf from_buf = aws_byte_buf_from_literal("testa");
-    struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
-    aws_byte_cursor_advance(&from, 2);
-    struct aws_byte_buf destination;
-
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from_buf.len + 10));
-    ASSERT_SUCCESS(aws_byte_buf_append(&destination, &from));
-
-    ASSERT_INT_EQUALS(from_buf.len - 2, destination.len);
-    ASSERT_INT_EQUALS(from_buf.len + 10, destination.capacity);
-
-    char expected[] = "sta";
-
-    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cpy_offsets, test_buffer_cpy_offsets_fn)
-
-static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf from_buf = aws_byte_buf_from_literal("testa");
-    struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
-
-    struct aws_byte_buf destination;
-
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len - 1));
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append(&destination, &from));
-    ASSERT_INT_EQUALS(0, destination.len);
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cpy_dest_too_small, test_buffer_cpy_dest_too_small_fn)
-
-static int test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    struct aws_byte_buf from_buf = aws_byte_buf_from_literal("testa");
-    struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
-    struct aws_byte_buf destination;
-
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &destination, from.len));
-    destination.len = 1;
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append(&destination, &from));
-    ASSERT_INT_EQUALS(1, destination.len);
-
-    aws_byte_buf_clean_up(&destination);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_buffer_cpy_offsets_dest_too_small, test_buffer_cpy_offsets_dest_too_small_fn)

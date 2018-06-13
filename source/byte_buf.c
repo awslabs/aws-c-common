@@ -23,8 +23,26 @@
 #pragma warning(disable:4706)
 #endif
 
-int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
-    struct aws_array_list *output, size_t n) {
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
+    buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
+    if (!buf->buffer)
+        return AWS_OP_ERR;
+    buf->len = 0;
+    buf->capacity = len;
+    buf->allocator = allocator;
+    return AWS_OP_SUCCESS;
+}
+
+void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
+    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
+    buf->allocator = NULL;
+    buf->buffer = NULL;
+    buf->len = 0;
+    buf->capacity = 0;
+}
+
+int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
+                                 struct aws_array_list *output, size_t n) {
     assert(input_str);
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_cursor));
@@ -66,8 +84,8 @@ int aws_string_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
     return AWS_OP_SUCCESS;
 }
 
-int aws_string_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
-    return aws_string_split_on_char_n(input_str, split_on, output, 0);
+int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
+    return aws_byte_buf_split_on_char_n(input_str, split_on, output, 0);
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {

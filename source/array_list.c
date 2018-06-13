@@ -29,7 +29,7 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
         list->data = aws_mem_acquire(list->alloc, allocation_size);
         list->length = 0;
         if (!list->data) {
-            return aws_raise_error(AWS_ERROR_OOM);
+            return AWS_OP_ERR;
         }
 #ifdef DEBUG_BUILD
         memset(list->data, SENTINAL, allocation_size);
@@ -151,7 +151,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *list) {
         if (ideal_size < list->current_size) {
             void *raw_data = aws_mem_acquire(list->alloc, ideal_size);
             if (!raw_data) {
-                return aws_raise_error(AWS_ERROR_OOM);
+                return AWS_OP_ERR;
             }
 
             memcpy(raw_data, list->data, ideal_size);
@@ -180,7 +180,7 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
         void *tmp = aws_mem_acquire(to->alloc, copy_size);
 
         if (!tmp) {
-            return aws_raise_error(AWS_ERROR_OOM);
+            return AWS_OP_ERR;
         }
 
         memcpy(tmp, from->data, copy_size);
@@ -261,7 +261,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
         void *temp = aws_mem_acquire(list->alloc, new_size);
 
         if(!temp) {
-            return aws_raise_error(AWS_ERROR_OOM);
+            return AWS_OP_ERR;
         }
 
         memcpy(temp, list->data, list->current_size);
@@ -284,7 +284,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
     return AWS_OP_SUCCESS;
 }
 
-void aws_array_list_mem_swap(void * AWS_RESTRICT item1, void * AWS_RESTRICT item2, size_t item_size) {
+void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
     /* copy SLICE sized bytes at a time */
