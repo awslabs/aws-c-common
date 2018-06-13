@@ -29,7 +29,9 @@
  * struct aws_string, and the memory for both the header and the data bytes
  * is allocated together.
  *
- * Use the aws_string_bytes function to access the data bytes.
+ * Use the aws_string_bytes function to access the data bytes. A null byte is always included
+ * immediately after the data but not counted in the length, so that the output of aws_string_bytes
+ * can be treated as a C-string in cases where none of the the data bytes are null.
  */
 struct aws_string {
     struct aws_allocator * allocator;
@@ -44,7 +46,7 @@ static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
  * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
 const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * c_str);
-const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const void * bytes, size_t len);
+const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.

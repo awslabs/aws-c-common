@@ -18,21 +18,25 @@
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(string_tests, string_tests_fn);
-static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
+static int string_tests_fn(struct aws_allocator * alloc, void * ctx) {
     /* Test: static string creation from macro works. */
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
     ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
     ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
     ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_1), test_string_1->len, "foofaraw", 8,
                              "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(aws_string_bytes(test_string_1)[test_string_1->len], '\0',
+                      "Static string should have null byte at end.");
 
     /* Test: string creation works. */
     const struct aws_string * test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw");
-    ASSERT_NOT_NULL(test_string_2, "Memory allocation of dynamic byte buffer should have succeeded.");
+    ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
     ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
     ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
     ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_2), test_string_2->len, "foofaraw", 8,
                              "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(aws_string_bytes(test_string_2)[test_string_2->len], '\0',
+                      "String from C-string should have null byte at end.");
 
     /* Test: strings from first two tests are equal and have same hashes. */
     ASSERT_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
@@ -59,5 +63,21 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy((void *)test_string_2);
 
+    return 0;
+}
+
+AWS_TEST_CASE(binary_string_test, binary_string_test_fn);
+static int binary_string_test_fn(struct aws_allocator * alloc, void * ctx) {
+    uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
+    size_t len = sizeof(test_array);
+    const struct aws_string * binary_string = aws_string_from_array_new(alloc, test_array, len);
+
+    ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
+    ASSERT_PTR_EQUALS(alloc, binary_string->allocator, "Allocator should have been set correctly.");
+    ASSERT_BIN_ARRAYS_EQUALS(test_array, len, aws_string_bytes(binary_string), binary_string->len,
+                             "Binary string bytes should be same as source array.");
+    ASSERT_INT_EQUALS(aws_string_bytes(binary_string)[binary_string->len], 0x00,
+                      "String from binary array should have null byte at end");
+    aws_string_destroy((void *)binary_string);
     return 0;
 }

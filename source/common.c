@@ -41,8 +41,7 @@ struct aws_allocator *aws_default_allocator() {
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
     void * mem = allocator->mem_acquire(allocator, size);
-    if (!mem)
-        aws_raise_error(AWS_ERROR_OOM);
+    if (!mem) aws_raise_error(AWS_ERROR_OOM);
     return mem;
 }
 

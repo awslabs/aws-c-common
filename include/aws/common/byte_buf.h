@@ -122,7 +122,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char * c_str) {
     return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_array(const void * bytes, size_t len) {
+static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t * bytes, size_t len) {
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)bytes;
     buf.len = len;

@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
                        &byte_cursor_read_tests,
                        &byte_cursor_limit_tests,
                        &string_tests,
+                       &binary_string_test,
                        &test_cpu_count_at_least_works_superficially
                        );
 }

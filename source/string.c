@@ -16,22 +16,22 @@
 
 const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * c_str) {
     size_t len = strlen(c_str);
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr)
-        return NULL;
+    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
+    if (!hdr) return NULL;
     hdr->allocator = allocator;
     hdr->len = len;
-    memcpy((void *)aws_string_bytes(hdr), c_str, len);
+    memcpy((void *)aws_string_bytes(hdr), c_str, len + 1);
     return hdr;
 }
 
-const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const void * bytes, size_t len) {
-    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len);
-    if (!hdr)
-        return NULL;
+const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len) {
+    struct aws_string * hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
+    if (!hdr) return NULL;
     hdr->allocator = allocator;
     hdr->len = len;
     memcpy((void *)aws_string_bytes(hdr), bytes, len);
+    uint8_t * extra_byte = (uint8_t *)aws_string_bytes(hdr) + len;
+    *extra_byte = '\0';
     return hdr;
 }
 
