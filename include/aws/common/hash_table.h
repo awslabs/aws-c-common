@@ -94,7 +94,7 @@ typedef bool (*aws_equals_fn_t)(const void *a, const void *b);
  * calling code during destruction.  In general, if the element is returned to
  * calling code, calling code must destroy it.
  */
-typedef void (*aws_hash_element_destroy_t)(void * key_or_value);
+typedef void (*aws_hash_element_destroy_t)(void *key_or_value);
 
 #ifdef __cplusplus
 extern "C" {

@@ -23,8 +23,8 @@
 #pragma warning(disable:4706)
 #endif
 
-int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len) {
-    buf->buffer = (uint8_t*)aws_mem_acquire(allocator, len);
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
+    buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
     if (!buf->buffer)
         return AWS_OP_ERR;
     buf->len = 0;
@@ -33,7 +33,7 @@ int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * bu
     return AWS_OP_SUCCESS;
 }
 
-void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
+void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
     if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
     buf->allocator = NULL;
     buf->buffer = NULL;
@@ -42,7 +42,7 @@ void aws_byte_buf_clean_up(struct aws_byte_buf * buf) {
 }
 
 int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
-    struct aws_array_list *output, size_t n) {
+                                 struct aws_array_list *output, size_t n) {
     assert(input_str);
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_cursor));

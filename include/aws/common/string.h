@@ -34,24 +34,32 @@
  * can be treated as a C-string in cases where none of the the data bytes are null.
  */
 struct aws_string {
-    struct aws_allocator * allocator;
+    struct aws_allocator *allocator;
     size_t len;
 };
 
-static inline const uint8_t * aws_string_bytes(const struct aws_string * hdr) {
+static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
     return (const uint8_t *)(hdr + 1);
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
-const struct aws_string * aws_string_from_c_str_new(struct aws_allocator * allocator, const char * c_str);
-const struct aws_string * aws_string_from_array_new(struct aws_allocator * allocator, const uint8_t * bytes, size_t len);
+AWS_COMMON_API const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str);
+AWS_COMMON_API const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
  */
-void aws_string_destroy(void * str);
+AWS_COMMON_API void aws_string_destroy(void *str);
+
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * Defines a (static const struct aws_string *) with name specified in first argument
@@ -64,7 +72,7 @@ void aws_string_destroy(void * str);
          sizeof(literal) - 1},                                                     \
         {literal}                                                                  \
     };                                                                             \
-    static const struct aws_string * name = & name ## _s.hdr
+    static const struct aws_string *name = & name ## _s.hdr
 
 /**
  * Copies all bytes from string to cursor.
@@ -72,7 +80,7 @@ void aws_string_destroy(void * str);
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_write_from_whole_string(struct aws_byte_cursor * AWS_RESTRICT cur, const struct aws_string * AWS_RESTRICT src) {
+static inline bool aws_byte_cursor_write_from_whole_string(struct aws_byte_cursor *AWS_RESTRICT cur, const struct aws_string *AWS_RESTRICT src) {
     return aws_byte_cursor_write(cur, aws_string_bytes(src), src->len);
 }
 

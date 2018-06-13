@@ -79,11 +79,11 @@ static int test_hash_table_string_put_get_fn(struct aws_allocator *alloc, void *
 
     /* Second element of hash, only value is dynamically allocated string */
     AWS_STATIC_STRING_FROM_LITERAL(key_2, "what's for dinner?");
-    const struct aws_string * val_2 = aws_string_from_c_str_new(alloc, "deadbeef");
+    const struct aws_string *val_2 = aws_string_from_c_str_new(alloc, "deadbeef");
 
     /* Third element of hash, only key is dynamically allocated string */
     uint8_t bytes[] = {0x88, 0x00, 0xaa, 0x13, 0xb7, 0x93, 0x7f, 0xdd, 0xbb, 0x62};
-    const struct aws_string * key_3 = aws_string_from_array_new(alloc, bytes, 10);
+    const struct aws_string *key_3 = aws_string_from_array_new(alloc, bytes, 10);
     AWS_STATIC_STRING_FROM_LITERAL(val_3, "hunter2");
 
     ret = aws_hash_table_create(&hash_table, (void *)key_1, &pElem, &was_created);
@@ -139,15 +139,15 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
     struct aws_hash_element *pElem;
     int was_created;
 
-    const struct aws_string * key_1 = aws_string_from_c_str_new(alloc, "Once upon a midnight dreary,");
+    const struct aws_string *key_1 = aws_string_from_c_str_new(alloc, "Once upon a midnight dreary,");
     AWS_STATIC_STRING_FROM_LITERAL(val_1, "while I pondered, weak and weary,");
-    const struct aws_string * key_2 = aws_string_from_c_str_new(alloc, "Over many a quaint and curious");
+    const struct aws_string *key_2 = aws_string_from_c_str_new(alloc, "Over many a quaint and curious");
     AWS_STATIC_STRING_FROM_LITERAL(val_2, "volume of forgotten lore--");
-    const struct aws_string * key_3 = aws_string_from_c_str_new(alloc, "While I nodded, nearly napping,");
+    const struct aws_string *key_3 = aws_string_from_c_str_new(alloc, "While I nodded, nearly napping,");
     AWS_STATIC_STRING_FROM_LITERAL(val_3, "suddenly there came a tapping,");
 
-    const struct aws_string * dyn_keys[] = {key_1, key_2, key_3};
-    const struct aws_string * static_vals[] = {val_1, val_2, val_3};
+    const struct aws_string *dyn_keys[] = {key_1, key_2, key_3};
+    const struct aws_string *static_vals[] = {val_1, val_2, val_3};
 
     int ret = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string, aws_string_eq,
                                   aws_string_destroy, NULL); /* destroy keys not values */
@@ -163,14 +163,14 @@ static int test_hash_table_string_clean_up_fn(struct aws_allocator *alloc, void 
     aws_hash_table_clean_up(&hash_table);
 
     AWS_STATIC_STRING_FROM_LITERAL(key_4, "As of some one gently rapping,");
-    const struct aws_string * val_4 = aws_string_from_c_str_new(alloc, "rapping at my chamber door.");
+    const struct aws_string *val_4 = aws_string_from_c_str_new(alloc, "rapping at my chamber door.");
     AWS_STATIC_STRING_FROM_LITERAL(key_5, "\"'Tis some visitor,\" I muttered,");
-    const struct aws_string * val_5 = aws_string_from_c_str_new(alloc, "\"tapping at my chamber door--");
+    const struct aws_string *val_5 = aws_string_from_c_str_new(alloc, "\"tapping at my chamber door--");
     AWS_STATIC_STRING_FROM_LITERAL(key_6, "Only this and nothing more.\"");
-    const struct aws_string * val_6 = aws_string_from_c_str_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
+    const struct aws_string *val_6 = aws_string_from_c_str_new(alloc, "from The Raven by Edgar Allan Poe (1845)");
 
-    const struct aws_string * static_keys[] = {key_4, key_5, key_6};
-    const struct aws_string * dyn_vals[] = {val_4, val_5, val_6};
+    const struct aws_string *static_keys[] = {key_4, key_5, key_6};
+    const struct aws_string *dyn_vals[] = {val_4, val_5, val_6};
 
     ret = aws_hash_table_init(&hash_table, alloc, 10, aws_hash_string, aws_string_eq,
                               NULL, aws_string_destroy); /* destroy values not keys */
@@ -260,16 +260,16 @@ static int test_hash_table_hash_overwrite_fn(struct aws_allocator *alloc, void *
     return 0;
 }
 
-static void * last_removed_key;
-static void * last_removed_value;
+static void *last_removed_key;
+static void *last_removed_value;
 static int key_removal_counter = 0;
 static int value_removal_counter = 0;
 
-static void destroy_key_fn(void * key) {
+static void destroy_key_fn(void *key) {
     last_removed_key = key;
     ++key_removal_counter;
 }
-static void destroy_value_fn(void * value) {
+static void destroy_value_fn(void *value) {
     last_removed_value = value;
     ++value_removal_counter;
 }

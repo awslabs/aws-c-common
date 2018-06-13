@@ -630,8 +630,8 @@ bool aws_c_string_eq(const void *a, const void *b) {
 }
 
 bool aws_string_eq(const void *a, const void *b) {
-    const struct aws_string * str_a = a;
-    const struct aws_string * str_b = b;
+    const struct aws_string *str_a = a;
+    const struct aws_string *str_b = b;
     return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a),
                                                aws_string_bytes(str_b),
                                                str_a->len);

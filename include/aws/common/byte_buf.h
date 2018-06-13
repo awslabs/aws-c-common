@@ -33,7 +33,7 @@
  * access to the memory.
  */
 struct aws_byte_buf {
-    struct aws_allocator * allocator;
+    struct aws_allocator *allocator;
     uint8_t *buffer;
     size_t len;
     size_t capacity;
@@ -51,8 +51,8 @@ struct aws_byte_cursor {
 extern "C" {
 #endif
 
-AWS_COMMON_API int aws_byte_buf_init(struct aws_allocator * allocator, struct aws_byte_buf * buf, size_t len);
-AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf * buf);
+AWS_COMMON_API int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len);
+AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
@@ -122,7 +122,7 @@ static inline struct aws_byte_buf aws_byte_buf_from_c_str(const char * c_str) {
     return buf;
 }
 
-static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t * bytes, size_t len) {
+static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *bytes, size_t len) {
     struct aws_byte_buf buf;
     buf.buffer = (uint8_t *)bytes;
     buf.len = len;
@@ -138,7 +138,7 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_b
     return cur;
 }
 
-static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void * bytes, size_t len) {
+static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void *bytes, size_t len) {
     struct aws_byte_cursor cur;
     cur.ptr = (uint8_t *)bytes;
     cur.len = len;
@@ -274,7 +274,7 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_read(struct aws_byte_cursor * AWS_RESTRICT cur, void * AWS_RESTRICT dest, size_t len) {
+static inline bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, size_t len) {
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
     if (slice.ptr) {
@@ -291,7 +291,7 @@ static inline bool aws_byte_cursor_read(struct aws_byte_cursor * AWS_RESTRICT cu
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor * AWS_RESTRICT cur, struct aws_byte_buf * AWS_RESTRICT dest) {
+static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor *AWS_RESTRICT cur, struct aws_byte_buf *AWS_RESTRICT dest) {
     if (aws_byte_cursor_read(cur, dest->buffer, dest->capacity)) {
         dest->len = dest->capacity;
         return true;
@@ -305,7 +305,7 @@ static inline bool aws_byte_cursor_read_and_fill_buffer(struct aws_byte_cursor *
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_read_u8(struct aws_byte_cursor * AWS_RESTRICT cur, uint8_t * AWS_RESTRICT var) {
+static inline bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
     return aws_byte_cursor_read(cur, var, 1);
 }
 
@@ -363,7 +363,7 @@ static inline bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_write(struct aws_byte_cursor * AWS_RESTRICT cur, const uint8_t * AWS_RESTRICT src, size_t len) {
+static inline bool aws_byte_cursor_write(struct aws_byte_cursor *AWS_RESTRICT cur, const uint8_t *AWS_RESTRICT src, size_t len) {
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
     if (slice.ptr) {
@@ -380,7 +380,7 @@ static inline bool aws_byte_cursor_write(struct aws_byte_cursor * AWS_RESTRICT c
  * On success, returns true and updates the cursor pointer/length accordingly.
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_cursor * AWS_RESTRICT cur, const struct aws_byte_buf * AWS_RESTRICT src) {
+static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_cursor *AWS_RESTRICT cur, const struct aws_byte_buf *AWS_RESTRICT src) {
     return aws_byte_cursor_write(cur, src->buffer, src->len);
 }
 
@@ -391,7 +391,7 @@ static inline bool aws_byte_cursor_write_from_whole_buffer(struct aws_byte_curso
 
  * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor * AWS_RESTRICT cur, uint8_t c) {
+static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t c) {
     return aws_byte_cursor_write(cur, &c, 1);
 }
 
