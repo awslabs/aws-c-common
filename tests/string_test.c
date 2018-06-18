@@ -81,3 +81,23 @@ static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
     aws_string_destroy((void *)binary_string);
     return 0;
 }
+
+AWS_TEST_CASE(string_compare_test, string_compare_test_fn);
+static int string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
+    AWS_STATIC_STRING_FROM_LITERAL(str_1, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(str_2, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(str_3, "foobar");
+    AWS_STATIC_STRING_FROM_LITERAL(str_4, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(str_5, "foobaz");
+    AWS_STATIC_STRING_FROM_LITERAL(str_6, "bar food");
+
+    ASSERT_TRUE(aws_string_compare(str_1, str_2) > 0);
+    ASSERT_TRUE(aws_string_compare(str_2, str_1) < 0);
+    ASSERT_TRUE(aws_string_compare(str_1, str_3) < 0);
+    ASSERT_TRUE(aws_string_compare(str_1, str_4) == 0);
+    ASSERT_TRUE(aws_string_compare(str_3, str_5) < 0);
+    ASSERT_TRUE(aws_string_compare(str_1, str_6) > 0);
+    ASSERT_TRUE(aws_string_compare(str_6, str_2) > 0);
+
+    return 0;
+}
