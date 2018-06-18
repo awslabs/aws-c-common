@@ -39,6 +39,7 @@
 #include <byte_order_test.c>
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
+#include <realloc_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -157,7 +158,10 @@ int main(int argc, char *argv[]) {
                        &byte_cursor_limit_tests,
                        &string_tests,
                        &binary_string_test,
-                       &test_cpu_count_at_least_works_superficially
+                       &test_cpu_count_at_least_works_superficially,
+                       &test_realloc_fallback,
+                       &test_realloc_fallback_oom,
+                       &test_realloc_passthrough_oom,
+                       &test_realloc_passthrough
                        );
 }
-
