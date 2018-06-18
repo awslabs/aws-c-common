@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
                        &array_list_pop_front_n_test,
                        &array_list_exponential_mem_model_test,
                        &array_list_exponential_mem_model_iteration_test,
+                       &array_list_set_at_overwrite_safety,
                        &array_list_iteration_test,
                        &array_list_iteration_by_ptr_test,
                        &array_list_preallocated_iteration_test,

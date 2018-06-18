@@ -247,6 +247,28 @@ static int array_list_exponential_mem_model_iteration_test_fn(struct aws_allocat
 
 AWS_TEST_CASE(array_list_exponential_mem_model_iteration_test, array_list_exponential_mem_model_iteration_test_fn)
 
+static int array_list_set_at_overwrite_safety_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_array_list list;
+
+    static size_t list_size = 4;
+    int overwrite_data[5];
+
+    ASSERT_SUCCESS(aws_array_list_init_static(&list, overwrite_data, list_size, sizeof(int)));
+
+    memset(overwrite_data, 0x11, sizeof(overwrite_data));
+    list.current_size = list_size * sizeof(int);
+    int value = 0xFFFFFFFF;
+
+    ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&value, 3));
+    ASSERT_ERROR(AWS_ERROR_INVALID_INDEX, aws_array_list_set_at(&list, (void *)&value, 4));
+    ASSERT_INT_EQUALS(0x11111111, overwrite_data[4]);
+
+    aws_array_list_clean_up(&list);
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_set_at_overwrite_safety, array_list_set_at_overwrite_safety_fn)
+
 static int array_list_iteration_test_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_array_list list;
 
@@ -475,7 +497,7 @@ static int array_list_copy_test_fn(struct aws_allocator *alloc, void *ctx) {
 
     static size_t list_size = 4;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_a, alloc, list_size, sizeof(int)), "List initialization failed with error %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_b, alloc, list_size, sizeof(int)), "List initialization failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_b, alloc, 0, sizeof(int)), "List initialization failed with error %d", aws_last_error());
 
     int first = 1, second = 2;
 
