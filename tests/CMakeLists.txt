@@ -146,6 +146,7 @@ add_test(byte_cursor_read_tests ${TEST_BINARY_NAME} byte_cursor_read_tests)
 add_test(byte_cursor_limit_tests ${TEST_BINARY_NAME} byte_cursor_limit_tests)
 add_test(string_tests ${TEST_BINARY_NAME} string_tests)
 add_test(binary_string_test ${TEST_BINARY_NAME} binary_string_test)
+add_test(string_compare_test ${TEST_BINARY_NAME} string_compare_test)
 
 add_test(test_char_split_happy_path ${TEST_BINARY_NAME} test_char_split_happy_path)
 add_test(test_char_split_ends_with_token ${TEST_BINARY_NAME} test_char_split_ends_with_token)
