@@ -58,15 +58,14 @@ AWS_COMMON_API const struct aws_string *aws_string_from_array_new(struct aws_all
 AWS_COMMON_API void aws_string_destroy(void *str);
 
 /**
- * Compares lexicographical ordering of two strings. If both strings are identical in the
- * bytes of the shorter string, then the longer string is lexicographically after the shorter.
+ * Compares lexicographical ordering of two strings. This is a binary byte-by-byte comparison, treating bytes
+ * as unsigned integers. It is suitable for either textual or binary data and is unaware of unicode or any
+ * other byte encoding. If both strings are identical in the bytes of the shorter string, then the longer string
+ * is lexicographically after the shorter.
  *
- * Returns a positive if string a > string b. (i.e., string a is lexicographically after string b.)
+ * Returns a positive number if string a > string b. (i.e., string a is lexicographically after string b.)
  * Returns zero if string a = string b.
- * Returns negative if string a < string b.
- *
- * Note that this function compares the bytes as unsigned integers. It is suitable for either
- * textual or binary data. (Null bytes are not a problem.)
+ * Returns negative number if string a < string b.
  */
 AWS_COMMON_API int aws_string_compare(const struct aws_string * a, const struct aws_string * b);
 
