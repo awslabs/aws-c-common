@@ -39,3 +39,15 @@ void aws_string_destroy(void *str) {
     struct aws_string *self = str;
     if (self && self->allocator) aws_mem_release(self->allocator, self);
 }
+
+int aws_string_compare(const struct aws_string * a, const struct aws_string * b) {
+    size_t len_a = a->len;
+    size_t len_b = b->len;
+    size_t min_len = len_a < len_b ? len_a : len_b;
+
+    int ret = memcmp(aws_string_bytes(a), aws_string_bytes(b), min_len);
+    if (ret) return ret; /* overlapping characters differ */
+    if (len_a == len_b) return 0; /* strings identical */
+    if (len_a > len_b) return 1; /* string b is first n characters of string a */
+    return -1; /* string a is first n characters of string b */
+}

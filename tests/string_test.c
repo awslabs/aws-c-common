@@ -81,3 +81,37 @@ static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
     aws_string_destroy((void *)binary_string);
     return 0;
 }
+
+AWS_TEST_CASE(string_compare_test, string_compare_test_fn);
+static int string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
+    AWS_STATIC_STRING_FROM_LITERAL(empty, "");
+    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
+    AWS_STATIC_STRING_FROM_LITERAL(foo2, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(foobaz, "foobaz");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_food, "bar food");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_null_food, "bar\0food");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_null_back, "bar\0back");
+
+    ASSERT_TRUE(aws_string_compare(empty, bar) < 0);
+    ASSERT_TRUE(aws_string_compare(foo, bar) > 0);
+    ASSERT_TRUE(aws_string_compare(bar, foo) < 0);
+    ASSERT_TRUE(aws_string_compare(foo, foobar) < 0);
+    ASSERT_TRUE(aws_string_compare(foo, foo2) == 0);
+    ASSERT_TRUE(aws_string_compare(foobar, foobaz) < 0);
+    ASSERT_TRUE(aws_string_compare(foobaz, empty) > 0);
+    ASSERT_TRUE(aws_string_compare(empty, empty) == 0);
+    ASSERT_TRUE(aws_string_compare(foo, bar_food) > 0);
+    ASSERT_TRUE(aws_string_compare(bar_food, bar) > 0);
+    ASSERT_TRUE(aws_string_compare(bar_null_food, bar) > 0);
+    ASSERT_TRUE(aws_string_compare(bar_null_food, bar_food) < 0);
+    ASSERT_TRUE(aws_string_compare(bar_null_food, bar_null_back) > 0);
+
+    /* Test that bytes are being compared as unsigned integers. */
+    AWS_STATIC_STRING_FROM_LITERAL(x80, "\x80");
+    AWS_STATIC_STRING_FROM_LITERAL(x7f, "\x79");
+    ASSERT_TRUE(aws_string_compare(x80, x7f) > 0);
+    ASSERT_TRUE(aws_string_compare(x7f, x80) < 0);
+    return 0;
+}
