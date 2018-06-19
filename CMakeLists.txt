@@ -83,7 +83,7 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STAND
 if (MSVC)
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
 else ()
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wpedantic -Werror -Wno-long-long)
 endif ()
 
 if (BUILD_SHARED_LIBS AND WIN32)
