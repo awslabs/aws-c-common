@@ -56,11 +56,21 @@ AWS_COMMON_API void aws_mem_release(struct aws_allocator *allocator, void *ptr);
 
 /*
  * Attempts to adjust the size of the pointed-to memory buffer from oldsize to
- * newsize. The pointer (*ptr) may be changed if the memory needs to be reallocated.
+ * newsize. The pointer (*ptr) may be changed if the memory needs to be
+ * reallocated.
  *
- * If reallocation fails, *ptr is unchanged, and this method raises an AWS_ERROR_OOM error.
+ * If reallocation fails, *ptr is unchanged, and this method raises an
+ * AWS_ERROR_OOM error.
  */
 AWS_COMMON_API int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize);
+/*
+ * Maintainer note: The above function doesn't return the pointer (as with
+ * standard C realloc) as this pattern becomes error-prone when OOMs occur.
+ * In particular, we want to avoid losing the old pointer when an OOM condition
+ * occurs, so we prefer to take the old pointer as an in/out reference argument
+ * that we can leave unchanged on failure.
+ */
+
 
 /*
  * Loads error strings for debugging and logging purposes.
