@@ -216,8 +216,8 @@ static int total_failures;
 
 #define ASSERT_TYP_EQUALS(type, formatarg, expected, got, ...) \
     do { \
-        type assert_expected = (type)(expected); \
-        type assert_actual   = (type)(got); \
+        const type assert_expected = (expected); \
+        const type assert_actual   = (got); \
         if (assert_expected != assert_actual) { \
             fprintf(AWS_TESTING_REPORT_FD, "%s" formatarg " != " formatarg ": ", FAIL_PREFIX, assert_expected, assert_actual); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
@@ -232,7 +232,7 @@ static int total_failures;
 #define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%llu", expected, got, __VA_ARGS__)
 #else
 /* For comparing any signed integer types */
-#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%j", expected, got, __VA_ARGS__)
+#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%jd", expected, got, __VA_ARGS__)
 /* For comparing any unsigned integer types */
 #define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
 #endif
@@ -323,7 +323,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
 
     if(!ret_val) {
         if (!harness->suppress_memcheck) {
-            ASSERT_INT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
+            ASSERT_UINT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
                 "Memory Leak Detected %d bytes were allocated, "
                 "but only %d were freed.", harness->test_name, harness->config.allocated, harness->config.freed);
         }

@@ -431,7 +431,7 @@ static int array_list_shrink_to_fit_static_test_fn(struct aws_allocator *alloc, 
     ASSERT_FAILS(aws_array_list_shrink_to_fit(&list), "List shrink of static list should have failed.");
     ASSERT_INT_EQUALS(AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK, aws_last_error(), "Error code should have been LIST_STATIC_MODE_CANT_SHRINK but was %d", aws_last_error());
 
-    ASSERT_INT_EQUALS(&list_data, list.data, "The underlying allocation should not have changed");
+    ASSERT_PTR_EQUALS(&list_data, list.data, "The underlying allocation should not have changed");
     ASSERT_INT_EQUALS(sizeof(list_data), list.current_size, "List size should not have been changed");
 
     aws_array_list_clean_up(&list);
