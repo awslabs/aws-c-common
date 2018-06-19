@@ -15,6 +15,7 @@
 
 #include <aws/common/task_scheduler.h>
 #include <aws/common/thread.h>
+#include <aws/common/clock.h>
 #include <aws/testing/aws_test_harness.h>
 
 static uint64_t g_timestamp;
