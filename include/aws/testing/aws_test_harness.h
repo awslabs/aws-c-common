@@ -229,6 +229,7 @@ static int total_failures;
 
 #define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(long long, "%lld", expected, got, __VA_ARGS__)
 #define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llu", expected, got, __VA_ARGS__)
+#define ASSERT_SIZE_T_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(size_t, "%zu", expected, got, __VA_ARGS__)
 #define ASSERT_PTR_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(void *, "%p", expected, got, __VA_ARGS__)
 /* note that uint8_t is promoted to unsigned int in varargs, so %02x is an acceptable format string */
 #define ASSERT_BYTE_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
