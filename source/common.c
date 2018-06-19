@@ -71,7 +71,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     void *newptr = aws_mem_acquire(allocator, newsize);
     if (!newptr) {
-        // AWS_ERROR_OOM already raised
+        /* AWS_ERROR_OOM already raised */
         return AWS_OP_ERR;
     }
 
