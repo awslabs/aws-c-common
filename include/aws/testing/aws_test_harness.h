@@ -227,9 +227,16 @@ static int total_failures;
         } \
     } while (0)
 
-#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(long long, "%lld", expected, got, __VA_ARGS__)
-#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llu", expected, got, __VA_ARGS__)
-#define ASSERT_SIZE_T_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(size_t, "%zu", expected, got, __VA_ARGS__)
+#ifdef _MSC_VER
+#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%lld", expected, got, __VA_ARGS__)
+#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%llu", expected, got, __VA_ARGS__)
+#else
+/* For comparing any signed integer types */
+#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%j", expected, got, __VA_ARGS__)
+/* For comparing any unsigned integer types */
+#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
+#endif
+
 #define ASSERT_PTR_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(void *, "%p", expected, got, __VA_ARGS__)
 /* note that uint8_t is promoted to unsigned int in varargs, so %02x is an acceptable format string */
 #define ASSERT_BYTE_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
