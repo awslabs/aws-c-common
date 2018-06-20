@@ -17,9 +17,7 @@
 */
 
 #include <aws/common/common.h>
-#include <aws/common/error.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 #define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
 #define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
@@ -76,6 +74,20 @@ struct aws_hash_element {
     void *value;
 };
 
+struct aws_hash_iter {
+    const struct aws_hash_table *map;
+    struct aws_hash_element element;
+    size_t slot;
+/*
+ * Reserving extra fields for binary compatibility with future expansion of
+ * iterator in case hash table implementation changes.
+ */
+    void * unused_0;
+    void * unused_1;
+    void * unused_2;
+    void * unused_3;
+};
+
 /**
  * Prototype for a key hashing function pointer.
  */
@@ -124,6 +136,42 @@ extern "C" {
      */
     AWS_COMMON_API void aws_hash_table_clean_up(
         struct aws_hash_table *map);
+
+    /**
+     * Returns the current number of entries in the table.
+     */
+    AWS_COMMON_API size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map);
+
+    /**
+     * Returns an iterator to be used for iterating through a hash table.
+     * Iterator will already point to the first element of the table it finds,
+     * which can be accessed as iter.element.
+     *
+     * This function cannot fail, but if there are no elements in the table,
+     * the returned iterator will return true for aws_hash_iter_done(&iter).
+     */
+    struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map);
+
+    /**
+     * Returns true if iterator is done iterating through table, false otherwise.
+     * If this is true, the iterator will not include an element of the table.
+     */
+    bool aws_hash_iter_done(const struct aws_hash_iter * iter);
+
+    /**
+     * Updates iterator so that it points to next element of hash table.
+     *
+     * This and the two previous functions are designed to be used together with
+     * the following idiom:
+     *
+     * for (struct aws_hash_iter iter = aws_hash_iter_begin(&map);
+     *      !aws_hash_iter_done(&iter); aws_hash_iter_next(&iter)) {
+     *     key_type key = *(const key_type *)iter.element.key;
+     *     value_type value = *(value_type *)iter.element.value;
+     *     // etc.
+     * }
+     */
+    void aws_hash_iter_next(struct aws_hash_iter *iter);
 
     /**
      * Attempts to locate an element at key.  If the element is found, a

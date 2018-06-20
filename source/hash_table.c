@@ -146,6 +146,11 @@ AWS_COMMON_API void aws_hash_table_print_stats(struct aws_hash_table *table) {
 }
 #endif
 
+size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map) {
+    struct hash_table_state *state = map->pImpl;
+    return state->entry_count;
+}
+
 /* Given a header template, allocates space for a hash table of the appropriate size, and copies the state header
  * into this allocated memory, which is returned.
  */
@@ -562,6 +567,40 @@ int aws_hash_table_foreach(struct aws_hash_table *map,
     }
 
     return AWS_OP_SUCCESS;
+}
+
+static inline void get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
+    struct hash_table_state *state = iter->map->pImpl;
+    size_t limit = state->size;
+
+    for (size_t i = start_slot; i < limit; i++) {
+        struct hash_table_entry *entry = &state->slots[i];
+
+        if (entry->hash_code) {
+            iter->element = entry->element;
+            iter->slot = i;
+            return ;
+        }
+    }
+    iter->element.key = NULL;
+    iter->element.value = NULL;
+    iter->slot = 0;
+}
+
+struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
+    struct aws_hash_iter iter = {.map = map};
+    get_next_element(&iter, 0);
+    return iter;
+}
+
+bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
+    return iter->element.key == NULL;
+}
+
+void aws_hash_iter_next(struct aws_hash_iter *iter) {
+    if (!aws_hash_iter_done(iter)) { /* If already at end of table, do nothing. */
+        get_next_element(iter, iter->slot + 1);
+    }
 }
 
 void aws_hash_table_clear(struct aws_hash_table *map) {

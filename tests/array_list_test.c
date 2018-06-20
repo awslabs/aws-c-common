@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/array_list.h>
+#include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
 static int array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc, void *ctx) {
@@ -608,3 +609,63 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
 }
 
 AWS_TEST_CASE(array_list_not_enough_space_test_failure, array_list_not_enough_space_test_failure_fn)
+
+AWS_STATIC_STRING_FROM_LITERAL(empty, "");
+AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
+AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
+AWS_STATIC_STRING_FROM_LITERAL(foo2, "foo");
+AWS_STATIC_STRING_FROM_LITERAL(foobaz, "foobaz");
+AWS_STATIC_STRING_FROM_LITERAL(bar_food, "bar food");
+AWS_STATIC_STRING_FROM_LITERAL(bar_null_food, "bar\0food");
+AWS_STATIC_STRING_FROM_LITERAL(bar_null_back, "bar\0back");
+
+static int array_list_of_strings_sort_fn(struct aws_allocator *alloc, void *ctx) {
+    const struct aws_string * strings[] =
+        {empty, foo, bar, foobar, foo2, foobaz, bar_food, bar_null_food, bar_null_back};
+    const struct aws_string * sorted[] =
+        {empty, bar, bar_null_back, bar_null_food, bar_food, foo, foo2, foobar, foobaz};
+    int num_strings = sizeof(strings)/sizeof(const struct aws_string *);
+
+    struct aws_array_list list;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, num_strings, sizeof(const struct aws_string *)),
+                   "List initialization failed with error %d", aws_last_error());        
+    for (int idx = 0; idx < num_strings; ++idx) {
+        ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)(strings + idx)),
+                       "List push failed with error code %d", aws_last_error());
+    }
+
+    aws_array_list_sort(&list, aws_array_list_comparator_string);
+
+    /* No control over whether foo or foo2 will be first, but checking for string equality with sorted array
+     * makes that irrelevant.
+     */
+    for (int idx = 0; idx < num_strings; ++idx) {
+        const struct aws_string * str;
+        ASSERT_SUCCESS(aws_array_list_get_at(&list, (void **)&str, idx),
+                       "List get failed with error code %d", aws_last_error());
+        ASSERT_INT_EQUALS(0, aws_string_compare(str, sorted[idx]), "Strings should be equal");
+    }
+    aws_array_list_clean_up(&list);
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_of_strings_sort, array_list_of_strings_sort_fn)
+
+static int array_list_empty_sort_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_array_list list;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, alloc, 5, sizeof(const struct aws_string *)),
+                   "List initialization failed with error %d", aws_last_error());
+
+    /* Nothing much to check, just want to make sure sort run on empty list doesn't crash. */
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
+    ASSERT_INT_EQUALS(5, aws_array_list_capacity(&list));
+    aws_array_list_sort(&list, aws_array_list_comparator_string);
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
+    ASSERT_INT_EQUALS(5, aws_array_list_capacity(&list));
+
+    aws_array_list_clean_up(&list);
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_empty_sort, array_list_empty_sort_fn)
