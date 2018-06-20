@@ -166,9 +166,9 @@ static int error_callback_test_fn(struct aws_allocator *config, void *ctx) {
                       test_error_2.lib_name, aws_error_lib_name(cb_data.last_seen));
 
     old_fn = aws_set_thread_local_error_handler_fn(NULL, NULL);
-    ASSERT_PTR_EQUALS((void *)error_test_thread_local_cb, (void *)old_fn, "Setting a new thread local error callback should have returned the most recent value");
+    ASSERT_PTR_EQUALS(error_test_thread_local_cb, old_fn, "Setting a new thread local error callback should have returned the most recent value");
     old_fn = aws_set_global_error_handler_fn(NULL, NULL);
-    ASSERT_PTR_EQUALS((void *)error_test_global_cb, (void *)old_fn, "Setting a new global error callback should have returned the most recent value");
+    ASSERT_PTR_EQUALS(error_test_global_cb, old_fn, "Setting a new global error callback should have returned the most recent value");
 
     return 0;
 }

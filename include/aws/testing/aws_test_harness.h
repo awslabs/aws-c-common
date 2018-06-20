@@ -216,8 +216,8 @@ static int total_failures;
 
 #define ASSERT_TYP_EQUALS(type, formatarg, expected, got, ...) \
     do { \
-        const type assert_expected = (expected); \
-        const type assert_actual   = (got); \
+        type assert_expected = (expected); \
+        type assert_actual   = (got); \
         if (assert_expected != assert_actual) { \
             fprintf(AWS_TESTING_REPORT_FD, "%s" formatarg " != " formatarg ": ", FAIL_PREFIX, assert_expected, assert_actual); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
@@ -237,7 +237,19 @@ static int total_failures;
 #define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
 #endif
 
-#define ASSERT_PTR_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(void *, "%p", expected, got, __VA_ARGS__)
+#define ASSERT_PTR_EQUALS(expected, got, ...) \
+    do { \
+        void *assert_expected = (void *)(uintptr_t)(expected); \
+        void *assert_actual   = (void *)(uintptr_t)(got); \
+        if (assert_expected != assert_actual) { \
+            fprintf(AWS_TESTING_REPORT_FD, "%s%p != %p: ", FAIL_PREFIX, assert_expected, assert_actual); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got); \
+            } \
+            POSTFAIL_INTERNAL(); \
+        } \
+    } while (0)
+
 /* note that uint8_t is promoted to unsigned int in varargs, so %02x is an acceptable format string */
 #define ASSERT_BYTE_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
 #define ASSERT_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llX", expected, got, __VA_ARGS__)
