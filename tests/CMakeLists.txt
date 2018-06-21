@@ -147,6 +147,7 @@ add_test(byte_cursor_read_tests ${TEST_BINARY_NAME} byte_cursor_read_tests)
 add_test(byte_cursor_limit_tests ${TEST_BINARY_NAME} byte_cursor_limit_tests)
 add_test(string_tests ${TEST_BINARY_NAME} string_tests)
 add_test(binary_string_test ${TEST_BINARY_NAME} binary_string_test)
+add_test(string_compare_test ${TEST_BINARY_NAME} string_compare_test)
 
 add_test(test_char_split_happy_path ${TEST_BINARY_NAME} test_char_split_happy_path)
 add_test(test_char_split_ends_with_token ${TEST_BINARY_NAME} test_char_split_ends_with_token)
@@ -166,3 +167,8 @@ add_test(test_buffer_cpy_offsets_dest_too_small ${TEST_BINARY_NAME} test_buffer_
 add_test(byte_swap_test ${TEST_BINARY_NAME} byte_swap_test)
 
 add_test(test_cpu_count_at_least_works_superficially ${TEST_BINARY_NAME} test_cpu_count_at_least_works_superficially)
+
+add_test(test_realloc_fallback ${TEST_BINARY_NAME} test_realloc_fallback)
+add_test(test_realloc_fallback_oom ${TEST_BINARY_NAME} test_realloc_fallback_oom)
+add_test(test_realloc_passthrough ${TEST_BINARY_NAME} test_realloc_passthrough)
+add_test(test_realloc_passthrough_oom ${TEST_BINARY_NAME} test_realloc_passthrough_oom)

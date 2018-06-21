@@ -17,22 +17,27 @@
 #include <stdlib.h>
 
 /* turn off unused named parameter warning on msvc.*/
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4100)
 #endif
 
-void *default_malloc(struct aws_allocator *allocator, size_t size) {
+static void *default_malloc(struct aws_allocator *allocator, size_t size) {
     return malloc(size);
 }
 
-void default_free(struct aws_allocator *allocator, void *ptr) {
+static void default_free(struct aws_allocator *allocator, void *ptr) {
     free(ptr);
+}
+
+static void *default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    return realloc(ptr, newsize);
 }
 
 static struct aws_allocator default_allocator = {
     .mem_acquire = default_malloc,
-    .mem_release = default_free
+    .mem_release = default_free,
+    .mem_realloc = default_realloc
 };
 
 struct aws_allocator *aws_default_allocator() {
@@ -47,6 +52,37 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
     allocator->mem_release(allocator, ptr);
+}
+
+int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
+    if (allocator->mem_realloc) {
+        void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
+        if (!newptr) {
+            return aws_raise_error(AWS_ERROR_OOM);
+        }
+        *ptr = newptr;
+        return AWS_OP_SUCCESS;
+    }
+
+    /* Since the allocator doesn't support realloc, we'll need to emulate it (inefficiently). */
+    if (oldsize >= newsize) {
+        return AWS_OP_SUCCESS;
+    }
+
+    void *newptr = aws_mem_acquire(allocator, newsize);
+    if (!newptr) {
+        /* AWS_ERROR_OOM already raised */
+        return AWS_OP_ERR;
+    }
+
+    memcpy(newptr, *ptr, oldsize);
+    memset((uint8_t *)newptr + oldsize, 0, newsize - oldsize);
+
+    aws_mem_release(allocator, *ptr);
+
+    *ptr = newptr;
+
+    return AWS_OP_SUCCESS;
 }
 
 static int8_t error_strings_loaded = 0;
