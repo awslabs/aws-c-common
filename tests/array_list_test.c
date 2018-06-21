@@ -253,7 +253,7 @@ static int array_list_set_at_overwrite_safety_fn(struct aws_allocator *alloc, vo
     static size_t list_size = 4;
     int overwrite_data[5];
 
-    ASSERT_SUCCESS(aws_array_list_init_static(&list, overwrite_data, list_size, sizeof(int)));
+    aws_array_list_init_static(&list, overwrite_data, list_size, sizeof(int));
 
     memset(overwrite_data, 0x11, sizeof(overwrite_data));
     list.current_size = list_size * sizeof(int);
@@ -340,7 +340,7 @@ static int array_list_preallocated_iteration_test_fn(struct aws_allocator *alloc
 
     static int list_data[4];
     static const size_t list_size = 4;
-    ASSERT_SUCCESS(aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int)), "Static list init failed with error code %d", aws_last_error());
+    aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
@@ -378,7 +378,7 @@ static int array_list_preallocated_push_test_fn(struct aws_allocator *alloc, voi
 
     static int list_data[4];
     static const size_t list_size = 4;
-    ASSERT_SUCCESS(aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int)), "Static list init failed with error code %d", aws_last_error());
+    aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
@@ -439,7 +439,7 @@ static int array_list_shrink_to_fit_static_test_fn(struct aws_allocator *alloc, 
     static int list_data[4];
     static const size_t list_size = 4;
 
-    ASSERT_SUCCESS(aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int)), "Static list init failed with error code %d", aws_last_error());
+    aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
     int first = 1, second = 2;
 
@@ -612,7 +612,7 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
     static size_t list_size = 4;
     int static_list[1];
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&list_a, alloc, list_size, sizeof(int)), "List initialization failed with error %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_init_static(&list_b, static_list, 1, sizeof(int)), "List initialization failed with error %d", aws_last_error());
+    aws_array_list_init_static(&list_b, static_list, 1, sizeof(int));
 
     int first = 1, second = 2;
 
