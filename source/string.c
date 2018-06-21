@@ -51,3 +51,9 @@ int aws_string_compare(const struct aws_string * a, const struct aws_string * b)
     if (len_a > len_b) return 1; /* string b is first n characters of string a */
     return -1; /* string a is first n characters of string b */
 }
+
+int aws_array_list_comparator_string(const void *a, const void *b) {
+    const struct aws_string * str_a = *(const struct aws_string **)a;
+    const struct aws_string * str_b = *(const struct aws_string **)b;
+    return aws_string_compare(str_a, str_b);
+}
