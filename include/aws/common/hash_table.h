@@ -150,13 +150,13 @@ extern "C" {
      * This function cannot fail, but if there are no elements in the table,
      * the returned iterator will return true for aws_hash_iter_done(&iter).
      */
-    struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map);
+    AWS_COMMON_API struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map);
 
     /**
      * Returns true if iterator is done iterating through table, false otherwise.
      * If this is true, the iterator will not include an element of the table.
      */
-    bool aws_hash_iter_done(const struct aws_hash_iter * iter);
+    AWS_COMMON_API bool aws_hash_iter_done(const struct aws_hash_iter * iter);
 
     /**
      * Updates iterator so that it points to next element of hash table.
@@ -171,7 +171,7 @@ extern "C" {
      *     // etc.
      * }
      */
-    void aws_hash_iter_next(struct aws_hash_iter *iter);
+    AWS_COMMON_API void aws_hash_iter_next(struct aws_hash_iter *iter);
 
     /**
      * Attempts to locate an element at key.  If the element is found, a

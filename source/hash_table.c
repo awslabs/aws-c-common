@@ -588,7 +588,8 @@ static inline void get_next_element(struct aws_hash_iter *iter, size_t start_slo
 }
 
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
-    struct aws_hash_iter iter = {.map = map};
+    struct aws_hash_iter iter;
+    iter.map = map;
     get_next_element(&iter, 0);
     return iter;
 }
