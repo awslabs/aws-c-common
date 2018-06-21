@@ -610,17 +610,17 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
 
 AWS_TEST_CASE(array_list_not_enough_space_test_failure, array_list_not_enough_space_test_failure_fn)
 
-AWS_STATIC_STRING_FROM_LITERAL(empty, "");
-AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
-AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
-AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
-AWS_STATIC_STRING_FROM_LITERAL(foo2, "foo");
-AWS_STATIC_STRING_FROM_LITERAL(foobaz, "foobaz");
-AWS_STATIC_STRING_FROM_LITERAL(bar_food, "bar food");
-AWS_STATIC_STRING_FROM_LITERAL(bar_null_food, "bar\0food");
-AWS_STATIC_STRING_FROM_LITERAL(bar_null_back, "bar\0back");
-
 static int array_list_of_strings_sort_fn(struct aws_allocator *alloc, void *ctx) {
+    AWS_STATIC_STRING_FROM_LITERAL(empty, "");
+    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
+    AWS_STATIC_STRING_FROM_LITERAL(foo2, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(foobaz, "foobaz");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_food, "bar food");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_null_food, "bar\0food");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_null_back, "bar\0back");
+
     const struct aws_string * strings[] =
         {empty, foo, bar, foobar, foo2, foobaz, bar_food, bar_null_food, bar_null_back};
     const struct aws_string * sorted[] =
