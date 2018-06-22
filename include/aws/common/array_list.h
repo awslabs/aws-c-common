@@ -15,12 +15,7 @@
 * express or implied. See the License for the specific language governing
 * permissions and limitations under the License.
 */
-
 #include <aws/common/common.h>
-#include <aws/common/error.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
 
 struct aws_array_list {
     struct aws_allocator *alloc;
@@ -30,6 +25,15 @@ struct aws_array_list {
     void *data;
 };
 
+/**
+ * Prototype for a comparator function for sorting elements.
+ *
+ * a and b should be cast to pointers to the element type held in the list
+ * before being dereferenced. The function should compare the elements and
+ * return a positive number if a > b, zero if a = b, and a negative number
+ * if a < b.
+ */
+typedef int (*aws_array_list_comparator)(const void *a, const void *b);
 
 #ifdef __cplusplus
 extern "C" {
@@ -144,6 +148,11 @@ extern "C" {
      * Swap elements at the specified indices.
      */
     AWS_COMMON_API void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
+
+    /**
+     * Sort elements in the list in-place according to the comparator function.
+     */
+    AWS_COMMON_API void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator compare_fn);
 
 #ifdef __cplusplus
 }

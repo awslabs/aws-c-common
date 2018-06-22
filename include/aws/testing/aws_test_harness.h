@@ -216,8 +216,8 @@ static int total_failures;
 
 #define ASSERT_TYP_EQUALS(type, formatarg, expected, got, ...) \
     do { \
-        type assert_expected = (type)(expected); \
-        type assert_actual   = (type)(got); \
+        type assert_expected = (expected); \
+        type assert_actual   = (got); \
         if (assert_expected != assert_actual) { \
             fprintf(AWS_TESTING_REPORT_FD, "%s" formatarg " != " formatarg ": ", FAIL_PREFIX, assert_expected, assert_actual); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
@@ -227,10 +227,29 @@ static int total_failures;
         } \
     } while (0)
 
-#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(long long, "%lld", expected, got, __VA_ARGS__)
-#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llu", expected, got, __VA_ARGS__)
-#define ASSERT_SIZE_T_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(size_t, "%zu", expected, got, __VA_ARGS__)
-#define ASSERT_PTR_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(void *, "%p", expected, got, __VA_ARGS__)
+#ifdef _MSC_VER
+#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%lld", expected, got, __VA_ARGS__)
+#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%llu", expected, got, __VA_ARGS__)
+#else
+/* For comparing any signed integer types */
+#define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%jd", expected, got, __VA_ARGS__)
+/* For comparing any unsigned integer types */
+#define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
+#endif
+
+#define ASSERT_PTR_EQUALS(expected, got, ...) \
+    do { \
+        void *assert_expected = (void *)(uintptr_t)(expected); \
+        void *assert_actual   = (void *)(uintptr_t)(got); \
+        if (assert_expected != assert_actual) { \
+            fprintf(AWS_TESTING_REPORT_FD, "%s%p != %p: ", FAIL_PREFIX, assert_expected, assert_actual); \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
+                PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got); \
+            } \
+            POSTFAIL_INTERNAL(); \
+        } \
+    } while (0)
+
 /* note that uint8_t is promoted to unsigned int in varargs, so %02x is an acceptable format string */
 #define ASSERT_BYTE_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
 #define ASSERT_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llX", expected, got, __VA_ARGS__)
@@ -316,7 +335,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
 
     if(!ret_val) {
         if (!harness->suppress_memcheck) {
-            ASSERT_INT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
+            ASSERT_UINT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
                 "Memory Leak Detected %d bytes were allocated, "
                 "but only %d were freed.", harness->test_name, harness->config.allocated, harness->config.freed);
         }
