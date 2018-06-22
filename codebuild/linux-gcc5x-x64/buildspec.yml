@@ -3,6 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
       - sudo apt-get update
       - sudo apt-get install gcc-5 g++-5 cmake3 cppcheck -y 
