@@ -25,10 +25,11 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
     size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
     list->item_size = item_size;
+    list->current_size = 0;
+    list->length = 0;
 
     if (allocation_size > 0) {
         list->data = aws_mem_acquire(list->alloc, allocation_size);
-        list->length = 0;
         if (!list->data) {
             return AWS_OP_ERR;
         }
@@ -41,7 +42,7 @@ int aws_array_list_init_dynamic(struct aws_array_list *list,
     return AWS_OP_SUCCESS;
 }
 
-int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t item_count, size_t item_size) {
+void aws_array_list_init_static(struct aws_array_list *list, void *raw_array, size_t item_count, size_t item_size) {
     assert(raw_array);
     assert(item_count);
     assert(item_size);
@@ -52,7 +53,6 @@ int aws_array_list_init_static(struct aws_array_list *list, void *raw_array, siz
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
-    return AWS_OP_SUCCESS;
 }
 
 void aws_array_list_clean_up(struct aws_array_list *list) {
@@ -138,7 +138,7 @@ int aws_array_list_pop_back(struct aws_array_list *list) {
 }
 
 void aws_array_list_clear(struct aws_array_list *list) {
-    if (list->length > 0) {
+    if (list->data) {
 #ifdef DEBUG_BUILD
         memset(list->data, SENTINAL, list->current_size);
 #endif
@@ -150,13 +150,17 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *list) {
     if (list->alloc) {
         size_t ideal_size = list->length * list->item_size;
         if (ideal_size < list->current_size) {
-            void *raw_data = aws_mem_acquire(list->alloc, ideal_size);
-            if (!raw_data) {
-                return AWS_OP_ERR;
-            }
+            void *raw_data = NULL;
 
-            memcpy(raw_data, list->data, ideal_size);
-            aws_mem_release(list->alloc, list->data);
+            if (ideal_size > 0) {
+                raw_data = aws_mem_acquire(list->alloc, ideal_size);
+                if (!raw_data) {
+                    return AWS_OP_ERR;
+                }
+
+                memcpy(raw_data, list->data, ideal_size);
+                aws_mem_release(list->alloc, list->data);
+            }
             list->data = raw_data;
             list->current_size = ideal_size;
         }
@@ -168,11 +172,14 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *list) {
 
 int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to) {
     assert(from->item_size == to->item_size);
+    assert(from->data);
 
     size_t copy_size = from->length * from->item_size;
 
-    if (to->length >= from->length) {
-        memcpy(to->data, from->data, copy_size);
+    if (to->current_size >= copy_size) {
+        if (copy_size > 0) {
+            memcpy(to->data, from->data, copy_size);
+        }
         to->length = from->length;
         return AWS_OP_SUCCESS;
     }
@@ -236,9 +243,9 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *list, void **val, siz
 }
 
 int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t index) {
-    size_t necessary_size = index * list->item_size;
+    size_t necessary_size = (index + 1) * list->item_size;
 
-    if (list->current_size <= necessary_size) {
+    if (list->current_size < necessary_size) {
         if (!list->alloc) {
             return aws_raise_error(AWS_ERROR_INVALID_INDEX);
         }
@@ -265,12 +272,14 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
             return AWS_OP_ERR;
         }
 
-        memcpy(temp, list->data, list->current_size);
+        if (list->data) {
+            memcpy(temp, list->data, list->current_size);
 
 #ifdef DEBUG_BUILD
-        memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
+            memset((void *) ((uint8_t *) temp + list->current_size), SENTINAL, new_size - list->current_size);
 #endif
-        aws_mem_release(list->alloc, list->data);
+            aws_mem_release(list->alloc, list->data);
+        }
         list->data = temp;
         list->current_size = new_size;
     }
