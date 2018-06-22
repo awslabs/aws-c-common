@@ -232,7 +232,7 @@ static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, 
 
     struct aws_array_list output;
     struct aws_byte_buf output_array[3] = {{0}};
-    ASSERT_SUCCESS(aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_cursor)));
+    aws_array_list_init_static(&output, output_array, 3, sizeof(struct aws_byte_cursor));
     ASSERT_ERROR(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, aws_byte_buf_split_on_char(&to_split, ';', &output));
     ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
 

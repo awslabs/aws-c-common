@@ -60,6 +60,7 @@ add_test(array_list_order_push_back_pop_back_test ${TEST_BINARY_NAME} array_list
 add_test(array_list_pop_front_n_test ${TEST_BINARY_NAME} array_list_pop_front_n_test)
 add_test(array_list_exponential_mem_model_test ${TEST_BINARY_NAME} array_list_exponential_mem_model_test)
 add_test(array_list_exponential_mem_model_iteration_test ${TEST_BINARY_NAME} array_list_exponential_mem_model_iteration_test)
+add_test(array_list_set_at_overwrite_safety ${TEST_BINARY_NAME} array_list_set_at_overwrite_safety)
 add_test(array_list_iteration_by_ptr_test ${TEST_BINARY_NAME} array_list_iteration_by_ptr_test)
 add_test(array_list_iteration_test ${TEST_BINARY_NAME} array_list_iteration_test)
 add_test(array_list_preallocated_iteration_test ${TEST_BINARY_NAME} array_list_preallocated_iteration_test)
