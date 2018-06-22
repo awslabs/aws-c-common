@@ -1,11 +1,13 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image 
+#this buildspec assumes the ubuntu 14.04 trusty image
 phases:
   install:
     commands:
+      - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
+      - sudo apt-add-repository "deb-src http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
       - sudo apt-get update -y
       - sudo apt-get update
-      - sudo apt-get install clang cmake3 cppcheck -y 
+      - sudo apt-get install clang-6.0 cmake3 cppcheck -y
   pre_build:
     commands:
       - export CC=clang
@@ -16,9 +18,11 @@ phases:
       - ./cppcheck.sh
       - mkdir build
       - cd build
-      - cmake ../ 
+      - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../
       - make
       - make test
+      - cd ..
+      - clang-tidy -p=build **/*.c
   post_build:
     commands:
       - echo Build completed on `date`
