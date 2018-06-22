@@ -1,14 +1,15 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
+#this build spec assumes the ubuntu 14.04 trusty image
 phases:
   install:
     commands:
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install clang cmake3 cppcheck -y
+      - sudo apt-get install gcc-7 g++-7 cmake3 cppcheck -y
   pre_build:
     commands:
-      - export CC=clang
-      - export CXX=clang++
+      - export CC=gcc-7
+      - export CXX=g++-7
   build:
     commands:
       - echo Build started on `date`
