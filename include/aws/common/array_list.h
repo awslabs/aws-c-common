@@ -53,7 +53,7 @@ extern "C" {
     * and item_size is the size in bytes of each element. Mixing items types is not supported
     * by this API. Once this list is full, new items will be rejected.
     */
-    AWS_COMMON_API int aws_array_list_init_static(struct aws_array_list *list,
+    AWS_COMMON_API void aws_array_list_init_static(struct aws_array_list *list,
         void *raw_array, size_t item_count, size_t item_size);
 
     /**
