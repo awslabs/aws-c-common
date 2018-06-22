@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-valist.Uninitialized'
 WarningsAsErrors: '*'
 FormatStyle:     none
 CheckOptions:

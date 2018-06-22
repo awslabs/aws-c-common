@@ -288,6 +288,9 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
 void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
+    assert(item1);
+    assert(item2);
+
     /* copy SLICE sized bytes at a time */
     size_t slice_count = item_size / SLICE;
     uint8_t temp[SLICE];
@@ -312,7 +315,7 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
         return;
     }
 
-    void *item1 =NULL, *item2 = NULL;
+    void *item1 = NULL, *item2 = NULL;
     aws_array_list_get_at_ptr(list, &item1, a);
     aws_array_list_get_at_ptr(list, &item2, b);
     aws_array_list_mem_swap(item1, item2, list->item_size);
