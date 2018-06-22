@@ -5,8 +5,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get update
-      - sudo apt-get install gcc-5 g++-5 cmake3 cppcheck -y 
+      - sudo apt-get install gcc-5 g++-5 cmake3 cppcheck -y
   pre_build:
     commands:
       - export CC=gcc-5
@@ -17,7 +16,7 @@ phases:
       - ./cppcheck.sh
       - mkdir build
       - cd build
-      - cmake ../ 
+      - cmake ../
       - make
       - make test
   post_build:
