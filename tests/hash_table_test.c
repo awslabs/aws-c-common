@@ -24,6 +24,10 @@ static const char *test_str_2 = "test 2";
 static const char *test_val_str_1 = "value 1";
 static const char *test_val_str_2 = "value 2";
 
+#define ASSERT_HASH_TABLE_ENTRY_COUNT(map, count) \
+ASSERT_UINT_EQUALS(count, aws_hash_table_get_entry_count(map), "Hash map should have %d entries", count)
+
+
 AWS_TEST_CASE(test_hash_table_put_get, test_hash_table_put_get_fn)
 static int test_hash_table_put_get_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_table hash_table;
@@ -31,34 +35,34 @@ static int test_hash_table_put_get_fn(struct aws_allocator *alloc, void *ctx) {
     struct aws_hash_element *pElem;
     int was_created;
 
-    ASSERT_SUCCESS(err_code,
-        "Hash Map init should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map init should have succeeded.");
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 0);
 
     err_code = aws_hash_table_create(&hash_table, (void *)test_str_1, &pElem, &was_created);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map put should have succeeded.");
-    ASSERT_INT_EQUALS(1, was_created,
-        "Hash Map put should have created a new element.");
+    ASSERT_SUCCESS(err_code, "Hash Map put should have succeeded.");
+    ASSERT_INT_EQUALS(1, was_created, "Hash Map put should have created a new element.");
     pElem->value = (void *)test_val_str_1;
+
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 1);
 
     /* Try passing a NULL was_created this time */
     err_code = aws_hash_table_create(&hash_table, (void *)test_str_2, &pElem, NULL);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map put should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map put should have succeeded.");
     pElem->value = (void *)test_val_str_2;
 
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 2);
+
     err_code = aws_hash_table_find(&hash_table, (void *)test_str_1, &pElem);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map get should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map get should have succeeded.");
     ASSERT_STR_EQUALS(test_val_str_1, (const char *)pElem->value,
         "Returned value for %s, should have been %s", test_str_1, test_val_str_1);
 
     err_code = aws_hash_table_find(&hash_table, (void *)test_str_2, &pElem);
-    ASSERT_SUCCESS(err_code,
-        "Hash Map get should have succeeded.");
+    ASSERT_SUCCESS(err_code, "Hash Map get should have succeeded.");
     ASSERT_BIN_ARRAYS_EQUALS(test_val_str_2, strlen(test_val_str_2) + 1, (const char *)pElem->value, strlen(pElem->value) + 1,
         "Returned value for %s, should have been %s", test_str_2, test_val_str_2);
 
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 2);
     aws_hash_table_clean_up(&hash_table);
     return 0;
 }
@@ -503,6 +507,77 @@ static int test_hash_table_foreach_fn(struct aws_allocator *alloc, void *ctx) {
 
     aws_hash_table_clean_up(&hash_table);
 
+    return 0;
+}
+
+/*
+ * Convenience functions for a hash table which uses uint64_t as keys, and whose hash function
+ * is just the identity function.
+ */
+static uint64_t hash_uint64_identity(const void *a) {
+    return *(uint64_t *)a;
+}
+
+static bool hash_uint64_eq(const void *a, const void *b) {
+    uint64_t my_a = *(uint64_t *)a;
+    uint64_t my_b = *(uint64_t *)b;
+    return my_a == my_b;
+}
+
+AWS_TEST_CASE(test_hash_table_iter, test_hash_table_iter_fn)
+static int test_hash_table_iter_fn(struct aws_allocator *alloc, void *ctx) {
+    /* Table entries are: (2^0 -> 2^10), (2^1 -> 2^11), (2^2 -> 2^12), ..., (2^9 -> 2^19).
+     * We will iterate through the table and AND all the keys and all the values together
+     * to ensure that we have hit every element of the table.
+     */
+
+    uint64_t powers_of_2[20];
+    uint64_t x = 1;
+    for (int i = 0; i < 20; ++i, x <<= 1) {
+        powers_of_2[i] = x;
+    }
+
+    struct aws_hash_table map;
+    ASSERT_SUCCESS(aws_hash_table_init(&map, alloc, 10, hash_uint64_identity, hash_uint64_eq, NULL, NULL),
+        "hash table init");
+
+    struct aws_hash_element *elem;
+    for (int i = 0 ; i < 10; ++i) {
+        int ret = aws_hash_table_create(&map, (void *)(powers_of_2 + i), &elem, NULL);
+        ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+        elem->value = (void *)(powers_of_2 + 10 + i);
+    }
+
+    uint64_t keys_bitflags = 0;
+    uint64_t values_bitflags = 0;
+    int num_elements = 0;
+    for (struct aws_hash_iter iter = aws_hash_iter_begin(&map); !aws_hash_iter_done(&iter); aws_hash_iter_next(&iter)) {
+        uint64_t key = *(const uint64_t *)iter.element.key;
+        uint64_t value = *(uint64_t *)iter.element.value;
+        keys_bitflags |= key;
+        values_bitflags |= value;
+        ++num_elements;
+    }
+    ASSERT_INT_EQUALS(num_elements, 10);
+    ASSERT_UINT_EQUALS(keys_bitflags, 0x3ffULL); // keys are bottom 10 bits
+    ASSERT_UINT_EQUALS(values_bitflags, 0xffc00ULL); // values are next 10 bits
+
+    aws_hash_table_clean_up(&map);
+    return 0;
+}
+
+AWS_TEST_CASE(test_hash_table_empty_iter, test_hash_table_empty_iter_fn)
+static int test_hash_table_empty_iter_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_hash_table map;
+    ASSERT_SUCCESS(aws_hash_table_init(&map, alloc, 10, hash_uint64_identity, hash_uint64_eq, NULL, NULL),
+                   "hash table init");
+
+    struct aws_hash_iter iter = aws_hash_iter_begin(&map);
+    ASSERT_TRUE(aws_hash_iter_done(&iter));
+    aws_hash_iter_next(&iter);
+    ASSERT_TRUE(aws_hash_iter_done(&iter));
+
+    aws_hash_table_clean_up(&map);
     return 0;
 }
 
