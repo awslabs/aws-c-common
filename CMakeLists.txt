@@ -79,7 +79,6 @@ endif ()
 add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 
-#set warnings
 if (MSVC)
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
 else ()
