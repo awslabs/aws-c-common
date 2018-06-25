@@ -100,7 +100,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
 target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
-install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/testing")
+install(FILES ${AWS_TEST_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/testing")
 
 install(
     TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
