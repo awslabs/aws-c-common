@@ -86,8 +86,7 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
         }
         else {
             finished = 1;
-            break;
-        }   
+        }
         aws_mutex_unlock(&mutex_data.mutex);
 
     }
