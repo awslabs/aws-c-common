@@ -36,6 +36,7 @@ struct aws_allocator {
     void(*mem_release)(struct aws_allocator *allocator, void *ptr);
     /* Optional method; if not supported, this pointer must be NULL */
     void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize);
+    void *impl;
 };
 
 /* Avoid pulling in CoreFoundation headers in a header file. */

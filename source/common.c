@@ -100,6 +100,11 @@ static void *cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void 
     struct aws_allocator *allocator = info;
 
     void *mem =  aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
+
+    if (!mem) {
+        return NULL;
+    }
+
     size_t allocation_size = (size_t)alloc_size + sizeof(size_t);
     memcpy(mem, &allocation_size, sizeof(size_t));
     return (void *)((uint8_t *)mem + sizeof(size_t));
