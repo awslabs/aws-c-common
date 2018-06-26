@@ -36,9 +36,7 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #define AWS_TESTING_REPORT_FD stderr
 #endif
 
-struct memory_test_config {
-    void *(*mem_acquire)(struct aws_allocator *config, size_t size);
-    void(*mem_release)(struct aws_allocator *config, void *ptr);
+struct memory_test_allocator {
     size_t allocated;
     size_t freed;
     struct aws_mutex mutex;
@@ -49,36 +47,27 @@ struct memory_test_tracker {
     void *blob;
 };
 
-static void *mem_acquire_malloc(struct aws_allocator *config, size_t size) {
-    struct memory_test_config *test_config = (struct memory_test_config *)config;
+static void *mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
+    struct memory_test_allocator *test_allocator = (struct memory_test_allocator *)allocator->impl;
 
-    aws_mutex_lock(&test_config->mutex);
-    test_config->allocated += size;
+    aws_mutex_lock(&test_allocator->mutex);
+    test_allocator->allocated += size;
     struct memory_test_tracker *memory = (struct memory_test_tracker *) malloc(size + sizeof(struct memory_test_tracker));
     memory->size = size;
     memory->blob = (uint8_t *)memory + sizeof(struct memory_test_tracker);
-    aws_mutex_unlock(&test_config->mutex);
+    aws_mutex_unlock(&test_allocator->mutex);
     return memory->blob;
 }
 
-static void mem_release_free(struct aws_allocator *config, void *ptr) {
-    struct memory_test_config *test_config = (struct memory_test_config *)config;
+static void mem_release_free(struct aws_allocator *allocator, void *ptr) {
+    struct memory_test_allocator *test_allocator = (struct memory_test_allocator *)allocator->impl;
 
     struct memory_test_tracker *memory = (struct memory_test_tracker *) ((uint8_t *)ptr - sizeof(struct memory_test_tracker));
-    aws_mutex_lock(&test_config->mutex);
-    test_config->freed += memory->size;
-    aws_mutex_unlock(&test_config->mutex);
+    aws_mutex_lock(&test_allocator->mutex);
+    test_allocator->freed += memory->size;
+    aws_mutex_unlock(&test_allocator->mutex);
     free(memory);
 }
-
-#define AWS_MEMORY_TEST_CONFIG                                                                                         \
-  {                                                                                                                    \
-        .mem_acquire = mem_acquire_malloc,                                                                             \
-        .mem_release = mem_release_free,                                                                               \
-        .allocated = 0,                                                                                                \
-        .freed = 0,                                                                                                    \
-        .mutex = AWS_MUTEX_INIT                                                                                        \
-  }                                                                                                                    \
 
 /** Prints a message to stdout using printf format that appends the function, file and line number.
   * If format is null, returns 0 without printing anything; otherwise returns 1.
@@ -299,23 +288,38 @@ struct aws_test_harness {
     aws_test_before on_before;
     aws_test_run run;
     aws_test_after on_after;
-    struct memory_test_config config;
+    struct aws_allocator *allocator;
     void *ctx;
     const char *test_name;
     int suppress_memcheck;
 };
 
+#define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
+     static struct memory_test_allocator name ## _alloc_impl =   {                                                     \
+        .allocated = 0,                                                                                                \
+        .freed = 0,                                                                                                    \
+        .mutex = AWS_MUTEX_INIT,                                                                                       \
+     };                                                                                                                \
+     static struct aws_allocator name ## _allocator = {                                                                \
+        .mem_acquire = mem_acquire_malloc,                                                                             \
+        .mem_release = mem_release_free,                                                                               \
+        .mem_realloc = NULL,                                                                                           \
+        .impl = &name ## _alloc_impl,                                                                                  \
+     };                                                                                                                \
+
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
+    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
     static struct aws_test_harness name = { .on_before = NULL, .run = fn, .on_after = NULL,                            \
-         .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                  \
+         .ctx = NULL, .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = s };                  \
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
     static void b(struct aws_allocator *allocator, void *ctx);                                                         \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     static void af(struct aws_allocator *allocator, void *ctx);                                                        \
+    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
     static struct aws_test_harness name = { .on_before = b, .run = fn, .on_after = af,                                 \
-        .ctx = NULL, .config = AWS_MEMORY_TEST_CONFIG, .test_name = #name, .suppress_memcheck = s };                   \
+        .ctx = NULL, .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = s };                   \
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
@@ -324,20 +328,21 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
 
     if(harness->on_before) {
-        harness->on_before((struct aws_allocator *)&harness->config, harness->ctx);
+        harness->on_before(harness->allocator, harness->ctx);
     }
 
-    int ret_val = harness->run((struct aws_allocator *)&harness->config, harness->ctx);
+    int ret_val = harness->run(harness->allocator, harness->ctx);
 
     if(harness->on_after) {
-        harness->on_after((struct aws_allocator *)&harness->config, harness->ctx);
+        harness->on_after(harness->allocator, harness->ctx);
     }
 
     if(!ret_val) {
         if (!harness->suppress_memcheck) {
-            ASSERT_UINT_EQUALS(harness->config.allocated, harness->config.freed, "%s [ \033[31mFAILED\033[0m ]"
+            struct memory_test_allocator *alloc_impl = (struct memory_test_allocator*)harness->allocator->impl;
+            ASSERT_UINT_EQUALS(alloc_impl->allocated, alloc_impl->freed, "%s [ \033[31mFAILED\033[0m ]"
                 "Memory Leak Detected %d bytes were allocated, "
-                "but only %d were freed.", harness->test_name, harness->config.allocated, harness->config.freed);
+                "but only %d were freed.", harness->test_name, alloc_impl->allocated, alloc_impl->freed);
         }
 
         RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);

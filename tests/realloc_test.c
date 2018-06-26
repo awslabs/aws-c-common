@@ -16,6 +16,10 @@
 #include <aws/common/common.h>
 #include <aws/testing/aws_test_harness.h>
 
+#ifdef __MACH__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 static size_t alloc_counter, alloc_total_size, call_ct_malloc, call_ct_free, call_ct_realloc;
 
 static void *test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
@@ -172,6 +176,26 @@ static int test_realloc_passthrough_fn(struct aws_allocator *unused, void *ctx) 
     ASSERT_FALSE(buf == oldbuf);
 
     aws_mem_release(&allocator, buf);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_cf_allocator_wrapper, test_cf_allocator_wrapper_fn)
+
+static int test_cf_allocator_wrapper_fn(struct aws_allocator *alloc, void *ctx) {
+
+#ifdef __MACH__
+    CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(alloc);
+    ASSERT_NOT_NULL(cf_allocator);
+    char test_prefix[] = "test_string";
+    CFStringRef test_str = CFStringCreateWithCString(cf_allocator, test_prefix, kCFStringEncodingUTF8);
+
+    ASSERT_NOT_NULL(test_str);
+    ASSERT_BIN_ARRAYS_EQUALS(test_prefix, sizeof(test_prefix) - 1, CFStringGetCStringPtr(test_str, kCFStringEncodingUTF8), CFStringGetLength(test_str));
+
+    CFRelease(test_str);
+    aws_wrapped_cf_allocator_destroy(cf_allocator);
+#endif
 
     return 0;
 }

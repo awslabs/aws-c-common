@@ -55,7 +55,13 @@ else ()
         file(GLOB AWS_COMMON_OS_SRC
                 "source/posix/*.c"
                 )
-        set(PLATFORM_LIBS pthread)
+
+        find_library(CORE_FOUNDATION_LIB CoreFoundation)
+        if (NOT CORE_FOUNDATION_LIB)
+            message(FATAL_ERROR "Core Foundation not found")
+        endif ()
+
+        set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
     endif ()
 endif ()
 
