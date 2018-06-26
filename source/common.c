@@ -16,6 +16,10 @@
 #include <aws/common/common.h>
 #include <stdlib.h>
 
+#ifdef __MACH__
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 /* turn off unused named parameter warning on msvc.*/
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -31,6 +35,7 @@ static void default_free(struct aws_allocator *allocator, void *ptr) {
 }
 
 static void *default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)oldsize;
     return realloc(ptr, newsize);
 }
 
@@ -84,6 +89,91 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     return AWS_OP_SUCCESS;
 }
+
+/* Wraps a CFAllocator around aws_allocator. For Mac only. */
+#ifdef __MACH__
+
+static CFStringRef cf_allocator_description = CFSTR("CFAllocator wrapping aws_allocator.");
+
+/* note we don't have a standard specification stating sizeof(size_t) == sizeof(void *) so we have some extra casts */
+static void *cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
+    struct aws_allocator *allocator = info;
+
+    void *mem =  aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
+    size_t allocation_size = (size_t)alloc_size + sizeof(size_t);
+    memcpy(mem, &allocation_size, sizeof(size_t));
+    return (void *)((uint8_t *)mem + sizeof(size_t));
+}
+
+static void cf_allocator_deallocate(void *ptr, void *info) {
+    struct aws_allocator *allocator = info;
+
+    void *original_allocation = (uint8_t *)ptr - sizeof(size_t);
+
+    aws_mem_release(allocator, original_allocation);
+}
+
+static void *cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
+    struct aws_allocator *allocator = info;
+    assert(allocator->mem_realloc);
+
+    void *original_allocation = (uint8_t *)ptr - sizeof(size_t);
+    size_t original_size = 0;
+    memcpy(&original_size, original_allocation, sizeof(size_t));
+
+    /* this 0 is on purpose */
+    if (aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size)) {
+        return NULL;
+    }
+
+    size_t new_allocation_size = (size_t)new_size;
+    memcpy(original_allocation, &new_allocation_size, sizeof(size_t));
+
+    return (void *)((uint8_t *)original_allocation + sizeof(size_t));
+}
+
+static CFStringRef cf_allocator_copy_description(const void *info) {
+    return cf_allocator_description;
+}
+
+static CFIndex cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
+    return size + sizeof(size_t);
+}
+
+CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
+    CFAllocatorRef cf_allocator = NULL;
+
+    CFAllocatorReallocateCallBack reallocate_callback  = NULL;
+
+    if (allocator->mem_realloc) {
+        reallocate_callback = cf_allocator_reallocate;
+    }
+
+    CFAllocatorContext context = {
+            .allocate = cf_allocator_allocate,
+            .copyDescription = cf_allocator_copy_description,
+            .deallocate = cf_allocator_deallocate,
+            .reallocate = reallocate_callback,
+            .info = allocator,
+            .preferredSize = cf_allocator_preferred_size,
+            .release = NULL,
+            .retain = NULL,
+            .version = 0 };
+
+    cf_allocator = CFAllocatorCreate(NULL, &context);
+
+    if (!cf_allocator) {
+        aws_raise_error(AWS_ERROR_OOM);
+    }
+
+    return cf_allocator;
+}
+
+void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
+    CFRelease(allocator);
+}
+
+#endif /*__MACH__ */
 
 static int8_t error_strings_loaded = 0;
 

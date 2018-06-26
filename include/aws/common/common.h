@@ -38,11 +38,31 @@ struct aws_allocator {
     void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize);
 };
 
+/* Avoid pulling in CoreFoundation headers in a header file. */
+#ifdef __MACH__
+struct __CFAllocator;
+typedef const struct __CFAllocator *CFAllocatorRef;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 AWS_COMMON_API struct aws_allocator *aws_default_allocator();
+
+#ifdef __MACH__
+/**
+ * Wraps a CFAllocator around aws_allocator. For Mac only. Use this anytime you need a CFAllocatorRef for interacting with Apple Frameworks.
+ * Unfortunately, it allocates memory so we can't make it static file scope, be sure to call aws_wrapped_cf_allocator_destroy
+ * when finished.
+ */
+AWS_COMMON_API CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator);
+
+/**
+ * Cleans up any resources alloced in aws_wrapped_cf_allocator_new.
+ */
+AWS_COMMON_API void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
+#endif
 
 /*
  * Returns at least `size` of memory ready for usage or returns NULL on failure.
