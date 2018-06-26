@@ -489,7 +489,7 @@ static int remove_entry(struct hash_table_state *state, struct hash_table_entry 
     }
 
     /* Clear the entry we shifted out of */
-    memset(&state->slots[index], 0, sizeof(*entry));
+    AWS_ZERO_STRUCT(state->slots[index]);
 
     return index;
 }
