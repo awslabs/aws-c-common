@@ -121,7 +121,6 @@ static void *cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags 
     size_t original_size = 0;
     memcpy(&original_size, original_allocation, sizeof(size_t));
 
-    /* this 0 is on purpose */
     if (aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size)) {
         return NULL;
     }
