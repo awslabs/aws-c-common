@@ -74,6 +74,19 @@ extern "C" {
      */
     AWS_COMMON_API int aws_array_list_comparator_string(const void *a, const void *b);
 
+/**
+ * Creates an aws_byte_buf that references the data in an aws_string.
+ * The aws_byte_buf will not be associated with the aws_string's allocator;
+ * destroying the byte_buf is therefore a no-op.
+ *
+ * Calling code should take care not to modify the data in the returned byte
+ * buf; code generally assumes that the aws_string should be constant, and in
+ * many cases it may in fact be constant data.
+ */
+static inline struct aws_byte_buf aws_string_to_buf(const struct aws_string *s) {
+    return aws_byte_buf_from_array(aws_string_bytes(s), s->len);
+}
+
 #ifdef __cplusplus
 }
 #endif
