@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
                        &test_realloc_fallback,
                        &test_realloc_fallback_oom,
                        &test_realloc_passthrough_oom,
-                       &test_realloc_passthrough
+                       &test_realloc_passthrough,
+                       &test_cf_allocator_wrapper
                        );
 }
