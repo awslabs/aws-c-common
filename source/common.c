@@ -181,6 +181,8 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
 
 static int8_t error_strings_loaded = 0;
 
+#define AWS_LIB_NAME "libaws-c-common"
+
 static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_SUCCESS, "success", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_OOM, "out-of-memory", AWS_LIB_NAME),
