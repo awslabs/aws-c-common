@@ -224,8 +224,6 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #define AWS_ZERO_STRUCT(object) memset(&object, 0, sizeof(object));
 #define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
 
-#define AWS_LIB_NAME "libaws-c-common"
-
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 
 #endif /* AWS_COMMON_H_ */
