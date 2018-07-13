@@ -26,7 +26,11 @@ static void element_destroy(void *value) {
     struct cache_node *cache_node = value;
 
     aws_linked_list_remove(&cache_node->node);
-    cache_node->cache->user_on_destroy(cache_node->value);
+
+    if (cache_node->cache->user_on_destroy) {
+        cache_node->cache->user_on_destroy(cache_node->value);
+    }
+
     aws_mem_release(cache_node->cache->allocator, cache_node);
 }
 
@@ -37,18 +41,15 @@ int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *alloca
                                       aws_hash_element_destroy_t destroy_value_fn,
                                       size_t max_items) {
     assert(allocator);
-    assert(max_items > 1);
+    assert(max_items);
 
     cache->allocator = allocator;
     cache->max_items = max_items;
     cache->user_on_destroy = destroy_value_fn;
 
-    /* this hash table automatically resizes itself, let's start off with 25% of the number of max items. */
-    size_t hash_table_size = max_items > 4 ? max_items / 4 : max_items;
-
     aws_linked_list_init(&cache->list);
     cache->user_on_destroy = destroy_value_fn;
-    return aws_hash_table_init(&cache->table, allocator, hash_table_size, hash_fn, equals_fn, destroy_key_fn, element_destroy);
+    return aws_hash_table_init(&cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn, element_destroy);
 }
 
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
@@ -96,8 +97,8 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
         return err_val;
     }
 
-    if (element) {
-        element_destroy(element);
+    if (element->value) {
+        element_destroy(element->value);
     }
 
     cache_node->value = p_value;
@@ -108,7 +109,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
     aws_linked_list_push_front(&cache->list, &cache_node->node);
 
     /* we only want to manage the space if we actually added a new element. */
-    if (was_added && cache->max_items > aws_hash_table_get_entry_count(&cache->table)) {
+    if (was_added && aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
 
         /* we're over the cache size limit. Remove whatever is in the back of the list. */
         struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
