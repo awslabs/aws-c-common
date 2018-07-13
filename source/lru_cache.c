@@ -25,12 +25,11 @@ struct cache_node {
 static void element_destroy(void *value) {
     struct cache_node *cache_node = value;
 
-    aws_linked_list_remove(&cache_node->node);
-
-    if (cache_node->cache->user_on_destroy) {
-        cache_node->cache->user_on_destroy(cache_node->value);
+    if (cache_node->cache->user_on_value_destroy) {
+        cache_node->cache->user_on_value_destroy(cache_node->value);
     }
 
+    aws_linked_list_remove(&cache_node->node);
     aws_mem_release(cache_node->cache->allocator, cache_node);
 }
 
@@ -45,10 +44,9 @@ int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *alloca
 
     cache->allocator = allocator;
     cache->max_items = max_items;
-    cache->user_on_destroy = destroy_value_fn;
+    cache->user_on_value_destroy = destroy_value_fn;
 
     aws_linked_list_init(&cache->list);
-    cache->user_on_destroy = destroy_value_fn;
     return aws_hash_table_init(&cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn, element_destroy);
 }
 
@@ -59,8 +57,6 @@ void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
 }
 
 int aws_lru_cache_find(struct aws_lru_cache *cache, const void *key, void **p_value) {
-
-    *p_value = NULL;
 
     struct aws_hash_element *cache_element = NULL;
     int err_val = aws_hash_table_find(&cache->table, key, &cache_element);

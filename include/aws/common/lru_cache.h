@@ -20,13 +20,13 @@
 
 /**
  * Simple Least-recently-used cache using the standard lazy linked hash table implementation. (Yes the one that was the
- * answer to that stupid interview question that one time).
+ * answer to that interview question that one time).
  */
 struct aws_lru_cache {
     struct aws_allocator *allocator;
     struct aws_linked_list list;
     struct aws_hash_table table;
-    aws_hash_element_destroy_t user_on_destroy;
+    aws_hash_element_destroy_t user_on_value_destroy;
     size_t max_items;
 };
 
