@@ -300,7 +300,7 @@ extern "C" {
      */
     AWS_COMMON_API bool aws_ptr_eq(const void *a, const void *b);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 
