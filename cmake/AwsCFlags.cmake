@@ -61,8 +61,6 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES -D${EXPORT_DEFINE}_EXPORTS)
     endif()
 
-    set(AWS_C_PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
