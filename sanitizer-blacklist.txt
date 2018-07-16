@@ -1,0 +1,2 @@
+# Disable hashlittle2, which purposefully reads past string ends
+fun:hashlittle2

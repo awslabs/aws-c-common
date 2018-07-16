@@ -40,7 +40,11 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
+<<<<<<< HEAD
 #include <memory_pool_test.c>
+=======
+#include <lru_cache_test.c>
+>>>>>>> 163a642f46a00023adc2acdf1d4ad7054a2880ed
 
 int main(int argc, char *argv[]) {
 
@@ -171,7 +175,14 @@ int main(int argc, char *argv[]) {
                        &test_realloc_passthrough_oom,
                        &test_realloc_passthrough,
                        &test_cf_allocator_wrapper,
+<<<<<<< HEAD
                        &test_memory_pool_no_overflow,
                        &test_memory_pool_overflow
+=======
+                       &test_lru_cache_overflow_static_members,
+                       &test_lru_cache_lru_ness_static_members,
+                       &test_lru_cache_entries_cleanup,
+                       &test_lru_cache_overwrite
+>>>>>>> 163a642f46a00023adc2acdf1d4ad7054a2880ed
                        );
 }
