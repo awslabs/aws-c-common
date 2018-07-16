@@ -39,6 +39,7 @@ function(aws_add_sanitizers target)
                 endif()
 
                 set(sanitizer_variable HAS_SANITIZER_${sanitizer})
+                # Sanitize the variable name to remove illegal characters
                 string(MAKE_C_IDENTIFIER ${sanitizer_variable} sanitizer_variable)
 
                 # Need to set this here so that the flag is passed to the linker
