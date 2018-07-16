@@ -13,6 +13,31 @@
 
 include(CheckCCompilerFlag)
 
+# This function checks if a sanitizer is available
+# Options:
+#  sanitizer: The sanitizer to check
+#  out_variable: The variable to assign the result to. Defaults to HAS_SANITIZER_${sanitizer}
+function(aws_check_sanitizer sanitizer)
+    # When testing for libfuzzer, if attempting to link there will be 2 mains
+    if(${sanitizer} STREQUAL "fuzzer")
+        set(sanitizer_test_flag -fsanitize=fuzzer-no-link)
+    else()
+        set(sanitizer_test_flag -fsanitize=${sanitizer})
+    endif()
+
+    if(NOT ${ARGN})
+        set(out_variable "${ARGN}")
+    else()
+        set(out_variable HAS_SANITIZER_${sanitizer})
+        # Sanitize the variable name to remove illegal characters
+        string(MAKE_C_IDENTIFIER ${out_variable} out_variable)
+    endif()
+
+    # Need to set this here so that the flag is passed to the linker
+    set(CMAKE_REQUIRED_FLAGS ${sanitizer_test_flag})
+    check_c_compiler_flag(${sanitizer_test_flag} ${out_variable})
+endfunction()
+
 # This function enables sanitizers on the given target
 # Options:
 #  SANITIZERS: The list of sanitizers to enable. Defaults to address;undefined
@@ -31,20 +56,11 @@ function(aws_add_sanitizers target)
 
             foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
-                # When testing for libfuzzer, if attempting to link there will be 2 mains
-                if(${sanitizer} STREQUAL "fuzzer")
-                    set(sanitizer_test_flag -fsanitize=fuzzer-no-link)
-                else()
-                    set(sanitizer_test_flag -fsanitize=${sanitizer})
-                endif()
-
                 set(sanitizer_variable HAS_SANITIZER_${sanitizer})
                 # Sanitize the variable name to remove illegal characters
                 string(MAKE_C_IDENTIFIER ${sanitizer_variable} sanitizer_variable)
 
-                # Need to set this here so that the flag is passed to the linker
-                set(CMAKE_REQUIRED_FLAGS ${sanitizer_test_flag})
-                check_c_compiler_flag(${sanitizer_test_flag} ${sanitizer_variable})
+                aws_check_sanitizer(${sanitizer} ${sanitizer_variable})
                 if(${${sanitizer_variable}})
                     set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS},${sanitizer}")
                 endif()
