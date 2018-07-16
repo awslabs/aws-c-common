@@ -54,7 +54,7 @@ function(aws_set_common_properties target)
     if(BUILD_SHARED_LIBS AND WIN32)
         set(EXPORT_DEFINE ${target})
         string(TOUPPER ${EXPORT_DEFINE} EXPORT_DEFINE)
-        string(REPLACE "AWS-C" "AWS" EXPORT_DEFINE ${EXPORT_DEFINE})
+        string(REGEX REPLACE "^AWS-C-" "AWS-" EXPORT_DEFINE ${EXPORT_DEFINE})
         string(REPLACE "-" "_" EXPORT_DEFINE ${EXPORT_DEFINE})
 
         list(APPEND AWS_C_DEFINES -DUSE_IMPORT_EXPORT)
