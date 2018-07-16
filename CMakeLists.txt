@@ -14,6 +14,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(aws-c-common)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(AwsCFlags)
+include(Sanitizers)
+
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         )
@@ -76,34 +80,14 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_OS_SRC}
         )
 
-if (BUILD_SHARED_LIBS)
-    if (WIN32)
-        add_definitions("-DUSE_IMPORT_EXPORT")
-    endif ()
-endif ()
-
 add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-
-if (MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
-else ()
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -pedantic -Werror -Wno-long-long)
-endif ()
-
-if (BUILD_SHARED_LIBS AND WIN32)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DAWS_COMMON_EXPORTS")
-endif ()
-
-if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
-endif ()
+aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
+aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
+target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
 
 install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(FILES ${AWS_TEST_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/testing")
@@ -117,6 +101,9 @@ install(
 
 export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
 install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
+
+file(GLOB EXPORT_MODULES "cmake/*.cmake")
+install(FILES ${EXPORT_MODULES} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/")
 
 include(CTest)
 add_subdirectory(tests)
