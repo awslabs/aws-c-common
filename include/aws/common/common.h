@@ -226,6 +226,38 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #define AWS_PTR_ADD(ptr, bytes) ((void *)(((char *)ptr) + (bytes)))
 #define AWS_PTR_SUB(ptr, bytes) ((void *)(((char *)ptr) - (bytes)))
 
+#define AWS_DOUBLY_LIST_INIT(sentinel) \
+	do { \
+		(sentinel)->next = (sentinel); \
+		(sentinel)->prev = (sentinel); \
+	} while (0)
+
+#define AWS_DOUBLY_LIST_INSERT_BEFORE(before_me, element) \
+	do { \
+		(element)->prev = (before_me); \
+		(element)->next = (before_me)->next; \
+		(before_me)->next->prev = (element); \
+		(before_me)->next = (element); \
+	} while (0)
+
+#define AWS_DOUBLY_LIST_REMOVE(element) \
+	do { \
+		(element)->prev->next = (element)->next; \
+		(element)->next->prev = (element)->prev; \
+	} while (0)
+
+#define AWS_SLIST_REVERSE(T, list) \
+    do { \
+        T* node = 0; \
+        while (list) { \
+            T* next = list->next; \
+            list->next = node; \
+            node = list; \
+            list = next; \
+        } \
+        list = node; \
+    } while (0)
+
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 
 #endif /* AWS_COMMON_H_ */
