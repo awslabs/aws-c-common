@@ -511,11 +511,6 @@ static void hashlittle2(
      * still catch it and complain.  The masking trick does make the hash
      * noticably faster for short strings (like English words).
      */
-#if defined(__has_feature)
-#  if __has_feature(address_sanitizer)
-#    define VALGRIND
-#  endif
-#endif
 #ifndef VALGRIND
     // changed in aws-c-common: fix unused variable warning
 

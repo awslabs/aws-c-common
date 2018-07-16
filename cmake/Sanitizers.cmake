@@ -13,17 +13,23 @@
 
 include(CheckCCompilerFlag)
 
+# This function enables sanitizers on the given target
+# Options:
+#  SANITIZERS: The list of sanitizers to enable. Defaults to address;undefined
+#  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
 function(aws_add_sanitizers target)
+    set(oneValueArgs BLACKLIST)
+    set(multiValueArgs SANITIZERS)
+    cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
         if(HAS_SANITIZERS)
-            if(ARGN)
-                set(SANITIZERS ${ARGN})
-            else()
-                set(SANITIZERS "address;undefined")
+            if(NOT SANITIZER_SANITIZERS)
+                set(SANITIZER_SANITIZERS "address;undefined")
             endif()
 
-            foreach (sanitizer IN LISTS SANITIZERS)
+            foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
                 # When testing for libfuzzer, if attempting to link there will be 2 mains
                 if(${sanitizer} STREQUAL "fuzzer")
@@ -43,11 +49,17 @@ function(aws_add_sanitizers target)
                 endif()
             endforeach()
 
-            target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
-            set_target_properties(${target} PROPERTIES LINK_FLAGS "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+            if(PRESENT_SANITIZERS)
+                target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
+                set_target_properties(${target} PROPERTIES LINK_FLAGS "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
 
-            string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
-            set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
+                if(SANITIZER_BLACKLIST)
+                    target_compile_options(${target} PRIVATE -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/${SANITIZER_BLACKLIST})
+                endif()
+
+                string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
+                set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
+            endif()
         endif()
     endif()
 endfunction()
