@@ -40,7 +40,11 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
+<<<<<<< HEAD
 #include <lru_cache_test.c>
+=======
+#include <memory_pool_test.c>
+>>>>>>> initial skeleton files for memory pool, log, and atomics
 
 int main(int argc, char *argv[]) {
 
@@ -175,5 +179,7 @@ int main(int argc, char *argv[]) {
                        &test_lru_cache_lru_ness_static_members,
                        &test_lru_cache_entries_cleanup,
                        &test_lru_cache_overwrite
+                       &test_memory_pool_no_overflow,
+                       &test_memory_pool_overflow
                        );
 }

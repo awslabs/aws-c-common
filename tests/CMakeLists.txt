@@ -182,3 +182,5 @@ add_test(test_lru_cache_overwrite ${TEST_BINARY_NAME} test_lru_cache_overwrite)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
+add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
+add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
