@@ -40,6 +40,7 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
+#include <memory_pool_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -169,6 +170,8 @@ int main(int argc, char *argv[]) {
                        &test_realloc_fallback_oom,
                        &test_realloc_passthrough_oom,
                        &test_realloc_passthrough,
-                       &test_cf_allocator_wrapper
+                       &test_cf_allocator_wrapper,
+                       &test_memory_pool_no_overflow,
+                       &test_memory_pool_overflow
                        );
 }

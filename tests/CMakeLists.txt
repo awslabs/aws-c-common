@@ -179,3 +179,5 @@ add_test(test_realloc_fallback_oom ${TEST_BINARY_NAME} test_realloc_fallback_oom
 add_test(test_realloc_passthrough ${TEST_BINARY_NAME} test_realloc_passthrough)
 add_test(test_realloc_passthrough_oom ${TEST_BINARY_NAME} test_realloc_passthrough_oom)
 add_test(test_cf_allocator_wrapper ${TEST_BINARY_NAME} test_cf_allocator_wrapper)
+add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
+add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
