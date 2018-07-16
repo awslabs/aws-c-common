@@ -38,20 +38,27 @@ struct aws_log_message {
 struct aws_log_context {
     struct aws_log_message *message_list;
     struct aws_log_message *delete_list;
+    int running;
+    size_t max_message_len;
     struct aws_memory_pool message_pool;
     struct aws_log_context *next;
+    struct aws_log_context *prev;
 };
+
+typedef void (*aws_log_report_callback)(const char* log_message);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-AWS_COMMON_API void aws_log(enum aws_log_level level, const char *fmt, ...);
+AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_callback report_callback);
+AWS_COMMON_API int aws_log(enum aws_log_level level, const char *fmt, ...);
 AWS_COMMON_API const char *aws_log_level_to_string(enum aws_log_level level);
+
 AWS_COMMON_API void aws_log_process();
 
-AWS_COMMON_API void aws_init_logging(struct aws_allocator *alloc, int memory_pool_element_count);
-AWS_COMMON_API void aws_shutdown_logging();
+AWS_COMMON_API int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count);
+AWS_COMMON_API void aws_log_clean_up();
 
 #ifdef __cplusplus
 }
