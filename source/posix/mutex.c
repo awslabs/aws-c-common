@@ -20,7 +20,7 @@ void aws_mutex_clean_up(struct aws_mutex *mutex) {
     pthread_mutex_destroy(&mutex->mutex_handle);
 }
 
-static int convert_and_raise_error_code (int error_code) {
+int convert_and_raise_error_code(int error_code) {
     switch (error_code) {
         case 0:
             return AWS_OP_SUCCESS;
