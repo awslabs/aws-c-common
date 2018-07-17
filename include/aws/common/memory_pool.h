@@ -31,7 +31,7 @@ extern "C" {
 
 /**
  * Constructs a memory pool where internal elements are all of the size `element_size`. Internally a single memory arena
- * is created of size (`element_size` + sizeof(void *)) * `element_count`, allocated via `alloc`.
+ * is created of size `(element_size + sizeof(void *)) * element_count`, allocated via `alloc`.
  */
 AWS_COMMON_API int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* alloc, size_t element_size, int element_count);
 

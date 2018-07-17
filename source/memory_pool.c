@@ -25,6 +25,7 @@ int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* all
     pool->overflow_count = 0;
 
     if (!pool->arena) {
+        aws_raise_error(AWS_ERROR_OOM);
         return AWS_OP_ERR;
     }
 
