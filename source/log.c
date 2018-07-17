@@ -26,28 +26,33 @@ static void aws_log_default_report_function_internal(const char* log_message) {
     (void)log_message;
 }
 
-int global_log_owning_thread_init;
-uint64_t global_log_owning_thread_id;
+int global_log_thread_count;
 aws_log_report_callback global_log_report_callback = aws_log_default_report_function_internal;
 struct aws_mutex global_log_list_mutex = AWS_MUTEX_INIT;
 struct aws_log_context *global_log_list;
 
-AWS_THREAD_LOCAL struct aws_log_context thread_local_log_context;
+AWS_THREAD_LOCAL struct aws_log_context *thread_local_log_context;
 
 static struct aws_log_message *aws_log_acquire_message_internal() {
-    void *mem = aws_memory_pool_acquire(&thread_local_log_context.message_pool);
+    void *mem = aws_memory_pool_acquire(&thread_local_log_context->message_pool);
     struct aws_log_message *msg = (struct aws_log_message *)mem;
     return msg;
 }
 
 void aws_log_set_reporting_callback(aws_log_report_callback report_callback) {
-    global_log_report_callback = report_callback;
+    if (report_callback) {
+        global_log_report_callback = report_callback;
+    } else {
+        global_log_report_callback = aws_log_default_report_function_internal;
+    }
 }
 
 int aws_log(enum aws_log_level level, const char *fmt, ...) {
-    (void)level;
+    if (level > AWS_LOG_LEVEL) {
+        return AWS_OP_SUCCESS;
+    }
 
-    if (!thread_local_log_context.running) {
+    if (!thread_local_log_context->running) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
     }
@@ -55,32 +60,32 @@ int aws_log(enum aws_log_level level, const char *fmt, ...) {
     /* Automically grab and release all messages on the `delete_list` whenever present. */
     struct aws_log_message* delete_list;
     do {
-        delete_list = thread_local_log_context.delete_list;
-    } while (!aws_atomic_cas_ptr(&thread_local_log_context.delete_list, delete_list, NULL));
+        delete_list = thread_local_log_context->delete_list;
+    } while (!aws_atomic_cas_ptr(&thread_local_log_context->delete_list, delete_list, NULL));
 
     while (delete_list) {
         struct aws_log_message *next = delete_list->next;
-        aws_memory_pool_release(&thread_local_log_context.message_pool, delete_list);
+        aws_memory_pool_release(&thread_local_log_context->message_pool, delete_list);
         delete_list = next;
     }
 
     /* Acquire memory for the new message. */
-    void *mem = aws_memory_pool_acquire(&thread_local_log_context.message_pool);
+    void *mem = aws_memory_pool_acquire(&thread_local_log_context->message_pool);
     struct aws_log_message *msg = (struct aws_log_message *)mem;
     char *msg_data = (char*)(msg + 1);
 
     /* Format the message. */
     va_list args;
     va_start(args, fmt);
-    vsnprintf((char *)msg_data, thread_local_log_context.max_message_len, fmt, args);
+    vsnprintf((char *)msg_data, thread_local_log_context->max_message_len, fmt, args);
     va_end(args);
 
     /* Push formatted message onto this thread's message list. Will be picked up later and
     processed by the logging thread in `process()`, and handed to a user callback set by
     `aws_log_set_reporting_callback`. */
     do {
-        msg->next = thread_local_log_context.message_list;
-    } while (!aws_atomic_cas_ptr(&thread_local_log_context.message_list, msg->next, msg));
+        msg->next = thread_local_log_context->message_list;
+    } while (!aws_atomic_cas_ptr(&thread_local_log_context->message_list, msg->next, msg));
 
     return AWS_OP_SUCCESS;
 }
@@ -97,12 +102,6 @@ const char *aws_log_level_to_string(enum aws_log_level level) {
 }
 
 int aws_log_process() {
-    aws_log_report_callback cb = global_log_report_callback;
-    if (!cb || !global_log_list) {
-        aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
-        return AWS_OP_ERR;
-    }
-
     struct aws_log_context *log_list = global_log_list;
     struct aws_log_context *sentinel = log_list;
     do {
@@ -115,27 +114,23 @@ int aws_log_process() {
         } while (!aws_atomic_cas_ptr(&log_list->message_list, msg_list, NULL));
 
         /* Reverse the list to preserve user submitted order, for reporting. */
-        struct aws_log_message *last_msg = msg_list;
-        AWS_SINGLY_LIST_REVERSE(struct aws_log_message, msg_list);
-        /* AWS_ASSERT(last_msg->next == NULL); */
+        if (msg_list) {
+            struct aws_log_message *last_msg = msg_list;
+            AWS_SINGLY_LIST_REVERSE(struct aws_log_message, msg_list);
+            /* AWS_ASSERT(last_msg->next == NULL); */
 
-        /* Report logs to the user. */
-        struct aws_log_message *msg = msg_list;
-        while (msg) {
-            char *msg_data = (char*)(msg + 1);
-            cb(msg_data);
-            msg = msg->next;
-        }
+            /* Report logs to the user. */
+            struct aws_log_message *msg = msg_list;
+            while (msg) {
+                char *msg_data = (char*)(msg + 1);
+                global_log_report_callback(msg_data);
+                msg = msg->next;
+            }
 
-        /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
-        do {
-            last_msg->next = thread_local_log_context.delete_list;
-        } while (!aws_atomic_cas_ptr(&thread_local_log_context.delete_list, last_msg->next, msg_list));
-
-        /* Remove dead threads. */
-        if (!log_list->running) {
-            AWS_DOUBLY_LIST_REMOVE(&thread_local_log_context);
-            aws_memory_pool_clean_up(&thread_local_log_context.message_pool);
+            /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
+            do {
+                last_msg->next = thread_local_log_context->delete_list;
+            } while (!aws_atomic_cas_ptr(&thread_local_log_context->delete_list, last_msg->next, msg_list));
         }
 
         log_list = next;
@@ -145,67 +140,98 @@ int aws_log_process() {
 }
 
 int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count) {
-    if (thread_local_log_context.running) {
+    if (aws_atomic_get_ptr(&thread_local_log_context)) {
         aws_raise_error(AWS_ERROR_LOG_DOUBLE_INITIALIZE);
         return AWS_OP_ERR;
     }
 
-    if (!global_log_owning_thread_init) {
-        global_log_owning_thread_id = aws_thread_current_thread_id();
-        global_log_owning_thread_init = 1;
+    aws_atomic_add(&global_log_thread_count, 1);
+    aws_atomic_set_ptr(&thread_local_log_context, alloc->mem_acquire(alloc, sizeof(struct aws_log_context)));
+    if (!thread_local_log_context) {
+        aws_raise_error(AWS_ERROR_OOM);
+        return AWS_OP_ERR;
     }
 
-    thread_local_log_context.max_message_len = max_message_len;
-    int ret = aws_memory_pool_init(&thread_local_log_context.message_pool, alloc, sizeof(struct aws_log_message) + max_message_len, memory_pool_message_count);
+    memset(thread_local_log_context, 0, sizeof(*thread_local_log_context));
+    thread_local_log_context->running = 1;
+    thread_local_log_context->max_message_len = max_message_len;
+    thread_local_log_context->alloc = alloc;
+    int ret = aws_memory_pool_init(&thread_local_log_context->message_pool, alloc, sizeof(struct aws_log_message) + max_message_len, memory_pool_message_count);
     if (ret) {
         aws_raise_error(AWS_ERROR_OOM);
         return AWS_OP_ERR;
     }
-    AWS_DOUBLY_LIST_INIT(&thread_local_log_context);
+    AWS_DOUBLY_LIST_INIT(thread_local_log_context);
 
     /* Insert thread local log info struct onto the global doubly linked list used by
     the logging thread. */
     aws_mutex_lock(&global_log_list_mutex);
     if (!global_log_list) {
-        global_log_list = &thread_local_log_context;
+        global_log_list = thread_local_log_context;
     } else {
-        AWS_DOUBLY_LIST_INSERT_BEFORE(global_log_list, &thread_local_log_context);
+        AWS_DOUBLY_LIST_INSERT_BEFORE(global_log_list, thread_local_log_context);
     }
     aws_mutex_unlock(&global_log_list_mutex);
 
-    thread_local_log_context.running = 1;
 
     return AWS_OP_SUCCESS;
 }
 
 int aws_log_clean_up() {
-    if (!global_log_owning_thread_init) {
+    if (aws_atomic_get(&global_log_thread_count) == 0) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
     }
 
-    /* Mark for removal from `global_log_list` by the owning thread. */
-    thread_local_log_context.running = 0;
+    struct aws_log_context *context;
+    do {
+        context = thread_local_log_context;
+    } while (!aws_atomic_cas_ptr(&thread_local_log_context, context, NULL));
 
-    /* Perform final cleanup if this is the owning thread. */
-    if (aws_thread_current_thread_id() == global_log_owning_thread_id) {
-        /* Make sure all the other log threads have been joined and remove dead threads. */
+    context->running = 0;
+
+    /* Perform final cleanup if this is the last log thread. */
+    aws_mutex_lock(&global_log_list_mutex);
+    if (aws_atomic_add(&global_log_thread_count, -1) == 1) {
         struct aws_log_context *log_list = global_log_list;
+        global_log_list = NULL;
+        aws_mutex_unlock(&global_log_list_mutex);
+
+        /* Make sure all the other log threads have been joined and remove dead threads. */
         struct aws_log_context *sentinel = log_list;
         do {
             struct aws_log_context *next = log_list->next;
 
-            /* Remove dead threads. */
+            /* Remove dead threads. Log any leftover messages. Cleanup leftover message pool memory. */
             if (!log_list->running) {
-                AWS_DOUBLY_LIST_REMOVE(log_list);
+                struct aws_log_message *delete_list = log_list->message_list;
+                while (delete_list) {
+                    struct aws_log_message *next0 = delete_list->next;
+                    char *msg_data = (char*)(delete_list + 1);
+                    global_log_report_callback(msg_data);
+                    aws_memory_pool_release(&context->message_pool, delete_list);
+                    delete_list = next0;
+                }
+
+                delete_list = log_list->delete_list;
+                while (delete_list) {
+                    struct aws_log_message *next0 = delete_list->next;
+                    aws_memory_pool_release(&context->message_pool, delete_list);
+                    delete_list = next0;
+                }
+
                 aws_memory_pool_clean_up(&log_list->message_pool);
             } else {
                 aws_raise_error(AWS_ERROR_LOG_IMPROPER_CLEAN_UP);
                 return AWS_OP_ERR;
             }
 
+            log_list->alloc->mem_release(log_list->alloc, log_list);
+
             log_list = next;
         } while (log_list != sentinel);
+    } else {
+        aws_mutex_unlock(&global_log_list_mutex);
     }
 
     return AWS_OP_SUCCESS;

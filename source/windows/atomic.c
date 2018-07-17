@@ -15,8 +15,38 @@
 
 #include <intrin.h>
 
+#include <aws/common/atomic.h>
+
+int aws_atomic_get(int *dst) {
+    int value;
+    do {
+        value = *dst;
+    } while (!aws_atomic_cas(dst, value, value));
+    return value;
+}
+
+int aws_atomic_set(int *dst, int value) {
+    return _InterlockedExchange((long *)dst, value);
+}
+
+int aws_atomic_add(int *dst, int addend) {
+    return (int)_InterlockedExchangeAdd((long *)dst, (long)addend);
+}
+
 int aws_atomic_cas(int *dst, int compare, int value) {
     return _InterlockedCompareExchange((long *)dst, (long)value, (long)compare) == (long)compare;
+}
+
+void *aws_atomic_get_ptr(void **dst) {
+    void *value;
+    do {
+        value = *dst;
+    } while (!aws_atomic_cas_ptr(dst, value, value));
+    return value;
+}
+
+void *aws_atomic_set_ptr(void **dst, void *value) {
+    return _InterlockedExchangePointer(dst, value);
 }
 
 int aws_atomic_cas_ptr(void **dst, void *compare, void *value) {

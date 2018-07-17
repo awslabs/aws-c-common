@@ -23,10 +23,35 @@ extern "C" {
 #endif
 
 /**
+ * Automically retrieves the value at `dst`.
+ */
+AWS_COMMON_API int aws_atomic_get(int *dst);
+
+/**
+ * Automically sets the value at `dst` to `value`.
+ */
+AWS_COMMON_API int aws_atomic_set(int *dst, int value);
+
+/**
+ * Adds `addend` to `dst` and returns the old value from `dst`.
+ */
+AWS_COMMON_API int aws_atomic_add(int *dst, int addend);
+
+/**
  * Sets `dst` to `value` if `compare` equals `dst`.
  * Returns 1 of the value was set, 0 otherwise.
  */
 AWS_COMMON_API int aws_atomic_cas(int *dst, int compare, int value);
+
+/**
+ * Automically retrieves the value at `dst`.
+ */
+AWS_COMMON_API void *aws_atomic_get_ptr(void **dst);
+
+/**
+ * Automically sets the value at `dst` to `value`.
+ */
+AWS_COMMON_API void *aws_atomic_set_ptr(void **dst, void *value);
 
 /**
  * Sets `dst` to `value` if `compare` equals `dst`.

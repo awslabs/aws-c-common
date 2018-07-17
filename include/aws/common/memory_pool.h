@@ -19,6 +19,7 @@
 
 struct aws_memory_pool {
     struct aws_allocator *alloc;
+    size_t arena_size;
     size_t element_size;
     void *arena;
     void *free_list;

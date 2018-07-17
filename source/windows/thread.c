@@ -13,8 +13,13 @@
 * permissions and limitations under the License.
 */
 
-#include <aws/common/thread.h>
 #include <assert.h>
+
+#include <aws/common/thread.h>
+#include <aws/common/log.h>
+
+#define AWS_LOG_MESSAGE_MAX_LEN (128)
+#define AWS_LOG_THREAD_MAX_MESSAGES (1024 * 1024)
 
 static struct aws_thread_options default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
@@ -30,7 +35,9 @@ struct thread_wrapper {
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
     aws_mem_release(thread_wrapper.allocator, (void *)arg);
+    aws_log_init(thread_wrapper.allocator, AWS_LOG_MESSAGE_MAX_LEN, AWS_LOG_THREAD_MAX_MESSAGES);
     thread_wrapper.func(thread_wrapper.arg);
+    aws_log_clean_up();
     return 0;
 }
 
@@ -39,7 +46,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
-    thread->thread_handle = 0;    
+    thread->thread_handle = 0;
     thread->thread_id = 0;
     thread->allocator = allocator;
     thread->detach_state = AWS_THREAD_NOT_CREATED;
@@ -59,6 +66,7 @@ int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg), void *a
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
+
     thread->thread_handle = CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
@@ -80,7 +88,7 @@ aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
 int aws_thread_join(struct aws_thread *thread) {
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
         WaitForSingleObject(thread->thread_handle, INFINITE);
-        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;        
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
     }
 
     return AWS_OP_SUCCESS;
