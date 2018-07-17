@@ -15,6 +15,10 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 
+    int aws_atomic_add(int *dst, int addend) {
+        return __sync_fetch_and_add(dst, addend);
+    }
+
     int aws_atomic_cas(int *dst, int compare, int value) {
         return __sync_bool_compare_and_swap(dst, compare, value);
     }

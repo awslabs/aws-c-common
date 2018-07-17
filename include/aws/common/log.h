@@ -29,8 +29,7 @@ enum aws_log_level
     AWS_LOG_LEVEL_TRACE = 4
 };
 
-#define AWS_LOG(level, str)
-#define AWS_LOG_F(level, fmt, ...)
+#define AWS_LOG_LEVEL AWS_LOG_LEVEL_TRACE
 
 struct aws_log_message {
     struct aws_log_message *next;
@@ -42,6 +41,7 @@ struct aws_log_context {
     int running;
     size_t max_message_len;
     struct aws_memory_pool message_pool;
+    struct aws_allocator *alloc;
     struct aws_log_context *next;
     struct aws_log_context *prev;
 };
