@@ -28,7 +28,7 @@ struct aws_log_context *global_log_list;
 AWS_THREAD_LOCAL struct aws_log_context thread_local_log_context;
 
 static struct aws_log_message *aws_log_acquire_message_internal() {
-    void* mem = aws_memory_pool_acquire(&thread_local_log_context.message_pool);
+    void *mem = aws_memory_pool_acquire(&thread_local_log_context.message_pool);
     struct aws_log_message *msg = (struct aws_log_message *)mem;
     return msg;
 }
@@ -86,7 +86,7 @@ const char *aws_log_level_to_string(enum aws_log_level level) {
     }
 }
 
-void aws_log_process() {
+int aws_log_process() {
     aws_log_report_callback cb = global_log_report_callback;
     if (!cb || !global_log_list)
         return AWS_OP_ERR;
@@ -104,7 +104,7 @@ void aws_log_process() {
 
         /* Reverse the list to preserve user submitted order, for reporting. */
         struct aws_log_message *last_msg = msg_list;
-        AWS_SLIST_REVERSE(struct aws_log_message *, msg_list);
+        AWS_SINGLY_LIST_REVERSE(struct aws_log_message, msg_list);
         /* AWS_ASSERT(last_msg->next == NULL); */
 
         /* Report logs to the user. */
@@ -121,7 +121,7 @@ void aws_log_process() {
 
         /* Remove dead threads. */
         if (!log_list->running) {
-            AWS_DLIST_REMOVE(&thread_local_log_context);
+            AWS_DOUBLY_LIST_REMOVE(&thread_local_log_context);
             aws_memory_pool_clean_up(&thread_local_log_context.message_pool);
         }
 
@@ -136,7 +136,7 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
     int ret = aws_memory_pool_init(&thread_local_log_context.message_pool, alloc, sizeof(struct aws_log_message), memory_pool_message_count);
     if (ret)
         return AWS_OP_ERR;
-    AWS_DLIST_INIT(&thread_local_log_context);
+    AWS_DOUBLY_LIST_INIT(&thread_local_log_context);
 
     /* Insert thread local log info struct onto the global doubly linked list used by
     the logging thread. */
@@ -144,11 +144,13 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
     if (!global_log_list) {
         global_log_list = &thread_local_log_context;
     } else {
-        AWS_DLIST_INSERT_BEFORE(global_log_list, &thread_local_log_context);
+        AWS_DOUBLY_LIST_INSERT_BEFORE(global_log_list, &thread_local_log_context);
     }
     aws_mutex_unlock(&global_log_list_mutex);
-    
+
     thread_local_log_context.running = 1;
+
+    return AWS_OP_SUCCESS;
 }
 
 void aws_log_clean_up() {

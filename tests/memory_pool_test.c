@@ -16,15 +16,16 @@
 #include <aws/common/memory_pool.h>
 #include <aws/testing/aws_test_harness.h>
 
+#define AWS_MEMORY_POOL_TEST_ITERATIONS 10
+
 AWS_TEST_CASE(test_memory_pool_no_overflow, test_memory_pool_no_overflow_fn)
 static int test_memory_pool_no_overflow_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_memory_pool pool;
-    const int it_count = 10;
-    ASSERT_SUCCESS(aws_memory_pool_init(&pool, allocator, sizeof(int), it_count));
+    ASSERT_SUCCESS(aws_memory_pool_init(&pool, allocator, sizeof(int), AWS_MEMORY_POOL_TEST_ITERATIONS));
 
-    int *ptrs[it_count];
+    int *ptrs[AWS_MEMORY_POOL_TEST_ITERATIONS];
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         void* mem = aws_memory_pool_acquire(&pool);
         ASSERT_NOT_NULL(mem);
         int* val_ptr = (int*)mem;
@@ -32,11 +33,11 @@ static int test_memory_pool_no_overflow_fn(struct aws_allocator *allocator, void
         ptrs[i] = val_ptr;
     }
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         ASSERT_INT_EQUALS(i, *ptrs[i]);
     }
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         aws_memory_pool_release(&pool, ptrs[i]);
     }
 
@@ -48,12 +49,11 @@ static int test_memory_pool_no_overflow_fn(struct aws_allocator *allocator, void
 AWS_TEST_CASE(test_memory_pool_overflow, test_memory_pool_overflow_fn)
 static int test_memory_pool_overflow_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_memory_pool pool;
-    const int it_count = 10;
-    ASSERT_SUCCESS(aws_memory_pool_init(&pool, allocator, sizeof(int), it_count));
+    ASSERT_SUCCESS(aws_memory_pool_init(&pool, allocator, sizeof(int), AWS_MEMORY_POOL_TEST_ITERATIONS));
 
-    int *ptrs[it_count];
+    int *ptrs[AWS_MEMORY_POOL_TEST_ITERATIONS];
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         void* mem = aws_memory_pool_acquire(&pool);
         ASSERT_NOT_NULL(mem);
         int* val_ptr = (int*)mem;
@@ -61,7 +61,7 @@ static int test_memory_pool_overflow_fn(struct aws_allocator *allocator, void *c
         ptrs[i] = val_ptr;
     }
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         ASSERT_INT_EQUALS(i, *ptrs[i]);
     }
 
@@ -75,7 +75,7 @@ static int test_memory_pool_overflow_fn(struct aws_allocator *allocator, void *c
     aws_memory_pool_release(&pool, mem1);
     aws_memory_pool_release(&pool, mem2);
 
-    for (int i = 0; i < it_count; ++i) {
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         aws_memory_pool_release(&pool, ptrs[i]);
     }
 

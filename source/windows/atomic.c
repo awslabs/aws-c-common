@@ -16,9 +16,9 @@
 #include <intrin.h>
 
 int aws_atomic_cas(int *dst, int compare, int value) {
-    return InterlockedCompareExchange((unsigned*)dst, (unsigned)value, (unsigned)compare) == (unsigned)compare;
+    return _InterlockedCompareExchange((long *)dst, (long)value, (long)compare) == (long)compare;
 }
 
 int aws_atomic_cas_ptr(void **dst, void *compare, void *value) {
-    return InterlockedCompareExchangePointer(dst, value, compare) == compare;
+    return _InterlockedCompareExchangePointer(dst, value, compare) == compare;
 }
