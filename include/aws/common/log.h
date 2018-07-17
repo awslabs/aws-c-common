@@ -33,7 +33,6 @@ enum aws_log_level
 #define AWS_LOG_F(level, fmt, ...)
 
 struct aws_log_message {
-    void* memory;
     struct aws_log_message *next;
 };
 
@@ -60,7 +59,7 @@ AWS_COMMON_API const char *aws_log_level_to_string(enum aws_log_level level);
 AWS_COMMON_API int aws_log_process();
 
 AWS_COMMON_API int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count);
-AWS_COMMON_API void aws_log_clean_up();
+AWS_COMMON_API int aws_log_clean_up();
 
 #ifdef __cplusplus
 }

@@ -47,6 +47,7 @@
 >>>>>>> initial skeleton files for memory pool, log, and atomics
 =======
 #include <memory_pool_test.c>
+#include <log_test.h>
 #include <lru_cache_test.c>
 
 /* Enables terminal escape sequences for text coloring. */
@@ -209,6 +210,7 @@ int main(int argc, char *argv[]) {
                        &test_cf_allocator_wrapper,
                        &test_memory_pool_no_overflow,
                        &test_memory_pool_overflow,
+                       &test_log_init_clean_up,
                        &test_lru_cache_overflow_static_members,
                        &test_lru_cache_lru_ness_static_members,
                        &test_lru_cache_entries_cleanup,

@@ -215,7 +215,11 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_PRIORITY_QUEUE_EMPTY, "attempt to pop an item from an empty queue.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_TASKS, "no tasks scheduled available.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, "none of the tasks scheduled is due to run now.", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_UNIMPLEMENTED, "The current function or feature is not yet implemented.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_UNINITIALIZED, "Log system not properly initialized yet.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_DOUBLE_INITIALIZE, "aws_log_init called more than once on this thread.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_IMPROPER_CLEAN_UP, "aws_log_clean_up must be called on all logging threads, before the owning thread can call it.", AWS_LIB_NAME),
 };
 
 static struct aws_error_info_list list = {
