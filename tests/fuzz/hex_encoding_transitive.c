@@ -27,41 +27,29 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     struct aws_byte_buf to_encode = aws_byte_buf_from_array(data, size);
 
-    struct aws_byte_buf encode_allocation;
-    result = aws_byte_buf_init(alloc, &encode_allocation, output_size + 2);
+    struct aws_byte_buf encode_output;
+    result = aws_byte_buf_init(alloc, &encode_output, output_size);
     assert(result == AWS_OP_SUCCESS);
-    memset(encode_allocation.buffer, 0xdd, encode_allocation.capacity);
-    struct aws_byte_buf encode_output = aws_byte_buf_from_array(encode_allocation.buffer + 1, output_size);
-    encode_output.len = 0;
 
     result = aws_hex_encode(&to_encode, &encode_output);
     assert(result == AWS_OP_SUCCESS);
-    assert(*encode_allocation.buffer == 0xdd);
-    assert(*(encode_allocation.buffer + output_size + 1) == 0xdd);
     --encode_output.len; /* Remove null terminator */
 
-    result = aws_hex_compute_decoded_len(output_size - 1, &output_size);
+    result = aws_hex_compute_decoded_len(encode_output.len, &output_size);
     assert(result == AWS_OP_SUCCESS);
     assert(output_size == size);
 
-    struct aws_byte_buf decode_allocation;
-    result = aws_byte_buf_init(alloc, &decode_allocation, output_size + 2);
+    struct aws_byte_buf decode_output;
+    result = aws_byte_buf_init(alloc, &decode_output, output_size);
     assert(result == AWS_OP_SUCCESS);
-    memset(decode_allocation.buffer, 0xdd, decode_allocation.capacity);
-    struct aws_byte_buf decode_output = aws_byte_buf_from_array(decode_allocation.buffer + 1, output_size);
-    decode_output.len = 0;
 
     result = aws_hex_decode(&encode_output, &decode_output);
     assert(result == AWS_OP_SUCCESS);
-
-    assert(*decode_allocation.buffer == 0xdd);
-    assert(*(decode_allocation.buffer + output_size + 1) == 0xdd);
-
     assert(output_size == decode_output.len);
     assert(memcmp(decode_output.buffer, data, size) == 0);
 
-    aws_byte_buf_clean_up(&encode_allocation);
-    aws_byte_buf_clean_up(&decode_allocation);
+    aws_byte_buf_clean_up(&encode_output);
+    aws_byte_buf_clean_up(&decode_output);
 
     return 0;
 }
