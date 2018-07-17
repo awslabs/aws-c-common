@@ -1,3 +1,4 @@
+include(LibFuzzer)
 enable_testing()
 
 file(GLOB TEST_SRC "main.c")
@@ -178,3 +179,6 @@ add_test(test_lru_cache_overflow_static_members ${TEST_BINARY_NAME} test_lru_cac
 add_test(test_lru_cache_lru_ness_static_members ${TEST_BINARY_NAME} test_lru_cache_lru_ness_static_members)
 add_test(test_lru_cache_entries_cleanup ${TEST_BINARY_NAME} test_lru_cache_entries_cleanup)
 add_test(test_lru_cache_overwrite ${TEST_BINARY_NAME} test_lru_cache_overwrite)
+
+file(GLOB FUZZ_TESTS "fuzz/*.c")
+aws_add_fuzz_tests("${FUZZ_TESTS}" "")
