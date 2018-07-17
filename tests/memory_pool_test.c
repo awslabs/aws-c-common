@@ -65,15 +65,45 @@ static int test_memory_pool_overflow_fn(struct aws_allocator *allocator, void *c
         ASSERT_INT_EQUALS(i, *ptrs[i]);
     }
 
-    void* mem0 = aws_memory_pool_acquire(&pool);
-    ASSERT_NOT_NULL(mem0);
-    void* mem1 = aws_memory_pool_acquire(&pool);
-    ASSERT_NOT_NULL(mem1);
-    void* mem2 = aws_memory_pool_acquire(&pool);
-    ASSERT_NOT_NULL(mem2);
-    aws_memory_pool_release(&pool, mem0);
-    aws_memory_pool_release(&pool, mem1);
-    aws_memory_pool_release(&pool, mem2);
+    {
+        void* mem0 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem0);
+        void* mem1 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem1);
+        void* mem2 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem2);
+        aws_memory_pool_release(&pool, mem0);
+        aws_memory_pool_release(&pool, mem1);
+        aws_memory_pool_release(&pool, mem2);
+    }
+
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
+        aws_memory_pool_release(&pool, ptrs[i]);
+    }
+
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
+        void* mem = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem);
+        int* val_ptr = (int*)mem;
+        *val_ptr = i;
+        ptrs[i] = val_ptr;
+    }
+
+    for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
+        ASSERT_INT_EQUALS(i, *ptrs[i]);
+    }
+
+    {
+        void* mem0 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem0);
+        void* mem1 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem1);
+        void* mem2 = aws_memory_pool_acquire(&pool);
+        ASSERT_NOT_NULL(mem2);
+        aws_memory_pool_release(&pool, mem0);
+        aws_memory_pool_release(&pool, mem1);
+        aws_memory_pool_release(&pool, mem2);
+    }
 
     for (int i = 0; i < AWS_MEMORY_POOL_TEST_ITERATIONS; ++i) {
         aws_memory_pool_release(&pool, ptrs[i]);

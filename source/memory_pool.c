@@ -37,7 +37,7 @@ int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* all
 
     /* Last element points to NULL. */
     void **last_element_ptr = (void **)AWS_PTR_ADD(pool->arena, stride * (element_count - 1));
-    last_element_ptr = NULL;
+    *last_element_ptr = NULL;
 
     return AWS_OP_SUCCESS;
 }
