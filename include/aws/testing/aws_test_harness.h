@@ -337,19 +337,24 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
         harness->on_after(harness->allocator, harness->ctx);
     }
 
+#ifdef _MSC_VER
+    #define AWS_ESC_SEQUENCE "\x1b"
+#else
+    #define AWS_ESC_SEQUENCE "\033"
+#endif
+
     if(!ret_val) {
         if (!harness->suppress_memcheck) {
             struct memory_test_allocator *alloc_impl = (struct memory_test_allocator*)harness->allocator->impl;
-            ASSERT_UINT_EQUALS(alloc_impl->allocated, alloc_impl->freed, "%s [ \033[31mFAILED\033[0m ]"
+            ASSERT_UINT_EQUALS(alloc_impl->allocated, alloc_impl->freed, "%s [ "AWS_ESC_SEQUENCE"[31mFAILED"AWS_ESC_SEQUENCE"[0m ]"
                 "Memory Leak Detected %d bytes were allocated, "
                 "but only %d were freed.", harness->test_name, alloc_impl->allocated, alloc_impl->freed);
         }
 
-        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
+        RETURN_SUCCESS("%s [ "AWS_ESC_SEQUENCE"[32mOK"AWS_ESC_SEQUENCE"[0m ]", harness->test_name);
     }
 
-
-    FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    FAIL("%s [ "AWS_ESC_SEQUENCE"[31mFAILED"AWS_ESC_SEQUENCE"[0m ]", harness->test_name);
 }
 
 #define AWS_RUN_TEST_CASES(...)                                                                                        \
