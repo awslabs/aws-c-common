@@ -35,19 +35,23 @@ enum aws_log_level
 #define AWS_LOG_LEVEL AWS_LOG_LEVEL_TRACE
 #endif /* AWS_LOG_LEVEL */
 
+#ifdef _WIN32
+#pragma warning(disable:4127) /* Suppress warnings for const conditionals (for the below LOG macros). */
+#endif /* _WIN32 */
+
 #define AWS_LOG(level, fmt, ...) \
     do { \
         if ((level) <= AWS_LOG_LEVEL) { \
             aws_log(level, fmt, __VA_ARGS__); \
         } \
-    while (0)
+    } while (0)
 
 #define AWS_VLOG(level, fmt, va_args) \
     do { \
         if ((level) <= AWS_LOG_LEVEL) { \
             aws_vlog(level, fmt, va_args); \
         } \
-    while (0)
+    } while (0)
 
 struct aws_log_message {
     struct aws_log_message *next;
@@ -104,7 +108,8 @@ AWS_COMMON_API int aws_log_flush();
 AWS_COMMON_API int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count);
 
 /**
- * Cleans up all resources allocated by the calling thread's previous call to `aws_log_init`.
+ * Cleans up all resources allocated by the calling thread's previous call to `aws_log_init`. The final thread to call this function
+ * will clean up all resources and will *not* flush any remaining messages.
  */
 AWS_COMMON_API int aws_log_clean_up();
 

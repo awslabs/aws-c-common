@@ -63,4 +63,6 @@ AWS_COMMON_API int aws_atomic_compare_exchange_ptr(void **dst, void *compare, vo
 }
 #endif
 
+#include <aws/common/private/atomic.inl>
+
 #endif /* AWS_COMMON_ATOMIC_H */
