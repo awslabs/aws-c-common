@@ -55,22 +55,22 @@ AWS_COMMON_API void aws_rw_lock_clean_up(struct aws_rw_lock *lock);
  * Blocks until it acquires the lock. While on some platforms such as Windows, this may behave as a reentrant mutex,
  * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
  */
-AWS_COMMON_API int aws_rw_lock_rdlock(struct aws_rw_lock *lock);
-AWS_COMMON_API int aws_rw_lock_wrlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_rlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_wlock(struct aws_rw_lock *lock);
 
 /**
  * Attempts to acquire the lock but returns immediately if it can not.
  * While on some platforms such as Windows, this may behave as a reentrant mutex,
  * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
 */
-AWS_COMMON_API int aws_rw_lock_try_rdlock(struct aws_rw_lock *lock);
-AWS_COMMON_API int aws_rw_lock_try_wrlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_try_rlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_try_wlock(struct aws_rw_lock *lock);
 
 /**
  * Releases the lock.
  */
-AWS_COMMON_API int aws_rw_lock_rdunlock(struct aws_rw_lock *lock);
-AWS_COMMON_API int aws_rw_lock_wrunlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_runlock(struct aws_rw_lock *lock);
+AWS_COMMON_API int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 
 #ifdef __cplusplus
 }

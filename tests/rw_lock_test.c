@@ -21,11 +21,11 @@ static int test_rw_lock_acquire_release(struct aws_allocator *allocator, void *c
     struct aws_rw_lock rw_lock;
     aws_rw_lock_init(&rw_lock);
 
-    ASSERT_SUCCESS(aws_rw_lock_wrlock(&rw_lock), "rw_lock acquire should have returned success.");
-    ASSERT_SUCCESS(aws_rw_lock_wrunlock(&rw_lock), "rw_lock release should have returned success.");
+    ASSERT_SUCCESS(aws_rw_lock_wlock(&rw_lock), "rw_lock acquire should have returned success.");
+    ASSERT_SUCCESS(aws_rw_lock_wunlock(&rw_lock), "rw_lock release should have returned success.");
 
-    ASSERT_SUCCESS(aws_rw_lock_rdlock(&rw_lock), "rw_lock acquire should have returned success.");
-    ASSERT_SUCCESS(aws_rw_lock_rdunlock(&rw_lock), "rw_lock release should have returned success.");
+    ASSERT_SUCCESS(aws_rw_lock_rlock(&rw_lock), "rw_lock acquire should have returned success.");
+    ASSERT_SUCCESS(aws_rw_lock_runlock(&rw_lock), "rw_lock release should have returned success.");
 
     aws_rw_lock_clean_up(&rw_lock);
 
@@ -45,19 +45,19 @@ static void rw_lock_thread_fn(void *rw_lock_data) {
     int finished = 0;
     while (!finished) {
 
-        aws_rw_lock_rdlock(&p_rw_lock->rw_lock);
+        aws_rw_lock_rlock(&p_rw_lock->rw_lock);
 
         if (p_rw_lock->counter != p_rw_lock->max_counts) {
             int counter = p_rw_lock->counter + 1;
 
-            aws_rw_lock_rdunlock(&p_rw_lock->rw_lock);
-            aws_rw_lock_wrlock(&p_rw_lock->rw_lock);
+            aws_rw_lock_runlock(&p_rw_lock->rw_lock);
+            aws_rw_lock_wlock(&p_rw_lock->rw_lock);
 
             p_rw_lock->counter = counter;
             p_rw_lock->thread_fn_increments += 1;
 
-            aws_rw_lock_wrunlock(&p_rw_lock->rw_lock);
-            aws_rw_lock_rdlock(&p_rw_lock->rw_lock);
+            aws_rw_lock_wunlock(&p_rw_lock->rw_lock);
+            aws_rw_lock_rlock(&p_rw_lock->rw_lock);
 
             finished = p_rw_lock->counter == p_rw_lock->max_counts;
         }
@@ -65,7 +65,7 @@ static void rw_lock_thread_fn(void *rw_lock_data) {
             finished = 1;
         }
 
-        aws_rw_lock_rdunlock(&p_rw_lock->rw_lock);
+        aws_rw_lock_runlock(&p_rw_lock->rw_lock);
     }
 }
 
@@ -85,11 +85,11 @@ static int test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, voi
     int finished = 0;
     while (!finished) {
 
-        aws_rw_lock_rdlock(&rw_lock_data.rw_lock);
+        aws_rw_lock_rlock(&rw_lock_data.rw_lock);
 
         finished = rw_lock_data.counter == rw_lock_data.max_counts;
 
-        aws_rw_lock_rdunlock(&rw_lock_data.rw_lock);
+        aws_rw_lock_runlock(&rw_lock_data.rw_lock);
     }
 
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
@@ -102,3 +102,55 @@ static int test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, voi
     return 0;
 }
 AWS_TEST_CASE(rw_lock_is_actually_rw_lock_test, test_rw_lock_is_actually_rw_lock)
+
+static int g_iterations = 0;
+static void thread_reader_fn(void *ud) {
+
+    struct aws_rw_lock *lock = ud;
+
+    int finished = 0;
+    while (!finished) {
+
+        aws_rw_lock_rlock(lock);
+
+        finished = g_iterations == 10000;
+
+        aws_rw_lock_runlock(lock);
+    }
+}
+
+static int test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx) {
+
+    struct aws_rw_lock lock;
+    aws_rw_lock_init(&lock);
+
+    struct aws_thread threads[8];
+    AWS_ZERO_ARRAY(threads);
+
+    for (size_t i = 0; i < sizeof(threads) / sizeof(threads[0]); ++i) {
+
+        aws_thread_init(&threads[i], allocator);
+        ASSERT_SUCCESS(aws_thread_launch(&threads[i], thread_reader_fn, &lock, 0), "thread creation failed with error %d", aws_last_error());
+    }
+
+    int finished = 0;
+    while (!finished) {
+
+        aws_rw_lock_wlock(&lock);
+
+        finished = ++g_iterations == 10000;
+
+        aws_rw_lock_wunlock(&lock);
+    }
+
+    for (size_t i = 0; i < sizeof(threads) / sizeof(threads[0]); ++i) {
+
+        ASSERT_SUCCESS(aws_thread_join(&threads[i]), "Thread join failed with error code %d.", aws_last_error());
+        aws_thread_clean_up(&threads[i]);
+    }
+
+    aws_rw_lock_clean_up(&lock);
+
+    return 0;
+}
+AWS_TEST_CASE(rw_lock_many_readers_test, test_rw_lock_many_readers)

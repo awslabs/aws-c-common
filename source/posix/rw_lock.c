@@ -28,32 +28,32 @@ void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
     pthread_rwlock_destroy(&lock->lock_handle);
 }
 
-int aws_rw_lock_rdlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_rdlock(&lock->lock_handle));
 }
 
-int aws_rw_lock_wrlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_wrlock(&lock->lock_handle));
 }
 
-int aws_rw_lock_try_rdlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_tryrdlock(&lock->lock_handle));
 }
 
-int aws_rw_lock_try_wrlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_trywrlock(&lock->lock_handle));
 }
 
-int aws_rw_lock_rdunlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
 
-int aws_rw_lock_wrunlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
