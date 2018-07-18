@@ -43,35 +43,7 @@
 #include <log_test.h>
 #include <lru_cache_test.c>
 
-/* Enables terminal escape sequences for text coloring. */
-/* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
-#ifdef _MSC_VER
-int EnableVTMode() {
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE) {
-        return AWS_OP_ERR;
-    }
-
-    DWORD dwMode = 0;
-    if (!GetConsoleMode(hOut, &dwMode)) {
-        return AWS_OP_ERR;
-    }
-
-    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    if (!SetConsoleMode(hOut, dwMode)) {
-        return AWS_OP_ERR;
-    }
-    return AWS_OP_SUCCESS;
-}
-#else
-int EnableVTMode() {
-    return AWS_OP_ERR;
-}
-#endif
-
 int main(int argc, char *argv[]) {
-
-    EnableVTMode();
 
     AWS_RUN_TEST_CASES(&raise_errors_test,
                        &reset_errors_test,
