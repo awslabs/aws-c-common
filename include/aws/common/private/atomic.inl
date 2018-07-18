@@ -15,7 +15,7 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 
-    inline int aws_atomic_get(int *dst) {
+    static inline int aws_atomic_get(int *dst) {
         int value;
         do {
             value = *dst;
@@ -23,19 +23,19 @@
         return value;
     }
 
-    inline int aws_atomic_set(int *dst, int value) {
+    static inline int aws_atomic_set(int *dst, int value) {
         return __sync_lock_test_and_set(dst, value);
     }
 
-    inline int aws_atomic_add(int *dst, int addend) {
+    static inline int aws_atomic_add(int *dst, int addend) {
         return __sync_fetch_and_add(dst, addend);
     }
 
-    inline int aws_atomic_compare_exchange(int *dst, int compare, int value) {
+    static inline int aws_atomic_compare_exchange(int *dst, int compare, int value) {
         return __sync_bool_compare_and_swap(dst, compare, value);
     }
 
-    inline void *aws_atomic_get_ptr(void **dst) {
+    static inline void *aws_atomic_get_ptr(void **dst) {
         void *value;
         do {
             value = *dst;
@@ -43,17 +43,53 @@
         return value;
     }
 
-    void *aws_atomic_set_ptr(void **dst, void *value) {
+    static inline void *aws_atomic_set_ptr(void **dst, void *value) {
         return __sync_lock_test_and_set(dst, value);
     }
 
-    inline int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
+    static inline int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
         return __sync_bool_compare_and_swap(dst, compare, value);
     }
 
 #elif defined _WIN32
 
-    /* These definitions reside in atomics.c to avoid extraneous header inclusions. */
+    #include <intrin.h>
+
+    static inline int aws_atomic_get(int *dst) {
+        int value;
+        do {
+            value = *dst;
+        } while (!aws_atomic_compare_exchange(dst, value, value));
+        return value;
+    }
+
+    static inline int aws_atomic_set(int *dst, int value) {
+        return _InterlockedExchange((long *)dst, value);
+    }
+
+    static inline int aws_atomic_add(int *dst, int addend) {
+        return (int)_InterlockedExchangeAdd((long *)dst, (long)addend);
+    }
+
+    static inline int aws_atomic_compare_exchange(int *dst, int compare, int value) {
+        return _InterlockedCompareExchange((long *)dst, (long)value, (long)compare) == (long)compare;
+    }
+
+    static inline void *aws_atomic_get_ptr(void **dst) {
+        void *value;
+        do {
+            value = *dst;
+        } while (!aws_atomic_compare_exchange_ptr(dst, value, value));
+        return value;
+    }
+
+    static inline void *aws_atomic_set_ptr(void **dst, void *value) {
+        return _InterlockedExchangePointer(dst, value);
+    }
+
+    static inline int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
+        return _InterlockedCompareExchangePointer(dst, value, compare) == compare;
+    }
 
 #else
 

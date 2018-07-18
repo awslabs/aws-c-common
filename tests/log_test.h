@@ -18,7 +18,7 @@
 #include <aws/common/log.h>
 
 static void log_report_fn(const char *log_message) {
-    fprintf(AWS_TESTING_REPORT_FD, log_message);
+    fprintf(AWS_TESTING_REPORT_FD, "%s", log_message);
 }
 
 AWS_TEST_CASE(test_log_init_clean_up, test_log_init_clean_up_fn)
@@ -116,7 +116,13 @@ int log_test_order_correct;
 
 static void log_report_test_order_fn(const char *log_message) {
     int thread_index, count;
-    sscanf_s(log_message, "%d %d", &thread_index, &count);
+
+    #ifdef _WIN32
+        sscanf_s(log_message, "%d %d", &thread_index, &count);
+    #else
+        sscanf(log_message, "%d %d", &thread_index, &count);
+    #endif
+    
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
     }
