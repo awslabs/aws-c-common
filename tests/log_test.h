@@ -13,8 +13,9 @@
 * permissions and limitations under the License.
 */
 
-#include <aws/common/log.h>
 #include <aws/testing/aws_test_harness.h>
+#include <aws/common/atomic.h>
+#include <aws/common/log.h>
 
 static void log_report_fn(const char *log_message) {
     fprintf(AWS_TESTING_REPORT_FD, log_message);
@@ -103,6 +104,84 @@ static int test_log_threads_hammer_fn(struct aws_allocator *allocator, void *ctx
     }
 
     ASSERT_SUCCESS(aws_log_flush());
+
+    ASSERT_SUCCESS(aws_log_clean_up());
+
+    return 0;
+}
+
+static int log_test_thread_index;
+static int log_test_thread_counts[AWS_TEST_LOG_THREAD_COUNT];
+int log_test_order_correct;
+
+static void log_report_test_order_fn(const char *log_message) {
+    int thread_index, count;
+    sscanf_s(log_message, "%d %d", &thread_index, &count);
+    if (log_test_thread_counts[thread_index] != count) {
+        log_test_order_correct = 0;
+    }
+    log_test_thread_counts[thread_index]++;
+}
+
+void test_log_thread_order_fn(void *param) {
+    int *running = (int *)param;
+    int index = aws_atomic_add(&log_test_thread_index, 1);
+    int count = 0;
+    while (*running) {
+        if (count < 10000) {
+            aws_log(AWS_LOG_LEVEL_TRACE, "%d %d", index, count);
+            ++count;
+        }
+        aws_thread_current_sleep(1);
+    }
+}
+
+AWS_TEST_CASE(test_log_threads_order, test_log_threads_order_fn)
+static int test_log_threads_order_fn(struct aws_allocator *allocator, void *ctx) {
+    const int message_len = 128;
+    const int max_messages = 1024 * 16;
+
+    log_test_thread_index = 0;
+    log_test_order_correct = 1;
+
+    ASSERT_SUCCESS(aws_log_init(allocator, message_len, max_messages));
+    aws_log_set_reporting_callback(log_report_test_order_fn);
+
+    int running = 1;
+    struct aws_thread threads[AWS_TEST_LOG_THREAD_COUNT];
+
+    for (int i = 0; i < AWS_TEST_LOG_THREAD_COUNT; ++i) {
+        aws_thread_init(threads + i, allocator);
+        aws_thread_launch(threads + i, test_log_thread_order_fn, &running, NULL);
+    }
+
+    aws_thread_current_sleep(100000000ULL);
+
+    running = 0;
+
+    for (int i = 0; i < AWS_TEST_LOG_THREAD_COUNT; ++i) {
+        aws_thread_join(threads + i);
+        aws_thread_clean_up(threads + i);
+    }
+
+    ASSERT_SUCCESS(aws_log_flush());
+
+    ASSERT_SUCCESS(aws_log_clean_up());
+
+    ASSERT_TRUE(log_test_order_correct == 1);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_log_no_flush_for_no_leaks, test_log_no_flush_for_no_leaks_fn)
+static int test_log_no_flush_for_no_leaks_fn(struct aws_allocator *allocator, void *ctx) {
+    const int message_len = 128;
+    const int max_messages = 1024 * 16;
+    ASSERT_SUCCESS(aws_log_init(allocator, message_len, max_messages));
+    aws_log_set_reporting_callback(NULL);
+
+    for (int i = 0; i < 10; ++i)
+        AWS_LOG(AWS_LOG_LEVEL_DEBUG, "This is a test log.\n");
 
     ASSERT_SUCCESS(aws_log_clean_up());
 
