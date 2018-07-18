@@ -47,10 +47,15 @@ AWS_COMMON_API void aws_memory_pool_clean_up(struct aws_memory_pool *pool);
 AWS_COMMON_API void *aws_memory_pool_acquire(struct aws_memory_pool *pool);
 
 /**
+ * Acquires memory from the pool. If the pool is full returns NULL.
+ */
+AWS_COMMON_API void *aws_memory_pool_acquire_strict(struct aws_memory_pool *pool);
+
+/**
  * Release memory at `to_release`. Releases the memory to the pool or via `alloc->mem_release` depending on if `to_release`
  * was allocated from the internal arena, or from a "one-shot" allocation (happens when the arena is completely full).
  */
-AWS_COMMON_API void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release);
+AWS_COMMON_API int aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release);
 
 #ifdef __cplusplus
 }

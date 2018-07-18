@@ -144,6 +144,7 @@ AWS_COMMON_API void aws_load_error_strings(void);
 typedef enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
+    AWS_ERROR_BAD_FREE,
     AWS_ERROR_UNKNOWN,
     AWS_ERROR_INVALID_ARGUMENT,
     AWS_ERROR_SHORT_BUFFER,

@@ -60,14 +60,31 @@ void *aws_memory_pool_acquire(struct aws_memory_pool *pool) {
     return mem;
 }
 
-void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
+
+void *aws_memory_pool_acquire_strict(struct aws_memory_pool *pool) {
+    if (pool->free_list) {
+        void* mem = AWS_PTR_ADD(pool->free_list, sizeof(void *));
+        pool->free_list = *((void **)pool->free_list);
+        return mem;
+    } else {
+        return NULL;
+    }
+}
+
+int aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
     size_t in_bounds = (size_t)((char *)to_release - (char *)pool->arena) < pool->arena_size;
     if (pool->overflow_count && !in_bounds) {
         aws_mem_release(pool->alloc, to_release);
         pool->overflow_count--;
-    } else {
+        return AWS_OP_SUCCESS;
+    } else if (!pool->overflow_count) {
         void** pool_element = (void **)AWS_PTR_SUB(to_release, sizeof(void *));
         *pool_element = pool->free_list;
         pool->free_list = pool_element;
+        return AWS_OP_SUCCESS;
+    } else {
+        /* Pointer was outside of arena bounds, or a double free was detected. */
+        aws_raise_error(AWS_ERROR_BAD_FREE);
+        return AWS_OP_ERR;
     }
 }
