@@ -351,6 +351,32 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
 }
 
+/* Enables terminal escape sequences for text coloring on Windows. */
+/* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
+#ifdef _MSC_VER
+static int enable_vt_mode() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) {
+        return AWS_OP_ERR;
+    }
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) {
+        return AWS_OP_ERR;
+    }
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (!SetConsoleMode(hOut, dwMode)) {
+        return AWS_OP_ERR;
+    }
+    return AWS_OP_SUCCESS;
+}
+#else
+int enable_vt_mode() {
+    return AWS_OP_ERR;
+}
+#endif
+
 #define AWS_RUN_TEST_CASES(...)                                                                                        \
     struct aws_test_harness *tests[] = { __VA_ARGS__ };                                                                \
     int ret_val = 0;                                                                                                   \
@@ -359,6 +385,8 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     if (argc >= 2) {                                                                                                   \
         test_name = argv[1];                                                                                           \
     }                                                                                                                  \
+                                                                                                                       \
+    enable_vt_mode();                                                                                                  \
                                                                                                                        \
     size_t test_count = sizeof(tests) / sizeof(struct aws_test_harness*);                                              \
     if(test_name) {                                                                                                    \

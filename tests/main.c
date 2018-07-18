@@ -39,47 +39,11 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
-<<<<<<< HEAD
-<<<<<<< HEAD
-#include <lru_cache_test.c>
-=======
-#include <memory_pool_test.c>
->>>>>>> initial skeleton files for memory pool, log, and atomics
-=======
 #include <memory_pool_test.c>
 #include <log_test.h>
 #include <lru_cache_test.c>
 
-/* Enables terminal escape sequences for text coloring. */
-/* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
-#ifdef _MSC_VER
-int EnableVTMode() {
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE) {
-        return AWS_OP_ERR;
-    }
-
-    DWORD dwMode = 0;
-    if (!GetConsoleMode(hOut, &dwMode)) {
-        return AWS_OP_ERR;
-    }
-
-    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    if (!SetConsoleMode(hOut, dwMode)) {
-        return AWS_OP_ERR;
-    }
-    return AWS_OP_SUCCESS;
-}
-#else
-int EnableVTMode() {
-    return AWS_OP_ERR;
-}
-#endif
->>>>>>> fix console colors on windows
-
 int main(int argc, char *argv[]) {
-
-    EnableVTMode();
 
     AWS_RUN_TEST_CASES(&raise_errors_test,
                        &reset_errors_test,
