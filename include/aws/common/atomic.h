@@ -25,39 +25,39 @@ extern "C" {
 /**
  * Atomically retrieves the value at `dst`, and returns it.
  */
-AWS_COMMON_API int aws_atomic_get(int *dst);
+AWS_COMMON_API static int aws_atomic_get(int *dst);
 
 /**
  * Atomically sets the value at `dst` to `value`.
  */
-AWS_COMMON_API int aws_atomic_set(int *dst, int value);
+AWS_COMMON_API static int aws_atomic_set(int *dst, int value);
 
 /**
  * Adds `addend` to `dst` and returns the old value from `dst`.
  */
-AWS_COMMON_API int aws_atomic_add(int *dst, int addend);
+AWS_COMMON_API static int aws_atomic_add(int *dst, int addend);
 
 /**
  * Sets `dst` to `value` if `compare` equals `dst`.
  * Returns 1 of the value was set, 0 otherwise.
  */
-AWS_COMMON_API int aws_atomic_compare_exchange(int *dst, int compare, int value);
+AWS_COMMON_API static int aws_atomic_compare_exchange(int *dst, int compare, int value);
 
 /**
  * Atomically retrieves the value at `dst`.
  */
-AWS_COMMON_API void *aws_atomic_get_ptr(void **dst);
+AWS_COMMON_API static void *aws_atomic_get_ptr(void **dst);
 
 /**
  * Atomically sets the value at `dst` to `value`.
  */
-AWS_COMMON_API void *aws_atomic_set_ptr(void **dst, void *value);
+AWS_COMMON_API static void *aws_atomic_set_ptr(void **dst, void *value);
 
 /**
  * Sets `dst` to `value` if `compare` equals `dst`.
  * Returns 1 of the value was set, 0 otherwise.
  */
-AWS_COMMON_API int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value);
+AWS_COMMON_API static int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value);
 
 #ifdef __cplusplus
 }

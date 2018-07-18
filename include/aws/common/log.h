@@ -42,7 +42,7 @@ enum aws_log_level
 #define AWS_LOG(level, fmt, ...) \
     do { \
         if ((level) <= AWS_LOG_LEVEL) { \
-            aws_log(level, fmt, __VA_ARGS__); \
+            aws_log(level, fmt, ## __VA_ARGS__); \
         } \
     } while (0)
 
