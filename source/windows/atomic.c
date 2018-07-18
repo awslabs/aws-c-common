@@ -21,7 +21,7 @@ int aws_atomic_get(int *dst) {
     int value;
     do {
         value = *dst;
-    } while (!aws_atomic_cas(dst, value, value));
+    } while (!aws_atomic_compare_exchange(dst, value, value));
     return value;
 }
 
@@ -33,7 +33,7 @@ int aws_atomic_add(int *dst, int addend) {
     return (int)_InterlockedExchangeAdd((long *)dst, (long)addend);
 }
 
-int aws_atomic_cas(int *dst, int compare, int value) {
+int aws_atomic_compare_exchange(int *dst, int compare, int value) {
     return _InterlockedCompareExchange((long *)dst, (long)value, (long)compare) == (long)compare;
 }
 
@@ -41,7 +41,7 @@ void *aws_atomic_get_ptr(void **dst) {
     void *value;
     do {
         value = *dst;
-    } while (!aws_atomic_cas_ptr(dst, value, value));
+    } while (!aws_atomic_compare_exchange_ptr(dst, value, value));
     return value;
 }
 
@@ -49,6 +49,6 @@ void *aws_atomic_set_ptr(void **dst, void *value) {
     return _InterlockedExchangePointer(dst, value);
 }
 
-int aws_atomic_cas_ptr(void **dst, void *compare, void *value) {
+int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
     return _InterlockedCompareExchangePointer(dst, value, compare) == compare;
 }

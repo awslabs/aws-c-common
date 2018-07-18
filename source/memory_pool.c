@@ -44,8 +44,15 @@ int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* all
     return AWS_OP_SUCCESS;
 }
 
-void aws_memory_pool_clean_up(struct aws_memory_pool *pool) {
+int aws_memory_pool_clean_up(struct aws_memory_pool *pool) {
     aws_mem_release(pool->alloc, pool->arena);
+
+    if (pool->overflow_count) {
+        aws_raise_error(AWS_ERROR_MEMORY_LEAK);
+        return AWS_OP_ERR;
+    } else {
+        return AWS_OP_SUCCESS;
+    }
 }
 
 void *aws_memory_pool_acquire(struct aws_memory_pool *pool) {

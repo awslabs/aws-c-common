@@ -29,13 +29,13 @@ static int test_log_init_clean_up_fn(struct aws_allocator *allocator, void *ctx)
     aws_log_set_reporting_callback(log_report_fn);
 
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #1.\n"));
-    ASSERT_SUCCESS(aws_log_process());
+    ASSERT_SUCCESS(aws_log_flush());
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #2.\n"));
-    ASSERT_SUCCESS(aws_log_process());
+    ASSERT_SUCCESS(aws_log_flush());
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #3.\n"));
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #4.\n"));
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #5.\n"));
-    ASSERT_SUCCESS(aws_log_process());
+    ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
 
@@ -52,7 +52,7 @@ static int test_log_overflow_message_fn(struct aws_allocator *allocator, void *c
 
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "This message should definitely overflow and get truncated because it is just simply way too long."));
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "\nOverflow the memory pool, but not the message (no truncation).\n"));
-    ASSERT_SUCCESS(aws_log_process());
+    ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
 
@@ -62,16 +62,20 @@ static int test_log_overflow_message_fn(struct aws_allocator *allocator, void *c
 void test_log_thread_fn(void *param) {
     int *running = (int *)param;
     uint64_t id = aws_thread_current_thread_id();
+    int count = 0;
     while (*running) {
-        aws_log(AWS_LOG_LEVEL_TRACE, "Hello from thread %d!\n", (unsigned)id);
+        if (count < 10000) {
+            aws_log(AWS_LOG_LEVEL_TRACE, "Hello from thread %d!\n", (unsigned)id);
+            ++count;
+        }
         aws_thread_current_sleep(1);
     }
 }
 
 #define AWS_TEST_LOG_THREAD_COUNT 10
 
-AWS_TEST_CASE(test_log_threads_no_spam, test_log_threads_no_spam_fn)
-static int test_log_threads_no_spam_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_log_threads_hammer, test_log_threads_hammer_fn)
+static int test_log_threads_hammer_fn(struct aws_allocator *allocator, void *ctx) {
     const int message_len = 128;
     const int max_messages = 1024 * 16;
 
@@ -86,15 +90,19 @@ static int test_log_threads_no_spam_fn(struct aws_allocator *allocator, void *ct
         aws_thread_launch(threads + i, test_log_thread_fn, &running, NULL);
     }
 
-    aws_thread_current_sleep(1000000000ULL);
+    for (int i = 0; i < 1000000; ++i) {
+        aws_log_flush();
+        aws_thread_current_sleep(1);
+    }
 
     running = 0;
 
     for (int i = 0; i < AWS_TEST_LOG_THREAD_COUNT; ++i) {
         aws_thread_join(threads + i);
+        aws_thread_clean_up(threads + i);
     }
 
-    ASSERT_SUCCESS(aws_log_process());
+    ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
 

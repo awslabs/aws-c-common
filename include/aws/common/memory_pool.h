@@ -32,14 +32,14 @@ extern "C" {
 
 /**
  * Constructs a memory pool where internal elements are all of the size `element_size`. Internally a single memory arena
- * is created of size `(element_size + sizeof(void *)) * element_count`, allocated via `alloc`.
+ * is created.
  */
 AWS_COMMON_API int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* alloc, size_t element_size, int element_count);
 
 /**
  * Releases the arena stored within `pool`. Does not release any overflow allocations (see \ref aws_memory_pool_acquire).
  */
-AWS_COMMON_API void aws_memory_pool_clean_up(struct aws_memory_pool *pool);
+AWS_COMMON_API int aws_memory_pool_clean_up(struct aws_memory_pool *pool);
 
 /**
  * Acquires memory from the pool. If the pool is full an overflow allocation is made via `alloc`, and returned.

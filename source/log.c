@@ -15,10 +15,10 @@
 
 #include <stdio.h>
 
+#include <aws/common/atomic.h>
 #include <aws/common/common.h>
 #include <aws/common/log.h>
 #include <aws/common/memory_pool.h>
-#include <aws/common/atomic.h>
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
 
@@ -47,21 +47,19 @@ void aws_log_set_reporting_callback(aws_log_report_callback report_callback) {
     }
 }
 
-int aws_log(enum aws_log_level level, const char *fmt, ...) {
-    if (level > AWS_LOG_LEVEL) {
-        return AWS_OP_SUCCESS;
-    }
+int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
+    (void)level;
 
     if (!thread_local_log_context->running) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
     }
 
-    /* Automically grab and release all messages on the `delete_list` whenever present. */
+    /* Atomically grab and release all messages on the `delete_list` whenever present. */
     struct aws_log_message* delete_list;
     do {
         delete_list = thread_local_log_context->delete_list;
-    } while (!aws_atomic_cas_ptr(&thread_local_log_context->delete_list, delete_list, NULL));
+    } while (!aws_atomic_compare_exchange_ptr(&thread_local_log_context->delete_list, delete_list, NULL));
 
     while (delete_list) {
         struct aws_log_message *next = delete_list->next;
@@ -75,19 +73,24 @@ int aws_log(enum aws_log_level level, const char *fmt, ...) {
     char *msg_data = (char*)(msg + 1);
 
     /* Format the message. */
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf((char *)msg_data, thread_local_log_context->max_message_len, fmt, args);
-    va_end(args);
+    vsnprintf((char *)msg_data, thread_local_log_context->max_message_len, fmt, va_args);
 
     /* Push formatted message onto this thread's message list. Will be picked up later and
-    processed by the logging thread in `process()`, and handed to a user callback set by
+    processed by the logging thread in `aws_log_flush()`, and handed to a user callback set by
     `aws_log_set_reporting_callback`. */
     do {
         msg->next = thread_local_log_context->message_list;
-    } while (!aws_atomic_cas_ptr(&thread_local_log_context->message_list, msg->next, msg));
+    } while (!aws_atomic_compare_exchange_ptr(&thread_local_log_context->message_list, msg->next, msg));
 
     return AWS_OP_SUCCESS;
+}
+
+int aws_log(enum aws_log_level level, const char *fmt, ...) {
+    va_list va_args;
+    va_start(va_args, fmt);
+    int ret = aws_vlog(level, fmt, va_args);
+    va_end(va_args);
+    return ret;
 }
 
 const char *aws_log_level_to_string(enum aws_log_level level) {
@@ -101,17 +104,17 @@ const char *aws_log_level_to_string(enum aws_log_level level) {
     }
 }
 
-int aws_log_process() {
+int aws_log_flush() {
     struct aws_log_context *log_list = global_log_list;
     struct aws_log_context *sentinel = log_list;
     do {
         struct aws_log_context *next = log_list->next;
 
-        /* Grab the message list, automically. */
+        /* Grab the message list, atomically. */
         struct aws_log_message* msg_list;
         do {
             msg_list = log_list->message_list;
-        } while (!aws_atomic_cas_ptr(&log_list->message_list, msg_list, NULL));
+        } while (!aws_atomic_compare_exchange_ptr(&log_list->message_list, msg_list, NULL));
 
         /* Reverse the list to preserve user submitted order, for reporting. */
         if (msg_list) {
@@ -130,7 +133,7 @@ int aws_log_process() {
             /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
             do {
                 last_msg->next = thread_local_log_context->delete_list;
-            } while (!aws_atomic_cas_ptr(&thread_local_log_context->delete_list, last_msg->next, msg_list));
+            } while (!aws_atomic_compare_exchange_ptr(&thread_local_log_context->delete_list, last_msg->next, msg_list));
         }
 
         log_list = next;
@@ -186,7 +189,7 @@ int aws_log_clean_up() {
     struct aws_log_context *context;
     do {
         context = thread_local_log_context;
-    } while (!aws_atomic_cas_ptr(&thread_local_log_context, context, NULL));
+    } while (!aws_atomic_compare_exchange_ptr(&thread_local_log_context, context, NULL));
 
     context->running = 0;
 

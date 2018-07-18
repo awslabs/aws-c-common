@@ -187,6 +187,7 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_SUCCESS, "success", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_OOM, "out-of-memory", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_BAD_FREE, "Out of bounds free, or double free.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_MEMORY_LEAK, "Memory leak detected.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_UNKNOWN, "unknown error", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_INVALID_ARGUMENT, "invalid argument", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_SHORT_BUFFER, "Insufficient data in input buffer", AWS_LIB_NAME),
