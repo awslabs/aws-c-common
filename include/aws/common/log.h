@@ -22,7 +22,7 @@
 
 enum aws_log_level
 {
-    AWS_LOG_LEVEL_OFF   = 0,
+    AWS_LOG_LEVEL_OFF   = 0, /* No logs will be processed at all. */
     AWS_LOG_LEVEL_FATAL = 1,
     AWS_LOG_LEVEL_ERROR = 2,
     AWS_LOG_LEVEL_WARN  = 3,
