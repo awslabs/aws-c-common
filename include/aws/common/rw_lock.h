@@ -76,4 +76,10 @@ AWS_COMMON_API int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 }
 #endif
 
+#ifdef _WIN32
+#include <aws/common/windows/rw_lock.inl>
+#else
+#include <aws/common/posix/rw_lock.inl>
+#endif /* _WIN32 */
+
 #endif /* AWS_COMMON_RW_LOCK_H */

@@ -1,19 +1,24 @@
-/*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+#ifndef AWS_COMMON_POSIX_RW_LOCK_INL
+#define AWS_COMMON_POSIX_RW_LOCK_INL
 
-#include <aws/common/rw_lock.h>
+/*
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Defined in mutex.c */
 int convert_and_raise_error_code(int error_code);
@@ -57,3 +62,9 @@ int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
     return convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* AWS_COMMON_POSIX_RW_LOCK_INL */
