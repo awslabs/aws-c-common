@@ -175,6 +175,9 @@ add_test(test_realloc_passthrough ${TEST_BINARY_NAME} test_realloc_passthrough)
 add_test(test_realloc_passthrough_oom ${TEST_BINARY_NAME} test_realloc_passthrough_oom)
 add_test(test_cf_allocator_wrapper ${TEST_BINARY_NAME} test_cf_allocator_wrapper)
 
+add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
+add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
+
 add_test(test_lru_cache_overflow_static_members ${TEST_BINARY_NAME} test_lru_cache_overflow_static_members)
 add_test(test_lru_cache_lru_ness_static_members ${TEST_BINARY_NAME} test_lru_cache_lru_ness_static_members)
 add_test(test_lru_cache_entries_cleanup ${TEST_BINARY_NAME} test_lru_cache_entries_cleanup)
