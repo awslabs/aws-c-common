@@ -20,30 +20,30 @@
 extern "C" {
 #endif
 
-int aws_rw_lock_init(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
     InitializeSRWLock(&lock->lock_handle);
     return AWS_OP_SUCCESS;
 }
 
-void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
+static inline void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
 
     (void)lock;
 }
 
-int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
 
     AcquireSRWLockShared(&lock->lock_handle);
     return AWS_OP_SUCCESS;
 }
 
-int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
 
     AcquireSRWLockExclusive(&lock->lock_handle);
     return AWS_OP_SUCCESS;
 }
 
-int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
 
     if (TryAcquireSRWLockShared(&lock->lock_handle)) {
         return AWS_OP_SUCCESS;
@@ -52,7 +52,7 @@ int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
     return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
 }
 
-int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
 
     if (TryAcquireSRWLockExclusive(&lock->lock_handle)) {
         return AWS_OP_SUCCESS;
@@ -61,14 +61,14 @@ int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
     return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
 }
 
-int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
     ReleaseSRWLockShared(&lock->lock_handle);
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
+static inline int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
     ReleaseSRWLockExclusive(&lock->lock_handle);
 
