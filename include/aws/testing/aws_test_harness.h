@@ -354,7 +354,7 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
 /* Enables terminal escape sequences for text coloring on Windows. */
 /* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
 #ifdef _MSC_VER
-#include <wincon.h>
+#include <Windows.h>
 
 static int enable_vt_mode() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
