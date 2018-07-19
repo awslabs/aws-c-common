@@ -134,7 +134,7 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     strftime(date, sizeof(date) - 1, "%d %m %Y %H:%M", t);
 
     char fmt_final[1024];
-    snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%llu] %s\n", aws_log_level_to_string(level), date, aws_thread_current_thread_id(), fmt);
+    snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%d] %s\n", aws_log_level_to_string(level), date, (unsigned)aws_thread_current_thread_id(), fmt);
 
     vsnprintf(msg_data, s_local_log_context->max_message_len, fmt_final, va_args);
     if (strlen(msg_data) == s_local_log_context->max_message_len - 1) {
