@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/mutex.h>
+
 #include <errno.h>
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {

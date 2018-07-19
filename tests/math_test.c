@@ -1,32 +1,42 @@
 /*
-* Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/math.h>
+
 #include <aws/testing/aws_test_harness.h>
+
 #include <stdio.h>
 
-#define CHECK_SAT(fn, a, b, result) \
-    do { \
-        ASSERT_UINT_EQUALS((result), fn((a), (b)), \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx", \
-            #fn, (unsigned long long)(a), (unsigned long long)b, \
-            (unsigned long long)(result)); \
-        ASSERT_UINT_EQUALS((result), fn((b), (a)), \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx", \
-            #fn, (unsigned long long)(b), (unsigned long long)a, \
-            (unsigned long long)(result)); \
+#define CHECK_SAT(fn, a, b, result)                                            \
+    do {                                                                       \
+        ASSERT_UINT_EQUALS(                                                    \
+            (result),                                                          \
+            fn((a), (b)),                                                      \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                            \
+            #fn,                                                               \
+            (unsigned long long)(a),                                           \
+            (unsigned long long)b,                                             \
+            (unsigned long long)(result));                                     \
+        ASSERT_UINT_EQUALS(                                                    \
+            (result),                                                          \
+            fn((b), (a)),                                                      \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                            \
+            #fn,                                                               \
+            (unsigned long long)(b),                                           \
+            (unsigned long long)a,                                             \
+            (unsigned long long)(result));                                     \
     } while (0)
 
 AWS_TEST_CASE(test_u64_saturating, test_u64_saturating_fn)
@@ -41,14 +51,25 @@ static int test_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     CHECK_SAT(aws_mul_u64_saturating, 1234, 4321, 5332114);
 
     CHECK_SAT(aws_mul_u64_saturating, 0xFFFFFFFF, 1, 0xFFFFFFFF);
-    CHECK_SAT(aws_mul_u64_saturating, 0xFFFFFFFF, 0xFFFFFFFF, 0xfffffffe00000001LLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x100000000, 0xFFFFFFFF, 0xFFFFFFFF00000000LLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x100000001, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x100000001, 0xFFFFFFFE, 0xFFFFFFFEFFFFFFFELLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x100000002, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFCLLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x100000003, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFFLLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0xFFFFFFFE, 0xFFFFFFFE, 0xFFFFFFFC00000004LLU);
-    CHECK_SAT(aws_mul_u64_saturating, 0x1FFFFFFFF, 0x1FFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0xFFFFFFFF, 0xFFFFFFFF, 0xfffffffe00000001LLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0x100000000, 0xFFFFFFFF, 0xFFFFFFFF00000000LLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0x100000001, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0x100000001, 0xFFFFFFFE, 0xFFFFFFFEFFFFFFFELLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0x100000002, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFCLLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0x100000003, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating, 0xFFFFFFFE, 0xFFFFFFFE, 0xFFFFFFFC00000004LLU);
+    CHECK_SAT(
+        aws_mul_u64_saturating,
+        0x1FFFFFFFF,
+        0x1FFFFFFFF,
+        0xFFFFFFFFFFFFFFFFLLU);
     CHECK_SAT(aws_mul_u64_saturating, ~0LLU, ~0LLU, ~0LLU);
 
     return 0;
@@ -80,38 +101,38 @@ static int test_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-#define CHECK_OVF_0(fn, type, a, b) \
-    do { \
-        type result_val; \
-        ASSERT_FALSE(fn((a), (b), &result_val)); \
+#define CHECK_OVF_0(fn, type, a, b)                                            \
+    do {                                                                       \
+        type result_val;                                                       \
+        ASSERT_FALSE(fn((a), (b), &result_val));                               \
     } while (0)
 
-#define CHECK_OVF(fn, type, a, b) \
-    do { \
-        CHECK_OVF_0(fn, type, a, b); \
-        CHECK_OVF_0(fn, type, b, a); \
+#define CHECK_OVF(fn, type, a, b)                                              \
+    do {                                                                       \
+        CHECK_OVF_0(fn, type, a, b);                                           \
+        CHECK_OVF_0(fn, type, b, a);                                           \
     } while (0)
 
-
-#define CHECK_NO_OVF_0(fn, type, a, b, r) \
-    do { \
-        type result_val; \
-        ASSERT_TRUE(fn((a), (b), &result_val)); \
-        ASSERT_INT_EQUALS((uint64_t)result_val, (uint64_t)(r), "Expected %s(%016llx, %016llx) = %016llx; got %016llx", \
-            #fn, \
-            (unsigned long long)(a), \
-            (unsigned long long)(b), \
-            (unsigned long long)(r), \
-            (unsigned long long)(result_val)\
-        ); \
+#define CHECK_NO_OVF_0(fn, type, a, b, r)                                      \
+    do {                                                                       \
+        type result_val;                                                       \
+        ASSERT_TRUE(fn((a), (b), &result_val));                                \
+        ASSERT_INT_EQUALS(                                                     \
+            (uint64_t)result_val,                                              \
+            (uint64_t)(r),                                                     \
+            "Expected %s(%016llx, %016llx) = %016llx; got %016llx",            \
+            #fn,                                                               \
+            (unsigned long long)(a),                                           \
+            (unsigned long long)(b),                                           \
+            (unsigned long long)(r),                                           \
+            (unsigned long long)(result_val));                                 \
     } while (0)
 
-#define CHECK_NO_OVF(fn, type, a, b, r) \
-    do { \
-        CHECK_NO_OVF_0(fn, type, a, b, r); \
-        CHECK_NO_OVF_0(fn, type, b, a, r); \
+#define CHECK_NO_OVF(fn, type, a, b, r)                                        \
+    do {                                                                       \
+        CHECK_NO_OVF_0(fn, type, a, b, r);                                     \
+        CHECK_NO_OVF_0(fn, type, b, a, r);                                     \
     } while (0)
-
 
 AWS_TEST_CASE(test_u64_checked, test_u64_checked_fn)
 static int test_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
@@ -124,14 +145,45 @@ static int test_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 4, 5, 20);
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 1234, 4321, 5332114);
 
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0xFFFFFFFFLLU, 1LLU, 0xFFFFFFFFLLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0xFFFFFFFFLLU, 0xFFFFFFFFLLU, 0xfffffffe00000001LLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0x100000000LLU, 0xFFFFFFFFLLU, 0xFFFFFFFF00000000LLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0x100000001LLU, 0xFFFFFFFFLLU, 0xFFFFFFFFFFFFFFFFLLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0x100000001LLU, 0xFFFFFFFELLU, 0xFFFFFFFEFFFFFFFELLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0x100000002LLU, 0xFFFFFFFELLU, 0xFFFFFFFFFFFFFFFCLLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked, uint64_t, 0xFFFFFFFFLLU, 1LLU, 0xFFFFFFFFLLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0xFFFFFFFFLLU,
+        0xFFFFFFFFLLU,
+        0xfffffffe00000001LLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0x100000000LLU,
+        0xFFFFFFFFLLU,
+        0xFFFFFFFF00000000LLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0x100000001LLU,
+        0xFFFFFFFFLLU,
+        0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0x100000001LLU,
+        0xFFFFFFFELLU,
+        0xFFFFFFFEFFFFFFFELLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0x100000002LLU,
+        0xFFFFFFFELLU,
+        0xFFFFFFFFFFFFFFFCLLU);
     CHECK_OVF(aws_mul_u64_checked, uint64_t, 0x100000003LLU, 0xFFFFFFFELLU);
-    CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0xFFFFFFFELLU, 0xFFFFFFFELLU, 0xFFFFFFFC00000004LLU);
+    CHECK_NO_OVF(
+        aws_mul_u64_checked,
+        uint64_t,
+        0xFFFFFFFELLU,
+        0xFFFFFFFELLU,
+        0xFFFFFFFC00000004LLU);
     CHECK_OVF(aws_mul_u64_checked, uint64_t, 0x1FFFFFFFFLLU, 0x1FFFFFFFFLLU);
     CHECK_OVF(aws_mul_u64_checked, uint64_t, ~0LLU, ~0LLU);
 

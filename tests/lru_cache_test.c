@@ -13,15 +13,19 @@
  *  permissions and limitations under the License.
  */
 
-#include <aws/testing/aws_test_harness.h>
 #include <aws/common/lru_cache.h>
 
-static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *allocator, void *ctx) {
+#include <aws/testing/aws_test_harness.h>
+
+static int test_lru_cache_overflow_static_members_fn(
+    struct aws_allocator *allocator,
+    void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
-    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
+    ASSERT_SUCCESS(aws_lru_cache_init(
+        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
 
     const char *first_key = "first";
     const char *second_key = "second";
@@ -54,7 +58,8 @@ static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *alloc
 
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, fourth_key, (void **)&fourth));
 
-    /* make sure the oldest entry was purged. Note, value should now be NULL but the call succeeds. */
+    /* make sure the oldest entry was purged. Note, value should now be NULL but
+     * the call succeeds. */
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, first_key, (void **)&value));
     ASSERT_NULL(value);
 
@@ -74,14 +79,19 @@ static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *alloc
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_overflow_static_members, test_lru_cache_overflow_static_members_fn)
+AWS_TEST_CASE(
+    test_lru_cache_overflow_static_members,
+    test_lru_cache_overflow_static_members_fn)
 
-static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *allocator, void *ctx) {
+static int test_lru_cache_lru_ness_static_members_fn(
+    struct aws_allocator *allocator,
+    void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
-    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
+    ASSERT_SUCCESS(aws_lru_cache_init(
+        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
 
     const char *first_key = "first";
     const char *second_key = "second";
@@ -108,10 +118,10 @@ static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *alloc
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(second, *value);
 
-
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, fourth_key, (void **)&fourth));
 
-    /* The third element is the LRU element (see above). Note, value should now be NULL but the call succeeds. */
+    /* The third element is the LRU element (see above). Note, value should now
+     * be NULL but the call succeeds. */
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, third_key, (void **)&value));
     ASSERT_NULL(value);
 
@@ -131,7 +141,9 @@ static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *alloc
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_lru_ness_static_members, test_lru_cache_lru_ness_static_members_fn)
+AWS_TEST_CASE(
+    test_lru_cache_lru_ness_static_members,
+    test_lru_cache_lru_ness_static_members_fn)
 
 struct lru_test_value_element {
     bool value_removed;
@@ -142,21 +154,29 @@ static void lru_test_element_value_destroy(void *value) {
     value_element->value_removed = true;
 }
 
-static int test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, void *ctx) {
+static int test_lru_cache_entries_cleanup_fn(
+    struct aws_allocator *allocator,
+    void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
-    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, lru_test_element_value_destroy, 2));
+    ASSERT_SUCCESS(aws_lru_cache_init(
+        &cache,
+        allocator,
+        aws_hash_c_string,
+        aws_c_string_eq,
+        NULL,
+        lru_test_element_value_destroy,
+        2));
 
     const char *first_key = "first";
     const char *second_key = "second";
     const char *third_key = "third";
 
-    struct lru_test_value_element first = {.value_removed = false };
-    struct lru_test_value_element second = {.value_removed = false };
-    struct lru_test_value_element third = {.value_removed = false };
-
+    struct lru_test_value_element first = {.value_removed = false};
+    struct lru_test_value_element second = {.value_removed = false};
+    struct lru_test_value_element third = {.value_removed = false};
 
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
@@ -192,18 +212,26 @@ static int test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, vo
 
 AWS_TEST_CASE(test_lru_cache_entries_cleanup, test_lru_cache_entries_cleanup_fn)
 
-static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
+static int test_lru_cache_overwrite_fn(
+    struct aws_allocator *allocator,
+    void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
-    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, lru_test_element_value_destroy, 2));
+    ASSERT_SUCCESS(aws_lru_cache_init(
+        &cache,
+        allocator,
+        aws_hash_c_string,
+        aws_c_string_eq,
+        NULL,
+        lru_test_element_value_destroy,
+        2));
 
     const char *first_key = "first";
 
-    struct lru_test_value_element first = {.value_removed = false };
-    struct lru_test_value_element second = {.value_removed = false };
-
+    struct lru_test_value_element first = {.value_removed = false};
+    struct lru_test_value_element second = {.value_removed = false};
 
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &second));
@@ -225,12 +253,15 @@ static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ct
 
 AWS_TEST_CASE(test_lru_cache_overwrite, test_lru_cache_overwrite_fn)
 
-static int test_lru_cache_element_access_members_fn(struct aws_allocator *allocator, void *ctx) {
+static int test_lru_cache_element_access_members_fn(
+    struct aws_allocator *allocator,
+    void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
-    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
+    ASSERT_SUCCESS(aws_lru_cache_init(
+        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
 
     int *value = NULL;
     ASSERT_NULL(aws_lru_cache_use_lru_element(&cache));
@@ -265,4 +296,6 @@ static int test_lru_cache_element_access_members_fn(struct aws_allocator *alloca
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_element_access_members, test_lru_cache_element_access_members_fn)
+AWS_TEST_CASE(
+    test_lru_cache_element_access_members,
+    test_lru_cache_element_access_members_fn)

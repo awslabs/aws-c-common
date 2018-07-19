@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/system_info.h>
+
 #include <unistd.h>
 #include <assert.h>
 
@@ -22,7 +23,7 @@ size_t aws_system_info_processor_count (void) {
     if (AWS_LIKELY(nprocs >= 0)) {
         return (size_t) nprocs;
     }
-    
+
     assert(0);
     return 0;
 }

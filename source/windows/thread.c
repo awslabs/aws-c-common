@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/thread.h>
+
 #include <assert.h>
 
 static struct aws_thread_options default_options = {
@@ -39,7 +40,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
-    thread->thread_handle = 0;    
+    thread->thread_handle = 0;
     thread->thread_id = 0;
     thread->allocator = allocator;
     thread->detach_state = AWS_THREAD_NOT_CREATED;
@@ -80,7 +81,7 @@ aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
 int aws_thread_join(struct aws_thread *thread) {
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
         WaitForSingleObject(thread->thread_handle, INFINITE);
-        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;        
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
     }
 
     return AWS_OP_SUCCESS;

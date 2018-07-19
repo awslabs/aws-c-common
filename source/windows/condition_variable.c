@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/condition_variable.h>
+
 #include <aws/common/mutex.h>
 
 #define MILLIS_PER_SEC 1000000

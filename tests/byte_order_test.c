@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/byte_order.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 static int byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {

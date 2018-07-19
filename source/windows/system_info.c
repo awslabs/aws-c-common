@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/system_info.h>
+
 #include <windows.h>
 
 size_t aws_system_info_processor_count (void) {

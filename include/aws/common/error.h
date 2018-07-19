@@ -2,19 +2,19 @@
 #define AWS_COMMON_ERROR_H
 
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/common.h>
 
@@ -33,18 +33,19 @@ struct aws_error_info_list {
 
 #define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                       \
     {                                                                          \
-        .literal_name = #C, .error_code = (C), .error_str = (ES),              \
-        .lib_name = (LN), .formatted_name = LN ": " #C ", " ES                 \
+        .literal_name = #C, .error_code = C, .error_str = ES, .lib_name = LN,  \
+        .formatted_name = LN ": " #C ", " ES                                   \
     }
 
-typedef void(*aws_error_handler)(int err, void *ctx);
+typedef void (*aws_error_handler)(int err, void *ctx);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
- * Returns the latest error code on the current thread, or 0 if none have occurred.
+ * Returns the latest error code on the current thread, or 0 if none have
+ * occurred.
  */
 AWS_COMMON_API int aws_last_error(void);
 
@@ -77,24 +78,31 @@ AWS_COMMON_API void aws_reset_error(void);
 AWS_COMMON_API void aws_restore_error(int err);
 
 /*
- * Sets an application wide error handler function. This will be overridden by the thread local handler.
- * The previous handler is returned, this can be used for restoring an error handler if it needs to be overridden
- * temporarily. Setting this to NULL will turn off this error callback after it has been enabled.
+ * Sets an application wide error handler function. This will be overridden by
+ * the thread local handler. The previous handler is returned, this can be used
+ * for restoring an error handler if it needs to be overridden temporarily.
+ * Setting this to NULL will turn off this error callback after it has been
+ * enabled.
  */
-AWS_COMMON_API aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx);
+AWS_COMMON_API aws_error_handler
+    aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx);
 
 /*
- * Sets a thread-local error handler function. This will override the global handler. The previous handler is returned,
- * this can be used for restoring an error handler if it needs to be overridden temporarily. Setting this to NULL will
- * turn off this error callback after it has been enabled.
+ * Sets a thread-local error handler function. This will override the global
+ * handler. The previous handler is returned, this can be used for restoring an
+ * error handler if it needs to be overridden temporarily. Setting this to NULL
+ * will turn off this error callback after it has been enabled.
  */
-AWS_COMMON_API aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx);
+AWS_COMMON_API aws_error_handler
+    aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx);
 
-/** TODO: this needs to be a private function (wait till we have the cmake story better before moving it though).
- * It should be external for the purpose of other libs we own,
- * but customers should not be able to hit it without going out of their way to do so.
+/** TODO: this needs to be a private function (wait till we have the cmake story
+ * better before moving it though). It should be external for the purpose of
+ * other libs we own, but customers should not be able to hit it without going
+ * out of their way to do so.
  */
-AWS_COMMON_API void aws_register_error_info(const struct aws_error_info_list *error_info);
+AWS_COMMON_API void aws_register_error_info(
+    const struct aws_error_info_list *error_info);
 
 #ifdef __cplusplus
 }

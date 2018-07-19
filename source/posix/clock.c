@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/clock.h>
+
 #include <time.h>
 
 #if defined(__MACH__)
