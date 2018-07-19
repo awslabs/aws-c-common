@@ -44,6 +44,11 @@ void aws_log_set_reporting_callback(aws_log_report_callback report_callback) {
 int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     (void)level;
 
+    if (!thread_local_log_context) {
+        aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
+        return AWS_OP_ERR;
+    }
+
     if (!thread_local_log_context->running) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
