@@ -130,7 +130,7 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     int flag;
     /**
      * Note: We use SETNO which only takes a byte register. To make this easy,
-     * we'll write it to dl (which we throw away anyway) and mask off the high bits. 
+     * we'll write it to dl (which we throw away anyway) and mask off the high bits.
      */
     __asm__(
         "mull %k[arg2]\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
@@ -162,9 +162,8 @@ static inline uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t x = a * b;
     if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
         return ~(uint64_t)0;
-    } else {
-        return x;
     }
+    return x;
 }
 
 /**
@@ -176,9 +175,8 @@ static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     *r = x;
     if (a != 0 && (a > 0xFFFFFFFF || b > 0xFFFFFFFF) && x / a != b) {
         return 0;
-    } else {
-        return 1;
     }
+    return 1;
 }
 #endif
 
@@ -190,9 +188,8 @@ static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t x = a * b;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
         return ~(uint32_t)0;
-    } else {
-        return x;
     }
+    return x;
 }
 
 /**
@@ -204,9 +201,8 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     *r = x;
     if (a != 0 && (a > 0xFFFF || b > 0xFFFF) && x / a != b) {
         return 0;
-    } else {
-        return 1;
     }
+    return 1;
 }
 #endif /* !AWS_ENABLE_HW_OPTIMIZATION */
 
@@ -217,29 +213,25 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 
 static inline size_t aws_mul_size_saturating(size_t a, size_t b) {
     /* static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)*/
-    char assert_sizet_is_32_or_64_bit[
-        (((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) ||
-        ((uint64_t)SIZE_MAX == (uint64_t)~(uint64_t)0))
-        ? 1 : -1
-    ] = {0};
+    char assert_sizet_is_32_or_64_bit
+        [(((uint64_t)SIZE_MAX == ~(uint32_t)0)
+          || ((uint64_t)SIZE_MAX == ~(uint64_t)0))
+             ? 1
+             : -1] = {0};
     /* suppress unused variable warning */
     (void)assert_sizet_is_32_or_64_bit;
 
-
-
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
         return (size_t)aws_mul_u32_saturating((uint32_t)a, (uint32_t)b);
-    } else {
-        return (size_t)aws_mul_u64_saturating(a, b);
     }
+    return (size_t)aws_mul_u64_saturating(a, b);
 }
 
 static inline int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
     if ((uint64_t)SIZE_MAX == (uint64_t)~(uint32_t)0) {
         return (int)aws_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t*)r);
-    } else {
-        return (int)aws_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t*)r);
     }
+    return (int)aws_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t*)r);
 }
 
 #if _MSC_VER

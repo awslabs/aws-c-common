@@ -184,7 +184,7 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
         return AWS_OP_SUCCESS;
     }
     /* if to is in dynamic mode, we can just reallocate it and copy */
-    else if (to->alloc != NULL) {
+    if (to->alloc != NULL) {
         void *tmp = aws_mem_acquire(to->alloc, copy_size);
 
         if (!tmp) {

@@ -27,10 +27,12 @@ static int compare_ints(const void* a, const void* b)
     return 0;
 }
 
-static int test_priority_queue_preserves_order(struct aws_allocator *alloc, void *ctx) {
+static int test_priority_queue_preserves_order(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_priority_queue queue;
 
-    int err = aws_priority_queue_dynamic_init(&queue, alloc, 10, sizeof(int), compare_ints);
+    int err = aws_priority_queue_dynamic_init(&queue, allocator, 10, sizeof(int), compare_ints);
     ASSERT_SUCCESS(err, "Priority queue initialization failed with error %d", err);
 
     int first = 45, second = 67, third = 80, fourth = 120, fifth = 10000;
@@ -69,7 +71,7 @@ static int test_priority_queue_preserves_order(struct aws_allocator *alloc, void
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
     ASSERT_INT_EQUALS(third, pop_val, "Third element returned should have been %d but was %d", third, pop_val);
-    ASSERT_INT_EQUALS(pop_val, top_val, "Popped element should have been the top element. expected %d but was %d", 
+    ASSERT_INT_EQUALS(pop_val, top_val, "Popped element should have been the top element. expected %d but was %d",
             pop_val, top_val);
 
     err = aws_priority_queue_top(&queue, (void **)&top_val_ptr);
@@ -97,7 +99,10 @@ static int test_priority_queue_preserves_order(struct aws_allocator *alloc, void
 }
 
 
-static int test_priority_queue_random_values(struct aws_allocator *alloc, void *ctx) {
+static int test_priority_queue_random_values(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     enum { SIZE = 20 };
     struct aws_priority_queue queue;
     int storage[SIZE], err;
@@ -142,9 +147,11 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
     return 0;
 }
 
-static int test_priority_queue_size_and_capacity(struct aws_allocator *alloc, void *ctx) {
+static int test_priority_queue_size_and_capacity(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_priority_queue queue;
-    int err = aws_priority_queue_dynamic_init(&queue, alloc, 5, sizeof(int), compare_ints);
+    int err = aws_priority_queue_dynamic_init(&queue, allocator, 5, sizeof(int), compare_ints);
     ASSERT_SUCCESS(err, "Dynamic init failed with error %d", err);
     size_t capacity = aws_priority_queue_capacity(&queue);
     ASSERT_INT_EQUALS(5, capacity, "Expected Capacity %d but was %d", 5, capacity);

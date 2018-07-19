@@ -157,4 +157,4 @@ static inline uint16_t aws_read_u16(const uint8_t *buffer) {
     return aws_ntoh16(value);
 }
 
-#endif /*AWS_COMMON_ENCODING_H*/
+#endif /* AWS_COMMON_ENCODING_H */

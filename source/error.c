@@ -19,13 +19,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static AWS_THREAD_LOCAL int last_error = 0;
+static AWS_THREAD_LOCAL int s_last_error = 0;
 
-static aws_error_handler global_handler = NULL;
-static void *global_error_context = NULL;
+static aws_error_handler s_global_handler = NULL;
+static void *s_global_error_context = NULL;
 
-static AWS_THREAD_LOCAL aws_error_handler thread_handler = NULL;
-AWS_THREAD_LOCAL void *thread_handler_context = NULL;
+static AWS_THREAD_LOCAL aws_error_handler s_thread_handler = NULL;
+AWS_THREAD_LOCAL void *s_thread_handler_context = NULL;
 
 #ifndef AWS_MAX_ERROR_SLOTS
 #define AWS_MAX_ERROR_SLOTS 16
@@ -38,16 +38,16 @@ AWS_THREAD_LOCAL void *thread_handler_context = NULL;
 #define SLOT_DIV_SHIFT 0x0A
 #define SLOT_MASK 0x03FF
 
-static const int max_error_code = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
+static const int MAX_ERROR_CODE = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
 
 static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = { 0 };
 
 int aws_last_error(void) {
-    return last_error;
+    return s_last_error;
 }
 
 static const struct aws_error_info *get_error_by_code(int err) {
-    if(err >= max_error_code || err < 0) {
+    if(err >= MAX_ERROR_CODE || err < 0) {
         return NULL;
     }
 
@@ -94,38 +94,38 @@ const char *aws_error_debug_str(int err) {
 }
 
 int aws_raise_error(int err) {
-    last_error = err;
+    s_last_error = err;
 
-    if(thread_handler) {
-        thread_handler(last_error, thread_handler_context);
+    if(s_thread_handler) {
+        s_thread_handler(s_last_error, s_thread_handler_context);
     }
-    else if(global_handler) {
-        global_handler(last_error, global_error_context);
+    else if(s_global_handler) {
+        s_global_handler(s_last_error, s_global_error_context);
     }
 
     return AWS_OP_ERR;
 }
 
 void aws_reset_error(void) {
-    last_error = 0;
+    s_last_error = 0;
 }
 
 void aws_restore_error(int err) {
-    last_error = err;
+    s_last_error = err;
 }
 
 aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx) {
-    aws_error_handler old_handler = global_handler;
-    global_handler = handler;
-    global_error_context = ctx;
+    aws_error_handler old_handler = s_global_handler;
+    s_global_handler = handler;
+    s_global_error_context = ctx;
 
     return old_handler;
 }
 
 aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx) {
-    aws_error_handler old_handler = thread_handler;
-    thread_handler = handler;
-    thread_handler_context = ctx;
+    aws_error_handler old_handler = s_thread_handler;
+    s_thread_handler = handler;
+    s_thread_handler_context = ctx;
 
     return old_handler;
 }

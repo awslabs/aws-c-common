@@ -18,7 +18,9 @@
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(string_tests, string_tests_fn);
-static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
+static int string_tests_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     /* Test: static string creation from macro works. */
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
     ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
@@ -29,9 +31,9 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
                       "Static string should have null byte at end.");
 
     /* Test: string creation works. */
-    const struct aws_string *test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw");
+    const struct aws_string *test_string_2 = aws_string_from_c_str_new(allocator, "foofaraw");
     ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
-    ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
+    ASSERT_PTR_EQUALS(test_string_2->allocator, allocator, "Allocator should have been set correctly.");
     ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
     ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_2), test_string_2->len, "foofaraw", 8,
                              "Data bytes should have been set correctly.");
@@ -67,13 +69,15 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(binary_string_test, binary_string_test_fn);
-static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
+static int binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
     size_t len = sizeof(test_array);
-    const struct aws_string *binary_string = aws_string_from_array_new(alloc, test_array, len);
+    const struct aws_string *binary_string = aws_string_from_array_new(allocator, test_array, len);
 
     ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
-    ASSERT_PTR_EQUALS(alloc, binary_string->allocator, "Allocator should have been set correctly.");
+    ASSERT_PTR_EQUALS(allocator, binary_string->allocator, "Allocator should have been set correctly.");
     ASSERT_BIN_ARRAYS_EQUALS(test_array, len, aws_string_bytes(binary_string), binary_string->len,
                              "Binary string bytes should be same as source array.");
     ASSERT_INT_EQUALS(aws_string_bytes(binary_string)[binary_string->len], 0x00,
@@ -83,7 +87,10 @@ static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(string_compare_test, string_compare_test_fn);
-static int string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
+static int string_compare_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     AWS_STATIC_STRING_FROM_LITERAL(empty, "");
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
     AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");

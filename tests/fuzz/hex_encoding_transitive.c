@@ -17,6 +17,7 @@
 
 #include <assert.h>
 
+/* NOLINTNEXTLINE(readability-identifier-naming) */
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     struct aws_allocator *alloc = aws_default_allocator();

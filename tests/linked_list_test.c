@@ -22,6 +22,9 @@ struct int_value {
 };
 
 static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);
@@ -39,19 +42,19 @@ static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allo
 
     int item;
     struct aws_linked_list_node *node = aws_linked_list_pop_front(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(first.value, item);
 
     node = aws_linked_list_pop_front(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(second.value, item);
 
     node = aws_linked_list_pop_front(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(third.value, item);
 
     node = aws_linked_list_pop_front(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(fourth.value, item);
 
     ASSERT_TRUE(aws_linked_list_empty(&list));
@@ -59,6 +62,9 @@ static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allo
 }
 
 static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);
@@ -79,19 +85,19 @@ static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allo
 
     int item;
     struct aws_linked_list_node *node = aws_linked_list_pop_back(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(first.value, item);
 
     node = aws_linked_list_pop_back(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(second.value, item);
 
     node = aws_linked_list_pop_back(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(third.value, item);
 
     node = aws_linked_list_pop_back(&list);
-    item = aws_container_of(node, struct int_value, node)->value;
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
     ASSERT_INT_EQUALS(fourth.value, item);
 
     ASSERT_TRUE(aws_linked_list_empty(&list));
@@ -100,6 +106,9 @@ static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allo
 }
 
 static int test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);
@@ -122,7 +131,7 @@ static int test_linked_list_iteration(struct aws_allocator *allocator, void *ctx
     for (struct aws_linked_list_node *iter = aws_linked_list_begin(&list); iter != aws_linked_list_end(&list);
          iter = aws_linked_list_next(iter)) {
 
-        int item = aws_container_of(iter, struct int_value, node)->value;
+        int item = AWS_CONTAINER_OF(iter, struct int_value, node)->value;
         ASSERT_INT_EQUALS(count, item);
         ++count;
     }

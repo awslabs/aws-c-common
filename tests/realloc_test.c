@@ -23,6 +23,8 @@
 static size_t alloc_counter, alloc_total_size, call_ct_malloc, call_ct_free, call_ct_realloc;
 
 static void *test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
+
     alloc_counter++;
     call_ct_malloc++;
     alloc_total_size += size;
@@ -34,6 +36,8 @@ static void *test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
 }
 
 static void test_alloc_release(struct aws_allocator *allocator, void *ptr) {
+    (void)allocator;
+
     uint8_t *buf = ptr;
     call_ct_free++;
 
@@ -48,6 +52,8 @@ static void test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 static size_t original_size, reported_oldsize;
 
 static void *test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+
     uint8_t *buf = ptr;
     buf -= 16;
     call_ct_realloc++;
@@ -70,10 +76,16 @@ static void *test_realloc(struct aws_allocator *allocator, void *ptr, size_t old
 }
 
 static void *test_malloc_failing(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
+    (void)size;
     return NULL;
 }
 
 static void *test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+    (void)ptr;
+    (void)oldsize;
+    (void)newsize;
     return NULL;
 }
 
@@ -83,7 +95,10 @@ static const uint8_t testpattern[32] = {
 };
 
 AWS_TEST_CASE(test_realloc_fallback, test_realloc_fallback_fn)
-static int test_realloc_fallback_fn(struct aws_allocator *unused, void *ctx) {
+static int test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator allocator = {
         .mem_acquire = test_alloc_acquire,
         .mem_release = test_alloc_release,
@@ -109,7 +124,10 @@ static int test_realloc_fallback_fn(struct aws_allocator *unused, void *ctx) {
 }
 
 AWS_TEST_CASE(test_realloc_fallback_oom, test_realloc_fallback_oom_fn)
-static int test_realloc_fallback_oom_fn(struct aws_allocator *unused, void *ctx) {
+static int test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator allocator = {
         .mem_acquire = test_alloc_acquire,
         .mem_release = test_alloc_release,
@@ -132,7 +150,10 @@ static int test_realloc_fallback_oom_fn(struct aws_allocator *unused, void *ctx)
 }
 
 AWS_TEST_CASE(test_realloc_passthrough_oom, test_realloc_passthrough_oom_fn)
-static int test_realloc_passthrough_oom_fn(struct aws_allocator *unused, void *ctx) {
+static int test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator allocator = {
         .mem_acquire = test_alloc_acquire,
         .mem_release = test_alloc_release,
@@ -154,7 +175,10 @@ static int test_realloc_passthrough_oom_fn(struct aws_allocator *unused, void *c
 }
 
 AWS_TEST_CASE(test_realloc_passthrough, test_realloc_passthrough_fn)
-static int test_realloc_passthrough_fn(struct aws_allocator *unused, void *ctx) {
+static int test_realloc_passthrough_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator allocator = {
         .mem_acquire = test_alloc_acquire,
         .mem_release = test_alloc_release,
@@ -182,10 +206,12 @@ static int test_realloc_passthrough_fn(struct aws_allocator *unused, void *ctx) 
 
 AWS_TEST_CASE(test_cf_allocator_wrapper, test_cf_allocator_wrapper_fn)
 
-static int test_cf_allocator_wrapper_fn(struct aws_allocator *alloc, void *ctx) {
+static int test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
 #ifdef __MACH__
-    CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(alloc);
+    CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(allocator);
     ASSERT_NOT_NULL(cf_allocator);
     char test_prefix[] = "test_string";
     CFStringRef test_str = CFStringCreateWithCString(cf_allocator, test_prefix, kCFStringEncodingUTF8);

@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_THREAD_H_
-#define AWS_COMMON_THREAD_H_
+#ifndef AWS_COMMON_THREAD_H
+#define AWS_COMMON_THREAD_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -60,7 +60,7 @@ AWS_COMMON_API int aws_thread_init(struct aws_thread *thread, struct aws_allocat
 /**
  * Creates an OS level thread and associates it with func. context will be passed to func when it is executed.
  * options will be applied to the thread if they are applicable for the platform.
- * You must either call join or detach after creating the thread and before calling clean_up. 
+ * You must either call join or detach after creating the thread and before calling clean_up.
  */
 AWS_COMMON_API int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg),
                                                       void *arg, struct aws_thread_options *options);
@@ -82,7 +82,7 @@ AWS_COMMON_API int aws_thread_join(struct aws_thread *thread);
 
 /**
  * Cleans up the thread handle. Either detach or join must be called
- * before calling this function. 
+ * before calling this function.
  */
 AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
 
@@ -100,4 +100,4 @@ AWS_COMMON_API void aws_thread_current_sleep(uint64_t nanos);
 }
 #endif
 
-#endif /* AWS_COMMON_THREAD_H_ */
+#endif /* AWS_COMMON_THREAD_H */

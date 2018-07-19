@@ -1,5 +1,5 @@
-#ifndef AWS_LINKED_LIST_H
-#define AWS_LINKED_LIST_H
+#ifndef AWS_COMMON_LINKED_LIST_H
+#define AWS_COMMON_LINKED_LIST_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -17,6 +17,7 @@
  */
 
 #include <aws/common/common.h>
+
 #include <assert.h>
 
 /**
@@ -24,7 +25,7 @@
  * this will get you back to the pointer of the object. member is the name of
  * the instance of struct aws_linked_list_node in your struct.
  */
-#define aws_container_of(ptr, type, member)  \
+#define AWS_CONTAINER_OF(ptr, type, member)  \
     ((type *)((uint8_t *)(ptr) - offsetof(type, member)))
 
 struct aws_linked_list_node {
@@ -154,4 +155,4 @@ static inline struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_
     return front;
 }
 
-#endif /*AWS_LINKED_LIST_H */
+#endif /* AWS_COMMON_LINKED_LIST_H */

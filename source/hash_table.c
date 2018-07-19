@@ -532,7 +532,7 @@ int aws_hash_table_remove(struct aws_hash_table *map,
 }
 
 int aws_hash_table_foreach(struct aws_hash_table *map,
-    int (*callback)(void *baton, struct aws_hash_element *pElement), void *baton)
+    int (*callback)(void *context, struct aws_hash_element *pElement), void *context)
 {
     struct hash_table_state *state = map->pImpl;
     size_t limit = state->size;
@@ -544,7 +544,7 @@ int aws_hash_table_foreach(struct aws_hash_table *map,
             continue;
         }
 
-        int rv = callback(baton, &entry->element);
+        int rv = callback(context, &entry->element);
 
         if (rv & AWS_COMMON_HASH_TABLE_ITER_DELETE) {
             size_t last_index = remove_entry(state, entry);

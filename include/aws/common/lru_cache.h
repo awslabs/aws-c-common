@@ -95,4 +95,4 @@ AWS_COMMON_API size_t aws_lru_cache_get_element_count(const struct aws_lru_cache
 }
 #endif
 
-#endif /*AWS_COMMON_LRU_CACHE_H */
+#endif /* AWS_COMMON_LRU_CACHE_H */

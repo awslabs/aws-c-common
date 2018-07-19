@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 /* Returns the number of online processors available for usage. */
-AWS_COMMON_API size_t aws_system_info_processor_count (void);
+AWS_COMMON_API size_t aws_system_info_processor_count();
 
 #ifdef __cplusplus
 }

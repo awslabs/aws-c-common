@@ -21,8 +21,8 @@
 #include <assert.h>
 
 static struct aws_thread_options default_options = {
-        /* this will make sure platform default stack size is used. */
-        .stack_size = 0
+    /* this will make sure platform default stack size is used. */
+    .stack_size = 0
 };
 
 struct thread_wrapper {
@@ -81,9 +81,9 @@ int aws_thread_launch (struct aws_thread *thread, void(*func)(void *arg), void *
             }
         }
     }
-    
+
     struct thread_wrapper *wrapper = (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
-    
+
     if(!wrapper) {
         allocation_failed = 1;
         goto cleanup;
@@ -109,8 +109,9 @@ int aws_thread_launch (struct aws_thread *thread, void(*func)(void *arg), void *
         return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
     }
 
-    if(attr_return == EAGAIN)
+    if(attr_return == EAGAIN) {
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
+    }
 
     if(attr_return == EPERM) {
         return aws_raise_error(AWS_ERROR_THREAD_NO_PERMISSIONS);
@@ -139,9 +140,11 @@ int aws_thread_join(struct aws_thread *thread) {
         if (err_no) {
             if (err_no == EINVAL) {
                 return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
-            } else if (err_no == ESRCH) {
+            }
+            if (err_no == ESRCH) {
                 return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
-            } else if (err_no == EDEADLK) {
+            }
+            if (err_no == EDEADLK) {
                 return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
             }
         }

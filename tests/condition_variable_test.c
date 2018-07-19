@@ -70,6 +70,8 @@ static void conditional_thread_3_fn(void *arg) {
 }
 
 static int test_conditional_notify_one_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct condition_predicate_args predicate_args = {
             .call_count = 0
     };
@@ -110,6 +112,8 @@ static int test_conditional_notify_one_fn(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(conditional_notify_one, test_conditional_notify_one_fn)
 
 static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct condition_predicate_args predicate_args = {
             .call_count = 0
     };
@@ -157,6 +161,8 @@ static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(conditional_notify_all, test_conditional_notify_all_fn)
 
 static int test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     struct condition_predicate_args predicate_args = {
             .call_count = 0

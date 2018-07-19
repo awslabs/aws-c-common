@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_hash_table_H
-#define AWS_COMMON_hash_table_H
+#ifndef AWS_COMMON_HASH_TABLE_H
+#define AWS_COMMON_HASH_TABLE_H
 
 /*
 * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -239,7 +239,7 @@ extern "C" {
      *
      * The callback must return a bitmask of zero or more of the following values
      * ORed together:
-     * 
+     *
      * # AWS_COMMON_HASH_TABLE_ITER_CONTINUE - Continues iteration to the next
      *     element (if not set, iteration stops)
      * # AWS_COMMON_HASH_TABLE_ITER_DELETE   - Deletes the current value and
@@ -269,20 +269,20 @@ extern "C" {
     /**
      * Convenience hash function for NULL-terminated C-strings
      */
-    AWS_COMMON_API uint64_t aws_hash_c_string(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_c_string(const void *item);
 
     /**
      * Convenience hash function for struct aws_strings.
      * Hash is same as used on the string bytes by aws_hash_c_string.
      */
-    AWS_COMMON_API uint64_t aws_hash_string(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_string(const void *item);
 
     /**
      * Convenience hash function which hashes the pointer value directly,
      * without dereferencing.  This can be used in cases where pointer identity
      * is desired, or where a uintptr_t is encoded into a const void *.
      */
-    AWS_COMMON_API uint64_t aws_hash_ptr(const void *a);
+    AWS_COMMON_API uint64_t aws_hash_ptr(const void *item);
 
     /**
      * Convenience eq function for NULL-terminated C-strings
@@ -304,6 +304,6 @@ extern "C" {
 #endif
 
 
-#endif /* AWS_COMMON_hash_table_H */
+#endif /* AWS_COMMON_HASH_TABLE_H */
 
 

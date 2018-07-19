@@ -278,9 +278,8 @@ static inline bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur
     if (slice.ptr) {
         memcpy(dest, slice.ptr, len);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 /**
@@ -367,9 +366,8 @@ static inline bool aws_byte_cursor_write(struct aws_byte_cursor *AWS_RESTRICT cu
     if (slice.ptr) {
         memcpy(slice.ptr, src, len);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 /**

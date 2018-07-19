@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_MUTEX_H_
-#define AWS_COMMON_MUTEX_H_
+#ifndef AWS_COMMON_MUTEX_H
+#define AWS_COMMON_MUTEX_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -73,4 +73,4 @@ AWS_COMMON_API int aws_mutex_unlock(struct aws_mutex *mutex);
 }
 #endif
 
-#endif /* AWS_COMMON_MUTEX_H_ */
+#endif /* AWS_COMMON_MUTEX_H */

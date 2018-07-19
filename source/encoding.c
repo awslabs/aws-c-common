@@ -17,14 +17,14 @@
 #include <ctype.h>
 #include <assert.h>
 
-static const uint8_t *hex_chars = (const uint8_t *)"0123456789abcdef";
+static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
-static const uint8_t base64_sentinal_value = 0xff;
-static const uint8_t base64_encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const uint8_t BASE64_SENTINAL_VALUE = 0xff;
+static const uint8_t BASE64_ENCODING_TABLE[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
  * per row. */
-static uint8_t base64_decoding_table[256] = {
+static uint8_t BASE64_DECODING_TABLE[256] = {
             64, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
             0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 62, 0xDD, 0xDD, 0xDD, 63,
@@ -73,8 +73,8 @@ int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws
     size_t written = 0;
     for (size_t i = 0; i < to_encode->len; ++i) {
 
-        output->buffer[written++] = hex_chars[to_encode->buffer[i] >> 4 & 0x0f];
-        output->buffer[written++] = hex_chars[to_encode->buffer[i] & 0x0f];
+        output->buffer[written++] = HEX_CHARS[to_encode->buffer[i] >> 4 & 0x0f];
+        output->buffer[written++] = HEX_CHARS[to_encode->buffer[i] & 0x0f];
     }
 
     output->buffer[written] = '\0';
@@ -89,12 +89,12 @@ static int hex_decode_char_to_int(char character, uint8_t *int_val) {
         return 0;
     }
 
-    else if (character >= 'A' && character <= 'F') {
+    if (character >= 'A' && character <= 'F') {
         *int_val = (uint8_t)(10 + (character - 'A'));
         return 0;
     }
 
-    else if (character >= '0' && character <= '9') {
+    if (character >= '0' && character <= '9') {
         *int_val = (uint8_t)(character - '0');
         return 0;
     }
@@ -249,10 +249,10 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
             block = block | to_encode->buffer[ i + 2 ];
         }
 
-        output->buffer[str_index++] = base64_encoding_table[(block >> 18) & 0x3F];
-        output->buffer[str_index++] = base64_encoding_table[(block >> 12) & 0x3F];
-        output->buffer[str_index++] = base64_encoding_table[(block >> 6) & 0x3F];
-        output->buffer[str_index++] = base64_encoding_table[block & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 18) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 12) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 6) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[block & 0x3F];
     }
 
     if(remainder_count > 0)
@@ -272,8 +272,8 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
 }
 
 static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_t allow_sentinal) {
-    uint8_t decode_value = base64_decoding_table[(size_t)to_decode];
-    if (decode_value != 0xDD && (decode_value != base64_sentinal_value || allow_sentinal)) {
+    uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
+    if (decode_value != 0xDD && (decode_value != BASE64_SENTINAL_VALUE || allow_sentinal)) {
         *value = decode_value;
         return AWS_OP_SUCCESS;
     }
@@ -324,9 +324,9 @@ int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct 
 
         output->buffer[buffer_index++] = (uint8_t) ((value1 << 2) | ((value2 >> 4) & 0x03));
 
-        if (value3 != base64_sentinal_value) {
+        if (value3 != BASE64_SENTINAL_VALUE) {
             output->buffer[buffer_index++] = (uint8_t) (((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
-            if (value4 != base64_sentinal_value) {
+            if (value4 != BASE64_SENTINAL_VALUE) {
                 output->buffer[buffer_index] = (uint8_t) ((value3 & 0x03) << 6 | value4);
             }
         }

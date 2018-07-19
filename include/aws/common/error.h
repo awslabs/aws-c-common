@@ -1,4 +1,5 @@
-#ifndef AWS_COMMON_ERROR_H_
+#ifndef AWS_COMMON_ERROR_H
+#define AWS_COMMON_ERROR_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -15,8 +16,6 @@
 * permissions and limitations under the License.
 */
 
-#define AWS_COMMON_ERROR_H_
-
 #include <aws/common/common.h>
 
 struct aws_error_info {
@@ -32,14 +31,11 @@ struct aws_error_info_list {
     uint16_t count;
 };
 
-#define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                                                               \
-{                                                                                                                      \
-    .literal_name = #C,                                                                                                \
-    .error_code = C,                                                                                                   \
-    .error_str = ES,                                                                                                   \
-    .lib_name = LN,                                                                                                    \
-    .formatted_name = LN ": " #C ", " ES                                                                               \
-}
+#define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                       \
+    {                                                                          \
+        .literal_name = #C, .error_code = (C), .error_str = (ES),              \
+        .lib_name = (LN), .formatted_name = LN ": " #C ", " ES                 \
+    }
 
 typedef void(*aws_error_handler)(int err, void *ctx);
 
@@ -104,4 +100,4 @@ AWS_COMMON_API void aws_register_error_info(const struct aws_error_info_list *er
 }
 #endif
 
-#endif /* AWS_COMMON_ERROR_H_ */
+#endif /* AWS_COMMON_ERROR_H */

@@ -26,6 +26,7 @@ static void thread_fn(void *arg) {
 }
 
 static int test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     struct thread_test_data test_data;
     test_data.thread_id = 0;
 

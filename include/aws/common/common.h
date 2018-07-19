@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_H_
-#define AWS_COMMON_H_
+#ifndef AWS_COMMON_COMMON_H
+#define AWS_COMMON_COMMON_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef NO_STDBOOL
-#include <stdbool.h>
+#include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #else
 #    ifndef __cplusplus
 #        define bool _Bool
@@ -49,7 +49,7 @@
 #endif
 
 #ifndef NO_STDINT
-#include <stdint.h>
+#include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #else
 #    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__)                \
          || defined(__ia64__) || defined(__powerpc64__)
@@ -236,8 +236,8 @@ AWS_COMMON_API void aws_load_error_strings(void);
 
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
-#define AWS_OP_SUCCESS 0
-#define AWS_OP_ERR -1
+#define AWS_OP_SUCCESS (0)
+#define AWS_OP_ERR (-1)
 
 typedef enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
@@ -319,9 +319,9 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #endif  // #else not windows
 }
 
-#define AWS_ZERO_STRUCT(object) memset(&object, 0, sizeof(object));
-#define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
+#define AWS_ZERO_STRUCT(object) memset((&object), 0, sizeof(object));
+#define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array));
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 
-#endif /* AWS_COMMON_H_ */
+#endif /* AWS_COMMON_COMMON_H */

@@ -25,8 +25,9 @@
 
 int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
     buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
-    if (!buf->buffer)
+    if (!buf->buffer) {
         return AWS_OP_ERR;
+    }
     buf->len = 0;
     buf->capacity = len;
     buf->allocator = allocator;
@@ -34,7 +35,9 @@ int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf,
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
-    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
+    if (buf->allocator && buf->buffer) {
+        aws_mem_release(buf->allocator, (void *)buf->buffer);
+    }
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;

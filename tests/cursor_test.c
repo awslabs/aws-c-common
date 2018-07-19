@@ -19,7 +19,10 @@
 #define SSIZE_MAX (SIZE_MAX >> 1)
 
 AWS_TEST_CASE(nospec_index_test, nospec_index_test_fn)
-static int nospec_index_test_fn(struct aws_allocator *alloc, void *ctx) {
+static int nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 1));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 0));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, SSIZE_MAX));
@@ -88,12 +91,18 @@ static int test_byte_cursor_advance_internal(
 }
 
 AWS_TEST_CASE(test_byte_cursor_advance, test_byte_cursor_advance_fn)
-static int test_byte_cursor_advance_fn(struct aws_allocator *alloc, void *ctx) {
+static int test_byte_cursor_advance_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     return test_byte_cursor_advance_internal(aws_byte_cursor_advance);
 }
 
 AWS_TEST_CASE(test_byte_cursor_advance_nospec, test_byte_cursor_advance_nospec_fn)
-static int test_byte_cursor_advance_nospec_fn(struct aws_allocator *alloc, void *ctx) {
+static int test_byte_cursor_advance_nospec_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     return test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
 }
 
@@ -107,7 +116,10 @@ static const uint8_t test_vector[] = {
 };
 
 AWS_TEST_CASE(byte_cursor_write_tests, byte_cursor_write_tests_fn);
-static int byte_cursor_write_tests_fn(struct aws_allocator *alloc, void *ctx) {
+static int byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     uint8_t buf[sizeof(test_vector) + 1];
     memset(buf, 0, sizeof(buf));
     buf[sizeof(buf) - 1] = 0x99;
@@ -134,7 +146,10 @@ static int byte_cursor_write_tests_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(byte_cursor_read_tests, byte_cursor_read_tests_fn);
-static int byte_cursor_read_tests_fn(struct aws_allocator *alloc, void *ctx) {
+static int byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_byte_cursor cur = aws_byte_cursor_from_array(test_vector, sizeof(test_vector));
 
     uint8_t aba[3], bcb[3];
@@ -157,7 +172,10 @@ static int byte_cursor_read_tests_fn(struct aws_allocator *alloc, void *ctx) {
 }
 
 AWS_TEST_CASE(byte_cursor_limit_tests, byte_cursor_limit_tests_fn);
-static int byte_cursor_limit_tests_fn(struct aws_allocator *alloc, void *ctx) {
+static int byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     uint8_t buf[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
     uint8_t starting_buf[sizeof(buf)];
     memcpy(starting_buf, buf, sizeof(buf));

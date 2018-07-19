@@ -1,5 +1,5 @@
-#ifndef AWS_PRIORITY_QUEUE_H
-#define AWS_PRIORITY_QUEUE_H
+#ifndef AWS_COMMON_PRIORITY_QUEUE_H
+#define AWS_COMMON_PRIORITY_QUEUE_H
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 *
@@ -61,7 +61,7 @@ extern "C" {
      * item_size is the size of each element in bytes. Mixing items types is not supported by this API.
      * pred is the function that will be used to determine priority.
      */
-    AWS_COMMON_API void aws_priority_queue_static_init(struct aws_priority_queue *queue, void *heap, size_t item_count, 
+    AWS_COMMON_API void aws_priority_queue_static_init(struct aws_priority_queue *queue, void *heap, size_t item_count,
             size_t item_size, aws_priority_queue_compare pred);
 
     /**
@@ -100,4 +100,4 @@ extern "C" {
 }
 #endif
 
-#endif /* #ifndef AWS_CORE_PRIORITY_QUEUE_H */
+#endif /* AWS_COMMON_PRIORITY_QUEUE_H */

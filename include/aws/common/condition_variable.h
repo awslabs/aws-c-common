@@ -1,5 +1,5 @@
-#ifndef AWS_CONDITION_VARIABLE_H
-#define AWS_CONDITION_VARIABLE_H
+#ifndef AWS_COMMON_CONDITION_VARIABLE_H
+#define AWS_COMMON_CONDITION_VARIABLE_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -101,4 +101,4 @@ AWS_COMMON_API int aws_condition_variable_wait_for_pred(struct aws_condition_var
 }
 #endif
 
-#endif /*AWS_CONDITION_VARIABLE_H */
+#endif /* AWS_COMMON_CONDITION_VARIABLE_H */

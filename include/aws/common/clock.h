@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_CLOCK_H_
-#define AWS_COMMON_CLOCK_H_
+#ifndef AWS_COMMON_CLOCK_H
+#define AWS_COMMON_CLOCK_H
 
 /*
 * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -37,4 +37,4 @@ AWS_COMMON_API int aws_sys_clock_get_ticks(uint64_t *timestamp);
 }
 #endif
 
-#endif /* AWS_COMMON_CLOCK_H_*/
+#endif /* AWS_COMMON_CLOCK_H */

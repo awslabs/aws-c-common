@@ -109,7 +109,7 @@ extern "C" {
     /**
      * Copies the elements from from to to. If to is in static mode, it must at least be the same length as from. Any data
      * in to will be overwritten in this copy.
-     */ 
+     */
     AWS_COMMON_API int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to);
 
     /**
@@ -126,8 +126,8 @@ extern "C" {
     /**
      * Returns the number of elements in the internal array.
      */
-    AWS_COMMON_API size_t aws_array_list_length(const struct aws_array_list *list); 
-     
+    AWS_COMMON_API size_t aws_array_list_length(const struct aws_array_list *list);
+
     /**
      * Copies the memory at index to val. If element does not exist, AWS_ERROR_INVALID_INDEX will be raised.
      */
@@ -158,4 +158,4 @@ extern "C" {
 }
 #endif
 
-#endif /*AWS_COMMON_ARRAY_LIST_H */
+#endif /* AWS_COMMON_ARRAY_LIST_H */

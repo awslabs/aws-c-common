@@ -1,5 +1,5 @@
-#ifndef AWS_TEST_HARNESS_H_
-#define AWS_TEST_HARNESS_H_
+#ifndef AWS_TESTING_AWS_TEST_HARNESS_H
+#define AWS_TESTING_AWS_TEST_HARNESS_H
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 *
@@ -93,8 +93,8 @@ static int cunit_failure_message0(const char *prefix, const char *function, cons
 
 static int total_failures;
 
-#define SUCCESS 0
-#define FAILURE -1
+#define SUCCESS (0)
+#define FAILURE (-1)
 
 #define RETURN_SUCCESS(format, ...) do { printf(format, ## __VA_ARGS__); printf("\n"); return SUCCESS; } while (0)
 #define PRINT_FAIL_INTERNAL(...) \
@@ -270,7 +270,7 @@ static int total_failures;
             } \
             POSTFAIL_INTERNAL(); \
         } \
-        if (memcmp(assert_ex_p, assert_got_p, assert_got_s)) { \
+        if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) { \
             fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
                 PRINT_FAIL_INTERNAL0("ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", \
@@ -310,8 +310,8 @@ struct aws_test_harness {
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
-    static struct aws_test_harness name = { .on_before = NULL, .run = fn, .on_after = NULL,                            \
-         .ctx = NULL, .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = s };                  \
+    static struct aws_test_harness name = { .on_before = NULL, .run = (fn), .on_after = NULL,                          \
+         .ctx = NULL, .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = (s) };                \
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
     static void b(struct aws_allocator *allocator, void *ctx);                                                         \
@@ -381,4 +381,4 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
     fflush(AWS_TESTING_REPORT_FD);                                                                                     \
     return ret_val;                                                                                                    \
 
-#endif /* AWS_TEST_HARNESS_H _*/
+#endif /* AWS_TESTING_AWS_TEST_HARNESS_H */
