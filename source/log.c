@@ -70,9 +70,8 @@ struct aws_log_message {
 struct aws_log_context {
     struct aws_log_message *message_list;
     struct aws_log_message *delete_list;
-    int running;
     size_t max_message_len;
-    struct aws_memory_pool message_pool;
+    struct aws_memory_pool* message_pool;
     struct aws_allocator *alloc;
     struct aws_log_context *next;
     struct aws_log_context *prev;
@@ -105,11 +104,6 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
         return AWS_OP_ERR;
     }
 
-    if (!s_local_log_context->running) {
-        aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
-        return AWS_OP_ERR;
-    }
-
     /* Atomically grab and release all messages on the `delete_list` whenever present. */
     struct aws_log_message* delete_list;
     do {
@@ -118,12 +112,12 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
 
     while (delete_list) {
         struct aws_log_message *next = delete_list->next;
-        aws_memory_pool_release(&s_local_log_context->message_pool, delete_list);
+        aws_memory_pool_release(s_local_log_context->message_pool, delete_list);
         delete_list = next;
     }
 
     /* Acquire memory for the new message. */
-    void *mem = aws_memory_pool_acquire(&s_local_log_context->message_pool);
+    void *mem = aws_memory_pool_acquire(s_local_log_context->message_pool);
     struct aws_log_message *msg = (struct aws_log_message *)mem;
     char *msg_data = (char*)(msg + 1);
     
@@ -203,8 +197,8 @@ int aws_log_flush() {
 
             /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
             do {
-                last_msg->next = s_local_log_context->delete_list;
-            } while (!aws_atomic_cas_ptr((void **)&s_local_log_context->delete_list, last_msg->next, msg_list));
+                last_msg->next = log_list->delete_list;
+            } while (!aws_atomic_cas_ptr((void **)&log_list->delete_list, last_msg->next, msg_list));
         }
 
         log_list = next;
@@ -231,12 +225,11 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
         return AWS_OP_ERR;
     }
 
-    memset(s_local_log_context, 0, sizeof(*s_local_log_context));
-    s_local_log_context->running = 1;
+    aws_secure_zero(s_local_log_context, sizeof(*s_local_log_context));
     s_local_log_context->max_message_len = max_message_len;
     s_local_log_context->alloc = alloc;
-    int ret = aws_memory_pool_init(&s_local_log_context->message_pool, alloc, sizeof(struct aws_log_message) + max_message_len, memory_pool_message_count);
-    if (ret) {
+    s_local_log_context->message_pool = aws_memory_pool_init(alloc, sizeof(struct aws_log_message) + max_message_len, memory_pool_message_count);
+    if (!s_local_log_context->message_pool) {
         aws_raise_error(AWS_ERROR_OOM);
         return AWS_OP_ERR;
     }
@@ -267,8 +260,6 @@ int aws_log_clean_up() {
         context = s_local_log_context;
     } while (!aws_atomic_cas_ptr((void **)&s_local_log_context, context, NULL));
 
-    context->running = 0;
-
     /* Perform final cleanup if this is the last log thread. */
     aws_mutex_lock(&s_log_list_mutex);
     if (aws_atomic_add(&s_log_thread_count, -1) == 1) {
@@ -282,30 +273,24 @@ int aws_log_clean_up() {
             struct aws_log_context *next = log_list->next;
 
             /* Remove dead threads. Log any leftover messages. Cleanup leftover message pool memory. */
-            if (!log_list->running) {
-                struct aws_log_message *delete_list = log_list->message_list;
-                while (delete_list) {
-                    struct aws_log_message *next0 = delete_list->next;
-                    char *msg_data = (char*)(delete_list + 1);
-                    s_log_report_callback(msg_data);
-                    aws_memory_pool_release(&context->message_pool, delete_list);
-                    delete_list = next0;
-                }
-
-                delete_list = log_list->delete_list;
-                while (delete_list) {
-                    struct aws_log_message *next0 = delete_list->next;
-                    aws_memory_pool_release(&context->message_pool, delete_list);
-                    delete_list = next0;
-                }
-
-                aws_memory_pool_clean_up(&log_list->message_pool);
-            } else {
-                aws_raise_error(AWS_ERROR_LOG_IMPROPER_CLEAN_UP);
-                return AWS_OP_ERR;
+            struct aws_log_message *delete_list = log_list->message_list;
+            while (delete_list) {
+                struct aws_log_message *next0 = delete_list->next;
+                char *msg_data = (char*)(delete_list + 1);
+                s_log_report_callback(msg_data);
+                aws_memory_pool_release(log_list->message_pool, delete_list);
+                delete_list = next0;
             }
 
-            log_list->alloc->mem_release(log_list->alloc, log_list);
+            delete_list = log_list->delete_list;
+            while (delete_list) {
+                struct aws_log_message *next0 = delete_list->next;
+                aws_memory_pool_release(log_list->message_pool, delete_list);
+                delete_list = next0;
+            }
+
+            aws_memory_pool_clean_up(log_list->message_pool);
+            aws_mem_release(log_list->alloc, log_list);
 
             log_list = next;
         } while (log_list != sentinel);

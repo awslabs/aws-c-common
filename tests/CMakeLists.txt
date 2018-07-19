@@ -177,6 +177,7 @@ add_test(test_cf_allocator_wrapper ${TEST_BINARY_NAME} test_cf_allocator_wrapper
 
 add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
 add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
+add_test(test_memory_pool_hammer ${TEST_BINARY_NAME} test_memory_pool_hammer)
 
 add_test(test_log_init_clean_up ${TEST_BINARY_NAME} test_log_init_clean_up)
 add_test(test_log_overflow_message ${TEST_BINARY_NAME} test_log_overflow_message)

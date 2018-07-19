@@ -65,7 +65,7 @@ void test_log_thread_fn(void *param) {
     uint64_t id = aws_thread_current_thread_id();
     int count = 0;
     while (*running) {
-        if (count < 100) {
+        if (count < 10) {
             aws_log(AWS_LOG_LEVEL_TRACE, "Hello from thread %d!", (unsigned)id);
             ++count;
         }
@@ -91,9 +91,9 @@ static int test_log_threads_hammer_fn(struct aws_allocator *allocator, void *ctx
         aws_thread_launch(threads + i, test_log_thread_fn, &running, NULL);
     }
 
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 100; ++i) {
         aws_log_flush();
-        aws_thread_current_sleep(1);
+        aws_thread_current_sleep(10);
     }
 
     running = 0;

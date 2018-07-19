@@ -47,7 +47,7 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
-#include <memory_pool_test.c>
+#include <memory_pool_test.h>
 #include <log_test.h>
 #include <lru_cache_test.c>
 
@@ -182,6 +182,7 @@ int main(int argc, char *argv[]) {
                        &test_cf_allocator_wrapper,
                        &test_memory_pool_no_overflow,
                        &test_memory_pool_overflow,
+                       &test_memory_pool_hammer,
                        &test_log_init_clean_up,
                        &test_log_overflow_message,
                        &test_log_threads_hammer,
