@@ -174,6 +174,7 @@ int main(int argc, char *argv[]) {
                        &test_lru_cache_overflow_static_members,
                        &test_lru_cache_lru_ness_static_members,
                        &test_lru_cache_entries_cleanup,
-                       &test_lru_cache_overwrite
+                       &test_lru_cache_overwrite,
+                       &test_lru_cache_element_access_members,
                        );
 }
