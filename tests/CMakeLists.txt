@@ -181,6 +181,10 @@ add_test(test_lru_cache_entries_cleanup ${TEST_BINARY_NAME} test_lru_cache_entri
 add_test(test_lru_cache_overwrite ${TEST_BINARY_NAME} test_lru_cache_overwrite)
 add_test(test_lru_cache_element_access_members ${TEST_BINARY_NAME} test_lru_cache_element_access_members)
 
+add_test(rw_lock_aquire_release_test ${TEST_BINARY_NAME} rw_lock_aquire_release_test)
+add_test(rw_lock_is_actually_rw_lock_test ${TEST_BINARY_NAME} rw_lock_is_actually_rw_lock_test)
+add_test(rw_lock_many_readers_test ${TEST_BINARY_NAME} rw_lock_many_readers_test)
+
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
 

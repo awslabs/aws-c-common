@@ -41,6 +41,7 @@
 #include <system_info_tests.c>
 #include <realloc_test.c>
 #include <lru_cache_test.c>
+#include <rw_lock_test.c>
 
 int main(int argc, char *argv[]) {
 
@@ -176,5 +177,8 @@ int main(int argc, char *argv[]) {
                        &test_lru_cache_entries_cleanup,
                        &test_lru_cache_overwrite,
                        &test_lru_cache_element_access_members,
+                       &rw_lock_aquire_release_test,
+                       &rw_lock_is_actually_rw_lock_test,
+                       &rw_lock_many_readers_test,
                        );
 }
