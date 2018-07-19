@@ -126,24 +126,88 @@ memory leaks, as well as some `ASSERT` macros. To write a test:
 * Include yur test in the `tests/CMakeLists.txt` file.
 
 ### Coding Style
-* No Tabs
-* Indent is 4 spaces
-* K & R style for braces
-* Space after if, before the `(`
-* Avoid C99 features in header files
-* Avoid C++ style comments e.g. `//`
-* All public API functions need C++ guards and Windows dll semantics
-* Use Unix line endings
+* No Tabs.
+* Indent is 4 spaces.
+* K & R style for braces.
+* Space after if, before the `(`.
+* `else` and `else if` stay on the same line as the closing brace.
+
+Example:
+
+    if (condition) {
+        do_something();
+    } else {
+        do_something_else();
+    }    
+* Avoid C99 features in header files. For some types such as bool, uint32_t etc..., these are defined if not available for the language
+standard being used in `aws/common/common.h`, so feel free to use them.
+* For C++ compatibility, don't put const members in structs.
+* Avoid C++ style comments e.g. `//`.
+* All public API functions need C++ guards and Windows dll semantics.
+* Use Unix line endings.
+* Where implementation hiding is desired for either ABI or runtime polymorphism reasons, use the `void *impl` pattern. v-tables
+ should be the last member in the struct.
+* For #ifdef, put a # as the first character on the line and then indent the compilation branches.
+
+Example:
+
+    
+    #ifdef FOO
+        do_something();
+    
+    #   ifdef BAR
+        do_something_else();
+    #   endif
+    #endif
+          
+
+* For all error code names with the exception of aws-c-common, use `AWS_ERROR_<lib name>_<error name>`.
+* All error strings should be written using correct English grammar.
 * SNAKE_UPPER_CASE constants, macros, and enum members.
 * snake_lower_case everything else.
-* do not use typedef struct idiom.
-* typedef function pointer definitions if you intend to expose them to the user
-* typedef enums
-* every source and header file must have a copyright header (The standard AWS one for apache 2).
-* Use standard include guards (e.g. #IFNDEF HEADER_NAME #define HEADER_NAME etc...)
+* File scope (static) variables and functions are prefixed with s_.
+* For constants, use anonymous enums.
+
+Example:
+  
+    enum { THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING = 42 };
+    
+* Use typedef struct by suffixing _t to the typedef for the struct name. 
+
+Example:
+
+    typdef struct my_struct { ... } my_struct_t;
+* Use typedef enum by suffixing _t to the typedef for the enum name.
+
+Example:
+
+    typdef struct my_enum { ... } my_enum_t;
+* typedef function definitions for use as function pointers as values and suffixed with _fn. 
+
+Example:
+
+    typedef int(fn_name_fn)(void *);
+* Every source and header file must have a copyright header (The standard AWS one for apache 2).
+* Use standard include guards (e.g. #IFNDEF HEADER_NAME #define HEADER_NAME etc...).
+* Include order should be:
+    the header for the translation unit for the .c file
+    newline
+    header files in a directory in alphabetical order
+    newline
+    header files not in a directory (system and stdlib headers)
 * Platform specifics should be handled in c files and partitioned by directory.
-* namespace all definitions in header files with `aws_<libname>?_<api>_<what it does>`. Lib name is
+* Do not use `extern inline`. It's too unpredictable between compiler versions and language standards.
+* Namespace all definitions in header files with `aws_<libname>?_<api>_<what it does>`. Lib name is
 not always required if a conflict is not likely and it provides better ergonomics.
+* `init`, `clean_up`, `new`, `destroy` are suffixed to the function names for their object.
+
+Example:
+
+    AWS_COMMON_API int aws_module_init(aws_module_t *module);
+    AWS_COMMON_API void aws_module_clean_up(aws_module_t *module);
+    AWS_COMMON_API aws_module_t *aws_module_new(aws_allocator_t *allocator);
+    AWS_COMMON_API void aws_module_destroy(aws_module_t *module);
+        
 * Avoid c-strings, and don't write code that depends on `NULL` terminators. Expose `struct aws_byte_buf` APIs
 and let the user figure it out.
 * There is only one valid character encoding-- UTF-8. Try not to ever need to care about character encodings, but
