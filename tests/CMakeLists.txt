@@ -1,3 +1,4 @@
+include(LibFuzzer)
 enable_testing()
 
 file(GLOB TEST_SRC "main.c")
@@ -7,31 +8,25 @@ file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 set(TEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-tests)
 
 add_executable(${TEST_BINARY_NAME} ${TESTS})
+aws_set_common_properties(${TEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
+aws_add_sanitizers(${TEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
 target_link_libraries(${TEST_BINARY_NAME} ${CMAKE_PROJECT_NAME})
-set_target_properties(${TEST_BINARY_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 target_compile_definitions(${TEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
 target_include_directories(${TEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-if (MSVC)
-    target_compile_options(${TEST_BINARY_NAME} PRIVATE /W4 /WX)
-else ()
-    target_compile_options(${TEST_BINARY_NAME} PRIVATE -Wall -Wno-long-long -Werror)
-endif ()
 
 file(GLOB META_TESTS "assert_test.c")
 
 set(METATEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-assert-tests)
 
 add_executable(${METATEST_BINARY_NAME} ${META_TESTS})
+aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
+aws_add_sanitizers(${METATEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
 target_link_libraries(${METATEST_BINARY_NAME} ${CMAKE_PROJECT_NAME})
-set_target_properties(${METATEST_BINARY_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
 target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-if (MSVC)
-    target_compile_options(${METATEST_BINARY_NAME} PRIVATE /W4 /WX)
+if(MSVC)
     target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE "-D_CRT_SECURE_NO_WARNINGS")
-else ()
-    target_compile_options(${METATEST_BINARY_NAME} PRIVATE -Wall -Wno-long-long -Werror)
-endif ()
+endif()
 
 add_test(assert_test ${METATEST_BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/metatest.tmp)
 
@@ -185,3 +180,7 @@ add_test(test_lru_cache_lru_ness_static_members ${TEST_BINARY_NAME} test_lru_cac
 add_test(test_lru_cache_entries_cleanup ${TEST_BINARY_NAME} test_lru_cache_entries_cleanup)
 add_test(test_lru_cache_overwrite ${TEST_BINARY_NAME} test_lru_cache_overwrite)
 add_test(test_lru_cache_element_access_members ${TEST_BINARY_NAME} test_lru_cache_element_access_members)
+
+file(GLOB FUZZ_TESTS "fuzz/*.c")
+aws_add_fuzz_tests("${FUZZ_TESTS}" "")
+
