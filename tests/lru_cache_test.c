@@ -209,3 +209,43 @@ static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ct
 }
 
 AWS_TEST_CASE(test_lru_cache_overwrite, test_lru_cache_overwrite_fn)
+
+static int test_lru_cache_element_access_members_fn(struct aws_allocator *allocator, void *ctx) {
+    struct aws_lru_cache cache;
+
+    ASSERT_SUCCESS(aws_lru_cache_init(&cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, NULL, 3));
+
+    int *value = NULL;
+    ASSERT_NULL(aws_lru_cache_use_lru_element(&cache));
+    ASSERT_NULL(aws_lru_cache_get_mru_element(&cache));
+
+    const char *first_key = "first";
+    const char *second_key = "second";
+    const char *third_key = "third";
+
+    int first = 1;
+    int second = 2;
+    int third = 3;
+
+    ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
+    ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
+    ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
+
+    value = aws_lru_cache_get_mru_element(&cache);
+    ASSERT_NOT_NULL(value);
+    ASSERT_INT_EQUALS(third, *value);
+
+    value = aws_lru_cache_use_lru_element(&cache);
+    ASSERT_NOT_NULL(value);
+    ASSERT_INT_EQUALS(first, *value);
+
+    value = aws_lru_cache_get_mru_element(&cache);
+    ASSERT_NOT_NULL(value);
+    ASSERT_INT_EQUALS(first, *value);
+
+    aws_lru_cache_clean_up(&cache);
+    return 0;
+}
+
+AWS_TEST_CASE(test_lru_cache_element_access_members, test_lru_cache_element_access_members_fn)
+
