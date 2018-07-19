@@ -29,13 +29,13 @@ static int test_log_init_clean_up_fn(struct aws_allocator *allocator, void *ctx)
     ASSERT_SUCCESS(aws_log_init(allocator, message_len, max_messages));
     aws_log_set_reporting_callback(log_report_fn);
 
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #1.\n"));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #1."));
     ASSERT_SUCCESS(aws_log_flush());
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #2.\n"));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #2."));
     ASSERT_SUCCESS(aws_log_flush());
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #3.\n"));
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #4.\n"));
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #5.\n"));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #3."));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #4."));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Oh, hello there #5."));
     ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
@@ -45,14 +45,14 @@ static int test_log_init_clean_up_fn(struct aws_allocator *allocator, void *ctx)
 
 AWS_TEST_CASE(test_log_overflow_message, test_log_overflow_message_fn)
 static int test_log_overflow_message_fn(struct aws_allocator *allocator, void *ctx) {
-    const int message_len = 75;
+    const int message_len = 100;
     const int max_messages = 1;
 
     ASSERT_SUCCESS(aws_log_init(allocator, message_len, max_messages));
     aws_log_set_reporting_callback(log_report_fn);
 
     ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "This message should definitely overflow and get truncated because it is just simply way too long."));
-    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "\nOverflow the memory pool, but not the message (no truncation).\n"));
+    ASSERT_SUCCESS(aws_log(AWS_LOG_LEVEL_TRACE, "Overflow the memory pool, but not the message (no truncation)."));
     ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
@@ -66,7 +66,7 @@ void test_log_thread_fn(void *param) {
     int count = 0;
     while (*running) {
         if (count < 100) {
-            aws_log(AWS_LOG_LEVEL_TRACE, "Hello from thread %d!\n", (unsigned)id);
+            aws_log(AWS_LOG_LEVEL_TRACE, "Hello from thread %d!", (unsigned)id);
             ++count;
         }
         aws_thread_current_sleep(1);
@@ -117,12 +117,8 @@ int log_test_order_correct;
 static void log_report_test_order_fn(const char *log_message) {
     int thread_index, count;
 
-    #ifdef _WIN32
-        sscanf_s(log_message, "%d %d", &thread_index, &count);
-    #else
-        sscanf(log_message, "%d %d", &thread_index, &count);
-    #endif
-    
+    sscanf(log_message, "%d %d", &thread_index, &count);
+
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
     }
@@ -187,7 +183,7 @@ static int test_log_no_flush_for_no_leaks_fn(struct aws_allocator *allocator, vo
     aws_log_set_reporting_callback(NULL);
 
     for (int i = 0; i < 10; ++i)
-        AWS_LOG(AWS_LOG_LEVEL_DEBUG, "This is a test log.\n");
+        AWS_LOG(AWS_LOG_LEVEL_DEBUG, "This is a test log.");
 
     ASSERT_SUCCESS(aws_log_clean_up());
 

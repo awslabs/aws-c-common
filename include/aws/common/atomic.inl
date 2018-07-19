@@ -19,7 +19,7 @@
         int value;
         do {
             value = *dst;
-        } while (!aws_atomic_compare_exchange(dst, value, value));
+        } while (!aws_atomic_cas(dst, value, value));
         return value;
     }
 
@@ -31,7 +31,7 @@
         return __sync_fetch_and_add(dst, addend);
     }
 
-    static inline int aws_atomic_compare_exchange(int *dst, int compare, int value) {
+    static inline int aws_atomic_cas(int *dst, int compare, int value) {
         return __sync_bool_compare_and_swap(dst, compare, value);
     }
 
@@ -39,7 +39,7 @@
         void *value;
         do {
             value = *dst;
-        } while (!aws_atomic_compare_exchange_ptr(dst, value, value));
+        } while (!aws_atomic_cas_ptr(dst, value, value));
         return value;
     }
 
@@ -47,7 +47,7 @@
         return __sync_lock_test_and_set(dst, value);
     }
 
-    static inline int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
+    static inline int aws_atomic_cas_ptr(void **dst, void *compare, void *value) {
         return __sync_bool_compare_and_swap(dst, compare, value);
     }
 
@@ -59,7 +59,7 @@
         int value;
         do {
             value = *dst;
-        } while (!aws_atomic_compare_exchange(dst, value, value));
+        } while (!aws_atomic_cas(dst, value, value));
         return value;
     }
 
@@ -71,7 +71,7 @@
         return (int)_InterlockedExchangeAdd((long *)dst, (long)addend);
     }
 
-    static inline int aws_atomic_compare_exchange(int *dst, int compare, int value) {
+    static inline int aws_atomic_cas(int *dst, int compare, int value) {
         return _InterlockedCompareExchange((long *)dst, (long)value, (long)compare) == (long)compare;
     }
 
@@ -79,7 +79,7 @@
         void *value;
         do {
             value = *dst;
-        } while (!aws_atomic_compare_exchange_ptr(dst, value, value));
+        } while (!aws_atomic_cas_ptr(dst, value, value));
         return value;
     }
 
@@ -87,7 +87,7 @@
         return _InterlockedExchangePointer(dst, value);
     }
 
-    static inline int aws_atomic_compare_exchange_ptr(void **dst, void *compare, void *value) {
+    static inline int aws_atomic_cas_ptr(void **dst, void *compare, void *value) {
         return _InterlockedCompareExchangePointer(dst, value, compare) == compare;
     }
 

@@ -15,6 +15,9 @@
 
 #include <aws/common/memory_pool.h>
 
+#define AWS_PTR_ADD(ptr, bytes) ((void *)(((uint8_t *)ptr) + (bytes)))
+#define AWS_PTR_SUB(ptr, bytes) ((void *)(((uint8_t *)ptr) - (bytes)))
+
 int aws_memory_pool_init(struct aws_memory_pool *pool, struct aws_allocator* alloc, size_t element_size, int element_count) {
     size_t stride = element_size + sizeof(void *);
     size_t arena_size = stride * element_count;

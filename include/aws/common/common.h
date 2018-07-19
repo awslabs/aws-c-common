@@ -229,40 +229,20 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 
 #define AWS_ZERO_STRUCT(object) memset(&object, 0, sizeof(object));
 #define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
-#define AWS_PTR_ADD(ptr, bytes) ((void *)(((char *)ptr) + (bytes)))
-#define AWS_PTR_SUB(ptr, bytes) ((void *)(((char *)ptr) - (bytes)))
 
-#define AWS_DOUBLY_LIST_INIT(sentinel) \
-    do { \
-        (sentinel)->next = (sentinel); \
-        (sentinel)->prev = (sentinel); \
-    } while (0)
+#if defined(_MSC_VER)
 
-#define AWS_DOUBLY_LIST_INSERT_BEFORE(before_me, element) \
-    do { \
-        (element)->prev = (before_me); \
-        (element)->next = (before_me)->next; \
-        (before_me)->next->prev = (element); \
-        (before_me)->next = (element); \
-    } while (0)
+#   define AWS_WARNING_PUSH __pragma(warning(push))
+#   define AWS_WARNING_POP __pragma(warning(pop))
+#   define AWS_WARNING_DISABLE_CONST_CONDITIONAL __pragma(warning(disable:4127)) /* Suppress warnings for const conditionals (for the below LOG macros). */
 
-#define AWS_DOUBLY_LIST_REMOVE(element) \
-    do { \
-        (element)->prev->next = (element)->next; \
-        (element)->next->prev = (element)->prev; \
-    } while (0)
+#else
 
-#define AWS_SINGLY_LIST_REVERSE(T, list) \
-    do { \
-        T* reverse_node__ = 0; \
-        while (list) { \
-            T* reverse_next__ = list->next; \
-            list->next = reverse_node__; \
-            reverse_node__ = list; \
-            list = reverse_next__; \
-        } \
-        list = reverse_node__; \
-    } while (0)
+#   define AWS_WARNING_PUSH
+#   define AWS_WARNING_POP
+#   define AWS_WARNING_DISABLE_CONST_CONDITIONAL
+
+#endif
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 

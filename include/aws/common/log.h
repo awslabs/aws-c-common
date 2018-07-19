@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #include <aws/common/memory_pool.h>
+#include <aws/common/linked_list.h>
 
 enum aws_log_level
 {
@@ -31,44 +32,33 @@ enum aws_log_level
     AWS_LOG_LEVEL_TRACE
 };
 
-#ifndef AWS_LOG_LEVEL
-#define AWS_LOG_LEVEL AWS_LOG_LEVEL_TRACE
-#endif /* AWS_LOG_LEVEL */
+#define AWS_DEFAULT_LOG_LEVEL AWS_LOG_LEVEL_TRACE
 
-#ifdef _WIN32
-#pragma warning(disable:4127) /* Suppress warnings for const conditionals (for the below LOG macros). */
-#endif /* _WIN32 */
+#ifndef AWS_LOG_LEVEL
+#define AWS_LOG_LEVEL AWS_DEFAULT_LOG_LEVEL
+#endif /* AWS_LOG_LEVEL */
 
 #define AWS_LOG(level, fmt, ...) \
     do { \
+        AWS_WARNING_PUSH \
+        AWS_WARNING_DISABLE_CONST_CONDITIONAL \
         if ((level) <= AWS_LOG_LEVEL) { \
-            aws_log(level, fmt, ## __VA_ARGS__); \
+            aws_log((level), (fmt), ## __VA_ARGS__); \
         } \
+        AWS_WARNING_POP \
     } while (0)
 
 #define AWS_VLOG(level, fmt, va_args) \
     do { \
+        AWS_WARNING_PUSH \
+        AWS_WARNING_DISABLE_CONST_CONDITIONAL \
         if ((level) <= AWS_LOG_LEVEL) { \
-            aws_vlog(level, fmt, va_args); \
+            aws_vlog((level), (fmt), (va_args)); \
         } \
+        AWS_WARNING_POP \
     } while (0)
 
-struct aws_log_message {
-    struct aws_log_message *next;
-};
-
-struct aws_log_context {
-    struct aws_log_message *message_list;
-    struct aws_log_message *delete_list;
-    int running;
-    size_t max_message_len;
-    struct aws_memory_pool message_pool;
-    struct aws_allocator *alloc;
-    struct aws_log_context *next;
-    struct aws_log_context *prev;
-};
-
-typedef void (*aws_log_report_callback)(const char* log_message);
+typedef void (aws_log_report_fn)(const char* log_message);
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,7 +68,7 @@ extern "C" {
  * `report_callback` is called from inside of `aws_log_flush`. Each message logged will be reported to this callback.
  * The default reporting mechanism is an empty stub function (no-op).
  */
-AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_callback report_callback);
+AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_fn* report_callback);
 
 /**
  * Records a log entry to be processed by a later call to `aws_log_flush`.
