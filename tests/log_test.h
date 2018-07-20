@@ -118,7 +118,6 @@ static void log_report_test_order_fn(const char *log_message) {
     int thread_index, count;
 
     sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count);
-    printf(log_message);
 
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
