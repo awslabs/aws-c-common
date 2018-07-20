@@ -120,7 +120,7 @@
 #    define UINT8_MAX (255)
 #    define UINT16_MAX (65535)
 #    define UINT32_MAX (4294967295U)
-#    define UINT64_MAX (__UINT64_C(18446744073709551615)
+#    define UINT64_MAX (__UINT64_C(18446744073709551615))
 
      AWS_STATIC_ASSERT(sizeof(uint64_t) == 8);
      AWS_STATIC_ASSERT(sizeof(uint32_t) == 4);
