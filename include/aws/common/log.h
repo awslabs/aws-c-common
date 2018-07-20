@@ -60,6 +60,8 @@ enum aws_log_level
 
 typedef void (aws_log_report_fn)(const char* log_message);
 
+#define AWS_LOG_MAX_LOGGING_THREADS (256)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

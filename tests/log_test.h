@@ -118,6 +118,7 @@ static void log_report_test_order_fn(const char *log_message) {
     int thread_index, count;
 
     sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count);
+    printf(log_message);
 
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
@@ -157,7 +158,9 @@ static int test_log_threads_order_fn(struct aws_allocator *allocator, void *ctx)
         aws_thread_launch(threads + i, test_log_thread_order_fn, &running, NULL);
     }
 
-    aws_thread_current_sleep(1000000);
+    aws_thread_current_sleep(10000000);
+
+    ASSERT_SUCCESS(aws_log_flush());
 
     running = 0;
 
@@ -165,8 +168,6 @@ static int test_log_threads_order_fn(struct aws_allocator *allocator, void *ctx)
         aws_thread_join(threads + i);
         aws_thread_clean_up(threads + i);
     }
-
-    ASSERT_SUCCESS(aws_log_flush());
 
     ASSERT_SUCCESS(aws_log_clean_up());
 

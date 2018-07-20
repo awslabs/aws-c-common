@@ -24,7 +24,7 @@
 static int aws_atomic_get(int *dst);
 
 /**
- * Atomically sets the value at `dst` to `value`.
+ * Atomically sets the value at `dst` to `value`. Returns the previous value at `dst`.
  */
 static int aws_atomic_set(int *dst, int value);
 
@@ -45,7 +45,7 @@ static int aws_atomic_cas(int *dst, int compare, int value);
 static void *aws_atomic_get_ptr(void **dst);
 
 /**
- * Atomically sets the value at `dst` to `value`.
+ * Atomically sets the value at `dst` to `value`. Returns the previous value at `dst`.
  */
 static void *aws_atomic_set_ptr(void **dst, void *value);
 

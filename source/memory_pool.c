@@ -32,7 +32,6 @@ struct aws_memory_pool *aws_memory_pool_init(struct aws_allocator* alloc, size_t
     struct aws_memory_pool *pool = (struct aws_memory_pool *)alloc->mem_acquire(alloc, arena_size);
 
     if (!pool) {
-        aws_raise_error(AWS_ERROR_OOM);
         return NULL;
     }
 

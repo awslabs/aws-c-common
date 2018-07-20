@@ -223,6 +223,7 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_UNINITIALIZED, "Log system not properly initialized yet.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_DOUBLE_INITIALIZE, "aws_log_init called more than once on this thread.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_IMPROPER_CLEAN_UP, "aws_log_clean_up must be called on all logging threads, before the owning thread can call it.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_THREAD_MAX_CAPACITY, "AWS_LOG_MAX_LOGGING_THREADS has been reached; spawn less threads or increase AWS_LOG_MAX_LOGGING_THREADS.", AWS_LIB_NAME),
 };
 
 static struct aws_error_info_list list = {
