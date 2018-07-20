@@ -16,18 +16,131 @@
 * permissions and limitations under the License.
 */
 
-#include <aws/common/error.h>
+#include <aws/common/exports.h>
+
 #include <stddef.h>
 #include <string.h>
 
-#if defined(_MSC_VER )
-#include <Windows.h> // for SecureZeroMemory
-#endif
+#define AWS_STATIC_ASSERT0(cond, msg) typedef char static_assertion_##msg[(!!(cond)) * 2-1]
+#define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
+#define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
 
 #if defined(_MSC_VER )
-#define AWS_THREAD_LOCAL __declspec(thread)
+#include <Windows.h> /* for SecureZeroMemory */
+#endif
+
+#ifndef NO_STDBOOL
+#include <stdbool.h>
 #else
-#define AWS_THREAD_LOCAL __thread
+#    ifndef __cplusplus
+#        define bool _Bool
+#        define true 1
+#        define false 0
+#    elif defined(__GNUC__) && !defined(__STRICT_ANSI__)
+
+#        define _Bool bool
+#        if  __cplusplus < 201103L
+/* For C++98, define bool, false, true as a GNU extension. */
+#            define bool  bool
+#            define false false
+#            define true  true
+#        endif
+#    endif
+#endif
+
+#ifndef NO_STDINT
+#include <stdint.h>
+#else
+#    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__)                \
+         || defined(__ia64__) || defined(__powerpc64__)
+#        define PTR_SIZE 8
+#    else
+#        define PTR_SIZE 4
+#    endif
+
+#    ifndef __cplusplus
+#        define bool _Bool
+#        define true 1
+#        define false 0
+#    elif defined(__GNUC__) && !defined(__STRICT_ANSI__)
+
+#        define _Bool bool
+#        if  __cplusplus < 201103L
+/* For C++98, define bool, false, true as a GNU extension. */
+#            define bool  bool
+#            define false false
+#            define true  true
+#        endif
+#    endif
+
+     typedef signed char int8_t;
+     typedef short int int16_t;
+     typedef int int32_t;
+#    if (PTR_SIZE == 8)
+        typedef long int int64_t;
+#    else
+        typedef long long int int64_t;
+#    endif
+
+     typedef unsigned char uint8_t;
+     typedef unsigned short int uint16_t;
+
+     typedef unsigned int uint32_t;
+
+#    if (PTR_SIZE == 8)
+         typedef unsigned long int uint64_t;
+#    else
+         typedef unsigned long long int uint64_t;
+#    endif
+
+#    if (PTR_SIZE == 8)
+         typedef long int intptr_t;
+         typedef unsigned long int uintptr_t;
+#    else
+         typedef int  intptr_t;
+         typedef unsigned int uintptr_t;
+#    endif
+
+#    if (PTR_SIZE == 8)
+#        define __INT64_C(c)  c ## L
+#        define __UINT64_C(c) c ## UL
+#    else
+#        define __INT64_C(c)  c ## LL
+#        define __UINT64_C(c) c ## ULL
+#    endif
+
+#    define INT8_MIN  (-128)
+#    define INT16_MIN (-32767-1)
+#    define INT32_MIN (-2147483647-1)
+#    define INT64_MIN (-__INT64_C(9223372036854775807)-1)
+#    define INT8_MAX  (127)
+#    define INT16_MAX (32767)
+#    define INT32_MAX (2147483647)
+#    define INT64_MAX (__INT64_C(9223372036854775807))
+#    define UINT8_MAX (255)
+#    define UINT16_MAX (65535)
+#    define UINT32_MAX (4294967295U)
+#    define UINT64_MAX (__UINT64_C(18446744073709551615)
+
+     AWS_STATIC_ASSERT(sizeof(uint64_t) == 8);
+     AWS_STATIC_ASSERT(sizeof(uint32_t) == 4);
+     AWS_STATIC_ASSERT(sizeof(uint16_t) == 2);
+     AWS_STATIC_ASSERT(sizeof(uint8_t) == 1);
+     AWS_STATIC_ASSERT(sizeof(int64_t) == 8);
+     AWS_STATIC_ASSERT(sizeof(int32_t) == 4);
+     AWS_STATIC_ASSERT(sizeof(int16_t) == 2);
+     AWS_STATIC_ASSERT(sizeof(int8_t) == 1);
+     AWS_STATIC_ASSERT(sizeof(uintptr_t) == sizeof(void *));
+     AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
+     AWS_STATIC_ASSERT(sizeof(char) == 1);
+#endif
+
+#include <aws/common/error.h>
+
+#if defined(_MSC_VER )
+#    define AWS_THREAD_LOCAL __declspec(thread)
+#else
+#    define AWS_THREAD_LOCAL __thread
 #endif
 
 /* Allocator structure. An instance of this will be passed around for anything needing memory allocation */
@@ -41,8 +154,8 @@ struct aws_allocator {
 
 /* Avoid pulling in CoreFoundation headers in a header file. */
 #ifdef __MACH__
-struct __CFAllocator;
-typedef const struct __CFAllocator *CFAllocatorRef;
+    struct __CFAllocator;
+    typedef const struct __CFAllocator *CFAllocatorRef;
 #endif
 
 #ifdef __cplusplus
@@ -105,35 +218,35 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #define AWS_CACHE_LINE 64
 
 #if defined(_MSC_VER )
-#define AWS_ALIGN(alignment) __declspec(align(alignment))
-#define AWS_LIKELY(x) x
-#define AWS_UNLIKELY(x) x
-#define AWS_FORCE_INLINE __forceinline
+#    define AWS_ALIGN(alignment) __declspec(align(alignment))
+#    define AWS_LIKELY(x) x
+#    define AWS_UNLIKELY(x) x
+#    define AWS_FORCE_INLINE __forceinline
 #else
-#if defined(__GNUC__) || defined(__clang__)
-#define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
-#define AWS_TYPE_OF(a) __typeof__(a)
-#define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
-#define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#define AWS_FORCE_INLINE __attribute__((always_inline))
-#endif
+#    if defined(__GNUC__) || defined(__clang__)
+#        define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
+#        define AWS_TYPE_OF(a) __typeof__(a)
+#        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
+#        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#        define AWS_FORCE_INLINE __attribute__((always_inline))
+#     endif
 #endif
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
  * If visual C++ building in C mode, the restrict definition is __restrict.
  * This just figures all of that out based on who's including this header file. */
 #if defined (__cplusplus)
-#define AWS_RESTRICT
+#    define AWS_RESTRICT
 #else
-#if defined (_MSC_VER )
-#define AWS_RESTRICT __restrict
-#else
-#if  defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#define AWS_RESTRICT restrict
-#else
-#define AWS_RESTRICT
-#endif
-#endif
+#    if defined (_MSC_VER )
+#        define AWS_RESTRICT __restrict
+#    else
+#        if  defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#            define AWS_RESTRICT restrict
+#        else
+#            define AWS_RESTRICT
+#        endif
+#    endif
 #endif
 
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)

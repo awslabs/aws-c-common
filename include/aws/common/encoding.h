@@ -19,7 +19,7 @@
 #include <aws/common/common.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
-#include <stdint.h>
+
 #include <memory.h>
 
 #ifdef __cplusplus

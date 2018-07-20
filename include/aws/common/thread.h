@@ -17,11 +17,8 @@
 */
 
 #include <aws/common/common.h>
-#include <stdint.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#else
+#ifndef _WIN32
 #include <pthread.h>
 #endif
 

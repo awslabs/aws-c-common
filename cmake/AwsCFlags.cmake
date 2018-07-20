@@ -12,6 +12,7 @@
 # permissions and limitations under the License.
 
 include(CheckCCompilerFlag)
+include(CheckIncludeFile)
 
 # This function will set all common flags on a target
 # Options:
@@ -37,6 +38,17 @@ function(aws_set_common_properties target)
 
         # Warning disables always go last to avoid future flags re-enabling them
         list(APPEND AWS_C_FLAGS -Wno-long-long)
+    endif()
+
+    check_include_file(stdint.h HAS_STDINT)
+    check_include_file(stdbool.h HAS_STDBOOL)
+
+    if (NOT HAS_STDINT)
+        list(APPEND AWS_C_FLAGS -DNO_STDINT)
+    endif()
+
+    if (NOT HAS_STDBOOL)
+        list(APPEND AWS_C_FLAGS -DNO_STDBOOL)
     endif()
 
     if(NOT SET_PROPERTIES_NO_WGNU)
