@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo Nothing to do in the install phase...
+  pre_build:
+    commands:
+      - echo Nothing to do in the pre_build phase...
+  build:
+    commands:
+      - echo Build started on `date`
+      - mkdir build
+      - cd build
+      - cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE="Release" ../ 
+      - msbuild.exe aws-c-common.vcxproj /p:Configuration=Release
+      - msbuild.exe tests/aws-c-common-assert-tests.vcxproj /p:Configuration=Release
+      - msbuild.exe tests/aws-c-common-tests.vcxproj /p:Configuration=Release
+      - ctest -V
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
