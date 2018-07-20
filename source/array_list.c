@@ -80,6 +80,7 @@ int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX
         && !list->alloc) {
+
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 

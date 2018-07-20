@@ -600,6 +600,7 @@ int aws_hash_table_foreach(
     struct aws_hash_table *map,
     int (*callback)(void *context, struct aws_hash_element *pElement),
     void *context) {
+
     struct hash_table_state *state = map->pImpl;
     size_t limit = state->size;
 
@@ -639,6 +640,7 @@ int aws_hash_table_foreach(
 static inline void get_next_element(
     struct aws_hash_iter *iter,
     size_t start_slot) {
+
     struct hash_table_state *state = iter->map->pImpl;
     size_t limit = state->size;
 
@@ -668,16 +670,16 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
 }
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
-    if (!aws_hash_iter_done(
-            iter)) { /* If already at end of table, do nothing. */
+    if (!aws_hash_iter_done(iter)) {
+        /* If already at end of table, do nothing. */
         get_next_element(iter, iter->slot + 1);
     }
 }
 
 void aws_hash_table_clear(struct aws_hash_table *map) {
     struct hash_table_state *state = map->pImpl;
-    if (state->destroy_key_fn) { /* Check whether we have destructors once
-                                    before traversing table. */
+    if (state->destroy_key_fn) {
+        /* Check whether we have destructors once before traversing table. */
         if (state->destroy_value_fn) {
             for (size_t i = 0; i < state->size; ++i) {
                 struct hash_table_entry *entry = &state->slots[i];
@@ -686,7 +688,8 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
                     state->destroy_value_fn(entry->element.value);
                 }
             }
-        } else { /* destroy_value_fn is not defined but destroy_key_fn is. */
+        } else {
+            /* destroy_value_fn is not defined but destroy_key_fn is. */
             for (size_t i = 0; i < state->size; ++i) {
                 struct hash_table_entry *entry = &state->slots[i];
                 if (entry->hash_code) {
@@ -694,8 +697,8 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
                 }
             }
         }
-    } else if (state->destroy_value_fn) { /* destroy_key_fn is not defined but
-                                             destroy_value_fn is. */
+    } else if (state->destroy_value_fn) {
+        /* destroy_key_fn is not defined but destroy_value_fn is. */
         for (size_t i = 0; i < state->size; ++i) {
             struct hash_table_entry *entry = &state->slots[i];
             if (entry->hash_code) {

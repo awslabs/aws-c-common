@@ -211,125 +211,109 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
 
 static int8_t error_strings_loaded = 0;
 
-#define AWS_LIB_NAME "libaws-c-common"
+#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES)                                    \
+    AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
 
+/* clang-format off */
 static struct aws_error_info errors[] = {
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_SUCCESS, "success", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_OOM, "out-of-memory", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_UNKNOWN, "unknown error", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_SUCCESS,
+        "success"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_OOM,
+        "out-of-memory"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_UNKNOWN,
+        "unknown error"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SHORT_BUFFER,
-        "Insufficient data in input buffer",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "Insufficient data in input buffer"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OVERFLOW_DETECTED,
-        "fixed size value overflow was detected",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "fixed size value overflow was detected"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_BUFFER_SIZE,
-        "invalid buffer size",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "invalid buffer size"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_HEX_STR,
-        "invalid hex string",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "invalid hex string"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_BASE64_STR,
-        "invalid base64 string",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "invalid base64 string"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_INDEX,
-        "invalid index for list access",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "invalid index for list access"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_INVALID_SETTINGS,
-        "invalid thread settings",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "invalid thread settings"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE,
-        "thread, insufficient resources",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "thread, insufficient resources"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NO_PERMISSIONS,
-        "insufficient permissions for thread operation",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "insufficient permissions for thread operation"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NOT_JOINABLE,
-        "thread not join-able",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "thread not join-able"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NO_SUCH_THREAD_ID,
-        "no such thread id",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "no such thread id"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_DEADLOCK_DETECTED,
-        "deadlock detected",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "deadlock detected"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_NOT_INIT,
-        "mutex not initialized",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "mutex not initialized"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_TIMEOUT,
-        "mutex operation timed out",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "mutex operation timed out"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_CALLER_NOT_OWNER,
-        "the caller of a mutex operation was not the owner",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "the caller of a mutex operation was not the owner"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_FAILED,
-        "mutex operation failed",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "mutex operation failed"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_INIT_FAILED,
-        "condition variable initialization failed.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "condition variable initialization failed."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_TIMED_OUT,
-        "condition variable wait timed out.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "condition variable wait timed out."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN,
-        "condition variable unknown error.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "condition variable unknown error."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_CLOCK_FAILURE,
-        "clock get ticks operation failed",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_EMPTY, "empty list", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "clock get ticks operation failed"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_LIST_EMPTY,
+        "empty list"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_DEST_COPY_TOO_SMALL,
-        "destination of copy is too small",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "destination of copy is too small"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
-        "a requested operation on a list would exceed it's max size.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "a requested operation on a list would exceed it's max size."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
-        "attempt to shrink a list in static mode",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "attempt to shrink a list in static mode"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PRIORITY_QUEUE_FULL,
-        "attempt to add items to a full preallocated queue in static mode.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "attempt to add items to a full preallocated queue in static mode."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PRIORITY_QUEUE_EMPTY,
-        "attempt to pop an item from an empty queue.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "attempt to pop an item from an empty queue."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_TASK_SCHEDULER_NO_TASKS,
-        "no tasks scheduled available.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "no tasks scheduled available."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS,
-        "none of the tasks scheduled is due to run now.",
-        AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(
+        "none of the tasks scheduled is due to run now."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
-        "Item not found in hash table",
-        AWS_LIB_NAME)};
+        "Item not found in hash table"),
+};
+/* clang-format on */
 
 static struct aws_error_info_list list = {
     .error_list = errors,
