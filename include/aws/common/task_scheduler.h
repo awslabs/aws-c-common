@@ -54,7 +54,8 @@ extern "C" {
  * Initializes a task scheduler instance with a clock function and an allocator.
  * The recommended clock functions are in <aws/common/clock.h>
  */
-AWS_COMMON_API int aws_task_scheduler_init(
+AWS_COMMON_API
+int aws_task_scheduler_init(
     struct aws_task_scheduler *scheduler,
     struct aws_allocator *alloc,
     aws_task_scheduler_clock clock);
@@ -64,8 +65,8 @@ AWS_COMMON_API int aws_task_scheduler_init(
  * status to the task function. Cleans up any memory allocated, and prepares the
  * instance for reuse or deletion.
  */
-AWS_COMMON_API void aws_task_scheduler_clean_up(
-    struct aws_task_scheduler *scheduler);
+AWS_COMMON_API
+void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler);
 
 /**
  * Gets the next task that is ready for execution. Tasks in the future will not
@@ -79,7 +80,8 @@ AWS_COMMON_API void aws_task_scheduler_clean_up(
  * If no tasks are scheduled AWS_ERROR_TASK_SCHEDULER_NO_TASKS error will be
  * raised. task is copied.
  */
-AWS_COMMON_API int aws_task_scheduler_next_task(
+AWS_COMMON_API
+int aws_task_scheduler_next_task(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t *next_run_time);
@@ -87,7 +89,8 @@ AWS_COMMON_API int aws_task_scheduler_next_task(
 /**
  * Schedules a task to run immediately. task is copied
  */
-AWS_COMMON_API int aws_task_scheduler_schedule_now(
+AWS_COMMON_API
+int aws_task_scheduler_schedule_now(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task);
 
@@ -95,7 +98,8 @@ AWS_COMMON_API int aws_task_scheduler_schedule_now(
  * Schedules a task to run at time_to_run units after the current time. task is
  * copied
  */
-AWS_COMMON_API int aws_task_scheduler_schedule_future(
+AWS_COMMON_API
+int aws_task_scheduler_schedule_future(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t time_to_run);
@@ -116,7 +120,8 @@ AWS_COMMON_API int aws_task_scheduler_schedule_future(
  * return AWS_OP_SUCCESS even if no tasks are scheduled. AWS_OP_ERR is only
  * returned if an actual error condition occurs (OOM, Clock failure etc...).
  */
-AWS_COMMON_API int aws_task_scheduler_run_all(
+AWS_COMMON_API
+int aws_task_scheduler_run_all(
     struct aws_task_scheduler *scheduler,
     uint64_t *next_task_time);
 

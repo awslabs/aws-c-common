@@ -41,7 +41,8 @@ extern "C" {
  * be removed. For the other parameters, see aws/common/hash_table.h. Hash table
  * semantics of these arguments are preserved.
  */
-AWS_COMMON_API int aws_lru_cache_init(
+AWS_COMMON_API
+int aws_lru_cache_init(
     struct aws_lru_cache *cache,
     struct aws_allocator *allocator,
     aws_hash_fn_t hash_fn,
@@ -54,7 +55,8 @@ AWS_COMMON_API int aws_lru_cache_init(
  * Cleans up the cache. Elements in the cache will be evicted and cleanup
  * callbacks will be invoked.
  */
-AWS_COMMON_API void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
+AWS_COMMON_API
+void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
 
 /**
  * Finds element in the cache by key. If found, it will become most-recently
@@ -64,7 +66,8 @@ AWS_COMMON_API void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
  *
  * If any errors occur AWS_OP_ERR will be returned.
  */
-AWS_COMMON_API int aws_lru_cache_find(
+AWS_COMMON_API
+int aws_lru_cache_find(
     struct aws_lru_cache *cache,
     const void *key,
     void **p_value);
@@ -74,7 +77,8 @@ AWS_COMMON_API int aws_lru_cache_find(
  * replaced. Added item becomes most-recently used. If the cache is already
  * full, the least-recently-used item will be removed.
  */
-AWS_COMMON_API int aws_lru_cache_put(
+AWS_COMMON_API
+int aws_lru_cache_put(
     struct aws_lru_cache *cache,
     const void *key,
     void *p_value);
@@ -82,26 +86,27 @@ AWS_COMMON_API int aws_lru_cache_put(
 /**
  * Removes item at `key` from the cache.
  */
-AWS_COMMON_API int aws_lru_cache_remove(
-    struct aws_lru_cache *cache,
-    const void *key);
+AWS_COMMON_API
+int aws_lru_cache_remove(struct aws_lru_cache *cache, const void *key);
 
 /**
  * Clears all items from the cache.
  */
-AWS_COMMON_API void aws_lru_cache_clear(struct aws_lru_cache *cache);
+AWS_COMMON_API
+void aws_lru_cache_clear(struct aws_lru_cache *cache);
 
 /**
  * Accesses the least-recently-used element, sets it to most-recently-used
  * element, and returns the value.
  */
-AWS_COMMON_API void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache);
+AWS_COMMON_API
+void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache);
 
 /**
  * Accesses the most-recently-used element and returns its value.
  */
-AWS_COMMON_API void *aws_lru_cache_get_mru_element(
-    const struct aws_lru_cache *cache);
+AWS_COMMON_API
+void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache);
 
 /**
  * Returns the number of elements in the cache.

@@ -55,31 +55,36 @@ extern "C" {
 /**
  * Initializes a condition variable.
  */
-AWS_COMMON_API int aws_condition_variable_init(
+AWS_COMMON_API
+int aws_condition_variable_init(
     struct aws_condition_variable *condition_variable);
 
 /**
  * Cleans up a condition variable.
  */
-AWS_COMMON_API void aws_condition_variable_clean_up(
+AWS_COMMON_API
+void aws_condition_variable_clean_up(
     struct aws_condition_variable *condition_variable);
 
 /**
  * Notifies/Wakes one waiting thread
  */
-AWS_COMMON_API int aws_condition_variable_notify_one(
+AWS_COMMON_API
+int aws_condition_variable_notify_one(
     struct aws_condition_variable *condition_variable);
 
 /**
  * Notifies/Wakes all waiting threads.
  */
-AWS_COMMON_API int aws_condition_variable_notify_all(
+AWS_COMMON_API
+int aws_condition_variable_notify_all(
     struct aws_condition_variable *condition_variable);
 
 /**
  * Waits the calling thread on a notification from another thread.
  */
-AWS_COMMON_API int aws_condition_variable_wait(
+AWS_COMMON_API
+int aws_condition_variable_wait(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex);
 
@@ -88,7 +93,8 @@ AWS_COMMON_API int aws_condition_variable_wait(
  * returns false, the wait is reentered, otherwise control returns to the
  * caller.
  */
-AWS_COMMON_API int aws_condition_variable_wait_pred(
+AWS_COMMON_API
+int aws_condition_variable_wait_pred(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     aws_condition_predicate pred,
@@ -98,7 +104,8 @@ AWS_COMMON_API int aws_condition_variable_wait_pred(
  * Waits the calling thread on a notification from another thread. Times out
  * after time_to_wait. time_to_wait is in nanoseconds.
  */
-AWS_COMMON_API int aws_condition_variable_wait_for(
+AWS_COMMON_API
+int aws_condition_variable_wait_for(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     int64_t time_to_wait);
@@ -108,7 +115,8 @@ AWS_COMMON_API int aws_condition_variable_wait_for(
  * after time_to_wait. time_to_wait is in nanoseconds. If predicate returns
  * false, the wait is reentered, otherwise control returns to the caller.
  */
-AWS_COMMON_API int aws_condition_variable_wait_for_pred(
+AWS_COMMON_API
+int aws_condition_variable_wait_for_pred(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     int64_t time_to_wait,

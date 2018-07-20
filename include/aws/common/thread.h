@@ -50,16 +50,15 @@ extern "C" {
 /**
  * Returns an instance of system default thread options.
  */
-AWS_COMMON_API const struct aws_thread_options *aws_default_thread_options(
-    void);
+AWS_COMMON_API
+const struct aws_thread_options *aws_default_thread_options(void);
 
 /**
  * Initializes a new platform specific thread object struct (not the os-level
  * thread itself).
  */
-AWS_COMMON_API int aws_thread_init(
-    struct aws_thread *thread,
-    struct aws_allocator *allocator);
+AWS_COMMON_API
+int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator);
 
 /**
  * Creates an OS level thread and associates it with func. context will be
@@ -67,7 +66,8 @@ AWS_COMMON_API int aws_thread_init(
  * they are applicable for the platform. You must either call join or detach
  * after creating the thread and before calling clean_up.
  */
-AWS_COMMON_API int aws_thread_launch(
+AWS_COMMON_API
+int aws_thread_launch(
     struct aws_thread *thread,
     void (*func)(void *arg),
     void *arg,
@@ -76,36 +76,41 @@ AWS_COMMON_API int aws_thread_launch(
 /**
  * Gets the id of thread
  */
-AWS_COMMON_API uint64_t aws_thread_get_id(struct aws_thread *thread);
+AWS_COMMON_API
+uint64_t aws_thread_get_id(struct aws_thread *thread);
 
 /**
  * Gets the detach state of the thread. For example, is it safe to call join on
  * this thread? Has it been detached()?
  */
-AWS_COMMON_API aws_thread_detach_state
-    aws_thread_get_detach_state(struct aws_thread *thread);
+AWS_COMMON_API
+aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
 
 /**
  * Joins the calling thread to a thread instance. Returns when thread is
  * finished.
  */
-AWS_COMMON_API int aws_thread_join(struct aws_thread *thread);
+AWS_COMMON_API
+int aws_thread_join(struct aws_thread *thread);
 
 /**
  * Cleans up the thread handle. Either detach or join must be called
  * before calling this function.
  */
-AWS_COMMON_API void aws_thread_clean_up(struct aws_thread *thread);
+AWS_COMMON_API
+void aws_thread_clean_up(struct aws_thread *thread);
 
 /**
  * returns the thread id of the calling thread.
  */
-AWS_COMMON_API uint64_t aws_thread_current_thread_id();
+AWS_COMMON_API
+uint64_t aws_thread_current_thread_id();
 
 /**
  * Sleeps the current thread by nanos.
  */
-AWS_COMMON_API void aws_thread_current_sleep(uint64_t nanos);
+AWS_COMMON_API
+void aws_thread_current_sleep(uint64_t nanos);
 
 #ifdef __cplusplus
 }

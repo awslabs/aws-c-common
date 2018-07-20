@@ -18,6 +18,8 @@
 
 #include <aws/common/common.h>
 
+#include <stddef.h>
+
 #define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
 #define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
 
@@ -120,7 +122,8 @@ extern "C" {
  * Either or both may be NULL if a callback is not desired in this case.
  */
 
-AWS_COMMON_API int aws_hash_table_init(
+AWS_COMMON_API
+int aws_hash_table_init(
     struct aws_hash_table *map,
     struct aws_allocator *alloc,
     size_t size,
@@ -134,13 +137,14 @@ AWS_COMMON_API int aws_hash_table_init(
  * destroy_fn will be called for each element.  aws_hash_table_init
  * must be called before reusing the hash table.
  */
-AWS_COMMON_API void aws_hash_table_clean_up(struct aws_hash_table *map);
+AWS_COMMON_API
+void aws_hash_table_clean_up(struct aws_hash_table *map);
 
 /**
  * Returns the current number of entries in the table.
  */
-AWS_COMMON_API size_t
-    aws_hash_table_get_entry_count(const struct aws_hash_table *map);
+AWS_COMMON_API
+size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map);
 
 /**
  * Returns an iterator to be used for iterating through a hash table.
@@ -150,14 +154,15 @@ AWS_COMMON_API size_t
  * This function cannot fail, but if there are no elements in the table,
  * the returned iterator will return true for aws_hash_iter_done(&iter).
  */
-AWS_COMMON_API struct aws_hash_iter aws_hash_iter_begin(
-    const struct aws_hash_table *map);
+AWS_COMMON_API
+struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map);
 
 /**
  * Returns true if iterator is done iterating through table, false otherwise.
  * If this is true, the iterator will not include an element of the table.
  */
-AWS_COMMON_API bool aws_hash_iter_done(const struct aws_hash_iter *iter);
+AWS_COMMON_API
+bool aws_hash_iter_done(const struct aws_hash_iter *iter);
 
 /**
  * Updates iterator so that it points to next element of hash table.
@@ -172,7 +177,8 @@ AWS_COMMON_API bool aws_hash_iter_done(const struct aws_hash_iter *iter);
  *     // etc.
  * }
  */
-AWS_COMMON_API void aws_hash_iter_next(struct aws_hash_iter *iter);
+AWS_COMMON_API
+void aws_hash_iter_next(struct aws_hash_iter *iter);
 
 /**
  * Attempts to locate an element at key.  If the element is found, a
@@ -189,7 +195,8 @@ AWS_COMMON_API void aws_hash_iter_next(struct aws_hash_iter *iter);
  * _clean_up.
  */
 
-AWS_COMMON_API int aws_hash_table_find(
+AWS_COMMON_API
+int aws_hash_table_find(
     const struct aws_hash_table *map,
     const void *key,
     struct aws_hash_element **pElem);
@@ -206,7 +213,8 @@ AWS_COMMON_API int aws_hash_table_find(
  * Raises AWS_ERROR_OOM if hash table expansion was required and memory
  * allocation failed.
  */
-AWS_COMMON_API int aws_hash_table_create(
+AWS_COMMON_API
+int aws_hash_table_create(
     struct aws_hash_table *map,
     const void *key,
     struct aws_hash_element **pElem,
@@ -223,7 +231,8 @@ AWS_COMMON_API int aws_hash_table_create(
  * If was_present is non-NULL, it is set to 0 if the element was
  * not present, or 1 if it was present (and is now removed).
  */
-AWS_COMMON_API int aws_hash_table_remove(
+AWS_COMMON_API
+int aws_hash_table_remove(
     struct aws_hash_table *map,
     const void *key,
     struct aws_hash_element *pValue,
@@ -257,7 +266,8 @@ AWS_COMMON_API int aws_hash_table_remove(
  * and is safe to invoke in parallel with other non-mutating operations.
  */
 
-AWS_COMMON_API int aws_hash_table_foreach(
+AWS_COMMON_API
+int aws_hash_table_foreach(
     struct aws_hash_table *map,
     int (*callback)(void *context, struct aws_hash_element *pElement),
     void *context);
@@ -266,40 +276,47 @@ AWS_COMMON_API int aws_hash_table_foreach(
  * Removes every element from the hash map. destroy_fn will be called for
  * each element.
  */
-AWS_COMMON_API void aws_hash_table_clear(struct aws_hash_table *map);
+AWS_COMMON_API
+void aws_hash_table_clear(struct aws_hash_table *map);
 
 /**
  * Convenience hash function for NULL-terminated C-strings
  */
-AWS_COMMON_API uint64_t aws_hash_c_string(const void *item);
+AWS_COMMON_API
+uint64_t aws_hash_c_string(const void *item);
 
 /**
  * Convenience hash function for struct aws_strings.
  * Hash is same as used on the string bytes by aws_hash_c_string.
  */
-AWS_COMMON_API uint64_t aws_hash_string(const void *item);
+AWS_COMMON_API
+uint64_t aws_hash_string(const void *item);
 
 /**
  * Convenience hash function which hashes the pointer value directly,
  * without dereferencing.  This can be used in cases where pointer identity
  * is desired, or where a uintptr_t is encoded into a const void *.
  */
-AWS_COMMON_API uint64_t aws_hash_ptr(const void *item);
+AWS_COMMON_API
+uint64_t aws_hash_ptr(const void *item);
 
 /**
  * Convenience eq function for NULL-terminated C-strings
  */
-AWS_COMMON_API bool aws_c_string_eq(const void *a, const void *b);
+AWS_COMMON_API
+bool aws_c_string_eq(const void *a, const void *b);
 
 /**
  * Convenience eq function for struct aws_strings.
  */
-AWS_COMMON_API bool aws_string_eq(const void *a, const void *b);
+AWS_COMMON_API
+bool aws_string_eq(const void *a, const void *b);
 
 /**
  * Equality function which compares pointer equality.
  */
-AWS_COMMON_API bool aws_ptr_eq(const void *a, const void *b);
+AWS_COMMON_API
+bool aws_ptr_eq(const void *a, const void *b);
 
 #ifdef __cplusplus
 }

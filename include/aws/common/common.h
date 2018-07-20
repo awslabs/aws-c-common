@@ -153,7 +153,8 @@ struct aws_allocator {
 extern "C" {
 #endif
 
-AWS_COMMON_API struct aws_allocator *aws_default_allocator();
+AWS_COMMON_API
+struct aws_allocator *aws_default_allocator();
 
 #ifdef __MACH__
 /**
@@ -162,26 +163,27 @@ AWS_COMMON_API struct aws_allocator *aws_default_allocator();
  * it allocates memory so we can't make it static file scope, be sure to call
  * aws_wrapped_cf_allocator_destroy when finished.
  */
-AWS_COMMON_API CFAllocatorRef
-    aws_wrapped_cf_allocator_new(struct aws_allocator *allocator);
+AWS_COMMON_API
+CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator);
 
 /**
  * Cleans up any resources alloced in aws_wrapped_cf_allocator_new.
  */
-AWS_COMMON_API void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
+AWS_COMMON_API
+void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
 #endif
 
 /*
  * Returns at least `size` of memory ready for usage or returns NULL on failure.
  */
-AWS_COMMON_API void *aws_mem_acquire(
-    struct aws_allocator *allocator,
-    size_t size);
+AWS_COMMON_API
+void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
 
 /*
  * Releases ptr back to whatever allocated it.
  */
-AWS_COMMON_API void aws_mem_release(struct aws_allocator *allocator, void *ptr);
+AWS_COMMON_API
+void aws_mem_release(struct aws_allocator *allocator, void *ptr);
 
 /*
  * Attempts to adjust the size of the pointed-to memory buffer from oldsize to
@@ -191,7 +193,8 @@ AWS_COMMON_API void aws_mem_release(struct aws_allocator *allocator, void *ptr);
  * If reallocation fails, *ptr is unchanged, and this method raises an
  * AWS_ERROR_OOM error.
  */
-AWS_COMMON_API int aws_mem_realloc(
+AWS_COMMON_API
+int aws_mem_realloc(
     struct aws_allocator *allocator,
     void **ptr,
     size_t oldsize,
@@ -207,7 +210,8 @@ AWS_COMMON_API int aws_mem_realloc(
 /*
  * Loads error strings for debugging and logging purposes.
  */
-AWS_COMMON_API void aws_load_error_strings(void);
+AWS_COMMON_API
+void aws_load_error_strings(void);
 
 #ifdef __cplusplus
 }

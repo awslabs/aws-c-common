@@ -2,6 +2,7 @@
 Checks:          'clang-diagnostic-*,clang-analyzer-*,readability-*,modernize-*,bugprone-*,misc-*,google-runtime-int,llvm-header-guard,fuchsia-restrict-system-includes,-clang-analyzer-valist.Uninitialized,-clang-analyzer-security.insecureAPI.rand,-clang-analyzer-alpha.*'
 WarningsAsErrors: '*'
 HeaderFilterRegex: '\./*'
+FormatStyle: 'file'
 # Use empty line filter to skip linting code we don't own
 LineFilter:
   - name:            lookup3.c
@@ -15,4 +16,3 @@ CheckOptions:
     value:           '*,-stdint.h,-stdbool.h'
 
 ...
-

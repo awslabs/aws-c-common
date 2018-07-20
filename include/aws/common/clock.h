@@ -26,7 +26,8 @@ extern "C" {
  * resolution clock (most-likely TSC). This clock has no bearing on the actual
  * system time. On success, timestamp will be set.
  */
-AWS_COMMON_API int aws_high_res_clock_get_ticks(uint64_t *timestamp);
+AWS_COMMON_API
+int aws_high_res_clock_get_ticks(uint64_t *timestamp);
 
 /**
  * Get ticks in nanoseconds (usually 100 nanosecond precision) on the system
@@ -34,7 +35,8 @@ AWS_COMMON_API int aws_high_res_clock_get_ticks(uint64_t *timestamp);
  * care since an inaccurately set clock will probably cause bugs. On success,
  * timestamp will be set.
  */
-AWS_COMMON_API int aws_sys_clock_get_ticks(uint64_t *timestamp);
+AWS_COMMON_API
+int aws_sys_clock_get_ticks(uint64_t *timestamp);
 
 #ifdef __cplusplus
 }

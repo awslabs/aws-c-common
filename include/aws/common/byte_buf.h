@@ -49,11 +49,13 @@ struct aws_byte_cursor {
 extern "C" {
 #endif
 
-AWS_COMMON_API int aws_byte_buf_init(
+AWS_COMMON_API
+int aws_byte_buf_init(
     struct aws_allocator *allocator,
     struct aws_byte_buf *buf,
     size_t len);
-AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
+AWS_COMMON_API
+void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of
@@ -76,7 +78,8 @@ AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.
  */
-AWS_COMMON_API int aws_byte_buf_split_on_char(
+AWS_COMMON_API
+int aws_byte_buf_split_on_char(
     struct aws_byte_buf *input_str,
     char split_on,
     struct aws_array_list *output);
@@ -103,7 +106,8 @@ AWS_COMMON_API int aws_byte_buf_split_on_char(
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.
  */
-AWS_COMMON_API int aws_byte_buf_split_on_char_n(
+AWS_COMMON_API
+int aws_byte_buf_split_on_char_n(
     struct aws_byte_buf *input_str,
     char split_on,
     struct aws_array_list *output,
@@ -113,9 +117,8 @@ AWS_COMMON_API int aws_byte_buf_split_on_char_n(
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
  * returned. dest->len will contain the amount of data actually copied to dest.
  */
-AWS_COMMON_API int aws_byte_buf_append(
-    struct aws_byte_buf *to,
-    struct aws_byte_cursor *from);
+AWS_COMMON_API
+int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from);
 
 /**
  * Concatenates a variable number of struct aws_byte_buf * into destination.
@@ -123,10 +126,8 @@ AWS_COMMON_API int aws_byte_buf_append(
  * AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len will contain the
  * amount of data actually copied to dest.
  */
-AWS_COMMON_API int aws_byte_buf_cat(
-    struct aws_byte_buf *dest,
-    size_t number_of_args,
-    ...);
+AWS_COMMON_API
+int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
 
 #ifdef __cplusplus
 }

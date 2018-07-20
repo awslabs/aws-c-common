@@ -46,7 +46,8 @@ extern "C" {
  * elements you want space allocated for. item_size is the size of each element
  * in bytes. Mixing items types is not supported by this API.
  */
-AWS_COMMON_API int aws_array_list_init_dynamic(
+AWS_COMMON_API
+int aws_array_list_init_dynamic(
     struct aws_array_list *list,
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
@@ -58,7 +59,8 @@ AWS_COMMON_API int aws_array_list_init_dynamic(
  * each element. Mixing items types is not supported by this API. Once this list
  * is full, new items will be rejected.
  */
-AWS_COMMON_API void aws_array_list_init_static(
+AWS_COMMON_API
+void aws_array_list_init_static(
     struct aws_array_list *list,
     void *raw_array,
     size_t item_count,
@@ -68,22 +70,21 @@ AWS_COMMON_API void aws_array_list_init_static(
  * Deallocates any memory that was allocated for this list, and resets list for
  * reuse or deletion.
  */
-AWS_COMMON_API void aws_array_list_clean_up(struct aws_array_list *list);
+AWS_COMMON_API
+void aws_array_list_clean_up(struct aws_array_list *list);
 
 /**
  * Pushes the memory pointed to by val onto the end of internal list
  */
-AWS_COMMON_API int aws_array_list_push_back(
-    struct aws_array_list *list,
-    const void *val);
+AWS_COMMON_API
+int aws_array_list_push_back(struct aws_array_list *list, const void *val);
 
 /**
  * Copies the element at the front of the list if it exists. If list is empty,
  * AWS_ERROR_LIST_EMPTY will be raised
  */
-AWS_COMMON_API int aws_array_list_front(
-    const struct aws_array_list *list,
-    void *val);
+AWS_COMMON_API
+int aws_array_list_front(const struct aws_array_list *list, void *val);
 
 /**
  * Deletes the element at the front of the list if it exists. If list is empty,
@@ -91,7 +92,8 @@ AWS_COMMON_API int aws_array_list_front(
  * elements at the end of the array to the front. Avoid this call unless that is
  * intended behavior.
  */
-AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
+AWS_COMMON_API
+int aws_array_list_pop_front(struct aws_array_list *list);
 
 /**
  * Delete N elements from the front of the list.
@@ -99,42 +101,44 @@ AWS_COMMON_API int aws_array_list_pop_front(struct aws_array_list *list);
  * If the list has less than N elements, the list is cleared.
  * This call is more efficient than calling aws_array_list_pop_front() N times.
  */
-AWS_COMMON_API void aws_array_list_pop_front_n(
-    struct aws_array_list *list,
-    size_t n);
+AWS_COMMON_API
+void aws_array_list_pop_front_n(struct aws_array_list *list, size_t n);
 
 /**
  * Copies the element at the end of the list if it exists. If list is empty,
  * AWS_ERROR_LIST_EMPTY will be raised.
  */
-AWS_COMMON_API int aws_array_list_back(
-    const struct aws_array_list *list,
-    void *val);
+AWS_COMMON_API
+int aws_array_list_back(const struct aws_array_list *list, void *val);
 
 /**
  * Deletes the element at the end of the list if it exists. If list is empty,
  * AWS_ERROR_LIST_EMPTY will be raised.
  */
-AWS_COMMON_API int aws_array_list_pop_back(struct aws_array_list *list);
+AWS_COMMON_API
+int aws_array_list_pop_back(struct aws_array_list *list);
 
 /**
  * Clears all elements in the array and resets length to zero. Size does not
  * change in this operation.
  */
-AWS_COMMON_API void aws_array_list_clear(struct aws_array_list *list);
+AWS_COMMON_API
+void aws_array_list_clear(struct aws_array_list *list);
 
 /**
  * If in dynamic mode, shrinks the allocated array size to the minimum amount
  * necessary to store its elements.
  */
-AWS_COMMON_API int aws_array_list_shrink_to_fit(struct aws_array_list *list);
+AWS_COMMON_API
+int aws_array_list_shrink_to_fit(struct aws_array_list *list);
 
 /**
  * Copies the elements from from to to. If to is in static mode, it must at
  * least be the same length as from. Any data in to will be overwritten in this
  * copy.
  */
-AWS_COMMON_API int aws_array_list_copy(
+AWS_COMMON_API
+int aws_array_list_copy(
     const struct aws_array_list *from,
     struct aws_array_list *to);
 
@@ -142,7 +146,8 @@ AWS_COMMON_API int aws_array_list_copy(
  * Swap contents between two dynamic lists. Both lists must use the same
  * allocator.
  */
-AWS_COMMON_API void aws_array_list_swap_contents(
+AWS_COMMON_API
+void aws_array_list_swap_contents(
     struct aws_array_list *list_a,
     struct aws_array_list *list_b);
 
@@ -150,19 +155,21 @@ AWS_COMMON_API void aws_array_list_swap_contents(
  * Returns the number of elements that can fit in the internal array. If list is
  * initialized in dynamic mode, the capacity changes over time.
  */
-AWS_COMMON_API size_t
-    aws_array_list_capacity(const struct aws_array_list *list);
+AWS_COMMON_API
+size_t aws_array_list_capacity(const struct aws_array_list *list);
 
 /**
  * Returns the number of elements in the internal array.
  */
-AWS_COMMON_API size_t aws_array_list_length(const struct aws_array_list *list);
+AWS_COMMON_API
+size_t aws_array_list_length(const struct aws_array_list *list);
 
 /**
  * Copies the memory at index to val. If element does not exist,
  * AWS_ERROR_INVALID_INDEX will be raised.
  */
-AWS_COMMON_API int aws_array_list_get_at(
+AWS_COMMON_API
+int aws_array_list_get_at(
     const struct aws_array_list *list,
     void *val,
     size_t index);
@@ -171,7 +178,8 @@ AWS_COMMON_API int aws_array_list_get_at(
  * Copies the memory address of the element at index to *val. If element does
  * not exist, AWS_ERROR_INVALID_INDEX will be raised.
  */
-AWS_COMMON_API int aws_array_list_get_at_ptr(
+AWS_COMMON_API
+int aws_array_list_get_at_ptr(
     const struct aws_array_list *list,
     void **val,
     size_t index);
@@ -182,7 +190,8 @@ AWS_COMMON_API int aws_array_list_get_at_ptr(
  * In static mode, AWS_ERROR_INVALID_INDEX will be raised if the index is past
  * the bounds of the array.
  */
-AWS_COMMON_API int aws_array_list_set_at(
+AWS_COMMON_API
+int aws_array_list_set_at(
     struct aws_array_list *list,
     const void *val,
     size_t index);
@@ -190,15 +199,14 @@ AWS_COMMON_API int aws_array_list_set_at(
 /**
  * Swap elements at the specified indices.
  */
-AWS_COMMON_API void aws_array_list_swap(
-    struct aws_array_list *list,
-    size_t a,
-    size_t b);
+AWS_COMMON_API
+void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
 
 /**
  * Sort elements in the list in-place according to the comparator function.
  */
-AWS_COMMON_API void aws_array_list_sort(
+AWS_COMMON_API
+void aws_array_list_sort(
     struct aws_array_list *list,
     aws_array_list_comparator compare_fn);
 

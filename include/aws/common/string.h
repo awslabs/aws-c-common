@@ -68,10 +68,12 @@ extern "C" {
  * Constructor functions which copy data from null-terminated C-string or array
  * of unsigned or signed characters.
  */
-AWS_COMMON_API const struct aws_string *aws_string_from_c_str_new(
+AWS_COMMON_API
+const struct aws_string *aws_string_from_c_str_new(
     struct aws_allocator *allocator,
     const char *c_str);
-AWS_COMMON_API const struct aws_string *aws_string_from_array_new(
+AWS_COMMON_API
+const struct aws_string *aws_string_from_array_new(
     struct aws_allocator *allocator,
     const uint8_t *bytes,
     size_t len);
@@ -80,7 +82,8 @@ AWS_COMMON_API const struct aws_string *aws_string_from_array_new(
  * Deallocate string. Takes a (void *) so it can be used as a destructor
  * function for struct aws_hash_table.
  */
-AWS_COMMON_API void aws_string_destroy(void *str);
+AWS_COMMON_API
+void aws_string_destroy(void *str);
 
 /**
  * Compares lexicographical ordering of two strings. This is a binary
@@ -93,18 +96,16 @@ AWS_COMMON_API void aws_string_destroy(void *str);
  * lexicographically after string b.) Returns zero if string a = string b.
  * Returns negative number if string a < string b.
  */
-AWS_COMMON_API int aws_string_compare(
-    const struct aws_string *a,
-    const struct aws_string *b);
+AWS_COMMON_API
+int aws_string_compare(const struct aws_string *a, const struct aws_string *b);
 
 /**
  * A convenience function for sorting lists of (const struct aws_string *)
  * elements. This can be used as a comparator for aws_array_list_sort. It is
  * just a simple wrapper around aws_string_compare.
  */
-AWS_COMMON_API int aws_array_list_comparator_string(
-    const void *a,
-    const void *b);
+AWS_COMMON_API
+int aws_array_list_comparator_string(const void *a, const void *b);
 
 #ifdef __cplusplus
 }

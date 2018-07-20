@@ -107,7 +107,8 @@ void hash_dump(struct aws_hash_table *tbl) {
 
 #if 0
 /* Not currently exposed as an API. Should we have something like this? Useful for benchmarks */
-AWS_COMMON_API void aws_hash_table_print_stats(struct aws_hash_table *table) {
+AWS_COMMON_API
+void aws_hash_table_print_stats(struct aws_hash_table *table) {
     struct hash_table_state *state = table->pImpl;
     uint64_t total_disp = 0;
     uint64_t max_disp = 0;

@@ -48,35 +48,42 @@ extern "C" {
  * Returns the latest error code on the current thread, or 0 if none have
  * occurred.
  */
-AWS_COMMON_API int aws_last_error(void);
+AWS_COMMON_API
+int aws_last_error(void);
 
 /*
  * Returns the error str corresponding to `err`.
  */
-AWS_COMMON_API const char *aws_error_str(int err);
+AWS_COMMON_API
+const char *aws_error_str(int err);
 
 /*
  * Returns the error lib name corresponding to `err`.
  */
-AWS_COMMON_API const char *aws_error_lib_name(int err);
+AWS_COMMON_API
+const char *aws_error_lib_name(int err);
 
 /*
  * Returns libname concatenated with error string.
  */
-AWS_COMMON_API const char *aws_error_debug_str(int err);
+AWS_COMMON_API
+const char *aws_error_debug_str(int err);
 
 /*
  * Raises `err` to the installed callbacks, and sets the thread's error.
  */
-AWS_COMMON_API int aws_raise_error(int err);
+AWS_COMMON_API
+int aws_raise_error(int err);
 /*
  * Resets the `err` back to defaults
  */
-AWS_COMMON_API void aws_reset_error(void);
+AWS_COMMON_API
+void aws_reset_error(void);
 /*
  * Sets `err` to the latest error. Does not invoke callbacks.
  */
-AWS_COMMON_API void aws_restore_error(int err);
+AWS_COMMON_API
+void aws_restore_error(int err);
 
 /*
  * Sets an application wide error handler function. This will be overridden by
@@ -85,8 +92,10 @@ AWS_COMMON_API void aws_restore_error(int err);
  * Setting this to NULL will turn off this error callback after it has been
  * enabled.
  */
-AWS_COMMON_API aws_error_handler
-    aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx);
+AWS_COMMON_API
+aws_error_handler aws_set_global_error_handler_fn(
+    aws_error_handler handler,
+    void *ctx);
 
 /*
  * Sets a thread-local error handler function. This will override the global
@@ -94,16 +103,18 @@ AWS_COMMON_API aws_error_handler
  * error handler if it needs to be overridden temporarily. Setting this to NULL
  * will turn off this error callback after it has been enabled.
  */
-AWS_COMMON_API aws_error_handler
-    aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx);
+AWS_COMMON_API
+aws_error_handler aws_set_thread_local_error_handler_fn(
+    aws_error_handler handler,
+    void *ctx);
 
 /** TODO: this needs to be a private function (wait till we have the cmake story
  * better before moving it though). It should be external for the purpose of
  * other libs we own, but customers should not be able to hit it without going
  * out of their way to do so.
  */
-AWS_COMMON_API void aws_register_error_info(
-    const struct aws_error_info_list *error_info);
+AWS_COMMON_API
+void aws_register_error_info(const struct aws_error_info_list *error_info);
 
 #ifdef __cplusplus
 }
