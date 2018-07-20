@@ -18,7 +18,7 @@
 #include <string.h>
 
 #define parent_of(index)                                                       \
-    (((index) & 1) ? (index) >> 1 : (index) > 1 ? ((index) - 2) >> 1 : 0)
+    (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
 #define left_of(index) (((index) << 1) + 1)
 
 /* Precondition: with the exception of the first element, the container must be
