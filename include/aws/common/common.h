@@ -121,7 +121,7 @@
 #endif
 
 #include <aws/common/error.h>
-/* clang-format on */
+#include <aws/common/exports.h>
 
 #if defined(_MSC_VER )
 #    define AWS_THREAD_LOCAL __declspec(thread)
@@ -338,7 +338,7 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #endif     // #else not windows
 }
 
-#define AWS_ZERO_STRUCT(object) memset((&object), 0, sizeof(object));
+#define AWS_ZERO_STRUCT(object) memset(&(object), 0, sizeof(object));
 #define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array));
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1

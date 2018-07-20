@@ -17,6 +17,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/exports.h>
 
 struct aws_error_info {
     int error_code;
@@ -33,8 +34,8 @@ struct aws_error_info_list {
 
 #define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                       \
     {                                                                          \
-        .literal_name = #C, .error_code = C, .error_str = ES, .lib_name = LN,  \
-        .formatted_name = LN ": " #C ", " ES                                   \
+        .literal_name = #C, .error_code = (C), .error_str = (ES),              \
+        .lib_name = (LN), .formatted_name = LN ": " #C ", " ES                 \
     }
 
 typedef void (*aws_error_handler)(int err, void *ctx);

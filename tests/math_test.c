@@ -27,7 +27,7 @@
             "%s(0x%016llx, 0x%016llx) = 0x%016llx",                            \
             #fn,                                                               \
             (unsigned long long)(a),                                           \
-            (unsigned long long)b,                                             \
+            (unsigned long long)(b),                                           \
             (unsigned long long)(result));                                     \
         ASSERT_UINT_EQUALS(                                                    \
             (result),                                                          \
@@ -35,7 +35,7 @@
             "%s(0x%016llx, 0x%016llx) = 0x%016llx",                            \
             #fn,                                                               \
             (unsigned long long)(b),                                           \
-            (unsigned long long)a,                                             \
+            (unsigned long long)(a),                                           \
             (unsigned long long)(result));                                     \
     } while (0)
 

@@ -222,14 +222,14 @@ static inline size_t aws_mul_size_saturating(size_t a, size_t b) {
     /* suppress unused variable warning */
     (void)assert_sizet_is_32_or_64_bit;
 
-    if ((uint64_t)SIZE_MAX == (uint64_t) ~(uint32_t)0) {
+    if ((uint64_t)SIZE_MAX == ~(uint32_t)0) {
         return (size_t)aws_mul_u32_saturating((uint32_t)a, (uint32_t)b);
     }
     return (size_t)aws_mul_u64_saturating(a, b);
 }
 
 static inline int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
-    if ((uint64_t)SIZE_MAX == (uint64_t) ~(uint32_t)0) {
+    if ((uint64_t)SIZE_MAX == ~(uint32_t)0) {
         return (int)aws_mul_u32_checked(
             (uint32_t)a, (uint32_t)b, (uint32_t *)r);
     }

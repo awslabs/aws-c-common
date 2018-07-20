@@ -247,7 +247,7 @@ static int total_failures;
     do { \
         const char *assert_expected = (expected); \
         const char *assert_got = (got); \
-        if (strcmp(assert_expected, assert_got)) { \
+        if (strcmp(assert_expected, assert_got) != 0) { \
             fprintf(AWS_TESTING_REPORT_FD, "%sExpected: \"%s\"; got: \"%s\": ", FAIL_PREFIX, assert_expected, assert_got); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) { \
                 PRINT_FAIL_INTERNAL0("ASSERT_STR_EQUALS(%s, %s)", #expected, #got); \

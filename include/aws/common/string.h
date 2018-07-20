@@ -120,7 +120,7 @@ AWS_COMMON_API int aws_array_list_comparator_string(
         struct aws_string hdr;                                                 \
         uint8_t data[sizeof(literal)];                                         \
     } name##_s = {{NULL, sizeof(literal) - 1}, {literal}};                     \
-    static const struct aws_string *name = &name##_s.hdr
+    static const struct aws_string *(name) = &name##_s.hdr
 
 /**
  * Copies all bytes from string to cursor.
