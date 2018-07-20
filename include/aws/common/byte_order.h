@@ -16,11 +16,9 @@
  * permissions and limitations under the License.
  */
 
-#include <stdint.h>
+#include <aws/common/common.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
+#ifndef _WIN32
 #include <netinet/in.h>
 #endif /*_WIN32 */
 

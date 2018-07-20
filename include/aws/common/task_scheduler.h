@@ -18,8 +18,6 @@
 
 #include <aws/common/common.h>
 #include <aws/common/priority_queue.h>
-#include <stdint.h>
-
 
 typedef enum aws_task_status {
     AWS_TASK_STATUS_RUN_READY,

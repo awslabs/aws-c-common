@@ -20,8 +20,6 @@
 #include <aws/common/byte_order.h>
 
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 /**
  * Represents a length-delimited binary string or buffer. If byte buffer points to constant
