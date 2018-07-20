@@ -47,7 +47,7 @@
     do { \
         do { \
             (node)->next = (head); \
-        } while (!aws_atomic_cas_ptr(&(head), (node)->next, (node))); \
+        } while (!aws_atomic_cas_ptr((void **)&(head), (node)->next, (node))); \
     } while (0)
 
 struct aws_log_message {
@@ -215,7 +215,7 @@ int aws_log_flush() {
             continue;
         }
 
-        struct aws_log_message *msg_list = aws_atomic_set_ptr(&ctx->message_list, NULL);
+        struct aws_log_message *msg_list = aws_atomic_set_ptr((void **)&ctx->message_list, NULL);
 
         /* Reverse the list to preserve user submitted order, for reporting. */
         if (msg_list) {
@@ -297,7 +297,6 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
                     }
                 }
             }
-
         }
     } else {
         aws_atomic_add(&s_log_context_count, -1);
