@@ -53,7 +53,7 @@ AWS_COMMON_API int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_al
 AWS_COMMON_API void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
 
 /**
- * Finds element in the cache be key. If found, it will become most-recently used, *p_value will hold the stored value,
+ * Finds element in the cache by key. If found, it will become most-recently used, *p_value will hold the stored value,
  * and AWS_OP_SUCCESS will be returned. If not found, AWS_OP_SUCCESS will be returned and *p_value will be NULL.
  *
  * If any errors occur AWS_OP_ERR will be returned.
@@ -75,6 +75,16 @@ AWS_COMMON_API int aws_lru_cache_remove(struct aws_lru_cache *cache, const void 
  * Clears all items from the cache.
  */
 AWS_COMMON_API void aws_lru_cache_clear(struct aws_lru_cache *cache);
+
+/**
+ * Accesses the least-recently-used element, sets it to most-recently-used element, and returns the value.
+ */
+AWS_COMMON_API void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache);
+
+/**
+ * Accesses the most-recently-used element and returns its value.
+ */
+AWS_COMMON_API void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache);
 
 #ifdef __cplusplus
 }

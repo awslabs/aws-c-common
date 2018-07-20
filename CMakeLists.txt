@@ -36,6 +36,9 @@ file(GLOB AWS_COMMON_SRC
         )
 
 if (WIN32)
+    file(GLOB AWS_COMMON_OS_HEADERS
+            "include/aws/common/windows/*"
+            )
     file(GLOB AWS_COMMON_OS_SRC
             "source/windows/*.c"
             )
@@ -51,11 +54,17 @@ if (WIN32)
     set(PLATFORM_LIBS Kernel32 Ws2_32)
 else ()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
+        file(GLOB AWS_COMMON_OS_HEADERS
+                "include/aws/common/posix/*"
+                )
         file(GLOB AWS_COMMON_OS_SRC
                 "source/posix/*.c"
                 )
         set(PLATFORM_LIBS pthread rt)
     elseif (APPLE)
+        file(GLOB AWS_COMMON_OS_HEADERS
+                "include/aws/common/posix/*"
+                )
         file(GLOB AWS_COMMON_OS_SRC
                 "source/posix/*.c"
                 )
@@ -71,6 +80,7 @@ endif ()
 
 file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
+        ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
         ${AWS_TEST_HEADERS}
         )
@@ -89,7 +99,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-install(FILES ${AWS_COMMON_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
+install(FILES ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/common")
 install(FILES ${AWS_TEST_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/aws/testing")
 
 install(

@@ -127,3 +127,27 @@ void aws_lru_cache_clear(struct aws_lru_cache *cache) {
     /* clearing the table will remove all elements. That will also deallocate any cache entries we currently have. */
     aws_hash_table_clear(&cache->table);
 }
+
+void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache) {
+    if (aws_linked_list_empty(&cache->list)) {
+        return NULL;
+    }
+
+    struct aws_linked_list_node *lru_node = aws_linked_list_back(&cache->list);
+
+    aws_linked_list_remove(lru_node);
+    aws_linked_list_push_front(&cache->list, lru_node);
+    struct cache_node *lru_element = aws_container_of(lru_node, struct cache_node, node);
+    return lru_element->value;
+}
+
+void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache) {
+    if (aws_linked_list_empty(&cache->list)) {
+        return NULL;
+    }
+
+    struct aws_linked_list_node *mru_node = aws_linked_list_front(&cache->list);
+
+    struct cache_node *mru_element = aws_container_of(mru_node, struct cache_node, node);
+    return mru_element->value;
+}
