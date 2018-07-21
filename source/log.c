@@ -88,7 +88,6 @@ static void s_aws_log_default_report_function(const char *log_message) {
 static int s_log_message_count;
 static int s_log_system_running;
 static struct aws_log_system_params s_log_system_params;
-static struct aws_mutex s_log_system_params_mutex;
 
 static int s_log_context_count;
 static struct aws_log_context_entry s_log_table[AWS_LOG_MAX_LOGGING_THREADS];
