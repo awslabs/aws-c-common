@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 cmake_minimum_required(VERSION 3.0)
-project(aws-c-common)
+project(aws-c-common C)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
