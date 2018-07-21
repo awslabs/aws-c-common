@@ -19,7 +19,7 @@
 #include <aws/common/common.h>
 
 #ifndef _WIN32
-#   include <netinet/in.h>
+#    include <netinet/in.h>
 #endif /*_WIN32 */
 
 /**

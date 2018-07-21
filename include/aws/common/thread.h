@@ -19,7 +19,7 @@
 #include <aws/common/common.h>
 
 #ifndef _WIN32
-#include <pthread.h>
+#    include <pthread.h>
 #endif
 
 typedef enum aws_thread_detach_state {

@@ -1,5 +1,5 @@
 #ifndef AWS_COMMON_COMMON_H
-#define AWS_COMMON_COMMON_H
+#    define AWS_COMMON_COMMON_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -16,118 +16,120 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/exports.h>
+#    include <aws/common/exports.h>
 
-#include <stddef.h>
-#include <string.h>
+#    include <stddef.h>
+#    include <string.h>
 
-#define AWS_STATIC_ASSERT0(cond, msg) typedef char static_assertion_##msg[(!!(cond)) * 2-1]
-#define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
-#define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
+#    define AWS_STATIC_ASSERT0(cond, msg)                                      \
+        typedef char static_assertion_##msg[(!!(cond)) * 2 - 1]
+#    define AWS_STATIC_ASSERT1(cond, line)                                     \
+        AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
+#    define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
 
-#if defined(_MSC_VER )
-#include <Windows.h> /* for SecureZeroMemory */
-#endif
+#    if defined(_MSC_VER)
+#        include <Windows.h> /* for SecureZeroMemory */
+#    endif
 
-#ifndef NO_STDBOOL
-#include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
-#else
-#    ifndef __cplusplus
-#        define bool _Bool
-#        define true 1
-#        define false 0
-#    elif defined(__GNUC__) && !defined(__STRICT_ANSI__)
+#    ifndef NO_STDBOOL
+#        include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
+#    else
+#        ifndef __cplusplus
+#            define bool _Bool
+#            define true 1
+#            define false 0
+#        elif defined(__GNUC__) && !defined(__STRICT_ANSI__)
 
-#        define _Bool bool
-#        if  __cplusplus < 201103L
+#            define _Bool bool
+#            if __cplusplus < 201103L
 /* For C++98, define bool, false, true as a GNU extension. */
-#            define bool  bool
-#            define false false
-#            define true  true
+#                define bool bool
+#                define false false
+#                define true true
+#            endif
 #        endif
 #    endif
-#endif
 
-#ifndef NO_STDINT
-#include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
-#else
-#    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__)                \
-         || defined(__ia64__) || defined(__powerpc64__)
-#        define PTR_SIZE 8
+#    ifndef NO_STDINT
+#        include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #    else
-#        define PTR_SIZE 4
+#        if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__)   \
+            || defined(__ia64__) || defined(__powerpc64__)
+#            define PTR_SIZE 8
+#        else
+#            define PTR_SIZE 4
+#        endif
+
+typedef signed char int8_t;
+typedef short int int16_t;
+typedef int int32_t;
+#        if (PTR_SIZE == 8)
+typedef long int int64_t;
+#        else
+typedef long long int int64_t;
+#        endif
+
+typedef unsigned char uint8_t;
+typedef unsigned short int uint16_t;
+
+typedef unsigned int uint32_t;
+
+#        if (PTR_SIZE == 8)
+typedef unsigned long int uint64_t;
+#        else
+typedef unsigned long long int uint64_t;
+#        endif
+
+#        if (PTR_SIZE == 8)
+typedef long int intptr_t;
+typedef unsigned long int uintptr_t;
+#        else
+typedef int intptr_t;
+typedef unsigned int uintptr_t;
+#        endif
+
+#        if (PTR_SIZE == 8)
+#            define __INT64_C(c) c##L
+#            define __UINT64_C(c) c##UL
+#        else
+#            define __INT64_C(c) c##LL
+#            define __UINT64_C(c) c##ULL
+#        endif
+
+#        define INT8_MIN (-128)
+#        define INT16_MIN (-32767 - 1)
+#        define INT32_MIN (-2147483647 - 1)
+#        define INT64_MIN (-__INT64_C(9223372036854775807) - 1)
+#        define INT8_MAX (127)
+#        define INT16_MAX (32767)
+#        define INT32_MAX (2147483647)
+#        define INT64_MAX (__INT64_C(9223372036854775807))
+#        define UINT8_MAX (255)
+#        define UINT16_MAX (65535)
+#        define UINT32_MAX (4294967295U)
+#        define UINT64_MAX (__UINT64_C(18446744073709551615))
+
+AWS_STATIC_ASSERT(sizeof(uint64_t) == 8);
+AWS_STATIC_ASSERT(sizeof(uint32_t) == 4);
+AWS_STATIC_ASSERT(sizeof(uint16_t) == 2);
+AWS_STATIC_ASSERT(sizeof(uint8_t) == 1);
+AWS_STATIC_ASSERT(sizeof(int64_t) == 8);
+AWS_STATIC_ASSERT(sizeof(int32_t) == 4);
+AWS_STATIC_ASSERT(sizeof(int16_t) == 2);
+AWS_STATIC_ASSERT(sizeof(int8_t) == 1);
+AWS_STATIC_ASSERT(sizeof(uintptr_t) == sizeof(void *));
+AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
+AWS_STATIC_ASSERT(sizeof(char) == 1);
 #    endif
 
-     typedef signed char int8_t;
-     typedef short int int16_t;
-     typedef int int32_t;
-#    if (PTR_SIZE == 8)
-        typedef long int int64_t;
+#    include <aws/common/error.h>
+#    include <aws/common/exports.h>
+
+#    if defined(_MSC_VER)
+#        define AWS_THREAD_LOCAL __declspec(thread)
 #    else
-        typedef long long int int64_t;
+#        define AWS_THREAD_LOCAL __thread
 #    endif
-
-     typedef unsigned char uint8_t;
-     typedef unsigned short int uint16_t;
-
-     typedef unsigned int uint32_t;
-
-#    if (PTR_SIZE == 8)
-         typedef unsigned long int uint64_t;
-#    else
-         typedef unsigned long long int uint64_t;
-#    endif
-
-#    if (PTR_SIZE == 8)
-         typedef long int intptr_t;
-         typedef unsigned long int uintptr_t;
-#    else
-         typedef int  intptr_t;
-         typedef unsigned int uintptr_t;
-#    endif
-
-#    if (PTR_SIZE == 8)
-#        define __INT64_C(c)  c ## L
-#        define __UINT64_C(c) c ## UL
-#    else
-#        define __INT64_C(c)  c ## LL
-#        define __UINT64_C(c) c ## ULL
-#    endif
-
-#    define INT8_MIN  (-128)
-#    define INT16_MIN (-32767-1)
-#    define INT32_MIN (-2147483647-1)
-#    define INT64_MIN (-__INT64_C(9223372036854775807)-1)
-#    define INT8_MAX  (127)
-#    define INT16_MAX (32767)
-#    define INT32_MAX (2147483647)
-#    define INT64_MAX (__INT64_C(9223372036854775807))
-#    define UINT8_MAX (255)
-#    define UINT16_MAX (65535)
-#    define UINT32_MAX (4294967295U)
-#    define UINT64_MAX (__UINT64_C(18446744073709551615))
-
-     AWS_STATIC_ASSERT(sizeof(uint64_t) == 8);
-     AWS_STATIC_ASSERT(sizeof(uint32_t) == 4);
-     AWS_STATIC_ASSERT(sizeof(uint16_t) == 2);
-     AWS_STATIC_ASSERT(sizeof(uint8_t) == 1);
-     AWS_STATIC_ASSERT(sizeof(int64_t) == 8);
-     AWS_STATIC_ASSERT(sizeof(int32_t) == 4);
-     AWS_STATIC_ASSERT(sizeof(int16_t) == 2);
-     AWS_STATIC_ASSERT(sizeof(int8_t) == 1);
-     AWS_STATIC_ASSERT(sizeof(uintptr_t) == sizeof(void *));
-     AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
-     AWS_STATIC_ASSERT(sizeof(char) == 1);
-#endif
-
-#include <aws/common/error.h>
-#include <aws/common/exports.h>
-
-#if defined(_MSC_VER )
-#    define AWS_THREAD_LOCAL __declspec(thread)
-#else
-#    define AWS_THREAD_LOCAL __thread
-#endif
 
 /* Allocator structure. An instance of this will be passed around for anything
  * needing memory allocation */
@@ -144,19 +146,19 @@ struct aws_allocator {
 };
 
 /* Avoid pulling in CoreFoundation headers in a header file. */
-#ifdef __MACH__
-    struct __CFAllocator;
-    typedef const struct __CFAllocator *CFAllocatorRef;
-#endif
+#    ifdef __MACH__
+struct __CFAllocator;
+typedef const struct __CFAllocator *CFAllocatorRef;
+#    endif
 
-#ifdef __cplusplus
+#    ifdef __cplusplus
 extern "C" {
-#endif
+#    endif
 
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator();
 
-#ifdef __MACH__
+#    ifdef __MACH__
 /**
  * Wraps a CFAllocator around aws_allocator. For Mac only. Use this anytime you
  * need a CFAllocatorRef for interacting with Apple Frameworks. Unfortunately,
@@ -171,7 +173,7 @@ CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator);
  */
 AWS_COMMON_API
 void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
-#endif
+#    endif
 
 /*
  * Returns at least `size` of memory ready for usage or returns NULL on failure.
@@ -213,49 +215,49 @@ int aws_mem_realloc(
 AWS_COMMON_API
 void aws_load_error_strings(void);
 
-#ifdef __cplusplus
+#    ifdef __cplusplus
 }
-#endif
-
-#define AWS_CACHE_LINE 64
-
-#if defined(_MSC_VER)
-#    define AWS_ALIGN(alignment) __declspec(align(alignment))
-#    define AWS_LIKELY(x) x
-#    define AWS_UNLIKELY(x) x
-#    define AWS_FORCE_INLINE __forceinline
-#else
-#    if defined(__GNUC__) || defined(__clang__)
-#        define AWS_ALIGN(alignment) __attribute__ ((aligned(alignment)))
-#        define AWS_TYPE_OF(a) __typeof__(a)
-#        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
-#        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#        define AWS_FORCE_INLINE __attribute__((always_inline))
 #    endif
-#endif
+
+#    define AWS_CACHE_LINE 64
+
+#    if defined(_MSC_VER)
+#        define AWS_ALIGN(alignment) __declspec(align(alignment))
+#        define AWS_LIKELY(x) x
+#        define AWS_UNLIKELY(x) x
+#        define AWS_FORCE_INLINE __forceinline
+#    else
+#        if defined(__GNUC__) || defined(__clang__)
+#            define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
+#            define AWS_TYPE_OF(a) __typeof__(a)
+#            define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
+#            define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#            define AWS_FORCE_INLINE __attribute__((always_inline))
+#        endif
+#    endif
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc
  * and clang, it isn't supported. If visual C++ building in C mode, the restrict
  * definition is __restrict. This just figures all of that out based on who's
  * including this header file. */
-#if defined(__cplusplus)
-#    define AWS_RESTRICT
-#else
-#    if defined(_MSC_VER)
-#        define AWS_RESTRICT __restrict
+#    if defined(__cplusplus)
+#        define AWS_RESTRICT
 #    else
-#        if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#            define AWS_RESTRICT restrict
+#        if defined(_MSC_VER)
+#            define AWS_RESTRICT __restrict
 #        else
-#            define AWS_RESTRICT
+#            if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#                define AWS_RESTRICT restrict
+#            else
+#                define AWS_RESTRICT
+#            endif
 #        endif
 #    endif
-#endif
 
-#define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
+#    define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
-#define AWS_OP_SUCCESS (0)
-#define AWS_OP_ERR (-1)
+#    define AWS_OP_SUCCESS (0)
+#    define AWS_OP_ERR (-1)
 
 typedef enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
@@ -300,9 +302,9 @@ typedef enum aws_common_error {
  * the compiler will not optimize away this zeroing operation.
  */
 static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
-#if defined(_MSC_VER)
+#    if defined(_MSC_VER)
     SecureZeroMemory(pBuf, bufsize);
-#else
+#    else
     /* We cannot use memset_s, even on a C11 compiler, because that would
      * require that __STDC_WANT_LIB_EXT1__ be defined before the _first_
      * inclusion of string.h.
@@ -310,7 +312,7 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
      * We'll try to work around this by using inline asm on GCC-like compilers,
      * and by exposing the buffer pointer in a volatile local pointer elsewhere.
      */
-#    if defined(__GNUC__) || defined(__clang__)
+#        if defined(__GNUC__) || defined(__clang__)
     memset(pBuf, 0, bufsize);
     /* This inline asm serves to convince the compiler that the buffer is
      * (somehow) still used after the zero, and therefore that the optimizer
@@ -331,20 +333,20 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
          * without it.
          */
         : "memory");
-#    else  // not GCC/clang
+#        else  // not GCC/clang
     /* We don't have access to inline asm, since we're on a non-GCC platform.
      * Move the pointer through a volatile pointer in an attempt to confuse the
      * optimizer.
      */
     volatile void *pVolBuf = pBuf;
     memset(pVolBuf, 0, bufsize);
-#    endif // #else not GCC/clang
-#endif     // #else not windows
+#        endif // #else not GCC/clang
+#    endif     // #else not windows
 }
 
-#define AWS_ZERO_STRUCT(object) memset(&(object), 0, sizeof(object));
-#define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array));
+#    define AWS_ZERO_STRUCT(object) memset(&(object), 0, sizeof(object));
+#    define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array));
 
-#define AWS_ENABLE_HW_OPTIMIZATION 1
+#    define AWS_ENABLE_HW_OPTIMIZATION 1
 
 #endif /* AWS_COMMON_COMMON_H */

@@ -18,7 +18,7 @@
 
 #include <aws/common/common.h>
 #ifndef _WIN32
-#include <pthread.h>
+#    include <pthread.h>
 #endif
 
 struct aws_mutex {
