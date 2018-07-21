@@ -1,7 +1,7 @@
-#ifndef AWS_COMMON_math_H
-#define AWS_COMMON_math_H
+#ifndef AWS_COMMON_MATH_H
+#define AWS_COMMON_MATH_H
 
-#include <stdint.h>
+#include <aws/common/common.h>
 #include <stdlib.h>
 
 #if defined(_M_X64) || defined(_M_IX86) || defined(_M_ARM)
@@ -246,4 +246,4 @@ static inline int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #pragma warning(pop)
 #endif /* _MSC_VER */
 
-#endif /* AWS_COMMON_math_H */
+#endif /* AWS_COMMON_MATH_H */
