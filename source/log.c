@@ -74,14 +74,25 @@ struct aws_log_context_entry {
     struct aws_log_context *ctx;
 };
 
+struct aws_log_system_params {
+    size_t max_message_len;
+    int memory_pool_message_count;
+    int max_message_count;
+    struct aws_allocator *alloc;
+};
 
-static void s_aws_log_default_report_function(const char* log_message) {
+static void s_aws_log_default_report_function(const char *log_message) {
     (void)log_message;
 }
 
-int s_log_context_count;
-struct aws_log_context_entry s_log_table[AWS_LOG_MAX_LOGGING_THREADS];
-aws_log_report_fn* s_log_report_callback = s_aws_log_default_report_function;
+static int s_log_message_count;
+static int s_log_system_running;
+static struct aws_log_system_params s_log_system_params;
+static struct aws_mutex s_log_system_params_mutex;
+
+static int s_log_context_count;
+static struct aws_log_context_entry s_log_table[AWS_LOG_MAX_LOGGING_THREADS];
+static aws_log_report_fn* s_log_report_callback = s_aws_log_default_report_function;
 
 AWS_THREAD_LOCAL struct aws_log_context *s_local_log_context;
 
@@ -93,11 +104,42 @@ void aws_log_set_reporting_callback(aws_log_report_fn* report_callback) {
     }
 }
 
-int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
-    (void)level;
+int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count, int max_message_count) {
+    if (max_message_len < 1 || max_message_count < 1) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return AWS_OP_ERR;
+    }
 
+    if (!aws_atomic_cas(&s_log_system_running, 0, 1)) {
+        aws_raise_error(AWS_ERROR_LOG_DOUBLE_INITIALIZE);
+        return AWS_OP_ERR;
+    }
+
+    s_log_system_params.max_message_len = max_message_len;
+    s_log_system_params.memory_pool_message_count = memory_pool_message_count;
+    s_log_system_params.max_message_count = max_message_count;
+    s_log_system_params.alloc = alloc;
+
+    aws_log_thread_init();
+
+    return AWS_OP_SUCCESS;
+}
+
+void aws_log_system_clean_up() {
+    s_log_system_running = 0;
+    aws_log_thread_clean_up();
+    aws_log_flush();
+}
+
+int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     if (!s_local_log_context) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
+        return AWS_OP_ERR;
+    }
+
+    if (aws_atomic_add(&s_log_message_count, 1) >= s_log_system_params.max_message_count) {
+        aws_raise_error(AWS_ERROR_LOG_THREAD_MAX_CAPACITY);
+        aws_atomic_add(&s_log_message_count, -1);
         return AWS_OP_ERR;
     }
 
@@ -144,7 +186,7 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
 }
 
 int aws_log(enum aws_log_level level, const char *fmt, ...) {
-    if (!s_local_log_context) {
+    if (!s_local_log_context || !s_log_system_running) {
         aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
     }
@@ -175,14 +217,22 @@ static void s_aws_log_remove_dead_context(int index) {
 
     if (ctx) {
         /* Cleanup all resources for this context. */
-        struct aws_log_message *delete_list = ctx->message_list;
-        while (delete_list) {
-            struct aws_log_message *next0 = delete_list->next;
-            aws_memory_pool_release(ctx->message_pool, delete_list);
-            delete_list = next0;
+        struct aws_log_message *msg_list = ctx->message_list;
+        AWS_SINGLY_LIST_REVERSE(struct aws_log_message, msg_list);
+        int count = 0;
+
+        while (msg_list) {
+            struct aws_log_message *next0 = msg_list->next;
+            char *msg_data = (char*)(msg_list + 1);
+            s_log_report_callback(msg_data);
+            aws_memory_pool_release(ctx->message_pool, msg_list);
+            msg_list = next0;
+            ++count;
         }
 
-        delete_list = ctx->delete_list;
+        aws_atomic_add(&s_log_message_count, -count);
+
+        struct aws_log_message *delete_list = ctx->delete_list;
         while (delete_list) {
             struct aws_log_message *next0 = delete_list->next;
             aws_memory_pool_release(ctx->message_pool, delete_list);
@@ -225,11 +275,15 @@ int aws_log_flush() {
 
             /* Report logs to the user. */
             struct aws_log_message *msg = msg_list;
+            int count = 0;
             while (msg) {
                 char *msg_data = (char*)(msg + 1);
                 s_log_report_callback(msg_data);
                 msg = msg->next;
+                ++count;
             }
+
+            aws_atomic_add(&s_log_message_count, -count);
 
             /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
             do {
@@ -246,28 +300,28 @@ int aws_log_flush() {
     return AWS_OP_SUCCESS;
 }
 
-int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count) {
+int aws_log_thread_init() {
+    if (!s_log_system_running) {
+        aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
+        return AWS_OP_ERR;
+    }
+
     if (s_local_log_context) {
         aws_raise_error(AWS_ERROR_LOG_DOUBLE_INITIALIZE);
         return AWS_OP_ERR;
     }
 
-    if (max_message_len < 1) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return AWS_OP_ERR;
-    }
-
-    s_local_log_context = (struct aws_log_context *)aws_mem_acquire(alloc, sizeof(struct aws_log_context));
+    s_local_log_context = (struct aws_log_context *)aws_mem_acquire(s_log_system_params.alloc, sizeof(struct aws_log_context));
     if (!s_local_log_context) {
         return AWS_OP_ERR;
     }
 
     aws_secure_zero(s_local_log_context, sizeof(*s_local_log_context));
-    s_local_log_context->max_message_len = max_message_len;
-    s_local_log_context->alloc = alloc;
-    s_local_log_context->message_pool = aws_memory_pool_init(alloc, sizeof(struct aws_log_message) + max_message_len, memory_pool_message_count);
+    s_local_log_context->max_message_len = s_log_system_params.max_message_len;
+    s_local_log_context->alloc = s_log_system_params.alloc;
+    s_local_log_context->message_pool = aws_memory_pool_init(s_log_system_params.alloc, sizeof(struct aws_log_message) + s_log_system_params.max_message_len, s_log_system_params.memory_pool_message_count);
     if (!s_local_log_context->message_pool) {
-        aws_mem_release(alloc, s_local_log_context);
+        aws_mem_release(s_log_system_params.alloc, s_local_log_context);
         s_local_log_context = NULL;
         return AWS_OP_ERR;
     }
@@ -283,13 +337,8 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
                     if (!s_log_table[i].ctx) {
                         s_log_table[i].ctx = s_local_log_context;
                         s_local_log_context->table_index = i;
-                        aws_atomic_set(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_NO_WRITERS);
+                        s_log_table[i].state = AWS_LOG_ENTRY_STATE_NO_WRITERS;
                         found_space = 1;
-                    } else {
-                        if (!aws_atomic_cas(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_WRITER, AWS_LOG_ENTRY_STATE_NO_WRITERS)) {
-                            /* The state was AWS_LOG_ENTRY_STATE_DELETEME. */
-                            s_aws_log_remove_dead_context(i);
-                        }
                     }
 
                     if (found_space) {
@@ -300,26 +349,21 @@ int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory
         }
     } else {
         aws_atomic_add(&s_log_context_count, -1);
-        aws_mem_release(alloc, s_local_log_context);
+        aws_mem_release(s_log_system_params.alloc, s_local_log_context);
         s_local_log_context = NULL;
         aws_raise_error(AWS_ERROR_LOG_THREAD_MAX_CAPACITY);
         return AWS_OP_ERR;
     }
 }
 
-int aws_log_clean_up() {
+int aws_log_thread_clean_up() {
     if (aws_atomic_get(&s_log_context_count) == 0 || s_local_log_context == NULL) {
-        aws_raise_error(AWS_ERROR_LOG_UNINITIALIZED);
         return AWS_OP_ERR;
     }
 
     int index = s_local_log_context->table_index;
     s_local_log_context = NULL;
-
-    /* Attempt to cleanup resources on this thread, otherwise signal the `aws_log_flush` caller to do the cleanup work. */
-    if (aws_atomic_set(&s_log_table[index].state, AWS_LOG_ENTRY_STATE_DELETEME) == AWS_LOG_ENTRY_STATE_NO_WRITERS) {
-        s_aws_log_remove_dead_context(index);
-    }
+    aws_atomic_set(&s_log_table[index].state, AWS_LOG_ENTRY_STATE_DELETEME);
 
     return AWS_OP_SUCCESS;
 }

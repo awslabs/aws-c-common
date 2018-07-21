@@ -35,9 +35,9 @@ struct thread_wrapper {
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
     aws_mem_release(thread_wrapper.allocator, (void *)arg);
-    aws_log_init(thread_wrapper.allocator, AWS_LOG_MESSAGE_MAX_LEN, AWS_LOG_THREAD_MAX_MESSAGES);
+    aws_log_thread_init(thread_wrapper.allocator, AWS_LOG_MESSAGE_MAX_LEN, AWS_LOG_THREAD_MAX_MESSAGES);
     thread_wrapper.func(thread_wrapper.arg);
-    aws_log_clean_up();
+    aws_log_thread_clean_up();
     return 0;
 }
 

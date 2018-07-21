@@ -73,6 +73,17 @@ extern "C" {
 AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_fn* report_callback);
 
 /**
+ * Initializes the logging system to capture future calls to `aws_log` and `aws_vlog`. The settings here are shared amongst
+ * all other instances of `aws_thread` when `aws_thread_launch` is called.
+ */
+AWS_COMMON_API int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count, int max_message_count);
+
+/**
+ * Cleans up all logging related resources and flushes any remaining logs.
+ */
+AWS_COMMON_API void aws_log_system_clean_up();
+
+/**
  * Records a log entry to be processed by a later call to `aws_log_flush`.
  */
 AWS_COMMON_API int aws_log(enum aws_log_level level, const char *fmt, ...);
@@ -90,20 +101,21 @@ AWS_COMMON_API const char *aws_log_level_to_string(enum aws_log_level level);
 /**
  * Call this function to process any previous logs captured by `aws_log` calls. Can be called in a loop, on a condition variable,
  * or by any other means deemed necessary. See `aws_log_default_process_thread_spawn` and `aws_log_default_process_thread_clean_up`.
+ * Will periodically call `report_callback` from \ref aws_log_set_reporting_callback.
  */
 AWS_COMMON_API int aws_log_flush();
 
 /**
  * Initializes the calling thread so subsequent calls to `aws_log` are properly captured. `aws_thread` has this functionality
- * baked into them, and do not need to manually call init/clean_up. Messages over `max_message_len` are truncated.
+ * baked into them, and do not need to manually call init/clean_up.
  */
-AWS_COMMON_API int aws_log_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count);
+AWS_COMMON_API int aws_log_thread_init();
 
 /**
- * Cleans up all resources allocated by the calling thread's previous call to `aws_log_init`. The final thread to call this function
+ * Cleans up all resources allocated by the calling thread's previous call to `aws_log_thread_init`. The final thread to call this function
  * will clean up all resources and will *not* flush any remaining messages.
  */
-AWS_COMMON_API int aws_log_clean_up();
+AWS_COMMON_API int aws_log_thread_clean_up();
 
 #ifdef __cplusplus
 }
