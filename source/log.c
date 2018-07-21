@@ -21,15 +21,18 @@
 	#define _CRT_NONSTDC_NO_DEPRECATE
 #endif
 
-#include <stdio.h>
-#include <time.h>
+#include <aws/common/log.h>
 
 #include <aws/common/atomic.h>
 #include <aws/common/common.h>
-#include <aws/common/log.h>
 #include <aws/common/memory_pool.h>
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
+
+
+#include <stdio.h>
+#include <time.h>
+#include <inttypes.h>
 
 #define AWS_SINGLY_LIST_REVERSE(T, list) \
     do { \
@@ -165,11 +168,13 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     /* Format the message. */
     char date[256];
     time_t now = time(NULL);
+    /* TODO: localtime isn't thread safe, call localtime_r on posix systems and localtime is fine on windows. */
     struct tm *t = localtime(&now);
-    strftime(date, sizeof(date) - 1, "%d %m %Y %H:%M", t);
+    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%Z", t);
 
     char fmt_final[1024];
-    snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%d] %s\n", aws_log_level_to_string(level), date, (unsigned)aws_thread_current_thread_id(), fmt);
+    snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%" PRIu64 "] %s\n", aws_log_level_to_string(level), date,
+             aws_thread_current_thread_id(), fmt);
 
     vsnprintf(msg_data, s_local_log_context->max_message_len, fmt_final, va_args);
     if (strlen(msg_data) == s_local_log_context->max_message_len - 1) {

@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_MUTEX_H_
-#define AWS_COMMON_MUTEX_H_
+#ifndef AWS_COMMON_RW_LOCK_H
+#define AWS_COMMON_RW_LOCK_H
 
 /*
 * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -17,24 +17,24 @@
 */
 
 #include <aws/common/common.h>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <pthread.h>
 #endif
 
-struct aws_mutex {
+struct aws_rw_lock {
 #ifdef _WIN32
-    SRWLOCK mutex_handle;
+    SRWLOCK lock_handle;
 #else
-    pthread_mutex_t mutex_handle;
+    pthread_rwlock_t lock_handle;
 #endif
 };
 
 #ifdef _WIN32
-#define AWS_MUTEX_INIT                                                                                                 \
-{ .mutex_handle = SRWLOCK_INIT }
+#define AWS_RW_LOCK_INIT { .lock_handle = SRWLOCK_INIT }
 #else
-#define AWS_MUTEX_INIT                                                                                                 \
-{ .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
+#define AWS_RW_LOCK_INIT { .lock_handle = PTHREAD_RWLOCK_INITIALIZER }
 #endif
 
 #ifdef __cplusplus
@@ -44,33 +44,42 @@ extern "C" {
 /**
  * Initializes a new platform instance of mutex.
  */
-AWS_COMMON_API int aws_mutex_init(struct aws_mutex *mutex);
+static inline int aws_rw_lock_init(struct aws_rw_lock *lock);
 
 /**
  * Cleans up internal resources.
  */
-AWS_COMMON_API void aws_mutex_clean_up(struct aws_mutex *mutex);
+static inline void aws_rw_lock_clean_up(struct aws_rw_lock *lock);
 
 /**
  * Blocks until it acquires the lock. While on some platforms such as Windows, this may behave as a reentrant mutex,
  * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
  */
-AWS_COMMON_API int aws_mutex_lock(struct aws_mutex *mutex);
+static inline int aws_rw_lock_rlock(struct aws_rw_lock *lock);
+static inline int aws_rw_lock_wlock(struct aws_rw_lock *lock);
 
 /**
  * Attempts to acquire the lock but returns immediately if it can not.
  * While on some platforms such as Windows, this may behave as a reentrant mutex,
  * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
 */
-AWS_COMMON_API int aws_mutex_try_lock(struct aws_mutex *mutex);
+static inline int aws_rw_lock_try_rlock(struct aws_rw_lock *lock);
+static inline int aws_rw_lock_try_wlock(struct aws_rw_lock *lock);
 
 /**
  * Releases the lock.
  */
-AWS_COMMON_API int aws_mutex_unlock(struct aws_mutex *mutex);
+static inline int aws_rw_lock_runlock(struct aws_rw_lock *lock);
+static inline int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AWS_COMMON_MUTEX_H_ */
+#ifdef _WIN32
+#include <aws/common/windows/rw_lock.inl>
+#else
+#include <aws/common/posix/rw_lock.inl>
+#endif /* _WIN32 */
+
+#endif /* AWS_COMMON_RW_LOCK_H */

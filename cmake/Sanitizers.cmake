@@ -13,17 +13,13 @@
 
 include(CheckCCompilerFlag)
 
+option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" ON)
+
 # This function checks if a sanitizer is available
 # Options:
 #  sanitizer: The sanitizer to check
 #  out_variable: The variable to assign the result to. Defaults to HAS_SANITIZER_${sanitizer}
 function(aws_check_sanitizer sanitizer)
-    # When testing for libfuzzer, if attempting to link there will be 2 mains
-    if(${sanitizer} STREQUAL "fuzzer")
-        set(sanitizer_test_flag -fsanitize=fuzzer-no-link)
-    else()
-        set(sanitizer_test_flag -fsanitize=${sanitizer})
-    endif()
 
     if(NOT ${ARGN})
         set(out_variable "${ARGN}")
@@ -33,9 +29,20 @@ function(aws_check_sanitizer sanitizer)
         string(MAKE_C_IDENTIFIER ${out_variable} out_variable)
     endif()
 
-    # Need to set this here so that the flag is passed to the linker
-    set(CMAKE_REQUIRED_FLAGS ${sanitizer_test_flag})
-    check_c_compiler_flag(${sanitizer_test_flag} ${out_variable})
+    if(ENABLE_SANITIZERS)
+        # When testing for libfuzzer, if attempting to link there will be 2 mains
+        if(${sanitizer} STREQUAL "fuzzer")
+            set(sanitizer_test_flag -fsanitize=fuzzer-no-link)
+        else()
+            set(sanitizer_test_flag -fsanitize=${sanitizer})
+        endif()
+
+        # Need to set this here so that the flag is passed to the linker
+        set(CMAKE_REQUIRED_FLAGS ${sanitizer_test_flag})
+        check_c_compiler_flag(${sanitizer_test_flag} ${out_variable})
+    else()
+        set(${out_variable} 0 PARENT_SCOPE)
+    endif()
 endfunction()
 
 # This function enables sanitizers on the given target

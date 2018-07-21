@@ -17,8 +17,6 @@
  */
 
 #include <aws/common/common.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <assert.h>
 
 /**
@@ -52,21 +50,21 @@ static inline void aws_linked_list_init(struct aws_linked_list *list) {
 /**
  * Returns an iteration pointer for the first element in the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_begin(struct aws_linked_list *list) {
+static inline struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
     return list->head.next;
 }
 
 /**
  * Returns an iteration pointer for one past the last element in the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_end(struct aws_linked_list *list) {
+static inline const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
     return &list->tail;
 }
 
 /**
  * Returns the next element in the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_next(struct aws_linked_list_node *node) {
+static inline struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
     return node->next;
 }
 
@@ -93,7 +91,7 @@ static inline void aws_linked_list_insert_before(struct aws_linked_list_node *be
 /**
  * Tests if the list is empty.
  */
-static inline bool aws_linked_list_empty(struct aws_linked_list *list) {
+static inline bool aws_linked_list_empty(const struct aws_linked_list *list) {
     return list->head.next == &list->tail;
 }
 
@@ -116,7 +114,7 @@ static inline void aws_linked_list_push_back(struct aws_linked_list *list, struc
 /**
  * Returns the element in the back of the list.
  */
-static struct aws_linked_list_node *aws_linked_list_back(struct aws_linked_list *list) {
+static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     return list->tail.prev;
 }
@@ -141,7 +139,7 @@ static inline void aws_linked_list_push_front(struct aws_linked_list *list, stru
 /**
  * Returns the element in the front of the list.
  */
-static inline struct aws_linked_list_node * aws_linked_list_front(struct aws_linked_list *list) {
+static inline struct aws_linked_list_node * aws_linked_list_front(const struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     return list->head.next;
 }

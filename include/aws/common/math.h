@@ -1,7 +1,7 @@
-#ifndef AWS_COMMON_math_H
-#define AWS_COMMON_math_H
+#ifndef AWS_COMMON_MATH_H
+#define AWS_COMMON_MATH_H
 
-#include <stdint.h>
+#include <aws/common/common.h>
 #include <stdlib.h>
 
 #if defined(_M_X64) || defined(_M_IX86) || defined(_M_ARM)
@@ -27,7 +27,7 @@
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
-#if (AWS_ENABLE_HW_OPTIMIZATION)
+#if (AWS_ENABLE_HW_OPTIMIZATION && (defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
 static inline uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86.
@@ -85,7 +85,9 @@ static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 #error "Not supported."
 #endif
 }
+#endif
 
+#if (AWS_ENABLE_HW_OPTIMIZATION)
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
@@ -100,7 +102,7 @@ static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
         "mull %k[arg2]\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
         /* cmov isn't guaranteed to be available on x86-32 */
         "jnc .1f%=\n"
-        "mov $0xFFFFFFFF, %%rax\n"
+        "mov $0xFFFFFFFF, %%eax\n"
         ".1f%=:"
         : /* in/out: %eax = result/a, out: edx (ignored) */ "+&a" (a), "=&d" (edx)
         : /* in: operand 2 in reg */ [arg2] "r" (b)
@@ -150,9 +152,9 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 #error "Not supported."
 #endif
 }
+#endif
 
-#else /* AWS_ENABLE_HW_OPTIMIZATION */
-
+#if (!AWS_ENABLE_HW_OPTIMIZATION || !(defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
@@ -178,7 +180,9 @@ static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
         return 1;
     }
 }
+#endif
 
+#if (!AWS_ENABLE_HW_OPTIMIZATION)
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
@@ -204,7 +208,7 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
         return 1;
     }
 }
-#endif /* AWS_ENABLE_HW_OPTIMIZATION */
+#endif /* !AWS_ENABLE_HW_OPTIMIZATION */
 
 #if _MSC_VER
 #pragma warning(push)
@@ -242,4 +246,4 @@ static inline int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #pragma warning(pop)
 #endif /* _MSC_VER */
 
-#endif /* AWS_COMMON_math_H */
+#endif /* AWS_COMMON_MATH_H */

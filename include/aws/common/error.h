@@ -17,8 +17,7 @@
 
 #define AWS_COMMON_ERROR_H_
 
-#include <aws/common/exports.h>
-#include <stdint.h>
+#include <aws/common/common.h>
 
 struct aws_error_info {
     int error_code;

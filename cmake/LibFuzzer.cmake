@@ -23,6 +23,10 @@ set(FUZZ_TESTS_MAX_TIME 60 CACHE STRING "Max time to run each fuzz test")
 #  other_files: Other files to link into each fuzz test
 function(aws_add_fuzz_tests fuzz_files other_files)
     if(ENABLE_FUZZ_TESTS)
+        if(NOT ENABLE_SANITIZERS)
+            message(FATAL_ERROR "ENABLE_FUZZ_TESTS is set but ENABLE_SANITIZERS is set to OFF")
+        endif()
+
         aws_check_sanitizer(fuzzer)
         if (NOT HAS_SANITIZER_fuzzer)
             message(FATAL_ERROR "ENABLE_FUZZ_TESTS is set but the current compiler (${CMAKE_CXX_COMPILER_ID}) doesn't support -fsanitize=fuzzer")

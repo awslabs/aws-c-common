@@ -14,7 +14,6 @@
 */
 
 #include <aws/common/clock.h>
-#include <Windows.h>
 #include <winnt.h>
 
 static const uint64_t MUS_PER_SEC = 1000000;

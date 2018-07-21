@@ -29,14 +29,14 @@ struct aws_memory_pool {
 struct aws_memory_pool *aws_memory_pool_init(struct aws_allocator* alloc, size_t element_size, int element_count) {
     size_t stride = element_size > sizeof(void *) ? element_size : sizeof(void *);
     size_t arena_size = sizeof(struct aws_memory_pool) + stride * element_count;
-    struct aws_memory_pool *pool = (struct aws_memory_pool *)alloc->mem_acquire(alloc, arena_size);
+    struct aws_memory_pool *pool = (struct aws_memory_pool *)aws_mem_acquire(alloc, arena_size);
 
     if (!pool) {
         return NULL;
     }
 
     pool->alloc = alloc;
-    pool->arena_size = arena_size;
+    pool->arena_size = arena_size - sizeof(struct aws_memory_pool);
     pool->element_size = element_size;
     pool->arena = (uint8_t *)(pool + 1);
     pool->free_list = pool->arena;
@@ -90,8 +90,8 @@ void *aws_memory_pool_acquire(struct aws_memory_pool *pool) {
 }
 
 void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
-    size_t difference = (size_t)((uint8_t *)to_release - (uint8_t *)(pool->arena));
-    size_t in_bounds = difference < pool->arena_size;
+    size_t difference = (size_t)((uint8_t *)to_release - (uintptr_t)pool->arena);
+    bool in_bounds = difference < pool->arena_size;
     if (pool->overflow_count && !in_bounds) {
         aws_mem_release(pool->alloc, to_release);
         pool->overflow_count--;
