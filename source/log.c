@@ -182,7 +182,7 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
              aws_thread_current_thread_id(), fmt);
 
     int count = vsnprintf(msg_data, s_local_log_context->max_message_len, fmt_final, va_args);
-    if (count >= s_local_log_context->max_message_len - 1) {
+    if ((size_t)count >= s_local_log_context->max_message_len - 1) {
         msg_data[s_local_log_context->max_message_len - 2] = '\n';
     }
 
