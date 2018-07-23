@@ -168,9 +168,14 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     /* Format the message. */
     char date[256];
     time_t now = time(NULL);
-    /* TODO: localtime isn't thread safe, call localtime_r on posix systems and localtime is fine on windows. */
+#ifdef _MSC_VER
     struct tm *t = localtime(&now);
     strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%Z", t);
+#else
+    struct tm t;
+    localtime_r(&now, &t);
+    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%Z", &t);
+#endif
 
     char fmt_final[1024];
     snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%" PRIu64 "] %s\n", aws_log_level_to_string(level), date,
