@@ -13,7 +13,7 @@
 
 include(CheckCCompilerFlag)
 
-option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" ON)
+option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" OFF)
 
 # This function checks if a sanitizer is available
 # Options:

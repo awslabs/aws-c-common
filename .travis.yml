@@ -13,6 +13,6 @@ compiler:
 script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DENABLE_SANITIZERS=ON ..
   - make && make test
 
