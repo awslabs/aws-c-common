@@ -181,8 +181,8 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     snprintf(fmt_final, sizeof(fmt_final), "[%s] %s [%" PRIu64 "] %s\n", aws_log_level_to_string(level), date,
              aws_thread_current_thread_id(), fmt);
 
-    vsnprintf(msg_data, s_local_log_context->max_message_len, fmt_final, va_args);
-    if (strlen(msg_data) == s_local_log_context->max_message_len - 1) {
+    int count = vsnprintf(msg_data, s_local_log_context->max_message_len, fmt_final, va_args);
+    if (count >= s_local_log_context->max_message_len - 1) {
         msg_data[s_local_log_context->max_message_len - 2] = '\n';
     }
 
