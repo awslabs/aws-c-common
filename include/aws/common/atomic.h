@@ -34,8 +34,7 @@ static inline int aws_atomic_set(int *dst, int value);
 static inline int aws_atomic_add(int *dst, int addend);
 
 /**
- * Sets `dst` to `value` if `compare` equals `dst`.
- * Returns 1 of the value was set, 0 otherwise.
+ * Sets `dst` to `value` if `compare` equals `dst`. Returns the old value at `dst`.
  */
 static inline int aws_atomic_cas(int *dst, int compare, int value);
 
@@ -50,10 +49,9 @@ static inline void *aws_atomic_get_ptr(void **dst);
 static inline void *aws_atomic_set_ptr(void **dst, void *value);
 
 /**
- * Sets `dst` to `value` if `compare` equals `dst`.
- * Returns 1 of the value was set, 0 otherwise.
+ * Sets `dst` to `value` if `compare` equals `dst`. Returns the old value at `dst`.
  */
-static inline int aws_atomic_cas_ptr(void **dst, void *compare, void *value);
+static inline void *aws_atomic_cas_ptr(void **dst, void *compare, void *value);
 
 #include <aws/common/atomic.inl>
 
