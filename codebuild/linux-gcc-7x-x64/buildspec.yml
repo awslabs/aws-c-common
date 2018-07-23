@@ -16,7 +16,7 @@ phases:
       - ./cppcheck.sh
       - mkdir build
       - cd build
-      - cmake ../
+      - cmake -DENABLE_SANITIZERS=ON ../
       - make
       - make test
   post_build:
