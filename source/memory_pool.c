@@ -104,3 +104,13 @@ void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
         assert(0);
     }
 }
+
+void aws_memory_pool_get_arena(struct aws_memory_pool *pool, void **arena, size_t* arena_size) {
+    if (arena) {
+        *arena = pool ? (void *)pool->arena : NULL;
+    }
+
+    if (arena_size) {
+        *arena_size = pool ? pool->arena_size : 0;
+    }
+}

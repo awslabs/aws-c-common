@@ -50,6 +50,11 @@ AWS_COMMON_API void *aws_memory_pool_try_acquire(struct aws_memory_pool *pool);
  */
 AWS_COMMON_API void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release);
 
+/**
+ * Returns the internal memory arena and its size in the pointers `arena` and `arena_size` respectively.
+ */
+AWS_COMMON_API void aws_memory_pool_get_arena(struct aws_memory_pool *pool, void **arena, size_t* arena_size);
+
 #ifdef __cplusplus
 }
 #endif

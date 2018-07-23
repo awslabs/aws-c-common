@@ -248,6 +248,10 @@ static void s_aws_log_remove_dead_context(int index) {
             delete_list = next0;
         }
 
+        void *arena;
+        size_t arena_size;
+        aws_memory_pool_get_arena(ctx->message_pool, &arena, &arena_size);
+        aws_secure_zero(arena, arena_size);
         aws_memory_pool_clean_up(ctx->message_pool);
         aws_mem_release(ctx->alloc, ctx);
     }
