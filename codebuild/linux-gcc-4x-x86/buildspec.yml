@@ -14,7 +14,7 @@ phases:
       - ./cppcheck.sh
       - mkdir build
       - cd build
-      - cmake -DCMAKE_C_FLAGS="-m32" ../
+      - cmake -DCMAKE_C_FLAGS="-m32" -DENABLE_SANITIZERS=ON ../
       - make
       - make test
   post_build:

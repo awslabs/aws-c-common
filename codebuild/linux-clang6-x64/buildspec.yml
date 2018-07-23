@@ -19,7 +19,7 @@ phases:
       - ./cppcheck.sh
       - mkdir build
       - cd build
-      - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_FUZZ_TESTS=ON ../
+      - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_SANITIZERS=ON -DENABLE_FUZZ_TESTS=ON ../
       - make
       - make test
       - cd ..
