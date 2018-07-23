@@ -100,8 +100,7 @@ AWS_COMMON_API const char *aws_log_level_to_string(enum aws_log_level level);
 
 /**
  * Call this function to process any previous logs captured by `aws_log` calls. Can be called in a loop, on a condition variable,
- * or by any other means deemed necessary. See `aws_log_default_process_thread_spawn` and `aws_log_default_process_thread_clean_up`.
- * Will periodically call `report_callback` from \ref aws_log_set_reporting_callback.
+ * or by any other means deemed necessary.
  */
 AWS_COMMON_API int aws_log_flush();
 
