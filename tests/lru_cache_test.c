@@ -34,6 +34,8 @@ static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *alloc
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
+    ASSERT_INT_EQUALS(3, aws_lru_cache_get_element_count(&cache));
+
 
     int *value = NULL;
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, first_key, (void **)&value));
@@ -90,6 +92,8 @@ static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *alloc
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
+    ASSERT_INT_EQUALS(3, aws_lru_cache_get_element_count(&cache));
+
 
     int *value = NULL;
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, first_key, (void **)&value));
@@ -151,6 +155,8 @@ static int test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, vo
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
+    ASSERT_INT_EQUALS(2, aws_lru_cache_get_element_count(&cache));
+
 
     ASSERT_TRUE(first.value_removed);
     ASSERT_FALSE(second.value_removed);
@@ -193,6 +199,7 @@ static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ct
 
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &second));
+    ASSERT_INT_EQUALS(1, aws_lru_cache_get_element_count(&cache));
 
     ASSERT_TRUE(first.value_removed);
     ASSERT_FALSE(second.value_removed);
@@ -230,6 +237,7 @@ static int test_lru_cache_element_access_members_fn(struct aws_allocator *alloca
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, first_key, &first));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
+    ASSERT_INT_EQUALS(3, aws_lru_cache_get_element_count(&cache));
 
     value = aws_lru_cache_get_mru_element(&cache);
     ASSERT_NOT_NULL(value);

@@ -151,3 +151,7 @@ void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache) {
     struct cache_node *mru_element = aws_container_of(mru_node, struct cache_node, node);
     return mru_element->value;
 }
+
+size_t aws_lru_cache_get_element_count(const struct aws_lru_cache *cache) {
+    return aws_hash_table_get_entry_count(&cache->table);
+}
