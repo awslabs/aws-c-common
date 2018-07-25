@@ -86,6 +86,11 @@ AWS_COMMON_API void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache);
  */
 AWS_COMMON_API void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache);
 
+/**
+ * Returns the number of elements in the cache.
+ */
+AWS_COMMON_API size_t aws_lru_cache_get_element_count(const struct aws_lru_cache *cache);
+
 #ifdef __cplusplus
 }
 #endif
