@@ -50,7 +50,7 @@
     do { \
         do { \
             (node)->next = (head); \
-        } while (aws_atomic_cas_ptr((void **)&(head), (node)->next, (node)) != (node)->next); \
+        } while (!aws_atomic_compare_exchange_ptr((void **)&(head), (void **)&((node)->next), (node))); \
     } while (0)
 
 struct aws_log_message {
@@ -112,7 +112,8 @@ int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int
         return AWS_OP_ERR;
     }
 
-    if (aws_atomic_cas(&s_log_system_running, 0, 1) != 0) {
+    int zero = 0;
+    if (!aws_atomic_compare_exchange(&s_log_system_running, &zero, 1)) {
         aws_raise_error(AWS_ERROR_LOG_DOUBLE_INITIALIZE);
         return AWS_OP_ERR;
     }
@@ -149,7 +150,7 @@ int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args) {
     struct aws_log_message *delete_list;
     do {
         delete_list = s_local_log_context->delete_list;
-    } while (aws_atomic_cas_ptr((void **)&s_local_log_context->delete_list, delete_list, NULL) != delete_list);
+    } while (!aws_atomic_compare_exchange_ptr((void **)&s_local_log_context->delete_list, (void **)&delete_list, NULL));
 
     while (delete_list) {
         struct aws_log_message *next = delete_list->next;
@@ -222,7 +223,7 @@ static void s_aws_log_remove_dead_context(int index) {
     assert(index >= 0 && index < AWS_LOG_MAX_LOGGING_THREADS);
 
     /* Atomically grab the ctx pointer for this index. */
-    struct aws_log_context* ctx = aws_atomic_set_ptr((void **)&s_log_table[index].ctx, NULL);
+    struct aws_log_context* ctx = aws_atomic_store_ptr((void **)&s_log_table[index].ctx, NULL);
 
     if (ctx) {
         /* Cleanup all resources for this context. */
@@ -256,14 +257,15 @@ static void s_aws_log_remove_dead_context(int index) {
         aws_mem_release(ctx->alloc, ctx);
     }
 
-    if (aws_atomic_cas(&s_log_table[index].state, AWS_LOG_ENTRY_STATE_DELETEME, AWS_LOG_ENTRY_STATE_NO_WRITERS) == AWS_LOG_ENTRY_STATE_DELETEME) {
+    int delete_me = AWS_LOG_ENTRY_STATE_DELETEME;
+    if (aws_atomic_compare_exchange(&s_log_table[index].state, &delete_me, AWS_LOG_ENTRY_STATE_NO_WRITERS)) {
         aws_atomic_add(&s_log_context_count, -1);
     }
 }
 
 int aws_log_flush() {
     for (int i = 0; i < AWS_LOG_MAX_LOGGING_THREADS; ++i) {
-        int state = aws_atomic_set(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_WRITER);
+        int state = aws_atomic_store(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_WRITER);
         if (state != AWS_LOG_ENTRY_STATE_NO_WRITERS) {
             if (state == AWS_LOG_ENTRY_STATE_DELETEME) {
                 s_aws_log_remove_dead_context(i);
@@ -278,7 +280,7 @@ int aws_log_flush() {
             continue;
         }
 
-        struct aws_log_message *msg_list = aws_atomic_set_ptr((void **)&ctx->message_list, NULL);
+        struct aws_log_message *msg_list = aws_atomic_store_ptr((void **)&ctx->message_list, NULL);
 
         /* Reverse the list to preserve user submitted order, for reporting. */
         if (msg_list) {
@@ -301,10 +303,11 @@ int aws_log_flush() {
             /* Release all messages to the thread local memory pool by appending to the `delete_list`. */
             do {
                 last_msg->next = ctx->delete_list;
-            } while (aws_atomic_cas_ptr((void **)&ctx->delete_list, last_msg->next, msg_list) != last_msg->next);
+            } while (!aws_atomic_compare_exchange_ptr((void **)&ctx->delete_list, (void **)&last_msg->next, msg_list));
         }
 
-        if (aws_atomic_cas(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_WRITER, AWS_LOG_ENTRY_STATE_NO_WRITERS) != AWS_LOG_ENTRY_STATE_WRITER) {
+        int writer = AWS_LOG_ENTRY_STATE_WRITER;
+        if (!aws_atomic_compare_exchange(&s_log_table[i].state, &writer, AWS_LOG_ENTRY_STATE_NO_WRITERS)) {
             /* The state was AWS_LOG_ENTRY_STATE_DELETEME. */
             s_aws_log_remove_dead_context(i);
         }
@@ -346,7 +349,8 @@ int aws_log_thread_init() {
         while (1) {
             int found_space = 0;
             for (int i = 0; i < AWS_LOG_MAX_LOGGING_THREADS; ++i) {
-                if (aws_atomic_cas(&s_log_table[i].state, AWS_LOG_ENTRY_STATE_NO_WRITERS, AWS_LOG_ENTRY_STATE_WRITER) == AWS_LOG_ENTRY_STATE_NO_WRITERS) {
+                int no_writers = AWS_LOG_ENTRY_STATE_NO_WRITERS;
+                if (aws_atomic_compare_exchange(&s_log_table[i].state, &no_writers, AWS_LOG_ENTRY_STATE_WRITER)) {
                     if (!s_log_table[i].ctx) {
                         s_log_table[i].ctx = s_local_log_context;
                         s_local_log_context->table_index = i;
@@ -370,13 +374,13 @@ int aws_log_thread_init() {
 }
 
 int aws_log_thread_clean_up() {
-    if (aws_atomic_get(&s_log_context_count) == 0 || s_local_log_context == NULL) {
+    if (aws_atomic_load(&s_log_context_count) == 0 || s_local_log_context == NULL) {
         return AWS_OP_ERR;
     }
 
     int index = s_local_log_context->table_index;
     s_local_log_context = NULL;
-    aws_atomic_set(&s_log_table[index].state, AWS_LOG_ENTRY_STATE_DELETEME);
+    aws_atomic_store(&s_log_table[index].state, AWS_LOG_ENTRY_STATE_DELETEME);
 
     return AWS_OP_SUCCESS;
 }
