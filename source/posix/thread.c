@@ -20,7 +20,7 @@
 #include <time.h>
 #include <assert.h>
 
-static struct aws_thread_options default_options = {
+static struct aws_thread_options s_default_options = {
         /* this will make sure platform default stack size is used. */
         .stack_size = 0
 };
@@ -40,7 +40,7 @@ static void *thread_fn(void *arg) {
 }
 
 const struct aws_thread_options *aws_default_thread_options(void) {
-    return &default_options;
+    return &s_default_options;
 }
 
 void aws_thread_clean_up (struct aws_thread *thread) {
@@ -128,7 +128,7 @@ uint64_t aws_thread_get_id (struct aws_thread *thread) {
     return (uint64_t)thread->thread_id;
 }
 
-aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
+enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
     return thread->detach_state;
 }
 

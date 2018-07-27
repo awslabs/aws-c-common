@@ -165,28 +165,23 @@ Example:
 * All error strings should be written using correct English grammar.
 * SNAKE_UPPER_CASE constants, macros, and enum members.
 * snake_lower_case everything else.
-* File scope (static) variables and functions are prefixed with s_.
-* For constants, use anonymous enums.
-
-Example:
-  
-    enum { THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING = 42 };
-    
-* Use typedef struct by suffixing _t to the typedef for the struct name. 
-
-Example:
-
-    typdef struct my_struct { ... } my_struct_t;
-* Use typedef enum by suffixing _t to the typedef for the enum name.
-
-Example:
-
-    typdef struct my_enum { ... } my_enum_t;
+* `static` (local file scope) variables that are not `const` are prefixed by `s_` and lower snake case.
+* Global variables not prefixed as `const` are prefixed by `g_` and lower snake case.
+* Thread local variables are prefixed as `tl_` and lower snake case.
+* Macros and `const` variables are upper snake case.
+* For constants, prefer anonymous enums.
+* Don't typedef structs. It breaks forward declaration ability.
+* Don't typedef enums. It breaks forward declaration ability.
 * typedef function definitions for use as function pointers as values and suffixed with _fn. 
 
 Example:
 
     typedef int(fn_name_fn)(void *);
+    
+Not:
+
+    typedef int(*fn_name_fn)(void *);   
+     
 * Every source and header file must have a copyright header (The standard AWS one for apache 2).
 * Use standard include guards (e.g. #IFNDEF HEADER_NAME #define HEADER_NAME etc...).
 * Include order should be:

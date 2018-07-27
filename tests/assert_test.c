@@ -1,10 +1,10 @@
 /** This standalone test harness tests that the asserts themselves function properly */
 
-#define AWS_TESTING_REPORT_FD test_filedes
+#define AWS_TESTING_REPORT_FD g_test_filedes
 #include <stdio.h>
 #include <string.h>
 
-FILE *test_filedes;
+FILE *g_test_filedes;
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -18,29 +18,29 @@ FILE *test_filedes;
 #pragma warning(disable:4100)
 #endif
 
-const char *test_filename;
-int cur_line;
-int expected_return;
-int bail_out;
+const char *g_test_filename;
+int g_cur_line;
+int g_expected_return;
+int g_bail_out;
 
 #define TEST_SUCCESS(name) \
-    if (bail_out) return BAILED_OUT; \
+    if (g_bail_out) return BAILED_OUT; \
     if (begin_test(index, #name, __FILE__, __LINE__, 0))
 
 #define TEST_FAILURE(name) \
-    if (bail_out) return BAILED_OUT; \
+    if (g_bail_out) return BAILED_OUT; \
     if (begin_test(index, #name, __FILE__, __LINE__, -1))
 
-const char *cur_testname, *cur_file;
+const char *g_cur_testname, *g_cur_file;
 
 int begin_test(int *index, const char *testname, const char *file, int line, int expected) {
     if (*index <= line) {
         *index = line;
-        cur_testname = testname;
-        cur_file = file;
-        cur_line = line;
-        expected_return = expected == 0 ? BAILED_OUT : expected;
-        bail_out = 1;
+        g_cur_testname = testname;
+        g_cur_file = file;
+        g_cur_line = line;
+        g_expected_return = expected == 0 ? BAILED_OUT : expected;
+        g_bail_out = 1;
         return 1;
     }
 
@@ -51,7 +51,7 @@ static int side_effect_ctr = 0;
 
 int side_effect() {
     if (side_effect_ctr++) {
-        fprintf(stderr, "***FAILURE*** Side effects triggered multiple times, after %s:%d (%s)", cur_file, cur_line, cur_testname);
+        fprintf(stderr, "***FAILURE*** Side effects triggered multiple times, after %s:%d (%s)", g_cur_file, g_cur_line, g_cur_testname);
         abort();
     }
 
@@ -179,16 +179,16 @@ int test_asserts(int *index) {
 }
 
 void reset() {
-    cur_testname = "UNKNOWN";
-    cur_file = "UNKNOWN";
-    bail_out = 0;
+    g_cur_testname = "UNKNOWN";
+    g_cur_file = "UNKNOWN";
+    g_bail_out = 0;
 
-    if (test_filedes) {
-        fclose(test_filedes);
+    if (g_test_filedes) {
+        fclose(g_test_filedes);
     }
 
-    test_filedes = fopen(test_filename, "w");
-    if (!test_filedes) {
+    g_test_filedes = fopen(g_test_filename, "w");
+    if (!g_test_filedes) {
         perror("***INTERNAL ERROR*** Failed to open temporary file");
         abort();
     }
@@ -197,10 +197,10 @@ void reset() {
 }
 
 int check_failure_output(const char *expected) {
-    fclose(test_filedes);
-    test_filedes = NULL;
+    fclose(g_test_filedes);
+    g_test_filedes = NULL;
 
-    FILE *readfd = fopen(test_filename, "r");
+    FILE *readfd = fopen(g_test_filename, "r");
 
     static char tmpbuf[256];
     char *rv = fgets(tmpbuf, sizeof(tmpbuf), readfd);
@@ -217,25 +217,25 @@ int check_failure_output(const char *expected) {
 int main(int argc, char **argv) {
     int index = 0;
 
-    test_filename = argv[1];
+    g_test_filename = argv[1];
 
     // Suppress unused function warnings
-    (void)mem_acquire_malloc;
-    (void)mem_release_free;
-    (void)aws_run_test_case;
+    (void)s_mem_acquire_malloc;
+    (void)s_mem_release_free;
+    (void)s_aws_run_test_case;
 
     // Sanity checks for our own test macros
 
     reset();
     if (test_asserts(&index) != BAILED_OUT) {
-        fprintf(stderr, "***FAILURE*** Initial case did not succeed; stopped at %s:%d (%s)\n", cur_file, index, cur_testname);
+        fprintf(stderr, "***FAILURE*** Initial case did not succeed; stopped at %s:%d (%s)\n", g_cur_file, index, g_cur_testname);
         return 1;
     }
 
     index++;
     reset();
     if (test_asserts(&index) != FAILURE) {
-        fprintf(stderr, "***FAILURE*** Second case did not fail; stopped at %s:%d (%s)\n", cur_file, index, cur_testname);
+        fprintf(stderr, "***FAILURE*** Second case did not fail; stopped at %s:%d (%s)\n", g_cur_file, index, g_cur_testname);
         return 1;
     }
 
@@ -246,18 +246,18 @@ int main(int argc, char **argv) {
         if (rv == NO_MORE_TESTS) {
             break;
         }
-        if (rv != expected_return) {
-            fprintf(stderr, "***FAILURE*** Wrong result (%d expected, %d got) after %s:%d (%s)\n", expected_return, rv, cur_file, index, cur_testname);
+        if (rv != g_expected_return) {
+            fprintf(stderr, "***FAILURE*** Wrong result (%d expected, %d got) after %s:%d (%s)\n", g_expected_return, rv, g_cur_file, index, g_cur_testname);
             return 1;
         }
-        if (expected_return == FAILURE) {
+        if (g_expected_return == FAILURE) {
             if (!check_failure_output("***FAILURE*** ")) {
-                fprintf(stderr, "***FAILURE*** Output did not start with ***FAILURE*** after %s:%d (%s)\n", cur_file, index, cur_testname);
+                fprintf(stderr, "***FAILURE*** Output did not start with ***FAILURE*** after %s:%d (%s)\n", g_cur_file, index, g_cur_testname);
                 return 1;
             }
         } else {
             if (!check_failure_output(NULL)) {
-                fprintf(stderr, "***FAILURE*** Output was not empty after %s:%d (%s)\n", cur_file, index, cur_testname);
+                fprintf(stderr, "***FAILURE*** Output was not empty after %s:%d (%s)\n", g_cur_file, index, g_cur_testname);
                 return 1;
             }
         }

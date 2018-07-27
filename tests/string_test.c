@@ -17,8 +17,8 @@
 #include <aws/common/hash_table.h>
 #include <aws/testing/aws_test_harness.h>
 
-AWS_TEST_CASE(string_tests, string_tests_fn);
-static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(string_tests, s_string_tests_fn);
+static int s_string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     /* Test: static string creation from macro works. */
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
     ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
@@ -66,8 +66,8 @@ static int string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(binary_string_test, binary_string_test_fn);
-static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(binary_string_test, s_binary_string_test_fn);
+static int s_binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
     uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
     size_t len = sizeof(test_array);
     const struct aws_string *binary_string = aws_string_from_array_new(alloc, test_array, len);
@@ -82,8 +82,8 @@ static int binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(string_compare_test, string_compare_test_fn);
-static int string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(string_compare_test, s_string_compare_test_fn);
+static int s_string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
     AWS_STATIC_STRING_FROM_LITERAL(empty, "");
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
     AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");

@@ -47,7 +47,7 @@ struct memory_test_tracker {
     void *blob;
 };
 
-static void *mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
+static void *s_mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
     struct memory_test_allocator *test_allocator = (struct memory_test_allocator *)allocator->impl;
 
     aws_mutex_lock(&test_allocator->mutex);
@@ -59,7 +59,7 @@ static void *mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
     return memory->blob;
 }
 
-static void mem_release_free(struct aws_allocator *allocator, void *ptr) {
+static void s_mem_release_free(struct aws_allocator *allocator, void *ptr) {
     struct memory_test_allocator *test_allocator = (struct memory_test_allocator *)allocator->impl;
 
     struct memory_test_tracker *memory = (struct memory_test_tracker *) ((uint8_t *)ptr - sizeof(struct memory_test_tracker));
@@ -72,7 +72,8 @@ static void mem_release_free(struct aws_allocator *allocator, void *ptr) {
 /** Prints a message to stdout using printf format that appends the function, file and line number.
   * If format is null, returns 0 without printing anything; otherwise returns 1.
   */
-static int cunit_failure_message0(const char *prefix, const char *function, const char *file, int line, const char *format, ...) {
+static int s_cunit_failure_message0(const char *prefix, const char *function, const char *file, int line,
+                                    const char *format, ...) {
     if (!format) return 0;
 
     fprintf(AWS_TESTING_REPORT_FD, "%s", prefix);
@@ -88,8 +89,8 @@ static int cunit_failure_message0(const char *prefix, const char *function, cons
 }
 
 #define FAIL_PREFIX "***FAILURE*** "
-#define cunit_failure_message(func, file, line, format, ...) \
-    cunit_failure_message0(FAIL_PREFIX, func, file, line, format, # __VA_ARGS__)
+#define CUNIT_FAILURE_MESSAGE(func, file, line, format, ...) \
+    s_cunit_failure_message0(FAIL_PREFIX, func, file, line, format, # __VA_ARGS__)
 
 static int total_failures;
 
@@ -98,10 +99,10 @@ static int total_failures;
 
 #define RETURN_SUCCESS(format, ...) do { printf(format, ## __VA_ARGS__); printf("\n"); return SUCCESS; } while (0)
 #define PRINT_FAIL_INTERNAL(...) \
-    cunit_failure_message(__FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
+    CUNIT_FAILURE_MESSAGE(__FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define PRINT_FAIL_INTERNAL0(...) \
-    cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
+    s_cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__, (const char *)NULL)
 
 #define POSTFAIL_INTERNAL() do {\
     total_failures++; \
@@ -280,14 +281,14 @@ static int total_failures;
         } \
     } while(0)
         
-typedef void(*aws_test_before)(struct aws_allocator *allocator, void *ctx);
-typedef int(*aws_test_run)(struct aws_allocator *allocator, void *ctx);
-typedef void(*aws_test_after)(struct aws_allocator *allocator, void *ctx);
+typedef void (aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
+typedef int (aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
+typedef void (aws_test_after_fn)(struct aws_allocator *allocator, void *ctx);
 
 struct aws_test_harness {
-    aws_test_before on_before;
-    aws_test_run run;
-    aws_test_after on_after;
+    aws_test_before_fn *on_before;
+    aws_test_run_fn *run;
+    aws_test_after_fn *on_after;
     struct aws_allocator *allocator;
     void *ctx;
     const char *test_name;
@@ -301,8 +302,8 @@ struct aws_test_harness {
         .mutex = AWS_MUTEX_INIT,                                                                                       \
      };                                                                                                                \
      static struct aws_allocator name ## _allocator = {                                                                \
-        .mem_acquire = mem_acquire_malloc,                                                                             \
-        .mem_release = mem_release_free,                                                                               \
+        .mem_acquire = s_mem_acquire_malloc,                                                                           \
+        .mem_release = s_mem_release_free,                                                                             \
         .mem_realloc = NULL,                                                                                           \
         .impl = &name ## _alloc_impl,                                                                                  \
      };                                                                                                                \
@@ -324,7 +325,7 @@ struct aws_test_harness {
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
-static int aws_run_test_case(struct aws_test_harness *harness) {
+static int s_aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
 
     if(harness->on_before) {
@@ -366,14 +367,14 @@ static int aws_run_test_case(struct aws_test_harness *harness) {
         ret_val = -1;                                                                                                  \
         for(size_t i = 0; i < test_count; ++i) {                                                                       \
             if(!strcmp(test_name, tests[i]->test_name)) {                                                              \
-                ret_val = aws_run_test_case(tests[i]);                                                                 \
+                ret_val = s_aws_run_test_case(tests[i]);                                                               \
                 break;                                                                                                 \
             }                                                                                                          \
         }                                                                                                              \
     }                                                                                                                  \
     else {                                                                                                             \
         for(size_t i = 0; i < test_count; ++i) {                                                                       \
-            ret_val |= aws_run_test_case(tests[i]);                                                                    \
+            ret_val |= s_aws_run_test_case(tests[i]);                                                                  \
         }                                                                                                              \
     }                                                                                                                  \
                                                                                                                        \

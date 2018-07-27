@@ -25,7 +25,7 @@ struct aws_mutex;
 
 struct aws_condition_variable;
 
-typedef bool(*aws_condition_predicate)(void *);
+typedef bool (aws_condition_predicate_fn)(void *);
 
 struct aws_condition_variable {
 #ifdef _WIN32
@@ -81,7 +81,7 @@ AWS_COMMON_API int aws_condition_variable_wait (struct aws_condition_variable *c
  * control returns to the caller.
  */
 AWS_COMMON_API int aws_condition_variable_wait_pred (struct aws_condition_variable *condition_variable,
-                                                     struct aws_mutex *mutex, aws_condition_predicate pred, void *pred_ctx);
+                                                     struct aws_mutex *mutex, aws_condition_predicate_fn *pred, void *pred_ctx);
 
 /**
  * Waits the calling thread on a notification from another thread. Times out after time_to_wait. time_to_wait is in nanoseconds.
@@ -95,7 +95,7 @@ AWS_COMMON_API int aws_condition_variable_wait_for(struct aws_condition_variable
  */
 AWS_COMMON_API int aws_condition_variable_wait_for_pred(struct aws_condition_variable *condition_variable,
                                                    struct aws_mutex *mutex, int64_t time_to_wait,
-                                                   aws_condition_predicate pred, void *pred_ctx);
+                                                   aws_condition_predicate_fn *pred, void *pred_ctx);
 
 #ifdef __cplusplus
 }

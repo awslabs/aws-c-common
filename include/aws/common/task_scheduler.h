@@ -19,30 +19,30 @@
 #include <aws/common/common.h>
 #include <aws/common/priority_queue.h>
 
-typedef enum aws_task_status {
+enum aws_task_status {
     AWS_TASK_STATUS_RUN_READY,
     AWS_TASK_STATUS_CANCELED
-} aws_task_status;
+};
 
 /**
  * Pointer to the scheduled function
  */
-typedef void(*aws_task_fn)(void *arg, aws_task_status);
+typedef void (aws_task_fn)(void *arg, enum aws_task_status);
 
 /**
  * Monotonic clock function
  */
-typedef int(*aws_task_scheduler_clock)(uint64_t *);
+typedef int (aws_task_scheduler_clock_fn)(uint64_t *);
 
 struct aws_task {
-    aws_task_fn fn;
+    aws_task_fn *fn;
     void *arg;
 };
 
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue queue;
-    aws_task_scheduler_clock clock;
+    aws_task_scheduler_clock_fn *clock;
     uint64_t min_run_time;
 };
 
@@ -55,7 +55,7 @@ extern "C" {
      * The recommended clock functions are in <aws/common/clock.h>
      */
     AWS_COMMON_API int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, 
-            struct aws_allocator *alloc, aws_task_scheduler_clock clock);
+            struct aws_allocator *alloc, aws_task_scheduler_clock_fn *clock);
 
     /**
      * Empties and executes all queued tasks, passing the AWS_TASK_STATUS_CANCELED status to the task function.

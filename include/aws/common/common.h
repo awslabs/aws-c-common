@@ -239,7 +239,7 @@ AWS_COMMON_API void aws_load_error_strings(void);
 #define AWS_OP_SUCCESS 0
 #define AWS_OP_ERR -1
 
-typedef enum aws_common_error {
+enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
     AWS_ERROR_UNKNOWN,
@@ -275,7 +275,7 @@ typedef enum aws_common_error {
     AWS_ERROR_UNIMPLEMENTED,
 
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
-} aws_common_error;
+};
 
 /**
  * Securely zeroes a memory buffer. This function will attempt to ensure that

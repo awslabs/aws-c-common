@@ -24,7 +24,7 @@
  * this will get you back to the pointer of the object. member is the name of
  * the instance of struct aws_linked_list_node in your struct.
  */
-#define aws_container_of(ptr, type, member)  \
+#define AWS_CONTAINER_OF(ptr, type, member)  \
     ((type *)((uint8_t *)(ptr) - offsetof(type, member)))
 
 struct aws_linked_list_node {

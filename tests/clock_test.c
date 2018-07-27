@@ -17,7 +17,7 @@
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
+static int s_test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
@@ -31,7 +31,7 @@ static int test_high_res_clock_increments(struct aws_allocator *allocator, void 
     return 0;
 }
 
-static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
+static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
@@ -45,5 +45,5 @@ static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 
-AWS_TEST_CASE(high_res_clock_increments_test, test_high_res_clock_increments)
-AWS_TEST_CASE(sys_clock_increments_test, test_sys_clock_increments)
+AWS_TEST_CASE(high_res_clock_increments_test, s_test_high_res_clock_increments)
+AWS_TEST_CASE(sys_clock_increments_test, s_test_sys_clock_increments)

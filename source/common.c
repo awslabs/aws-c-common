@@ -26,23 +26,23 @@
 #pragma warning( disable : 4100)
 #endif
 
-static void *default_malloc(struct aws_allocator *allocator, size_t size) {
+static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     return malloc(size);
 }
 
-static void default_free(struct aws_allocator *allocator, void *ptr) {
+static void s_default_free(struct aws_allocator *allocator, void *ptr) {
     free(ptr);
 }
 
-static void *default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)oldsize;
     return realloc(ptr, newsize);
 }
 
 static struct aws_allocator default_allocator = {
-    .mem_acquire = default_malloc,
-    .mem_release = default_free,
-    .mem_realloc = default_realloc
+    .mem_acquire = s_default_malloc,
+    .mem_release = s_default_free,
+    .mem_realloc = s_default_realloc
 };
 
 struct aws_allocator *aws_default_allocator() {
@@ -93,10 +93,10 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 /* Wraps a CFAllocator around aws_allocator. For Mac only. */
 #ifdef __MACH__
 
-static CFStringRef cf_allocator_description = CFSTR("CFAllocator wrapping aws_allocator.");
+static CFStringRef s_cf_allocator_description = CFSTR("CFAllocator wrapping aws_allocator.");
 
 /* note we don't have a standard specification stating sizeof(size_t) == sizeof(void *) so we have some extra casts */
-static void *cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
+static void *s_cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
     struct aws_allocator *allocator = info;
 
     void *mem =  aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
@@ -110,7 +110,7 @@ static void *cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void 
     return (void *)((uint8_t *)mem + sizeof(size_t));
 }
 
-static void cf_allocator_deallocate(void *ptr, void *info) {
+static void s_cf_allocator_deallocate(void *ptr, void *info) {
     struct aws_allocator *allocator = info;
 
     void *original_allocation = (uint8_t *)ptr - sizeof(size_t);
@@ -118,7 +118,7 @@ static void cf_allocator_deallocate(void *ptr, void *info) {
     aws_mem_release(allocator, original_allocation);
 }
 
-static void *cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
+static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
     struct aws_allocator *allocator = info;
     assert(allocator->mem_realloc);
 
@@ -136,11 +136,11 @@ static void *cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags 
     return (void *)((uint8_t *)original_allocation + sizeof(size_t));
 }
 
-static CFStringRef cf_allocator_copy_description(const void *info) {
-    return cf_allocator_description;
+static CFStringRef s_cf_allocator_copy_description(const void *info) {
+    return s_cf_allocator_description;
 }
 
-static CFIndex cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
+static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
     return size + sizeof(size_t);
 }
 
@@ -150,16 +150,16 @@ CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
     CFAllocatorReallocateCallBack reallocate_callback  = NULL;
 
     if (allocator->mem_realloc) {
-        reallocate_callback = cf_allocator_reallocate;
+        reallocate_callback = s_cf_allocator_reallocate;
     }
 
     CFAllocatorContext context = {
-            .allocate = cf_allocator_allocate,
-            .copyDescription = cf_allocator_copy_description,
-            .deallocate = cf_allocator_deallocate,
+            .allocate = s_cf_allocator_allocate,
+            .copyDescription = s_cf_allocator_copy_description,
+            .deallocate = s_cf_allocator_deallocate,
             .reallocate = reallocate_callback,
             .info = allocator,
-            .preferredSize = cf_allocator_preferred_size,
+            .preferredSize = s_cf_allocator_preferred_size,
             .release = NULL,
             .retain = NULL,
             .version = 0 };
@@ -179,7 +179,7 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
 
 #endif /*__MACH__ */
 
-static int8_t error_strings_loaded = 0;
+static int8_t s_error_strings_loaded = 0;
 
 #define AWS_LIB_NAME "libaws-c-common"
 
@@ -218,14 +218,14 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)
 };
 
-static struct aws_error_info_list list = {
+static struct aws_error_info_list s_list = {
     .error_list = errors,
     .count = sizeof(errors) / sizeof(struct aws_error_info),
 };
 
 void aws_load_error_strings(void) {
-    if(!error_strings_loaded) {
-        error_strings_loaded = 1;
-        aws_register_error_info(&list);
+    if(!s_error_strings_loaded) {
+        s_error_strings_loaded = 1;
+        aws_register_error_info(&s_list);
     }
 }

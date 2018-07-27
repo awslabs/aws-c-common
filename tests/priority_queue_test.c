@@ -17,7 +17,7 @@
 #include <aws/testing/aws_test_harness.h>
 #include <stdlib.h>
 
-static int compare_ints(const void* a, const void* b)
+static int s_compare_ints(const void* a, const void* b)
 {
     int arg1 = *(const int*)a;
     int arg2 = *(const int*)b;
@@ -27,10 +27,10 @@ static int compare_ints(const void* a, const void* b)
     return 0;
 }
 
-static int test_priority_queue_preserves_order(struct aws_allocator *alloc, void *ctx) {
+static int s_test_priority_queue_preserves_order(struct aws_allocator *alloc, void *ctx) {
     struct aws_priority_queue queue;
 
-    int err = aws_priority_queue_dynamic_init(&queue, alloc, 10, sizeof(int), compare_ints);
+    int err = aws_priority_queue_dynamic_init(&queue, alloc, 10, sizeof(int), s_compare_ints);
     ASSERT_SUCCESS(err, "Priority queue initialization failed with error %d", err);
 
     int first = 45, second = 67, third = 80, fourth = 120, fifth = 10000;
@@ -97,11 +97,11 @@ static int test_priority_queue_preserves_order(struct aws_allocator *alloc, void
 }
 
 
-static int test_priority_queue_random_values(struct aws_allocator *alloc, void *ctx) {
+static int s_test_priority_queue_random_values(struct aws_allocator *alloc, void *ctx) {
     enum { SIZE = 20 };
     struct aws_priority_queue queue;
     int storage[SIZE], err;
-    aws_priority_queue_static_init(&queue, storage, SIZE, sizeof(int), compare_ints);
+    aws_priority_queue_static_init(&queue, storage, SIZE, sizeof(int), s_compare_ints);
     int values[SIZE];
     srand((unsigned)(uintptr_t)&queue);
     for(int i = 0; i < SIZE; i++) {
@@ -110,7 +110,7 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
         ASSERT_SUCCESS(err, "Push operation failed with error %d", err);
     }
 
-    qsort(values, SIZE, sizeof(int), compare_ints);
+    qsort(values, SIZE, sizeof(int), s_compare_ints);
 
     /* pop only half */
     for(int i = 0; i < SIZE/2; i++) {
@@ -128,7 +128,7 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
     }
 
     /* sort again so we can verify correct order on pop */
-    qsort(values, SIZE, sizeof(int), compare_ints);
+    qsort(values, SIZE, sizeof(int), s_compare_ints);
     /* pop all the queue */
     for(int i = 0; i < SIZE; i++) {
         int top;
@@ -142,9 +142,9 @@ static int test_priority_queue_random_values(struct aws_allocator *alloc, void *
     return 0;
 }
 
-static int test_priority_queue_size_and_capacity(struct aws_allocator *alloc, void *ctx) {
+static int s_test_priority_queue_size_and_capacity(struct aws_allocator *alloc, void *ctx) {
     struct aws_priority_queue queue;
-    int err = aws_priority_queue_dynamic_init(&queue, alloc, 5, sizeof(int), compare_ints);
+    int err = aws_priority_queue_dynamic_init(&queue, alloc, 5, sizeof(int), s_compare_ints);
     ASSERT_SUCCESS(err, "Dynamic init failed with error %d", err);
     size_t capacity = aws_priority_queue_capacity(&queue);
     ASSERT_INT_EQUALS(5, capacity, "Expected Capacity %d but was %d", 5, capacity);
@@ -164,6 +164,6 @@ static int test_priority_queue_size_and_capacity(struct aws_allocator *alloc, vo
     return 0;
 }
 
-AWS_TEST_CASE(priority_queue_push_pop_order_test, test_priority_queue_preserves_order);
-AWS_TEST_CASE(priority_queue_random_values_test, test_priority_queue_random_values);
-AWS_TEST_CASE(priority_queue_size_and_capacity_test, test_priority_queue_size_and_capacity);
+AWS_TEST_CASE(priority_queue_push_pop_order_test, s_test_priority_queue_preserves_order);
+AWS_TEST_CASE(priority_queue_random_values_test, s_test_priority_queue_random_values);
+AWS_TEST_CASE(priority_queue_size_and_capacity_test, s_test_priority_queue_size_and_capacity);

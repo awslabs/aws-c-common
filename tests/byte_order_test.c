@@ -16,7 +16,7 @@
 #include <aws/common/byte_order.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int byte_swap_test_fn(struct aws_allocator *alloc, void *ctx) {
+static int s_byte_swap_test_fn(struct aws_allocator *alloc, void *ctx) {
     uint64_t ans_x = 0x1122334455667788ULL;
     uint32_t ans_y = 0xaabbccdd;
     uint16_t ans_z = 0xeeff;
@@ -44,4 +44,4 @@ static int byte_swap_test_fn(struct aws_allocator *alloc, void *ctx) {
 
     return 0;
 }
-AWS_TEST_CASE(byte_swap_test, byte_swap_test_fn);
+AWS_TEST_CASE(byte_swap_test, s_byte_swap_test_fn);

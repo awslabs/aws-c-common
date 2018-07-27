@@ -29,8 +29,8 @@
             (unsigned long long)result); \
     } while (0)
 
-AWS_TEST_CASE(test_u64_saturating, test_u64_saturating_fn)
-static int test_u64_saturating_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(test_u64_saturating, s_test_u64_saturating_fn)
+static int s_test_u64_saturating_fn(struct aws_allocator *alloc, void *ctx) {
     CHECK_SAT(aws_mul_u64_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_u64_saturating, 0, 1, 0);
     CHECK_SAT(aws_mul_u64_saturating, 0, ~0LLU, 0);
@@ -51,8 +51,8 @@ static int test_u64_saturating_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_u32_saturating, test_u32_saturating_fn)
-static int test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(test_u32_saturating, s_test_u32_saturating_fn)
+static int s_test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
     CHECK_SAT(aws_mul_u32_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_u32_saturating, 0, 1, 0);
     CHECK_SAT(aws_mul_u32_saturating, 0, ~0U, 0);
@@ -107,8 +107,8 @@ static int test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
     } while (0)
 
 
-AWS_TEST_CASE(test_u64_checked, test_u64_checked_fn)
-static int test_u64_checked_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(test_u64_checked, s_test_u64_checked_fn)
+static int s_test_u64_checked_fn(struct aws_allocator *alloc, void *ctx) {
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0, 1, 0);
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0, ~0LLU, 0);
@@ -129,8 +129,8 @@ static int test_u64_checked_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_u32_checked, test_u32_checked_fn)
-static int test_u32_checked_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(test_u32_checked, s_test_u32_checked_fn)
+static int s_test_u32_checked_fn(struct aws_allocator *alloc, void *ctx) {
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 1, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, ~0u, 0);

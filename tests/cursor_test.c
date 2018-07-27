@@ -18,8 +18,8 @@
 
 #define SSIZE_MAX (SIZE_MAX >> 1)
 
-AWS_TEST_CASE(nospec_index_test, nospec_index_test_fn)
-static int nospec_index_test_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(nospec_index_test, s_nospec_index_test_fn)
+static int s_nospec_index_test_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 1));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 0));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(0, SSIZE_MAX));
@@ -70,7 +70,7 @@ static int nospec_index_test_fn(struct aws_allocator *alloc, void *ctx) {
     free(orig_cursor); \
 } while (0)
 
-static int test_byte_cursor_advance_internal(
+static int s_test_byte_cursor_advance_internal(
     struct aws_byte_cursor (*advance)(struct aws_byte_cursor *cursor, size_t len)
 ) {
     ASSERT_ADVANCE(0, 1);
@@ -87,17 +87,17 @@ static int test_byte_cursor_advance_internal(
     return 0;
 }
 
-AWS_TEST_CASE(test_byte_cursor_advance, test_byte_cursor_advance_fn)
-static int test_byte_cursor_advance_fn(struct aws_allocator *alloc, void *ctx) {
-    return test_byte_cursor_advance_internal(aws_byte_cursor_advance);
+AWS_TEST_CASE(test_byte_cursor_advance, s_test_byte_cursor_advance_fn)
+static int s_test_byte_cursor_advance_fn(struct aws_allocator *alloc, void *ctx) {
+    return s_test_byte_cursor_advance_internal(aws_byte_cursor_advance);
 }
 
-AWS_TEST_CASE(test_byte_cursor_advance_nospec, test_byte_cursor_advance_nospec_fn)
-static int test_byte_cursor_advance_nospec_fn(struct aws_allocator *alloc, void *ctx) {
-    return test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
+AWS_TEST_CASE(test_byte_cursor_advance_nospec, s_test_byte_cursor_advance_nospec_fn)
+static int s_test_byte_cursor_advance_nospec_fn(struct aws_allocator *alloc, void *ctx) {
+    return s_test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
 }
 
-static const uint8_t test_vector[] = {
+static const uint8_t TEST_VECTOR[] = {
     0xaa, 0xbb, 0xaa,
     0xbb, 0xcc, 0xbb,
     0x42,
@@ -106,9 +106,9 @@ static const uint8_t test_vector[] = {
     0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
 };
 
-AWS_TEST_CASE(byte_cursor_write_tests, byte_cursor_write_tests_fn);
-static int byte_cursor_write_tests_fn(struct aws_allocator *alloc, void *ctx) {
-    uint8_t buf[sizeof(test_vector) + 1];
+AWS_TEST_CASE(byte_cursor_write_tests, s_byte_cursor_write_tests_fn);
+static int s_byte_cursor_write_tests_fn(struct aws_allocator *alloc, void *ctx) {
+    uint8_t buf[sizeof(TEST_VECTOR) + 1];
     memset(buf, 0, sizeof(buf));
     buf[sizeof(buf) - 1] = 0x99;
 
@@ -128,14 +128,14 @@ static int byte_cursor_write_tests_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_FALSE(aws_byte_cursor_write_u8(&cur, 0xFF));
     ASSERT_UINT_EQUALS(0x99, buf[sizeof(buf) - 1]);
 
-    ASSERT_BIN_ARRAYS_EQUALS(test_vector, sizeof(test_vector), buf, sizeof(test_vector));
+    ASSERT_BIN_ARRAYS_EQUALS(TEST_VECTOR, sizeof(TEST_VECTOR), buf, sizeof(TEST_VECTOR));
 
     return 0;
 }
 
-AWS_TEST_CASE(byte_cursor_read_tests, byte_cursor_read_tests_fn);
-static int byte_cursor_read_tests_fn(struct aws_allocator *alloc, void *ctx) {
-    struct aws_byte_cursor cur = aws_byte_cursor_from_array(test_vector, sizeof(test_vector));
+AWS_TEST_CASE(byte_cursor_read_tests, s_byte_cursor_read_tests_fn);
+static int s_byte_cursor_read_tests_fn(struct aws_allocator *alloc, void *ctx) {
+    struct aws_byte_cursor cur = aws_byte_cursor_from_array(TEST_VECTOR, sizeof(TEST_VECTOR));
 
     uint8_t aba[3], bcb[3];
     ASSERT_TRUE(aws_byte_cursor_read(&cur, aba, sizeof(aba)));
@@ -156,8 +156,8 @@ static int byte_cursor_read_tests_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(byte_cursor_limit_tests, byte_cursor_limit_tests_fn);
-static int byte_cursor_limit_tests_fn(struct aws_allocator *alloc, void *ctx) {
+AWS_TEST_CASE(byte_cursor_limit_tests, s_byte_cursor_limit_tests_fn);
+static int s_byte_cursor_limit_tests_fn(struct aws_allocator *alloc, void *ctx) {
     uint8_t buf[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
     uint8_t starting_buf[sizeof(buf)];
     memcpy(starting_buf, buf, sizeof(buf));

@@ -16,8 +16,8 @@
 #include <aws/common/common.h>
 #include <aws/testing/aws_test_harness.h>
 
-AWS_TEST_CASE(test_secure_zero, test_secure_zero_fn)
-static int test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_secure_zero, s_test_secure_zero_fn)
+static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
     /* We can't actually test the secure part of the zero operation - anything
      * we do to observe the buffer will teach the compiler that it needs to
      * actually zero the buffer (or provide a convincing-enough simulation of

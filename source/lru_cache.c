@@ -22,7 +22,7 @@ struct cache_node {
     void *value;
 };
 
-static void element_destroy(void *value) {
+static void s_element_destroy(void *value) {
     struct cache_node *cache_node = value;
 
     if (cache_node->cache->user_on_value_destroy) {
@@ -34,10 +34,10 @@ static void element_destroy(void *value) {
 }
 
 int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *allocator,
-                                      aws_hash_fn_t hash_fn,
-                                      aws_equals_fn_t equals_fn,
-                                      aws_hash_element_destroy_t destroy_key_fn,
-                                      aws_hash_element_destroy_t destroy_value_fn,
+                                      aws_hash_fn *hash_fn,
+                                      aws_equals_fn *equals_fn,
+                                      aws_hash_element_destroy_fn *destroy_key_fn,
+                                      aws_hash_element_destroy_fn *destroy_value_fn,
                                       size_t max_items) {
     assert(allocator);
     assert(max_items);
@@ -47,7 +47,8 @@ int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *alloca
     cache->user_on_value_destroy = destroy_value_fn;
 
     aws_linked_list_init(&cache->list);
-    return aws_hash_table_init(&cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn, element_destroy);
+    return aws_hash_table_init(&cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn,
+                               s_element_destroy);
 }
 
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
@@ -94,7 +95,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
     }
 
     if (element->value) {
-        element_destroy(element->value);
+        s_element_destroy(element->value);
     }
 
     cache_node->value = p_value;
@@ -110,7 +111,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
         /* we're over the cache size limit. Remove whatever is in the back of the list. */
         struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
         assert(node_to_remove);
-        struct cache_node *entry_to_remove = aws_container_of(node_to_remove, struct cache_node, node);
+        struct cache_node *entry_to_remove = AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
         /*the callback will unlink and deallocate the node */
         aws_hash_table_remove(&cache->table, entry_to_remove->key, NULL, NULL);
     }
@@ -137,7 +138,7 @@ void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache) {
 
     aws_linked_list_remove(lru_node);
     aws_linked_list_push_front(&cache->list, lru_node);
-    struct cache_node *lru_element = aws_container_of(lru_node, struct cache_node, node);
+    struct cache_node *lru_element = AWS_CONTAINER_OF(lru_node, struct cache_node, node);
     return lru_element->value;
 }
 
@@ -148,7 +149,7 @@ void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache) {
 
     struct aws_linked_list_node *mru_node = aws_linked_list_front(&cache->list);
 
-    struct cache_node *mru_element = aws_container_of(mru_node, struct cache_node, node);
+    struct cache_node *mru_element = AWS_CONTAINER_OF(mru_node, struct cache_node, node);
     return mru_element->value;
 }
 

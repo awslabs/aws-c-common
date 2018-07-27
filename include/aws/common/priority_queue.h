@@ -26,13 +26,13 @@
  * int cmp(const void *a, const void *b) { return a > b; }
  * would result in a min heap.
  */
-typedef int(*aws_priority_queue_compare)(const void *a, const void *b);
+typedef int (aws_priority_queue_compare_fn)(const void *a, const void *b);
 
 struct aws_priority_queue {
     /**
      * predicate that determines the priority of the elements in the queue.
      */
-    aws_priority_queue_compare pred;
+    aws_priority_queue_compare_fn *pred;
 
     /**
      * The underlying container storing the queue elements.
@@ -51,7 +51,7 @@ extern "C" {
      * pred is the function that will be used to determine priority.
      */
     AWS_COMMON_API int aws_priority_queue_dynamic_init(struct aws_priority_queue *queue,
-            struct aws_allocator *alloc, size_t default_size, size_t item_size, aws_priority_queue_compare pred);
+            struct aws_allocator *alloc, size_t default_size, size_t item_size, aws_priority_queue_compare_fn *pred);
 
     /**
      * Initializes a priority queue struct for use. This mode will not allocate any additional memory. When the heap fills
@@ -62,7 +62,7 @@ extern "C" {
      * pred is the function that will be used to determine priority.
      */
     AWS_COMMON_API void aws_priority_queue_static_init(struct aws_priority_queue *queue, void *heap, size_t item_count, 
-            size_t item_size, aws_priority_queue_compare pred);
+            size_t item_size, aws_priority_queue_compare_fn *pred);
 
     /**
      * Cleans up any internally allocated memory and resets the struct for reuse or deletion.

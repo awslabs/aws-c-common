@@ -35,7 +35,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     set_fake_clock(0);
 
     struct aws_task task2;
-    task2.fn = (aws_task_fn)2;
+    task2.fn = (aws_task_fn *)2;
     task2.arg = (void *)2;
 
     /* run 250 ms in the future. */
@@ -44,14 +44,14 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
             "Schedule task in %lluns in the future failed", task2_timestamp);
 
     struct aws_task task1;
-    task1.fn = (aws_task_fn)1;
+    task1.fn = (aws_task_fn *)1;
     task1.arg = (void *)1;
 
     /* run now. */
     ASSERT_SUCCESS(aws_task_scheduler_schedule_now(&scheduler, &task1));
 
     struct aws_task task3;
-    task3.fn = (aws_task_fn)3;
+    task3.fn = (aws_task_fn *)3;
     task3.arg = (void *)3;
 
     /* run 500 ms in the future. */
@@ -92,7 +92,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     return 0;
 }
 
-static void null_fn(void *arg, aws_task_status status) {}
+static void null_fn(void *arg, enum aws_task_status status) {}
 
 static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void *ctx) {
     struct aws_task_scheduler scheduler;
@@ -129,7 +129,7 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     set_fake_clock(0);
 
     struct aws_task task;
-    task.fn = (aws_task_fn)0;
+    task.fn = (aws_task_fn *)0;
     task.arg = (void *)0;
 
     uint64_t run_at_or_after = 10;
@@ -160,11 +160,11 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
 struct task_scheduler_reentrancy_args {
     struct aws_task_scheduler *scheduler;
     int executed;
-    aws_task_status status;
+    enum aws_task_status status;
     struct task_scheduler_reentrancy_args *next_task_args;
 };
 
-static void reentrancy_fn(void *arg, aws_task_status status) {
+static void reentrancy_fn(void *arg, enum aws_task_status status) {
 
     struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
 
@@ -215,10 +215,10 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx)
 }
 
 struct cancellation_args {
-    aws_task_status status;
+    enum aws_task_status status;
 };
 
-static void cancellation_fn(void *arg, aws_task_status status) {
+static void cancellation_fn(void *arg, enum aws_task_status status) {
 
     struct cancellation_args *cancellation_args = (struct cancellation_args *)arg;
 

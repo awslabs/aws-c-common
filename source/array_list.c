@@ -330,7 +330,7 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
     aws_array_list_mem_swap(item1, item2, list->item_size);
 }
 
-void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator compare_fn) {
+void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator_fn *compare_fn) {
     qsort(list->data, list->length, list->item_size, compare_fn);
 }
 

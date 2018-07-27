@@ -26,7 +26,7 @@ struct aws_lru_cache {
     struct aws_allocator *allocator;
     struct aws_linked_list list;
     struct aws_hash_table table;
-    aws_hash_element_destroy_t user_on_value_destroy;
+    aws_hash_element_destroy_fn *user_on_value_destroy;
     size_t max_items;
 };
 
@@ -41,10 +41,10 @@ extern "C" {
  * semantics of these arguments are preserved.
  */
 AWS_COMMON_API int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *allocator,
-                                      aws_hash_fn_t hash_fn,
-                                      aws_equals_fn_t equals_fn,
-                                      aws_hash_element_destroy_t destroy_key_fn,
-                                      aws_hash_element_destroy_t destroy_value_fn,
+                                      aws_hash_fn *hash_fn,
+                                      aws_equals_fn *equals_fn,
+                                      aws_hash_element_destroy_fn *destroy_key_fn,
+                                      aws_hash_element_destroy_fn *destroy_value_fn,
                                       size_t max_items);
 
 /**
