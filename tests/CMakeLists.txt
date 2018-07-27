@@ -149,6 +149,7 @@ add_test(byte_cursor_limit_tests ${TEST_BINARY_NAME} byte_cursor_limit_tests)
 add_test(string_tests ${TEST_BINARY_NAME} string_tests)
 add_test(binary_string_test ${TEST_BINARY_NAME} binary_string_test)
 add_test(string_compare_test ${TEST_BINARY_NAME} string_compare_test)
+add_test(string_secure_destroy_test ${TEST_BINARY_NAME} string_secure_destroy_test)
 
 add_test(test_char_split_happy_path ${TEST_BINARY_NAME} test_char_split_happy_path)
 add_test(test_char_split_ends_with_token ${TEST_BINARY_NAME} test_char_split_ends_with_token)
@@ -184,6 +185,9 @@ add_test(test_lru_cache_element_access_members ${TEST_BINARY_NAME} test_lru_cach
 add_test(rw_lock_aquire_release_test ${TEST_BINARY_NAME} rw_lock_aquire_release_test)
 add_test(rw_lock_is_actually_rw_lock_test ${TEST_BINARY_NAME} rw_lock_is_actually_rw_lock_test)
 add_test(rw_lock_many_readers_test ${TEST_BINARY_NAME} rw_lock_many_readers_test)
+add_test(test_secure_zero ${TEST_BINARY_NAME} test_secure_zero)
+add_test(test_buffer_secure_zero ${TEST_BINARY_NAME} test_buffer_secure_zero)
+add_test(test_buffer_secure_clean_up ${TEST_BINARY_NAME} test_buffer_secure_clean_up)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")

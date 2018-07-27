@@ -71,8 +71,15 @@ extern "C" {
 
     /**
      * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
+     * Safe to run on a string created with AWS_STATIC_STRING_FROM_LITERAL. (Is a no-op in this case.)
      */
     AWS_COMMON_API void aws_string_destroy(void *str);
+
+    /**
+     * Zeroes out the data bytes of string and then deallocates the memory.
+     * Not safe to run on a string created with AWS_STATIC_STRING_FROM_LITERAL.
+     */
+    AWS_COMMON_API void aws_string_secure_destroy(void *str);
 
     /**
      * Compares lexicographical ordering of two strings. This is a binary byte-by-byte comparison, treating bytes

@@ -115,3 +115,19 @@ static int string_compare_test_fn(struct aws_allocator *alloc, void *ctx) {
     ASSERT_TRUE(aws_string_compare(x7f, x80) < 0);
     return 0;
 }
+
+AWS_TEST_CASE(string_secure_destroy_test, string_secure_destroy_test_fn);
+static int string_secure_destroy_test_fn(struct aws_allocator *alloc, void *ctx) {
+    /* Just verifies all memory was freed. */
+    const struct aws_string *empty = aws_string_from_c_str_new(alloc, "");
+    const struct aws_string *logorrhea = aws_string_from_c_str_new(alloc, "logorrhea");
+    const uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x86, 0x75, 0x30, 0x90};
+    const struct aws_string *deadbeef = aws_string_from_array_new(alloc, bytes, sizeof(bytes));
+    ASSERT_NOT_NULL(empty, "Memory allocation of string should have succeeded.");
+    ASSERT_NOT_NULL(logorrhea, "Memory allocation of string should have succeeded.");
+    ASSERT_NOT_NULL(deadbeef, "Memory allocation of string should have succeeded.");
+    aws_string_secure_destroy((void *)empty);
+    aws_string_secure_destroy((void *)logorrhea);
+    aws_string_secure_destroy((void *)deadbeef);
+    return 0;
+}

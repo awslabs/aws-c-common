@@ -53,6 +53,16 @@ AWS_COMMON_API int aws_byte_buf_init(struct aws_allocator *allocator, struct aws
 AWS_COMMON_API void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
 
 /**
+ * Sets all bytes of buffer to zero and resets len to zero.
+ */
+AWS_COMMON_API void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
+
+/**
+ * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up on the buffer.
+ */
+AWS_COMMON_API void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf);
+
+/**
  * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
  * an offset into the input_str and len is the length of that string in the original buffer.
  *

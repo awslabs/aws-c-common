@@ -35,7 +35,7 @@
 #include <math_test.c>
 #include <split_test.c>
 #include <string_test.c>
-#include <misc_test.c>
+#include <secure_zero_test.c>
 #include <byte_order_test.c>
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
@@ -159,6 +159,8 @@ int main(int argc, char *argv[]) {
                        &test_buffer_cpy_offsets,
                        &test_buffer_cpy_offsets_dest_too_small,
                        &test_secure_zero,
+                       &test_buffer_secure_zero,
+                       &test_buffer_secure_clean_up,
                        &byte_swap_test,
                        &byte_cursor_write_tests,
                        &byte_cursor_read_tests,
@@ -166,6 +168,7 @@ int main(int argc, char *argv[]) {
                        &string_tests,
                        &binary_string_test,
                        &string_compare_test,
+                       &string_secure_destroy_test,
                        &test_cpu_count_at_least_works_superficially,
                        &test_realloc_fallback,
                        &test_realloc_fallback_oom,

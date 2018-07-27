@@ -14,6 +14,7 @@
 */
 
 #include <aws/common/common.h>
+#include <aws/common/byte_buf.h>
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(test_secure_zero, test_secure_zero_fn)
@@ -43,5 +44,36 @@ static int test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
         }
     }
 
+    return SUCCESS;
+}
+
+AWS_TEST_CASE(test_buffer_secure_zero, test_buffer_secure_zero_fn)
+static int test_buffer_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
+    struct aws_byte_buf buf;
+    size_t len = 27;
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &buf, len));
+    buf.len = buf.capacity;
+    for (size_t i = 0; i < len; ++i) buf.buffer[i] = 0xDD;
+
+    aws_byte_buf_secure_zero(&buf);
+    for (size_t i = 0; i < len; ++i) ASSERT_INT_EQUALS(0, buf.buffer[i]);
+    ASSERT_INT_EQUALS(0, buf.len);
+
+    aws_byte_buf_clean_up(&buf);
+    return SUCCESS;
+}
+
+AWS_TEST_CASE(test_buffer_secure_clean_up, test_buffer_secure_clean_up_fn)
+static int test_buffer_secure_clean_up_fn(struct aws_allocator *allocator, void *ctx) {
+    /* We cannot test the zeroing of data here, because that would require reading
+     * memory that has already been freed. Simply verifies that there is no memory leak.
+     */
+    struct aws_byte_buf buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &buf, 37));
+    aws_byte_buf_secure_clean_up(&buf);
+    ASSERT_INT_EQUALS(buf.len, 0);
+    ASSERT_INT_EQUALS(buf.capacity, 0);
+    ASSERT_NULL(buf.buffer);
+    ASSERT_NULL(buf.allocator);
     return SUCCESS;
 }
