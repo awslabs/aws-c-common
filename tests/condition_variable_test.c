@@ -126,9 +126,7 @@ static int test_conditional_notify_one_fn(
 
 AWS_TEST_CASE(conditional_notify_one, test_conditional_notify_one_fn)
 
-static int test_conditional_notify_all_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_conditional_notify_all_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
@@ -180,9 +178,10 @@ static int test_conditional_notify_all_fn(
 
 AWS_TEST_CASE(conditional_notify_all, test_conditional_notify_all_fn)
 
-static int test_conditional_wait_timeout_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+/* 10 milliseconds */
+static const uint64_t WAIT_TIME_EPSILON = 10000000;
+
+static int test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -209,10 +208,10 @@ static int test_conditional_wait_timeout_fn(
     uint64_t post_wait_timestamp = 0;
     ASSERT_SUCCESS(aws_sys_clock_get_ticks(&post_wait_timestamp));
 
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= wait_ns);
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < wait_ns * 2);
-
     ASSERT_TRUE(predicate_args.call_count >= 1);
+
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= (wait_ns * predicate_args.call_count));
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < (wait_ns * predicate_args.call_count) + WAIT_TIME_EPSILON);
 
     return AWS_OP_SUCCESS;
 }
