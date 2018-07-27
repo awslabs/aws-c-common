@@ -30,10 +30,10 @@ struct aws_mutex {
 };
 
 #ifdef _WIN32
-#    define AWS_MUTEX_INIT                                                     \
+#    define AWS_MUTEX_INIT                                                                                             \
         { .mutex_handle = SRWLOCK_INIT }
 #else
-#    define AWS_MUTEX_INIT                                                     \
+#    define AWS_MUTEX_INIT                                                                                             \
         { .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
 #endif
 

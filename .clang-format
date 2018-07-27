@@ -21,7 +21,7 @@ BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
 BreakBeforeTernaryOperators: true
 BreakStringLiterals: true
-ColumnLimit:     80
+ColumnLimit:     120
 ContinuationIndentWidth: 4
 DerivePointerAlignment: false
 IncludeBlocks:   Preserve

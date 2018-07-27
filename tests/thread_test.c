@@ -26,9 +26,7 @@ static void thread_fn(void *arg) {
     test_data->thread_id = aws_thread_current_thread_id();
 }
 
-static int test_thread_creation_join_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     struct thread_test_data test_data;
     test_data.thread_id = 0;
@@ -36,13 +34,9 @@ static int test_thread_creation_join_fn(
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
 
-    ASSERT_SUCCESS(
-        aws_thread_launch(&thread, thread_fn, (void *)&test_data, 0),
-        "thread creation failed");
+    ASSERT_SUCCESS(aws_thread_launch(&thread, thread_fn, (void *)&test_data, 0), "thread creation failed");
     ASSERT_INT_EQUALS(
-        AWS_THREAD_JOINABLE,
-        aws_thread_get_detach_state(&thread),
-        "thread state should have returned JOINABLE");
+        AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
     ASSERT_INT_EQUALS(
         test_data.thread_id,

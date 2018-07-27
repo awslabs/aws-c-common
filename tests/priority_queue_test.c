@@ -32,48 +32,24 @@ static int compare_ints(const void *a, const void *b) {
     return 0;
 }
 
-static int test_priority_queue_preserves_order(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_priority_queue_preserves_order(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_priority_queue queue;
 
-    int err = aws_priority_queue_dynamic_init(
-        &queue, allocator, 10, sizeof(int), compare_ints);
-    ASSERT_SUCCESS(
-        err, "Priority queue initialization failed with error %d", err);
+    int err = aws_priority_queue_dynamic_init(&queue, allocator, 10, sizeof(int), compare_ints);
+    ASSERT_SUCCESS(err, "Priority queue initialization failed with error %d", err);
 
     int first = 45, second = 67, third = 80, fourth = 120, fifth = 10000;
 
-    ASSERT_SUCCESS(
-        aws_priority_queue_push(&queue, &third),
-        "Push operation failed for item %d",
-        third);
-    ASSERT_SUCCESS(
-        aws_priority_queue_push(&queue, &fourth),
-        "Push operation failed for item %d",
-        fourth);
-    ASSERT_SUCCESS(
-        aws_priority_queue_push(&queue, &second),
-        "Push operation failed for item %d",
-        second);
-    ASSERT_SUCCESS(
-        aws_priority_queue_push(&queue, &fifth),
-        "Push operation failed for item %d",
-        fifth);
-    ASSERT_SUCCESS(
-        aws_priority_queue_push(&queue, &first),
-        "Push operation failed for item %d",
-        first);
+    ASSERT_SUCCESS(aws_priority_queue_push(&queue, &third), "Push operation failed for item %d", third);
+    ASSERT_SUCCESS(aws_priority_queue_push(&queue, &fourth), "Push operation failed for item %d", fourth);
+    ASSERT_SUCCESS(aws_priority_queue_push(&queue, &second), "Push operation failed for item %d", second);
+    ASSERT_SUCCESS(aws_priority_queue_push(&queue, &fifth), "Push operation failed for item %d", fifth);
+    ASSERT_SUCCESS(aws_priority_queue_push(&queue, &first), "Push operation failed for item %d", first);
 
     size_t num_elements = aws_priority_queue_size(&queue);
-    ASSERT_INT_EQUALS(
-        5,
-        num_elements,
-        "Priority queue size should have been %d but was %d",
-        5,
-        num_elements);
+    ASSERT_INT_EQUALS(5, num_elements, "Priority queue size should have been %d but was %d", 5, num_elements);
 
     int pop_val, top_val, *top_val_ptr;
     err = aws_priority_queue_top(&queue, (void **)&top_val_ptr);
@@ -81,12 +57,7 @@ static int test_priority_queue_preserves_order(
     top_val = *top_val_ptr;
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-    ASSERT_INT_EQUALS(
-        first,
-        pop_val,
-        "First element returned should have been %d but was %d",
-        first,
-        pop_val);
+    ASSERT_INT_EQUALS(first, pop_val, "First element returned should have been %d but was %d", first, pop_val);
     ASSERT_INT_EQUALS(
         pop_val,
         top_val,
@@ -100,12 +71,7 @@ static int test_priority_queue_preserves_order(
     top_val = *top_val_ptr;
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-    ASSERT_INT_EQUALS(
-        second,
-        pop_val,
-        "Second element returned should have been %d but was %d",
-        second,
-        pop_val);
+    ASSERT_INT_EQUALS(second, pop_val, "Second element returned should have been %d but was %d", second, pop_val);
     ASSERT_INT_EQUALS(
         pop_val,
         top_val,
@@ -119,12 +85,7 @@ static int test_priority_queue_preserves_order(
     top_val = *top_val_ptr;
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-    ASSERT_INT_EQUALS(
-        third,
-        pop_val,
-        "Third element returned should have been %d but was %d",
-        third,
-        pop_val);
+    ASSERT_INT_EQUALS(third, pop_val, "Third element returned should have been %d but was %d", third, pop_val);
     ASSERT_INT_EQUALS(
         pop_val,
         top_val,
@@ -138,12 +99,7 @@ static int test_priority_queue_preserves_order(
     top_val = *top_val_ptr;
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-    ASSERT_INT_EQUALS(
-        fourth,
-        pop_val,
-        "Fourth element returned should have been %d but was %d",
-        fourth,
-        pop_val);
+    ASSERT_INT_EQUALS(fourth, pop_val, "Fourth element returned should have been %d but was %d", fourth, pop_val);
     ASSERT_INT_EQUALS(
         pop_val,
         top_val,
@@ -157,12 +113,7 @@ static int test_priority_queue_preserves_order(
     top_val = *top_val_ptr;
     err = aws_priority_queue_pop(&queue, &pop_val);
     ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-    ASSERT_INT_EQUALS(
-        fifth,
-        pop_val,
-        "Fifth element returned should have been %d but was %d",
-        fifth,
-        pop_val);
+    ASSERT_INT_EQUALS(fifth, pop_val, "Fifth element returned should have been %d but was %d", fifth, pop_val);
     ASSERT_INT_EQUALS(
         pop_val,
         top_val,
@@ -180,17 +131,14 @@ static int test_priority_queue_preserves_order(
     return 0;
 }
 
-static int test_priority_queue_random_values(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_priority_queue_random_values(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     enum { SIZE = 20 };
     struct aws_priority_queue queue;
     int storage[SIZE], err;
-    aws_priority_queue_static_init(
-        &queue, storage, SIZE, sizeof(int), compare_ints);
+    aws_priority_queue_static_init(&queue, storage, SIZE, sizeof(int), compare_ints);
     int values[SIZE];
     srand((unsigned)(uintptr_t)&queue);
     for (int i = 0; i < SIZE; i++) {
@@ -206,12 +154,7 @@ static int test_priority_queue_random_values(
         int top;
         err = aws_priority_queue_pop(&queue, &top);
         ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-        ASSERT_INT_EQUALS(
-            values[i],
-            top,
-            "Elements priority are out of order. Expected: %d Actual %d",
-            values[i],
-            top);
+        ASSERT_INT_EQUALS(values[i], top, "Elements priority are out of order. Expected: %d Actual %d", values[i], top);
     }
 
     /* push new random values in that first half*/
@@ -228,12 +171,7 @@ static int test_priority_queue_random_values(
         int top;
         err = aws_priority_queue_pop(&queue, &top);
         ASSERT_SUCCESS(err, "Pop operation failed with error %d", err);
-        ASSERT_INT_EQUALS(
-            values[i],
-            top,
-            "Elements priority are out of order. Expected: %d Actual %d",
-            values[i],
-            top);
+        ASSERT_INT_EQUALS(values[i], top, "Elements priority are out of order. Expected: %d Actual %d", values[i], top);
     }
 
     aws_priority_queue_clean_up(&queue);
@@ -241,18 +179,14 @@ static int test_priority_queue_random_values(
     return 0;
 }
 
-static int test_priority_queue_size_and_capacity(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_priority_queue_size_and_capacity(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_priority_queue queue;
-    int err = aws_priority_queue_dynamic_init(
-        &queue, allocator, 5, sizeof(int), compare_ints);
+    int err = aws_priority_queue_dynamic_init(&queue, allocator, 5, sizeof(int), compare_ints);
     ASSERT_SUCCESS(err, "Dynamic init failed with error %d", err);
     size_t capacity = aws_priority_queue_capacity(&queue);
-    ASSERT_INT_EQUALS(
-        5, capacity, "Expected Capacity %d but was %d", 5, capacity);
+    ASSERT_INT_EQUALS(5, capacity, "Expected Capacity %d but was %d", 5, capacity);
 
     for (int i = 0; i < 15; i++) {
         err = aws_priority_queue_push(&queue, &i);
@@ -263,19 +197,12 @@ static int test_priority_queue_size_and_capacity(
     ASSERT_INT_EQUALS(15, size, "Expected Size %d but was %d", 15, capacity);
 
     capacity = aws_priority_queue_capacity(&queue);
-    ASSERT_INT_EQUALS(
-        20, capacity, "Expected Capacity %d but was %d", 20, capacity);
+    ASSERT_INT_EQUALS(20, capacity, "Expected Capacity %d but was %d", 20, capacity);
 
     aws_priority_queue_clean_up(&queue);
     return 0;
 }
 
-AWS_TEST_CASE(
-    priority_queue_push_pop_order_test,
-    test_priority_queue_preserves_order);
-AWS_TEST_CASE(
-    priority_queue_random_values_test,
-    test_priority_queue_random_values);
-AWS_TEST_CASE(
-    priority_queue_size_and_capacity_test,
-    test_priority_queue_size_and_capacity);
+AWS_TEST_CASE(priority_queue_push_pop_order_test, test_priority_queue_preserves_order);
+AWS_TEST_CASE(priority_queue_random_values_test, test_priority_queue_random_values);
+AWS_TEST_CASE(priority_queue_size_and_capacity_test, test_priority_queue_size_and_capacity);

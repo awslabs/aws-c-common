@@ -40,61 +40,42 @@ static int nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_UINT_EQUALS(0, aws_nospec_index(4, 4));
     ASSERT_UINT_EQUALS(4, aws_nospec_index(4, 5));
 
-    ASSERT_UINT_EQUALS(
-        SSIZE_MAX - 1, aws_nospec_index(SSIZE_MAX - 1, SSIZE_MAX));
+    ASSERT_UINT_EQUALS(SSIZE_MAX - 1, aws_nospec_index(SSIZE_MAX - 1, SSIZE_MAX));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(SSIZE_MAX + 1, SSIZE_MAX));
     ASSERT_UINT_EQUALS(0, aws_nospec_index(SSIZE_MAX, SSIZE_MAX + 1));
 
     return 0;
 }
 
-#define ASSERT_NOADVANCE(advlen, cursorlen)                                    \
-    do {                                                                       \
-        struct aws_byte_cursor cursor;                                         \
-        cursor.ptr = (uint8_t *)&cursor;                                       \
-        cursor.len = (cursorlen);                                              \
-        struct aws_byte_cursor rv = advance(&cursor, (advlen));                \
-        ASSERT_NULL(                                                           \
-            rv.ptr,                                                            \
-            "advance(cursorlen=%s, advlen=%s) should fail",                    \
-            #cursorlen,                                                        \
-            #advlen);                                                          \
-        ASSERT_UINT_EQUALS(                                                    \
-            0,                                                                 \
-            rv.len,                                                            \
-            "advance(cursorlen=%s, advlen=%s) should fail",                    \
-            #cursorlen,                                                        \
-            #advlen);                                                          \
+#define ASSERT_NOADVANCE(advlen, cursorlen)                                                                            \
+    do {                                                                                                               \
+        struct aws_byte_cursor cursor;                                                                                 \
+        cursor.ptr = (uint8_t *)&cursor;                                                                               \
+        cursor.len = (cursorlen);                                                                                      \
+        struct aws_byte_cursor rv = advance(&cursor, (advlen));                                                        \
+        ASSERT_NULL(rv.ptr, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);                      \
+        ASSERT_UINT_EQUALS(0, rv.len, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);            \
     } while (0)
 
-#define ASSERT_ADVANCE(advlen, cursorlen)                                      \
-    do {                                                                       \
-        uint8_t *orig_cursor;                                                  \
-        struct aws_byte_cursor cursor;                                         \
-        cursor.len = (cursorlen);                                              \
-        cursor.ptr = orig_cursor = malloc(cursor.len);                         \
-        if (!cursor.ptr) {                                                     \
-            abort();                                                           \
-        }                                                                      \
-        struct aws_byte_cursor rv = advance(&cursor, (advlen));                \
-        ASSERT_PTR_EQUALS(                                                     \
-            orig_cursor,                                                       \
-            rv.ptr,                                                            \
-            "Wrong ptr in advance(cursorlen=%s, advlen=%s)",                   \
-            #cursorlen,                                                        \
-            #advlen);                                                          \
-        ASSERT_PTR_EQUALS(                                                     \
-            orig_cursor + (advlen),                                            \
-            cursor.ptr,                                                        \
-            "Wrong new cursorptr in advance");                                 \
-        ASSERT_UINT_EQUALS((advlen), rv.len, "Wrong returned length");         \
-        ASSERT_UINT_EQUALS(                                                    \
-            (cursorlen) - (advlen), cursor.len, "Wrong residual length");      \
-        free(orig_cursor);                                                     \
+#define ASSERT_ADVANCE(advlen, cursorlen)                                                                              \
+    do {                                                                                                               \
+        uint8_t *orig_cursor;                                                                                          \
+        struct aws_byte_cursor cursor;                                                                                 \
+        cursor.len = (cursorlen);                                                                                      \
+        cursor.ptr = orig_cursor = malloc(cursor.len);                                                                 \
+        if (!cursor.ptr) {                                                                                             \
+            abort();                                                                                                   \
+        }                                                                                                              \
+        struct aws_byte_cursor rv = advance(&cursor, (advlen));                                                        \
+        ASSERT_PTR_EQUALS(orig_cursor, rv.ptr, "Wrong ptr in advance(cursorlen=%s, advlen=%s)", #cursorlen, #advlen);  \
+        ASSERT_PTR_EQUALS(orig_cursor + (advlen), cursor.ptr, "Wrong new cursorptr in advance");                       \
+        ASSERT_UINT_EQUALS((advlen), rv.len, "Wrong returned length");                                                 \
+        ASSERT_UINT_EQUALS((cursorlen) - (advlen), cursor.len, "Wrong residual length");                               \
+        free(orig_cursor);                                                                                             \
     } while (0)
 
-static int test_byte_cursor_advance_internal(struct aws_byte_cursor (
-    *advance)(struct aws_byte_cursor *cursor, size_t len)) {
+static int test_byte_cursor_advance_internal(
+    struct aws_byte_cursor (*advance)(struct aws_byte_cursor *cursor, size_t len)) {
     ASSERT_ADVANCE(0, 1);
     ASSERT_ADVANCE(1, 1);
     ASSERT_NOADVANCE(2, 1);
@@ -110,35 +91,26 @@ static int test_byte_cursor_advance_internal(struct aws_byte_cursor (
 }
 
 AWS_TEST_CASE(test_byte_cursor_advance, test_byte_cursor_advance_fn)
-static int test_byte_cursor_advance_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_byte_cursor_advance_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     return test_byte_cursor_advance_internal(aws_byte_cursor_advance);
 }
 
-AWS_TEST_CASE(
-    test_byte_cursor_advance_nospec,
-    test_byte_cursor_advance_nospec_fn)
-static int test_byte_cursor_advance_nospec_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+AWS_TEST_CASE(test_byte_cursor_advance_nospec, test_byte_cursor_advance_nospec_fn)
+static int test_byte_cursor_advance_nospec_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     return test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
 }
 
-static const uint8_t test_vector[] = {0xaa, 0xbb, 0xaa, 0xbb, 0xcc, 0xbb, 0x42,
-                                      0x12, 0x34, 0x45, 0x67, 0x89, 0xab, 0x11,
-                                      0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+static const uint8_t test_vector[] = {0xaa, 0xbb, 0xaa, 0xbb, 0xcc, 0xbb, 0x42, 0x12, 0x34, 0x45, 0x67,
+                                      0x89, 0xab, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
 
 AWS_TEST_CASE(byte_cursor_write_tests, byte_cursor_write_tests_fn);
-static int byte_cursor_write_tests_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -146,8 +118,7 @@ static int byte_cursor_write_tests_fn(
     memset(buf, 0, sizeof(buf));
     buf[sizeof(buf) - 1] = 0x99;
 
-    struct aws_byte_cursor cur =
-        aws_byte_cursor_from_array(buf, sizeof(buf) - 1);
+    struct aws_byte_cursor cur = aws_byte_cursor_from_array(buf, sizeof(buf) - 1);
 
     uint8_t aba[] = {0xaa, 0xbb, 0xaa};
     uint8_t bcb[] = {0xbb, 0xcc, 0xbb};
@@ -158,34 +129,28 @@ static int byte_cursor_write_tests_fn(
     ASSERT_TRUE(aws_byte_cursor_write_u8(&cur, 0x42));
     ASSERT_TRUE(aws_byte_cursor_write_be16(&cur, 0x1234));
     ASSERT_TRUE(aws_byte_cursor_write_be32(&cur, 0x456789ab));
-    ASSERT_TRUE(
-        aws_byte_cursor_write_be64(&cur, (uint64_t)0x1122334455667788ULL));
+    ASSERT_TRUE(aws_byte_cursor_write_be64(&cur, (uint64_t)0x1122334455667788ULL));
 
     ASSERT_FALSE(aws_byte_cursor_write_u8(&cur, 0xFF));
     ASSERT_UINT_EQUALS(0x99, buf[sizeof(buf) - 1]);
 
-    ASSERT_BIN_ARRAYS_EQUALS(
-        test_vector, sizeof(test_vector), buf, sizeof(test_vector));
+    ASSERT_BIN_ARRAYS_EQUALS(test_vector, sizeof(test_vector), buf, sizeof(test_vector));
 
     return 0;
 }
 
 AWS_TEST_CASE(byte_cursor_read_tests, byte_cursor_read_tests_fn);
-static int byte_cursor_read_tests_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_byte_cursor cur =
-        aws_byte_cursor_from_array(test_vector, sizeof(test_vector));
+    struct aws_byte_cursor cur = aws_byte_cursor_from_array(test_vector, sizeof(test_vector));
 
     uint8_t aba[3], bcb[3];
     ASSERT_TRUE(aws_byte_cursor_read(&cur, aba, sizeof(aba)));
     struct aws_byte_buf buf = aws_byte_buf_from_array(bcb, sizeof(bcb));
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &buf));
-    uint8_t aba_expect[] = {0xaa, 0xbb, 0xaa},
-            bcb_expect[] = {0xbb, 0xcc, 0xbb};
+    uint8_t aba_expect[] = {0xaa, 0xbb, 0xaa}, bcb_expect[] = {0xbb, 0xcc, 0xbb};
     ASSERT_BIN_ARRAYS_EQUALS(aba_expect, 3, aba, 3);
     ASSERT_BIN_ARRAYS_EQUALS(bcb_expect, 3, bcb, 3);
 
@@ -209,9 +174,7 @@ static int byte_cursor_read_tests_fn(
 }
 
 AWS_TEST_CASE(byte_cursor_limit_tests, byte_cursor_limit_tests_fn);
-static int byte_cursor_limit_tests_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -232,15 +195,13 @@ static int byte_cursor_limit_tests_fn(
     ASSERT_FALSE(aws_byte_cursor_read_be64(&cur, &u64));
     ASSERT_UINT_EQUALS(0, u64);
     ASSERT_FALSE(aws_byte_cursor_write_be64(&cur, 0));
-    ASSERT_BIN_ARRAYS_EQUALS(
-        buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
     cur.len = 3;
     ASSERT_FALSE(aws_byte_cursor_read_be32(&cur, &u32));
     ASSERT_UINT_EQUALS(0, u32);
     ASSERT_FALSE(aws_byte_cursor_write_be32(&cur, 0));
-    ASSERT_BIN_ARRAYS_EQUALS(
-        buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
     cur.len = 1;
     ASSERT_FALSE(aws_byte_cursor_read_be16(&cur, &u16));
@@ -249,8 +210,7 @@ static int byte_cursor_limit_tests_fn(
     ASSERT_FALSE(aws_byte_cursor_read(&cur, arr, sizeof(arr)));
     ASSERT_FALSE(aws_byte_cursor_write_from_whole_buffer(&cur, &arrbuf));
     ASSERT_FALSE(aws_byte_cursor_read_and_fill_buffer(&cur, &arrbuf));
-    ASSERT_BIN_ARRAYS_EQUALS(
-        buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
     ASSERT_UINT_EQUALS(0, arr[0]);
     ASSERT_UINT_EQUALS(0, arr[1]);
 
@@ -258,8 +218,7 @@ static int byte_cursor_limit_tests_fn(
     ASSERT_FALSE(aws_byte_cursor_read_u8(&cur, &u8));
     ASSERT_UINT_EQUALS(0, u8);
     ASSERT_FALSE(aws_byte_cursor_write_u8(&cur, 0));
-    ASSERT_BIN_ARRAYS_EQUALS(
-        buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
     ASSERT_TRUE(aws_byte_cursor_read(&cur, arr, 0));
     ASSERT_TRUE(aws_byte_cursor_write(&cur, arr, 0));

@@ -67,10 +67,7 @@ void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
  * If any errors occur AWS_OP_ERR will be returned.
  */
 AWS_COMMON_API
-int aws_lru_cache_find(
-    struct aws_lru_cache *cache,
-    const void *key,
-    void **p_value);
+int aws_lru_cache_find(struct aws_lru_cache *cache, const void *key, void **p_value);
 
 /**
  * Puts `p_value` at `key`. If an element is already stored at `key` it will be
@@ -78,10 +75,7 @@ int aws_lru_cache_find(
  * full, the least-recently-used item will be removed.
  */
 AWS_COMMON_API
-int aws_lru_cache_put(
-    struct aws_lru_cache *cache,
-    const void *key,
-    void *p_value);
+int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_value);
 
 /**
  * Removes item at `key` from the cache.

@@ -39,9 +39,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
     return &default_options;
 }
 
-int aws_thread_init(
-    struct aws_thread *thread,
-    struct aws_allocator *allocator) {
+int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->thread_handle = 0;
     thread->thread_id = 0;
     thread->allocator = allocator;
@@ -63,18 +61,12 @@ int aws_thread_launch(
     }
 
     struct thread_wrapper *thread_wrapper =
-        (struct thread_wrapper *)aws_mem_acquire(
-            thread->allocator, sizeof(struct thread_wrapper));
+        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
-    thread->thread_handle = CreateThread(
-        0,
-        stack_size,
-        thread_wrapper_fn,
-        (LPVOID)thread_wrapper,
-        0,
-        &thread->thread_id);
+    thread->thread_handle =
+        CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);

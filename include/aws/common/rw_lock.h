@@ -32,10 +32,10 @@ struct aws_rw_lock {
 };
 
 #ifdef _WIN32
-#    define AWS_RW_LOCK_INIT                                                   \
+#    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = SRWLOCK_INIT }
 #else
-#    define AWS_RW_LOCK_INIT                                                   \
+#    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = PTHREAD_RWLOCK_INITIALIZER }
 #endif
 

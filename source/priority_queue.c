@@ -17,8 +17,7 @@
 
 #include <string.h>
 
-#define parent_of(index)                                                       \
-    (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
+#define parent_of(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
 #define left_of(index) (((index) << 1) + 1)
 
 /* Precondition: with the exception of the first element, the container must be
@@ -81,8 +80,7 @@ int aws_priority_queue_dynamic_init(
     aws_priority_queue_compare pred) {
 
     queue->pred = pred;
-    return aws_array_list_init_dynamic(
-        &queue->container, alloc, default_size, item_size);
+    return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
 }
 
 void aws_priority_queue_static_init(
@@ -121,8 +119,7 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
         return AWS_OP_ERR;
     }
 
-    aws_array_list_swap(
-        &queue->container, 0, aws_array_list_length(&queue->container) - 1);
+    aws_array_list_swap(&queue->container, 0, aws_array_list_length(&queue->container) - 1);
     if (aws_array_list_pop_back(&queue->container)) {
         return AWS_OP_ERR;
     }

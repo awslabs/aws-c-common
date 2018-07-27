@@ -17,9 +17,7 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-static int test_cpu_count_at_least_works_superficially_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_cpu_count_at_least_works_superficially_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -32,6 +30,4 @@ static int test_cpu_count_at_least_works_superficially_fn(
     return 0;
 }
 
-AWS_TEST_CASE(
-    test_cpu_count_at_least_works_superficially,
-    test_cpu_count_at_least_works_superficially_fn)
+AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, test_cpu_count_at_least_works_superficially_fn)

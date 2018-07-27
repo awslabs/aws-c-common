@@ -27,17 +27,13 @@ typedef VOID WINAPI timefunc_t(LPFILETIME);
 static VOID WINAPI get_system_time_func_lazy_init(LPFILETIME filetime_p);
 static timefunc_t *volatile ptimefunc = get_system_time_func_lazy_init;
 
-static BOOL CALLBACK get_system_time_init_once(
-    PINIT_ONCE initOnce,
-    PVOID param,
-    PVOID *context) {
+static BOOL CALLBACK get_system_time_init_once(PINIT_ONCE initOnce, PVOID param, PVOID *context) {
     (void)initOnce;
     (void)param;
     (void)context;
 
     HMODULE hkernel32 = GetModuleHandleW(L"kernel32.dll");
-    timefunc_t *timefunc = (timefunc_t *)GetProcAddress(
-        hkernel32, "GetSystemTimePreciseAsFileTime");
+    timefunc_t *timefunc = (timefunc_t *)GetProcAddress(hkernel32, "GetSystemTimePreciseAsFileTime");
 
     if (timefunc == NULL) {
         timefunc = GetSystemTimeAsFileTime;
@@ -49,8 +45,7 @@ static BOOL CALLBACK get_system_time_init_once(
 }
 
 static VOID WINAPI get_system_time_func_lazy_init(LPFILETIME filetime_p) {
-    BOOL status = InitOnceExecuteOnce(
-        &timefunc_init_once, get_system_time_init_once, NULL, NULL);
+    BOOL status = InitOnceExecuteOnce(&timefunc_init_once, get_system_time_init_once, NULL, NULL);
 
     if (status) {
         (*ptimefunc)(filetime_p);
@@ -64,12 +59,9 @@ static VOID WINAPI get_system_time_func_lazy_init(LPFILETIME filetime_p) {
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
-    if (QueryPerformanceFrequency(&frequency) &&
-        QueryPerformanceCounter(&ticks)) {
+    if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
 
-        *timestamp = (((uint64_t)ticks.QuadPart * MUS_PER_SEC) /
-                      (uint64_t)frequency.QuadPart) *
-                     NS_PER_MUS;
+        *timestamp = (((uint64_t)ticks.QuadPart * MUS_PER_SEC) / (uint64_t)frequency.QuadPart) * NS_PER_MUS;
         return AWS_OP_SUCCESS;
     }
 
@@ -90,7 +82,6 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     int_conv.LowPart = ticks.dwLowDateTime;
     int_conv.HighPart = ticks.dwHighDateTime;
 
-    *timestamp = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) *
-                 FILE_TIME_TO_NS;
+    *timestamp = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS;
     return AWS_OP_SUCCESS;
 }

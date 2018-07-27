@@ -41,10 +41,10 @@ struct aws_condition_variable {
  * AWS_CONDITION_VARIABLE_INIT;
  */
 #ifdef _WIN32
-#    define AWS_CONDITION_VARIABLE_INIT                                        \
+#    define AWS_CONDITION_VARIABLE_INIT                                                                                \
         { .condition_handle = CONDITION_VARIABLE_INIT }
 #else
-#    define AWS_CONDITION_VARIABLE_INIT                                        \
+#    define AWS_CONDITION_VARIABLE_INIT                                                                                \
         { .condition_handle = PTHREAD_COND_INITIALIZER }
 #endif
 
@@ -56,37 +56,31 @@ extern "C" {
  * Initializes a condition variable.
  */
 AWS_COMMON_API
-int aws_condition_variable_init(
-    struct aws_condition_variable *condition_variable);
+int aws_condition_variable_init(struct aws_condition_variable *condition_variable);
 
 /**
  * Cleans up a condition variable.
  */
 AWS_COMMON_API
-void aws_condition_variable_clean_up(
-    struct aws_condition_variable *condition_variable);
+void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable);
 
 /**
  * Notifies/Wakes one waiting thread
  */
 AWS_COMMON_API
-int aws_condition_variable_notify_one(
-    struct aws_condition_variable *condition_variable);
+int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable);
 
 /**
  * Notifies/Wakes all waiting threads.
  */
 AWS_COMMON_API
-int aws_condition_variable_notify_all(
-    struct aws_condition_variable *condition_variable);
+int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable);
 
 /**
  * Waits the calling thread on a notification from another thread.
  */
 AWS_COMMON_API
-int aws_condition_variable_wait(
-    struct aws_condition_variable *condition_variable,
-    struct aws_mutex *mutex);
+int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex);
 
 /**
  * Waits the calling thread on a notification from another thread. If predicate

@@ -24,24 +24,19 @@ int cur_line;
 int expected_return;
 int bail_out;
 
-#define TEST_SUCCESS(name)                                                     \
-    if (bail_out)                                                              \
-        return BAILED_OUT;                                                     \
+#define TEST_SUCCESS(name)                                                                                             \
+    if (bail_out)                                                                                                      \
+        return BAILED_OUT;                                                                                             \
     if (begin_test(index, #name, __FILE__, __LINE__, 0))
 
-#define TEST_FAILURE(name)                                                     \
-    if (bail_out)                                                              \
-        return BAILED_OUT;                                                     \
+#define TEST_FAILURE(name)                                                                                             \
+    if (bail_out)                                                                                                      \
+        return BAILED_OUT;                                                                                             \
     if (begin_test(index, #name, __FILE__, __LINE__, -1))
 
 const char *cur_testname, *cur_file;
 
-int begin_test(
-    int *index,
-    const char *testname,
-    const char *file,
-    int line,
-    int expected) {
+int begin_test(int *index, const char *testname, const char *file, int line, int expected) {
     if (*index <= line) {
         *index = line;
         cur_testname = testname;
@@ -90,38 +85,23 @@ int test_asserts(int *index) {
     TEST_SUCCESS(assert_bool) { ASSERT_FALSE(0); }
     TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS); }
     TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS, "foo"); }
-    TEST_FAILURE(assert_success) {
-        ASSERT_SUCCESS(aws_raise_error(AWS_ERROR_OOM), "foo");
-    }
+    TEST_FAILURE(assert_success) { ASSERT_SUCCESS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
 
     TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM)); }
-    TEST_SUCCESS(assert_fails) {
-        ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM), "foo");
-    }
+    TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
     TEST_FAILURE(assert_fails) { ASSERT_FAILS(AWS_OP_SUCCESS, "foo"); }
 
-    TEST_SUCCESS(assert_error) {
-        ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM));
+    TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM)); }
+    TEST_SUCCESS(assert_error_side_effect) {
+        ASSERT_ERROR((side_effect(), AWS_ERROR_OOM), aws_raise_error(AWS_ERROR_OOM));
     }
     TEST_SUCCESS(assert_error_side_effect) {
-        ASSERT_ERROR(
-            (side_effect(), AWS_ERROR_OOM), aws_raise_error(AWS_ERROR_OOM));
+        ASSERT_ERROR(AWS_ERROR_OOM, (side_effect(), aws_raise_error(AWS_ERROR_OOM)));
     }
-    TEST_SUCCESS(assert_error_side_effect) {
-        ASSERT_ERROR(
-            AWS_ERROR_OOM, (side_effect(), aws_raise_error(AWS_ERROR_OOM)));
-    }
-    TEST_SUCCESS(assert_error) {
-        ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM), "foo");
-    }
-    TEST_FAILURE(assert_error) {
-        ASSERT_ERROR(
-            AWS_ERROR_CLOCK_FAILURE, aws_raise_error(AWS_ERROR_OOM), "foo");
-    }
+    TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM), "foo"); }
+    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, aws_raise_error(AWS_ERROR_OOM), "foo"); }
     aws_raise_error(AWS_ERROR_CLOCK_FAILURE); // set last error
-    TEST_FAILURE(assert_error) {
-        ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo");
-    }
+    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo"); }
 
     TEST_SUCCESS(assert_null) { ASSERT_NULL(NULL); }
     {
@@ -131,9 +111,7 @@ int test_asserts(int *index) {
             ASSERT_NULL(nullp);
         }
         TEST_SUCCESS(assert_null) { ASSERT_NULL(nullp2); }
-        TEST_SUCCESS(assert_null_sideeffects) {
-            ASSERT_NULL((side_effect(), nullp2));
-        }
+        TEST_SUCCESS(assert_null_sideeffects) { ASSERT_NULL((side_effect(), nullp2)); }
     }
     TEST_SUCCESS(assert_null) { ASSERT_NULL(0, "foo"); }
     TEST_FAILURE(assert_null) { ASSERT_NULL("hello world", "foo"); }
@@ -181,9 +159,7 @@ int test_asserts(int *index) {
     }
     TEST_FAILURE(bineq_diffsize) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin2, 2); }
     TEST_FAILURE(bineq_diffsize) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 2, bin2, 3); }
-    TEST_SUCCESS(bineq_empty) {
-        ASSERT_BIN_ARRAYS_EQUALS(bin1, 0, bin2, 0, "foo");
-    }
+    TEST_SUCCESS(bineq_empty) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 0, bin2, 0, "foo"); }
     TEST_SUCCESS(bineq_same) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin1, 3); }
 
     return NO_MORE_TESTS;
@@ -258,11 +234,7 @@ int main(int argc, char **argv) {
     reset();
     if (test_asserts(&index) != FAILURE) {
         fprintf(
-            stderr,
-            "***FAILURE*** Second case did not fail; stopped at %s:%d (%s)\n",
-            cur_file,
-            index,
-            cur_testname);
+            stderr, "***FAILURE*** Second case did not fail; stopped at %s:%d (%s)\n", cur_file, index, cur_testname);
         return 1;
     }
 
@@ -298,12 +270,7 @@ int main(int argc, char **argv) {
             }
         } else {
             if (!check_failure_output(NULL)) {
-                fprintf(
-                    stderr,
-                    "***FAILURE*** Output was not empty after %s:%d (%s)\n",
-                    cur_file,
-                    index,
-                    cur_testname);
+                fprintf(stderr, "***FAILURE*** Output was not empty after %s:%d (%s)\n", cur_file, index, cur_testname);
                 return 1;
             }
         }

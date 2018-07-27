@@ -83,8 +83,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *ctx) {
 
     set_fake_clock(250);
     ASSERT_SUCCESS(
-        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp),
-        "Task pop should return on the first try");
+        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "Task pop should return on the first try");
     ASSERT_INT_EQUALS(
         task3_timestamp,
         timestamp,
@@ -95,19 +94,13 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *ctx) {
     ASSERT_TRUE(task2.arg == task_to_run.arg);
 
     set_fake_clock(555);
-    ASSERT_SUCCESS(
-        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
 
     ASSERT_TRUE(task3.fn == task_to_run.fn, );
     ASSERT_TRUE(task3.arg == task_to_run.arg);
-    ASSERT_INT_EQUALS(
-        0,
-        timestamp,
-        "When the last task is popped, the timestamp should be 0");
+    ASSERT_INT_EQUALS(0, timestamp, "When the last task is popped, the timestamp should be 0");
 
-    ASSERT_ERROR(
-        AWS_ERROR_TASK_SCHEDULER_NO_TASKS,
-        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
+    ASSERT_ERROR(AWS_ERROR_TASK_SCHEDULER_NO_TASKS, aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
 
     aws_task_scheduler_clean_up(&scheduler);
     return 0;
@@ -115,9 +108,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *ctx) {
 
 static void null_fn(void *arg, aws_task_status status) {}
 
-static int test_scheduler_next_task_timestamp(
-    struct aws_allocator *alloc,
-    void *ctx) {
+static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -144,17 +135,14 @@ static int test_scheduler_next_task_timestamp(
 
     uint64_t timestamp = 0;
     struct aws_task task_to_run;
-    ASSERT_SUCCESS(
-        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
+    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
     ASSERT_INT_EQUALS(run_at_or_after, timestamp);
 
     aws_task_scheduler_clean_up(&scheduler);
     return 0;
 }
 
-static int test_scheduler_pops_task_fashionably_late(
-    struct aws_allocator *alloc,
-    void *ctx) {
+static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -176,19 +164,14 @@ static int test_scheduler_pops_task_fashionably_late(
     struct aws_task task_to_run = {.fn = 0, .arg = 0};
 
     uint64_t timestamp = 0;
-    ASSERT_FAILS(
-        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
+    ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
     int lasterror = aws_last_error();
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, lasterror);
     ASSERT_TRUE(
         task_to_run.fn == 0,
         "Popped task should have been null since it is not time for it to "
         "run.");
-    ASSERT_INT_EQUALS(
-        run_at_or_after,
-        timestamp,
-        "Timestamp should for next run should be %llu",
-        run_at_or_after);
+    ASSERT_INT_EQUALS(run_at_or_after, timestamp, "Timestamp should for next run should be %llu", run_at_or_after);
 
     set_fake_clock(100);
     ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, 0));
@@ -211,8 +194,7 @@ struct task_scheduler_reentrancy_args {
 
 static void reentrancy_fn(void *arg, aws_task_status status) {
 
-    struct task_scheduler_reentrancy_args *reentrancy_args =
-        (struct task_scheduler_reentrancy_args *)arg;
+    struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
 
     if (reentrancy_args->next_task_args) {
         struct aws_task task;
@@ -225,9 +207,7 @@ static void reentrancy_fn(void *arg, aws_task_status status) {
     reentrancy_args->status = status;
 }
 
-static int test_scheduler_reentrant_safe(
-    struct aws_allocator *alloc,
-    void *ctx) {
+static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -270,15 +250,12 @@ struct cancellation_args {
 
 static void cancellation_fn(void *arg, aws_task_status status) {
 
-    struct cancellation_args *cancellation_args =
-        (struct cancellation_args *)arg;
+    struct cancellation_args *cancellation_args = (struct cancellation_args *)arg;
 
     cancellation_args->status = status;
 }
 
-static int test_scheduler_cleanup_cancellation(
-    struct aws_allocator *alloc,
-    void *ctx) {
+static int test_scheduler_cleanup_cancellation(struct aws_allocator *alloc, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -297,14 +274,8 @@ static int test_scheduler_cleanup_cancellation(
     return 0;
 }
 
-AWS_TEST_CASE(
-    scheduler_pops_task_late_test,
-    test_scheduler_pops_task_fashionably_late);
+AWS_TEST_CASE(scheduler_pops_task_late_test, test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, test_scheduler_ordering);
-AWS_TEST_CASE(
-    scheduler_task_timestamp_test,
-    test_scheduler_next_task_timestamp);
+AWS_TEST_CASE(scheduler_task_timestamp_test, test_scheduler_next_task_timestamp);
 AWS_TEST_CASE(scheduler_reentrant_safe, test_scheduler_reentrant_safe);
-AWS_TEST_CASE(
-    scheduler_cleanup_cancellation,
-    test_scheduler_cleanup_cancellation);
+AWS_TEST_CASE(scheduler_cleanup_cancellation, test_scheduler_cleanup_cancellation);

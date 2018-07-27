@@ -47,11 +47,7 @@ int aws_task_scheduler_init(
     scheduler->clock = clock;
     scheduler->min_run_time = 0;
     return aws_priority_queue_dynamic_init(
-        &scheduler->queue,
-        alloc,
-        DEFAULT_QUEUE_SIZE,
-        sizeof(struct task_container),
-        &compare_timestamps);
+        &scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container), &compare_timestamps);
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
@@ -101,8 +97,7 @@ static inline int get_next_task(
 
     *task = container.task;
     if (next_run_time) {
-        if (aws_priority_queue_top(
-                &scheduler->queue, (void **)&possible_task)) {
+        if (aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
             *next_run_time = 0;
             if (AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
                 return AWS_OP_SUCCESS;
@@ -114,10 +109,7 @@ static inline int get_next_task(
     return AWS_OP_SUCCESS;
 }
 
-int aws_task_scheduler_next_task(
-    struct aws_task_scheduler *scheduler,
-    struct aws_task *task,
-    uint64_t *next_run_time) {
+int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t *next_run_time) {
 
     uint64_t now;
     if (scheduler->clock(&now)) {
@@ -127,9 +119,7 @@ int aws_task_scheduler_next_task(
     return get_next_task(scheduler, task, now, next_run_time);
 }
 
-int aws_task_scheduler_schedule_now(
-    struct aws_task_scheduler *scheduler,
-    struct aws_task *task) {
+int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struct aws_task *task) {
 
     uint64_t now;
     if (scheduler->clock(&now)) {
@@ -165,9 +155,7 @@ int aws_task_scheduler_schedule_future(
     return AWS_OP_SUCCESS;
 }
 
-int aws_task_scheduler_run_all(
-    struct aws_task_scheduler *scheduler,
-    uint64_t *next_task_time) {
+int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
 
     uint64_t now;
     if (scheduler->clock(&now)) {
@@ -186,8 +174,7 @@ int aws_task_scheduler_run_all(
 
         if (get_next_task(scheduler, &task_to_run, now, next_task_time)) {
             int err_code = aws_last_error();
-            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS ||
-                err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
                 return AWS_OP_SUCCESS;
             }
 

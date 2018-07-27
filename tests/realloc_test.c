@@ -21,8 +21,7 @@
 #    include <CoreFoundation/CoreFoundation.h>
 #endif
 
-static size_t alloc_counter, alloc_total_size, call_ct_malloc, call_ct_free,
-    call_ct_realloc;
+static size_t alloc_counter, alloc_total_size, call_ct_malloc, call_ct_free, call_ct_realloc;
 
 static void *test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
@@ -53,11 +52,7 @@ static void test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 
 static size_t original_size, reported_oldsize;
 
-static void *test_realloc(
-    struct aws_allocator *allocator,
-    void *ptr,
-    size_t oldsize,
-    size_t newsize) {
+static void *test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
 
     uint8_t *buf = ptr;
@@ -89,11 +84,7 @@ static void *test_malloc_failing(struct aws_allocator *allocator, size_t size) {
     return NULL;
 }
 
-static void *test_realloc_failing(
-    struct aws_allocator *allocator,
-    void *ptr,
-    size_t oldsize,
-    size_t newsize) {
+static void *test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)ptr;
     (void)oldsize;
@@ -101,15 +92,12 @@ static void *test_realloc_failing(
     return NULL;
 }
 
-static const uint8_t testpattern[32] = {
-    0xa5, 0x41, 0xcb, 0xe7, 0x00, 0x19, 0xd9, 0xf3, 0x60, 0x4a, 0x2b,
-    0x68, 0x55, 0x46, 0xb7, 0xe0, 0x74, 0x91, 0x2a, 0xbe, 0x5e, 0x41,
-    0x06, 0x39, 0x02, 0x02, 0xf6, 0x79, 0x1c, 0x4a, 0x08, 0xa9};
+static const uint8_t testpattern[32] = {0xa5, 0x41, 0xcb, 0xe7, 0x00, 0x19, 0xd9, 0xf3, 0x60, 0x4a, 0x2b,
+                                        0x68, 0x55, 0x46, 0xb7, 0xe0, 0x74, 0x91, 0x2a, 0xbe, 0x5e, 0x41,
+                                        0x06, 0x39, 0x02, 0x02, 0xf6, 0x79, 0x1c, 0x4a, 0x08, 0xa9};
 
 AWS_TEST_CASE(test_realloc_fallback, test_realloc_fallback_fn)
-static int test_realloc_fallback_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -138,9 +126,7 @@ static int test_realloc_fallback_fn(
 }
 
 AWS_TEST_CASE(test_realloc_fallback_oom, test_realloc_fallback_oom_fn)
-static int test_realloc_fallback_oom_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -166,9 +152,7 @@ static int test_realloc_fallback_oom_fn(
 }
 
 AWS_TEST_CASE(test_realloc_passthrough_oom, test_realloc_passthrough_oom_fn)
-static int test_realloc_passthrough_oom_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -193,9 +177,7 @@ static int test_realloc_passthrough_oom_fn(
 }
 
 AWS_TEST_CASE(test_realloc_passthrough, test_realloc_passthrough_fn)
-static int test_realloc_passthrough_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_realloc_passthrough_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -226,9 +208,7 @@ static int test_realloc_passthrough_fn(
 
 AWS_TEST_CASE(test_cf_allocator_wrapper, test_cf_allocator_wrapper_fn)
 
-static int test_cf_allocator_wrapper_fn(
-    struct aws_allocator *allocator,
-    void *ctx) {
+static int test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -236,8 +216,7 @@ static int test_cf_allocator_wrapper_fn(
     CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(allocator);
     ASSERT_NOT_NULL(cf_allocator);
     char test_prefix[] = "test_string";
-    CFStringRef test_str = CFStringCreateWithCString(
-        cf_allocator, test_prefix, kCFStringEncodingUTF8);
+    CFStringRef test_str = CFStringCreateWithCString(cf_allocator, test_prefix, kCFStringEncodingUTF8);
 
     ASSERT_NOT_NULL(test_str);
     ASSERT_BIN_ARRAYS_EQUALS(

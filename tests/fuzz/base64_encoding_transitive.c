@@ -36,8 +36,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     assert(result == AWS_OP_SUCCESS);
     --encode_output.len; /* Remove null terminator */
 
-    result = aws_base64_compute_decoded_len(
-        (const char *)encode_output.buffer, encode_output.len, &output_size);
+    result = aws_base64_compute_decoded_len((const char *)encode_output.buffer, encode_output.len, &output_size);
     assert(result == AWS_OP_SUCCESS);
     assert(output_size == size);
 

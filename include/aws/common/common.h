@@ -21,10 +21,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#define AWS_STATIC_ASSERT0(cond, msg)                                      \
-        typedef char static_assertion_##msg[(!!(cond)) * 2 - 1]
-#define AWS_STATIC_ASSERT1(cond, line)                                     \
-        AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
+#define AWS_STATIC_ASSERT0(cond, msg) typedef char static_assertion_##msg[(!!(cond)) * 2 - 1]
+#define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
 
 #if defined(_MSC_VER)
@@ -53,8 +51,7 @@
 #ifndef NO_STDINT
 #    include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #else
-#    if defined(__x86_64__) || defined(_M_AMD64) ||                        \
-            defined(__aarch64__) || defined(__ia64__) ||                       \
+#    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__) || defined(__ia64__) ||                   \
             defined(__powerpc64__)
 #        define PTR_SIZE 8
 #    else
@@ -138,11 +135,7 @@ struct aws_allocator {
     void *(*mem_acquire)(struct aws_allocator *allocator, size_t size);
     void (*mem_release)(struct aws_allocator *allocator, void *ptr);
     /* Optional method; if not supported, this pointer must be NULL */
-    void *(*mem_realloc)(
-        struct aws_allocator *allocator,
-        void *oldptr,
-        size_t oldsize,
-        size_t newsize);
+    void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize);
     void *impl;
 };
 
@@ -197,11 +190,7 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr);
  * AWS_ERROR_OOM error.
  */
 AWS_COMMON_API
-int aws_mem_realloc(
-    struct aws_allocator *allocator,
-    void **ptr,
-    size_t oldsize,
-    size_t newsize);
+int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize);
 /*
  * Maintainer note: The above function doesn't return the pointer (as with
  * standard C realloc) as this pattern becomes error-prone when OOMs occur.
@@ -319,21 +308,20 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
      * (somehow) still used after the zero, and therefore that the optimizer
      * can't eliminate the memset.
      */
-    __asm__ __volatile__(
-        "" /* The asm doesn't actually do anything. */
-        :  /* no outputs */
-        /* Tell the compiler that the asm code has access to the pointer to the
-         * buffer, and therefore it might be reading the (now-zeroed) buffer.
-         * Without this. clang/LLVM 9.0.0 optimizes away a memset of a stack
-         * buffer.
-         */
-        : "r"(pBuf)
-        /* Also clobber memory. While this seems like it might be unnecessary -
-         * after all, it's enough that the asm might read the buffer, right? -
-         * in practice GCC 7.3.0 seems to optimize a zero of a stack buffer
-         * without it.
-         */
-        : "memory");
+    __asm__ __volatile__("" /* The asm doesn't actually do anything. */
+                         :  /* no outputs */
+                         /* Tell the compiler that the asm code has access to the pointer to the
+                          * buffer, and therefore it might be reading the (now-zeroed) buffer.
+                          * Without this. clang/LLVM 9.0.0 optimizes away a memset of a stack
+                          * buffer.
+                          */
+                         : "r"(pBuf)
+                         /* Also clobber memory. While this seems like it might be unnecessary -
+                          * after all, it's enough that the asm might read the buffer, right? -
+                          * in practice GCC 7.3.0 seems to optimize a zero of a stack buffer
+                          * without it.
+                          */
+                         : "memory");
 #    else  // not GCC/clang
     /* We don't have access to inline asm, since we're on a non-GCC platform.
      * Move the pointer through a volatile pointer in an attempt to confuse the

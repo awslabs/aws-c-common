@@ -32,10 +32,10 @@ struct aws_error_info_list {
     uint16_t count;
 };
 
-#define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                       \
-    {                                                                          \
-        .literal_name = #C, .error_code = (C), .error_str = (ES),              \
-        .lib_name = (LN), .formatted_name = LN ": " #C ", " ES                 \
+#define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                                                               \
+    {                                                                                                                  \
+        .literal_name = #C, .error_code = (C), .error_str = (ES), .lib_name = (LN),                                    \
+        .formatted_name = LN ": " #C ", " ES,                                                                          \
     }
 
 typedef void (*aws_error_handler)(int err, void *ctx);
@@ -93,9 +93,7 @@ void aws_restore_error(int err);
  * enabled.
  */
 AWS_COMMON_API
-aws_error_handler aws_set_global_error_handler_fn(
-    aws_error_handler handler,
-    void *ctx);
+aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx);
 
 /*
  * Sets a thread-local error handler function. This will override the global
@@ -104,9 +102,7 @@ aws_error_handler aws_set_global_error_handler_fn(
  * will turn off this error callback after it has been enabled.
  */
 AWS_COMMON_API
-aws_error_handler aws_set_thread_local_error_handler_fn(
-    aws_error_handler handler,
-    void *ctx);
+aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx);
 
 /** TODO: this needs to be a private function (wait till we have the cmake story
  * better before moving it though). It should be external for the purpose of
