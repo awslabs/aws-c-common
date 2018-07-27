@@ -186,7 +186,10 @@ static int8_t error_strings_loaded = 0;
 static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_SUCCESS, "success", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_OOM, "out-of-memory", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_BAD_FREE, "Out of bounds free, or double free.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_MEMORY_LEAK, "Memory leak detected.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_UNKNOWN, "unknown error", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_INVALID_ARGUMENT, "invalid argument", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_SHORT_BUFFER, "Insufficient data in input buffer", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_OVERFLOW_DETECTED, "fixed size value overflow was detected", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_INVALID_BUFFER_SIZE, "invalid buffer size", AWS_LIB_NAME),
@@ -215,7 +218,13 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_PRIORITY_QUEUE_EMPTY, "attempt to pop an item from an empty queue.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_TASKS, "no tasks scheduled available.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, "none of the tasks scheduled is due to run now.", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_UNIMPLEMENTED, "The current function or feature is not yet implemented.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_UNINITIALIZED, "Log system not properly initialized yet.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_DOUBLE_INITIALIZE, "aws_log_thread_init called more than once on this thread.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_IMPROPER_CLEAN_UP, "aws_log_clean_up must be called on all logging threads, before the owning thread can call it.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_THREAD_MAX_CAPACITY, "AWS_LOG_MAX_LOGGING_THREADS has been reached; spawn less threads or increase AWS_LOG_MAX_LOGGING_THREADS.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LOG_MAX_MESSAGE_CAPACITY, "AWS_ERROR_LOG_MAX_MESSAGE_CAPACITY has been reached, as set in aws_log_system_init().", AWS_LIB_NAME),
 };
 
 static struct aws_error_info_list list = {

@@ -242,7 +242,10 @@ AWS_COMMON_API void aws_load_error_strings(void);
 typedef enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
+    AWS_ERROR_BAD_FREE,
+    AWS_ERROR_MEMORY_LEAK,
     AWS_ERROR_UNKNOWN,
+    AWS_ERROR_INVALID_ARGUMENT,
     AWS_ERROR_SHORT_BUFFER,
     AWS_ERROR_OVERFLOW_DETECTED,
     AWS_ERROR_INVALID_BUFFER_SIZE,
@@ -273,6 +276,11 @@ typedef enum aws_common_error {
     AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS,
     AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
     AWS_ERROR_UNIMPLEMENTED,
+    AWS_ERROR_LOG_UNINITIALIZED,
+    AWS_ERROR_LOG_DOUBLE_INITIALIZE,
+    AWS_ERROR_LOG_IMPROPER_CLEAN_UP,
+    AWS_ERROR_LOG_THREAD_MAX_CAPACITY,
+    AWS_ERROR_LOG_MAX_MESSAGE_CAPACITY,
 
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
 } aws_common_error;
@@ -321,6 +329,20 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 
 #define AWS_ZERO_STRUCT(object) memset(&object, 0, sizeof(object));
 #define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
+
+#if defined(_MSC_VER)
+
+#   define AWS_WARNING_PUSH __pragma(warning(push))
+#   define AWS_WARNING_POP __pragma(warning(pop))
+#   define AWS_WARNING_DISABLE_CONST_CONDITIONAL __pragma(warning(disable:4127)) /* Suppress warnings for const conditionals (for the below LOG macros). */
+
+#else
+
+#   define AWS_WARNING_PUSH
+#   define AWS_WARNING_POP
+#   define AWS_WARNING_DISABLE_CONST_CONDITIONAL
+
+#endif
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 

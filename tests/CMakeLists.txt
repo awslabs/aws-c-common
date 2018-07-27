@@ -175,6 +175,16 @@ add_test(test_realloc_passthrough ${TEST_BINARY_NAME} test_realloc_passthrough)
 add_test(test_realloc_passthrough_oom ${TEST_BINARY_NAME} test_realloc_passthrough_oom)
 add_test(test_cf_allocator_wrapper ${TEST_BINARY_NAME} test_cf_allocator_wrapper)
 
+add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
+add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
+add_test(test_memory_pool_hammer ${TEST_BINARY_NAME} test_memory_pool_hammer)
+
+add_test(test_log_init_clean_up ${TEST_BINARY_NAME} test_log_init_clean_up)
+add_test(test_log_overflow_message ${TEST_BINARY_NAME} test_log_overflow_message)
+add_test(test_log_threads_hammer ${TEST_BINARY_NAME} test_log_threads_hammer)
+add_test(test_log_threads_order ${TEST_BINARY_NAME} test_log_threads_order)
+add_test(test_log_no_flush_for_no_leaks ${TEST_BINARY_NAME} test_log_no_flush_for_no_leaks)
+
 add_test(test_lru_cache_overflow_static_members ${TEST_BINARY_NAME} test_lru_cache_overflow_static_members)
 add_test(test_lru_cache_lru_ness_static_members ${TEST_BINARY_NAME} test_lru_cache_lru_ness_static_members)
 add_test(test_lru_cache_entries_cleanup ${TEST_BINARY_NAME} test_lru_cache_entries_cleanup)
@@ -184,6 +194,9 @@ add_test(test_lru_cache_element_access_members ${TEST_BINARY_NAME} test_lru_cach
 add_test(rw_lock_aquire_release_test ${TEST_BINARY_NAME} rw_lock_aquire_release_test)
 add_test(rw_lock_is_actually_rw_lock_test ${TEST_BINARY_NAME} rw_lock_is_actually_rw_lock_test)
 add_test(rw_lock_many_readers_test ${TEST_BINARY_NAME} rw_lock_many_readers_test)
+
+add_test(test_memory_pool_no_overflow ${TEST_BINARY_NAME} test_memory_pool_no_overflow)
+add_test(test_memory_pool_overflow ${TEST_BINARY_NAME} test_memory_pool_overflow)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")

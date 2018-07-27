@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,6 +12,14 @@
  *  express or implied. See the License for the specific language governing
  *  permissions and limitations under the License.
  */
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+	#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#ifndef _CRT_NONSTDC_NO_DEPRECATE
+	#define _CRT_NONSTDC_NO_DEPRECATE
+#endif
 
 #if _MSC_VER
 #pragma warning(disable:4100)
@@ -40,6 +47,8 @@
 #include <byte_buf_test.c>
 #include <system_info_tests.c>
 #include <realloc_test.c>
+#include <memory_pool_test.h>
+#include <log_test.h>
 #include <lru_cache_test.c>
 #include <rw_lock_test.c>
 
@@ -172,6 +181,14 @@ int main(int argc, char *argv[]) {
                        &test_realloc_passthrough_oom,
                        &test_realloc_passthrough,
                        &test_cf_allocator_wrapper,
+                       &test_memory_pool_no_overflow,
+                       &test_memory_pool_overflow,
+                       &test_memory_pool_hammer,
+                       &test_log_init_clean_up,
+                       &test_log_overflow_message,
+                       &test_log_threads_hammer,
+                       &test_log_threads_order,
+                       &test_log_no_flush_for_no_leaks,
                        &test_lru_cache_overflow_static_members,
                        &test_lru_cache_lru_ness_static_members,
                        &test_lru_cache_entries_cleanup,
