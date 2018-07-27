@@ -16,6 +16,7 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
+#include <aws/common/clock.h>
 #include <stdio.h>
 
 static const char *test_str_1 = "test 1";
