@@ -14,8 +14,9 @@
  */
 
 #include <aws/common/task_scheduler.h>
-#include <aws/common/thread.h>
+
 #include <aws/common/priority_queue.h>
+#include <aws/common/thread.h>
 
 #include <assert.h>
 
@@ -27,27 +28,36 @@ struct task_container {
 };
 
 static int compare_timestamps(const void *a, const void *b) {
-    uint64_t a_time = ((struct task_container*)a)->timestamp;
-    uint64_t b_time = ((struct task_container*)b)->timestamp;
+    uint64_t a_time = ((struct task_container *)a)->timestamp;
+    uint64_t b_time = ((struct task_container *)b)->timestamp;
     return a_time > b_time; /* min-heap */
 }
 
-static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t run_before,
-                                uint64_t *next_run_time);
+static inline int get_next_task(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task,
+    uint64_t run_before,
+    uint64_t *next_run_time);
 
-int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_allocator *alloc,
-        aws_task_scheduler_clock clock) {
+int aws_task_scheduler_init(
+    struct aws_task_scheduler *scheduler,
+    struct aws_allocator *alloc,
+    aws_task_scheduler_clock clock) {
     scheduler->alloc = alloc;
     scheduler->clock = clock;
     scheduler->min_run_time = 0;
-    return aws_priority_queue_dynamic_init(&scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container),
-            &compare_timestamps);
+    return aws_priority_queue_dynamic_init(
+        &scheduler->queue,
+        alloc,
+        DEFAULT_QUEUE_SIZE,
+        sizeof(struct task_container),
+        &compare_timestamps);
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
     uint64_t everything_in_past = UINT64_MAX;
 
-    while(1) {
+    while (1) {
         struct aws_task task_to_run = {0};
 
         if (get_next_task(scheduler, &task_to_run, everything_in_past, NULL)) {
@@ -63,11 +73,14 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
     scheduler->clock = NULL;
 }
 
-static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws_task *task, uint64_t run_before,
-                                uint64_t *next_run_time) {
+static inline int get_next_task(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task,
+    uint64_t run_before,
+    uint64_t *next_run_time) {
     struct task_container *possible_task;
-    if(aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
-        if(AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
+    if (aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
+        if (AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
             return aws_raise_error(AWS_ERROR_TASK_SCHEDULER_NO_TASKS);
         }
         return AWS_OP_ERR;
@@ -82,15 +95,16 @@ static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws
     }
 
     struct task_container container;
-    if(aws_priority_queue_pop(&scheduler->queue, (void *)&container)) {
+    if (aws_priority_queue_pop(&scheduler->queue, (void *)&container)) {
         return AWS_OP_ERR;
     }
 
     *task = container.task;
     if (next_run_time) {
-        if(aws_priority_queue_top(&scheduler->queue, (void **)&possible_task)) {
+        if (aws_priority_queue_top(
+                &scheduler->queue, (void **)&possible_task)) {
             *next_run_time = 0;
-            if(AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
+            if (AWS_ERROR_PRIORITY_QUEUE_EMPTY == aws_last_error()) {
                 return AWS_OP_SUCCESS;
             }
             return AWS_OP_ERR;
@@ -100,37 +114,43 @@ static inline int get_next_task(struct aws_task_scheduler *scheduler, struct aws
     return AWS_OP_SUCCESS;
 }
 
-int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler,
-        struct aws_task *task, uint64_t *next_run_time) {
+int aws_task_scheduler_next_task(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task,
+    uint64_t *next_run_time) {
 
     uint64_t now;
-    if(scheduler->clock(&now)) {
+    if (scheduler->clock(&now)) {
         return AWS_OP_ERR;
     }
 
     return get_next_task(scheduler, task, now, next_run_time);
 }
 
-int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler,
-        struct aws_task *task) {
+int aws_task_scheduler_schedule_now(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task) {
 
     uint64_t now;
-    if(scheduler->clock(&now)) {
+    if (scheduler->clock(&now)) {
         return AWS_OP_ERR;
     }
 
     return aws_task_scheduler_schedule_future(scheduler, task, now);
 }
 
-int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
-        struct aws_task *task, uint64_t time_to_run) {
+int aws_task_scheduler_schedule_future(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task,
+    uint64_t time_to_run) {
 
     struct task_container container;
 
-    /* this serves the purpose of handling reentrant scheduling while the tasks are being run.
-       if the clock tick is on the same nanosecond (with microsecond precision) as the run was kicked
-       off, it will still be run. As a result, if time_to_run is before or on the same clock tick, increment it
-       by one nanosecond to avoid the issue. */
+    /* this serves the purpose of handling reentrant scheduling while the tasks
+       are being run. if the clock tick is on the same nanosecond (with
+       microsecond precision) as the run was kicked off, it will still be run.
+       As a result, if time_to_run is before or on the same clock tick,
+       increment it by one nanosecond to avoid the issue. */
     if (AWS_UNLIKELY(time_to_run < scheduler->min_run_time)) {
         time_to_run = scheduler->min_run_time;
     }
@@ -138,17 +158,19 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *scheduler,
     container.task = *task;
     container.timestamp = time_to_run;
 
-    if(aws_priority_queue_push(&scheduler->queue, &container)) {
+    if (aws_priority_queue_push(&scheduler->queue, &container)) {
         return AWS_OP_ERR;
     }
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
+int aws_task_scheduler_run_all(
+    struct aws_task_scheduler *scheduler,
+    uint64_t *next_task_time) {
 
     uint64_t now;
-    if(scheduler->clock(&now)) {
+    if (scheduler->clock(&now)) {
         return AWS_OP_ERR;
     }
 
@@ -159,12 +181,13 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *n
 
     scheduler->min_run_time = now + 1;
 
-    while(1) {
+    while (1) {
         struct aws_task task_to_run = {0};
 
-        if (get_next_task(scheduler, &task_to_run,  now, next_task_time)) {
+        if (get_next_task(scheduler, &task_to_run, now, next_task_time)) {
             int err_code = aws_last_error();
-            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS  || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS ||
+                err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
                 return AWS_OP_SUCCESS;
             }
 
