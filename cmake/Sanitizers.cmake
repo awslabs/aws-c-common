@@ -75,7 +75,7 @@ function(aws_add_sanitizers target)
 
             if(PRESENT_SANITIZERS)
                 target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
-                set_target_properties(${target} PROPERTIES LINK_FLAGS "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+                target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
 
                 if(SANITIZER_BLACKLIST)
                     target_compile_options(${target} PRIVATE -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/${SANITIZER_BLACKLIST})
