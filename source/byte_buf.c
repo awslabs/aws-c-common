@@ -48,6 +48,18 @@ void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
     buf->capacity = 0;
 }
 
+void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
+    if (buf->buffer) {
+        aws_secure_zero(buf->buffer, buf->capacity);
+    }
+    buf->len = 0;
+}
+
+void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf) {
+    aws_byte_buf_secure_zero(buf);
+    aws_byte_buf_clean_up(buf);
+}
+
 int aws_byte_buf_split_on_char_n(
     struct aws_byte_buf *input_str,
     char split_on,

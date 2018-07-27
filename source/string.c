@@ -53,6 +53,14 @@ void aws_string_destroy(void *str) {
     }
 }
 
+void aws_string_secure_destroy(void *str) {
+    struct aws_string *self = str;
+    if (self) {
+        aws_secure_zero((void *)aws_string_bytes(self), self->len);
+        if (self->allocator) aws_mem_release(self->allocator, self);
+    }
+}
+
 int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
     size_t len_a = a->len;
     size_t len_b = b->len;
