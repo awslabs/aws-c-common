@@ -53,8 +53,9 @@
 #    ifndef NO_STDINT
 #        include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #    else
-#        if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__)   \
-            || defined(__ia64__) || defined(__powerpc64__)
+#        if defined(__x86_64__) || defined(_M_AMD64) ||                        \
+            defined(__aarch64__) || defined(__ia64__) ||                       \
+            defined(__powerpc64__)
 #            define PTR_SIZE 8
 #        else
 #            define PTR_SIZE 4

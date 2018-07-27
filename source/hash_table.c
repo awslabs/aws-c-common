@@ -228,8 +228,8 @@ static int update_template_size(
     /* Make sure we don't overflow when computing memory requirements either */
     size_t required_mem = aws_mul_size_saturating(
         template->size, sizeof(struct hash_table_entry));
-    if (required_mem == SIZE_MAX
-        || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
+    if (required_mem == SIZE_MAX ||
+        (required_mem + sizeof(struct hash_table_state)) < required_mem) {
         return aws_raise_error(AWS_ERROR_OOM);
     }
 
@@ -307,8 +307,8 @@ static int inline find_entry(
         return AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
     }
 
-    if (entry->hash_code == hash_code
-        && state->equals_fn(key, entry->element.key)) {
+    if (entry->hash_code == hash_code &&
+        state->equals_fn(key, entry->element.key)) {
         if (p_probe_idx) {
             *p_probe_idx = 0;
         }
@@ -342,8 +342,8 @@ static int find_entry1(
             break;
         }
 
-        if (entry->hash_code == hash_code
-            && state->equals_fn(key, entry->element.key)) {
+        if (entry->hash_code == hash_code &&
+            state->equals_fn(key, entry->element.key)) {
             rv = AWS_ERROR_SUCCESS;
             break;
         }
@@ -748,9 +748,9 @@ bool aws_c_string_eq(const void *a, const void *b) {
 bool aws_string_eq(const void *a, const void *b) {
     const struct aws_string *str_a = a;
     const struct aws_string *str_b = b;
-    return str_a->len == str_b->len
-           && !memcmp(
-                  aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
+    return str_a->len == str_b->len &&
+           !memcmp(
+               aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {

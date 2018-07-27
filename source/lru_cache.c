@@ -124,8 +124,8 @@ int aws_lru_cache_put(
     aws_linked_list_push_front(&cache->list, &cache_node->node);
 
     /* we only want to manage the space if we actually added a new element. */
-    if (was_added
-        && aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
+    if (was_added &&
+        aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
 
         /* we're over the cache size limit. Remove whatever is in the back of
          * the list. */

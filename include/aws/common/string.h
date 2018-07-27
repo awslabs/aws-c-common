@@ -45,18 +45,24 @@ static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_cursor(const struct aws_string * str,
-                                             const struct aws_byte_cursor * cur) {
-    if (str->len != cur->len) return false;
+static inline bool aws_string_eq_byte_cursor(
+    const struct aws_string *str,
+    const struct aws_byte_cursor *cur) {
+
+    if (str->len != cur->len)
+        return false;
     return (!memcmp(aws_string_bytes(str), cur->ptr, cur->len));
 }
 
 /**
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_buf(const struct aws_string * str,
-                                          const struct aws_byte_buf * buf) {
-    if (str->len != buf->len) return false;
+static inline bool aws_string_eq_byte_buf(
+    const struct aws_string *str,
+    const struct aws_byte_buf *buf) {
+
+    if (str->len != buf->len)
+        return false;
     return (!memcmp(aws_string_bytes(str), buf->buffer, buf->len));
 }
 

@@ -28,7 +28,9 @@
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
-#if (AWS_ENABLE_HW_OPTIMIZATION && (defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
+#if (                                                                          \
+    AWS_ENABLE_HW_OPTIMIZATION &&                                              \
+    (defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
 static inline uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
 #    if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86.
@@ -91,8 +93,8 @@ static inline int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
 static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
-#    if (defined(__i386__) || defined(__x86_64__))                             \
-        && (defined(__GNUC__) || defined(__clang__))
+#    if (defined(__i386__) || defined(__x86_64__)) &&                          \
+        (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86.
 
      we specify edx as an output, rather than a clobber, because we want to
@@ -123,8 +125,8 @@ static inline uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
  * returns 0, else returns 1.
  */
 static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-#    if (defined(__i386__) || defined(__x86_64__))                             \
-        && (defined(__GNUC__) || defined(__clang__))
+#    if (defined(__i386__) || defined(__x86_64__)) &&                          \
+        (defined(__GNUC__) || defined(__clang__))
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
     uint32_t result = a;
     int flag;
@@ -154,7 +156,9 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 }
 #endif
 
-#if (!AWS_ENABLE_HW_OPTIMIZATION || !(defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
+#if (                                                                          \
+    !AWS_ENABLE_HW_OPTIMIZATION ||                                             \
+    !(defined(_X86_64) || defined(_M_X64) || defined(_M_ARM)))
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
@@ -215,8 +219,8 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 static inline size_t aws_mul_size_saturating(size_t a, size_t b) {
     /* static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)*/
     char assert_sizet_is_32_or_64_bit
-        [(((uint64_t)SIZE_MAX == ~(uint32_t)0)
-          || ((uint64_t)SIZE_MAX == ~(uint64_t)0))
+        [(((uint64_t)SIZE_MAX == ~(uint32_t)0) ||
+          ((uint64_t)SIZE_MAX == ~(uint64_t)0))
              ? 1
              : -1] = {0};
     /* suppress unused variable warning */

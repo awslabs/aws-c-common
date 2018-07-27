@@ -928,8 +928,8 @@ static int test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
             err_code =
                 aws_hash_table_remove(&hash_table, e->key, NULL, &was_present);
             ASSERT_SUCCESS(err_code, "Unexpected failure removing element");
-            if (i == 0 && entries[i - 1].key == e->key
-                && entries[i - 1].is_removed) {
+            if (i == 0 && entries[i - 1].key == e->key &&
+                entries[i - 1].is_removed) {
                 ASSERT_INT_EQUALS(
                     0, was_present, "Expected item to be missing");
             } else {

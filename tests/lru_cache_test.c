@@ -42,7 +42,6 @@ static int test_lru_cache_overflow_static_members_fn(
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
     ASSERT_INT_EQUALS(3, aws_lru_cache_get_element_count(&cache));
 
-
     int *value = NULL;
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, first_key, (void **)&value));
     ASSERT_NOT_NULL(value);
@@ -107,7 +106,6 @@ static int test_lru_cache_lru_ness_static_members_fn(
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
     ASSERT_INT_EQUALS(3, aws_lru_cache_get_element_count(&cache));
-
 
     int *value = NULL;
     ASSERT_SUCCESS(aws_lru_cache_find(&cache, first_key, (void **)&value));
@@ -182,7 +180,6 @@ static int test_lru_cache_entries_cleanup_fn(
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, second_key, &second));
     ASSERT_SUCCESS(aws_lru_cache_put(&cache, third_key, &third));
     ASSERT_INT_EQUALS(2, aws_lru_cache_get_element_count(&cache));
-
 
     ASSERT_TRUE(first.value_removed);
     ASSERT_FALSE(second.value_removed);

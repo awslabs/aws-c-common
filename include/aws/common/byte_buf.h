@@ -252,8 +252,8 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance(
     struct aws_byte_cursor *cursor,
     size_t len) {
     struct aws_byte_cursor rv;
-    if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1)
-        || len > cursor->len) {
+    if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) ||
+        len > cursor->len) {
         rv.ptr = NULL;
         rv.len = 0;
     } else {
@@ -282,8 +282,8 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(
     size_t len) {
     struct aws_byte_cursor rv;
 
-    if (len <= cursor->len && len <= (SIZE_MAX >> 1)
-        && cursor->len <= (SIZE_MAX >> 1)) {
+    if (len <= cursor->len && len <= (SIZE_MAX >> 1) &&
+        cursor->len <= (SIZE_MAX >> 1)) {
         /*
          * Pass the length through aws_nospec_index. We do this after the
          * branch, as otherwise we'd treat an out-of-bounds read as a

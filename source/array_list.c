@@ -78,8 +78,8 @@ void aws_array_list_clean_up(struct aws_array_list *list) {
 int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
     int err_code = aws_array_list_set_at(list, val, list->length);
 
-    if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX
-        && !list->alloc) {
+    if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX &&
+        !list->alloc) {
 
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }

@@ -160,9 +160,8 @@ int aws_hex_decode(
 
     for (; i < to_decode->len; i += 2) {
         if (AWS_UNLIKELY(
-                hex_decode_char_to_int(to_decode->buffer[i], &high_value)
-                || hex_decode_char_to_int(
-                       to_decode->buffer[i + 1], &low_value))) {
+                hex_decode_char_to_int(to_decode->buffer[i], &high_value) ||
+                hex_decode_char_to_int(to_decode->buffer[i + 1], &low_value))) {
             return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
         }
 
@@ -222,8 +221,8 @@ int aws_base64_compute_decoded_len(
 
     size_t padding = 0;
 
-    if (len >= 2 && input[len - 1] == '='
-        && input[len - 2] == '=') { /*last two chars are = */
+    if (len >= 2 && input[len - 1] == '=' &&
+        input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     } else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
@@ -295,8 +294,8 @@ static inline int base64_get_decoded_value(
     uint8_t *value,
     int8_t allow_sentinal) {
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
-    if (decode_value != 0xDD
-        && (decode_value != BASE64_SENTINAL_VALUE || allow_sentinal)) {
+    if (decode_value != 0xDD &&
+        (decode_value != BASE64_SENTINAL_VALUE || allow_sentinal)) {
         *value = decode_value;
         return AWS_OP_SUCCESS;
     }
@@ -326,13 +325,13 @@ int aws_base64_decode(
     for (int32_t i = 0; i < block_count - 1; ++i) {
         if (AWS_UNLIKELY(
                 base64_get_decoded_value(
-                    to_decode->buffer[string_index++], &value1, 0)
-                || base64_get_decoded_value(
-                       to_decode->buffer[string_index++], &value2, 0)
-                || base64_get_decoded_value(
-                       to_decode->buffer[string_index++], &value3, 0)
-                || base64_get_decoded_value(
-                       to_decode->buffer[string_index++], &value4, 0))) {
+                    to_decode->buffer[string_index++], &value1, 0) ||
+                base64_get_decoded_value(
+                    to_decode->buffer[string_index++], &value2, 0) ||
+                base64_get_decoded_value(
+                    to_decode->buffer[string_index++], &value3, 0) ||
+                base64_get_decoded_value(
+                    to_decode->buffer[string_index++], &value4, 0))) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
@@ -348,13 +347,13 @@ int aws_base64_decode(
 
     if (buffer_index >= 0) {
         if (base64_get_decoded_value(
-                to_decode->buffer[string_index++], &value1, 0)
-            || base64_get_decoded_value(
-                   to_decode->buffer[string_index++], &value2, 0)
-            || base64_get_decoded_value(
-                   to_decode->buffer[string_index++], &value3, 1)
-            || base64_get_decoded_value(
-                   to_decode->buffer[string_index], &value4, 1)) {
+                to_decode->buffer[string_index++], &value1, 0) ||
+            base64_get_decoded_value(
+                to_decode->buffer[string_index++], &value2, 0) ||
+            base64_get_decoded_value(
+                to_decode->buffer[string_index++], &value3, 1) ||
+            base64_get_decoded_value(
+                to_decode->buffer[string_index], &value4, 1)) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 

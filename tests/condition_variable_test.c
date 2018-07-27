@@ -16,6 +16,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <aws/common/condition_variable.h>
+
 #include <aws/common/clock.h>
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
@@ -197,8 +198,14 @@ static int test_conditional_wait_timeout_fn(
 
     ASSERT_SUCCESS(aws_mutex_lock(&mutex));
 
-    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_for_pred(&condition_variable, &mutex, wait_ns,
-                                                                                    conditional_predicate, &predicate_args));
+    ASSERT_ERROR(
+        AWS_ERROR_COND_VARIABLE_TIMED_OUT,
+        aws_condition_variable_wait_for_pred(
+            &condition_variable,
+            &mutex,
+            wait_ns,
+            conditional_predicate,
+            &predicate_args));
     uint64_t post_wait_timestamp = 0;
     ASSERT_SUCCESS(aws_sys_clock_get_ticks(&post_wait_timestamp));
 

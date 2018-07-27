@@ -19,8 +19,6 @@ BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
-BreakBeforeInheritanceComma: false
-BreakInheritanceList: BeforeComma
 BreakBeforeTernaryOperators: true
 BreakStringLiterals: true
 ColumnLimit:     80

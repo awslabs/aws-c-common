@@ -63,9 +63,9 @@ int aws_byte_buf_split_on_char_n(
 
     struct aws_byte_cursor current_pos = aws_byte_cursor_from_buf(input_str);
 
-    while (split_count < max_splits
-           && (new_location =
-                   memchr(current_pos.ptr, split_on, current_pos.len))) {
+    while (
+        split_count < max_splits &&
+        (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
 
         size_t distance_from_origin = new_location - current_pos.ptr;
 

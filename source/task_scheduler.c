@@ -186,8 +186,8 @@ int aws_task_scheduler_run_all(
 
         if (get_next_task(scheduler, &task_to_run, now, next_task_time)) {
             int err_code = aws_last_error();
-            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS
-                || err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
+            if (err_code == AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS ||
+                err_code == AWS_ERROR_TASK_SCHEDULER_NO_TASKS) {
                 return AWS_OP_SUCCESS;
             }
 
