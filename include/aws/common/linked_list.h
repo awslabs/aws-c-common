@@ -16,16 +16,15 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
 #include <assert.h>
+#include <aws/common/common.h>
 
 /**
  * from a pointer and a type of the struct containing the node
  * this will get you back to the pointer of the object. member is the name of
  * the instance of struct aws_linked_list_node in your struct.
  */
-#define AWS_CONTAINER_OF(ptr, type, member)  \
-    ((type *)((uint8_t *)(ptr) - offsetof(type, member)))
+#define AWS_CONTAINER_OF(ptr, type, member) ((type *)((uint8_t *)(ptr)-offsetof(type, member)))
 
 struct aws_linked_list_node {
     struct aws_linked_list_node *next;
@@ -71,7 +70,9 @@ static inline struct aws_linked_list_node *aws_linked_list_next(const struct aws
 /**
  * Inserts to_add immediately after after.
  */
-static inline void aws_linked_list_insert_after(struct aws_linked_list_node *after, struct aws_linked_list_node *to_add) {
+static inline void aws_linked_list_insert_after(
+    struct aws_linked_list_node *after,
+    struct aws_linked_list_node *to_add) {
     to_add->prev = after;
     to_add->next = after->next;
     after->next->prev = to_add;
@@ -81,7 +82,9 @@ static inline void aws_linked_list_insert_after(struct aws_linked_list_node *aft
 /**
  * Inserts to_add immediately before before.
  */
-static inline void aws_linked_list_insert_before(struct aws_linked_list_node *before, struct aws_linked_list_node *to_add) {
+static inline void aws_linked_list_insert_before(
+    struct aws_linked_list_node *before,
+    struct aws_linked_list_node *to_add) {
     to_add->next = before;
     to_add->prev = before->prev;
     before->prev->next = to_add;
@@ -108,7 +111,6 @@ static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
  */
 static inline void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     aws_linked_list_insert_before(&list->tail, node);
-
 }
 
 /**
@@ -139,7 +141,7 @@ static inline void aws_linked_list_push_front(struct aws_linked_list *list, stru
 /**
  * Returns the element in the front of the list.
  */
-static inline struct aws_linked_list_node * aws_linked_list_front(const struct aws_linked_list *list) {
+static inline struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     return list->head.next;
 }

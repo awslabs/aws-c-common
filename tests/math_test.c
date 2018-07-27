@@ -1,32 +1,40 @@
 /*
-* Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/math.h>
 #include <aws/testing/aws_test_harness.h>
 #include <stdio.h>
 
-#define CHECK_SAT(fn, a, b, result) \
-    do { \
-        ASSERT_UINT_EQUALS((result), fn((a), (b)), \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx", \
-            #fn, (unsigned long long)(a), (unsigned long long)b, \
-            (unsigned long long)result); \
-        ASSERT_UINT_EQUALS((result), fn((b), (a)), \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx", \
-            #fn, (unsigned long long)(b), (unsigned long long)a, \
-            (unsigned long long)result); \
+#define CHECK_SAT(fn, a, b, result)                                                                                    \
+    do {                                                                                                               \
+        ASSERT_UINT_EQUALS(                                                                                            \
+            (result),                                                                                                  \
+            fn((a), (b)),                                                                                              \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
+            #fn,                                                                                                       \
+            (unsigned long long)(a),                                                                                   \
+            (unsigned long long)b,                                                                                     \
+            (unsigned long long)result);                                                                               \
+        ASSERT_UINT_EQUALS(                                                                                            \
+            (result),                                                                                                  \
+            fn((b), (a)),                                                                                              \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
+            #fn,                                                                                                       \
+            (unsigned long long)(b),                                                                                   \
+            (unsigned long long)a,                                                                                     \
+            (unsigned long long)result);                                                                               \
     } while (0)
 
 AWS_TEST_CASE(test_u64_saturating, s_test_u64_saturating_fn)
@@ -74,38 +82,38 @@ static int s_test_u32_saturating_fn(struct aws_allocator *alloc, void *ctx) {
     return 0;
 }
 
-#define CHECK_OVF_0(fn, type, a, b) \
-    do { \
-        type result_val; \
-        ASSERT_FALSE(fn((a), (b), &result_val)); \
+#define CHECK_OVF_0(fn, type, a, b)                                                                                    \
+    do {                                                                                                               \
+        type result_val;                                                                                               \
+        ASSERT_FALSE(fn((a), (b), &result_val));                                                                       \
     } while (0)
 
-#define CHECK_OVF(fn, type, a, b) \
-    do { \
-        CHECK_OVF_0(fn, type, a, b); \
-        CHECK_OVF_0(fn, type, b, a); \
+#define CHECK_OVF(fn, type, a, b)                                                                                      \
+    do {                                                                                                               \
+        CHECK_OVF_0(fn, type, a, b);                                                                                   \
+        CHECK_OVF_0(fn, type, b, a);                                                                                   \
     } while (0)
 
-
-#define CHECK_NO_OVF_0(fn, type, a, b, r) \
-    do { \
-        type result_val; \
-        ASSERT_TRUE(fn((a), (b), &result_val)); \
-        ASSERT_INT_EQUALS((uint64_t)result_val, (uint64_t)(r), "Expected %s(%016llx, %016llx) = %016llx; got %016llx", \
-            #fn, \
-            (unsigned long long)(a), \
-            (unsigned long long)(b), \
-            (unsigned long long)(r), \
-            (unsigned long long)(result_val)\
-        ); \
+#define CHECK_NO_OVF_0(fn, type, a, b, r)                                                                              \
+    do {                                                                                                               \
+        type result_val;                                                                                               \
+        ASSERT_TRUE(fn((a), (b), &result_val));                                                                        \
+        ASSERT_INT_EQUALS(                                                                                             \
+            (uint64_t)result_val,                                                                                      \
+            (uint64_t)(r),                                                                                             \
+            "Expected %s(%016llx, %016llx) = %016llx; got %016llx",                                                    \
+            #fn,                                                                                                       \
+            (unsigned long long)(a),                                                                                   \
+            (unsigned long long)(b),                                                                                   \
+            (unsigned long long)(r),                                                                                   \
+            (unsigned long long)(result_val));                                                                         \
     } while (0)
 
-#define CHECK_NO_OVF(fn, type, a, b, r) \
-    do { \
-        CHECK_NO_OVF_0(fn, type, a, b, r); \
-        CHECK_NO_OVF_0(fn, type, b, a, r); \
+#define CHECK_NO_OVF(fn, type, a, b, r)                                                                                \
+    do {                                                                                                               \
+        CHECK_NO_OVF_0(fn, type, a, b, r);                                                                             \
+        CHECK_NO_OVF_0(fn, type, b, a, r);                                                                             \
     } while (0)
-
 
 AWS_TEST_CASE(test_u64_checked, s_test_u64_checked_fn)
 static int s_test_u64_checked_fn(struct aws_allocator *alloc, void *ctx) {

@@ -1,29 +1,28 @@
 /*
-* Copyright 2010 - 2018 Amazon.com, Inc. or its affiliates.All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file.This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied.See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010 - 2018 Amazon.com, Inc. or its affiliates.All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file.This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied.See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
-#include <aws/common/thread.h>
 #include <assert.h>
+#include <aws/common/thread.h>
 
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
-    .stack_size = 0
-};
+    .stack_size = 0};
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
-    void(*func)(void *arg);
+    void (*func)(void *arg);
     void *arg;
 };
 
@@ -39,7 +38,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
-    thread->thread_handle = 0;    
+    thread->thread_handle = 0;
     thread->thread_id = 0;
     thread->allocator = allocator;
     thread->detach_state = AWS_THREAD_NOT_CREATED;
@@ -47,7 +46,11 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg), void *arg, struct aws_thread_options *options) {
+int aws_thread_launch(
+    struct aws_thread *thread,
+    void (*func)(void *arg),
+    void *arg,
+    struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
 
@@ -55,11 +58,13 @@ int aws_thread_launch(struct aws_thread *thread, void(*func)(void *arg), void *a
         stack_size = (SIZE_T)options->stack_size;
     }
 
-    struct thread_wrapper *thread_wrapper = (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+    struct thread_wrapper *thread_wrapper =
+        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
-    thread->thread_handle = CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
+    thread->thread_handle =
+        CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
@@ -80,7 +85,7 @@ enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thre
 int aws_thread_join(struct aws_thread *thread) {
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
         WaitForSingleObject(thread->thread_handle, INFINITE);
-        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;        
+        thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
     }
 
     return AWS_OP_SUCCESS;

@@ -1,17 +1,17 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/clock.h>
 #include <winnt.h>
@@ -25,35 +25,35 @@ static const uint64_t WINDOWS_TICK = 10000000;
 static INIT_ONCE s_timefunc_init_once = INIT_ONCE_STATIC_INIT;
 typedef VOID WINAPI timefunc_t(LPFILETIME);
 static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p);
-static timefunc_t * volatile s_p_time_func = s_get_system_time_func_lazy_init;
-
+static timefunc_t *volatile s_p_time_func = s_get_system_time_func_lazy_init;
 
 static BOOL CALLBACK get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
-	(void)init_once; (void)param; (void)context;
+    (void)init_once;
+    (void)param;
+    (void)context;
 
-	HMODULE hkernel32 = GetModuleHandleW(L"kernel32.dll");
-	timefunc_t *time_func = (timefunc_t *)GetProcAddress(hkernel32, "GetSystemTimePreciseAsFileTime");
+    HMODULE hkernel32 = GetModuleHandleW(L"kernel32.dll");
+    timefunc_t *time_func = (timefunc_t *)GetProcAddress(hkernel32, "GetSystemTimePreciseAsFileTime");
 
-	if (time_func == NULL) {
-		time_func = GetSystemTimeAsFileTime;
-	}
+    if (time_func == NULL) {
+        time_func = GetSystemTimeAsFileTime;
+    }
 
-	s_p_time_func = time_func;
+    s_p_time_func = time_func;
 
-	return TRUE;
+    return TRUE;
 }
 
 static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p) {
-	BOOL status = InitOnceExecuteOnce(&s_timefunc_init_once, get_system_time_init_once, NULL, NULL);
+    BOOL status = InitOnceExecuteOnce(&s_timefunc_init_once, get_system_time_init_once, NULL, NULL);
 
-	if (status) {
-		(*s_p_time_func)(filetime_p);
-	} else {
-		// Something went wrong in static initialization? Should never happen, but deal with it somehow...
-		GetSystemTimeAsFileTime(filetime_p);
-	}
+    if (status) {
+        (*s_p_time_func)(filetime_p);
+    } else {
+        // Something went wrong in static initialization? Should never happen, but deal with it somehow...
+        GetSystemTimeAsFileTime(filetime_p);
+    }
 }
-
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;

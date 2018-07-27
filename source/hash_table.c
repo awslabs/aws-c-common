@@ -1,17 +1,17 @@
 /*
-* Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 /* For more information on how the RH hash works and in particular how we do
  * deletions, see:
@@ -21,9 +21,9 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/math.h>
 #include <aws/common/string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Include lookup3.c so we can (potentially) inline it and make use of the mix() macro. */
 #include <aws/common/private/lookup3.c>
@@ -53,7 +53,7 @@ struct hash_table_state {
     size_t size, entry_count;
     size_t max_load;
     /* We AND a hash value with mask to get the slot index */
-    uint64_t  mask;
+    uint64_t mask;
     double max_load_factor;
     /* actually variable length */
     struct hash_table_entry slots[1];
@@ -101,7 +101,8 @@ void hash_dump(struct aws_hash_table *tbl) {
 
 #if 0
 /* Not currently exposed as an API. Should we have something like this? Useful for benchmarks */
-AWS_COMMON_API void aws_hash_table_print_stats(struct aws_hash_table *table) {
+AWS_COMMON_API
+ void aws_hash_table_print_stats(struct aws_hash_table *table) {
     struct hash_table_state *state = table->p_impl;
     uint64_t total_disp = 0;
     uint64_t max_disp = 0;
@@ -223,13 +224,14 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
     return AWS_OP_SUCCESS;
 }
 
-int aws_hash_table_init(struct aws_hash_table *map,
-                        struct aws_allocator *alloc,
-                        size_t size,
-                        aws_hash_fn *hash_fn,
-                        aws_equals_fn *equals_fn,
-                        aws_hash_element_destroy_fn *destroy_key_fn,
-                        aws_hash_element_destroy_fn *destroy_value_fn) {
+int aws_hash_table_init(
+    struct aws_hash_table *map,
+    struct aws_allocator *alloc,
+    size_t size,
+    aws_hash_fn *hash_fn,
+    aws_equals_fn *equals_fn,
+    aws_hash_element_destroy_fn *destroy_key_fn,
+    aws_hash_element_destroy_fn *destroy_value_fn) {
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -264,23 +266,33 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
  * probe_idx is set to the probe index of the entry found.
  */
 
-static int s_find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key,
-                         struct hash_table_entry **p_entry, int *p_probe_idx);
+static int s_find_entry1(
+    struct hash_table_state *state,
+    uint64_t hash_code,
+    const void *key,
+    struct hash_table_entry **p_entry,
+    int *p_probe_idx);
 
 /* Inlined fast path: Check the first slot, only. */
 /* TODO: Force inlining? */
-static int inline s_find_entry(struct hash_table_state *state, uint64_t hash_code, const void *key,
-                               struct hash_table_entry **p_entry, int *p_probe_idx) {
+static int inline s_find_entry(
+    struct hash_table_state *state,
+    uint64_t hash_code,
+    const void *key,
+    struct hash_table_entry **p_entry,
+    int *p_probe_idx) {
     struct hash_table_entry *entry = &state->slots[hash_code & state->mask];
 
     if (entry->hash_code == 0) {
-        if (p_probe_idx) *p_probe_idx = 0;
+        if (p_probe_idx)
+            *p_probe_idx = 0;
         *p_entry = entry;
         return AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
     }
 
     if (entry->hash_code == hash_code && state->equals_fn(key, entry->element.key)) {
-        if (p_probe_idx) *p_probe_idx = 0;
+        if (p_probe_idx)
+            *p_probe_idx = 0;
         *p_entry = entry;
         return AWS_OP_SUCCESS;
     }
@@ -288,11 +300,15 @@ static int inline s_find_entry(struct hash_table_state *state, uint64_t hash_cod
     return s_find_entry1(state, hash_code, key, p_entry, p_probe_idx);
 }
 
-static int s_find_entry1(struct hash_table_state *state, uint64_t hash_code, const void *key,
-                         struct hash_table_entry **p_entry, int *p_probe_idx) {
+static int s_find_entry1(
+    struct hash_table_state *state,
+    uint64_t hash_code,
+    const void *key,
+    struct hash_table_entry **p_entry,
+    int *p_probe_idx) {
     int probe_idx = 1;
-    /* If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to see if it already exists,
-     * but if not we'll overwrite the deleted entry).
+    /* If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to
+     * see if it already exists, but if not we'll overwrite the deleted entry).
      */
     int probe_cap = INT_MAX;
 
@@ -323,7 +339,7 @@ static int s_find_entry1(struct hash_table_state *state, uint64_t hash_code, con
         }
 
         probe_idx++;
-    } while(1);
+    } while (1);
 
     *p_entry = entry;
     if (p_probe_idx) {
@@ -336,8 +352,7 @@ static int s_find_entry1(struct hash_table_state *state, uint64_t hash_code, con
     return rv;
 }
 
-int aws_hash_table_find(const struct aws_hash_table *map,
-    const void *key, struct aws_hash_element **p_elem) {
+int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **p_elem) {
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
     struct hash_table_entry *entry;
@@ -356,8 +371,10 @@ int aws_hash_table_find(const struct aws_hash_table *map,
 /*
  * Attempts to find a home for the given entry. Returns after doing nothing if entry was not occupied.
  */
-static struct hash_table_entry *s_emplace_item(struct hash_table_state *state, struct hash_table_entry entry,
-                                               int probe_idx) {
+static struct hash_table_entry *s_emplace_item(
+    struct hash_table_state *state,
+    struct hash_table_entry entry,
+    int probe_idx) {
     struct hash_table_entry *initial_placement = NULL;
 
     while (entry.hash_code) {
@@ -409,9 +426,11 @@ static int s_expand_table(struct aws_hash_table *map) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hash_table_create(struct aws_hash_table *map,
-    const void *key, struct aws_hash_element **p_elem, int *was_created
-) {
+int aws_hash_table_create(
+    struct aws_hash_table *map,
+    const void *key,
+    struct aws_hash_element **p_elem,
+    int *was_created) {
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
     struct hash_table_entry *entry;
@@ -480,12 +499,14 @@ static int s_remove_entry(struct hash_table_state *state, struct hash_table_entr
         int next_index = (index + 1) & state->mask;
 
         /* If we hit an empty slot, stop */
-        if (!state->slots[next_index].hash_code) break;
+        if (!state->slots[next_index].hash_code)
+            break;
         /* If the next slot is at the start of the probe sequence, stop.
          * We know that nothing with an earlier home slot is after this; otherwise
          * this index-zero entry would have been evicted from its home.
          */
-        if ((state->slots[next_index].hash_code & state->mask) == next_index) break;
+        if ((state->slots[next_index].hash_code & state->mask) == next_index)
+            break;
 
         /* Okay, shift this one back */
         memcpy(&state->slots[index], &state->slots[next_index], sizeof(*state->slots));
@@ -498,10 +519,11 @@ static int s_remove_entry(struct hash_table_state *state, struct hash_table_entr
     return index;
 }
 
-int aws_hash_table_remove(struct aws_hash_table *map,
-    const void *key, struct aws_hash_element *p_value,
-    int *was_present
-) {
+int aws_hash_table_remove(
+    struct aws_hash_table *map,
+    const void *key,
+    struct aws_hash_element *p_value,
+    int *was_present) {
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
     struct hash_table_entry *entry;
@@ -535,9 +557,10 @@ int aws_hash_table_remove(struct aws_hash_table *map,
     return AWS_OP_SUCCESS;
 }
 
-int aws_hash_table_foreach(struct aws_hash_table *map,
-    int (*callback)(void *baton, struct aws_hash_element *p_element), void *baton)
-{
+int aws_hash_table_foreach(
+    struct aws_hash_table *map,
+    int (*callback)(void *baton, struct aws_hash_element *p_element),
+    void *baton) {
     struct hash_table_state *state = map->p_impl;
     size_t limit = state->size;
 
@@ -583,7 +606,7 @@ static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_s
         if (entry->hash_code) {
             iter->element = entry->element;
             iter->slot = i;
-            return ;
+            return;
         }
     }
     iter->element.key = NULL;
@@ -650,7 +673,7 @@ uint64_t aws_hash_c_string(const void *item) {
 }
 
 uint64_t aws_hash_string(const void *item) {
-    const struct aws_string * str = item;
+    const struct aws_string *str = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
@@ -676,9 +699,7 @@ bool aws_c_string_eq(const void *a, const void *b) {
 bool aws_string_eq(const void *a, const void *b) {
     const struct aws_string *str_a = a;
     const struct aws_string *str_b = b;
-    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a),
-                                               aws_string_bytes(str_b),
-                                               str_a->len);
+    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {

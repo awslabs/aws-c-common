@@ -40,8 +40,10 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
 
     /* run 250 ms in the future. */
     uint64_t task2_timestamp = 250;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp), 
-            "Schedule task in %lluns in the future failed", task2_timestamp);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp),
+        "Schedule task in %lluns in the future failed",
+        task2_timestamp);
 
     struct aws_task task1;
     task1.fn = (aws_task_fn *)1;
@@ -56,25 +58,34 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
 
     /* run 500 ms in the future. */
     uint64_t task3_timestamp = 500;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp), 
-            "Schedule task in %lluns in the future failed.", task3_timestamp);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp),
+        "Schedule task in %lluns in the future failed.",
+        task3_timestamp);
 
     struct aws_task task_to_run;
 
     uint64_t timestamp = 0;
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), 
-            "Task pop on a now() task, should return on the first try");
-    ASSERT_INT_EQUALS(task2_timestamp, timestamp, "Timestamp should for next run should be %llu", 
-            (long long unsigned)task2_timestamp);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp),
+        "Task pop on a now() task, should return on the first try");
+    ASSERT_INT_EQUALS(
+        task2_timestamp,
+        timestamp,
+        "Timestamp should for next run should be %llu",
+        (long long unsigned)task2_timestamp);
 
     ASSERT_TRUE(task1.fn == task_to_run.fn);
     ASSERT_TRUE(task1.arg == task_to_run.arg);
 
     set_fake_clock(250);
-    ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), 
-            "Task pop should return on the first try");
-    ASSERT_INT_EQUALS(task3_timestamp, timestamp, "Timestamp should for next run should be %llu", 
-            (long long unsigned)task3_timestamp);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp), "Task pop should return on the first try");
+    ASSERT_INT_EQUALS(
+        task3_timestamp,
+        timestamp,
+        "Timestamp should for next run should be %llu",
+        (long long unsigned)task3_timestamp);
 
     ASSERT_TRUE(task2.fn == task_to_run.fn);
     ASSERT_TRUE(task2.arg == task_to_run.arg);
@@ -82,7 +93,7 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
     set_fake_clock(555);
     ASSERT_SUCCESS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
 
-    ASSERT_TRUE(task3.fn == task_to_run.fn,);
+    ASSERT_TRUE(task3.fn == task_to_run.fn, );
     ASSERT_TRUE(task3.arg == task_to_run.arg);
     ASSERT_INT_EQUALS(0, timestamp, "When the last task is popped, the timestamp should be 0");
 
@@ -106,12 +117,16 @@ static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void 
     task2.arg = (void *)2;
 
     uint64_t run_at_or_after = 0;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task1, run_at_or_after), 
-            "Schedule task1 in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_schedule_future(&scheduler, &task1, run_at_or_after),
+        "Schedule task1 in %lluns in the future failed",
+        run_at_or_after);
 
     run_at_or_after = 10;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, run_at_or_after), 
-            "Schedule task2 in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_schedule_future(&scheduler, &task2, run_at_or_after),
+        "Schedule task2 in %lluns in the future failed",
+        run_at_or_after);
 
     uint64_t timestamp = 0;
     struct aws_task task_to_run;
@@ -134,8 +149,10 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
 
     uint64_t run_at_or_after = 10;
 
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task, run_at_or_after), 
-            "Schedule task in %lluns in the future failed", run_at_or_after);
+    ASSERT_SUCCESS(
+        aws_task_scheduler_schedule_future(&scheduler, &task, run_at_or_after),
+        "Schedule task in %lluns in the future failed",
+        run_at_or_after);
 
     struct aws_task task_to_run = {.fn = 0, .arg = 0};
 
@@ -229,9 +246,7 @@ static int test_scheduler_cleanup_cancellation(struct aws_allocator *alloc, void
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, alloc, aws_high_res_clock_get_ticks);
 
-    struct cancellation_args task_args = {
-            .status = 100000
-    };
+    struct cancellation_args task_args = {.status = 100000};
 
     struct aws_task task;
     task.arg = &task_args;
@@ -249,4 +264,3 @@ AWS_TEST_CASE(scheduler_ordering_test, test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_task_timestamp_test, test_scheduler_next_task_timestamp);
 AWS_TEST_CASE(scheduler_reentrant_safe, test_scheduler_reentrant_safe);
 AWS_TEST_CASE(scheduler_cleanup_cancellation, test_scheduler_cleanup_cancellation);
-

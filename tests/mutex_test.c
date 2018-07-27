@@ -22,7 +22,7 @@ static int s_test_mutex_acquire_release(struct aws_allocator *allocator, void *c
     aws_mutex_init(&mutex);
 
     ASSERT_SUCCESS(aws_mutex_lock(&mutex), "Mutex acquire should have returned success.");
-    ASSERT_SUCCESS(aws_mutex_unlock(&mutex),"Mutex release should have returned success.");
+    ASSERT_SUCCESS(aws_mutex_unlock(&mutex), "Mutex release should have returned success.");
 
     aws_mutex_clean_up(&mutex);
 
@@ -46,12 +46,10 @@ static void s_mutex_thread_fn(void *mutex_data) {
             p_mutex->counter = counter;
             p_mutex->thread_fn_increments += 1;
             finished = p_mutex->counter == p_mutex->max_counts;
-        }
-        else {
+        } else {
             finished = 1;
         }
         aws_mutex_unlock(&p_mutex->mutex);
-
     }
 }
 
@@ -67,7 +65,10 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(aws_thread_launch(&thread, s_mutex_thread_fn, &mutex_data, 0), "thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(
+        aws_thread_launch(&thread, s_mutex_thread_fn, &mutex_data, 0),
+        "thread creation failed with error %d",
+        aws_last_error());
     int finished = 0;
     int increments = 0;
     while (!finished) {
@@ -78,24 +79,26 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
             continue;
         }
 
-        if(mutex_data.counter != mutex_data.max_counts) {
+        if (mutex_data.counter != mutex_data.max_counts) {
             increments += 1;
             int counter = mutex_data.counter + 1;
             mutex_data.counter = counter;
             finished = mutex_data.counter == mutex_data.max_counts;
-        }
-        else {
+        } else {
             finished = 1;
         }
         aws_mutex_unlock(&mutex_data.mutex);
-
     }
 
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
     ASSERT_TRUE(mutex_data.thread_fn_increments > 0, "Thread 2 should have written some");
     ASSERT_TRUE(increments > 0, "Thread 1 should have written some");
-    ASSERT_INT_EQUALS(mutex_data.max_counts, mutex_data.counter, "Both threads should have written exactly the max counts.");
-    ASSERT_INT_EQUALS(mutex_data.counter, mutex_data.thread_fn_increments + increments, "Both threads should have written up to the max count");
+    ASSERT_INT_EQUALS(
+        mutex_data.max_counts, mutex_data.counter, "Both threads should have written exactly the max counts.");
+    ASSERT_INT_EQUALS(
+        mutex_data.counter,
+        mutex_data.thread_fn_increments + increments,
+        "Both threads should have written up to the max count");
 
     aws_thread_clean_up(&thread);
     aws_mutex_clean_up(&mutex_data.mutex);

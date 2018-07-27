@@ -133,4 +133,3 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
 AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)
-

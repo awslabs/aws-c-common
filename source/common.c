@@ -1,29 +1,29 @@
 /*
-* Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/common.h>
 #include <stdlib.h>
 
 #ifdef __MACH__
-#include <CoreFoundation/CoreFoundation.h>
+#    include <CoreFoundation/CoreFoundation.h>
 #endif
 
 /* turn off unused named parameter warning on msvc.*/
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4100)
+#    pragma warning(push)
+#    pragma warning(disable : 4100)
 #endif
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
@@ -39,11 +39,9 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     return realloc(ptr, newsize);
 }
 
-static struct aws_allocator default_allocator = {
-    .mem_acquire = s_default_malloc,
-    .mem_release = s_default_free,
-    .mem_realloc = s_default_realloc
-};
+static struct aws_allocator default_allocator = {.mem_acquire = s_default_malloc,
+                                                 .mem_release = s_default_free,
+                                                 .mem_realloc = s_default_realloc};
 
 struct aws_allocator *aws_default_allocator() {
     return &default_allocator;
@@ -51,7 +49,8 @@ struct aws_allocator *aws_default_allocator() {
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
     void *mem = allocator->mem_acquire(allocator, size);
-    if (!mem) aws_raise_error(AWS_ERROR_OOM);
+    if (!mem)
+        aws_raise_error(AWS_ERROR_OOM);
     return mem;
 }
 
@@ -99,7 +98,7 @@ static CFStringRef s_cf_allocator_description = CFSTR("CFAllocator wrapping aws_
 static void *s_cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
     struct aws_allocator *allocator = info;
 
-    void *mem =  aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
+    void *mem = aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
 
     if (!mem) {
         return NULL;
@@ -147,22 +146,21 @@ static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, v
 CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
     CFAllocatorRef cf_allocator = NULL;
 
-    CFAllocatorReallocateCallBack reallocate_callback  = NULL;
+    CFAllocatorReallocateCallBack reallocate_callback = NULL;
 
     if (allocator->mem_realloc) {
         reallocate_callback = s_cf_allocator_reallocate;
     }
 
-    CFAllocatorContext context = {
-            .allocate = s_cf_allocator_allocate,
-            .copyDescription = s_cf_allocator_copy_description,
-            .deallocate = s_cf_allocator_deallocate,
-            .reallocate = reallocate_callback,
-            .info = allocator,
-            .preferredSize = s_cf_allocator_preferred_size,
-            .release = NULL,
-            .retain = NULL,
-            .version = 0 };
+    CFAllocatorContext context = {.allocate = s_cf_allocator_allocate,
+                                  .copyDescription = s_cf_allocator_copy_description,
+                                  .deallocate = s_cf_allocator_deallocate,
+                                  .reallocate = reallocate_callback,
+                                  .info = allocator,
+                                  .preferredSize = s_cf_allocator_preferred_size,
+                                  .release = NULL,
+                                  .retain = NULL,
+                                  .version = 0};
 
     cf_allocator = CFAllocatorCreate(NULL, &context);
 
@@ -195,28 +193,48 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_INVALID_INDEX, "invalid index for list access", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_INVALID_SETTINGS, "invalid thread settings", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE, "thread, insufficient resources", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_NO_PERMISSIONS, "insufficient permissions for thread operation", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_THREAD_NO_PERMISSIONS,
+        "insufficient permissions for thread operation",
+        AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_NOT_JOINABLE, "thread not join-able", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID, "no such thread id", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_THREAD_DEADLOCK_DETECTED, "deadlock detected", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_MUTEX_NOT_INIT, "mutex not initialized", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_MUTEX_TIMEOUT, "mutex operation timed out", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_MUTEX_CALLER_NOT_OWNER, "the caller of a mutex operation was not the owner", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_MUTEX_CALLER_NOT_OWNER,
+        "the caller of a mutex operation was not the owner",
+        AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_MUTEX_FAILED, "mutex operation failed", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_COND_VARIABLE_INIT_FAILED, "condition variable initialization failed.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_COND_VARIABLE_INIT_FAILED,
+        "condition variable initialization failed.",
+        AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_COND_VARIABLE_TIMED_OUT, "condition variable wait timed out.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN, "condition variable unknown error.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_CLOCK_FAILURE, "clock get ticks operation failed", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_EMPTY, "empty list", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_DEST_COPY_TOO_SMALL, "destination of copy is too small", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE, "a requested operation on a list would exceed it's max size.", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK, "attempt to shrink a list in static mode", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_PRIORITY_QUEUE_FULL, "attempt to add items to a full preallocated queue in static mode.", AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
+        "a requested operation on a list would exceed it's max size.",
+        AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
+        "attempt to shrink a list in static mode",
+        AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_PRIORITY_QUEUE_FULL,
+        "attempt to add items to a full preallocated queue in static mode.",
+        AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_PRIORITY_QUEUE_EMPTY, "attempt to pop an item from an empty queue.", AWS_LIB_NAME),
     AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_TASKS, "no tasks scheduled available.", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, "none of the tasks scheduled is due to run now.", AWS_LIB_NAME),
-    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)
-};
+    AWS_DEFINE_ERROR_INFO(
+        AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS,
+        "none of the tasks scheduled is due to run now.",
+        AWS_LIB_NAME),
+    AWS_DEFINE_ERROR_INFO(AWS_ERROR_HASHTBL_ITEM_NOT_FOUND, "Item not found in hash table", AWS_LIB_NAME)};
 
 static struct aws_error_info_list s_list = {
     .error_list = errors,
@@ -224,7 +242,7 @@ static struct aws_error_info_list s_list = {
 };
 
 void aws_load_error_strings(void) {
-    if(!s_error_strings_loaded) {
+    if (!s_error_strings_loaded) {
         s_error_strings_loaded = 1;
         aws_register_error_info(&s_list);
     }

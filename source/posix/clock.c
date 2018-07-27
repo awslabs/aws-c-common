@@ -17,19 +17,19 @@
 #include <time.h>
 
 #if defined(__MACH__)
-#include <AvailabilityMacros.h>
+#    include <AvailabilityMacros.h>
 #endif
 
 #if defined(__MACH__) && MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif /*defined(__MACH__) && MAC_OS_X_VERSION_MAX_ALLOWED < 101200*/
 
 static const uint64_t NS_PER_SEC = 1000000000;
 
 #if defined(CLOCK_MONOTONIC_RAW)
-#define HIGH_RES_CLOCK CLOCK_MONOTONIC_RAW
+#    define HIGH_RES_CLOCK CLOCK_MONOTONIC_RAW
 #else
-#define HIGH_RES_CLOCK CLOCK_MONOTONIC
+#    define HIGH_RES_CLOCK CLOCK_MONOTONIC
 #endif
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
@@ -39,7 +39,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     struct timeval tv;
     ret_val = gettimeofday(&tv, NULL);
 
-    if(ret_val) {
+    if (ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
@@ -49,9 +49,8 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 
     ret_val = clock_gettime(HIGH_RES_CLOCK, &ts);
 
-    if(ret_val) {
+    if (ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
@@ -68,7 +67,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 
     struct timespec ts;
     ret_val = clock_gettime(CLOCK_REALTIME, &ts);
-    if(ret_val) {
+    if (ret_val) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
@@ -77,4 +76,3 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 
     return AWS_OP_SUCCESS;
 }
-

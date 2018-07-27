@@ -60,8 +60,7 @@ static void s_rw_lock_thread_fn(void *rw_lock_data) {
             aws_rw_lock_rlock(&p_rw_lock->rw_lock);
 
             finished = p_rw_lock->counter == p_rw_lock->max_counts;
-        }
-        else {
+        } else {
             finished = 1;
         }
 
@@ -81,7 +80,10 @@ static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, v
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(aws_thread_launch(&thread, s_rw_lock_thread_fn, &rw_lock_data, 0), "thread creation failed with error %d", aws_last_error());
+    ASSERT_SUCCESS(
+        aws_thread_launch(&thread, s_rw_lock_thread_fn, &rw_lock_data, 0),
+        "thread creation failed with error %d",
+        aws_last_error());
     int finished = 0;
     while (!finished) {
 
@@ -93,8 +95,10 @@ static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, v
     }
 
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
-    ASSERT_INT_EQUALS(rw_lock_data.thread_fn_increments, rw_lock_data.max_counts, "Thread 2 should have written all data");
-    ASSERT_INT_EQUALS(rw_lock_data.max_counts, rw_lock_data.counter, "Both threads should have written exactly the max counts.");
+    ASSERT_INT_EQUALS(
+        rw_lock_data.thread_fn_increments, rw_lock_data.max_counts, "Thread 2 should have written all data");
+    ASSERT_INT_EQUALS(
+        rw_lock_data.max_counts, rw_lock_data.counter, "Both threads should have written exactly the max counts.");
 
     aws_thread_clean_up(&thread);
     aws_rw_lock_clean_up(&rw_lock_data.rw_lock);
@@ -130,7 +134,10 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
     for (size_t i = 0; i < sizeof(threads) / sizeof(threads[0]); ++i) {
 
         aws_thread_init(&threads[i], allocator);
-        ASSERT_SUCCESS(aws_thread_launch(&threads[i], s_thread_reader_fn, &lock, 0), "thread creation failed with error %d", aws_last_error());
+        ASSERT_SUCCESS(
+            aws_thread_launch(&threads[i], s_thread_reader_fn, &lock, 0),
+            "thread creation failed with error %d",
+            aws_last_error());
     }
 
     int finished = 0;

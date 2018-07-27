@@ -138,7 +138,7 @@ Example:
         do_something();
     } else {
         do_something_else();
-    }    
+    }
 * Avoid C99 features in header files. For some types such as bool, uint32_t etc..., these are defined if not available for the language
 standard being used in `aws/common/common.h`, so feel free to use them.
 * For C++ compatibility, don't put const members in structs.
@@ -151,15 +151,15 @@ standard being used in `aws/common/common.h`, so feel free to use them.
 
 Example:
 
-    
+
     #ifdef FOO
         do_something();
-    
+
     #   ifdef BAR
         do_something_else();
     #   endif
     #endif
-          
+
 
 * For all error code names with the exception of aws-c-common, use `AWS_ERROR_<lib name>_<error name>`.
 * All error strings should be written using correct English grammar.
@@ -172,16 +172,16 @@ Example:
 * For constants, prefer anonymous enums.
 * Don't typedef structs. It breaks forward declaration ability.
 * Don't typedef enums. It breaks forward declaration ability.
-* typedef function definitions for use as function pointers as values and suffixed with _fn. 
+* typedef function definitions for use as function pointers as values and suffixed with _fn.
 
 Example:
 
     typedef int(fn_name_fn)(void *);
-    
+
 Not:
 
-    typedef int(*fn_name_fn)(void *);   
-     
+    typedef int(*fn_name_fn)(void *);
+
 * Every source and header file must have a copyright header (The standard AWS one for apache 2).
 * Use standard include guards (e.g. #IFNDEF HEADER_NAME #define HEADER_NAME etc...).
 * Include order should be:
@@ -198,11 +198,15 @@ not always required if a conflict is not likely and it provides better ergonomic
 
 Example:
 
-    AWS_COMMON_API int aws_module_init(aws_module_t *module);
-    AWS_COMMON_API void aws_module_clean_up(aws_module_t *module);
-    AWS_COMMON_API aws_module_t *aws_module_new(aws_allocator_t *allocator);
-    AWS_COMMON_API void aws_module_destroy(aws_module_t *module);
-        
+    AWS_COMMON_API
+ int aws_module_init(aws_module_t *module);
+    AWS_COMMON_API
+ void aws_module_clean_up(aws_module_t *module);
+    AWS_COMMON_API
+ aws_module_t *aws_module_new(aws_allocator_t *allocator);
+    AWS_COMMON_API
+ void aws_module_destroy(aws_module_t *module);
+
 * Avoid c-strings, and don't write code that depends on `NULL` terminators. Expose `struct aws_byte_buf` APIs
 and let the user figure it out.
 * There is only one valid character encoding-- UTF-8. Try not to ever need to care about character encodings, but

@@ -1,19 +1,19 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
-#include <aws/common/lru_cache.h>
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #include <assert.h>
+#include <aws/common/lru_cache.h>
 
 struct cache_node {
     struct aws_linked_list_node node;
@@ -33,12 +33,14 @@ static void s_element_destroy(void *value) {
     aws_mem_release(cache_node->cache->allocator, cache_node);
 }
 
-int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *allocator,
-                                      aws_hash_fn *hash_fn,
-                                      aws_equals_fn *equals_fn,
-                                      aws_hash_element_destroy_fn *destroy_key_fn,
-                                      aws_hash_element_destroy_fn *destroy_value_fn,
-                                      size_t max_items) {
+int aws_lru_cache_init(
+    struct aws_lru_cache *cache,
+    struct aws_allocator *allocator,
+    aws_hash_fn *hash_fn,
+    aws_equals_fn *equals_fn,
+    aws_hash_element_destroy_fn *destroy_key_fn,
+    aws_hash_element_destroy_fn *destroy_value_fn,
+    size_t max_items) {
     assert(allocator);
     assert(max_items);
 
@@ -47,8 +49,8 @@ int aws_lru_cache_init(struct aws_lru_cache *cache, struct aws_allocator *alloca
     cache->user_on_value_destroy = destroy_value_fn;
 
     aws_linked_list_init(&cache->list);
-    return aws_hash_table_init(&cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn,
-                               s_element_destroy);
+    return aws_hash_table_init(
+        &cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn, s_element_destroy);
 }
 
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {

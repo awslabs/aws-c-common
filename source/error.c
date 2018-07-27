@@ -1,21 +1,21 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
-#include <aws/common/error.h>
-#include <aws/common/common.h>
 #include <assert.h>
+#include <aws/common/common.h>
+#include <aws/common/error.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,7 +28,7 @@ static AWS_THREAD_LOCAL aws_error_handler_fn *tl_thread_handler = NULL;
 AWS_THREAD_LOCAL void *tl_thread_handler_context = NULL;
 
 #ifndef AWS_MAX_ERROR_SLOTS
-#define AWS_MAX_ERROR_SLOTS 16
+#    define AWS_MAX_ERROR_SLOTS 16
 #endif
 
 /* Since slot size is 00000100 00000000, to divide, we need to shift right by 10 bits to find the slot,
@@ -40,14 +40,14 @@ AWS_THREAD_LOCAL void *tl_thread_handler_context = NULL;
 
 static const int MAX_ERROR_CODE = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
 
-static const struct aws_error_info_list *volatile ERROR_SLOTS[AWS_MAX_ERROR_SLOTS] = { 0 };
+static const struct aws_error_info_list *volatile ERROR_SLOTS[AWS_MAX_ERROR_SLOTS] = {0};
 
 int aws_last_error(void) {
     return tl_last_error;
 }
 
 static const struct aws_error_info *get_error_by_code(int err) {
-    if(err >= MAX_ERROR_CODE || err < 0) {
+    if (err >= MAX_ERROR_CODE || err < 0) {
         return NULL;
     }
 
@@ -56,7 +56,7 @@ static const struct aws_error_info *get_error_by_code(int err) {
 
     const struct aws_error_info_list *error_slot = ERROR_SLOTS[slot_index];
 
-    if(!error_slot || error_index >= error_slot->count) {
+    if (!error_slot || error_index >= error_slot->count) {
         return NULL;
     }
 
@@ -66,7 +66,7 @@ static const struct aws_error_info *get_error_by_code(int err) {
 const char *aws_error_str(int err) {
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->error_str;
     }
 
@@ -76,7 +76,7 @@ const char *aws_error_str(int err) {
 const char *aws_error_lib_name(int err) {
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->lib_name;
     }
 
@@ -86,7 +86,7 @@ const char *aws_error_lib_name(int err) {
 const char *aws_error_debug_str(int err) {
     const struct aws_error_info *error_info = get_error_by_code(err);
 
-    if(error_info) {
+    if (error_info) {
         return error_info->formatted_name;
     }
 
@@ -96,10 +96,9 @@ const char *aws_error_debug_str(int err) {
 int aws_raise_error(int err) {
     tl_last_error = err;
 
-    if(tl_thread_handler) {
+    if (tl_thread_handler) {
         tl_thread_handler(tl_last_error, tl_thread_handler_context);
-    }
-    else if(s_global_handler) {
+    } else if (s_global_handler) {
         s_global_handler(tl_last_error, s_global_error_context);
     }
 
@@ -122,7 +121,7 @@ aws_error_handler_fn *aws_set_global_error_handler_fn(aws_error_handler_fn *hand
     return old_handler;
 }
 
-aws_error_handler_fn * aws_set_thread_local_error_handler_fn(aws_error_handler_fn *handler, void *ctx) {
+aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn *handler, void *ctx) {
     aws_error_handler_fn *old_handler = tl_thread_handler;
     tl_thread_handler = handler;
     tl_thread_handler_context = ctx;

@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/string.h>
 #include <aws/common/hash_table.h>
+#include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(string_tests, s_string_tests_fn);
@@ -23,40 +23,52 @@ static int s_string_tests_fn(struct aws_allocator *alloc, void *ctx) {
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
     ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
     ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_1), test_string_1->len, "foofaraw", 8,
-                             "Data bytes should have been set correctly.");
-    ASSERT_INT_EQUALS(aws_string_bytes(test_string_1)[test_string_1->len], '\0',
-                      "Static string should have null byte at end.");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        aws_string_bytes(test_string_1),
+        test_string_1->len,
+        "foofaraw",
+        8,
+        "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(
+        aws_string_bytes(test_string_1)[test_string_1->len], '\0', "Static string should have null byte at end.");
 
     /* Test: string creation works. */
     const struct aws_string *test_string_2 = aws_string_from_c_str_new(alloc, "foofaraw");
     ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
     ASSERT_PTR_EQUALS(test_string_2->allocator, alloc, "Allocator should have been set correctly.");
     ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(aws_string_bytes(test_string_2), test_string_2->len, "foofaraw", 8,
-                             "Data bytes should have been set correctly.");
-    ASSERT_INT_EQUALS(aws_string_bytes(test_string_2)[test_string_2->len], '\0',
-                      "String from C-string should have null byte at end.");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        aws_string_bytes(test_string_2),
+        test_string_2->len,
+        "foofaraw",
+        8,
+        "Data bytes should have been set correctly.");
+    ASSERT_INT_EQUALS(
+        aws_string_bytes(test_string_2)[test_string_2->len],
+        '\0',
+        "String from C-string should have null byte at end.");
 
     /* Test: strings from first two tests are equal and have same hashes. */
     ASSERT_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
-    ASSERT_INT_EQUALS(aws_hash_string(test_string_1), aws_hash_string(test_string_2),
-                      "Hash values of byte buffers should be equal.");
+    ASSERT_INT_EQUALS(
+        aws_hash_string(test_string_1), aws_hash_string(test_string_2), "Hash values of byte buffers should be equal.");
 
     /* Test: write from string to byte cursor works. */
     uint8_t dest[8] = {0};
     struct aws_byte_cursor dest_cur = aws_byte_cursor_from_array(dest, 8);
 
-    ASSERT_TRUE(aws_byte_cursor_write_from_whole_string(&dest_cur, test_string_2),
-                "Write from whole string should have succeeded.");
+    ASSERT_TRUE(
+        aws_byte_cursor_write_from_whole_string(&dest_cur, test_string_2),
+        "Write from whole string should have succeeded.");
     ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
 
     /* Test: write from string fails cleanly when byte cursor too short. */
     int8_t short_dest[7] = {0};
     struct aws_byte_cursor short_dest_cur = aws_byte_cursor_from_array(short_dest, 7);
 
-    ASSERT_FALSE(aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),
-                 "Write from whole buffer should have failed.");
+    ASSERT_FALSE(
+        aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),
+        "Write from whole buffer should have failed.");
     ASSERT_INT_EQUALS(short_dest_cur.len, 7, "Destination cursor length should be unchanged.");
     ASSERT_INT_EQUALS(0, short_dest_cur.ptr[0], "Destination cursor should not have received data.");
 
@@ -74,10 +86,16 @@ static int s_binary_string_test_fn(struct aws_allocator *alloc, void *ctx) {
 
     ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
     ASSERT_PTR_EQUALS(alloc, binary_string->allocator, "Allocator should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(test_array, len, aws_string_bytes(binary_string), binary_string->len,
-                             "Binary string bytes should be same as source array.");
-    ASSERT_INT_EQUALS(aws_string_bytes(binary_string)[binary_string->len], 0x00,
-                      "String from binary array should have null byte at end");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        test_array,
+        len,
+        aws_string_bytes(binary_string),
+        binary_string->len,
+        "Binary string bytes should be same as source array.");
+    ASSERT_INT_EQUALS(
+        aws_string_bytes(binary_string)[binary_string->len],
+        0x00,
+        "String from binary array should have null byte at end");
     aws_string_destroy((void *)binary_string);
     return 0;
 }

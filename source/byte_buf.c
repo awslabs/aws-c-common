@@ -1,26 +1,26 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
-#include <aws/common/byte_buf.h>
 #include <assert.h>
+#include <aws/common/byte_buf.h>
 #include <stdarg.h>
 
 #ifdef _MSC_VER
 /* disables warning non const declared initializers for Microsoft compilers */
-#pragma warning(disable:4204)
-#pragma warning(disable:4706)
+#    pragma warning(disable : 4204)
+#    pragma warning(disable : 4706)
 #endif
 
 int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
@@ -34,15 +34,19 @@ int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf,
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
-    if (buf->allocator && buf->buffer) aws_mem_release(buf->allocator, (void *)buf->buffer);
+    if (buf->allocator && buf->buffer)
+        aws_mem_release(buf->allocator, (void *)buf->buffer);
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;
     buf->capacity = 0;
 }
 
-int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
-                                 struct aws_array_list *output, size_t n) {
+int aws_byte_buf_split_on_char_n(
+    struct aws_byte_buf *input_str,
+    char split_on,
+    struct aws_array_list *output,
+    size_t n) {
     assert(input_str);
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_cursor));
@@ -53,8 +57,7 @@ int aws_byte_buf_split_on_char_n(struct aws_byte_buf *input_str, char split_on,
 
     struct aws_byte_cursor current_pos = aws_byte_cursor_from_buf(input_str);
 
-    while (split_count < max_splits &&
-        (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
+    while (split_count < max_splits && (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
 
         size_t distance_from_origin = new_location - current_pos.ptr;
 
@@ -95,7 +98,7 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     va_list ap;
     va_start(ap, number_of_args);
 
-    for (size_t i = 0; i < number_of_args; ++i ) {
+    for (size_t i = 0; i < number_of_args; ++i) {
         struct aws_byte_buf *buffer = va_arg(ap, struct aws_byte_buf *);
         struct aws_byte_cursor cursor = aws_byte_cursor_from_buf(buffer);
 

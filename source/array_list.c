@@ -1,26 +1,29 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
-#include <aws/common/array_list.h>
 #include <assert.h>
+#include <aws/common/array_list.h>
 #include <stdlib.h> /* qsort */
 
 #define SENTINAL 0xDD
 
-int aws_array_list_init_dynamic(struct aws_array_list *list,
-    struct aws_allocator *alloc, size_t initial_item_allocation, size_t item_size) {
+int aws_array_list_init_dynamic(
+    struct aws_array_list *list,
+    struct aws_allocator *alloc,
+    size_t initial_item_allocation,
+    size_t item_size) {
     list->alloc = alloc;
     size_t allocation_size = initial_item_allocation * item_size;
     list->data = NULL;
@@ -70,7 +73,7 @@ void aws_array_list_clean_up(struct aws_array_list *list) {
 int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
     int err_code = aws_array_list_set_at(list, val, list->length);
 
-    if(err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
+    if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 
@@ -268,7 +271,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
 
         void *temp = aws_mem_acquire(list->alloc, new_size);
 
-        if(!temp) {
+        if (!temp) {
             return AWS_OP_ERR;
         }
 
@@ -276,7 +279,7 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
             memcpy(temp, list->data, list->current_size);
 
 #ifdef DEBUG_BUILD
-            memset((void *) ((uint8_t *) temp + list->current_size), SENTINAL, new_size - list->current_size);
+            memset((void *)((uint8_t *)temp + list->current_size), SENTINAL, new_size - list->current_size);
 #endif
             aws_mem_release(list->alloc, list->data);
         }
@@ -303,12 +306,12 @@ void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2,
     /* copy SLICE sized bytes at a time */
     size_t slice_count = item_size / SLICE;
     uint8_t temp[SLICE];
-    for(size_t i = 0; i < slice_count; i++) {
+    for (size_t i = 0; i < slice_count; i++) {
         memcpy((void *)temp, (void *)item1, SLICE);
         memcpy((void *)item1, (void *)item2, SLICE);
         memcpy((void *)item2, (void *)temp, SLICE);
-        item1 = (uint8_t*)item1 + SLICE;
-        item2 = (uint8_t*)item2 + SLICE;
+        item1 = (uint8_t *)item1 + SLICE;
+        item2 = (uint8_t *)item2 + SLICE;
     }
 
     size_t remainder = item_size & (SLICE - 1); /* item_size % SLICE */
@@ -320,7 +323,7 @@ void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2,
 void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
     assert(a < list->length);
     assert(b < list->length);
-    if(a == b) {
+    if (a == b) {
         return;
     }
 
@@ -333,4 +336,3 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
 void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator_fn *compare_fn) {
     qsort(list->data, list->length, list->item_size, compare_fn);
 }
-
