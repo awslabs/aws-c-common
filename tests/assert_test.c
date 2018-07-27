@@ -65,6 +65,7 @@ int side_effect() {
     return 0;
 }
 
+/* NOLINTNEXTLINE(readability-function-size) */
 int test_asserts(int *index) {
     TEST_SUCCESS(null_test) {}
     TEST_FAILURE(null_failure_test) {
@@ -191,15 +192,19 @@ int check_failure_output(const char *expected) {
 
     if (!expected) {
         return rv == NULL;
-    } else {
-        if (!rv)
-            return 0;
-        return !strncmp(tmpbuf, expected, strlen(expected));
     }
+    if (!rv) {
+        return 0;
+    }
+    return !strncmp(tmpbuf, expected, strlen(expected));
 }
 
 int main(int argc, char **argv) {
     int index = 0;
+
+    if (argc < 2) {
+        return 1;
+    }
 
     g_test_filename = argv[1];
 

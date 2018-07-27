@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/task_scheduler.h>
+
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
@@ -28,9 +29,11 @@ static void set_fake_clock(uint64_t timestamp) {
     g_timestamp = timestamp;
 }
 
-static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
+static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_task_scheduler scheduler;
-    aws_task_scheduler_init(&scheduler, alloc, fake_clock);
+    aws_task_scheduler_init(&scheduler, allocator, fake_clock);
 
     set_fake_clock(0);
 
@@ -105,9 +108,11 @@ static int test_scheduler_ordering(struct aws_allocator *alloc, void *context) {
 
 static void null_fn(void *arg, enum aws_task_status status) {}
 
-static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void *ctx) {
+static int test_scheduler_next_task_timestamp(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_task_scheduler scheduler;
-    aws_task_scheduler_init(&scheduler, alloc, fake_clock);
+    aws_task_scheduler_init(&scheduler, allocator, fake_clock);
 
     set_fake_clock(0);
     struct aws_task task1, task2;
@@ -137,9 +142,11 @@ static int test_scheduler_next_task_timestamp(struct aws_allocator *alloc, void 
     return 0;
 }
 
-static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc, void *ctx) {
+static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_task_scheduler scheduler;
-    aws_task_scheduler_init(&scheduler, alloc, fake_clock);
+    aws_task_scheduler_init(&scheduler, allocator, fake_clock);
 
     set_fake_clock(0);
 
@@ -160,7 +167,10 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     ASSERT_FAILS(aws_task_scheduler_next_task(&scheduler, &task_to_run, &timestamp));
     int lasterror = aws_last_error();
     ASSERT_INT_EQUALS(AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS, lasterror);
-    ASSERT_TRUE(task_to_run.fn == 0, "Popped task should have been null since it is not time for it to run.");
+    ASSERT_TRUE(
+        task_to_run.fn == 0,
+        "Popped task should have been null since it is not time for it to "
+        "run.");
     ASSERT_INT_EQUALS(run_at_or_after, timestamp, "Timestamp should for next run should be %llu", run_at_or_after);
 
     set_fake_clock(100);
@@ -172,8 +182,9 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     return 0;
 }
 
-/* container for running the test making sure a recursive call to aws_task_scheduler_schedule_now
- * does not break the fairness of the task scheduler. */
+/* container for running the test making sure a recursive call to
+ * aws_task_scheduler_schedule_now does not break the fairness of the task
+ * scheduler. */
 struct task_scheduler_reentrancy_args {
     struct aws_task_scheduler *scheduler;
     int executed;
@@ -196,9 +207,11 @@ static void reentrancy_fn(void *arg, enum aws_task_status status) {
     reentrancy_args->status = status;
 }
 
-static int test_scheduler_reentrant_safe(struct aws_allocator *alloc, void *ctx) {
+static int test_scheduler_reentrant_safe(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_task_scheduler scheduler;
-    aws_task_scheduler_init(&scheduler, alloc, aws_high_res_clock_get_ticks);
+    aws_task_scheduler_init(&scheduler, allocator, aws_high_res_clock_get_ticks);
 
     struct task_scheduler_reentrancy_args task2_args;
     task2_args.scheduler = &scheduler;
@@ -242,9 +255,11 @@ static void cancellation_fn(void *arg, enum aws_task_status status) {
     cancellation_args->status = status;
 }
 
-static int test_scheduler_cleanup_cancellation(struct aws_allocator *alloc, void *ctx) {
+static int test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct aws_task_scheduler scheduler;
-    aws_task_scheduler_init(&scheduler, alloc, aws_high_res_clock_get_ticks);
+    aws_task_scheduler_init(&scheduler, allocator, aws_high_res_clock_get_ticks);
 
     struct cancellation_args task_args = {.status = 100000};
 

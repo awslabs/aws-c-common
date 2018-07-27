@@ -19,8 +19,9 @@
 #include <aws/common/linked_list.h>
 
 /**
- * Simple Least-recently-used cache using the standard lazy linked hash table implementation. (Yes the one that was the
- * answer to that interview question that one time).
+ * Simple Least-recently-used cache using the standard lazy linked hash table
+ * implementation. (Yes the one that was the answer to that interview question
+ * that one time).
  */
 struct aws_lru_cache {
     struct aws_allocator *allocator;
@@ -35,8 +36,9 @@ extern "C" {
 #endif
 
 /**
- * Initializes the cache. Sets up the underlying hash table and linked list. Once `max_items` elements have been added,
- * the least recently used item will be removed. For the other parameters, see aws/common/hash_table.h. Hash table
+ * Initializes the cache. Sets up the underlying hash table and linked list.
+ * Once `max_items` elements have been added, the least recently used item will
+ * be removed. For the other parameters, see aws/common/hash_table.h. Hash table
  * semantics of these arguments are preserved.
  */
 AWS_COMMON_API
@@ -50,14 +52,17 @@ int aws_lru_cache_init(
     size_t max_items);
 
 /**
- * Cleans up the cache. Elements in the cache will be evicted and cleanup callbacks will be invoked.
+ * Cleans up the cache. Elements in the cache will be evicted and cleanup
+ * callbacks will be invoked.
  */
 AWS_COMMON_API
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
 
 /**
- * Finds element in the cache by key. If found, it will become most-recently used, *p_value will hold the stored value,
- * and AWS_OP_SUCCESS will be returned. If not found, AWS_OP_SUCCESS will be returned and *p_value will be NULL.
+ * Finds element in the cache by key. If found, it will become most-recently
+ * used, *p_value will hold the stored value, and AWS_OP_SUCCESS will be
+ * returned. If not found, AWS_OP_SUCCESS will be returned and *p_value will be
+ * NULL.
  *
  * If any errors occur AWS_OP_ERR will be returned.
  */
@@ -84,7 +89,8 @@ AWS_COMMON_API
 void aws_lru_cache_clear(struct aws_lru_cache *cache);
 
 /**
- * Accesses the least-recently-used element, sets it to most-recently-used element, and returns the value.
+ * Accesses the least-recently-used element, sets it to most-recently-used
+ * element, and returns the value.
  */
 AWS_COMMON_API
 void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache);
@@ -105,4 +111,4 @@ size_t aws_lru_cache_get_element_count(const struct aws_lru_cache *cache);
 }
 #endif
 
-#endif /*AWS_COMMON_LRU_CACHE_H */
+#endif /* AWS_COMMON_LRU_CACHE_H */

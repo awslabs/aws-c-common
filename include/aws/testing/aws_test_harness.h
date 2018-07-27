@@ -1,5 +1,5 @@
-#ifndef AWS_TEST_HARNESS_H_
-#define AWS_TEST_HARNESS_H_
+#ifndef AWS_TESTING_AWS_TEST_HARNESS_H
+#define AWS_TESTING_AWS_TEST_HARNESS_H
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -101,8 +101,8 @@ static int s_cunit_failure_message0(
 
 static int total_failures;
 
-#define SUCCESS 0
-#define FAILURE -1
+#define SUCCESS (0)
+#define FAILURE (-1)
 
 #define RETURN_SUCCESS(format, ...)                                                                                    \
     do {                                                                                                               \
@@ -285,7 +285,7 @@ static int total_failures;
     do {                                                                                                               \
         const char *assert_expected = (expected);                                                                      \
         const char *assert_got = (got);                                                                                \
-        if (strcmp(assert_expected, assert_got)) {                                                                     \
+        if (strcmp(assert_expected, assert_got) != 0) {                                                                \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD, "%sExpected: \"%s\"; got: \"%s\": ", FAIL_PREFIX, assert_expected, assert_got); \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
@@ -309,7 +309,7 @@ static int total_failures;
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
-        if (memcmp(assert_ex_p, assert_got_p, assert_got_s)) {                                                         \
+        if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
             fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                          \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
@@ -349,26 +349,30 @@ struct aws_test_harness {
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
-    static struct aws_test_harness name = {.on_before = NULL,                                                          \
-                                           .run = fn,                                                                  \
-                                           .on_after = NULL,                                                           \
-                                           .ctx = NULL,                                                                \
-                                           .allocator = &name##_allocator,                                             \
-                                           .test_name = #name,                                                         \
-                                           .suppress_memcheck = s};
+    static struct aws_test_harness name = {                                                                            \
+        .on_before = NULL,                                                                                             \
+        .run = (fn),                                                                                                   \
+        .on_after = NULL,                                                                                              \
+        .ctx = NULL,                                                                                                   \
+        .allocator = &name##_allocator,                                                                                \
+        .test_name = #name,                                                                                            \
+        .suppress_memcheck = (s),                                                                                      \
+    };
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
     static void b(struct aws_allocator *allocator, void *ctx);                                                         \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     static void af(struct aws_allocator *allocator, void *ctx);                                                        \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
-    static struct aws_test_harness name = {.on_before = b,                                                             \
-                                           .run = fn,                                                                  \
-                                           .on_after = af,                                                             \
-                                           .ctx = NULL,                                                                \
-                                           .allocator = &name##_allocator,                                             \
-                                           .test_name = #name,                                                         \
-                                           .suppress_memcheck = s};
+    static struct aws_test_harness name = {                                                                            \
+        .on_before = (b),                                                                                              \
+        .run = (fn),                                                                                                   \
+        .on_after = (af),                                                                                              \
+        .ctx = (c),                                                                                                    \
+        .allocator = &name##_allocator,                                                                                \
+        .test_name = #name,                                                                                            \
+        .suppress_memcheck = (s),                                                                                      \
+    };
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
@@ -434,4 +438,4 @@ static int s_aws_run_test_case(struct aws_test_harness *harness) {
     fflush(AWS_TESTING_REPORT_FD);                                                                                     \
     return ret_val;
 
-#endif /* AWS_TEST_HARNESS_H _*/
+#endif /* AWS_TESTING_AWS_TEST_HARNESS_H */

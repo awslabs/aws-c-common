@@ -1,5 +1,5 @@
-#ifndef AWS_PRIORITY_QUEUE_H
-#define AWS_PRIORITY_QUEUE_H
+#ifndef AWS_COMMON_PRIORITY_QUEUE_H
+#define AWS_COMMON_PRIORITY_QUEUE_H
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,12 +18,11 @@
 #include <aws/common/array_list.h>
 #include <aws/common/common.h>
 
-/* The comparator should return a positive value if the second argument has a higher priority than the first; Otherwise,
- * it should return a negative value or zero.
- * NOTE: priority_queue pops its highest priority element first.
- * For example: int cmp(const void *a, const void *b) { return a < b; }
- * would result in a max heap, while:
- * int cmp(const void *a, const void *b) { return a > b; }
+/* The comparator should return a positive value if the second argument has a
+ * higher priority than the first; Otherwise, it should return a negative value
+ * or zero. NOTE: priority_queue pops its highest priority element first. For
+ * example: int cmp(const void *a, const void *b) { return a < b; } would result
+ * in a max heap, while: int cmp(const void *a, const void *b) { return a > b; }
  * would result in a min heap.
  */
 typedef int(aws_priority_queue_compare_fn)(const void *a, const void *b);
@@ -117,4 +116,4 @@ size_t aws_priority_queue_capacity(struct aws_priority_queue *queue);
 }
 #endif
 
-#endif /* #ifndef AWS_CORE_PRIORITY_QUEUE_H */
+#endif /* AWS_COMMON_PRIORITY_QUEUE_H */

@@ -17,9 +17,10 @@
 
 #include <assert.h>
 
+/* NOLINTNEXTLINE(readability-identifier-naming) */
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
-    struct aws_allocator *alloc = aws_default_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
 
     size_t output_size = 0;
     int result = aws_base64_compute_encoded_len(size, &output_size);
@@ -28,7 +29,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     struct aws_byte_buf to_encode = aws_byte_buf_from_array(data, size);
 
     struct aws_byte_buf encode_output;
-    result = aws_byte_buf_init(alloc, &encode_output, output_size);
+    result = aws_byte_buf_init(allocator, &encode_output, output_size);
     assert(result == AWS_OP_SUCCESS);
 
     result = aws_base64_encode(&to_encode, &encode_output);
@@ -40,7 +41,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     assert(output_size == size);
 
     struct aws_byte_buf decode_output;
-    result = aws_byte_buf_init(alloc, &decode_output, output_size);
+    result = aws_byte_buf_init(allocator, &decode_output, output_size);
     assert(result == AWS_OP_SUCCESS);
 
     result = aws_base64_decode(&encode_output, &decode_output);

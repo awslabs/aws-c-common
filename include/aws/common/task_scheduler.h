@@ -1,5 +1,5 @@
-#ifndef AWS_TASK_SCHEDULER_H
-#define AWS_TASK_SCHEDULER_H
+#ifndef AWS_COMMON_TASK_SCHEDULER_H
+#define AWS_COMMON_TASK_SCHEDULER_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -19,7 +19,10 @@
 #include <aws/common/common.h>
 #include <aws/common/priority_queue.h>
 
-enum aws_task_status { AWS_TASK_STATUS_RUN_READY, AWS_TASK_STATUS_CANCELED };
+typedef enum aws_task_status {
+    AWS_TASK_STATUS_RUN_READY,
+    AWS_TASK_STATUS_CANCELED,
+} aws_task_status;
 
 /**
  * Pointer to the scheduled function
@@ -109,4 +112,4 @@ int aws_task_scheduler_run_all(struct aws_task_scheduler *queue, uint64_t *next_
 }
 #endif
 
-#endif /* #ifndef AWS_PRIORITY_QUEUE_H */
+#endif /* AWS_COMMON_TASK_SCHEDULER_H */

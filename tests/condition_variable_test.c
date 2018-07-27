@@ -15,8 +15,9 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#include <aws/common/clock.h>
 #include <aws/common/condition_variable.h>
+
+#include <aws/common/clock.h>
 #include <aws/common/thread.h>
 
 struct condition_predicate_args {
@@ -70,6 +71,8 @@ static void s_conditional_thread_3_fn(void *arg) {
 }
 
 static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
     struct conditional_test_data test_data = {.condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
@@ -106,6 +109,8 @@ static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(conditional_notify_one, s_test_conditional_notify_one_fn)
 
 static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
     struct conditional_test_data test_data = {.condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
@@ -148,7 +153,12 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(conditional_notify_all, s_test_conditional_notify_all_fn)
 
+/* 10 milliseconds */
+static const uint64_t WAIT_TIME_EPSILON = 10000000;
+
 static int s_test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
@@ -168,10 +178,10 @@ static int s_test_conditional_wait_timeout_fn(struct aws_allocator *allocator, v
     uint64_t post_wait_timestamp = 0;
     ASSERT_SUCCESS(aws_sys_clock_get_ticks(&post_wait_timestamp));
 
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= wait_ns);
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < wait_ns * 2);
-
     ASSERT_TRUE(predicate_args.call_count >= 1);
+
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= (wait_ns * predicate_args.call_count));
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < (wait_ns * predicate_args.call_count) + WAIT_TIME_EPSILON);
 
     return AWS_OP_SUCCESS;
 }

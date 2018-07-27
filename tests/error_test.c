@@ -13,6 +13,8 @@
  *  permissions and limitations under the License.
  */
 
+#include <aws/common/error.h>
+
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
@@ -26,20 +28,28 @@ static struct aws_error_info_list s_errors_list = {
     .count = sizeof(s_errors) / sizeof(struct aws_error_info),
 };
 
-static void s_setup_errors_test_fn(struct aws_allocator *config, void *ctx) {
+static void s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     aws_reset_error();
     aws_set_global_error_handler_fn(NULL, NULL);
     aws_set_thread_local_error_handler_fn(NULL, NULL);
     aws_register_error_info(&s_errors_list);
 }
 
-static void s_teardown_errors_test_fn(struct aws_allocator *config, void *ctx) {
+static void s_teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     aws_reset_error();
     aws_set_global_error_handler_fn(NULL, NULL);
     aws_set_thread_local_error_handler_fn(NULL, NULL);
 }
 
-static int s_raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     int error = aws_last_error();
 
@@ -95,7 +105,9 @@ static int s_raise_errors_test_fn(struct aws_allocator *config, void *ctx) {
     return 0;
 }
 
-static int s_reset_errors_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_reset_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     struct aws_error_info test_error_1 = s_errors[0];
     struct aws_error_info test_error_2 = s_errors[1];
@@ -141,7 +153,9 @@ static void s_error_test_thread_local_cb(int err, void *ctx) {
     cb_data->last_seen = err;
 }
 
-static int s_error_callback_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_error_callback_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     struct error_test_cb_data cb_data = {.last_seen = 0, .global_cb_called = 0, .tl_cb_called = 0};
 
@@ -225,7 +239,9 @@ static int s_error_callback_test_fn(struct aws_allocator *config, void *ctx) {
     return 0;
 }
 
-static int s_unknown_error_code_in_slot_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     int error = aws_last_error();
 
@@ -263,7 +279,9 @@ static int s_unknown_error_code_in_slot_test_fn(struct aws_allocator *config, vo
     return 0;
 }
 
-static int s_unknown_error_code_no_slot_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_unknown_error_code_no_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     int error = aws_last_error();
 
@@ -300,7 +318,9 @@ static int s_unknown_error_code_no_slot_test_fn(struct aws_allocator *config, vo
     return 0;
 }
 
-static int s_unknown_error_code_range_too_large_test_fn(struct aws_allocator *config, void *ctx) {
+static int s_unknown_error_code_range_too_large_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
     int error = aws_last_error();
 
@@ -372,6 +392,7 @@ static void s_error_thread_fn(void *arg) {
 }
 
 static int s_error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
 
     struct error_thread_test_data test_data = {.thread_1_code = 0,
                                                .thread_1_get_last_code = 0,

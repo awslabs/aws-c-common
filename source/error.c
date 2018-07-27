@@ -13,9 +13,11 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
-#include <aws/common/common.h>
 #include <aws/common/error.h>
+
+#include <aws/common/common.h>
+
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,9 +33,10 @@ AWS_THREAD_LOCAL void *tl_thread_handler_context = NULL;
 #    define AWS_MAX_ERROR_SLOTS 16
 #endif
 
-/* Since slot size is 00000100 00000000, to divide, we need to shift right by 10 bits to find the slot,
- * and to find the modulus, we use a binary and with 00000011 11111111 to find the index in that slot. The next three
- * values define those constants */
+/* Since slot size is 00000100 00000000, to divide, we need to shift right by 10
+ * bits to find the slot, and to find the modulus, we use a binary and with
+ * 00000011 11111111 to find the index in that slot. The next three values
+ * define those constants */
 #define AWS_ERROR_SLOT_SIZE 0x0400
 #define SLOT_DIV_SHIFT 0x0A
 #define SLOT_MASK 0x03FF
@@ -131,9 +134,9 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 
 void aws_register_error_info(const struct aws_error_info_list *error_info) {
     /*
-     * We're not so worried about these asserts being removed in an NDEBUG build -
-     * we'll either segfault immediately (for the first two) or for the count assert,
-     * the registration will be ineffective.
+     * We're not so worried about these asserts being removed in an NDEBUG build
+     * - we'll either segfault immediately (for the first two) or for the count
+     * assert, the registration will be ineffective.
      */
     assert(error_info);
     assert(error_info->error_list);
@@ -146,7 +149,8 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
     assert(slot_index < AWS_MAX_ERROR_SLOTS && slot_index >= 0);
 
     if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
-        /* This is an NDEBUG build apparently. Kill the process rather than corrupting heap. */
+        /* This is an NDEBUG build apparently. Kill the process rather than
+         * corrupting heap. */
         fprintf(stderr, "Bad error slot index 0x%016x\n", slot_index);
         abort();
     }

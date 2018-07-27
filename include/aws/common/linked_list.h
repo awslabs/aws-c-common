@@ -1,5 +1,5 @@
-#ifndef AWS_LINKED_LIST_H
-#define AWS_LINKED_LIST_H
+#ifndef AWS_COMMON_LINKED_LIST_H
+#define AWS_COMMON_LINKED_LIST_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -16,8 +16,10 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/common.h>
+
+#include <assert.h>
+#include <stddef.h>
 
 /**
  * from a pointer and a type of the struct containing the node
@@ -99,7 +101,8 @@ static inline bool aws_linked_list_empty(const struct aws_linked_list *list) {
 }
 
 /**
- * Removes the specified node from the list (prev/next point to each other) and returns the next node in the list.
+ * Removes the specified node from the list (prev/next point to each other) and
+ * returns the next node in the list.
  */
 static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
     node->prev->next = node->next;
@@ -156,4 +159,4 @@ static inline struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_
     return front;
 }
 
-#endif /*AWS_LINKED_LIST_H */
+#endif /* AWS_COMMON_LINKED_LIST_H */

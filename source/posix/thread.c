@@ -113,8 +113,9 @@ cleanup:
         return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
     }
 
-    if (attr_return == EAGAIN)
+    if (attr_return == EAGAIN) {
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
+    }
 
     if (attr_return == EPERM) {
         return aws_raise_error(AWS_ERROR_THREAD_NO_PERMISSIONS);
@@ -142,9 +143,11 @@ int aws_thread_join(struct aws_thread *thread) {
         if (err_no) {
             if (err_no == EINVAL) {
                 return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
-            } else if (err_no == ESRCH) {
+            }
+            if (err_no == ESRCH) {
                 return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
-            } else if (err_no == EDEADLK) {
+            }
+            if (err_no == EDEADLK) {
                 return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
             }
         }

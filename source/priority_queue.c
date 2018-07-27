@@ -14,12 +14,14 @@
  */
 
 #include <aws/common/priority_queue.h>
+
 #include <string.h>
 
-#define PARENT_OF(index) ((index & 1) ? index >> 1 : index > 1 ? (index - 2) >> 1 : 0)
-#define LEFT_OF(index) ((index << 1) + 1)
+#define PARENT_OF(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
+#define LEFT_OF(index) (((index) << 1) + 1)
 
-/* Precondition: with the exception of the first element, the container must be in heap order */
+/* Precondition: with the exception of the first element, the container must be
+ * in heap order */
 static void s_sift_down(struct aws_priority_queue *queue) {
     size_t root = 0;
     size_t left = LEFT_OF(root);
@@ -33,7 +35,8 @@ static void s_sift_down(struct aws_priority_queue *queue) {
         if (right < len) {
             aws_array_list_get_at_ptr(&queue->container, &right_item, right);
 
-            /* choose the larger/smaller of the two in case of a max/min heap respectively */
+            /* choose the larger/smaller of the two in case of a max/min heap
+             * respectively */
             if (queue->pred(left_item, right_item) > 0) {
                 left = right;
                 left_item = right_item;

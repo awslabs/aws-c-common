@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/clock.h>
 #include <aws/common/condition_variable.h>
+
+#include <aws/common/clock.h>
 #include <aws/common/mutex.h>
 
 #include <errno.h>
@@ -78,6 +79,7 @@ int aws_condition_variable_wait_for(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     int64_t time_to_wait) {
+
     uint64_t current_sys_time = 0;
     if (aws_sys_clock_get_ticks(&current_sys_time)) {
         return AWS_OP_ERR;

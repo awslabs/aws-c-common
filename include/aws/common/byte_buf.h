@@ -22,13 +22,13 @@
 #include <string.h>
 
 /**
- * Represents a length-delimited binary string or buffer. If byte buffer points to constant
- * memory or memory that should otherwise not be freed by this struct, set allocator to NULL
- * and free function will be a no-op.
+ * Represents a length-delimited binary string or buffer. If byte buffer points
+ * to constant memory or memory that should otherwise not be freed by this
+ * struct, set allocator to NULL and free function will be a no-op.
  *
- * Note that this structure allocates memory at the buffer pointer only. The struct itself
- * does not get dynamically allocated and must be either maintained or copied to avoid losing
- * access to the memory.
+ * Note that this structure allocates memory at the buffer pointer only. The
+ * struct itself does not get dynamically allocated and must be either
+ * maintained or copied to avoid losing access to the memory.
  */
 struct aws_byte_buf {
     struct aws_allocator *allocator;
@@ -51,24 +51,40 @@ extern "C" {
 
 AWS_COMMON_API
 int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len);
+
 AWS_COMMON_API
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
 
 /**
- * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
- * an offset into the input_str and len is the length of that string in the original buffer.
+ * Sets all bytes of buffer to zero and resets len to zero.
+ */
+AWS_COMMON_API void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
+
+/**
+ * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up
+ * on the buffer.
+ */
+AWS_COMMON_API void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf);
+
+/**
+ * No copies, no buffer allocations. Fills in output with a list of
+ * aws_byte_cursor instances where buffer is an offset into the input_str and
+ * len is the length of that string in the original buffer.
  *
  * Edge case rules are as follows:
- * if the input begins with split_on, an empty cursor will be the first entry in output.
- * if the input has two adjacent split_on tokens, an empty cursor will be inserted into the output.
- * if the input ends with split_on, an empty cursor will be appended to the output.
+ * if the input begins with split_on, an empty cursor will be the first entry in
+ * output. if the input has two adjacent split_on tokens, an empty cursor will
+ * be inserted into the output. if the input ends with split_on, an empty cursor
+ * will be appended to the output.
  *
  * It is the user's responsibility to properly initialize output. Recommended number of preallocated elements from
  * output is your most likely guess for the upper bound of the number of elements resulting from the split.
  *
- * The type that will be stored in output is struct aws_byte_cursor (you'll need this for the item size param).
+ * The type that will be stored in output is struct aws_byte_cursor (you'll need
+ * this for the item size param).
  *
- * It is the user's responsibility to make sure the input buffer stays in memory long enough to use the results.
+ * It is the user's responsibility to make sure the input buffer stays in memory
+ * long enough to use the results.
  */
 AWS_COMMON_API
 int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output);
@@ -98,16 +114,17 @@ int aws_byte_buf_split_on_char_n(
     size_t n);
 
 /**
- * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
- * dest->len will contain the amount of data actually copied to dest.
+ * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
+ * returned. dest->len will contain the amount of data actually copied to dest.
  */
 AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from);
 
 /**
- * Concatenates a variable number of struct aws_byte_buf * into destination. Number of args must be
- * greater than 1. If dest is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len
- * will contain the amount of data actually copied to dest.
+ * Concatenates a variable number of struct aws_byte_buf * into destination.
+ * Number of args must be greater than 1. If dest is too small,
+ * AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len will contain the
+ * amount of data actually copied to dest.
  */
 AWS_COMMON_API
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
@@ -152,8 +169,8 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void *byte
 }
 
 /**
- * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns 0.
- * Otherwise, returns index.  This function is designed to return a value
+ * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
+ * 0. Otherwise, returns index.  This function is designed to return a value
  * within [0, bound) even under CPU speculation conditions, and is intended to
  * be used for SPECTRE mitigation purposes.
  */
@@ -185,8 +202,8 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * positive simply because the sign bit got inverted away. So we also check
      * that the sign bit isn't set from the start.
      *
-     * We also check that bound <= (SIZE_MAX / 2) to catch cases where the buffer
-     * is _already_ out of bounds.
+     * We also check that bound <= (SIZE_MAX / 2) to catch cases where the
+     * buffer is _already_ out of bounds.
      */
     size_t negative_mask = index | bound;
     size_t toobig_mask = bound - index - (uintptr_t)1;
@@ -219,11 +236,12 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
 /**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
  * *buf is advanced by len bytes (incrementing ->ptr and decrementing ->len),
- * and an aws_byte_cursor referring to the first len bytes of the original *buf is
- * returned. Otherwise, an aws_byte_cursor with ->ptr = NULL, ->len = 0 is returned.
+ * and an aws_byte_cursor referring to the first len bytes of the original *buf
+ * is returned. Otherwise, an aws_byte_cursor with ->ptr = NULL, ->len = 0 is
+ * returned.
  *
- * Note that if len is above (SIZE_MAX / 2), this function will also treat it as a buffer
- * overflow, and return NULL without changing *buf.
+ * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
+ * a buffer overflow, and return NULL without changing *buf.
  */
 static inline struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *cursor, size_t len) {
     struct aws_byte_cursor rv;
@@ -256,8 +274,9 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
 
     if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
         /*
-         * Pass the length through aws_nospec_index. We do this after the branch, as otherwise
-         * we'd treat an out-of-bounds read as a zero-length read.
+         * Pass the length through aws_nospec_index. We do this after the
+         * branch, as otherwise we'd treat an out-of-bounds read as a
+         * zero-length read.
          */
         len = aws_nospec_index(len, cursor->len + 1);
 
@@ -275,10 +294,12 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
 }
 
 /**
- * Reads specified length of data from byte cursor and copies it to the destination array.
+ * Reads specified length of data from byte cursor and copies it to the
+ * destination array.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, size_t len) {
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
@@ -286,16 +307,16 @@ static inline bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur
     if (slice.ptr) {
         memcpy(dest, slice.ptr, len);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 /**
  * Reads as many bytes from cursor as size of buffer, and copies them to buffer.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_and_fill_buffer(
     struct aws_byte_cursor *AWS_RESTRICT cur,
@@ -311,17 +332,20 @@ static inline bool aws_byte_cursor_read_and_fill_buffer(
  * Reads a single byte from cursor, placing it in *var.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
     return aws_byte_cursor_read(cur, var, 1);
 }
 
 /**
- * Reads a 16-bit value in network byte order from cur, and places it in host byte order into var.
+ * Reads a 16-bit value in network byte order from cur, and places it in host
+ * byte order into var.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
     bool rv = aws_byte_cursor_read(cur, var, 2);
@@ -334,10 +358,12 @@ static inline bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16
 }
 
 /**
- * Reads a 32-bit value in network byte order from cur, and places it in host byte order into var.
+ * Reads a 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
     bool rv = aws_byte_cursor_read(cur, var, 4);
@@ -350,10 +376,12 @@ static inline bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32
 }
 
 /**
- * Reads a 64-bit value in network byte order from cur, and places it in host byte order into var.
+ * Reads a 64-bit value in network byte order from cur, and places it in host
+ * byte order into var.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
     bool rv = aws_byte_cursor_read(cur, var, sizeof(*var));
@@ -369,7 +397,8 @@ static inline bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64
  * Write specified number of bytes from array to byte cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_write(
     struct aws_byte_cursor *AWS_RESTRICT cur,
@@ -380,16 +409,16 @@ static inline bool aws_byte_cursor_write(
     if (slice.ptr) {
         memcpy(slice.ptr, src, len);
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 /**
  * Copies all bytes from buffer to cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_from_whole_buffer(
     struct aws_byte_cursor *AWS_RESTRICT cur,
@@ -400,9 +429,11 @@ static inline bool aws_byte_cursor_write_from_whole_buffer(
 /**
  * Copies one byte to cursor.
  *
- * On success, returns true and updates the cursor pointer/length accordingly.<<<<<< str-split
+ * On success, returns true and updates the cursor pointer/length
+ accordingly.<<<<<< str-split
 
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t c) {
     return aws_byte_cursor_write(cur, &c, 1);
@@ -412,7 +443,8 @@ static inline bool aws_byte_cursor_write_u8(struct aws_byte_cursor *AWS_RESTRICT
  * Writes a 16-bit integer in network byte order (big endian) to cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_be16(struct aws_byte_cursor *cur, uint16_t x) {
     x = aws_hton16(x);
@@ -423,7 +455,8 @@ static inline bool aws_byte_cursor_write_be16(struct aws_byte_cursor *cur, uint1
  * Writes a 32-bit integer in network byte order (big endian) to cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_be32(struct aws_byte_cursor *cur, uint32_t x) {
     x = aws_hton32(x);
@@ -434,7 +467,8 @@ static inline bool aws_byte_cursor_write_be32(struct aws_byte_cursor *cur, uint3
  * Writes a 64-bit integer in network byte order (big endian) to cursor.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the cursor unchanged.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
  */
 static inline bool aws_byte_cursor_write_be64(struct aws_byte_cursor *cur, uint64_t x) {
     x = aws_hton64(x);

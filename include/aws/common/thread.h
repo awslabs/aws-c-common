@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_THREAD_H_
-#define AWS_COMMON_THREAD_H_
+#ifndef AWS_COMMON_THREAD_H
+#define AWS_COMMON_THREAD_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -50,7 +50,8 @@ AWS_COMMON_API
 const struct aws_thread_options *aws_default_thread_options(void);
 
 /**
- * Initializes a new platform specific thread object struct (not the os-level thread itself).
+ * Initializes a new platform specific thread object struct (not the os-level
+ * thread itself).
  */
 AWS_COMMON_API
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator);
@@ -74,13 +75,15 @@ AWS_COMMON_API
 uint64_t aws_thread_get_id(struct aws_thread *thread);
 
 /**
- * Gets the detach state of the thread. For example, is it safe to call join on this thread? Has it been detached()?
+ * Gets the detach state of the thread. For example, is it safe to call join on
+ * this thread? Has it been detached()?
  */
 AWS_COMMON_API
 enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
 
 /**
- * Joins the calling thread to a thread instance. Returns when thread is finished.
+ * Joins the calling thread to a thread instance. Returns when thread is
+ * finished.
  */
 AWS_COMMON_API
 int aws_thread_join(struct aws_thread *thread);
@@ -108,4 +111,4 @@ void aws_thread_current_sleep(uint64_t nanos);
 }
 #endif
 
-#endif /* AWS_COMMON_THREAD_H_ */
+#endif /* AWS_COMMON_THREAD_H */

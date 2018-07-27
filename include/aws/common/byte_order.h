@@ -24,8 +24,9 @@
 
 /**
  * Returns 1 if machine is big endian, 0 if little endian.
- * If you compile with even -O1 optimization, this check is completely optimized out at compile
- * time and code which calls "if (aws_is_big_endian())" will do the right thing without branching.
+ * If you compile with even -O1 optimization, this check is completely optimized
+ * out at compile time and code which calls "if (aws_is_big_endian())" will do
+ * the right thing without branching.
  */
 static inline int aws_is_big_endian() {
     const uint16_t z = 0x100;
@@ -36,8 +37,9 @@ static inline int aws_is_big_endian() {
  * Convert 64 bit integer from host to network byte order.
  */
 static inline uint64_t aws_hton64(uint64_t x) {
-    if (aws_is_big_endian())
+    if (aws_is_big_endian()) {
         return x;
+    }
 #if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));

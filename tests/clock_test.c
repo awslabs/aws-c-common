@@ -14,10 +14,14 @@
  */
 
 #include <aws/common/clock.h>
+
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
@@ -36,6 +40,9 @@ static int s_test_high_res_clock_increments(struct aws_allocator *allocator, voi
 }
 
 static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {

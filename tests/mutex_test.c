@@ -14,10 +14,14 @@
  */
 
 #include <aws/common/mutex.h>
+
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_mutex mutex;
     aws_mutex_init(&mutex);
 
@@ -54,6 +58,7 @@ static void s_mutex_thread_fn(void *mutex_data) {
 }
 
 static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
 
     struct thread_mutex_data mutex_data = {
         .counter = 0,

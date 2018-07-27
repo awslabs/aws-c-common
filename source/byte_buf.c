@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/byte_buf.h>
+
+#include <assert.h>
 #include <stdarg.h>
 
 #ifdef _MSC_VER
@@ -25,8 +26,9 @@
 
 int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
     buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
-    if (!buf->buffer)
+    if (!buf->buffer) {
         return AWS_OP_ERR;
+    }
     buf->len = 0;
     buf->capacity = len;
     buf->allocator = allocator;
@@ -34,12 +36,25 @@ int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf,
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
-    if (buf->allocator && buf->buffer)
+    if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
+    }
     buf->allocator = NULL;
     buf->buffer = NULL;
     buf->len = 0;
     buf->capacity = 0;
+}
+
+void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
+    if (buf->buffer) {
+        aws_secure_zero(buf->buffer, buf->capacity);
+    }
+    buf->len = 0;
+}
+
+void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf) {
+    aws_byte_buf_secure_zero(buf);
+    aws_byte_buf_clean_up(buf);
 }
 
 int aws_byte_buf_split_on_char_n(

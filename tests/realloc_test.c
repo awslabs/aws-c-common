@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/common.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 #ifdef __MACH__
@@ -23,6 +24,8 @@
 static size_t s_alloc_counter, s_alloc_total_size, s_call_ct_malloc, s_call_ct_free, s_call_ct_realloc;
 
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
+
     s_alloc_counter++;
     s_call_ct_malloc++;
     s_alloc_total_size += size;
@@ -34,6 +37,8 @@ static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) 
 }
 
 static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
+    (void)allocator;
+
     uint8_t *buf = ptr;
     s_call_ct_free++;
 
@@ -48,6 +53,8 @@ static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 static size_t s_original_size, s_reported_oldsize;
 
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+
     uint8_t *buf = ptr;
     buf -= 16;
     s_call_ct_realloc++;
@@ -57,8 +64,9 @@ static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t o
 
     /* Always pick a new pointer for test purposes */
     void *newbuf = malloc(newsize);
-    if (!newbuf)
+    if (!newbuf) {
         abort();
+    }
 
     memcpy(newbuf, buf, 16 + (oldsize > newsize ? newsize : oldsize));
     free(buf);
@@ -71,10 +79,16 @@ static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t o
 }
 
 static void *s_test_malloc_failing(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
+    (void)size;
     return NULL;
 }
 
 static void *s_test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+    (void)ptr;
+    (void)oldsize;
+    (void)newsize;
     return NULL;
 }
 
@@ -83,16 +97,22 @@ static const uint8_t TEST_PATTERN[32] = {0xa5, 0x41, 0xcb, 0xe7, 0x00, 0x19, 0xd
                                          0x06, 0x39, 0x02, 0x02, 0xf6, 0x79, 0x1c, 0x4a, 0x08, 0xa9};
 
 AWS_TEST_CASE(test_realloc_fallback, s_test_realloc_fallback_fn)
-static int s_test_realloc_fallback_fn(struct aws_allocator *unused, void *ctx) {
-    struct aws_allocator allocator = {
-        .mem_acquire = s_test_alloc_acquire, .mem_release = s_test_alloc_release, .mem_realloc = NULL};
+static int s_test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_allocator test_allocator = {
+        .mem_acquire = s_test_alloc_acquire,
+        .mem_release = s_test_alloc_release,
+        .mem_realloc = NULL,
+    };
 
     s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
 
-    void *buf = aws_mem_acquire(&allocator, 32);
+    void *buf = aws_mem_acquire(&test_allocator, 32);
     void *oldbuf = buf;
     memcpy(buf, TEST_PATTERN, 32);
-    ASSERT_SUCCESS(aws_mem_realloc(&allocator, &buf, 32, 64));
+    ASSERT_SUCCESS(aws_mem_realloc(&test_allocator, &buf, 32, 64));
     ASSERT_INT_EQUALS(s_call_ct_malloc, 2);
     ASSERT_INT_EQUALS(s_call_ct_free, 1);
     ASSERT_INT_EQUALS(s_alloc_counter, 1);
@@ -100,63 +120,80 @@ static int s_test_realloc_fallback_fn(struct aws_allocator *unused, void *ctx) {
     ASSERT_INT_EQUALS(memcmp(buf, TEST_PATTERN, 32), 0);
     ASSERT_FALSE(buf == oldbuf);
 
-    aws_mem_release(&allocator, buf);
+    aws_mem_release(&test_allocator, buf);
 
     return 0;
 }
 
 AWS_TEST_CASE(test_realloc_fallback_oom, s_test_realloc_fallback_oom_fn)
-static int s_test_realloc_fallback_oom_fn(struct aws_allocator *unused, void *ctx) {
-    struct aws_allocator allocator = {
-        .mem_acquire = s_test_alloc_acquire, .mem_release = s_test_alloc_release, .mem_realloc = NULL};
+static int s_test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_allocator test_allocator = {
+        .mem_acquire = s_test_alloc_acquire,
+        .mem_release = s_test_alloc_release,
+        .mem_realloc = NULL,
+    };
 
     s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
-    void *buf = aws_mem_acquire(&allocator, 32);
+    void *buf = aws_mem_acquire(&test_allocator, 32);
     void *oldbuf = buf;
 
-    allocator.mem_acquire = s_test_malloc_failing;
+    test_allocator.mem_acquire = s_test_malloc_failing;
 
-    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&allocator, &buf, 32, 64));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&test_allocator, &buf, 32, 64));
     ASSERT_INT_EQUALS(s_call_ct_free, 0);
     ASSERT_PTR_EQUALS(buf, oldbuf);
 
-    aws_mem_release(&allocator, buf);
+    aws_mem_release(&test_allocator, buf);
 
     return 0;
 }
 
 AWS_TEST_CASE(test_realloc_passthrough_oom, s_test_realloc_passthrough_oom_fn)
-static int s_test_realloc_passthrough_oom_fn(struct aws_allocator *unused, void *ctx) {
-    struct aws_allocator allocator = {.mem_acquire = s_test_alloc_acquire,
-                                      .mem_release = s_test_alloc_release,
-                                      .mem_realloc = s_test_realloc_failing};
+static int s_test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_allocator test_allocator = {
+        .mem_acquire = s_test_alloc_acquire,
+        .mem_release = s_test_alloc_release,
+        .mem_realloc = s_test_realloc_failing,
+    };
 
     s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
 
-    void *buf = aws_mem_acquire(&allocator, 32);
+    void *buf = aws_mem_acquire(&test_allocator, 32);
     void *oldbuf = buf;
     memcpy(buf, TEST_PATTERN, 32);
 
-    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&allocator, &buf, 32, 64));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&test_allocator, &buf, 32, 64));
     ASSERT_PTR_EQUALS(buf, oldbuf);
 
-    aws_mem_release(&allocator, buf);
+    aws_mem_release(&test_allocator, buf);
 
     return 0;
 }
 
 AWS_TEST_CASE(test_realloc_passthrough, s_test_realloc_passthrough_fn)
-static int s_test_realloc_passthrough_fn(struct aws_allocator *unused, void *ctx) {
-    struct aws_allocator allocator = {
-        .mem_acquire = s_test_alloc_acquire, .mem_release = s_test_alloc_release, .mem_realloc = s_test_realloc};
+static int s_test_realloc_passthrough_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_allocator test_allocator = {
+        .mem_acquire = s_test_alloc_acquire,
+        .mem_release = s_test_alloc_release,
+        .mem_realloc = s_test_realloc,
+    };
 
     s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
 
-    void *buf = aws_mem_acquire(&allocator, 32);
+    void *buf = aws_mem_acquire(&test_allocator, 32);
     void *oldbuf = buf;
     memcpy(buf, TEST_PATTERN, 32);
 
-    ASSERT_SUCCESS(aws_mem_realloc(&allocator, &buf, 32, 64));
+    ASSERT_SUCCESS(aws_mem_realloc(&test_allocator, &buf, 32, 64));
     ASSERT_INT_EQUALS(memcmp(buf, TEST_PATTERN, 32), 0);
     ASSERT_INT_EQUALS(s_reported_oldsize, 32);
     ASSERT_INT_EQUALS(s_original_size, 32);
@@ -164,17 +201,19 @@ static int s_test_realloc_passthrough_fn(struct aws_allocator *unused, void *ctx
     ASSERT_INT_EQUALS(s_call_ct_free, 0);
     ASSERT_FALSE(buf == oldbuf);
 
-    aws_mem_release(&allocator, buf);
+    aws_mem_release(&test_allocator, buf);
 
     return 0;
 }
 
 AWS_TEST_CASE(test_cf_allocator_wrapper, s_test_cf_allocator_wrapper_fn)
 
-static int s_test_cf_allocator_wrapper_fn(struct aws_allocator *alloc, void *ctx) {
+static int s_test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
 
 #ifdef __MACH__
-    CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(alloc);
+    CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(allocator);
     ASSERT_NOT_NULL(cf_allocator);
     char test_prefix[] = "test_string";
     CFStringRef test_str = CFStringCreateWithCString(cf_allocator, test_prefix, kCFStringEncodingUTF8);

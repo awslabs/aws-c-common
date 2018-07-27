@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/mutex.h>
+
 #include <errno.h>
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
@@ -47,6 +48,7 @@ int aws_mutex_init(struct aws_mutex *mutex) {
     if (!err_code) {
         if ((err_code = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||
             (err_code = pthread_mutex_init(&mutex->mutex_handle, &attr))) {
+
             return_code = convert_and_raise_error_code(err_code);
         }
         pthread_mutexattr_destroy(&attr);

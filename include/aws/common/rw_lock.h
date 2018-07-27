@@ -54,8 +54,9 @@ static inline int aws_rw_lock_init(struct aws_rw_lock *lock);
 static inline void aws_rw_lock_clean_up(struct aws_rw_lock *lock);
 
 /**
- * Blocks until it acquires the lock. While on some platforms such as Windows, this may behave as a reentrant mutex,
- * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
+ * Blocks until it acquires the lock. While on some platforms such as Windows,
+ * this may behave as a reentrant mutex, you should not treat it like one. On
+ * platforms it is possible for it to be non-reentrant, it will be.
  */
 static inline int aws_rw_lock_rlock(struct aws_rw_lock *lock);
 static inline int aws_rw_lock_wlock(struct aws_rw_lock *lock);

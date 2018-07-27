@@ -14,10 +14,13 @@
  */
 
 #include <aws/common/byte_buf.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(test_char_split_happy_path, s_test_char_split_happy_path_fn)
 static int s_test_char_split_happy_path_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = "testa;testb;testc";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -49,6 +52,8 @@ static int s_test_char_split_happy_path_fn(struct aws_allocator *allocator, void
 
 AWS_TEST_CASE(test_char_split_ends_with_token, s_test_char_split_ends_with_token_fn)
 static int s_test_char_split_ends_with_token_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = "testa;testb;testc;";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -82,6 +87,8 @@ static int s_test_char_split_ends_with_token_fn(struct aws_allocator *allocator,
 
 AWS_TEST_CASE(test_char_split_begins_with_token, s_test_char_split_begins_with_token_fn)
 static int s_test_char_split_begins_with_token_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = ";testa;testb;testc";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -117,6 +124,8 @@ static int s_test_char_split_begins_with_token_fn(struct aws_allocator *allocato
 
 AWS_TEST_CASE(test_char_split_token_not_present, s_test_char_split_token_not_present_fn)
 static int s_test_char_split_token_not_present_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = "testa";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -140,6 +149,8 @@ static int s_test_char_split_token_not_present_fn(struct aws_allocator *allocato
 
 AWS_TEST_CASE(test_char_split_empty, s_test_char_split_empty_fn)
 static int s_test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = "";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -160,6 +171,8 @@ static int s_test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx
 
 AWS_TEST_CASE(test_char_split_adj_tokens, s_test_char_split_adj_tokens_fn)
 static int s_test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = "testa;;testb;testc";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -195,6 +208,8 @@ static int s_test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void
 
 AWS_TEST_CASE(test_char_split_with_max_splits, s_test_char_split_with_max_splits_fn)
 static int s_test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     const char str_to_split[] = ";testa;testb;testc";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);
@@ -226,6 +241,9 @@ static int s_test_char_split_with_max_splits_fn(struct aws_allocator *allocator,
 
 AWS_TEST_CASE(test_char_split_output_too_small, s_test_char_split_output_too_small_fn)
 static int s_test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     const char str_to_split[] = "testa;testb;testc;";
 
     struct aws_byte_buf to_split = aws_byte_buf_from_c_str(str_to_split);

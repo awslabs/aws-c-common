@@ -1,5 +1,5 @@
-#ifndef AWS_CONDITION_VARIABLE_H
-#define AWS_CONDITION_VARIABLE_H
+#ifndef AWS_COMMON_CONDITION_VARIABLE_H
+#define AWS_COMMON_CONDITION_VARIABLE_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -37,7 +37,8 @@ struct aws_condition_variable {
 
 /**
  * Static initializer for condition variable.
- * You can do something like struct aws_condition_variable var = AWS_CONDITION_VARIABLE_INIT;
+ * You can do something like struct aws_condition_variable var =
+ * AWS_CONDITION_VARIABLE_INIT;
  */
 #ifdef _WIN32
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
@@ -118,4 +119,4 @@ int aws_condition_variable_wait_for_pred(
 }
 #endif
 
-#endif /*AWS_CONDITION_VARIABLE_H */
+#endif /* AWS_COMMON_CONDITION_VARIABLE_H */

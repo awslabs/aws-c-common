@@ -37,7 +37,7 @@ function(aws_add_fuzz_tests fuzz_files other_files)
 
             set(FUZZ_BINARY_NAME ${CMAKE_PROJECT_NAME}-fuzz-${TEST_FILE_NAME})
             add_executable(${FUZZ_BINARY_NAME} ${test_file} ${other_files})
-            target_link_libraries(${FUZZ_BINARY_NAME} ${CMAKE_PROJECT_NAME})
+            target_link_libraries(${FUZZ_BINARY_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
             aws_set_common_properties(${FUZZ_BINARY_NAME})
             aws_add_sanitizers(${FUZZ_BINARY_NAME} SANITIZERS "${${CMAKE_PROJECT_NAME}_SANITIZERS};fuzzer")
             target_compile_definitions(${FUZZ_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)

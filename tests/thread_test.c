@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/thread.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 struct thread_test_data {
@@ -26,6 +27,7 @@ static void s_thread_fn(void *arg) {
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     struct thread_test_data test_data;
     test_data.thread_id = 0;
 

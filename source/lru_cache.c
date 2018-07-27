@@ -12,8 +12,9 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <assert.h>
 #include <aws/common/lru_cache.h>
+
+#include <assert.h>
 
 struct cache_node {
     struct aws_linked_list_node node;
@@ -54,7 +55,8 @@ int aws_lru_cache_init(
 }
 
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
-    /* clearing the table will remove all elements. That will also deallocate any cache entries we currently have. */
+    /* clearing the table will remove all elements. That will also deallocate
+     * any cache entries we currently have. */
     aws_hash_table_clean_up(&cache->table);
     AWS_ZERO_STRUCT(*cache);
 }
@@ -110,7 +112,8 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
     /* we only want to manage the space if we actually added a new element. */
     if (was_added && aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
 
-        /* we're over the cache size limit. Remove whatever is in the back of the list. */
+        /* we're over the cache size limit. Remove whatever is in the back of
+         * the list. */
         struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
         assert(node_to_remove);
         struct cache_node *entry_to_remove = AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
@@ -122,12 +125,14 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
 }
 
 int aws_lru_cache_remove(struct aws_lru_cache *cache, const void *key) {
-    /* allocated cache memory and the linked list entry will be removed in the callback. */
+    /* allocated cache memory and the linked list entry will be removed in the
+     * callback. */
     return aws_hash_table_remove(&cache->table, key, NULL, NULL);
 }
 
 void aws_lru_cache_clear(struct aws_lru_cache *cache) {
-    /* clearing the table will remove all elements. That will also deallocate any cache entries we currently have. */
+    /* clearing the table will remove all elements. That will also deallocate
+     * any cache entries we currently have. */
     aws_hash_table_clear(&cache->table);
 }
 

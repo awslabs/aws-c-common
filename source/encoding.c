@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/encoding.h>
+
+#include <assert.h>
 #include <ctype.h>
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
@@ -87,12 +88,12 @@ static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
         return 0;
     }
 
-    else if (character >= 'A' && character <= 'F') {
+    if (character >= 'A' && character <= 'F') {
         *int_val = (uint8_t)(10 + (character - 'A'));
         return 0;
     }
 
-    else if (character >= '0' && character <= '9') {
+    if (character >= '0' && character <= '9') {
         *int_val = (uint8_t)(character - '0');
         return 0;
     }
@@ -264,6 +265,7 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
 }
 
 static inline int s_base64_get_decoded_value(char to_decode, uint8_t *value, int8_t allow_sentinal) {
+
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
     if (decode_value != 0xDD && (decode_value != BASE64_SENTIANAL_VALUE || allow_sentinal)) {
         *value = decode_value;

@@ -14,11 +14,16 @@
  */
 
 #include <aws/common/system_info.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     size_t processor_count = aws_system_info_processor_count();
-    /* I think this is a fairly reasonable assumption given the circumstances (you know this test is part of a program
+    /* I think this is a fairly reasonable assumption given the circumstances
+     * (you know this test is part of a program
      * that must be running on at least one core).... */
     ASSERT_TRUE(processor_count > 0);
 

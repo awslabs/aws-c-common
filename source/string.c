@@ -17,8 +17,9 @@
 const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str) {
     size_t len = strlen(c_str);
     struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
-    if (!hdr)
+    if (!hdr) {
         return NULL;
+    }
     hdr->allocator = allocator;
     hdr->len = len;
     memcpy((void *)aws_string_bytes(hdr), c_str, len + 1);
@@ -27,8 +28,9 @@ const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocat
 
 const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
     struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
-    if (!hdr)
+    if (!hdr) {
         return NULL;
+    }
     hdr->allocator = allocator;
     hdr->len = len;
     memcpy((void *)aws_string_bytes(hdr), bytes, len);
@@ -39,8 +41,18 @@ const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocat
 
 void aws_string_destroy(void *str) {
     struct aws_string *self = str;
-    if (self && self->allocator)
+    if (self && self->allocator) {
         aws_mem_release(self->allocator, self);
+    }
+}
+
+void aws_string_secure_destroy(void *str) {
+    struct aws_string *self = str;
+    if (self) {
+        aws_secure_zero((void *)aws_string_bytes(self), self->len);
+        if (self->allocator)
+            aws_mem_release(self->allocator, self);
+    }
 }
 
 int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
@@ -49,13 +61,16 @@ int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
     size_t min_len = len_a < len_b ? len_a : len_b;
 
     int ret = memcmp(aws_string_bytes(a), aws_string_bytes(b), min_len);
-    if (ret)
+    if (ret) {
         return ret; /* overlapping characters differ */
-    if (len_a == len_b)
+    }
+    if (len_a == len_b) {
         return 0; /* strings identical */
-    if (len_a > len_b)
+    }
+    if (len_a > len_b) {
         return 1; /* string b is first n characters of string a */
-    return -1;    /* string a is first n characters of string b */
+    }
+    return -1; /* string a is first n characters of string b */
 }
 
 int aws_array_list_comparator_string(const void *a, const void *b) {

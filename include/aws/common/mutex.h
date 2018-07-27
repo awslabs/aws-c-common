@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_MUTEX_H_
-#define AWS_COMMON_MUTEX_H_
+#ifndef AWS_COMMON_MUTEX_H
+#define AWS_COMMON_MUTEX_H
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -54,8 +54,9 @@ AWS_COMMON_API
 void aws_mutex_clean_up(struct aws_mutex *mutex);
 
 /**
- * Blocks until it acquires the lock. While on some platforms such as Windows, this may behave as a reentrant mutex,
- * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
+ * Blocks until it acquires the lock. While on some platforms such as Windows,
+ * this may behave as a reentrant mutex, you should not treat it like one. On
+ * platforms it is possible for it to be non-reentrant, it will be.
  */
 AWS_COMMON_API
 int aws_mutex_lock(struct aws_mutex *mutex);
@@ -78,4 +79,4 @@ int aws_mutex_unlock(struct aws_mutex *mutex);
 }
 #endif
 
-#endif /* AWS_COMMON_MUTEX_H_ */
+#endif /* AWS_COMMON_MUTEX_H */

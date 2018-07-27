@@ -93,7 +93,7 @@ file(GLOB COMMON_SRC
 add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
-target_link_libraries(${CMAKE_PROJECT_NAME} ${PLATFORM_LIBS})
+target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

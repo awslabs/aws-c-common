@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/system_info.h>
+
+#include <assert.h>
 #include <unistd.h>
 
 size_t aws_system_info_processor_count(void) {

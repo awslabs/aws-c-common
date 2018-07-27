@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/linked_list.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 struct int_value {
@@ -22,6 +23,9 @@ struct int_value {
 };
 
 static int s_test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);
@@ -59,6 +63,9 @@ static int s_test_linked_list_order_push_back_pop_front(struct aws_allocator *al
 }
 
 static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);
@@ -100,6 +107,9 @@ static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *al
 }
 
 static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_linked_list list;
 
     aws_linked_list_init(&list);

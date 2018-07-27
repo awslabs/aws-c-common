@@ -13,12 +13,14 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/thread.h>
+
+#include <assert.h>
 
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
-    .stack_size = 0};
+    .stack_size = 0,
+};
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
@@ -101,8 +103,9 @@ uint64_t aws_thread_current_thread_id() {
 }
 
 void aws_thread_current_sleep(uint64_t nanos) {
-    /* We don't really have a better option here for windows that isn't super complex AND we don't have a use case
-     * yet where we should have sleeps anywhere other than for context switches and testing. When that time arises
-     * put the effort in here. */
+    /* We don't really have a better option here for windows that isn't super
+     * complex AND we don't have a use case yet where we should have sleeps
+     * anywhere other than for context switches and testing. When that time
+     * arises put the effort in here. */
     Sleep((DWORD)(nanos / 1000000));
 }

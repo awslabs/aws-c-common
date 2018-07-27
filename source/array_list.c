@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <assert.h>
 #include <aws/common/array_list.h>
+
+#include <assert.h>
 #include <stdlib.h> /* qsort */
 
 #define SENTINAL 0xDD
@@ -187,7 +188,7 @@ int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list
         return AWS_OP_SUCCESS;
     }
     /* if to is in dynamic mode, we can just reallocate it and copy */
-    else if (to->alloc != NULL) {
+    if (to->alloc != NULL) {
         void *tmp = aws_mem_acquire(to->alloc, copy_size);
 
         if (!tmp) {
@@ -253,18 +254,22 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
             return aws_raise_error(AWS_ERROR_INVALID_INDEX);
         }
 
-        /* this will double capacity if the index isn't bigger than what the next allocation would be,
-         * but allocates the exact requested size if it is. This is largely because we don't have a
-         * good way to predict the usage pattern to make a smart decision about it. However, if the user
-         * is doing this in an iterative fashion, necessary_size will never be used.*/
+        /* this will double capacity if the index isn't bigger than what the
+         * next allocation would be, but allocates the exact requested size if
+         * it is. This is largely because we don't have a good way to predict
+         * the usage pattern to make a smart decision about it. However, if the
+         * user
+         * is doing this in an iterative fashion, necessary_size will never be
+         * used.*/
         size_t next_allocation_size = list->current_size << 1;
         size_t new_size = next_allocation_size > necessary_size ? next_allocation_size : necessary_size;
 
         if (new_size < list->current_size) {
-            /* this means new_size overflowed. The only way this happens is on a 32-bit system
-             * where size_t is 32 bits, in which case we're out of addressable memory anyways, or
-             * we're on a 64 bit system and we're most certainly out of addressable memory.
-             * But since we're simply going to fail fast and say, sorry can't do it, we'll just tell
+            /* this means new_size overflowed. The only way this happens is on a
+             * 32-bit system where size_t is 32 bits, in which case we're out of
+             * addressable memory anyways, or we're on a 64 bit system and we're
+             * most certainly out of addressable memory. But since we're simply
+             * going to fail fast and say, sorry can't do it, we'll just tell
              * the user they can't grow the list anymore. */
             return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
         }
@@ -289,7 +294,8 @@ int aws_array_list_set_at(struct aws_array_list *list, const void *val, size_t i
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 
-    /* this isn't perfect but its the best I can come up with for detecting length changes*/
+    /* this isn't perfect but its the best I can come up with for detecting
+     * length changes*/
     if (index >= list->length) {
         list->length = index + 1;
     }

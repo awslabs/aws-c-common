@@ -13,6 +13,8 @@ phases:
     commands:
       - export CC=clang-6.0
       - export CXX=clang++-6.0
+      - export CLANG_FORMAT=clang-format-6.0
+      - export CLANG_TIDY=clang-tidy-6.0
   build:
     commands:
       - echo Build started on `date`
@@ -23,7 +25,8 @@ phases:
       - make
       - make test
       - cd ..
-      - clang-tidy-6.0 -p=build **/*.c
+      - ./format-check.sh
+      - $CLANG_TIDY -p=build **/*.c
   post_build:
     commands:
       - echo Build completed on `date`
