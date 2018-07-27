@@ -48,9 +48,7 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     }
 }
 
-int aws_thread_init(
-    struct aws_thread *thread,
-    struct aws_allocator *allocator) {
+int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->allocator = allocator;
     thread->thread_id = 0;
     thread->detach_state = AWS_THREAD_NOT_CREATED;
@@ -79,8 +77,7 @@ int aws_thread_launch(
         attributes_ptr = &attributes;
 
         if (options->stack_size > PTHREAD_STACK_MIN) {
-            attr_return =
-                pthread_attr_setstacksize(attributes_ptr, options->stack_size);
+            attr_return = pthread_attr_setstacksize(attributes_ptr, options->stack_size);
 
             if (attr_return) {
                 goto cleanup;
@@ -88,8 +85,8 @@ int aws_thread_launch(
         }
     }
 
-    struct thread_wrapper *wrapper = (struct thread_wrapper *)aws_mem_acquire(
-        thread->allocator, sizeof(struct thread_wrapper));
+    struct thread_wrapper *wrapper =
+        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
 
     if (!wrapper) {
         allocation_failed = 1;
@@ -99,8 +96,7 @@ int aws_thread_launch(
     wrapper->allocator = thread->allocator;
     wrapper->func = func;
     wrapper->arg = arg;
-    attr_return = pthread_create(
-        &thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
+    attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if (attr_return) {
         goto cleanup;

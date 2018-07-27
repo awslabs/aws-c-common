@@ -46,8 +46,7 @@ int aws_mutex_init(struct aws_mutex *mutex) {
     int return_code = AWS_OP_SUCCESS;
 
     if (!err_code) {
-        if ((err_code =
-                 pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||
+        if ((err_code = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||
             (err_code = pthread_mutex_init(&mutex->mutex_handle, &attr))) {
 
             return_code = convert_and_raise_error_code(err_code);
@@ -62,18 +61,15 @@ int aws_mutex_init(struct aws_mutex *mutex) {
 
 int aws_mutex_lock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(
-        pthread_mutex_lock(&mutex->mutex_handle));
+    return convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
 }
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(
-        pthread_mutex_trylock(&mutex->mutex_handle));
+    return convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(
-        pthread_mutex_unlock(&mutex->mutex_handle));
+    return convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
 }

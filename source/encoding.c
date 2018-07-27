@@ -21,34 +21,25 @@
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
 static const uint8_t BASE64_SENTINAL_VALUE = 0xff;
-static const uint8_t BASE64_ENCODING_TABLE[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const uint8_t BASE64_ENCODING_TABLE[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte
  * counting for any reason, there's 16 bytes per row. */
 static uint8_t BASE64_DECODING_TABLE[256] = {
-    64,   0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 62,   0xDD, 0xDD, 0xDD, 63,
-    52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   0xDD, 0xDD,
-    0xDD, 255,  0xDD, 0xDD, 0xDD, 0,    1,    2,    3,    4,    5,    6,
-    7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,
-    19,   20,   21,   22,   23,   24,   25,   0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
-    37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,
-    49,   50,   51,   0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
-    0xDD, 0xDD, 0xDD, 0xDD};
+    64,   0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 62,   0xDD, 0xDD, 0xDD, 63,   52,   53,   54,   55,   56,   57,   58,   59,   60,
+    61,   0xDD, 0xDD, 0xDD, 255,  0xDD, 0xDD, 0xDD, 0,    1,    2,    3,    4,    5,    6,    7,    8,    9,    10,
+    11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,   22,   23,   24,   25,   0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,   37,   38,   39,   40,   41,   42,
+    43,   44,   45,   46,   47,   48,   49,   50,   51,   0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD,
+    0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD};
 
 int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     assert(encoded_length);
@@ -64,16 +55,13 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_encode(
-    const struct aws_byte_buf *AWS_RESTRICT to_encode,
-    struct aws_byte_buf *AWS_RESTRICT output) {
+int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
     assert(to_encode->buffer);
     assert(output->buffer);
 
     size_t encoded_len = 0;
 
-    if (AWS_UNLIKELY(
-            aws_hex_compute_encoded_len(to_encode->len, &encoded_len))) {
+    if (AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode->len, &encoded_len))) {
         return AWS_OP_ERR;
     }
 
@@ -126,16 +114,13 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_hex_decode(
-    const struct aws_byte_buf *AWS_RESTRICT to_decode,
-    struct aws_byte_buf *AWS_RESTRICT output) {
+int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
     assert(to_decode->buffer);
     assert(output->buffer);
 
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(
-            aws_hex_compute_decoded_len(to_decode->len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode->len, &decoded_length))) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
@@ -197,10 +182,7 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_compute_decoded_len(
-    const char *input,
-    size_t len,
-    size_t *decoded_len) {
+int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len) {
     assert(input);
     assert(decoded_len);
 
@@ -221,8 +203,7 @@ int aws_base64_compute_decoded_len(
 
     size_t padding = 0;
 
-    if (len >= 2 && input[len - 1] == '=' &&
-        input[len - 2] == '=') { /*last two chars are = */
+    if (len >= 2 && input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     } else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
@@ -232,15 +213,12 @@ int aws_base64_compute_decoded_len(
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_encode(
-    const struct aws_byte_buf *AWS_RESTRICT to_encode,
-    struct aws_byte_buf *AWS_RESTRICT output) {
+int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
     assert(to_encode->buffer);
     assert(output->buffer);
 
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(
-            aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
         return AWS_OP_ERR;
     }
 
@@ -266,12 +244,9 @@ int aws_base64_encode(
             block = block | to_encode->buffer[i + 2];
         }
 
-        output->buffer[str_index++] =
-            BASE64_ENCODING_TABLE[(block >> 18) & 0x3F];
-        output->buffer[str_index++] =
-            BASE64_ENCODING_TABLE[(block >> 12) & 0x3F];
-        output->buffer[str_index++] =
-            BASE64_ENCODING_TABLE[(block >> 6) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 18) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 12) & 0x3F];
+        output->buffer[str_index++] = BASE64_ENCODING_TABLE[(block >> 6) & 0x3F];
         output->buffer[str_index++] = BASE64_ENCODING_TABLE[block & 0x3F];
     }
 
@@ -289,13 +264,9 @@ int aws_base64_encode(
     return AWS_OP_SUCCESS;
 }
 
-static inline int base64_get_decoded_value(
-    char to_decode,
-    uint8_t *value,
-    int8_t allow_sentinal) {
+static inline int base64_get_decoded_value(char to_decode, uint8_t *value, int8_t allow_sentinal) {
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
-    if (decode_value != 0xDD &&
-        (decode_value != BASE64_SENTINAL_VALUE || allow_sentinal)) {
+    if (decode_value != 0xDD && (decode_value != BASE64_SENTINAL_VALUE || allow_sentinal)) {
         *value = decode_value;
         return AWS_OP_SUCCESS;
     }
@@ -303,13 +274,10 @@ static inline int base64_get_decoded_value(
     return AWS_OP_ERR;
 }
 
-int aws_base64_decode(
-    const struct aws_byte_buf *AWS_RESTRICT to_decode,
-    struct aws_byte_buf *AWS_RESTRICT output) {
+int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_base64_compute_decoded_len(
-            (char *)to_decode->buffer, to_decode->len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_decoded_len((char *)to_decode->buffer, to_decode->len, &decoded_length))) {
         return AWS_OP_ERR;
     }
 
@@ -324,48 +292,35 @@ int aws_base64_decode(
 
     for (int32_t i = 0; i < block_count - 1; ++i) {
         if (AWS_UNLIKELY(
-                base64_get_decoded_value(
-                    to_decode->buffer[string_index++], &value1, 0) ||
-                base64_get_decoded_value(
-                    to_decode->buffer[string_index++], &value2, 0) ||
-                base64_get_decoded_value(
-                    to_decode->buffer[string_index++], &value3, 0) ||
-                base64_get_decoded_value(
-                    to_decode->buffer[string_index++], &value4, 0))) {
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value1, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value2, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value3, 0) ||
+                base64_get_decoded_value(to_decode->buffer[string_index++], &value4, 0))) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
         buffer_index = i * 3;
-        output->buffer[buffer_index++] =
-            (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
-        output->buffer[buffer_index++] =
-            (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
+        output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
+        output->buffer[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
         output->buffer[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
     }
 
     buffer_index = (block_count - 1) * 3;
 
     if (buffer_index >= 0) {
-        if (base64_get_decoded_value(
-                to_decode->buffer[string_index++], &value1, 0) ||
-            base64_get_decoded_value(
-                to_decode->buffer[string_index++], &value2, 0) ||
-            base64_get_decoded_value(
-                to_decode->buffer[string_index++], &value3, 1) ||
-            base64_get_decoded_value(
-                to_decode->buffer[string_index], &value4, 1)) {
+        if (base64_get_decoded_value(to_decode->buffer[string_index++], &value1, 0) ||
+            base64_get_decoded_value(to_decode->buffer[string_index++], &value2, 0) ||
+            base64_get_decoded_value(to_decode->buffer[string_index++], &value3, 1) ||
+            base64_get_decoded_value(to_decode->buffer[string_index], &value4, 1)) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
-        output->buffer[buffer_index++] =
-            (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
+        output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
 
         if (value3 != BASE64_SENTINAL_VALUE) {
-            output->buffer[buffer_index++] =
-                (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
+            output->buffer[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
             if (value4 != BASE64_SENTINAL_VALUE) {
-                output->buffer[buffer_index] =
-                    (uint8_t)((value3 & 0x03) << 6 | value4);
+                output->buffer[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
             }
         }
     }

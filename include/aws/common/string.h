@@ -45,9 +45,7 @@ static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_cursor(
-    const struct aws_string *str,
-    const struct aws_byte_cursor *cur) {
+static inline bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
 
     if (str->len != cur->len)
         return false;
@@ -57,9 +55,7 @@ static inline bool aws_string_eq_byte_cursor(
 /**
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_buf(
-    const struct aws_string *str,
-    const struct aws_byte_buf *buf) {
+static inline bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
 
     if (str->len != buf->len)
         return false;
@@ -75,14 +71,9 @@ extern "C" {
  * of unsigned or signed characters.
  */
 AWS_COMMON_API
-const struct aws_string *aws_string_from_c_str_new(
-    struct aws_allocator *allocator,
-    const char *c_str);
+const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str);
 AWS_COMMON_API
-const struct aws_string *aws_string_from_array_new(
-    struct aws_allocator *allocator,
-    const uint8_t *bytes,
-    size_t len);
+const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor
@@ -130,11 +121,11 @@ int aws_array_list_comparator_string(const void *a, const void *b);
  * argument that points to constant memory and has data bytes containing the
  * string literal in the second argument.
  */
-#define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                          \
-    static const struct {                                                      \
-        struct aws_string hdr;                                                 \
-        uint8_t data[sizeof(literal)];                                         \
-    } name##_s = {{NULL, sizeof(literal) - 1}, {literal}};                     \
+#define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                                                                  \
+    static const struct {                                                                                              \
+        struct aws_string hdr;                                                                                         \
+        uint8_t data[sizeof(literal)];                                                                                 \
+    } name##_s = {{NULL, sizeof(literal) - 1}, {literal}};                                                             \
     static const struct aws_string *(name) = &name##_s.hdr
 
 /**

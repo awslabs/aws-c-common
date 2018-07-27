@@ -51,13 +51,7 @@ int aws_lru_cache_init(
 
     aws_linked_list_init(&cache->list);
     return aws_hash_table_init(
-        &cache->table,
-        allocator,
-        max_items,
-        hash_fn,
-        equals_fn,
-        destroy_key_fn,
-        element_destroy);
+        &cache->table, allocator, max_items, hash_fn, equals_fn, destroy_key_fn, element_destroy);
 }
 
 void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
@@ -67,10 +61,7 @@ void aws_lru_cache_clean_up(struct aws_lru_cache *cache) {
     AWS_ZERO_STRUCT(*cache);
 }
 
-int aws_lru_cache_find(
-    struct aws_lru_cache *cache,
-    const void *key,
-    void **p_value) {
+int aws_lru_cache_find(struct aws_lru_cache *cache, const void *key, void **p_value) {
 
     struct aws_hash_element *cache_element = NULL;
     int err_val = aws_hash_table_find(&cache->table, key, &cache_element);
@@ -90,13 +81,9 @@ int aws_lru_cache_find(
     return AWS_OP_SUCCESS;
 }
 
-int aws_lru_cache_put(
-    struct aws_lru_cache *cache,
-    const void *key,
-    void *p_value) {
+int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_value) {
 
-    struct cache_node *cache_node =
-        aws_mem_acquire(cache->allocator, sizeof(struct cache_node));
+    struct cache_node *cache_node = aws_mem_acquire(cache->allocator, sizeof(struct cache_node));
 
     if (!cache_node) {
         return AWS_OP_ERR;
@@ -104,8 +91,7 @@ int aws_lru_cache_put(
 
     struct aws_hash_element *element = NULL;
     int was_added = 0;
-    int err_val =
-        aws_hash_table_create(&cache->table, key, &element, &was_added);
+    int err_val = aws_hash_table_create(&cache->table, key, &element, &was_added);
 
     if (err_val) {
         aws_mem_release(cache->allocator, cache_node);
@@ -124,16 +110,13 @@ int aws_lru_cache_put(
     aws_linked_list_push_front(&cache->list, &cache_node->node);
 
     /* we only want to manage the space if we actually added a new element. */
-    if (was_added &&
-        aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
+    if (was_added && aws_hash_table_get_entry_count(&cache->table) > cache->max_items) {
 
         /* we're over the cache size limit. Remove whatever is in the back of
          * the list. */
-        struct aws_linked_list_node *node_to_remove =
-            aws_linked_list_back(&cache->list);
+        struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
         assert(node_to_remove);
-        struct cache_node *entry_to_remove =
-            AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
+        struct cache_node *entry_to_remove = AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
         /*the callback will unlink and deallocate the node */
         aws_hash_table_remove(&cache->table, entry_to_remove->key, NULL, NULL);
     }
@@ -162,8 +145,7 @@ void *aws_lru_cache_use_lru_element(struct aws_lru_cache *cache) {
 
     aws_linked_list_remove(lru_node);
     aws_linked_list_push_front(&cache->list, lru_node);
-    struct cache_node *lru_element =
-        AWS_CONTAINER_OF(lru_node, struct cache_node, node);
+    struct cache_node *lru_element = AWS_CONTAINER_OF(lru_node, struct cache_node, node);
     return lru_element->value;
 }
 
@@ -174,8 +156,7 @@ void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache) {
 
     struct aws_linked_list_node *mru_node = aws_linked_list_front(&cache->list);
 
-    struct cache_node *mru_element =
-        AWS_CONTAINER_OF(mru_node, struct cache_node, node);
+    struct cache_node *mru_element = AWS_CONTAINER_OF(mru_node, struct cache_node, node);
     return mru_element->value;
 }
 

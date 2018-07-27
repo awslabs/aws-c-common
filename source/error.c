@@ -43,8 +43,7 @@ AWS_THREAD_LOCAL void *s_thread_handler_context = NULL;
 
 static const int MAX_ERROR_CODE = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
 
-static const struct aws_error_info_list
-    *volatile error_slots[AWS_MAX_ERROR_SLOTS] = {0};
+static const struct aws_error_info_list *volatile error_slots[AWS_MAX_ERROR_SLOTS] = {0};
 
 int aws_last_error(void) {
     return s_last_error;
@@ -117,9 +116,7 @@ void aws_restore_error(int err) {
     s_last_error = err;
 }
 
-aws_error_handler aws_set_global_error_handler_fn(
-    aws_error_handler handler,
-    void *ctx) {
+aws_error_handler aws_set_global_error_handler_fn(aws_error_handler handler, void *ctx) {
     aws_error_handler old_handler = s_global_handler;
     s_global_handler = handler;
     s_global_error_context = ctx;
@@ -127,9 +124,7 @@ aws_error_handler aws_set_global_error_handler_fn(
     return old_handler;
 }
 
-aws_error_handler aws_set_thread_local_error_handler_fn(
-    aws_error_handler handler,
-    void *ctx) {
+aws_error_handler aws_set_thread_local_error_handler_fn(aws_error_handler handler, void *ctx) {
     aws_error_handler old_handler = s_thread_handler;
     s_thread_handler = handler;
     s_thread_handler_context = ctx;

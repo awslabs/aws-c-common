@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
 #include <aws/common/byte_buf.h>
+#include <aws/common/common.h>
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(test_secure_zero, test_secure_zero_fn)
@@ -56,10 +56,12 @@ static int test_buffer_secure_zero_fn(struct aws_allocator *allocator, void *ctx
     size_t len = 27;
     ASSERT_SUCCESS(aws_byte_buf_init(allocator, &buf, len));
     buf.len = buf.capacity;
-    for (size_t i = 0; i < len; ++i) buf.buffer[i] = 0xDD;
+    for (size_t i = 0; i < len; ++i)
+        buf.buffer[i] = 0xDD;
 
     aws_byte_buf_secure_zero(&buf);
-    for (size_t i = 0; i < len; ++i) ASSERT_INT_EQUALS(0, buf.buffer[i]);
+    for (size_t i = 0; i < len; ++i)
+        ASSERT_INT_EQUALS(0, buf.buffer[i]);
     ASSERT_INT_EQUALS(0, buf.len);
 
     aws_byte_buf_clean_up(&buf);

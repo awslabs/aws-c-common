@@ -37,11 +37,7 @@ static void default_free(struct aws_allocator *allocator, void *ptr) {
     free(ptr);
 }
 
-static void *default_realloc(
-    struct aws_allocator *allocator,
-    void *ptr,
-    size_t oldsize,
-    size_t newsize) {
+static void *default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
     return realloc(ptr, newsize);
@@ -69,14 +65,9 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
     allocator->mem_release(allocator, ptr);
 }
 
-int aws_mem_realloc(
-    struct aws_allocator *allocator,
-    void **ptr,
-    size_t oldsize,
-    size_t newsize) {
+int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
     if (allocator->mem_realloc) {
-        void *newptr =
-            allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
+        void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
         if (!newptr) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
@@ -109,15 +100,11 @@ int aws_mem_realloc(
 /* Wraps a CFAllocator around aws_allocator. For Mac only. */
 #ifdef __MACH__
 
-static CFStringRef cf_allocator_description =
-    CFSTR("CFAllocator wrapping aws_allocator.");
+static CFStringRef cf_allocator_description = CFSTR("CFAllocator wrapping aws_allocator.");
 
 /* note we don't have a standard specification stating sizeof(size_t) ==
  * sizeof(void *) so we have some extra casts */
-static void *cf_allocator_allocate(
-    CFIndex alloc_size,
-    CFOptionFlags hint,
-    void *info) {
+static void *cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
     struct aws_allocator *allocator = info;
 
     void *mem = aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
@@ -139,11 +126,7 @@ static void cf_allocator_deallocate(void *ptr, void *info) {
     aws_mem_release(allocator, original_allocation);
 }
 
-static void *cf_allocator_reallocate(
-    void *ptr,
-    CFIndex new_size,
-    CFOptionFlags hint,
-    void *info) {
+static void *cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
     struct aws_allocator *allocator = info;
     assert(allocator->mem_realloc);
 
@@ -151,8 +134,7 @@ static void *cf_allocator_reallocate(
     size_t original_size = 0;
     memcpy(&original_size, original_allocation, sizeof(size_t));
 
-    if (aws_mem_realloc(
-            allocator, &original_allocation, original_size, (size_t)new_size)) {
+    if (aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size)) {
         return NULL;
     }
 
@@ -166,10 +148,7 @@ static CFStringRef cf_allocator_copy_description(const void *info) {
     return cf_allocator_description;
 }
 
-static CFIndex cf_allocator_preferred_size(
-    CFIndex size,
-    CFOptionFlags hint,
-    void *info) {
+static CFIndex cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
     return size + sizeof(size_t);
 }
 
@@ -211,8 +190,7 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
 
 static int8_t error_strings_loaded = 0;
 
-#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES)                                    \
-    AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
+#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
 
 /* clang-format off */
 static struct aws_error_info errors[] = {

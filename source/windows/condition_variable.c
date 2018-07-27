@@ -19,42 +19,32 @@
 
 #define MILLIS_PER_SEC 1000000
 
-int aws_condition_variable_init(
-    struct aws_condition_variable *condition_variable) {
+int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
 
     InitializeConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
 
-void aws_condition_variable_clean_up(
-    struct aws_condition_variable *condition_variable) {
+void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
     (void)condition_variable;
     /* no op */
 }
 
-int aws_condition_variable_notify_one(
-    struct aws_condition_variable *condition_variable) {
+int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable) {
 
     WakeConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
 
-int aws_condition_variable_notify_all(
-    struct aws_condition_variable *condition_variable) {
+int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
 
     WakeAllConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
 
-int aws_condition_variable_wait(
-    struct aws_condition_variable *condition_variable,
-    struct aws_mutex *mutex) {
+int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
 
-    if (SleepConditionVariableSRW(
-            &condition_variable->condition_handle,
-            &mutex->mutex_handle,
-            INFINITE,
-            0)) {
+    if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, INFINITE, 0)) {
         return AWS_OP_SUCCESS;
     }
 
@@ -67,11 +57,7 @@ int aws_condition_variable_wait_for(
     int64_t time_to_wait) {
 
     DWORD time_ms = (DWORD)(time_to_wait / MILLIS_PER_SEC);
-    if (SleepConditionVariableSRW(
-            &condition_variable->condition_handle,
-            &mutex->mutex_handle,
-            time_ms,
-            0)) {
+    if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {
         return AWS_OP_SUCCESS;
     }
 

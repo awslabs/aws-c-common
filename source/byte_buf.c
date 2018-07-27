@@ -24,10 +24,7 @@
 #    pragma warning(disable : 4706)
 #endif
 
-int aws_byte_buf_init(
-    struct aws_allocator *allocator,
-    struct aws_byte_buf *buf,
-    size_t len) {
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
     buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
     if (!buf->buffer) {
         return AWS_OP_ERR;
@@ -75,19 +72,15 @@ int aws_byte_buf_split_on_char_n(
 
     struct aws_byte_cursor current_pos = aws_byte_cursor_from_buf(input_str);
 
-    while (
-        split_count < max_splits &&
-        (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
+    while (split_count < max_splits && (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
 
         size_t distance_from_origin = new_location - current_pos.ptr;
 
-        struct aws_byte_cursor buffer =
-            aws_byte_cursor_advance(&current_pos, distance_from_origin);
+        struct aws_byte_cursor buffer = aws_byte_cursor_advance(&current_pos, distance_from_origin);
         /* skip ahead by one to jump over the split_on character.*/
         aws_byte_cursor_advance(&current_pos, 1);
 
-        if (AWS_UNLIKELY(
-                aws_array_list_push_back(output, (const void *)&buffer))) {
+        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
             return AWS_OP_ERR;
         }
 
@@ -109,10 +102,7 @@ int aws_byte_buf_split_on_char_n(
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_split_on_char(
-    struct aws_byte_buf *input_str,
-    char split_on,
-    struct aws_array_list *output) {
+int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
     return aws_byte_buf_split_on_char_n(input_str, split_on, output, 0);
 }
 

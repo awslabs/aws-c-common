@@ -38,8 +38,7 @@ int aws_condition_variable_wait_for_pred(
     void *pred_ctx) {
     int err_code = 0;
     while (!err_code && !pred(pred_ctx)) {
-        err_code = aws_condition_variable_wait_for(
-            condition_variable, mutex, time_to_wait);
+        err_code = aws_condition_variable_wait_for(condition_variable, mutex, time_to_wait);
     }
 
     return err_code;

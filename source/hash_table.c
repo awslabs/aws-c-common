@@ -74,9 +74,7 @@ static uint64_t hash_for(struct hash_table_state *state, const void *key) {
     return hash_code;
 }
 
-static int index_for(
-    struct hash_table_state *map,
-    struct hash_table_entry *entry) {
+static int index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
     return (int)(entry - map->slots);
 }
 
@@ -162,14 +160,12 @@ size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map) {
  * size, and copies the state header into this allocated memory, which is
  * returned.
  */
-static struct hash_table_state *alloc_state(
-    const struct hash_table_state *template) {
+static struct hash_table_state *alloc_state(const struct hash_table_state *template) {
     size_t elemsize;
 
     /* We use size - 1 because the first slot is inlined into the
      * hash_table_state structure. */
-    if (!aws_mul_size_checked(
-            template->size - 1, sizeof(template->slots[0]), &elemsize)) {
+    if (!aws_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
         return NULL;
     }
 
@@ -186,16 +182,13 @@ static struct hash_table_state *alloc_state(
     }
 
     memcpy(state, template, sizeof(*template));
-    memset(
-        &state->slots[0], 0, size - sizeof(*state) + sizeof(state->slots[0]));
+    memset(&state->slots[0], 0, size - sizeof(*state) + sizeof(state->slots[0]));
 
     return state;
 }
 
 /* Computes the correct size and max_load based on a requested size. */
-static int update_template_size(
-    struct hash_table_state *template,
-    size_t expected_elements) {
+static int update_template_size(struct hash_table_state *template, size_t expected_elements) {
     size_t min_size = expected_elements;
 
     if (min_size < 2) {
@@ -226,10 +219,8 @@ static int update_template_size(
     }
 
     /* Make sure we don't overflow when computing memory requirements either */
-    size_t required_mem = aws_mul_size_saturating(
-        template->size, sizeof(struct hash_table_entry));
-    if (required_mem == SIZE_MAX ||
-        (required_mem + sizeof(struct hash_table_state)) < required_mem) {
+    size_t required_mem = aws_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
+    if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
         return aws_raise_error(AWS_ERROR_OOM);
     }
 
@@ -307,8 +298,7 @@ static int inline find_entry(
         return AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
     }
 
-    if (entry->hash_code == hash_code &&
-        state->equals_fn(key, entry->element.key)) {
+    if (entry->hash_code == hash_code && state->equals_fn(key, entry->element.key)) {
         if (p_probe_idx) {
             *p_probe_idx = 0;
         }
@@ -342,8 +332,7 @@ static int find_entry1(
             break;
         }
 
-        if (entry->hash_code == hash_code &&
-            state->equals_fn(key, entry->element.key)) {
+        if (entry->hash_code == hash_code && state->equals_fn(key, entry->element.key)) {
             rv = AWS_ERROR_SUCCESS;
             break;
         }
@@ -374,10 +363,7 @@ static int find_entry1(
     return rv;
 }
 
-int aws_hash_table_find(
-    const struct aws_hash_table *map,
-    const void *key,
-    struct aws_hash_element **pElem) {
+int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **pElem) {
     struct hash_table_state *state = map->pImpl;
     uint64_t hash_code = hash_for(state, key);
     struct hash_table_entry *entry;
@@ -518,9 +504,7 @@ int aws_hash_table_create(
  * Returns the last slot touched (note that if we wrap, we'll report an index
  * lower than the original entry's index)
  */
-static int remove_entry(
-    struct hash_table_state *state,
-    struct hash_table_entry *entry) {
+static int remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
     state->entry_count--;
 
     /* Shift subsequent entries back until we find an entry that belongs at its
@@ -545,10 +529,7 @@ static int remove_entry(
         }
 
         /* Okay, shift this one back */
-        memcpy(
-            &state->slots[index],
-            &state->slots[next_index],
-            sizeof(*state->slots));
+        memcpy(&state->slots[index], &state->slots[next_index], sizeof(*state->slots));
         index = next_index;
     }
 
@@ -637,9 +618,7 @@ int aws_hash_table_foreach(
     return AWS_OP_SUCCESS;
 }
 
-static inline void get_next_element(
-    struct aws_hash_iter *iter,
-    size_t start_slot) {
+static inline void get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
 
     struct hash_table_state *state = iter->map->pImpl;
     size_t limit = state->size;
@@ -748,9 +727,7 @@ bool aws_c_string_eq(const void *a, const void *b) {
 bool aws_string_eq(const void *a, const void *b) {
     const struct aws_string *str_a = a;
     const struct aws_string *str_b = b;
-    return str_a->len == str_b->len &&
-           !memcmp(
-               aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
+    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {

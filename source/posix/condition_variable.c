@@ -33,8 +33,7 @@ static int process_error_code(int err) {
     }
 }
 
-int aws_condition_variable_init(
-    struct aws_condition_variable *condition_variable) {
+int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
     if (pthread_cond_init(&condition_variable->condition_handle, NULL)) {
         return aws_raise_error(AWS_ERROR_COND_VARIABLE_INIT_FAILED);
     }
@@ -42,13 +41,11 @@ int aws_condition_variable_init(
     return AWS_OP_SUCCESS;
 }
 
-void aws_condition_variable_clean_up(
-    struct aws_condition_variable *condition_variable) {
+void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
     pthread_cond_destroy(&condition_variable->condition_handle);
 }
 
-int aws_condition_variable_notify_one(
-    struct aws_condition_variable *condition_variable) {
+int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable) {
     int err_code = pthread_cond_signal(&condition_variable->condition_handle);
 
     if (err_code) {
@@ -58,10 +55,8 @@ int aws_condition_variable_notify_one(
     return AWS_OP_SUCCESS;
 }
 
-int aws_condition_variable_notify_all(
-    struct aws_condition_variable *condition_variable) {
-    int err_code =
-        pthread_cond_broadcast(&condition_variable->condition_handle);
+int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
+    int err_code = pthread_cond_broadcast(&condition_variable->condition_handle);
 
     if (err_code) {
         return process_error_code(err_code);
@@ -70,11 +65,8 @@ int aws_condition_variable_notify_all(
     return AWS_OP_SUCCESS;
 }
 
-int aws_condition_variable_wait(
-    struct aws_condition_variable *condition_variable,
-    struct aws_mutex *mutex) {
-    int err_code = pthread_cond_wait(
-        &condition_variable->condition_handle, &mutex->mutex_handle);
+int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
+    int err_code = pthread_cond_wait(&condition_variable->condition_handle, &mutex->mutex_handle);
 
     if (err_code) {
         return process_error_code(err_code);
@@ -99,8 +91,7 @@ int aws_condition_variable_wait_for(
     ts.tv_sec = time_to_wait / NANOS_PER_SEC;
     ts.tv_nsec = time_to_wait % NANOS_PER_SEC;
 
-    int err_code = pthread_cond_timedwait(
-        &condition_variable->condition_handle, &mutex->mutex_handle, &ts);
+    int err_code = pthread_cond_timedwait(&condition_variable->condition_handle, &mutex->mutex_handle, &ts);
 
     if (err_code) {
         return process_error_code(err_code);

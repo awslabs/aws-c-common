@@ -196,10 +196,7 @@ void aws_hash_iter_next(struct aws_hash_iter *iter);
  */
 
 AWS_COMMON_API
-int aws_hash_table_find(
-    const struct aws_hash_table *map,
-    const void *key,
-    struct aws_hash_element **pElem);
+int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **pElem);
 
 /**
  * Attempts to locate an element at key. If no such element was found,
