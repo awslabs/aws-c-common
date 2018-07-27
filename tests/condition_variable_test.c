@@ -14,7 +14,9 @@
 */
 
 #include <aws/testing/aws_test_harness.h>
+
 #include <aws/common/condition_variable.h>
+#include <aws/common/clock.h>
 #include <aws/common/thread.h>
 
 struct condition_predicate_args {
@@ -163,10 +165,20 @@ static int test_conditional_wait_timeout_fn(struct aws_allocator *allocator, voi
     struct aws_mutex mutex = AWS_MUTEX_INIT;
     struct aws_condition_variable condition_variable = AWS_CONDITION_VARIABLE_INIT;
 
+    uint64_t pre_wait_timestamp = 0;
+    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&pre_wait_timestamp));
+    uint64_t wait_ns = 1000000;
+
     ASSERT_SUCCESS(aws_mutex_lock(&mutex));
 
-    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_for_pred(&condition_variable, &mutex, 1000000,
+    ASSERT_ERROR(AWS_ERROR_COND_VARIABLE_TIMED_OUT, aws_condition_variable_wait_for_pred(&condition_variable, &mutex, wait_ns,
                                                                                     conditional_predicate, &predicate_args));
+    uint64_t post_wait_timestamp = 0;
+    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&post_wait_timestamp));
+
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= wait_ns);
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < wait_ns * 2);
+
     ASSERT_TRUE(predicate_args.call_count >= 1);
 
     return AWS_OP_SUCCESS;
