@@ -2,6 +2,7 @@
  * The following public domain code has been modified as follows:
  * # All functions have been made static.
  * # The self test harness has been turned off.
+ * # stdint.h include removed for C89 compatibility.
  *
  * The original code was retrieved from http://burtleburtle.net/bob/c/lookup3.c
  */
@@ -45,7 +46,6 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 
 #include <stdio.h>      /* defines printf for tests */
 #include <time.h>       /* defines time_t for timings in the test */
-#include <stdint.h>     /* defines uint32_t etc */
 #ifndef _MSC_VER
 #include <sys/param.h>  /* attempt to define endianness */
 #endif
