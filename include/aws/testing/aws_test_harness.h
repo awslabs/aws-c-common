@@ -404,26 +404,30 @@ struct aws_test_harness {
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                  \
     static int fn(struct aws_allocator *allocator, void *ctx);                 \
     AWS_TEST_ALLOCATOR_INIT(name)                                              \
-    static struct aws_test_harness name = {.on_before = NULL,                  \
-                                           .run = (fn),                        \
-                                           .on_after = NULL,                   \
-                                           .ctx = NULL,                        \
-                                           .allocator = &name##_allocator,     \
-                                           .test_name = #name,                 \
-                                           .suppress_memcheck = (s),};
+    static struct aws_test_harness name = {                                    \
+        .on_before = NULL,                                                     \
+        .run = (fn),                                                           \
+        .on_after = NULL,                                                      \
+        .ctx = NULL,                                                           \
+        .allocator = &name##_allocator,                                        \
+        .test_name = #name,                                                    \
+        .suppress_memcheck = (s),                                              \
+    };
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)               \
     static void b(struct aws_allocator *allocator, void *ctx);                 \
     static int fn(struct aws_allocator *allocator, void *ctx);                 \
     static void af(struct aws_allocator *allocator, void *ctx);                \
     AWS_TEST_ALLOCATOR_INIT(name)                                              \
-    static struct aws_test_harness name = {.on_before = (b),                   \
-                                           .run = (fn),                        \
-                                           .on_after = (af),                   \
-                                           .ctx = (c),                         \
-                                           .allocator = &name##_allocator,     \
-                                           .test_name = #name,                 \
-                                           .suppress_memcheck = (s),};
+    static struct aws_test_harness name = {                                    \
+        .on_before = (b),                                                      \
+        .run = (fn),                                                           \
+        .on_after = (af),                                                      \
+        .ctx = (c),                                                            \
+        .allocator = &name##_allocator,                                        \
+        .test_name = #name,                                                    \
+        .suppress_memcheck = (s),                                              \
+    };
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c)                              \

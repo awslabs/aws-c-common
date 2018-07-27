@@ -21,6 +21,7 @@
 
 int aws_condition_variable_init(
     struct aws_condition_variable *condition_variable) {
+
     InitializeConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
@@ -33,12 +34,14 @@ void aws_condition_variable_clean_up(
 
 int aws_condition_variable_notify_one(
     struct aws_condition_variable *condition_variable) {
+
     WakeConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
 
 int aws_condition_variable_notify_all(
     struct aws_condition_variable *condition_variable) {
+
     WakeAllConditionVariable(&condition_variable->condition_handle);
     return AWS_OP_SUCCESS;
 }
@@ -46,6 +49,7 @@ int aws_condition_variable_notify_all(
 int aws_condition_variable_wait(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex) {
+
     if (SleepConditionVariableSRW(
             &condition_variable->condition_handle,
             &mutex->mutex_handle,
@@ -61,6 +65,7 @@ int aws_condition_variable_wait_for(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     int64_t time_to_wait) {
+
     DWORD time_ms = (DWORD)(time_to_wait / MILLIS_PER_SEC);
     if (SleepConditionVariableSRW(
             &condition_variable->condition_handle,
