@@ -14,8 +14,8 @@
 */
 
 #include <aws/common/condition_variable.h>
-#include <aws/common/mutex.h>
 #include <aws/common/clock.h>
+#include <aws/common/mutex.h>
 
 #include <errno.h>
 

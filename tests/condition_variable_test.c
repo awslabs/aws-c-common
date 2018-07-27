@@ -14,9 +14,10 @@
 */
 
 #include <aws/testing/aws_test_harness.h>
+
 #include <aws/common/condition_variable.h>
-#include <aws/common/thread.h>
 #include <aws/common/clock.h>
+#include <aws/common/thread.h>
 
 struct condition_predicate_args {
     int call_count;
