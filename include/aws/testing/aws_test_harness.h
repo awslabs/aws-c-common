@@ -279,7 +279,7 @@ static int total_failures;
             POSTFAIL_INTERNAL(); \
         } \
     } while(0)
-        
+
 typedef void(*aws_test_before)(struct aws_allocator *allocator, void *ctx);
 typedef int(*aws_test_run)(struct aws_allocator *allocator, void *ctx);
 typedef void(*aws_test_after)(struct aws_allocator *allocator, void *ctx);
@@ -305,7 +305,7 @@ struct aws_test_harness {
         .mem_release = mem_release_free,                                                                               \
         .mem_realloc = NULL,                                                                                           \
         .impl = &name ## _alloc_impl,                                                                                  \
-     };                                                                                                                \
+     };
 
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
@@ -319,7 +319,7 @@ struct aws_test_harness {
     static void af(struct aws_allocator *allocator, void *ctx);                                                        \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
     static struct aws_test_harness name = { .on_before = b, .run = fn, .on_after = af,                                 \
-        .ctx = NULL, .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = s };                   \
+        .ctx = (c), .allocator = &name ## _allocator, .test_name = #name, .suppress_memcheck = s };
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
