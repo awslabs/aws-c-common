@@ -18,7 +18,7 @@
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
+static int s_test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -29,8 +29,7 @@ static int test_high_res_clock_increments(struct aws_allocator *allocator, void 
             aws_high_res_clock_get_ticks(&ticks), "High res get ticks failed with error %d", aws_last_error());
         ASSERT_TRUE(
             ticks >= prev,
-            "Next get ticks should have been greater than or equal to "
-            "previous. previous %llu current %llu",
+            "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
             (long long unsigned int)prev,
             (long long unsigned int)ticks);
         aws_thread_current_sleep(1000000);
@@ -40,7 +39,7 @@ static int test_high_res_clock_increments(struct aws_allocator *allocator, void 
     return 0;
 }
 
-static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
+static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -51,8 +50,7 @@ static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx)
             aws_sys_clock_get_ticks(&ticks), "Sys clock res get ticks failed with error %d", aws_last_error());
         ASSERT_TRUE(
             ticks >= prev,
-            "Next get ticks should have been greater than or equal to "
-            "previous. previous %llu current %llu",
+            "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
             (long long unsigned int)prev,
             (long long unsigned int)ticks);
         aws_thread_current_sleep(1000000);
@@ -62,5 +60,5 @@ static int test_sys_clock_increments(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 
-AWS_TEST_CASE(high_res_clock_increments_test, test_high_res_clock_increments)
-AWS_TEST_CASE(sys_clock_increments_test, test_sys_clock_increments)
+AWS_TEST_CASE(high_res_clock_increments_test, s_test_high_res_clock_increments)
+AWS_TEST_CASE(sys_clock_increments_test, s_test_sys_clock_increments)

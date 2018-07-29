@@ -46,9 +46,9 @@ static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
 static inline bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
-
-    if (str->len != cur->len)
+    if (str->len != cur->len) {
         return false;
+    }
     return (!memcmp(aws_string_bytes(str), cur->ptr, cur->len));
 }
 
@@ -56,9 +56,9 @@ static inline bool aws_string_eq_byte_cursor(const struct aws_string *str, const
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
 static inline bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
-
-    if (str->len != buf->len)
+    if (str->len != buf->len) {
         return false;
+    }
     return (!memcmp(aws_string_bytes(str), buf->buffer, buf->len));
 }
 
@@ -67,8 +67,7 @@ extern "C" {
 #endif
 
 /**
- * Constructor functions which copy data from null-terminated C-string or array
- * of unsigned or signed characters.
+ * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
 AWS_COMMON_API
 const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str);
@@ -76,9 +75,7 @@ AWS_COMMON_API
 const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
- * Deallocate string. Takes a (void *) so it can be used as a destructor
- * function for struct aws_hash_table. Safe to run on a string created
- * with AWS_STATIC_STRING_FROM_LITERAL. (Is a no-op in this case.)
+ * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
  */
 AWS_COMMON_API
 void aws_string_destroy(void *str);
@@ -105,9 +102,8 @@ AWS_COMMON_API
 int aws_string_compare(const struct aws_string *a, const struct aws_string *b);
 
 /**
- * A convenience function for sorting lists of (const struct aws_string *)
- * elements. This can be used as a comparator for aws_array_list_sort. It is
- * just a simple wrapper around aws_string_compare.
+ * A convenience function for sorting lists of (const struct aws_string *) elements. This can be used as a
+ * comparator for aws_array_list_sort. It is just a simple wrapper around aws_string_compare.
  */
 AWS_COMMON_API
 int aws_array_list_comparator_string(const void *a, const void *b);

@@ -39,8 +39,8 @@
             (unsigned long long)(result));                                                                             \
     } while (0)
 
-AWS_TEST_CASE(test_u64_saturating, test_u64_saturating_fn)
-static int test_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_u64_saturating, s_test_u64_saturating_fn)
+static int s_test_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -64,8 +64,8 @@ static int test_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_u32_saturating, test_u32_saturating_fn)
-static int test_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_u32_saturating, s_test_u32_saturating_fn)
+static int s_test_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -123,8 +123,8 @@ static int test_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
         CHECK_NO_OVF_0(fn, type, b, a, r);                                                                             \
     } while (0)
 
-AWS_TEST_CASE(test_u64_checked, test_u64_checked_fn)
-static int test_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_u64_checked, s_test_u64_checked_fn)
+static int s_test_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -148,9 +148,9 @@ static int test_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_u32_checked, test_u32_checked_fn)
+AWS_TEST_CASE(test_u32_checked, s_test_u32_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
-static int test_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 

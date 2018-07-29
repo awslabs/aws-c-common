@@ -17,10 +17,10 @@
 
 #include <assert.h>
 
-static struct aws_thread_options default_options = {
-    /* zero will make sure whatever the default for that version of windows is
-       used. */
-    .stack_size = 0};
+static struct aws_thread_options s_default_options = {
+    /* zero will make sure whatever the default for that version of windows is used. */
+    .stack_size = 0,
+};
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
@@ -36,7 +36,7 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
 }
 
 const struct aws_thread_options *aws_default_thread_options(void) {
-    return &default_options;
+    return &s_default_options;
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
@@ -80,7 +80,7 @@ uint64_t aws_thread_get_id(struct aws_thread *thread) {
     return thread->thread_id;
 }
 
-aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
+enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
     return thread->detach_state;
 }
 

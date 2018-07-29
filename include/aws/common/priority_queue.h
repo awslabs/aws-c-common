@@ -25,13 +25,13 @@
  * in a max heap, while: int cmp(const void *a, const void *b) { return a > b; }
  * would result in a min heap.
  */
-typedef int (*aws_priority_queue_compare)(const void *a, const void *b);
+typedef int(aws_priority_queue_compare_fn)(const void *a, const void *b);
 
 struct aws_priority_queue {
     /**
      * predicate that determines the priority of the elements in the queue.
      */
-    aws_priority_queue_compare pred;
+    aws_priority_queue_compare_fn *pred;
 
     /**
      * The underlying container storing the queue elements.
@@ -44,11 +44,10 @@ extern "C" {
 #endif
 
 /**
- * Initializes a priority queue struct for use. This mode will grow memory
- * automatically (exponential model) Default size is the inital size of the
- * queue item_size is the size of each element in bytes. Mixing items types is
- * not supported by this API. pred is the function that will be used to
- * determine priority.
+ * Initializes a priority queue struct for use. This mode will grow memory automatically (exponential model)
+ * Default size is the inital size of the queue
+ * item_size is the size of each element in bytes. Mixing items types is not supported by this API.
+ * pred is the function that will be used to determine priority.
  */
 AWS_COMMON_API
 int aws_priority_queue_dynamic_init(
@@ -56,16 +55,15 @@ int aws_priority_queue_dynamic_init(
     struct aws_allocator *alloc,
     size_t default_size,
     size_t item_size,
-    aws_priority_queue_compare pred);
+    aws_priority_queue_compare_fn *pred);
 
 /**
- * Initializes a priority queue struct for use. This mode will not allocate any
- * additional memory. When the heap fills new enqueue operations will fail with
- * AWS_ERROR_PRIORITY_QUEUE_FULL. heap is the raw memory allocated for this
- * priority_queue item_count is the maximum number of elements the raw heap can
- * contain item_size is the size of each element in bytes. Mixing items types is
- * not supported by this API. pred is the function that will be used to
- * determine priority.
+ * Initializes a priority queue struct for use. This mode will not allocate any additional memory. When the heap fills
+ * new enqueue operations will fail with AWS_ERROR_PRIORITY_QUEUE_FULL.
+ * heap is the raw memory allocated for this priority_queue
+ * item_count is the maximum number of elements the raw heap can contain
+ * item_size is the size of each element in bytes. Mixing items types is not supported by this API.
+ * pred is the function that will be used to determine priority.
  */
 AWS_COMMON_API
 void aws_priority_queue_static_init(
@@ -73,26 +71,23 @@ void aws_priority_queue_static_init(
     void *heap,
     size_t item_count,
     size_t item_size,
-    aws_priority_queue_compare pred);
+    aws_priority_queue_compare_fn *pred);
 
 /**
- * Cleans up any internally allocated memory and resets the struct for reuse or
- * deletion.
+ * Cleans up any internally allocated memory and resets the struct for reuse or deletion.
  */
 AWS_COMMON_API
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue);
 
 /**
- * Copies item into the queue and places it in the proper priority order.
- * Complexity: O(log(n)).
+ * Copies item into the queue and places it in the proper priority order. Complexity: O(log(n)).
  */
 AWS_COMMON_API
 int aws_priority_queue_push(struct aws_priority_queue *queue, void *item);
 
 /**
- * Copies the element of the highest priority, and removes it from the queue..
- * Complexity: O(log(n)). If queue is empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY will
- * be raised.
+ * Copies the element of the highest priority, and removes it from the queue.. Complexity: O(log(n)).
+ * If queue is empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY will be raised.
  */
 AWS_COMMON_API
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item);
@@ -111,8 +106,8 @@ AWS_COMMON_API
 size_t aws_priority_queue_size(struct aws_priority_queue *queue);
 
 /**
- * Current allocated capacity for the queue, in dynamic mode this grows over
- * time, in static mode, this will never change.
+ * Current allocated capacity for the queue, in dynamic mode this grows over time, in static mode, this will never
+ * change.
  */
 AWS_COMMON_API
 size_t aws_priority_queue_capacity(struct aws_priority_queue *queue);

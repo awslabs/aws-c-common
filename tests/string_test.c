@@ -18,8 +18,8 @@
 #include <aws/common/hash_table.h>
 #include <aws/testing/aws_test_harness.h>
 
-AWS_TEST_CASE(string_tests, string_tests_fn);
-static int string_tests_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(string_tests, s_string_tests_fn);
+static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     /* Test: static string creation from macro works. */
@@ -81,8 +81,8 @@ static int string_tests_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(binary_string_test, binary_string_test_fn);
-static int binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(binary_string_test, s_binary_string_test_fn);
+static int s_binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
@@ -105,8 +105,8 @@ static int binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(string_compare_test, string_compare_test_fn);
-static int string_compare_test_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(string_compare_test, s_string_compare_test_fn);
+static int s_string_compare_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -143,12 +143,12 @@ static int string_compare_test_fn(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(string_secure_destroy_test, string_secure_destroy_test_fn);
-static int string_secure_destroy_test_fn(struct aws_allocator *alloc, void *ctx) {
+static int string_secure_destroy_test_fn(struct aws_allocator *allocator, void *ctx) {
     /* Just verifies all memory was freed. */
-    const struct aws_string *empty = aws_string_from_c_str_new(alloc, "");
-    const struct aws_string *logorrhea = aws_string_from_c_str_new(alloc, "logorrhea");
+    const struct aws_string *empty = aws_string_from_c_str_new(allocator, "");
+    const struct aws_string *logorrhea = aws_string_from_c_str_new(allocator, "logorrhea");
     const uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x86, 0x75, 0x30, 0x90};
-    const struct aws_string *deadbeef = aws_string_from_array_new(alloc, bytes, sizeof(bytes));
+    const struct aws_string *deadbeef = aws_string_from_array_new(allocator, bytes, sizeof(bytes));
     ASSERT_NOT_NULL(empty, "Memory allocation of string should have succeeded.");
     ASSERT_NOT_NULL(logorrhea, "Memory allocation of string should have succeeded.");
     ASSERT_NOT_NULL(deadbeef, "Memory allocation of string should have succeeded.");

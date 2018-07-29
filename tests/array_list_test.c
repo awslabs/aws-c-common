@@ -18,12 +18,13 @@
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int array_list_order_push_back_pop_front_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *allocator, void *ctx) {
+
     (void)ctx;
 
     struct aws_array_list list;
 
-    static size_t list_size = 4;
+    size_t list_size = 4;
     int first = 1, second = 2, third = 3, fourth = 4;
 
     ASSERT_SUCCESS(
@@ -85,9 +86,9 @@ static int array_list_order_push_back_pop_front_fn(struct aws_allocator *allocat
     return 0;
 }
 
-AWS_TEST_CASE(array_list_order_push_back_pop_front_test, array_list_order_push_back_pop_front_fn)
+AWS_TEST_CASE(array_list_order_push_back_pop_front_test, s_array_list_order_push_back_pop_front_fn)
 
-static int array_list_order_push_back_pop_back_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_order_push_back_pop_back_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -150,9 +151,9 @@ static int array_list_order_push_back_pop_back_fn(struct aws_allocator *allocato
     return 0;
 }
 
-AWS_TEST_CASE(array_list_order_push_back_pop_back_test, array_list_order_push_back_pop_back_fn)
+AWS_TEST_CASE(array_list_order_push_back_pop_back_test, s_array_list_order_push_back_pop_back_fn)
 
-static int array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -194,9 +195,9 @@ static int array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 
-AWS_TEST_CASE(array_list_pop_front_n_test, array_list_pop_front_n_fn)
+AWS_TEST_CASE(array_list_pop_front_n_test, s_array_list_pop_front_n_fn)
 
-static int array_list_exponential_mem_model_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_exponential_mem_model_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -264,9 +265,9 @@ static int array_list_exponential_mem_model_test_fn(struct aws_allocator *alloca
     return 0;
 }
 
-AWS_TEST_CASE(array_list_exponential_mem_model_test, array_list_exponential_mem_model_test_fn)
+AWS_TEST_CASE(array_list_exponential_mem_model_test, s_array_list_exponential_mem_model_test_fn)
 
-static int array_list_exponential_mem_model_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_exponential_mem_model_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -334,15 +335,15 @@ static int array_list_exponential_mem_model_iteration_test_fn(struct aws_allocat
     return 0;
 }
 
-AWS_TEST_CASE(array_list_exponential_mem_model_iteration_test, array_list_exponential_mem_model_iteration_test_fn)
+AWS_TEST_CASE(array_list_exponential_mem_model_iteration_test, s_array_list_exponential_mem_model_iteration_test_fn)
 
-static int array_list_set_at_overwrite_safety_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_set_at_overwrite_safety_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     struct aws_array_list list;
 
-    static size_t list_size = 4;
+    size_t list_size = 4;
     int overwrite_data[5];
 
     aws_array_list_init_static(&list, overwrite_data, list_size, sizeof(int));
@@ -359,9 +360,9 @@ static int array_list_set_at_overwrite_safety_fn(struct aws_allocator *allocator
     return 0;
 }
 
-AWS_TEST_CASE(array_list_set_at_overwrite_safety, array_list_set_at_overwrite_safety_fn)
+AWS_TEST_CASE(array_list_set_at_overwrite_safety, s_array_list_set_at_overwrite_safety_fn)
 
-static int array_list_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -405,9 +406,9 @@ static int array_list_iteration_test_fn(struct aws_allocator *allocator, void *c
     return 0;
 }
 
-AWS_TEST_CASE(array_list_iteration_test, array_list_iteration_test_fn)
+AWS_TEST_CASE(array_list_iteration_test, s_array_list_iteration_test_fn)
 
-static int array_list_iteration_by_ptr_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_iteration_by_ptr_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -451,16 +452,16 @@ static int array_list_iteration_by_ptr_test_fn(struct aws_allocator *allocator, 
     return 0;
 }
 
-AWS_TEST_CASE(array_list_iteration_by_ptr_test, array_list_iteration_by_ptr_test_fn)
+AWS_TEST_CASE(array_list_iteration_by_ptr_test, s_array_list_iteration_by_ptr_test_fn)
 
-static int array_list_preallocated_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_preallocated_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     struct aws_array_list list;
 
-    static int list_data[4];
-    static const size_t list_size = 4;
+    int list_data[4];
+    size_t list_size = 4;
     aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
     int first = 1, second = 2, third = 3, fourth = 4;
@@ -508,16 +509,16 @@ static int array_list_preallocated_iteration_test_fn(struct aws_allocator *alloc
     return 0;
 }
 
-AWS_TEST_CASE(array_list_preallocated_iteration_test, array_list_preallocated_iteration_test_fn)
+AWS_TEST_CASE(array_list_preallocated_iteration_test, s_array_list_preallocated_iteration_test_fn)
 
-static int array_list_preallocated_push_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_preallocated_push_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     struct aws_array_list list;
 
-    static int list_data[4];
-    static const size_t list_size = 4;
+    int list_data[4];
+    const size_t list_size = 4;
     aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
     int first = 1, second = 2, third = 3, fourth = 4;
@@ -532,18 +533,16 @@ static int array_list_preallocated_push_test_fn(struct aws_allocator *allocator,
     ASSERT_ERROR(
         AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
         aws_array_list_push_back(&list, &fourth),
-        "List push past static size should have failed with "
-        "AWS_ERROR_LIST_EXCEEDS_MAX_SIZE but was %d",
+        "List push past static size should have failed with AWS_ERROR_LIST_EXCEEDS_MAX_SIZE but was %d",
         aws_last_error());
 
     aws_array_list_clean_up(&list);
 
     return 0;
 }
+AWS_TEST_CASE(array_list_preallocated_push_test, s_array_list_preallocated_push_test_fn)
 
-AWS_TEST_CASE(array_list_preallocated_push_test, array_list_preallocated_push_test_fn)
-
-static int array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -585,16 +584,16 @@ static int array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, voi
     return 0;
 }
 
-AWS_TEST_CASE(array_list_shrink_to_fit_test, array_list_shrink_to_fit_test_fn)
+AWS_TEST_CASE(array_list_shrink_to_fit_test, s_array_list_shrink_to_fit_test_fn)
 
-static int array_list_shrink_to_fit_static_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_shrink_to_fit_static_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     struct aws_array_list list;
 
-    static int list_data[4];
-    static const size_t list_size = 4;
+    int list_data[4];
+    const size_t list_size = 4;
 
     aws_array_list_init_static(&list, (void *)list_data, list_size, sizeof(int));
 
@@ -623,9 +622,9 @@ static int array_list_shrink_to_fit_static_test_fn(struct aws_allocator *allocat
     return 0;
 }
 
-AWS_TEST_CASE(array_list_shrink_to_fit_static_test, array_list_shrink_to_fit_static_test_fn)
+AWS_TEST_CASE(array_list_shrink_to_fit_static_test, s_array_list_shrink_to_fit_static_test_fn)
 
-static int array_list_clear_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_clear_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -662,9 +661,9 @@ static int array_list_clear_test_fn(struct aws_allocator *allocator, void *ctx) 
     return 0;
 }
 
-AWS_TEST_CASE(array_list_clear_test, array_list_clear_test_fn)
+AWS_TEST_CASE(array_list_clear_test, s_array_list_clear_test_fn)
 
-static int array_list_copy_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_copy_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list_a;
@@ -707,9 +706,9 @@ static int array_list_copy_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(array_list_copy_test, array_list_copy_test_fn)
+AWS_TEST_CASE(array_list_copy_test, s_array_list_copy_test_fn)
 
-static int array_list_swap_contents_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_swap_contents_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     /* build lists */
@@ -764,9 +763,9 @@ static int array_list_swap_contents_test_fn(struct aws_allocator *allocator, voi
     return 0;
 }
 
-AWS_TEST_CASE(array_list_swap_contents_test, array_list_swap_contents_test_fn)
+AWS_TEST_CASE(array_list_swap_contents_test, s_array_list_swap_contents_test_fn)
 
-static int array_list_not_enough_space_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_not_enough_space_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list_a;
@@ -796,8 +795,7 @@ static int array_list_not_enough_space_test_fn(struct aws_allocator *allocator, 
     ASSERT_INT_EQUALS(
         2 * sizeof(int),
         list_b.current_size,
-        "List b should have grown to the size of the number of elements in "
-        "list a");
+        "List b should have grown to the size of the number of elements in list a");
 
     aws_array_list_clean_up(&list_a);
     aws_array_list_clean_up(&list_b);
@@ -805,15 +803,15 @@ static int array_list_not_enough_space_test_fn(struct aws_allocator *allocator, 
     return 0;
 }
 
-AWS_TEST_CASE(array_list_not_enough_space_test, array_list_not_enough_space_test_fn)
+AWS_TEST_CASE(array_list_not_enough_space_test, s_array_list_not_enough_space_test_fn)
 
-static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_not_enough_space_test_failure_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list_a;
     struct aws_array_list list_b;
 
-    static size_t list_size = 4;
+    size_t list_size = 4;
     int static_list[1];
     ASSERT_SUCCESS(
         aws_array_list_init_dynamic(&list_a, allocator, list_size, sizeof(int)),
@@ -832,8 +830,7 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
     ASSERT_ERROR(
         AWS_ERROR_DEST_COPY_TOO_SMALL,
         aws_array_list_copy(&list_a, &list_b),
-        "Copying to a static list too small should have failed with TOO_SMALL "
-        "but got %d instead",
+        "Copying to a static list too small should have failed with TOO_SMALL but got %d instead",
         aws_last_error());
 
     aws_array_list_clean_up(&list_a);
@@ -842,9 +839,9 @@ static int array_list_not_enough_space_test_failure_fn(struct aws_allocator *all
     return 0;
 }
 
-AWS_TEST_CASE(array_list_not_enough_space_test_failure, array_list_not_enough_space_test_failure_fn)
+AWS_TEST_CASE(array_list_not_enough_space_test_failure, s_array_list_not_enough_space_test_failure_fn)
 
-static int array_list_of_strings_sort_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_of_strings_sort_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     AWS_STATIC_STRING_FROM_LITERAL(empty, "");
@@ -889,9 +886,9 @@ static int array_list_of_strings_sort_fn(struct aws_allocator *allocator, void *
     return 0;
 }
 
-AWS_TEST_CASE(array_list_of_strings_sort, array_list_of_strings_sort_fn)
+AWS_TEST_CASE(array_list_of_strings_sort, s_array_list_of_strings_sort_fn)
 
-static int array_list_empty_sort_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_empty_sort_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_array_list list;
@@ -912,4 +909,4 @@ static int array_list_empty_sort_fn(struct aws_allocator *allocator, void *ctx) 
     return 0;
 }
 
-AWS_TEST_CASE(array_list_empty_sort, array_list_empty_sort_fn)
+AWS_TEST_CASE(array_list_empty_sort, s_array_list_empty_sort_fn)

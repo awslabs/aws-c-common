@@ -75,7 +75,6 @@ int aws_array_list_push_back(struct aws_array_list *list, const void *val) {
     int err_code = aws_array_list_set_at(list, val, list->length);
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
-
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 
@@ -340,6 +339,6 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b) {
     aws_array_list_mem_swap(item1, item2, list->item_size);
 }
 
-void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator compare_fn) {
+void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator_fn *compare_fn) {
     qsort(list->data, list->length, list->item_size, compare_fn);
 }

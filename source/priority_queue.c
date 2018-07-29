@@ -17,14 +17,14 @@
 
 #include <string.h>
 
-#define parent_of(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
-#define left_of(index) (((index) << 1) + 1)
+#define PARENT_OF(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
+#define LEFT_OF(index) (((index) << 1) + 1)
 
 /* Precondition: with the exception of the first element, the container must be
  * in heap order */
-static void sift_down(struct aws_priority_queue *queue) {
+static void s_sift_down(struct aws_priority_queue *queue) {
     size_t root = 0;
-    size_t left = left_of(root);
+    size_t left = LEFT_OF(root);
     size_t len = aws_array_list_length(&queue->container);
     void *right_item, *left_item, *root_item;
 
@@ -47,7 +47,7 @@ static void sift_down(struct aws_priority_queue *queue) {
         if (queue->pred(root_item, left_item) > 0) {
             aws_array_list_swap(&queue->container, left, root);
             root = left;
-            left = left_of(root);
+            left = LEFT_OF(root);
         } else {
             break;
         }
@@ -55,9 +55,9 @@ static void sift_down(struct aws_priority_queue *queue) {
 }
 
 /* Precondition: Elements prior to the specified index must be in heap order. */
-static void sift_up(struct aws_priority_queue *queue, size_t index) {
+static void s_sift_up(struct aws_priority_queue *queue, size_t index) {
     void *parent_item, *child_item;
-    size_t parent = parent_of(index);
+    size_t parent = PARENT_OF(index);
     while (index) {
         aws_array_list_get_at_ptr(&queue->container, &parent_item, parent);
         aws_array_list_get_at_ptr(&queue->container, &child_item, index);
@@ -65,7 +65,7 @@ static void sift_up(struct aws_priority_queue *queue, size_t index) {
         if (queue->pred(parent_item, child_item) > 0) {
             aws_array_list_swap(&queue->container, index, parent);
             index = parent;
-            parent = parent_of(index);
+            parent = PARENT_OF(index);
         } else {
             break;
         }
@@ -77,7 +77,7 @@ int aws_priority_queue_dynamic_init(
     struct aws_allocator *alloc,
     size_t default_size,
     size_t item_size,
-    aws_priority_queue_compare pred) {
+    aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
     return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
@@ -88,7 +88,7 @@ void aws_priority_queue_static_init(
     void *heap,
     size_t item_count,
     size_t item_size,
-    aws_priority_queue_compare pred) {
+    aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
@@ -104,7 +104,7 @@ int aws_priority_queue_push(struct aws_priority_queue *queue, void *item) {
         return err;
     }
 
-    sift_up(queue, aws_array_list_length(&queue->container) - 1);
+    s_sift_up(queue, aws_array_list_length(&queue->container) - 1);
 
     return AWS_OP_SUCCESS;
 }
@@ -124,7 +124,7 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
         return AWS_OP_ERR;
     }
 
-    sift_down(queue);
+    s_sift_down(queue);
     return AWS_OP_SUCCESS;
 }
 

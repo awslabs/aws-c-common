@@ -14,10 +14,11 @@
  */
 
 #include <aws/common/lru_cache.h>
+#include <aws/testing/aws_test_harness.h>
 
 #include <aws/testing/aws_test_harness.h>
 
-static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_lru_cache_overflow_static_members_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
@@ -75,9 +76,9 @@ static int test_lru_cache_overflow_static_members_fn(struct aws_allocator *alloc
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_overflow_static_members, test_lru_cache_overflow_static_members_fn)
+AWS_TEST_CASE(test_lru_cache_overflow_static_members, s_test_lru_cache_overflow_static_members_fn)
 
-static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
@@ -131,24 +132,24 @@ static int test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *alloc
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_lru_ness_static_members, test_lru_cache_lru_ness_static_members_fn)
+AWS_TEST_CASE(test_lru_cache_lru_ness_static_members, s_test_lru_cache_lru_ness_static_members_fn)
 
 struct lru_test_value_element {
     bool value_removed;
 };
 
-static void lru_test_element_value_destroy(void *value) {
+static void s_lru_test_element_value_destroy(void *value) {
     struct lru_test_value_element *value_element = value;
     value_element->value_removed = true;
 }
 
-static int test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
     ASSERT_SUCCESS(aws_lru_cache_init(
-        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, lru_test_element_value_destroy, 2));
+        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, s_lru_test_element_value_destroy, 2));
 
     const char *first_key = "first";
     const char *second_key = "second";
@@ -189,15 +190,15 @@ static int test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_entries_cleanup, test_lru_cache_entries_cleanup_fn)
+AWS_TEST_CASE(test_lru_cache_entries_cleanup, s_test_lru_cache_entries_cleanup_fn)
 
-static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
 
     ASSERT_SUCCESS(aws_lru_cache_init(
-        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, lru_test_element_value_destroy, 2));
+        &cache, allocator, aws_hash_c_string, aws_c_string_eq, NULL, s_lru_test_element_value_destroy, 2));
 
     const char *first_key = "first";
 
@@ -222,9 +223,9 @@ static int test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ct
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_overwrite, test_lru_cache_overwrite_fn)
+AWS_TEST_CASE(test_lru_cache_overwrite, s_test_lru_cache_overwrite_fn)
 
-static int test_lru_cache_element_access_members_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_test_lru_cache_element_access_members_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_lru_cache cache;
@@ -264,4 +265,4 @@ static int test_lru_cache_element_access_members_fn(struct aws_allocator *alloca
     return 0;
 }
 
-AWS_TEST_CASE(test_lru_cache_element_access_members, test_lru_cache_element_access_members_fn)
+AWS_TEST_CASE(test_lru_cache_element_access_members, s_test_lru_cache_element_access_members_fn)

@@ -18,27 +18,27 @@
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
-static struct aws_error_info errors[] = {
+static struct aws_error_info s_errors[] = {
     AWS_DEFINE_ERROR_INFO(1024, "test error 1", "test lib"),
     AWS_DEFINE_ERROR_INFO(1025, "test error 2", "test lib"),
 };
 
-static struct aws_error_info_list errors_list = {
-    .error_list = errors,
-    .count = sizeof(errors) / sizeof(struct aws_error_info),
+static struct aws_error_info_list s_errors_list = {
+    .error_list = s_errors,
+    .count = sizeof(s_errors) / sizeof(struct aws_error_info),
 };
 
-static void setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static void s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     aws_reset_error();
     aws_set_global_error_handler_fn(NULL, NULL);
     aws_set_thread_local_error_handler_fn(NULL, NULL);
-    aws_register_error_info(&errors_list);
+    aws_register_error_info(&s_errors_list);
 }
 
-static void teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static void s_teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -47,7 +47,7 @@ static void teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) 
     aws_set_thread_local_error_handler_fn(NULL, NULL);
 }
 
-static int raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -56,8 +56,8 @@ static int raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_NULL(error, "error should be initialized to NULL");
     ASSERT_INT_EQUALS(0, aws_last_error(), "error code should be initialized to 0");
 
-    struct aws_error_info test_error_1 = errors[0];
-    struct aws_error_info test_error_2 = errors[1];
+    struct aws_error_info test_error_1 = s_errors[0];
+    struct aws_error_info test_error_2 = s_errors[1];
 
     ASSERT_INT_EQUALS(-1, aws_raise_error(test_error_1.error_code), "Raise error should return failure code.");
     error = aws_last_error();
@@ -105,12 +105,12 @@ static int raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-static int reset_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_reset_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_error_info test_error_1 = errors[0];
-    struct aws_error_info test_error_2 = errors[1];
+    struct aws_error_info test_error_1 = s_errors[0];
+    struct aws_error_info test_error_2 = s_errors[1];
 
     aws_raise_error(test_error_2.error_code);
     aws_restore_error(test_error_1.error_code);
@@ -141,28 +141,28 @@ struct error_test_cb_data {
     int last_seen;
 };
 
-static void error_test_global_cb(int err, void *ctx) {
+static void s_error_test_global_cb(int err, void *ctx) {
     struct error_test_cb_data *cb_data = (struct error_test_cb_data *)ctx;
     cb_data->global_cb_called = 1;
     cb_data->last_seen = err;
 }
 
-static void error_test_thread_local_cb(int err, void *ctx) {
+static void s_error_test_thread_local_cb(int err, void *ctx) {
     struct error_test_cb_data *cb_data = (struct error_test_cb_data *)ctx;
     cb_data->tl_cb_called = 1;
     cb_data->last_seen = err;
 }
 
-static int error_callback_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_error_callback_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
     struct error_test_cb_data cb_data = {.last_seen = 0, .global_cb_called = 0, .tl_cb_called = 0};
 
-    struct aws_error_info test_error_1 = errors[0];
-    struct aws_error_info test_error_2 = errors[1];
+    struct aws_error_info test_error_1 = s_errors[0];
+    struct aws_error_info test_error_2 = s_errors[1];
 
-    aws_error_handler old_fn = aws_set_global_error_handler_fn(error_test_global_cb, &cb_data);
+    aws_error_handler_fn *old_fn = aws_set_global_error_handler_fn(s_error_test_global_cb, &cb_data);
     ASSERT_NULL(old_fn, "setting the global error callback the first time should return null");
     aws_raise_error(test_error_1.error_code);
 
@@ -191,7 +191,7 @@ static int error_callback_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     cb_data.last_seen = 0;
     cb_data.global_cb_called = 0;
-    old_fn = aws_set_thread_local_error_handler_fn(error_test_thread_local_cb, &cb_data);
+    old_fn = aws_set_thread_local_error_handler_fn(s_error_test_thread_local_cb, &cb_data);
     ASSERT_NULL(old_fn, "setting the global error callback the first time should return null");
 
     aws_raise_error(test_error_2.error_code);
@@ -227,21 +227,19 @@ static int error_callback_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     old_fn = aws_set_thread_local_error_handler_fn(NULL, NULL);
     ASSERT_PTR_EQUALS(
-        error_test_thread_local_cb,
+        s_error_test_thread_local_cb,
         old_fn,
-        "Setting a new thread local error callback should have returned the "
-        "most recent value");
+        "Setting a new thread local error callback should have returned the most recent value");
     old_fn = aws_set_global_error_handler_fn(NULL, NULL);
     ASSERT_PTR_EQUALS(
-        error_test_global_cb,
+        s_error_test_global_cb,
         old_fn,
-        "Setting a new global error callback should have returned the most "
-        "recent value");
+        "Setting a new global error callback should have returned the most recent value");
 
     return 0;
 }
 
-static int unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -250,7 +248,7 @@ static int unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator, v
     ASSERT_NULL(error, "error should be initialized to NULL");
     ASSERT_INT_EQUALS(0, aws_last_error(), "error code should be initialized to 0");
 
-    struct aws_error_info test_error_2 = errors[1];
+    struct aws_error_info test_error_2 = s_errors[1];
 
     aws_raise_error(test_error_2.error_code + 1);
     error = aws_last_error();
@@ -281,7 +279,7 @@ static int unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
-static int unknown_error_code_no_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_unknown_error_code_no_slot_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -320,7 +318,7 @@ static int unknown_error_code_no_slot_test_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
-static int unknown_error_code_range_too_large_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_unknown_error_code_range_too_large_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -369,7 +367,7 @@ struct error_thread_test_data {
     uint64_t thread_2_id;
 };
 
-static void error_thread_test_thread_local_cb(int err, void *ctx) {
+static void s_error_thread_test_thread_local_cb(int err, void *ctx) {
     struct error_thread_test_data *cb_data = (struct error_thread_test_data *)ctx;
 
     uint64_t thread_id = aws_thread_current_thread_id();
@@ -387,13 +385,13 @@ static void error_thread_test_thread_local_cb(int err, void *ctx) {
     cb_data->thread_2_encountered_count += 1;
 }
 
-static void error_thread_fn(void *arg) {
-    aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, arg);
+static void s_error_thread_fn(void *arg) {
+    aws_set_thread_local_error_handler_fn(s_error_thread_test_thread_local_cb, arg);
 
     aws_raise_error(15);
 }
 
-static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct error_thread_test_data test_data = {.thread_1_code = 0,
@@ -406,7 +404,7 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
 
     test_data.thread_1_id = aws_thread_current_thread_id();
 
-    aws_set_thread_local_error_handler_fn(error_thread_test_thread_local_cb, &test_data);
+    aws_set_thread_local_error_handler_fn(s_error_thread_test_thread_local_cb, &test_data);
 
     int thread_1_error_code_expected = 5;
     aws_raise_error(thread_1_error_code_expected);
@@ -414,7 +412,7 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
     ASSERT_SUCCESS(
-        aws_thread_launch(&thread, error_thread_fn, &test_data, NULL),
+        aws_thread_launch(&thread, s_error_thread_fn, &test_data, NULL),
         "Thread creation failed with error %d",
         aws_last_error());
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error %d", aws_last_error());
@@ -422,20 +420,17 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
     ASSERT_INT_EQUALS(
         1,
         test_data.thread_1_encountered_count,
-        "The thread local CB should only have triggered for the first thread "
-        "once.");
+        "The thread local CB should only have triggered for the first thread once.");
     ASSERT_INT_EQUALS(
         1,
         test_data.thread_2_encountered_count,
-        "The thread local CB should only have triggered for the second thread "
-        "once.");
+        "The thread local CB should only have triggered for the second thread once.");
     ASSERT_FALSE(test_data.thread_2_id == 0, "thread 2 id should have been set to something other than 0");
     ASSERT_FALSE(test_data.thread_2_id == test_data.thread_1_id, "threads 1 and 2 should be different ids");
     ASSERT_INT_EQUALS(
         thread_1_error_code_expected,
         aws_last_error(),
-        "Thread 1's error should not have changed when thread 2 raised an "
-        "error.");
+        "Thread 1's error should not have changed when thread 2 raised an error.");
     ASSERT_INT_EQUALS(
         thread_1_error_code_expected, test_data.thread_1_code, "Thread 1 code should have matched the original error.");
     ASSERT_INT_EQUALS(
@@ -449,30 +444,45 @@ static int error_code_cross_thread_test_fn(struct aws_allocator *allocator, void
     return 0;
 }
 
-AWS_TEST_CASE_FIXTURE(raise_errors_test, setup_errors_test_fn, raise_errors_test_fn, teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(error_callback_test, setup_errors_test_fn, error_callback_test_fn, teardown_errors_test_fn, NULL)
-AWS_TEST_CASE_FIXTURE(reset_errors_test, setup_errors_test_fn, reset_errors_test_fn, teardown_errors_test_fn, NULL)
+AWS_TEST_CASE_FIXTURE(
+    raise_errors_test,
+    s_setup_errors_test_fn,
+    s_raise_errors_test_fn,
+    s_teardown_errors_test_fn,
+    NULL)
+AWS_TEST_CASE_FIXTURE(
+    error_callback_test,
+    s_setup_errors_test_fn,
+    s_error_callback_test_fn,
+    s_teardown_errors_test_fn,
+    NULL)
+AWS_TEST_CASE_FIXTURE(
+    reset_errors_test,
+    s_setup_errors_test_fn,
+    s_reset_errors_test_fn,
+    s_teardown_errors_test_fn,
+    NULL)
 AWS_TEST_CASE_FIXTURE(
     unknown_error_code_in_slot_test,
-    setup_errors_test_fn,
-    unknown_error_code_in_slot_test_fn,
-    teardown_errors_test_fn,
+    s_setup_errors_test_fn,
+    s_unknown_error_code_in_slot_test_fn,
+    s_teardown_errors_test_fn,
     NULL)
 AWS_TEST_CASE_FIXTURE(
     unknown_error_code_no_slot_test,
-    setup_errors_test_fn,
-    unknown_error_code_no_slot_test_fn,
-    teardown_errors_test_fn,
+    s_setup_errors_test_fn,
+    s_unknown_error_code_no_slot_test_fn,
+    s_teardown_errors_test_fn,
     NULL)
 AWS_TEST_CASE_FIXTURE(
     unknown_error_code_range_too_large_test,
-    setup_errors_test_fn,
-    unknown_error_code_range_too_large_test_fn,
-    teardown_errors_test_fn,
+    s_setup_errors_test_fn,
+    s_unknown_error_code_range_too_large_test_fn,
+    s_teardown_errors_test_fn,
     NULL)
 AWS_TEST_CASE_FIXTURE(
     error_code_cross_thread_test,
-    setup_errors_test_fn,
-    error_code_cross_thread_test_fn,
-    teardown_errors_test_fn,
+    s_setup_errors_test_fn,
+    s_error_code_cross_thread_test_fn,
+    s_teardown_errors_test_fn,
     NULL)

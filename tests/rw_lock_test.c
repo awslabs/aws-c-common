@@ -18,7 +18,7 @@
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int test_rw_lock_acquire_release(struct aws_allocator *allocator, void *ctx) {
+static int s_test_rw_lock_acquire_release(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -35,7 +35,7 @@ static int test_rw_lock_acquire_release(struct aws_allocator *allocator, void *c
 
     return 0;
 }
-AWS_TEST_CASE(rw_lock_aquire_release_test, test_rw_lock_acquire_release)
+AWS_TEST_CASE(rw_lock_aquire_release_test, s_test_rw_lock_acquire_release)
 
 struct thread_rw_lock_data {
     struct aws_rw_lock rw_lock;
@@ -44,7 +44,7 @@ struct thread_rw_lock_data {
     volatile int thread_fn_increments;
 };
 
-static void rw_lock_thread_fn(void *rw_lock_data) {
+static void s_rw_lock_thread_fn(void *rw_lock_data) {
     struct thread_rw_lock_data *p_rw_lock = (struct thread_rw_lock_data *)rw_lock_data;
     int finished = 0;
     while (!finished) {
@@ -72,7 +72,7 @@ static void rw_lock_thread_fn(void *rw_lock_data) {
     }
 }
 
-static int test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, void *ctx) {
+static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct thread_rw_lock_data rw_lock_data = {
@@ -86,7 +86,7 @@ static int test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, voi
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
     ASSERT_SUCCESS(
-        aws_thread_launch(&thread, rw_lock_thread_fn, &rw_lock_data, 0),
+        aws_thread_launch(&thread, s_rw_lock_thread_fn, &rw_lock_data, 0),
         "thread creation failed with error %d",
         aws_last_error());
     int finished = 0;
@@ -110,10 +110,10 @@ static int test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, voi
 
     return 0;
 }
-AWS_TEST_CASE(rw_lock_is_actually_rw_lock_test, test_rw_lock_is_actually_rw_lock)
+AWS_TEST_CASE(rw_lock_is_actually_rw_lock_test, s_test_rw_lock_is_actually_rw_lock)
 
-static int g_iterations = 0;
-static void thread_reader_fn(void *ud) {
+static int s_iterations = 0;
+static void s_thread_reader_fn(void *ud) {
 
     struct aws_rw_lock *lock = ud;
 
@@ -122,13 +122,13 @@ static void thread_reader_fn(void *ud) {
 
         aws_rw_lock_rlock(lock);
 
-        finished = g_iterations == 10000;
+        finished = s_iterations == 10000;
 
         aws_rw_lock_runlock(lock);
     }
 }
 
-static int test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx) {
+static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_rw_lock lock;
@@ -141,7 +141,7 @@ static int test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx)
 
         aws_thread_init(&threads[i], allocator);
         ASSERT_SUCCESS(
-            aws_thread_launch(&threads[i], thread_reader_fn, &lock, 0),
+            aws_thread_launch(&threads[i], s_thread_reader_fn, &lock, 0),
             "thread creation failed with error %d",
             aws_last_error());
     }
@@ -151,7 +151,7 @@ static int test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx)
 
         aws_rw_lock_wlock(&lock);
 
-        finished = ++g_iterations == 10000;
+        finished = ++s_iterations == 10000;
 
         aws_rw_lock_wunlock(&lock);
     }
@@ -166,4 +166,4 @@ static int test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx)
 
     return 0;
 }
-AWS_TEST_CASE(rw_lock_many_readers_test, test_rw_lock_many_readers)
+AWS_TEST_CASE(rw_lock_many_readers_test, s_test_rw_lock_many_readers)

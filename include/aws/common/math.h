@@ -125,8 +125,7 @@ static inline int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     int flag;
     /**
      * Note: We use SETNO which only takes a byte register. To make this easy,
-     * we'll write it to dl (which we throw away anyway) and mask off the high
-     * bits.
+     * we'll write it to dl (which we throw away anyway) and mask off the high bits.
      */
     __asm__("mull %k[arg2]\n"    /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
             "setno %%dl\n"       /* flag = !OF ^ (junk in top 24 bits) */

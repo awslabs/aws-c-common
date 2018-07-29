@@ -19,7 +19,7 @@
 
 /* Test cases from rfc4648 for Base 16 Encoding */
 
-static int run_hex_encoding_test_case(
+static int s_run_hex_encoding_test_case(
     struct aws_allocator *allocator,
     const char *test_str,
     size_t test_str_size,
@@ -85,84 +85,84 @@ static int run_hex_encoding_test_case(
     return 0;
 }
 
-static int hex_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "";
     char expected[] = "";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_empty_test, hex_encoding_test_case_empty)
+AWS_TEST_CASE(hex_encoding_test_case_empty_test, s_hex_encoding_test_case_empty)
 
-static int hex_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "f";
     char expected[] = "66";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_f_test, hex_encoding_test_case_f)
+AWS_TEST_CASE(hex_encoding_test_case_f_test, s_hex_encoding_test_case_f)
 
-static int hex_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "fo";
     char expected[] = "666f";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_fo_test, hex_encoding_test_case_fo)
+AWS_TEST_CASE(hex_encoding_test_case_fo_test, s_hex_encoding_test_case_fo)
 
-static int hex_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foo";
     char expected[] = "666f6f";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_foo_test, hex_encoding_test_case_foo)
+AWS_TEST_CASE(hex_encoding_test_case_foo_test, s_hex_encoding_test_case_foo)
 
-static int hex_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foob";
     char expected[] = "666f6f62";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_foob_test, hex_encoding_test_case_foob)
+AWS_TEST_CASE(hex_encoding_test_case_foob_test, s_hex_encoding_test_case_foob)
 
-static int hex_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "fooba";
     char expected[] = "666f6f6261";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_fooba_test, hex_encoding_test_case_fooba)
+AWS_TEST_CASE(hex_encoding_test_case_fooba_test, s_hex_encoding_test_case_fooba)
 
-static int hex_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foobar";
     char expected[] = "666f6f626172";
 
-    return run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_foobar_test, hex_encoding_test_case_foobar)
+AWS_TEST_CASE(hex_encoding_test_case_foobar_test, s_hex_encoding_test_case_foobar)
 
-static int hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -186,9 +186,9 @@ static int hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *
     return 0;
 }
 
-AWS_TEST_CASE(hex_encoding_test_case_missing_leading_zero, hex_encoding_test_case_missing_leading_zero_fn)
+AWS_TEST_CASE(hex_encoding_test_case_missing_leading_zero, s_hex_encoding_test_case_missing_leading_zero_fn)
 
-static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -211,9 +211,9 @@ static int hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *alloca
     return 0;
 }
 
-AWS_TEST_CASE(hex_encoding_invalid_buffer_size_test, hex_encoding_invalid_buffer_size_test_fn)
+AWS_TEST_CASE(hex_encoding_invalid_buffer_size_test, s_hex_encoding_invalid_buffer_size_test_fn)
 
-static int hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -229,14 +229,13 @@ static int hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void *
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
         aws_hex_encode(&test_buf, &output_buf),
-        "overflow buffer size should have failed with "
-        "AWS_ERROR_OVERFLOW_DETECTED");
+        "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
     return 0;
 }
 
-AWS_TEST_CASE(hex_encoding_overflow_test, hex_encoding_overflow_test_fn)
+AWS_TEST_CASE(hex_encoding_overflow_test, s_hex_encoding_overflow_test_fn)
 
-static int hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -253,10 +252,10 @@ static int hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator, 
     return 0;
 }
 
-AWS_TEST_CASE(hex_encoding_invalid_string_test, hex_encoding_invalid_string_test_fn)
+AWS_TEST_CASE(hex_encoding_invalid_string_test, s_hex_encoding_invalid_string_test_fn)
 
 /*base64 encoding test cases */
-static int run_base64_encoding_test_case(
+static int s_run_base64_encoding_test_case(
     struct aws_allocator *allocator,
     const char *test_str,
     size_t test_str_size,
@@ -327,93 +326,92 @@ static int run_base64_encoding_test_case(
     return 0;
 }
 
-static int base64_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "";
     char expected[] = "";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_empty_test, base64_encoding_test_case_empty)
+AWS_TEST_CASE(base64_encoding_test_case_empty_test, s_base64_encoding_test_case_empty)
 
-static int base64_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "f";
     char expected[] = "Zg==";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_f_test, base64_encoding_test_case_f)
+AWS_TEST_CASE(base64_encoding_test_case_f_test, s_base64_encoding_test_case_f)
 
-static int base64_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "fo";
     char expected[] = "Zm8=";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_fo_test, base64_encoding_test_case_fo)
+AWS_TEST_CASE(base64_encoding_test_case_fo_test, s_base64_encoding_test_case_fo)
 
-static int base64_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foo";
     char expected[] = "Zm9v";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_foo_test, base64_encoding_test_case_foo)
+AWS_TEST_CASE(base64_encoding_test_case_foo_test, s_base64_encoding_test_case_foo)
 
-static int base64_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foob";
     char expected[] = "Zm9vYg==";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_foob_test, base64_encoding_test_case_foob)
+AWS_TEST_CASE(base64_encoding_test_case_foob_test, s_base64_encoding_test_case_foob)
 
-static int base64_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+static int s_base64_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
 
     char test_data[] = "fooba";
     char expected[] = "Zm9vYmE=";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_fooba_test, base64_encoding_test_case_fooba)
+AWS_TEST_CASE(base64_encoding_test_case_fooba_test, s_base64_encoding_test_case_fooba)
 
-static int base64_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     char test_data[] = "foobar";
     char expected[] = "Zm9vYmFy";
 
-    return run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_case_foobar_test, base64_encoding_test_case_foobar)
+AWS_TEST_CASE(base64_encoding_test_case_foobar_test, s_base64_encoding_test_case_foobar)
 
-static int base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint8_t test_data[6] = {0};
     char expected[] = "AAAAAAAA";
 
-    return run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_zeros, base64_encoding_test_zeros_fn)
+AWS_TEST_CASE(base64_encoding_test_zeros, s_base64_encoding_test_zeros_fn)
 
 /* this test is here because I manually touched the decoding table with sentinal
  * values for efficiency reasons and I want to make sure it matches the encoded
@@ -421,7 +419,7 @@ AWS_TEST_CASE(base64_encoding_test_zeros, base64_encoding_test_zeros_fn)
  * moved to a sentinal value of 0xDD, were actually supposed to be a 0 other
  * than character value of 65 -> "A" -> 0.
  */
-static int base64_encoding_test_all_values_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint8_t test_data[255] = {0};
@@ -430,20 +428,17 @@ static int base64_encoding_test_all_values_fn(struct aws_allocator *allocator, v
         test_data[i] = i;
     }
 
-    char expected[] = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMz"
-                      "Q1Njc4OTo7PD0+P0BBQkNERU"
-                      "ZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6"
-                      "e3x9fn+AgYKDhIWGh4iJiouM"
-                      "jY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/"
-                      "wMHCw8TFxsfIycrLzM3Oz9DR0t"
+    char expected[] = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERU"
+                      "ZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM"
+                      "jY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0t"
                       "PU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+";
 
-    return run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected));
 }
 
-AWS_TEST_CASE(base64_encoding_test_all_values, base64_encoding_test_all_values_fn)
+AWS_TEST_CASE(base64_encoding_test_all_values, s_base64_encoding_test_all_values_fn)
 
-static int base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -469,9 +464,9 @@ static int base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *a
     return 0;
 }
 
-AWS_TEST_CASE(base64_encoding_buffer_size_too_small_test, base64_encoding_buffer_size_too_small_test_fn)
+AWS_TEST_CASE(base64_encoding_buffer_size_too_small_test, s_base64_encoding_buffer_size_too_small_test_fn)
 
-static int base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -488,22 +483,20 @@ static int base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *al
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
         aws_base64_encode(&test_buf, &output_buf),
-        "overflow buffer size should have failed with "
-        "AWS_ERROR_OVERFLOW_DETECTED");
+        "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
 
     struct aws_byte_buf encoded_buf = aws_byte_buf_from_array((const uint8_t *)encoded_data, overflow);
 
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
         aws_base64_decode(&encoded_buf, &output_buf),
-        "overflow buffer size should have failed with "
-        "AWS_ERROR_OVERFLOW_DETECTED");
+        "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
     return 0;
 }
 
-AWS_TEST_CASE(base64_encoding_buffer_size_overflow_test, base64_encoding_buffer_size_overflow_test_fn)
+AWS_TEST_CASE(base64_encoding_buffer_size_overflow_test, s_base64_encoding_buffer_size_overflow_test_fn)
 
-static int base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -518,14 +511,13 @@ static int base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *all
     ASSERT_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
-        "Non multiple of 4 buffer size should have failed with "
-        "AWS_ERROR_INVALID_BASE64_STR");
+        "Non multiple of 4 buffer size should have failed with AWS_ERROR_INVALID_BASE64_STR");
     return 0;
 }
 
-AWS_TEST_CASE(base64_encoding_buffer_size_invalid_test, base64_encoding_buffer_size_invalid_test_fn)
+AWS_TEST_CASE(base64_encoding_buffer_size_invalid_test, s_base64_encoding_buffer_size_invalid_test_fn)
 
-static int base64_encoding_invalid_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_invalid_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -538,14 +530,13 @@ static int base64_encoding_invalid_buffer_test_fn(struct aws_allocator *allocato
     ASSERT_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
-        "buffer with invalid character should have failed with "
-        "AWS_ERROR_INVALID_BASE64_STR");
+        "buffer with invalid character should have failed with AWS_ERROR_INVALID_BASE64_STR");
     return 0;
 }
 
-AWS_TEST_CASE(base64_encoding_invalid_buffer_test, base64_encoding_invalid_buffer_test_fn)
+AWS_TEST_CASE(base64_encoding_invalid_buffer_test, s_base64_encoding_invalid_buffer_test_fn)
 
-static int base64_encoding_invalid_padding_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_base64_encoding_invalid_padding_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -558,15 +549,14 @@ static int base64_encoding_invalid_padding_test_fn(struct aws_allocator *allocat
     ASSERT_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
-        "buffer with invalid padding should have failed with "
-        "AWS_ERROR_INVALID_BASE64_STR");
+        "buffer with invalid padding should have failed with AWS_ERROR_INVALID_BASE64_STR");
     return 0;
 }
 
-AWS_TEST_CASE(base64_encoding_invalid_padding_test, base64_encoding_invalid_padding_test_fn)
+AWS_TEST_CASE(base64_encoding_invalid_padding_test, s_base64_encoding_invalid_padding_test_fn)
 
 /* network integer encoding tests */
-static int uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -582,9 +572,9 @@ static int uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(uint64_buffer_test, uint64_buffer_test_fn)
+AWS_TEST_CASE(uint64_buffer_test, s_uint64_buffer_test_fn)
 
-static int uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -606,9 +596,9 @@ static int uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(uint64_buffer_non_aligned_test, uint64_buffer_non_aligned_test_fn)
+AWS_TEST_CASE(uint64_buffer_non_aligned_test, s_uint64_buffer_non_aligned_test_fn)
 
-static int uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -625,9 +615,9 @@ static int uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(uint32_buffer_test, uint32_buffer_test_fn)
+AWS_TEST_CASE(uint32_buffer_test, s_uint32_buffer_test_fn)
 
-static int uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint32_t test_value = 0x10203040;
@@ -648,9 +638,9 @@ static int uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(uint32_buffer_non_aligned_test, uint32_buffer_non_aligned_test_fn)
+AWS_TEST_CASE(uint32_buffer_non_aligned_test, s_uint32_buffer_non_aligned_test_fn)
 
-static int uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -667,9 +657,9 @@ static int uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(uint24_buffer_test, uint24_buffer_test_fn)
+AWS_TEST_CASE(uint24_buffer_test, s_uint24_buffer_test_fn)
 
-static int uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint32_t test_value = 0x102030;
@@ -688,9 +678,9 @@ static int uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(uint24_buffer_non_aligned_test, uint24_buffer_non_aligned_test_fn)
+AWS_TEST_CASE(uint24_buffer_non_aligned_test, s_uint24_buffer_non_aligned_test_fn)
 
-static int uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -707,9 +697,9 @@ static int uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(uint16_buffer_test, uint16_buffer_test_fn)
+AWS_TEST_CASE(uint16_buffer_test, s_uint16_buffer_test_fn)
 
-static int uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     uint16_t test_value = 0x1020;
@@ -728,10 +718,10 @@ static int uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(uint16_buffer_non_aligned_test, uint16_buffer_non_aligned_test_fn)
+AWS_TEST_CASE(uint16_buffer_non_aligned_test, s_uint16_buffer_non_aligned_test_fn)
 
 /* sanity check that signed/unsigned work the same */
-static int uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -748,9 +738,9 @@ static int uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocator
     return 0;
 }
 
-AWS_TEST_CASE(uint16_buffer_signed_positive_test, uint16_buffer_signed_positive_test_fn)
+AWS_TEST_CASE(uint16_buffer_signed_positive_test, s_uint16_buffer_signed_positive_test_fn)
 
-static int uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -767,4 +757,4 @@ static int uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocator
     return 0;
 }
 
-AWS_TEST_CASE(uint16_buffer_signed_negative_test, uint16_buffer_signed_negative_test_fn)
+AWS_TEST_CASE(uint16_buffer_signed_negative_test, s_uint16_buffer_signed_negative_test_fn)

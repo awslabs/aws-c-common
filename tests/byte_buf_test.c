@@ -17,8 +17,8 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-AWS_TEST_CASE(test_buffer_cat, test_buffer_cat_fn)
-static int test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cat, s_test_buffer_cat_fn)
+static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf str1 = aws_byte_buf_from_c_str("testa");
@@ -40,8 +40,8 @@ static int test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_cat_dest_too_small, test_buffer_cat_dest_too_small_fn)
-static int test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cat_dest_too_small, s_test_buffer_cat_dest_too_small_fn)
+static int s_test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf str1 = aws_byte_buf_from_c_str("testa");
@@ -60,8 +60,8 @@ static int test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_cpy, test_buffer_cpy_fn)
-static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cpy, s_test_buffer_cpy_fn)
+static int s_test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
@@ -81,8 +81,8 @@ static int test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_cpy_offsets, test_buffer_cpy_offsets_fn)
-static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cpy_offsets, s_test_buffer_cpy_offsets_fn)
+static int s_test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
@@ -105,8 +105,8 @@ static int test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_cpy_dest_too_small, test_buffer_cpy_dest_too_small_fn)
-static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cpy_dest_too_small, s_test_buffer_cpy_dest_too_small_fn)
+static int s_test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
@@ -123,8 +123,8 @@ static int test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_cpy_offsets_dest_too_small, test_buffer_cpy_offsets_dest_too_small_fn)
-static int test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_buffer_cpy_offsets_dest_too_small, s_test_buffer_cpy_offsets_dest_too_small_fn)
+static int s_test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");

@@ -30,7 +30,7 @@
 #endif
 
 #ifndef NO_STDBOOL
-#    include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
+#    include <stdbool.h>
 #else
 #    ifndef __cplusplus
 #        define bool _Bool
@@ -49,7 +49,7 @@
 #endif
 
 #ifndef NO_STDINT
-#    include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
+#    include <stdint.h>
 #else
 #    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__) || defined(__ia64__) ||                   \
             defined(__powerpc64__)
@@ -121,7 +121,6 @@ AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif
 
 #include <aws/common/error.h>
-#include <aws/common/exports.h>
 
 #if defined(_MSC_VER)
 #    define AWS_THREAD_LOCAL __declspec(thread)
@@ -129,8 +128,7 @@ AWS_STATIC_ASSERT(sizeof(char) == 1);
 #    define AWS_THREAD_LOCAL __thread
 #endif
 
-/* Allocator structure. An instance of this will be passed around for anything
- * needing memory allocation */
+/* Allocator structure. An instance of this will be passed around for anything needing memory allocation */
 struct aws_allocator {
     void *(*mem_acquire)(struct aws_allocator *allocator, size_t size);
     void (*mem_release)(struct aws_allocator *allocator, void *ptr);
@@ -154,9 +152,8 @@ struct aws_allocator *aws_default_allocator();
 
 #ifdef __MACH__
 /**
- * Wraps a CFAllocator around aws_allocator. For Mac only. Use this anytime you
- * need a CFAllocatorRef for interacting with Apple Frameworks. Unfortunately,
- * it allocates memory so we can't make it static file scope, be sure to call
+ * Wraps a CFAllocator around aws_allocator. For Mac only. Use this anytime you need a CFAllocatorRef for interacting
+ * with Apple Frameworks. Unfortunately, it allocates memory so we can't make it static file scope, be sure to call
  * aws_wrapped_cf_allocator_destroy when finished.
  */
 AWS_COMMON_API
@@ -226,10 +223,9 @@ void aws_load_error_strings(void);
 #    endif
 #endif
 
-/* If this is C++, restrict isn't supported. If this is not at least C99 on gcc
- * and clang, it isn't supported. If visual C++ building in C mode, the restrict
- * definition is __restrict. This just figures all of that out based on who's
- * including this header file. */
+/* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
+ * If visual C++ building in C mode, the restrict definition is __restrict.
+ * This just figures all of that out based on who's including this header file. */
 #if defined(__cplusplus)
 #    define AWS_RESTRICT
 #else
@@ -249,7 +245,7 @@ void aws_load_error_strings(void);
 #define AWS_OP_SUCCESS (0)
 #define AWS_OP_ERR (-1)
 
-typedef enum aws_common_error {
+enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
     AWS_ERROR_UNKNOWN,
@@ -285,7 +281,7 @@ typedef enum aws_common_error {
     AWS_ERROR_UNIMPLEMENTED,
 
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
-} aws_common_error;
+};
 
 /**
  * Securely zeroes a memory buffer. This function will attempt to ensure that
@@ -295,37 +291,32 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #if defined(_MSC_VER)
     SecureZeroMemory(pBuf, bufsize);
 #else
-    /* We cannot use memset_s, even on a C11 compiler, because that would
-     * require that __STDC_WANT_LIB_EXT1__ be defined before the _first_
-     * inclusion of string.h.
+    /* We cannot use memset_s, even on a C11 compiler, because that would require
+     * that __STDC_WANT_LIB_EXT1__ be defined before the _first_ inclusion of string.h.
      *
      * We'll try to work around this by using inline asm on GCC-like compilers,
      * and by exposing the buffer pointer in a volatile local pointer elsewhere.
      */
-#    if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
     memset(pBuf, 0, bufsize);
-    /* This inline asm serves to convince the compiler that the buffer is
-     * (somehow) still used after the zero, and therefore that the optimizer
-     * can't eliminate the memset.
+    /* This inline asm serves to convince the compiler that the buffer is (somehow) still
+     * used after the zero, and therefore that the optimizer can't eliminate the memset.
      */
     __asm__ __volatile__("" /* The asm doesn't actually do anything. */
                          :  /* no outputs */
-                         /* Tell the compiler that the asm code has access to the pointer to the
-                          * buffer, and therefore it might be reading the (now-zeroed) buffer.
-                          * Without this. clang/LLVM 9.0.0 optimizes away a memset of a stack
-                          * buffer.
+                         /* Tell the compiler that the asm code has access to the pointer to the buffer,
+                          * and therefore it might be reading the (now-zeroed) buffer.
+                          * Without this. clang/LLVM 9.0.0 optimizes away a memset of a stack buffer.
                           */
                          : "r"(pBuf)
-                         /* Also clobber memory. While this seems like it might be unnecessary -
-                          * after all, it's enough that the asm might read the buffer, right? -
-                          * in practice GCC 7.3.0 seems to optimize a zero of a stack buffer
-                          * without it.
+                         /* Also clobber memory. While this seems like it might be unnecessary - after all,
+                          * it's enough that the asm might read the buffer, right? - in practice GCC 7.3.0
+                          * seems to optimize a zero of a stack buffer without it.
                           */
                          : "memory");
 #    else  // not GCC/clang
-    /* We don't have access to inline asm, since we're on a non-GCC platform.
-     * Move the pointer through a volatile pointer in an attempt to confuse the
-     * optimizer.
+    /* We don't have access to inline asm, since we're on a non-GCC platform. Move the pointer
+     * through a volatile pointer in an attempt to confuse the optimizer.
      */
     volatile void *pVolBuf = pBuf;
     memset(pVolBuf, 0, bufsize);
@@ -333,8 +324,8 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #endif     // #else not windows
 }
 
-#define AWS_ZERO_STRUCT(object) memset(&(object), 0, sizeof(object));
-#define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array));
+#define AWS_ZERO_STRUCT(object) memset(&object, 0, sizeof(object));
+#define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
 
 #define AWS_ENABLE_HW_OPTIMIZATION 1
 

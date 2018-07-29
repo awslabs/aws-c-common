@@ -44,6 +44,7 @@
 #include <thread_test.c>
 
 int main(int argc, char *argv[]) {
+
     AWS_RUN_TEST_CASES(
         &raise_errors_test,
         &reset_errors_test,

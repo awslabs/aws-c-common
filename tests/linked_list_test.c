@@ -22,7 +22,7 @@ struct int_value {
     struct aws_linked_list_node node;
 };
 
-static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
+static int s_test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -62,7 +62,7 @@ static int test_linked_list_order_push_back_pop_front(struct aws_allocator *allo
     return 0;
 }
 
-static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
+static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -106,7 +106,7 @@ static int test_linked_list_order_push_front_pop_back(struct aws_allocator *allo
     return 0;
 }
 
-static int test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
+static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -140,6 +140,6 @@ static int test_linked_list_iteration(struct aws_allocator *allocator, void *ctx
     return 0;
 }
 
-AWS_TEST_CASE(linked_list_push_back_pop_front, test_linked_list_order_push_back_pop_front)
-AWS_TEST_CASE(linked_list_push_front_pop_back, test_linked_list_order_push_front_pop_back)
-AWS_TEST_CASE(linked_list_iteration, test_linked_list_iteration)
+AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
+AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
+AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)

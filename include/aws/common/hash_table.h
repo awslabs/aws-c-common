@@ -56,7 +56,7 @@
  * usage to multithreaded usage.
  */
 struct aws_hash_table {
-    void *pImpl;
+    void *p_impl;
 };
 
 /**
@@ -92,7 +92,7 @@ struct aws_hash_iter {
 /**
  * Prototype for a key hashing function pointer.
  */
-typedef uint64_t (*aws_hash_fn_t)(const void *key);
+typedef uint64_t(aws_hash_fn)(const void *key);
 
 /**
  * Prototype for a hash table equality check function.
@@ -100,14 +100,14 @@ typedef uint64_t (*aws_hash_fn_t)(const void *key);
  * Equality functions used in a hash table must be reflexive (i.e., a == b if
  * and only if b == a), and must be consistent with the hash function in use.
  */
-typedef bool (*aws_equals_fn_t)(const void *a, const void *b);
+typedef bool(aws_equals_fn)(const void *a, const void *b);
 
 /*
  * This callback is used to destroy elements that are not returned to the
  * calling code during destruction.  In general, if the element is returned to
  * calling code, calling code must destroy it.
  */
-typedef void (*aws_hash_element_destroy_t)(void *key_or_value);
+typedef void(aws_hash_element_destroy_fn)(void *key_or_value);
 
 #ifdef __cplusplus
 extern "C" {
@@ -127,10 +127,10 @@ int aws_hash_table_init(
     struct aws_hash_table *map,
     struct aws_allocator *alloc,
     size_t size,
-    aws_hash_fn_t hash_fn,
-    aws_equals_fn_t equals_fn,
-    aws_hash_element_destroy_t destroy_key_fn,
-    aws_hash_element_destroy_t destroy_value_fn);
+    aws_hash_fn *hash_fn,
+    aws_equals_fn *equals_fn,
+    aws_hash_element_destroy_fn *destroy_key_fn,
+    aws_hash_element_destroy_fn *destroy_value_fn);
 
 /**
  * Deletes every element from map and frees all associated memory.
@@ -182,7 +182,7 @@ void aws_hash_iter_next(struct aws_hash_iter *iter);
 
 /**
  * Attempts to locate an element at key.  If the element is found, a
- * pointer to the value is placed in *pElem; if it is not found,
+ * pointer to the value is placed in *p_elem; if it is not found,
  * *pElem is set to NULL. Either way, AWS_OP_SUCCESS is returned.
  *
  * This method does not change the state of the hash table. Therefore, it
@@ -196,12 +196,12 @@ void aws_hash_iter_next(struct aws_hash_iter *iter);
  */
 
 AWS_COMMON_API
-int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **pElem);
+int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **p_elem);
 
 /**
  * Attempts to locate an element at key. If no such element was found,
  * creates a new element, with value initialized to NULL. In either case, a
- * pointer to the element is placed in *pElem.
+ * pointer to the element is placed in *p_elem.
  *
  * If was_created is non-NULL, *was_created is set to 0 if an existing
  * element was found, or 1 is a new element was created.
@@ -214,7 +214,7 @@ AWS_COMMON_API
 int aws_hash_table_create(
     struct aws_hash_table *map,
     const void *key,
-    struct aws_hash_element **pElem,
+    struct aws_hash_element **p_elem,
     int *was_created);
 
 /**
@@ -232,7 +232,7 @@ AWS_COMMON_API
 int aws_hash_table_remove(
     struct aws_hash_table *map,
     const void *key,
-    struct aws_hash_element *pValue,
+    struct aws_hash_element *p_value,
     int *was_present);
 
 /**
@@ -266,8 +266,54 @@ int aws_hash_table_remove(
 AWS_COMMON_API
 int aws_hash_table_foreach(
     struct aws_hash_table *map,
-    int (*callback)(void *context, struct aws_hash_element *pElement),
+    int (*callback)(void *context, struct aws_hash_element *p_element),
     void *context);
+
+/**
+ * Removes every element from the hash map. destroy_fn will be called for
+ * each element.
+ */
+AWS_COMMON_API
+void aws_hash_table_clear(struct aws_hash_table *map);
+
+/**
+ * Convenience hash function for NULL-terminated C-strings
+ */
+AWS_COMMON_API
+uint64_t aws_hash_c_string(const void *a);
+
+/**
+ * Convenience hash function for struct aws_strings.
+ * Hash is same as used on the string bytes by aws_hash_c_string.
+ */
+AWS_COMMON_API
+uint64_t aws_hash_string(const void *a);
+
+/**
+ * Convenience hash function which hashes the pointer value directly,
+ * without dereferencing.  This can be used in cases where pointer identity
+ * is desired, or where a uintptr_t is encoded into a const void *.
+ */
+AWS_COMMON_API
+uint64_t aws_hash_ptr(const void *a);
+
+/**
+ * Convenience eq function for NULL-terminated C-strings
+ */
+AWS_COMMON_API
+bool aws_c_string_eq(const void *a, const void *b);
+
+/**
+ * Convenience eq function for struct aws_strings.
+ */
+AWS_COMMON_API
+bool aws_string_eq(const void *a, const void *b);
+
+/**
+ * Equality function which compares pointer equality.
+ */
+AWS_COMMON_API
+bool aws_ptr_eq(const void *a, const void *b);
 
 /**
  * Removes every element from the hash map. destroy_fn will be called for
@@ -296,24 +342,6 @@ uint64_t aws_hash_string(const void *item);
  */
 AWS_COMMON_API
 uint64_t aws_hash_ptr(const void *item);
-
-/**
- * Convenience eq function for NULL-terminated C-strings
- */
-AWS_COMMON_API
-bool aws_c_string_eq(const void *a, const void *b);
-
-/**
- * Convenience eq function for struct aws_strings.
- */
-AWS_COMMON_API
-bool aws_string_eq(const void *a, const void *b);
-
-/**
- * Equality function which compares pointer equality.
- */
-AWS_COMMON_API
-bool aws_ptr_eq(const void *a, const void *b);
 
 #ifdef __cplusplus
 }

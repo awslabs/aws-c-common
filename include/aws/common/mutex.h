@@ -63,9 +63,8 @@ int aws_mutex_lock(struct aws_mutex *mutex);
 
 /**
  * Attempts to acquire the lock but returns immediately if it can not.
- * While on some platforms such as Windows, this may behave as a reentrant
- * mutex, you should not treat it like one. On platforms it is possible for it
- * to be non-reentrant, it will be.
+ * While on some platforms such as Windows, this may behave as a reentrant mutex,
+ * you should not treat it like one. On platforms it is possible for it to be non-reentrant, it will be.
  */
 AWS_COMMON_API
 int aws_mutex_try_lock(struct aws_mutex *mutex);

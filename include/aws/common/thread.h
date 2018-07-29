@@ -22,11 +22,7 @@
 #    include <pthread.h>
 #endif
 
-typedef enum aws_thread_detach_state {
-    AWS_THREAD_NOT_CREATED = 1,
-    AWS_THREAD_JOINABLE,
-    AWS_THREAD_JOIN_COMPLETED
-} aws_thread_detach_state;
+enum aws_thread_detach_state { AWS_THREAD_NOT_CREATED = 1, AWS_THREAD_JOINABLE, AWS_THREAD_JOIN_COMPLETED };
 
 struct aws_thread_options {
     size_t stack_size;
@@ -34,7 +30,7 @@ struct aws_thread_options {
 
 struct aws_thread {
     struct aws_allocator *allocator;
-    aws_thread_detach_state detach_state;
+    enum aws_thread_detach_state detach_state;
 #ifdef _WIN32
     HANDLE thread_handle;
     DWORD thread_id;
@@ -61,10 +57,9 @@ AWS_COMMON_API
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator);
 
 /**
- * Creates an OS level thread and associates it with func. context will be
- * passed to func when it is executed. options will be applied to the thread if
- * they are applicable for the platform. You must either call join or detach
- * after creating the thread and before calling clean_up.
+ * Creates an OS level thread and associates it with func. context will be passed to func when it is executed.
+ * options will be applied to the thread if they are applicable for the platform.
+ * You must either call join or detach after creating the thread and before calling clean_up.
  */
 AWS_COMMON_API
 int aws_thread_launch(
@@ -84,7 +79,7 @@ uint64_t aws_thread_get_id(struct aws_thread *thread);
  * this thread? Has it been detached()?
  */
 AWS_COMMON_API
-aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
+enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread);
 
 /**
  * Joins the calling thread to a thread instance. Returns when thread is

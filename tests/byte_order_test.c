@@ -17,7 +17,7 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-static int byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -48,4 +48,4 @@ static int byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     return 0;
 }
-AWS_TEST_CASE(byte_swap_test, byte_swap_test_fn);
+AWS_TEST_CASE(byte_swap_test, s_byte_swap_test_fn);

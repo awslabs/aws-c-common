@@ -18,7 +18,7 @@
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
-static int test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx) {
+static int s_test_mutex_acquire_release(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -40,7 +40,7 @@ struct thread_mutex_data {
     volatile int thread_fn_increments;
 };
 
-static void mutex_thread_fn(void *mutex_data) {
+static void s_mutex_thread_fn(void *mutex_data) {
     struct thread_mutex_data *p_mutex = (struct thread_mutex_data *)mutex_data;
     int finished = 0;
     while (!finished) {
@@ -57,7 +57,7 @@ static void mutex_thread_fn(void *mutex_data) {
     }
 }
 
-static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *ctx) {
+static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct thread_mutex_data mutex_data = {
@@ -71,7 +71,7 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
     ASSERT_SUCCESS(
-        aws_thread_launch(&thread, mutex_thread_fn, &mutex_data, 0),
+        aws_thread_launch(&thread, s_mutex_thread_fn, &mutex_data, 0),
         "thread creation failed with error %d",
         aws_last_error());
     int finished = 0;
@@ -111,5 +111,5 @@ static int test_mutex_is_actually_mutex(struct aws_allocator *allocator, void *c
     return 0;
 }
 
-AWS_TEST_CASE(mutex_aquire_release_test, test_mutex_acquire_release)
-AWS_TEST_CASE(mutex_is_actually_mutex_test, test_mutex_is_actually_mutex)
+AWS_TEST_CASE(mutex_aquire_release_test, s_test_mutex_acquire_release)
+AWS_TEST_CASE(mutex_is_actually_mutex_test, s_test_mutex_is_actually_mutex)

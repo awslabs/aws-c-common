@@ -17,8 +17,8 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-AWS_TEST_CASE(test_char_split_happy_path, test_char_split_happy_path_fn)
-static int test_char_split_happy_path_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_happy_path, s_test_char_split_happy_path_fn)
+static int s_test_char_split_happy_path_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = "testa;testb;testc";
@@ -50,8 +50,8 @@ static int test_char_split_happy_path_fn(struct aws_allocator *allocator, void *
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_ends_with_token, test_char_split_ends_with_token_fn)
-static int test_char_split_ends_with_token_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_ends_with_token, s_test_char_split_ends_with_token_fn)
+static int s_test_char_split_ends_with_token_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = "testa;testb;testc;";
@@ -85,8 +85,8 @@ static int test_char_split_ends_with_token_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_begins_with_token, test_char_split_begins_with_token_fn)
-static int test_char_split_begins_with_token_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_begins_with_token, s_test_char_split_begins_with_token_fn)
+static int s_test_char_split_begins_with_token_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = ";testa;testb;testc";
@@ -122,8 +122,8 @@ static int test_char_split_begins_with_token_fn(struct aws_allocator *allocator,
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_token_not_present, test_char_split_token_not_present_fn)
-static int test_char_split_token_not_present_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_token_not_present, s_test_char_split_token_not_present_fn)
+static int s_test_char_split_token_not_present_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = "testa";
@@ -147,8 +147,8 @@ static int test_char_split_token_not_present_fn(struct aws_allocator *allocator,
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_empty, test_char_split_empty_fn)
-static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_empty, s_test_char_split_empty_fn)
+static int s_test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = "";
@@ -169,8 +169,8 @@ static int test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx) 
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_adj_tokens, test_char_split_adj_tokens_fn)
-static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_adj_tokens, s_test_char_split_adj_tokens_fn)
+static int s_test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = "testa;;testb;testc";
@@ -206,8 +206,8 @@ static int test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_with_max_splits, test_char_split_with_max_splits_fn)
-static int test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_with_max_splits, s_test_char_split_with_max_splits_fn)
+static int s_test_char_split_with_max_splits_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     const char str_to_split[] = ";testa;testb;testc";
@@ -239,8 +239,8 @@ static int test_char_split_with_max_splits_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
-AWS_TEST_CASE(test_char_split_output_too_small, test_char_split_output_too_small_fn)
-static int test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_char_split_output_too_small, s_test_char_split_output_too_small_fn)
+static int s_test_char_split_output_too_small_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
