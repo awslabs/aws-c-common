@@ -27,7 +27,7 @@ typedef VOID WINAPI timefunc_t(LPFILETIME);
 static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p);
 static timefunc_t *volatile s_p_time_func = s_get_system_time_func_lazy_init;
 
-static BOOL CALLBACK get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
+static BOOL CALLBACK s_get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
     (void)init_once;
     (void)param;
     (void)context;
@@ -44,24 +44,13 @@ static BOOL CALLBACK get_system_time_init_once(PINIT_ONCE init_once, PVOID param
     return TRUE;
 }
 
-<<<<<<< HEAD
 static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p) {
-    BOOL status = InitOnceExecuteOnce(&s_timefunc_init_once, get_system_time_init_once, NULL, NULL);
+    BOOL status = InitOnceExecuteOnce(&s_timefunc_init_once, s_get_system_time_init_once, NULL, NULL);
 
     if (status) {
         (*s_p_time_func)(filetime_p);
     } else {
-        // Something went wrong in static initialization? Should never happen, but deal with it somehow...
-=======
-static VOID WINAPI get_system_time_func_lazy_init(LPFILETIME filetime_p) {
-    BOOL status = InitOnceExecuteOnce(&timefunc_init_once, get_system_time_init_once, NULL, NULL);
-
-    if (status) {
-        (*ptimefunc)(filetime_p);
-    } else {
-        // Something went wrong in static initialization? Should never happen,
-        // but deal with it somehow...
->>>>>>> master
+        /* Something went wrong in static initialization? Should never happen, but deal with it somehow...*/
         GetSystemTimeAsFileTime(filetime_p);
     }
 }
@@ -80,16 +69,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 
 int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     FILETIME ticks;
-<<<<<<< HEAD
     /*GetSystemTimePreciseAsFileTime() returns 100 nanosecond precision. Convert to nanoseconds.
      *Also, this function returns a different epoch than unix, so we add a conversion to handle that as well. */
     (*s_p_time_func)(&ticks);
-=======
-    /*GetSystemTimePreciseAsFileTime() returns 100 nanosecond precision. Convert
-     *to nanoseconds. Also, this function returns a different epoch than unix,
-     *so we add a conversion to handle that as well. */
-    (*ptimefunc)(&ticks);
->>>>>>> master
 
     /*if this looks unnecessary, see:
      * https://msdn.microsoft.com/en-us/library/windows/desktop/ms724284(v=vs.85).aspx
