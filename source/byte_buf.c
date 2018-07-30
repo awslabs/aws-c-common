@@ -148,7 +148,6 @@ int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, st
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     assert(dest);
-    assert(number_of_args > 1);
 
     va_list ap;
     va_start(ap, number_of_args);
