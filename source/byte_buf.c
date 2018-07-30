@@ -57,6 +57,46 @@ void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf) {
     aws_byte_buf_clean_up(buf);
 }
 
+bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b) {
+    if (!a || !b) {
+        return (a == b);
+    }
+
+    if (a->len != b->len) {
+        return false;
+    }
+
+    if (!a->buffer || !b->buffer) {
+        return (a->buffer == b->buffer);
+    }
+
+    return !memcmp(a->buffer, b->buffer, a->len);
+}
+
+int aws_byte_buf_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
+    assert(allocator);
+    assert(dest);
+    assert(src);
+
+    dest->len = 0;
+    dest->capacity = 0;
+    dest->allocator = allocator;
+    if (src->buffer == NULL) {
+        dest->buffer = NULL;
+        return AWS_OP_SUCCESS;
+    }
+
+    dest->buffer = (uint8_t *) aws_mem_acquire(allocator, sizeof(uint8_t) * src->len);
+    if (dest->buffer == NULL) {
+        return aws_raise_error(AWS_ERROR_OOM);
+    }
+
+    dest->len = src->len;
+    dest->capacity = src->len;
+    memcpy(dest->buffer, src->buffer, src->len);
+    return AWS_OP_SUCCESS;
+}
+
 int aws_byte_buf_split_on_char_n(
     struct aws_byte_buf *input_str,
     char split_on,

@@ -140,3 +140,117 @@ static int s_test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *all
 
     return 0;
 }
+
+AWS_TEST_CASE(test_buffer_null, s_test_buffer_null_fn)
+static int s_test_buffer_null_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf b = aws_byte_buf_null();
+
+    ASSERT_PTR_EQUALS(0, b.buffer);
+    ASSERT_PTR_EQUALS(0, b.allocator);
+    ASSERT_INT_EQUALS(0, b.len);
+    ASSERT_INT_EQUALS(0, b.capacity);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_eq, s_test_buffer_eq_fn)
+static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
+    struct aws_byte_buf b1_equal = aws_byte_buf_from_c_str("testa");
+
+    struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testb");
+
+    b1.capacity = 5;
+    b1_equal.capacity = 2;
+    b1_equal.allocator = allocator;
+
+    ASSERT_TRUE(aws_byte_buf_eq(&b1, &b1_equal));
+    ASSERT_TRUE(aws_byte_buf_eq(&b1, &b1));
+
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_eq_same_content_different_len, s_test_buffer_eq_same_content_different_len_fn)
+static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
+    struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
+    b2.len--;
+
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_eq_null_byte_buffer, s_test_buffer_eq_null_byte_buffer_fn)
+static int s_test_buffer_eq_null_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
+
+    ASSERT_TRUE(aws_byte_buf_eq(NULL, NULL));
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, NULL));
+    ASSERT_FALSE(aws_byte_buf_eq(NULL, &b1));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_eq_null_internal_byte_buffer, s_test_buffer_eq_null_internal_byte_buffer_fn)
+static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
+    struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
+
+    b1.buffer = NULL;
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+    ASSERT_FALSE(aws_byte_buf_eq(&b2, &b1));
+
+    b2.buffer = NULL;
+    ASSERT_TRUE(aws_byte_buf_eq(&b1, &b2));
+
+    b2.len++;
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_copy, s_test_buffer_copy_fn)
+static int s_test_buffer_copy_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf src = aws_byte_buf_from_c_str("test_string");
+    src.capacity = 0;
+    struct aws_byte_buf dest;
+
+    ASSERT_SUCCESS(aws_byte_buf_copy(allocator, &dest, &src));
+    ASSERT_TRUE(aws_byte_buf_eq(&src, &dest));
+    ASSERT_INT_EQUALS(src.len, dest.capacity);
+    ASSERT_PTR_EQUALS(allocator, dest.allocator);
+    aws_byte_buf_clean_up(&dest);
+    return 0;
+}
+
+AWS_TEST_CASE(test_buffer_copy_null_buffer, s_test_buffer_copy_null_buffer_fn)
+static int s_test_buffer_copy_null_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+    (void) ctx;
+
+    struct aws_byte_buf src;
+    src.buffer = NULL;
+    src.len = 5;
+    src.capacity = 6;
+
+    struct aws_byte_buf dest;
+    ASSERT_SUCCESS(aws_byte_buf_copy(allocator, &dest, &src));
+    ASSERT_PTR_EQUALS(allocator, dest.allocator);
+    ASSERT_INT_EQUALS(0, dest.capacity);
+    ASSERT_INT_EQUALS(0, dest.len);
+    ASSERT_PTR_EQUALS(0, dest.buffer);
+    aws_byte_buf_clean_up(&dest);
+    return 0;
+}
