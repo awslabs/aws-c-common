@@ -88,7 +88,7 @@ int aws_byte_buf_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest
 
     dest->buffer = (uint8_t *) aws_mem_acquire(allocator, sizeof(uint8_t) * src->len);
     if (dest->buffer == NULL) {
-        return aws_raise_error(AWS_ERROR_OOM);
+        return AWS_OP_ERR;
     }
 
     dest->len = src->len;
