@@ -35,6 +35,15 @@ static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_INT_EQUALS(strlen(expected) + 10, destination.capacity);
     ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
 
+    destination.len = 0;
+    ASSERT_SUCCESS(aws_byte_buf_cat(&destination, 1, &str1));
+    ASSERT_INT_EQUALS(str1.len, destination.len);
+    ASSERT_BIN_ARRAYS_EQUALS(str1.buffer, str1.len, destination.buffer, destination.len);
+
+    destination.len = 0;
+    ASSERT_SUCCESS(aws_byte_buf_cat(&destination, 0));
+    ASSERT_INT_EQUALS(0, destination.len);
+
     aws_byte_buf_clean_up(&destination);
 
     return 0;
