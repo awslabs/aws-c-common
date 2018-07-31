@@ -152,7 +152,7 @@ static int s_test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *all
 
 AWS_TEST_CASE(test_buffer_eq, s_test_buffer_eq_fn)
 static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf b1_equal = aws_byte_buf_from_c_str("testa");
@@ -172,7 +172,7 @@ static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_eq_same_content_different_len, s_test_buffer_eq_same_content_different_len_fn)
 static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
@@ -185,7 +185,7 @@ static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *
 
 AWS_TEST_CASE(test_buffer_eq_null_byte_buffer, s_test_buffer_eq_null_byte_buffer_fn)
 static int s_test_buffer_eq_null_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
 
@@ -198,7 +198,7 @@ static int s_test_buffer_eq_null_byte_buffer_fn(struct aws_allocator *allocator,
 
 AWS_TEST_CASE(test_buffer_eq_null_internal_byte_buffer, s_test_buffer_eq_null_internal_byte_buffer_fn)
 static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
@@ -217,7 +217,7 @@ static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *a
 
 AWS_TEST_CASE(test_buffer_dup, s_test_buffer_dup_fn)
 static int s_test_buffer_dup_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf src = aws_byte_buf_from_c_str("test_string");
     src.capacity = 0;
@@ -233,7 +233,7 @@ static int s_test_buffer_dup_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_dup_null_buffer, s_test_buffer_dup_null_buffer_fn)
 static int s_test_buffer_dup_null_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
 
     struct aws_byte_buf src;
     src.buffer = NULL;
