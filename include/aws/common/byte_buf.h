@@ -82,7 +82,7 @@ AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct a
  * Returns AWS_OP_SUCCESS in case of success or AWS_OP_ERR when memory can't be allocated.
  */
 AWS_COMMON_API
-int aws_byte_buf_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of
@@ -168,15 +168,6 @@ static inline struct aws_byte_buf aws_byte_buf_from_array(const uint8_t *bytes, 
     buf.buffer = (uint8_t *)bytes;
     buf.len = len;
     buf.capacity = len;
-    buf.allocator = NULL;
-    return buf;
-}
-
-static inline struct aws_byte_buf aws_byte_buf_null() {
-    struct aws_byte_buf buf;
-    buf.buffer = NULL;
-    buf.len = 0;
-    buf.capacity = 0;
     buf.allocator = NULL;
     return buf;
 }

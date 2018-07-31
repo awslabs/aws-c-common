@@ -73,14 +73,14 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
     return !memcmp(a->buffer, b->buffer, a->len);
 }
 
-int aws_byte_buf_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
+int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
     assert(allocator);
     assert(dest);
     assert(src);
 
     dest->len = 0;
     dest->capacity = 0;
-    dest->allocator = allocator;
+    dest->allocator = NULL;
     if (src->buffer == NULL) {
         dest->buffer = NULL;
         return AWS_OP_SUCCESS;
@@ -93,6 +93,7 @@ int aws_byte_buf_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest
 
     dest->len = src->len;
     dest->capacity = src->len;
+    dest->allocator = allocator;
     memcpy(dest->buffer, src->buffer, src->len);
     return AWS_OP_SUCCESS;
 }
