@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 if [[ -z $CLANG_FORMAT ]] ; then
     CLANG_FORMAT=clang-format
 fi
