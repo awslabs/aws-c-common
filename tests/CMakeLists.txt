@@ -165,6 +165,12 @@ add_test(test_buffer_cpy ${TEST_BINARY_NAME} test_buffer_cpy)
 add_test(test_buffer_cpy_dest_too_small ${TEST_BINARY_NAME} test_buffer_cpy_dest_too_small)
 add_test(test_buffer_cpy_offsets ${TEST_BINARY_NAME} test_buffer_cpy_offsets)
 add_test(test_buffer_cpy_offsets_dest_too_small ${TEST_BINARY_NAME} test_buffer_cpy_offsets_dest_too_small)
+add_test(test_buffer_eq ${TEST_BINARY_NAME} test_buffer_eq)
+add_test(test_buffer_eq_same_content_different_len ${TEST_BINARY_NAME} test_buffer_eq_same_content_different_len)
+add_test(test_buffer_eq_null_byte_buffer ${TEST_BINARY_NAME} test_buffer_eq_null_byte_buffer)
+add_test(test_buffer_eq_null_internal_byte_buffer ${TEST_BINARY_NAME} test_buffer_eq_null_internal_byte_buffer)
+add_test(test_buffer_dup ${TEST_BINARY_NAME} test_buffer_dup)
+add_test(test_buffer_dup_null_buffer ${TEST_BINARY_NAME} test_buffer_dup_null_buffer)
 
 add_test(byte_swap_test ${TEST_BINARY_NAME} byte_swap_test)
 

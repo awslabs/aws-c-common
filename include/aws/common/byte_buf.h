@@ -67,6 +67,24 @@ AWS_COMMON_API void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
 AWS_COMMON_API void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf);
 
 /**
+ * Compares two aws_byte_buf structures
+ * Returns true if a has the same length as b and their buffers have the same bytes
+ * (or both buffers are null). When both a and b are null the function returns true
+ */
+AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
+
+/**
+ * Copies src buffer into dest and sets the correct len and capacity.
+ * A new memory zone is allocated for dest->buffer. When dest is no longer needed it will have to be cleaned-up using
+ * aws_byte_buf_clean_up(dest).
+ * Dest capacity and len will be equal to the src len. Allocator of the dest will be identical with parameter allocator.
+ * If src buffer is null the dest will have a null buffer with a len and a capacity of 0
+ * Returns AWS_OP_SUCCESS in case of success or AWS_OP_ERR when memory can't be allocated.
+ */
+AWS_COMMON_API
+int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+
+/**
  * No copies, no buffer allocations. Fills in output with a list of
  * aws_byte_cursor instances where buffer is an offset into the input_str and
  * len is the length of that string in the original buffer.
