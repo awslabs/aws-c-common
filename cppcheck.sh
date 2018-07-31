@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+set -e
+
 cppcheck                                                    \
                                                             \
 --enable=all --std=c99 --language=c                         \
