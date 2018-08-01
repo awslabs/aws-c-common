@@ -857,7 +857,7 @@ static int s_array_list_of_strings_sort_fn(struct aws_allocator *allocator, void
     const struct aws_string *strings[] = {
         empty, foo, bar, foobar, foo2, foobaz, bar_food, bar_null_food, bar_null_back};
     const struct aws_string *sorted[] = {empty, bar, bar_null_back, bar_null_food, bar_food, foo, foo2, foobar, foobaz};
-    int num_strings = sizeof(strings) / sizeof(const struct aws_string *);
+    int num_strings = AWS_ARRAY_SIZE(strings);
 
     struct aws_array_list list;
     ASSERT_SUCCESS(
