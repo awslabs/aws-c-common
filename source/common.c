@@ -291,7 +291,7 @@ static struct aws_error_info errors[] = {
 
 static struct aws_error_info_list s_list = {
     .error_list = errors,
-    .count = sizeof(errors) / sizeof(struct aws_error_info),
+    .count = AWS_ARRAY_SIZE(errors),
 };
 
 void aws_load_error_strings(void) {

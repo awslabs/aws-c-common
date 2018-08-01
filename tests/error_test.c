@@ -25,7 +25,7 @@ static struct aws_error_info s_errors[] = {
 
 static struct aws_error_info_list s_errors_list = {
     .error_list = s_errors,
-    .count = sizeof(s_errors) / sizeof(struct aws_error_info),
+    .count = AWS_ARRAY_SIZE(s_errors),
 };
 
 static void s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {

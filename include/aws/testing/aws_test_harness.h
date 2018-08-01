@@ -419,7 +419,7 @@ static int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_name = argv[1];                                                                                           \
     }                                                                                                                  \
                                                                                                                        \
-    size_t test_count = sizeof(tests) / sizeof(struct aws_test_harness *);                                             \
+    size_t test_count = AWS_ARRAY_SIZE(tests);                                                                         \
     if (test_name) {                                                                                                   \
         ret_val = -1;                                                                                                  \
         for (size_t i = 0; i < test_count; ++i) {                                                                      \

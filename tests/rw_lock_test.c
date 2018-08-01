@@ -137,7 +137,7 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
     struct aws_thread threads[8];
     AWS_ZERO_ARRAY(threads);
 
-    for (size_t i = 0; i < sizeof(threads) / sizeof(threads[0]); ++i) {
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(threads); ++i) {
 
         aws_thread_init(&threads[i], allocator);
         ASSERT_SUCCESS(
@@ -156,7 +156,7 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
         aws_rw_lock_wunlock(&lock);
     }
 
-    for (size_t i = 0; i < sizeof(threads) / sizeof(threads[0]); ++i) {
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(threads); ++i) {
 
         ASSERT_SUCCESS(aws_thread_join(&threads[i]), "Thread join failed with error code %d.", aws_last_error());
         aws_thread_clean_up(&threads[i]);
