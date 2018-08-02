@@ -11,12 +11,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-cmake_minimum_required(VERSION 3.0)
-project(aws-c-common C)
+cmake_minimum_required(VERSION 3.1)
+project(aws-c-common C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(Sanitizers)
+include(HeaderChecker)
 
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
@@ -34,6 +35,9 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
+
+CHECK_HEADERS(${AWS_COMMON_HEADERS})
+CHECK_HEADERS(${AWS_TEST_HEADERS})
 
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
