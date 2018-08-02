@@ -16,6 +16,11 @@
  * permissions and limitations under the License.
  */
 
+#if defined(_MSC_VER)
+#    include <WinSock2.h> /* for htons; must be included before windows.h */
+#    include <Windows.h>  /* for SecureZeroMemory */
+#endif
+
 #include <aws/common/exports.h>
 
 #include <stddef.h>
@@ -24,10 +29,6 @@
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char static_assertion_##msg[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
-
-#if defined(_MSC_VER)
-#    include <Windows.h> /* for SecureZeroMemory */
-#endif
 
 #ifndef NO_STDBOOL
 #    include <stdbool.h>
