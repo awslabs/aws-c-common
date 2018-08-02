@@ -44,6 +44,8 @@ static inline uint64_t aws_hton64(uint64_t x) {
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));
     return v;
+#elif defined(_MSC_VER)
+    return _byteswap_uint64(x);
 #else
     uint32_t low = (uint32_t)x;
     uint32_t high = (uint32_t)(x >> 32);
@@ -62,28 +64,44 @@ static inline uint64_t aws_ntoh64(uint64_t x) {
  * Convert 32 bit integer from host to network byte order.
  */
 static inline uint32_t aws_hton32(uint32_t x) {
+#ifdef _MSC_VER
+    return _byteswap_ulong(x);
+#else
     return htonl(x);
+#endif
 }
 
 /**
  * Convert 32 bit integer from network to host byte order.
  */
 static inline uint32_t aws_ntoh32(uint32_t x) {
+#ifdef _MSC_VER
+    return _byteswap_ulong(x);
+#else
     return ntohl(x);
+#endif
 }
 
 /**
  * Convert 16 bit integer from host to network byte order.
  */
 static inline uint16_t aws_hton16(uint16_t x) {
+#ifdef _MSC_VER
+    return _byteswap_ushort(x);
+#else
     return htons(x);
+#endif
 }
 
 /**
  * Convert 16 bit integer from network to host byte order.
  */
 static inline uint16_t aws_ntoh16(uint16_t x) {
+#ifdef _MSC_VER
+    return _byteswap_ushort(x);
+#else
     return ntohs(x);
+#endif
 }
 
 #endif /* AWS_COMMON_BYTE_ORDER_H */
