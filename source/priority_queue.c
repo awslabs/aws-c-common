@@ -72,7 +72,7 @@ static void s_sift_up(struct aws_priority_queue *queue, size_t index) {
     }
 }
 
-int aws_priority_queue_dynamic_init(
+int aws_priority_queue_init_dynamic(
     struct aws_priority_queue *queue,
     struct aws_allocator *alloc,
     size_t default_size,
@@ -83,7 +83,7 @@ int aws_priority_queue_dynamic_init(
     return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
 }
 
-void aws_priority_queue_static_init(
+void aws_priority_queue_init_static(
     struct aws_priority_queue *queue,
     void *heap,
     size_t item_count,
