@@ -36,7 +36,7 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
         aws_string_bytes(test_string_1)[test_string_1->len], '\0', "Static string should have null byte at end.");
 
     /* Test: string creation works. */
-    const struct aws_string *test_string_2 = aws_string_from_c_str_new(allocator, "foofaraw");
+    const struct aws_string *test_string_2 = aws_string_new_from_c_str(allocator, "foofaraw");
     ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
     ASSERT_PTR_EQUALS(test_string_2->allocator, allocator, "Allocator should have been set correctly.");
     ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
@@ -87,7 +87,7 @@ static int s_binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
     size_t len = sizeof(test_array);
-    const struct aws_string *binary_string = aws_string_from_array_new(allocator, test_array, len);
+    const struct aws_string *binary_string = aws_string_new_from_array(allocator, test_array, len);
 
     ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
     ASSERT_PTR_EQUALS(allocator, binary_string->allocator, "Allocator should have been set correctly.");
@@ -142,18 +142,18 @@ static int s_string_compare_test_fn(struct aws_allocator *allocator, void *ctx) 
     return 0;
 }
 
-AWS_TEST_CASE(string_secure_destroy_test, string_secure_destroy_test_fn);
-static int string_secure_destroy_test_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(string_destroy_secure_test, string_destroy_secure_test_fn);
+static int string_destroy_secure_test_fn(struct aws_allocator *allocator, void *ctx) {
     /* Just verifies all memory was freed. */
-    const struct aws_string *empty = aws_string_from_c_str_new(allocator, "");
-    const struct aws_string *logorrhea = aws_string_from_c_str_new(allocator, "logorrhea");
+    const struct aws_string *empty = aws_string_new_from_c_str(allocator, "");
+    const struct aws_string *logorrhea = aws_string_new_from_c_str(allocator, "logorrhea");
     const uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x86, 0x75, 0x30, 0x90};
-    const struct aws_string *deadbeef = aws_string_from_array_new(allocator, bytes, sizeof(bytes));
+    const struct aws_string *deadbeef = aws_string_new_from_array(allocator, bytes, sizeof(bytes));
     ASSERT_NOT_NULL(empty, "Memory allocation of string should have succeeded.");
     ASSERT_NOT_NULL(logorrhea, "Memory allocation of string should have succeeded.");
     ASSERT_NOT_NULL(deadbeef, "Memory allocation of string should have succeeded.");
-    aws_string_secure_destroy((void *)empty);
-    aws_string_secure_destroy((void *)logorrhea);
-    aws_string_secure_destroy((void *)deadbeef);
+    aws_string_destroy_secure((void *)empty);
+    aws_string_destroy_secure((void *)logorrhea);
+    aws_string_destroy_secure((void *)deadbeef);
     return 0;
 }
