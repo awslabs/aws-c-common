@@ -46,7 +46,7 @@ int aws_task_scheduler_init(
     scheduler->alloc = alloc;
     scheduler->clock = clock;
     scheduler->min_run_time = 0;
-    return aws_priority_queue_dynamic_init(
+    return aws_priority_queue_init_dynamic(
         &scheduler->queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct task_container), &s_compare_timestamps);
 }
 

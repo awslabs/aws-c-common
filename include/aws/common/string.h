@@ -70,9 +70,9 @@ extern "C" {
  * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
 AWS_COMMON_API
-const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str);
+const struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
 AWS_COMMON_API
-const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
+const struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
@@ -85,7 +85,7 @@ void aws_string_destroy(void *str);
  * Not safe to run on a string created with AWS_STATIC_STRING_FROM_LITERAL.
  */
 AWS_COMMON_API
-void aws_string_secure_destroy(void *str);
+void aws_string_destroy_secure(void *str);
 
 /**
  * Compares lexicographical ordering of two strings. This is a binary

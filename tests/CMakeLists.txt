@@ -149,7 +149,7 @@ add_test(byte_cursor_limit_tests ${TEST_BINARY_NAME} byte_cursor_limit_tests)
 add_test(string_tests ${TEST_BINARY_NAME} string_tests)
 add_test(binary_string_test ${TEST_BINARY_NAME} binary_string_test)
 add_test(string_compare_test ${TEST_BINARY_NAME} string_compare_test)
-add_test(string_secure_destroy_test ${TEST_BINARY_NAME} string_secure_destroy_test)
+add_test(string_destroy_secure_test ${TEST_BINARY_NAME} string_destroy_secure_test)
 
 add_test(test_char_split_happy_path ${TEST_BINARY_NAME} test_char_split_happy_path)
 add_test(test_char_split_ends_with_token ${TEST_BINARY_NAME} test_char_split_ends_with_token)
@@ -169,8 +169,8 @@ add_test(test_buffer_eq ${TEST_BINARY_NAME} test_buffer_eq)
 add_test(test_buffer_eq_same_content_different_len ${TEST_BINARY_NAME} test_buffer_eq_same_content_different_len)
 add_test(test_buffer_eq_null_byte_buffer ${TEST_BINARY_NAME} test_buffer_eq_null_byte_buffer)
 add_test(test_buffer_eq_null_internal_byte_buffer ${TEST_BINARY_NAME} test_buffer_eq_null_internal_byte_buffer)
-add_test(test_buffer_dup ${TEST_BINARY_NAME} test_buffer_dup)
-add_test(test_buffer_dup_null_buffer ${TEST_BINARY_NAME} test_buffer_dup_null_buffer)
+add_test(test_buffer_init_copy ${TEST_BINARY_NAME} test_buffer_init_copy)
+add_test(test_buffer_init_copy_null_buffer ${TEST_BINARY_NAME} test_buffer_init_copy_null_buffer)
 
 add_test(byte_swap_test ${TEST_BINARY_NAME} byte_swap_test)
 
@@ -193,7 +193,7 @@ add_test(rw_lock_is_actually_rw_lock_test ${TEST_BINARY_NAME} rw_lock_is_actuall
 add_test(rw_lock_many_readers_test ${TEST_BINARY_NAME} rw_lock_many_readers_test)
 add_test(test_secure_zero ${TEST_BINARY_NAME} test_secure_zero)
 add_test(test_buffer_secure_zero ${TEST_BINARY_NAME} test_buffer_secure_zero)
-add_test(test_buffer_secure_clean_up ${TEST_BINARY_NAME} test_buffer_secure_clean_up)
+add_test(test_buffer_clean_up_secure ${TEST_BINARY_NAME} test_buffer_clean_up_secure)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
