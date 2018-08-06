@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/thread.h>
+#include <aws/common/clock.h>
 
 #include <assert.h>
 
