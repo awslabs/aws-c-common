@@ -18,6 +18,32 @@
 
 #include <aws/common/common.h>
 
+enum aws_timestamp_unit {
+    AWS_TIMESTAMP_SECS = 1,
+    AWS_TIMESTAMP_MILLIS = 1000,
+    AWS_TIMESTAMP_MICROS = 1000000,
+    AWS_TIMESTAMP_NANOS = 1000000000
+};
+
+/**
+ * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is returned.
+ */
+static inline uint64_t aws_timestamp_convert(uint64_t timestamp, enum aws_timestamp_unit convert_from, enum aws_timestamp_unit convert_to) {
+    uint64_t diff = 0;
+
+    if (convert_to >  convert_from) {
+        diff = convert_to / convert_from;
+        return timestamp * diff;
+    }
+    else if (convert_to < convert_from) {
+        diff = convert_from / convert_to;
+        return timestamp / diff;
+    }
+    else {
+        return timestamp;
+    }
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
