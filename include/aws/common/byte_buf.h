@@ -50,28 +50,7 @@ extern "C" {
 #endif
 
 AWS_COMMON_API
-int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len);
-
-AWS_COMMON_API
-void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
-
-/**
- * Sets all bytes of buffer to zero and resets len to zero.
- */
-AWS_COMMON_API void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
-
-/**
- * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up
- * on the buffer.
- */
-AWS_COMMON_API void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf);
-
-/**
- * Compares two aws_byte_buf structures
- * Returns true if a has the same length as b and their buffers have the same bytes
- * (or both buffers are null). When both a and b are null the function returns true
- */
-AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity);
 
 /**
  * Copies src buffer into dest and sets the correct len and capacity.
@@ -82,7 +61,31 @@ AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct a
  * Returns AWS_OP_SUCCESS in case of success or AWS_OP_ERR when memory can't be allocated.
  */
 AWS_COMMON_API
-int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+int aws_byte_buf_init_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+
+AWS_COMMON_API
+void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
+
+/**
+ * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up
+ * on the buffer.
+ */
+AWS_COMMON_API
+void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf);
+
+/**
+ * Sets all bytes of buffer to zero and resets len to zero.
+ */
+AWS_COMMON_API
+void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
+
+/**
+ * Compares two aws_byte_buf structures
+ * Returns true if a has the same length as b and their buffers have the same bytes
+ * (or both buffers are null). When both a and b are null the function returns true
+ */
+AWS_COMMON_API
+bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of

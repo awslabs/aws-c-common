@@ -24,13 +24,13 @@
 #    pragma warning(disable : 4706)
 #endif
 
-int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len) {
-    buf->buffer = (uint8_t *)aws_mem_acquire(allocator, len);
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity) {
+    buf->buffer = (uint8_t *)aws_mem_acquire(allocator, capacity);
     if (!buf->buffer) {
         return AWS_OP_ERR;
     }
     buf->len = 0;
-    buf->capacity = len;
+    buf->capacity = capacity;
     buf->allocator = allocator;
     return AWS_OP_SUCCESS;
 }
@@ -52,7 +52,7 @@ void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
     buf->len = 0;
 }
 
-void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf) {
+void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
     aws_byte_buf_secure_zero(buf);
     aws_byte_buf_clean_up(buf);
 }
@@ -73,7 +73,7 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
     return !memcmp(a->buffer, b->buffer, a->len);
 }
 
-int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
+int aws_byte_buf_init_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
     assert(allocator);
     assert(dest);
     assert(src);
