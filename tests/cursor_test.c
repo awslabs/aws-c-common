@@ -24,25 +24,25 @@ static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 1));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(0, 0));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(0, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(0, SIZE_MAX));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(0, 1));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(0, 0));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(0, SSIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(0, SIZE_MAX));
 
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(1, 1));
-    ASSERT_UINT_EQUALS(1, aws_nospec_index(1, 2));
-    ASSERT_UINT_EQUALS(1, aws_nospec_index(1, 4));
-    ASSERT_UINT_EQUALS(1, aws_nospec_index(1, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(1, SIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(1, 0));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(1, 1));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(1, 2));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(1, 4));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(1, SSIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(1, SIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(1, 0));
 
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(4, 3));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(4, 4));
-    ASSERT_UINT_EQUALS(4, aws_nospec_index(4, 5));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(4, 3));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(4, 4));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(4, 5));
 
-    ASSERT_UINT_EQUALS(SSIZE_MAX - 1, aws_nospec_index(SSIZE_MAX - 1, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(SSIZE_MAX + 1, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_index(SSIZE_MAX, SSIZE_MAX + 1));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(SSIZE_MAX - 1, SSIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(SSIZE_MAX + 1, SSIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask(SSIZE_MAX, SSIZE_MAX + 1));
 
     return 0;
 }

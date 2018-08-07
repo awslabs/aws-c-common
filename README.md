@@ -50,11 +50,15 @@ All error functions are in the `include/aws/common/error.h` header file.
 
 #### Naming
 Any function that allocates and initializes an object will be suffixed with `new`. Similarly, these objects will always
-have a corresponding function with a `destroy` suffix. The `new` suffixed functions will return `NULL` on failure.
-To respond to the error, call `aws_last_error()`.
+have a corresponding function with a `destroy` suffix. The `new` functions will return the allocated object
+on success and `NULL` on failure. To respond to the error, call `aws_last_error()`. If several `new` or `destroy`
+functions are available, the variants should be named like `new_x` or `destroy_x` (e.g. `new_copy` or `destroy_secure`).
 
-Any function that simply initializes an object will be suffixed with `init`. These objects will have a corresponding
-`clean_up` function. In these cases, you are responsible for making the decisions for how your object is allocated.
+Any function that initializes an existing object will be suffixed with `init`. These objects will have a corresponding
+`clean_up` function if necessary. In these cases, you are responsible for making the decisions for how your object is
+allocated. The `init` functions return `AWS_OP_SUCCESS` ( 0 ) or `AWS_OP_ERR` (-1) on failure. If several `init` or
+`clean_up` functions are available, they should be named like `init_x` or `clean_up_x` (e.g. `init_static` or
+`clean_up_secure`).
 
 ## Contributing
 

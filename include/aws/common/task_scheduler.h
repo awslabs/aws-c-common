@@ -84,13 +84,16 @@ int aws_task_scheduler_next_task(struct aws_task_scheduler *scheduler, struct aw
  * Schedules a task to run immediately. task is copied
  */
 AWS_COMMON_API
-int aws_task_scheduler_schedule_now(struct aws_task_scheduler *queue, struct aws_task *task);
+int aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struct aws_task *task);
 
 /**
  * Schedules a task to run at time_to_run units after the current time. task is copied
  */
 AWS_COMMON_API
-int aws_task_scheduler_schedule_future(struct aws_task_scheduler *queue, struct aws_task *task, uint64_t time_to_run);
+int aws_task_scheduler_schedule_future(
+    struct aws_task_scheduler *scheduler,
+    struct aws_task *task,
+    uint64_t time_to_run);
 
 /**
  * Sequentially execute all tasks that are ready until either the queue is empty or no ready tasks are available.
@@ -106,7 +109,7 @@ int aws_task_scheduler_schedule_future(struct aws_task_scheduler *queue, struct 
  * no tasks are scheduled. AWS_OP_ERR is only returned if an actual error condition occurs (OOM, Clock failure etc...).
  */
 AWS_COMMON_API
-int aws_task_scheduler_run_all(struct aws_task_scheduler *queue, uint64_t *next_task_time);
+int aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t *next_task_time);
 
 #ifdef __cplusplus
 }

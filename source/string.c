@@ -14,7 +14,7 @@
  */
 #include <aws/common/string.h>
 
-const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocator, const char *c_str) {
+const struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
     size_t len = strlen(c_str);
     struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
     if (!hdr) {
@@ -26,7 +26,7 @@ const struct aws_string *aws_string_from_c_str_new(struct aws_allocator *allocat
     return hdr;
 }
 
-const struct aws_string *aws_string_from_array_new(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
+const struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
     struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
     if (!hdr) {
         return NULL;
@@ -46,12 +46,13 @@ void aws_string_destroy(void *str) {
     }
 }
 
-void aws_string_secure_destroy(void *str) {
+void aws_string_destroy_secure(void *str) {
     struct aws_string *self = str;
     if (self) {
         aws_secure_zero((void *)aws_string_bytes(self), self->len);
-        if (self->allocator)
+        if (self->allocator) {
             aws_mem_release(self->allocator, self);
+        }
     }
 }
 

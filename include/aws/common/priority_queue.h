@@ -50,7 +50,7 @@ extern "C" {
  * pred is the function that will be used to determine priority.
  */
 AWS_COMMON_API
-int aws_priority_queue_dynamic_init(
+int aws_priority_queue_init_dynamic(
     struct aws_priority_queue *queue,
     struct aws_allocator *alloc,
     size_t default_size,
@@ -66,7 +66,7 @@ int aws_priority_queue_dynamic_init(
  * pred is the function that will be used to determine priority.
  */
 AWS_COMMON_API
-void aws_priority_queue_static_init(
+void aws_priority_queue_init_static(
     struct aws_priority_queue *queue,
     void *heap,
     size_t item_count,
