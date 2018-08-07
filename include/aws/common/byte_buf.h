@@ -191,11 +191,11 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void *byte
 
 /**
  * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
- * 0. Otherwise, returns index.  This function is designed to return a value
- * within [0, bound) even under CPU speculation conditions, and is intended to
- * be used for SPECTRE mitigation purposes.
+ * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
+ * value even under CPU speculation conditions, and is intended to be used for
+ * SPECTRE mitigation purposes.
  */
-static inline size_t aws_nospec_index(size_t index, size_t bound) {
+static inline size_t aws_nospec_mask(size_t index, size_t bound) {
     /*
      * SPECTRE mitigation - we compute a mask that will be zero if len < 0
      * or len >= buf->len, and all-ones otherwise, and AND it into the index.
@@ -249,9 +249,9 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * Note that GCC is smart enough to optimize the divide-and-multiply into
      * an arithmetic right shift operation on x86.
      */
-    combined_mask = combined_mask * SIZE_MAX;
+    combined_mask = combined_mask * UINTPTR_MAX;
 
-    return index & combined_mask;
+    return combined_mask;
 }
 
 /**
@@ -295,14 +295,21 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
 
     if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
         /*
-         * Pass the length through aws_nospec_index. We do this after the
-         * branch, as otherwise we'd treat an out-of-bounds read as a
-         * zero-length read.
+         * If we're speculating past a failed bounds check, null out the pointer. This ensures
+         * that we don't try to read past the end of the buffer and leak information about other
+         * memory through timing side-channels.
          */
-        len = aws_nospec_index(len, cursor->len + 1);
+        uintptr_t mask = aws_nospec_mask(len, cursor->len + 1);
+
+        /* Make sure we don't speculate-underflow len either */
+        len = len & mask;
+        cursor->ptr = (uint8_t *)((uintptr_t)cursor->ptr & mask);
+        /* Make sure subsequent nospec accesses don't advance ptr past NULL */
+        cursor->len = cursor->len & mask;
 
         rv.ptr = cursor->ptr;
-        rv.len = len;
+        /* Make sure anything acting upon the returned cursor _also_ doesn't advance past NULL */
+        rv.len = len & mask;
 
         cursor->ptr += len;
         cursor->len -= len;
