@@ -16,11 +16,19 @@
 # 
 # To do so, we generate a single-line C or C++ source file that includes each
 # header, and link all of these stub source files into a test executable.
+#
+# Because we pull in a CXX compiler, this is split out into a subproject,
+# so that it can be disabled when not desired.
+
+cmake_minimum_required(VERSION 3.1)
+project(aws-c-common C CXX)
+
+include(AwsCFlags)
 
 set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker")
 
 set(HEADER_CHECKER_LIB ${CMAKE_PROJECT_NAME}-header-check)
-add_executable(${HEADER_CHECKER_LIB} "cmake/header-test-stub.c")
+add_executable(${HEADER_CHECKER_LIB} "${CMAKE_CURRENT_SOURCE_DIR}/stub.c")
 target_link_libraries(${HEADER_CHECKER_LIB} ${CMAKE_PROJECT_NAME})
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_UNSTABLE_TESTING_API=1)
 
@@ -33,16 +41,14 @@ set_target_properties(${HEADER_CHECKER_LIB} PROPERTIES
     C_STANDARD 99
 )
 
-function(CHECK_HEADERS)
-    foreach(header ${ARGV})
-        file(RELATIVE_PATH rel_header ${CMAKE_CURRENT_SOURCE_DIR} ${header})
-        file(RELATIVE_PATH include_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header})
-        set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
-        file(MAKE_DIRECTORY "${stub_dir}")
-        file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n")
-        file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n")
+foreach(header ${HEADERS_TO_CHECK})
+    file(RELATIVE_PATH rel_header ${CMAKE_HOME_DIRECTORY} ${header})
+    file(RELATIVE_PATH include_path "${CMAKE_HOME_DIRECTORY}/include" ${header})
+    set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
+    file(MAKE_DIRECTORY "${stub_dir}")
+    file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n")
+    file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n")
 
-        target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c")
-        target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/checkcpp.cpp")
-    endforeach(header)
-endfunction()
+    target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c")
+    target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/checkcpp.cpp")
+endforeach(header)
