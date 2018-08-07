@@ -3,9 +3,12 @@
  * # All functions have been made static.
  * # The self test harness has been turned off.
  * # stdint.h include removed for C89 compatibility.
+ * # VALGRIND has been enabled to suppress valgrind warnings
  *
  * The original code was retrieved from http://burtleburtle.net/bob/c/lookup3.c
  */
+
+#define VALGRIND
 
 /*
 -------------------------------------------------------------------------------
