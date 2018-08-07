@@ -50,8 +50,9 @@ void aws_string_destroy_secure(void *str) {
     struct aws_string *self = str;
     if (self) {
         aws_secure_zero((void *)aws_string_bytes(self), self->len);
-        if (self->allocator)
+        if (self->allocator) {
             aws_mem_release(self->allocator, self);
+        }
     }
 }
 
