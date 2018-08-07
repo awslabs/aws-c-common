@@ -28,14 +28,17 @@
 #endif
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
     return malloc(size);
 }
 
 static void s_default_free(struct aws_allocator *allocator, void *ptr) {
+    (void)allocator;
     free(ptr);
 }
 
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
     (void)oldsize;
     return realloc(ptr, newsize);
 }

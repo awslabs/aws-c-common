@@ -182,4 +182,4 @@ void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator_
 }
 #endif
 
-#endif /*AWS_COMMON_ARRAY_LIST_H */
+#endif /* AWS_COMMON_ARRAY_LIST_H */

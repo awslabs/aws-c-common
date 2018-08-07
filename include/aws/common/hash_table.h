@@ -280,14 +280,14 @@ void aws_hash_table_clear(struct aws_hash_table *map);
  * Convenience hash function for NULL-terminated C-strings
  */
 AWS_COMMON_API
-uint64_t aws_hash_c_string(const void *a);
+uint64_t aws_hash_c_string(const void *item);
 
 /**
  * Convenience hash function for struct aws_strings.
  * Hash is same as used on the string bytes by aws_hash_c_string.
  */
 AWS_COMMON_API
-uint64_t aws_hash_string(const void *a);
+uint64_t aws_hash_string(const void *item);
 
 /**
  * Convenience hash function which hashes the pointer value directly,
@@ -295,7 +295,7 @@ uint64_t aws_hash_string(const void *a);
  * is desired, or where a uintptr_t is encoded into a const void *.
  */
 AWS_COMMON_API
-uint64_t aws_hash_ptr(const void *a);
+uint64_t aws_hash_ptr(const void *item);
 
 /**
  * Convenience eq function for NULL-terminated C-strings
@@ -314,34 +314,6 @@ bool aws_string_eq(const void *a, const void *b);
  */
 AWS_COMMON_API
 bool aws_ptr_eq(const void *a, const void *b);
-
-/**
- * Removes every element from the hash map. destroy_fn will be called for
- * each element.
- */
-AWS_COMMON_API
-void aws_hash_table_clear(struct aws_hash_table *map);
-
-/**
- * Convenience hash function for NULL-terminated C-strings
- */
-AWS_COMMON_API
-uint64_t aws_hash_c_string(const void *item);
-
-/**
- * Convenience hash function for struct aws_strings.
- * Hash is same as used on the string bytes by aws_hash_c_string.
- */
-AWS_COMMON_API
-uint64_t aws_hash_string(const void *item);
-
-/**
- * Convenience hash function which hashes the pointer value directly,
- * without dereferencing.  This can be used in cases where pointer identity
- * is desired, or where a uintptr_t is encoded into a const void *.
- */
-AWS_COMMON_API
-uint64_t aws_hash_ptr(const void *item);
 
 #ifdef __cplusplus
 }
