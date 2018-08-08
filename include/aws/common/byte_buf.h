@@ -50,28 +50,7 @@ extern "C" {
 #endif
 
 AWS_COMMON_API
-int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t len);
-
-AWS_COMMON_API
-void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
-
-/**
- * Sets all bytes of buffer to zero and resets len to zero.
- */
-AWS_COMMON_API void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
-
-/**
- * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up
- * on the buffer.
- */
-AWS_COMMON_API void aws_byte_buf_secure_clean_up(struct aws_byte_buf *buf);
-
-/**
- * Compares two aws_byte_buf structures
- * Returns true if a has the same length as b and their buffers have the same bytes
- * (or both buffers are null). When both a and b are null the function returns true
- */
-AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
+int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity);
 
 /**
  * Copies src buffer into dest and sets the correct len and capacity.
@@ -82,7 +61,31 @@ AWS_COMMON_API bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct a
  * Returns AWS_OP_SUCCESS in case of success or AWS_OP_ERR when memory can't be allocated.
  */
 AWS_COMMON_API
-int aws_byte_buf_dup(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+int aws_byte_buf_init_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src);
+
+AWS_COMMON_API
+void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
+
+/**
+ * Equivalent to calling aws_byte_buf_secure_zero and then aws_byte_buf_clean_up
+ * on the buffer.
+ */
+AWS_COMMON_API
+void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf);
+
+/**
+ * Sets all bytes of buffer to zero and resets len to zero.
+ */
+AWS_COMMON_API
+void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
+
+/**
+ * Compares two aws_byte_buf structures
+ * Returns true if a has the same length as b and their buffers have the same bytes
+ * (or both buffers are null). When both a and b are null the function returns true
+ */
+AWS_COMMON_API
+bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of
@@ -188,11 +191,11 @@ static inline struct aws_byte_cursor aws_byte_cursor_from_array(const void *byte
 
 /**
  * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
- * 0. Otherwise, returns index.  This function is designed to return a value
- * within [0, bound) even under CPU speculation conditions, and is intended to
- * be used for SPECTRE mitigation purposes.
+ * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
+ * value even under CPU speculation conditions, and is intended to be used for
+ * SPECTRE mitigation purposes.
  */
-static inline size_t aws_nospec_index(size_t index, size_t bound) {
+static inline size_t aws_nospec_mask(size_t index, size_t bound) {
     /*
      * SPECTRE mitigation - we compute a mask that will be zero if len < 0
      * or len >= buf->len, and all-ones otherwise, and AND it into the index.
@@ -246,9 +249,9 @@ static inline size_t aws_nospec_index(size_t index, size_t bound) {
      * Note that GCC is smart enough to optimize the divide-and-multiply into
      * an arithmetic right shift operation on x86.
      */
-    combined_mask = combined_mask * SIZE_MAX;
+    combined_mask = combined_mask * UINTPTR_MAX;
 
-    return index & combined_mask;
+    return combined_mask;
 }
 
 /**
@@ -292,14 +295,21 @@ static inline struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_b
 
     if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
         /*
-         * Pass the length through aws_nospec_index. We do this after the
-         * branch, as otherwise we'd treat an out-of-bounds read as a
-         * zero-length read.
+         * If we're speculating past a failed bounds check, null out the pointer. This ensures
+         * that we don't try to read past the end of the buffer and leak information about other
+         * memory through timing side-channels.
          */
-        len = aws_nospec_index(len, cursor->len + 1);
+        uintptr_t mask = aws_nospec_mask(len, cursor->len + 1);
+
+        /* Make sure we don't speculate-underflow len either */
+        len = len & mask;
+        cursor->ptr = (uint8_t *)((uintptr_t)cursor->ptr & mask);
+        /* Make sure subsequent nospec accesses don't advance ptr past NULL */
+        cursor->len = cursor->len & mask;
 
         rv.ptr = cursor->ptr;
-        rv.len = len;
+        /* Make sure anything acting upon the returned cursor _also_ doesn't advance past NULL */
+        rv.len = len & mask;
 
         cursor->ptr += len;
         cursor->len -= len;
