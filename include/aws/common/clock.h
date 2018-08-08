@@ -28,7 +28,9 @@ enum aws_timestamp_unit {
 /**
  * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is returned.
  */
-static inline uint64_t aws_timestamp_convert(uint64_t timestamp, enum aws_timestamp_unit convert_from, enum aws_timestamp_unit convert_to) {
+static inline uint64_t aws_timestamp_convert(uint64_t timestamp, 
+                                             enum aws_timestamp_unit convert_from, 
+                                             enum aws_timestamp_unit convert_to) {
     uint64_t diff = 0;
 
     if (convert_to >  convert_from) {
@@ -67,3 +69,4 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp);
 #endif
 
 #endif /* AWS_COMMON_CLOCK_H */
+

@@ -135,7 +135,3 @@ AWS_TEST_CASE(test_milli_and_micros_conversion, s_test_milli_and_micros_conversi
 AWS_TEST_CASE(test_milli_and_nanos_conversion, s_test_milli_and_nanos_conversion)
 AWS_TEST_CASE(test_micro_and_nanos_conversion, s_test_micro_and_nanos_conversion)
 
-
-
-
-

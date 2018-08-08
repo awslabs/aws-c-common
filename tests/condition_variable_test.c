@@ -179,9 +179,11 @@ static int s_test_conditional_wait_timeout_fn(struct aws_allocator *allocator, v
     ASSERT_TRUE(predicate_args.call_count >= 1);
 
     ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= (wait_time_epsilon * predicate_args.call_count));
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < (wait_time_epsilon * predicate_args.call_count) + wait_time_epsilon);
+    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp < 
+                (wait_time_epsilon * predicate_args.call_count) + wait_time_epsilon);
 
     return AWS_OP_SUCCESS;
 }
 
 AWS_TEST_CASE(conditional_wait_timeout, s_test_conditional_wait_timeout_fn)
+

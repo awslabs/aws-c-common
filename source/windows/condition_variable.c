@@ -15,6 +15,7 @@
 
 #include <aws/common/condition_variable.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/mutex.h>
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {

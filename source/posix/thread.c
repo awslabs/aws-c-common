@@ -15,11 +15,12 @@
 
 #include <aws/common/thread.h>
 
+#include <aws/common/clock.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
-#include <aws/common/clock.h>
 
 static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
@@ -175,3 +176,4 @@ void aws_thread_current_sleep(uint64_t nanos) {
 
     nanosleep(&tm, &output);
 }
+

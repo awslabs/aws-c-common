@@ -110,3 +110,4 @@ void aws_thread_current_sleep(uint64_t nanos) {
      * arises put the effort in here. */
     Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS));
 }
+
