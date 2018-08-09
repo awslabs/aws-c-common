@@ -19,6 +19,7 @@
 
 #include <aws/common/clock.h>
 #include <aws/common/thread.h>
+#include <inttypes.h>
 
 struct condition_predicate_args {
     int call_count;
@@ -160,34 +161,36 @@ static int s_test_conditional_wait_timeout_fn(struct aws_allocator *allocator, v
     /* 20 ms in nanos */
     uint64_t wait_time_epsilon = aws_timestamp_convert(20, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL);
 
-    struct condition_predicate_args predicate_args = {.call_count = 0};
-
     struct aws_mutex mutex = AWS_MUTEX_INIT;
     struct aws_condition_variable condition_variable = AWS_CONDITION_VARIABLE_INIT;
+    aws_mutex_lock(&mutex);
+    size_t less_than_half_count = 0, more_than_half_count = 0, more_than_requested_count = 0;
+    for (size_t i = 0; i < 1000; ++i) {
+        struct condition_predicate_args predicate_args = {.call_count = 0};
+        uint64_t pre_wait_timestamp = 0;
+        uint64_t post_wait_timestamp = 0;
 
-    uint64_t pre_wait_timestamp = 0;
-    ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&pre_wait_timestamp));
-
-    ASSERT_SUCCESS(aws_mutex_lock(&mutex));
-
-    ASSERT_ERROR(
-        AWS_ERROR_COND_VARIABLE_TIMED_OUT,
+        aws_high_res_clock_get_ticks(&pre_wait_timestamp);
         aws_condition_variable_wait_for_pred(
-            &condition_variable, &mutex, wait_time_epsilon, s_conditional_predicate, &predicate_args));
-    uint64_t post_wait_timestamp = 0;
-    ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&post_wait_timestamp));
+                &condition_variable, &mutex, wait_time_epsilon, s_conditional_predicate, &predicate_args);
+        aws_high_res_clock_get_ticks(&post_wait_timestamp);
 
-    ASSERT_TRUE(predicate_args.call_count >= 1);
+        uint64_t diff = post_wait_timestamp - pre_wait_timestamp;
 
-    uint64_t how_long_we_actually_slept_nanos = post_wait_timestamp - pre_wait_timestamp;
-    uint64_t how_long_we_actually_slept_ms =
-        aws_timestamp_convert(how_long_we_actually_slept_nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
+        if (diff < wait_time_epsilon / 2) {
+            less_than_half_count++;
+        }
+        else if (diff < wait_time_epsilon) {
+            more_than_half_count++;
+        }
+        else {
+            more_than_requested_count++;
+        }
+    }
 
-    /* this is the best idea I've got, this thing is impossible to test, so let's just make sure it slept a reasonable
-     * enough time, that a timestamp calculation somewhere isn't wrong. */
-    ASSERT_TRUE(how_long_we_actually_slept_ms >= 5);
-    /* this one, just make sure we didn't sleep more than one interval more than the requested timeout. */
-    ASSERT_TRUE(how_long_we_actually_slept_nanos < (wait_time_epsilon * predicate_args.call_count) + wait_time_epsilon);
+    fprintf(stderr, "Wait totals:\n\tless than half time : %" PRIu64 "\n", (uint64_t)less_than_half_count);
+    fprintf(stderr, "\tmore than half time : %" PRIu64 "\n", (uint64_t)more_than_half_count);
+    fprintf(stderr, "\tentire time : %" PRIu64 "\n", (uint64_t)more_than_requested_count);
 
     return AWS_OP_SUCCESS;
 }
