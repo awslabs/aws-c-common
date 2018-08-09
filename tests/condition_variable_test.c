@@ -153,40 +153,41 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(conditional_notify_all, s_test_conditional_notify_all_fn)
 
-static bool s_timeout_conditional_predicate(void *arg) {
-    struct condition_predicate_args *condition_predicate_args = (struct condition_predicate_args *)arg;
-    condition_predicate_args->call_count++;
-    return false;
-}
-
 static int s_test_conditional_wait_timeout_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    /* 10 ms in nanos 8 */
-    uint64_t wait_time_epsilon = aws_timestamp_convert(10, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL);
+    /* 20 ms in nanos */
+    uint64_t wait_time_epsilon = aws_timestamp_convert(20, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL);
+
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
     struct aws_mutex mutex = AWS_MUTEX_INIT;
     struct aws_condition_variable condition_variable = AWS_CONDITION_VARIABLE_INIT;
 
     uint64_t pre_wait_timestamp = 0;
-    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&pre_wait_timestamp));
+    ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&pre_wait_timestamp));
 
     ASSERT_SUCCESS(aws_mutex_lock(&mutex));
 
     ASSERT_ERROR(
         AWS_ERROR_COND_VARIABLE_TIMED_OUT,
         aws_condition_variable_wait_for_pred(
-            &condition_variable, &mutex, wait_time_epsilon, s_timeout_conditional_predicate, &predicate_args));
+            &condition_variable, &mutex, wait_time_epsilon, s_conditional_predicate, &predicate_args));
     uint64_t post_wait_timestamp = 0;
-    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&post_wait_timestamp));
+    ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&post_wait_timestamp));
 
     ASSERT_TRUE(predicate_args.call_count >= 1);
 
-    ASSERT_TRUE(post_wait_timestamp - pre_wait_timestamp >= (wait_time_epsilon * predicate_args.call_count));
-    ASSERT_TRUE(
-        post_wait_timestamp - pre_wait_timestamp < (wait_time_epsilon * predicate_args.call_count) + wait_time_epsilon);
+    uint64_t how_long_we_actually_slept_nanos = post_wait_timestamp - pre_wait_timestamp;
+    uint64_t how_long_we_actually_slept_ms =
+        aws_timestamp_convert(how_long_we_actually_slept_nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
+
+    /* this is the best idea I've got, this thing is impossible to test, so let's just make sure it slept a reasonable
+     * enough time, that a timestamp calculation somewhere isn't wrong. */
+    ASSERT_TRUE(how_long_we_actually_slept_ms >= 5);
+    /* this one, just make sure we didn't sleep more than one interval more than the requested timeout. */
+    ASSERT_TRUE(how_long_we_actually_slept_nanos < (wait_time_epsilon * predicate_args.call_count) + wait_time_epsilon);
 
     return AWS_OP_SUCCESS;
 }

@@ -56,6 +56,7 @@ int aws_condition_variable_wait_for(
     int64_t time_to_wait) {
 
     DWORD time_ms = (DWORD)aws_timestamp_convert(time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
+
     if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {
         return AWS_OP_SUCCESS;
     }
