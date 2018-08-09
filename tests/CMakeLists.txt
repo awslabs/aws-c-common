@@ -50,6 +50,14 @@ add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thre
 
 add_test(high_res_clock_increments_test ${TEST_BINARY_NAME} high_res_clock_increments_test)
 add_test(sys_clock_increments_test ${TEST_BINARY_NAME} sys_clock_increments_test)
+add_test(test_sec_and_millis_conversions ${TEST_BINARY_NAME} test_sec_and_millis_conversions)
+add_test(test_sec_and_micros_conversions ${TEST_BINARY_NAME} test_sec_and_micros_conversions)
+add_test(test_sec_and_nanos_conversions ${TEST_BINARY_NAME} test_sec_and_nanos_conversions)
+add_test(test_milli_and_micros_conversion ${TEST_BINARY_NAME} test_milli_and_micros_conversion)
+add_test(test_milli_and_nanos_conversion ${TEST_BINARY_NAME} test_milli_and_nanos_conversion)
+add_test(test_micro_and_nanos_conversion ${TEST_BINARY_NAME} test_micro_and_nanos_conversion)
+add_test(test_precision_loss_remainders_conversion ${TEST_BINARY_NAME} test_precision_loss_remainders_conversion)
+
 add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 add_test(array_list_order_push_back_pop_front_test ${TEST_BINARY_NAME} array_list_order_push_back_pop_front_test)
 add_test(array_list_order_push_back_pop_back_test ${TEST_BINARY_NAME} array_list_order_push_back_pop_back_test)

@@ -16,8 +16,6 @@
 #include <aws/common/clock.h>
 #include <winnt.h>
 
-static const uint64_t MUS_PER_SEC = 1000000;
-static const uint64_t NS_PER_MUS = 1000;
 static const uint64_t FILE_TIME_TO_NS = 100;
 static const uint64_t EC_TO_UNIX_EPOCH = 11644473600LL;
 static const uint64_t WINDOWS_TICK = 10000000;
@@ -60,7 +58,10 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
     if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
 
-        *timestamp = (((uint64_t)ticks.QuadPart * MUS_PER_SEC) / (uint64_t)frequency.QuadPart) * NS_PER_MUS;
+        *timestamp = aws_timestamp_convert((uint64_t)ticks.QuadPart, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MICROS, NULL)
+                / (uint64_t)frequency.QuadPart;
+
+        *timestamp = aws_timestamp_convert(*timestamp, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL);
         return AWS_OP_SUCCESS;
     }
 
