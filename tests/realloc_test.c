@@ -239,14 +239,14 @@ static int s_test_acquire_many_fn(struct aws_allocator *allocator, void *ctx) {
 
     void *a = NULL;
     void *b = NULL;
-    void *buffer = aws_mem_acquire_many(allocator, 2, &a, 32, &b, 32);
+    void *buffer = aws_mem_acquire_many(allocator, 2, &a, (size_t)64, &b, (size_t)64);
 
     ASSERT_NOT_NULL(buffer);
     ASSERT_NOT_NULL(a);
     ASSERT_NOT_NULL(b);
 
     ASSERT_UINT_EQUALS((uintptr_t)a, (uintptr_t)buffer);
-    ASSERT_UINT_EQUALS((uintptr_t)b, (uintptr_t)buffer + 32);
+    ASSERT_UINT_EQUALS((uintptr_t)b, (uintptr_t)buffer + 64);
     ASSERT_UINT_EQUALS((uintptr_t)a % sizeof(intmax_t), 0);
     ASSERT_UINT_EQUALS((uintptr_t)b % sizeof(intmax_t), 0);
 
@@ -254,7 +254,7 @@ static int s_test_acquire_many_fn(struct aws_allocator *allocator, void *ctx) {
     a = NULL;
     b = NULL;
 
-    buffer = aws_mem_acquire_many(allocator, 2, &a, 1, &b, 1);
+    buffer = aws_mem_acquire_many(allocator, 2, &a, (size_t)1, &b, (size_t)1);
 
     ASSERT_NOT_NULL(buffer);
     ASSERT_NOT_NULL(a);
