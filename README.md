@@ -100,7 +100,7 @@ have pre-slotted error codes for each library. The currently allocated error ran
 | [0x0800, 0x0C00) | aws-c-http |
 | [0x0C00, 0x1000) | aws-c-compression |
 | [0x1000, 0x1400) | aws-c-eventstream |
-| [0x1400, 0x1800) | (reserved for future project) |
+| [0x1400, 0x1800) | aws-c-mqtt |
 | [0x1800, 0x1C00) | (reserved for future project) |
 | [0x1C00, 0x2000) | (reserved for future project) |
 | [0x2000, 0x2400) | (reserved for future project) |

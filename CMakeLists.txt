@@ -35,6 +35,8 @@ file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
 
+option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
+
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
             "include/aws/common/windows/*"
@@ -89,6 +91,11 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
         )
+
+if (PERFORM_HEADER_CHECK)
+    set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
+    add_subdirectory(cmake/header-tester)
+endif()
 
 add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
