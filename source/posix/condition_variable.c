@@ -20,8 +20,6 @@
 
 #include <errno.h>
 
-#define NANOS_PER_SEC 1000000000
-
 static int process_error_code(int err) {
     switch (err) {
         case ENOMEM:
@@ -88,8 +86,9 @@ int aws_condition_variable_wait_for(
     time_to_wait += current_sys_time;
 
     struct timespec ts;
-    ts.tv_sec = time_to_wait / NANOS_PER_SEC;
-    ts.tv_nsec = time_to_wait % NANOS_PER_SEC;
+    uint64_t remainder = 0;
+    ts.tv_sec = aws_timestamp_convert((uint64_t)time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &remainder);
+    ts.tv_nsec = remainder;
 
     int err_code = pthread_cond_timedwait(&condition_variable->condition_handle, &mutex->mutex_handle, &ts);
 
