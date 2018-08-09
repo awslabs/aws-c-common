@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
         &test_milli_and_micros_conversion,
         &test_milli_and_nanos_conversion,
         &test_micro_and_nanos_conversion,
+        &test_precision_loss_remainders_conversion,
         &array_list_order_push_back_pop_front_test,
         &array_list_order_push_back_pop_back_test,
         &array_list_pop_front_n_test,

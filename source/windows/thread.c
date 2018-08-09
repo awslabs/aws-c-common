@@ -12,8 +12,8 @@
  * express or implied.See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #include <aws/common/thread.h>
+
 #include <aws/common/clock.h>
 
 #include <assert.h>
@@ -108,6 +108,5 @@ void aws_thread_current_sleep(uint64_t nanos) {
      * complex AND we don't have a use case yet where we should have sleeps
      * anywhere other than for context switches and testing. When that time
      * arises put the effort in here. */
-    Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS));
+    Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL));
 }
-

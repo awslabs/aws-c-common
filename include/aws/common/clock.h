@@ -26,22 +26,30 @@ enum aws_timestamp_unit {
 };
 
 /**
- * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is returned.
+ * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is
+ * returned. If 'remainder' is NOT NULL, it will be set to the remainder if convert_from is a more precise unit than
+ * convert_to. To avoid unnecessary branching, 'remainder' is not zero initialized in this function, be sure to set it
+ * to 0 first if you care about that kind of thing.
  */
-static inline uint64_t aws_timestamp_convert(uint64_t timestamp, 
-                                             enum aws_timestamp_unit convert_from, 
-                                             enum aws_timestamp_unit convert_to) {
+static inline uint64_t aws_timestamp_convert(
+    uint64_t timestamp,
+    enum aws_timestamp_unit convert_from,
+    enum aws_timestamp_unit convert_to,
+    uint64_t *remainder) {
     uint64_t diff = 0;
 
-    if (convert_to >  convert_from) {
+    if (convert_to > convert_from) {
         diff = convert_to / convert_from;
         return timestamp * diff;
-    }
-    else if (convert_to < convert_from) {
+    } else if (convert_to < convert_from) {
         diff = convert_from / convert_to;
+
+        if (remainder) {
+            *remainder = timestamp % diff;
+        }
+
         return timestamp / diff;
-    }
-    else {
+    } else {
         return timestamp;
     }
 }
@@ -69,4 +77,3 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp);
 #endif
 
 #endif /* AWS_COMMON_CLOCK_H */
-

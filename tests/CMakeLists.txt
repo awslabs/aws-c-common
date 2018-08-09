@@ -56,6 +56,7 @@ add_test(test_sec_and_nanos_conversions ${TEST_BINARY_NAME} test_sec_and_nanos_c
 add_test(test_milli_and_micros_conversion ${TEST_BINARY_NAME} test_milli_and_micros_conversion)
 add_test(test_milli_and_nanos_conversion ${TEST_BINARY_NAME} test_milli_and_nanos_conversion)
 add_test(test_micro_and_nanos_conversion ${TEST_BINARY_NAME} test_micro_and_nanos_conversion)
+add_test(test_precision_loss_remainders_conversion ${TEST_BINARY_NAME} test_precision_loss_remainders_conversion)
 
 add_test(error_code_cross_thread_test, ${TEST_BINARY_NAME} error_code_cross_thread_test)
 add_test(array_list_order_push_back_pop_front_test ${TEST_BINARY_NAME} array_list_order_push_back_pop_front_test)
