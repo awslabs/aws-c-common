@@ -189,6 +189,7 @@ int main(int argc, char *argv[]) {
         &test_realloc_passthrough_oom,
         &test_realloc_passthrough,
         &test_cf_allocator_wrapper,
+        &test_acquire_many,
         &test_lru_cache_overflow_static_members,
         &test_lru_cache_lru_ness_static_members,
         &test_lru_cache_entries_cleanup,

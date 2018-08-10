@@ -189,6 +189,7 @@ add_test(test_realloc_fallback_oom ${TEST_BINARY_NAME} test_realloc_fallback_oom
 add_test(test_realloc_passthrough ${TEST_BINARY_NAME} test_realloc_passthrough)
 add_test(test_realloc_passthrough_oom ${TEST_BINARY_NAME} test_realloc_passthrough_oom)
 add_test(test_cf_allocator_wrapper ${TEST_BINARY_NAME} test_cf_allocator_wrapper)
+add_test(test_acquire_many ${TEST_BINARY_NAME} test_acquire_many)
 
 add_test(test_lru_cache_overflow_static_members ${TEST_BINARY_NAME} test_lru_cache_overflow_static_members)
 add_test(test_lru_cache_lru_ness_static_members ${TEST_BINARY_NAME} test_lru_cache_lru_ness_static_members)
