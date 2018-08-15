@@ -15,9 +15,9 @@
 
 #include <aws/common/hash_table.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
-
 #include <stdio.h>
 
 static const char *TEST_STR_1 = "test 1";
@@ -498,6 +498,8 @@ static int s_foreach_cb_deltarget(void *context, struct aws_hash_element *p_elem
 }
 
 static int s_foreach_cb_cutoff(void *context, struct aws_hash_element *p_element) {
+    (void)p_element;
+
     int *p_remain = context;
     s_iter_count++;
     if (--*p_remain) {

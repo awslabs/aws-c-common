@@ -15,6 +15,7 @@
 
 #include <aws/common/task_scheduler.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
@@ -106,7 +107,10 @@ static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
-static void null_fn(void *arg, enum aws_task_status status) {}
+static void null_fn(void *arg, enum aws_task_status status) {
+    (void)arg;
+    (void)status;
+}
 
 static int test_scheduler_next_task_timestamp(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
