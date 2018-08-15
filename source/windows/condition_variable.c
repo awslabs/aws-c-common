@@ -15,9 +15,8 @@
 
 #include <aws/common/condition_variable.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/mutex.h>
-
-#define MILLIS_PER_SEC 1000000
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
 
@@ -56,7 +55,8 @@ int aws_condition_variable_wait_for(
     struct aws_mutex *mutex,
     int64_t time_to_wait) {
 
-    DWORD time_ms = (DWORD)(time_to_wait / MILLIS_PER_SEC);
+    DWORD time_ms = (DWORD)aws_timestamp_convert(time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
+
     if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {
         return AWS_OP_SUCCESS;
     }

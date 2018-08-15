@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 
+#include <stdarg.h>
 #include <stdlib.h>
 
 #ifdef __MACH__
@@ -60,6 +61,58 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
     }
     return mem;
 }
+
+#define AWS_ALIGN_ROUND_UP(value, alignment) (((value) + ((alignment)-1)) & ~((alignment)-1))
+
+void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
+
+    enum { S_ALIGNMENT = sizeof(intmax_t) };
+
+    va_list args_size;
+    va_start(args_size, count);
+    va_list args_allocs;
+    va_copy(args_allocs, args_size);
+
+    size_t total_size = 0;
+    for (size_t i = 0; i < count; ++i) {
+
+        /* Ignore the pointer argument for now */
+        va_arg(args_size, void **);
+
+        size_t alloc_size = va_arg(args_size, size_t);
+        total_size += AWS_ALIGN_ROUND_UP(alloc_size, S_ALIGNMENT);
+    }
+    va_end(args_size);
+
+    void *allocation = NULL;
+
+    if (total_size > 0) {
+
+        allocation = aws_mem_acquire(allocator, total_size);
+        if (!allocation) {
+            goto cleanup;
+        }
+
+        uint8_t *current_ptr = allocation;
+
+        for (size_t i = 0; i < count; ++i) {
+
+            void **out_ptr = va_arg(args_allocs, void **);
+
+            size_t alloc_size = va_arg(args_allocs, size_t);
+            alloc_size = AWS_ALIGN_ROUND_UP(alloc_size, S_ALIGNMENT);
+
+            *out_ptr = current_ptr;
+            current_ptr += alloc_size;
+        }
+    }
+
+cleanup:
+    va_end(args_allocs);
+    return allocation;
+}
+
+#undef AWS_ALIGN_ROUND_UP
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
     allocator->mem_release(allocator, ptr);

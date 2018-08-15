@@ -172,6 +172,18 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
 AWS_COMMON_API
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
 
+/**
+ * Allocates many chunks of bytes into a single block. Expects to be called with alternating void ** (dest), size_t
+ * (size). The first void ** will be set to the root of the allocation. Alignment is assumed to be sizeof(intmax_t).
+ *
+ * This is useful for allocating structs using the pimpl pattern, as you may allocate the public object and impl object
+ * in the same contiguous block of memory.
+ *
+ * Returns a pointer to the allocation.
+ */
+AWS_COMMON_API
+void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...);
+
 /*
  * Releases ptr back to whatever allocated it.
  */
