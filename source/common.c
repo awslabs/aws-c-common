@@ -204,7 +204,7 @@ static struct aws_error_info errors[] = {
         "unknown error"),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SHORT_BUFFER,
-        "Insufficient data in input buffer"),
+        "buffer is not large enough to hold result"),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OVERFLOW_DETECTED,
         "fixed size value overflow was detected"),
