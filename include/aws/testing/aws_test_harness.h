@@ -53,6 +53,11 @@ static void *s_mem_acquire_malloc(struct aws_allocator *allocator, size_t size) 
     test_allocator->allocated += size;
     struct memory_test_tracker *memory =
         (struct memory_test_tracker *)malloc(size + sizeof(struct memory_test_tracker));
+
+    if (!memory) {
+        return NULL;
+    }
+
     memory->size = size;
     memory->blob = (uint8_t *)memory + sizeof(struct memory_test_tracker);
     aws_mutex_unlock(&test_allocator->mutex);

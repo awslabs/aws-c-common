@@ -15,6 +15,8 @@
 
 #include <aws/common/thread.h>
 
+#include <aws/common/clock.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -163,8 +165,8 @@ uint64_t aws_thread_current_thread_id() {
 }
 
 void aws_thread_current_sleep(uint64_t nanos) {
-    uint64_t seconds = nanos / 1000000000;
-    uint64_t nano = nanos % 1000000000;
+    uint64_t nano = 0;
+    uint64_t seconds = aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &nano);
 
     struct timespec tm = {
         .tv_sec = seconds,
