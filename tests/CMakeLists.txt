@@ -1,4 +1,5 @@
 include(LibFuzzer)
+include(AwsTestHarness)
 enable_testing()
 
 file(GLOB META_TEST_SRC "assert_test.c")
@@ -6,30 +7,6 @@ file(GLOB TEST_SRC "*.c")
 list(REMOVE_ITEM TEST_SRC ${META_TEST_SRC})
 file(GLOB TEST_HDRS "*.h")
 file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
-
-set(TEST_RUNNER_NAME ${CMAKE_PROJECT_NAME}-tests)
-
-set(TEST_CASES)
-
-macro(add_test_case name)
-    list(APPEND TEST_CASES "${name}")
-    add_test(${name} ${TEST_RUNNER_NAME} "${name}")
-endmacro(add_test_case)
-
-macro(generate_test_driver)
-    create_test_sourcelist(test_srclist test_runner.c ${TEST_CASES})
-    # Write clang tidy file that disables all but one check to avoid false positives
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/.clang-tidy" "Checks: '-*,misc-static-assert'")
-
-    add_executable(${TEST_RUNNER_NAME} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.c ${TESTS})
-    aws_set_common_properties(${TEST_RUNNER_NAME} NO_WEXTRA NO_PEDANTIC)
-    aws_add_sanitizers(${TEST_RUNNER_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
-
-    target_link_libraries(${TEST_RUNNER_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
-    set_target_properties(${TEST_RUNNER_NAME} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-    target_compile_definitions(${TEST_RUNNER_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
-    target_include_directories(${TEST_RUNNER_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-endmacro()
 
 set(METATEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-assert-tests)
 
@@ -217,7 +194,7 @@ add_test_case(test_secure_zero)
 add_test_case(test_buffer_secure_zero)
 add_test_case(test_buffer_clean_up_secure)
 
+generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
+
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
-
-generate_test_driver()
