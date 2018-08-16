@@ -13,7 +13,7 @@
 
 # This cmake logic verifies that each of our headers is complete, in that it
 # #includes any necessary dependencies, and that it builds under C++ as well.
-# 
+#
 # To do so, we generate a single-line C or C++ source file that includes each
 # header, and link all of these stub source files into a test executable.
 #
@@ -38,7 +38,7 @@ set_target_properties(${HEADER_CHECKER_LIB} PROPERTIES
     LINKER_LANGUAGE CXX
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED 0
-    C_STANDARD 99
+    C_STANDARD 90
 )
 
 foreach(header ${HEADERS_TO_CHECK})
