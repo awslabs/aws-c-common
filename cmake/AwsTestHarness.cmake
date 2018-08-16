@@ -11,6 +11,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+include(AwsCFlags)
+include(Sanitizers)
+
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)
 macro(add_test_case name)
     list(APPEND TEST_CASES "${name}")
