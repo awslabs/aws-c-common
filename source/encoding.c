@@ -17,6 +17,48 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdlib.h>
+
+#ifdef USE_SIMD_ENCODING
+size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len);
+size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
+bool aws_common_private_has_b64_simd();
+#else
+size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
+    (void)in;
+    (void)out;
+    (void)len;
+
+    /*
+     * This volatile variable prevents MSVC from flagging code after the call to this stub as unreachable
+     */
+
+    volatile bool do_abort = true;
+    if (do_abort) {
+        abort();
+    }
+
+    return (size_t)-1;
+}
+size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
+    (void)in;
+    (void)out;
+    (void)len;
+    /*
+     * This volatile variable prevents MSVC from flagging code after the call to this stub as unreachable
+     */
+
+    volatile bool do_abort = true;
+    if (do_abort) {
+        abort();
+    }
+
+    return (size_t)-1;
+}
+bool aws_common_private_has_b64_simd() {
+    return false;
+}
+#endif
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
@@ -226,6 +268,13 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
+    if (aws_common_private_has_b64_simd()) {
+        output->len = encoded_length;
+        aws_common_private_base64_encode_sse41(to_encode->buffer, output->buffer, to_encode->len);
+        output->buffer[encoded_length - 1] = 0;
+        return AWS_OP_SUCCESS;
+    }
+
     size_t buffer_length = to_encode->len;
     size_t block_count = (buffer_length + 2) / 3;
     size_t remainder_count = (buffer_length % 3);
@@ -284,6 +333,16 @@ int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct 
 
     if (output->capacity < decoded_length) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
+
+    if (aws_common_private_has_b64_simd()) {
+        size_t result = aws_common_private_base64_decode_sse41(to_decode->buffer, output->buffer, to_decode->len);
+        if (result == -1) {
+            return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
+        }
+
+        output->len = result;
+        return AWS_OP_SUCCESS;
     }
 
     int64_t block_count = (int)to_decode->len / 4;

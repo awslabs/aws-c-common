@@ -16,5 +16,6 @@ cppcheck                                                    \
 --suppress=memleak:tests/hash_table_test.c                  \
 --suppress=staticStringCompare:tests/assert_test.c          \
 --suppress=*:build/tests/test_runner.c                      \
+--suppress=unusedStructMember:source/arch/encoding_simd_sse41.c \
                                                             \
 -q .

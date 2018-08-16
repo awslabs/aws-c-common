@@ -103,6 +103,10 @@ aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 
+include(SIMD)
+
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/source/b64-simd.c PROPERTIES COMPILE_FLAGS "-mavx -mavx2 -mssse3 -msse4 -msse4.1")
+
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
