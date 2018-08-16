@@ -144,6 +144,8 @@ static int s_string_compare_test_fn(struct aws_allocator *allocator, void *ctx) 
 
 AWS_TEST_CASE(string_destroy_secure_test, string_destroy_secure_test_fn);
 static int string_destroy_secure_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
     /* Just verifies all memory was freed. */
     const struct aws_string *empty = aws_string_new_from_c_str(allocator, "");
     const struct aws_string *logorrhea = aws_string_new_from_c_str(allocator, "logorrhea");
