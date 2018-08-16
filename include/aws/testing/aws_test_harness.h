@@ -36,7 +36,6 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #endif
 
 #if _MSC_VER
-#    pragma warning(disable : 4100) /* unreferenced parameters */
 #    pragma warning(disable : 4221) /* aggregate initializer using local variable addresses */
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif

@@ -14,10 +14,10 @@
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)
 macro(add_test_case name)
     list(APPEND TEST_CASES "${name}")
-endmacro(add_test_case)
+endmacro()
 
 # Generate a test driver executable with the given name
-macro(generate_test_driver driver_exe_name)
+function(generate_test_driver driver_exe_name)
     create_test_sourcelist(test_srclist test_runner.c ${TEST_CASES})
     # Write clang tidy file that disables all but one check to avoid false positives
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/.clang-tidy" "Checks: '-*,misc-static-assert'")
@@ -36,5 +36,5 @@ macro(generate_test_driver driver_exe_name)
     endforeach()
 
     # Clear test cases in case another driver needsto be generated
-    unset(TEST_CASES)
-endmacro()
+    unset(TEST_CASES PARENT_SCOPE)
+endfunction()
