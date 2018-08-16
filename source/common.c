@@ -248,100 +248,100 @@ static int8_t s_error_strings_loaded = 0;
 static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SUCCESS,
-        "success"),
+        "Success."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OOM,
-        "out-of-memory"),
+        "Out of memory."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_UNKNOWN,
-        "unknown error"),
+        "Unknown error."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SHORT_BUFFER,
-        "buffer is not large enough to hold result"),
+        "Buffer is not large enough to hold result."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OVERFLOW_DETECTED,
-        "fixed size value overflow was detected"),
+        "Fixed size value overflow was detected."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_BUFFER_SIZE,
-        "invalid buffer size"),
+        "Invalid buffer size."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_HEX_STR,
-        "invalid hex string"),
+        "Invalid hex string."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_BASE64_STR,
-        "invalid base64 string"),
+        "Invalid base64 string."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_INDEX,
-        "invalid index for list access"),
+        "Invalid index for list access."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_INVALID_SETTINGS,
-        "invalid thread settings"),
+        "Invalid thread settings."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE,
-        "thread, insufficient resources"),
+        "Insufficent resources for thread."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NO_PERMISSIONS,
-        "insufficient permissions for thread operation"),
+        "Insufficient permissions for thread operation."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NOT_JOINABLE,
-        "thread not join-able"),
+        "Thread not joinable."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_NO_SUCH_THREAD_ID,
-        "no such thread id"),
+        "No such thread ID."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_THREAD_DEADLOCK_DETECTED,
-        "deadlock detected"),
+        "Deadlock detected in thread."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_NOT_INIT,
-        "mutex not initialized"),
+        "Mutex not initialized."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_TIMEOUT,
-        "mutex operation timed out"),
+        "Mutex operation timed out."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_CALLER_NOT_OWNER,
-        "the caller of a mutex operation was not the owner"),
+        "The caller of a mutex operation was not the owner."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_MUTEX_FAILED,
-        "mutex operation failed"),
+        "Mutex operation failed."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_INIT_FAILED,
-        "condition variable initialization failed."),
+        "Condition variable initialization failed."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_TIMED_OUT,
-        "condition variable wait timed out."),
+        "Condition variable wait timed out."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN,
-        "condition variable unknown error."),
+        "Condition variable unknown error."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_CLOCK_FAILURE,
-        "clock get ticks operation failed"),
+        "Clock operation failed."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_LIST_EMPTY,
-        "empty list"),
+        "Empty list."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_DEST_COPY_TOO_SMALL,
-        "destination of copy is too small"),
+        "Destination of copy is too small."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
-        "a requested operation on a list would exceed it's max size."),
+        "A requested operation on a list would exceed it's max size."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
-        "attempt to shrink a list in static mode"),
+        "Attempt to shrink a list in static mode."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PRIORITY_QUEUE_FULL,
-        "attempt to add items to a full preallocated queue in static mode."),
+        "Attempt to add items to a full preallocated queue in static mode."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PRIORITY_QUEUE_EMPTY,
-        "attempt to pop an item from an empty queue."),
+        "Attempt to pop an item from an empty queue."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_TASK_SCHEDULER_NO_TASKS,
-        "no tasks scheduled available."),
+        "No scheduled tasks available."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS,
-        "none of the tasks scheduled is due to run now."),
+        "None of the tasks scheduled is due to run now."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
-        "Item not found in hash table"),
+        "Item not found in hash table."),
 };
 /* clang-format on */
 
