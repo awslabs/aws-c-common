@@ -51,8 +51,6 @@ __inline char *__builtin___strcat_chk(char *dst, const char *src, __CPROVER_size
   __CPROVER_assert(__CPROVER_buffer_size(dst)>new_size,
                    "strcat buffer overflow");
   __CPROVER_size_t old_size=__CPROVER_zero_string_length(dst);
-  //"  for(size_t i=0; i<__CPROVER_zero_string_length(src); i++)
-  //"    dst[old_size+i];
   dst[new_size]=0;
   __CPROVER_is_zero_string(dst)=1;
   __CPROVER_zero_string_length(dst)=new_size;
@@ -187,8 +185,8 @@ inline char *strncpy(char *dst, const char *src, size_t n)
   char ch;
   _Bool end;
 
-  // We use a single loop to make bounds checking etc easier.
-  // Note that strncpy _always_ writes 'n' characters into 'dst'.
+  /* We use a single loop to make bounds checking etc easier. */
+  /* Note that strncpy _always_ writes 'n' characters into 'dst'. */
   for(end=0; i<n; i++)
   {
     ch=end?0:src[i];
@@ -227,8 +225,8 @@ inline char *__builtin___strncpy_chk(char *dst, const char *src, size_t n, size_
   _Bool end;
   (void)object_size;
 
-  // We use a single loop to make bounds checking etc easier.
-  // Note that strncpy _always_ writes 'n' characters into 'dst'.
+  /* We use a single loop to make bounds checking etc easier. */
+  /* Note that strncpy _always_ writes 'n' characters into 'dst'. */
   for(end=0; i<n; i++)
   {
     ch=end?0:src[i];
@@ -261,8 +259,6 @@ inline char *strcat(char *dst, const char *src)
   __CPROVER_assert(__CPROVER_buffer_size(dst)>new_size,
                    "strcat buffer overflow");
   __CPROVER_size_t old_size=__CPROVER_zero_string_length(dst);
-  //"  for(size_t i=0; i<__CPROVER_zero_string_length(src); i++)
-  //"    dst[old_size+i];
   dst[new_size]=0;
   __CPROVER_is_zero_string(dst)=1;
   __CPROVER_zero_string_length(dst)=new_size;
@@ -587,7 +583,6 @@ void *memcpy(void *dst, const void *src, size_t n)
                          "memcpy buffer overflow");
   __CPROVER_precondition(__CPROVER_buffer_size(dst)>=n,
                          "memcpy buffer overflow");
-  //  for(size_t i=0; i<n ; i++) dst[i]=src[i];
   if(__CPROVER_is_zero_string(src) &&
      n > __CPROVER_zero_string_length(src))
   {
@@ -604,14 +599,11 @@ void *memcpy(void *dst, const void *src, size_t n)
 
   if(n > 0)
   {
-    (void)*(char *)dst; // check that the memory is accessible
-    (void)*(const char *)src; // check that the memory is accessible
-    (void)*(((char *)dst) + n - 1);       // check that the memory is accessible
-    (void)*(((const char *)src) + n - 1); // check that the memory is accessible
+    (void)*(char *)dst; /* check that the memory is accessible */
+    (void)*(const char *)src; /* check that the memory is accessible */
+    (void)*(((char *)dst) + n - 1);       /* check that the memory is accessible */
+    (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
     for(__CPROVER_size_t i=0; i<n ; i++) ((char *)dst)[i]=((const char *)src)[i];
-    /* char src_n[n];
-    __CPROVER_array_copy(src_n, (char *)src);
-    __CPROVER_array_replace((char *)dst, src_n); */
   }
   #endif
   return dst;
@@ -629,7 +621,6 @@ void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __C
                          "memcpy buffer overflow");
   __CPROVER_precondition(__CPROVER_buffer_size(dst)==s,
                          "builtin object size");
-  //  for(size_t i=0; i<n ; i++) dst[i]=src[i];
   if(__CPROVER_is_zero_string(src) &&
      n > __CPROVER_zero_string_length(src))
   {
@@ -647,14 +638,11 @@ void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __C
 
   if(n > 0)
   {
-    (void)*(char *)dst; // check that the memory is accessible
-    (void)*(const char *)src; // check that the memory is accessible
-    (void)*(((char *)dst) + n - 1);       // check that the memory is accessible
-    (void)*(((const char *)src) + n - 1); // check that the memory is accessible
+    (void)*(char *)dst; /* check that the memory is accessible */
+    (void)*(const char *)src; /* check that the memory is accessible */
+    (void)*(((char *)dst) + n - 1);       /* check that the memory is accessible */
+    (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
     for(__CPROVER_size_t i=0; i<n ; i++) ((char *)dst)[i]=((const char *)src)[i];
-    /* char src_n[n];
-    __CPROVER_array_copy(src_n, (char *)src);
-    __CPROVER_array_replace((char *)dst, src_n); */
   }
   #endif
   return dst;
@@ -675,7 +663,6 @@ void *memset(void *s, int c, size_t n)
   #ifdef __CPROVER_STRING_ABSTRACTION
   __CPROVER_precondition(__CPROVER_buffer_size(s)>=n,
                          "memset buffer overflow");
-  //  for(size_t i=0; i<n ; i++) s[i]=c;
   if(__CPROVER_is_zero_string(s) &&
      n > __CPROVER_zero_string_length(s))
   {
@@ -692,13 +679,10 @@ void *memset(void *s, int c, size_t n)
 
   if(n > 0)
   {
-    (void)*(char *)s; // check that the memory is accessible
-    (void)*(((char *)s) + n - 1); // check that the memory is accessible
+    (void)*(char *)s; /* check that the memory is accessible */
+    (void)*(((char *)s) + n - 1); /* check that the memory is accessible */
     char *sp=s;
     for(__CPROVER_size_t i=0; i<n ; i++) sp[i]=c;
-    /*unsigned char s_n[n];
-    __CPROVER_array_set(s_n, (unsigned char)c);
-    __CPROVER_array_replace((unsigned char *)s, s_n);*/
   }
   #endif
   return s;
@@ -712,7 +696,6 @@ void *__builtin_memset(void *s, int c, __CPROVER_size_t n)
   #ifdef __CPROVER_STRING_ABSTRACTION
   __CPROVER_precondition(__CPROVER_buffer_size(s)>=n,
                          "memset buffer overflow");
-  //  for(size_t i=0; i<n ; i++) s[i]=c;
   if(__CPROVER_is_zero_string(s) &&
      n > __CPROVER_zero_string_length(s))
   {
@@ -731,15 +714,10 @@ void *__builtin_memset(void *s, int c, __CPROVER_size_t n)
 
   if(n > 0)
   {
-    (void)*(char *)s; // check that the memory is accessible
-    (void)*(((char *)s) + n - 1); // check that the memory is accessible
+    (void)*(char *)s; /* check that the memory is accessible */
+    (void)*(((char *)s) + n - 1); /* check that the memory is accessible */
     char *sp=s;
     for(__CPROVER_size_t i=0; i<n ; i++) sp[i]=c;
-/*
-    unsigned char s_n[n];
-    __CPROVER_array_set(s_n, (unsigned char)c);
-    __CPROVER_array_replace((unsigned char *)s, s_n);
-*/
   }
   #endif
   return s;
@@ -755,7 +733,6 @@ void *__builtin___memset_chk(void *s, int c, __CPROVER_size_t n, __CPROVER_size_
                          "memset buffer overflow");
   __CPROVER_precondition(__CPROVER_buffer_size(s)==size,
                          "builtin object size");
-  //  for(size_t i=0; i<n ; i++) s[i]=c;
   if(__CPROVER_is_zero_string(s) &&
      n > __CPROVER_zero_string_length(s))
   {
@@ -773,15 +750,10 @@ void *__builtin___memset_chk(void *s, int c, __CPROVER_size_t n, __CPROVER_size_
 
   if(n > 0)
   {
-    (void)*(char *)s; // check that the memory is accessible
-    (void)*(((char *)s) + n - 1); // check that the memory is accessible
+    (void)*(char *)s; /* check that the memory is accessible */
+    (void)*(((char *)s) + n - 1); /* check that the memory is accessible */
     char *sp=s;
     for(__CPROVER_size_t i=0; i<n ; i++) sp[i]=c;
-/*
-    unsigned char s_n[n];
-    __CPROVER_array_set(s_n, (unsigned char)c);
-    __CPROVER_array_replace((unsigned char *)s, s_n);
-*/
   }
   #endif
   return s;
@@ -802,7 +774,7 @@ void *memmove(void *dest, const void *src, size_t n)
   #ifdef __CPROVER_STRING_ABSTRACTION
   __CPROVER_precondition(__CPROVER_buffer_size(src)>=n,
                          "memmove buffer overflow");
-  // dst = src (with overlap allowed)
+  /* dst = src (with overlap allowed) */
   if(__CPROVER_is_zero_string(src) &&
      n > __CPROVER_zero_string_length(src))
   {
@@ -815,10 +787,10 @@ void *memmove(void *dest, const void *src, size_t n)
 
   if(n > 0)
   {
-    (void)*(char *)dest; // check that the memory is accessible
-    (void)*(const char *)src;  // check that the memory is accessible
-    (void)*(((char *)dest) + n - 1);      // check that the memory is accessible
-    (void)*(((const char *)src) + n - 1); // check that the memory is accessible
+    (void)*(char *)dest; /* check that the memory is accessible */
+    (void)*(const char *)src;  /* check that the memory is accessible */
+    (void)*(((char *)dest) + n - 1);      /* check that the memory is accessible */
+    (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
     char src_n[n];
     __CPROVER_array_copy(src_n, (char *)src);
     __CPROVER_array_replace((char *)dest, src_n);
@@ -844,7 +816,7 @@ void *__builtin___memmove_chk(void *dest, const void *src, size_t n, __CPROVER_s
                          "memmove buffer overflow");
   __CPROVER_precondition(__CPROVER_buffer_size(dest)==size,
                          "builtin object size");
-  // dst = src (with overlap allowed)
+  /* dst = src (with overlap allowed) */
   if(__CPROVER_is_zero_string(src) &&
      n > __CPROVER_zero_string_length(src))
   {
@@ -860,10 +832,10 @@ void *__builtin___memmove_chk(void *dest, const void *src, size_t n, __CPROVER_s
 
   if(n > 0)
   {
-    (void)*(char *)dest; // check that the memory is accessible
-    (void)*(const char *)src;  // check that the memory is accessible
-    (void)*(((char *)dest) + n - 1);      // check that the memory is accessible
-    (void)*(((const char *)src) + n - 1); // check that the memory is accessible
+    (void)*(char *)dest; /* check that the memory is accessible */
+    (void)*(const char *)src;  /* check that the memory is accessible */
+    (void)*(((char *)dest) + n - 1);      /* check that the memory is accessible */
+    (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
     char src_n[n];
     __CPROVER_array_copy(src_n, (char *)src);
     __CPROVER_array_replace((char *)dest, src_n);
@@ -924,7 +896,7 @@ inline char *strchr(const char *src, int c)
   for(__CPROVER_size_t i=0; ; i++)
   {
     if(src[i]==(char)c)
-      return ((char *)src)+i; // cast away const-ness
+      return ((char *)src)+i; /* cast away const-ness */
     if(src[i]==0) break;
   }
   return 0;

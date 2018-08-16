@@ -10,15 +10,15 @@ size_t nondet_size_t();
 
 struct aws_array_list *get_arbitrary_array_list(size_t item_count, size_t item_size) {
     struct aws_array_list *list;
-    // Assume list is allocated
+    /* Assume list is allocated */
     ASSUME_VALID_MEMORY(list);
 
-    if (nondet_int()) { // Dynamic initialization
-        // Use default allocator
+    if (nondet_int()) { /* Dynamic initialization */
+        /* Use default allocator */
         struct aws_allocator *allocator = malloc(sizeof(*allocator));
         ASSUME_DEFAULT_ALLOCATOR(allocator);
         aws_array_list_init_dynamic(list, allocator, item_count, item_size);
-    } else { // Static initialization
+    } else { /* Static initialization */
         __CPROVER_assume(item_count > 0); 
         __CPROVER_assume(item_size > 0); 
 

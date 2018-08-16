@@ -27,13 +27,12 @@ void aws_byte_buf_from_c_str_verify(void) {
     char * c_str;
     ASSUME_VALID_MEMORY_COUNT(c_str, len);
 
-    // Need *c_str to be a '\0'-terminated C string, so assume an arbitrary character
-    // within the array is 0
+    /* Need *c_str to be a '\0'-terminated C string, so assume an arbitrary character is 0 */
     uint8_t index = nondet_int();
     __CPROVER_assume(index >= 0 && index < len);
     c_str[index] = 0;
 
-    // Assume the length of the string is bounded by some max length
+    /* Assume the length of the string is bounded by some max length */
     __CPROVER_assume(len <= MAX_STR_LEN);
 
     aws_byte_buf_from_c_str(c_str);
@@ -41,17 +40,17 @@ void aws_byte_buf_from_c_str_verify(void) {
 
 void aws_byte_buf_append_verify(void) {
     size_t len1 = nondet_size_t();
-    size_t len2 = nondet_size_t();
     __CPROVER_assume(len1 <= MAX_BUF_LEN);
+    size_t len2 = nondet_size_t();
 
-    // Need arbitrary buf that is "correct enough"
+    /* Need arbitrary buf that is "correct enough" */
     struct aws_byte_buf * to;
     ASSUME_VALID_MEMORY(to);
     ASSUME_VALID_MEMORY_COUNT(to->buffer, len1);
     to->capacity = len1;
     __CPROVER_assume(to->len <= to->capacity);
 
-    // Need arbitrary cursor
+    /* Need arbitrary cursor */
     struct aws_byte_cursor * from;
     ASSUME_VALID_MEMORY(from);
     from->ptr = malloc(len2);

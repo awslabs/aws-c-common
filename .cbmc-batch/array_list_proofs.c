@@ -19,7 +19,7 @@ void aws_array_list_init_dynamic_verify(void) {
 
     aws_array_list_init_dynamic(list, allocator, item_count, item_size);
     
-    // some guarantees
+    /* some guarantees */
     assert(list->alloc == allocator);
     assert(list->item_size == item_size);
     if (item_count <= MAX_INITIAL_ITEM_ALLOCATION && item_size <= MAX_ITEM_SIZE)
@@ -32,14 +32,14 @@ void aws_array_list_init_static_verify(void) {
     size_t len = nondet_size_t();
     void * raw_array = malloc(len);
     size_t item_count = nondet_size_t();
-    size_t item_size = nondet_size_t();
-
     __CPROVER_assume(item_count > 0);
+    size_t item_size = nondet_size_t();
     __CPROVER_assume(item_size > 0);
+
 
     aws_array_list_init_static(list, raw_array, item_count, item_size);
     
-    // some guarantees
+    /* some guarantees */
     assert(list->alloc == NULL);
     assert(list->item_size == item_size);
     assert(list->data == raw_array);
@@ -47,8 +47,8 @@ void aws_array_list_init_static_verify(void) {
 
 void aws_array_list_set_at_verify(void) {
     size_t initial_item_allocation = nondet_size_t();
-    size_t item_size = nondet_size_t();
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
+    size_t item_size = nondet_size_t();
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
     struct aws_array_list *list;
     ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size);
@@ -62,11 +62,11 @@ void aws_array_list_set_at_verify(void) {
 }
 
 void aws_array_list_push_back_verify(void) {
-    struct aws_array_list* list;
     size_t item_count = nondet_size_t();
-    size_t item_size = nondet_size_t();
     __CPROVER_assume(item_count <= MAX_INITIAL_ITEM_ALLOCATION);
+    size_t item_size = nondet_size_t();
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    struct aws_array_list* list;
     ASSUME_ARBITRARY_ARRAY_LIST(list, item_count, item_size);
 
     void *val = malloc(item_size);
