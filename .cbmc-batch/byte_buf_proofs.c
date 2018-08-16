@@ -10,10 +10,10 @@
 #define MAX_BUF_LEN 32
 
 void aws_byte_buf_init_verify(void) {
-    struct aws_allocator * allocator;
+    struct aws_allocator *allocator;
     ASSUME_DEFAULT_ALLOCATOR(allocator);
     
-    struct aws_byte_buf * buf;
+    struct aws_byte_buf *buf;
     ASSUME_VALID_MEMORY(buf);
 
     size_t len = nondet_size_t();
@@ -24,11 +24,11 @@ void aws_byte_buf_init_verify(void) {
 void aws_byte_buf_from_c_str_verify(void) {
     size_t len = nondet_size_t();
 
-    char * c_str;
+    char *c_str;
     ASSUME_VALID_MEMORY_COUNT(c_str, len);
 
     /* Need *c_str to be a '\0'-terminated C string, so assume an arbitrary character is 0 */
-    uint8_t index = nondet_int();
+    int index = nondet_int();
     __CPROVER_assume(index >= 0 && index < len);
     c_str[index] = 0;
 
@@ -44,14 +44,14 @@ void aws_byte_buf_append_verify(void) {
     size_t len2 = nondet_size_t();
 
     /* Need arbitrary buf that is "correct enough" */
-    struct aws_byte_buf * to;
+    struct aws_byte_buf *to;
     ASSUME_VALID_MEMORY(to);
     ASSUME_VALID_MEMORY_COUNT(to->buffer, len1);
     to->capacity = len1;
     __CPROVER_assume(to->len <= to->capacity);
 
     /* Need arbitrary cursor */
-    struct aws_byte_cursor * from;
+    struct aws_byte_cursor *from;
     ASSUME_VALID_MEMORY(from);
     from->ptr = malloc(len2);
     __CPROVER_assume(from->len <= len2);

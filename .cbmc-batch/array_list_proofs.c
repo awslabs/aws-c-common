@@ -27,10 +27,10 @@ void aws_array_list_init_dynamic_verify(void) {
 }
 
 void aws_array_list_init_static_verify(void) {
-    struct aws_array_list * list;
+    struct aws_array_list *list;
     ASSUME_VALID_MEMORY(list);
     size_t len = nondet_size_t();
-    void * raw_array = malloc(len);
+    void *raw_array = malloc(len);
     size_t item_count = nondet_size_t();
     __CPROVER_assume(item_count > 0);
     size_t item_size = nondet_size_t();
@@ -66,7 +66,7 @@ void aws_array_list_push_back_verify(void) {
     __CPROVER_assume(item_count <= MAX_INITIAL_ITEM_ALLOCATION);
     size_t item_size = nondet_size_t();
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
-    struct aws_array_list* list;
+    struct aws_array_list *list;
     ASSUME_ARBITRARY_ARRAY_LIST(list, item_count, item_size);
 
     void *val = malloc(item_size);
