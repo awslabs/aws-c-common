@@ -1,0 +1,5 @@
+cbmcpkg: cbmc-ubuntu16.tar.gz
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--pointer-check;--function;aws_byte_buf_append_verify;--unwinding-assertions;--unwindset;memcpy.0:33,__builtin___memcpy_chk.0:33"
+goto: proofs.goto
+expected: "SUCCESSFUL"
