@@ -382,6 +382,7 @@ static int s_base64_encoding_test_case_foob(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(base64_encoding_test_case_foob_test, s_base64_encoding_test_case_foob)
 
 static int s_base64_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
 
     char test_data[] = "fooba";
     char expected[] = "Zm9vYmE=";
