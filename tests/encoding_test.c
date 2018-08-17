@@ -492,14 +492,15 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
 
     aws_base64_decode(&b64_data, &decoded_buf);
 
-    if (memcmp(decoded_buf.buffer, original_data.buffer, decoded_buf.len)) {
+    if (memcmp(decoded_buf.buffer, original_data.buffer, decoded_buf.len) != 0) {
         aws_hex_encode(&original_data, &hex);
         fprintf(stderr, "Base64 round-trip failed\n");
         fprintf(stderr, "Original: %s\n", (char *)test_hex);
         fprintf(stderr, "Base64  : ");
         for (size_t i = 0; i < sizeof(test_b64); i++) {
-            if (!test_b64[i])
+            if (!test_b64[i]) {
                 break;
+            }
             fprintf(stderr, " %c", test_b64[i]);
         }
         fprintf(stderr, "\n");
