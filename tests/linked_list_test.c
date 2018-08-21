@@ -140,6 +140,96 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
     return 0;
 }
 
+static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list a, b;
+    struct aws_linked_list_node a1, a2, b1, b2;
+
+    /* Setup lists like:
+     * a = {a1, a2}
+     * b = {b1, b2}
+     * 
+     * After swap should be like:
+     * a = {b1, b2}
+     * b = {a1, a2}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_back(&a, &a1);
+    aws_linked_list_push_back(&a, &a2);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_back(&b, &b1);
+    aws_linked_list_push_back(&b, &b2);
+
+    aws_linked_list_swap_contents(&a, &b);
+
+    ASSERT_PTR_EQUALS(&b1, aws_linked_list_pop_front(&a));
+    ASSERT_PTR_EQUALS(&b2, aws_linked_list_pop_front(&a));
+    ASSERT_TRUE(aws_linked_list_empty(&a));
+
+    ASSERT_PTR_EQUALS(&a1, aws_linked_list_pop_front(&b));
+    ASSERT_PTR_EQUALS(&a2, aws_linked_list_pop_front(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    /* Setup lists like:
+     * a = {a1, a2}
+     * b = {}
+     * 
+     * After swap should be like:
+     * a = {}
+     * b = {a1, a2}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_back(&a, &a1);
+    aws_linked_list_push_back(&a, &a2);
+
+    aws_linked_list_init(&b);
+
+    aws_linked_list_swap_contents(&a, &b);
+
+    ASSERT_TRUE(aws_linked_list_empty(&a));
+
+    ASSERT_PTR_EQUALS(&a1, aws_linked_list_pop_front(&b));
+    ASSERT_PTR_EQUALS(&a2, aws_linked_list_pop_front(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    /* Setup lists like:
+     * a = {}
+     * b = {b1, b2}
+     * 
+     * After swap should be like:
+     * a = {b1, b2}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_back(&b, &b1);
+    aws_linked_list_push_back(&b, &b2);
+
+    aws_linked_list_swap_contents(&a, &b);
+
+    ASSERT_PTR_EQUALS(&b1, aws_linked_list_pop_front(&a));
+    ASSERT_PTR_EQUALS(&b2, aws_linked_list_pop_front(&a));
+    ASSERT_TRUE(aws_linked_list_empty(&a));
+
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    /* Setup two empty lists, after swap they should both still be ok. */
+    aws_linked_list_init(&a);
+    aws_linked_list_init(&b);
+
+    aws_linked_list_swap_contents(&a, &b);
+
+    ASSERT_TRUE(aws_linked_list_empty(&a));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
 AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)
+AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)

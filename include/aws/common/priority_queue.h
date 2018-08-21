@@ -97,20 +97,20 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item);
  * If queue is empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY will be raised.
  */
 AWS_COMMON_API
-int aws_priority_queue_top(struct aws_priority_queue *queue, void **item);
+int aws_priority_queue_top(const struct aws_priority_queue *queue, void **item);
 
 /**
  * Current number of elements in the queue
  */
 AWS_COMMON_API
-size_t aws_priority_queue_size(struct aws_priority_queue *queue);
+size_t aws_priority_queue_size(const struct aws_priority_queue *queue);
 
 /**
  * Current allocated capacity for the queue, in dynamic mode this grows over time, in static mode, this will never
  * change.
  */
 AWS_COMMON_API
-size_t aws_priority_queue_capacity(struct aws_priority_queue *queue);
+size_t aws_priority_queue_capacity(const struct aws_priority_queue *queue);
 
 #ifdef __cplusplus
 }
