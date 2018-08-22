@@ -101,7 +101,7 @@ int aws_task_scheduler_schedule_future(
 
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time) {
     assert(scheduler);
-    
+
     s_run_all(scheduler, current_time, AWS_TASK_STATUS_RUN_READY);
 }
 
