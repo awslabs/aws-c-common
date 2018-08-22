@@ -80,7 +80,7 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler);
  * added via aws_task_scheduler_schedule_now() and UINT64_MAX will be set if no tasks are scheduled at all.
  */
 AWS_COMMON_API
-bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *out_next_task_time);
+bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time);
 
 
 /**

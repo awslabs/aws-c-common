@@ -48,23 +48,23 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
     AWS_ZERO_STRUCT(scheduler);
 }
 
-bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *out_next_task_time) {
-    uint64_t next_task_time = UINT64_MAX;
+bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
+    uint64_t timestamp = UINT64_MAX;
     bool has_tasks = false;
 
     if (!aws_linked_list_empty(&scheduler->asap_list)) {
-        next_task_time = 0;
+        timestamp = 0;
         has_tasks = true;
     } else {
         struct aws_task **task_ptrptr = NULL;
         if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&task_ptrptr) == AWS_OP_SUCCESS) {
-            next_task_time = (*task_ptrptr)->timestamp;
+            timestamp = (*task_ptrptr)->timestamp;
             has_tasks = true;
         }
     }
 
-    if (out_next_task_time) {
-        *out_next_task_time = next_task_time;
+    if (next_task_time) {
+        *next_task_time = timestamp;
     }
     return has_tasks;
 }

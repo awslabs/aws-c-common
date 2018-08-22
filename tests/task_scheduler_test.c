@@ -171,7 +171,7 @@ struct task_scheduler_reentrancy_args {
 };
 
 static void s_reentrancy_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
-    (void *)task;
+    (void)task;
     struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
 
     if (reentrancy_args->next_task_args) {
