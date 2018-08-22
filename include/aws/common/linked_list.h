@@ -37,8 +37,7 @@ struct aws_linked_list_node {
  * Set node's next and prev pointers to NULL.
  */
 static inline void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
-    node->next = NULL;
-    node->prev = NULL;
+    AWS_ZERO_STRUCT(*node);
 }
 
 struct aws_linked_list {

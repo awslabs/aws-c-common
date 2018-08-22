@@ -44,17 +44,15 @@ struct aws_task {
 };
 
 static inline void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg) {
+    AWS_ZERO_STRUCT(*task);
     task->fn = fn;
     task->arg = arg;
-    task->timestamp = 0;
-    aws_linked_list_node_reset(&task->node);
 }
 
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue timed_queue; /* Tasks scheduled to run at specific times */
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
-    struct aws_linked_list running_list;   /* Tasks currently being executed */
 };
 
 #ifdef __cplusplus

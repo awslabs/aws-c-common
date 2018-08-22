@@ -32,12 +32,13 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
 
     scheduler->alloc = alloc;
     aws_linked_list_init(&scheduler->asap_list);
-    aws_linked_list_init(&scheduler->running_list);
     return aws_priority_queue_init_dynamic(
         &scheduler->timed_queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct aws_task *), &s_compare_timestamps);
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
+    assert(scheduler);
+
     /* Execute all remaining tasks as CANCELED.
      * Do this in a loop so that tasks scheduled by other tasks are executed */
     while (aws_task_scheduler_has_tasks(scheduler, NULL)) {
@@ -49,6 +50,8 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
 }
 
 bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
+    assert(scheduler);
+
     uint64_t timestamp = UINT64_MAX;
     bool has_tasks = false;
 
@@ -70,6 +73,7 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
 }
 
 void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struct aws_task *task) {
+    assert(scheduler);
     assert(task);
     assert(task->fn);
 
@@ -81,6 +85,7 @@ int aws_task_scheduler_schedule_future(
     struct aws_task *task,
     uint64_t time_to_run) {
 
+    assert(scheduler);
     assert(task);
     assert(task->fn);
 
@@ -95,6 +100,8 @@ int aws_task_scheduler_schedule_future(
 }
 
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time) {
+    assert(scheduler);
+    
     s_run_all(scheduler, current_time, AWS_TASK_STATUS_RUN_READY);
 }
 
@@ -102,11 +109,12 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
 
     /* Move scheduled tasks to running_list before executing.
      * This gives us the desired behavior that: if executing a task results in another task being scheduled,
-     * that new task is not invoked until the next time run() is invoked. */
+     * that new task is not executed until the next time run() is invoked. */
+    struct aws_linked_list running_list;
+    aws_linked_list_init(&running_list);
 
     /* First move everything from asap_list */
-    assert(aws_linked_list_empty(&scheduler->running_list));
-    aws_linked_list_swap_contents(&scheduler->running_list, &scheduler->asap_list);
+    aws_linked_list_swap_contents(&running_list, &scheduler->asap_list);
 
     /* Then move tasks from timed_queue, stop upon seeing a task that shouldn't be run yet */
     struct aws_task **next_timed_task_ptrptr = NULL;
@@ -118,12 +126,12 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
         struct aws_task *next_timed_task = NULL;
         aws_priority_queue_pop(&scheduler->timed_queue, &next_timed_task);
 
-        aws_linked_list_push_back(&scheduler->running_list, &next_timed_task->node);
+        aws_linked_list_push_back(&running_list, &next_timed_task->node);
     }
 
     /* Run tasks */
-    while (!aws_linked_list_empty(&scheduler->running_list)) {
-        struct aws_linked_list_node *task_node = aws_linked_list_pop_front(&scheduler->running_list);
+    while (!aws_linked_list_empty(&running_list)) {
+        struct aws_linked_list_node *task_node = aws_linked_list_pop_front(&running_list);
         struct aws_task *task = AWS_CONTAINER_OF(task_node, struct aws_task, node);
         task->fn(task, task->arg, status);
     }
