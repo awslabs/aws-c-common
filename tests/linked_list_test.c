@@ -150,7 +150,7 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
     /* Setup lists like:
      * a = {a1, a2}
      * b = {b1, b2}
-     * 
+     *
      * After swap should be like:
      * a = {b1, b2}
      * b = {a1, a2}
@@ -176,7 +176,7 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
     /* Setup lists like:
      * a = {a1, a2}
      * b = {}
-     * 
+     *
      * After swap should be like:
      * a = {}
      * b = {a1, a2}
@@ -198,7 +198,7 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
     /* Setup lists like:
      * a = {}
      * b = {b1, b2}
-     * 
+     *
      * After swap should be like:
      * a = {b1, b2}
      * b = {}

@@ -82,7 +82,6 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler);
 AWS_COMMON_API
 bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time);
 
-
 /**
  * Schedules a task to run immediately.
  * The task should not be cleaned up or modified until its function is executed.

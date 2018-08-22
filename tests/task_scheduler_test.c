@@ -182,11 +182,15 @@ static void s_reentrancy_fn(struct aws_task *task, void *arg, enum aws_task_stat
     reentrancy_args->status = status;
 }
 
-static void s_reentrancy_args_init(struct task_scheduler_reentrancy_args *args, struct aws_task_scheduler *scheduler, struct task_scheduler_reentrancy_args *next_task_args) {
+static void s_reentrancy_args_init(
+    struct task_scheduler_reentrancy_args *args,
+    struct aws_task_scheduler *scheduler,
+    struct task_scheduler_reentrancy_args *next_task_args) {
+
     AWS_ZERO_STRUCT(*args);
     args->scheduler = scheduler;
     aws_task_init(&args->task, s_reentrancy_fn, args);
-    args->status = (enum aws_task_status)-1;
+    args->status = -1;
     args->next_task_args = next_task_args;
 }
 
@@ -215,7 +219,7 @@ static int test_scheduler_reentrant_safe(struct aws_allocator *allocator, void *
 
     /* Run again, task2 should execute */
     aws_task_scheduler_run_all(&scheduler, 200);
-    
+
     ASSERT_TRUE(task2_args.executed);
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task2_args.status);
 
@@ -276,10 +280,10 @@ static int test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, vo
     /* When future_task1 executes, it schedules future_task2 */
     struct task_scheduler_reentrancy_args future_task2_args;
     s_reentrancy_args_init(&future_task2_args, &scheduler, NULL);
-    
+
     struct task_scheduler_reentrancy_args future_task1_args;
     s_reentrancy_args_init(&future_task1_args, &scheduler, &future_task2_args);
-    
+
     aws_task_scheduler_schedule_future(&scheduler, &future_task1_args.task, 555555555555555555);
 
     /* Clean up scheduler. All tasks should be executed with CANCELLED status */
