@@ -167,6 +167,40 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     return AWS_OP_SUCCESS;
 }
 
+bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
+
+    if (!a || !b) {
+        return (a == b);
+    }
+
+    if (a->len != b->len) {
+        return false;
+    }
+
+    if (!a->ptr || !b->ptr) {
+        return (a->ptr == b->ptr);
+    }
+
+    return !memcmp(a->ptr, b->ptr, a->len);
+}
+
+bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
+
+    if (!a || !b) {
+        return ((void *)a == (void *)b);
+    }
+
+    if (a->len != b->len) {
+        return false;
+    }
+
+    if (!a->ptr || !b->buffer) {
+        return (a->ptr == b->buffer);
+    }
+
+    return !memcmp(a->ptr, b->buffer, a->len);
+}
+
 int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
