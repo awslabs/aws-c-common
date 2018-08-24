@@ -395,9 +395,9 @@ static int test_scheduler_oom_still_works(struct aws_allocator *allocator, void 
             ++timed_queue_count;
         }
 
-    /* Keep going until there are twice as many tasks in timed_queue as in timed_list.
-     * We do this exact ratio so that, when running tasks, at first the scheduler needs to choose between the two,
-     * but eventually it's just picking from timed_queue. */
+        /* Keep going until there are twice as many tasks in timed_queue as in timed_list.
+         * We do this exact ratio so that, when running tasks, at first the scheduler needs to choose between the two,
+         * but eventually it's just picking from timed_queue. */
     } while (timed_list_count * 2 < timed_queue_count);
 
     /* Schedule some now-tasks as well */
@@ -426,7 +426,11 @@ static int test_scheduler_oom_still_works(struct aws_allocator *allocator, void 
     uint64_t prev_task_done_time = 0;
     while (!aws_linked_list_empty(&done_tasks)) {
         struct aws_task *task = AWS_CONTAINER_OF(aws_linked_list_pop_front(&done_tasks), struct aws_task, node);
-        ASSERT_TRUE(prev_task_done_time <= task->timestamp, "Tasks ran in wrong order: %llu before %llu", prev_task_done_time, task->timestamp);
+        ASSERT_TRUE(
+            prev_task_done_time <= task->timestamp,
+            "Tasks ran in wrong order: %llu before %llu",
+            prev_task_done_time,
+            task->timestamp);
         aws_mem_release(allocator, task);
 
         done_task_count++;
