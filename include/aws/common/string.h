@@ -137,4 +137,12 @@ static inline bool aws_byte_cursor_write_from_whole_string(
     return aws_byte_cursor_write(cur, aws_string_bytes(src), src->len);
 }
 
+/**
+ * Creates an aws_byte_cursor from an existing string.
+ */
+static inline struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
+
+    return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
+}
+
 #endif /* AWS_COMMON_STRING_H */

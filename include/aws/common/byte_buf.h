@@ -150,6 +150,22 @@ int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from);
 AWS_COMMON_API
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
 
+/**
+ * Compares two aws_byte_cursor structures
+ * Returns true if a has the same length as b and their buffers have the same bytes
+ * (or both buffers are null). When both a and b are null the function returns true
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
+
+/**
+ * Compares an aws_byte_cursor against an aws_byte_buf
+ * Returns true if a has the same length as b and their buffers have the same bytes
+ * (or both buffers are null). When both a and b are null the function returns true
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
+
 #ifdef __cplusplus
 }
 #endif
