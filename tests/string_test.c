@@ -58,22 +58,22 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Test: write from string to byte cursor works. */
     uint8_t dest[8] = {0};
-    struct aws_byte_cursor dest_cur = aws_byte_cursor_from_array(dest, 8);
+    struct aws_byte_buf dest_cur = aws_byte_buf_from_array(dest, 0, sizeof(dest));
 
     ASSERT_TRUE(
-        aws_byte_cursor_write_from_whole_string(&dest_cur, test_string_2),
+        aws_byte_buf_write_from_whole_string(&dest_cur, test_string_2),
         "Write from whole string should have succeeded.");
     ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
 
     /* Test: write from string fails cleanly when byte cursor too short. */
     int8_t short_dest[7] = {0};
-    struct aws_byte_cursor short_dest_cur = aws_byte_cursor_from_array(short_dest, 7);
+    struct aws_byte_buf short_dest_buf = aws_byte_buf_from_array(short_dest, 0, sizeof(short_dest));
 
     ASSERT_FALSE(
-        aws_byte_cursor_write_from_whole_string(&short_dest_cur, test_string_2),
+        aws_byte_buf_write_from_whole_string(&short_dest_buf, test_string_2),
         "Write from whole buffer should have failed.");
-    ASSERT_INT_EQUALS(short_dest_cur.len, 7, "Destination cursor length should be unchanged.");
-    ASSERT_INT_EQUALS(0, short_dest_cur.ptr[0], "Destination cursor should not have received data.");
+    ASSERT_INT_EQUALS(short_dest_buf.len, 0, "Destination cursor length should be unchanged.");
+    ASSERT_INT_EQUALS(0, short_dest_buf.buffer[0], "Destination cursor should not have received data.");
 
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy((void *)test_string_2);
