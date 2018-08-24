@@ -31,6 +31,7 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
     assert(alloc);
 
     scheduler->alloc = alloc;
+    aws_linked_list_init(&scheduler->timed_list);
     aws_linked_list_init(&scheduler->asap_list);
     return aws_priority_queue_init_dynamic(
         &scheduler->timed_queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct aws_task *), &s_compare_timestamps);
@@ -58,10 +59,21 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
     if (!aws_linked_list_empty(&scheduler->asap_list)) {
         timestamp = 0;
         has_tasks = true;
+
     } else {
+        /* Check whether timed_list or timed_queue has the earlier task */
+        if (AWS_UNLIKELY(!aws_linked_list_empty(&scheduler->timed_list))) {
+            struct aws_linked_list_node *node = aws_linked_list_front(&scheduler->timed_list);
+            struct aws_task *task = AWS_CONTAINER_OF(node, struct aws_task, node);
+            timestamp = task->timestamp;
+            has_tasks = true;
+        }
+
         struct aws_task **task_ptrptr = NULL;
         if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&task_ptrptr) == AWS_OP_SUCCESS) {
-            timestamp = (*task_ptrptr)->timestamp;
+            if ((*task_ptrptr)->timestamp < timestamp) {
+                timestamp = (*task_ptrptr)->timestamp;
+            }
             has_tasks = true;
         }
     }
@@ -77,10 +89,11 @@ void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struc
     assert(task);
     assert(task->fn);
 
+    task->timestamp = 0;
     aws_linked_list_push_back(&scheduler->asap_list, &task->node);
 }
 
-int aws_task_scheduler_schedule_future(
+void aws_task_scheduler_schedule_future(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t time_to_run) {
@@ -92,11 +105,21 @@ int aws_task_scheduler_schedule_future(
     task->timestamp = time_to_run;
 
     int err = aws_priority_queue_push(&scheduler->timed_queue, &task);
-    if (err) {
-        return AWS_OP_ERR;
-    }
+    if (AWS_UNLIKELY(err)) {
+        /* In the (very unlikely) case that we can't push into the timed_queue,
+         * perform a sorted insertion into timed_list. */
+        struct aws_linked_list_node *node_i;
+        for (node_i = aws_linked_list_begin(&scheduler->timed_list);
+             node_i != aws_linked_list_end(&scheduler->timed_list);
+             node_i = aws_linked_list_next(node_i)) {
 
-    return AWS_OP_SUCCESS;
+            struct aws_task *task_i = AWS_CONTAINER_OF(node_i, struct aws_task, node);
+            if (task_i->timestamp > time_to_run) {
+                break;
+            }
+        }
+        aws_linked_list_insert_before(node_i, &task->node);
+    }
 }
 
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time) {
@@ -116,16 +139,46 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
     /* First move everything from asap_list */
     aws_linked_list_swap_contents(&running_list, &scheduler->asap_list);
 
-    /* Then move tasks from timed_queue, stop upon seeing a task that shouldn't be run yet */
-    struct aws_task **next_timed_task_ptrptr = NULL;
-    while (aws_priority_queue_top(&scheduler->timed_queue, (void **)&next_timed_task_ptrptr) == AWS_OP_SUCCESS) {
-        if ((*next_timed_task_ptrptr)->timestamp > current_time) {
+    /* Next move tasks from timed_queue and timed_list, based on whichever's next-task is sooner.
+     * It's very unlikely that any tasks are in timed_list, so once it has no more valid tasks,
+     * break out of this complex loop in favor of a simpler one. */
+    while (AWS_UNLIKELY(!aws_linked_list_empty(&scheduler->timed_list))) {
+
+        struct aws_linked_list_node *timed_list_node = aws_linked_list_begin(&scheduler->timed_list);
+        struct aws_task *timed_list_task = AWS_CONTAINER_OF(timed_list_node, struct aws_task, node);
+        if (timed_list_task->timestamp > current_time) {
+            /* timed_list is out of valid tasks, break out of complex loop */
             break;
         }
 
-        struct aws_task *next_timed_task = NULL;
-        aws_priority_queue_pop(&scheduler->timed_queue, &next_timed_task);
+        /* Check if timed_queue has a task which is sooner */
+        struct aws_task **timed_queue_task_ptrptr = NULL;
+        if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCCESS) {
+            if ((*timed_queue_task_ptrptr)->timestamp <= current_time) {
+                if ((*timed_queue_task_ptrptr)->timestamp < timed_list_task->timestamp) {
+                    /* Take task from timed_queue */
+                    struct aws_task *timed_queue_task;
+                    aws_priority_queue_pop(&scheduler->timed_queue, &timed_queue_task);
+                    aws_linked_list_push_back(&running_list, &timed_queue_task->node);
+                    continue;
+                }
+            }
+        }
 
+        /* Take task from timed_list */
+        aws_linked_list_pop_front(&scheduler->timed_list);
+        aws_linked_list_push_back(&running_list, &timed_list_task->node);
+    }
+
+    /* Simpler loop that moves remaining valid tasks from timed_queue */
+    struct aws_task **timed_queue_task_ptrptr = NULL;
+    while (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCCESS) {
+        if ((*timed_queue_task_ptrptr)->timestamp > current_time) {
+            break;
+        }
+
+        struct aws_task *next_timed_task;
+        aws_priority_queue_pop(&scheduler->timed_queue, &next_timed_task);
         aws_linked_list_push_back(&running_list, &next_timed_task->node);
     }
 

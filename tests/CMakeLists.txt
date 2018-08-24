@@ -120,6 +120,7 @@ add_test_case(scheduler_pops_task_late_test)
 add_test_case(scheduler_has_tasks_test)
 add_test_case(scheduler_reentrant_safe)
 add_test_case(scheduler_cleanup_reentrants)
+add_test_case(scheduler_oom_still_works)
 
 add_test_case(test_hash_table_put_get)
 add_test_case(test_hash_table_string_put_get)

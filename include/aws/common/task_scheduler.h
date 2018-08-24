@@ -52,6 +52,7 @@ static inline void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *a
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue timed_queue; /* Tasks scheduled to run at specific times */
+    struct aws_linked_list timed_list;     /* If timed_queue runs out of memory, further timed tests are stored here */
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
 };
 
@@ -92,7 +93,7 @@ void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struc
  * The task should not be cleaned up or modified until its function is executed.
  */
 AWS_COMMON_API
-int aws_task_scheduler_schedule_future(
+void aws_task_scheduler_schedule_future(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t time_to_run);

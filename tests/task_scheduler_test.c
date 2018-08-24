@@ -50,7 +50,7 @@ static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
 
     /* schedule 250 ns in the future. */
     uint64_t task2_timestamp = 250;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp));
+    aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp);
 
     struct aws_task task1;
     aws_task_init(&task1, task_n_fn, (void *)1);
@@ -63,7 +63,7 @@ static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
 
     /* schedule 500 ns in the future. */
     uint64_t task3_timestamp = 500;
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp));
+    aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp);
 
     /* run tasks 1 and 2 (but not 3) */
     aws_task_scheduler_run_all(&scheduler, task2_timestamp);
@@ -115,7 +115,7 @@ static int test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx) 
     struct aws_task timed_task;
     aws_task_init(&timed_task, s_null_fn, (void *)1);
 
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &timed_task, 10));
+    aws_task_scheduler_schedule_future(&scheduler, &timed_task, 10);
     ASSERT_TRUE(aws_task_scheduler_has_tasks(&scheduler, &next_task_time));
     ASSERT_UINT_EQUALS(10, next_task_time);
 
@@ -141,7 +141,7 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     struct aws_task task;
     aws_task_init(&task, task_n_fn, (void *)0);
 
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &task, 10));
+    aws_task_scheduler_schedule_future(&scheduler, &task, 10);
 
     /* Run scheduler before task is supposed to execute, check that it didn't execute */
     aws_task_scheduler_run_all(&scheduler, 5);
@@ -253,7 +253,7 @@ static int test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, 
     struct cancellation_args future_task_args = {.status = 100000};
     struct aws_task future_task;
     aws_task_init(&future_task, cancellation_fn, &future_task_args);
-    ASSERT_SUCCESS(aws_task_scheduler_schedule_future(&scheduler, &future_task, 9999999999999));
+    aws_task_scheduler_schedule_future(&scheduler, &future_task, 9999999999999);
 
     aws_task_scheduler_clean_up(&scheduler);
 
@@ -297,9 +297,152 @@ static int test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, vo
     return AWS_OP_SUCCESS;
 }
 
+/* Allocator that only works N times. Not at all thread safe. */
+struct oom_allocator_impl {
+    struct aws_allocator *alloc; /* normal underlying allocator */
+    size_t num_allocations;
+    size_t num_allocations_limit;
+    size_t num_allocations_rejected;
+};
+
+static void *s_oom_allocator_acquire(struct aws_allocator *allocator, size_t size) {
+    struct oom_allocator_impl *impl = allocator->impl;
+    void *mem = NULL;
+
+    if (impl->num_allocations < impl->num_allocations_limit) {
+        mem = aws_mem_acquire(impl->alloc, size);
+        if (mem) {
+            impl->num_allocations++;
+        }
+    } else {
+        impl->num_allocations_rejected++;
+    }
+
+    return mem;
+}
+
+static void s_oom_allocator_release(struct aws_allocator *allocator, void *ptr) {
+    struct oom_allocator_impl *impl = allocator->impl;
+    aws_mem_release(impl->alloc, ptr);
+}
+
+static struct aws_allocator *s_oom_allocator_new(struct aws_allocator *normal_allocator, size_t num_allocations_limit) {
+    struct oom_allocator_impl *impl = aws_mem_acquire(normal_allocator, sizeof(struct oom_allocator_impl));
+    AWS_ZERO_STRUCT(*impl);
+    impl->alloc = normal_allocator;
+    impl->num_allocations_limit = num_allocations_limit;
+
+    struct aws_allocator *oom_allocator = aws_mem_acquire(normal_allocator, sizeof(struct aws_allocator));
+    AWS_ZERO_STRUCT(*oom_allocator);
+    oom_allocator->mem_acquire = s_oom_allocator_acquire;
+    oom_allocator->mem_release = s_oom_allocator_release;
+    oom_allocator->impl = impl;
+
+    return oom_allocator;
+}
+
+static void s_oom_allocator_destroy(struct aws_allocator *oom_allocator) {
+    struct oom_allocator_impl *impl = oom_allocator->impl;
+    aws_mem_release(impl->alloc, oom_allocator);
+    aws_mem_release(impl->alloc, impl);
+}
+
+static void s_oom_task_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+    (void)status;
+    struct aws_linked_list *done_list = arg;
+    aws_linked_list_push_back(done_list, &task->node);
+}
+
+static int test_scheduler_oom_still_works(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    /* Create allocator for scheduler that limits how many allocations it can make.
+     * Note that timed_queue is an array-list under the hood, so it only grabs memory at init and resize time */
+    struct aws_allocator *oom_allocator = s_oom_allocator_new(allocator, 3); /* let timed_queue resize a few times */
+    ASSERT_NOT_NULL(oom_allocator);
+    struct oom_allocator_impl *oom_impl = oom_allocator->impl;
+
+    struct aws_task_scheduler scheduler;
+    ASSERT_SUCCESS(aws_task_scheduler_init(&scheduler, oom_allocator));
+
+    /* Pass this to each task so it can insert itself when it's done */
+    struct aws_linked_list done_tasks;
+    aws_linked_list_init(&done_tasks);
+
+    /* Create a bunch of tasks with random times, more tasks than the scheduler can fit in the timed_queue */
+    size_t timed_queue_count = 0;
+    size_t timed_list_count = 0;
+    uint64_t highest_timestamp = 0;
+    do {
+        struct aws_task *task = aws_mem_acquire(allocator, sizeof(struct aws_task));
+        ASSERT_NOT_NULL(task);
+        aws_task_init(task, s_oom_task_fn, &done_tasks);
+
+        size_t prev_rejects = oom_impl->num_allocations_rejected;
+
+        /* add 1 to random time just so no future-tasks have same timestamp as now-tasks */
+        uint64_t timestamp = (uint64_t)rand() + 1;
+        if (timestamp > highest_timestamp) {
+            highest_timestamp = timestamp;
+        }
+
+        aws_task_scheduler_schedule_future(&scheduler, task, timestamp);
+
+        /* If scheduling causes a rejected allocation, then task was put on timed_list */
+        if (prev_rejects < oom_impl->num_allocations_rejected) {
+            ++timed_list_count;
+        } else {
+            ++timed_queue_count;
+        }
+
+    /* Keep going until there are twice as many tasks in timed_queue as in timed_list.
+     * We do this exact ratio so that, when running tasks, at first the scheduler needs to choose between the two,
+     * but eventually it's just picking from timed_queue. */
+    } while (timed_list_count * 2 < timed_queue_count);
+
+    /* Schedule some now-tasks as well */
+    size_t now_count;
+    for (now_count = 0; now_count < 10; ++now_count) {
+        struct aws_task *task = aws_mem_acquire(allocator, sizeof(struct aws_task));
+        ASSERT_NOT_NULL(task);
+        aws_task_init(task, s_oom_task_fn, &done_tasks);
+
+        aws_task_scheduler_schedule_now(&scheduler, task);
+    }
+
+    /* Run all tasks and clean up scheduler.
+     * Run it in a few steps, just to stress the edge-cases */
+    const uint64_t num_run_steps = 4;
+    for (size_t run_i = 0; run_i < num_run_steps; ++run_i) {
+        uint64_t timestamp = (highest_timestamp / num_run_steps) * run_i;
+        aws_task_scheduler_run_all(&scheduler, timestamp);
+    }
+    aws_task_scheduler_run_all(&scheduler, UINT64_MAX); /* Run whatever's left */
+
+    aws_task_scheduler_clean_up(&scheduler);
+
+    /* Check that tasks ran in proper order */
+    uint64_t done_task_count = 0;
+    uint64_t prev_task_done_time = 0;
+    while (!aws_linked_list_empty(&done_tasks)) {
+        struct aws_task *task = AWS_CONTAINER_OF(aws_linked_list_pop_front(&done_tasks), struct aws_task, node);
+        ASSERT_TRUE(prev_task_done_time <= task->timestamp, "Tasks ran in wrong order: %llu before %llu", prev_task_done_time, task->timestamp);
+        aws_mem_release(allocator, task);
+
+        done_task_count++;
+    }
+
+    size_t scheduled_task_count = now_count + timed_queue_count + timed_list_count;
+    ASSERT_UINT_EQUALS(scheduled_task_count, done_task_count);
+
+    s_oom_allocator_destroy(oom_allocator);
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE(scheduler_pops_task_late_test, test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_has_tasks_test, test_scheduler_has_tasks);
 AWS_TEST_CASE(scheduler_reentrant_safe, test_scheduler_reentrant_safe);
 AWS_TEST_CASE(scheduler_cleanup_cancellation, test_scheduler_cleanup_cancellation);
 AWS_TEST_CASE(scheduler_cleanup_reentrants, test_scheduler_cleanup_reentrants);
+AWS_TEST_CASE(scheduler_oom_still_works, test_scheduler_oom_still_works)
