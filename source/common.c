@@ -313,6 +313,9 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN,
         "Condition variable unknown error."),
     AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_LOG_FAILURE,
+        "Log operation failed."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_CLOCK_FAILURE,
         "Clock operation failed."),
     AWS_DEFINE_ERROR_INFO_COMMON(

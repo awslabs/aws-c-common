@@ -17,7 +17,6 @@
 */
 
 #include <aws/common/exports.h>
-//#include <aws/common/memory_pool.h>
 
 #include <stdarg.h>
 
@@ -31,7 +30,10 @@ enum aws_log_level {
     AWS_LOG_LEVEL_TRACE
 };
 
-typedef void (aws_log_report_fn)(const char *log_message);
+typedef void (aws_log_report_fn)(const char *tag, const char *log_message);
+
+#define AWS_LOG(level, tag, fmt) do { aws_log(level, tag, fmt); } while (0)
+#define AWS_VLOG(level, tag, fmt, ...) do { aws_log(level, tag, fmt, __VA_ARGS__); } while (0)
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +49,7 @@ AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_fn *report_cal
  * Initializes the logging system to capture future calls to `aws_log` and `aws_vlog`. The settings here are shared amongst
  * all other instances of `aws_thread` when `aws_thread_launch` is called.
  */
-AWS_COMMON_API int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count, int max_message_count, enum aws_log_level level);
+AWS_COMMON_API int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count, enum aws_log_level level);
 
 /**
  * TODO (randgaul): Document this.
@@ -72,7 +74,7 @@ AWS_COMMON_API int aws_log(enum aws_log_level level, const char *tag, const char
 /**
  * Records a log entry to be processed by a later call to `aws_log_flush`.
  */
-AWS_COMMON_API int aws_vlog(enum aws_log_level level, const char *fmt, va_list va_args);
+AWS_COMMON_API int aws_vlog(enum aws_log_level level, const char *tag, const char *fmt, va_list va_args);
 
 /**
  * Returns the string representation of `level` as an `aws_log_level` enum type.
@@ -88,7 +90,12 @@ AWS_COMMON_API int aws_log_flush();
 /**
  * TODO (randgaul): Document this.
  */
-AWS_COMMON_API int aws_log_spawn_log_thread();
+AWS_COMMON_API int aws_log_spawn_log_thread(struct aws_allocator *alloc);
+
+/**
+ * TODO (randgaul): Document this.
+ */
+AWS_COMMON_API void aws_log_destroy_log_thread();
 
 #ifdef __cplusplus
 }
