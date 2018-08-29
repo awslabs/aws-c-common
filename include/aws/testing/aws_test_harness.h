@@ -434,7 +434,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 #   define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #   endif
 
-    static int enable_vt_mode() {
+    static inline int enable_vt_mode() {
         HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hOut == INVALID_HANDLE_VALUE) {
             return AWS_OP_ERR;
@@ -454,7 +454,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
 #else
 
-    int enable_vt_mode() {
+    static inline int enable_vt_mode() {
         return AWS_OP_ERR;
     }
 
