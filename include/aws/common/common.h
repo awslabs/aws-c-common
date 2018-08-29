@@ -340,6 +340,4 @@ static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
 #define AWS_ZERO_ARRAY(array) memset((void *)array, 0, sizeof(array));
 #define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
-#define AWS_ENABLE_HW_OPTIMIZATION 1
-
 #endif /* AWS_COMMON_COMMON_H */
