@@ -194,6 +194,10 @@ add_test_case(test_secure_zero)
 add_test_case(test_buffer_secure_zero)
 add_test_case(test_buffer_clean_up_secure)
 
+add_test_case(test_memory_pool_no_overflow)
+add_test_case(test_memory_pool_overflow)
+add_test_case(test_memory_pool_hammer)
+
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")

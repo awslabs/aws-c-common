@@ -1,17 +1,17 @@
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <assert.h>
 
@@ -26,7 +26,7 @@ struct aws_memory_pool {
     int overflow_count;
 };
 
-struct aws_memory_pool *aws_memory_pool_init(struct aws_allocator* alloc, size_t element_size, int element_count) {
+struct aws_memory_pool *aws_memory_pool_init(struct aws_allocator *alloc, size_t element_size, int element_count) {
     size_t stride = element_size > sizeof(void *) ? element_size : sizeof(void *);
     size_t arena_size = sizeof(struct aws_memory_pool) + stride * element_count;
     struct aws_memory_pool *pool = (struct aws_memory_pool *)aws_mem_acquire(alloc, arena_size);
@@ -89,7 +89,7 @@ void *aws_memory_pool_acquire(struct aws_memory_pool *pool) {
     return mem;
 }
 
-void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
+void aws_memory_pool_release(struct aws_memory_pool *pool, void *to_release) {
     size_t difference = (size_t)((uint8_t *)to_release - (uintptr_t)pool->arena);
     bool in_bounds = difference < pool->arena_size;
     if (pool->overflow_count && !in_bounds) {
@@ -105,7 +105,7 @@ void aws_memory_pool_release(struct aws_memory_pool *pool, void* to_release) {
     }
 }
 
-void aws_memory_pool_get_arena(struct aws_memory_pool *pool, void **arena, size_t* arena_size) {
+void aws_memory_pool_get_arena(struct aws_memory_pool *pool, void **arena, size_t *arena_size) {
     if (arena) {
         *arena = pool ? (void *)pool->arena : NULL;
     }

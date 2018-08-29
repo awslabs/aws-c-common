@@ -256,6 +256,12 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_UNKNOWN,
         "Unknown error."),
     AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_BAD_FREE,
+        "Out of bounds free, or double free."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_MEMORY_LEAK,
+        "Memory leak detected."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SHORT_BUFFER,
         "Buffer is not large enough to hold result."),
     AWS_DEFINE_ERROR_INFO_COMMON(
