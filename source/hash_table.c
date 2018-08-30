@@ -505,6 +505,39 @@ int aws_hash_table_create(
     return AWS_OP_SUCCESS;
 }
 
+AWS_COMMON_API
+int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value, int *was_created) {
+    struct aws_hash_element *p_elem;
+    int was_created_fallback;
+
+    if (!was_created) {
+        was_created = &was_created_fallback;
+    }
+
+    if (aws_hash_table_create(map, key, &p_elem, was_created)) {
+        return AWS_OP_ERR;
+    }
+
+    /*
+     * aws_hash_table_create might resize the table, which results in map->p_impl changing.
+     * It is therefore important to wait to read p_impl until after we return.
+     */
+    struct hash_table_state *state = map->p_impl;
+
+    if (!*was_created) {
+        if (p_elem->key != key) {
+            state->destroy_key_fn((void *)p_elem->key);
+        }
+
+        state->destroy_value_fn((void *)p_elem->value);
+    }
+
+    p_elem->key = key;
+    p_elem->value = value;
+
+    return AWS_OP_SUCCESS;
+}
+
 /* Clears an entry. Does _not_ invoke destructor callbacks.
  * Returns the last slot touched (note that if we wrap, we'll report an index
  * lower than the original entry's index)

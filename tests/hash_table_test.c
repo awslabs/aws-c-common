@@ -29,8 +29,29 @@ static const char *TEST_VAL_STR_2 = "value 2";
 #define ASSERT_HASH_TABLE_ENTRY_COUNT(map, count)                                                                      \
     ASSERT_UINT_EQUALS(count, aws_hash_table_get_entry_count(map), "Hash map should have %d entries", count)
 
-AWS_TEST_CASE(test_hash_table_put_get, s_test_hash_table_put_get_fn)
-static int s_test_hash_table_put_get_fn(struct aws_allocator *allocator, void *ctx) {
+#define ASSERT_NO_KEY(hash_table, key)                                                                                 \
+    do {                                                                                                               \
+        AWS_STATIC_STRING_FROM_LITERAL(assert_key, key);                                                               \
+        struct aws_hash_element *pElem_assert;                                                                         \
+        ASSERT_SUCCESS(aws_hash_table_find((hash_table), (void *)assert_key, &pElem_assert));                          \
+        ASSERT_NULL(pElem_assert, "Expected key to not be present: " key);                                             \
+    } while (0)
+
+#define ASSERT_KEY_VALUE(hash_table, key, expected)                                                                    \
+    do {                                                                                                               \
+        AWS_STATIC_STRING_FROM_LITERAL(assert_key, key);                                                               \
+        AWS_STATIC_STRING_FROM_LITERAL(assert_value, expected);                                                        \
+        struct aws_hash_element *pElem_assert;                                                                         \
+        ASSERT_SUCCESS(aws_hash_table_find((hash_table), (void *)assert_key, &pElem_assert));                          \
+        ASSERT_NOT_NULL(pElem_assert, "Expected key to be present: " key);                                             \
+        ASSERT_TRUE(                                                                                                   \
+            aws_string_eq(assert_value, (const struct aws_string *)pElem_assert->value),                               \
+            "Expected key \"" key "\" to have value \"" expected "\"; actually had value \"%s\"",                      \
+            aws_string_bytes((const struct aws_string *)pElem_assert->value));                                         \
+    } while (0)
+
+AWS_TEST_CASE(test_hash_table_create_find, s_test_hash_table_create_find_fn)
+static int s_test_hash_table_create_find_fn(struct aws_allocator *allocator, void *ctx) {
 
     (void)ctx;
 
@@ -81,8 +102,8 @@ static int s_test_hash_table_put_get_fn(struct aws_allocator *allocator, void *c
     return 0;
 }
 
-AWS_TEST_CASE(test_hash_table_string_put_get, s_test_hash_table_string_put_get_fn)
-static int s_test_hash_table_string_put_get_fn(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_hash_table_string_create_find, s_test_hash_table_string_create_find_fn)
+static int s_test_hash_table_string_create_find_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_hash_table hash_table;
@@ -184,6 +205,69 @@ static int s_test_hash_table_string_put_get_fn(struct aws_allocator *allocator, 
         ((struct aws_string *)pElem->value)->len,
         "Returned value for binary bytes should have been %s",
         "hunter2");
+    aws_hash_table_clean_up(&hash_table);
+
+    return 0;
+}
+
+static const void *last_key, *last_value;
+
+static void destroy_key_record(void *key) {
+    last_key = key;
+}
+
+static void destroy_value_record(void *value) {
+    last_value = value;
+}
+
+AWS_TEST_CASE(test_hash_table_put, s_test_hash_table_put_fn)
+static int s_test_hash_table_put_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_hash_table hash_table;
+    struct aws_hash_element *pElem;
+    int was_created;
+
+    int ret = aws_hash_table_init(
+        &hash_table, allocator, 10, aws_hash_string, aws_string_eq, destroy_key_record, destroy_value_record);
+    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
+
+    AWS_STATIC_STRING_FROM_LITERAL(sentinel, "");
+    AWS_STATIC_STRING_FROM_LITERAL(key_a_1, "a");
+    AWS_STATIC_STRING_FROM_LITERAL(value_b_1, "b");
+
+    ASSERT_NO_KEY(&hash_table, "a");
+    last_key = last_value = sentinel;
+    aws_hash_table_put(&hash_table, key_a_1, (void *)value_b_1, &was_created);
+    ASSERT_INT_EQUALS(was_created, 1);
+    ASSERT_KEY_VALUE(&hash_table, "a", "b");
+    /* dtors were not called, even with nulls */
+    ASSERT_PTR_EQUALS(last_key, sentinel);
+    ASSERT_PTR_EQUALS(last_value, sentinel);
+
+    AWS_STATIC_STRING_FROM_LITERAL(key_a_2, "a");
+    AWS_STATIC_STRING_FROM_LITERAL(value_c_1, "c");
+
+    last_key = last_value = NULL;
+    aws_hash_table_put(&hash_table, key_a_2, (void *)value_c_1, &was_created);
+    ASSERT_INT_EQUALS(was_created, 0);
+    ASSERT_KEY_VALUE(&hash_table, "a", "c");
+
+    ASSERT_SUCCESS(aws_hash_table_find(&hash_table, (void *)key_a_1, &pElem));
+    ASSERT_PTR_EQUALS(key_a_2, pElem->key);
+    /* verify dtor was called on the old key ptr */
+    ASSERT_PTR_EQUALS(last_key, key_a_1);
+    ASSERT_PTR_EQUALS(last_value, value_b_1);
+
+    last_key = last_value = NULL;
+    aws_hash_table_put(&hash_table, key_a_2, (void *)value_b_1, NULL);
+    ASSERT_KEY_VALUE(&hash_table, "a", "b");
+
+    /* Since the key ptr did not change, it was not destroyed */
+    ASSERT_PTR_EQUALS(last_key, NULL);
+    /* The value was destroyed however */
+    ASSERT_PTR_EQUALS(last_value, value_c_1);
+
     aws_hash_table_clean_up(&hash_table);
 
     return 0;
