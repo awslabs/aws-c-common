@@ -259,8 +259,17 @@ int aws_hash_table_init(
 }
 
 void aws_hash_table_clean_up(struct aws_hash_table *map) {
+    struct hash_table_state *state = map->p_impl;
+
+    /* Ensure that we're idempotent */
+    if (!state) {
+        return;
+    }
+
     aws_hash_table_clear(map);
     aws_mem_release(((struct hash_table_state *)map->p_impl)->alloc, map->p_impl);
+
+    map->p_impl = NULL;
 }
 
 /* Tries to find where the requested key is or where it should go if put.

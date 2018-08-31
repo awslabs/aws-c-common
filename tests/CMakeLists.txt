@@ -131,6 +131,7 @@ add_test_case(test_hash_table_foreach)
 add_test_case(test_hash_table_iter)
 add_test_case(test_hash_table_empty_iter)
 add_test_case(test_hash_churn)
+add_test_case(test_hash_table_cleanup_idempotent)
 
 add_test_case(test_u64_saturating)
 add_test_case(test_u32_saturating)

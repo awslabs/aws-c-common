@@ -787,3 +787,16 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
     printf("elapsed=%ld us\n", end - start);
     return 0;
 }
+
+AWS_TEST_CASE(test_hash_table_cleanup_idempotent, s_test_hash_table_cleanup_idempotent_fn)
+static int s_test_hash_table_cleanup_idempotent_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_hash_table hash_table;
+    ASSERT_SUCCESS(aws_hash_table_init(&hash_table, allocator, 10, aws_hash_c_string, aws_c_string_eq, NULL, NULL));
+
+    aws_hash_table_clean_up(&hash_table);
+    aws_hash_table_clean_up(&hash_table);
+
+    return 0;
+}
