@@ -525,11 +525,13 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
     struct hash_table_state *state = map->p_impl;
 
     if (!*was_created) {
-        if (p_elem->key != key) {
+        if (p_elem->key != key && state->destroy_key_fn) {
             state->destroy_key_fn((void *)p_elem->key);
         }
 
-        state->destroy_value_fn((void *)p_elem->value);
+        if (state->destroy_value_fn) {
+            state->destroy_value_fn((void *)p_elem->value);
+        }
     }
 
     p_elem->key = key;
