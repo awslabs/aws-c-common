@@ -52,12 +52,12 @@ AWS_COMMON_API void aws_log_set_reporting_callback(aws_log_report_fn *report_cal
 AWS_COMMON_API int aws_log_system_init(struct aws_allocator *alloc, size_t max_message_len, int memory_pool_message_count, enum aws_log_level level);
 
 /**
- * TODO (randgaul): Document this.
+ * Sets the global log level. Log levels above this level are ignored.
  */
 AWS_COMMON_API void aws_log_system_set_level(enum aws_log_level level);
 
 /**
- * TODO (randgaul): Document this.
+ * Retrieves the global log level.
  */
 AWS_COMMON_API enum aws_log_level aws_log_system_get_level(void);
 
@@ -88,12 +88,12 @@ AWS_COMMON_API const char *aws_log_level_to_string(enum aws_log_level level);
 AWS_COMMON_API int aws_log_flush();
 
 /**
- * TODO (randgaul): Document this.
+ * Spawns a thread that wakes whenever logs are recieved, and calls `aws_log_flush`.
  */
 AWS_COMMON_API int aws_log_spawn_log_thread(struct aws_allocator *alloc);
 
 /**
- * TODO (randgaul): Document this.
+ * Destroys the logging thread.
  */
 AWS_COMMON_API void aws_log_destroy_log_thread();
 

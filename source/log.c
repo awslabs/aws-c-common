@@ -29,16 +29,16 @@ struct s_msg {
     const char *tag;
 };
 
-struct s_ctx {
+struct s_log_ctx {
     struct aws_allocator *alloc;
     void *msg_pool;
-    struct aws_mutex mutex;
     size_t message_size;
     struct aws_linked_list messages;
 };
 
 /* Logging globals. */
-struct s_ctx *s_ctx;
+struct s_log_ctx *s_ctx;
+struct aws_mutex s_mutex = AWS_MUTEX_INIT;
 aws_log_report_fn *s_report;
 enum aws_log_level s_level;
 
@@ -47,25 +47,24 @@ bool s_log_thread_running;
 struct aws_thread s_log_thread;
 struct aws_condition_variable s_cv = AWS_CONDITION_VARIABLE_INIT;
 struct aws_mutex s_cv_mutex = AWS_MUTEX_INIT;
-bool s_cv_state;
 
 static inline struct s_msg *s_msg_new(void) {
     if (!s_ctx) {
         return NULL;
     }
 
-    aws_mutex_lock(&s_ctx->mutex);
-    struct s_msg *msg = (struct s_msg *)aws_mem_acquire(s_ctx->alloc, s_ctx->message_size);
-    aws_mutex_unlock(&s_ctx->mutex);
+    aws_mutex_lock(&s_mutex);
+    struct s_msg *msg = (struct s_msg *)aws_mem_acquire(s_ctx->alloc, sizeof(struct s_msg) + s_ctx->message_size);
+    aws_mutex_unlock(&s_mutex);
 
     return msg;
 }
 
 static inline void s_msg_destroy(struct s_msg *msg) {
     if (s_ctx) {
-        aws_mutex_lock(&s_ctx->mutex);
+        aws_mutex_lock(&s_mutex);
         aws_mem_release(s_ctx->alloc, msg);
-        aws_mutex_unlock(&s_ctx->mutex);
+        aws_mutex_unlock(&s_mutex);
     }
 }
 
@@ -82,14 +81,28 @@ int aws_log_system_init(
     size_t max_message_len,
     int memory_pool_message_count,
     enum aws_log_level level) {
-    s_ctx = (struct s_ctx *)aws_mem_acquire(alloc, sizeof(*s_ctx));
+    if (!alloc) {
+        return aws_raise_error(AWS_ERROR_LOG_FAILURE);
+    }
+    if (max_message_len < 16) {
+        /*
+         * Must be least greater than 2, to ensure buffer formatting code never underflows.
+         * 16 seemed like a reasonable number to enfore here, since 2 is impractical anyways.
+         */
+        max_message_len = 16;
+    }
+    s_ctx = (struct s_log_ctx *)aws_mem_acquire(alloc, sizeof(*s_ctx));
+    if (!s_ctx) {
+        return aws_raise_error(AWS_ERROR_LOG_FAILURE);
+    }
     s_ctx->alloc = alloc;
     s_ctx->msg_pool = NULL;
     s_ctx->message_size = max_message_len;
     (void)memory_pool_message_count;
-    aws_mutex_init(&s_ctx->mutex);
+    aws_mutex_init(&s_mutex);
     aws_linked_list_init(&s_ctx->messages);
     aws_log_system_set_level(level);
+    return AWS_OP_SUCCESS;
 }
 
 void aws_log_system_set_level(enum aws_log_level level) {
@@ -101,11 +114,17 @@ enum aws_log_level aws_log_system_get_level(void) {
 }
 
 void aws_log_system_clean_up() {
-    // TODO: Delete all messages.
-    aws_mutex_clean_up(&s_ctx->mutex);
-    // TODO: Clean up log thread.
-    struct s_ctx *ctx = s_ctx;
+    /* Null out s_ctx and cleanup messages. */
+    aws_mutex_lock(&s_mutex);
+    while (!aws_linked_list_empty(&s_ctx->messages)) {
+        struct s_msg *msg = AWS_CONTAINER_OF(aws_linked_list_pop_front(&s_ctx->messages), struct s_msg, node);
+        aws_mem_release(s_ctx->alloc, msg);
+    }
+    struct s_log_ctx *ctx = s_ctx;
     s_ctx = NULL;
+    aws_mutex_unlock(&s_mutex);
+
+    aws_log_destroy_log_thread();
     aws_mem_release(ctx->alloc, ctx);
 }
 
@@ -139,41 +158,49 @@ int aws_vlog(enum aws_log_level level, const char *tag, const char *fmt, va_list
     msg->tag = tag;
     char *msg_data = s_get_msg_data(msg);
 
-    /* Format message. */
+    /* Format date and log prefix info. */
     char date[256];
     time_t now = time(NULL);
 #ifdef _MSC_VER
     struct tm *t = localtime(&now);
-    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%Z", t);
+    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%z", t);
 #else
     struct tm t;
     localtime_r(&now, &t);
-    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%Z", &t);
+    strftime(date, sizeof(date) - 1, "%m-%d-%Y %H:%M:%S:%z", &t);
 #endif
 
-    char fmt_final[1024];
-    snprintf(
-        fmt_final,
-        sizeof(fmt_final),
-        "[%s] %s [%" PRIu64 "] %s\n",
+    char date_prefix[256];
+    int prefix_len = snprintf(
+        date_prefix,
+        sizeof(date_prefix),
+        "[%s] %s [%" PRIu64 "] ",
         aws_log_level_to_string(level),
         date,
-        aws_thread_current_thread_id(),
-        fmt);
+        aws_thread_current_thread_id());
 
-    int count = vsnprintf(msg_data, s_ctx->message_size, fmt_final, va_args);
-    if ((size_t)count >= s_ctx->message_size - 1) {
+    if (prefix_len >= s_ctx->message_size) {
+        return aws_raise_error(AWS_ERROR_LOG_FAILURE);
+    }
+
+    /* Perform log format, and cat with prefix. Append a newline. */
+    memcpy(msg_data, date_prefix, prefix_len);
+
+    int len = prefix_len + vsnprintf(msg_data + prefix_len, s_ctx->message_size - prefix_len, fmt, va_args);
+    if ((size_t)len >= s_ctx->message_size - 2) {
         msg_data[s_ctx->message_size - 2] = '\n';
+    } else {
+        msg_data[len - 1] = '\n';
+        msg_data[len] = 0;
     }
 
     /* Push message onto queue. */
-    aws_mutex_lock(&s_ctx->mutex);
-    aws_linked_list_push_front(&s_ctx->messages, msg);
-    aws_mutex_unlock(&s_ctx->mutex);
+    aws_mutex_lock(&s_mutex);
+    aws_linked_list_push_front(&s_ctx->messages, &msg->node);
+    aws_mutex_unlock(&s_mutex);
 
     if (s_log_thread_running) {
         /* Notify log thread. */
-        s_cv_state = true;
         aws_condition_variable_notify_one(&s_cv);
     }
 
@@ -204,13 +231,13 @@ int aws_log_flush() {
 
     while (1) {
         /* Pop message off of queue. */
-        aws_mutex_lock(&s_ctx->mutex);
+        aws_mutex_lock(&s_mutex);
         if (aws_linked_list_empty(&s_ctx->messages)) {
-            aws_mutex_unlock(&s_ctx->mutex);
+            aws_mutex_unlock(&s_mutex);
             break;
         }
-        struct s_msg *msg = aws_linked_list_pop_back(&s_ctx->messages);
-        aws_mutex_unlock(&s_ctx->mutex);
+        struct s_msg *msg = AWS_CONTAINER_OF(aws_linked_list_pop_back(&s_ctx->messages), struct s_msg, node);
+        aws_mutex_unlock(&s_mutex);
 
         /* Report message. */
         char *msg_data = s_get_msg_data(msg);
@@ -225,6 +252,17 @@ int aws_log_flush() {
     return AWS_OP_SUCCESS;
 }
 
+bool s_has_msgs(void *arg) {
+    (void)arg;
+    bool empty = false;
+    aws_mutex_lock(&s_mutex);
+    if (s_ctx) {
+        empty = aws_linked_list_empty(&s_ctx->messages);
+    }
+    aws_mutex_unlock(&s_mutex);
+    return !empty || !s_log_thread_running;
+}
+
 void s_log_thread_function(void *arg) {
     (void)arg;
 
@@ -234,9 +272,9 @@ void s_log_thread_function(void *arg) {
             break;
         }
 
-        while (!s_cv_state) {
-            aws_condition_variable_wait(&s_cv, &s_cv_mutex);
-        }
+        aws_mutex_lock(&s_cv_mutex);
+        aws_condition_variable_wait_pred(&s_cv, &s_cv_mutex, s_has_msgs, NULL);
+        aws_mutex_unlock(&s_cv_mutex);
     }
 }
 
@@ -246,6 +284,7 @@ int aws_log_spawn_log_thread(struct aws_allocator *alloc) {
         return ret;
     }
 
+    s_log_thread_running = true;
     ret = aws_thread_launch(&s_log_thread, s_log_thread_function, NULL, NULL);
 
     return ret;
@@ -253,6 +292,5 @@ int aws_log_spawn_log_thread(struct aws_allocator *alloc) {
 
 void aws_log_destroy_log_thread() {
     s_log_thread_running = false;
-    s_cv_state = true;
     aws_condition_variable_notify_one(&s_cv);
 }

@@ -187,6 +187,12 @@ add_test_case(test_lru_cache_entries_cleanup)
 add_test_case(test_lru_cache_overwrite)
 add_test_case(test_lru_cache_element_access_members)
 
+add_test_case(test_log_init_clean_up)
+add_test_case(test_log_overflow_message)
+add_test_case(test_log_threads_hammer)
+add_test_case(test_log_threads_order)
+add_test_case(test_log_thread_basic)
+
 add_test_case(rw_lock_aquire_release_test)
 add_test_case(rw_lock_is_actually_rw_lock_test)
 add_test_case(rw_lock_many_readers_test)

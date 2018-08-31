@@ -18,6 +18,16 @@
 
 #include <aws/common/exports.h>
 
+#if defined(_MSC_VER)
+#   ifndef _CRT_SECURE_NO_WARNINGS
+#       define _CRT_SECURE_NO_WARNINGS
+#   endif
+
+#   ifndef _CRT_NONSTDC_NO_DEPRECATE
+#       define _CRT_NONSTDC_NO_DEPRECATE
+#   endif
+#endif
+
 #include <stddef.h>
 #include <string.h>
 
