@@ -694,6 +694,8 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
     /* Since hash code 0 represents an empty slot we can just zero out the
      * entire table. */
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
+
+    state->entry_count = 0;
 }
 
 uint64_t aws_hash_c_string(const void *item) {
