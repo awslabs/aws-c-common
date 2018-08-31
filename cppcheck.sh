@@ -4,7 +4,7 @@ set -e
 
 cppcheck                                                    \
                                                             \
---enable=all --std=c99 --language=c                         \
+--enable=all --std=c99 --language=c --inline-suppr          \
 --template='[{file}:{line}]: ({severity},{id}){message}'    \
 --force --error-exitcode=-1                                 \
                                                             \

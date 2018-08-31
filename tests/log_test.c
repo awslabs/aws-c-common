@@ -115,8 +115,9 @@ static void log_report_test_order_fn(const char *tag, const char *log_message) {
     (void)tag;
     int thread_index, count;
 
+    /* Suppress cppcheck warning: scanf without field width limits can crash with huge input data on some versions of libc. */
     /* cppcheck-suppress invalidscanf */
-    sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count); /* NOLINT */
+    sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count);
 
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
@@ -125,7 +126,7 @@ static void log_report_test_order_fn(const char *tag, const char *log_message) {
 }
 
 void test_log_thread_order_fn(void *param) {
-    int *running = (int *)param;
+    volatile int *running = (volatile int *)param;
     int index = log_test_thread_index++;
     int count = 0;
     while (*running) {
