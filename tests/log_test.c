@@ -115,7 +115,8 @@ static void log_report_test_order_fn(const char *tag, const char *log_message) {
     (void)tag;
     int thread_index, count;
 
-    sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count);
+    /* cppcheck-suppress invalidscanf */
+    sscanf(log_message, "%*[^]]] %*[^]]] %d %d", &thread_index, &count); /* NOLINT */
 
     if (log_test_thread_counts[thread_index] != count) {
         log_test_order_correct = 0;
