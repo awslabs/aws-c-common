@@ -46,6 +46,7 @@ enum aws_log_level s_level;
 volatile bool s_log_thread_running;
 struct aws_thread s_log_thread;
 struct aws_condition_variable s_cv = AWS_CONDITION_VARIABLE_INIT;
+struct aws_mutex s_cv_mutex = AWS_MUTEX_INIT;
 
 static inline struct s_msg *s_msg_new(void) {
     if (!s_ctx) {
@@ -204,9 +205,9 @@ int aws_vlog(enum aws_log_level level, const char *tag, const char *fmt, va_list
 
     if (s_log_thread_running) {
         /* Notify log thread. */
-        aws_mutex_lock(&s_mutex);
+        aws_mutex_lock(&s_cv_mutex);
         aws_condition_variable_notify_one(&s_cv);
-        aws_mutex_unlock(&s_mutex);
+        aws_mutex_unlock(&s_cv_mutex);
     }
 
     return AWS_OP_SUCCESS;
@@ -237,7 +238,7 @@ int aws_log_flush() {
     while (1) {
         /* Pop message off of queue. */
         aws_mutex_lock(&s_mutex);
-        if (aws_linked_list_empty(&s_ctx->messages)) {
+        if (!s_ctx || aws_linked_list_empty(&s_ctx->messages)) {
             aws_mutex_unlock(&s_mutex);
             break;
         }
@@ -277,9 +278,9 @@ void s_log_thread_function(void *arg) {
             break;
         }
 
-        aws_mutex_lock(&s_mutex);
-        aws_condition_variable_wait_pred(&s_cv, &s_mutex, s_has_msgs, NULL);
-        aws_mutex_unlock(&s_mutex);
+        aws_mutex_lock(&s_cv_mutex);
+        aws_condition_variable_wait_pred(&s_cv, &s_cv_mutex, s_has_msgs, NULL);
+        aws_mutex_unlock(&s_cv_mutex);
     }
 }
 
@@ -296,8 +297,8 @@ int aws_log_spawn_log_thread(struct aws_allocator *alloc) {
 }
 
 void aws_log_destroy_log_thread() {
-    aws_mutex_lock(&s_mutex);
+    aws_mutex_lock(&s_cv_mutex);
     s_log_thread_running = false;
     aws_condition_variable_notify_one(&s_cv);
-    aws_mutex_unlock(&s_mutex);
+    aws_mutex_unlock(&s_cv_mutex);
 }
