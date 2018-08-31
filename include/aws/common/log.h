@@ -16,7 +16,7 @@
 * permissions and limitations under the License.
 */
 
-#include <aws/common/exports.h>
+#include <aws/common/common.h>
 
 #include <stdarg.h>
 
