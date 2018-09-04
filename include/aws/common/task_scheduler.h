@@ -89,7 +89,7 @@ AWS_COMMON_API
 void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struct aws_task *task);
 
 /**
- * Schedules a task to run at time_to_run units after the current time.
+ * Schedules a task to run at time_to_run.
  * The task should not be cleaned up or modified until its function is executed.
  */
 AWS_COMMON_API
