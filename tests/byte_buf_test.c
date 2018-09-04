@@ -222,11 +222,11 @@ AWS_TEST_CASE(test_buffer_init_copy, s_test_buffer_init_copy_fn)
 static int s_test_buffer_init_copy_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_byte_cursor src = aws_byte_cursor_from_c_str("test_string");
+    struct aws_byte_buf src = aws_byte_buf_from_c_str("test_string");
     struct aws_byte_buf dest;
 
     ASSERT_SUCCESS(aws_byte_buf_init_copy(allocator, &dest, &src));
-    ASSERT_TRUE(aws_byte_cursor_eq_byte_buf(&src, &dest));
+    ASSERT_TRUE(aws_byte_buf_eq(&src, &dest));
     ASSERT_INT_EQUALS(src.len, dest.capacity);
     ASSERT_PTR_EQUALS(allocator, dest.allocator);
     aws_byte_buf_clean_up(&dest);
@@ -237,8 +237,8 @@ AWS_TEST_CASE(test_buffer_init_copy_null_buffer, s_test_buffer_init_copy_null_bu
 static int s_test_buffer_init_copy_null_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_byte_cursor src;
-    src.ptr = NULL;
+    struct aws_byte_buf src;
+    src.buffer = NULL;
     src.len = 5;
 
     struct aws_byte_buf dest;

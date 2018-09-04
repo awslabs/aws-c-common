@@ -58,7 +58,7 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Test: write from string to byte cursor works. */
     uint8_t dest[8] = {0};
-    struct aws_byte_buf dest_cur = aws_byte_buf_from_array(dest, 0, sizeof(dest));
+    struct aws_byte_buf dest_cur = aws_byte_buf_from_empty_array(dest, sizeof(dest));
 
     ASSERT_TRUE(
         aws_byte_buf_write_from_whole_string(&dest_cur, test_string_2),
@@ -67,7 +67,7 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Test: write from string fails cleanly when byte cursor too short. */
     int8_t short_dest[7] = {0};
-    struct aws_byte_buf short_dest_buf = aws_byte_buf_from_array(short_dest, 0, sizeof(short_dest));
+    struct aws_byte_buf short_dest_buf = aws_byte_buf_from_empty_array(short_dest, sizeof(short_dest));
 
     ASSERT_FALSE(
         aws_byte_buf_write_from_whole_string(&short_dest_buf, test_string_2),

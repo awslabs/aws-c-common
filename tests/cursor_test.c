@@ -120,13 +120,13 @@ static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *c
     memset(buf, 0, sizeof(buf));
     buf[sizeof(buf) - 1] = 0x99;
 
-    struct aws_byte_buf cur = aws_byte_buf_from_array(buf, 0, sizeof(buf) - 1);
+    struct aws_byte_buf cur = aws_byte_buf_from_empty_array(buf, sizeof(buf) - 1);
 
     uint8_t aba[] = {0xaa, 0xbb, 0xaa};
     uint8_t bcb[] = {0xbb, 0xcc, 0xbb};
 
     ASSERT_TRUE(aws_byte_buf_write(&cur, aba, sizeof(aba)));
-    struct aws_byte_buf bcb_buf = aws_byte_buf_from_array(bcb, sizeof(bcb), sizeof(bcb));
+    struct aws_byte_buf bcb_buf = aws_byte_buf_from_array(bcb, sizeof(bcb));
     ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&cur, &bcb_buf));
     ASSERT_TRUE(aws_byte_buf_write_u8(&cur, 0x42));
     ASSERT_TRUE(aws_byte_buf_write_be16(&cur, 0x1234));
@@ -150,7 +150,7 @@ static int s_byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ct
 
     uint8_t aba[3], bcb[3];
     ASSERT_TRUE(aws_byte_cursor_read(&cur, aba, sizeof(aba)));
-    struct aws_byte_buf buf = aws_byte_buf_from_array(bcb, 0, sizeof(bcb));
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(bcb, sizeof(bcb));
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &buf));
     uint8_t aba_expect[] = {0xaa, 0xbb, 0xaa}, bcb_expect[] = {0xbb, 0xcc, 0xbb};
     ASSERT_BIN_ARRAYS_EQUALS(aba_expect, 3, aba, 3);
@@ -185,14 +185,14 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     memcpy(starting_buf, buf, sizeof(buf));
 
     struct aws_byte_cursor cur = aws_byte_cursor_from_array(buf, sizeof(buf));
-    struct aws_byte_buf buffer = aws_byte_buf_from_array(buf, 0, sizeof(buf));
+    struct aws_byte_buf buffer = aws_byte_buf_from_empty_array(buf, sizeof(buf));
 
     uint64_t u64 = 0;
     uint32_t u32 = 0;
     uint16_t u16 = 0;
     uint8_t u8 = 0;
     uint8_t arr[2] = {0};
-    struct aws_byte_buf arrbuf = aws_byte_buf_from_array(arr, sizeof(arr), sizeof(arr));
+    struct aws_byte_buf arrbuf = aws_byte_buf_from_array(arr, sizeof(arr));
 
     cur.len = 7;
     buffer.capacity = 7;

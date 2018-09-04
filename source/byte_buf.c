@@ -73,7 +73,7 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
     return !memcmp(a->buffer, b->buffer, a->len);
 }
 
-int aws_byte_buf_init_copy(
+int aws_byte_buf_init_copy_from_cursor(
     struct aws_allocator *allocator,
     struct aws_byte_buf *dest,
     const struct aws_byte_cursor *src) {
@@ -154,7 +154,7 @@ bool aws_byte_cursor_next_split(
 int aws_byte_cursor_split_on_char_n(
     const struct aws_byte_cursor *input_str,
     char split_on,
-    struct aws_array_list *output,
+    struct aws_array_list *AWS_RESTRICT output,
     size_t n) {
     assert(input_str && input_str->ptr);
     assert(output);
@@ -186,7 +186,7 @@ int aws_byte_cursor_split_on_char_n(
 int aws_byte_cursor_split_on_char(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
-    struct aws_array_list *output) {
+    struct aws_array_list *AWS_RESTRICT output) {
     return aws_byte_cursor_split_on_char_n(input_str, split_on, output, 0);
 }
 
@@ -244,7 +244,7 @@ bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct a
     return !memcmp(a->ptr, b->buffer, a->len);
 }
 
-int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *AWS_RESTRICT from) {
+int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
 
