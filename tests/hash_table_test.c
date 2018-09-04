@@ -278,8 +278,7 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
 
     struct aws_hash_table hash_table;
 
-    int ret = aws_hash_table_init(
-        &hash_table, allocator, 10, aws_hash_string, aws_string_eq, NULL, NULL);
+    int ret = aws_hash_table_init(&hash_table, allocator, 10, aws_hash_string, aws_string_eq, NULL, NULL);
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
@@ -290,8 +289,6 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
 
     return 0;
 }
-
-
 
 AWS_TEST_CASE(test_hash_table_string_clean_up, s_test_hash_table_string_clean_up_fn)
 static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator, void *ctx) {
