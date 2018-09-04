@@ -29,7 +29,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(data, size);
 
     struct aws_byte_buf encode_output;
-    result = aws_byte_buf_init(allocator, &encode_output, output_size);
+    result = aws_byte_buf_init(&encode_output, allocator, output_size);
     assert(result == AWS_OP_SUCCESS);
 
     result = aws_hex_encode(&to_encode, &encode_output);
@@ -41,7 +41,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     assert(output_size == size);
 
     struct aws_byte_buf decode_output;
-    result = aws_byte_buf_init(allocator, &decode_output, output_size);
+    result = aws_byte_buf_init(&decode_output, allocator, output_size);
     assert(result == AWS_OP_SUCCESS);
 
     struct aws_byte_cursor decode_input = aws_byte_cursor_from_buf(&encode_output);

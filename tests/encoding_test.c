@@ -36,7 +36,7 @@ static int s_run_hex_encoding_test_case(
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_size - 1);
 
     struct aws_byte_buf allocation;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &allocation, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
@@ -294,7 +294,7 @@ static int s_run_base64_encoding_test_case(
 
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_size);
     struct aws_byte_buf allocation;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &allocation, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
@@ -330,7 +330,7 @@ static int s_run_base64_encoding_test_case(
         aws_last_error());
     ASSERT_INT_EQUALS(test_str_size, output_size, "Output size on string should be %d", test_str_size);
 
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &allocation, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
@@ -682,7 +682,7 @@ static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint64_t test_value = 0x1020304050607080;
     uint8_t buffer[8] = {0};
-    aws_write_u64(buffer, test_value);
+    aws_write_u64(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint64_t to buffer failed");
@@ -703,7 +703,7 @@ static int s_uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
 
     ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
 
-    aws_write_u64(buffer + 1, test_value);
+    aws_write_u64(test_value, buffer + 1);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 1), sizeof(expected), "Uint64_t to buffer failed");
@@ -724,7 +724,7 @@ static int s_uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint32_t test_value = 0x10203040;
     uint8_t buffer[4] = {0};
-    aws_write_u32(buffer, test_value);
+    aws_write_u32(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint32_t to buffer failed");
@@ -745,7 +745,7 @@ static int s_uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
 
     ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
 
-    aws_write_u32(buffer + 5, test_value);
+    aws_write_u32(test_value, buffer + 5);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 5), sizeof(expected), "Uint32_t to buffer failed");
@@ -766,7 +766,7 @@ static int s_uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint32_t test_value = 0x102030;
     uint8_t buffer[3] = {0};
-    aws_write_u24(buffer, test_value);
+    aws_write_u24(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "24 bit int to buffer failed");
@@ -786,7 +786,7 @@ static int s_uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
     ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
-    aws_write_u24(buffer + 6, test_value);
+    aws_write_u24(test_value, buffer + 6);
 
     uint8_t expected[] = {0x10, 0x20, 0x30};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 6), sizeof(expected), "24 bit int to buffer failed");
@@ -806,7 +806,7 @@ static int s_uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint16_t test_value = 0x1020;
     uint8_t buffer[2] = {0};
-    aws_write_u16(buffer, test_value);
+    aws_write_u16(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
@@ -826,7 +826,7 @@ static int s_uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
     ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
-    aws_write_u16(buffer + 7, test_value);
+    aws_write_u16(test_value, buffer + 7);
 
     uint8_t expected[] = {0x10, 0x20};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 7), sizeof(expected), "16 bit int to buffer failed");
@@ -847,7 +847,7 @@ static int s_uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocat
 
     int16_t test_value = 0x4030;
     uint8_t buffer[2] = {0};
-    aws_write_u16(buffer, (uint16_t)test_value);
+    aws_write_u16((uint16_t)test_value, buffer);
 
     uint8_t expected[] = {0x40, 0x30};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
@@ -866,7 +866,7 @@ static int s_uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocat
 
     int16_t test_value = -2;
     uint8_t buffer[2] = {0};
-    aws_write_u16(buffer, (uint16_t)test_value);
+    aws_write_u16((uint16_t)test_value, buffer);
 
     uint8_t expected[] = {0xFF, 0xFE};
     ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");

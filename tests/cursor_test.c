@@ -127,7 +127,7 @@ static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *c
 
     ASSERT_TRUE(aws_byte_buf_write(&cur, aba, sizeof(aba)));
     struct aws_byte_buf bcb_buf = aws_byte_buf_from_array(bcb, sizeof(bcb));
-    ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&cur, &bcb_buf));
+    ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&cur, bcb_buf));
     ASSERT_TRUE(aws_byte_buf_write_u8(&cur, 0x42));
     ASSERT_TRUE(aws_byte_buf_write_be16(&cur, 0x1234));
     ASSERT_TRUE(aws_byte_buf_write_be32(&cur, 0x456789ab));
@@ -214,7 +214,7 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_UINT_EQUALS(0, u16);
     ASSERT_FALSE(aws_byte_buf_write_be16(&buffer, 0));
     ASSERT_FALSE(aws_byte_cursor_read(&cur, arr, sizeof(arr)));
-    ASSERT_FALSE(aws_byte_buf_write_from_whole_buffer(&buffer, &arrbuf));
+    ASSERT_FALSE(aws_byte_buf_write_from_whole_buffer(&buffer, arrbuf));
     ASSERT_FALSE(aws_byte_cursor_read_and_fill_buffer(&cur, &arrbuf));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
     ASSERT_UINT_EQUALS(0, arr[0]);
@@ -231,7 +231,7 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_TRUE(aws_byte_buf_write(&buffer, arr, 0));
     arrbuf.capacity = 0;
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &arrbuf));
-    ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&buffer, &arrbuf));
+    ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&buffer, arrbuf));
     ASSERT_UINT_EQUALS(0, arr[0]);
     ASSERT_UINT_EQUALS(0, arr[1]);
 

@@ -12,13 +12,13 @@
 void aws_byte_buf_init_verify(void) {
     struct aws_allocator *allocator;
     ASSUME_DEFAULT_ALLOCATOR(allocator);
-    
+
     struct aws_byte_buf *buf;
     ASSUME_VALID_MEMORY(buf);
 
     size_t len = nondet_size_t();
 
-    aws_byte_buf_init(allocator, buf, len);
+    aws_byte_buf_init(buf, allocator, len)
 }
 
 void aws_byte_buf_from_c_str_verify(void) {

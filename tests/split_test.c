@@ -216,7 +216,7 @@ static int s_test_char_split_with_max_splits_fn(struct aws_allocator *allocator,
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
-    ASSERT_SUCCESS(aws_byte_cursor_split_on_char_n(&to_split, ';', &output, 2));
+    ASSERT_SUCCESS(aws_byte_cursor_split_on_char_n(&to_split, ';', 2, &output));
     ASSERT_INT_EQUALS(3, aws_array_list_length(&output));
 
     struct aws_byte_cursor value = {0};
