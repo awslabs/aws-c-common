@@ -428,9 +428,11 @@ static int s_test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *
     err_code = aws_hash_table_create(&hash_table, (void *)TEST_STR_2, NULL, NULL);
     ASSERT_SUCCESS(err_code, "Hash Map put should have succeeded.");
 
+    ASSERT_INT_EQUALS(2, aws_hash_table_get_entry_count(&hash_table));
     aws_hash_table_clear(&hash_table);
     ASSERT_INT_EQUALS(2, s_key_removal_counter, "Clear should destroy all keys");
     ASSERT_INT_EQUALS(2, s_value_removal_counter, "Clear should destroy all values");
+    ASSERT_INT_EQUALS(0, aws_hash_table_get_entry_count(&hash_table));
 
     struct aws_hash_element *pElem;
     err_code = aws_hash_table_find(&hash_table, (void *)TEST_STR_1, &pElem);
@@ -785,5 +787,18 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
     free(permuted);
 
     printf("elapsed=%ld us\n", end - start);
+    return 0;
+}
+
+AWS_TEST_CASE(test_hash_table_cleanup_idempotent, s_test_hash_table_cleanup_idempotent_fn)
+static int s_test_hash_table_cleanup_idempotent_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_hash_table hash_table;
+    ASSERT_SUCCESS(aws_hash_table_init(&hash_table, allocator, 10, aws_hash_c_string, aws_c_string_eq, NULL, NULL));
+
+    aws_hash_table_clean_up(&hash_table);
+    aws_hash_table_clean_up(&hash_table);
+
     return 0;
 }
