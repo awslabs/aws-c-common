@@ -356,3 +356,7 @@ void aws_load_error_strings(void) {
         aws_register_error_info(&s_list);
     }
 }
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
