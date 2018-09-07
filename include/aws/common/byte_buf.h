@@ -31,18 +31,20 @@
  * maintained or copied to avoid losing access to the memory.
  */
 struct aws_byte_buf {
-    struct aws_allocator *allocator;
-    uint8_t *buffer;
+    /* do not reorder this, this struct lines up nicely with windows buffer structures--saving us allocations.*/
     size_t len;
+    uint8_t *buffer;
     size_t capacity;
+    struct aws_allocator *allocator;
 };
 
 /**
  * Represents a movable pointer within a larger binary string or buffer.
  */
 struct aws_byte_cursor {
-    uint8_t *ptr;
+    /* do not reorder this, this struct lines up nicely with windows buffer structures--saving us allocations */
     size_t len;
+    uint8_t *ptr;
 };
 
 #ifdef __cplusplus
