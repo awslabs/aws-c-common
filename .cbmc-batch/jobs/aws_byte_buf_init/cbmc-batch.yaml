@@ -1,4 +1,3 @@
-cbmcpkg: cbmc-ubuntu16.tar.gz
 jobos: ubuntu16
 cbmcflags: "--bounds-check;--pointer-check;--function;aws_byte_buf_init_verify"
 goto: proofs.goto
