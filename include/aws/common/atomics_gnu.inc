@@ -20,8 +20,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc11-extensions"
+#endif
 
 /**
  * GCC guarantees support for 64-bit ints in atomics. However, performance will be worse
@@ -236,6 +238,8 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
     __atomic_thread_fence(order);
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE
