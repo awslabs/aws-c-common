@@ -218,6 +218,20 @@ int aws_hash_table_create(
     int *was_created);
 
 /**
+ * Inserts a new element at key, with the given value. If another element
+ * exists at that key, the old element will be overwritten; both old key and
+ * value objects will be destroyed.
+ *
+ * If was_created is non-NULL, *was_created is set to 0 if an existing
+ * element was found, or 1 is a new element was created.
+ *
+ * Returns AWS_OP_SUCCESS if an item was found or created.
+ * Raises AWS_ERROR_OOM if hash table expansion was required and memory
+ */
+AWS_COMMON_API
+int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value, int *was_created);
+
+/**
  * Removes element at key. Always returns AWS_OP_SUCCESS.
  *
  * If pValue is non-NULL, the existing value (if any) is moved into
