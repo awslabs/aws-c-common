@@ -334,12 +334,6 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_PRIORITY_QUEUE_EMPTY,
         "Attempt to pop an item from an empty queue."),
     AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_TASK_SCHEDULER_NO_TASKS,
-        "No scheduled tasks available."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_TASK_SCHEDULER_NO_READY_TASKS,
-        "None of the tasks scheduled is due to run now."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
         "Item not found in hash table."),
 };

@@ -33,6 +33,13 @@ struct aws_linked_list_node {
     struct aws_linked_list_node *prev;
 };
 
+/**
+ * Set node's next and prev pointers to NULL.
+ */
+static inline void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
+    AWS_ZERO_STRUCT(*node);
+}
+
 struct aws_linked_list {
     struct aws_linked_list_node head;
     struct aws_linked_list_node tail;
@@ -107,6 +114,7 @@ static inline bool aws_linked_list_empty(const struct aws_linked_list *list) {
 static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
+    aws_linked_list_node_reset(node);
 }
 
 /**
@@ -157,6 +165,33 @@ static inline struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
     return front;
+}
+
+static inline void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
+    assert(a);
+    assert(b);
+    struct aws_linked_list_node *a_first = a->head.next;
+    struct aws_linked_list_node *a_last = a->tail.prev;
+
+    /* Move B's contents into A */
+    if (aws_linked_list_empty(b)) {
+        aws_linked_list_init(a);
+    } else {
+        a->head.next = b->head.next;
+        a->head.next->prev = &a->head;
+        a->tail.prev = b->tail.prev;
+        a->tail.prev->next = &a->tail;
+    }
+
+    /* Move A's old contents into B */
+    if (a_first == &a->tail) {
+        aws_linked_list_init(b);
+    } else {
+        b->head.next = a_first;
+        b->head.next->prev = &b->head;
+        b->tail.prev = a_last;
+        b->tail.prev->next = &b->tail;
+    }
 }
 
 #endif /* AWS_COMMON_LINKED_LIST_H */
