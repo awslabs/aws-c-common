@@ -118,8 +118,9 @@ static struct aws_atomic_var last_race_index;
 
 static struct aws_atomic_var *alloc_var(struct aws_allocator *alloc, const struct aws_atomic_var *template) {
     struct aws_atomic_var *var = aws_mem_acquire(alloc, sizeof(union padded_var));
-    if (!var)
+    if (!var) {
         abort();
+    }
 
     memcpy(var, template, sizeof(*var));
     return var;
@@ -140,16 +141,18 @@ static void setup_races(
     n_observations = n_observations_v;
 
     races = aws_mem_acquire(alloc, n_races * sizeof(*races));
-    if (!races)
+    if (!races) {
         abort();
+    }
 
     for (size_t i = 0; i < n_races; i++) {
         races[i].wait = alloc_var(alloc, &init_wait);
 
         races[i].vars = aws_mem_acquire(alloc, n_vars * sizeof(*races[i].vars));
         races[i].observations = aws_mem_acquire(alloc, n_observations * sizeof(*races[i].observations));
-        if (!races[i].vars || !races[i].observations)
+        if (!races[i].vars || !races[i].observations) {
             abort();
+        }
 
         for (size_t j = 0; j < n_vars; j++) {
             races[i].vars[j] = alloc_var(alloc, &init_vars[j]);
@@ -189,6 +192,7 @@ static int run_races(
     int *participant_indexes = alloca(n_participants_local * sizeof(*participant_indexes));
     struct aws_thread *threads = alloca(n_participants_local * sizeof(struct aws_thread));
 
+    *last_race = -1;
     n_participants = n_participants_local;
     done_racing = false;
     aws_atomic_init_int(&last_race_index, 0);
@@ -267,7 +271,7 @@ static void notify_race_completed() {
         notify_race_completed();                                                                                       \
         aws_atomic_thread_fence(aws_memory_order_release);                                                             \
     }                                                                                                                  \
-    static void race_name##_iter(int vn_participant, struct one_race *vn_race)
+    static void race_name##_iter(int vn_participant, struct one_race *vn_race) /* NOLINT */
 
 /*
  * See http://www.cs.cmu.edu/~410-f10/doc/Intel_Reordering_318147.pdf #2.3
