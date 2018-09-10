@@ -97,6 +97,7 @@ static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
             abort();
     }
 #endif
+    (void)order;
 }
 
 /**

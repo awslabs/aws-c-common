@@ -108,7 +108,8 @@ struct one_race {
 };
 
 static struct one_race *races;
-static size_t n_races, n_vars, n_observations, n_participants;
+static size_t n_races, n_vars, n_observations;
+static int n_participants;
 
 static int done_racing;
 static struct aws_mutex done_mutex = AWS_MUTEX_INIT;
@@ -192,7 +193,7 @@ static int run_races(
     int *participant_indexes = alloca(n_participants_local * sizeof(*participant_indexes));
     struct aws_thread *threads = alloca(n_participants_local * sizeof(struct aws_thread));
 
-    *last_race = -1;
+    *last_race = (size_t)-1;
     n_participants = n_participants_local;
     done_racing = false;
     aws_atomic_init_int(&last_race_index, 0);
@@ -212,7 +213,7 @@ static int run_races(
     if (done_racing >= n_participants) {
         *last_race = n_races;
     } else {
-        *last_race = aws_atomic_load_int(&last_race_index, aws_memory_order_relaxed);
+        *last_race = (size_t)aws_atomic_load_int(&last_race_index, aws_memory_order_relaxed);
         if (*last_race == (size_t)-1) {
             /* We didn't even see the first race complete */
             *last_race = 0;
@@ -225,7 +226,7 @@ static int run_races(
         aws_atomic_store_int(races[i].wait, n_participants, aws_memory_order_relaxed);
     }
 
-    for (size_t i = 0; i < n_participants; i++) {
+    for (int i = 0; i < n_participants; i++) {
         ASSERT_SUCCESS(aws_thread_join(&threads[i]));
         aws_thread_clean_up(&threads[i]);
     }
@@ -257,7 +258,7 @@ static void notify_race_completed() {
     static void race_name(void *vp_participant) {                                                                      \
         int participant = *(int *)vp_participant;                                                                      \
         size_t n_races_local = n_races;                                                                                \
-        size_t n_participants_local = n_participants;                                                                  \
+        int n_participants_local = n_participants;                                                                     \
         for (size_t i = 0; i < n_races_local; i++) {                                                                   \
             while (i > 0 && aws_atomic_load_int(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
                 /* spin */                                                                                             \
