@@ -16,6 +16,8 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
+#include <aws/common/mutex.h>
+#include <aws/common/condition_variable.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -106,7 +108,13 @@ struct one_race {
 };
 
 static struct one_race *races;
-static size_t n_races, n_vars, n_observations;
+static size_t n_races, n_vars, n_observations, n_participants;
+
+static int done_racing;
+static struct aws_mutex done_mutex = AWS_MUTEX_INIT;
+static struct aws_condition_variable done_cvar = AWS_CONDITION_VARIABLE_INIT;
+
+static struct aws_atomic_var last_race_index;
 
 static struct aws_atomic_var *alloc_var(struct aws_allocator *alloc, const struct aws_atomic_var *template) {
     struct aws_atomic_var *var = aws_mem_acquire(alloc, sizeof(union padded_var));
@@ -167,9 +175,19 @@ static void free_races(struct aws_allocator *alloc) {
     aws_mem_release(alloc, races);
 }
 
-static int run_races(struct aws_allocator *alloc, int n_participants, void (*race_fn)(void *vp_participant)) {
-    int *participant_indexes = alloca(n_participants * sizeof(*participant_indexes));
-    struct aws_thread *threads = alloca(n_participants * sizeof(struct aws_thread));
+static bool are_races_done(void *ignored) {
+    (void)ignored;
+
+    return done_racing >= n_participants;
+}
+
+static int run_races(size_t *last_race, struct aws_allocator *alloc, int n_participants_local, void (*race_fn)(void *vp_participant)) {
+    int *participant_indexes = alloca(n_participants_local * sizeof(*participant_indexes));
+    struct aws_thread *threads = alloca(n_participants_local * sizeof(struct aws_thread));
+
+    n_participants = n_participants_local;
+    done_racing = false;
+    aws_atomic_init_int(&last_race_index, 0);
 
     for (int i = 0; i < n_participants; i++) {
         participant_indexes[i] = i;
@@ -177,11 +195,25 @@ static int run_races(struct aws_allocator *alloc, int n_participants, void (*rac
         ASSERT_SUCCESS(aws_thread_launch(&threads[i], race_fn, &participant_indexes[i], NULL));
     }
 
-    for (size_t i = 0; i < n_races; i++) {
-        struct one_race *race = &races[i];
-        aws_atomic_store_int(race->wait, 1, aws_memory_order_relaxed);
-        while (aws_atomic_load_int(race->wait, aws_memory_order_relaxed) != n_participants + 1) {
+    ASSERT_SUCCESS(aws_mutex_lock(&done_mutex));
+    if (aws_condition_variable_wait_for_pred(&done_cvar, &done_mutex, 1000000000ULL /* 1s */, are_races_done, NULL) == AWS_OP_ERR) {
+        ASSERT_TRUE(aws_last_error() == AWS_ERROR_COND_VARIABLE_TIMED_OUT);
+    }
+
+    if (done_racing >= n_participants) {
+        *last_race = n_races;
+    } else {
+        *last_race = aws_atomic_load_int(&last_race_index, aws_memory_order_relaxed);
+        if (*last_race == (size_t)-1) {
+            /* We didn't even see the first race complete */
+            *last_race = 0;
         }
+    }
+    ASSERT_SUCCESS(aws_mutex_unlock(&done_mutex));
+
+    /* Poison all remaining races to make sure the threads exit quickly */
+    for (size_t i = 0; i < n_races; i++) {
+        aws_atomic_store_int(races[i].wait, n_participants, aws_memory_order_relaxed);
     }
 
     for (size_t i = 0; i < n_participants; i++) {
@@ -194,17 +226,34 @@ static int run_races(struct aws_allocator *alloc, int n_participants, void (*rac
     return 0;
 }
 
+static void notify_race_completed() {
+    if (aws_mutex_lock(&done_mutex)) abort();
+
+    done_racing++;
+    if (done_racing >= n_participants) {
+        if (aws_condition_variable_notify_all(&done_cvar)) abort();
+    }
+
+    if (aws_mutex_unlock(&done_mutex)) abort();
+}
+
 #define DEFINE_RACE(race_name, vn_participant, vn_race)                                                                \
     static void race_name##_iter(int participant, struct one_race *race);                                              \
     static void race_name(void *vp_participant) {                                                                      \
         int participant = *(int *)vp_participant;                                                                      \
         size_t n_races_local = n_races;                                                                                \
+        size_t n_participants_local = n_participants;                                                                  \
         for (size_t i = 0; i < n_races_local; i++) {                                                                   \
-            while (aws_atomic_load_int(races[i].wait, aws_memory_order_relaxed) == 0) {                                \
+            while (i > 0 && aws_atomic_load_int(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
+                /* spin */                                                                                             \
             }                                                                                                          \
+            if (participant == 0) { \
+                aws_atomic_store_int(&last_race_index, i - 1, aws_memory_order_relaxed); \
+            } \
             race_name##_iter(participant, &races[i]);                                                                  \
             aws_atomic_fetch_add(races[i].wait, 1, aws_memory_order_relaxed);                                          \
         }                                                                                                              \
+        notify_race_completed();                                                                                       \
         aws_atomic_thread_fence(aws_memory_order_release);                                                             \
     }                                                                                                                  \
     static void race_name##_iter(int vn_participant, struct one_race *vn_race)
@@ -232,13 +281,14 @@ static int t_loads_reordered_with_older_stores(struct aws_allocator *allocator, 
     (void)ctx;
 
     struct aws_atomic_var template[2];
+    size_t last_race;
     aws_atomic_init_int(&template[0], 0);
     aws_atomic_init_int(&template[1], 0);
 
     setup_races(allocator, 100000, 2, 2, template, template);
-    run_races(allocator, 2, loads_reordered_with_older_stores);
+    run_races(&last_race, allocator, 2, loads_reordered_with_older_stores);
 
-    for (size_t i = 0; i < n_races; i++) {
+    for (size_t i = 0; i < last_race; i++) {
         aws_atomic_int_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
         aws_atomic_int_t b = aws_atomic_load_int(races[i].observations[1], aws_memory_order_relaxed);
 
@@ -286,13 +336,14 @@ static int t_acquire_to_release_one_direction(struct aws_allocator *allocator, v
     (void)ctx;
 
     struct aws_atomic_var template[2];
+    size_t last_race;
     aws_atomic_init_int(&template[0], 0);
     aws_atomic_init_int(&template[1], 0);
 
     setup_races(allocator, 100000, 2, 1, template, template);
-    run_races(allocator, 2, acquire_to_release_one_direction);
+    run_races(&last_race, allocator, 2, acquire_to_release_one_direction);
 
-    for (size_t i = 0; i < n_races; i++) {
+    for (size_t i = 0; i < last_race; i++) {
         aws_atomic_int_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
 
         /*
@@ -345,13 +396,14 @@ static int t_acquire_to_release_mixed(struct aws_allocator *allocator, void *ctx
     (void)ctx;
 
     struct aws_atomic_var template[2];
+    size_t last_race;
     aws_atomic_init_int(&template[0], 0);
     aws_atomic_init_int(&template[1], 0);
 
     setup_races(allocator, 100000, 2, 2, template, template);
-    run_races(allocator, 2, acquire_to_release_mixed);
+    run_races(&last_race, allocator, 2, acquire_to_release_mixed);
 
-    for (size_t i = 0; i < n_races; i++) {
+    for (size_t i = 0; i < last_race; i++) {
         aws_atomic_int_t data_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
         aws_atomic_int_t flag_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
 
