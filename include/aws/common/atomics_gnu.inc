@@ -21,8 +21,8 @@
 #include <stdlib.h>
 
 #ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc11-extensions"
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wc11-extensions"
 #endif
 
 /**
@@ -239,7 +239,7 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
 }
 
 #ifdef __clang__
-#pragma clang diagnostic pop
+#    pragma clang diagnostic pop
 #endif
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE

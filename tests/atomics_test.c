@@ -15,9 +15,9 @@
 
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
-#include <aws/common/thread.h>
-#include <aws/common/mutex.h>
 #include <aws/common/condition_variable.h>
+#include <aws/common/mutex.h>
+#include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -181,7 +181,11 @@ static bool are_races_done(void *ignored) {
     return done_racing >= n_participants;
 }
 
-static int run_races(size_t *last_race, struct aws_allocator *alloc, int n_participants_local, void (*race_fn)(void *vp_participant)) {
+static int run_races(
+    size_t *last_race,
+    struct aws_allocator *alloc,
+    int n_participants_local,
+    void (*race_fn)(void *vp_participant)) {
     int *participant_indexes = alloca(n_participants_local * sizeof(*participant_indexes));
     struct aws_thread *threads = alloca(n_participants_local * sizeof(struct aws_thread));
 
@@ -196,7 +200,8 @@ static int run_races(size_t *last_race, struct aws_allocator *alloc, int n_parti
     }
 
     ASSERT_SUCCESS(aws_mutex_lock(&done_mutex));
-    if (aws_condition_variable_wait_for_pred(&done_cvar, &done_mutex, 1000000000ULL /* 1s */, are_races_done, NULL) == AWS_OP_ERR) {
+    if (aws_condition_variable_wait_for_pred(&done_cvar, &done_mutex, 1000000000ULL /* 1s */, are_races_done, NULL) ==
+        AWS_OP_ERR) {
         ASSERT_TRUE(aws_last_error() == AWS_ERROR_COND_VARIABLE_TIMED_OUT);
     }
 
@@ -227,14 +232,20 @@ static int run_races(size_t *last_race, struct aws_allocator *alloc, int n_parti
 }
 
 static void notify_race_completed() {
-    if (aws_mutex_lock(&done_mutex)) abort();
+    if (aws_mutex_lock(&done_mutex)) {
+        abort();
+    }
 
     done_racing++;
     if (done_racing >= n_participants) {
-        if (aws_condition_variable_notify_all(&done_cvar)) abort();
+        if (aws_condition_variable_notify_all(&done_cvar)) {
+            abort();
+        }
     }
 
-    if (aws_mutex_unlock(&done_mutex)) abort();
+    if (aws_mutex_unlock(&done_mutex)) {
+        abort();
+    }
 }
 
 #define DEFINE_RACE(race_name, vn_participant, vn_race)                                                                \
@@ -247,9 +258,9 @@ static void notify_race_completed() {
             while (i > 0 && aws_atomic_load_int(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
                 /* spin */                                                                                             \
             }                                                                                                          \
-            if (participant == 0) { \
-                aws_atomic_store_int(&last_race_index, i - 1, aws_memory_order_relaxed); \
-            } \
+            if (participant == 0) {                                                                                    \
+                aws_atomic_store_int(&last_race_index, i - 1, aws_memory_order_relaxed);                               \
+            }                                                                                                          \
             race_name##_iter(participant, &races[i]);                                                                  \
             aws_atomic_fetch_add(races[i].wait, 1, aws_memory_order_relaxed);                                          \
         }                                                                                                              \
