@@ -37,7 +37,7 @@ static int t_semantics(struct aws_allocator *allocator, void *ctx) {
     int dummy_1, dummy_2, dummy_3;
 
     void *expected_ptr;
-    aws_atomic_int_t expected_int;
+    size_t expected_int;
 
     struct aws_atomic_var var;
 
@@ -305,8 +305,8 @@ static int t_loads_reordered_with_older_stores(struct aws_allocator *allocator, 
     run_races(&last_race, allocator, 2, loads_reordered_with_older_stores);
 
     for (size_t i = 0; i < last_race; i++) {
-        aws_atomic_int_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
-        aws_atomic_int_t b = aws_atomic_load_int(races[i].observations[1], aws_memory_order_relaxed);
+        size_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
+        size_t b = aws_atomic_load_int(races[i].observations[1], aws_memory_order_relaxed);
 
         ASSERT_TRUE(a || b, "Race at iteration %zu", i);
     }
@@ -341,8 +341,8 @@ DEFINE_RACE(acquire_to_release_one_direction, participant, race) {
         aws_atomic_store_int(protected_data, 1, aws_memory_order_relaxed);
         aws_atomic_store_int(flag, 2, aws_memory_order_release);
     } else {
-        aws_atomic_int_t flagval = aws_atomic_load_int(flag, aws_memory_order_acquire);
-        aws_atomic_int_t dataval = aws_atomic_load_int(protected_data, aws_memory_order_relaxed);
+        size_t flagval = aws_atomic_load_int(flag, aws_memory_order_acquire);
+        size_t dataval = aws_atomic_load_int(protected_data, aws_memory_order_relaxed);
         aws_atomic_store_int(observation, flagval ^ dataval, aws_memory_order_relaxed);
     }
 }
@@ -360,7 +360,7 @@ static int t_acquire_to_release_one_direction(struct aws_allocator *allocator, v
     run_races(&last_race, allocator, 2, acquire_to_release_one_direction);
 
     for (size_t i = 0; i < last_race; i++) {
-        aws_atomic_int_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
+        size_t a = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
 
         /*
          * If we see that flag == 2, then the data observation must be 1.
@@ -420,8 +420,8 @@ static int t_acquire_to_release_mixed(struct aws_allocator *allocator, void *ctx
     run_races(&last_race, allocator, 2, acquire_to_release_mixed);
 
     for (size_t i = 0; i < last_race; i++) {
-        aws_atomic_int_t data_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
-        aws_atomic_int_t flag_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
+        size_t data_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
+        size_t flag_observation = aws_atomic_load_int(races[i].observations[0], aws_memory_order_relaxed);
 
         /*
          * If we see that flag == 2, then the data observation must be 1.

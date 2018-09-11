@@ -60,20 +60,12 @@
  * this use case.
  */
 
-/**
- * Windows guarantees support for 64-bit ints in atomics.
- */
-typedef int64_t aws_atomic_int_impl_t;
-
-#define AWS_ATOMIC_INT_IMPL_MAX INT64_MAX
-#define AWS_ATOMIC_INT_IMPL_MIN INT64_MIN
-
 #pragma warning(push)
 #pragma warning(disable : 4201) /* nameless union */
 
 struct aws_atomic_var {
     union {
-        aws_atomic_int_impl_t intval;
+        size_t intval;
         void *ptrval;
     };
 };
@@ -104,7 +96,7 @@ static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
  * Initializes an atomic variable with an integer value. This operation should be done before any
  * other operations on this atomic variable, and must be done before attempting any parallel operations.
  */
-void aws_atomic_init_int(volatile struct aws_atomic_var *var, aws_atomic_int_impl_t n) {
+void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
     var->intval = n;
 }
 
@@ -120,7 +112,7 @@ void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
  * Reads an atomic var as an integer, using the specified ordering, and returns the result.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_load_int(
+size_t aws_atomic_load_int(
     volatile const struct aws_atomic_var *var,
     enum aws_memory_order memory_order) {
     aws_atomic_priv_check_order(memory_order);
@@ -142,7 +134,7 @@ void *aws_atomic_load_ptr(volatile const struct aws_atomic_var *var, enum aws_me
 AWS_STATIC_IMPL
 void aws_atomic_store_int(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order memory_order) {
     aws_atomic_priv_check_order(memory_order);
     if (memory_order != aws_memory_order_seq_cst) {
@@ -170,9 +162,9 @@ void aws_atomic_store_ptr(volatile struct aws_atomic_var *var, void *p, enum aws
  * Returns the value that was previously in the atomic_var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_swap_int(
+size_t aws_atomic_swap_int(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order memory_order) {
     aws_atomic_priv_check_order(memory_order);
     return InterlockedExchange64(&var->intval, n);
@@ -196,14 +188,14 @@ void *aws_atomic_swap_ptr(volatile struct aws_atomic_var *var, void *p, enum aws
 AWS_STATIC_IMPL
 bool aws_atomic_compare_exchange_int(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t *expected,
-    aws_atomic_int_impl_t desired,
+    size_t *expected,
+    size_t desired,
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
     aws_atomic_priv_check_order(order_success);
     aws_atomic_priv_check_order(order_failure);
 
-    aws_atomic_int_impl_t oldval = InterlockedCompareExchange64(&var->intval, desired, *expected);
+    size_t oldval = InterlockedCompareExchange64(&var->intval, desired, *expected);
     bool successful = oldval == *expected;
     *expected = oldval;
 
@@ -236,9 +228,9 @@ bool aws_atomic_compare_exchange_ptr(
  * Atomically adds n to *var, and returns the previous value of *var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_fetch_add(
+size_t aws_atomic_fetch_add(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
@@ -249,9 +241,9 @@ aws_atomic_int_impl_t aws_atomic_fetch_add(
  * Atomically subtracts n from *var, and returns the previous value of *var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_fetch_sub(
+size_t aws_atomic_fetch_sub(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
@@ -262,9 +254,9 @@ aws_atomic_int_impl_t aws_atomic_fetch_sub(
  * Atomically ORs n with *var, and returns the previous value of *var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_fetch_or(
+size_t aws_atomic_fetch_or(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
@@ -275,9 +267,9 @@ aws_atomic_int_impl_t aws_atomic_fetch_or(
  * Atomically ANDs n with *var, and returns the previous value of *var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_fetch_and(
+size_t aws_atomic_fetch_and(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
@@ -288,9 +280,9 @@ aws_atomic_int_impl_t aws_atomic_fetch_and(
  * Atomically XORs n with *var, and returns the previous value of *var.
  */
 AWS_STATIC_IMPL
-aws_atomic_int_impl_t aws_atomic_fetch_xor(
+size_t aws_atomic_fetch_xor(
     volatile struct aws_atomic_var *var,
-    aws_atomic_int_impl_t n,
+    size_t n,
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
