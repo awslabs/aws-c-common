@@ -201,6 +201,7 @@ add_test_case(test_buffer_secure_zero)
 add_test_case(test_buffer_clean_up_secure)
 
 add_test_case(atomics_semantics)
+add_test_case(atomics_semantics_implicit)
 add_test_case(atomics_loads_reordered_with_older_stores)
 add_test_case(atomics_acquire_to_release_one_direction)
 add_test_case(atomics_acquire_to_release_mixed)
