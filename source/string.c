@@ -14,23 +14,17 @@
  */
 #include <aws/common/string.h>
 
-#ifdef _MSC_VER
-/* disables warning non const declared initializers for Microsoft compilers */
-#    pragma warning(disable : 4204)
-#    pragma warning(disable : 4706)
-#endif
-
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
-    struct aws_string template = {.allocator = allocator, .len = len};
     struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
     if (!hdr) {
         return NULL;
     }
-    memcpy(hdr, &template, sizeof(template));
+    *(struct aws_allocator **)(&hdr->allocator) = allocator;
+    *(size_t *)(&hdr->len) = len;
     memcpy((void *)aws_string_bytes(hdr), bytes, len);
     uint8_t *extra_byte = (uint8_t *)aws_string_bytes(hdr) + len;
     *extra_byte = '\0';
