@@ -105,7 +105,7 @@ static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
     (void)order;
 }
 
-enum aws_atomic_mode_priv { aws_atomic_priv_load, aws_atomic_priv_store, aws_atomic_priv_load_store };
+enum aws_atomic_mode_priv { aws_atomic_priv_load, aws_atomic_priv_store };
 
 static inline void aws_atomic_priv_barrier_before(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
     aws_atomic_priv_check_order(order);
