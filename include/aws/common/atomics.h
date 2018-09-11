@@ -191,7 +191,10 @@ size_t aws_atomic_exchange_int(volatile struct aws_atomic_var *var, size_t n) {
  * Exchanges a pointer with the value in an atomic_var, using the specified ordering.
  * Returns the value that was previously in the atomic_var.
  */
-void *aws_atomic_exchange_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order);
+void *aws_atomic_exchange_ptr_explicit(
+    volatile struct aws_atomic_var *var,
+    void *p,
+    enum aws_memory_order memory_order);
 
 /**
  * Exchanges an integer with the value in an atomic_var, using sequentially consistent ordering.
@@ -221,11 +224,9 @@ bool aws_atomic_compare_exchange_int_explicit(
  * Returns true if the compare was successful and the variable updated to desired.
  */
 AWS_STATIC_IMPL
-bool aws_atomic_compare_exchange_int(
-    volatile struct aws_atomic_var *var,
-    size_t *expected,
-    size_t desired) {
-    return aws_atomic_compare_exchange_int_explicit(var, expected, desired, aws_memory_order_seq_cst, aws_memory_order_seq_cst);
+bool aws_atomic_compare_exchange_int(volatile struct aws_atomic_var *var, size_t *expected, size_t desired) {
+    return aws_atomic_compare_exchange_int_explicit(
+        var, expected, desired, aws_memory_order_seq_cst, aws_memory_order_seq_cst);
 }
 
 /**
@@ -247,52 +248,35 @@ bool aws_atomic_compare_exchange_ptr_explicit(
  * Returns true if the compare was successful and the variable updated to desired.
  */
 AWS_STATIC_IMPL
-bool aws_atomic_compare_exchange_ptr(
-    volatile struct aws_atomic_var *var,
-    void **expected,
-    void *desired) {
-    return aws_atomic_compare_exchange_ptr_explicit(var, expected, desired, aws_memory_order_seq_cst, aws_memory_order_seq_cst);
+bool aws_atomic_compare_exchange_ptr(volatile struct aws_atomic_var *var, void **expected, void *desired) {
+    return aws_atomic_compare_exchange_ptr_explicit(
+        var, expected, desired, aws_memory_order_seq_cst, aws_memory_order_seq_cst);
 }
 
 /**
  * Atomically adds n to *var, and returns the previous value of *var.
  */
-size_t aws_atomic_fetch_add_explicit(
-    volatile struct aws_atomic_var *var,
-    size_t n,
-    enum aws_memory_order order);
+size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically subtracts n from *var, and returns the previous value of *var.
  */
-size_t aws_atomic_fetch_sub_explicit(
-    volatile struct aws_atomic_var *var,
-    size_t n,
-    enum aws_memory_order order);
+size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically ORs n with *var, and returns the previous value of *var.
  */
-size_t aws_atomic_fetch_or_explicit(
-    volatile struct aws_atomic_var *var,
-    size_t n,
-    enum aws_memory_order order);
+size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically ANDs n with *var, and returns the previous value of *var.
  */
-size_t aws_atomic_fetch_and_explicit(
-    volatile struct aws_atomic_var *var,
-    size_t n,
-    enum aws_memory_order order);
+size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically XORs n with *var, and returns the previous value of *var.
  */
-size_t aws_atomic_fetch_xor_explicit(
-    volatile struct aws_atomic_var *var,
-    size_t n,
-    enum aws_memory_order order);
+size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically adds n to *var, and returns the previous value of *var.
