@@ -14,12 +14,6 @@
  */
 #include <aws/common/string.h>
 
-#ifdef _MSC_VER
-/* disables warning non const declared initializers for Microsoft compilers */
-#    pragma warning(disable : 4204)
-#    pragma warning(disable : 4706)
-#endif
-
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
 }
