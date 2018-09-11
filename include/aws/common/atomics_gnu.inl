@@ -35,6 +35,9 @@ struct aws_atomic_var {
     };
 };
 
+#define AWS_ATOMIC_INIT_INT_IMPL(x) { .intval = (x) }
+#define AWS_ATOMIC_INIT_PTR_IMPL(x) { .ptrval = (void *)(x) }
+
 static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
     switch (order) {
         case aws_memory_order_relaxed:

@@ -94,6 +94,16 @@ enum aws_memory_order {
 
 #endif
 
+/**
+ * Statically initializes an aws_atomic_var to a given size_t value.
+ */
+#define AWS_ATOMIC_INIT_INT(x) AWS_ATOMIC_INIT_INT_IMPL(x)
+
+/**
+ * Statically initializes an aws_atomic_var to a given void * value.
+ */
+#define AWS_ATOMIC_INIT_PTR(x) AWS_ATOMIC_INIT_PTR_IMPL(x)
+
 /*
  * Note: We do not use the C11 atomics API; this is because we want to make sure the representation
  * (and behavior) of atomic values is consistent, regardless of what --std= flag you pass to your compiler.

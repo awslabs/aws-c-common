@@ -159,6 +159,18 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 
+AWS_TEST_CASE(atomics_static_init, t_static_init)
+static int t_static_init(struct aws_allocator *allocator, void *ctx) {
+    /* Verify that we have the right sign extension behavior - we should see zero extension here */
+    struct aws_atomic_var int_init = AWS_ATOMIC_INIT_INT((uint8_t)0x80);
+    struct aws_atomic_var ptr_init = AWS_ATOMIC_INIT_PTR(&int_init);
+
+    ASSERT_INT_EQUALS(0x80, aws_atomic_load_int(&int_init));
+    ASSERT_PTR_EQUALS(&int_init, aws_atomic_load_int(&ptr_init));
+
+    return 0;
+}
+
 union padded_var {
     struct aws_atomic_var var;
     char pad[32];
