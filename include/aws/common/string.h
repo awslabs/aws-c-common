@@ -32,10 +32,14 @@
  * always included immediately after the data but not counted in the length, so
  * that the output of aws_string_bytes can be treated as a C-string in cases
  * where none of the the data bytes are null.
+ *
+ * Note that the fields of this structure are const; this ensures not only that
+ * they cannot be modified, but also that you can't assign the structure using
+ * the = operator accidentally.
  */
 struct aws_string {
-    struct aws_allocator *allocator;
-    size_t len;
+    struct aws_allocator *const allocator;
+    const size_t len;
 };
 
 static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
@@ -70,9 +74,9 @@ extern "C" {
  * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
  */
 AWS_COMMON_API
-const struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
+struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
 AWS_COMMON_API
-const struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
+struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
