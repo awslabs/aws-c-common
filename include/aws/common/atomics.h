@@ -82,11 +82,11 @@ enum aws_memory_order {
 /* Include the backend implementation now, because we'll use its typedefs and #defines below */
 #if defined(__GNUC__) || defined(__clang__)
 
-#    include "atomics_gnu.inc"
+#    include "atomics_gnu.inl"
 
 #elif defined(_MSC_VER)
 
-#    include "atomics_msvc.inc"
+#    include "atomics_msvc.inl"
 
 #else
 
@@ -329,6 +329,6 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
  */
 void aws_atomic_thread_fence(enum aws_memory_order order);
 
-#include "atomics_fallback.inc"
+#include "atomics_fallback.inl"
 
 #endif
