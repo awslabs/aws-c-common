@@ -70,10 +70,10 @@
 
 #ifdef _M_IX86
 #    define AWS_INTERLOCKED_INT(x) Interlocked##x
-typedef int aws_atomic_impl_int_t;
+typedef LONG aws_atomic_impl_int_t;
 #else
 #    define AWS_INTERLOCKED_INT(x) Interlocked##x##64
-typedef int64_t aws_atomic_impl_int_t;
+typedef LONG64 aws_atomic_impl_int_t;
 #endif
 
 struct aws_atomic_var {

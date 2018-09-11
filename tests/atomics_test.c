@@ -161,6 +161,9 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(atomics_static_init, t_static_init)
 static int t_static_init(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     /* Verify that we have the right sign extension behavior - we should see zero extension here */
     struct aws_atomic_var int_init = AWS_ATOMIC_INIT_INT((uint8_t)0x80);
     struct aws_atomic_var ptr_init = AWS_ATOMIC_INIT_PTR(&int_init);
@@ -337,7 +340,7 @@ static void notify_race_completed() {
     static void race_name(void *vp_participant) {                                                                      \
         int participant = *(int *)vp_participant;                                                                      \
         size_t n_races_local = n_races;                                                                                \
-        int n_participants_local = n_participants;                                                                     \
+        size_t n_participants_local = n_participants;                                                                     \
         for (size_t i = 0; i < n_races_local; i++) {                                                                   \
             while (i > 0 && aws_atomic_load_int_explicit(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
                 /* spin */                                                                                             \
