@@ -20,13 +20,18 @@
 #include <intrin.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #if !(defined(_M_IX86) || defined(_M_X64))
 #    error Atomics are not currently supported for non-x86 MSVC platforms
 
 /*
  * In particular, it's not clear that seq_cst will work properly on non-x86
- * memory models
+ * memory models. We may need to make use of platform-specific intrinsics.
+ * 
+ * NOTE: Before removing this #error, please make use of the Interlocked*[Acquire|Release]
+ * variants (if applicable for the new platform)! This will (hopefully) help ensure that
+ * code breaks before people take too much of a dependency on it.
  */
 
 #endif
@@ -34,18 +39,20 @@
 /**
  * Some general notes:
  *
- * Windows automatically uses acquire semantics for read accesses to volatile variables,
- * and release semantics for stores. Volatile to volatile references are ordered.
+ * On x86/x86_64, by default, windows uses acquire/release semantics for volatile accesses;
+ * however, this is not the case on ARM, and on x86/x86_64 it can be disabled using the
+ * /volatile:iso compile flag.
  *
  * Interlocked* functions implicitly have acq_rel semantics; there are ones with weaker
  * semantics as well, but because windows is generally used on x86, where there's not a lot
  * of performance difference between different ordering modes anyway, we just use the stronger
  * forms for now. Further, on x86, they actually have seq_cst semantics as they use locked instructions.
+ * It is unclear if Interlocked functions guarantee seq_cst on non-x86 platforms.
  *
  * Since all loads and stores are acq and/or rel already, we can do non-seq_cst loads and stores
- * as just volatile variable accesses.
+ * as just volatile variable accesses, but add the appropriate barriers for good measure.
  *
- * For seq_cst accesses, we take advantage of the facts that:
+ * For seq_cst accesses, we take advantage of the facts that (on x86):
  * 1. Loads are not reordered with other loads
  * 2. Stores are not reordered with other stores
  * 3. Locked instructions (including swaps) have a total order
@@ -61,14 +68,24 @@
 #pragma warning(push)
 #pragma warning(disable : 4201) /* nameless union */
 
+#ifdef _M_IX86
+#define AWS_INTERLOCKED_INT(x) Interlocked##x
+typedef int aws_atomic_impl_int_t;
+#else
+#define AWS_INTERLOCKED_INT(x) Interlocked##x##64
+typedef int64_t aws_atomic_impl_int_t;
+#endif
+
+
 struct aws_atomic_var {
     union {
-        size_t intval;
+        aws_atomic_impl_int_t intval;
         void *ptrval;
     };
 };
 
 #pragma warning(pop)
+
 
 static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
 #ifndef NDEBUG
@@ -88,6 +105,57 @@ static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
     }
 #endif
     (void)order;
+}
+
+enum aws_atomic_mode_priv {
+    aws_atomic_priv_load,
+    aws_atomic_priv_store,
+    aws_atomic_priv_load_store
+};
+
+static inline void aws_atomic_priv_barrier_before(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
+    aws_atomic_priv_check_order(order);
+    assert(mode != aws_atomic_priv_load || order != aws_memory_order_release);
+
+    if (order == aws_memory_order_relaxed) {
+        /* no barriers required for relaxed mode */
+        return;
+    }
+
+    if (order == aws_memory_order_acquire || mode == aws_atomic_priv_load) {
+        /* for acquire, we need only use a barrier afterward */
+        return;
+    }
+
+    /* 
+     * x86: only a compiler barrier is required. For seq_cst, we must use some form of interlocked operation for
+     * writes, but that's the caller's responsibility.
+     * 
+     * Volatile ops may or may not imply this barrier, depending on the /volatile: switch, but adding an extra
+     * barrier doesn't hurt.
+     */
+    _ReadWriteBarrier();
+}
+
+static inline void aws_atomic_priv_barrier_after(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
+    aws_atomic_priv_check_order(order);
+    assert(mode != aws_atomic_priv_store || order != aws_memory_order_acquire);
+
+    if (order == aws_memory_order_relaxed) {
+        /* no barriers required for relaxed mode */
+        return;
+    }
+
+    if (order == aws_memory_order_release || mode == aws_atomic_priv_store) {
+        /* for release, we need only use a barrier before */
+        return;
+    }
+
+    /* 
+     * x86: only a compiler barrier is required. For seq_cst, we must use some form of interlocked operation for
+     * writes, but that's the caller's responsibility.
+     */
+    _ReadWriteBarrier();
 }
 
 /**
@@ -113,8 +181,10 @@ AWS_STATIC_IMPL
 size_t aws_atomic_load_int_explicit(
     volatile const struct aws_atomic_var *var,
     enum aws_memory_order memory_order) {
-    aws_atomic_priv_check_order(memory_order);
-    return var->intval;
+    aws_atomic_priv_barrier_before(memory_order, aws_atomic_priv_load);
+    size_t result = var->intval;
+    aws_atomic_priv_barrier_after(memory_order, aws_atomic_priv_load);
+    return result;
 }
 
 /**
@@ -122,8 +192,10 @@ size_t aws_atomic_load_int_explicit(
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
-    aws_atomic_priv_check_order(memory_order);
-    return var->ptrval;
+    aws_atomic_priv_barrier_before(memory_order, aws_atomic_priv_load);
+    void *result = var->ptrval;
+    aws_atomic_priv_barrier_after(memory_order, aws_atomic_priv_load);
+    return result;
 }
 
 /**
@@ -134,11 +206,12 @@ void aws_atomic_store_int_explicit(
     volatile struct aws_atomic_var *var,
     size_t n,
     enum aws_memory_order memory_order) {
-    aws_atomic_priv_check_order(memory_order);
     if (memory_order != aws_memory_order_seq_cst) {
+        aws_atomic_priv_barrier_before(memory_order, aws_atomic_priv_store);
         var->intval = n;
+        aws_atomic_priv_barrier_after(memory_order, aws_atomic_priv_store);
     } else {
-        InterlockedExchange64(&var->intval, n);
+        AWS_INTERLOCKED_INT(Exchange)(&var->intval, n);
     }
 }
 
@@ -149,7 +222,9 @@ AWS_STATIC_IMPL
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order) {
     aws_atomic_priv_check_order(memory_order);
     if (memory_order != aws_memory_order_seq_cst) {
+        aws_atomic_priv_barrier_before(memory_order, aws_atomic_priv_store);
         var->ptrval = p;
+        aws_atomic_priv_barrier_after(memory_order, aws_atomic_priv_store);
     } else {
         InterlockedExchangePointer(&var->ptrval, p);
     }
@@ -165,7 +240,7 @@ size_t aws_atomic_exchange_int_explicit(
     size_t n,
     enum aws_memory_order memory_order) {
     aws_atomic_priv_check_order(memory_order);
-    return InterlockedExchange64(&var->intval, n);
+    return AWS_INTERLOCKED_INT(Exchange)(&var->intval, n);
 }
 
 /**
@@ -193,7 +268,7 @@ bool aws_atomic_compare_exchange_int_explicit(
     aws_atomic_priv_check_order(order_success);
     aws_atomic_priv_check_order(order_failure);
 
-    size_t oldval = InterlockedCompareExchange64(&var->intval, desired, *expected);
+    size_t oldval = AWS_INTERLOCKED_INT(CompareExchange)(&var->intval, desired, *expected);
     bool successful = oldval == *expected;
     *expected = oldval;
 
@@ -232,7 +307,7 @@ size_t aws_atomic_fetch_add_explicit(
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
-    return InterlockedExchangeAdd64(&var->intval, n);
+    return AWS_INTERLOCKED_INT(ExchangeAdd)(&var->intval, n);
 }
 
 /**
@@ -245,7 +320,7 @@ size_t aws_atomic_fetch_sub_explicit(
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
-    return InterlockedExchangeAdd64(&var->intval, -n);
+    return AWS_INTERLOCKED_INT(ExchangeAdd)(&var->intval, -(aws_atomic_impl_int_t)n);
 }
 
 /**
@@ -258,7 +333,7 @@ size_t aws_atomic_fetch_or_explicit(
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
-    return InterlockedOr64(&var->intval, n);
+    return AWS_INTERLOCKED_INT(Or)(&var->intval, n);
 }
 
 /**
@@ -271,7 +346,7 @@ size_t aws_atomic_fetch_and_explicit(
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
-    return InterlockedAnd64(&var->intval, n);
+    return AWS_INTERLOCKED_INT(And)(&var->intval, n);
 }
 
 /**
@@ -284,7 +359,7 @@ size_t aws_atomic_fetch_xor_explicit(
     enum aws_memory_order order) {
     aws_atomic_priv_check_order(order);
 
-    return InterlockedXor64(&var->intval, n);
+    return AWS_INTERLOCKED_INT(Xor)(&var->intval, n);
 }
 
 /**
@@ -293,17 +368,19 @@ size_t aws_atomic_fetch_xor_explicit(
  */
 AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order) {
-    volatile int x = 0;
+    volatile aws_atomic_impl_int_t x = 0;
     aws_atomic_priv_check_order(order);
+
+    /* On x86: A compiler barrier is sufficient for anything short of seq_cst */
 
     switch (order) {
         case aws_memory_order_seq_cst:
-            MemoryBarrier();
+            AWS_INTERLOCKED_INT(Exchange)(&x, 1);
             break;
         case aws_memory_order_release:
         case aws_memory_order_acquire:
         case aws_memory_order_acq_rel:
-            x = x;
+            _ReadWriteBarrier();
             break;
         case aws_memory_order_relaxed:
             /* no-op */

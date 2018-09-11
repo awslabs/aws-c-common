@@ -24,7 +24,9 @@ function(aws_set_common_properties target)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
     if(MSVC)
-        list(APPEND AWS_C_FLAGS /W4 /WX)
+	# /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
+	# Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
+        list(APPEND AWS_C_FLAGS /W4 /WX /volatile:iso)
     else()
         list(APPEND AWS_C_FLAGS -Wall -Werror)
 
