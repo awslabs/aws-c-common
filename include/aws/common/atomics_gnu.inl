@@ -24,8 +24,8 @@
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wc11-extensions"
 #else
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wpedantic"
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
 struct aws_atomic_var {
@@ -35,8 +35,10 @@ struct aws_atomic_var {
     };
 };
 
-#define AWS_ATOMIC_INIT_INT_IMPL(x) { .intval = (x) }
-#define AWS_ATOMIC_INIT_PTR_IMPL(x) { .ptrval = (void *)(x) }
+#define AWS_ATOMIC_INIT_INT_IMPL(x)                                                                                    \
+    { .intval = (x) }
+#define AWS_ATOMIC_INIT_PTR_IMPL(x)                                                                                    \
+    { .ptrval = (void *)(x) }
 
 static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
     switch (order) {

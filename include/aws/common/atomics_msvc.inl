@@ -83,8 +83,10 @@ struct aws_atomic_var {
     };
 };
 
-#define AWS_ATOMIC_INIT_INT_IMPL(x) { .intval = (size_t)(x) }
-#define AWS_ATOMIC_INIT_PTR_IMPL(x) { .ptrval = (void *)(x) }
+#define AWS_ATOMIC_INIT_INT_IMPL(x)                                                                                    \
+    { .intval = (size_t)(x) }
+#define AWS_ATOMIC_INIT_PTR_IMPL(x)                                                                                    \
+    { .ptrval = (void *)(x) }
 
 #pragma warning(pop)
 

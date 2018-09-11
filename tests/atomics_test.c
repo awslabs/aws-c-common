@@ -68,8 +68,8 @@ static int t_semantics(struct aws_allocator *allocator, void *ctx) {
     ASSERT_INT_EQUALS(9999, aws_atomic_load_int_explicit(&var, aws_memory_order_acquire));
 
     expected_int = 1111;
-    ASSERT_FALSE(
-        aws_atomic_compare_exchange_int_explicit(&var, &expected_int, 0, aws_memory_order_acq_rel, aws_memory_order_relaxed));
+    ASSERT_FALSE(aws_atomic_compare_exchange_int_explicit(
+        &var, &expected_int, 0, aws_memory_order_acq_rel, aws_memory_order_relaxed));
     ASSERT_INT_EQUALS(9999, aws_atomic_load_int_explicit(&var, aws_memory_order_acquire));
     ASSERT_INT_EQUALS(9999, expected_int);
     ASSERT_TRUE(aws_atomic_compare_exchange_int_explicit(
@@ -117,13 +117,11 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
     ASSERT_PTR_EQUALS(&dummy_1, aws_atomic_load_ptr(&var));
 
     expected_ptr = &dummy_3;
-    ASSERT_FALSE(aws_atomic_compare_exchange_ptr(
-        &var, &expected_ptr, &dummy_3));
+    ASSERT_FALSE(aws_atomic_compare_exchange_ptr(&var, &expected_ptr, &dummy_3));
     ASSERT_PTR_EQUALS(&dummy_1, aws_atomic_load_ptr(&var));
     ASSERT_PTR_EQUALS(&dummy_1, expected_ptr);
 
-    ASSERT_TRUE(aws_atomic_compare_exchange_ptr(
-        &var, &expected_ptr, &dummy_3));
+    ASSERT_TRUE(aws_atomic_compare_exchange_ptr(&var, &expected_ptr, &dummy_3));
     ASSERT_PTR_EQUALS(&dummy_3, aws_atomic_load_ptr(&var));
 
     /* Integer tests */
@@ -135,12 +133,10 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
     ASSERT_INT_EQUALS(9999, aws_atomic_load_int(&var));
 
     expected_int = 1111;
-    ASSERT_FALSE(
-        aws_atomic_compare_exchange_int(&var, &expected_int, 0));
+    ASSERT_FALSE(aws_atomic_compare_exchange_int(&var, &expected_int, 0));
     ASSERT_INT_EQUALS(9999, aws_atomic_load_int(&var));
     ASSERT_INT_EQUALS(9999, expected_int);
-    ASSERT_TRUE(aws_atomic_compare_exchange_int(
-        &var, &expected_int, 0x7000));
+    ASSERT_TRUE(aws_atomic_compare_exchange_int(&var, &expected_int, 0x7000));
     ASSERT_INT_EQUALS(0x7000, aws_atomic_load_int(&var));
 
     ASSERT_INT_EQUALS(0x7000, aws_atomic_fetch_add(&var, 6));
@@ -340,16 +336,17 @@ static void notify_race_completed() {
     static void race_name(void *vp_participant) {                                                                      \
         int participant = *(int *)vp_participant;                                                                      \
         size_t n_races_local = n_races;                                                                                \
-        size_t n_participants_local = n_participants;                                                                     \
+        size_t n_participants_local = n_participants;                                                                  \
         for (size_t i = 0; i < n_races_local; i++) {                                                                   \
-            while (i > 0 && aws_atomic_load_int_explicit(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
+            while (i > 0 &&                                                                                            \
+                   aws_atomic_load_int_explicit(races[i - 1].wait, aws_memory_order_relaxed) < n_participants_local) { \
                 /* spin */                                                                                             \
             }                                                                                                          \
             if (participant == 0) {                                                                                    \
-                aws_atomic_store_int_explicit(&last_race_index, i - 1, aws_memory_order_relaxed);                               \
+                aws_atomic_store_int_explicit(&last_race_index, i - 1, aws_memory_order_relaxed);                      \
             }                                                                                                          \
             race_name##_iter(participant, &races[i]);                                                                  \
-            aws_atomic_fetch_add_explicit(races[i].wait, 1, aws_memory_order_relaxed);                                          \
+            aws_atomic_fetch_add_explicit(races[i].wait, 1, aws_memory_order_relaxed);                                 \
         }                                                                                                              \
         notify_race_completed();                                                                                       \
         aws_atomic_thread_fence(aws_memory_order_release);                                                             \
@@ -371,7 +368,8 @@ DEFINE_RACE(loads_reordered_with_older_stores, participant, race) {
     enum aws_memory_order load_order = aws_memory_order_seq_cst;
 
     aws_atomic_store_int_explicit(my_var, 1, store_order);
-    aws_atomic_store_int_explicit(observed, aws_atomic_load_int_explicit(their_var, load_order), aws_memory_order_relaxed);
+    aws_atomic_store_int_explicit(
+        observed, aws_atomic_load_int_explicit(their_var, load_order), aws_memory_order_relaxed);
 }
 
 AWS_TEST_CASE(atomics_loads_reordered_with_older_stores, t_loads_reordered_with_older_stores)
@@ -484,7 +482,9 @@ DEFINE_RACE(acquire_to_release_mixed, participant, race) {
         aws_atomic_store_int_explicit(flag, 2, aws_memory_order_release);
     } else {
         aws_atomic_store_int_explicit(
-            race->observations[1], aws_atomic_load_int_explicit(flag, aws_memory_order_acquire), aws_memory_order_relaxed);
+            race->observations[1],
+            aws_atomic_load_int_explicit(flag, aws_memory_order_acquire),
+            aws_memory_order_relaxed);
         aws_atomic_store_int_explicit(protected_data, 1, aws_memory_order_relaxed);
     }
 }
