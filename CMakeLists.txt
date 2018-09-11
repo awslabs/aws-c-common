@@ -20,6 +20,7 @@ include(Sanitizers)
 
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
+        "include/aws/common/*.inl"
         )
 
 file(GLOB AWS_TEST_HEADERS
