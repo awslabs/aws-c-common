@@ -23,6 +23,9 @@
 #ifdef __clang__
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wc11-extensions"
+#else
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
 struct aws_atomic_var {
@@ -214,6 +217,8 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
 
 #ifdef __clang__
 #    pragma clang diagnostic pop
+#else
+#    pragma GCC diagnostic pop
 #endif
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE
