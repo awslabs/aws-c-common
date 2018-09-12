@@ -61,6 +61,7 @@ static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
  * Initializes an atomic variable with an integer value. This operation should be done before any
  * other operations on this atomic variable, and must be done before attempting any parallel operations.
  */
+AWS_STATIC_IMPL
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
     var->intval = n;
 }
@@ -69,6 +70,7 @@ void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
  * Initializes an atomic variable with a pointer value. This operation should be done before any
  * other operations on this atomic variable, and must be done before attempting any parallel operations.
  */
+AWS_STATIC_IMPL
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
     var->ptrval = p;
 }
