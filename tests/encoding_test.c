@@ -213,6 +213,22 @@ static int s_hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allo
 
 AWS_TEST_CASE(hex_encoding_invalid_buffer_size_test, s_hex_encoding_invalid_buffer_size_test_fn)
 
+static int s_hex_encoding_highbyte_string_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    char bad_input[] = "66\xb6\xb6"
+                       "6f6f6617";
+    uint8_t output[sizeof(bad_input)] = {0};
+
+    struct aws_byte_buf bad_buf = aws_byte_buf_from_c_str(bad_input);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_array(output, sizeof(output));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_HEX_STR, aws_hex_decode(&bad_buf, &output_buf));
+    return 0;
+}
+AWS_TEST_CASE(hex_encoding_highbyte_string_test, s_hex_encoding_highbyte_string_test_fn)
+
 static int s_hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
@@ -536,6 +552,22 @@ static int s_base64_encoding_invalid_buffer_test_fn(struct aws_allocator *alloca
 }
 
 AWS_TEST_CASE(base64_encoding_invalid_buffer_test, s_base64_encoding_invalid_buffer_test_fn)
+
+static int s_base64_encoding_highbyte_string_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    char bad_input[] = "AAAA\xC1"
+                       "AAA";
+    uint8_t output[sizeof(bad_input)] = {0};
+
+    struct aws_byte_buf bad_buf = aws_byte_buf_from_c_str(bad_input);
+    struct aws_byte_buf output_buf = aws_byte_buf_from_array(output, sizeof(output));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_BASE64_STR, aws_base64_decode(&bad_buf, &output_buf));
+    return 0;
+}
+AWS_TEST_CASE(base64_encoding_highbyte_string_test, s_base64_encoding_highbyte_string_test_fn)
 
 static int s_base64_encoding_invalid_padding_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
