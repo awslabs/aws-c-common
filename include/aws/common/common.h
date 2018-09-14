@@ -21,6 +21,14 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifndef AWS_STATIC_IMPL
+/*
+ * In order to allow us to export our inlinable methods in a DLL/.so, we have a designated .c
+ * file where this AWS_STATIC_IMPL macro will be redefined to be non-static.
+ */
+#define AWS_STATIC_IMPL static inline
+#endif
+
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char static_assertion_##msg[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, static_assertion_at_line_##line)
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
