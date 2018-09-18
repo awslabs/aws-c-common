@@ -20,40 +20,39 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef __clang__
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wc11-extensions"
-#else
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wpedantic"
-#endif
-
 struct aws_atomic_var {
     union {
         size_t intval;
         void *ptrval;
-    };
+    } u;
 };
 
 #define AWS_ATOMIC_INIT_INT_IMPL(x)                                                                                    \
-    { .intval = (x) }
+    {                                                                                                                  \
+        .u = {.intval = (x) }                                                                                          \
+    }
 #define AWS_ATOMIC_INIT_PTR_IMPL(x)                                                                                    \
-    { .ptrval = (void *)(x) }
+    {                                                                                                                  \
+        .u = {.ptrval = (void *)(x) }                                                                                  \
+    }
 
-static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
-    switch (order) {
-        case aws_memory_order_relaxed:
-            return __ATOMIC_RELAXED;
-        case aws_memory_order_acquire:
-            return __ATOMIC_ACQUIRE;
-        case aws_memory_order_release:
-            return __ATOMIC_RELEASE;
-        case aws_memory_order_acq_rel:
-            return __ATOMIC_ACQ_REL;
-        case aws_memory_order_seq_cst:
-            return __ATOMIC_SEQ_CST;
-        default: /* Unknown memory order */
-            abort();
+static inline void aws_atomic_private_compiler_barrier() {
+    __asm__ __volatile__("" : : : "memory");
+}
+
+static inline void aws_atomic_private_barrier_before(enum aws_memory_order order) {
+    if (order == aws_memory_order_release || order == aws_memory_order_acq_rel || order == aws_memory_order_seq_cst) {
+        __sync_synchronize();
+    }
+
+    aws_atomic_private_compiler_barrier();
+}
+
+static inline void aws_atomic_private_barrier_after(enum aws_memory_order order) {
+    aws_atomic_private_compiler_barrier();
+
+    if (order == aws_memory_order_acquire || order == aws_memory_order_acq_rel || order == aws_memory_order_seq_cst) {
+        __sync_synchronize();
     }
 }
 
@@ -63,7 +62,7 @@ static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
-    var->intval = n;
+    var->u.intval = n;
 }
 
 /**
@@ -72,7 +71,7 @@ void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
-    var->ptrval = p;
+    var->u.ptrval = p;
 }
 
 /**
@@ -80,7 +79,14 @@ void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
-    return __atomic_load_n(&var->intval, aws_atomic_priv_xlate_order(memory_order));
+    aws_atomic_private_barrier_before(memory_order);
+
+    size_t retval = var->u.intval;
+
+    /* Release barriers are not permitted for loads, so we just do a compiler barrier here */
+    aws_atomic_private_compiler_barrier();
+
+    return retval;
 }
 
 /**
@@ -88,7 +94,14 @@ size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, e
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
-    return __atomic_load_n(&var->ptrval, aws_atomic_priv_xlate_order(memory_order));
+    aws_atomic_private_barrier_before(memory_order);
+
+    void *retval = var->u.ptrval;
+
+    /* Release barriers are not permitted for loads, so we just do a compiler barrier here */
+    aws_atomic_private_compiler_barrier();
+
+    return retval;
 }
 
 /**
@@ -96,7 +109,12 @@ void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, en
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order memory_order) {
-    __atomic_store_n(&var->intval, n, aws_atomic_priv_xlate_order(memory_order));
+    /* Acquire barriers are not permitted for stores, so just do a compiler barrier before */
+    aws_atomic_private_compiler_barrier();
+
+    var->u.intval = n;
+
+    aws_atomic_private_barrier_after(memory_order);
 }
 
 /**
@@ -104,7 +122,12 @@ void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order) {
-    __atomic_store_n(&var->ptrval, p, aws_atomic_priv_xlate_order(memory_order));
+    /* Acquire barriers are not permitted for stores, so just do a compiler barrier before */
+    aws_atomic_private_compiler_barrier();
+
+    var->u.ptrval = p;
+
+    aws_atomic_private_barrier_after(memory_order);
 }
 
 /**
@@ -116,7 +139,21 @@ size_t aws_atomic_exchange_int_explicit(
     volatile struct aws_atomic_var *var,
     size_t n,
     enum aws_memory_order memory_order) {
-    return __atomic_exchange_n(&var->intval, n, aws_atomic_priv_xlate_order(memory_order));
+
+    /*
+     * GCC 4.6 and before have only __sync_lock_test_and_set as an exchange operation,
+     * which may not support arbitrary values on all architectures. We simply emulate
+     * with a CAS instead.
+     */
+
+    size_t oldval;
+    do {
+        oldval = var->u.intval;
+    } while (!__sync_bool_compare_and_swap(&var->u.intval, oldval, n));
+
+    /* __sync_bool_compare_and_swap implies a full barrier */
+
+    return oldval;
 }
 
 /**
@@ -128,7 +165,20 @@ void *aws_atomic_exchange_ptr_explicit(
     volatile struct aws_atomic_var *var,
     void *p,
     enum aws_memory_order memory_order) {
-    return __atomic_exchange_n(&var->ptrval, p, aws_atomic_priv_xlate_order(memory_order));
+
+    /*
+     * GCC 4.6 and before have only __sync_lock_test_and_set as an exchange operation,
+     * which may not support arbitrary values on all architectures. We simply emulate
+     * with a CAS instead.
+     */
+    void *oldval;
+    do {
+        oldval = var->u.ptrval;
+    } while (!__sync_bool_compare_and_swap(&var->u.ptrval, oldval, p));
+
+    /* __sync_bool_compare_and_swap implies a full barrier */
+
+    return oldval;
 }
 
 /**
@@ -143,13 +193,13 @@ bool aws_atomic_compare_exchange_int_explicit(
     size_t desired,
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
-    return __atomic_compare_exchange_n(
-        &var->intval,
-        expected,
-        desired,
-        false,
-        aws_atomic_priv_xlate_order(order_success),
-        aws_atomic_priv_xlate_order(order_failure));
+
+    bool result = __sync_bool_compare_and_swap(&var->u.intval, *expected, desired);
+    if (!result) {
+        *expected = var->u.intval;
+    }
+
+    return result;
 }
 
 /**
@@ -164,13 +214,13 @@ bool aws_atomic_compare_exchange_ptr_explicit(
     void *desired,
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
-    return __atomic_compare_exchange_n(
-        &var->ptrval,
-        expected,
-        desired,
-        false,
-        aws_atomic_priv_xlate_order(order_success),
-        aws_atomic_priv_xlate_order(order_failure));
+
+    bool result = __sync_bool_compare_and_swap(&var->u.ptrval, *expected, desired);
+    if (!result) {
+        *expected = var->u.ptrval;
+    }
+
+    return result;
 }
 
 /**
@@ -178,7 +228,7 @@ bool aws_atomic_compare_exchange_ptr_explicit(
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_add(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __sync_fetch_and_add(&var->u.intval, n);
 }
 
 /**
@@ -186,7 +236,7 @@ size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_sub(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __sync_fetch_and_sub(&var->u.intval, n);
 }
 
 /**
@@ -194,7 +244,7 @@ size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_or(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __sync_fetch_and_or(&var->u.intval, n);
 }
 
 /**
@@ -202,7 +252,7 @@ size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t 
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_and(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __sync_fetch_and_and(&var->u.intval, n);
 }
 
 /**
@@ -210,7 +260,7 @@ size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_xor(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __sync_fetch_and_xor(&var->u.intval, n);
 }
 
 /**
@@ -219,13 +269,8 @@ size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order) {
-    __atomic_thread_fence(order);
+    /* On old versions of GCC we only have this one big hammer... */
+    __sync_synchronize();
 }
-
-#ifdef __clang__
-#    pragma clang diagnostic pop
-#else
-#    pragma GCC diagnostic pop
-#endif
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE

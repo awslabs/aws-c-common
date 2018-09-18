@@ -82,7 +82,15 @@ enum aws_memory_order {
 /* Include the backend implementation now, because we'll use its typedefs and #defines below */
 #if defined(__GNUC__) || defined(__clang__)
 
-#    include <aws/common/atomics_gnu.inl>
+#    if defined(__ATOMIC_RELAXED)
+
+#        include <aws/common/atomics_gnu.inl>
+
+#    else
+
+#        include <aws/common/atomics_gnu_old.inl>
+
+#    endif /* __ATOMIC_RELAXED */
 
 #elif defined(_MSC_VER)
 
