@@ -42,14 +42,14 @@ struct aws_string {
     const size_t len;
 };
 
-static inline const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
+AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
     return (const uint8_t *)(hdr + 1);
 }
 
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
+AWS_STATIC_IMPL bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
     if (str->len != cur->len) {
         return false;
     }
@@ -59,7 +59,7 @@ static inline bool aws_string_eq_byte_cursor(const struct aws_string *str, const
 /**
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
-static inline bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
+AWS_STATIC_IMPL bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
     if (str->len != buf->len) {
         return false;
     }
@@ -135,7 +135,7 @@ int aws_array_list_comparator_string(const void *a, const void *b);
  * accordingly. If there is insufficient space in the cursor, returns
  * false, leaving the cursor unchanged.
  */
-static inline bool aws_byte_cursor_write_from_whole_string(
+AWS_STATIC_IMPL bool aws_byte_cursor_write_from_whole_string(
     struct aws_byte_cursor *AWS_RESTRICT cur,
     const struct aws_string *AWS_RESTRICT src) {
     return aws_byte_cursor_write(cur, aws_string_bytes(src), src->len);
@@ -144,7 +144,7 @@ static inline bool aws_byte_cursor_write_from_whole_string(
 /**
  * Creates an aws_byte_cursor from an existing string.
  */
-static inline struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
 
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }

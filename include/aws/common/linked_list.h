@@ -36,7 +36,7 @@ struct aws_linked_list_node {
 /**
  * Set node's next and prev pointers to NULL.
  */
-static inline void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
+AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
     AWS_ZERO_STRUCT(*node);
 }
 
@@ -48,7 +48,7 @@ struct aws_linked_list {
 /**
  * Initializes the list. List will be empty after this call.
  */
-static inline void aws_linked_list_init(struct aws_linked_list *list) {
+AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
     list->head.next = &list->tail;
     list->head.prev = NULL;
     list->tail.prev = &list->head;
@@ -58,28 +58,28 @@ static inline void aws_linked_list_init(struct aws_linked_list *list) {
 /**
  * Returns an iteration pointer for the first element in the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
     return list->head.next;
 }
 
 /**
  * Returns an iteration pointer for one past the last element in the list.
  */
-static inline const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
     return &list->tail;
 }
 
 /**
  * Returns the next element in the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
     return node->next;
 }
 
 /**
  * Inserts to_add immediately after after.
  */
-static inline void aws_linked_list_insert_after(
+AWS_STATIC_IMPL void aws_linked_list_insert_after(
     struct aws_linked_list_node *after,
     struct aws_linked_list_node *to_add) {
     to_add->prev = after;
@@ -91,7 +91,7 @@ static inline void aws_linked_list_insert_after(
 /**
  * Inserts to_add immediately before before.
  */
-static inline void aws_linked_list_insert_before(
+AWS_STATIC_IMPL void aws_linked_list_insert_before(
     struct aws_linked_list_node *before,
     struct aws_linked_list_node *to_add) {
     to_add->next = before;
@@ -103,7 +103,7 @@ static inline void aws_linked_list_insert_before(
 /**
  * Tests if the list is empty.
  */
-static inline bool aws_linked_list_empty(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
     return list->head.next == &list->tail;
 }
 
@@ -111,7 +111,7 @@ static inline bool aws_linked_list_empty(const struct aws_linked_list *list) {
  * Removes the specified node from the list (prev/next point to each other) and
  * returns the next node in the list.
  */
-static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
+AWS_STATIC_IMPL void aws_linked_list_remove(struct aws_linked_list_node *node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
     aws_linked_list_node_reset(node);
@@ -120,7 +120,7 @@ static inline void aws_linked_list_remove(struct aws_linked_list_node *node) {
 /**
  * Append new_node.
  */
-static inline void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
+AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     aws_linked_list_insert_before(&list->tail, node);
 }
 
@@ -135,7 +135,7 @@ static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked
 /**
  * Returns the element in the back of the list and removes it
  */
-static inline struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     struct aws_linked_list_node *back = aws_linked_list_back(list);
     aws_linked_list_remove(back);
@@ -145,14 +145,14 @@ static inline struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_l
 /**
  * Prepend new_node.
  */
-static inline void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
+AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     aws_linked_list_insert_before(list->head.next, node);
 }
 
 /**
  * Returns the element in the front of the list.
  */
-static inline struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     return list->head.next;
 }
@@ -160,14 +160,14 @@ static inline struct aws_linked_list_node *aws_linked_list_front(const struct aw
 /**
  * Returns the element in the front of the list and removes it
  */
-static inline struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
     assert(!aws_linked_list_empty(list));
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
     return front;
 }
 
-static inline void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
+AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
     assert(a);
     assert(b);
     struct aws_linked_list_node *a_first = a->head.next;

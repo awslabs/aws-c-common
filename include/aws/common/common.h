@@ -305,7 +305,7 @@ enum aws_common_error {
  * Securely zeroes a memory buffer. This function will attempt to ensure that
  * the compiler will not optimize away this zeroing operation.
  */
-static inline void aws_secure_zero(void *pBuf, size_t bufsize) {
+AWS_STATIC_IMPL void aws_secure_zero(void *pBuf, size_t bufsize) {
 #if defined(_MSC_VER)
     SecureZeroMemory(pBuf, bufsize);
 #else

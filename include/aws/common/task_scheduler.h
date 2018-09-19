@@ -43,7 +43,7 @@ struct aws_task {
     struct aws_linked_list_node node;
 };
 
-static inline void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg) {
+AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg) {
     AWS_ZERO_STRUCT(*task);
     task->fn = fn;
     task->arg = arg;

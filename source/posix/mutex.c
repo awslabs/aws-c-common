@@ -14,30 +14,12 @@
  */
 
 #include <aws/common/mutex.h>
+#include <aws/common/posix/common.inl>
 
 #include <errno.h>
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
     pthread_mutex_destroy(&mutex->mutex_handle);
-}
-
-int convert_and_raise_error_code(int error_code) {
-    switch (error_code) {
-        case 0:
-            return AWS_OP_SUCCESS;
-        case EINVAL:
-            return aws_raise_error(AWS_ERROR_MUTEX_NOT_INIT);
-        case EBUSY:
-            return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
-        case EPERM:
-            return aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
-        case ENOMEM:
-            return aws_raise_error(AWS_ERROR_OOM);
-        case EDEADLK:
-            return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
-        default:
-            return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
-    }
 }
 
 int aws_mutex_init(struct aws_mutex *mutex) {
@@ -49,11 +31,11 @@ int aws_mutex_init(struct aws_mutex *mutex) {
         if ((err_code = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||
             (err_code = pthread_mutex_init(&mutex->mutex_handle, &attr))) {
 
-            return_code = convert_and_raise_error_code(err_code);
+            return_code = aws_private_convert_and_raise_error_code(err_code);
         }
         pthread_mutexattr_destroy(&attr);
     } else {
-        return_code = convert_and_raise_error_code(err_code);
+        return_code = aws_private_convert_and_raise_error_code(err_code);
     }
 
     return return_code;
@@ -61,15 +43,15 @@ int aws_mutex_init(struct aws_mutex *mutex) {
 
 int aws_mutex_lock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
+    return aws_private_convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
 }
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
+    return aws_private_convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
 
-    return convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
+    return aws_private_convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
 }
