@@ -1,0 +1,2 @@
+/* TEST_CASES is set in AwsTestHarness.cmake */
+static const char *known_test_case_names = "@TEST_CASES@";

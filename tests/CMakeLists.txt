@@ -22,6 +22,8 @@ endif()
 
 add_test(assert_test ${METATEST_BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/metatest.tmp)
 
+add_test_case(test_crosscheck)
+
 add_test_case(raise_errors_test)
 add_test_case(reset_errors_test)
 add_test_case(error_callback_test)

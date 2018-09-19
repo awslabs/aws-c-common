@@ -345,6 +345,31 @@ struct aws_test_harness {
     int suppress_memcheck;
 };
 
+struct aws_test_registration {
+    const char *test_name;
+    struct aws_test_registration *next;
+};
+
+/* Defined in test_crosscheck.c */
+extern struct aws_test_registration *aws_test_registry_head;
+
+#if defined(__GCC__) || defined(__clang__)
+/*
+ * This constructor attribute magic lets us build a list of all test names declared in source, so we can cross-check
+ * and verify that we're not missing any at runtime.
+ */
+
+#    define AWS_TEST_RECORD_TEST_NAME(name)                                                                            \
+        static struct aws_test_registration name##_registration = {.test_name = #name, .next = NULL};                  \
+        void __attribute__((constructor)) name##_init_register(void);                                                  \
+        void name##_init_register(void) {                                                                              \
+            name##_registration.next = aws_test_registry_head;                                                         \
+            aws_test_registry_head = &name##_registration;                                                             \
+        }
+#else
+#    define AWS_TEST_RECORD_TEST_NAME(name)
+#endif
+
 #define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
     static struct memory_test_allocator name##_alloc_impl = {                                                          \
         .allocated = 0,                                                                                                \
@@ -360,6 +385,7 @@ struct aws_test_harness {
 
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
+    AWS_TEST_RECORD_TEST_NAME(name)                                                                                    \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
     static struct aws_test_harness name##_test = {                                                                     \
         .on_before = NULL,                                                                                             \
@@ -376,6 +402,7 @@ struct aws_test_harness {
     static void b(struct aws_allocator *allocator, void *ctx);                                                         \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     static void af(struct aws_allocator *allocator, void *ctx);                                                        \
+    AWS_TEST_RECORD_TEST_NAME(name)                                                                                    \
     AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
     static struct aws_test_harness name##_test = {                                                                     \
         .on_before = (b),                                                                                              \

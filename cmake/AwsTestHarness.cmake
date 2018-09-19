@@ -32,12 +32,14 @@ function(generate_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${CMAKE_PROJECT_NAME})
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
-    target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+    target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/generated-include)
+
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/test_crosscheck.inl.template" "${CMAKE_CURRENT_BINARY_DIR}/generated-include/test_crosscheck.inl")
 
     foreach(name IN LISTS TEST_CASES)
         add_test(${name} ${driver_exe_name} "${name}")
     endforeach()
 
-    # Clear test cases in case another driver needsto be generated
+    # Clear test cases in case another driver needs to be generated
     unset(TEST_CASES PARENT_SCOPE)
 endfunction()
