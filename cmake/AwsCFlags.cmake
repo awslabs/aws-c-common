@@ -63,7 +63,7 @@ function(aws_set_common_properties target)
     endif()
 
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-        list(APPEND AWS_C_DEFINES -DDEBUG_BUILD)
+        list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     endif()
 
     if(BUILD_SHARED_LIBS AND WIN32)
@@ -72,11 +72,11 @@ function(aws_set_common_properties target)
         string(REGEX REPLACE "^AWS-C-" "AWS-" EXPORT_DEFINE ${EXPORT_DEFINE})
         string(REPLACE "-" "_" EXPORT_DEFINE ${EXPORT_DEFINE})
 
-        list(APPEND AWS_C_DEFINES -DAWS_COMMON_USE_IMPORT_EXPORT)
-        list(APPEND AWS_C_DEFINES -D${EXPORT_DEFINE}_EXPORTS)
+        list(APPEND AWS_C_DEFINES_PUBLIC -DAWS_COMMON_USE_IMPORT_EXPORT)
+        list(APPEND AWS_C_DEFINES_PRIVATE -D${EXPORT_DEFINE}_EXPORTS)
     endif()
 
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
-    target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES})
+    target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
 endfunction()
