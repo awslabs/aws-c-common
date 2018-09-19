@@ -20,6 +20,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(__GNUC__)
+#    if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 4)
+/* See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36793 */
+#        error GCC versions before 4.4.0 are not supported
+#    endif
+#endif
+
 struct aws_atomic_var {
     union {
         size_t intval;
@@ -90,7 +97,7 @@ size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, e
 }
 
 /**
- * Reads an atomic var as an pointer, using the specified ordering, and returns the result.
+ * Reads an atomic var as a pointer, using the specified ordering, and returns the result.
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
@@ -118,7 +125,7 @@ void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n
 }
 
 /**
- * Stores an pointer into an atomic var, using the specified ordering.
+ * Stores a pointer into an atomic var, using the specified ordering.
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order) {
