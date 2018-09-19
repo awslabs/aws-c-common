@@ -99,7 +99,7 @@ if (PERFORM_HEADER_CHECK)
     add_subdirectory(cmake/header-tester)
 endif()
 
-add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
+add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
@@ -110,6 +110,9 @@ endif()
 
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
+
+# Our ABI is not yet stable
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

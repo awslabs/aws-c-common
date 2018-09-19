@@ -1,3 +1,4 @@
+#include <aws/common/atomics.h>
 #ifndef AWS_COMMON_POSIX_RW_LOCK_INL
 #define AWS_COMMON_POSIX_RW_LOCK_INL
 
@@ -16,51 +17,50 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/posix/common.inl>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Defined in mutex.c */
-int convert_and_raise_error_code(int error_code);
+AWS_STATIC_IMPL int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
-static inline int aws_rw_lock_init(struct aws_rw_lock *lock) {
-
-    return convert_and_raise_error_code(pthread_rwlock_init(&lock->lock_handle, NULL));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_init(&lock->lock_handle, NULL));
 }
 
-static inline void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
 
     pthread_rwlock_destroy(&lock->lock_handle);
 }
 
-static inline int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_rdlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_rdlock(&lock->lock_handle));
 }
 
-static inline int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_wrlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_wrlock(&lock->lock_handle));
 }
 
-static inline int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_tryrdlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_tryrdlock(&lock->lock_handle));
 }
 
-static inline int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_trywrlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_trywrlock(&lock->lock_handle));
 }
 
-static inline int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
 
-static inline int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
+AWS_STATIC_IMPL int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
-    return convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
+    return aws_private_convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
 
 #ifdef __cplusplus

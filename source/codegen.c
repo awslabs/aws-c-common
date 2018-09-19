@@ -19,4 +19,24 @@
 
 #define AWS_STATIC_IMPL AWS_COMMON_API
 
+#include <aws/common/array_list.h>
 #include <aws/common/atomics.h>
+#include <aws/common/byte_buf.h>
+#include <aws/common/byte_order.h>
+#include <aws/common/clock.h>
+#include <aws/common/common.h>
+#include <aws/common/condition_variable.h>
+#include <aws/common/encoding.h>
+#include <aws/common/error.h>
+#include <aws/common/exports.h>
+#include <aws/common/hash_table.h>
+#include <aws/common/linked_list.h>
+#include <aws/common/lru_cache.h>
+#include <aws/common/math.h>
+#include <aws/common/mutex.h>
+#include <aws/common/priority_queue.h>
+#include <aws/common/rw_lock.h>
+#include <aws/common/string.h>
+#include <aws/common/system_info.h>
+#include <aws/common/task_scheduler.h>
+#include <aws/common/thread.h>

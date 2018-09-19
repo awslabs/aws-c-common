@@ -31,7 +31,7 @@ enum aws_timestamp_unit {
  * convert_to. To avoid unnecessary branching, 'remainder' is not zero initialized in this function, be sure to set it
  * to 0 first if you care about that kind of thing.
  */
-static inline uint64_t aws_timestamp_convert(
+AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     uint64_t timestamp,
     enum aws_timestamp_unit convert_from,
     enum aws_timestamp_unit convert_to,

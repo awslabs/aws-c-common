@@ -28,7 +28,7 @@
  * out at compile time and code which calls "if (aws_is_big_endian())" will do
  * the right thing without branching.
  */
-static inline int aws_is_big_endian() {
+AWS_STATIC_IMPL int aws_is_big_endian() {
     const uint16_t z = 0x100;
     return *(const uint8_t *)&z;
 }
@@ -36,7 +36,7 @@ static inline int aws_is_big_endian() {
 /**
  * Convert 64 bit integer from host to network byte order.
  */
-static inline uint64_t aws_hton64(uint64_t x) {
+AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
     if (aws_is_big_endian()) {
         return x;
     }
@@ -56,14 +56,14 @@ static inline uint64_t aws_hton64(uint64_t x) {
 /**
  * Convert 64 bit integer from network to host byte order.
  */
-static inline uint64_t aws_ntoh64(uint64_t x) {
+AWS_STATIC_IMPL uint64_t aws_ntoh64(uint64_t x) {
     return aws_hton64(x);
 }
 
 /**
  * Convert 32 bit integer from host to network byte order.
  */
-static inline uint32_t aws_hton32(uint32_t x) {
+AWS_STATIC_IMPL uint32_t aws_hton32(uint32_t x) {
 #ifdef _MSC_VER
     return _byteswap_ulong(x);
 #else
@@ -74,7 +74,7 @@ static inline uint32_t aws_hton32(uint32_t x) {
 /**
  * Convert 32 bit integer from network to host byte order.
  */
-static inline uint32_t aws_ntoh32(uint32_t x) {
+AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
 #ifdef _MSC_VER
     return _byteswap_ulong(x);
 #else
@@ -85,7 +85,7 @@ static inline uint32_t aws_ntoh32(uint32_t x) {
 /**
  * Convert 16 bit integer from host to network byte order.
  */
-static inline uint16_t aws_hton16(uint16_t x) {
+AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
 #ifdef _MSC_VER
     return _byteswap_ushort(x);
 #else
@@ -96,7 +96,7 @@ static inline uint16_t aws_hton16(uint16_t x) {
 /**
  * Convert 16 bit integer from network to host byte order.
  */
-static inline uint16_t aws_ntoh16(uint16_t x) {
+AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
 #ifdef _MSC_VER
     return _byteswap_ushort(x);
 #else
