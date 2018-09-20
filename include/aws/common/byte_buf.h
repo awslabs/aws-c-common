@@ -347,7 +347,10 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws
  * If there is insufficient space in the cursor, returns false, leaving the
  * cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, size_t len) {
+AWS_STATIC_IMPL bool aws_byte_cursor_read(
+    struct aws_byte_cursor *AWS_RESTRICT cur,
+    void *AWS_RESTRICT dest,
+    size_t len) {
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
     if (slice.ptr) {
