@@ -1,6 +1,6 @@
 #include <aws/common/atomics.h>
 #ifndef AWS_COMMON_POSIX_RW_LOCK_INL
-#define AWS_COMMON_POSIX_RW_LOCK_INL
+#    define AWS_COMMON_POSIX_RW_LOCK_INL
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -17,11 +17,11 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/posix/common.inl>
+#    include <aws/common/posix/common.inl>
 
-#ifdef __cplusplus
+#    ifdef __cplusplus
 extern "C" {
-#endif
+#    endif
 
 AWS_STATIC_IMPL int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
@@ -63,8 +63,8 @@ AWS_STATIC_IMPL int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
     return aws_private_convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
 
-#ifdef __cplusplus
+#    ifdef __cplusplus
 }
-#endif
+#    endif
 
 #endif /* AWS_COMMON_POSIX_RW_LOCK_INL */
