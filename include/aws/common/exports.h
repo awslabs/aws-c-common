@@ -25,8 +25,14 @@
 #        define AWS_COMMON_API
 #    endif // USE_IMPORT_EXPORT
 
-#else // defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32)
-#    define AWS_COMMON_API
-#endif // defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32)
+#else /* defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
+
+#    if ((__GNUC__ >= 4) || defined(__clang__)) && defined(AWS_COMMON_USE_IMPORT_EXPORT) && defined(AWS_COMMON_EXPORTS)
+#        define AWS_COMMON_API __attribute__((visibility("default")))
+#    else
+#        define AWS_COMMON_API
+#    endif /* __GNUC__ >= 4 || defined(__clang__) */
+
+#endif /* defined (USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
 
 #endif /* AWS_COMMON_EXPORTS_H */

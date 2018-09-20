@@ -41,6 +41,9 @@ function(aws_set_common_properties target)
 
         # Warning disables always go last to avoid future flags re-enabling them
         list(APPEND AWS_C_FLAGS -Wno-long-long)
+
+        # Avoid exporting symbols we don't intend to export
+        list(APPEND AWS_C_FLAGS -fvisibility=hidden)
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
@@ -66,7 +69,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     endif()
 
-    if(BUILD_SHARED_LIBS AND WIN32)
+    if(BUILD_SHARED_LIBS)
         set(EXPORT_DEFINE ${target})
         string(TOUPPER ${EXPORT_DEFINE} EXPORT_DEFINE)
         string(REGEX REPLACE "^AWS-C-" "AWS-" EXPORT_DEFINE ${EXPORT_DEFINE})
@@ -74,6 +77,10 @@ function(aws_set_common_properties target)
 
         list(APPEND AWS_C_DEFINES_PUBLIC -DAWS_COMMON_USE_IMPORT_EXPORT)
         list(APPEND AWS_C_DEFINES_PRIVATE -D${EXPORT_DEFINE}_EXPORTS)
+
+        if (NOT MSVC)
+            list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
+        endif()
     endif()
 
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
