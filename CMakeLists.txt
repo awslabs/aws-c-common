@@ -17,6 +17,7 @@ project(aws-c-common C)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(Sanitizers)
+include(SIMD)
 
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
@@ -106,6 +107,19 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+
+# Enable SIMD encoder if the compiler supports the right features
+simd_add_definitions(${CMAKE_PROJECT_NAME})
+
+if (HAVE_MAY_I_USE OR HAVE_BUILTIN_CPU_SUPPORTS OR HAVE_MSVC_CPUIDEX)
+    set(HAVE_SIMD_CPUID TRUE)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
+endif()
+
+if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+	target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
+    simd_add_source_avx2(${CMAKE_PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
+endif()
 
 # Preserve subdirectories when installing headers
 foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${AWS_TEST_HEADERS})
