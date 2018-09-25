@@ -66,10 +66,6 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     endif()
 
-    if (UNIX)
-        list(APPEND AWS_C_DEFINES_PRIVATE -D_POSIX_C_SOURCE=200809L)
-    endif()
-
     if(BUILD_SHARED_LIBS AND WIN32)
         set(EXPORT_DEFINE ${target})
         string(TOUPPER ${EXPORT_DEFINE} EXPORT_DEFINE)
