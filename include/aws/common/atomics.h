@@ -82,7 +82,15 @@ enum aws_memory_order {
 /* Include the backend implementation now, because we'll use its typedefs and #defines below */
 #if defined(__GNUC__) || defined(__clang__)
 
-#    include <aws/common/atomics_gnu.inl>
+#    if defined(__ATOMIC_RELAXED)
+
+#        include <aws/common/atomics_gnu.inl>
+
+#    else
+
+#        include <aws/common/atomics_gnu_old.inl>
+
+#    endif /* __ATOMIC_RELAXED */
 
 #elif defined(_MSC_VER)
 
@@ -118,12 +126,20 @@ enum aws_memory_order {
 /**
  * Initializes an atomic variable with an integer value. This operation should be done before any
  * other operations on this atomic variable, and must be done before attempting any parallel operations.
+ *
+ * This operation does not imply a barrier. Ensure that you use an acquire-release barrier (or stronger)
+ * when communicating the fact that initialization is complete to the other thread. Launching the thread
+ * implies a sufficiently strong barrier.
  */
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n);
 
 /**
  * Initializes an atomic variable with a pointer value. This operation should be done before any
  * other operations on this atomic variable, and must be done before attempting any parallel operations.
+ *
+ * This operation does not imply a barrier. Ensure that you use an acquire-release barrier (or stronger)
+ * when communicating the fact that initialization is complete to the other thread. Launching the thread
+ * implies a sufficiently strong barrier.
  */
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p);
 
@@ -141,7 +157,7 @@ size_t aws_atomic_load_int(volatile const struct aws_atomic_var *var) {
 }
 
 /**
- * Reads an atomic var as an pointer, using the specified ordering, and returns the result.
+ * Reads an atomic var as a pointer, using the specified ordering, and returns the result.
  */
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order);
 
@@ -167,12 +183,12 @@ void aws_atomic_store_int(volatile struct aws_atomic_var *var, size_t n) {
 }
 
 /**
- * Stores an pointer into an atomic var, using the specified ordering.
+ * Stores a pointer into an atomic var, using the specified ordering.
  */
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order);
 
 /**
- * Stores an pointer into an atomic var, using sequentially consistent ordering.
+ * Stores a pointer into an atomic var, using sequentially consistent ordering.
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_ptr(volatile struct aws_atomic_var *var, void *p) {
