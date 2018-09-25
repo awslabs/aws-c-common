@@ -386,9 +386,9 @@ bool aws_common_private_has_b64_simd() {
         return false;
 
 #ifdef USE_BUILTIN_CPU_SUPPORTS
-    bool available = __builtin_cpu_supports("sse4.1") && __builtin_cpu_supports("avx2");
+    bool available = __builtin_cpu_supports("avx2");
 #else /* USE_MAY_I_USE */
-    bool available = _may_i_use_cpu_feature(_FEATURE_AVX2 | _FEATURE_SSE4_1);
+    bool available = _may_i_use_cpu_feature(_FEATURE_AVX2);
 #endif
     cpuid_state = available ? CPUID_AVAILABLE : CPUID_UNAVAILABLE;
 

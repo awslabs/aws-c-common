@@ -17,17 +17,16 @@ include(CheckIncludeFile)
 check_include_file(immintrin.h HAS_IMMINTRIN)
 check_include_file(emmintrin.h HAS_EMMINTRIN)
 
-check_c_compiler_flag(-msse4.1 HAVE_M_SSE41)
 check_c_compiler_flag(-mavx2 HAVE_M_AVX2)
 
 if (HAS_IMMINTRIN AND HAS_EMMINTRIN)
 # Do we need to pass compiler flags to enable SSE stuff?
-    if (HAVE_M_SSE41 AND HAVE_M_AVX2)
-        set(SSE41_CFLAGS "-mavx -mavx2 -mssse3 -msse4 -msse4.1")
+    if (HAVE_M_AVX2)
+        set(AVX2_CFLAGS "-mavx -mavx2")
     endif()
 
     set(old_flags "${CMAKE_REQUIRED_FLAGS}")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${SSE41_CFLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
 
     check_c_source_compiles("
 #include <immintrin.h>
@@ -57,7 +56,7 @@ int main() {
 #include <immintrin.h>
 
 int main() {
-    return __builtin_cpu_supports(\"sse4.1\");
+    return __builtin_cpu_supports(\"avx2\");
 }
 "   USE_BUILTIN_CPU_SUPPORTS)
     set(CMAKE_REQUIRED_FLAGS "${old_flags}")
@@ -71,9 +70,9 @@ int main() {
     endif()
 
     if (USE_SIMD_ENCODING)
-        set(encoding_simd_source ${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_simd_sse41.c)
+        set(encoding_simd_source ${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_simd_avx2.c)
         target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${encoding_simd_source})
-        set_source_files_properties(${encoding_simd_source} COMPILE_FLAGS "${SSE41_CFLAGS}")
+        set_source_files_properties(${encoding_simd_source} COMPILE_FLAGS "${AVX2_CFLAGS}")
         add_definitions(-DUSE_SIMD_ENCODING)
     endif()
 endif()
