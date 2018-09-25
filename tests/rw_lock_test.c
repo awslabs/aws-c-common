@@ -134,7 +134,7 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
     struct aws_rw_lock lock;
     aws_rw_lock_init(&lock);
 
-    struct aws_thread threads[8];
+    struct aws_thread threads[2];
     AWS_ZERO_ARRAY(threads);
 
     for (size_t i = 0; i < AWS_ARRAY_SIZE(threads); ++i) {
