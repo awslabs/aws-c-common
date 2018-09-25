@@ -24,36 +24,18 @@ size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned 
 size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
 bool aws_common_private_has_avx2();
 #else
+/*
+ * When AVX2 compilation is unavailable, we use these stubs to fall back to the pure-C decoder.
+ * Since we force aws_common_private_has_avx2 to return false, the encode and decode functions should
+ * not be called - but we must provide them anyway to avoid link errors.
+ */
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
-    (void)in;
-    (void)out;
-    (void)len;
-
-    /*
-     * This volatile variable prevents MSVC from flagging code after the call to this stub as unreachable
-     */
-
-    volatile bool do_abort = true;
-    if (do_abort) {
-        abort();
-    }
-
-    return (size_t)-1;
+    (void)in; (void)out; (void)len;
+    return (size_t)-1; /* unreachable */
 }
 size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
-    (void)in;
-    (void)out;
-    (void)len;
-    /*
-     * This volatile variable prevents MSVC from flagging code after the call to this stub as unreachable
-     */
-
-    volatile bool do_abort = true;
-    if (do_abort) {
-        abort();
-    }
-
-    return (size_t)-1;
+    (void)in; (void)out; (void)len;
+    return (size_t)-1; /* unreachable */
 }
 bool aws_common_private_has_avx2() {
     return false;
