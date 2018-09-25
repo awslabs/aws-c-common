@@ -101,6 +101,8 @@ endif()
 
 add_library(${CMAKE_PROJECT_NAME} ${LIBTYPE} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
+#apple source already includes the definitions we want, and setting this posix source
+#version causes it to revert to an older version. So don't turn it on there, we don't need it.
 if (UNIX AND NOT APPLE)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L)
