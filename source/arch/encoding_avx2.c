@@ -13,10 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include "emmintrin.h"
-#include "immintrin.h"
-#include <ctype.h>
-#include <stdbool.h>
+#include <emmintrin.h>
+#include <immintrin.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,11 +59,12 @@ static inline __m256i translate_exact(__m256i in, uint8_t match, uint8_t decode)
 /*
  * Input: a pointer to a 256-bit vector of base64 characters
  * The pointed-to-vector is replaced by a 256-bit vector of 6-bit decoded parts;
- * on decode failure, returns 0, else returns 1 on success.
+ * on decode failure, returns false, else returns true on success.
  */
 static inline bool decode_vec(__m256i *in) {
     __m256i tmp;
 
+    /* Base64 decoding table, see RFC4648 */
     tmp = translate_range(*in, 'A', 'Z', 0 + 1);
     tmp |= translate_range(*in, 'a', 'z', 26 + 1);
     tmp |= translate_range(*in, '0', '9', 52 + 1);
@@ -84,7 +84,7 @@ static inline bool decode_vec(__m256i *in) {
 
 struct aligned256 {
     unsigned char bytes[32];
-} __attribute__((aligned(32)));
+} AWS_ALIGN(32);
 
 /*
  * Input: a 256-bit vector, interpreted as 32 * 6-bit values
@@ -94,10 +94,10 @@ static inline __m256i pack_vec(__m256i in) {
     /*
      * Our basic strategy is to split the input vector into three vectors, for each 6-bit component
      * of each 24-bit group, shift the groups into place, then OR the vectors together. Conveniently,
-     * we can do this on a dword-by-dword basis.
+     * we can do this on a (32 bit) dword-by-dword basis.
      *
      * It's important to note that we're interpreting the vector as being little-endian. That is,
-     * on entry, we have 32-bit dwords that looks like this:
+     * on entry, we have dwords that look like this:
      *
      * MSB                                 LSB
      * 00DD DDDD 00CC CCCC 00BB BBBB 00AA AAAA
@@ -242,6 +242,7 @@ size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned 
 static inline __m256i encode_chars(__m256i in) {
     __m256i tmp;
 
+    /* Base64 encoding table, see RFC4648 */
     tmp = translate_range(in, 0, 25, 'A');
     tmp |= translate_range(in, 26, 26 + 25, 'a');
     tmp |= translate_range(in, 52, 61, '0');
@@ -368,29 +369,4 @@ void aws_common_private_base64_encode_sse41(const uint8_t *input, uint8_t *outpu
         output += outlen;
         inlen -= stridelen;
     }
-}
-
-#define CPUID_UNKNOWN 2
-#define CPUID_AVAILABLE 0
-#define CPUID_UNAVAILABLE 1
-static int cpuid_state = 2;
-
-void aws_common_private_set_b64_simd_state(int state) {
-    cpuid_state = state;
-}
-
-bool aws_common_private_has_b64_simd() {
-    if (AWS_LIKELY(cpuid_state == 0))
-        return true;
-    if (AWS_LIKELY(cpuid_state == 1))
-        return false;
-
-#ifdef USE_BUILTIN_CPU_SUPPORTS
-    bool available = __builtin_cpu_supports("avx2");
-#else /* USE_MAY_I_USE */
-    bool available = _may_i_use_cpu_feature(_FEATURE_AVX2);
-#endif
-    cpuid_state = available ? CPUID_AVAILABLE : CPUID_UNAVAILABLE;
-
-    return available;
 }

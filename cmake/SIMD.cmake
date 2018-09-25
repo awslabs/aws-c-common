@@ -14,21 +14,9 @@
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 
-check_include_file(immintrin.h HAS_IMMINTRIN)
-check_include_file(emmintrin.h HAS_EMMINTRIN)
+check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
 
-check_c_compiler_flag(-mavx2 HAVE_M_AVX2)
-
-if (HAS_IMMINTRIN AND HAS_EMMINTRIN)
-# Do we need to pass compiler flags to enable SSE stuff?
-    if (HAVE_M_AVX2)
-        set(AVX2_CFLAGS "-mavx -mavx2")
-    endif()
-
-    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
-
-    check_c_source_compiles("
+check_c_source_compiles("
 #include <immintrin.h>
 #include <emmintrin.h>
 #include <string.h>
@@ -42,37 +30,65 @@ int main() {
     _mm256_permutevar8x32_epi32(vec, vec);
 
     return 0;
-}"  USE_SIMD_ENCODING)
+}"  HAVE_AVX2_INTRINSICS)
 
-    check_c_source_compiles("
+check_c_source_compiles("
 #include <immintrin.h>
 
 int main() {
     return _may_i_use_cpu_feature(_FEATURE_AVX2 | _FEATURE_SSE4_1);
 }
-"   USE_MAY_I_USE)
+"   HAVE_MAY_I_USE)
 
-    check_c_source_compiles("
+check_c_source_compiles("
 #include <immintrin.h>
 
 int main() {
     return __builtin_cpu_supports(\"avx2\");
 }
-"   USE_BUILTIN_CPU_SUPPORTS)
-    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+" HAVE_BUILTIN_CPU_SUPPORTS)
 
-    if (USE_MAY_I_USE)
-        add_definitions(-DUSE_MAY_I_USE)
-    elseif(USE_BUILTIN_CPU_SUPPORTS)
-        add_definitions(-DUSE_BUILTIN_CPU_SUPPORTS)
-    else()
-        set(USE_SIMD_ENCODING FALSE)
-    endif()
+check_c_source_compiles("
+#include <intrin.h>
 
-    if (USE_SIMD_ENCODING)
-        set(encoding_simd_source ${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_simd_avx2.c)
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${encoding_simd_source})
-        set_source_files_properties(${encoding_simd_source} COMPILE_FLAGS "${AVX2_CFLAGS}")
-        add_definitions(-DUSE_SIMD_ENCODING)
-    endif()
+int main() {
+    int cpuInfo[4] = {0};
+    int function_id = 1;
+    int subfunction_id = 1;
+    __cpuidex(cpuInfo, function_id, subfunction_id);
+    return 0;
+}" HAVE_MSVC_CPUIDEX)
+
+if (HAVE_M_AVX2_FLAG)
+    set(AVX2_CFLAGS "-mavx -mavx2")
 endif()
+
+macro(simd_add_definition_if target definition)
+    if(${definition})
+        target_compile_definitions(${target} PRIVATE -D${definition})
+    endif(${definition})
+endmacro(simd_add_definition_if)
+
+# Configure private preprocessor definitions for SIMD-related features
+# Does not set any processor feature codegen flags
+function(simd_add_definitions target)
+    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
+    
+    simd_add_definition_if(${target} HAVE_AVX2_INTRINSICS)
+    simd_add_definition_if(${target} HAVE_MAY_I_USE)
+    simd_add_definition_if(${target} HAVE_BUILTIN_CPU_SUPPORTS)
+    simd_add_definition_if(${target} HAVE_MSVC_CPUIDEX)
+
+    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+endfunction(simd_add_definitions)
+
+# Adds source files only if AVX2 is supported. These files will be built with
+# avx2 intrinsics enabled.
+# Usage: simd_add_source_avx2(target file1.c file2.c ...)
+function(simd_add_source_avx2 target)
+    foreach(file ${ARGN})
+        target_sources(${target} PRIVATE ${file})
+        set_source_files_properties(${file} COMPILE_FLAGS "${AVX2_CFLAGS}")
+    endforeach()
+endfunction(simd_add_source_avx2)

@@ -22,7 +22,7 @@
 #ifdef USE_SIMD_ENCODING
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len);
 size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
-bool aws_common_private_has_b64_simd();
+bool aws_common_private_has_avx2();
 #else
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;
@@ -55,7 +55,7 @@ size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned 
 
     return (size_t)-1;
 }
-bool aws_common_private_has_b64_simd() {
+bool aws_common_private_has_avx2() {
     return false;
 }
 #endif
@@ -268,7 +268,7 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    if (aws_common_private_has_b64_simd()) {
+    if (aws_common_private_has_avx2()) {
         output->len = encoded_length;
         aws_common_private_base64_encode_sse41(to_encode->buffer, output->buffer, to_encode->len);
         output->buffer[encoded_length - 1] = 0;
@@ -335,7 +335,7 @@ int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct 
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    if (aws_common_private_has_b64_simd()) {
+    if (aws_common_private_has_avx2()) {
         size_t result = aws_common_private_base64_decode_sse41(to_decode->buffer, output->buffer, to_decode->len);
         if (result == -1) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
