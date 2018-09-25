@@ -44,7 +44,7 @@ static inline __m256i translate_range(__m256i in, uint8_t lo, uint8_t hi, uint8_
     mask = _mm256_cmpeq_epi8(mask, tmp);
 
     tmp = _mm256_add_epi8(tmp, offsetvec);
-    tmp &= mask;
+    tmp = _mm256_and_si256(tmp, mask);
     return tmp;
 }
 
@@ -53,7 +53,7 @@ static inline __m256i translate_range(__m256i in, uint8_t lo, uint8_t hi, uint8_
  */
 static inline __m256i translate_exact(__m256i in, uint8_t match, uint8_t decode) {
     __m256i mask = _mm256_cmpeq_epi8(in, _mm256_set1_epi8(match));
-    return mask & _mm256_set1_epi8(decode);
+    return _mm256_and_si256(mask, _mm256_set1_epi8(decode));
 }
 
 /*
@@ -66,10 +66,10 @@ static inline bool decode_vec(__m256i *in) {
 
     /* Base64 decoding table, see RFC4648 */
     tmp = translate_range(*in, 'A', 'Z', 0 + 1);
-    tmp |= translate_range(*in, 'a', 'z', 26 + 1);
-    tmp |= translate_range(*in, '0', '9', 52 + 1);
-    tmp |= translate_exact(*in, '+', 62 + 1);
-    tmp |= translate_exact(*in, '/', 63 + 1);
+    tmp = _mm256_or_si256(tmp, translate_range(*in, 'a', 'z', 26 + 1));
+    tmp = _mm256_or_si256(tmp, translate_range(*in, '0', '9', 52 + 1));
+    tmp = _mm256_or_si256(tmp, translate_exact(*in, '+', 62 + 1));
+    tmp = _mm256_or_si256(tmp, translate_exact(*in, '/', 63 + 1));
 
     /*
      * We use 0 to mark decode failures, so everything is decoded to one higher
@@ -114,12 +114,12 @@ static inline __m256i pack_vec(__m256i in) {
     __m256i maskC = _mm256_set1_epi32(0xFF0000);
     __m256i maskD = _mm256_set1_epi32(0xFF000000);
 
-    __m256i bitsA = _mm256_slli_epi32(in & maskA, 18);
-    __m256i bitsB = _mm256_slli_epi32(in & maskB, 4);
-    __m256i bitsC = _mm256_srli_epi32(in & maskC, 10);
-    __m256i bitsD = _mm256_srli_epi32(in & maskD, 24);
+    __m256i bitsA = _mm256_slli_epi32(_mm256_and_si256(in, maskA), 18);
+    __m256i bitsB = _mm256_slli_epi32(_mm256_and_si256(in, maskB), 4);
+    __m256i bitsC = _mm256_srli_epi32(_mm256_and_si256(in, maskC), 10);
+    __m256i bitsD = _mm256_srli_epi32(_mm256_and_si256(in, maskD), 24);
 
-    __m256i dwords = (bitsA | bitsB) | (bitsC | bitsD);
+    __m256i dwords = _mm256_or_si256(_mm256_or_si256(bitsA, bitsB), _mm256_or_si256(bitsC, bitsD));
     /*
      * Now we have a series of dwords with empty MSBs.
      * We need to pack them together (and shift down) with a shuffle operation.
@@ -180,7 +180,12 @@ static inline bool decode(const unsigned char *in, unsigned char *out) {
      * [0 1 2 3] [4 5]
      */
     __m128i lo = _mm256_extracti128_si256(vec, 0);
+#ifndef _MSC_VER
     uint64_t hi = _mm256_extract_epi64(vec, 2);
+#else
+    /* MSVC does not support _mm256_extract_epi64 */
+    uint64_t hi = vec.m256i_u64[2];
+#endif
 
     _mm_storeu_si128((__m128i *)out, lo);
     memcpy(out + 16, &hi, sizeof(hi));
@@ -189,13 +194,15 @@ static inline bool decode(const unsigned char *in, unsigned char *out) {
 }
 
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
-    if (len % 4)
-        return -1;
+    if (len % 4) {
+        return (size_t)-1;
+    }
 
     size_t outlen = 0;
     while (len > 32) {
-        if (!decode(in, out))
-            return -1;
+        if (!decode(in, out)) {
+            return (size_t)-1;
+        }
         len -= 32;
         in += 32;
         out += 24;
@@ -223,13 +230,15 @@ size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned 
             }
         }
 
-        if (!decode(tmp_in, tmp_out))
-            return -1;
+        if (!decode(tmp_in, tmp_out)) {
+            return (size_t)-1;
+        }
 
         /* Check that there are no trailing ones bits */
         for (size_t i = final_out; i < sizeof(tmp_out); i++) {
-            if (tmp_out[i])
-                return -1;
+            if (tmp_out[i]) {
+                return (size_t)-1;
+            }
         }
 
         memcpy(out, tmp_out, final_out);
@@ -244,10 +253,10 @@ static inline __m256i encode_chars(__m256i in) {
 
     /* Base64 encoding table, see RFC4648 */
     tmp = translate_range(in, 0, 25, 'A');
-    tmp |= translate_range(in, 26, 26 + 25, 'a');
-    tmp |= translate_range(in, 52, 61, '0');
-    tmp |= translate_exact(in, 62, '+');
-    tmp |= translate_exact(in, 63, '/');
+    tmp = _mm256_or_si256(tmp, translate_range(in, 26, 26 + 25, 'a'));
+    tmp = _mm256_or_si256(tmp, translate_range(in, 52, 61, '0'));
+    tmp = _mm256_or_si256(tmp, translate_exact(in, 62, '+'));
+    tmp = _mm256_or_si256(tmp, translate_exact(in, 63, '/'));
 
     return tmp;
 }
@@ -300,10 +309,10 @@ static inline __m256i encode_stride(__m256i vec) {
     __m256i mask2 = _mm256_set1_epi32(0x3F << 12);
     __m256i mask3 = _mm256_set1_epi32(0x3F << 18);
 
-    __m256i digit0 = mask0 & vec;
-    __m256i digit1 = mask1 & vec;
-    __m256i digit2 = mask2 & vec;
-    __m256i digit3 = mask3 & vec;
+    __m256i digit0 = _mm256_and_si256(mask0, vec);
+    __m256i digit1 = _mm256_and_si256(mask1, vec);
+    __m256i digit2 = _mm256_and_si256(mask2, vec);
+    __m256i digit3 = _mm256_and_si256(mask3, vec);
 
     /*
      * Because we want to byteswap, the low-order digit0 goes into the
@@ -314,7 +323,7 @@ static inline __m256i encode_stride(__m256i vec) {
     digit2 = _mm256_srli_epi32(digit2, 4);
     digit3 = _mm256_srli_epi32(digit3, 18);
 
-    vec = (digit0 | digit1) | (digit2 | digit3);
+    vec = _mm256_or_si256(_mm256_or_si256(digit0, digit1), _mm256_or_si256(digit2, digit3));
 
     /* Finally translate to the base64 character set */
     return encode_chars(vec);

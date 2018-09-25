@@ -13,6 +13,12 @@
  * permissions and limitations under the License.
  */
 
+/*
+ * MSVC wants us to use the non-portable _dupenv_s instead; since we need
+ * to remain portable, tell MSVC to suppress this warning.
+ */
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -26,6 +32,29 @@
 #define CPUID_AVAILABLE 0
 #define CPUID_UNAVAILABLE 1
 static int cpuid_state = 2;
+
+#ifdef HAVE_MSVC_CPUIDEX
+static bool msvc_check_avx2() {
+    int cpuInfo[4];
+
+    /* Check maximum supported function */
+    __cpuidex(cpuInfo, 0, 0);
+
+    if (cpuInfo[0] < 7) {
+        /*
+         * AVX2 support bit is in function 7, so if function 7 is not
+         * supported, we know we have no AVX2 support
+         */
+        return false;
+    }
+
+    /* CPUID: Extended features */
+    __cpuidex(cpuInfo, 7, 0);
+
+    /* EBX bit 5: AVX2 support */
+    return cpuInfo[1] & (1 << 5);
+}
+#endif
 
 bool aws_common_private_has_avx2() {
     if (AWS_LIKELY(cpuid_state == 0))
@@ -46,7 +75,7 @@ bool aws_common_private_has_avx2() {
 #elif defined(HAVE_MAY_I_USE)
     bool available = _may_i_use_cpu_feature(_FEATURE_AVX2);
 #elif defined(HAVE_MSVC_CPUIDEX)
-#error TODO
+    bool available = msvc_check_avx2();
 #else
 #error No CPUID probe mechanism available
 #endif
