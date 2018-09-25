@@ -62,23 +62,29 @@ static inline __m256i translate_exact(__m256i in, uint8_t match, uint8_t decode)
  * on decode failure, returns false, else returns true on success.
  */
 static inline bool decode_vec(__m256i *in) {
-    __m256i tmp;
+    __m256i tmp1, tmp2, tmp3;
 
-    /* Base64 decoding table, see RFC4648 */
-    tmp = translate_range(*in, 'A', 'Z', 0 + 1);
-    tmp = _mm256_or_si256(tmp, translate_range(*in, 'a', 'z', 26 + 1));
-    tmp = _mm256_or_si256(tmp, translate_range(*in, '0', '9', 52 + 1));
-    tmp = _mm256_or_si256(tmp, translate_exact(*in, '+', 62 + 1));
-    tmp = _mm256_or_si256(tmp, translate_exact(*in, '/', 63 + 1));
+    /*
+     * Base64 decoding table, see RFC4648
+     *
+     * Note that we use multiple vector registers to try to allow the CPU to
+     * paralellize the merging ORs
+     */
+    tmp1 = translate_range(*in, 'A', 'Z', 0 + 1);
+    tmp2 = translate_range(*in, 'a', 'z', 26 + 1);
+    tmp3 = translate_range(*in, '0', '9', 52 + 1);
+    tmp1 = _mm256_or_si256(tmp1, translate_exact(*in, '+', 62 + 1));
+    tmp2 = _mm256_or_si256(tmp2, translate_exact(*in, '/', 63 + 1));
+    tmp3 = _mm256_or_si256(tmp3, _mm256_or_si256(tmp1, tmp2));
 
     /*
      * We use 0 to mark decode failures, so everything is decoded to one higher
      * than normal. We'll shift this down now.
      */
-    *in = _mm256_sub_epi8(tmp, _mm256_set1_epi8(1));
+    *in = _mm256_sub_epi8(tmp3, _mm256_set1_epi8(1));
 
     /* If any byte is now zero, we had a decode failure */
-    __m256i mask = _mm256_cmpeq_epi8(tmp, _mm256_set1_epi8(0));
+    __m256i mask = _mm256_cmpeq_epi8(tmp3, _mm256_set1_epi8(0));
     return _mm256_testz_si256(mask, mask);
 }
 
@@ -249,16 +255,20 @@ size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned 
 
 /***** Encode logic *****/
 static inline __m256i encode_chars(__m256i in) {
-    __m256i tmp;
+    __m256i tmp1, tmp2, tmp3;
 
-    /* Base64 encoding table, see RFC4648 */
-    tmp = translate_range(in, 0, 25, 'A');
-    tmp = _mm256_or_si256(tmp, translate_range(in, 26, 26 + 25, 'a'));
-    tmp = _mm256_or_si256(tmp, translate_range(in, 52, 61, '0'));
-    tmp = _mm256_or_si256(tmp, translate_exact(in, 62, '+'));
-    tmp = _mm256_or_si256(tmp, translate_exact(in, 63, '/'));
+    /*
+     * Base64 encoding table, see RFC4648
+     *
+     * We again use fan-in for the ORs here.
+     */
+    tmp1 = translate_range(in, 0, 25, 'A');
+    tmp2 = translate_range(in, 26, 26 + 25, 'a');
+    tmp3 = translate_range(in, 52, 61, '0');
+    tmp1 = _mm256_or_si256(tmp1, translate_exact(in, 62, '+'));
+    tmp2 = _mm256_or_si256(tmp2, translate_exact(in, 63, '/'));
 
-    return tmp;
+    return _mm256_or_si256(tmp3, _mm256_or_si256(tmp1, tmp2));
 }
 
 /*
