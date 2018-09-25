@@ -21,6 +21,8 @@
 
 #include <aws/testing/aws_test_harness.h>
 
+#include <alloca.h>
+
 AWS_TEST_CASE(atomics_semantics, t_semantics)
 static int t_semantics(struct aws_allocator *allocator, void *ctx) {
     /*

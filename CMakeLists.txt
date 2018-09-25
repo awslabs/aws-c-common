@@ -136,10 +136,10 @@ install(
 )
 
 export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
-install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
+install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "lib/${CMAKE_PROJECT_NAME}/cmake/")
 
 file(GLOB EXPORT_MODULES "cmake/*.cmake")
-install(FILES ${EXPORT_MODULES} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/")
+install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
 
 include(CTest)
 add_subdirectory(tests)
