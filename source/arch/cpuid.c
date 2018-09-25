@@ -23,7 +23,7 @@
 #include <immintrin.h>
 
 #ifdef HAVE_MSVC_CPUIDEX
-#include <intrin.h>
+#    include <intrin.h>
 #endif
 
 #include <aws/common/common.h>
@@ -77,7 +77,7 @@ bool aws_common_private_has_avx2() {
 #elif defined(HAVE_MSVC_CPUIDEX)
     bool available = msvc_check_avx2();
 #else
-#error No CPUID probe mechanism available
+#    error No CPUID probe mechanism available
 #endif
     cpuid_state = available ? CPUID_AVAILABLE : CPUID_UNAVAILABLE;
 
