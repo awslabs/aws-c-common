@@ -19,14 +19,16 @@
  */
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <emmintrin.h>
+/* for _may_i_use_cpu_feature */
 #include <immintrin.h>
 
 #ifdef HAVE_MSVC_CPUIDEX
+/* for __cpuidex */
 #    include <intrin.h>
 #endif
 
 #include <aws/common/common.h>
+#include <stdlib.h>
 
 #define CPUID_UNKNOWN 2
 #define CPUID_AVAILABLE 0
