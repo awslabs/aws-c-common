@@ -16,6 +16,13 @@ include(CheckIncludeFile)
 
 check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
 
+if (HAVE_M_AVX2_FLAG)
+    set(AVX2_CFLAGS "-mavx -mavx2")
+endif()
+
+set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
+
 check_c_source_compiles("
 #include <immintrin.h>
 #include <emmintrin.h>
@@ -59,9 +66,7 @@ int main() {
     return 0;
 }" HAVE_MSVC_CPUIDEX)
 
-if (HAVE_M_AVX2_FLAG)
-    set(AVX2_CFLAGS "-mavx -mavx2")
-endif()
+set(CMAKE_REQUIRED_FLAGS "${old_flags}")
 
 macro(simd_add_definition_if target definition)
     if(${definition})
@@ -72,15 +77,10 @@ endmacro(simd_add_definition_if)
 # Configure private preprocessor definitions for SIMD-related features
 # Does not set any processor feature codegen flags
 function(simd_add_definitions target)
-    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
-    
     simd_add_definition_if(${target} HAVE_AVX2_INTRINSICS)
     simd_add_definition_if(${target} HAVE_MAY_I_USE)
     simd_add_definition_if(${target} HAVE_BUILTIN_CPU_SUPPORTS)
     simd_add_definition_if(${target} HAVE_MSVC_CPUIDEX)
-
-    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
 endfunction(simd_add_definitions)
 
 # Adds source files only if AVX2 is supported. These files will be built with
