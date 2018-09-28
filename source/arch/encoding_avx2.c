@@ -186,15 +186,20 @@ static inline bool decode(const unsigned char *in, unsigned char *out) {
      * [0 1 2 3] [4 5]
      */
     __m128i lo = _mm256_extracti128_si256(vec, 0);
-#ifndef _MSC_VER
+    /*
+     * Unfortunately some compilers don't support _mm256_extract_epi64,
+     * so we'll just copy right out of the vector as a fallback
+     */
+
+#ifdef HAVE_MM256_EXTRACT_EPI64
     uint64_t hi = _mm256_extract_epi64(vec, 2);
+    const uint64_t *p_hi = &hi;
 #else
-    /* MSVC does not support _mm256_extract_epi64 */
-    uint64_t hi = vec.m256i_u64[2];
+    const uint64_t *p_hi = (uint64_t *)&vec + 2;
 #endif
 
     _mm_storeu_si128((__m128i *)out, lo);
-    memcpy(out + 16, &hi, sizeof(hi));
+    memcpy(out + 16, p_hi, sizeof(*p_hi));
 
     return true;
 }
