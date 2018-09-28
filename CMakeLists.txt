@@ -17,6 +17,7 @@ project(aws-c-common C)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(Sanitizers)
+include(SIMD)
 
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
@@ -100,6 +101,13 @@ endif()
 
 add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
+#apple source already includes the definitions we want, and setting this posix source
+#version causes it to revert to an older version. So don't turn it on there, we don't need it.
+if (UNIX AND NOT APPLE)
+    #this only gets applied to aws-c-common (not its consumers).
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L)
+endif()
+
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 
@@ -110,6 +118,20 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE "-fvisibility=hidden")
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+
+# Enable SIMD encoder if the compiler supports the right features
+simd_add_definitions(${CMAKE_PROJECT_NAME})
+
+if (HAVE_MAY_I_USE OR HAVE_BUILTIN_CPU_SUPPORTS OR HAVE_MSVC_CPUIDEX)
+    set(HAVE_SIMD_CPUID TRUE)
+endif()
+
+if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+	target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
+    simd_add_source_avx2(${CMAKE_PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
+    message(STATUS "Building SIMD base64 decoder")
+endif()
 
 # Preserve subdirectories when installing headers
 foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${AWS_TEST_HEADERS})
@@ -126,10 +148,10 @@ install(
 )
 
 export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
-install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_PROJECT_NAME}/cmake/")
+install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "lib/${CMAKE_PROJECT_NAME}/cmake/")
 
 file(GLOB EXPORT_MODULES "cmake/*.cmake")
-install(FILES ${EXPORT_MODULES} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/")
+install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
 
 include(CTest)
 add_subdirectory(tests)

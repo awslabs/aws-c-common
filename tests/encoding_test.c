@@ -45,7 +45,13 @@ static int s_run_hex_encoding_test_case(
     ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected, expected_size, output.buffer, output_size, "Encode output should have been %s.", expected);
+        expected,
+        expected_size,
+        output.buffer,
+        output_size,
+        "Encode output should have been {%s}, was {%s}.",
+        expected,
+        output.buffer);
     ASSERT_INT_EQUALS(output_size, output.len);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
@@ -297,7 +303,13 @@ static int s_run_base64_encoding_test_case(
     ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected, expected_size, output.buffer, output.len, "Encode output should have been %s.", expected);
+        expected,
+        expected_size,
+        output.buffer,
+        output.len,
+        "Encode output should have been {%s}, was {%s}.",
+        expected,
+        output.buffer);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
@@ -327,7 +339,13 @@ static int s_run_base64_encoding_test_case(
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        test_str, test_str_size, output.buffer, output_size, "Decode output should have been %s.", test_str);
+        test_str,
+        test_str_size,
+        output.buffer,
+        output_size,
+        "Decode output should have been {%s} (len=%zu).",
+        test_str,
+        test_str_size);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
@@ -419,6 +437,18 @@ static int s_base64_encoding_test_case_foobar(struct aws_allocator *allocator, v
 
 AWS_TEST_CASE(base64_encoding_test_case_foobar_test, s_base64_encoding_test_case_foobar)
 
+static int s_base64_encoding_test_case_32bytes(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    /*                  01234567890123456789012345678901 */
+    char test_data[] = "this is a 32 byte long string!!!";
+    char expected[] = "dGhpcyBpcyBhIDMyIGJ5dGUgbG9uZyBzdHJpbmchISE=";
+
+    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected));
+}
+
+AWS_TEST_CASE(base64_encoding_test_case_32bytes_test, s_base64_encoding_test_case_32bytes)
+
 static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -429,6 +459,60 @@ static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void
 }
 
 AWS_TEST_CASE(base64_encoding_test_zeros, s_base64_encoding_test_zeros_fn)
+
+static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    fprintf(stderr, "--test\n");
+    uint8_t test_data[32];
+    for (int i = 0; i < sizeof(test_data); i++) {
+        /* 0000 0100 0010 0000 1100 0100 */
+#if 0
+        test_data[i] = 0x;
+        test_data[i + 1] = 0x20;
+        test_data[i + 2] = 0xc4;
+#endif
+        test_data[i] = (uint8_t)i;
+        /* b64 nibbles: 1 2 3 4 (BCDE) */
+    }
+    struct aws_byte_buf original_data = aws_byte_buf_from_array(test_data, sizeof(test_data));
+
+    uint8_t test_hex[65] = {0};
+    struct aws_byte_buf hex = aws_byte_buf_from_array(test_hex, sizeof(test_hex));
+
+    uint8_t test_b64[128] = {0};
+    struct aws_byte_buf b64_data = aws_byte_buf_from_array(test_b64, sizeof(test_b64));
+
+    aws_base64_encode(&original_data, &b64_data);
+    b64_data.len--;
+
+    uint8_t decoded_data[32] = {0};
+    struct aws_byte_buf decoded_buf = aws_byte_buf_from_array(decoded_data, sizeof(decoded_data));
+
+    aws_base64_decode(&b64_data, &decoded_buf);
+
+    if (memcmp(decoded_buf.buffer, original_data.buffer, decoded_buf.len) != 0) {
+        aws_hex_encode(&original_data, &hex);
+        fprintf(stderr, "Base64 round-trip failed\n");
+        fprintf(stderr, "Original: %s\n", (char *)test_hex);
+        fprintf(stderr, "Base64  : ");
+        for (size_t i = 0; i < sizeof(test_b64); i++) {
+            if (!test_b64[i]) {
+                break;
+            }
+            fprintf(stderr, " %c", test_b64[i]);
+        }
+        fprintf(stderr, "\n");
+        memset(test_hex, 0, sizeof(test_hex));
+        aws_hex_encode(&decoded_buf, &hex);
+        fprintf(stderr, "Decoded : %s\n", (char *)test_hex);
+        return 1;
+    }
+
+    return 0;
+}
+AWS_TEST_CASE(base64_encoding_test_roundtrip, s_base64_encoding_test_roundtrip)
 
 /* this test is here because I manually touched the decoding table with sentinal
  * values for efficiency reasons and I want to make sure it matches the encoded
