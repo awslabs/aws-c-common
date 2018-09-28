@@ -41,6 +41,16 @@ int main() {
 
 check_c_source_compiles("
 #include <immintrin.h>
+#include <string.h>
+
+int main() {
+    __m256i vec;
+    memset(&vec, 0, sizeof(vec));
+    return (int)_mm256_extract_epi64(vec, 2);
+}" HAVE_MM256_EXTRACT_EPI64)
+
+check_c_source_compiles("
+#include <immintrin.h>
 
 int main() {
     return _may_i_use_cpu_feature(_FEATURE_AVX2 | _FEATURE_SSE4_1);
@@ -81,6 +91,7 @@ function(simd_add_definitions target)
     simd_add_definition_if(${target} HAVE_MAY_I_USE)
     simd_add_definition_if(${target} HAVE_BUILTIN_CPU_SUPPORTS)
     simd_add_definition_if(${target} HAVE_MSVC_CPUIDEX)
+    simd_add_definition_if(${target} HAVE_MM256_EXTRACT_EPI64)
 endfunction(simd_add_definitions)
 
 # Adds source files only if AVX2 is supported. These files will be built with
