@@ -22,7 +22,11 @@
 #    include <pthread.h>
 #endif
 
-enum aws_thread_detach_state { AWS_THREAD_NOT_CREATED = 1, AWS_THREAD_JOINABLE, AWS_THREAD_JOIN_COMPLETED };
+enum aws_thread_detach_state {
+    AWS_THREAD_NOT_CREATED = 1,
+    AWS_THREAD_JOINABLE,
+    AWS_THREAD_JOIN_COMPLETED,
+};
 
 struct aws_thread_options {
     size_t stack_size;
@@ -99,7 +103,7 @@ void aws_thread_clean_up(struct aws_thread *thread);
  * returns the thread id of the calling thread.
  */
 AWS_COMMON_API
-uint64_t aws_thread_current_thread_id();
+uint64_t aws_thread_current_thread_id(void);
 
 /**
  * Sleeps the current thread by nanos.

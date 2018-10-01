@@ -29,7 +29,7 @@ function(aws_set_common_properties target)
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Werror)
+        list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes)
 
         if(NOT SET_PROPERTIES_NO_WEXTRA)
             list(APPEND AWS_C_FLAGS -Wextra)
