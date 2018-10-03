@@ -28,7 +28,7 @@
  * out at compile time and code which calls "if (aws_is_big_endian())" will do
  * the right thing without branching.
  */
-AWS_STATIC_IMPL int aws_is_big_endian() {
+AWS_STATIC_IMPL int aws_is_big_endian(void) {
     const uint16_t z = 0x100;
     return *(const uint8_t *)&z;
 }
