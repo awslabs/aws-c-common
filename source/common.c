@@ -50,7 +50,7 @@ static struct aws_allocator default_allocator = {
     .mem_realloc = s_default_realloc,
 };
 
-struct aws_allocator *aws_default_allocator() {
+struct aws_allocator *aws_default_allocator(void) {
     return &default_allocator;
 }
 

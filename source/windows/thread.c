@@ -99,7 +99,7 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     thread->thread_handle = 0;
 }
 
-uint64_t aws_thread_current_thread_id() {
+uint64_t aws_thread_current_thread_id(void) {
     return (uint64_t)GetCurrentThreadId();
 }
 

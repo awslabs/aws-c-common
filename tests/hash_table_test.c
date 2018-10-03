@@ -443,7 +443,7 @@ static void s_destroy_value_fn(void *value) {
     ++s_value_removal_counter;
 }
 
-static void s_reset_destroy_ck() {
+static void s_reset_destroy_ck(void) {
     s_key_removal_counter = 0;
     s_value_removal_counter = 0;
     s_last_removed_key = NULL;
@@ -773,7 +773,7 @@ static int s_qsort_churn_entry(const void *a, const void *b) {
     return 0;
 }
 
-static long s_timestamp() {
+static long s_timestamp(void) {
     uint64_t time = 0;
     aws_sys_clock_get_ticks(&time);
     return (long)(time / 1000);

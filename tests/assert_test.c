@@ -51,7 +51,7 @@ int begin_test(int *index, const char *testname, const char *file, int line, int
 
 static int side_effect_ctr = 0;
 
-int side_effect() {
+int side_effect(void) {
     if (side_effect_ctr++) {
         fprintf(
             stderr,
@@ -162,7 +162,7 @@ int test_asserts(int *index) {
     return NO_MORE_TESTS;
 }
 
-void reset() {
+void reset(void) {
     g_cur_testname = "UNKNOWN";
     g_cur_file = "UNKNOWN";
     g_bail_out = 0;
