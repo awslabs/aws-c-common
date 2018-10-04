@@ -43,7 +43,7 @@ struct aws_atomic_var {
         .u = {.ptrval = (void *)(x) }                                                                                  \
     }
 
-static inline void aws_atomic_private_compiler_barrier() {
+static inline void aws_atomic_private_compiler_barrier(void) {
     __asm__ __volatile__("" : : : "memory");
 }
 

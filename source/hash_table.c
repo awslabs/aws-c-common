@@ -31,7 +31,7 @@
  * macro. */
 #include <aws/common/private/lookup3.c>
 
-static void s_suppress_unused_lookup3_func_warnings() {
+static void s_suppress_unused_lookup3_func_warnings(void) {
     /* We avoid making changes to lookup3 if we can avoid it, but since it has functions
      * we're not using, reference them somewhere to suppress the unused function warning.
      */

@@ -36,7 +36,7 @@
 static int cpuid_state = 2;
 
 #ifdef HAVE_MSVC_CPUIDEX
-static bool msvc_check_avx2() {
+static bool msvc_check_avx2(void) {
     int cpuInfo[4];
 
     /* Check maximum supported function */
@@ -58,7 +58,7 @@ static bool msvc_check_avx2() {
 }
 #endif
 
-bool aws_common_private_has_avx2() {
+bool aws_common_private_has_avx2(void) {
     if (AWS_LIKELY(cpuid_state == 0))
         return true;
     if (AWS_LIKELY(cpuid_state == 1))

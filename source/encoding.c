@@ -22,7 +22,7 @@
 #ifdef USE_SIMD_ENCODING
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len);
 size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
-bool aws_common_private_has_avx2();
+bool aws_common_private_has_avx2(void);
 #else
 /*
  * When AVX2 compilation is unavailable, we use these stubs to fall back to the pure-C decoder.
@@ -47,7 +47,7 @@ static inline size_t aws_common_private_base64_encode_sse41(
     (void)len;
     return (size_t)-1; /* unreachable */
 }
-static inline bool aws_common_private_has_avx2() {
+static inline bool aws_common_private_has_avx2(void) {
     return false;
 }
 #endif

@@ -314,7 +314,7 @@ static int run_races(
     return 0;
 }
 
-static void notify_race_completed() {
+static void notify_race_completed(void) {
     if (aws_mutex_lock(&done_mutex)) {
         abort();
     }

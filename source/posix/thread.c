@@ -160,7 +160,7 @@ int aws_thread_join(struct aws_thread *thread) {
     return AWS_OP_SUCCESS;
 }
 
-uint64_t aws_thread_current_thread_id() {
+uint64_t aws_thread_current_thread_id(void) {
     return (uint64_t)pthread_self();
 }
 
