@@ -14,9 +14,14 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/mutex.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
+
+#ifdef AWS_ALLOCATOR_LEAKCHECK
+#   include <stdio.h>
+#endif
 
 #ifdef __MACH__
 #    include <CoreFoundation/CoreFoundation.h>
@@ -28,34 +33,114 @@
 #    pragma warning(disable : 4100)
 #endif
 
-static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
-    (void)allocator;
-    return malloc(size);
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+struct aws_allocation {
+    const char *file;
+    int line;
+    size_t size;
+
+    struct aws_allocation *next;
+    struct aws_allocation *prev;
+};
+
+struct aws_mutex s_mutex = AWS_MUTEX_INIT;
+struct aws_allocation *s_head(void) {
+    static struct aws_allocation head;
+    static bool init;
+
+    if (!init) {
+        head.next = &head;
+        head.prev = &head;
+        init = 1;
+    }
+
+    return &head;
 }
 
-static void s_default_free(struct aws_allocator *allocator, void *ptr) {
+static void *s_hook_leakchecker(void *mem, size_t size, const char *file, int line) {
+    if (!mem) {
+        return mem;
+    }
+
+    struct aws_allocation* allocation = (struct aws_allocation *)mem;
+    allocation->file = file;
+    allocation->line = line;
+    allocation->size = size;
+    allocation->next = allocation;
+    allocation->prev = allocation;
+
+    aws_mutex_lock(&s_mutex);
+    struct aws_allocation *head = s_head();
+    allocation->prev = head;
+    allocation->next = head->next;
+    head->next->prev = allocation;
+    head->next = allocation;
+    aws_mutex_unlock(&s_mutex);
+
+    mem = (void *)(allocation + 1);
+    return mem;
+}
+#endif
+
+void *aws_default_malloc(struct aws_allocator *allocator, size_t size, const char *file, int line) {
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+    void *mem = malloc(size + sizeof(struct aws_allocation));
+    mem = s_hook_leakchecker(mem, size, file, line);
+    return mem;
+#else
+    (void)allocator;
+    (void)file;
+    (void)line;
+    return malloc(size);
+#endif
+}
+
+void aws_default_free(struct aws_allocator *allocator, void *ptr) {
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+    struct aws_allocation *allocation = (struct aws_allocation *)ptr - 1;
+    aws_mutex_lock(&s_mutex);
+    allocation->prev->next = allocation->next;
+    allocation->next->prev = allocation->prev;
+    aws_mutex_unlock(&s_mutex);
+    free((void *)allocation);
+#else
     (void)allocator;
     free(ptr);
+#endif
 }
 
-static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+void *aws_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize, const char *file, int line) {
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+    struct aws_allocation *allocation = (struct aws_allocation *)ptr - 1;
+    aws_mutex_lock(&s_mutex);
+    allocation->prev->next = allocation->next;
+    allocation->next->prev = allocation->prev;
+    aws_mutex_unlock(&s_mutex);
+
+    void *mem = realloc(allocation, newsize + sizeof(struct aws_allocation));
+    mem = s_hook_leakchecker(mem, newsize, file, line);
+    return mem;
+#else
     (void)allocator;
     (void)oldsize;
+    (void)file;
+    (void)line;
     return realloc(ptr, newsize);
+#endif
 }
 
 static struct aws_allocator default_allocator = {
-    .mem_acquire = s_default_malloc,
-    .mem_release = s_default_free,
-    .mem_realloc = s_default_realloc,
+    .mem_acquire = aws_default_malloc,
+    .mem_release = aws_default_free,
+    .mem_realloc = aws_default_realloc,
 };
 
 struct aws_allocator *aws_default_allocator(void) {
     return &default_allocator;
 }
 
-void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
-    void *mem = allocator->mem_acquire(allocator, size);
+void *aws_mem_acquire_implementation(struct aws_allocator *allocator, size_t size, const char *file, int line) {
+    void *mem = allocator->mem_acquire(allocator, size, file, line);
     if (!mem) {
         aws_raise_error(AWS_ERROR_OOM);
     }
@@ -118,9 +203,9 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
     allocator->mem_release(allocator, ptr);
 }
 
-int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
+int aws_mem_realloc_implementation(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize, const char *file, int line) {
     if (allocator->mem_realloc) {
-        void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
+        void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize, file, line);
         if (!newptr) {
             return aws_raise_error(AWS_ERROR_OOM);
         }
@@ -134,7 +219,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
         return AWS_OP_SUCCESS;
     }
 
-    void *newptr = aws_mem_acquire(allocator, newsize);
+    void *newptr = aws_mem_acquire_implementation(allocator, newsize, file, line);
     if (!newptr) {
         /* AWS_ERROR_OOM already raised */
         return AWS_OP_ERR;
@@ -148,6 +233,28 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
     *ptr = newptr;
 
     return AWS_OP_SUCCESS;
+}
+
+void aws_mem_print_leaks_from_default_allocator(void) {
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+    aws_mutex_lock(&s_mutex);
+    struct aws_allocation *head = s_head();
+    struct aws_allocation *next = head->next;
+    bool leaks;
+
+    while (next != head) {
+        fprintf(stderr, "LEAKED %zu bytes from file \"%s\" at line %d from address %p.\n", next->size, next->file, next->line, (void*)(next + 1));
+        next = next->next;
+        leaks = 1;
+    }
+
+    if (leaks) {
+        fprintf(stderr, "WARNING: Memory leaks detected (see above).\n");
+    } else {
+        fprintf(stderr, "SUCCESS: No memory leaks detected.\n");
+    }
+    aws_mutex_unlock(&s_mutex);
+#endif
 }
 
 /* Wraps a CFAllocator around aws_allocator. For Mac only. */

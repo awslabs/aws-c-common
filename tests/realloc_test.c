@@ -23,8 +23,10 @@
 
 static size_t s_alloc_counter, s_alloc_total_size, s_call_ct_malloc, s_call_ct_free, s_call_ct_realloc;
 
-static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
+static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size, const char *file, int line) {
     (void)allocator;
+    (void)file;
+    (void)line;
 
     s_alloc_counter++;
     s_call_ct_malloc++;
@@ -52,8 +54,10 @@ static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 
 static size_t s_original_size, s_reported_oldsize;
 
-static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize, const char *file, int line) {
     (void)allocator;
+    (void)file;
+    (void)line;
 
     uint8_t *buf = ptr;
     buf -= 16;
@@ -78,17 +82,21 @@ static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t o
     return buf + 16;
 }
 
-static void *s_test_malloc_failing(struct aws_allocator *allocator, size_t size) {
+static void *s_test_malloc_failing(struct aws_allocator *allocator, size_t size, const char *file, int line) {
     (void)allocator;
     (void)size;
+    (void)file;
+    (void)line;
     return NULL;
 }
 
-static void *s_test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+static void *s_test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize, const char *file, int line) {
     (void)allocator;
     (void)ptr;
     (void)oldsize;
     (void)newsize;
+    (void)file;
+    (void)line;
     return NULL;
 }
 

@@ -138,10 +138,10 @@ AWS_STATIC_ASSERT(sizeof(char) == 1);
 
 /* Allocator structure. An instance of this will be passed around for anything needing memory allocation */
 struct aws_allocator {
-    void *(*mem_acquire)(struct aws_allocator *allocator, size_t size);
+    void *(*mem_acquire)(struct aws_allocator *allocator, size_t size, const char *file, int line);
     void (*mem_release)(struct aws_allocator *allocator, void *ptr);
     /* Optional method; if not supported, this pointer must be NULL */
-    void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize);
+    void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize, const char *file, int line);
     void *impl;
 };
 
@@ -154,6 +154,15 @@ typedef const struct __CFAllocator *CFAllocatorRef;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+AWS_COMMON_API
+void *aws_default_malloc(struct aws_allocator *allocator, size_t size, const char *file, int line);
+
+AWS_COMMON_API
+void aws_default_free(struct aws_allocator *allocator, void *ptr);
+
+AWS_COMMON_API
+void *aws_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize, const char *file, int line);
 
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator(void);
@@ -178,7 +187,7 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
  * Returns at least `size` of memory ready for usage or returns NULL on failure.
  */
 AWS_COMMON_API
-void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
+void *aws_mem_acquire_implementation(struct aws_allocator *allocator, size_t size, const char *file, int line);
 
 /**
  * Allocates many chunks of bytes into a single block. Expects to be called with alternating void ** (dest), size_t
@@ -207,7 +216,7 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr);
  * AWS_ERROR_OOM error.
  */
 AWS_COMMON_API
-int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize);
+int aws_mem_realloc_implementation(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize, const char *file, int line);
 /*
  * Maintainer note: The above function doesn't return the pointer (as with
  * standard C realloc) as this pattern becomes error-prone when OOMs occur.
@@ -215,6 +224,13 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
  * occurs, so we prefer to take the old pointer as an in/out reference argument
  * that we can leave unchanged on failure.
  */
+
+#define aws_mem_acquire(alloc, size) aws_mem_acquire_implementation(alloc, size, __FILE__, __LINE__)
+#define aws_mem_realloc(alloc, ptr, oldsize, newsize) aws_mem_realloc_implementation(alloc, ptr, oldsize, newsize, __FILE__, __LINE__)
+
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
+AWS_COMMON_API void aws_mem_print_leaks_from_default_allocator(void);
+#endif
 
 /*
  * Loads error strings for debugging and logging purposes.

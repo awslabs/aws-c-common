@@ -305,12 +305,12 @@ struct oom_allocator_impl {
     size_t num_allocations_rejected;
 };
 
-static void *s_oom_allocator_acquire(struct aws_allocator *allocator, size_t size) {
+static void *s_oom_allocator_acquire(struct aws_allocator *allocator, size_t size, const char *file, int line) {
     struct oom_allocator_impl *impl = allocator->impl;
     void *mem = NULL;
 
     if (impl->num_allocations < impl->num_allocations_limit) {
-        mem = aws_mem_acquire(impl->alloc, size);
+        mem = aws_mem_acquire_implementation(impl->alloc, size, file, line);
         if (mem) {
             impl->num_allocations++;
         }

@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
+#include <aws/common/exports.h>
 #ifndef _WIN32
 #    include <pthread.h>
 #endif

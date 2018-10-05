@@ -53,13 +53,13 @@ struct memory_test_tracker {
     void *blob;
 };
 
-static inline void *s_mem_acquire_malloc(struct aws_allocator *allocator, size_t size) {
+static inline void *s_mem_acquire_malloc(struct aws_allocator *allocator, size_t size, const char *file, int line) {
     struct memory_test_allocator *test_allocator = (struct memory_test_allocator *)allocator->impl;
 
     aws_mutex_lock(&test_allocator->mutex);
     test_allocator->allocated += size;
     struct memory_test_tracker *memory =
-        (struct memory_test_tracker *)malloc(size + sizeof(struct memory_test_tracker));
+        (struct memory_test_tracker *)aws_default_malloc(allocator, size + sizeof(struct memory_test_tracker), file, line);
 
     if (!memory) {
         return NULL;
@@ -79,7 +79,7 @@ static inline void s_mem_release_free(struct aws_allocator *allocator, void *ptr
     aws_mutex_lock(&test_allocator->mutex);
     test_allocator->freed += memory->size;
     aws_mutex_unlock(&test_allocator->mutex);
-    free(memory);
+    aws_default_free(allocator, memory);
 }
 
 /** Prints a message to stdout using printf format that appends the function, file and line number.
