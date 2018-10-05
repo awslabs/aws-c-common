@@ -19,7 +19,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifdef AWS_ALLOCATOR_LEAKCHECK
+#ifdef AWS_DEFAULT_ALLOCATOR_LEAKCHECK
 #   include <stdio.h>
 #endif
 
