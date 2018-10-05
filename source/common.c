@@ -262,6 +262,9 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_OVERFLOW_DETECTED,
         "Fixed size value overflow was detected."),
     AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_UNSUPPORTED_OPERATION,
+        "Unsupported operation."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_BUFFER_SIZE,
         "Invalid buffer size."),
     AWS_DEFINE_ERROR_INFO_COMMON(
@@ -333,6 +336,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PRIORITY_QUEUE_EMPTY,
         "Attempt to pop an item from an empty queue."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_PRIORITY_QUEUE_BAD_NODE,
+        "Bad node handle passed to remove."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
         "Item not found in hash table."),

@@ -37,6 +37,22 @@ struct aws_priority_queue {
      * The underlying container storing the queue elements.
      */
     struct aws_array_list container;
+
+    /**
+     * An array of pointers to backpointer elements. This array is initialized when
+     * the first call to aws_priority_queue_push_bp is made, and is subsequently maintained
+     * through any heap node manipulations.
+     *
+     * Each element is a struct aws_priority_queue_node *, pointing to a backpointer field
+     * owned by the calling code, or a NULL. The backpointer field is continually updated
+     * with information needed to locate and remove a specific node later on.
+     */
+    struct aws_array_list backpointers;
+};
+
+struct aws_priority_queue_node {
+    /** The current index of the node in queuesion, or SIZE_MAX if the node has been removed. */
+    size_t current_index;
 };
 
 AWS_EXTERN_C_BEGIN
@@ -58,6 +74,10 @@ int aws_priority_queue_init_dynamic(
 /**
  * Initializes a priority queue struct for use. This mode will not allocate any additional memory. When the heap fills
  * new enqueue operations will fail with AWS_ERROR_PRIORITY_QUEUE_FULL.
+ *
+ * Heaps initialized using this call do not support the aws_priority_queue_push_ref call with a non-NULL backpointer
+ * parameter.
+ *
  * heap is the raw memory allocated for this priority_queue
  * item_count is the maximum number of elements the raw heap can contain
  * item_size is the size of each element in bytes. Mixing items types is not supported by this API.
@@ -84,11 +104,38 @@ AWS_COMMON_API
 int aws_priority_queue_push(struct aws_priority_queue *queue, void *item);
 
 /**
+ * Copies item into the queue and places it in the proper priority order. Complexity: O(log(n)).
+ *
+ * If the backpointer parameter is non-null, the heap will continually update the pointed-to field
+ * with information needed to remove the node later on. *backpointer must remain valid until the node
+ * is removed from the heap, and may be updated on any mutating operation on the priority queue.
+ *
+ * If the node is removed, the backpointer will be set to a sentinel value that indicates that the
+ * node has already been removed. It is safe (and a no-op) to call aws_priority_queue_remove with
+ * such a sentinel value.
+ */
+AWS_COMMON_API
+int aws_priority_queue_push_ref(
+    struct aws_priority_queue *queue,
+    void *item,
+    struct aws_priority_queue_node *backpointer);
+
+/**
  * Copies the element of the highest priority, and removes it from the queue.. Complexity: O(log(n)).
  * If queue is empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY will be raised.
  */
 AWS_COMMON_API
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item);
+
+/**
+ * Removes a specific node from the priority queue. Complexity: O(log(n))
+ * After removing a node (using either _remove or _pop), the backpointer set at push_ref time is set
+ * to a sentinel value. If this sentinel value is passed to aws_priority_queue_remove,
+ * AWS_ERROR_PRIORITY_QUEUE_BAD_NODE will be raised. Note, however, that passing uninitialized
+ * aws_priority_queue_nodes, or ones from different priority queues, results in undefined behavior.
+ */
+AWS_COMMON_API
+int aws_priority_queue_remove(struct aws_priority_queue *queue, void *item, const struct aws_priority_queue_node *node);
 
 /**
  * Copies the element of the highest priority. Complexity: constant time.
