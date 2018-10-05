@@ -178,6 +178,293 @@ static int s_test_priority_queue_size_and_capacity(struct aws_allocator *allocat
     return 0;
 }
 
+#define ADD_ELEMS(pq, ...)                                                                                             \
+    do {                                                                                                               \
+        static int ADD_ELEMS_elems[] = {__VA_ARGS__};                                                                  \
+        for (size_t ADD_ELEMS_i = 0; ADD_ELEMS_i < sizeof(ADD_ELEMS_elems) / sizeof(*ADD_ELEMS_elems);                 \
+             ADD_ELEMS_i++) {                                                                                          \
+            ASSERT_SUCCESS(aws_priority_queue_push(&(pq), &ADD_ELEMS_elems[ADD_ELEMS_i]));                             \
+        }                                                                                                              \
+    } while (0)
+
+#define CHECK_ORDER(pq, ...)                                                                                           \
+    do {                                                                                                               \
+        static int CHECK_ORDER_elems[] = {__VA_ARGS__};                                                                \
+        size_t CHECK_ORDER_count = sizeof(CHECK_ORDER_elems) / sizeof(*CHECK_ORDER_elems);                             \
+        size_t CHECK_ORDER_i = 0;                                                                                      \
+        int CHECK_ORDER_val;                                                                                           \
+        while (aws_priority_queue_pop(&(pq), &CHECK_ORDER_val) == AWS_OP_SUCCESS) {                                    \
+            ASSERT_TRUE(CHECK_ORDER_i < CHECK_ORDER_count);                                                            \
+            ASSERT_INT_EQUALS(CHECK_ORDER_val, CHECK_ORDER_elems[CHECK_ORDER_i]);                                      \
+            CHECK_ORDER_i++;                                                                                           \
+        }                                                                                                              \
+        ASSERT_INT_EQUALS(CHECK_ORDER_i, CHECK_ORDER_count);                                                           \
+    } while (0)
+
+static int s_test_remove_root(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_priority_queue queue;
+    struct aws_priority_queue_node node = {12345};
+    int val = 0;
+    ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
+
+    ASSERT_SUCCESS(aws_priority_queue_push_ref(&queue, &val, &node));
+    ADD_ELEMS(queue, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+
+    val = 42;
+    ASSERT_SUCCESS(aws_priority_queue_remove(&queue, &val, &node));
+    ASSERT_INT_EQUALS(val, 0);
+    ASSERT_ERROR(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE, aws_priority_queue_remove(&queue, &val, &node));
+
+    CHECK_ORDER(queue, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+
+    aws_priority_queue_clean_up(&queue);
+
+    return 0;
+}
+
+static int s_test_remove_leaf(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_priority_queue queue;
+    struct aws_priority_queue_node node = {12345};
+    ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
+
+    ADD_ELEMS(queue, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+    int val = 16;
+    ASSERT_SUCCESS(aws_priority_queue_push_ref(&queue, &val, &node));
+
+    val = 42;
+    ASSERT_SUCCESS(aws_priority_queue_remove(&queue, &val, &node));
+    ASSERT_INT_EQUALS(val, 16);
+    ASSERT_ERROR(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE, aws_priority_queue_remove(&queue, &val, &node));
+
+    CHECK_ORDER(queue, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+    aws_priority_queue_clean_up(&queue);
+
+    return 0;
+}
+
+/*
+ * Here we force the heap to sift a value up to its parents when removing an interior node.
+ *
+ * 0
+ *  20
+ *   22
+ *    222 <- Removed, swapped with 15
+ *     2222
+ *     2221
+ *    221
+ *     2212
+ *     2211
+ *   21
+ *    212
+ *     2122
+ *     2121
+ *    211
+ *     2112
+ *     2111
+ *  1
+ *   2
+ *    3
+ *     4
+ *     5
+ *    6
+ *     7
+ *     8
+ *   9
+ *    10
+ *     11
+ *     12
+ *    13
+ *     14
+ *     15
+ */
+static int s_test_remove_interior_sift_up(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_priority_queue queue;
+    struct aws_priority_queue_node node = {12345};
+    ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
+
+    ADD_ELEMS(queue, 0, 20, 1, 22, 21, 2, 9);
+    int val = 222;
+    ASSERT_SUCCESS(aws_priority_queue_push_ref(&queue, &val, &node));
+    ADD_ELEMS(
+        queue, 221, 212, 211, 3, 6, 10, 13, 2222, 2221, 2212, 2211, 2122, 2121, 2112, 2111, 4, 5, 7, 8, 11, 12, 14, 15);
+
+    val = 42;
+    ASSERT_SUCCESS(aws_priority_queue_remove(&queue, &val, &node));
+    ASSERT_INT_EQUALS(val, 222);
+    ASSERT_ERROR(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE, aws_priority_queue_remove(&queue, &val, &node));
+
+    CHECK_ORDER(
+        queue,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        20,
+        21,
+        22,
+        211,
+        212,
+        221,
+        /* 222, */ 2111,
+        2112,
+        2121,
+        2122,
+        2211,
+        2212,
+        2221,
+        2222);
+
+    aws_priority_queue_clean_up(&queue);
+
+    return 0;
+}
+
+/*
+ * Here we force the heap to sift a value down to a leaf when removing an interior node.
+ *
+ * 0
+ *  1 <- Removed, swapped with 30
+ *   2
+ *    3
+ *     4
+ *     5
+ *    6
+ *     7
+ *     8
+ *   9
+ *    10
+ *     11
+ *     12
+ *    13
+ *     14
+ *     15
+ *  16
+ *   17
+ *    18
+ *     19
+ *     20
+ *    21
+ *     22
+ *     23
+ *   24
+ *    25
+ *     26
+ *     27
+ *    28
+ *     29
+ *     30
+ */
+static int s_test_remove_interior_sift_down(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_priority_queue queue;
+    struct aws_priority_queue_node node = {12345};
+    ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
+
+    ADD_ELEMS(queue, 0);
+
+    int val = 1;
+    ASSERT_SUCCESS(aws_priority_queue_push_ref(&queue, &val, &node));
+
+    ADD_ELEMS(
+        queue,
+        16,
+        2,
+        9,
+        17,
+        24,
+        3,
+        6,
+        10,
+        13,
+        18,
+        21,
+        25,
+        28,
+        4,
+        5,
+        7,
+        8,
+        11,
+        12,
+        14,
+        15,
+        19,
+        20,
+        22,
+        23,
+        26,
+        27,
+        29,
+        30);
+
+    val = 42;
+    ASSERT_SUCCESS(aws_priority_queue_remove(&queue, &val, &node));
+    ASSERT_INT_EQUALS(val, 1);
+    ASSERT_ERROR(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE, aws_priority_queue_remove(&queue, &val, &node));
+
+    CHECK_ORDER(
+        queue,
+        0,
+        /* 1, */ 2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30);
+
+    aws_priority_queue_clean_up(&queue);
+
+    return 0;
+}
+
+AWS_TEST_CASE(priority_queue_remove_interior_sift_down_test, s_test_remove_interior_sift_down);
+AWS_TEST_CASE(priority_queue_remove_interior_sift_up_test, s_test_remove_interior_sift_up);
+AWS_TEST_CASE(priority_queue_remove_leaf_test, s_test_remove_leaf);
+AWS_TEST_CASE(priority_queue_remove_root_test, s_test_remove_root);
 AWS_TEST_CASE(priority_queue_push_pop_order_test, s_test_priority_queue_preserves_order);
 AWS_TEST_CASE(priority_queue_random_values_test, s_test_priority_queue_random_values);
 AWS_TEST_CASE(priority_queue_size_and_capacity_test, s_test_priority_queue_size_and_capacity);

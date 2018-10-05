@@ -15,47 +15,86 @@
 
 #include <aws/common/priority_queue.h>
 
+#include <assert.h>
 #include <string.h>
 
 #define PARENT_OF(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
 #define LEFT_OF(index) (((index) << 1) + 1)
+#define RIGHT_OF(index) (((index) << 1) + 2)
 
-/* Precondition: with the exception of the first element, the container must be
- * in heap order */
-static void s_sift_down(struct aws_priority_queue *queue) {
-    size_t root = 0;
-    size_t left = LEFT_OF(root);
-    size_t len = aws_array_list_length(&queue->container);
-    void *right_item = NULL, *left_item = NULL, *root_item = NULL;
+static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
+    aws_array_list_swap(&queue->container, a, b);
 
-    while (left < len) {
-        aws_array_list_get_at_ptr(&queue->container, &left_item, left);
+    /* Invariant: If the backpointer array is initialized, we have enough room for all elements */
+    if (queue->backpointers.data) {
+        assert(queue->backpointers.length > a);
+        assert(queue->backpointers.length > b);
 
-        size_t right = left + 1;
-        if (right < len) {
-            aws_array_list_get_at_ptr(&queue->container, &right_item, right);
+        struct aws_priority_queue_node **bp_a = &((struct aws_priority_queue_node **)queue->backpointers.data)[a];
+        struct aws_priority_queue_node **bp_b = &((struct aws_priority_queue_node **)queue->backpointers.data)[b];
 
-            /* choose the larger/smaller of the two in case of a max/min heap
-             * respectively */
-            if (queue->pred(left_item, right_item) > 0) {
-                left = right;
-                left_item = right_item;
-            }
+        struct aws_priority_queue_node *tmp = *bp_a;
+        *bp_a = *bp_b;
+        *bp_b = tmp;
+
+        if (*bp_a) {
+            (*bp_a)->current_index = a;
         }
 
-        aws_array_list_get_at_ptr(&queue->container, &root_item, root);
-        if (queue->pred(root_item, left_item) > 0) {
-            aws_array_list_swap(&queue->container, left, root);
-            root = left;
-            left = LEFT_OF(root);
-        } else {
-            break;
+        if (*bp_b) {
+            (*bp_b)->current_index = b;
         }
     }
 }
 
+/* Precondition: with the exception of the given root element, the container must be
+ * in heap order */
+static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
+    bool did_move = false;
+
+    size_t len = aws_array_list_length(&queue->container);
+
+    while (LEFT_OF(root) < len) {
+        size_t left = LEFT_OF(root);
+        size_t right = RIGHT_OF(root);
+        size_t first = root;
+        void *first_item = NULL, *other_item = NULL;
+
+        aws_array_list_get_at_ptr(&queue->container, &first_item, root);
+        aws_array_list_get_at_ptr(&queue->container, &other_item, left);
+
+        if (queue->pred(first_item, other_item) > 0) {
+            first = left;
+            first_item = other_item;
+        }
+
+        if (right < len) {
+            aws_array_list_get_at_ptr(&queue->container, &other_item, right);
+
+            /* choose the larger/smaller of the two in case of a max/min heap
+             * respectively */
+            if (queue->pred(first_item, other_item) > 0) {
+                first = right;
+                first_item = other_item;
+            }
+        }
+
+        if (first != root) {
+            s_swap(queue, first, root);
+            did_move = true;
+            root = first;
+        } else {
+            break;
+        }
+    }
+
+    return did_move;
+}
+
 /* Precondition: Elements prior to the specified index must be in heap order. */
-static void s_sift_up(struct aws_priority_queue *queue, size_t index) {
+static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
+    bool did_move = false;
+
     void *parent_item, *child_item;
     size_t parent = PARENT_OF(index);
     while (index) {
@@ -70,12 +109,25 @@ static void s_sift_up(struct aws_priority_queue *queue, size_t index) {
         }
 
         if (queue->pred(parent_item, child_item) > 0) {
-            aws_array_list_swap(&queue->container, index, parent);
+            s_swap(queue, index, parent);
+            did_move = true;
             index = parent;
             parent = PARENT_OF(index);
         } else {
             break;
         }
+    }
+
+    return did_move;
+}
+
+/*
+ * Precondition: With the exception of the given index, the heap condition holds for all elements.
+ * In particular, the parent of the current index is a predecessor of all children of the current index.
+ */
+static void s_sift_either(struct aws_priority_queue *queue, size_t index) {
+    if (!index || !s_sift_up(queue, index)) {
+        s_sift_down(queue, index);
     }
 }
 
@@ -87,6 +139,8 @@ int aws_priority_queue_init_dynamic(
     aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
+    memset(&queue->backpointers, 0, sizeof(queue->backpointers));
+
     return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
 }
 
@@ -98,22 +152,108 @@ void aws_priority_queue_init_static(
     aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
+    memset(&queue->backpointers, 0, sizeof(queue->backpointers));
+
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
 }
 
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
     aws_array_list_clean_up(&queue->container);
+    aws_array_list_clean_up(&queue->backpointers);
 }
 
 int aws_priority_queue_push(struct aws_priority_queue *queue, void *item) {
+    return aws_priority_queue_push_ref(queue, item, NULL);
+}
+
+int aws_priority_queue_push_ref(
+    struct aws_priority_queue *queue,
+    void *item,
+    struct aws_priority_queue_node *backpointer) {
     int err = aws_array_list_push_back(&queue->container, item);
     if (err) {
         return err;
     }
 
+    size_t index = aws_array_list_length(&queue->container) - 1;
+
+    if (backpointer && !queue->backpointers.alloc) {
+        if (!queue->container.alloc) {
+            aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+            goto backpointer_update_failed;
+        }
+
+        if (aws_array_list_init_dynamic(
+                &queue->backpointers, queue->container.alloc, index + 1, sizeof(struct aws_priority_queue_node *))) {
+            goto backpointer_update_failed;
+        }
+
+        /* When we initialize the backpointers array we need to zero out all existing entries */
+        memset(queue->backpointers.data, 0, queue->backpointers.current_size);
+    }
+
+    /*
+     * Once we have any backpointers, we want to make sure we always have room in the backpointers array
+     * for all elements; otherwise, sift_down gets complicated if it runs out of memory when sifting an
+     * element with a backpointer down in the array.
+     */
+    if (queue->backpointers.data) {
+        if (aws_array_list_set_at(&queue->backpointers, &backpointer, index)) {
+            goto backpointer_update_failed;
+        }
+    }
+
+    if (backpointer) {
+        backpointer->current_index = index;
+    }
+
     s_sift_up(queue, aws_array_list_length(&queue->container) - 1);
 
     return AWS_OP_SUCCESS;
+
+backpointer_update_failed:
+    /* Failed to initialize or grow the backpointer array, back out the node addition */
+    aws_array_list_pop_back(&queue->container);
+    return AWS_OP_ERR;
+}
+
+static int s_remove_node(struct aws_priority_queue *queue, void *item, size_t item_index) {
+    if (aws_array_list_get_at(&queue->container, item, item_index)) {
+        /* shouldn't happen, but if it does we've already raised an error... */
+        return AWS_OP_ERR;
+    }
+
+    size_t swap_with = aws_array_list_length(&queue->container) - 1;
+    struct aws_priority_queue_node *backpointer = NULL;
+
+    if (item_index != swap_with) {
+        s_swap(queue, item_index, swap_with);
+    }
+
+    aws_array_list_get_at(&queue->backpointers, &backpointer, swap_with);
+    if (backpointer) {
+        backpointer->current_index = SIZE_MAX;
+    }
+
+    aws_array_list_pop_back(&queue->container);
+    aws_array_list_pop_back(&queue->backpointers);
+
+    if (item_index != swap_with) {
+        s_sift_either(queue, item_index);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_priority_queue_remove(
+    struct aws_priority_queue *queue,
+    void *item,
+    const struct aws_priority_queue_node *node) {
+    if (node->current_index >= aws_array_list_length(&queue->container) || !queue->backpointers.data) {
+        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
+    }
+
+    return s_remove_node(queue, item, node->current_index);
 }
 
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
@@ -121,18 +261,7 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
         return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
     }
 
-    /* in this case aws_raise_error(..) has already been called */
-    if (aws_array_list_get_at(&queue->container, item, 0)) {
-        return AWS_OP_ERR;
-    }
-
-    aws_array_list_swap(&queue->container, 0, aws_array_list_length(&queue->container) - 1);
-    if (aws_array_list_pop_back(&queue->container)) {
-        return AWS_OP_ERR;
-    }
-
-    s_sift_down(queue);
-    return AWS_OP_SUCCESS;
+    return s_remove_node(queue, item, 0);
 }
 
 int aws_priority_queue_top(const struct aws_priority_queue *queue, void **item) {
