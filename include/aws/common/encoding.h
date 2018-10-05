@@ -22,9 +22,7 @@
 
 #include <memory.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /*
  * computes the length necessary to store the result of aws_hex_encode().
@@ -83,9 +81,7 @@ int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decode
 AWS_COMMON_API
 int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 /* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 8 bytes.

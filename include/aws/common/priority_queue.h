@@ -39,9 +39,7 @@ struct aws_priority_queue {
     struct aws_array_list container;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a priority queue struct for use. This mode will grow memory automatically (exponential model)
@@ -112,8 +110,6 @@ size_t aws_priority_queue_size(const struct aws_priority_queue *queue);
 AWS_COMMON_API
 size_t aws_priority_queue_capacity(const struct aws_priority_queue *queue);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_PRIORITY_QUEUE_H */

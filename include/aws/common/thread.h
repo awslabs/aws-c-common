@@ -43,9 +43,7 @@ struct aws_thread {
 #endif
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Returns an instance of system default thread options.
@@ -111,8 +109,6 @@ uint64_t aws_thread_current_thread_id(void);
 AWS_COMMON_API
 void aws_thread_current_sleep(uint64_t nanos);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_THREAD_H */

@@ -31,9 +31,7 @@ struct aws_lru_cache {
     size_t max_items;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes the cache. Sets up the underlying hash table and linked list.
@@ -107,8 +105,6 @@ void *aws_lru_cache_get_mru_element(const struct aws_lru_cache *cache);
 AWS_COMMON_API
 size_t aws_lru_cache_get_element_count(const struct aws_lru_cache *cache);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_LRU_CACHE_H */

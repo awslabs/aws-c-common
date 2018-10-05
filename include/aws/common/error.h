@@ -40,9 +40,7 @@ struct aws_error_info_list {
 
 typedef void(aws_error_handler_fn)(int err, void *ctx);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /*
  * Returns the latest error code on the current thread, or 0 if none have
@@ -112,8 +110,6 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ERROR_H */

@@ -128,6 +128,14 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif
 
+#ifdef __cplusplus
+#    define AWS_EXTERN_C_BEGIN extern "C" {
+#    define AWS_EXTERN_C_END }
+#else
+#    define AWS_EXTERN_C_BEGIN
+#    define AWS_EXTERN_C_END
+#endif
+
 #include <aws/common/error.h>
 
 #if defined(_MSC_VER)
@@ -151,9 +159,7 @@ struct __CFAllocator;
 typedef const struct __CFAllocator *CFAllocatorRef;
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator(void);
@@ -222,9 +228,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 AWS_COMMON_API
 void aws_load_error_strings(void);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #define AWS_CACHE_LINE 64
 

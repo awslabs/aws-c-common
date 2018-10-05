@@ -35,9 +35,7 @@ struct aws_array_list {
  */
 typedef int(aws_array_list_comparator_fn)(const void *a, const void *b);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes an array list with an array of size initial_item_allocation * item_size. In this mode, the array size
@@ -178,8 +176,6 @@ void aws_array_list_swap(struct aws_array_list *list, size_t a, size_t b);
 AWS_COMMON_API
 void aws_array_list_sort(struct aws_array_list *list, aws_array_list_comparator_fn *compare_fn);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ARRAY_LIST_H */

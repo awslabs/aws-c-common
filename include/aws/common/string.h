@@ -66,9 +66,7 @@ AWS_STATIC_IMPL bool aws_string_eq_byte_buf(const struct aws_string *str, const 
     return (!memcmp(aws_string_bytes(str), buf->buffer, buf->len));
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Constructor functions which copy data from null-terminated C-string or array of unsigned or signed characters.
@@ -112,9 +110,7 @@ int aws_string_compare(const struct aws_string *a, const struct aws_string *b);
 AWS_COMMON_API
 int aws_array_list_comparator_string(const void *a, const void *b);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 /**
  * Defines a (static const struct aws_string *) with name specified in first

@@ -54,9 +54,7 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     }
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 /**
  * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This
  * clock has no bearing on the actual system time. On success, timestamp will be set.
@@ -72,8 +70,6 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp);
 AWS_COMMON_API
 int aws_sys_clock_get_ticks(uint64_t *timestamp);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_CLOCK_H */
