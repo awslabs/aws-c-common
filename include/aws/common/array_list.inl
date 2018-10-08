@@ -164,7 +164,7 @@ void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_swap_contents(struct aws_array_list *AWS_RESTRICT list_a, struct aws_array_list *list_b) {
+void aws_array_list_swap_contents(struct aws_array_list *AWS_RESTRICT list_a, struct aws_array_list *AWS_RESTRICT list_b) {
     assert(list_a->alloc);
     assert(list_a->alloc == list_b->alloc);
     assert(list_a->item_size == list_b->item_size);

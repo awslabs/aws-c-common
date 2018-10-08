@@ -42,7 +42,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
     return aws_raise_error(AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK);
 }
 
-int aws_array_list_copy(const struct aws_array_list *from, struct aws_array_list *to) {
+int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct aws_array_list *AWS_RESTRICT to) {
     assert(from->item_size == to->item_size);
     assert(from->data);
 
