@@ -48,9 +48,7 @@ struct aws_condition_variable {
         { .condition_handle = PTHREAD_COND_INITIALIZER }
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a condition variable.
@@ -115,8 +113,5 @@ int aws_condition_variable_wait_for_pred(
     aws_condition_predicate_fn *pred,
     void *pred_ctx);
 
-#ifdef __cplusplus
-}
-#endif
-
+AWS_EXTERN_C_END
 #endif /* AWS_COMMON_CONDITION_VARIABLE_H */

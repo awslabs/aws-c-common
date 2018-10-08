@@ -16,9 +16,7 @@
  * permissions and limitations under the License.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 AWS_STATIC_IMPL int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
@@ -75,8 +73,6 @@ AWS_STATIC_IMPL int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
     return AWS_OP_SUCCESS;
 }
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_WINDOWS_RW_LOCK_INL */

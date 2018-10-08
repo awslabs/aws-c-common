@@ -39,9 +39,7 @@ struct aws_rw_lock {
         { .lock_handle = PTHREAD_RWLOCK_INITIALIZER }
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a new platform instance of mutex.
@@ -75,9 +73,7 @@ AWS_STATIC_IMPL int aws_rw_lock_try_wlock(struct aws_rw_lock *lock);
 AWS_STATIC_IMPL int aws_rw_lock_runlock(struct aws_rw_lock *lock);
 AWS_STATIC_IMPL int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #ifdef _WIN32
 #    include <aws/common/windows/rw_lock.inl>

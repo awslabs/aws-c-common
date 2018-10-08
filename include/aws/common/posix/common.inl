@@ -20,9 +20,7 @@
 
 #include <errno.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 static inline int aws_private_convert_and_raise_error_code(int error_code) {
     switch (error_code) {
@@ -43,8 +41,6 @@ static inline int aws_private_convert_and_raise_error_code(int error_code) {
     }
 }
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_POSIX_COMMON_INL */

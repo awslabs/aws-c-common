@@ -37,9 +37,7 @@ struct aws_mutex {
         { .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a new platform instance of mutex.
@@ -75,8 +73,6 @@ int aws_mutex_try_lock(struct aws_mutex *mutex);
 AWS_COMMON_API
 int aws_mutex_unlock(struct aws_mutex *mutex);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_MUTEX_H */

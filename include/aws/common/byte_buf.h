@@ -47,9 +47,7 @@ struct aws_byte_cursor {
     uint8_t *ptr;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
 int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity);
@@ -168,9 +166,7 @@ bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_c
 AWS_COMMON_API
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 /**
  * For creating a byte buffer from a null-terminated string literal.

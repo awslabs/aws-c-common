@@ -109,9 +109,7 @@ typedef bool(aws_equals_fn)(const void *a, const void *b);
  */
 typedef void(aws_hash_element_destroy_fn)(void *key_or_value);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a hash map with initial capacity for 'size' elements
@@ -329,8 +327,6 @@ bool aws_string_eq(const void *a, const void *b);
 AWS_COMMON_API
 bool aws_ptr_eq(const void *a, const void *b);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_HASH_TABLE_H */

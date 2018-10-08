@@ -59,10 +59,12 @@ static bool msvc_check_avx2(void) {
 #endif
 
 bool aws_common_private_has_avx2(void) {
-    if (AWS_LIKELY(cpuid_state == 0))
+    if (AWS_LIKELY(cpuid_state == 0)) {
         return true;
-    if (AWS_LIKELY(cpuid_state == 1))
+    }
+    if (AWS_LIKELY(cpuid_state == 1)) {
         return false;
+    }
 
     /* Provide a hook for testing fallbacks and benchmarking */
     const char *env_avx2_enabled = getenv("AWS_COMMON_AVX2");

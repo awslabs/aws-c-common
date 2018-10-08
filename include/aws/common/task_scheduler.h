@@ -56,9 +56,7 @@ struct aws_task_scheduler {
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a task scheduler instance.
@@ -107,8 +105,6 @@ void aws_task_scheduler_schedule_future(
 AWS_COMMON_API
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_TASK_SCHEDULER_H */

@@ -18,16 +18,12 @@
 
 #include <aws/common/common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 /* Returns the number of online processors available for usage. */
 AWS_COMMON_API
 size_t aws_system_info_processor_count(void);
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_SYSTEM_INFO_H */
