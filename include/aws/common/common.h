@@ -136,6 +136,13 @@ AWS_STATIC_ASSERT(sizeof(char) == 1);
 #    define AWS_EXTERN_C_END
 #endif
 
+/*
+ * Due to the recursive inclusion of error.h and common.h, we need to define these
+ * before including error.h
+ */
+#define AWS_OP_SUCCESS (0)
+#define AWS_OP_ERR (-1)
+
 #include <aws/common/error.h>
 
 #if defined(_MSC_VER)
@@ -265,9 +272,6 @@ AWS_EXTERN_C_END
 #endif
 
 #define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
-
-#define AWS_OP_SUCCESS (0)
-#define AWS_OP_ERR (-1)
 
 enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,
