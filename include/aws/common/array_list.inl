@@ -20,10 +20,9 @@
  * which might break system headers.
  */
 
-
 AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
-    struct aws_array_list * AWS_RESTRICT list,
+    struct aws_array_list *AWS_RESTRICT list,
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
     size_t item_size) {
@@ -49,7 +48,11 @@ int aws_array_list_init_dynamic(
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_init_static(struct aws_array_list * AWS_RESTRICT list, void *raw_array, size_t item_count, size_t item_size) {
+void aws_array_list_init_static(
+    struct aws_array_list *AWS_RESTRICT list,
+    void *raw_array,
+    size_t item_count,
+    size_t item_size) {
     assert(raw_array);
     assert(item_count);
     assert(item_size);
@@ -63,7 +66,7 @@ void aws_array_list_init_static(struct aws_array_list * AWS_RESTRICT list, void 
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_clean_up(struct aws_array_list * AWS_RESTRICT list) {
+void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
     if (list->alloc && list->data) {
         aws_mem_release(list->alloc, list->data);
     }
@@ -76,7 +79,7 @@ void aws_array_list_clean_up(struct aws_array_list * AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_push_back(struct aws_array_list * AWS_RESTRICT list, const void *val) {
+int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val) {
     int err_code = aws_array_list_set_at(list, val, list->length);
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
@@ -87,7 +90,7 @@ int aws_array_list_push_back(struct aws_array_list * AWS_RESTRICT list, const vo
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_front(const struct aws_array_list * AWS_RESTRICT list, void *val) {
+int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     if (list->length > 0) {
         memcpy(val, list->data, list->item_size);
         return AWS_OP_SUCCESS;
@@ -97,7 +100,7 @@ int aws_array_list_front(const struct aws_array_list * AWS_RESTRICT list, void *
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_pop_front(struct aws_array_list * AWS_RESTRICT list) {
+int aws_array_list_pop_front(struct aws_array_list *AWS_RESTRICT list) {
     if (list->length > 0) {
         aws_array_list_pop_front_n(list, 1);
         return AWS_OP_SUCCESS;
@@ -107,7 +110,7 @@ int aws_array_list_pop_front(struct aws_array_list * AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_pop_front_n(struct aws_array_list * AWS_RESTRICT list, size_t n) {
+void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t n) {
     if (n >= list->length) {
         aws_array_list_clear(list);
         return;
@@ -126,7 +129,7 @@ void aws_array_list_pop_front_n(struct aws_array_list * AWS_RESTRICT list, size_
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_back(const struct aws_array_list * AWS_RESTRICT list, void *val) {
+int aws_array_list_back(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     if (list->length > 0) {
         size_t last_item_offset = list->item_size * (list->length - 1);
 
@@ -138,7 +141,7 @@ int aws_array_list_back(const struct aws_array_list * AWS_RESTRICT list, void *v
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_pop_back(struct aws_array_list * AWS_RESTRICT list) {
+int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
     if (list->length > 0) {
         size_t last_item_offset = list->item_size * (list->length - 1);
 
@@ -151,7 +154,7 @@ int aws_array_list_pop_back(struct aws_array_list * AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_clear(struct aws_array_list * AWS_RESTRICT list) {
+void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
     if (list->data) {
 #ifdef DEBUG_BUILD
         memset(list->data, ARRAY_LIST_DEBUG_FILL, list->current_size);
@@ -161,7 +164,7 @@ void aws_array_list_clear(struct aws_array_list * AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_swap_contents(struct aws_array_list * AWS_RESTRICT list_a, struct aws_array_list *list_b) {
+void aws_array_list_swap_contents(struct aws_array_list *AWS_RESTRICT list_a, struct aws_array_list *list_b) {
     assert(list_a->alloc);
     assert(list_a->alloc == list_b->alloc);
     assert(list_a->item_size == list_b->item_size);
@@ -173,18 +176,18 @@ void aws_array_list_swap_contents(struct aws_array_list * AWS_RESTRICT list_a, s
 }
 
 AWS_STATIC_IMPL
-size_t aws_array_list_capacity(const struct aws_array_list * AWS_RESTRICT list) {
+size_t aws_array_list_capacity(const struct aws_array_list *AWS_RESTRICT list) {
     assert(list->item_size);
     return list->current_size / list->item_size;
 }
 
 AWS_STATIC_IMPL
-size_t aws_array_list_length(const struct aws_array_list * AWS_RESTRICT list) {
+size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
     return list->length;
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_get_at(const struct aws_array_list * AWS_RESTRICT list, void *val, size_t index) {
+int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *val, size_t index) {
     if (list->length > index) {
         memcpy(val, (void *)((uint8_t *)list->data + (list->item_size * index)), list->item_size);
         return AWS_OP_SUCCESS;
@@ -193,7 +196,7 @@ int aws_array_list_get_at(const struct aws_array_list * AWS_RESTRICT list, void 
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_get_at_ptr(const struct aws_array_list * AWS_RESTRICT list, void **val, size_t index) {
+int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, void **val, size_t index) {
     if (list->length > index) {
         *val = (void *)((uint8_t *)list->data + (list->item_size * index));
         return AWS_OP_SUCCESS;
@@ -202,7 +205,7 @@ int aws_array_list_get_at_ptr(const struct aws_array_list * AWS_RESTRICT list, v
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_set_at(struct aws_array_list * AWS_RESTRICT list, const void *val, size_t index) {
+int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     size_t necessary_size = (index + 1) * list->item_size;
 
     if (list->current_size < necessary_size) {
@@ -223,7 +226,7 @@ int aws_array_list_set_at(struct aws_array_list * AWS_RESTRICT list, const void 
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_sort(struct aws_array_list * AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
+void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
     if (list->data) {
         qsort(list->data, list->length, list->item_size, compare_fn);
     }
