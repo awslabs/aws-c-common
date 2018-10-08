@@ -39,7 +39,7 @@ int aws_array_list_init_dynamic(
             return AWS_OP_ERR;
         }
 #ifdef DEBUG_BUILD
-        memset(list->data, ARRAY_LIST_DEBUG_FILL, allocation_size);
+        memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, allocation_size);
 #endif
         list->current_size = allocation_size;
     }
@@ -123,7 +123,7 @@ void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t
         memmove(list->data, (uint8_t *)list->data + popping_bytes, remaining_bytes);
         list->length = remaining_items;
 #ifdef DEBUG_BUILD
-        memset((uint8_t *)list->data + remaining_bytes, ARRAY_LIST_DEBUG_FILL, popping_bytes);
+        memset((uint8_t *)list->data + remaining_bytes, AWS_ARRAY_LIST_DEBUG_FILL, popping_bytes);
 #endif
     }
 }
@@ -157,7 +157,7 @@ AWS_STATIC_IMPL
 void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
     if (list->data) {
 #ifdef DEBUG_BUILD
-        memset(list->data, ARRAY_LIST_DEBUG_FILL, list->current_size);
+        memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, list->current_size);
 #endif
         list->length = 0;
     }

@@ -116,7 +116,7 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
 
 #ifdef DEBUG_BUILD
             memset(
-                (void *)((uint8_t *)temp + list->current_size), ARRAY_LIST_DEBUG_FILL, new_size - list->current_size);
+                (void *)((uint8_t *)temp + list->current_size), AWS_ARRAY_LIST_DEBUG_FILL, new_size - list->current_size);
 #endif
             aws_mem_release(list->alloc, list->data);
         }

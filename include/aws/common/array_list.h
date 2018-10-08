@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define ARRAY_LIST_DEBUG_FILL 0xDD
+#define AWS_ARRAY_LIST_DEBUG_FILL 0xDD
 
 struct aws_array_list {
     struct aws_allocator *alloc;
