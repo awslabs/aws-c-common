@@ -78,7 +78,7 @@ void aws_raise_error_private(int err);
  */
 AWS_STATIC_IMPL
 int aws_raise_error(int err) {
-    /* 
+    /*
      * Certain static analyzers can't see through the out-of-line call to aws_raise_error,
      * and assume that this might return AWS_OP_SUCCESS. We'll put the return inline just
      * to help with their assumptions.
