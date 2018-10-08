@@ -59,8 +59,15 @@ static void s_sift_up(struct aws_priority_queue *queue, size_t index) {
     void *parent_item, *child_item;
     size_t parent = PARENT_OF(index);
     while (index) {
-        aws_array_list_get_at_ptr(&queue->container, &parent_item, parent);
-        aws_array_list_get_at_ptr(&queue->container, &child_item, index);
+        /*
+         * These get_ats are guaranteed to be successful; if they are not, we have
+         * serious state corruption, so just abort.
+         */
+
+        if (aws_array_list_get_at_ptr(&queue->container, &parent_item, parent) ||
+            aws_array_list_get_at_ptr(&queue->container, &child_item, index)) {
+            abort();
+        }
 
         if (queue->pred(parent_item, child_item) > 0) {
             aws_array_list_swap(&queue->container, index, parent);
