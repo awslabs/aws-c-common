@@ -96,7 +96,7 @@ const char *aws_error_debug_str(int err) {
     return "Unknown Error Code";
 }
 
-int aws_raise_error(int err) {
+void aws_raise_error_private(int err) {
     tl_last_error = err;
 
     if (tl_thread_handler) {
@@ -104,8 +104,6 @@ int aws_raise_error(int err) {
     } else if (s_global_handler) {
         s_global_handler(tl_last_error, s_global_error_context);
     }
-
-    return AWS_OP_ERR;
 }
 
 void aws_reset_error(void) {
