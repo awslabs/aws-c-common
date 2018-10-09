@@ -327,7 +327,6 @@ static int s_find_entry1(
     /* If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to
      * see if it already exists, but if not we'll overwrite the deleted entry).
      */
-    int probe_cap = INT_MAX;
 
     int rv;
     struct hash_table_entry *entry;
@@ -361,9 +360,6 @@ static int s_find_entry1(
 
     *p_entry = entry;
     if (p_probe_idx) {
-        if (probe_cap < probe_idx) {
-            probe_idx = probe_cap;
-        }
         *p_probe_idx = probe_idx;
     }
 
