@@ -26,7 +26,7 @@ static void s_sift_down(struct aws_priority_queue *queue) {
     size_t root = 0;
     size_t left = LEFT_OF(root);
     size_t len = aws_array_list_length(&queue->container);
-    void *right_item, *left_item, *root_item;
+    void *right_item = NULL, *left_item = NULL, *root_item = NULL;
 
     while (left < len) {
         aws_array_list_get_at_ptr(&queue->container, &left_item, left);
