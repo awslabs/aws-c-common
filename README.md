@@ -1,5 +1,10 @@
 ## AWS C Common
 
+
+[![GitHub](https://img.shields.io/github/license/awslabs/aws-c-common.svg)](https://github.com/awslabs/aws-c-common/blob/master/LICENSE)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/awslabs/aws-c-common.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/awslabs/aws-c-common/context:cpp)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/awslabs/aws-c-common.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/awslabs/aws-c-common/alerts/)
+
 Core c99 package for AWS SDK for C. Includes cross-platform primitives, configuration, data structures, and error handling.
 
 ## License
