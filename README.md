@@ -39,6 +39,12 @@ Or on windows,
     cmake -G "Visual Studio 14 2015 Win64" ../aws-c-common
     msbuild.exe ALL_BUILD.vcproj
 
+### CMake Options
+* -DCMAKE_CLANG_TIDY=/path/to/clang-tidy (or just clang-tidy or clang-tidy-7.0 if it is in your PATH) - Runs clang-tidy as part of your build.
+* -DENABLE_SANITIZERS=ON - Enables gcc/clang sanitizers, by default this adds -fsanitizer=address,undefined to the compile flags for projects that call aws_add_sanitizers.
+* -DENABLE_FUZZ_TESTS=ON - Includes fuzz tests in the unit test suite. Off by default, because fuzz tests can take a long time. Set -DFUZZ_TESTS_MAX_TIME=N to determine how long to run each fuzz test (default 60s).
+* -DCMAKE_INSTALL_PREFIX=/path/to/install - Standard way of installing to a user defined path. If specified when configuring aws-c-common, ensure the same prefix is specified when configuring other aws-c-* SDKs.
+
 ### API style and conventions
 Every API has a specific set of styles and conventions. We'll outline them here. These conventions are followed in every
 library in the AWS C SDK ecosystem.
