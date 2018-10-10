@@ -286,7 +286,7 @@ static int s_find_entry1(
     uint64_t hash_code,
     const void *key,
     struct hash_table_entry **p_entry,
-    int *p_probe_idx);
+    size_t *p_probe_idx);
 
 /* Inlined fast path: Check the first slot, only. */
 /* TODO: Force inlining? */
@@ -295,7 +295,7 @@ static int inline s_find_entry(
     uint64_t hash_code,
     const void *key,
     struct hash_table_entry **p_entry,
-    int *p_probe_idx) {
+    size_t *p_probe_idx) {
     struct hash_table_entry *entry = &state->slots[hash_code & state->mask];
 
     if (entry->hash_code == 0) {
@@ -322,8 +322,8 @@ static int s_find_entry1(
     uint64_t hash_code,
     const void *key,
     struct hash_table_entry **p_entry,
-    int *p_probe_idx) {
-    int probe_idx = 1;
+    size_t *p_probe_idx) {
+    size_t probe_idx = 1;
     /* If we find a deleted entry, we record that index and return it as our probe index (i.e. we'll keep searching to
      * see if it already exists, but if not we'll overwrite the deleted entry).
      */
@@ -390,14 +390,14 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
 static struct hash_table_entry *s_emplace_item(
     struct hash_table_state *state,
     struct hash_table_entry entry,
-    int probe_idx) {
+    size_t probe_idx) {
     struct hash_table_entry *initial_placement = NULL;
 
     while (entry.hash_code) {
-        int index = (int)(entry.hash_code + probe_idx) & state->mask;
+        size_t index = (size_t)(entry.hash_code + probe_idx) & state->mask;
         struct hash_table_entry *victim = &state->slots[index];
 
-        int victim_probe_idx = (int)(index - victim->hash_code) & state->mask;
+        size_t victim_probe_idx = (size_t)(index - victim->hash_code) & state->mask;
 
         if (!victim->hash_code || victim_probe_idx < probe_idx) {
             if (!initial_placement) {
@@ -447,10 +447,11 @@ int aws_hash_table_create(
     const void *key,
     struct aws_hash_element **p_elem,
     int *was_created) {
+
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
     struct hash_table_entry *entry;
-    int probe_idx;
+    size_t probe_idx;
     int ignored;
     if (!was_created) {
         was_created = &ignored;
