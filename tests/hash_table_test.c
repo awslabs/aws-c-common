@@ -290,6 +290,52 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
+AWS_TEST_CASE(test_hash_table_swap_move, s_test_hash_table_swap_move)
+static int s_test_hash_table_swap_move(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(key, "key");
+
+    struct aws_hash_table table1, table2, tmp;
+
+    ASSERT_SUCCESS(aws_hash_table_init(&table1, allocator, 10, aws_hash_string, aws_string_eq, NULL, NULL));
+    ASSERT_SUCCESS(aws_hash_table_init(&table2, allocator, 10, aws_hash_string, aws_string_eq, NULL, NULL));
+
+    ASSERT_SUCCESS(aws_hash_table_put(&table1, key, (void *)foo, NULL));
+    ASSERT_SUCCESS(aws_hash_table_put(&table2, key, (void *)bar, NULL));
+
+    aws_hash_table_swap(&table1, &table2);
+
+    ASSERT_KEY_VALUE(&table1, "key", "bar");
+    ASSERT_KEY_VALUE(&table2, "key", "foo");
+
+    aws_hash_table_clean_up(&table2);
+
+    ASSERT_KEY_VALUE(&table1, "key", "bar");
+
+    /* Swap is safe with freed/uninitialized tables */
+    aws_hash_table_swap(&table1, &table2);
+    ASSERT_KEY_VALUE(&table2, "key", "bar");
+    memset(&table1, 0xDD, sizeof(table1));
+    aws_hash_table_swap(&table1, &table2);
+    ASSERT_KEY_VALUE(&table1, "key", "bar");
+
+    /* Move is safe with freed/uninitialized destination */
+    aws_hash_table_move(&table2, &table1);
+    ASSERT_KEY_VALUE(&table2, "key", "bar");
+
+    /* After move, source can be cleaned up as a no-op */
+    memcpy(&tmp, &table1, sizeof(table1));
+    aws_hash_table_clean_up(&table1);
+    ASSERT_INT_EQUALS(0, memcmp(&tmp, &table1, sizeof(table1)));
+
+    aws_hash_table_clean_up(&table2);
+
+    return 0;
+}
+
 AWS_TEST_CASE(test_hash_table_string_clean_up, s_test_hash_table_string_clean_up_fn)
 static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator, void *ctx) {
 
