@@ -163,7 +163,14 @@ install(EXPORT "${CMAKE_PROJECT_NAME}-targets"
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
     DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/")
 
-file(GLOB EXPORT_MODULES "cmake/*.cmake")
+list(APPEND EXPORT_MODULES
+    "cmake/AwsCFlags.cmake"
+    "cmake/AwsTestHarness.cmake"
+    "cmake/LibFuzzer.cmake"
+    "cmake/Sanitizers.cmake"
+    "cmake/SIMD.cmake"
+    )
+
 install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
 
 include(CTest)
