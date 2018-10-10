@@ -134,9 +134,35 @@ int aws_hash_table_init(
  * Deletes every element from map and frees all associated memory.
  * destroy_fn will be called for each element.  aws_hash_table_init
  * must be called before reusing the hash table.
+ *
+ * This method is idempotent.
  */
 AWS_COMMON_API
 void aws_hash_table_clean_up(struct aws_hash_table *map);
+
+/**
+ * Safely swaps two hash tables. Note that we swap the entirety of the hash
+ * table, including which allocator is associated.
+ *
+ * Neither hash table is required to be initialized; if one or both is
+ * uninitialized, then the uninitialized state is also swapped.
+ */
+AWS_COMMON_API
+void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b);
+
+/**
+ * Moves the hash table in 'from' to 'to'. After this move, 'from' will
+ * be identical to the state of the original 'to' hash table, and 'to'
+ * will be in the same state as if it had been passed to aws_hash_table_clean_up
+ * (that is, it will have no memory allocated, and it will be safe to
+ * either discard it or call aws_hash_table_clean_up again).
+ *
+ * Note that 'to' will not be cleaned up. You should make sure that 'to'
+ * is either uninitialized or cleaned up before moving a hashtable into
+ * it.
+ */
+AWS_COMMON_API
+void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash_table *AWS_RESTRICT from);
 
 /**
  * Returns the current number of entries in the table.

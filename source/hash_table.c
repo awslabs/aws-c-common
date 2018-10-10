@@ -272,6 +272,17 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
     map->p_impl = NULL;
 }
 
+void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b) {
+    struct aws_hash_table tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash_table *AWS_RESTRICT from) {
+    *to = *from;
+    memset(from, 0, sizeof(*from));
+}
+
 /* Tries to find where the requested key is or where it should go if put.
  * Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
  * or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
