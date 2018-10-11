@@ -140,17 +140,32 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
     install(FILES ${HEADER_SRCPATH} DESTINATION ${HEADER_DSTDIR})
 endforeach()
 
-install(
-    TARGETS ${CMAKE_PROJECT_NAME} EXPORT ${CMAKE_PROJECT_NAME}-config
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        COMPONENT library
-)
+set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib)
 
-export(TARGETS ${CMAKE_PROJECT_NAME} FILE ${CMAKE_PROJECT_NAME}-config.cmake)
-install(EXPORT ${CMAKE_PROJECT_NAME}-config DESTINATION "lib/${CMAKE_PROJECT_NAME}/cmake/")
+install(TARGETS ${CMAKE_PROJECT_NAME}
+    EXPORT ${CMAKE_PROJECT_NAME}-targets
+    ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
+    LIBRARY DESTINATION ${LIBRARY_DIRECTORY})
 
-file(GLOB EXPORT_MODULES "cmake/*.cmake")
+configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
+  @ONLY)
+
+install(EXPORT "${CMAKE_PROJECT_NAME}-targets"
+    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/"
+    NAMESPACE AWS::)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
+    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/")
+
+list(APPEND EXPORT_MODULES
+    "cmake/AwsCFlags.cmake"
+    "cmake/AwsTestHarness.cmake"
+    "cmake/LibFuzzer.cmake"
+    "cmake/Sanitizers.cmake"
+    "cmake/SIMD.cmake"
+    )
+
 install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
 
 include(CTest)
