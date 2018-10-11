@@ -23,7 +23,7 @@
 #        endif /* AWS_COMMON_EXPORTS */
 #    else
 #        define AWS_COMMON_API
-#    endif // AWS_COMMON_USE_IMPORT_EXPORT
+#    endif /* AWS_COMMON_USE_IMPORT_EXPORT */
 
 #else /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
 
