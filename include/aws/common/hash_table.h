@@ -319,6 +319,18 @@ int aws_hash_table_foreach(
     void *context);
 
 /**
+ * Compares two hash tables for equality. Both hash tables must have equivalent
+ * key comparators; values will be compared using the comparator passed into this
+ * function. The key hash function does not need to be equivalent between the
+ * two hash tables.
+ */
+AWS_COMMON_API
+bool aws_hash_table_eq(
+    const struct aws_hash_table *a,
+    const struct aws_hash_table *b,
+    bool (*value_eq)(const void *a, const void *b));
+
+/**
  * Removes every element from the hash map. destroy_fn will be called for
  * each element.
  */
