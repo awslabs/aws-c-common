@@ -73,8 +73,8 @@ static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
     return hash_code;
 }
 
-static int s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
-    return (int)(entry - map->slots);
+static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
+    return (size_t)(entry - map->slots);
 }
 
 #if 0
@@ -552,16 +552,16 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
  * Returns the last slot touched (note that if we wrap, we'll report an index
  * lower than the original entry's index)
  */
-static int s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
+static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
     state->entry_count--;
 
     /* Shift subsequent entries back until we find an entry that belongs at its
      * current position. This is important to ensure that subsequent searches
      * don't terminate at the removed element.
      */
-    int index = s_index_for(state, entry);
+    size_t index = s_index_for(state, entry);
     while (1) {
-        int next_index = (index + 1) & state->mask;
+        size_t next_index = (index + 1) & state->mask;
 
         /* If we hit an empty slot, stop */
         if (!state->slots[next_index].hash_code) {
@@ -631,32 +631,11 @@ int aws_hash_table_foreach(
     int (*callback)(void *context, struct aws_hash_element *pElement),
     void *context) {
 
-    struct hash_table_state *state = map->p_impl;
-    size_t limit = state->size;
-
-    for (size_t i = 0; i < limit; i++) {
-        struct hash_table_entry *entry = &state->slots[i];
-
-        if (!entry->hash_code) {
-            continue;
-        }
-
-        int rv = callback(context, &entry->element);
+    for (struct aws_hash_iter iter = aws_hash_iter_begin(map); !aws_hash_iter_done(&iter); aws_hash_iter_next(&iter)) {
+        int rv = callback(context, &iter.element);
 
         if (rv & AWS_COMMON_HASH_TABLE_ITER_DELETE) {
-            size_t last_index = s_remove_entry(state, entry);
-            /* Removing an entry will shift back subsequent elements,
-             * so we must revisit this slot.
-             */
-            i--;
-            /* If we shifted elements outside of our current limit, then that
-             * means that (exactly) one element that we've previously visited is
-             * now inside our horizon set by limit, so decrement limit to
-             * compensate
-             */
-            if (last_index < i || last_index >= limit) {
-                limit--;
-            }
+            aws_hash_iter_delete(&iter, false);
         }
 
         if (!(rv & AWS_COMMON_HASH_TABLE_ITER_CONTINUE)) {
@@ -670,7 +649,7 @@ int aws_hash_table_foreach(
 static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
 
     struct hash_table_state *state = iter->map->p_impl;
-    size_t limit = state->size;
+    size_t limit = iter->limit;
 
     for (size_t i = start_slot; i < limit; i++) {
         struct hash_table_entry *entry = &state->slots[i];
@@ -683,25 +662,67 @@ static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_s
     }
     iter->element.key = NULL;
     iter->element.value = NULL;
-    iter->slot = 0;
+    iter->slot = iter->limit;
 }
 
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
+    struct hash_table_state *state = map->p_impl;
     struct aws_hash_iter iter;
     iter.map = map;
+    iter.limit = state->size;
     s_get_next_element(&iter, 0);
     return iter;
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
-    return iter->element.key == NULL;
+    /*
+     * SIZE_MAX is a valid (non-terminal) value for iter->slot in the event that
+     * we delete slot 0. See comments in aws_hash_iter_delete.
+     *
+     * As such we must use == rather than >= here.
+     */
+    return iter->slot == iter->limit;
 }
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
-    if (!aws_hash_iter_done(iter)) {
-        /* If already at end of table, do nothing. */
-        s_get_next_element(iter, iter->slot + 1);
+    s_get_next_element(iter, iter->slot + 1);
+}
+
+void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
+    struct hash_table_state *state = iter->map->p_impl;
+    if (destroy_contents) {
+        state->destroy_key_fn((void *)iter->element.key);
+        state->destroy_value_fn(iter->element.value);
     }
+
+    size_t last_index = s_remove_entry(state, &state->slots[iter->slot]);
+
+    /* If we shifted elements that are not part of the window we intend to iterate
+     * over, it means we shifted an element that we already visited into the
+     * iter->limit - 1 position. To avoid double iteration, we'll now reduce the
+     * limit to compensate.
+     *
+     * Note that last_index cannot equal iter->slot, because slots[iter->slot]
+     * is empty before we start walking the table.
+     */
+    if (last_index < iter->slot || last_index >= iter->limit) {
+        iter->limit--;
+    }
+
+    /*
+     * After removing this entry, the next entry might be in the same slot, or
+     * in some later slot, or we might have no further entries.
+     *
+     * We also expect that the caller will call aws_hash_iter_done and aws_hash_iter_next
+     * after this delete call. This gets a bit tricky if we just deleted the value
+     * in slot 0, and a new value has shifted in.
+     *
+     * To deal with this, we'll just step back one slot, and let _next start iteration
+     * at our current slot. Note that if we just deleted slot 0, this will result in
+     * underflowing to SIZE_MAX; we have to take care in aws_hash_iter_done to avoid
+     * treating this as an end-of-iteration condition.
+     */
+    iter->slot--;
 }
 
 void aws_hash_table_clear(struct aws_hash_table *map) {
