@@ -646,6 +646,37 @@ int aws_hash_table_foreach(
     return AWS_OP_SUCCESS;
 }
 
+bool aws_hash_table_eq(
+    const struct aws_hash_table *a,
+    const struct aws_hash_table *b,
+    bool (*value_eq)(const void *a, const void *b)) {
+    if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
+        return false;
+    }
+
+    /*
+     * Now that we have established that the two tables have the same number of
+     * entries, we can simply iterate one and compare against the same key in
+     * the other.
+     */
+    for (struct aws_hash_iter iter = aws_hash_iter_begin(a); !aws_hash_iter_done(&iter); aws_hash_iter_next(&iter)) {
+        struct aws_hash_element *b_element = NULL;
+
+        aws_hash_table_find(b, iter.element.key, &b_element);
+
+        if (!b_element) {
+            /* Key is present in A only */
+            return false;
+        }
+
+        if (!value_eq(iter.element.value, b_element->value)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
 
     struct hash_table_state *state = iter->map->p_impl;

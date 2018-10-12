@@ -880,6 +880,70 @@ static int s_test_hash_table_iter_detail(struct aws_allocator *allocator, void *
     ASSERT_ORDER(iter, 17, 18, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
     aws_hash_table_clean_up(&map);
+#undef ASSERT_ORDER
+
+    return 0;
+}
+
+static uint64_t bad_hash_fn(const void *key) {
+    (void)key;
+    return 4; // chosen by fair dice roll
+              // guaranteed to be random
+}
+
+static bool everything_is_eq(const void *a, const void *b) {
+    (void)a;
+    (void)b;
+
+    return true;
+}
+
+AWS_TEST_CASE(test_hash_table_eq, s_test_hash_table_eq)
+static int s_test_hash_table_eq(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_hash_table table_a, table_b;
+
+    ASSERT_SUCCESS(aws_hash_table_init(&table_a, allocator, 16, aws_hash_string, aws_string_eq, NULL, NULL));
+    ASSERT_SUCCESS(aws_hash_table_init(&table_b, allocator, 16, bad_hash_fn, aws_string_eq, NULL, NULL));
+
+    AWS_STATIC_STRING_FROM_LITERAL(foo_a, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(foo_b, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_a, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(bar_b, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(quux_a, "quux");
+    AWS_STATIC_STRING_FROM_LITERAL(quux_b, "quux");
+
+    ASSERT_SUCCESS(aws_hash_table_put(&table_a, foo_a, (void *)bar_a, NULL));
+    ASSERT_SUCCESS(aws_hash_table_put(&table_b, foo_b, (void *)bar_b, NULL));
+    ASSERT_SUCCESS(aws_hash_table_put(&table_a, bar_a, (void *)quux_a, NULL));
+    ASSERT_SUCCESS(aws_hash_table_put(&table_b, bar_a, (void *)quux_a, NULL));
+
+    ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, aws_string_eq));
+    ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
+
+    /* Non-equal: Table B has extra members */
+    ASSERT_SUCCESS(aws_hash_table_put(&table_b, quux_a, (void *)quux_b, NULL));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_string_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
+
+    /* Non-equal: Same number of members, but different keys */
+    ASSERT_SUCCESS(aws_hash_table_remove(&table_b, bar_a, NULL, NULL));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_string_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
+
+    /* Non-equal: Same keys, values differ */
+    ASSERT_SUCCESS(aws_hash_table_remove(&table_b, quux_a, NULL, NULL));
+    ASSERT_SUCCESS(aws_hash_table_put(&table_b, bar_a, (void *)foo_b, NULL));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_string_eq));
+    ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
+
+    aws_hash_table_clean_up(&table_b);
+    aws_hash_table_clean_up(&table_a);
 
     return 0;
 }
