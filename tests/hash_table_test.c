@@ -680,7 +680,7 @@ static int s_test_hash_table_foreach_fn(struct aws_allocator *allocator, void *c
         pElem->value = NULL;
     }
 
-    // We should find all four elements
+    // We should find all eight elements
     int mask = 0;
     ASSERT_SUCCESS(aws_hash_table_foreach(&hash_table, s_foreach_cb_tomask, &mask), "foreach invocation");
     ASSERT_INT_EQUALS(0xff, mask, "bitmask");
@@ -790,6 +790,97 @@ static int s_test_hash_table_empty_iter_fn(struct aws_allocator *allocator, void
     ASSERT_TRUE(aws_hash_iter_done(&iter));
 
     aws_hash_table_clean_up(&map);
+    return 0;
+}
+
+AWS_TEST_CASE(test_hash_table_iter_detail, s_test_hash_table_iter_detail)
+static int s_test_hash_table_iter_detail(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    uint64_t keys[32], vals[32];
+    for (uint64_t i = 0; i < 32; i++) {
+        keys[i] = i;
+        vals[i] = i + 100;
+    }
+
+    struct aws_hash_table map;
+    ASSERT_SUCCESS(aws_hash_table_init(
+        &map, allocator, 10, s_hash_uint64_identity, s_hash_uint64_eq, destroy_key_record, destroy_value_record));
+
+    /*
+     * We'll fill hash table entries as follows:
+     * Slot    Value
+     *  0       16
+     *  1       17
+     *  2       18
+     *  3       (empty)
+     *  4       (empty)
+     *  5       5
+     *  6       6
+     *  7       7
+     *  8       8
+     *  9       9
+     *  10      10
+     *  11      11
+     *  12      12
+     *  13      13
+     *  14      14
+     *  15      15
+     */
+    for (size_t i = 5; i <= 18; i++) {
+        ASSERT_SUCCESS(aws_hash_table_put(&map, &keys[i], &vals[i], NULL));
+    }
+
+    /* Verify that we have the correct set of values in the right order, first of all */
+#define ASSERT_ORDER(iter, ...)                                                                                        \
+    do {                                                                                                               \
+        uint64_t expected[] = {__VA_ARGS__};                                                                           \
+        size_t count = sizeof(expected) / sizeof(*expected);                                                           \
+        for (size_t i = 0; i < count; i++) {                                                                           \
+            ASSERT_FALSE(aws_hash_iter_done(&(iter)));                                                                 \
+            ASSERT_INT_EQUALS(expected[i], *(const uint64_t *)(iter).element.key);                                     \
+            ASSERT_INT_EQUALS(expected[i] + 100, *(const uint64_t *)(iter).element.value);                             \
+            aws_hash_iter_next(&(iter));                                                                               \
+        }                                                                                                              \
+    } while (0)
+
+    struct aws_hash_iter iter = aws_hash_iter_begin(&map);
+    ASSERT_ORDER(iter, 16, 17, 18, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    ASSERT_TRUE(aws_hash_iter_done(&(iter)));
+
+    /* If we delete the very first slot, we expect that we'll see the remaining elements. */
+    iter = aws_hash_iter_begin(&map);
+    last_key = last_value = NULL;
+    aws_hash_iter_delete(&iter, true);
+    aws_hash_iter_next(&iter);
+    /* Since we passed true to delete, we should have destroyed the key and value */
+    ASSERT_PTR_EQUALS(&keys[16], last_key);
+    ASSERT_PTR_EQUALS(&vals[16], last_value);
+    ASSERT_ORDER(iter, 17, 18, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+    /*
+     * If we delete one of the later elements (in this case, 5), the deletion has to wrap
+     * around the hash table. Verify that we don't see the element that wrapped around
+     * (in this case 17) twice.
+     */
+    iter = aws_hash_iter_begin(&map);
+    last_key = last_value = NULL;
+    aws_hash_iter_next(&iter); /* 17 => 18 */
+    aws_hash_iter_next(&iter); /* 18 => 5 */
+
+    aws_hash_iter_delete(&iter, false);
+    ASSERT_NULL(last_key);
+    ASSERT_NULL(last_value);
+
+    aws_hash_iter_next(&iter);
+    ASSERT_ORDER(iter, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+    /* Now verify that we did in fact wrap the element around */
+    iter = aws_hash_iter_begin(&map);
+    ASSERT_ORDER(iter, 17, 18, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+    aws_hash_table_clean_up(&map);
+
     return 0;
 }
 

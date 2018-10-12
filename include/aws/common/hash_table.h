@@ -79,6 +79,7 @@ struct aws_hash_iter {
     const struct aws_hash_table *map;
     struct aws_hash_element element;
     size_t slot;
+    size_t limit;
     /*
      * Reserving extra fields for binary compatibility with future expansion of
      * iterator in case hash table implementation changes.
@@ -86,7 +87,6 @@ struct aws_hash_iter {
     void *unused_0;
     void *unused_1;
     void *unused_2;
-    void *unused_3;
 };
 
 /**
@@ -203,6 +203,17 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter);
  */
 AWS_COMMON_API
 void aws_hash_iter_next(struct aws_hash_iter *iter);
+
+/**
+ * Deletes the element currently pointed-to by the hash iterator.
+ * After calling this method, the element member of the iterator
+ * should not be accessed until the next call to aws_hash_iter_next.
+ *
+ * @param destroy_contents If true, the destructors for the key and value
+ *  will be called.
+ */
+AWS_COMMON_API
+void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents);
 
 /**
  * Attempts to locate an element at key.  If the element is found, a

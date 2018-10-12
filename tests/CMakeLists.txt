@@ -144,6 +144,7 @@ add_test_case(test_hash_table_on_resize_returns_correct_entry)
 add_test_case(test_hash_table_foreach)
 add_test_case(test_hash_table_iter)
 add_test_case(test_hash_table_empty_iter)
+add_test_case(test_hash_table_iter_detail)
 add_test_case(test_hash_churn)
 add_test_case(test_hash_table_cleanup_idempotent)
 
