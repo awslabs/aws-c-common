@@ -113,7 +113,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 
 # Our ABI is not yet stable
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
-target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE "-fvisibility=hidden")
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
