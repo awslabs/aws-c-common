@@ -157,6 +157,8 @@ static CFStringRef s_cf_allocator_description = CFSTR("CFAllocator wrapping aws_
 
 /* note we don't have a standard specification stating sizeof(size_t) == sizeof(void *) so we have some extra casts */
 static void *s_cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
+    (void)hint;
+
     struct aws_allocator *allocator = info;
 
     void *mem = aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
@@ -179,6 +181,8 @@ static void s_cf_allocator_deallocate(void *ptr, void *info) {
 }
 
 static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
+    (void)hint;
+
     struct aws_allocator *allocator = info;
     assert(allocator->mem_realloc);
 
@@ -197,10 +201,15 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
 }
 
 static CFStringRef s_cf_allocator_copy_description(const void *info) {
+    (void)info;
+
     return s_cf_allocator_description;
 }
 
 static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
+    (void)hint;
+    (void)info;
+
     return size + sizeof(size_t);
 }
 

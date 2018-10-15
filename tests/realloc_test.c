@@ -219,6 +219,7 @@ static int s_test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void 
     CFStringRef test_str = CFStringCreateWithCString(cf_allocator, test_prefix, kCFStringEncodingUTF8);
 
     ASSERT_NOT_NULL(test_str);
+    /* NOLINTNEXTLINE(clang-analyzer-osx.cocoa.RetainCount) */
     ASSERT_BIN_ARRAYS_EQUALS(
         test_prefix,
         sizeof(test_prefix) - 1,
