@@ -9,10 +9,17 @@ os:
 compiler:
   - clang
 
+install:
+  - brew update
+  - brew install llvm
+  - export PATH="/usr/local/opt/llvm/bin:$PATH"
+
 #execute build
 script:
   - mkdir build
   - cd build
-  - cmake -DENABLE_SANITIZERS=ON ..
+  - cmake -DENABLE_SANITIZERS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
   - make && make test
+  - cd ..
+  - clang-tidy -p=build **/*.c
 
