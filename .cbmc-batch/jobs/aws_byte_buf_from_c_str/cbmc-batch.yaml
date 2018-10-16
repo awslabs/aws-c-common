@@ -2,5 +2,3 @@ jobos: ubuntu16
 cbmcflags: "--bounds-check;--pointer-check;--function;aws_byte_buf_from_c_str_verify;--unwindset;strlen.0:33;--unwinding-assertions"
 goto: proofs.goto
 expected: "SUCCESSFUL"
-coverage: false
-report: false
