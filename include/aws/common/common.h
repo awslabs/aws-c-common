@@ -128,6 +128,9 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif
 
+#define AWS_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define AWS_MAX(a, b) ((a) > (b) ? (a) : (b))
+
 #ifdef __cplusplus
 #    define AWS_EXTERN_C_BEGIN extern "C" {
 #    define AWS_EXTERN_C_END }
