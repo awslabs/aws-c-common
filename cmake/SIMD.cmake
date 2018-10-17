@@ -14,11 +14,18 @@
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 
-check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
-
-if (HAVE_M_AVX2_FLAG)
-    set(AVX2_CFLAGS "-mavx -mavx2")
+if (MSVC)
+    check_c_compiler_flag("/arch:AVX2" HAVE_M_AVX2_FLAG)
+    if (HAVE_M_AVX2_FLAG)
+        set(AVX2_CFLAGS "/arch:AVX2")
+    endif()
+else()
+    check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
+    if (HAVE_M_AVX2_FLAG)
+        set(AVX2_CFLAGS "-mavx" "-mavx2")
+    endif()
 endif()
+
 
 set(old_flags "${CMAKE_REQUIRED_FLAGS}")
 set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
