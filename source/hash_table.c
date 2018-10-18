@@ -56,7 +56,7 @@ struct hash_table_state {
     size_t size, entry_count;
     size_t max_load;
     /* We AND a hash value with mask to get the slot index */
-    uint64_t mask;
+    size_t mask;
     double max_load_factor;
     /* actually variable length */
     struct hash_table_entry slots[1];
@@ -212,7 +212,7 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
     }
 
     template->size = size;
-    template->max_load = (size_t)(template->max_load_factor * template->size);
+    template->max_load = (size_t)(template->max_load_factor * (double)template->size);
     if (template->max_load >= size) {
         template->max_load = size - 1;
     }

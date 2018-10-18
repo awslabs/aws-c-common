@@ -34,7 +34,7 @@ static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
         volatile char *ptr = buf;
         ptr += i;
 
-        *ptr = 0xDD;
+        *ptr = (unsigned char)0xDD;
     }
 
     aws_secure_zero(buf, sizeof(buf) / 2);

@@ -44,6 +44,11 @@ function(aws_set_common_properties target)
 
         # Avoid exporting symbols we don't intend to export
         list(APPEND AWS_C_FLAGS -fvisibility=hidden)
+
+        # Warn about implicit conversions that would result in precision loss (MSVC warns about those anyway with /W4)
+        # Without -Wno-sign-conversion, this becomes too noisy.
+        list(APPEND AWS_C_FLAGS -Wconversion -Wno-sign-conversion)
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
