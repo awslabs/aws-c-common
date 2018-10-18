@@ -148,6 +148,7 @@ add_test_case(test_hash_table_iter_detail)
 add_test_case(test_hash_table_eq)
 add_test_case(test_hash_churn)
 add_test_case(test_hash_table_cleanup_idempotent)
+add_test_case(test_hash_table_byte_cursor_create_find)
 
 add_test_case(test_u64_saturating)
 add_test_case(test_u32_saturating)
