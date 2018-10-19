@@ -135,7 +135,6 @@ endif()
 
 if (ENABLE_HW_OPTIMIZATION)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_ENABLE_HW_OPTIMIZATION)
-    message(STATUS "Hardware optimizations are enabled.")
 endif()
 
 # Preserve subdirectories when installing headers
