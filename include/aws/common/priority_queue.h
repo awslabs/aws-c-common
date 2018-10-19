@@ -138,7 +138,7 @@ AWS_COMMON_API
 int aws_priority_queue_remove(struct aws_priority_queue *queue, void *item, const struct aws_priority_queue_node *node);
 
 /**
- * Copies the element of the highest priority. Complexity: constant time.
+ * Obtains a pointer to the element of the highest priority. Complexity: constant time.
  * If queue is empty, AWS_ERROR_PRIORITY_QUEUE_EMPTY will be raised.
  */
 AWS_COMMON_API
