@@ -184,7 +184,7 @@ int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws
             return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
         }
 
-        uint8_t value = high_value << 4;
+        uint8_t value = (uint8_t)(high_value << 4);
         value |= low_value;
         output->buffer[written++] = value;
     }

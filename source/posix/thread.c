@@ -131,7 +131,7 @@ cleanup:
 }
 
 uint64_t aws_thread_get_id(struct aws_thread *thread) {
-    return (uint64_t)thread->thread_id;
+    return (uintptr_t)thread->thread_id;
 }
 
 enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
@@ -161,16 +161,16 @@ int aws_thread_join(struct aws_thread *thread) {
 }
 
 uint64_t aws_thread_current_thread_id(void) {
-    return (uint64_t)pthread_self();
+    return (uintptr_t)pthread_self();
 }
 
 void aws_thread_current_sleep(uint64_t nanos) {
     uint64_t nano = 0;
-    uint64_t seconds = aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &nano);
+    time_t seconds = (time_t)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &nano);
 
     struct timespec tm = {
         .tv_sec = seconds,
-        .tv_nsec = nano,
+        .tv_nsec = (long)nano,
     };
     struct timespec output;
 

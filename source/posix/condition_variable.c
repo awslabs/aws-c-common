@@ -87,8 +87,9 @@ int aws_condition_variable_wait_for(
 
     struct timespec ts;
     uint64_t remainder = 0;
-    ts.tv_sec = aws_timestamp_convert((uint64_t)time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &remainder);
-    ts.tv_nsec = remainder;
+    ts.tv_sec =
+        (time_t)aws_timestamp_convert((uint64_t)time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &remainder);
+    ts.tv_nsec = (long)remainder;
 
     int err_code = pthread_cond_timedwait(&condition_variable->condition_handle, &mutex->mutex_handle, &ts);
 
