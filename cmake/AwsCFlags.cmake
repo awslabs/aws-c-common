@@ -24,6 +24,12 @@ function(aws_set_common_properties target)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
     if(MSVC)
+        # Remove other /W flags
+        if(CMAKE_C_FLAGS MATCHES "/W3")
+            string(REGEX REPLACE "/W3" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
+        endif()
+
         list(APPEND AWS_C_FLAGS /W4 /WX /MP)
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
