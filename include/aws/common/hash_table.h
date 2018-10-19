@@ -351,6 +351,13 @@ AWS_COMMON_API
 uint64_t aws_hash_string(const void *item);
 
 /**
+ * Convenience hash function for struct aws_byte_cursor.
+ * Hash is same as used on the string bytes by aws_hash_c_string.
+ */
+AWS_COMMON_API
+uint64_t aws_hash_byte_cursor_ptr(const void *item);
+
+/**
  * Convenience hash function which hashes the pointer value directly,
  * without dereferencing.  This can be used in cases where pointer identity
  * is desired, or where a uintptr_t is encoded into a const void *.
@@ -369,6 +376,12 @@ bool aws_c_string_eq(const void *a, const void *b);
  */
 AWS_COMMON_API
 bool aws_string_eq(const void *a, const void *b);
+
+/**
+ * Convenience eq function for struct aws_byte_cursor.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_ptr_eq(const void *a, const void *b);
 
 /**
  * Equality function which compares pointer equality.

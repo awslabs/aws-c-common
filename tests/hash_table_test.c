@@ -1104,3 +1104,109 @@ static int s_test_hash_table_cleanup_idempotent_fn(struct aws_allocator *allocat
 
     return 0;
 }
+
+struct hash_table_entry {
+    struct aws_allocator *allocator;
+    struct aws_byte_cursor key;
+};
+
+static void s_hash_table_entry_destroy(void *item) {
+    struct hash_table_entry *entry = item;
+    aws_mem_release(entry->allocator, entry);
+}
+
+AWS_TEST_CASE(test_hash_table_byte_cursor_create_find, s_test_hash_table_byte_cursor_create_find_fn)
+static int s_test_hash_table_byte_cursor_create_find_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_hash_table hash_table;
+    struct aws_hash_element *pElem;
+    int was_created;
+
+    int ret = aws_hash_table_init(
+        &hash_table, allocator, 10, aws_hash_byte_cursor_ptr, aws_byte_cursor_ptr_eq, NULL, s_hash_table_entry_destroy);
+    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
+
+    /* First element of hash, both key and value are statically allocated
+     * strings */
+    AWS_STATIC_STRING_FROM_LITERAL(key_1_str, "tweedle dee");
+    struct hash_table_entry *val_1 = aws_mem_acquire(allocator, sizeof(struct hash_table_entry));
+    val_1->allocator = allocator;
+    val_1->key = aws_byte_cursor_from_string(key_1_str);
+
+    /* Second element of hash, only value is dynamically allocated string */
+    AWS_STATIC_STRING_FROM_LITERAL(key_2_str, "what's for dinner?");
+    struct hash_table_entry *val_2 = aws_mem_acquire(allocator, sizeof(struct hash_table_entry));
+    val_2->allocator = allocator;
+    val_2->key = aws_byte_cursor_from_string(key_2_str);
+
+    /* Third element of hash, only key is dynamically allocated string */
+    uint8_t bytes[] = {0x88, 0x00, 0xaa, 0x13, 0xb7, 0x93, 0x7f, 0xdd, 0xbb, 0x62};
+    const struct aws_string *key_3_str = aws_string_new_from_array(allocator, bytes, 10);
+    struct hash_table_entry *val_3 = aws_mem_acquire(allocator, sizeof(struct hash_table_entry));
+    val_3->allocator = allocator;
+    val_3->key = aws_byte_cursor_from_string(key_3_str);
+
+    ret = aws_hash_table_create(&hash_table, (void *)&val_1->key, &pElem, &was_created);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    ASSERT_INT_EQUALS(1, was_created, "Hash Map put should have created a new element.");
+    pElem->value = (void *)val_1;
+
+    /* Try passing a NULL was_created this time */
+    ret = aws_hash_table_create(&hash_table, (void *)&val_2->key, &pElem, NULL);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    pElem->value = (void *)val_2;
+
+    ret = aws_hash_table_create(&hash_table, (void *)&val_3->key, &pElem, NULL);
+    ASSERT_SUCCESS(ret, "Hash Map put should have succeeded.");
+    pElem->value = (void *)val_3;
+
+    ret = aws_hash_table_find(&hash_table, (void *)&val_1->key, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        "tweedle dee",
+        strlen("tweedle dee"),
+        ((struct aws_byte_cursor *)pElem->key)->ptr,
+        ((struct aws_byte_cursor *)pElem->key)->len,
+        "Returned key for %s, should have been %s",
+        "tweedle dee",
+        "tweedle dee");
+    ASSERT_PTR_EQUALS(val_1, pElem->value);
+
+    ret = aws_hash_table_find(&hash_table, (void *)&val_2->key, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        "what's for dinner?",
+        strlen("what's for dinner?"),
+        ((struct aws_byte_cursor *)pElem->key)->ptr,
+        ((struct aws_byte_cursor *)pElem->key)->len,
+        "Returned key for %s, should have been %s",
+        "what's for dinner?",
+        "what's for dinner?");
+    ASSERT_PTR_EQUALS(val_2, pElem->value);
+
+    ret = aws_hash_table_find(&hash_table, (void *)&val_3->key, &pElem);
+    ASSERT_SUCCESS(ret, "Hash Map get should have succeeded.");
+    ASSERT_BIN_ARRAYS_EQUALS(
+        bytes,
+        10,
+        ((struct aws_byte_cursor *)pElem->key)->ptr,
+        ((struct aws_byte_cursor *)pElem->key)->len,
+        "Returned key for %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx should have been same",
+        bytes[0],
+        bytes[1],
+        bytes[2],
+        bytes[3],
+        bytes[4],
+        bytes[5],
+        bytes[6],
+        bytes[7],
+        bytes[8],
+        bytes[9]);
+    ASSERT_PTR_EQUALS(val_3, pElem->value);
+    aws_hash_table_clean_up(&hash_table);
+
+    aws_string_destroy((void *)key_3_str);
+
+    return 0;
+}

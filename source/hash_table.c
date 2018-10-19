@@ -813,6 +813,16 @@ uint64_t aws_hash_string(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
+uint64_t aws_hash_byte_cursor_ptr(const void *item) {
+    const struct aws_byte_cursor *cur = item;
+
+    /* first digits of pi in hex */
+    uint32_t b = 0x3243F6A8, c = 0x885A308D;
+    hashlittle2(cur->ptr, cur->len, &c, &b);
+
+    return ((uint64_t)b << 32) | c;
+}
+
 uint64_t aws_hash_ptr(const void *item) {
     /* first digits of e in hex
      * 2.b7e 1516 28ae d2a6 */
@@ -831,6 +841,13 @@ bool aws_string_eq(const void *a, const void *b) {
     const struct aws_string *str_a = a;
     const struct aws_string *str_b = b;
     return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
+}
+
+bool aws_byte_cursor_ptr_eq(const void *a, const void *b) {
+    const struct aws_byte_cursor *cur_a = a;
+    const struct aws_byte_cursor *cur_b = b;
+
+    return aws_byte_cursor_eq(cur_a, cur_b);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {
