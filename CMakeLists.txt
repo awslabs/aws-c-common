@@ -38,6 +38,7 @@ file(GLOB AWS_COMMON_SRC
         )
 
 option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
+option(ENABLE_HW_OPTIMIZATION "Enables hardware specific optimizations in assembly. Not all compilers are supported." ON)
 
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
@@ -126,10 +127,14 @@ if (HAVE_MAY_I_USE OR HAVE_BUILTIN_CPU_SUPPORTS OR HAVE_MSVC_CPUIDEX)
 endif()
 
 if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
-	target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
     simd_add_source_avx2(${CMAKE_PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
+endif()
+
+if (ENABLE_HW_OPTIMIZATION)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_ENABLE_HW_OPTIMIZATION)
 endif()
 
 # Preserve subdirectories when installing headers
