@@ -17,7 +17,9 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#define SSIZE_MAX (SIZE_MAX >> 1)
+#ifndef SSIZE_MAX
+#   define SSIZE_MAX (SIZE_MAX >> 1)
+#endif
 
 AWS_TEST_CASE(nospec_index_test, s_nospec_index_test_fn)
 static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
