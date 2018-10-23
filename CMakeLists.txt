@@ -58,30 +58,23 @@ if (WIN32)
 
     set(PLATFORM_LIBS Kernel32 Ws2_32)
 else ()
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR (UNIX AND NOT APPLE))
-        file(GLOB AWS_COMMON_OS_HEADERS
-                "include/aws/common/posix/*"
-                )
-        file(GLOB AWS_COMMON_OS_SRC
-                "source/posix/*.c"
-                )
-        set(PLATFORM_LIBS pthread rt)
-    elseif (APPLE)
-        file(GLOB AWS_COMMON_OS_HEADERS
-                "include/aws/common/posix/*"
-                )
-        file(GLOB AWS_COMMON_OS_SRC
-                "source/posix/*.c"
-                )
-
+    file(GLOB AWS_COMMON_OS_HEADERS
+        "include/aws/common/posix/*"
+        )
+    file(GLOB AWS_COMMON_OS_SRC
+        "source/posix/*.c"
+        )
+    if (APPLE)
         find_library(CORE_FOUNDATION_LIB CoreFoundation)
         if (NOT CORE_FOUNDATION_LIB)
             message(FATAL_ERROR "Core Foundation not found")
         endif ()
 
         set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
+    elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
+            set(PLATFORM_LIBS pthread rt)
+        endif ()
     endif ()
-endif ()
 
 file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}

@@ -17,7 +17,9 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#define SSIZE_MAX (SIZE_MAX >> 1)
+#ifndef SSIZE_MAX
+#    define SSIZE_MAX (SIZE_MAX >> 1)
+#endif
 
 AWS_TEST_CASE(nospec_index_test, s_nospec_index_test_fn)
 static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
@@ -85,7 +87,7 @@ static int s_test_byte_cursor_advance_internal(
     ASSERT_NOADVANCE(6, 5);
 
     ASSERT_NOADVANCE(SSIZE_MAX + 1, SSIZE_MAX);
-    ASSERT_NOADVANCE(SSIZE_MAX, SSIZE_MAX + 1);
+    ASSERT_NOADVANCE(SSIZE_MAX, (size_t)SSIZE_MAX + 1);
 
     return 0;
 }
