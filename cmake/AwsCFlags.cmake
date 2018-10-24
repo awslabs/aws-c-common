@@ -13,6 +13,7 @@
 
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
+include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 # This function will set all common flags on a target
 # Options:
