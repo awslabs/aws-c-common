@@ -13,13 +13,20 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/atomics.h>
+#include <aws/common/atomics.inl>
 #include <aws/common/common.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
+
+#ifdef _WIN32
+#    include <malloc.h>
+#    define alloca _alloca
+#else
+#    include <alloca.h>
+#endif
 
 AWS_TEST_CASE(atomics_semantics, t_semantics)
 static int t_semantics(struct aws_allocator *allocator, void *ctx) {

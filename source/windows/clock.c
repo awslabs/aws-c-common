@@ -14,7 +14,7 @@
  */
 
 #include <aws/common/clock.h>
-#include <winnt.h>
+#include <Windows.h>
 
 static const uint64_t FILE_TIME_TO_NS = 100;
 static const uint64_t EC_TO_UNIX_EPOCH = 11644473600LL;

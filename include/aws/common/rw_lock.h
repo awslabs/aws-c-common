@@ -18,14 +18,15 @@
 
 #include <aws/common/common.h>
 #ifdef _WIN32
-#    include <Windows.h>
+/* NOTE: Do not use this macro before including Windows.h */
+#    define AWSSRW_TO_WINDOWS(pCV) (PSRWLOCK) pCV
 #else
 #    include <pthread.h>
 #endif
 
 struct aws_rw_lock {
 #ifdef _WIN32
-    SRWLOCK lock_handle;
+    void *lock_handle;
 #else
     pthread_rwlock_t lock_handle;
 #endif
@@ -33,7 +34,7 @@ struct aws_rw_lock {
 
 #ifdef _WIN32
 #    define AWS_RW_LOCK_INIT                                                                                           \
-        { .lock_handle = SRWLOCK_INIT }
+        { .lock_handle = NULL }
 #else
 #    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = PTHREAD_RWLOCK_INITIALIZER }

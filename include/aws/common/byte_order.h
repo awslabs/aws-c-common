@@ -18,7 +18,9 @@
 
 #include <aws/common/common.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#    include <stdlib.h>
+#else
 #    include <netinet/in.h>
 #endif /*_WIN32 */
 

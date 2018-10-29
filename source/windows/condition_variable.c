@@ -18,9 +18,16 @@
 #include <aws/common/clock.h>
 #include <aws/common/mutex.h>
 
+#include <Windows.h>
+
+/* Ensure our condition variable and Windows' condition variables are the same size */
+AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(struct aws_condition_variable));
+
+#define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE)pCV
+
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
 
-    InitializeConditionVariable(&condition_variable->condition_handle);
+    InitializeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     return AWS_OP_SUCCESS;
 }
 
@@ -31,19 +38,19 @@ void aws_condition_variable_clean_up(struct aws_condition_variable *condition_va
 
 int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable) {
 
-    WakeConditionVariable(&condition_variable->condition_handle);
+    WakeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     return AWS_OP_SUCCESS;
 }
 
 int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
 
-    WakeAllConditionVariable(&condition_variable->condition_handle);
+    WakeAllConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     return AWS_OP_SUCCESS;
 }
 
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
 
-    if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, INFINITE, 0)) {
+    if (SleepConditionVariableSRW(AWSCV_TO_WINDOWS(condition_variable), AWSMUTEX_TO_WINDOWS(mutex), INFINITE, 0)) {
         return AWS_OP_SUCCESS;
     }
 
@@ -57,7 +64,7 @@ int aws_condition_variable_wait_for(
 
     DWORD time_ms = (DWORD)aws_timestamp_convert(time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
 
-    if (SleepConditionVariableSRW(&condition_variable->condition_handle, &mutex->mutex_handle, time_ms, 0)) {
+    if (SleepConditionVariableSRW(AWSCV_TO_WINDOWS(condition_variable), AWSMUTEX_TO_WINDOWS(mutex), time_ms, 0)) {
         return AWS_OP_SUCCESS;
     }
 
