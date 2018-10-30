@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/atomics.inl>
+#include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/mutex.h>

@@ -20,7 +20,7 @@
 #define AWS_STATIC_IMPL AWS_COMMON_API
 
 #include <aws/common/array_list.h>
-#include <aws/common/atomics.inl>
+#include <aws/common/atomics.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
 #include <aws/common/clock.h>

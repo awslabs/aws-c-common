@@ -26,6 +26,9 @@
 struct aws_atomic_var {
     void *value;
 };
+/* Helpers for extracting the integer and pointer values from aws_atomic_var. */
+#define AWS_ATOMIC_VAR_PTRVAL(var) (var->value)
+#define AWS_ATOMIC_VAR_INTVAL(var) (*(aws_atomic_impl_int_t *)var)
 
 /*
  * This enumeration specifies the memory ordering properties requested for a particular
@@ -81,20 +84,35 @@ enum aws_memory_order {
     aws_memory_order_seq_cst
 };
 
+/* Include the backend implementation now, because we'll use its typedefs and #defines below */
+#if defined(__GNUC__) || defined(__clang__)
+#    if defined(__ATOMIC_RELAXED)
+#        include <aws/common/atomics_gnu.inl>
+#    else
+#        include <aws/common/atomics_gnu_old.inl>
+#    endif /* __ATOMIC_RELAXED */
+#elif defined(_MSC_VER)
+#    include <aws/common/atomics_msvc.inl>
+#else
+#    error No atomics implementation for your compiler is available
+#endif
+
 /**
  * Statically initializes an aws_atomic_var to a given size_t value.
  */
-#define AWS_ATOMIC_INIT_INT(x) { .value = (void *)(uintptr_t)(x) }
+#define AWS_ATOMIC_INIT_INT(x)                                                                                         \
+    { .value = (void *)(uintptr_t)(x) }
 
 /**
  * Statically initializes an aws_atomic_var to a given void * value.
  */
-#define AWS_ATOMIC_INIT_PTR(x) { .value = (void *)(x) }
+#define AWS_ATOMIC_INIT_PTR(x)                                                                                         \
+    { .value = (void *)(x) }
 
 #ifdef AWS_ATOMICS_INLINE
-#define AWS_ATOMICS_API AWS_STATIC_IMPL
+#    define AWS_ATOMICS_API AWS_STATIC_IMPL
 #else
-#define AWS_ATOMICS_API AWS_COMMON_API
+#    define AWS_ATOMICS_API AWS_COMMON_API
 #endif
 
 /*
@@ -355,5 +373,7 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
  */
 AWS_ATOMICS_API
 void aws_atomic_thread_fence(enum aws_memory_order order);
+
+#include <aws/common/atomics_fallback.inl>
 
 #endif
