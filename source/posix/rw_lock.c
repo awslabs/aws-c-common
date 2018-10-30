@@ -1,8 +1,3 @@
-#ifndef AWS_COMMON_POSIX_RW_LOCK_INL
-#define AWS_COMMON_POSIX_RW_LOCK_INL
-
-#include <aws/common/atomics.h>
-
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,50 +13,47 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/rw_lock.h>
+#include <aws/common/atomics.h>
+
 #include <aws/common/posix/common.inl>
 
-AWS_EXTERN_C_BEGIN
-
-AWS_STATIC_IMPL int aws_rw_lock_init(struct aws_rw_lock *lock) {
+int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_init(&lock->lock_handle, NULL));
 }
 
-AWS_STATIC_IMPL void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
+void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
 
     pthread_rwlock_destroy(&lock->lock_handle);
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_rdlock(&lock->lock_handle));
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_wrlock(&lock->lock_handle));
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_tryrdlock(&lock->lock_handle));
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_trywrlock(&lock->lock_handle));
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
 
-AWS_STATIC_IMPL int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
+int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
     return aws_private_convert_and_raise_error_code(pthread_rwlock_unlock(&lock->lock_handle));
 }
-
-AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_POSIX_RW_LOCK_INL */
