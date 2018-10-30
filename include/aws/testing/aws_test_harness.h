@@ -392,6 +392,8 @@ struct aws_test_harness {
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
 #ifdef _WIN32
+/* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
+#    pragma warning(disable: 4091)
 #    include <Windows.h>
 #    include <dbghelp.h>
 
