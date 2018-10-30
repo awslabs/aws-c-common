@@ -393,7 +393,7 @@ struct aws_test_harness {
 
 #ifdef _WIN32
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
-#    pragma warning(disable: 4091)
+#    pragma warning(disable : 4091)
 #    include <Windows.h>
 #    include <dbghelp.h>
 
@@ -402,7 +402,7 @@ struct win_symbol_data {
     char symbol_name[1024];
 };
 
-static LONG s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
+static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
     (void)exception_pointers;
     fprintf(stderr, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     void *stack[1024];
