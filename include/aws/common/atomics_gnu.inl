@@ -28,17 +28,7 @@
 #    pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
-struct aws_atomic_var {
-    union {
-        size_t intval;
-        void *ptrval;
-    };
-};
-
-#define AWS_ATOMIC_INIT_INT_IMPL(x)                                                                                    \
-    { .intval = (x) }
-#define AWS_ATOMIC_INIT_PTR_IMPL(x)                                                                                    \
-    { .ptrval = (void *)(x) }
+typedef size_t aws_atomic_impl_int_t;
 
 static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
     switch (order) {
@@ -63,7 +53,7 @@ static inline int aws_atomic_priv_xlate_order(enum aws_memory_order order) {
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
-    var->intval = n;
+    AWS_ATOMIC_VAR_INTVAL(var) = n;
 }
 
 /**
@@ -72,7 +62,7 @@ void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
-    var->ptrval = p;
+    AWS_ATOMIC_VAR_PTRVAL(var) = p;
 }
 
 /**
@@ -80,7 +70,7 @@ void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
-    return __atomic_load_n(&var->intval, aws_atomic_priv_xlate_order(memory_order));
+    return __atomic_load_n(&AWS_ATOMIC_VAR_INTVAL(var), aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -88,7 +78,7 @@ size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, e
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
-    return __atomic_load_n(&var->ptrval, aws_atomic_priv_xlate_order(memory_order));
+    return __atomic_load_n(&AWS_ATOMIC_VAR_PTRVAL(var), aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -96,7 +86,7 @@ void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, en
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order memory_order) {
-    __atomic_store_n(&var->intval, n, aws_atomic_priv_xlate_order(memory_order));
+    __atomic_store_n(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -104,7 +94,7 @@ void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n
  */
 AWS_STATIC_IMPL
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order) {
-    __atomic_store_n(&var->ptrval, p, aws_atomic_priv_xlate_order(memory_order));
+    __atomic_store_n(&AWS_ATOMIC_VAR_PTRVAL(var), p, aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -116,7 +106,7 @@ size_t aws_atomic_exchange_int_explicit(
     volatile struct aws_atomic_var *var,
     size_t n,
     enum aws_memory_order memory_order) {
-    return __atomic_exchange_n(&var->intval, n, aws_atomic_priv_xlate_order(memory_order));
+    return __atomic_exchange_n(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -128,7 +118,7 @@ void *aws_atomic_exchange_ptr_explicit(
     volatile struct aws_atomic_var *var,
     void *p,
     enum aws_memory_order memory_order) {
-    return __atomic_exchange_n(&var->ptrval, p, aws_atomic_priv_xlate_order(memory_order));
+    return __atomic_exchange_n(&AWS_ATOMIC_VAR_PTRVAL(var), p, aws_atomic_priv_xlate_order(memory_order));
 }
 
 /**
@@ -144,7 +134,7 @@ bool aws_atomic_compare_exchange_int_explicit(
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
     return __atomic_compare_exchange_n(
-        &var->intval,
+        &AWS_ATOMIC_VAR_INTVAL(var),
         expected,
         desired,
         false,
@@ -165,7 +155,7 @@ bool aws_atomic_compare_exchange_ptr_explicit(
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
     return __atomic_compare_exchange_n(
-        &var->ptrval,
+        &AWS_ATOMIC_VAR_PTRVAL(var),
         expected,
         desired,
         false,
@@ -178,7 +168,7 @@ bool aws_atomic_compare_exchange_ptr_explicit(
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_add(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __atomic_fetch_add(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(order));
 }
 
 /**
@@ -186,7 +176,7 @@ size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_sub(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __atomic_fetch_sub(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(order));
 }
 
 /**
@@ -194,7 +184,7 @@ size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_or(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __atomic_fetch_or(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(order));
 }
 
 /**
@@ -202,7 +192,7 @@ size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t 
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_and(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __atomic_fetch_and(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(order));
 }
 
 /**
@@ -210,7 +200,7 @@ size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __atomic_fetch_xor(&var->intval, n, aws_atomic_priv_xlate_order(order));
+    return __atomic_fetch_xor(&AWS_ATOMIC_VAR_INTVAL(var), n, aws_atomic_priv_xlate_order(order));
 }
 
 /**

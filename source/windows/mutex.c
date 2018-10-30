@@ -15,8 +15,13 @@
 
 #include <aws/common/mutex.h>
 
+#include <Windows.h>
+
+/* Ensure our condition variable and Windows' condition variables are the same size */
+AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(struct aws_mutex));
+
 int aws_mutex_init(struct aws_mutex *mutex) {
-    InitializeSRWLock(&mutex->mutex_handle);
+    InitializeSRWLock(AWSMUTEX_TO_WINDOWS(mutex));
     return AWS_OP_SUCCESS;
 }
 
@@ -29,12 +34,12 @@ int aws_mutex_init(struct aws_mutex *mutex) {
 void aws_mutex_clean_up(struct aws_mutex *mutex) {}
 
 int aws_mutex_lock(struct aws_mutex *mutex) {
-    AcquireSRWLockExclusive(&mutex->mutex_handle);
+    AcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     return AWS_OP_SUCCESS;
 }
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
-    BOOL res = TryAcquireSRWLockExclusive(&mutex->mutex_handle);
+    BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
 
     if (!res) {
         return AWS_OP_SUCCESS;
@@ -44,7 +49,7 @@ int aws_mutex_try_lock(struct aws_mutex *mutex) {
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
-    ReleaseSRWLockExclusive(&mutex->mutex_handle);
+    ReleaseSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     return AWS_OP_SUCCESS;
 }
 

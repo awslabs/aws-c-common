@@ -18,9 +18,11 @@
 
 #include <aws/common/common.h>
 
-#ifndef _WIN32
+#ifdef _MSC_VER
+#    include <stdlib.h>
+#else
 #    include <netinet/in.h>
-#endif /*_WIN32 */
+#endif /* _MSC_VER */
 
 /**
  * Returns 1 if machine is big endian, 0 if little endian.

@@ -29,7 +29,7 @@ typedef bool(aws_condition_predicate_fn)(void *);
 
 struct aws_condition_variable {
 #ifdef _WIN32
-    CONDITION_VARIABLE condition_handle;
+    void *condition_handle;
 #else
     pthread_cond_t condition_handle;
 #endif
@@ -39,10 +39,13 @@ struct aws_condition_variable {
  * Static initializer for condition variable.
  * You can do something like struct aws_condition_variable var =
  * AWS_CONDITION_VARIABLE_INIT;
+ *
+ * If on Windows and you get an error about AWS_CONDITION_VARIABLE_INIT being undefined, please include Windows.h to get
+ * CONDITION_VARIABLE_INIT.
  */
 #ifdef _WIN32
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
-        { .condition_handle = CONDITION_VARIABLE_INIT }
+        { .condition_handle = NULL }
 #else
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
         { .condition_handle = PTHREAD_COND_INITIALIZER }

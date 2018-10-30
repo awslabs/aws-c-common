@@ -5,7 +5,7 @@ phases:
     commands:
       - sudo apt-get update -y
       - sudo apt-get update
-      - sudo apt-get install clang-3.9 cmake3 cppcheck clang-tidy-3.9 -y
+      - sudo apt-get install clang-3.9 cmake3 clang-tidy-3.9 -y
 
   pre_build:
     commands:
