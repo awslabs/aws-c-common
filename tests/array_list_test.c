@@ -82,7 +82,6 @@ static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     aws_array_list_clean_up(&list);
-
     return 0;
 }
 
