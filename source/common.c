@@ -371,7 +371,7 @@ void aws_load_error_strings(void) {
 }
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     SecureZeroMemory(pBuf, bufsize);
 #else
     /* We cannot use memset_s, even on a C11 compiler, because that would require
