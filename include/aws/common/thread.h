@@ -36,8 +36,8 @@ struct aws_thread {
     struct aws_allocator *allocator;
     enum aws_thread_detach_state detach_state;
 #ifdef _WIN32
-    HANDLE thread_handle;
-    DWORD thread_id;
+    void *thread_handle;
+    unsigned long thread_id;
 #else
     pthread_t thread_id;
 #endif

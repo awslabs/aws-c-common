@@ -27,21 +27,7 @@
 #    endif
 #endif
 
-struct aws_atomic_var {
-    union {
-        size_t intval;
-        void *ptrval;
-    } u;
-};
-
-#define AWS_ATOMIC_INIT_INT_IMPL(x)                                                                                    \
-    {                                                                                                                  \
-        .u = {.intval = (x) }                                                                                          \
-    }
-#define AWS_ATOMIC_INIT_PTR_IMPL(x)                                                                                    \
-    {                                                                                                                  \
-        .u = {.ptrval = (void *)(x) }                                                                                  \
-    }
+typedef size_t aws_atomic_impl_int_t;
 
 static inline void aws_atomic_private_compiler_barrier(void) {
     __asm__ __volatile__("" : : : "memory");
