@@ -10,5 +10,3 @@ make
 make test
 
 cd ..
-
-./cppcheck.sh
