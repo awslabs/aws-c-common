@@ -23,7 +23,7 @@
 /* Ensure our condition variable and Windows' condition variables are the same size */
 AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(struct aws_condition_variable));
 
-#define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE)pCV
+#define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE) pCV
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
 

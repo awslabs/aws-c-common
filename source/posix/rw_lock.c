@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/rw_lock.h>
 #include <aws/common/atomics.h>
+#include <aws/common/rw_lock.h>
 
 #include <aws/common/posix/common.inl>
 
