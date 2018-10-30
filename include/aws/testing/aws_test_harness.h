@@ -395,7 +395,7 @@ struct aws_test_harness {
 #    include <dbghelp.h>
 
 struct win_symbol_data {
-    SYMBOL_INFO sym_info;
+    struct _SYMBOL_INFO sym_info;
     char symbol_name[1024];
 };
 
@@ -415,11 +415,11 @@ static LONG s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_point
         struct win_symbol_data sym_info;
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
-        sym_info.sym_info.SizeOfStruct = sizeof(SYMBOL_INFO);
+        sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
         SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
-        IMAGEHLP_LINE line;
-        line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+        struct _IMAGEHLP_LINE64 line;
+        line.SizeOfStruct = sizeof(struct _IMAGEHLP_LINE64);
         if (SymGetLineFromAddr(process, address, &disp, &line)) {
             if (i != 0) {
                 fprintf(
