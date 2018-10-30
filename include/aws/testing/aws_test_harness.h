@@ -392,6 +392,7 @@ struct aws_test_harness {
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
 #ifdef _WIN32
+#    include <Windows.h>
 #    include <dbghelp.h>
 
 struct win_symbol_data {
