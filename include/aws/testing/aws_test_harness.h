@@ -391,8 +391,61 @@ struct aws_test_harness {
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
+#ifdef _WIN32
+/* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
+#    pragma warning(disable : 4091)
+#    include <Windows.h>
+#    include <dbghelp.h>
+
+struct win_symbol_data {
+    struct _SYMBOL_INFO sym_info;
+    char symbol_name[1024];
+};
+
+static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
+    (void)exception_pointers;
+    fprintf(stderr, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
+    void *stack[1024];
+    HANDLE process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+    WORD num_frames = CaptureStackBackTrace(0, 1024, stack, NULL);
+    DWORD64 displacement = 0;
+    DWORD disp = 0;
+
+    fprintf(stderr, "Stack Trace:\n");
+    for (size_t i = 0; i < num_frames; ++i) {
+        uintptr_t address = (uintptr_t)stack[i];
+        struct win_symbol_data sym_info;
+        AWS_ZERO_STRUCT(sym_info);
+        sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
+        sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
+        SymFromAddr(process, address, &displacement, &sym_info.sym_info);
+
+        IMAGEHLP_LINE line;
+        line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+        if (SymGetLineFromAddr(process, address, &disp, &line)) {
+            if (i != 0) {
+                fprintf(
+                    stderr,
+                    "at %s(%s:%lu): address: 0x%llX\n",
+                    sym_info.sym_info.Name,
+                    line.FileName,
+                    line.LineNumber,
+                    sym_info.sym_info.Address);
+            }
+        }
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
+
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
+
+#ifdef _WIN32
+    SetUnhandledExceptionFilter(s_test_print_stack_trace);
+#endif
 
     if (harness->on_before) {
         harness->on_before(harness->allocator, harness->ctx);
