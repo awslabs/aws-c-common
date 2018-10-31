@@ -152,9 +152,9 @@ AWS_EXTERN_C_END
  * false, leaving the buf unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_string(
-    struct aws_byte_buf *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT buf,
     const struct aws_string *AWS_RESTRICT src) {
-    return aws_byte_buf_write(cur, aws_string_bytes(src), src->len);
+    return aws_byte_buf_write(buf, aws_string_bytes(src), src->len);
 }
 
 /**

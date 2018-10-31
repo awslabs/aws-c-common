@@ -502,19 +502,19 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint
  * buffer unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write(
-    struct aws_byte_buf *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT buf,
     const uint8_t *AWS_RESTRICT src,
     size_t len) {
 
-    if (cur->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || cur->len + len > cur->capacity) {
+    if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
         return false;
     }
 
-    memcpy(cur->buffer + cur->len, src, len);
-        cur->len += len;
+    memcpy(buf->buffer + buf->len, src, len);
+    buf->len += len;
 
-        return true;
-    }
+    return true;
+}
 
 /**
  * Copies all bytes from buffer to buffer.
@@ -524,9 +524,9 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
  * buffer unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
-    struct aws_byte_buf *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_buf src) {
-    return aws_byte_buf_write(cur, src.buffer, src.len);
+    return aws_byte_buf_write(buf, src.buffer, src.len);
 }
 
 /**
@@ -537,9 +537,9 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
  * buffer unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_cursor(
-    struct aws_byte_buf *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_cursor src) {
-    return aws_byte_buf_write(cur, src.ptr, src.len);
+    return aws_byte_buf_write(buf, src.ptr, src.len);
 }
 
 /**
@@ -551,8 +551,8 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_cursor(
  * If there is insufficient space in the cursor, returns false, leaving the
  cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT cur, uint8_t c) {
-    return aws_byte_buf_write(cur, &c, 1);
+AWS_STATIC_IMPL bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c) {
+    return aws_byte_buf_write(buf, &c, 1);
 }
 
 /**
@@ -562,9 +562,9 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT cur
  * If there is insufficient space in the cursor, returns false, leaving the
  * cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_buf_write_be16(struct aws_byte_buf *cur, uint16_t x) {
+AWS_STATIC_IMPL bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t x) {
     x = aws_hton16(x);
-    return aws_byte_buf_write(cur, (uint8_t *)&x, 2);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 2);
 }
 
 /**
@@ -574,9 +574,9 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be16(struct aws_byte_buf *cur, uint16_t 
  * If there is insufficient space in the cursor, returns false, leaving the
  * cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *cur, uint32_t x) {
+AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t x) {
     x = aws_hton32(x);
-    return aws_byte_buf_write(cur, (uint8_t *)&x, 4);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 4);
 }
 
 /**
@@ -586,9 +586,9 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *cur, uint32_t 
  * If there is insufficient space in the cursor, returns false, leaving the
  * cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_buf_write_be64(struct aws_byte_buf *cur, uint64_t x) {
+AWS_STATIC_IMPL bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x) {
     x = aws_hton64(x);
-    return aws_byte_buf_write(cur, (uint8_t *)&x, 8);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
 
 #endif /* AWS_COMMON_BYTE_BUF_H */
