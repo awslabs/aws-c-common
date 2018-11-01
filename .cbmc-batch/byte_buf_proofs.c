@@ -18,7 +18,7 @@ void aws_byte_buf_init_verify(void) {
 
     size_t len = nondet_size_t();
 
-    aws_byte_buf_init(buf, allocator, len)
+    aws_byte_buf_init(buf, allocator, len);
 }
 
 void aws_byte_buf_from_c_str_verify(void) {
