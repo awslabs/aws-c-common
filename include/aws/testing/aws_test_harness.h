@@ -436,25 +436,26 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
 
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
     if (!dbghelp) {
-        return EXCEPTION_EXECUTE_HANDLER;
+        fprintf(stderr, "Failed to load DbgHelp.dll.\n");
+        goto done;
     }
 
     SymInitialize_fn *p_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
     if (!p_SymInitialize) {
-        FreeLibrary(dbghelp);
-        return EXCEPTION_EXECUTE_HANDLER;
+        fprintf(stderr, "Failed to load SymInitialize from DbgHelp.dll.\n");
+        goto done;
     }
 
     SymFromAddr_fn *p_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
     if (!p_SymFromAddr) {
-        FreeLibrary(dbghelp);
-        return EXCEPTION_EXECUTE_HANDLER;
+        fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
+        goto done;
     }
 
     SymGetLineFromAddr_fn *p_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
     if (!p_SymGetLineFromAddr) {
-        FreeLibrary(dbghelp);
-        return EXCEPTION_EXECUTE_HANDLER;
+        fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
+        goto done;
     }
 
     HANDLE process = GetCurrentProcess();
@@ -487,7 +488,10 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
         }
     }
 
-    FreeLibrary(dbghelp);
+done:
+    if (dbghelp) {
+        FreeLibrary(dbghelp);
+    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
