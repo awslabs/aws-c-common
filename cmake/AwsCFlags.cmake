@@ -56,6 +56,9 @@ function(aws_set_common_properties target)
         # Without -Wno-sign-conversion, this becomes too noisy.
         list(APPEND AWS_C_FLAGS -Wconversion -Wno-sign-conversion)
 
+	# Always enable position independent code, since this code will always end up in a shared lib
+	list(APPEND AWS_C_FLAGS -fPIC)
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
