@@ -109,12 +109,6 @@ enum aws_memory_order {
 #define AWS_ATOMIC_INIT_PTR(x)                                                                                         \
     { .value = (void *)(x) }
 
-#ifdef AWS_ATOMICS_INLINE
-#    define AWS_ATOMICS_API AWS_STATIC_IMPL
-#else
-#    define AWS_ATOMICS_API AWS_COMMON_API
-#endif
-
 /*
  * Note: We do not use the C11 atomics API; this is because we want to make sure the representation
  * (and behavior) of atomic values is consistent, regardless of what --std= flag you pass to your compiler.
@@ -134,7 +128,7 @@ enum aws_memory_order {
  * when communicating the fact that initialization is complete to the other thread. Launching the thread
  * implies a sufficiently strong barrier.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n);
 
 /**
@@ -145,13 +139,13 @@ void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n);
  * when communicating the fact that initialization is complete to the other thread. Launching the thread
  * implies a sufficiently strong barrier.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p);
 
 /**
  * Reads an atomic var as an integer, using the specified ordering, and returns the result.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order);
 
 /**
@@ -165,7 +159,7 @@ size_t aws_atomic_load_int(volatile const struct aws_atomic_var *var) {
 /**
  * Reads an atomic var as a pointer, using the specified ordering, and returns the result.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order);
 
 /**
@@ -179,7 +173,7 @@ void *aws_atomic_load_ptr(volatile const struct aws_atomic_var *var) {
 /**
  * Stores an integer into an atomic var, using the specified ordering.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order memory_order);
 
 /**
@@ -193,7 +187,7 @@ void aws_atomic_store_int(volatile struct aws_atomic_var *var, size_t n) {
 /**
  * Stores a pointer into an atomic var, using the specified ordering.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p, enum aws_memory_order memory_order);
 
 /**
@@ -208,7 +202,7 @@ void aws_atomic_store_ptr(volatile struct aws_atomic_var *var, void *p) {
  * Exchanges an integer with the value in an atomic_var, using the specified ordering.
  * Returns the value that was previously in the atomic_var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_exchange_int_explicit(
     volatile struct aws_atomic_var *var,
     size_t n,
@@ -227,7 +221,7 @@ size_t aws_atomic_exchange_int(volatile struct aws_atomic_var *var, size_t n) {
  * Exchanges a pointer with the value in an atomic_var, using the specified ordering.
  * Returns the value that was previously in the atomic_var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void *aws_atomic_exchange_ptr_explicit(
     volatile struct aws_atomic_var *var,
     void *p,
@@ -248,7 +242,7 @@ void *aws_atomic_exchange_ptr(volatile struct aws_atomic_var *var, void *p) {
  * order_failure must be no stronger than order_success, and must not be release or acq_rel.
  * Returns true if the compare was successful and the variable updated to desired.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 bool aws_atomic_compare_exchange_int_explicit(
     volatile struct aws_atomic_var *var,
     size_t *expected,
@@ -273,7 +267,7 @@ bool aws_atomic_compare_exchange_int(volatile struct aws_atomic_var *var, size_t
  * order_failure must be no stronger than order_success, and must not be release or acq_rel.
  * Returns true if the compare was successful and the variable updated to desired.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 bool aws_atomic_compare_exchange_ptr_explicit(
     volatile struct aws_atomic_var *var,
     void **expected,
@@ -295,31 +289,31 @@ bool aws_atomic_compare_exchange_ptr(volatile struct aws_atomic_var *var, void *
 /**
  * Atomically adds n to *var, and returns the previous value of *var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically subtracts n from *var, and returns the previous value of *var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically ORs n with *var, and returns the previous value of *var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically ANDs n with *var, and returns the previous value of *var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
  * Atomically XORs n with *var, and returns the previous value of *var.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order);
 
 /**
@@ -371,7 +365,7 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
  * Provides the same reordering guarantees as an atomic operation with the specified memory order, without
  * needing to actually perform an atomic operation.
  */
-AWS_ATOMICS_API
+AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order);
 
 #include <aws/common/atomics_fallback.inl>
