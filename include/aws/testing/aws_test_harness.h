@@ -402,12 +402,62 @@ struct win_symbol_data {
     char symbol_name[1024];
 };
 
+typedef BOOL __stdcall SymInitialize_fn(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess);
+
+typedef BOOL __stdcall SymFromAddr_fn(
+    _In_ HANDLE hProcess,
+    _In_ DWORD64 Address,
+    _Out_opt_ PDWORD64 Displacement,
+    _Inout_ PSYMBOL_INFO Symbol);
+
+#    if defined(_WIN64)
+typedef BOOL __stdcall SymGetLineFromAddr_fn(
+    _In_ HANDLE hProcess,
+    _In_ DWORD64 qwAddr,
+    _Out_ PDWORD pdwDisplacement,
+    _Out_ PIMAGEHLP_LINE64 Line64);
+#        define SymGetLineFromAddrName "SymGetLineFromAddr64"
+#    else
+typedef BOOL __stdcall SymGetLineFromAddr_fn(
+    _In_ HANDLE hProcess,
+    _In_ DWORD dwAddr,
+    _Out_ PDWORD pdwDisplacement,
+    _Out_ PIMAGEHLP_LINE Line);
+#        define SymGetLineFromAddrName "SymGetLineFromAddr"
+#    endif
+
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
     (void)exception_pointers;
     fprintf(stderr, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     void *stack[1024];
+
+    HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
+    if (!dbghelp) {
+        fprintf(stderr, "Failed to load DbgHelp.dll.\n");
+        goto done;
+    }
+
+    SymInitialize_fn *p_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
+    if (!p_SymInitialize) {
+        fprintf(stderr, "Failed to load SymInitialize from DbgHelp.dll.\n");
+        goto done;
+    }
+
+    SymFromAddr_fn *p_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
+    if (!p_SymFromAddr) {
+        fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
+        goto done;
+    }
+
+    SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
+        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+    if (!p_SymGetLineFromAddr) {
+        fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
+        goto done;
+    }
+
     HANDLE process = GetCurrentProcess();
-    SymInitialize(process, NULL, TRUE);
+    p_SymInitialize(process, NULL, TRUE);
     WORD num_frames = CaptureStackBackTrace(0, 1024, stack, NULL);
     DWORD64 displacement = 0;
     DWORD disp = 0;
@@ -419,11 +469,11 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        SymFromAddr(process, address, &displacement, &sym_info.sym_info);
+        p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-        if (SymGetLineFromAddr(process, address, &disp, &line)) {
+        if (p_SymGetLineFromAddr(process, address, &disp, &line)) {
             if (i != 0) {
                 fprintf(
                     stderr,
@@ -436,6 +486,10 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
         }
     }
 
+done:
+    if (dbghelp) {
+        FreeLibrary(dbghelp);
+    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
