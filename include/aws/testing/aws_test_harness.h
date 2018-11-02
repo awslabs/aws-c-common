@@ -402,10 +402,7 @@ struct win_symbol_data {
     char symbol_name[1024];
 };
 
-typedef BOOL __stdcall SymInitialize_fn(
-    _In_ HANDLE hProcess,
-    _In_opt_ PCSTR UserSearchPath,
-    _In_ BOOL fInvadeProcess);
+typedef BOOL __stdcall SymInitialize_fn(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess);
 
 typedef BOOL __stdcall SymFromAddr_fn(
     _In_ HANDLE hProcess,
@@ -413,21 +410,21 @@ typedef BOOL __stdcall SymFromAddr_fn(
     _Out_opt_ PDWORD64 Displacement,
     _Inout_ PSYMBOL_INFO Symbol);
 
-#if defined(_WIN64)
+#    if defined(_WIN64)
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD64 qwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE64 Line64);
-#define SymGetLineFromAddrName "SymGetLineFromAddr64"
-#else
+#        define SymGetLineFromAddrName "SymGetLineFromAddr64"
+#    else
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD dwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE Line);
-#define SymGetLineFromAddrName "SymGetLineFromAddr"
-#endif
+#        define SymGetLineFromAddrName "SymGetLineFromAddr"
+#    endif
 
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
     (void)exception_pointers;
@@ -452,7 +449,8 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
         goto done;
     }
 
-    SymGetLineFromAddr_fn *p_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+    SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
+        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
     if (!p_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
