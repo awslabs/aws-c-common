@@ -31,10 +31,6 @@ function(generate_test_driver driver_exe_name)
 
     target_link_libraries(${driver_exe_name} PRIVATE ${CMAKE_PROJECT_NAME})
 
-    if (WIN32)
-        target_link_libraries(${driver_exe_name} PUBLIC Dbghelp)
-    endif()
-
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
