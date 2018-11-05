@@ -199,7 +199,7 @@ void aws_task_scheduler_cancel_task(struct aws_task_scheduler *scheduler, struct
     /* attempt the linked lists first since those will be faster access and more likely to occur
      * anyways.
      */
-    if (task->node.next || task->node.prev) {
+    if (task->node.next && task->node.prev) {
         aws_linked_list_remove(&task->node);
     } else {
         aws_priority_queue_remove(&scheduler->timed_queue, &task, &task->priority_queue_node);
