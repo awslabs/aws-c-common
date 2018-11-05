@@ -98,52 +98,86 @@ int aws_byte_buf_init_copy(struct aws_allocator *allocator, struct aws_byte_buf 
     return AWS_OP_SUCCESS;
 }
 
+bool aws_byte_buf_next_split(const struct aws_byte_buf *input_str, char split_on, struct aws_byte_cursor *substr) {
+
+    bool first_run = false;
+    if (!substr->ptr) {
+        first_run = true;
+        substr->ptr = input_str->buffer;
+        substr->len = 0;
+    }
+
+    if (substr->ptr > input_str->buffer + input_str->len) {
+        /* This will hit if the last substring returned was an empty string after terminating split_on. */
+        AWS_ZERO_STRUCT(*substr);
+        return false;
+    }
+
+    /* Calculate first byte to search. */
+    substr->ptr += substr->len;
+    /* Remaining bytes is the number we started with minus the number of bytes already read. */
+    substr->len = input_str->len - (substr->ptr - input_str->buffer);
+
+    if (!first_run && substr->len == 0) {
+        /* This will hit if the string doesn't end with split_on but we're done. */
+        AWS_ZERO_STRUCT(*substr);
+        return false;
+    }
+
+    if (!first_run && *substr->ptr == split_on) {
+        /* If not first rodeo and the character after substr is split_on, skip. */
+        ++substr->ptr;
+        --substr->len;
+
+        if (substr->len == 0) {
+            /* If split character was last in the string, return empty substr. */
+            return true;
+        }
+    }
+
+    uint8_t *new_location = memchr(substr->ptr, split_on, substr->len);
+    if (new_location) {
+
+        /* Character found, update string length. */
+        substr->len = new_location - substr->ptr;
+    }
+
+    return true;
+}
+
 int aws_byte_buf_split_on_char_n(
-    struct aws_byte_buf *input_str,
+    const struct aws_byte_buf *input_str,
     char split_on,
     struct aws_array_list *output,
     size_t n) {
-    assert(input_str);
+    assert(input_str && input_str->buffer);
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_cursor));
 
     size_t max_splits = n > 0 ? n : SIZE_MAX;
-    size_t last_offset = 0, split_count = 0;
-    uint8_t *new_location = NULL;
+    size_t split_count = 0;
 
-    struct aws_byte_cursor current_pos = aws_byte_cursor_from_buf(input_str);
+    struct aws_byte_cursor substr;
+    AWS_ZERO_STRUCT(substr);
 
-    while (split_count < max_splits && (new_location = memchr(current_pos.ptr, split_on, current_pos.len))) {
+    /* Until we run out of substrs or hit the max split count, keep iterating and pushing into the array list. */
+    while (split_count <= max_splits && aws_byte_buf_next_split(input_str, split_on, &substr)) {
 
-        size_t distance_from_origin = new_location - current_pos.ptr;
-
-        struct aws_byte_cursor buffer = aws_byte_cursor_advance(&current_pos, distance_from_origin);
-        /* skip ahead by one to jump over the split_on character.*/
-        aws_byte_cursor_advance(&current_pos, 1);
-
-        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&buffer))) {
-            return AWS_OP_ERR;
+        if (split_count == max_splits) {
+            /* If this is the last split, take the rest of the string. */
+            substr.len = input_str->len - (substr.ptr - input_str->buffer);
         }
 
-        last_offset = distance_from_origin + 1;
-        split_count += 1;
-    }
-
-    if (last_offset < input_str->len) {
-        return aws_array_list_push_back(output, (const void *)&current_pos);
-    }
-
-    /* if we get here, we hit the end and we need to add an empty split */
-    struct aws_byte_cursor cursor = aws_byte_cursor_from_array(NULL, 0);
-
-    if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&cursor))) {
-        return AWS_OP_ERR;
+        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&substr))) {
+            return AWS_OP_ERR;
+        }
+        ++split_count;
     }
 
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
+int aws_byte_buf_split_on_char(const struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
     return aws_byte_buf_split_on_char_n(input_str, split_on, output, 0);
 }
 
