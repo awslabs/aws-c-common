@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/task_scheduler.h>
+#include <aws/common/thread.h>
 #include <aws/testing/aws_test_harness.h>
 
 struct executed_task_data {
@@ -27,7 +28,7 @@ static AWS_THREAD_LOCAL struct executed_task_data tl_executed_tasks[16];
 static AWS_THREAD_LOCAL size_t tl_executed_tasks_n;
 
 /* Updates tl_executed_tasks and tl_executed_task_n when function is executed */
-void task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
     if (tl_executed_tasks_n > AWS_ARRAY_SIZE(tl_executed_tasks)) {
         assert(0);
     }
@@ -38,7 +39,7 @@ void task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
     data->status = status;
 }
 
-static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     tl_executed_tasks_n = 0;
 
@@ -46,20 +47,20 @@ static int test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
     aws_task_scheduler_init(&scheduler, allocator);
 
     struct aws_task task2;
-    aws_task_init(&task2, task_n_fn, (void *)2);
+    aws_task_init(&task2, s_task_n_fn, (void *)2);
 
     /* schedule 250 ns in the future. */
     uint64_t task2_timestamp = 250;
     aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp);
 
     struct aws_task task1;
-    aws_task_init(&task1, task_n_fn, (void *)1);
+    aws_task_init(&task1, s_task_n_fn, (void *)1);
 
     /* schedule now. */
     aws_task_scheduler_schedule_now(&scheduler, &task1);
 
     struct aws_task task3;
-    aws_task_init(&task3, task_n_fn, (void *)3);
+    aws_task_init(&task3, s_task_n_fn, (void *)3);
 
     /* schedule 500 ns in the future. */
     uint64_t task3_timestamp = 500;
@@ -100,7 +101,7 @@ static void s_null_fn(struct aws_task *task, void *arg, enum aws_task_status sta
     (void)status;
 }
 
-static int test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -131,7 +132,7 @@ static int test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx) 
     return 0;
 }
 
-static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_pops_task_fashionably_late(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     tl_executed_tasks_n = 0;
 
@@ -139,7 +140,7 @@ static int test_scheduler_pops_task_fashionably_late(struct aws_allocator *alloc
     aws_task_scheduler_init(&scheduler, allocator);
 
     struct aws_task task;
-    aws_task_init(&task, task_n_fn, (void *)0);
+    aws_task_init(&task, s_task_n_fn, (void *)0);
 
     aws_task_scheduler_schedule_future(&scheduler, &task, 10);
 
@@ -194,7 +195,7 @@ static void s_reentrancy_args_init(
     args->next_task_args = next_task_args;
 }
 
-static int test_scheduler_reentrant_safe(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_reentrant_safe(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -231,7 +232,7 @@ struct cancellation_args {
     enum aws_task_status status;
 };
 
-static void cancellation_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+static void s_cancellation_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
 
     (void)task;
     struct cancellation_args *cancellation_args = (struct cancellation_args *)arg;
@@ -239,7 +240,7 @@ static void cancellation_fn(struct aws_task *task, void *arg, enum aws_task_stat
     cancellation_args->status = status;
 }
 
-static int test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -247,12 +248,12 @@ static int test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, 
 
     struct cancellation_args now_task_args = {.status = 100000};
     struct aws_task now_task;
-    aws_task_init(&now_task, cancellation_fn, &now_task_args);
+    aws_task_init(&now_task, s_cancellation_fn, &now_task_args);
     aws_task_scheduler_schedule_now(&scheduler, &now_task);
 
     struct cancellation_args future_task_args = {.status = 100000};
     struct aws_task future_task;
-    aws_task_init(&future_task, cancellation_fn, &future_task_args);
+    aws_task_init(&future_task, s_cancellation_fn, &future_task_args);
     aws_task_scheduler_schedule_future(&scheduler, &future_task, 9999999999999);
 
     aws_task_scheduler_clean_up(&scheduler);
@@ -262,7 +263,7 @@ static int test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, 
     return 0;
 }
 
-static int test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_task_scheduler scheduler;
@@ -353,7 +354,7 @@ static void s_oom_task_fn(struct aws_task *task, void *arg, enum aws_task_status
     aws_linked_list_push_back(done_list, &task->node);
 }
 
-static int test_scheduler_oom_still_works(struct aws_allocator *allocator, void *ctx) {
+static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     /* Create allocator for scheduler that limits how many allocations it can make.
@@ -443,10 +444,64 @@ static int test_scheduler_oom_still_works(struct aws_allocator *allocator, void 
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(scheduler_pops_task_late_test, test_scheduler_pops_task_fashionably_late);
-AWS_TEST_CASE(scheduler_ordering_test, test_scheduler_ordering);
-AWS_TEST_CASE(scheduler_has_tasks_test, test_scheduler_has_tasks);
-AWS_TEST_CASE(scheduler_reentrant_safe, test_scheduler_reentrant_safe);
-AWS_TEST_CASE(scheduler_cleanup_cancellation, test_scheduler_cleanup_cancellation);
-AWS_TEST_CASE(scheduler_cleanup_reentrants, test_scheduler_cleanup_reentrants);
-AWS_TEST_CASE(scheduler_oom_still_works, test_scheduler_oom_still_works)
+static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    tl_executed_tasks_n = 0;
+
+    struct aws_task_scheduler scheduler;
+    aws_task_scheduler_init(&scheduler, allocator);
+
+    struct aws_task task2;
+    aws_task_init(&task2, s_task_n_fn, (void *)2);
+
+    /* schedule 250 ns in the future. */
+    uint64_t task2_timestamp = 250;
+    aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp);
+
+    struct aws_task task1;
+    aws_task_init(&task1, s_task_n_fn, (void *)1);
+
+    /* schedule now. */
+    aws_task_scheduler_schedule_now(&scheduler, &task1);
+
+    struct aws_task task3;
+    aws_task_init(&task3, s_task_n_fn, (void *)3);
+
+    /* schedule 500 ns in the future. */
+    uint64_t task3_timestamp = 500;
+    aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp);
+
+    aws_task_scheduler_cancel_task(&scheduler, &task1);
+    aws_task_scheduler_cancel_task(&scheduler, &task2);
+
+    aws_task_scheduler_run_all(&scheduler, task3_timestamp);
+
+    ASSERT_UINT_EQUALS(3, tl_executed_tasks_n);
+
+    struct executed_task_data *task_data = &tl_executed_tasks[0];
+    ASSERT_PTR_EQUALS(&task1, task_data->task);
+    ASSERT_PTR_EQUALS(task1.arg, task_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
+
+    task_data = &tl_executed_tasks[1];
+    ASSERT_PTR_EQUALS(&task2, task_data->task);
+    ASSERT_PTR_EQUALS(task2.arg, task_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
+
+    task_data = &tl_executed_tasks[2];
+    ASSERT_PTR_EQUALS(&task3, task_data->task);
+    ASSERT_PTR_EQUALS(task3.arg, task_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task_data->status);
+
+    aws_task_scheduler_clean_up(&scheduler);
+    return 0;
+}
+
+AWS_TEST_CASE(scheduler_pops_task_late_test, s_test_scheduler_pops_task_fashionably_late);
+AWS_TEST_CASE(scheduler_ordering_test, s_test_scheduler_ordering);
+AWS_TEST_CASE(scheduler_has_tasks_test, s_test_scheduler_has_tasks);
+AWS_TEST_CASE(scheduler_reentrant_safe, s_test_scheduler_reentrant_safe);
+AWS_TEST_CASE(scheduler_cleanup_cancellation, s_test_scheduler_cleanup_cancellation);
+AWS_TEST_CASE(scheduler_cleanup_reentrants, s_test_scheduler_cleanup_reentrants);
+AWS_TEST_CASE(scheduler_oom_still_works, s_test_scheduler_oom_still_works);
+AWS_TEST_CASE(scheduler_schedule_cancellation, s_test_scheduler_schedule_cancellation);
