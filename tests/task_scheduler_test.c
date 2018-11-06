@@ -444,6 +444,17 @@ static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, voi
     return AWS_OP_SUCCESS;
 }
 
+struct task_cancelling_task_data {
+    struct aws_task_scheduler *scheduler;
+    struct aws_task *task_to_cancel;
+};
+
+static void s_task_cancelling_task(struct aws_task *task, void *arg, enum aws_task_status status) {
+    s_task_n_fn(task, arg, status);
+    struct task_cancelling_task_data *task_data = arg;
+    aws_task_scheduler_cancel_task(task_data->scheduler, task_data->task_to_cancel);
+}
+
 static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     tl_executed_tasks_n = 0;
@@ -471,12 +482,26 @@ static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocato
     uint64_t task3_timestamp = 500;
     aws_task_scheduler_schedule_future(&scheduler, &task3, task3_timestamp);
 
+    struct aws_task task5;
+    aws_task_init(&task5, s_task_n_fn, (void *)5);
+
+    struct task_cancelling_task_data task_cancel_data = {
+            .scheduler = &scheduler,
+            .task_to_cancel = &task5,
+    };
+
+    struct aws_task task4;
+
+    aws_task_init(&task4, s_task_cancelling_task, &task_cancel_data);
+    aws_task_scheduler_schedule_now(&scheduler, &task4);
+    aws_task_scheduler_schedule_now(&scheduler, &task5);
+
     aws_task_scheduler_cancel_task(&scheduler, &task1);
     aws_task_scheduler_cancel_task(&scheduler, &task2);
 
     aws_task_scheduler_run_all(&scheduler, task3_timestamp);
 
-    ASSERT_UINT_EQUALS(3, tl_executed_tasks_n);
+    ASSERT_UINT_EQUALS(5, tl_executed_tasks_n);
 
     struct executed_task_data *task_data = &tl_executed_tasks[0];
     ASSERT_PTR_EQUALS(&task1, task_data->task);
@@ -486,6 +511,16 @@ static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocato
     task_data = &tl_executed_tasks[1];
     ASSERT_PTR_EQUALS(&task2, task_data->task);
     ASSERT_PTR_EQUALS(task2.arg, task_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
+
+    task_data = &tl_executed_tasks[3];
+    ASSERT_PTR_EQUALS(&task4, task_data->task);
+    ASSERT_PTR_EQUALS(task4.arg, task_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task_data->status);
+
+    task_data = &tl_executed_tasks[4];
+    ASSERT_PTR_EQUALS(&task5, task_data->task);
+    ASSERT_PTR_EQUALS(task5.arg, task_data->arg);
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
 
     task_data = &tl_executed_tasks[2];
