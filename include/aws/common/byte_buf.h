@@ -88,6 +88,22 @@ AWS_COMMON_API
 bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
 
 /**
+ * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.
+ *
+ * Edge case rules are as follows:
+ * If the input begins with split_on, an empty cursor will be the first entry returned.
+ * If the input has two adjacent split_on tokens, an empty cursor will be returned.
+ * If the input ends with split_on, an empty cursor will be returned last.
+ *
+ * It is the user's responsibility to properly zero-initialize substr.
+ *
+ * It is the user's responsibility to make sure the input buffer stays in memory
+ * long enough to use the results.
+ */
+AWS_COMMON_API
+bool aws_byte_buf_next_split(const struct aws_byte_buf *input_str, char split_on, struct aws_byte_cursor *substr);
+
+/**
  * No copies, no buffer allocations. Fills in output with a list of
  * aws_byte_cursor instances where buffer is an offset into the input_str and
  * len is the length of that string in the original buffer.
@@ -108,7 +124,7 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
  * long enough to use the results.
  */
 AWS_COMMON_API
-int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output);
+int aws_byte_buf_split_on_char(const struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of aws_byte_cursor instances where buffer is
@@ -129,7 +145,7 @@ int aws_byte_buf_split_on_char(struct aws_byte_buf *input_str, char split_on, st
  */
 AWS_COMMON_API
 int aws_byte_buf_split_on_char_n(
-    struct aws_byte_buf *input_str,
+    const struct aws_byte_buf *input_str,
     char split_on,
     struct aws_array_list *output,
     size_t n);
@@ -475,7 +491,7 @@ AWS_STATIC_IMPL bool aws_byte_cursor_write_from_whole_buffer(
  * Copies one byte to cursor.
  *
  * On success, returns true and updates the cursor pointer/length
- accordingly.<<<<<< str-split
+ accordingly.
 
  * If there is insufficient space in the cursor, returns false, leaving the
  cursor unchanged.
