@@ -41,6 +41,7 @@ struct aws_task {
     void *arg;
     uint64_t timestamp;
     struct aws_linked_list_node node;
+    struct aws_priority_queue_node priority_queue_node;
 };
 
 AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg) {
@@ -95,6 +96,12 @@ void aws_task_scheduler_schedule_future(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t time_to_run);
+
+/**
+ * Removes task from the scheduler and invokes the task with the AWS_TASK_STATUS_CANCELED status.
+ */
+AWS_COMMON_API
+void aws_task_scheduler_cancel_task(struct aws_task_scheduler *scheduler, struct aws_task *task);
 
 /**
  * Sequentially execute all tasks scheduled to run at, or before current_time.

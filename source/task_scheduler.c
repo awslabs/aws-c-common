@@ -89,7 +89,10 @@ void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struc
     assert(task);
     assert(task->fn);
 
+    task->priority_queue_node.current_index = SIZE_MAX;
+    aws_linked_list_node_reset(&task->node);
     task->timestamp = 0;
+
     aws_linked_list_push_back(&scheduler->asap_list, &task->node);
 }
 
@@ -104,7 +107,9 @@ void aws_task_scheduler_schedule_future(
 
     task->timestamp = time_to_run;
 
-    int err = aws_priority_queue_push(&scheduler->timed_queue, &task);
+    task->priority_queue_node.current_index = SIZE_MAX;
+    aws_linked_list_node_reset(&task->node);
+    int err = aws_priority_queue_push_ref(&scheduler->timed_queue, &task, &task->priority_queue_node);
     if (AWS_UNLIKELY(err)) {
         /* In the (very unlikely) case that we can't push into the timed_queue,
          * perform a sorted insertion into timed_list. */
@@ -188,4 +193,16 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
         struct aws_task *task = AWS_CONTAINER_OF(task_node, struct aws_task, node);
         task->fn(task, task->arg, status);
     }
+}
+
+void aws_task_scheduler_cancel_task(struct aws_task_scheduler *scheduler, struct aws_task *task) {
+    /* attempt the linked lists first since those will be faster access and more likely to occur
+     * anyways.
+     */
+    if (task->node.next) {
+        aws_linked_list_remove(&task->node);
+    } else {
+        aws_priority_queue_remove(&scheduler->timed_queue, &task, &task->priority_queue_node);
+    }
+    task->fn(task, task->arg, AWS_TASK_STATUS_CANCELED);
 }
