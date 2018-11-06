@@ -107,7 +107,7 @@ void aws_task_scheduler_schedule_future(
 
     task->timestamp = time_to_run;
 
-    task->priority_queue_node.current_index = 0;
+    task->priority_queue_node.current_index = SIZE_MAX;
     aws_linked_list_node_reset(&task->node);
     int err = aws_priority_queue_push_ref(&scheduler->timed_queue, &task, &task->priority_queue_node);
     if (AWS_UNLIKELY(err)) {
