@@ -36,7 +36,7 @@
 #define AWS_FATAL_ASSERT(cond) if (!cond) {                                                                     \
                                     fprintf(stderr, "Fatal error condition occured in %s. "                     \
                                         "Exiting application\n", __LINE__);                                     \
-                                    exit(-1);                                                                   \
+                                    abort();                                                                    \
                                }                                                                                \
 
 #ifndef NO_STDBOOL
