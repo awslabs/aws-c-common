@@ -33,6 +33,11 @@
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
+#define AWS_FATAL_ASSERT(cond) if (!(cond)) {                                                                   \
+                                    fprintf(stderr, "Fatal error condition occurred in %s:%d: %s "               \
+                                        "Exiting application\n", __FILE__, __LINE__, #cond);                    \
+                                    abort();                                                                    \
+                               }                                                                                \
 
 #ifndef NO_STDBOOL
 #    include <stdbool.h>
