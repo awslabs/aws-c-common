@@ -44,24 +44,6 @@ int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
-
-    if (TryAcquireSRWLockShared(AWSSRW_TO_WINDOWS(lock))) {
-        return AWS_OP_SUCCESS;
-    }
-
-    return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
-}
-
-int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
-
-    if (TryAcquireSRWLockExclusive(AWSSRW_TO_WINDOWS(lock))) {
-        return AWS_OP_SUCCESS;
-    }
-
-    return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
-}
-
 int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
     ReleaseSRWLockShared(AWSSRW_TO_WINDOWS(lock));

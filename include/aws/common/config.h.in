@@ -26,5 +26,6 @@
 #cmakedefine AWS_HAVE_GCC_INLINE_ASM
 #cmakedefine AWS_ENABLE_HW_OPTIMIZATION
 #cmakedefine AWS_HAVE_MSVC_MULX
+#define AWS_SIZEOF_VOID_P @CMAKE_SIZEOF_VOID_P@
 
 #endif
