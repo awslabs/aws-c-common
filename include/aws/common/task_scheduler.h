@@ -42,6 +42,7 @@ struct aws_task {
     uint64_t timestamp;
     struct aws_linked_list_node node;
     struct aws_priority_queue_node priority_queue_node;
+    size_t reserved;
 };
 
 AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg) {
