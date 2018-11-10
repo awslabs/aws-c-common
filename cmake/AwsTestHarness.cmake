@@ -42,3 +42,21 @@ function(generate_test_driver driver_exe_name)
     # Clear test cases in case another driver needsto be generated
     unset(TEST_CASES PARENT_SCOPE)
 endfunction()
+
+function(generate_cpp_test_driver driver_exe_name)
+    create_test_sourcelist(test_srclist test_runner.cpp ${TEST_CASES})
+
+    add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.cpp ${TESTS})
+    target_link_libraries(${driver_exe_name} PRIVATE ${CMAKE_PROJECT_NAME})
+
+    set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
+    target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
+    target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+
+    foreach(name IN LISTS TEST_CASES)
+        add_test(${name} ${driver_exe_name} "${name}")
+    endforeach()
+
+    # Clear test cases in case another driver needsto be generated
+    unset(TEST_CASES PARENT_SCOPE)
+endfunction()

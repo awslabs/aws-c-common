@@ -347,6 +347,8 @@ struct aws_test_harness {
 
 #define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
     static struct memory_test_allocator name##_alloc_impl = {                                                          \
+        .mem_acquire = NULL,                                                                                           \
+        .mem_release = NULL,                                                                                           \
         .allocated = 0,                                                                                                \
         .freed = 0,                                                                                                    \
         .mutex = AWS_MUTEX_INIT,                                                                                       \
@@ -365,8 +367,8 @@ struct aws_test_harness {
         .on_before = NULL,                                                                                             \
         .run = (fn),                                                                                                   \
         .on_after = NULL,                                                                                              \
-        .ctx = NULL,                                                                                                   \
         .allocator = &name##_allocator,                                                                                \
+        .ctx = NULL,                                                                                                   \
         .test_name = #name,                                                                                            \
         .suppress_memcheck = (s),                                                                                      \
     };                                                                                                                 \
