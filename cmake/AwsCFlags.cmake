@@ -93,7 +93,7 @@ function(aws_set_common_properties target)
             set(CMAKE_REQUIRED_FLAGS "${old_flags}")
         endif(HAS_WGNU)
 
-        if (NOT NO_GNU_EXPR)
+        if (DEFINED NO_GNU_EXPR AND NOT NO_GNU_EXPR)
             list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
         endif()
 
