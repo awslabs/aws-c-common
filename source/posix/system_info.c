@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <unistd.h>
 
+#if defined(HAVE_SYSCONF)
 size_t aws_system_info_processor_count(void) {
     long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
     if (AWS_LIKELY(nprocs >= 0)) {
@@ -27,3 +28,10 @@ size_t aws_system_info_processor_count(void) {
     assert(0);
     return 0;
 }
+#else
+
+size_t aws_system_info_processor_count(void) {
+    return 1;
+}
+
+#endif

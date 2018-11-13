@@ -73,8 +73,8 @@ else ()
         set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
             set(PLATFORM_LIBS pthread rt)
-        endif ()
-    endif ()
+    endif()
+endif()
 
 file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
@@ -166,5 +166,7 @@ list(APPEND EXPORT_MODULES
 
 install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
 
-include(CTest)
-add_subdirectory(tests)
+if (NOT CMAKE_CROSSCOMPILING)
+    include(CTest)
+    add_subdirectory(tests)
+endif()

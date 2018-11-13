@@ -80,6 +80,37 @@ function(aws_set_common_properties target)
         endif()
     endif()
 
+    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "-Wgnu -Werror")
+
+    # some platforms implement htonl family of functions via GNU statement expressions (https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html)
+    # which generates -Wgnu-statement-expression warning.
+    check_c_source_compiles("
+    #include <netinet/in.h>
+
+    int main() {
+    uint32_t x = 0;
+    x = htonl(x);
+    return (int)x;
+    }"  NO_GNU_EXPR)
+
+    # some platforms (especially when cross-compiling) do not have the sysconf API in their toolchain files.
+    check_c_source_compiles("
+    #include <unistd.h>
+    int main() {
+    sysconf(_SC_NPROCESSORS_ONLN);
+    }"  HAVE_SYSCONF)
+
+    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
+    if (NOT NO_GNU_EXPR)
+        list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
+    endif()
+
+    if (HAVE_SYSCONF)
+        list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
+    endif()
+
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     endif()

@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-#if defined(_M_X64) || defined(_M_IX86) || defined(_M_ARM)
+#if (AWS_ENABLE_HW_OPTIMIZATION && defined(_M_X64) || defined(_M_IX86) || defined(_M_ARM))
 #    include <immintrin.h>
 #    include <intrin.h>
 #endif
