@@ -86,18 +86,17 @@ function(aws_set_common_properties target)
             #include <netinet/in.h>
 
             int main() {
-              uint32_t x = 0;
-              x = htonl(x);
-              return (int)x;
+            uint32_t x = 0;
+            x = htonl(x);
+            return (int)x;
             }"  NO_GNU_EXPR)
             set(CMAKE_REQUIRED_FLAGS "${old_flags}")
-        endif(HAS_WGNU)
 
-        if (DEFINED NO_GNU_EXPR AND NOT NO_GNU_EXPR)
-            list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
+            if (NOT NO_GNU_EXPR)
+                list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
+            endif()
         endif()
-
-    endif(NOT SET_PROPERTIES_NO_WGNU)
+    endif()
 
     # some platforms (especially when cross-compiling) do not have the sysconf API in their toolchain files.
     check_c_source_compiles("
