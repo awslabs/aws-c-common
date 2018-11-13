@@ -39,6 +39,7 @@ file(GLOB AWS_COMMON_SRC
 
 option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
 option(ENABLE_HW_OPTIMIZATION "Enables hardware specific optimizations in assembly. Not all compilers are supported." ON)
+option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
@@ -104,6 +105,10 @@ endif()
 
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
+
+if (AWS_NUM_CPU_CORES)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
+endif()
 
 # Our ABI is not yet stable
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
