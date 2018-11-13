@@ -29,14 +29,12 @@ size_t aws_system_info_processor_count(void) {
     return 0;
 }
 #else
-
 size_t aws_system_info_processor_count(void) {
-#if defined(AWS_NUM_CPU_CORES)
-    assert(AWS_NUM_CPU_CORES > 0)
+#    if defined(AWS_NUM_CPU_CORES)
+    assert(AWS_NUM_CPU_CORES > 0);
     return AWS_NUM_CPU_CORES;
-#else
+#    else
     return 1;
-#endif
+#    endif
 }
-
 #endif
