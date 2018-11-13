@@ -90,6 +90,11 @@ function(aws_set_common_properties target)
             }"  NO_GNU_EXPR)
 
         endif(HAS_WGNU)
+
+        if (NOT NO_GNU_EXPR)
+            list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
+        endif()
+
     endif(NOT SET_PROPERTIES_NO_WGNU)
 
     set(old_flags "${CMAKE_REQUIRED_FLAGS}")
@@ -104,10 +109,6 @@ function(aws_set_common_properties target)
     }"  HAVE_SYSCONF)
 
     set(CMAKE_REQUIRED_FLAGS "${old_flags}")
-
-    if (NOT NO_GNU_EXPR)
-        list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
-    endif()
 
     if (HAVE_SYSCONF)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
