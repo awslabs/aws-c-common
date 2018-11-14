@@ -77,7 +77,36 @@ function(aws_set_common_properties target)
         if(HAS_WGNU)
             # -Wgnu-zero-variadic-macro-arguments results in a lot of false positives
             list(APPEND AWS_C_FLAGS -Wgnu -Wno-gnu-zero-variadic-macro-arguments)
+
+            # some platforms implement htonl family of functions via GNU statement expressions (https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html)
+            # which generates -Wgnu-statement-expression warning.
+            set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+            set(CMAKE_REQUIRED_FLAGS "-Wgnu -Werror")
+            check_c_source_compiles("
+            #include <netinet/in.h>
+
+            int main() {
+            uint32_t x = 0;
+            x = htonl(x);
+            return (int)x;
+            }"  NO_GNU_EXPR)
+            set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
+            if (NOT NO_GNU_EXPR)
+                list(APPEND AWS_C_FLAGS -Wno-gnu-statement-expression)
+            endif()
         endif()
+    endif()
+
+    # some platforms (especially when cross-compiling) do not have the sysconf API in their toolchain files.
+    check_c_source_compiles("
+    #include <unistd.h>
+    int main() {
+      sysconf(_SC_NPROCESSORS_ONLN);
+    }"  HAVE_SYSCONF)
+
+    if (HAVE_SYSCONF)
+        list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
