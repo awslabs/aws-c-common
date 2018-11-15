@@ -1,19 +1,19 @@
 #ifndef AWS_TESTING_AWS_TEST_HARNESS_H
 #define AWS_TESTING_AWS_TEST_HARNESS_H
 /*
-* Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+ * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
 #include <aws/common/common.h>
 #include <aws/common/error.h>
@@ -81,8 +81,8 @@ static inline void s_mem_release_free(struct aws_allocator *allocator, void *ptr
 }
 
 /** Prints a message to stdout using printf format that appends the function, file and line number.
-* If format is null, returns 0 without printing anything; otherwise returns 1.
-*/
+ * If format is null, returns 0 without printing anything; otherwise returns 1.
+ */
 static int s_cunit_failure_message0(
     const char *prefix,
     const char *function,
@@ -521,16 +521,16 @@ static inline int enable_vt_mode(void) {
 
 #define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
     static struct memory_test_allocator name##_alloc_impl = {                                                          \
-         0,                                                                                                            \
-         0,                                                                                                            \
-         AWS_MUTEX_INIT,                                                                                               \
+        0,                                                                                                             \
+        0,                                                                                                             \
+        AWS_MUTEX_INIT,                                                                                                \
     };                                                                                                                 \
     static struct aws_allocator name##_allocator = {                                                                   \
         s_mem_acquire_malloc,                                                                                          \
         s_mem_release_free,                                                                                            \
         NULL,                                                                                                          \
         &name##_alloc_impl,                                                                                            \
-    };                                                                                                                 \
+    };
 
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
@@ -544,7 +544,10 @@ static inline int enable_vt_mode(void) {
         #name,                                                                                                         \
         s,                                                                                                             \
     };                                                                                                                 \
-    int name(int argc, char *argv[]) { (void) argc, (void)argv; return s_aws_run_test_case(&name##_test); }            \
+    int name(int argc, char *argv[]) {                                                                                 \
+        (void)argc, (void)argv;                                                                                        \
+        return s_aws_run_test_case(&name##_test);                                                                      \
+    }
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
     static void b(struct aws_allocator *allocator, void *ctx);                                                         \
@@ -560,7 +563,11 @@ static inline int enable_vt_mode(void) {
         #name,                                                                                                         \
         s,                                                                                                             \
     };                                                                                                                 \
-    int name(int argc, char *argv[]) { (void)argc; (void)argv; return s_aws_run_test_case(&name##_test); }
+    int name(int argc, char *argv[]) {                                                                                 \
+        (void)argc;                                                                                                    \
+        (void)argv;                                                                                                    \
+        return s_aws_run_test_case(&name##_test);                                                                      \
+    }
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
