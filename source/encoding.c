@@ -21,7 +21,7 @@
 
 #ifdef USE_SIMD_ENCODING
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len);
-size_t aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
+void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len);
 bool aws_common_private_has_avx2(void);
 #else
 /*
@@ -36,16 +36,17 @@ static inline size_t aws_common_private_base64_decode_sse41(
     (void)in;
     (void)out;
     (void)len;
+    assert(false);
     return (size_t)-1; /* unreachable */
 }
-static inline size_t aws_common_private_base64_encode_sse41(
+static inline void aws_common_private_base64_encode_sse41(
     const unsigned char *in,
     unsigned char *out, // NOLINT
     size_t len) {
     (void)in;
     (void)out;
     (void)len;
-    return (size_t)-1; /* unreachable */
+    assert(false);
 }
 static inline bool aws_common_private_has_avx2(void) {
     return false;
