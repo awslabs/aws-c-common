@@ -34,7 +34,7 @@ struct aws_mutex {
 
 #ifdef _WIN32
 #    define AWS_MUTEX_INIT                                                                                             \
-        { .mutex_handle = NULL }
+        { NULL }
 #else
 #    define AWS_MUTEX_INIT                                                                                             \
         { .mutex_handle = PTHREAD_MUTEX_INITIALIZER }
