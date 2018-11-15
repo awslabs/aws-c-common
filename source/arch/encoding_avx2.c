@@ -31,7 +31,7 @@
  */
 static inline __m256i translate_range(__m256i in, uint8_t lo, uint8_t hi, uint8_t offset) {
     __m256i lovec = _mm256_set1_epi8(lo);
-    __m256i hivec = _mm256_set1_epi8(hi - lo);
+    __m256i hivec = _mm256_set1_epi8((char)(hi - lo));
     __m256i offsetvec = _mm256_set1_epi8(offset);
 
     __m256i tmp = _mm256_sub_epi8(in, lovec);
