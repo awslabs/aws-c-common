@@ -41,8 +41,6 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #endif
 
 struct memory_test_allocator {
-    void *(*mem_acquire)(struct aws_allocator *config, size_t size);
-    void (*mem_release)(struct aws_allocator *config, void *ptr);
     size_t allocated;
     size_t freed;
     struct aws_mutex mutex;
@@ -345,54 +343,6 @@ struct aws_test_harness {
     int suppress_memcheck;
 };
 
-#define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
-    static struct memory_test_allocator name##_alloc_impl = {                                                          \
-        .mem_acquire = NULL,                                                                                           \
-        .mem_release = NULL,                                                                                           \
-        .allocated = 0,                                                                                                \
-        .freed = 0,                                                                                                    \
-        .mutex = AWS_MUTEX_INIT,                                                                                       \
-    };                                                                                                                 \
-    static struct aws_allocator name##_allocator = {                                                                   \
-        .mem_acquire = s_mem_acquire_malloc,                                                                           \
-        .mem_release = s_mem_release_free,                                                                             \
-        .mem_realloc = NULL,                                                                                           \
-        .impl = &name##_alloc_impl,                                                                                    \
-    };
-
-#define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
-    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
-    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
-    static struct aws_test_harness name##_test = {                                                                     \
-        .on_before = NULL,                                                                                             \
-        .run = (fn),                                                                                                   \
-        .on_after = NULL,                                                                                              \
-        .allocator = &name##_allocator,                                                                                \
-        .ctx = NULL,                                                                                                   \
-        .test_name = #name,                                                                                            \
-        .suppress_memcheck = (s),                                                                                      \
-    };                                                                                                                 \
-    int name(int argc, char **argv) { AWS_RUN_TEST_CASES(&name##_test); }
-
-#define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
-    static void b(struct aws_allocator *allocator, void *ctx);                                                         \
-    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
-    static void af(struct aws_allocator *allocator, void *ctx);                                                        \
-    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
-    static struct aws_test_harness name##_test = {                                                                     \
-        .on_before = (b),                                                                                              \
-        .run = (fn),                                                                                                   \
-        .on_after = (af),                                                                                              \
-        .ctx = (c),                                                                                                    \
-        .allocator = &name##_allocator,                                                                                \
-        .test_name = #name,                                                                                            \
-        .suppress_memcheck = (s),                                                                                      \
-    };                                                                                                                 \
-    int name(int argc, char **argv) { AWS_RUN_TEST_CASES(&name##_test); }
-
-#define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
-#define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
-
 #ifdef _WIN32
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
 #    pragma warning(disable : 4091)
@@ -569,34 +519,57 @@ static inline int enable_vt_mode(void) {
 
 #endif
 
-#define AWS_RUN_TEST_CASES(...)                                                                                        \
-    struct aws_test_harness *tests[] = {__VA_ARGS__};                                                                  \
-    int ret_val = 0;                                                                                                   \
-                                                                                                                       \
-    const char *test_name = NULL;                                                                                      \
-    if (argc >= 2) {                                                                                                   \
-        test_name = argv[1];                                                                                           \
-    }                                                                                                                  \
-                                                                                                                       \
-    enable_vt_mode();                                                                                                  \
-                                                                                                                       \
-    size_t test_count = AWS_ARRAY_SIZE(tests);                                                                         \
-    if (test_name) {                                                                                                   \
-        ret_val = -1;                                                                                                  \
-        for (size_t i = 0; i < test_count; ++i) {                                                                      \
-            if (!strcmp(test_name, tests[i]->test_name)) {                                                             \
-                ret_val = s_aws_run_test_case(tests[i]);                                                               \
-                break;                                                                                                 \
-            }                                                                                                          \
-        }                                                                                                              \
-    } else {                                                                                                           \
-        for (size_t i = 0; i < test_count; ++i) {                                                                      \
-            ret_val |= s_aws_run_test_case(tests[i]);                                                                  \
-        }                                                                                                              \
-    }                                                                                                                  \
-                                                                                                                       \
-    fflush(stdout);                                                                                                    \
-    fflush(AWS_TESTING_REPORT_FD);                                                                                     \
-    return ret_val;
+#define AWS_TEST_ALLOCATOR_INIT(name)                                                                                  \
+    static struct memory_test_allocator name##_alloc_impl = {                                                          \
+        0,                                                                                                             \
+        0,                                                                                                             \
+        AWS_MUTEX_INIT,                                                                                                \
+    };                                                                                                                 \
+    static struct aws_allocator name##_allocator = {                                                                   \
+        s_mem_acquire_malloc,                                                                                          \
+        s_mem_release_free,                                                                                            \
+        NULL,                                                                                                          \
+        &name##_alloc_impl,                                                                                            \
+    };
+
+#define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
+    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
+    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
+    static struct aws_test_harness name##_test = {                                                                     \
+        NULL,                                                                                                          \
+        fn,                                                                                                            \
+        NULL,                                                                                                          \
+        &name##_allocator,                                                                                             \
+        NULL,                                                                                                          \
+        #name,                                                                                                         \
+        s,                                                                                                             \
+    };                                                                                                                 \
+    int name(int argc, char *argv[]) {                                                                                 \
+        (void)argc, (void)argv;                                                                                        \
+        return s_aws_run_test_case(&name##_test);                                                                      \
+    }
+
+#define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
+    static void b(struct aws_allocator *allocator, void *ctx);                                                         \
+    static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
+    static void af(struct aws_allocator *allocator, void *ctx);                                                        \
+    AWS_TEST_ALLOCATOR_INIT(name)                                                                                      \
+    static struct aws_test_harness name##_test = {                                                                     \
+        b,                                                                                                             \
+        fn,                                                                                                            \
+        af,                                                                                                            \
+        &name##_allocator,                                                                                             \
+        c,                                                                                                             \
+        #name,                                                                                                         \
+        s,                                                                                                             \
+    };                                                                                                                 \
+    int name(int argc, char *argv[]) {                                                                                 \
+        (void)argc;                                                                                                    \
+        (void)argv;                                                                                                    \
+        return s_aws_run_test_case(&name##_test);                                                                      \
+    }
+
+#define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
+#define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
 
 #endif /* AWS_TESTING_AWS_TEST_HARNESS_H */
