@@ -23,11 +23,13 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     if (!hdr) {
         return NULL;
     }
+
+    /* Fields are declared const, so we need to copy them in like this */
     *(struct aws_allocator **)(&hdr->allocator) = allocator;
     *(size_t *)(&hdr->len) = len;
-    memcpy((void *)aws_string_bytes(hdr), bytes, len);
-    uint8_t *extra_byte = (uint8_t *)aws_string_bytes(hdr) + len;
-    *extra_byte = '\0';
+    memcpy((void *)hdr->bytes, bytes, len);
+    *(uint8_t *)&hdr->bytes[len] = '\0';
+
     return hdr;
 }
 

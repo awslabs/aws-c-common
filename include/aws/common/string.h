@@ -37,13 +37,28 @@
  * they cannot be modified, but also that you can't assign the structure using
  * the = operator accidentally.
  */
+
+/* Using a flexible array member is the C99 compliant way to have the bytes of
+ * the string immediately follow the header.
+ *
+ * MSVC doesn't know this for some reason so we need to use a pragma to make
+ * it happy.
+ */
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4200)
+#endif
 struct aws_string {
     struct aws_allocator *const allocator;
     const size_t len;
+    const uint8_t bytes[];
 };
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
 
 AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
-    return (const uint8_t *)(hdr + 1);
+    return hdr->bytes;
 }
 
 /**
@@ -116,13 +131,18 @@ AWS_EXTERN_C_END
  * Defines a (static const struct aws_string *) with name specified in first
  * argument that points to constant memory and has data bytes containing the
  * string literal in the second argument.
+ *
+ * GCC allows direct initilization of structs with variable length final fields
+ * However, this might not be portable, so we can do this instead
+ * This will have to be updated whenever the aws_string structure changes
  */
 #define AWS_STATIC_STRING_FROM_LITERAL(name, literal)                                                                  \
     static const struct {                                                                                              \
-        struct aws_string hdr;                                                                                         \
-        uint8_t data[sizeof(literal)];                                                                                 \
-    } name##_s = {{NULL, sizeof(literal) - 1}, {literal}};                                                             \
-    static const struct aws_string *(name) = &name##_s.hdr
+        struct aws_allocator *const allocator;                                                                         \
+        const size_t len;                                                                                              \
+        const uint8_t bytes[sizeof(literal)];                                                                          \
+    } name##_s = {NULL, sizeof(literal) - 1, literal};                                                                 \
+    static const struct aws_string *(name) = (struct aws_string *)(&name##_s)
 
 /**
  * Copies all bytes from string to cursor.
