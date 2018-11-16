@@ -444,6 +444,29 @@ done:
     }
     return EXCEPTION_EXECUTE_HANDLER;
 }
+#else
+#    include <execinfo.h>
+#    include <signal.h>
+
+static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
+    (void)sig_info;
+    (void)user_data;
+
+    void *array[100];
+    char **strings;
+    size_t i;
+
+    fprintf(stderr, "** Signal Thrown %d**\n", sig);
+    int size = backtrace(array, 10);
+    strings = backtrace_symbols(array, size);
+    fprintf(stderr, "Stack Trace:\n");
+
+    for (i = 0; i < size; i++)
+        fprintf(stderr, "%s\n", strings[i]);
+
+    free(strings);
+    exit(-1);
+}
 #endif
 
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
@@ -451,6 +474,15 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
 #ifdef _WIN32
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
+#else
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sigaction));
+    sigemptyset(&sa.sa_mask);
+
+    sa.sa_flags = SA_NODEFER;
+    sa.sa_sigaction = s_print_stack_trace;
+
+    sigaction(SIGSEGV, &sa, NULL);
 #endif
 
     if (harness->on_before) {
