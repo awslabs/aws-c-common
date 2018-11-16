@@ -476,7 +476,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
 #else
     struct sigaction sa;
-    memset(&sa, 0, sizeof(sigaction));
+    memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);
 
     sa.sa_flags = SA_NODEFER;
