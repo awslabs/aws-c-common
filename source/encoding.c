@@ -217,9 +217,12 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len) {
-    assert(input);
+int aws_base64_compute_decoded_len(const struct aws_byte_buf *AWS_RESTRICT to_decode, size_t *decoded_len) {
+    assert(to_decode);
     assert(decoded_len);
+
+    const size_t len = to_decode->len;
+    const char *input = (const char *)to_decode->buffer;
 
     if (len == 0) {
         *decoded_len = 0;
@@ -320,7 +323,7 @@ static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *v
 int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_base64_compute_decoded_len((char *)to_decode->buffer, to_decode->len, &decoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, &decoded_length))) {
         return AWS_OP_ERR;
     }
 

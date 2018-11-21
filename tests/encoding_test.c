@@ -323,8 +323,9 @@ static int s_run_base64_encoding_test_case(
 
     /* Part 2: decoding */
 
+    struct aws_byte_buf expected_cur = aws_byte_buf_from_array((const uint8_t *)expected, expected_size - 1);
     ASSERT_SUCCESS(
-        aws_base64_compute_decoded_len(expected, expected_size - 1, &output_size),
+        aws_base64_compute_decoded_len(&expected_cur, &output_size),
         "Compute base64 decoded length failed with %d",
         aws_last_error());
     ASSERT_INT_EQUALS(test_str_size, output_size, "Output size on string should be %d", test_str_size);

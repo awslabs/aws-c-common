@@ -73,7 +73,7 @@ int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct 
  * returns -1 on failure, and 0 on success. decoded_len will be set on success.
  */
 AWS_COMMON_API
-int aws_base64_compute_decoded_len(const char *input, size_t len, size_t *decoded_len);
+int aws_base64_compute_decoded_len(const struct aws_byte_buf *AWS_RESTRICT to_decode, size_t *decoded_len);
 
 /*
  * Base 64 decodes the contents of to_decode and stores the result in output.
