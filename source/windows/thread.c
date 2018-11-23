@@ -55,7 +55,7 @@ int aws_thread_launch(
     struct aws_thread *thread,
     void (*func)(void *arg),
     void *arg,
-    struct aws_thread_options *options) {
+    const struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
 
