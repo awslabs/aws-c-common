@@ -24,7 +24,7 @@
 #    pragma warning(disable : 4706)
 #endif
 
-int aws_byte_buf_init(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity) {
+int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
     buf->buffer = (uint8_t *)aws_mem_acquire(allocator, capacity);
     if (!buf->buffer) {
         return AWS_OP_ERR;
@@ -73,41 +73,46 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
     return !memcmp(a->buffer, b->buffer, a->len);
 }
 
-int aws_byte_buf_init_copy(struct aws_allocator *allocator, struct aws_byte_buf *dest, const struct aws_byte_buf *src) {
+int aws_byte_buf_init_copy_from_cursor(
+    struct aws_byte_buf *dest,
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor src) {
     assert(allocator);
     assert(dest);
-    assert(src);
 
     dest->len = 0;
     dest->capacity = 0;
     dest->allocator = NULL;
-    if (src->buffer == NULL) {
+    if (src.ptr == NULL) {
         dest->buffer = NULL;
         return AWS_OP_SUCCESS;
     }
 
-    dest->buffer = (uint8_t *)aws_mem_acquire(allocator, sizeof(uint8_t) * src->len);
+    dest->buffer = (uint8_t *)aws_mem_acquire(allocator, sizeof(uint8_t) * src.len);
     if (dest->buffer == NULL) {
         return AWS_OP_ERR;
     }
 
-    dest->len = src->len;
-    dest->capacity = src->len;
+    dest->len = src.len;
+    dest->capacity = src.len;
     dest->allocator = allocator;
-    memcpy(dest->buffer, src->buffer, src->len);
+    memcpy(dest->buffer, src.ptr, src.len);
     return AWS_OP_SUCCESS;
 }
 
-bool aws_byte_buf_next_split(const struct aws_byte_buf *input_str, char split_on, struct aws_byte_cursor *substr) {
+bool aws_byte_cursor_next_split(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    char split_on,
+    struct aws_byte_cursor *AWS_RESTRICT substr) {
 
     bool first_run = false;
     if (!substr->ptr) {
         first_run = true;
-        substr->ptr = input_str->buffer;
+        substr->ptr = input_str->ptr;
         substr->len = 0;
     }
 
-    if (substr->ptr > input_str->buffer + input_str->len) {
+    if (substr->ptr > input_str->ptr + input_str->len) {
         /* This will hit if the last substring returned was an empty string after terminating split_on. */
         AWS_ZERO_STRUCT(*substr);
         return false;
@@ -116,7 +121,7 @@ bool aws_byte_buf_next_split(const struct aws_byte_buf *input_str, char split_on
     /* Calculate first byte to search. */
     substr->ptr += substr->len;
     /* Remaining bytes is the number we started with minus the number of bytes already read. */
-    substr->len = input_str->len - (substr->ptr - input_str->buffer);
+    substr->len = input_str->len - (substr->ptr - input_str->ptr);
 
     if (!first_run && substr->len == 0) {
         /* This will hit if the string doesn't end with split_on but we're done. */
@@ -145,12 +150,12 @@ bool aws_byte_buf_next_split(const struct aws_byte_buf *input_str, char split_on
     return true;
 }
 
-int aws_byte_buf_split_on_char_n(
-    const struct aws_byte_buf *input_str,
+int aws_byte_cursor_split_on_char_n(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
-    struct aws_array_list *output,
-    size_t n) {
-    assert(input_str && input_str->buffer);
+    size_t n,
+    struct aws_array_list *AWS_RESTRICT output) {
+    assert(input_str && input_str->ptr);
     assert(output);
     assert(output->item_size >= sizeof(struct aws_byte_cursor));
 
@@ -161,11 +166,11 @@ int aws_byte_buf_split_on_char_n(
     AWS_ZERO_STRUCT(substr);
 
     /* Until we run out of substrs or hit the max split count, keep iterating and pushing into the array list. */
-    while (split_count <= max_splits && aws_byte_buf_next_split(input_str, split_on, &substr)) {
+    while (split_count <= max_splits && aws_byte_cursor_next_split(input_str, split_on, &substr)) {
 
         if (split_count == max_splits) {
             /* If this is the last split, take the rest of the string. */
-            substr.len = input_str->len - (substr.ptr - input_str->buffer);
+            substr.len = input_str->len - (substr.ptr - input_str->ptr);
         }
 
         if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&substr))) {
@@ -177,8 +182,12 @@ int aws_byte_buf_split_on_char_n(
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_split_on_char(const struct aws_byte_buf *input_str, char split_on, struct aws_array_list *output) {
-    return aws_byte_buf_split_on_char_n(input_str, split_on, output, 0);
+int aws_byte_cursor_split_on_char(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    char split_on,
+    struct aws_array_list *AWS_RESTRICT output) {
+
+    return aws_byte_cursor_split_on_char_n(input_str, split_on, 0, output);
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
@@ -235,7 +244,7 @@ bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct a
     return !memcmp(a->ptr, b->buffer, a->len);
 }
 
-int aws_byte_buf_append(struct aws_byte_buf *to, struct aws_byte_cursor *from) {
+int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
 

@@ -56,7 +56,7 @@ static int s_test_buffer_secure_zero_fn(struct aws_allocator *allocator, void *c
 
     struct aws_byte_buf buf;
     size_t len = 27;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &buf, len));
+    ASSERT_SUCCESS(aws_byte_buf_init(&buf, allocator, len));
     buf.len = buf.capacity;
     for (size_t i = 0; i < len; ++i) {
         buf.buffer[i] = 0xDD;
@@ -80,7 +80,7 @@ static int s_test_buffer_clean_up_secure_fn(struct aws_allocator *allocator, voi
      * memory that has already been freed. Simply verifies that there is no memory leak.
      */
     struct aws_byte_buf buf;
-    ASSERT_SUCCESS(aws_byte_buf_init(allocator, &buf, 37));
+    ASSERT_SUCCESS(aws_byte_buf_init(&buf, allocator, 37));
     aws_byte_buf_clean_up_secure(&buf);
     ASSERT_INT_EQUALS(buf.len, 0);
     ASSERT_INT_EQUALS(buf.capacity, 0);

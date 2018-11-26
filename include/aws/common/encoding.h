@@ -37,7 +37,7 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length);
  * output.
  */
 AWS_COMMON_API
-int aws_hex_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output);
+int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output);
 
 /*
  * computes the length necessary to store the result of aws_hex_decode().
@@ -52,7 +52,7 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len);
  * should be.
  */
 AWS_COMMON_API
-int aws_hex_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
+int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
 
 /*
  * Computes the length necessary to store the output of aws_base64_encode call.
@@ -66,27 +66,27 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len);
  * Base 64 encodes the contents of to_encode and stores the result in output.
  */
 AWS_COMMON_API
-int aws_base64_encode(const struct aws_byte_buf *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output);
+int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output);
 
 /*
  * Computes the length necessary to store the output of aws_base64_decode call.
  * returns -1 on failure, and 0 on success. decoded_len will be set on success.
  */
 AWS_COMMON_API
-int aws_base64_compute_decoded_len(const struct aws_byte_buf *AWS_RESTRICT to_decode, size_t *decoded_len);
+int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to_decode, size_t *decoded_len);
 
 /*
  * Base 64 decodes the contents of to_decode and stores the result in output.
  */
 AWS_COMMON_API
-int aws_base64_decode(const struct aws_byte_buf *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
+int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
 
 AWS_EXTERN_C_END
 
 /* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 8 bytes.
  */
-AWS_STATIC_IMPL void aws_write_u64(uint8_t *buffer, uint64_t value) {
+AWS_STATIC_IMPL void aws_write_u64(uint64_t value, uint8_t *buffer) {
     value = aws_hton64(value);
 
     memcpy((void *)buffer, &value, sizeof(value));
@@ -107,7 +107,7 @@ AWS_STATIC_IMPL uint64_t aws_read_u64(const uint8_t *buffer) {
 /* Add a 32 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 4 bytes.
  */
-AWS_STATIC_IMPL void aws_write_u32(uint8_t *buffer, uint32_t value) {
+AWS_STATIC_IMPL void aws_write_u32(uint32_t value, uint8_t *buffer) {
     value = aws_hton32(value);
 
     memcpy((void *)buffer, (void *)&value, sizeof(value));
@@ -130,7 +130,7 @@ AWS_STATIC_IMPL uint32_t aws_read_u32(const uint8_t *buffer) {
  * Note, since this uses uint32_t for storage, the 3 least significant bytes
  * will be used. Assumes buffer is at least 3 bytes long.
  */
-AWS_STATIC_IMPL void aws_write_u24(uint8_t *buffer, uint32_t value) {
+AWS_STATIC_IMPL void aws_write_u24(uint32_t value, uint8_t *buffer) {
     value = aws_hton32(value);
     memcpy((void *)buffer, (void *)((uint8_t *)&value + 1), sizeof(value) - 1);
 }
@@ -151,7 +151,7 @@ AWS_STATIC_IMPL uint32_t aws_read_u24(const uint8_t *buffer) {
  * return the new position in the buffer for the next operation.
  * Assumes buffer is at least 2 bytes long.
  */
-AWS_STATIC_IMPL void aws_write_u16(uint8_t *buffer, uint16_t value) {
+AWS_STATIC_IMPL void aws_write_u16(uint16_t value, uint8_t *buffer) {
     value = aws_hton16(value);
 
     memcpy((void *)buffer, (void *)&value, sizeof(value));

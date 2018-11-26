@@ -26,25 +26,26 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     int result = aws_base64_compute_encoded_len(size, &output_size);
     assert(result == AWS_OP_SUCCESS);
 
-    struct aws_byte_buf to_encode = aws_byte_buf_from_array(data, size);
+    struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(data, size);
 
     struct aws_byte_buf encode_output;
-    result = aws_byte_buf_init(allocator, &encode_output, output_size);
+    result = aws_byte_buf_init(&encode_output, allocator, output_size);
     assert(result == AWS_OP_SUCCESS);
 
     result = aws_base64_encode(&to_encode, &encode_output);
     assert(result == AWS_OP_SUCCESS);
     --encode_output.len; /* Remove null terminator */
 
-    result = aws_base64_compute_decoded_len(&encode_output, &output_size);
+    struct aws_byte_cursor to_decode = aws_byte_cursor_from_buf(&encode_output);
+    result = aws_base64_compute_decoded_len(&to_decode, &output_size);
     assert(result == AWS_OP_SUCCESS);
     assert(output_size == size);
 
     struct aws_byte_buf decode_output;
-    result = aws_byte_buf_init(allocator, &decode_output, output_size);
+    result = aws_byte_buf_init(&decode_output, allocator, output_size);
     assert(result == AWS_OP_SUCCESS);
 
-    result = aws_base64_decode(&encode_output, &decode_output);
+    result = aws_base64_decode(&to_decode, &decode_output);
     assert(result == AWS_OP_SUCCESS);
     assert(output_size == decode_output.len);
     assert(memcmp(decode_output.buffer, data, size) == 0);
