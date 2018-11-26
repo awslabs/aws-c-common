@@ -101,9 +101,9 @@ int aws_byte_buf_init_copy_from_cursor(
 }
 
 bool aws_byte_cursor_next_split(
-    const struct aws_byte_cursor *input_str,
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
-    struct aws_byte_cursor *substr) {
+    struct aws_byte_cursor *AWS_RESTRICT substr) {
 
     bool first_run = false;
     if (!substr->ptr) {
@@ -151,7 +151,7 @@ bool aws_byte_cursor_next_split(
 }
 
 int aws_byte_cursor_split_on_char_n(
-    const struct aws_byte_cursor *input_str,
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output) {

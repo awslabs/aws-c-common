@@ -108,7 +108,10 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
  * long enough to use the results.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_next_split(const struct aws_byte_cursor *input_str, char split_on, struct aws_byte_cursor *substr);
+bool aws_byte_cursor_next_split(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    char split_on,
+    struct aws_byte_cursor *AWS_RESTRICT substr);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of
