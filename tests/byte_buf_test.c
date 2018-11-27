@@ -250,3 +250,37 @@ static int s_test_buffer_init_copy_null_buffer_fn(struct aws_allocator *allocato
     aws_byte_buf_clean_up(&dest);
     return 0;
 }
+
+AWS_TEST_CASE(test_buffer_advance, s_test_buffer_advance)
+static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    uint8_t arr[16];
+    struct aws_byte_buf src_buf = aws_byte_buf_from_array(arr, sizeof(arr));
+
+    struct aws_byte_buf dst_buf;
+
+    src_buf.len = 0;
+    ASSERT_TRUE(aws_byte_buf_advance(&src_buf, &dst_buf, 4));
+    ASSERT_NULL(dst_buf.allocator);
+    ASSERT_INT_EQUALS(src_buf.len, 4);
+    ASSERT_INT_EQUALS(dst_buf.len, 0);
+    ASSERT_INT_EQUALS(dst_buf.capacity, 4);
+    ASSERT_PTR_EQUALS(src_buf.buffer, arr);
+    ASSERT_PTR_EQUALS(dst_buf.buffer, arr);
+
+    ASSERT_TRUE(aws_byte_buf_advance(&src_buf, &dst_buf, 12));
+    ASSERT_PTR_EQUALS(dst_buf.buffer, arr + 4);
+    ASSERT_INT_EQUALS(src_buf.len, 16);
+
+    src_buf.len = 12;
+    ASSERT_FALSE(aws_byte_buf_advance(&src_buf, &dst_buf, 5));
+    ASSERT_PTR_EQUALS(dst_buf.buffer, NULL);
+    ASSERT_NULL(dst_buf.allocator);
+    ASSERT_INT_EQUALS(dst_buf.len, 0);
+    ASSERT_INT_EQUALS(dst_buf.capacity, 0);
+    ASSERT_INT_EQUALS(src_buf.len, 12);
+
+    return 0;
+}
