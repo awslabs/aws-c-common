@@ -498,6 +498,32 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint
 }
 
 /**
+ * Appends a sub-buffer to the specified buffer.
+ *
+ * If the buffer has at least `len' bytes remaining (buffer->capacity - buffer->len >= len),
+ * then buffer->len is incremented by len, and an aws_byte_buf is assigned to *output corresponding
+ * to the last len bytes of the input buffer. The aws_byte_buf at *output will have a null
+ * allocator, a zero initial length, and a capacity of 'len'. The function then returns true.
+ *
+ * If there is insufficient space, then this function nulls all fields in *output and returns
+ * false.
+ */
+AWS_STATIC_IMPL bool aws_byte_buf_advance(
+    struct aws_byte_buf *AWS_RESTRICT buffer,
+    struct aws_byte_buf *AWS_RESTRICT output,
+    size_t len) {
+    if (buffer->capacity - buffer->len >= len) {
+        *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
+        buffer->len += len;
+        output->len = 0;
+        return true;
+    } else {
+        memset(output, 0, sizeof(*output));
+        return false;
+    }
+}
+
+/**
  * Write specified number of bytes from array to byte buffer.
  *
  * On success, returns true and updates the buffer length accordingly.
