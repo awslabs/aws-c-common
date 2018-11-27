@@ -16,7 +16,7 @@ include(CheckCSourceRuns)
 check_c_source_runs("
 #include <stdbool.h>
 bool foo(int a, int b, int *c) {
-    return __builtin_add_overflow(a, b, c);
+    return __builtin_mul_overflow(a, b, c);
 }
 
 int main() {
