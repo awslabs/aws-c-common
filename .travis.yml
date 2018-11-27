@@ -1,25 +1,19 @@
 sudo: false
 language: c
 
-osx_image: xcode8
+os: osx
+osx_image: xcode9.2
+compiler: clang
 
-os:
-  - osx
-
-compiler:
-  - clang
+addons:
+  homebrew:
+    update: true
+    packages:
+      - llvm
 
 install:
-  - brew update
-  - brew install llvm
-  - export PATH="/usr/local/opt/llvm/bin:$PATH"
+  - export PATH=$(brew --prefix llvm)/bin:$PATH
 
-#execute build
 script:
-  - mkdir build
-  - cd build
-  - cmake -DENABLE_SANITIZERS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-  - make && make test
-  - cd ..
+  - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
   - clang-tidy -p=build **/*.c
-
