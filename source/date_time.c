@@ -431,7 +431,7 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
     int state = 0;
     bool error = false;
 
-    while (state <= final_state && !error && index < date_str->len) {
+    while (state <= final_state && !error && index < date_str->len) { /* lgtm [cpp/constant-comparison] */
         char c = date_str->buffer[index];
         switch (state) {
             case 0:
