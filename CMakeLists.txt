@@ -16,13 +16,21 @@ project(aws-c-common C)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
+include(FeatureTests)
 include(Sanitizers)
 include(SIMD)
+
+set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+set(GENERATED_CONFIG_HEADER "${GENERATED_INCLUDE_DIR}/aws/common/config.h")
+set(CONFIG_HEADER_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/config.h.in")
 
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
         )
+# The generated config header doesn't exist yet, so don't use GLOB to try to find it
+# (as it'll skip the file if it doesn't exist yet)
+set(AWS_COMMON_HEADERS ${AWS_COMMON_HEADERS} ${GENERATED_CONFIG_HEADER})
 
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
@@ -38,7 +46,6 @@ file(GLOB AWS_COMMON_SRC
         )
 
 option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
-option(ENABLE_HW_OPTIMIZATION "Enables hardware specific optimizations in assembly. Not all compilers are supported." ON)
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
@@ -116,6 +123,10 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+# When we install, the generated header will be at the INSTALL_INTERFACE:include location,
+# but at build time we need to explicitly include this here
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
 
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${CMAKE_PROJECT_NAME})
@@ -131,14 +142,14 @@ if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
-if (ENABLE_HW_OPTIMIZATION)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_ENABLE_HW_OPTIMIZATION)
-endif()
-
 # Preserve subdirectories when installing headers
 foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${AWS_TEST_HEADERS})
     get_filename_component(HEADER_DIR ${HEADER_SRCPATH} DIRECTORY)
-    string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_INSTALL_PREFIX} HEADER_DSTDIR "${HEADER_DIR}")
+# Note: We need to replace the generated include directory component first, otherwise if the build
+# directory is located inside the source tree, we'll partially rewrite the path and fail to replace it
+# when we replace the generated include dir.
+    string(REPLACE ${GENERATED_INCLUDE_DIR} ${CMAKE_INSTALL_PREFIX}/include HEADER_DSTDIR "${HEADER_DIR}")
+    string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_INSTALL_PREFIX} HEADER_DSTDIR "${HEADER_DSTDIR}")
     install(FILES ${HEADER_SRCPATH} DESTINATION ${HEADER_DSTDIR})
 endforeach()
 
@@ -175,3 +186,8 @@ if (NOT CMAKE_CROSSCOMPILING)
     include(CTest)
     add_subdirectory(tests)
 endif()
+
+# This should come last, to ensure all variables defined by cmake will be available for export
+configure_file(${CONFIG_HEADER_TEMPLATE}
+               ${GENERATED_CONFIG_HEADER}
+               ESCAPE_QUOTES)
