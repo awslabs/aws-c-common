@@ -355,6 +355,10 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
         "Item not found in hash table."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_DATE_STR,
+        "Date string is invalid and cannot be parsed."
+    ),
 };
 /* clang-format on */
 
