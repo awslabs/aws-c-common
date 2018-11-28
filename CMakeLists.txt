@@ -27,8 +27,10 @@ set(CONFIG_HEADER_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/confi
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
-        ${GENERATED_CONFIG_HEADER}
         )
+# The generated config header doesn't exist yet, so don't use GLOB to try to find it
+# (as it'll skip the file if it doesn't exist yet)
+set(AWS_COMMON_HEADERS ${AWS_COMMON_HEADERS} ${GENERATED_CONFIG_HEADER})
 
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
