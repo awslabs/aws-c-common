@@ -359,6 +359,10 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_INVALID_DATE_STR,
         "Date string is invalid and cannot be parsed."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_ARGUMENT,
+        "An invalid argument was passed to a function."
+    )
 };
 /* clang-format on */
 
