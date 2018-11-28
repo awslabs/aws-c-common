@@ -413,11 +413,11 @@ static bool is_utc_time_zone(const char *str) {
 void aws_date_time_init_now(struct aws_date_time *dt) {
     uint64_t current_time = 0;
     aws_sys_clock_get_ticks(&current_time);
-    dt->timestamp = aws_timestamp_convert(current_time, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, NULL);
+    dt->timestamp = (time_t)aws_timestamp_convert(current_time, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, NULL);
 }
 
 void aws_date_time_init_epoch_millis(struct aws_date_time *dt, uint64_t ms_since_epoch) {
-    dt->timestamp = ms_since_epoch / AWS_TIMESTAMP_MILLIS;
+    dt->timestamp = (time_t)(ms_since_epoch / AWS_TIMESTAMP_MILLIS);
 }
 
 void aws_date_time_init_epoch_secs(struct aws_date_time *dt, double sec_ms) {

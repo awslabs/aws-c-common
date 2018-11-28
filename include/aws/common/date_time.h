@@ -67,7 +67,7 @@ AWS_COMMON_API void aws_date_time_init_now(struct aws_date_time *dt);
 /**
  * Initializes dt to be the time represented in milliseconds since unix epoch.
  */
-AWS_COMMON_API void aws_date_time_init_epoch_millis(struct aws_date_time *dt, uint64_t ns_since_epoch);
+AWS_COMMON_API void aws_date_time_init_epoch_millis(struct aws_date_time *dt, uint64_t ms_since_epoch);
 
 /**
  * Initializes dt to be the time represented in seconds.millis since unix epoch.
