@@ -67,7 +67,7 @@ AWS_STATIC_IMPL uint64_t aws_ntoh64(uint64_t x) {
  */
 AWS_STATIC_IMPL uint32_t aws_hton32(uint32_t x) {
 #ifdef _MSC_VER
-    return _byteswap_ulong(x);
+    return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return htonl(x);
 #endif
@@ -78,7 +78,7 @@ AWS_STATIC_IMPL uint32_t aws_hton32(uint32_t x) {
  */
 AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
 #ifdef _MSC_VER
-    return _byteswap_ulong(x);
+    return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return ntohl(x);
 #endif
@@ -89,7 +89,7 @@ AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
  */
 AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
 #ifdef _MSC_VER
-    return _byteswap_ushort(x);
+    return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return htons(x);
 #endif
@@ -100,7 +100,7 @@ AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
  */
 AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
 #ifdef _MSC_VER
-    return _byteswap_ushort(x);
+    return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return ntohs(x);
 #endif
