@@ -554,9 +554,9 @@ int aws_date_time_to_local_time_str(
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->local_time, RFC822_DATE_FORMAT_STR_WITH_Z, output_buf);
-    } else {
-        return s_date_to_str(&dt->local_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
     }
+
+    return s_date_to_str(&dt->local_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
 }
 
 int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format fmt, struct aws_byte_buf *output_buf) {
@@ -568,9 +568,9 @@ int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, output_buf);
-    } else {
-        return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
     }
+
+    return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
 }
 
 int aws_date_time_to_local_time_short_str(
@@ -585,9 +585,9 @@ int aws_date_time_to_local_time_short_str(
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->local_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
-    } else {
-        return s_date_to_str(&dt->local_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
     }
+
+    return s_date_to_str(&dt->local_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
 }
 
 int aws_date_time_to_utc_time_short_str(
@@ -602,9 +602,9 @@ int aws_date_time_to_utc_time_short_str(
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->gmt_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
-    } else {
-        return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
     }
+
+    return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
 }
 
 double aws_date_time_as_epoch_secs(struct aws_date_time *dt) {
