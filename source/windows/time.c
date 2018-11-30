@@ -14,14 +14,14 @@
  */
 #include <aws/common/time.h>
 
-time_t aws_mk_gm_time(struct tm *const t) {
+time_t aws_timegm(struct tm *const t) {
     return _mkgmtime(t);
 }
 
-void aws_local_time(time_t time, struct tm *t) {
+void aws_localtime(time_t time, struct tm *t) {
     localtime_s(t, &time);
 }
 
-void aws_gm_time(time_t time, struct tm *t) {
+void aws_gmtime(time_t time, struct tm *t) {
     gmtime_s(t, &time);
 }

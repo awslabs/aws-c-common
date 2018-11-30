@@ -28,14 +28,14 @@ static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *c
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
@@ -57,14 +57,14 @@ static int s_test_rfc822_utc_parsing_auto_detect_fn(struct aws_allocator *alloca
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_AUTO_DETECT));
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
@@ -86,14 +86,14 @@ static int s_test_rfc822_utc_two_digit_year_parsing_fn(struct aws_allocator *all
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
@@ -166,14 +166,14 @@ static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_ISO_8601));
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
@@ -197,14 +197,14 @@ static int s_test_iso8601_utc_parsing_auto_detect_fn(struct aws_allocator *alloc
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_AUTO_DETECT));
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
@@ -275,14 +275,14 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
 
     aws_date_time_init_epoch_secs(&date_time, 1033545909.0);
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
@@ -304,14 +304,14 @@ static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) 
 
     aws_date_time_init_epoch_millis(&date_time, 1033545909000);
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
-    ASSERT_UINT_EQUALS(02, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
     ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
     ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
 
-    uint8_t date_output[100];
+    uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));

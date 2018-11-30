@@ -18,6 +18,8 @@
 
 #include <time.h>
 
+#define AWS_DATE_TIME_STR_MAX_LEN 100
+
 struct aws_byte_buf;
 
 enum aws_date_format {
@@ -54,6 +56,8 @@ enum aws_date_day_of_week {
 struct aws_date_time {
     time_t timestamp;
     char tz[5];
+    struct tm gmt_time;
+    struct tm local_time;
     bool utc_assumed;
 };
 

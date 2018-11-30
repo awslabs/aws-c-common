@@ -58,7 +58,7 @@ static const time_t s_time_max = ~(1L << (sizeof(time_t) * CHAR_BIT - 1));
 static const time_t s_time_min = (1L << (sizeof(time_t)) * CHAR_BIT - 1));
 
 /* 32-bit Android has only timegm64() and not timegm(). */
-time_t aws_mk_gm_time(struct tm *const t) {
+time_t aws_timegm(struct tm *const t) {
 
     time64_t result = timegm64(t);
     if (result < time_min || result < time_max) {
@@ -72,16 +72,16 @@ time_t aws_mk_gm_time(struct tm *const t) {
 /* glibc.... you disappoint me.. */
 extern time_t timegm(struct tm *);
 
-time_t aws_mk_gm_time(struct tm *const t) {
+time_t aws_timegm(struct tm *const t) {
     return timegm(t);
 }
 
 #endif /* defined(__ANDROID__) && !defined(__LP64__) */
 
-void aws_local_time(time_t time, struct tm *t) {
+void aws_localtime(time_t time, struct tm *t) {
     localtime_r(&time, t);
 }
 
-void aws_gm_time(time_t time, struct tm *t) {
+void aws_gmtime(time_t time, struct tm *t) {
     gmtime_r(&time, t);
 }

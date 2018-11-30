@@ -20,9 +20,20 @@
 
 AWS_EXTERN_C_BEGIN
 
-AWS_COMMON_API time_t aws_mk_gm_time(struct tm *const t);
-AWS_COMMON_API void aws_local_time(time_t time, struct tm *t);
-AWS_COMMON_API void aws_gm_time(time_t time, struct tm *t);
+/**
+ * Cross platform friendly version of timegm
+ */
+AWS_COMMON_API time_t aws_timegm(struct tm *const t);
+
+/**
+ * Cross platform friendly version of localtime_r
+ */
+AWS_COMMON_API void aws_localtime(time_t time, struct tm *t);
+
+/**
+ * Cross platform friendly version of gmtime_r
+ */
+AWS_COMMON_API void aws_gmtime(time_t time, struct tm *t);
 
 AWS_EXTERN_C_END
 
