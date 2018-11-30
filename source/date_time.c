@@ -141,23 +141,24 @@ static bool is_utc_time_zone(const char *str) {
             return true;
         }
 
-        if (len > 3 && (str[0] == '+' || str[0] == '-')) {
-            if (!strcmp("+0000", str) || !strcmp("-0000", str)) {
-                return true;
-            }
+        /* offsets count since their usable */
+        if (len == 5 && (str[0] == '+' || str[0] == '-')) {
+            return true;
+        }
 
+        if (len == 2) {
+            return tolower(str[0]) == 'u' && tolower(str[1]) == 't';
+        }
+
+        if (len < 3) {
             return false;
         }
-    }
 
-    if (len < 3) {
-        return false;
-    }
+        uint32_t comp_val = STR_TRIPLET_TO_INDEX(str);
 
-    uint32_t comp_val = STR_TRIPLET_TO_INDEX(str);
-
-    if (comp_val == s_utc || comp_val == s_gmt) {
-        return true;
+        if (comp_val == s_utc || comp_val == s_gmt) {
+            return true;
+        }
     }
 
     return false;
@@ -391,8 +392,10 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                 }
                 break;
             case 8:
-                if (isalpha(c) && (index - state_start_index) < 5) {
+                if ((isalnum(c) || c == '-' || c == '+') && (index - state_start_index) < 5) {
                     dt->tz[index - state_start_index] = c;
+                } else {
+                    error = true;
                 }
 
                 break;
@@ -402,7 +405,11 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
     }
 
     if (dt->tz[0] != 0) {
-        dt->utc_assumed = is_utc_time_zone(dt->tz);
+        if (is_utc_time_zone(dt->tz)) {
+            dt->utc_assumed = true;
+        } else {
+            error = true;
+        }
     }
 
     return error || state != final_state ? AWS_OP_ERR : AWS_OP_SUCCESS;
@@ -421,6 +428,8 @@ int aws_date_time_init_from_str(
     struct tm parsed_time;
     AWS_ZERO_STRUCT(parsed_time);
     bool successfully_parsed = false;
+
+    time_t seconds_offset = 0;
     if (fmt == AWS_DATE_FORMAT_ISO_8601 || fmt == AWS_DATE_FORMAT_AUTO_DETECT) {
         if (!s_parse_iso_8601(date_str, &parsed_time)) {
             dt->utc_assumed = true;
@@ -431,6 +440,25 @@ int aws_date_time_init_from_str(
     if (fmt == AWS_DATE_FORMAT_RFC822 || (fmt == AWS_DATE_FORMAT_AUTO_DETECT && !successfully_parsed)) {
         if (!s_parse_rfc_822(date_str, &parsed_time, dt)) {
             successfully_parsed = true;
+
+            if (dt->utc_assumed) {
+                if (dt->tz[0] == '+' || dt->tz[0] == '-') {
+                    char min_str[3] = {0};
+                    char hour_str[3] = {0};
+                    hour_str[0] = dt->tz[1];
+                    hour_str[1] = dt->tz[2];
+                    min_str[0] = dt->tz[3];
+                    min_str[1] = dt->tz[4];
+
+                    long hour = strtol(hour_str, NULL, 10);
+                    long min = strtol(min_str, NULL, 10);
+                    seconds_offset = (time_t)(hour * 3600 + min * 60);
+
+                    if (dt->tz[0] == '-') {
+                        seconds_offset = -seconds_offset;
+                    }
+                }
+            }
         }
     }
 
@@ -438,11 +466,13 @@ int aws_date_time_init_from_str(
         return aws_raise_error(AWS_ERROR_INVALID_DATE_STR);
     }
 
-    if (dt->utc_assumed) {
+    if (dt->utc_assumed || seconds_offset) {
         dt->timestamp = aws_timegm(&parsed_time);
     } else {
         dt->timestamp = mktime(&parsed_time);
     }
+
+    dt->timestamp -= seconds_offset;
 
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
@@ -460,23 +490,21 @@ int aws_date_time_to_local_time_str(
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    char formatted_string[AWS_DATE_TIME_STR_MAX_LEN];
-    AWS_ZERO_ARRAY(formatted_string);
-
-    if (fmt == AWS_DATE_FORMAT_RFC822) {
-        strftime(formatted_string, sizeof(formatted_string), RFC822_DATE_FORMAT_STR_WITH_Z, &dt->local_time);
-    } else {
-        strftime(formatted_string, sizeof(formatted_string), ISO_8601_LONG_DATE_FORMAT_STR, &dt->local_time);
-    }
-
-    size_t len = strlen(formatted_string);
-
-    if (output_buf->capacity < len) {
+    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    memcpy(output_buf->buffer, formatted_string, len);
-    output_buf->len = len;
+    if (fmt == AWS_DATE_FORMAT_RFC822) {
+        output_buf->len =
+            strftime((char *)output_buf->buffer, output_buf->capacity, RFC822_DATE_FORMAT_STR_WITH_Z, &dt->local_time);
+    } else {
+        output_buf->len =
+            strftime((char *)output_buf->buffer, output_buf->capacity, ISO_8601_LONG_DATE_FORMAT_STR, &dt->local_time);
+    }
+
+    if (output_buf->len == 0) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
 
     return AWS_OP_SUCCESS;
 }
@@ -488,23 +516,21 @@ int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    char formatted_string[AWS_DATE_TIME_STR_MAX_LEN];
-    AWS_ZERO_ARRAY(formatted_string);
-
-    if (fmt == AWS_DATE_FORMAT_RFC822) {
-        strftime(formatted_string, sizeof(formatted_string), RFC822_DATE_FORMAT_STR_MINUS_Z, &dt->gmt_time);
-    } else {
-        strftime(formatted_string, sizeof(formatted_string), ISO_8601_LONG_DATE_FORMAT_STR, &dt->gmt_time);
-    }
-
-    size_t len = strlen(formatted_string);
-
-    if (output_buf->capacity < len) {
+    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    memcpy(output_buf->buffer, formatted_string, len);
-    output_buf->len = len;
+    if (fmt == AWS_DATE_FORMAT_RFC822) {
+        output_buf->len =
+            strftime((char *)output_buf->buffer, output_buf->capacity, RFC822_DATE_FORMAT_STR_MINUS_Z, &dt->gmt_time);
+    } else {
+        output_buf->len =
+            strftime((char *)output_buf->buffer, output_buf->capacity, ISO_8601_LONG_DATE_FORMAT_STR, &dt->gmt_time);
+    }
+
+    if (output_buf->len == 0) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
 
     return AWS_OP_SUCCESS;
 }

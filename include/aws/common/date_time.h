@@ -55,7 +55,7 @@ enum aws_date_day_of_week {
 
 struct aws_date_time {
     time_t timestamp;
-    char tz[5];
+    char tz[6];
     struct tm gmt_time;
     struct tm local_time;
     bool utc_assumed;
@@ -80,7 +80,15 @@ AWS_COMMON_API void aws_date_time_init_epoch_secs(struct aws_date_time *dt, doub
 
 /**
  * Initializes dt to be the time represented by date_str in format 'fmt'. Returns AWS_OP_SUCCESS if the
- * string was succesfully parsed, returns  AWS_OP_ERR if parsing failed.
+ * string was successfully parsed, returns  AWS_OP_ERR if parsing failed.
+ *
+ * Notes for AWS_DATE_FORMAT_RFC822:
+ * If no time zone information is provided, it is assumed to be local time (please don't do this).
+ *
+ * If the time zone is something other than something indicating Universal Time (e.g. Z, UT, UTC, or GMT) or an offset
+ * from UTC (e.g. +0100, -0700), parsing will fail.
+ *
+ * Really, it's just better if you always use Universal Time.
  */
 AWS_COMMON_API int aws_date_time_init_from_str(
     struct aws_date_time *dt,
