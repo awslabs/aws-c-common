@@ -26,7 +26,9 @@
 
 static const char *RFC822_DATE_FORMAT_STR_MINUS_Z = "%a, %d %b %Y %H:%M:%S GMT";
 static const char *RFC822_DATE_FORMAT_STR_WITH_Z = "%a, %d %b %Y %H:%M:%S %Z";
+static const char *RFC822_SHORT_DATE_FORMAT_STR = "%a, %d %b %Y";
 static const char *ISO_8601_LONG_DATE_FORMAT_STR = "%Y-%m-%dT%H:%M:%SZ";
+static const char *ISO_8601_SHORT_DATE_FORMAT_STR = "%Y-%m-%d";
 
 #define STR_TRIPLET_TO_INDEX(str)                                                                                      \
     (((uint32_t)(uint8_t)tolower((str)[0]) << 0) | ((uint32_t)(uint8_t)tolower((str)[1]) << 8) |                       \
@@ -196,20 +198,32 @@ void aws_date_time_init_epoch_secs(struct aws_date_time *dt, double sec_ms) {
     dt->local_time = s_get_time_struct(dt, true);
 }
 
+enum parser_state {
+    ON_WEEKDAY,
+    ON_SPACE_DELIM,
+    ON_YEAR,
+    ON_MONTH,
+    ON_MONTH_DAY,
+    ON_HOUR,
+    ON_MINUTE,
+    ON_SECOND,
+    ON_TZ,
+    FINISHED,
+};
+
 static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *parsed_time) {
     size_t index = 0;
     size_t state_start_index = 0;
-    const int final_state = 7;
-    int state = 0;
+    enum parser_state state = ON_YEAR;
     bool error = false;
-    bool increment = true;
+    bool advance = true;
 
-    while (state < final_state && !error && index < date_str->len) { /* lgtm [cpp/constant-comparison] */
+    while (state < FINISHED && !error && index < date_str->len) {
         char c = date_str->buffer[index];
         switch (state) {
-            case 0:
+            case ON_YEAR:
                 if (c == '-' && index - state_start_index == 4) {
-                    state = 1;
+                    state = ON_MONTH;
                     state_start_index = index + 1;
                     parsed_time->tm_year -= 1900;
                 } else if (isdigit(c)) {
@@ -218,9 +232,9 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                     error = true;
                 }
                 break;
-            case 1:
+            case ON_MONTH:
                 if (c == '-' && index - state_start_index == 2) {
-                    state = 2;
+                    state = ON_MONTH_DAY;
                     state_start_index = index + 1;
                     parsed_time->tm_mon -= 1;
                 } else if (isdigit(c)) {
@@ -230,24 +244,25 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                 }
 
                 break;
-            case 2:
+            case ON_MONTH_DAY:
                 if (c == 'T' && index - state_start_index == 2) {
-                    state = 3;
+                    state = ON_HOUR;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
                     parsed_time->tm_mday = parsed_time->tm_mday * 10 + (c - '0');
                 } else {
                     error = true;
                 }
-
                 break;
-            case 3:
+            /* note: no time portion is spec compliant. */
+            case ON_HOUR:
+                /* time parts can be delimited by ':' or just concatenated together, but must always be 2 digits. */
                 if (index - state_start_index == 2) {
-                    state = 4;
+                    state = ON_MINUTE;
                     state_start_index = index + 1;
                     if (isdigit(c)) {
                         state_start_index = index;
-                        increment = false;
+                        advance = false;
                     } else if (c != ':') {
                         error = true;
                     }
@@ -258,13 +273,14 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                 }
 
                 break;
-            case 4:
+            case ON_MINUTE:
+                /* time parts can be delimited by ':' or just concatenated together, but must always be 2 digits. */
                 if (index - state_start_index == 2) {
-                    state = 5;
+                    state = ON_SECOND;
                     state_start_index = index + 1;
                     if (isdigit(c)) {
                         state_start_index = index;
-                        increment = false;
+                        advance = false;
                     } else if (c != ':') {
                         error = true;
                     }
@@ -275,12 +291,12 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                 }
 
                 break;
-            case 5:
+            case ON_SECOND:
                 if (c == 'Z' && index - state_start_index == 2) {
-                    state = final_state;
+                    state = FINISHED;
                     state_start_index = index + 1;
                 } else if (c == '.' && index - state_start_index == 2) {
-                    state = 6;
+                    state = ON_TZ;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
                     parsed_time->tm_sec = parsed_time->tm_sec * 10 + (c - '0');
@@ -289,25 +305,28 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                 }
 
                 break;
-            case 6:
+            case ON_TZ:
                 if (c == 'Z') {
-                    state = final_state;
+                    state = FINISHED;
                     state_start_index = index + 1;
                 } else if (!isdigit(c)) {
                     error = true;
                 }
                 break;
+            default:
+                error = true;
+                break;
         }
 
-        if (increment) {
+        if (advance) {
             index++;
         } else {
-            increment = true;
+            advance = true;
         }
     }
 
-    /* ISO8601 supports date only with no time portion. state ==2 catches this case. */
-    return (state == final_state || state == 2) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
+    /* ISO8601 supports date only with no time portion. state ==ON_MONTH_DAY catches this case. */
+    return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }
 
 static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parsed_time, struct aws_date_time *dt) {
@@ -315,49 +334,49 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
 
     size_t index = 0;
     size_t state_start_index = 0;
-    int final_state = 8;
-    int state = 0;
+    int state = ON_WEEKDAY;
     bool error = false;
 
     while (!error && index < len) {
         char c = date_str->buffer[index];
 
         switch (state) {
-            case 0:
+            /* week day abbr is optional. */
+            case ON_WEEKDAY:
                 if (c == ',') {
-                    state = 1;
+                    state = ON_SPACE_DELIM;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
-                    state = 2;
+                    state = ON_MONTH_DAY;
                 } else if (!isalpha(c)) {
                     error = true;
                 }
                 break;
-            case 1:
+            case ON_SPACE_DELIM:
                 if (isspace(c)) {
-                    state = 2;
+                    state = ON_MONTH_DAY;
                     state_start_index = index + 1;
                 } else {
                     error = true;
                 }
                 break;
-            case 2:
+            case ON_MONTH_DAY:
                 if (isdigit(c)) {
                     parsed_time->tm_mday = parsed_time->tm_mday * 10 + (c - '0');
                 } else if (isspace(c)) {
-                    state = 3;
+                    state = ON_MONTH;
                     state_start_index = index + 1;
                 } else {
                     error = true;
                 }
                 break;
-            case 3:
+            case ON_MONTH:
                 if (isspace(c)) {
                     int monthNumber =
                         get_month_number_from_str((const char *)date_str->buffer, state_start_index, index + 1);
 
                     if (monthNumber > -1) {
-                        state = 4;
+                        state = ON_YEAR;
                         state_start_index = index + 1;
                         parsed_time->tm_mon = monthNumber;
                     } else {
@@ -367,9 +386,10 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                     error = true;
                 }
                 break;
-            case 4:
+            /* year can be 4 or 2 digits. */
+            case ON_YEAR:
                 if (isspace(c) && index - state_start_index == 4) {
-                    state = 5;
+                    state = ON_HOUR;
                     state_start_index = index + 1;
                     parsed_time->tm_year -= 1900;
                 } else if (isspace(c) && index - state_start_index == 2) {
@@ -382,9 +402,9 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                     error = true;
                 }
                 break;
-            case 5:
+            case ON_HOUR:
                 if (c == ':' && index - state_start_index == 2) {
-                    state = 6;
+                    state = ON_MINUTE;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
                     parsed_time->tm_hour = parsed_time->tm_hour * 10 + (c - '0');
@@ -392,9 +412,9 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                     error = true;
                 }
                 break;
-            case 6:
+            case ON_MINUTE:
                 if (c == ':' && index - state_start_index == 2) {
-                    state = 7;
+                    state = ON_SECOND;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
                     parsed_time->tm_min = parsed_time->tm_min * 10 + (c - '0');
@@ -402,9 +422,9 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                     error = true;
                 }
                 break;
-            case 7:
+            case ON_SECOND:
                 if (isspace(c) && index - state_start_index == 2) {
-                    state = 8;
+                    state = ON_TZ;
                     state_start_index = index + 1;
                 } else if (isdigit(c)) {
                     parsed_time->tm_sec = parsed_time->tm_sec * 10 + (c - '0');
@@ -412,13 +432,16 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                     error = true;
                 }
                 break;
-            case 8:
+            case ON_TZ:
                 if ((isalnum(c) || c == '-' || c == '+') && (index - state_start_index) < 5) {
                     dt->tz[index - state_start_index] = c;
                 } else {
                     error = true;
                 }
 
+                break;
+            default:
+                error = true;
                 break;
         }
 
@@ -433,7 +456,7 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
         }
     }
 
-    return error || state != final_state ? AWS_OP_ERR : AWS_OP_SUCCESS;
+    return error || state != ON_TZ ? AWS_OP_ERR : AWS_OP_SUCCESS;
 }
 
 int aws_date_time_init_from_str(
@@ -464,6 +487,8 @@ int aws_date_time_init_from_str(
 
             if (dt->utc_assumed) {
                 if (dt->tz[0] == '+' || dt->tz[0] == '-') {
+                    /* in this format, the offset is in format +/-HHMM so convert that to seconds and we'll use
+                     * the offset later. */
                     char min_str[3] = {0};
                     char hour_str[3] = {0};
                     hour_str[0] = dt->tz[1];
@@ -493,10 +518,26 @@ int aws_date_time_init_from_str(
         dt->timestamp = mktime(&parsed_time);
     }
 
+    /* negative means we need to move west (increase the timestamp), positive means head east, so decrease the
+     * timestamp. */
     dt->timestamp -= seconds_offset;
 
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
+
+    return AWS_OP_SUCCESS;
+}
+
+static inline int s_date_to_str(struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
+    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
+
+    output_buf->len = strftime((char *)output_buf->buffer, output_buf->capacity, format_str, tm);
+
+    if (output_buf->len == 0) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
 
     return AWS_OP_SUCCESS;
 }
@@ -511,23 +552,11 @@ int aws_date_time_to_local_time_str(
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
-
     if (fmt == AWS_DATE_FORMAT_RFC822) {
-        output_buf->len =
-            strftime((char *)output_buf->buffer, output_buf->capacity, RFC822_DATE_FORMAT_STR_WITH_Z, &dt->local_time);
+        return s_date_to_str(&dt->local_time, RFC822_DATE_FORMAT_STR_WITH_Z, output_buf);
     } else {
-        output_buf->len =
-            strftime((char *)output_buf->buffer, output_buf->capacity, ISO_8601_LONG_DATE_FORMAT_STR, &dt->local_time);
+        return s_date_to_str(&dt->local_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
     }
-
-    if (output_buf->len == 0) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
-
-    return AWS_OP_SUCCESS;
 }
 
 int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format fmt, struct aws_byte_buf *output_buf) {
@@ -537,23 +566,45 @@ int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    if (fmt == AWS_DATE_FORMAT_RFC822) {
+        return s_date_to_str(&dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, output_buf);
+    } else {
+        return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
+    }
+}
+
+int aws_date_time_to_local_time_short_str(
+    struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf) {
+    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+
+    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
-        output_buf->len =
-            strftime((char *)output_buf->buffer, output_buf->capacity, RFC822_DATE_FORMAT_STR_MINUS_Z, &dt->gmt_time);
+        return s_date_to_str(&dt->local_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
     } else {
-        output_buf->len =
-            strftime((char *)output_buf->buffer, output_buf->capacity, ISO_8601_LONG_DATE_FORMAT_STR, &dt->gmt_time);
+        return s_date_to_str(&dt->local_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
+    }
+}
+
+int aws_date_time_to_utc_time_short_str(
+    struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf) {
+    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+
+    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    if (output_buf->len == 0) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    if (fmt == AWS_DATE_FORMAT_RFC822) {
+        return s_date_to_str(&dt->gmt_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
+    } else {
+        return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
     }
-
-    return AWS_OP_SUCCESS;
 }
 
 double aws_date_time_as_epoch_secs(struct aws_date_time *dt) {
@@ -616,6 +667,6 @@ bool aws_date_time_dst(struct aws_date_time *dt, bool local_time) {
     return (bool)time->tm_isdst;
 }
 
-int64_t aws_date_time_diff(struct aws_date_time *a, struct aws_date_time *b) {
-    return (int64_t)a->timestamp - (int64_t)b->timestamp;
+time_t aws_date_time_diff(struct aws_date_time *a, struct aws_date_time *b) {
+    return a->timestamp - b->timestamp;
 }

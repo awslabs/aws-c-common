@@ -48,10 +48,19 @@ static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *c
         struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
         ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
-        const char *expected_str = "Wed, 02 Oct 2002 08:05:09 GMT";
-        struct aws_byte_buf expected_buf = aws_byte_buf_from_c_str(expected_str);
+        const char *expected_long_str = "Wed, 02 Oct 2002 08:05:09 GMT";
+        struct aws_byte_buf expected_long_buf = aws_byte_buf_from_c_str(expected_long_str);
 
-        ASSERT_BIN_ARRAYS_EQUALS(expected_buf.buffer, expected_buf.len, str_output.buffer, str_output.len);
+        ASSERT_BIN_ARRAYS_EQUALS(expected_long_buf.buffer, expected_long_buf.len, str_output.buffer, str_output.len);
+
+        AWS_ZERO_ARRAY(date_output);
+        str_output.len = 0;
+        ASSERT_SUCCESS(aws_date_time_to_utc_time_short_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
+
+        const char *expected_short_str = "Wed, 02 Oct 2002";
+        struct aws_byte_buf expected_short_buf = aws_byte_buf_from_c_str(expected_short_str);
+
+        ASSERT_BIN_ARRAYS_EQUALS(expected_short_buf.buffer, expected_short_buf.len, str_output.buffer, str_output.len);
     }
 
     return AWS_OP_SUCCESS;
@@ -305,6 +314,14 @@ static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
+    AWS_ZERO_ARRAY(date_output);
+    str_output.len = 0;
+    ASSERT_SUCCESS(aws_date_time_to_utc_time_short_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
+
+    const char *expected_short_str = "2002-10-02";
+    struct aws_byte_buf expected_short_buf = aws_byte_buf_from_c_str(expected_short_str);
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected_short_buf.buffer, expected_short_buf.len, str_output.buffer, str_output.len);
     return AWS_OP_SUCCESS;
 }
 

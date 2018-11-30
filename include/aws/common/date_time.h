@@ -97,7 +97,8 @@ AWS_COMMON_API int aws_date_time_init_from_str(
 
 /**
  * Copies the current time as a formatted date string in local time into output_buf. If buffer is too small, it will
- * return AWS_OP_ERR. A good size suggestion is 100 bytes. AWS_DATE_FORMAT_AUTO_DETECT is not allowed.
+ * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
+ * allowed.
  */
 AWS_COMMON_API int aws_date_time_to_local_time_str(
     struct aws_date_time *dt,
@@ -106,12 +107,34 @@ AWS_COMMON_API int aws_date_time_to_local_time_str(
 
 /**
  * Copies the current time as a formatted date string in utc time into output_buf. If buffer is too small, it will
- * return AWS_OP_ERR. A good size suggestion is 100 bytes. AWS_DATE_FORMAT_AUTO_DETECT is not allowed.
+ * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
+ * allowed.
  */
 AWS_COMMON_API int aws_date_time_to_utc_time_str(
     struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf);
+
+/**
+ * Copies the current time as a formatted short date string in local time into output_buf. If buffer is too small, it
+ * will return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
+ * allowed.
+ */
+AWS_COMMON_API int aws_date_time_to_local_time_short_str(
+    struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf);
+
+/**
+ * Copies the current time as a formatted short date string in utc time into output_buf. If buffer is too small, it will
+ * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
+ * allowed.
+ */
+AWS_COMMON_API int aws_date_time_to_utc_time_short_str(
+    struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf);
+
 AWS_COMMON_API double aws_date_time_as_epoch_secs(struct aws_date_time *dt);
 AWS_COMMON_API uint64_t aws_date_time_as_nanos(struct aws_date_time *dt);
 AWS_COMMON_API uint64_t aws_date_time_as_millis(struct aws_date_time *dt);
@@ -123,7 +146,11 @@ AWS_COMMON_API uint8_t aws_date_time_hour(struct aws_date_time *dt, bool local_t
 AWS_COMMON_API uint8_t aws_date_time_minute(struct aws_date_time *dt, bool local_time);
 AWS_COMMON_API uint8_t aws_date_time_second(struct aws_date_time *dt, bool local_time);
 AWS_COMMON_API bool aws_date_time_dst(struct aws_date_time *dt, bool local_time);
-AWS_COMMON_API int64_t aws_date_time_diff(struct aws_date_time *a, struct aws_date_time *b);
+
+/**
+ * returns the difference of a and b (a - b) in seconds.
+ */
+AWS_COMMON_API time_t aws_date_time_diff(struct aws_date_time *a, struct aws_date_time *b);
 
 AWS_EXTERN_C_END
 
