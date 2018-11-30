@@ -244,11 +244,11 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
             case 3:
                 if (index - state_start_index == 2) {
                     state = 4;
+                    state_start_index = index + 1;
                     if (isdigit(c)) {
                         state_start_index = index;
                         increment = false;
                     } else if (c != ':') {
-                        state_start_index = index + 1;
                         error = true;
                     }
                 } else if (isdigit(c)) {
@@ -261,11 +261,11 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
             case 4:
                 if (index - state_start_index == 2) {
                     state = 5;
+                    state_start_index = index + 1;
                     if (isdigit(c)) {
                         state_start_index = index;
                         increment = false;
                     } else if (c != ':') {
-                        state_start_index = index + 1;
                         error = true;
                     }
                 } else if (isdigit(c)) {

@@ -425,7 +425,7 @@ static int s_test_iso8601_invalid_format_fn(struct aws_allocator *allocator, voi
     (void)ctx;
 
     struct aws_date_time date_time;
-    const char *date_str = "2002-10-02";
+    const char *date_str = "2002-10-02T";
     struct aws_byte_buf date_buf = aws_byte_buf_from_c_str(date_str);
 
     ASSERT_ERROR(
@@ -441,7 +441,7 @@ static int s_test_iso8601_invalid_auto_format_fn(struct aws_allocator *allocator
     (void)ctx;
 
     struct aws_date_time date_time;
-    const char *date_str = "2002-10-02";
+    const char *date_str = "2002-10-02T";
     struct aws_byte_buf date_buf = aws_byte_buf_from_c_str(date_str);
 
     ASSERT_ERROR(
