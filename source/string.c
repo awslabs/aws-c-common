@@ -19,18 +19,29 @@ struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, co
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
-    struct aws_string *hdr = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
-    if (!hdr) {
+    struct aws_string *str = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
+    if (!str) {
         return NULL;
     }
 
     /* Fields are declared const, so we need to copy them in like this */
-    *(struct aws_allocator **)(&hdr->allocator) = allocator;
-    *(size_t *)(&hdr->len) = len;
-    memcpy((void *)hdr->bytes, bytes, len);
-    *(uint8_t *)&hdr->bytes[len] = '\0';
+    *(struct aws_allocator **)(&str->allocator) = allocator;
+    *(size_t *)(&str->len) = len;
+    memcpy((void *)str->bytes, bytes, len);
+    *(uint8_t *)&str->bytes[len] = '\0';
 
-    return hdr;
+    return str;
+}
+
+struct aws_string *aws_string_copy(struct aws_allocator *allocator, const struct aws_string *str) {
+    size_t size = sizeof(struct aws_string) + str->len + 1;
+    struct aws_string *new_str = aws_mem_acquire(allocator, size);
+    if (!new_str) {
+        return NULL;
+    }
+    memcpy(new_str, str, size);
+    *(struct aws_allocator **)(&new_str->allocator) = allocator;
+    return new_str;
 }
 
 void aws_string_destroy(void *str) {

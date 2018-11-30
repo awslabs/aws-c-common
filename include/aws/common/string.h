@@ -57,8 +57,8 @@ struct aws_string {
 #    pragma warning(pop)
 #endif
 
-AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *hdr) {
-    return hdr->bytes;
+AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
+    return str->bytes;
 }
 
 /**
@@ -90,6 +90,12 @@ AWS_COMMON_API
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
+
+/**
+ * Copy a string.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_copy(struct aws_allocator *allocator, const struct aws_string *str);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
