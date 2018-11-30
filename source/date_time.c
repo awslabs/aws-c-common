@@ -202,8 +202,9 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
     const int final_state = 7;
     int state = 0;
     bool error = false;
+    bool increment = true;
 
-    while (!error && index < date_str->len) { /* lgtm [cpp/constant-comparison] */
+    while (state < final_state && !error && index < date_str->len) { /* lgtm [cpp/constant-comparison] */
         char c = date_str->buffer[index];
         switch (state) {
             case 0:
@@ -241,9 +242,15 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
 
                 break;
             case 3:
-                if (c == ':' && index - state_start_index == 2) {
+                if (index - state_start_index == 2) {
                     state = 4;
-                    state_start_index = index + 1;
+                    if (isdigit(c)) {
+                        state_start_index = index;
+                        increment = false;
+                    } else if (c != ':') {
+                        state_start_index = index + 1;
+                        error = true;
+                    }
                 } else if (isdigit(c)) {
                     parsed_time->tm_hour = parsed_time->tm_hour * 10 + (c - '0');
                 } else {
@@ -252,9 +259,15 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
 
                 break;
             case 4:
-                if (c == ':' && index - state_start_index == 2) {
+                if (index - state_start_index == 2) {
                     state = 5;
-                    state_start_index = index + 1;
+                    if (isdigit(c)) {
+                        state_start_index = index;
+                        increment = false;
+                    } else if (c != ':') {
+                        state_start_index = index + 1;
+                        error = true;
+                    }
                 } else if (isdigit(c)) {
                     parsed_time->tm_min = parsed_time->tm_min * 10 + (c - '0');
                 } else {
@@ -285,10 +298,16 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
                 }
                 break;
         }
-        index++;
+
+        if (increment) {
+            index++;
+        } else {
+            increment = true;
+        }
     }
 
-    return state == final_state && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
+    /* ISO8601 supports date only with no time portion. state ==2 catches this case. */
+    return (state == final_state || state == 2) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }
 
 static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parsed_time, struct aws_date_time *dt) {
@@ -308,6 +327,8 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
                 if (c == ',') {
                     state = 1;
                     state_start_index = index + 1;
+                } else if (isdigit(c)) {
+                    state = 2;
                 } else if (!isalpha(c)) {
                     error = true;
                 }
