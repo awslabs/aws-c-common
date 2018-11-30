@@ -33,15 +33,8 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     return str;
 }
 
-struct aws_string *aws_string_copy(struct aws_allocator *allocator, const struct aws_string *str) {
-    size_t size = sizeof(struct aws_string) + str->len + 1;
-    struct aws_string *new_str = aws_mem_acquire(allocator, size);
-    if (!new_str) {
-        return NULL;
-    }
-    memcpy(new_str, str, size);
-    *(struct aws_allocator **)(&new_str->allocator) = allocator;
-    return new_str;
+struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
+    return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 
 void aws_string_destroy(void *str) {

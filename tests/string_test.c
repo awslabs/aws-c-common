@@ -75,20 +75,20 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_INT_EQUALS(short_dest_buf.len, 0, "Destination cursor length should be unchanged.");
     ASSERT_INT_EQUALS(0, short_dest_buf.buffer[0], "Destination cursor should not have received data.");
 
-    /* Test: can copy from both a static string and an allocated one. */
+    /* Test: can duplicate both a static string and an allocated one. */
 
-    struct aws_string *copy_string_1 = aws_string_copy(allocator, test_string_1);
-    ASSERT_NOT_NULL(copy_string_1, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_1, copy_string_1), "Strings should be equal.");
+    struct aws_string *dup_string_1 = aws_string_new_from_string(allocator, test_string_1);
+    ASSERT_NOT_NULL(dup_string_1, "Memory allocation of string should have succeeded.");
+    ASSERT_TRUE(aws_string_eq(test_string_1, dup_string_1), "Strings should be equal.");
 
-    struct aws_string *copy_string_2 = aws_string_copy(allocator, test_string_2);
-    ASSERT_NOT_NULL(copy_string_2, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_2, copy_string_2), "Strings should be equal.");
+    struct aws_string *dup_string_2 = aws_string_new_from_string(allocator, test_string_2);
+    ASSERT_NOT_NULL(dup_string_2, "Memory allocation of string should have succeeded.");
+    ASSERT_TRUE(aws_string_eq(test_string_2, dup_string_2), "Strings should be equal.");
 
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy((void *)test_string_2);
-    aws_string_destroy((void *)copy_string_1);
-    aws_string_destroy((void *)copy_string_2);
+    aws_string_destroy((void *)dup_string_1);
+    aws_string_destroy((void *)dup_string_2);
 
     return 0;
 }
