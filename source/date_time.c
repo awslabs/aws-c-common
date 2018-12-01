@@ -528,7 +528,7 @@ int aws_date_time_init_from_str(
     return AWS_OP_SUCCESS;
 }
 
-static inline int s_date_to_str(struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
+static inline int s_date_to_str(const struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
     if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
@@ -543,7 +543,7 @@ static inline int s_date_to_str(struct tm *tm, const char *format_str, struct aw
 }
 
 int aws_date_time_to_local_time_str(
-    struct aws_date_time *dt,
+    const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
@@ -559,7 +559,10 @@ int aws_date_time_to_local_time_str(
     return s_date_to_str(&dt->local_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
 }
 
-int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format fmt, struct aws_byte_buf *output_buf) {
+int aws_date_time_to_utc_time_str(
+    const struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
     if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
@@ -574,7 +577,7 @@ int aws_date_time_to_utc_time_str(struct aws_date_time *dt, enum aws_date_format
 }
 
 int aws_date_time_to_local_time_short_str(
-    struct aws_date_time *dt,
+    const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
@@ -591,7 +594,7 @@ int aws_date_time_to_local_time_short_str(
 }
 
 int aws_date_time_to_utc_time_short_str(
-    struct aws_date_time *dt,
+    const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
@@ -607,66 +610,66 @@ int aws_date_time_to_utc_time_short_str(
     return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
 }
 
-double aws_date_time_as_epoch_secs(struct aws_date_time *dt) {
+double aws_date_time_as_epoch_secs(const struct aws_date_time *dt) {
     return (double)dt->timestamp;
 }
 
-uint64_t aws_date_time_as_nanos(struct aws_date_time *dt) {
+uint64_t aws_date_time_as_nanos(const struct aws_date_time *dt) {
     return (uint64_t)dt->timestamp * AWS_TIMESTAMP_NANOS;
 }
 
-uint64_t aws_date_time_as_millis(struct aws_date_time *dt) {
+uint64_t aws_date_time_as_millis(const struct aws_date_time *dt) {
     return (uint64_t)dt->timestamp * AWS_TIMESTAMP_MILLIS;
 }
 
-uint16_t aws_date_time_year(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+uint16_t aws_date_time_year(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (uint16_t)(time->tm_year + 1900);
 }
 
-enum aws_date_month aws_date_time_month(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+enum aws_date_month aws_date_time_month(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return time->tm_mon;
 }
 
-uint8_t aws_date_time_month_day(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+uint8_t aws_date_time_month_day(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (uint8_t)time->tm_mday;
 }
 
-enum aws_date_day_of_week aws_date_time_day_of_week(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+enum aws_date_day_of_week aws_date_time_day_of_week(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return time->tm_wday;
 }
 
-uint8_t aws_date_time_hour(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+uint8_t aws_date_time_hour(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (uint8_t)time->tm_hour;
 }
 
-uint8_t aws_date_time_minute(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+uint8_t aws_date_time_minute(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (uint8_t)time->tm_min;
 }
 
-uint8_t aws_date_time_second(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+uint8_t aws_date_time_second(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (uint8_t)time->tm_sec;
 }
 
-bool aws_date_time_dst(struct aws_date_time *dt, bool local_time) {
-    struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
+bool aws_date_time_dst(const struct aws_date_time *dt, bool local_time) {
+    const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (bool)time->tm_isdst;
 }
 
-time_t aws_date_time_diff(struct aws_date_time *a, struct aws_date_time *b) {
+time_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b) {
     return a->timestamp - b->timestamp;
 }
