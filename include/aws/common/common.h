@@ -242,10 +242,12 @@ AWS_EXTERN_C_END
 #define AWS_CACHE_LINE 64
 
 #if defined(_MSC_VER)
+#    include <malloc.h>
 #    define AWS_ALIGN(alignment) __declspec(align(alignment))
 #    define AWS_LIKELY(x) x
 #    define AWS_UNLIKELY(x) x
 #    define AWS_FORCE_INLINE __forceinline
+#    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * length)
 #else
 #    if defined(__GNUC__) || defined(__clang__)
 #        define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
@@ -253,6 +255,11 @@ AWS_EXTERN_C_END
 #        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #        define AWS_FORCE_INLINE __attribute__((always_inline))
+#        if defined(__cplusplus)
+#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = alloca(sizeof(type) * length)
+#        else
+#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type name[length];
+#        endif
 #    endif
 #endif
 
