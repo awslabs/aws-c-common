@@ -87,7 +87,6 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy((void *)test_string_2);
-    aws_string_destroy((void *)dup_string_1);
     aws_string_destroy((void *)dup_string_2);
 
     return 0;

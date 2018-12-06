@@ -34,7 +34,10 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
 }
 
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
-    return aws_string_new_from_array(allocator, str->bytes, str->len);
+    if (str->allocator) return aws_string_new_from_array(allocator, str->bytes, str->len);
+
+    /* Optimization: if this is a static string, don't allocate a new one */
+    return (struct aws_string *)str;
 }
 
 void aws_string_destroy(void *str) {
