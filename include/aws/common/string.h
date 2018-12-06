@@ -92,13 +92,17 @@ AWS_COMMON_API
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
- * Allocate a new string with the same contents as the old.
+ * Allocate a new string with the same contents as the old. This uses an optimization
+ * that does not duplicate memory of strings created with AWS_STATIC_STRING_FROM_LITERAL.
+ * This is safe because aws_string_destroy is a no-op on such strings, and therefore
+ * there is no risk of a double free.
  */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str);
 
 /**
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
+ * This is a no-op on strings created with AWS_STATIC_STRING_FROM_LITERAL.
  */
 AWS_COMMON_API
 void aws_string_destroy(void *str);
