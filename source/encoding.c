@@ -29,20 +29,14 @@ bool aws_common_private_has_avx2(void);
  * Since we force aws_common_private_has_avx2 to return false, the encode and decode functions should
  * not be called - but we must provide them anyway to avoid link errors.
  */
-static inline size_t aws_common_private_base64_decode_sse41(
-    const unsigned char *in,
-    unsigned char *out, // NOLINT
-    size_t len) {
+static inline size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;
     (void)out;
     (void)len;
     assert(false);
     return (size_t)-1; /* unreachable */
 }
-static inline void aws_common_private_base64_encode_sse41(
-    const unsigned char *in,
-    unsigned char *out, // NOLINT
-    size_t len) {
+static inline void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;
     (void)out;
     (void)len;

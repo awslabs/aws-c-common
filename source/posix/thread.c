@@ -50,6 +50,10 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     }
 }
 
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
+    pthread_once(flag, call_once);
+}
+
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->allocator = allocator;
     thread->thread_id = 0;
