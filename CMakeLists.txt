@@ -64,7 +64,7 @@ if (WIN32)
         source_group("Source Files\\windows" FILES ${AWS_COMMON_OS_SRC})
     endif ()
 
-    set(PLATFORM_LIBS Kernel32 Ws2_32)
+    set(PLATFORM_LIBS BCrypt Kernel32 Ws2_32)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"

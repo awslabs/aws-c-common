@@ -15,7 +15,6 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #include <aws/common/common.h>
 
 #ifndef _WIN32
@@ -31,6 +30,17 @@ enum aws_thread_detach_state {
 struct aws_thread_options {
     size_t stack_size;
 };
+
+#ifdef _WIN32
+typedef union {
+    void *ptr;
+} aws_thread_once;
+#    define AWS_THREAD_ONCE_STATIC_INIT                                                                                \
+        { NULL }
+#else
+typedef pthread_once_t aws_thread_once;
+#    define AWS_THREAD_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
+#endif
 
 struct aws_thread {
     struct aws_allocator *allocator;
@@ -50,6 +60,8 @@ AWS_EXTERN_C_BEGIN
  */
 AWS_COMMON_API
 const struct aws_thread_options *aws_default_thread_options(void);
+
+AWS_COMMON_API void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void));
 
 /**
  * Initializes a new platform specific thread object struct (not the os-level
