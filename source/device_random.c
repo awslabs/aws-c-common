@@ -16,7 +16,14 @@
 
 #include <aws/common/byte_buf.h>
 
-int aws_device_random_u64(uint64_t *output) {
+#ifdef _MSC_VER
+/* disables warning non const declared initializers for Microsoft compilers */
+#    pragma warning(disable : 4204)
+#    pragma warning(disable : 4706)
+#endif
+
+int aws_device_random_u64(uint64_t *output)
+{
     struct aws_byte_buf buf = {
         .buffer = (uint8_t *)output,
         .len = 0,

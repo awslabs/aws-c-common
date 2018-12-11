@@ -24,7 +24,8 @@ struct aws_uuid {
     uint8_t uuid_data[16];
 };
 
-#define AWS_UUID_STR_LEN 36
+/* 36 bytes for the UUID plus one more for the null terminator. */
+#define AWS_UUID_STR_LEN 37
 
 AWS_EXTERN_C_BEGIN
 

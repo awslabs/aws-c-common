@@ -16,12 +16,23 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/device_random.h>
+
 #include <inttypes.h>
 #include <stdio.h>
 
 #define UUID_FORMAT                                                                                                    \
     "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8     \
     "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8
+
+#include <stdio.h>
+
+#ifdef _MSC_VER
+/* disables warning non const declared initializers for Microsoft compilers */
+#    pragma warning(disable : 4204)
+#    pragma warning(disable : 4706)
+/* sprintf warning (we already check the bounds in this case). */
+#    pragma warning(disable : 4996)
+#endif
 
 int aws_uuid_init(struct aws_uuid *uuid) {
     struct aws_byte_buf buf = {
@@ -34,12 +45,12 @@ int aws_uuid_init(struct aws_uuid *uuid) {
 }
 
 int aws_uuid_init_from_str(struct aws_uuid *uuid, struct aws_byte_cursor *uuid_str) {
-    if (uuid_str->len < AWS_UUID_STR_LEN) {
+    if (uuid_str->len < AWS_UUID_STR_LEN - 1) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
 
-    char cpy[AWS_UUID_STR_LEN + 1] = {0};
-    memcpy(cpy, uuid_str->ptr, AWS_UUID_STR_LEN);
+    char cpy[AWS_UUID_STR_LEN] = {0};
+    memcpy(cpy, uuid_str->ptr, AWS_UUID_STR_LEN - 1);
 
     AWS_ZERO_STRUCT(*uuid);
 
@@ -93,7 +104,7 @@ int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output) {
         uuid->uuid_data[14],
         uuid->uuid_data[15]);
 
-    output->len += AWS_UUID_STR_LEN;
+    output->len += AWS_UUID_STR_LEN - 1;
 
     return AWS_OP_SUCCESS;
 }

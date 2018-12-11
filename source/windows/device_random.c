@@ -14,9 +14,12 @@
  */
 #include <aws/common/device_random.h>
 
+#include <aws/common/byte_buf.h>
+#include <aws/common/thread.h>
+
 #include <bcrypt.h>
 
-static HANDLE s_alg_handle = NULL;
+static BCRYPT_ALG_HANDLE s_alg_handle = NULL;
 static aws_thread_once s_rand_init = AWS_THREAD_ONCE_INIT;
 
 static void s_init_rand(void) {
@@ -24,20 +27,21 @@ static void s_init_rand(void) {
 
     status = BCryptOpenAlgorithmProvider(&s_alg_handle, BCRYPT_RNG_ALGORITHM, NULL, 0);
 
-    if (!NT_SUCCESS(status)) {
-        return abort();
+    if (!BCRYPT_SUCCESS(status)) {
+        abort();
     }
 }
 
 int aws_device_random_buffer(struct aws_byte_buf *output) {
+    aws_thread_call_once(&s_rand_init, s_init_rand);
 
-    size_t diff = output->capacity - output->len;
-    status = BCryptGenRandom(m_algHandle, output->buffer + output->len, diff, 0);
+    size_t offset = output->capacity - output->len;
+    NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, (ULONG)offset, 0);
 
-    if (!NT_SUCCESS(status)) {
+    if (!BCRYPT_SUCCESS(status)) {
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
     }
 
-    output->len += diff;
+    output->len += offset;
     return AWS_OP_SUCCESS;
 }

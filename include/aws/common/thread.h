@@ -15,11 +15,12 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #include <aws/common/common.h>
 
 #ifndef _WIN32
 #    include <pthread.h>
+#else
+#    include <windows.h>
 #endif
 
 enum aws_thread_detach_state {
@@ -34,6 +35,8 @@ struct aws_thread_options {
 
 #ifdef _WIN32
 typedef INIT_ONCE aws_thread_once;
+#        define AWS_THREAD_ONCE_INIT                                                                                   \
+            { NULL }       
 #else
 typedef pthread_once_t aws_thread_once;
 #    define AWS_THREAD_ONCE_INIT PTHREAD_ONCE_INIT
