@@ -46,7 +46,7 @@ struct callback_fn_wrapper {
     void (*call_once)(void);
 };
 
-BOOL s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
+BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
     (void)context;
     (void)init_once;
 
