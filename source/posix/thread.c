@@ -50,7 +50,7 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     }
 }
 
-void aws_thread_call_once(aws_thread_once *flag, void(*call_once)(void)) {
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
     pthread_once(flag, call_once);
 }
 

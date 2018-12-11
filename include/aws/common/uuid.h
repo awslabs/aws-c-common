@@ -17,6 +17,7 @@
  */
 #include <aws/common/common.h>
 
+struct aws_byte_cursor;
 struct aws_byte_buf;
 
 struct aws_uuid {
@@ -28,6 +29,7 @@ struct aws_uuid {
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API int aws_uuid_init(struct aws_uuid *uuid);
+AWS_COMMON_API int aws_uuid_init_from_str(struct aws_uuid *uuid, struct aws_byte_cursor *uuid_str);
 AWS_COMMON_API int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output);
 
 AWS_EXTERN_C_END

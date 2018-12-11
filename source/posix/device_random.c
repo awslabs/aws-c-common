@@ -23,23 +23,24 @@ static aws_thread_once s_rand_init = AWS_THREAD_ONCE_INIT;
 
 #ifdef O_CLOEXEC
 #    define OPEN_FLAGS O_RDONLY | O_CLOEXEC
-#    define NEED_FCNTL 0
 #else
 #    define OPEN_FLAGS O_RDONLY
-#    define NEED_FCNTL 1
 #endif
 static void s_init_rand(void) {
     s_rand_fd = open("/dev/urandom", OPEN_FLAGS);
 
     if (s_rand_fd == -1) {
+        s_rand_fd = open("/dev/urandom", O_RDONLY);
+
+        if (s_rand_fd == -1) {
+            abort();
+        }
+    }
+
+    if (-1 == fcntl(s_rand_fd, F_SETFD, FD_CLOEXEC)) {
         abort();
     }
 
-#if NEED_FCNTL
-    if (-1 == fcntl(rand_fd, F_SETFD, FD_CLOEXEC)) {
-        abort();
-    }
-#endif
     s_rand_init = true;
 }
 
@@ -51,7 +52,7 @@ static int s_fallback_device_random_buffer(struct aws_byte_buf *output) {
 
     ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, diff);
 
-    if (amount_read != diff){
+    if (amount_read != diff) {
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
     }
 

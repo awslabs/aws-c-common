@@ -87,7 +87,7 @@ static int s_device_rand_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     uint8_t last_value[23] = {0};
 
     for (size_t i = 0; i < 100000; ++i) {
-        uint8_t  next_value[23] = {0};
+        uint8_t next_value[23] = {0};
         struct aws_byte_buf buf = aws_byte_buf_from_array(next_value, sizeof(next_value));
         buf.len = 0;
 

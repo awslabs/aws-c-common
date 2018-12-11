@@ -16,16 +16,56 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/device_random.h>
+#include <inttypes.h>
 #include <stdio.h>
+
+#define UUID_FORMAT                                                                                                    \
+    "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8     \
+    "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8
 
 int aws_uuid_init(struct aws_uuid *uuid) {
     struct aws_byte_buf buf = {
-            .buffer = uuid->uuid_data,
-            .len = 0,
-            .capacity = sizeof(uuid->uuid_data),
-            .allocator = NULL,
+        .buffer = uuid->uuid_data,
+        .len = 0,
+        .capacity = sizeof(uuid->uuid_data),
+        .allocator = NULL,
     };
     return aws_device_random_buffer(&buf);
+}
+
+int aws_uuid_init_from_str(struct aws_uuid *uuid, struct aws_byte_cursor *uuid_str) {
+    if (uuid_str->len < AWS_UUID_STR_LEN) {
+        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
+    }
+
+    char cpy[AWS_UUID_STR_LEN + 1] = {0};
+    memcpy(cpy, uuid_str->ptr, AWS_UUID_STR_LEN);
+
+    AWS_ZERO_STRUCT(*uuid);
+
+    if (16 != sscanf(
+                  cpy,
+                  UUID_FORMAT,
+                  &uuid->uuid_data[0],
+                  &uuid->uuid_data[1],
+                  &uuid->uuid_data[2],
+                  &uuid->uuid_data[3],
+                  &uuid->uuid_data[4],
+                  &uuid->uuid_data[5],
+                  &uuid->uuid_data[6],
+                  &uuid->uuid_data[7],
+                  &uuid->uuid_data[8],
+                  &uuid->uuid_data[9],
+                  &uuid->uuid_data[10],
+                  &uuid->uuid_data[11],
+                  &uuid->uuid_data[12],
+                  &uuid->uuid_data[13],
+                  &uuid->uuid_data[14],
+                  &uuid->uuid_data[15])) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+
+    return AWS_OP_SUCCESS;
 }
 
 int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output) {
@@ -33,25 +73,25 @@ int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    sprintf((char *)(output->buffer + output->len),
-            "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            uuid->uuid_data[0],
-            uuid->uuid_data[1],
-            uuid->uuid_data[2],
-            uuid->uuid_data[3],
-            uuid->uuid_data[4],
-            uuid->uuid_data[5],
-            uuid->uuid_data[6],
-            uuid->uuid_data[7],
-            uuid->uuid_data[8],
-            uuid->uuid_data[9],
-            uuid->uuid_data[10],
-            uuid->uuid_data[11],
-            uuid->uuid_data[12],
-            uuid->uuid_data[13],
-            uuid->uuid_data[14],
-            uuid->uuid_data[15]
-    );
+    sprintf(
+        (char *)(output->buffer + output->len),
+        UUID_FORMAT,
+        uuid->uuid_data[0],
+        uuid->uuid_data[1],
+        uuid->uuid_data[2],
+        uuid->uuid_data[3],
+        uuid->uuid_data[4],
+        uuid->uuid_data[5],
+        uuid->uuid_data[6],
+        uuid->uuid_data[7],
+        uuid->uuid_data[8],
+        uuid->uuid_data[9],
+        uuid->uuid_data[10],
+        uuid->uuid_data[11],
+        uuid->uuid_data[12],
+        uuid->uuid_data[13],
+        uuid->uuid_data[14],
+        uuid->uuid_data[15]);
 
     output->len += AWS_UUID_STR_LEN;
 

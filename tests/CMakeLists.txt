@@ -228,6 +228,11 @@ add_test_case(device_rand_u16)
 add_test_case(device_rand_buffer)
 
 add_test_case(uuid_string)
+add_test_case(prefilled_uuid_string)
+add_test_case(uuid_string_short_buffer)
+add_test_case(uuid_string_parse)
+add_test_case(uuid_string_parse_too_short)
+add_test_case(uuid_string_parse_malformed)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
