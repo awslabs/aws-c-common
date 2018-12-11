@@ -22,8 +22,7 @@
 #    pragma warning(disable : 4706)
 #endif
 
-int aws_device_random_u64(uint64_t *output)
-{
+int aws_device_random_u64(uint64_t *output) {
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array((uint8_t *)output, sizeof(uint64_t));
 
     return aws_device_random_buffer(&buf);
