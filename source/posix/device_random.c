@@ -22,9 +22,9 @@ static int s_rand_fd = -1;
 static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
 
 #ifdef O_CLOEXEC
-#    define OPEN_FLAGS O_RDONLY | O_CLOEXEC
+#    define OPEN_FLAGS (O_RDONLY | O_CLOEXEC)
 #else
-#    define OPEN_FLAGS O_RDONLY
+#    define OPEN_FLAGS (O_RDONLY)
 #endif
 static void s_init_rand(void) {
     s_rand_fd = open("/dev/urandom", OPEN_FLAGS);
@@ -40,8 +40,6 @@ static void s_init_rand(void) {
     if (-1 == fcntl(s_rand_fd, F_SETFD, FD_CLOEXEC)) {
         abort();
     }
-
-    s_rand_init = true;
 }
 
 static int s_fallback_device_random_buffer(struct aws_byte_buf *output) {
