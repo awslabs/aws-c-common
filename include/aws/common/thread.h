@@ -19,8 +19,6 @@
 
 #ifndef _WIN32
 #    include <pthread.h>
-#else
-#    include <windows.h>
 #endif
 
 enum aws_thread_detach_state {
@@ -34,12 +32,14 @@ struct aws_thread_options {
 };
 
 #ifdef _WIN32
-typedef INIT_ONCE aws_thread_once;
-#        define AWS_THREAD_ONCE_INIT                                                                                   \
-            { NULL }       
+typedef union {
+    void *ptr;
+} aws_thread_once;
+#    define AWS_THREAD_ONCE_STATIC_INIT                                                                                \
+        { NULL }
 #else
 typedef pthread_once_t aws_thread_once;
-#    define AWS_THREAD_ONCE_INIT PTHREAD_ONCE_INIT
+#    define AWS_THREAD_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
 #endif
 
 struct aws_thread {

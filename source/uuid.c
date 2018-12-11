@@ -20,9 +20,12 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#define HEX_CHAR_FMT "%02" SCNx8
+
 #define UUID_FORMAT                                                                                                    \
-    "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "-%02" SCNx8     \
-    "%02" SCNx8 "-%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8 "%02" SCNx8
+    HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT                                                                \
+        "-" HEX_CHAR_FMT HEX_CHAR_FMT "-" HEX_CHAR_FMT HEX_CHAR_FMT "-" HEX_CHAR_FMT HEX_CHAR_FMT                      \
+        "-" HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT
 
 #include <stdio.h>
 
@@ -35,16 +38,12 @@
 #endif
 
 int aws_uuid_init(struct aws_uuid *uuid) {
-    struct aws_byte_buf buf = {
-        .buffer = uuid->uuid_data,
-        .len = 0,
-        .capacity = sizeof(uuid->uuid_data),
-        .allocator = NULL,
-    };
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(uuid->uuid_data, sizeof(uuid->uuid_data));
+
     return aws_device_random_buffer(&buf);
 }
 
-int aws_uuid_init_from_str(struct aws_uuid *uuid, struct aws_byte_cursor *uuid_str) {
+int aws_uuid_init_from_str(struct aws_uuid *uuid, const struct aws_byte_cursor *uuid_str) {
     if (uuid_str->len < AWS_UUID_STR_LEN - 1) {
         return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
     }
@@ -79,7 +78,7 @@ int aws_uuid_init_from_str(struct aws_uuid *uuid, struct aws_byte_cursor *uuid_s
     return AWS_OP_SUCCESS;
 }
 
-int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output) {
+int aws_uuid_to_str(const struct aws_uuid *uuid, struct aws_byte_buf *output) {
     if (output->capacity - output->len < AWS_UUID_STR_LEN) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
@@ -107,4 +106,8 @@ int aws_uuid_to_str(struct aws_uuid *uuid, struct aws_byte_buf *output) {
     output->len += AWS_UUID_STR_LEN - 1;
 
     return AWS_OP_SUCCESS;
+}
+
+bool aws_uuid_equals(const struct aws_uuid *a, const struct aws_uuid *b) {
+    return 0 == memcmp(a->uuid_data, b->uuid_data, sizeof(a->uuid_data));
 }

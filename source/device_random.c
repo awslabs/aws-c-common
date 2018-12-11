@@ -24,45 +24,25 @@
 
 int aws_device_random_u64(uint64_t *output)
 {
-    struct aws_byte_buf buf = {
-        .buffer = (uint8_t *)output,
-        .len = 0,
-        .capacity = sizeof(uint64_t),
-        .allocator = NULL,
-    };
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array((uint8_t *)output, sizeof(uint64_t));
 
     return aws_device_random_buffer(&buf);
 }
 
 int aws_device_random_u32(uint32_t *output) {
-    struct aws_byte_buf buf = {
-        .buffer = (uint8_t *)output,
-        .len = 0,
-        .capacity = sizeof(uint32_t),
-        .allocator = NULL,
-    };
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array((uint8_t *)output, sizeof(uint32_t));
 
     return aws_device_random_buffer(&buf);
 }
 
 int aws_device_random_u16(uint16_t *output) {
-    struct aws_byte_buf buf = {
-        .buffer = (uint8_t *)output,
-        .len = 0,
-        .capacity = sizeof(uint16_t),
-        .allocator = NULL,
-    };
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array((uint8_t *)output, sizeof(uint16_t));
 
     return aws_device_random_buffer(&buf);
 }
 
 int aws_device_random_u8(uint8_t *output) {
-    struct aws_byte_buf buf = {
-        .buffer = (uint8_t *)output,
-        .len = 0,
-        .capacity = sizeof(uint8_t),
-        .allocator = NULL,
-    };
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array((uint8_t *)output, sizeof(uint8_t));
 
     return aws_device_random_buffer(&buf);
 }

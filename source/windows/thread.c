@@ -58,7 +58,7 @@ BOOL s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
 void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
     struct callback_fn_wrapper wrapper;
     wrapper.call_once = call_once;
-    InitOnceExecuteOnce(flag, s_init_once_wrapper, &wrapper, NULL);
+    InitOnceExecuteOnce((PINIT_ONCE)flag, s_init_once_wrapper, &wrapper, NULL);
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {

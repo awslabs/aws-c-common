@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 static int s_rand_fd = -1;
-static aws_thread_once s_rand_init = AWS_THREAD_ONCE_INIT;
+static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
 
 #ifdef O_CLOEXEC
 #    define OPEN_FLAGS O_RDONLY | O_CLOEXEC

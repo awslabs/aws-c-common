@@ -64,7 +64,7 @@ static int s_device_rand_u16_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint64_t last_value = 0;
 
-    for (size_t i = 0; i < 10000; ++i) {
+    for (size_t i = 0; i < 1000; ++i) {
         uint16_t next_value = 0;
         ASSERT_SUCCESS(aws_device_random_u16(&next_value));
 
