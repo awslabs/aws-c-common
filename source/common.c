@@ -355,6 +355,10 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
         "Item not found in hash table."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_RANDOM_GEN_FAILED,
+        "A call to the random number generator failed. Retry later."
+    ),
 };
 /* clang-format on */
 

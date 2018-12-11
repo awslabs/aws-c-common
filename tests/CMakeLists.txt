@@ -222,6 +222,13 @@ add_test_case(atomics_loads_reordered_with_older_stores)
 add_test_case(atomics_acquire_to_release_one_direction)
 add_test_case(atomics_acquire_to_release_mixed)
 
+add_test_case(device_rand_u64)
+add_test_case(device_rand_u32)
+add_test_case(device_rand_u16)
+add_test_case(device_rand_buffer)
+
+add_test_case(uuid_string)
+
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
