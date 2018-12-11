@@ -362,7 +362,8 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_ARGUMENT,
         "An invalid argument was passed to a function."
-    )
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_RANDOM_GEN_FAILED,
         "A call to the random number generator failed. Retry later."
     ),
