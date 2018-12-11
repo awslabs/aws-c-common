@@ -31,7 +31,7 @@ bool aws_common_private_has_avx2(void);
  */
 static inline size_t aws_common_private_base64_decode_sse41(
     const unsigned char *in,
-    unsigned char *out, // NOLINT
+    unsigned char *out,
     size_t len) {
     (void)in;
     (void)out;
@@ -41,7 +41,7 @@ static inline size_t aws_common_private_base64_decode_sse41(
 }
 static inline void aws_common_private_base64_encode_sse41(
     const unsigned char *in,
-    unsigned char *out, // NOLINT
+    unsigned char *out,
     size_t len) {
     (void)in;
     (void)out;
