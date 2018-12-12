@@ -356,6 +356,14 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
         "Item not found in hash table."),
     AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_DATE_STR,
+        "Date string is invalid and cannot be parsed."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_ARGUMENT,
+        "An invalid argument was passed to a function."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_RANDOM_GEN_FAILED,
         "A call to the random number generator failed. Retry later."
     ),

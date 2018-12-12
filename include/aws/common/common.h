@@ -315,6 +315,8 @@ enum aws_common_error {
     AWS_ERROR_PRIORITY_QUEUE_EMPTY,
     AWS_ERROR_PRIORITY_QUEUE_BAD_NODE,
     AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
+    AWS_ERROR_INVALID_DATE_STR,
+    AWS_ERROR_INVALID_ARGUMENT,
     AWS_ERROR_RANDOM_GEN_FAILED,
     AWS_ERROR_MALFORMED_INPUT_STRING,
     AWS_ERROR_UNIMPLEMENTED,
@@ -329,11 +331,11 @@ enum aws_common_error {
 AWS_COMMON_API
 void aws_secure_zero(void *pBuf, size_t bufsize);
 
-#define AWS_ZERO_STRUCT(object)                                                                                    \
+#define AWS_ZERO_STRUCT(object)                                                                                        \
         do {                                                                                                           \
             memset(&(object), 0, sizeof(object));                                                                      \
         } while (0)
-#define AWS_ZERO_ARRAY(array)                                                                                      \
+#define AWS_ZERO_ARRAY(array)                                                                                          \
         do {                                                                                                           \
             memset((void *)array, 0, sizeof(array));                                                                   \
         } while (0)
