@@ -20,7 +20,8 @@ include(FeatureTests)
 include(Sanitizers)
 include(SIMD)
 
-set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
+set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
 set(GENERATED_CONFIG_HEADER "${GENERATED_INCLUDE_DIR}/aws/common/config.h")
 set(CONFIG_HEADER_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/config.h.in")
 
@@ -148,8 +149,25 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 # Note: We need to replace the generated include directory component first, otherwise if the build
 # directory is located inside the source tree, we'll partially rewrite the path and fail to replace it
 # when we replace the generated include dir.
-    string(REPLACE ${GENERATED_INCLUDE_DIR} ${CMAKE_INSTALL_PREFIX}/include HEADER_DSTDIR "${HEADER_DIR}")
-    string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_INSTALL_PREFIX} HEADER_DSTDIR "${HEADER_DSTDIR}")
+# We also need to take care to not run the source-directory match if the generated-directory match
+# succeeds; otherwise, if we're installing to /foo/aws-c-common-install, and our source directory is
+# /foo/aws-c-common, we'll end up installing to /foo/aws-c-common-install-install
+
+	unset(HEADER_DSTDIR)
+
+	foreach(POTENTIAL_PREFIX IN ITEMS ${GENERATED_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+		string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
+		string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
+		if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
+			string(REPLACE ${POTENTIAL_PREFIX} ${CMAKE_INSTALL_PREFIX} HEADER_DSTDIR "${HEADER_DIR}")
+			break()
+		endif()
+	endforeach()
+
+	if(NOT HEADER_DSTDIR)
+		message(ERROR "Couldn't find source root for header ${HEADER_SRCPATH}")
+	endif()
+
     install(FILES ${HEADER_SRCPATH} DESTINATION ${HEADER_DSTDIR})
 endforeach()
 
