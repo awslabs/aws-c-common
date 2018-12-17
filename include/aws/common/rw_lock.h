@@ -64,17 +64,26 @@ AWS_COMMON_API int aws_rw_lock_init(struct aws_rw_lock *lock);
 AWS_COMMON_API void aws_rw_lock_clean_up(struct aws_rw_lock *lock);
 
 /**
- * Blocks until it acquires the lock. While on some platforms such as Windows,
- * this may behave as a reentrant mutex, you should not treat it like one. On
- * platforms it is possible for it to be non-reentrant, it will be.
+ * Enters the lock in reader-mode. This call blocks if there are any open writers.
  */
 AWS_COMMON_API int aws_rw_lock_rlock(struct aws_rw_lock *lock);
+
+/**
+ * Enters the lock in writer-mode. This call blocks if there are any open readers.
+ * Note: You may not use this call to upgrade from reader to writer mode, the lock must be unlocked.
+ */
 AWS_COMMON_API int aws_rw_lock_wlock(struct aws_rw_lock *lock);
 
 /**
- * Releases the lock.
+ * Releases the lock from reader mode.
+ * If any writers are waiting and this is the last reader, the writer will enter the lock.
  */
 AWS_COMMON_API int aws_rw_lock_runlock(struct aws_rw_lock *lock);
+
+/**
+ * Release the lock from writer mode.
+ * If any readers are waiting, they will all enter the lock.
+ */
 AWS_COMMON_API int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 
 AWS_EXTERN_C_END

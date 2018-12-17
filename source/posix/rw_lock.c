@@ -29,6 +29,17 @@ static const int32_t s_max_readers = INT32_MAX;
 #    error Unsupported pointer size
 #endif
 
+/**
+ * Some notes about the implementation of this structure:
+ *  1. lock->writer_lock exists to ensure only 1 writer is active at a time. It will be locked from wlock to wunlock.
+ *  2. lock->readers will be equal to the number of open readers when > 0,
+ *      and (the number of open readers - s_max_readers) when a writer is waiting.
+ *  3. lock->holdouts refers to the number of readers that were open when a writer attempted to obtain the lock.
+ *      Calls to runlock will decrement this count as well as lock->readers,
+ *      and once holdouts reaches 0, lock->writer_sem will be released and the writer will commence.
+ *  4. lock->reader_sem will be released when the writer is done and the readers may commence.
+ */
+
 int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
     aws_atomic_init_int(&lock->readers, 0);
