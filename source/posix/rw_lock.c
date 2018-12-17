@@ -110,9 +110,7 @@ int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
     const reader_count_t current = aws_atomic_fetch_add(&lock->readers, s_max_readers) + s_max_readers;
 
-    for (reader_count_t i = 0; i < current; ++i) {
-        aws_semaphore_release_one(&lock->reader_sem);
-    }
+    aws_semaphore_release(&lock->reader_sem, current);
     aws_mutex_unlock(&lock->writer_lock);
 
     return AWS_OP_SUCCESS;

@@ -74,7 +74,10 @@ void aws_semaphore_release(struct aws_semaphore *semaphore, size_t num_resources
     if (semaphore->count > semaphore->max_count) {
         semaphore->count = semaphore->max_count;
     }
-    aws_condition_variable_notify_one(&semaphore->sync_point);
+
+    for (size_t i = 0; i < num_resources; ++i) {
+        aws_condition_variable_notify_one(&semaphore->sync_point);
+    }
 
     aws_mutex_unlock(&semaphore->mutex);
 }
