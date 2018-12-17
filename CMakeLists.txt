@@ -81,7 +81,7 @@ else ()
 
         set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-            set(PLATFORM_LIBS pthread rt)
+        set(PLATFORM_LIBS pthread rt)
     endif()
 endif()
 
@@ -172,6 +172,11 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 endforeach()
 
 set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib)
+# Set the default lib installation path on GNU systems with GNUInstallDirs
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND UNIX AND NOT APPLE)
+    include(GNUInstallDirs)
+    set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 install(TARGETS ${CMAKE_PROJECT_NAME}
     EXPORT ${CMAKE_PROJECT_NAME}-targets
