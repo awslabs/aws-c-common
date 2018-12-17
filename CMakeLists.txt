@@ -16,9 +16,9 @@ project(aws-c-common C)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
-include(FeatureTests)
-include(Sanitizers)
-include(SIMD)
+include(AwsFeatureTests)
+include(AwsSanitizers)
+include(AwsSIMD)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -193,9 +193,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
     "cmake/AwsTestHarness.cmake"
-    "cmake/LibFuzzer.cmake"
-    "cmake/Sanitizers.cmake"
-    "cmake/SIMD.cmake"
+    "cmake/AwsLibFuzzer.cmake"
+    "cmake/AwsSanitizers.cmake"
+    "cmake/AwsSIMD.cmake"
     )
 
 install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")

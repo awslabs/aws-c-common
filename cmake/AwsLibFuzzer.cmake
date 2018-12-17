@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 include(CTest)
-include(Sanitizers)
+include(AwsSanitizers)
 
 option(ENABLE_FUZZ_TESTS "Build and run fuzz tests" OFF)
 set(FUZZ_TESTS_MAX_TIME 60 CACHE STRING "Max time to run each fuzz test")
