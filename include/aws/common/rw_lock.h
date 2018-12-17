@@ -41,13 +41,19 @@ struct aws_rw_lock {
 #ifdef _WIN32
 #    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = NULL }
-#else
-/* -1 ^ (1ull << (sizeof(size_t) * 8 - 1)): SSIZE_MAX but without guaranteeing SSIZE_MAX exists. */
+#elif SIZE_MAX == UINT32_MAX
 #    define AWS_RW_LOCK_INIT                                                                                           \
         {                                                                                                              \
             .readers = AWS_ATOMIC_INIT_INT(0), .holdouts = AWS_ATOMIC_INIT_INT(0),                                     \
-            .reader_sem = AWS_SEMAPHORE_INIT(0, -1 ^ (1ull << (sizeof(size_t) * 8 - 1))),                              \
-            .writer_sem = AWS_SEMAPHORE_INIT(0, 1), .writer_lock = AWS_MUTEX_INIT,                                     \
+            .reader_sem = AWS_SEMAPHORE_INIT(0, INT32_MAX), .writer_sem = AWS_SEMAPHORE_INIT(0, 1),                    \
+            .writer_lock = AWS_MUTEX_INIT,                                                                             \
+        }
+#else
+#    define AWS_RW_LOCK_INIT                                                                                           \
+        {                                                                                                              \
+            .readers = AWS_ATOMIC_INIT_INT(0), .holdouts = AWS_ATOMIC_INIT_INT(0),                                     \
+            .reader_sem = AWS_SEMAPHORE_INIT(0, INT64_MAX), .writer_sem = AWS_SEMAPHORE_INIT(0, 1),                    \
+            .writer_lock = AWS_MUTEX_INIT,                                                                             \
         }
 #endif
 

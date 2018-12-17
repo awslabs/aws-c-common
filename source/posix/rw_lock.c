@@ -19,10 +19,10 @@
 
 #include <assert.h>
 
-#if AWS_SIZEOF_VOID_P == 8
+#if SIZE_MAX == UINT64_MAX
 typedef int64_t reader_count_t;
 static const int64_t s_max_readers = INT64_MAX;
-#elif AWS_SIZEOF_VOID_P == 4
+#elif SIZE_MAX == UINT32_MAX
 typedef int32_t reader_count_t;
 static const int32_t s_max_readers = INT32_MAX;
 #else
