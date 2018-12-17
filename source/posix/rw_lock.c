@@ -46,7 +46,7 @@ int aws_rw_lock_init(struct aws_rw_lock *lock) {
         return AWS_OP_ERR;
     }
 
-    return AWS_OP_ERR;
+    return AWS_OP_SUCCESS;
 }
 
 void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
@@ -62,7 +62,6 @@ int aws_rw_lock_rlock(struct aws_rw_lock *lock) {
     if (num_readers < 0) {
         aws_semaphore_acquire(&lock->reader_sem);
     }
-    assert(aws_atomic_load_int(&lock->readers) > 0);
 
     return AWS_OP_SUCCESS;
 }
@@ -74,11 +73,9 @@ int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
     const reader_count_t num_readers = aws_atomic_fetch_sub(&lock->readers, s_max_readers);
     if (num_readers > 0) {
         const reader_count_t num_holdouts = aws_atomic_fetch_add(&lock->holdouts, num_readers) + num_readers;
-        assert(num_holdouts >= 0);
         if (num_holdouts > 0) {
             aws_semaphore_acquire(&lock->writer_sem);
         }
-        assert(aws_atomic_load_int(&lock->holdouts) == 0);
     }
 
     return AWS_OP_SUCCESS;
@@ -100,10 +97,7 @@ int aws_rw_lock_runlock(struct aws_rw_lock *lock) {
 
 int aws_rw_lock_wunlock(struct aws_rw_lock *lock) {
 
-    assert(aws_atomic_load_int(&lock->holdouts) == 0);
-
     const reader_count_t current = aws_atomic_fetch_add(&lock->readers, s_max_readers) + s_max_readers;
-    assert(current >= 0);
 
     for (reader_count_t i = 0; i < current; ++i) {
         aws_semaphore_release_one(&lock->reader_sem);

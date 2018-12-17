@@ -36,6 +36,7 @@
 #include <aws/common/mutex.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/rw_lock.h>
+#include <aws/common/semaphore.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 #include <aws/common/task_scheduler.h>

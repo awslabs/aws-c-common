@@ -53,13 +53,25 @@ void aws_semaphore_acquire(struct aws_semaphore *semaphore);
  * Release a single resource to the pool.
  */
 AWS_COMMON_API
-void aws_semaphore_release_one(struct aws_semaphore *semaphore);
+void aws_semaphore_release(struct aws_semaphore *semaphore, size_t num_resources);
+
+/**
+ * Release a single resource to the pool.
+ */
+AWS_STATIC_IMPL
+void aws_semaphore_release_one(struct aws_semaphore *semaphore) {
+
+    aws_semaphore_release(semaphore, 1);
+}
 
 /**
  * Release all resources to the pool.
  */
-AWS_COMMON_API
-void aws_semaphore_release_all(struct aws_semaphore *semaphore);
+AWS_STATIC_IMPL
+void aws_semaphore_release_all(struct aws_semaphore *semaphore) {
+
+    aws_semaphore_release(semaphore, semaphore->max_count);
+}
 
 AWS_EXTERN_C_END
 

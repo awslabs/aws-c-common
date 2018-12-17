@@ -64,28 +64,17 @@ void aws_semaphore_acquire(struct aws_semaphore *semaphore) {
     aws_mutex_unlock(&semaphore->mutex);
 }
 
-void aws_semaphore_release_one(struct aws_semaphore *semaphore) {
+void aws_semaphore_release(struct aws_semaphore *semaphore, size_t num_resources) {
 
     assert(semaphore);
 
     aws_mutex_lock(&semaphore->mutex);
 
-    if (semaphore->count < semaphore->max_count) {
-        ++semaphore->count;
+    semaphore->count += num_resources;
+    if (semaphore->count > semaphore->max_count) {
+        semaphore->count = semaphore->max_count;
     }
     aws_condition_variable_notify_one(&semaphore->sync_point);
-
-    aws_mutex_unlock(&semaphore->mutex);
-}
-
-void aws_semaphore_release_all(struct aws_semaphore *semaphore) {
-
-    assert(semaphore);
-
-    aws_mutex_lock(&semaphore->mutex);
-
-    semaphore->count = semaphore->max_count;
-    aws_condition_variable_notify_all(&semaphore->sync_point);
 
     aws_mutex_unlock(&semaphore->mutex);
 }

@@ -42,18 +42,19 @@ struct aws_rw_lock {
 #    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = NULL }
 #else
+/* -1 ^ (1ull << (sizeof(size_t) * 8 - 1)): SSIZE_MAX but without guaranteeing SSIZE_MAX exists. */
 #    define AWS_RW_LOCK_INIT                                                                                           \
         {                                                                                                              \
             .readers = AWS_ATOMIC_INIT_INT(0), .holdouts = AWS_ATOMIC_INIT_INT(0),                                     \
-            .reader_sem = AWS_SEMAPHORE_INIT(0, INT), .writer_sem = AWS_SEMAPHORE_INIT(0, 1),                          \
-            .writer_lock = AWS_MUTEX_INIT,                                                                             \
+            .reader_sem = AWS_SEMAPHORE_INIT(0, -1 ^ (1ull << (sizeof(size_t) * 8 - 1))),                              \
+            .writer_sem = AWS_SEMAPHORE_INIT(0, 1), .writer_lock = AWS_MUTEX_INIT,                                     \
         }
 #endif
 
 AWS_EXTERN_C_BEGIN
 
 /**
- * Initializes a new platform instance of mutex.
+ * Initializes a new platform instance of rw_lock.
  */
 AWS_COMMON_API int aws_rw_lock_init(struct aws_rw_lock *lock);
 
