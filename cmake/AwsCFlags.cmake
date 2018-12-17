@@ -125,8 +125,6 @@ function(aws_set_common_properties target)
         if (NOT MSVC)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
-
-        set_target_properties(${target} PROPERTIES VERSION 1.0.0 SOVERSION 0)
     endif()
 
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})

@@ -119,6 +119,7 @@ if (AWS_NUM_CPU_CORES)
 endif()
 
 # Our ABI is not yet stable
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES VERSION 1.0.0)
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
