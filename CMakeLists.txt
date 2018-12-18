@@ -25,6 +25,11 @@ set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
 set(GENERATED_CONFIG_HEADER "${GENERATED_INCLUDE_DIR}/aws/common/config.h")
 set(CONFIG_HEADER_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/config.h.in")
 
+# Set the default build type to Release
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
@@ -191,14 +196,18 @@ if (BUILD_SHARED_LIBS)
       RUNTIME
         DESTINATION ${LIBRARY_DIRECTORY}
         COMPONENT Runtime)
+  install(TARGETS ${CMAKE_PROJECT_NAME}
+      EXPORT ${CMAKE_PROJECT_NAME}-targets
+      LIBRARY
+        DESTINATION ${LIBRARY_DIRECTORY}
+        NAMELINK_ONLY
+      COMPONENT Development)
+else()
+  install(TARGETS ${CMAKE_PROJECT_NAME}
+      EXPORT ${CMAKE_PROJECT_NAME}-targets
+      ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
+      COMPONENT Development)
 endif()
-install(TARGETS ${CMAKE_PROJECT_NAME}
-    EXPORT ${CMAKE_PROJECT_NAME}-targets
-    ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
-    LIBRARY
-      DESTINATION ${LIBRARY_DIRECTORY}
-      NAMELINK_ONLY
-    COMPONENT Development)
 
 configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
@@ -222,7 +231,7 @@ list(APPEND EXPORT_MODULES
     )
 
 install(FILES ${EXPORT_MODULES}
-        DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}"
+        DESTINATION "${LIBRARY_DIRECTORY}/cmake/${CMAKE_PROJECT_NAME}"
         COMPONENT Development)
 
 if (NOT CMAKE_CROSSCOMPILING)
