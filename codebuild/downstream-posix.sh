@@ -25,7 +25,7 @@ function cmake_project {
     cmake -G"Unix Makefiles" $cmake_args -DCMAKE_INSTALL_PREFIX=$install_prefix ..
     cmake --build . --target all
     cmake --build . --target install
-    if [ $cmake_args != *"-DBUILD_TESTING=OFF"* ]; then
+    if [[ $cmake_args != *"-DBUILD_TESTING=OFF"* ]]; then
         cmake --build . --target test
     fi
     popd
