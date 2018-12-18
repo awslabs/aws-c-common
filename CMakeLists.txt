@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 cmake_minimum_required(VERSION 3.0)
-project(aws-c-common C)
+project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
@@ -160,7 +160,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 		string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
 		string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
 		if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
-			string(REPLACE ${POTENTIAL_PREFIX} ${CMAKE_INSTALL_PREFIX} HEADER_DSTDIR "${HEADER_DIR}")
+			string(REPLACE "${POTENTIAL_PREFIX}/" "" HEADER_DSTDIR "${HEADER_DIR}")
 			break()
 		endif()
 	endforeach()
@@ -169,32 +169,53 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 		message(ERROR "Couldn't find source root for header ${HEADER_SRCPATH}")
 	endif()
 
-    install(FILES ${HEADER_SRCPATH} DESTINATION ${HEADER_DSTDIR})
+    install(FILES ${HEADER_SRCPATH}
+            DESTINATION ${HEADER_DSTDIR}
+            COMPONENT Development)
 endforeach()
 
-set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib)
+set(LIBRARY_DIRECTORY lib)
 # Set the default lib installation path on GNU systems with GNUInstallDirs
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
     set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-install(TARGETS ${CMAKE_PROJECT_NAME}
-    EXPORT ${CMAKE_PROJECT_NAME}-targets
-    ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
-    LIBRARY DESTINATION ${LIBRARY_DIRECTORY}
-    RUNTIME DESTINATION ${LIBRARY_DIRECTORY})
+if (BUILD_SHARED_LIBS)
+  install(TARGETS ${CMAKE_PROJECT_NAME}
+      EXPORT ${CMAKE_PROJECT_NAME}-targets
+      LIBRARY
+        DESTINATION ${LIBRARY_DIRECTORY}
+        NAMELINK_SKIP
+        COMPONENT Runtime
+      RUNTIME
+        DESTINATION ${LIBRARY_DIRECTORY}
+        COMPONENT Runtime)
+  install(TARGETS ${CMAKE_PROJECT_NAME}
+      EXPORT ${CMAKE_PROJECT_NAME}-targets
+      LIBRARY
+        DESTINATION ${LIBRARY_DIRECTORY}
+        NAMELINK_ONLY
+      COMPONENT Development)
+else()
+  install(TARGETS ${CMAKE_PROJECT_NAME}
+      EXPORT ${CMAKE_PROJECT_NAME}-targets
+      ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
+      COMPONENT Development)
+endif()
 
 configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
   @ONLY)
 
 install(EXPORT "${CMAKE_PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/"
-    NAMESPACE AWS::)
+    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${CMAKE_PROJECT_NAME}"
+    NAMESPACE AWS::
+    COMPONENT Development)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
-    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/")
+    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${CMAKE_PROJECT_NAME}"
+    COMPONENT Development)
 
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
@@ -204,7 +225,9 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     )
 
-install(FILES ${EXPORT_MODULES} DESTINATION "lib/cmake/")
+install(FILES ${EXPORT_MODULES}
+        DESTINATION "${LIBRARY_DIRECTORY}/cmake/${CMAKE_PROJECT_NAME}"
+        COMPONENT Development)
 
 if (NOT CMAKE_CROSSCOMPILING)
     include(CTest)
@@ -215,3 +238,5 @@ endif()
 configure_file(${CONFIG_HEADER_TEMPLATE}
                ${GENERATED_CONFIG_HEADER}
                ESCAPE_QUOTES)
+
+include(CPackConfig)
