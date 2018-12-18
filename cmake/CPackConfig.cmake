@@ -14,8 +14,10 @@ else()
   return()
 endif()
 
-# We'll want 2 RPMS, one for runtime files and one for developement files
+# We'll want 2 RPMS, one for runtime files and one for development files
 set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL Development Runtime)
+set(CPACK_RPM_MAIN_COMPONENT Runtime)
 
 # Configure package names
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME} CACHE STRING "")
@@ -56,6 +58,12 @@ if (BUILD_SHARED_LIBS)
   set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE
       "${CMAKE_CURRENT_LIST_DIR}/rpm-scripts/postun.sh")
 endif()
+
+# By default, we'll try to claim the cmake directory under the library directory
+# and the aws include directory. We have to share both of these
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+    /usr/${LIBRARY_DIRECTORY}/cmake
+    /usr/include/aws)
 
 # Include CPack, which generates the package target
 include(CPack)
