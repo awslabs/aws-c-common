@@ -82,7 +82,7 @@ int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
     aws_mutex_lock(&lock->writer_lock);
 
     const reader_count_t num_readers = aws_atomic_fetch_sub(&lock->readers, s_max_readers);
-    if (num_readers > 0) {
+    if (num_readers != 0) {
         const reader_count_t num_holdouts = aws_atomic_fetch_add(&lock->holdouts, num_readers) + num_readers;
         if (num_holdouts > 0) {
             aws_semaphore_acquire(&lock->writer_sem);
