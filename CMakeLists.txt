@@ -176,7 +176,7 @@ endforeach()
 
 set(LIBRARY_DIRECTORY lib)
 # Set the default lib installation path on GNU systems with GNUInstallDirs
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
     set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
 endif()
