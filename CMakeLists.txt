@@ -16,9 +16,9 @@ project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
-include(FeatureTests)
-include(Sanitizers)
-include(SIMD)
+include(AwsFeatureTests)
+include(AwsSanitizers)
+include(AwsSIMD)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -81,7 +81,7 @@ else ()
 
         set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-            set(PLATFORM_LIBS pthread rt)
+        set(PLATFORM_LIBS pthread rt)
     endif()
 endif()
 
@@ -119,8 +119,8 @@ if (AWS_NUM_CPU_CORES)
 endif()
 
 # Our ABI is not yet stable
-set_target_properties(${CMAKE_PROJECT_NAME}
-        PROPERTIES SOVERSION 0unstable VERSION ${PROJECT_VERSION})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES VERSION 1.0.0)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -175,9 +175,10 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 endforeach()
 
 set(LIBRARY_DIRECTORY lib)
-if (UNIX AND NOT APPLE)
-  include(GNUInstallDirs)
-  set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
+# Set the default lib installation path on GNU systems with GNUInstallDirs
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND UNIX AND NOT APPLE)
+    include(GNUInstallDirs)
+    set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 if (BUILD_SHARED_LIBS)
@@ -212,9 +213,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
     "cmake/AwsTestHarness.cmake"
-    "cmake/LibFuzzer.cmake"
-    "cmake/Sanitizers.cmake"
-    "cmake/SIMD.cmake"
+    "cmake/AwsLibFuzzer.cmake"
+    "cmake/AwsSanitizers.cmake"
+    "cmake/AwsSIMD.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

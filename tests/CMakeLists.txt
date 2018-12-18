@@ -1,4 +1,4 @@
-include(LibFuzzer)
+include(AwsLibFuzzer)
 include(AwsTestHarness)
 enable_testing()
 
