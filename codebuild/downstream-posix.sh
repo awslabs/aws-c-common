@@ -7,8 +7,8 @@
 set -e
 set -x
 
-# everything is relative to the directory this script is in
-home_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+# everything is relative to the project root, which should be above this directory
+home_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. >/dev/null && pwd )"
 
 # where to have cmake put its binaries
 build_dir=$home_dir/build/downstream
@@ -18,7 +18,7 @@ install_prefix=$build_dir/install
 cmake_args=""
 
 function cmake_project {
-    local $proj_dir=$1
+    local proj_dir=$1
     pushd $proj_dir
     mkdir -p ci-build
     cd ci-build
@@ -48,7 +48,7 @@ function build_project {
     fi
     echo "Using git repo: $dep branch:" `git branch | grep \* | cut -d ' ' -f2` "commit: " `git rev-parse HEAD`
 
-    cmake_project $dep
+    cmake_project .
 
     popd
 }
@@ -70,13 +70,14 @@ do
     esac
 done
 
+cd $home_dir
 if [ $clean ]; then
     rm -rf $build_dir
 fi
 mkdir -p $build_dir
 
 # build s2n without tests
-if [ "$(uname)" != "Darwin"]; then
+if [ "$(uname)" != "Darwin" ]; then
     default_cmake_args=$cmake_args
     cmake_args="$cmake_args -DBUILD_TESTING=OFF"
     build_project s2n
@@ -84,7 +85,7 @@ if [ "$(uname)" != "Darwin"]; then
 fi
 
 # build aws-c-common from this pr/branch
-cmake_project ..
+cmake_project .
 
 # build master head rev of downstream projects
 build_project aws-checksums
