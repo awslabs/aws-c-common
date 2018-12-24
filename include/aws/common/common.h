@@ -324,12 +324,17 @@ enum aws_common_error {
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
 };
 
+
+AWS_EXTERN_C_BEGIN
+
 /**
  * Securely zeroes a memory buffer. This function will attempt to ensure that
  * the compiler will not optimize away this zeroing operation.
  */
 AWS_COMMON_API
 void aws_secure_zero(void *pBuf, size_t bufsize);
+
+AWS_EXTERN_C_END
 
 #define AWS_ZERO_STRUCT(object)                                                                                        \
         do {                                                                                                           \
