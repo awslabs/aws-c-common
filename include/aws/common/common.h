@@ -237,7 +237,25 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 AWS_COMMON_API
 void aws_load_error_strings(void);
 
+/**
+ * Securely zeroes a memory buffer. This function will attempt to ensure that
+ * the compiler will not optimize away this zeroing operation.
+ */
+AWS_COMMON_API
+void aws_secure_zero(void *pBuf, size_t bufsize);
+
 AWS_EXTERN_C_END
+
+#define AWS_ZERO_STRUCT(object)                                                                                        \
+        do {                                                                                                           \
+            memset(&(object), 0, sizeof(object));                                                                      \
+        } while (0)
+#define AWS_ZERO_ARRAY(array)                                                                                          \
+        do {                                                                                                           \
+            memset((void *)array, 0, sizeof(array));                                                                   \
+        } while (0)
+#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+
 
 #define AWS_CACHE_LINE 64
 
@@ -323,27 +341,5 @@ enum aws_common_error {
 
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
 };
-
-
-AWS_EXTERN_C_BEGIN
-
-/**
- * Securely zeroes a memory buffer. This function will attempt to ensure that
- * the compiler will not optimize away this zeroing operation.
- */
-AWS_COMMON_API
-void aws_secure_zero(void *pBuf, size_t bufsize);
-
-AWS_EXTERN_C_END
-
-#define AWS_ZERO_STRUCT(object)                                                                                        \
-        do {                                                                                                           \
-            memset(&(object), 0, sizeof(object));                                                                      \
-        } while (0)
-#define AWS_ZERO_ARRAY(array)                                                                                          \
-        do {                                                                                                           \
-            memset((void *)array, 0, sizeof(array));                                                                   \
-        } while (0)
-#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 #endif /* AWS_COMMON_COMMON_H */
