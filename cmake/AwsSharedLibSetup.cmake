@@ -11,6 +11,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+option(VERSION_LIBS "Turns on versioning of shared libs, defaults to ON, you'll want to turn this off if you're building bindings and copying shared libs around." ON)
+
 set(LIBRARY_DIRECTORY lib)
 # Set the default lib installation path on GNU systems with GNUInstallDirs
 if (UNIX AND NOT APPLE)
@@ -19,6 +21,12 @@ if (UNIX AND NOT APPLE)
 endif()
 
 function(aws_prepare_shared_lib_exports target)
+    if (VERSION_LIBS)
+        # Our ABI is not yet stable
+        set_target_properties(${target} PROPERTIES VERSION 1.0.0)
+        set_target_properties(${target} PROPERTIES SOVERSION 0unstable)
+    endif()
+
     if (BUILD_SHARED_LIBS)
         install(TARGETS ${target}
                 EXPORT ${target}-targets

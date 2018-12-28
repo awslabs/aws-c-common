@@ -49,6 +49,7 @@ file(GLOB AWS_COMMON_SRC
 
 option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
+option(VERSION_LIBS "Turns on versioning of shared libs, defaults to ON, you'll want to turn this off if you're building bindings and copying shared libs around." ON)
 
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
@@ -120,10 +121,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
 endif()
-
-# Our ABI is not yet stable
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES VERSION 1.0.0)
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
