@@ -16,6 +16,7 @@ project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
+include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsSIMD)
@@ -104,6 +105,8 @@ endif()
 
 add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
+aws_prepare_symbol_visibility_args(${CMAKE_PROJECT_NAME} "AWS_COMMON")
+
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
 if (UNIX AND NOT APPLE)
@@ -174,38 +177,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
             COMPONENT Development)
 endforeach()
 
-set(LIBRARY_DIRECTORY lib)
-# Set the default lib installation path on GNU systems with GNUInstallDirs
-if (UNIX AND NOT APPLE)
-    include(GNUInstallDirs)
-    set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-if (BUILD_SHARED_LIBS)
-  install(TARGETS ${CMAKE_PROJECT_NAME}
-      EXPORT ${CMAKE_PROJECT_NAME}-targets
-      ARCHIVE
-        DESTINATION ${LIBRARY_DIRECTORY}
-        COMPONENT Development
-      LIBRARY
-        DESTINATION ${LIBRARY_DIRECTORY}
-        NAMELINK_SKIP
-        COMPONENT Runtime
-      RUNTIME
-        DESTINATION ${LIBRARY_DIRECTORY}
-        COMPONENT Runtime)
-  install(TARGETS ${CMAKE_PROJECT_NAME}
-      EXPORT ${CMAKE_PROJECT_NAME}-targets
-      LIBRARY
-        DESTINATION ${LIBRARY_DIRECTORY}
-        NAMELINK_ONLY
-      COMPONENT Development)
-else()
-  install(TARGETS ${CMAKE_PROJECT_NAME}
-      EXPORT ${CMAKE_PROJECT_NAME}-targets
-      ARCHIVE DESTINATION ${LIBRARY_DIRECTORY}
-      COMPONENT Development)
-endif()
+aws_prepare_shared_lib_exports(${CMAKE_PROJECT_NAME})
 
 configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
@@ -222,6 +194,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
 
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
+    "cmake/AwsSharedLibSetup.cmake"
     "cmake/AwsTestHarness.cmake"
     "cmake/AwsLibFuzzer.cmake"
     "cmake/AwsSanitizers.cmake"
