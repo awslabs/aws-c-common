@@ -49,7 +49,6 @@ file(GLOB AWS_COMMON_SRC
 
 option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
-option(VERSION_LIBS "Turns on versioning of shared libs, defaults to ON, you'll want to turn this off if you're building bindings and copying shared libs around." ON)
 
 if (WIN32)
     file(GLOB AWS_COMMON_OS_HEADERS
