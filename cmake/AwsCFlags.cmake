@@ -114,14 +114,6 @@ function(aws_set_common_properties target)
     endif()
 
     if(BUILD_SHARED_LIBS)
-        set(EXPORT_DEFINE ${target})
-        string(TOUPPER ${EXPORT_DEFINE} EXPORT_DEFINE)
-        string(REGEX REPLACE "^AWS-C-" "AWS-" EXPORT_DEFINE ${EXPORT_DEFINE})
-        string(REPLACE "-" "_" EXPORT_DEFINE ${EXPORT_DEFINE})
-
-        list(APPEND AWS_C_DEFINES_PUBLIC -DAWS_COMMON_USE_IMPORT_EXPORT)
-        list(APPEND AWS_C_DEFINES_PRIVATE -D${EXPORT_DEFINE}_EXPORTS)
-
         if (NOT MSVC)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
