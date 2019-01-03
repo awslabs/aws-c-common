@@ -37,10 +37,10 @@ static void s_element_destroy(void *value) {
 int aws_lru_cache_init(
     struct aws_lru_cache *cache,
     struct aws_allocator *allocator,
-    aws_hash_fn *hash_fn,
-    aws_equals_fn *equals_fn,
-    aws_hash_element_destroy_fn *destroy_key_fn,
-    aws_hash_element_destroy_fn *destroy_value_fn,
+    aws_hash_fn hash_fn,
+    aws_hash_element_eq_fn equals_fn,
+    aws_hash_element_destroy_fn destroy_key_fn,
+    aws_hash_element_destroy_fn destroy_value_fn,
     size_t max_items) {
     assert(allocator);
     assert(max_items);

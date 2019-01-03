@@ -57,8 +57,18 @@ struct aws_string {
 #    pragma warning(pop)
 #endif
 
+/**
+ * Equivalent to str->bytes. Here for legacy reaasons.
+ */
 AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
     return str->bytes;
+}
+
+/**
+ * Returns true if bytes of string are the same, false otherwise.
+ */
+AWS_STATIC_IMPL bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
+    return a->len == b->len && !memcmp(a->bytes, b->bytes, a->len);
 }
 
 /**
@@ -101,14 +111,14 @@ struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, c
  * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
  */
 AWS_COMMON_API
-void aws_string_destroy(void *str);
+void aws_string_destroy(struct aws_string *str);
 
 /**
  * Zeroes out the data bytes of string and then deallocates the memory.
  * Not safe to run on a string created with AWS_STATIC_STRING_FROM_LITERAL.
  */
 AWS_COMMON_API
-void aws_string_destroy_secure(void *str);
+void aws_string_destroy_secure(struct aws_string *str);
 
 /**
  * Compares lexicographical ordering of two strings. This is a binary
