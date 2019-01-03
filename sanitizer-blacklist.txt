@@ -3,5 +3,7 @@
 fun:hashlittle2
 
 [unsigned-integer-overflow]
-# aws_hash_iter_delete underflows a signed integer when deleting the 0th element, but checks for this behavior in aws_hash_iter_done
+# aws_hash_iter_delete underflows a unsigned integer when deleting the 0th element, but checks for this behavior in aws_hash_iter_done
 fun:aws_hash_iter_delete
+# aws_hash_iter_next adds 1 to this underflowed integer, overflowing it back to 0
+fun:aws_hash_iter_next
