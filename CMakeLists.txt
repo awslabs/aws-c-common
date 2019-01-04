@@ -157,20 +157,20 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 # succeeds; otherwise, if we're installing to /foo/aws-c-common-install, and our source directory is
 # /foo/aws-c-common, we'll end up installing to /foo/aws-c-common-install-install
 
-	unset(HEADER_DSTDIR)
+    unset(HEADER_DSTDIR)
 
-	foreach(POTENTIAL_PREFIX IN ITEMS ${GENERATED_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-		string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
-		string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
-		if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
-			string(REPLACE "${POTENTIAL_PREFIX}/" "" HEADER_DSTDIR "${HEADER_DIR}")
-			break()
-		endif()
-	endforeach()
+    foreach(POTENTIAL_PREFIX IN ITEMS ${GENERATED_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+        string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
+        string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
+        if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
+            string(REPLACE "${POTENTIAL_PREFIX}/" "" HEADER_DSTDIR "${HEADER_DIR}")
+            break()
+        endif()
+    endforeach()
 
-	if(NOT HEADER_DSTDIR)
-		message(ERROR "Couldn't find source root for header ${HEADER_SRCPATH}")
-	endif()
+    if(NOT HEADER_DSTDIR)
+        message(ERROR "Couldn't find source root for header ${HEADER_SRCPATH}")
+    endif()
 
     install(FILES ${HEADER_SRCPATH}
             DESTINATION ${HEADER_DSTDIR}
