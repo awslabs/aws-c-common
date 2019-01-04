@@ -147,14 +147,6 @@ if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
-if (AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
-endif()
-
-if (AWS_HAVE_MSVC_MULX
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_HAVE_MSVC_MULX)
-endif()
-
 # Preserve subdirectories when installing headers
 foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${AWS_TEST_HEADERS})
     get_filename_component(HEADER_DIR ${HEADER_SRCPATH} DIRECTORY)
