@@ -47,10 +47,10 @@ struct hash_table_entry {
 };
 
 struct hash_table_state {
-    aws_hash_fn hash_fn;
-    aws_hash_element_eq_fn equals_fn;
-    aws_hash_element_destroy_fn destroy_key_fn;
-    aws_hash_element_destroy_fn destroy_value_fn;
+    aws_hash_fn *hash_fn;
+    aws_hash_element_eq_fn *equals_fn;
+    aws_hash_element_destroy_fn *destroy_key_fn;
+    aws_hash_element_destroy_fn *destroy_value_fn;
     struct aws_allocator *alloc;
 
     size_t size, entry_count;
@@ -233,10 +233,10 @@ int aws_hash_table_init(
     struct aws_hash_table *map,
     struct aws_allocator *alloc,
     size_t size,
-    aws_hash_fn hash_fn,
-    aws_hash_element_eq_fn equals_fn,
-    aws_hash_element_destroy_fn destroy_key_fn,
-    aws_hash_element_destroy_fn destroy_value_fn) {
+    aws_hash_fn *hash_fn,
+    aws_hash_element_eq_fn *equals_fn,
+    aws_hash_element_destroy_fn *destroy_key_fn,
+    aws_hash_element_destroy_fn *destroy_value_fn) {
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -649,7 +649,7 @@ int aws_hash_table_foreach(
 bool aws_hash_table_eq(
     const struct aws_hash_table *a,
     const struct aws_hash_table *b,
-    aws_hash_element_eq_fn value_eq) {
+    aws_hash_element_eq_fn *value_eq) {
     if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
         return false;
     }

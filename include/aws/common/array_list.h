@@ -38,7 +38,7 @@ struct aws_array_list {
  * return a positive number if a > b, zero if a = b, and a negative number
  * if a < b.
  */
-typedef int (*aws_array_list_comparator_fn)(const void *a, const void *b);
+typedef int(aws_array_list_comparator_fn)(const void *a, const void *b);
 
 AWS_EXTERN_C_BEGIN
 
@@ -193,7 +193,7 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
  * Sort elements in the list in-place according to the comparator function.
  */
 AWS_STATIC_IMPL
-void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn compare_fn);
+void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn);
 
 #include <aws/common/array_list.inl>
 

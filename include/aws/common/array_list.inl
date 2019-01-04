@@ -235,7 +235,7 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn compare_fn) {
+void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
     if (list->data) {
         qsort(list->data, aws_array_list_length(list), list->item_size, compare_fn);
     }

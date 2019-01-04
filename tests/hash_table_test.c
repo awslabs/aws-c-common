@@ -57,7 +57,7 @@ static int s_test_hash_table_create_find_fn(struct aws_allocator *allocator, voi
 
     struct aws_hash_table hash_table;
     int err_code = aws_hash_table_init(
-        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn)aws_c_string_eq, NULL, NULL);
+        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn *)aws_c_string_eq, NULL, NULL);
     struct aws_hash_element *pElem;
     int was_created;
 
@@ -116,9 +116,9 @@ static int s_test_hash_table_string_create_find_fn(struct aws_allocator *allocat
         allocator,
         10,
         aws_hash_string,
-        (aws_hash_element_eq_fn)aws_string_eq,
-        (aws_hash_element_destroy_fn)aws_string_destroy,
-        (aws_hash_element_destroy_fn)aws_string_destroy);
+        (aws_hash_element_eq_fn *)aws_string_eq,
+        (aws_hash_element_destroy_fn *)aws_string_destroy,
+        (aws_hash_element_destroy_fn *)aws_string_destroy);
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
     /* First element of hash, both key and value are statically allocated
@@ -240,7 +240,7 @@ static int s_test_hash_table_put_fn(struct aws_allocator *allocator, void *ctx) 
         allocator,
         10,
         aws_hash_string,
-        (aws_hash_element_eq_fn)aws_string_eq,
+        (aws_hash_element_eq_fn *)aws_string_eq,
         destroy_key_record,
         destroy_value_record);
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
@@ -292,7 +292,7 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
     struct aws_hash_table hash_table;
 
     int ret = aws_hash_table_init(
-        &hash_table, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn)aws_string_eq, NULL, NULL);
+        &hash_table, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn *)aws_string_eq, NULL, NULL);
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
@@ -315,9 +315,9 @@ static int s_test_hash_table_swap_move(struct aws_allocator *allocator, void *ct
     struct aws_hash_table table1, table2, tmp;
 
     ASSERT_SUCCESS(aws_hash_table_init(
-        &table1, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn)aws_string_eq, NULL, NULL));
+        &table1, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn *)aws_string_eq, NULL, NULL));
     ASSERT_SUCCESS(aws_hash_table_init(
-        &table2, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn)aws_string_eq, NULL, NULL));
+        &table2, allocator, 10, aws_hash_string, (aws_hash_element_eq_fn *)aws_string_eq, NULL, NULL));
 
     ASSERT_SUCCESS(aws_hash_table_put(&table1, key, (void *)foo, NULL));
     ASSERT_SUCCESS(aws_hash_table_put(&table2, key, (void *)bar, NULL));
@@ -377,8 +377,8 @@ static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator,
         allocator,
         10,
         aws_hash_string,
-        (aws_hash_element_eq_fn)aws_string_eq,
-        (aws_hash_element_destroy_fn)aws_string_destroy,
+        (aws_hash_element_eq_fn *)aws_string_eq,
+        (aws_hash_element_destroy_fn *)aws_string_destroy,
         NULL); /* destroy keys not values */
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
@@ -406,9 +406,9 @@ static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator,
         allocator,
         10,
         aws_hash_string,
-        (aws_hash_element_eq_fn)aws_string_eq,
+        (aws_hash_element_eq_fn *)aws_string_eq,
         NULL,
-        (aws_hash_element_destroy_fn)aws_string_destroy); /* destroy values not keys */
+        (aws_hash_element_destroy_fn *)aws_string_destroy); /* destroy values not keys */
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
 
     for (int idx = 0; idx < 3; ++idx) {
@@ -435,7 +435,7 @@ static int s_test_hash_table_hash_collision_fn(struct aws_allocator *allocator, 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
     int err_code = aws_hash_table_init(
-        &hash_table, allocator, 10, hash_collide, (aws_hash_element_eq_fn)aws_c_string_eq, NULL, NULL);
+        &hash_table, allocator, 10, hash_collide, (aws_hash_element_eq_fn *)aws_c_string_eq, NULL, NULL);
 
     ASSERT_SUCCESS(err_code, "Hash Map init should have succeeded.");
 
@@ -468,7 +468,7 @@ static int s_test_hash_table_hash_overwrite_fn(struct aws_allocator *allocator, 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
     int err_code = aws_hash_table_init(
-        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn)aws_c_string_eq, NULL, NULL);
+        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn *)aws_c_string_eq, NULL, NULL);
     int was_created = 42;
 
     ASSERT_SUCCESS(err_code, "Hash Map init should have succeeded.");
@@ -526,7 +526,7 @@ static int s_test_hash_table_hash_remove_fn(struct aws_allocator *allocator, voi
         allocator,
         10,
         aws_hash_c_string,
-        (aws_hash_element_eq_fn)aws_c_string_eq,
+        (aws_hash_element_eq_fn *)aws_c_string_eq,
         s_destroy_key_fn,
         s_destroy_value_fn);
     int was_present = 42;
@@ -592,7 +592,7 @@ static int s_test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *
         allocator,
         10,
         aws_hash_c_string,
-        (aws_hash_element_eq_fn)aws_c_string_eq,
+        (aws_hash_element_eq_fn *)aws_c_string_eq,
         s_destroy_key_fn,
         s_destroy_value_fn);
 
@@ -935,9 +935,9 @@ static int s_test_hash_table_eq(struct aws_allocator *allocator, void *ctx) {
     struct aws_hash_table table_a, table_b;
 
     ASSERT_SUCCESS(aws_hash_table_init(
-        &table_a, allocator, 16, aws_hash_string, (aws_hash_element_eq_fn)aws_string_eq, NULL, NULL));
+        &table_a, allocator, 16, aws_hash_string, (aws_hash_element_eq_fn *)aws_string_eq, NULL, NULL));
     ASSERT_SUCCESS(
-        aws_hash_table_init(&table_b, allocator, 16, bad_hash_fn, (aws_hash_element_eq_fn)aws_string_eq, NULL, NULL));
+        aws_hash_table_init(&table_b, allocator, 16, bad_hash_fn, (aws_hash_element_eq_fn *)aws_string_eq, NULL, NULL));
 
     AWS_STATIC_STRING_FROM_LITERAL(foo_a, "foo");
     AWS_STATIC_STRING_FROM_LITERAL(foo_b, "foo");
@@ -951,26 +951,26 @@ static int s_test_hash_table_eq(struct aws_allocator *allocator, void *ctx) {
     ASSERT_SUCCESS(aws_hash_table_put(&table_a, bar_a, (void *)quux_a, NULL));
     ASSERT_SUCCESS(aws_hash_table_put(&table_b, bar_a, (void *)quux_a, NULL));
 
-    ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn)aws_string_eq));
+    ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn *)aws_string_eq));
     ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
 
     /* Non-equal: Table B has extra members */
     ASSERT_SUCCESS(aws_hash_table_put(&table_b, quux_a, (void *)quux_b, NULL));
-    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn)aws_string_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn *)aws_string_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
 
     /* Non-equal: Same number of members, but different keys */
     ASSERT_SUCCESS(aws_hash_table_remove(&table_b, bar_a, NULL, NULL));
-    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn)aws_string_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn *)aws_string_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
 
     /* Non-equal: Same keys, values differ */
     ASSERT_SUCCESS(aws_hash_table_remove(&table_b, quux_a, NULL, NULL));
     ASSERT_SUCCESS(aws_hash_table_put(&table_b, bar_a, (void *)foo_b, NULL));
-    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn)aws_string_eq));
+    ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, (aws_hash_element_eq_fn *)aws_string_eq));
     ASSERT_TRUE(aws_hash_table_eq(&table_a, &table_b, everything_is_eq));
     ASSERT_FALSE(aws_hash_table_eq(&table_a, &table_b, aws_ptr_eq));
 
@@ -1130,7 +1130,7 @@ static int s_test_hash_table_cleanup_idempotent_fn(struct aws_allocator *allocat
 
     struct aws_hash_table hash_table;
     ASSERT_SUCCESS(aws_hash_table_init(
-        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn)aws_c_string_eq, NULL, NULL));
+        &hash_table, allocator, 10, aws_hash_c_string, (aws_hash_element_eq_fn *)aws_c_string_eq, NULL, NULL));
 
     aws_hash_table_clean_up(&hash_table);
     aws_hash_table_clean_up(&hash_table);
@@ -1161,7 +1161,7 @@ static int s_test_hash_table_byte_cursor_create_find_fn(struct aws_allocator *al
         allocator,
         10,
         aws_hash_byte_cursor_ptr,
-        (aws_hash_element_eq_fn)aws_byte_cursor_eq,
+        (aws_hash_element_eq_fn *)aws_byte_cursor_eq,
         NULL,
         s_hash_table_entry_destroy);
     ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
