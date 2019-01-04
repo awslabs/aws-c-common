@@ -108,7 +108,7 @@ AWS_COMMON_API
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str);
 
 /**
- * Deallocate string. Takes a (void *) so it can be used as a destructor function for struct aws_hash_table.
+ * Deallocate string.
  */
 AWS_COMMON_API
 void aws_string_destroy(struct aws_string *str);
