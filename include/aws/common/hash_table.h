@@ -122,7 +122,7 @@ AWS_EXTERN_C_BEGIN
 /**
  * Initializes a hash map with initial capacity for 'size' elements
  * without resizing. Uses hash_fn to compute the hash of each element.
- * equals_fn to compute equality of two keys.  Whenver an element is
+ * equals_fn to compute equality of two keys.  Whenever an element is
  * removed without being returned, destroy_key_fn is run on the pointer
  * to the key and destroy_value_fn is run on the pointer to the value.
  * Either or both may be NULL if a callback is not desired in this case.
