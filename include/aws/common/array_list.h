@@ -38,7 +38,7 @@ struct aws_array_list {
  * return a positive number if a > b, zero if a = b, and a negative number
  * if a < b.
  */
-typedef int(*aws_array_list_comparator_fn)(const void *a, const void *b);
+typedef int (*aws_array_list_comparator_fn)(const void *a, const void *b);
 
 AWS_EXTERN_C_BEGIN
 

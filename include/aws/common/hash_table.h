@@ -91,7 +91,7 @@ struct aws_hash_iter {
 /**
  * Prototype for a key hashing function pointer.
  */
-typedef uint64_t(*aws_hash_fn)(const void *key);
+typedef uint64_t (*aws_hash_fn)(const void *key);
 
 /**
  * Prototype for a hash table equality check function pointer.
@@ -103,7 +103,7 @@ typedef uint64_t(*aws_hash_fn)(const void *key);
  * Equality functions used in a hash table must be reflexive (i.e., a == b if
  * and only if b == a), and must be consistent with the hash function in use.
  */
-typedef bool(*aws_hash_element_eq_fn)(const void *a, const void *b);
+typedef bool (*aws_hash_element_eq_fn)(const void *a, const void *b);
 
 /**
  * Prototype for a hash table key or value destructor function pointer.
@@ -115,7 +115,7 @@ typedef bool(*aws_hash_element_eq_fn)(const void *a, const void *b);
  * table provide options of whether or not to invoke the destructors
  * on the key and value of a removed element.
  */
-typedef void(*aws_hash_element_destroy_fn)(void *key_or_value);
+typedef void (*aws_hash_element_destroy_fn)(void *key_or_value);
 
 AWS_EXTERN_C_BEGIN
 
@@ -338,10 +338,7 @@ int aws_hash_table_foreach(
  * it to aws_hash_element_eq_fn.
  */
 AWS_COMMON_API
-bool aws_hash_table_eq(
-    const struct aws_hash_table *a,
-    const struct aws_hash_table *b,
-    aws_hash_element_eq_fn value_eq);
+bool aws_hash_table_eq(const struct aws_hash_table *a, const struct aws_hash_table *b, aws_hash_element_eq_fn value_eq);
 
 /**
  * Removes every element from the hash map. destroy_fn will be called for
