@@ -13,20 +13,30 @@
 
 include(CheckCSourceRuns)
 
-check_c_source_runs("
-#include <stdbool.h>
-bool foo(int a, int b, int *c) {
-    return __builtin_mul_overflow(a, b, c);
-}
-
-int main() {
-    int out;
-    if (foo(1, 2, &out)) {
-        return 0;
+if(NOT CMAKE_CROSSCOMPILING)
+    check_c_source_runs("
+    #include <stdbool.h>
+    bool foo(int a, int b, int *c) {
+        return __builtin_mul_overflow(a, b, c);
     }
 
-    return 0;
-}" AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
+    int main() {
+        int out;
+        if (foo(1, 2, &out)) {
+            return 0;
+        }
+
+        return 0;
+    }" AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
+
+    check_c_source_runs("
+    int main() {
+    int foo = 42;
+    _mulx_u32(1, 2, &foo);
+    return foo != 2;
+    }" AWS_HAVE_MSVC_MULX)
+
+endif()
 
 check_c_source_compiles("
 int main() {
@@ -34,9 +44,3 @@ int main() {
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
 }" AWS_HAVE_GCC_INLINE_ASM)
 
-check_c_source_runs("
-int main() {
-    int foo = 42;
-    _mulx_u32(1, 2, &foo);
-    return foo != 2;
-}" AWS_HAVE_MSVC_MULX)

@@ -7,6 +7,6 @@ cd build
 
 cmake -DPERFORM_HEADER_CHECK=ON -DENABLE_SANITIZERS=ON $@ ../
 make
-make test
+ctest . --output-on-failure
 
 cd ..
