@@ -37,19 +37,17 @@ struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, c
     return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 
-void aws_string_destroy(void *str) {
-    struct aws_string *self = str;
-    if (self && self->allocator) {
-        aws_mem_release(self->allocator, self);
+void aws_string_destroy(struct aws_string *str) {
+    if (str && str->allocator) {
+        aws_mem_release(str->allocator, str);
     }
 }
 
-void aws_string_destroy_secure(void *str) {
-    struct aws_string *self = str;
-    if (self) {
-        aws_secure_zero((void *)aws_string_bytes(self), self->len);
-        if (self->allocator) {
-            aws_mem_release(self->allocator, self);
+void aws_string_destroy_secure(struct aws_string *str) {
+    if (str) {
+        aws_secure_zero((void *)aws_string_bytes(str), str->len);
+        if (str->allocator) {
+            aws_mem_release(str->allocator, str);
         }
     }
 }

@@ -48,9 +48,9 @@ struct hash_table_entry {
 
 struct hash_table_state {
     aws_hash_fn *hash_fn;
-    aws_equals_fn *equals_fn;
-    aws_hash_element_destroy_fn *destroy_key_fn;
-    aws_hash_element_destroy_fn *destroy_value_fn;
+    aws_hash_callback_eq_fn *equals_fn;
+    aws_hash_callback_destroy_fn *destroy_key_fn;
+    aws_hash_callback_destroy_fn *destroy_value_fn;
     struct aws_allocator *alloc;
 
     size_t size, entry_count;
@@ -234,9 +234,9 @@ int aws_hash_table_init(
     struct aws_allocator *alloc,
     size_t size,
     aws_hash_fn *hash_fn,
-    aws_equals_fn *equals_fn,
-    aws_hash_element_destroy_fn *destroy_key_fn,
-    aws_hash_element_destroy_fn *destroy_value_fn) {
+    aws_hash_callback_eq_fn *equals_fn,
+    aws_hash_callback_destroy_fn *destroy_key_fn,
+    aws_hash_callback_destroy_fn *destroy_value_fn) {
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -649,7 +649,7 @@ int aws_hash_table_foreach(
 bool aws_hash_table_eq(
     const struct aws_hash_table *a,
     const struct aws_hash_table *b,
-    bool (*value_eq)(const void *a, const void *b)) {
+    aws_hash_callback_eq_fn *value_eq) {
     if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
         return false;
     }
@@ -833,21 +833,16 @@ uint64_t aws_hash_ptr(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
-bool aws_c_string_eq(const void *a, const void *b) {
-    return !strcmp((const char *)a, (const char *)b);
+bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
+    return !strcmp(a, b);
 }
 
-bool aws_string_eq(const void *a, const void *b) {
-    const struct aws_string *str_a = a;
-    const struct aws_string *str_b = b;
-    return str_a->len == str_b->len && !memcmp(aws_string_bytes(str_a), aws_string_bytes(str_b), str_a->len);
+bool aws_hash_callback_string_eq(const void *a, const void *b) {
+    return aws_string_eq(a, b);
 }
 
-bool aws_byte_cursor_ptr_eq(const void *a, const void *b) {
-    const struct aws_byte_cursor *cur_a = a;
-    const struct aws_byte_cursor *cur_b = b;
-
-    return aws_byte_cursor_eq(cur_a, cur_b);
+void aws_hash_callback_string_destroy(void *a) {
+    aws_string_destroy(a);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {
