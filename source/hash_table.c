@@ -834,15 +834,15 @@ uint64_t aws_hash_ptr(const void *item) {
 }
 
 bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
-    return !strcmp((const char *)a, (const char *)b);
+    return !strcmp(a, b);
 }
 
 bool aws_hash_callback_string_eq(const void *a, const void *b) {
-    return aws_string_eq((const struct aws_string *)a, (const struct aws_string *)b);
+    return aws_string_eq(a, b);
 }
 
 void aws_hash_callback_string_destroy(void *a) {
-    aws_string_destroy((struct aws_string *)a);
+    aws_string_destroy(a);
 }
 
 bool aws_ptr_eq(const void *a, const void *b) {
