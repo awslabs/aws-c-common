@@ -103,7 +103,7 @@ typedef uint64_t(aws_hash_fn)(const void *key);
  * Equality functions used in a hash table must be reflexive (i.e., a == b if
  * and only if b == a), and must be consistent with the hash function in use.
  */
-typedef bool(aws_hash_element_eq_fn)(const void *a, const void *b);
+typedef bool(aws_hash_callback_eq_fn)(const void *a, const void *b);
 
 /**
  * Prototype for a hash table key or value destructor function pointer.
@@ -115,7 +115,7 @@ typedef bool(aws_hash_element_eq_fn)(const void *a, const void *b);
  * table provide options of whether or not to invoke the destructors
  * on the key and value of a removed element.
  */
-typedef void(aws_hash_element_destroy_fn)(void *key_or_value);
+typedef void(aws_hash_callback_destroy_fn)(void *key_or_value);
 
 AWS_EXTERN_C_BEGIN
 
@@ -126,9 +126,6 @@ AWS_EXTERN_C_BEGIN
  * removed without being returned, destroy_key_fn is run on the pointer
  * to the key and destroy_value_fn is run on the pointer to the value.
  * Either or both may be NULL if a callback is not desired in this case.
- *
- * Note: you may pass type-safe versions of any of the functions
- * by casting them to the appropriate (aws_hash..._fn *) type.
  */
 AWS_COMMON_API
 int aws_hash_table_init(
@@ -136,9 +133,9 @@ int aws_hash_table_init(
     struct aws_allocator *alloc,
     size_t size,
     aws_hash_fn *hash_fn,
-    aws_hash_element_eq_fn *equals_fn,
-    aws_hash_element_destroy_fn *destroy_key_fn,
-    aws_hash_element_destroy_fn *destroy_value_fn);
+    aws_hash_callback_eq_fn *equals_fn,
+    aws_hash_callback_destroy_fn *destroy_key_fn,
+    aws_hash_callback_destroy_fn *destroy_value_fn);
 
 /**
  * Deletes every element from map and frees all associated memory.
@@ -333,15 +330,12 @@ int aws_hash_table_foreach(
  * key comparators; values will be compared using the comparator passed into this
  * function. The key hash function does not need to be equivalent between the
  * two hash tables.
- *
- * Note: you may pass a type-safe equality function for value_eq by casting
- * it to (aws_hash_element_eq_fn *).
  */
 AWS_COMMON_API
 bool aws_hash_table_eq(
     const struct aws_hash_table *a,
     const struct aws_hash_table *b,
-    aws_hash_element_eq_fn *value_eq);
+    aws_hash_callback_eq_fn *value_eq);
 
 /**
  * Removes every element from the hash map. destroy_fn will be called for
@@ -379,10 +373,22 @@ AWS_COMMON_API
 uint64_t aws_hash_ptr(const void *item);
 
 /**
- * Convenience eq function for NULL-terminated C-strings
+ * Convenience eq callback for NULL-terminated C-strings
  */
 AWS_COMMON_API
-bool aws_c_string_eq(const char *a, const char *b);
+bool aws_hash_callback_c_str_eq(const void *a, const void *b);
+
+/**
+ * Convenience eq callback for AWS strings
+ */
+AWS_COMMON_API
+bool aws_hash_callback_string_eq(const void *a, const void *b);
+
+/**
+ * Convenience destroy callback for AWS strings
+ */
+AWS_COMMON_API
+void aws_hash_callback_string_destroy(void *a);
 
 /**
  * Equality function which compares pointer equality.
