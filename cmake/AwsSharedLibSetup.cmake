@@ -16,6 +16,13 @@ set(LIBRARY_DIRECTORY lib)
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
     set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
+    
+    # this is the absolute dumbest thing in the world, but find_package won't work without it
+    # also I verified this is correctly NOT "lib64" when CMAKE_C_FLAGS includes "-m32"
+    if (${LIBRARY_DIRECTORY} STREQUAL "lib64")
+        set(FIND_LIBRARY_USE_LIB64_PATHS true)
+    endif()
+
 endif()
 
 function(aws_prepare_shared_lib_exports target)
