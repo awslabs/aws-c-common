@@ -51,6 +51,11 @@ AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void 
     task->arg = arg;
 }
 
+AWS_STATIC_IMPL void aws_task_run(struct aws_task *task, enum aws_task_status status) {
+    assert(task->fn);
+    task->fn(task, task->arg, status);
+}
+
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue timed_queue; /* Tasks scheduled to run at specific times */
