@@ -191,7 +191,7 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
     while (!aws_linked_list_empty(&running_list)) {
         struct aws_linked_list_node *task_node = aws_linked_list_pop_front(&running_list);
         struct aws_task *task = AWS_CONTAINER_OF(task_node, struct aws_task, node);
-        task->fn(task, task->arg, status);
+        aws_task_run(task, status);
     }
 }
 
@@ -204,5 +204,5 @@ void aws_task_scheduler_cancel_task(struct aws_task_scheduler *scheduler, struct
     } else {
         aws_priority_queue_remove(&scheduler->timed_queue, &task, &task->priority_queue_node);
     }
-    task->fn(task, task->arg, AWS_TASK_STATUS_CANCELED);
+    aws_task_run(task, AWS_TASK_STATUS_CANCELED);
 }
