@@ -12,18 +12,20 @@
 # permissions and limitations under the License.
 
 set(LIBRARY_DIRECTORY lib)
+set(RUNTIME_DIRECTORY bin)
 # Set the default lib installation path on GNU systems with GNUInstallDirs
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
     set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
+    set(RUNTIME_DIRECTORY ${CMAKE_INSTALL_BINDIR})
     
     # this is the absolute dumbest thing in the world, but find_package won't work without it
     # also I verified this is correctly NOT "lib64" when CMAKE_C_FLAGS includes "-m32"
     if (${LIBRARY_DIRECTORY} STREQUAL "lib64")
         set(FIND_LIBRARY_USE_LIB64_PATHS true)
     endif()
-
 endif()
+
 
 function(aws_prepare_shared_lib_exports target)
     if (BUILD_SHARED_LIBS)
@@ -37,7 +39,7 @@ function(aws_prepare_shared_lib_exports target)
                 NAMELINK_SKIP
                 COMPONENT Runtime
                 RUNTIME
-                DESTINATION ${LIBRARY_DIRECTORY}
+                DESTINATION ${RUNTIME_DIRECTORY}
                 COMPONENT Runtime)
         install(TARGETS ${target}
                 EXPORT ${target}-targets
