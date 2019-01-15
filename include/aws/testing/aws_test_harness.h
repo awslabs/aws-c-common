@@ -444,7 +444,7 @@ done:
     }
     return EXCEPTION_EXECUTE_HANDLER;
 }
-#else
+#elif !defined __ANDROID__
 #    include <execinfo.h>
 #    include <signal.h>
 
@@ -474,7 +474,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
 #ifdef _WIN32
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
-#else
+#elif !defined __ANDROID__
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);
