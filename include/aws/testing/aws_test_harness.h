@@ -457,7 +457,7 @@ static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
     size_t i;
 
     fprintf(stderr, "** Signal Thrown %d**\n", sig);
-    int size = backtrace(array, 10);
+    int size = (int)backtrace(array, 10);
     strings = backtrace_symbols(array, size);
     fprintf(stderr, "Stack Trace:\n");
 
