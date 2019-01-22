@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ -z $CLANG_FORMAT ]] ; then
     CLANG_FORMAT=clang-format
