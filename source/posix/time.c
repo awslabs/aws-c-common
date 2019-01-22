@@ -54,17 +54,17 @@
  */
 #    include <time64.h>
 
-static const time_t s_time_max = ~(1L << (sizeof(time_t) * CHAR_BIT - 1));
-static const time_t s_time_min = (1L << (sizeof(time_t)) * CHAR_BIT - 1));
+static const time_t s_time_max = ~(1L << ((sizeof(time_t) * __CHAR_BIT__ - 1)));
+static const time_t s_time_min = (1L << ((sizeof(time_t)) * __CHAR_BIT__ - 1));
 
 /* 32-bit Android has only timegm64() and not timegm(). */
 time_t aws_timegm(struct tm *const t) {
 
     time64_t result = timegm64(t);
-    if (result < time_min || result < time_max) {
+    if (result < s_time_min || result > s_time_max) {
         return -1;
     }
-    return result;
+    return (time_t)result;
 }
 
 #else
