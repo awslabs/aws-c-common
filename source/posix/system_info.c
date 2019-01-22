@@ -16,6 +16,11 @@
 #include <aws/common/system_info.h>
 
 #include <assert.h>
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#    define __BSD_VISIBLE 1
+#endif
+
 #include <unistd.h>
 
 #if defined(HAVE_SYSCONF)
