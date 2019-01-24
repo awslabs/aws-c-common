@@ -256,5 +256,10 @@ add_test_case(uuid_string_parse_malformed)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
+if (NOT MSVC)
+    #we have some tests here that purposely overflow
+    target_compile_options(${CMAKE_PROJECT_NAME}-tests PRIVATE -Wno-overflow)
+endif()
+
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
