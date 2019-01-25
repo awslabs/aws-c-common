@@ -1,0 +1,20 @@
+version: 0.2
+#this build spec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+
+  pre_build:
+    commands:
+      - export CC=gcc
+  build:
+    commands:
+      - echo Build started on `date`
+      - mkdir build
+      - cmake ../
+      - make
+      - ctest . --output-on-failure
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
