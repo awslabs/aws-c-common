@@ -1,5 +1,5 @@
 version: 0.2
-#this build spec assumes centos5 for building manylinux1 pypi packages
+#this build spec assumes centos5 for building 32-bit manylinux1 pypi packages
 # relevant packages on image:
 #     gcc 4.8
 #     cmake 3.5
