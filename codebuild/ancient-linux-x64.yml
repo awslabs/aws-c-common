@@ -11,6 +11,7 @@ phases:
     commands:
       - echo Build started on `date`
       - mkdir build
+      - cd build
       - cmake ../
       - make
       - ctest . --output-on-failure
