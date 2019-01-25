@@ -1,3 +1,2 @@
-[address]
 # hashlittle2 purposefully reads past string ends (but shifts unnecessary data out before doing anything with it)
 fun:hashlittle2
