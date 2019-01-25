@@ -13,4 +13,3 @@ install:
 
 script:
   - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-  - clang-tidy -p=build **/*.c
