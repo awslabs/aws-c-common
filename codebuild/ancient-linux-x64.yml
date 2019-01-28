@@ -1,0 +1,24 @@
+version: 0.2
+#this build spec assumes centos5 for building manylinux1 pypi packages
+# relevant packages on image:
+#     gcc 4.8
+#     cmake 3.5
+phases:
+  install:
+    commands:
+
+  pre_build:
+    commands:
+      - export CC=gcc
+  build:
+    commands:
+      - echo Build started on `date`
+      - mkdir build
+      - cd build
+      - cmake ../
+      - make
+      - ctest . --output-on-failure
+  post_build:
+    commands:
+      - echo Build completed on `date`
+

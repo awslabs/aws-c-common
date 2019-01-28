@@ -116,7 +116,7 @@ aws_prepare_symbol_visibility_args(${CMAKE_PROJECT_NAME} "AWS_COMMON")
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
 if (UNIX AND NOT APPLE)
     #this only gets applied to aws-c-common (not its consumers).
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
 
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
