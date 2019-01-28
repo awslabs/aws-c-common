@@ -37,7 +37,6 @@ add_test_case(mutex_is_actually_mutex_test)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)
-add_test_case(conditional_wait_timeout)
 
 add_test_case(error_code_cross_thread_test)
 
