@@ -47,7 +47,7 @@ endfunction()
 
 # This function enables sanitizers on the given target
 # Options:
-#  SANITIZERS: The list of sanitizers to enable. Defaults to address;undefined;integer
+#  SANITIZERS: The list of sanitizers to enable. Defaults to address;undefined
 #  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
 function(aws_add_sanitizers target)
     set(oneValueArgs BLACKLIST)
@@ -58,7 +58,7 @@ function(aws_add_sanitizers target)
         check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
         if(HAS_SANITIZERS)
             if(NOT SANITIZER_SANITIZERS)
-                set(SANITIZER_SANITIZERS "address;undefined;integer")
+                set(SANITIZER_SANITIZERS "address;undefined")
             endif()
 
             foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
