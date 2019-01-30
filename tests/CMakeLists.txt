@@ -37,7 +37,6 @@ add_test_case(mutex_is_actually_mutex_test)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)
-add_test_case(conditional_wait_timeout)
 
 add_test_case(error_code_cross_thread_test)
 
@@ -255,6 +254,11 @@ add_test_case(uuid_string_parse_too_short)
 add_test_case(uuid_string_parse_malformed)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
+
+if (NOT MSVC)
+    #we have some tests here that purposely overflow
+    target_compile_options(${CMAKE_PROJECT_NAME}-tests PRIVATE -Wno-overflow)
+endif()
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "")
