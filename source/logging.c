@@ -15,7 +15,6 @@
 
 #include <aws/common/logging.h>
 
-#include <aws/common/atomics.h>
 #include <aws/common/common.h>
 
 static struct aws_logger *s_root_logger = NULL;

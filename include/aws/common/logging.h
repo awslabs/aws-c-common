@@ -44,8 +44,6 @@ typedef uint64_t aws_log_subject_t;
 
 struct aws_logger;
 
-
-
 struct aws_logger_vtable {
     int(*log_fn)(struct aws_logger *logger, enum aws_log_level log_level, aws_log_subject_t subject, const char *format, ...);
     enum aws_log_level(*get_log_level_fn)(struct aws_logger *logger, aws_log_subject_t subject);
