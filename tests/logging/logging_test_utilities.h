@@ -23,19 +23,21 @@
 
 int do_log_test(enum aws_log_level level, const char *expected_result, void (*callback)(enum aws_log_level));
 
-void log_all_levels_v1(enum aws_log_level level);
-void log_all_levels_v2(enum aws_log_level level);
+#define TEST_LEVEL_FILTER(log_level, expected, action_fn) \
+static int s_logging_filter_at_##log_level##_##action_fn##_fn(struct aws_allocator *allocator, void *ctx) { \
+    (void) ctx; \
+    return do_log_test(log_level, expected, action_fn); \
+} \
+AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter_at_##log_level##_##action_fn##_fn); \
 
-#define TEST_LEVEL_FILTER(log_level, expected, token) \
-static int s_logging_filter_v1_at_##log_level##_##token##_fn(struct aws_allocator *allocator, void *ctx) { \
-    (void) ctx; \
-    return do_log_test(log_level, expected, log_all_levels_v1); \
-} \
-AWS_TEST_CASE(test_logging_filter_v1_at_##log_level##_##token, s_logging_filter_v1_at_##log_level##_##token##_fn); \
-static int s_logging_filter_v2_at_##log_level##_##token##_fn(struct aws_allocator *allocator, void *ctx) { \
-    (void) ctx; \
-    return do_log_test(log_level, expected, log_all_levels_v2); \
-} \
-AWS_TEST_CASE(test_logging_filter_v2_at_##log_level##_##token, s_logging_filter_v2_at_##log_level##_##token##_fn);
+#define DECLARE_LOG_ALL_LEVELS_FUNCTION(fn_name) \
+static void fn_name(enum aws_log_level level) { \
+LOGF_FATAL("%d", (int)AWS_LL_FATAL) \
+LOGF_ERROR("%d", (int)AWS_LL_ERROR) \
+LOGF_WARN("%d", (int)AWS_LL_WARN) \
+LOGF_INFO("%d", (int)AWS_LL_INFO) \
+LOGF_DEBUG("%d", (int)AWS_LL_DEBUG) \
+LOGF_TRACE("%d", (int)AWS_LL_TRACE) \
+}
 
 #endif //AWS_COMMON_LOGGING_TEST_UTILITIES_H

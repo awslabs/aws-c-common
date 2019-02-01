@@ -13,8 +13,10 @@
  * permissions and limitations under the License.
  */
 
-#define AWS_STATIC_LOG_LEVEL AWS_LOG_LEVEL_DEBUG
+#define AWS_STATIC_LOG_LEVEL 5
 
 #include "logging_test_utilities.h"
 
-TEST_LEVEL_FILTER(AWS_LL_TRACE, "12345", DEBUG_CUTOFF)
+DECLARE_LOG_ALL_LEVELS_FUNCTION(s_log_all_levels_debug_cutoff)
+
+TEST_LEVEL_FILTER(AWS_LL_TRACE, "12345", s_log_all_levels_debug_cutoff)

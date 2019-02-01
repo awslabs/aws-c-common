@@ -13,8 +13,10 @@
  * permissions and limitations under the License.
  */
 
-#define AWS_STATIC_LOG_LEVEL AWS_LOG_LEVEL_FATAL
+#define AWS_STATIC_LOG_LEVEL 1
 
 #include "logging_test_utilities.h"
 
-TEST_LEVEL_FILTER(AWS_LL_TRACE, "1", FATAL_CUTOFF)
+DECLARE_LOG_ALL_LEVELS_FUNCTION(s_log_all_levels_fatal_cutoff)
+
+TEST_LEVEL_FILTER(AWS_LL_TRACE, "1", s_log_all_levels_fatal_cutoff)

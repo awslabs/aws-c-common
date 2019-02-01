@@ -35,17 +35,3 @@ int do_log_test(enum aws_log_level level, const char *expected_result, void (*ca
     return AWS_OP_SUCCESS;
 }
 
-void log_all_levels_v1(enum aws_log_level level) {
-    for (int i = 0; i < AWS_LL_COUNT; ++i) {
-        LOGF(i, "%d", i)
-    }
-}
-
-void log_all_levels_v2(enum aws_log_level level) {
-    LOGF_FATAL("%d", (int)AWS_LL_FATAL)
-    LOGF_ERROR("%d", (int)AWS_LL_ERROR)
-    LOGF_WARN("%d", (int)AWS_LL_WARN)
-    LOGF_INFO("%d", (int)AWS_LL_INFO)
-    LOGF_DEBUG("%d", (int)AWS_LL_DEBUG)
-    LOGF_TRACE("%d", (int)AWS_LL_TRACE)
-}
