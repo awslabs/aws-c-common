@@ -21,8 +21,18 @@
 
 #include <aws/testing/aws_test_harness.h>
 
+/**
+ * A staging function for basic logging tests.  It
+ *   (1) Initializes and globally attaches a test logger
+ *   (2) Invokes the supplied callback, which should perform the logging operations under test
+ *   (3) Detaches and cleans up the test logger
+ *   (4) Checks if what was recorded by the test logger matches what the test expected.
+ */
 int do_log_test(enum aws_log_level level, const char *expected_result, void (*callback)(enum aws_log_level));
 
+/**
+ * A macro capable of defining simple logging tests that follow the do_log_test function pattern
+ */
 #define TEST_LEVEL_FILTER(log_level, expected, action_fn) \
 static int s_logging_filter_at_##log_level##_##action_fn##_fn(struct aws_allocator *allocator, void *ctx) { \
     (void) ctx; \
@@ -30,6 +40,13 @@ static int s_logging_filter_at_##log_level##_##action_fn##_fn(struct aws_allocat
 } \
 AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter_at_##log_level##_##action_fn##_fn); \
 
+/**
+ * A macro that defines a function that invokes all 6 LOGF_<level> variants
+ *
+ * Needs to be a macro and not just a function because the compile-time filtering tests require a private implementation
+ * that is compiled with AWS_STATIC_LOG_LEVEL at the level to be tested.  There's no way to shared a single definition
+ * that does so.
+ */
 #define DECLARE_LOG_ALL_LEVELS_FUNCTION(fn_name) \
 static void fn_name(enum aws_log_level level) { \
 LOGF_FATAL("%d", (int)AWS_LL_FATAL) \

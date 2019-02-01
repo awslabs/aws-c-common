@@ -18,18 +18,24 @@
 #include "test_logger.h"
 
 int do_log_test(enum aws_log_level level, const char *expected_result, void (*callback)(enum aws_log_level)) {
+
+    /* Create and attach a logger for testing*/
     struct aws_logger test_logger;
     test_logger_init(&test_logger, aws_default_allocator(), level);
     aws_logging_set(&test_logger);
 
+    /* Perform logging operations */
     (*callback)(level);
 
+    /* Pull out what was logged before clean up */
     char buffer[TEST_LOGGER_MAX_BUFFER_SIZE];
     test_logger_get_contents(&test_logger, buffer, TEST_LOGGER_MAX_BUFFER_SIZE);
 
+    /* clean up */
     aws_logging_set(NULL);
     test_logger_cleanup(&test_logger);
 
+    /* Check the test results last */
     ASSERT_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
 
     return AWS_OP_SUCCESS;

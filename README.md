@@ -160,8 +160,7 @@ standard being used in `aws/common/common.h`, so feel free to use them.
 * Avoid C++ style comments e.g. `//`.
 * All public API functions need C++ guards and Windows dll semantics.
 * Use Unix line endings.
-* Where implementation hiding is desired for either ABI or runtime polymorphism reasons, use the `void *impl` pattern. v-tables
- should be the last member in the struct.
+* Where implementation hiding is desired for either ABI or runtime polymorphism reasons, use the `void *impl` pattern.
 * For #ifdef, put a # as the first character on the line and then indent the compilation branches.
 
 Example:

@@ -20,6 +20,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+/**
+ * A real logger wouldn't have such size restrictions, but these are good enough for our tests
+ */
 #define TEST_LOGGER_MAX_LOG_LINE_SIZE 256
 
 int s_test_logger_log_fn(struct aws_logger *logger, enum aws_log_level log_level, aws_log_subject_t subject, const char *format, ...) {
@@ -29,7 +32,7 @@ int s_test_logger_log_fn(struct aws_logger *logger, enum aws_log_level log_level
     static char buffer[TEST_LOGGER_MAX_LOG_LINE_SIZE];
 
 #ifdef WIN32
-    int written = vsnprintf_s(buffer, MAX_LOG_LINE_SIZE, _TRUNCATE, format, format_args);
+    int written = vsnprintf_s(buffer, TEST_LOGGER_MAX_LOG_LINE_SIZE, _TRUNCATE, format, format_args);
 #else
     int written = vsnprintf(buffer, TEST_LOGGER_MAX_LOG_LINE_SIZE, format, format_args);
 #endif // WIN32
