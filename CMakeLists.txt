@@ -108,7 +108,7 @@ if (PERFORM_HEADER_CHECK)
     add_subdirectory(cmake/header-tester)
 endif()
 
-add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
+add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC} include/aws/common/logging.h source/logging.c)
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${CMAKE_PROJECT_NAME} "AWS_COMMON")
 
