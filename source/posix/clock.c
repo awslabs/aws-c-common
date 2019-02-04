@@ -32,8 +32,8 @@ static const uint64_t NS_PER_SEC = 1000000000;
  * to keep the function out of linker tables and only use the symbol if the current running process has access to the
  * function. */
 #if defined(__MACH__)
-#    include <aws/common/thread.h>
 #    include <AvailabilityMacros.h>
+#    include <aws/common/thread.h>
 #    include <dlfcn.h>
 #    include <sys/time.h>
 
