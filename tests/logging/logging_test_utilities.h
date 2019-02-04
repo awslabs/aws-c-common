@@ -49,12 +49,12 @@ AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter
  */
 #define DECLARE_LOG_ALL_LEVELS_FUNCTION(fn_name) \
 static void fn_name(enum aws_log_level level) { \
-LOGF_FATAL("%d", (int)AWS_LL_FATAL) \
-LOGF_ERROR("%d", (int)AWS_LL_ERROR) \
-LOGF_WARN("%d", (int)AWS_LL_WARN) \
-LOGF_INFO("%d", (int)AWS_LL_INFO) \
-LOGF_DEBUG("%d", (int)AWS_LL_DEBUG) \
-LOGF_TRACE("%d", (int)AWS_LL_TRACE) \
+LOGF_FATAL("%d", (int)AWS_LL_FATAL); \
+LOGF_ERROR("%d", (int)AWS_LL_ERROR); \
+LOGF_WARN("%d", (int)AWS_LL_WARN); \
+LOGF_INFO("%d", (int)AWS_LL_INFO); \
+LOGF_DEBUG("%d", (int)AWS_LL_DEBUG); \
+LOGF_TRACE("%d", (int)AWS_LL_TRACE); \
 }
 
 #endif //AWS_COMMON_LOGGING_TEST_UTILITIES_H

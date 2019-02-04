@@ -98,14 +98,13 @@ void test_logger_cleanup(struct aws_logger *logger) {
 int test_logger_get_contents(struct aws_logger *logger, char* buffer, size_t max_length)
 {
     struct test_logger_impl *impl = (struct test_logger_impl *)logger->p_impl;
+    if (max_length == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
     size_t copy_length = max_length - 1;
     if (impl->log_buffer.len < copy_length) {
         copy_length = impl->log_buffer.len;
-    }
-
-    if (copy_length < 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     if (copy_length > 0) {

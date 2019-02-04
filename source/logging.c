@@ -17,14 +17,35 @@
 
 #include <aws/common/common.h>
 
-static struct aws_logger *s_root_logger = NULL;
+static enum aws_log_level s_null_logger_get_log_level_fn(struct aws_logger *logger, aws_log_subject_t subject) {
+    return AWS_LL_NONE;
+}
+
+static int s_null_logger_log_fn(struct aws_logger *logger, enum aws_log_level log_level, aws_log_subject_t subject, const char *format, ...) {
+    return AWS_OP_SUCCESS;
+}
+
+static struct aws_logger_vtable s_null_vtable = {
+        .get_log_level_fn = s_null_logger_get_log_level_fn,
+        .log_fn = s_null_logger_log_fn
+};
+
+static struct aws_logger s_root_logger = {
+        .vtable = &s_null_vtable,
+        .p_impl = NULL
+};
 
 void aws_logging_set(struct aws_logger *logger) {
-    s_root_logger = logger;
+    if (logger != NULL) {
+        s_root_logger = *logger;
+    } else {
+        s_root_logger.vtable = &s_null_vtable;
+        s_root_logger.p_impl = NULL;
+    }
 }
 
 struct aws_logger *aws_logging_get(void) {
-    return s_root_logger;
+    return &s_root_logger;
 }
 
 static const char* s_log_level_strings[AWS_LL_COUNT] = {
@@ -38,7 +59,7 @@ static const char* s_log_level_strings[AWS_LL_COUNT] = {
 };
 
 int aws_logging_log_level_to_string(enum aws_log_level log_level, const char **level_string) {
-    if (log_level < 0 || log_level >= AWS_LL_COUNT) {
+    if (log_level >= AWS_LL_COUNT) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
