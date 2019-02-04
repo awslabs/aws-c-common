@@ -30,32 +30,33 @@ static struct aws_logger_vtable s_null_vtable = {
         .log_fn = s_null_logger_log_fn
 };
 
-static struct aws_logger s_root_logger = {
+static struct aws_logger s_null_logger = {
         .vtable = &s_null_vtable,
         .p_impl = NULL
 };
 
+static struct aws_logger *s_root_logger_ptr = &s_null_logger;
+
 void aws_logging_set(struct aws_logger *logger) {
     if (logger != NULL) {
-        s_root_logger = *logger;
+        s_root_logger_ptr = logger;
     } else {
-        s_root_logger.vtable = &s_null_vtable;
-        s_root_logger.p_impl = NULL;
+        s_root_logger_ptr = &s_null_logger;
     }
 }
 
 struct aws_logger *aws_logging_get(void) {
-    return &s_root_logger;
+    return s_root_logger_ptr;
 }
 
 static const char* s_log_level_strings[AWS_LL_COUNT] = {
-    "None",
-    "Fatal",
-    "Error",
-    "Warn",
-    "Info",
-    "Debug",
-    "Trace"
+    "NONE",
+    "FATAL",
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DEBUG",
+    "TRACE"
 };
 
 int aws_logging_log_level_to_string(enum aws_log_level log_level, const char **level_string) {

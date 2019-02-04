@@ -55,6 +55,11 @@ enum aws_log_level s_test_logger_get_log_level_fn(struct aws_logger *logger, aws
     return impl->level;
 }
 
+static struct aws_logger_vtable s_test_logger_vtable = {
+        .get_log_level_fn = s_test_logger_get_log_level_fn,
+        .log_fn = s_test_logger_log_fn
+};
+
 int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level) {
 
     struct test_logger_impl *impl = (struct test_logger_impl *)aws_mem_acquire(allocator, sizeof(struct test_logger_impl));
@@ -62,17 +67,7 @@ int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator,
         return aws_raise_error(AWS_ERROR_OOM);
     }
 
-    struct aws_logger_vtable *vtable = (struct aws_logger_vtable *)aws_mem_acquire(allocator, sizeof(struct aws_logger_vtable));
-    if (vtable == NULL) {
-        aws_mem_release(allocator, impl);
-        return aws_raise_error(AWS_ERROR_OOM);
-    }
-
-    vtable->get_log_level_fn = &s_test_logger_get_log_level_fn;
-    vtable->log_fn = &s_test_logger_log_fn;
-
     if (aws_byte_buf_init(&impl->log_buffer, allocator, TEST_LOGGER_MAX_BUFFER_SIZE)) {
-        aws_mem_release(allocator, vtable);
         aws_mem_release(allocator, impl);
         return AWS_OP_ERR;
     }
@@ -80,7 +75,7 @@ int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator,
     impl->level = level;
     impl->allocator = allocator;
 
-    logger->vtable = vtable;
+    logger->vtable = &s_test_logger_vtable;
     logger->p_impl = impl;
 
     return AWS_OP_SUCCESS;

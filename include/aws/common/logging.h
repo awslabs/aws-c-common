@@ -106,9 +106,9 @@ AWS_EXTERN_C_END
  * The base formatted logging macro that all other formatted logging macros resolve to.
  * Checks for a logger and filters based on log level.
  */
-#define LOGF_RAW(log_level, subject, format, ...) \
-(((aws_logging_get()->vtable->get_log_level_fn)(aws_logging_get(), subject) >= log_level && log_level > 0) ?  \
-(aws_logging_get()->vtable->log_fn)(aws_logging_get(), log_level, subject, format, __VA_ARGS__) : \
+#define LOGF_RAW(log_level, subject, format, ...)                                                               \
+(((aws_logging_get()->vtable->get_log_level_fn)(aws_logging_get(), subject) >= log_level && log_level > 0) ?    \
+(aws_logging_get()->vtable->log_fn)(aws_logging_get(), log_level, subject, format, __VA_ARGS__) :               \
 AWS_OP_SUCCESS)
 
 #define LOGF(log_level, format, ...) LOGF_RAW(log_level, AWS_LOG_SUBJECT_NONE, format, __VA_ARGS__)

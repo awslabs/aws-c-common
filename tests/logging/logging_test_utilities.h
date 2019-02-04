@@ -34,11 +34,11 @@ int do_log_test(enum aws_log_level level, const char *expected_result, void (*ca
  * A macro capable of defining simple logging tests that follow the do_log_test function pattern
  */
 #define TEST_LEVEL_FILTER(log_level, expected, action_fn) \
-static int s_logging_filter_at_##log_level##_##action_fn##_fn(struct aws_allocator *allocator, void *ctx) { \
-    (void) ctx; \
-    return do_log_test(log_level, expected, action_fn); \
-} \
-AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter_at_##log_level##_##action_fn##_fn); \
+static int s_logging_filter_at_##log_level##_##action_fn##_fn(struct aws_allocator *allocator, void *ctx) {             \
+    (void) ctx;                                                                                                         \
+    return do_log_test(log_level, expected, action_fn);                                                                 \
+}                                                                                                                       \
+AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter_at_##log_level##_##action_fn##_fn);
 
 /**
  * A macro that defines a function that invokes all 6 LOGF_<level> variants
@@ -47,14 +47,14 @@ AWS_TEST_CASE(test_logging_filter_at_##log_level##_##action_fn, s_logging_filter
  * that is compiled with AWS_STATIC_LOG_LEVEL at the level to be tested.  There's no way to shared a single definition
  * that does so.
  */
-#define DECLARE_LOG_ALL_LEVELS_FUNCTION(fn_name) \
-static void fn_name(enum aws_log_level level) { \
-LOGF_FATAL("%d", (int)AWS_LL_FATAL); \
-LOGF_ERROR("%d", (int)AWS_LL_ERROR); \
-LOGF_WARN("%d", (int)AWS_LL_WARN); \
-LOGF_INFO("%d", (int)AWS_LL_INFO); \
-LOGF_DEBUG("%d", (int)AWS_LL_DEBUG); \
-LOGF_TRACE("%d", (int)AWS_LL_TRACE); \
+#define DECLARE_LOG_ALL_LEVELS_FUNCTION(fn_name)    \
+static void fn_name(enum aws_log_level level) {     \
+LOGF_FATAL("%d", (int)AWS_LL_FATAL);                \
+LOGF_ERROR("%d", (int)AWS_LL_ERROR);                \
+LOGF_WARN("%d", (int)AWS_LL_WARN);                  \
+LOGF_INFO("%d", (int)AWS_LL_INFO);                  \
+LOGF_DEBUG("%d", (int)AWS_LL_DEBUG);                \
+LOGF_TRACE("%d", (int)AWS_LL_TRACE);                \
 }
 
 #endif //AWS_COMMON_LOGGING_TEST_UTILITIES_H
