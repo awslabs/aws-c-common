@@ -32,6 +32,7 @@ static const uint64_t NS_PER_SEC = 1000000000;
  * to keep the function out of linker tables and only use the symbol if the current running process has access to the
  * function. */
 #if defined(__MACH__)
+#    include <aws/common/thread.h>
 #    include <AvailabilityMacros.h>
 #    include <dlfcn.h>
 #    include <sys/time.h>
@@ -49,18 +50,15 @@ static int s_legacy_get_time(uint64_t *timestamp) {
 }
 
 #    if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
-static bool s_gettime_init = false;
+static aws_thread_once s_thread_once_flag = AWS_THREAD_ONCE_STATIC_INIT;
 static int (*s_gettime_fn)(clockid_t __clock_id, struct timespec *__tp) = NULL;
 
-static void s_do_osx_loads() {
-    if (AWS_UNLIKELY(!s_gettime_init)) {
-        s_gettime_fn = (int (*)(clockid_t __clock_id, struct timespec * __tp)) dlsym(RTLD_DEFAULT, "clock_gettime");
-        s_gettime_init = true;
-    }
+static void s_do_osx_loads(void) {
+    s_gettime_fn = (int (*)(clockid_t __clock_id, struct timespec * __tp)) dlsym(RTLD_DEFAULT, "clock_gettime");
 }
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
-    s_do_osx_loads();
+    aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads);
     int ret_val = 0;
 
     if (s_gettime_fn) {
@@ -79,7 +77,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 }
 
 int aws_sys_clock_get_ticks(uint64_t *timestamp) {
-    s_do_osx_loads();
+    aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads);
     int ret_val = 0;
 
     if (s_gettime_fn) {
