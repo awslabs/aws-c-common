@@ -371,6 +371,14 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_MALFORMED_INPUT_STRING,
         "An input string was passed to a parser and the string was incorrectly formatted."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_UNIMPLEMENTED,
+        "A function was called, but is not implemented."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_STATE,
+        "An invalid state was encountered."
+    ),
 };
 /* clang-format on */
 
