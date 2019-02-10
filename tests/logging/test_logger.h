@@ -28,7 +28,6 @@
  * We provide an extraction function for easy test validation.
  */
 struct test_logger_impl {
-    struct aws_allocator *allocator;
     enum aws_log_level level;
     struct aws_byte_buf log_buffer;
 };
@@ -39,13 +38,8 @@ struct test_logger_impl {
 int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level);
 
 /**
- * Cleans up all resources used by a test logger
- */
-void test_logger_cleanup(struct aws_logger *logger);
-
-/**
  * Extracts logged content from a test logger.
  */
 int test_logger_get_contents(struct aws_logger *logger, char *buffer, size_t max_length);
 
-#endif // AWS_COMMON_TEST_LOGGER_H
+#endif /* AWS_COMMON_TEST_LOGGER_H */

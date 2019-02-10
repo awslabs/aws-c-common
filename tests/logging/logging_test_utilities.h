@@ -57,4 +57,4 @@ LOGF_DEBUG("%d", (int)AWS_LL_DEBUG);                \
 LOGF_TRACE("%d", (int)AWS_LL_TRACE);                \
 }
 
-#endif //AWS_COMMON_LOGGING_TEST_UTILITIES_H
+#endif /* AWS_COMMON_LOGGING_TEST_UTILITIES_H */

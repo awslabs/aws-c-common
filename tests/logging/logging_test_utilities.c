@@ -33,7 +33,7 @@ int do_log_test(enum aws_log_level level, const char *expected_result, void (*ca
 
     /* clean up */
     aws_logging_set(NULL);
-    test_logger_cleanup(&test_logger);
+    aws_logger_cleanup(&test_logger);
 
     /* Check the test results last */
     ASSERT_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);

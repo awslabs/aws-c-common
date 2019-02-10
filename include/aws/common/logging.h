@@ -70,10 +70,12 @@ struct aws_logger;
 struct aws_logger_vtable {
     int(*log_fn)(struct aws_logger *logger, enum aws_log_level log_level, aws_log_subject_t subject, const char *format, ...);
     enum aws_log_level(*get_log_level_fn)(struct aws_logger *logger, aws_log_subject_t subject);
+    int(*cleanup_fn)(struct aws_logger *logger);
 };
 
 struct aws_logger {
     struct aws_logger_vtable *vtable;
+    struct aws_allocator *allocator;
     void *p_impl;
 };
 
@@ -90,6 +92,12 @@ void aws_logging_set(struct aws_logger *logger);
  */
 AWS_COMMON_API
 struct aws_logger *aws_logging_get(void);
+
+/**
+ * Cleans up all resources used by the logger; simply invokes the cleanup v-function
+ */
+AWS_COMMON_API
+int aws_logger_cleanup(struct aws_logger *logger);
 
 /**
  * Converts a log level to a c-string constant.  Intended primarily to support building log lines that
@@ -165,4 +173,4 @@ AWS_OP_SUCCESS)
 #endif
 
 
-#endif //AWS_COMMON_LOGGING_H
+#endif /* AWS_COMMON_LOGGING_H */
