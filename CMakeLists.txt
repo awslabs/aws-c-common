@@ -30,9 +30,6 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
         )
-# The generated config header doesn't exist yet, so don't use GLOB to try to find it
-# (as it'll skip the file if it doesn't exist yet)
-set(AWS_COMMON_HEADERS ${AWS_COMMON_HEADERS} ${GENERATED_CONFIG_HEADER})
 
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
@@ -153,7 +150,7 @@ if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
 endif()
 
 # Preserve subdirectories when installing headers
-foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${AWS_TEST_HEADERS})
+foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${GENERATED_CONFIG_HEADER} ${AWS_TEST_HEADERS})
     get_filename_component(HEADER_DIR ${HEADER_SRCPATH} DIRECTORY)
 # Note: We need to replace the generated include directory component first, otherwise if the build
 # directory is located inside the source tree, we'll partially rewrite the path and fail to replace it
@@ -210,14 +207,14 @@ install(FILES ${EXPORT_MODULES}
         DESTINATION "${LIBRARY_DIRECTORY}/cmake"
         COMPONENT Development)
 
+# This should come last, to ensure all variables defined by cmake will be available for export
+configure_file(${CONFIG_HEADER_TEMPLATE}
+        ${GENERATED_CONFIG_HEADER}
+        ESCAPE_QUOTES)
+
 if (NOT CMAKE_CROSSCOMPILING)
     include(CTest)
     add_subdirectory(tests)
 endif()
-
-# This should come last, to ensure all variables defined by cmake will be available for export
-configure_file(${CONFIG_HEADER_TEMPLATE}
-               ${GENERATED_CONFIG_HEADER}
-               ESCAPE_QUOTES)
 
 include(CPackConfig)
