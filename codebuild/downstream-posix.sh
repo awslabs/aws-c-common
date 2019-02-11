@@ -8,7 +8,7 @@ set -e
 set -x
 
 # everything is relative to the project root, which should be above this directory
-home_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. >/dev/null && pwd )"
+home_dir="$CODEBUILD_SRC_DIR"
 
 # where to have cmake put its binaries
 build_dir=$home_dir/build/downstream
@@ -22,7 +22,7 @@ function cmake_project {
     pushd $proj_dir
     mkdir -p ci-build
     cd ci-build
-    cmake -G"Unix Makefiles" $cmake_args -DCMAKE_INSTALL_PREFIX=$install_prefix ..
+    cmake -G"Unix Makefiles" $cmake_args -DCMAKE_PREFIX_PATH=$install_prefix -DCMAKE_INSTALL_PREFIX=$install_prefix ..
     cmake --build . --target all
     cmake --build . --target install
     if [[ $cmake_args != *"-DBUILD_TESTING=OFF"* ]]; then
