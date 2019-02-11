@@ -1,7 +1,7 @@
 
-mkdir build
-cd build
-cmake %* -DPERFORM_HEADER_CHECK=ON -DCMAKE_BUILD_TYPE="Release" ../ || goto error
+mkdir %TEMP%\build
+cd  %TEMP%\build
+cmake %* -DPERFORM_HEADER_CHECK=ON -DCMAKE_BUILD_TYPE="Release" %CODEBUILD_SRC_DIR% || goto error
 msbuild.exe aws-c-common.vcxproj /p:Configuration=Release || goto error
 msbuild.exe tests/aws-c-common-assert-tests.vcxproj /p:Configuration=Release
 msbuild.exe tests/aws-c-common-tests.vcxproj /p:Configuration=Release

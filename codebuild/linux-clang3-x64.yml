@@ -14,7 +14,7 @@ phases:
     commands:
       - echo Build started on `date`
       - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      - clang-tidy-3.9 -p=build **/*.c
+      - clang-tidy-3.9 -p=/tmp/build **/*.c
   post_build:
     commands:
       - echo Build completed on `date`
