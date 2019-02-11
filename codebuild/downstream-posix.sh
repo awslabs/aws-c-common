@@ -7,11 +7,9 @@
 set -e
 set -x
 
-# everything is relative to the project root, which should be above this directory
-home_dir="$CODEBUILD_SRC_DIR"
-pwd
-ls -la
-env
+
+home_dir="/tmp"
+
 # where to have cmake put its binaries
 build_dir=$home_dir/build/downstream
 # where deps will be installed
@@ -74,7 +72,6 @@ do
     esac
 done
 
-cd $home_dir
 if [ $clean ]; then
     rm -rf $build_dir
 fi
@@ -92,6 +89,7 @@ fi
 cmake_project .
 
 # build master head rev of downstream projects
+cd $home_dir
 build_project aws-checksums
 build_project aws-c-event-stream
 build_project aws-c-io
