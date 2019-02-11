@@ -9,7 +9,9 @@ set -x
 
 # everything is relative to the project root, which should be above this directory
 home_dir="$CODEBUILD_SRC_DIR"
-
+pwd
+ls -la
+env
 # where to have cmake put its binaries
 build_dir=$home_dir/build/downstream
 # where deps will be installed
