@@ -13,9 +13,9 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - mkdir build
-      - cd build
-      - cmake ../
+      - mkdir /tmp/build
+      - cd /tmp/build
+      - cmake $CODEBUILD_SRC_DIR
       - make
       - ctest . --output-on-failure
   post_build:

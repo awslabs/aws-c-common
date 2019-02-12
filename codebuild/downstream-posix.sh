@@ -7,8 +7,8 @@
 set -e
 set -x
 
-# everything is relative to the project root, which should be above this directory
-home_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. >/dev/null && pwd )"
+
+home_dir="/tmp"
 
 # where to have cmake put its binaries
 build_dir=$home_dir/build/downstream
@@ -22,7 +22,7 @@ function cmake_project {
     pushd $proj_dir
     mkdir -p ci-build
     cd ci-build
-    cmake -G"Unix Makefiles" $cmake_args -DCMAKE_INSTALL_PREFIX=$install_prefix ..
+    cmake -G"Unix Makefiles" $cmake_args -DCMAKE_PREFIX_PATH=$install_prefix -DCMAKE_INSTALL_PREFIX=$install_prefix ..
     cmake --build . --target all
     cmake --build . --target install
     if [[ $cmake_args != *"-DBUILD_TESTING=OFF"* ]]; then
@@ -72,7 +72,6 @@ do
     esac
 done
 
-cd $home_dir
 if [ $clean ]; then
     rm -rf $build_dir
 fi
@@ -90,6 +89,7 @@ fi
 cmake_project .
 
 # build master head rev of downstream projects
+cd $home_dir
 build_project aws-checksums
 build_project aws-c-event-stream
 build_project aws-c-io
