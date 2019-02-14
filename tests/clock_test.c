@@ -138,6 +138,27 @@ static int s_test_precision_loss_remainders_conversion(struct aws_allocator *all
     return 0;
 }
 
+static int s_test_overflow_conversion(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000ULL, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000000ULL, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MICROS, NULL));
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000000ULL, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL));
+
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000000000ULL, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MILLIS, NULL));
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000000000ULL, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_MICROS, NULL));
+    ASSERT_UINT_EQUALS(
+        UINT64_MAX, aws_timestamp_convert(100000000000000000ULL, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL));
+    return 0;
+}
+
 AWS_TEST_CASE(high_res_clock_increments_test, s_test_high_res_clock_increments)
 AWS_TEST_CASE(sys_clock_increments_test, s_test_sys_clock_increments)
 AWS_TEST_CASE(test_sec_and_millis_conversions, s_test_sec_and_millis_conversion)
@@ -147,3 +168,4 @@ AWS_TEST_CASE(test_milli_and_micros_conversion, s_test_milli_and_micros_conversi
 AWS_TEST_CASE(test_milli_and_nanos_conversion, s_test_milli_and_nanos_conversion)
 AWS_TEST_CASE(test_micro_and_nanos_conversion, s_test_micro_and_nanos_conversion)
 AWS_TEST_CASE(test_precision_loss_remainders_conversion, s_test_precision_loss_remainders_conversion)
+AWS_TEST_CASE(test_overflow_conversion, s_test_overflow_conversion)
