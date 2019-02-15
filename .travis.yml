@@ -12,4 +12,5 @@ install:
   - export PATH=$(brew --prefix llvm)/bin:$PATH
 
 script:
+  - export CODEBUILD_SRC_DIR=$(pwd)
   - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
