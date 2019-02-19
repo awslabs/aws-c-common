@@ -51,7 +51,7 @@ int aws_array_list_init_dynamic(
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_init_static(
+void aws_array_list_init_static(
     struct aws_array_list *AWS_RESTRICT list,
     void *raw_array,
     size_t item_count,
@@ -61,13 +61,11 @@ int aws_array_list_init_static(
     assert(item_size);
 
     list->alloc = NULL;
-    if(!aws_mul_size_checked(item_count, item_size, &list->current_size)) {
-        return AWS_OP_ERR;
-    }
+    int no_overflow = aws_mul_size_checked(item_count, item_size, &list->current_size);
+    assert(no_overflow);
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
-    return AWS_OP_SUCCESS;
 }
 
 AWS_STATIC_IMPL

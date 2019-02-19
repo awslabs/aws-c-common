@@ -62,7 +62,7 @@ int aws_array_list_init_dynamic(
  * by this API. Once this list is full, new items will be rejected.
  */
 AWS_STATIC_IMPL
-int aws_array_list_init_static(
+void aws_array_list_init_static(
     struct aws_array_list *AWS_RESTRICT list,
     void *raw_array,
     size_t item_count,
