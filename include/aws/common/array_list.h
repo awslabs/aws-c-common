@@ -16,6 +16,7 @@
  * permissions and limitations under the License.
  */
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -61,7 +62,7 @@ int aws_array_list_init_dynamic(
  * by this API. Once this list is full, new items will be rejected.
  */
 AWS_STATIC_IMPL
-void aws_array_list_init_static(
+int aws_array_list_init_static(
     struct aws_array_list *AWS_RESTRICT list,
     void *raw_array,
     size_t item_count,
