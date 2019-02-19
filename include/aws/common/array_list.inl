@@ -27,8 +27,8 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
     list->alloc = alloc;
-    uint64_t allocation_size;
-    if(!aws_mul_u64_checked(initial_item_allocation, item_size, &allocation_size)) {
+    size_t allocation_size;
+    if(!aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
         return AWS_OP_ERR;
     }
     list->data = NULL;
@@ -61,11 +61,9 @@ int aws_array_list_init_static(
     assert(item_size);
 
     list->alloc = NULL;
-    uint64_t current_size;
-    if(!aws_mul_u64_checked(item_count, item_size, &current_size)) {
+    if(!aws_mul_size_checked(item_count, item_size, &list->current_size)) {
         return AWS_OP_ERR;
     }
-    list->current_size = current_size;
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
