@@ -62,16 +62,8 @@ void aws_array_list_init_static(
 
     list->alloc = NULL;
 
-    //MSVC: no_overflow unused in regular builds when assert() is disabled. 
-#ifdef _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 4189)
-#endif
     int no_overflow = aws_mul_size_checked(item_count, item_size, &list->current_size);
-    assert(no_overflow);
-#ifdef _MSC_VER
-#    pragma warning(pop)
-#endif
+    AWS_FATAL_ASSERT(no_overflow);
 
     list->item_size = item_size;
     list->length = 0;
