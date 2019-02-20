@@ -27,7 +27,10 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
     list->alloc = alloc;
-    size_t allocation_size = initial_item_allocation * item_size;
+    size_t allocation_size;
+    if(!aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
+        return AWS_OP_ERR;
+    }
     list->data = NULL;
     list->item_size = item_size;
     list->current_size = 0;
@@ -59,7 +62,17 @@ void aws_array_list_init_static(
 
     list->alloc = NULL;
 
-    list->current_size = item_count * item_size;
+    //MSVC: no_overflow unused in regular builds when assert() is disabled. 
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4189)
+#endif
+    int no_overflow = aws_mul_size_checked(item_count, item_size, &list->current_size);
+    assert(no_overflow);
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
+
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;

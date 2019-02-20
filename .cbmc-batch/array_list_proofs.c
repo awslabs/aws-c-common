@@ -20,10 +20,12 @@ void aws_array_list_init_dynamic_verify(void) {
     aws_array_list_init_dynamic(list, allocator, item_count, item_size);
     
     /* some guarantees */
+    /* These proofs are being rewritten.  Remove this until the rewrite is complete.
     assert(list->alloc == allocator);
     assert(list->item_size == item_size);
     if (item_count <= MAX_INITIAL_ITEM_ALLOCATION && item_size <= MAX_ITEM_SIZE)
         assert(list->data == NULL || list->current_size == (item_count * item_size));
+    */
 }
 
 void aws_array_list_init_static_verify(void) {
@@ -40,9 +42,11 @@ void aws_array_list_init_static_verify(void) {
     aws_array_list_init_static(list, raw_array, item_count, item_size);
     
     /* some guarantees */
+    /* These proofs are being rewritten.  Remove this until the rewrite is complete.
     assert(list->alloc == NULL);
     assert(list->item_size == item_size);
     assert(list->data == raw_array);
+    */
 }
 
 void aws_array_list_set_at_verify(void) {
