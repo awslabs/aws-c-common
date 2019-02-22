@@ -38,7 +38,7 @@ int aws_array_list_init_dynamic(
 
     if (allocation_size > 0) {
         list->data = aws_mem_acquire(list->alloc, allocation_size);
-	AWS_RETURN_ERR_IF(!list->data);
+        AWS_RETURN_ERR_IF(!list->data);
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, allocation_size);
 #endif

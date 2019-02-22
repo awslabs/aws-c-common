@@ -87,7 +87,7 @@ int aws_byte_buf_init_copy_from_cursor(
     }
 
     dest->buffer = (uint8_t *)aws_mem_acquire(allocator, sizeof(uint8_t) * src.len);
-    AWS_RETURN_ERR_IF(dest->buffer == NULL); 
+    AWS_RETURN_ERR_IF(dest->buffer == NULL);
 
     dest->len = src.len;
     dest->capacity = src.len;

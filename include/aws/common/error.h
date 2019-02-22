@@ -126,19 +126,19 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
 
-#define AWS_RETURN_ERR_IF( cond ) \
-  do {				  \
-    if ( cond ) {		  \
-      return AWS_OP_ERR;	  \
-    }				  \
-  } while (0)
+#define AWS_RETURN_ERR_IF(cond)                                                                                        \
+    do {                                                                                                               \
+        if (cond) {                                                                                                    \
+            return AWS_OP_ERR;                                                                                         \
+        }                                                                                                              \
+    } while (0)
 
-#define AWS_RAISE_ERR_IF( cond , err ) \
-  do {				       \
-    if ( cond ) {		       \
-      return aws_raise_error( err );   \
-    }				       \
-  } while (0)
+#define AWS_RAISE_ERR_IF(cond, err)                                                                                    \
+    do {                                                                                                               \
+        if (cond) {                                                                                                    \
+            return aws_raise_error(err);                                                                               \
+        }                                                                                                              \
+    } while (0)
 
 AWS_EXTERN_C_END
 

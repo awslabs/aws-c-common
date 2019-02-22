@@ -26,7 +26,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
 
             if (ideal_size > 0) {
                 raw_data = aws_mem_acquire(list->alloc, ideal_size);
-		AWS_RETURN_ERR_IF(!raw_data);
+                AWS_RETURN_ERR_IF(!raw_data);
 
                 memcpy(raw_data, list->data, ideal_size);
                 aws_mem_release(list->alloc, list->data);
@@ -57,7 +57,7 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
     if (to->alloc != NULL) {
         void *tmp = aws_mem_acquire(to->alloc, copy_size);
 
-	AWS_RETURN_ERR_IF(!tmp);
+        AWS_RETURN_ERR_IF(!tmp);
 
         memcpy(tmp, from->data, copy_size);
         if (to->data) {
@@ -103,7 +103,7 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
 
         void *temp = aws_mem_acquire(list->alloc, new_size);
 
-	AWS_RETURN_ERR_IF(!temp);
+        AWS_RETURN_ERR_IF(!temp);
 
         if (list->data) {
             memcpy(temp, list->data, list->current_size);
