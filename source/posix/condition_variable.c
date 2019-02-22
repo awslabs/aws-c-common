@@ -79,9 +79,7 @@ int aws_condition_variable_wait_for(
     int64_t time_to_wait) {
 
     uint64_t current_sys_time = 0;
-    if (aws_sys_clock_get_ticks(&current_sys_time)) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(aws_sys_clock_get_ticks(&current_sys_time));
 
     time_to_wait += current_sys_time;
 

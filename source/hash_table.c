@@ -251,9 +251,7 @@ int aws_hash_table_init(
     s_update_template_size(&template, size);
     map->p_impl = s_alloc_state(&template);
 
-    if (!map->p_impl) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!map->p_impl);
 
     return AWS_OP_SUCCESS;
 }
@@ -435,9 +433,7 @@ static int s_expand_table(struct aws_hash_table *map) {
     s_update_template_size(&template, template.size * 2);
 
     struct hash_table_state *new_state = s_alloc_state(&template);
-    if (!new_state) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!new_state);
 
     for (size_t i = 0; i < old_state->size; i++) {
         struct hash_table_entry entry = old_state->slots[i];
@@ -522,9 +518,7 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
         was_created = &was_created_fallback;
     }
 
-    if (aws_hash_table_create(map, key, &p_elem, was_created)) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(aws_hash_table_create(map, key, &p_elem, was_created));
 
     /*
      * aws_hash_table_create might resize the table, which results in map->p_impl changing.

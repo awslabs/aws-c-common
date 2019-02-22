@@ -38,9 +38,7 @@ int aws_array_list_init_dynamic(
 
     if (allocation_size > 0) {
         list->data = aws_mem_acquire(list->alloc, allocation_size);
-        if (!list->data) {
-            return AWS_OP_ERR;
-        }
+	AWS_RETURN_ERR_IF(!list->data);
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, allocation_size);
 #endif
@@ -223,9 +221,7 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
     size_t necessary_size = (index + 1) * list->item_size;
 
     if (list->current_size < necessary_size) {
-        if (aws_array_list_ensure_capacity(list, index)) {
-            return AWS_OP_ERR;
-        }
+        AWS_RETURN_ERR_IF(aws_array_list_ensure_capacity(list, index));
     }
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);

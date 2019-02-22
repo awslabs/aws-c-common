@@ -527,19 +527,13 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
 static inline int enable_vt_mode(void) {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(hOut == INVALID_HANDLE_VALUE);
 
     DWORD dwMode = 0;
-    if (!GetConsoleMode(hOut, &dwMode)) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!GetConsoleMode(hOut, &dwMode));
 
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    if (!SetConsoleMode(hOut, dwMode)) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!SetConsoleMode(hOut, dwMode));
     return AWS_OP_SUCCESS;
 }
 

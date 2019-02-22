@@ -94,9 +94,7 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
 
     size_t encoded_len = 0;
 
-    if (AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode->len, &encoded_len))) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode->len, &encoded_len)));
 
     if (AWS_UNLIKELY(output->capacity < encoded_len)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
@@ -254,9 +252,7 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     assert(output->buffer);
 
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length)));
 
     if (AWS_UNLIKELY(output->capacity < encoded_length)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
@@ -321,9 +317,7 @@ static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *v
 int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, &decoded_length))) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, &decoded_length)));
 
     if (output->capacity < decoded_length) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);

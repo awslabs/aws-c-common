@@ -26,9 +26,7 @@
 
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
     buf->buffer = (uint8_t *)aws_mem_acquire(allocator, capacity);
-    if (!buf->buffer) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!buf->buffer);
     buf->len = 0;
     buf->capacity = capacity;
     buf->allocator = allocator;
@@ -89,9 +87,7 @@ int aws_byte_buf_init_copy_from_cursor(
     }
 
     dest->buffer = (uint8_t *)aws_mem_acquire(allocator, sizeof(uint8_t) * src.len);
-    if (dest->buffer == NULL) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(dest->buffer == NULL); 
 
     dest->len = src.len;
     dest->capacity = src.len;
@@ -173,9 +169,7 @@ int aws_byte_cursor_split_on_char_n(
             substr.len = input_str->len - (substr.ptr - input_str->ptr);
         }
 
-        if (AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&substr))) {
-            return AWS_OP_ERR;
-        }
+        AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_array_list_push_back(output, (const void *)&substr)));
         ++split_count;
     }
 

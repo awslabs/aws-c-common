@@ -85,9 +85,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
 
     struct cache_node *cache_node = aws_mem_acquire(cache->allocator, sizeof(struct cache_node));
 
-    if (!cache_node) {
-        return AWS_OP_ERR;
-    }
+    AWS_RETURN_ERR_IF(!cache_node);
 
     struct aws_hash_element *element = NULL;
     int was_added = 0;

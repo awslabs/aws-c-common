@@ -218,10 +218,9 @@ backpointer_update_failed:
 }
 
 static int s_remove_node(struct aws_priority_queue *queue, void *item, size_t item_index) {
-    if (aws_array_list_get_at(&queue->container, item, item_index)) {
-        /* shouldn't happen, but if it does we've already raised an error... */
-        return AWS_OP_ERR;
-    }
+
+    /* shouldn't happen, but if it does we've already raised an error... */
+    AWS_RETURN_ERR_IF(aws_array_list_get_at(&queue->container, item, item_index));
 
     size_t swap_with = aws_array_list_length(&queue->container) - 1;
     struct aws_priority_queue_node *backpointer = NULL;
