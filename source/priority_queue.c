@@ -248,25 +248,22 @@ int aws_priority_queue_remove(
     struct aws_priority_queue *queue,
     void *item,
     const struct aws_priority_queue_node *node) {
-    if (node->current_index >= aws_array_list_length(&queue->container) || !queue->backpointers.data) {
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
-    }
+    AWS_RAISE_ERR_IF(
+        node->current_index >= aws_array_list_length(&queue->container) || !queue->backpointers.data,
+        AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
 
     return s_remove_node(queue, item, node->current_index);
 }
 
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
-    if (0 == aws_array_list_length(&queue->container)) {
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
-    }
+    AWS_RAISE_ERR_IF(0 == aws_array_list_length(&queue->container), AWS_ERROR_PRIORITY_QUEUE_EMPTY);
 
     return s_remove_node(queue, item, 0);
 }
 
 int aws_priority_queue_top(const struct aws_priority_queue *queue, void **item) {
-    if (0 == aws_array_list_length(&queue->container)) {
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
-    }
+    AWS_RAISE_ERR_IF(0 == aws_array_list_length(&queue->container), AWS_ERROR_PRIORITY_QUEUE_EMPTY);
+
     return aws_array_list_get_at_ptr(&queue->container, item, 0);
 }
 

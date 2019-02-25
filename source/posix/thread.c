@@ -115,21 +115,10 @@ cleanup:
         pthread_attr_destroy(attributes_ptr);
     }
 
-    if (attr_return == EINVAL) {
-        return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
-    }
-
-    if (attr_return == EAGAIN) {
-        return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
-    }
-
-    if (attr_return == EPERM) {
-        return aws_raise_error(AWS_ERROR_THREAD_NO_PERMISSIONS);
-    }
-
-    if (allocation_failed || attr_return == ENOMEM) {
-        return aws_raise_error(AWS_ERROR_OOM);
-    }
+    AWS_RAISE_ERR_IF(attr_return == EINVAL, AWS_ERROR_THREAD_INVALID_SETTINGS);
+    AWS_RAISE_ERR_IF(attr_return == EAGAIN, AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
+    AWS_RAISE_ERR_IF(attr_return == EPERM, AWS_ERROR_THREAD_NO_PERMISSIONS);
+    AWS_RAISE_ERR_IF(allocation_failed || attr_return == ENOMEM, AWS_ERROR_OOM);
 
     return AWS_OP_SUCCESS;
 }
@@ -147,15 +136,9 @@ int aws_thread_join(struct aws_thread *thread) {
         int err_no = pthread_join(thread->thread_id, 0);
 
         if (err_no) {
-            if (err_no == EINVAL) {
-                return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
-            }
-            if (err_no == ESRCH) {
-                return aws_raise_error(AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
-            }
-            if (err_no == EDEADLK) {
-                return aws_raise_error(AWS_ERROR_THREAD_DEADLOCK_DETECTED);
-            }
+            AWS_RAISE_ERR_IF(err_no == EINVAL, AWS_ERROR_THREAD_NOT_JOINABLE);
+            AWS_RAISE_ERR_IF(err_no == ESRCH, AWS_ERROR_THREAD_NO_SUCH_THREAD_ID);
+            AWS_RAISE_ERR_IF(err_no == EDEADLK, AWS_ERROR_THREAD_DEADLOCK_DETECTED);
         }
 
         thread->detach_state = AWS_THREAD_JOIN_COMPLETED;

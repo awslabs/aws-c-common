@@ -32,9 +32,8 @@ static int process_error_code(int err) {
 }
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
-    if (pthread_cond_init(&condition_variable->condition_handle, NULL)) {
-        return aws_raise_error(AWS_ERROR_COND_VARIABLE_INIT_FAILED);
-    }
+    AWS_RAISE_ERR_IF(
+        pthread_cond_init(&condition_variable->condition_handle, NULL), AWS_ERROR_COND_VARIABLE_INIT_FAILED);
 
     return AWS_OP_SUCCESS;
 }

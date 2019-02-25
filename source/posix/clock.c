@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/clock.h>
+#include <aws/common/error.h>
 
 #include <time.h>
 
@@ -41,9 +42,7 @@ static int s_legacy_get_time(uint64_t *timestamp) {
     struct timeval tv;
     int ret_val = gettimeofday(&tv, NULL);
 
-    if (ret_val) {
-        return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-    }
+    AWS_RAISE_ERR_IF(ret_val, AWS_ERROR_CLOCK_FAILURE);
 
     *timestamp = tv.tv_sec * NS_PER_SEC + tv.tv_usec * 1000;
     return AWS_OP_SUCCESS;
@@ -65,9 +64,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
         struct timespec ts;
         ret_val = s_gettime_fn(HIGH_RES_CLOCK, &ts);
 
-        if (ret_val) {
-            return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-        }
+        AWS_RAISE_ERR_IF(ret_val, AWS_ERROR_CLOCK_FAILURE);
 
         *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
         return AWS_OP_SUCCESS;
@@ -83,9 +80,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     if (s_gettime_fn) {
         struct timespec ts;
         ret_val = s_gettime_fn(CLOCK_REALTIME, &ts);
-        if (ret_val) {
-            return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-        }
+        AWS_RAISE_ERR_IF(ret_val, AWS_ERROR_CLOCK_FAILURE);
 
         *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
         return AWS_OP_SUCCESS;
@@ -111,9 +106,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 
     ret_val = clock_gettime(HIGH_RES_CLOCK, &ts);
 
-    if (ret_val) {
-        return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-    }
+    AWS_RAISE_ERR_IF(ret_val, AWS_ERROR_CLOCK_FAILURE);
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
     return AWS_OP_SUCCESS;
@@ -124,9 +117,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 
     struct timespec ts;
     ret_val = clock_gettime(CLOCK_REALTIME, &ts);
-    if (ret_val) {
-        return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
-    }
+    AWS_RAISE_ERR_IF(ret_val, AWS_ERROR_CLOCK_FAILURE);
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
     return AWS_OP_SUCCESS;

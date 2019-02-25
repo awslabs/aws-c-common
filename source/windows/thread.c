@@ -90,9 +90,7 @@ int aws_thread_launch(
     thread->thread_handle =
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
-    if (!thread->thread_handle) {
-        return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
-    }
+    AWS_RAISE_ERR_IF(!thread->thread_handle, AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
 
     thread->detach_state = AWS_THREAD_JOINABLE;
     return AWS_OP_SUCCESS;

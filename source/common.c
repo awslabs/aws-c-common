@@ -125,9 +125,7 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
 int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
     if (allocator->mem_realloc) {
         void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
-        if (!newptr) {
-            return aws_raise_error(AWS_ERROR_OOM);
-        }
+        AWS_RAISE_ERR_IF(!newptr, AWS_ERROR_OOM);
         *ptr = newptr;
         return AWS_OP_SUCCESS;
     }

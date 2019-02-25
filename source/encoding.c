@@ -79,9 +79,7 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
 
     size_t temp = (to_encode_len << 1) + 1;
 
-    if (AWS_UNLIKELY(temp < to_encode_len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(temp < to_encode_len), AWS_ERROR_OVERFLOW_DETECTED);
 
     *encoded_length = temp;
 
@@ -96,9 +94,7 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
 
     AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_hex_compute_encoded_len(to_encode->len, &encoded_len)));
 
-    if (AWS_UNLIKELY(output->capacity < encoded_len)) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(output->capacity < encoded_len), AWS_ERROR_SHORT_BUFFER);
 
     size_t written = 0;
     for (size_t i = 0; i < to_encode->len; ++i) {
@@ -137,9 +133,7 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
 
     size_t temp = (to_decode_len + 1);
 
-    if (AWS_UNLIKELY(temp < to_decode_len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(temp < to_decode_len), AWS_ERROR_OVERFLOW_DETECTED);
 
     *decoded_len = temp >> 1;
     return AWS_OP_SUCCESS;
@@ -151,13 +145,9 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
 
     size_t decoded_length = 0;
 
-    if (AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode->len, &decoded_length))) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
-
-    if (AWS_UNLIKELY(output->capacity < decoded_length)) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(
+        AWS_UNLIKELY(aws_hex_compute_decoded_len(to_decode->len, &decoded_length)), AWS_ERROR_OVERFLOW_DETECTED);
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(output->capacity < decoded_length), AWS_ERROR_SHORT_BUFFER);
 
     size_t written = 0;
     size_t i = 0;
@@ -167,19 +157,17 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
     /* if the buffer isn't even, prepend a 0 to the buffer. */
     if (AWS_UNLIKELY(to_decode->len & 0x01)) {
         i = 1;
-        if (s_hex_decode_char_to_int(to_decode->ptr[0], &low_value)) {
-            return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
-        }
+        AWS_RAISE_ERR_IF(s_hex_decode_char_to_int(to_decode->ptr[0], &low_value), AWS_ERROR_INVALID_HEX_STR);
 
         output->buffer[written++] = low_value;
     }
 
     for (; i < to_decode->len; i += 2) {
-        if (AWS_UNLIKELY(
+        AWS_RAISE_ERR_IF(
+            AWS_UNLIKELY(
                 s_hex_decode_char_to_int(to_decode->ptr[i], &high_value) ||
-                s_hex_decode_char_to_int(to_decode->ptr[i + 1], &low_value))) {
-            return aws_raise_error(AWS_ERROR_INVALID_HEX_STR);
-        }
+                s_hex_decode_char_to_int(to_decode->ptr[i + 1], &low_value)),
+            AWS_ERROR_INVALID_HEX_STR);
 
         uint8_t value = (uint8_t)(high_value << 4);
         value |= low_value;
@@ -196,17 +184,13 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 
     size_t tmp = to_encode_len + 2;
 
-    if (AWS_UNLIKELY(tmp < to_encode_len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(tmp < to_encode_len), AWS_ERROR_OVERFLOW_DETECTED);
 
     tmp /= 3;
     size_t overflow_check = tmp;
     tmp = 4 * tmp + 1; /* plus one for the NULL terminator */
 
-    if (AWS_UNLIKELY(tmp < overflow_check)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(tmp < overflow_check), AWS_ERROR_OVERFLOW_DETECTED);
 
     *encoded_len = tmp;
 
@@ -225,15 +209,11 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
         return AWS_OP_SUCCESS;
     }
 
-    if (AWS_UNLIKELY(len & 0x03)) {
-        return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(len & 0x03), AWS_ERROR_INVALID_BASE64_STR);
 
     size_t tmp = len * 3;
 
-    if (AWS_UNLIKELY(tmp < len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(tmp < len), AWS_ERROR_OVERFLOW_DETECTED);
 
     size_t padding = 0;
 
@@ -254,9 +234,7 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     size_t encoded_length = 0;
     AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length)));
 
-    if (AWS_UNLIKELY(output->capacity < encoded_length)) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(output->capacity < encoded_length), AWS_ERROR_SHORT_BUFFER);
 
     if (aws_common_private_has_avx2()) {
         output->len = encoded_length;
@@ -319,15 +297,11 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
 
     AWS_RETURN_ERR_IF(AWS_UNLIKELY(aws_base64_compute_decoded_len(to_decode, &decoded_length)));
 
-    if (output->capacity < decoded_length) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(output->capacity < decoded_length, AWS_ERROR_SHORT_BUFFER);
 
     if (aws_common_private_has_avx2()) {
         size_t result = aws_common_private_base64_decode_sse41(to_decode->ptr, output->buffer, to_decode->len);
-        if (result == -1) {
-            return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
-        }
+        AWS_RAISE_ERR_IF(result == -1, AWS_ERROR_INVALID_BASE64_STR);
 
         output->len = result;
         return AWS_OP_SUCCESS;
@@ -339,13 +313,13 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
     int64_t buffer_index = 0;
 
     for (int32_t i = 0; i < block_count - 1; ++i) {
-        if (AWS_UNLIKELY(
+        AWS_RAISE_ERR_IF(
+            AWS_UNLIKELY(
                 s_base64_get_decoded_value(to_decode->ptr[string_index++], &value1, 0) ||
                 s_base64_get_decoded_value(to_decode->ptr[string_index++], &value2, 0) ||
                 s_base64_get_decoded_value(to_decode->ptr[string_index++], &value3, 0) ||
-                s_base64_get_decoded_value(to_decode->ptr[string_index++], &value4, 0))) {
-            return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
-        }
+                s_base64_get_decoded_value(to_decode->ptr[string_index++], &value4, 0)),
+            AWS_ERROR_INVALID_BASE64_STR);
 
         buffer_index = i * 3;
         output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
@@ -356,12 +330,12 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
     buffer_index = (block_count - 1) * 3;
 
     if (buffer_index >= 0) {
-        if (s_base64_get_decoded_value(to_decode->ptr[string_index++], &value1, 0) ||
-            s_base64_get_decoded_value(to_decode->ptr[string_index++], &value2, 0) ||
-            s_base64_get_decoded_value(to_decode->ptr[string_index++], &value3, 1) ||
-            s_base64_get_decoded_value(to_decode->ptr[string_index], &value4, 1)) {
-            return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
-        }
+        AWS_RAISE_ERR_IF(
+            s_base64_get_decoded_value(to_decode->ptr[string_index++], &value1, 0) ||
+                s_base64_get_decoded_value(to_decode->ptr[string_index++], &value2, 0) ||
+                s_base64_get_decoded_value(to_decode->ptr[string_index++], &value3, 1) ||
+                s_base64_get_decoded_value(to_decode->ptr[string_index], &value4, 1),
+            AWS_ERROR_INVALID_BASE64_STR);
 
         output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
 

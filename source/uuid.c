@@ -44,16 +44,15 @@ int aws_uuid_init(struct aws_uuid *uuid) {
 }
 
 int aws_uuid_init_from_str(struct aws_uuid *uuid, const struct aws_byte_cursor *uuid_str) {
-    if (uuid_str->len < AWS_UUID_STR_LEN - 1) {
-        return aws_raise_error(AWS_ERROR_INVALID_BUFFER_SIZE);
-    }
+    AWS_RAISE_ERR_IF(uuid_str->len < AWS_UUID_STR_LEN - 1, AWS_ERROR_INVALID_BUFFER_SIZE);
 
     char cpy[AWS_UUID_STR_LEN] = {0};
     memcpy(cpy, uuid_str->ptr, AWS_UUID_STR_LEN - 1);
 
     AWS_ZERO_STRUCT(*uuid);
 
-    if (16 != sscanf(
+    AWS_RAISE_ERR_IF(
+        16 != sscanf(
                   cpy,
                   UUID_FORMAT,
                   &uuid->uuid_data[0],
@@ -71,17 +70,14 @@ int aws_uuid_init_from_str(struct aws_uuid *uuid, const struct aws_byte_cursor *
                   &uuid->uuid_data[12],
                   &uuid->uuid_data[13],
                   &uuid->uuid_data[14],
-                  &uuid->uuid_data[15])) {
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
-    }
+                  &uuid->uuid_data[15]),
+        AWS_ERROR_MALFORMED_INPUT_STRING);
 
     return AWS_OP_SUCCESS;
 }
 
 int aws_uuid_to_str(const struct aws_uuid *uuid, struct aws_byte_buf *output) {
-    if (output->capacity - output->len < AWS_UUID_STR_LEN) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(output->capacity - output->len < AWS_UUID_STR_LEN, AWS_ERROR_SHORT_BUFFER);
 
     sprintf(
         (char *)(output->buffer + output->len),

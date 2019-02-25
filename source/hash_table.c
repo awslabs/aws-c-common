@@ -199,17 +199,12 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
         size = size << 1;
         mask = mask << 1;
 
-        if (size == 0) {
-            /* Overflow */
-            return aws_raise_error(AWS_ERROR_OOM);
-        }
+        AWS_RAISE_ERR_IF(size == 0, AWS_ERROR_OOM); /* Overflow */
     }
     mask = ~mask;
 
     /* Cross-check - make sure we didn't just overflow somehow. */
-    if (size < expected_elements) {
-        return aws_raise_error(AWS_ERROR_OOM);
-    }
+    AWS_RAISE_ERR_IF(size < expected_elements, AWS_ERROR_OOM);
 
     template->size = size;
     template->max_load = (size_t)(template->max_load_factor * (double)template->size);
@@ -219,9 +214,8 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
 
     /* Make sure we don't overflow when computing memory requirements either */
     size_t required_mem = aws_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
-    if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
-        return aws_raise_error(AWS_ERROR_OOM);
-    }
+    AWS_RAISE_ERR_IF(
+        required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem, AWS_ERROR_OOM);
 
     template->size = size;
     template->mask = mask;

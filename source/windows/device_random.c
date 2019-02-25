@@ -39,9 +39,7 @@ int aws_device_random_buffer(struct aws_byte_buf *output) {
     size_t offset = output->capacity - output->len;
     NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, (ULONG)offset, 0);
 
-    if (!BCRYPT_SUCCESS(status)) {
-        return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
-    }
+    AWS_RAISE_ERR_IF(!BCRYPT_SUCCESS(status), AWS_ERROR_RANDOM_GEN_FAILED);
 
     output->len += offset;
     return AWS_OP_SUCCESS;

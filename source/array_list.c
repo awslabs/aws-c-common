@@ -77,9 +77,7 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
     size_t necessary_size = (index + 1) * list->item_size;
 
     if (list->current_size < necessary_size) {
-        if (!list->alloc) {
-            return aws_raise_error(AWS_ERROR_INVALID_INDEX);
-        }
+        AWS_RAISE_ERR_IF(!list->alloc, AWS_ERROR_INVALID_INDEX);
 
         /* this will double capacity if the index isn't bigger than what the
          * next allocation would be, but allocates the exact requested size if
@@ -91,15 +89,13 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
         size_t next_allocation_size = list->current_size << 1;
         size_t new_size = next_allocation_size > necessary_size ? next_allocation_size : necessary_size;
 
-        if (new_size < list->current_size) {
-            /* this means new_size overflowed. The only way this happens is on a
-             * 32-bit system where size_t is 32 bits, in which case we're out of
-             * addressable memory anyways, or we're on a 64 bit system and we're
-             * most certainly out of addressable memory. But since we're simply
-             * going to fail fast and say, sorry can't do it, we'll just tell
-             * the user they can't grow the list anymore. */
-            return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
-        }
+        /* Raise an error if new_size overflowed. The only way this happens is on a
+         * 32-bit system where size_t is 32 bits, in which case we're out of
+         * addressable memory anyways, or we're on a 64 bit system and we're
+         * most certainly out of addressable memory. But since we're simply
+         * going to fail fast and say, sorry can't do it, we'll just tell
+         * the user they can't grow the list anymore. */
+        AWS_RAISE_ERR_IF(new_size < list->current_size, AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
 
         void *temp = aws_mem_acquire(list->alloc, new_size);
 

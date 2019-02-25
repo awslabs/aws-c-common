@@ -463,9 +463,7 @@ int aws_date_time_init_from_str(
     struct aws_date_time *dt,
     const struct aws_byte_buf *date_str,
     enum aws_date_format fmt) {
-    if (date_str->len > AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_RAISE_ERR_IF(date_str->len > AWS_DATE_TIME_STR_MAX_LEN, AWS_ERROR_OVERFLOW_DETECTED);
 
     AWS_ZERO_STRUCT(*dt);
 
@@ -508,9 +506,7 @@ int aws_date_time_init_from_str(
         }
     }
 
-    if (!successfully_parsed) {
-        return aws_raise_error(AWS_ERROR_INVALID_DATE_STR);
-    }
+    AWS_RAISE_ERR_IF(!successfully_parsed, AWS_ERROR_INVALID_DATE_STR);
 
     if (dt->utc_assumed || seconds_offset) {
         dt->timestamp = aws_timegm(&parsed_time);
@@ -529,15 +525,11 @@ int aws_date_time_init_from_str(
 }
 
 static inline int s_date_to_str(const struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
-    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN, AWS_ERROR_SHORT_BUFFER);
 
     output_buf->len = strftime((char *)output_buf->buffer, output_buf->capacity, format_str, tm);
 
-    if (output_buf->len == 0) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    AWS_RAISE_ERR_IF(output_buf->len == 0, AWS_ERROR_SHORT_BUFFER);
 
     return AWS_OP_SUCCESS;
 }
@@ -548,9 +540,7 @@ int aws_date_time_to_local_time_str(
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
-    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT), AWS_ERROR_INVALID_ARGUMENT);
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->local_time, RFC822_DATE_FORMAT_STR_WITH_Z, output_buf);
@@ -565,9 +555,7 @@ int aws_date_time_to_utc_time_str(
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
-    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT), AWS_ERROR_INVALID_ARGUMENT);
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, output_buf);
@@ -582,9 +570,7 @@ int aws_date_time_to_local_time_short_str(
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
-    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT), AWS_ERROR_INVALID_ARGUMENT);
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->local_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
@@ -599,9 +585,7 @@ int aws_date_time_to_utc_time_short_str(
     struct aws_byte_buf *output_buf) {
     assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
-    if (AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_RAISE_ERR_IF(AWS_UNLIKELY(fmt == AWS_DATE_FORMAT_AUTO_DETECT), AWS_ERROR_INVALID_ARGUMENT);
 
     if (fmt == AWS_DATE_FORMAT_RFC822) {
         return s_date_to_str(&dt->gmt_time, RFC822_SHORT_DATE_FORMAT_STR, output_buf);
