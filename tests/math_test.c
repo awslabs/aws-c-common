@@ -91,6 +91,7 @@ static int s_test_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) 
 }
 
 AWS_TEST_CASE(test_size_saturating, s_test_size_saturating_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_size_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
@@ -223,6 +224,7 @@ static int s_test_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(test_size_checked, s_test_size_checked_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_size_checked_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
