@@ -96,7 +96,7 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #elif SIZE_MAX == UINT64_MAX
     return aws_mul_u64_checked(a, b, (uint64_t *)r);
 #else
-#   error "Target not supported"
+#    error "Target not supported"
 #endif
 }
 
