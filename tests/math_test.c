@@ -96,44 +96,44 @@ static int s_test_size_saturating_fn(struct aws_allocator *allocator, void *ctx)
     (void)allocator;
     (void)ctx;
 
-    if (sizeof(size_t) == sizeof(uint32_t)) {
-        CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
-        CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
-        CHECK_SAT(aws_mul_size_saturating, 0, ~0U, 0);
-        CHECK_SAT(aws_mul_size_saturating, 4, 5, 20);
-        CHECK_SAT(aws_mul_size_saturating, 1234, 4321, 5332114);
+#if SIZE_MAX == UINT32_MAX
+    CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
+    CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
+    CHECK_SAT(aws_mul_size_saturating, 0, ~0U, 0);
+    CHECK_SAT(aws_mul_size_saturating, 4, 5, 20);
+    CHECK_SAT(aws_mul_size_saturating, 1234, 4321, 5332114);
 
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 1, 0xFFFFFFFF);
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFF, 1, 0xFFFF);
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFF, 0xFFFF, 0xfffe0001);
-        CHECK_SAT(aws_mul_size_saturating, 0x10000, 0xFFFF, 0xFFFF0000U);
-        CHECK_SAT(aws_mul_size_saturating, 0x10001, 0xFFFF, 0xFFFFFFFFU);
-        CHECK_SAT(aws_mul_size_saturating, 0x10001, 0xFFFE, 0xFFFEFFFEU);
-        CHECK_SAT(aws_mul_size_saturating, 0x10002, 0xFFFE, 0xFFFFFFFCU);
-        CHECK_SAT(aws_mul_size_saturating, 0x10003, 0xFFFE, 0xFFFFFFFFU);
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFE, 0xFFFE, 0xFFFC0004U);
-        CHECK_SAT(aws_mul_size_saturating, 0x1FFFF, 0x1FFFF, 0xFFFFFFFFU);
-        CHECK_SAT(aws_mul_size_saturating, ~0U, ~0U, ~0U);
-    } else if (sizeof(size_t) == sizeof(uint64_t)) {
-        CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
-        CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
-        CHECK_SAT(aws_mul_size_saturating, 0, ~0LLU, 0);
-        CHECK_SAT(aws_mul_size_saturating, 4, 5, 20);
-        CHECK_SAT(aws_mul_size_saturating, 1234, 4321, 5332114);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 1, 0xFFFFFFFF);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFF, 1, 0xFFFF);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFF, 0xFFFF, 0xfffe0001);
+    CHECK_SAT(aws_mul_size_saturating, 0x10000, 0xFFFF, 0xFFFF0000U);
+    CHECK_SAT(aws_mul_size_saturating, 0x10001, 0xFFFF, 0xFFFFFFFFU);
+    CHECK_SAT(aws_mul_size_saturating, 0x10001, 0xFFFE, 0xFFFEFFFEU);
+    CHECK_SAT(aws_mul_size_saturating, 0x10002, 0xFFFE, 0xFFFFFFFCU);
+    CHECK_SAT(aws_mul_size_saturating, 0x10003, 0xFFFE, 0xFFFFFFFFU);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFE, 0xFFFE, 0xFFFC0004U);
+    CHECK_SAT(aws_mul_size_saturating, 0x1FFFF, 0x1FFFF, 0xFFFFFFFFU);
+    CHECK_SAT(aws_mul_size_saturating, ~0U, ~0U, ~0U);
+#elif SIZE_MAX == UINT64_MAX
+    CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
+    CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
+    CHECK_SAT(aws_mul_size_saturating, 0, ~0LLU, 0);
+    CHECK_SAT(aws_mul_size_saturating, 4, 5, 20);
+    CHECK_SAT(aws_mul_size_saturating, 1234, 4321, 5332114);
 
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 1, 0xFFFFFFFF);
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 0xFFFFFFFF, 0xfffffffe00000001LLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x100000000, 0xFFFFFFFF, 0xFFFFFFFF00000000LLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x100000001, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x100000001, 0xFFFFFFFE, 0xFFFFFFFEFFFFFFFELLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x100000002, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFCLLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x100000003, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFFLLU);
-        CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFE, 0xFFFFFFFE, 0xFFFFFFFC00000004LLU);
-        CHECK_SAT(aws_mul_size_saturating, 0x1FFFFFFFF, 0x1FFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
-        CHECK_SAT(aws_mul_size_saturating, ~0LLU, ~0LLU, ~0LLU);
-    } else {
-        FAIL("Unexpected size for size_t");
-    }
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 1, 0xFFFFFFFF);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFF, 0xFFFFFFFF, 0xfffffffe00000001LLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x100000000, 0xFFFFFFFF, 0xFFFFFFFF00000000LLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x100000001, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x100000001, 0xFFFFFFFE, 0xFFFFFFFEFFFFFFFELLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x100000002, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFCLLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x100000003, 0xFFFFFFFE, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(aws_mul_size_saturating, 0xFFFFFFFE, 0xFFFFFFFE, 0xFFFFFFFC00000004LLU);
+    CHECK_SAT(aws_mul_size_saturating, 0x1FFFFFFFF, 0x1FFFFFFFF, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_SAT(aws_mul_size_saturating, ~0LLU, ~0LLU, ~0LLU);
+#else
+    FAIL("Unexpected size for size_t: %zu", sizeof(size_t));
+#endif
 
     return 0;
 }
@@ -229,43 +229,43 @@ static int s_test_size_checked_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    if (sizeof(size_t) == sizeof(uint32_t)) {
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0u, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
+#if SIZE_MAX == UINT32_MAX
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0u, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
 
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 1, 0xFFFF);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000u);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
-        CHECK_OVF(aws_mul_size_checked, size_t, 0x10003, 0xFFFE);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
-        CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFF, 0x1FFFF);
-        CHECK_OVF(aws_mul_size_checked, size_t, ~0u, ~0u);
-    } else if (sizeof(size_t) == sizeof(uint64_t)) {
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0LLU, 0);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 1, 0xFFFF);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000u);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
+    CHECK_OVF(aws_mul_size_checked, size_t, 0x10003, 0xFFFE);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
+    CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFF, 0x1FFFF);
+    CHECK_OVF(aws_mul_size_checked, size_t, ~0u, ~0u);
+#elif SIZE_MAX == UINT64_MAX
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0LLU, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
 
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFFLLU, 1LLU, 0xFFFFFFFFLLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFFLLU, 0xFFFFFFFFLLU, 0xfffffffe00000001LLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000000LLU, 0xFFFFFFFFLLU, 0xFFFFFFFF00000000LLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000001LLU, 0xFFFFFFFFLLU, 0xFFFFFFFFFFFFFFFFLLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000001LLU, 0xFFFFFFFELLU, 0xFFFFFFFEFFFFFFFELLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000002LLU, 0xFFFFFFFELLU, 0xFFFFFFFFFFFFFFFCLLU);
-        CHECK_OVF(aws_mul_size_checked, size_t, 0x100000003LLU, 0xFFFFFFFELLU);
-        CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFELLU, 0xFFFFFFFELLU, 0xFFFFFFFC00000004LLU);
-        CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFFFFFFLLU, 0x1FFFFFFFFLLU);
-        CHECK_OVF(aws_mul_size_checked, size_t, ~0LLU, ~0LLU);
-    } else {
-        FAIL("Unexpected size for size_t");
-    }
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFFLLU, 1LLU, 0xFFFFFFFFLLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFFLLU, 0xFFFFFFFFLLU, 0xfffffffe00000001LLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000000LLU, 0xFFFFFFFFLLU, 0xFFFFFFFF00000000LLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000001LLU, 0xFFFFFFFFLLU, 0xFFFFFFFFFFFFFFFFLLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000001LLU, 0xFFFFFFFELLU, 0xFFFFFFFEFFFFFFFELLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x100000002LLU, 0xFFFFFFFELLU, 0xFFFFFFFFFFFFFFFCLLU);
+    CHECK_OVF(aws_mul_size_checked, size_t, 0x100000003LLU, 0xFFFFFFFELLU);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFELLU, 0xFFFFFFFELLU, 0xFFFFFFFC00000004LLU);
+    CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFFFFFFLLU, 0x1FFFFFFFFLLU);
+    CHECK_OVF(aws_mul_size_checked, size_t, ~0LLU, ~0LLU);
+#else
+    FAIL("Unexpected size for size_t: %zu", sizeof(size_t));
+#endif
     return 0;
 }
