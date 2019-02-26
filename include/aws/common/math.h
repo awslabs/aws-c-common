@@ -91,10 +91,13 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 }
 
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
-    if (sizeof(size_t) == sizeof(uint32_t)) {
-        return aws_mul_u32_checked(a, b, (uint32_t *)r);
-    }
+#if SIZE_MAX == UINT32_MAX
+    return aws_mul_u32_checked(a, b, (uint32_t *)r);
+#elif SIZE_MAX == UINT64_MAX
     return aws_mul_u64_checked(a, b, (uint64_t *)r);
+#else
+#   error "Target not supported"
+#endif
 }
 
 #if _MSC_VER
