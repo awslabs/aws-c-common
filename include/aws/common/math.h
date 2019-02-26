@@ -97,6 +97,26 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #endif
 }
 
+AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
+#if SIZE_MAX == UINT32_MAX
+    return (size_t)aws_add_u32_saturating(a, b);
+#elif SIZE_MAX == UINT64_MAX
+    return (size_t)aws_add_u64_saturating(a, b);
+#else
+#    error "Target not supported"
+#endif
+}
+
+AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
+#if SIZE_MAX == UINT32_MAX
+    return aws_add_u32_checked(a, b, (uint32_t *)r);
+#elif SIZE_MAX == UINT64_MAX
+    return aws_add_u64_checked(a, b, (uint64_t *)r);
+#else
+#    error "Target not supported"
+#endif
+}
+
 #if _MSC_VER
 #    pragma warning(pop)
 #endif /* _MSC_VER */

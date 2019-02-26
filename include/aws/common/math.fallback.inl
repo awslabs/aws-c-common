@@ -66,3 +66,51 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     }
     return 1;
 }
+
+/**
+ * Adds a + b.  If the result overflows returns 2^64 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
+  uint64_t x = a + b;
+  if(x < a) {
+    return UINT64_MAX;
+  }
+  return x;
+}
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+  uint64_t x = a + b;
+  *r = x;
+  if(x < a) {
+    return 0;
+  }
+  return 1;
+}
+
+/**
+ * Adds a + b. If the result overflows returns 2^32 - 1.
+ */
+AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+  uint32_t x = a + b;
+  if(x < a) {
+    return UINT32_MAX;
+  }
+  return x;
+}
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+  uint32_t x = a + b;
+  *r = x;
+  if(x < a) {
+    return 0;
+  }
+  return 1;
+}

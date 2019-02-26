@@ -102,3 +102,72 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     *r = result;
     return flag;
 }
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    char flag;
+    __asm__ ("addq %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
+	     "setnc %[flag]\n"  /* [flag] = 0 if overflow, 1 otherwise */
+	     : /* in/out: */   [arga] "+r"(a), [flag] "=&r"(flag)
+	     : /* in: */       [argb] "r"(b)
+	     : /* clobbers: */ "cc"
+	     );
+    *r = a;
+    return flag;
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^64 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    uint64_t result = UINT64_MAX;
+    __asm__ ("addq %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
+	     "cmovncq %[arga], %[result]\n"  /* [result] = UINT64_MAX if overflow, a+b otherwise*/
+	     : /* in/out: */   [result] "+r"(result)
+	     : /* in: */       [arga] "r"(a), [argb] "r"(b)
+	     : /* clobbers: */ "cc"
+	     );
+    return result;
+}
+
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    char flag;
+    __asm__ ("addl %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
+	     "setnc %[flag]\n"  /* [flag] = 0 if overflow, 1 otherwise */
+	     : /* in/out: */   [arga] "+r"(a), [flag] "=&r"(flag)
+	     : /* in: */       [argb] "r"(b)
+	     : /* clobbers: */ "cc"
+	     );
+    *r = a;
+    return flag;
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^32 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    uint32_t result = UINT32_MAX;
+    __asm__ ("addl %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
+	     "cmovncl %[arga], %[result]\n"  /* [result] = UINT64_MAX if overflow, a+b otherwise*/
+	     : /* in/out: */   [result] "+r"(result)
+	     : /* in: */       [arga] "r"(a), [argb] "r"(b)
+	     : /* clobbers: */ "cc"
+	     );
+    return result;
+}

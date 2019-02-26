@@ -51,6 +51,8 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     return out == 0 ? ret_val : ~(uint32_t)0;
 }
 
+
+
 /**
  * Multiplies a * b and returns the result in *r. If the result overflows,
  * returns 0, else returns 1.
@@ -60,4 +62,47 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     *r = _mulx_u32(a, b, &out);
 
     return out == 0;
+}
+
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u64_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    return !_addcarry_u64(0, a, b, *r);
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^64 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint32_t a, uint32_t b) {
+    uint32_t res;
+
+    if (_addcarry_u64(0, a, b, &res)) {
+        res = UINT64_MAX;
+    }
+
+    return res;
+}
+
+/**
+ * Adds a + b and returns the result in *r. If the result overflows,
+ * returns 0, else returns 1.
+ */
+AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    return !_addcarry_u32(0, a, b, *r);
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^32 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+    uint32_t res;
+
+    if (_addcarry_u32(0, a, b, &res)) {
+        res = UINT32_MAX;
+    }
+
+    return res;
 }
