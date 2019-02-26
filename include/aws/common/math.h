@@ -91,10 +91,10 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 }
 
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
-    if ((uint64_t)SIZE_MAX == ~(uint32_t)0) {
-        return (int)aws_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t *)r);
+    if (sizeof(size_t) == sizeof(uint32_t)) {
+        return aws_mul_u32_checked(a, b, (uint32_t *)r);
     }
-    return (int)aws_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t *)r);
+    return aws_mul_u64_checked(a, b, (uint64_t *)r);
 }
 
 #if _MSC_VER
