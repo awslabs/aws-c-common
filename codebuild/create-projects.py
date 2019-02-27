@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description='Creates all required AWS CodeBuild
 parser.add_argument('project', type=str, help='The name of the repo to create the projects for')
 parser.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
 parser.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
+parser.add_argument('--linux-image', type=str, default='aws/codebuild/ubuntu-base:14.04', help='The codebuild image to use in the Linux environment')
 args = parser.parse_args()
 
 # The template for the arguments to be passed to create_project
@@ -46,7 +47,7 @@ CREATE_PARAM_TEMPLATE = {
 ENVIRONMENTS = {
     'linux': {
         'type': 'LINUX_CONTAINER',
-        'image': 'aws/codebuild/ubuntu-base:14.04',
+        'image': args.linux_image,
         'computeType': 'BUILD_GENERAL1_SMALL',
         'environmentVariables': [],
         'privilegedMode': False,
