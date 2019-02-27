@@ -78,23 +78,23 @@ AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 #endif                              /* _MSC_VER */
 
 AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
-    /* static assert: SIZE_MAX == (~(uint32_t)0) || (~(uint64_t)0)*/
-    char assert_sizet_is_32_or_64_bit
-        [(((uint64_t)SIZE_MAX == ~(uint32_t)0) || ((uint64_t)SIZE_MAX == ~(uint64_t)0)) ? 1 : -1] = {0};
-    /* suppress unused variable warning */
-    (void)assert_sizet_is_32_or_64_bit;
-
-    if ((uint64_t)SIZE_MAX == ~(uint32_t)0) {
-        return (size_t)aws_mul_u32_saturating((uint32_t)a, (uint32_t)b);
-    }
+#if SIZE_MAX == UINT32_MAX
+    return (size_t)aws_mul_u32_saturating(a, b);
+#elif SIZE_MAX == UINT64_MAX
     return (size_t)aws_mul_u64_saturating(a, b);
+#else
+#    error "Target not supported"
+#endif
 }
 
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
-    if ((uint64_t)SIZE_MAX == ~(uint32_t)0) {
-        return (int)aws_mul_u32_checked((uint32_t)a, (uint32_t)b, (uint32_t *)r);
-    }
-    return (int)aws_mul_u64_checked((uint32_t)a, (uint32_t)b, (uint64_t *)r);
+#if SIZE_MAX == UINT32_MAX
+    return aws_mul_u32_checked(a, b, (uint32_t *)r);
+#elif SIZE_MAX == UINT64_MAX
+    return aws_mul_u64_checked(a, b, (uint64_t *)r);
+#else
+#    error "Target not supported"
+#endif
 }
 
 #if _MSC_VER
