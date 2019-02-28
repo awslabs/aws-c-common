@@ -54,8 +54,8 @@ extern "C" {
 AWS_COMMON_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
 
 /**
- * Multiplies a * b and returns the truncated result in *r. If the result
- * overflows, returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
@@ -65,10 +65,33 @@ AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 AWS_COMMON_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
 
 /**
- * Multiplies a * b and returns the result in *r. If the result overflows,
- * returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
+
+/**
+ * Adds a + b.  If the result overflows returns 2^64 - 1.
+ */
+AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b)
+
+    /**
+     * Adds a + b and returns the result in *r. If the result
+     * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+     */
+    AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
+
+/**
+ * Adds a + b. If the result overflows returns 2^32 - 1.
+ */
+AWS_COMMON_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
+
+/**
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
+AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
+
 #    endif
 #endif
 
@@ -77,6 +100,9 @@ AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
 #endif                              /* _MSC_VER */
 
+/**
+ * Multiplies a * b. If the result overflows, returns SIZE_MAX.
+ */
 AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 #if SIZE_MAX == UINT32_MAX
     return (size_t)aws_mul_u32_saturating(a, b);
@@ -87,6 +113,10 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 #endif
 }
 
+/**
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_MAX == UINT32_MAX
     return aws_mul_u32_checked(a, b, (uint32_t *)r);
@@ -97,6 +127,9 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #endif
 }
 
+/**
+ * Adds a + b.  If the result overflows returns SIZE_MAX.
+ */
 AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
 #if SIZE_MAX == UINT32_MAX
     return (size_t)aws_add_u32_saturating(a, b);
@@ -106,6 +139,11 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
 #    error "Target not supported"
 #endif
 }
+
+/**
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
 
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_MAX == UINT32_MAX

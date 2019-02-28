@@ -28,18 +28,21 @@
 AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t out;
     uint64_t ret_val = _umul128(a, b, &out);
-    return out == 0 ? ret_val : ~(uint64_t)0;
+    return (out == 0) ? ret_val : UINT64_MAX;
 }
 
 /**
- * Multiplies a * b and returns the truncated result in *r. If the result
- * overflows, returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint64_t out;
     *r = _umul128(a, b, &out);
 
-    return out == 0;
+    if (out != 0) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
 }
 
 /**
@@ -48,29 +51,32 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t out;
     uint32_t ret_val = _mulx_u32(a, b, &out);
-    return out == 0 ? ret_val : ~(uint32_t)0;
+    return (out == 0) ? ret_val : UINT32_MAX;
 }
 
-
-
 /**
- * Multiplies a * b and returns the result in *r. If the result overflows,
- * returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     uint32_t out;
     *r = _mulx_u32(a, b, &out);
 
-    return out == 0;
+    if (out != 0) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
 }
 
-
 /**
- * Adds a + b and returns the result in *r. If the result overflows,
- * returns 0, else returns 1.
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    return !_addcarry_u64(0, a, b, *r);
+    if (_addcarry_u64(0, a, b, *r)) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
 }
 
 /**
@@ -87,11 +93,14 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint32_t a, uint32_t b) {
 }
 
 /**
- * Adds a + b and returns the result in *r. If the result overflows,
- * returns 0, else returns 1.
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    return !_addcarry_u32(0, a, b, *r);
+  if(_addcarry_u32(0, a, b, *r){
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
 }
 
 /**
