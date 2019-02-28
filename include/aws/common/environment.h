@@ -35,7 +35,7 @@ int aws_get_environment_value(
     struct aws_string **value_out);
 
 AWS_COMMON_API
-int aws_set_environment_value(const struct aws_string *variable_name, struct aws_string *value);
+int aws_set_environment_value(const struct aws_string *variable_name, const struct aws_string *value);
 
 AWS_COMMON_API
 int aws_unset_environment_value(const struct aws_string *variable_name);

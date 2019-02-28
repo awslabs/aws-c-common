@@ -38,7 +38,7 @@ int aws_get_environment_value(
     return AWS_OP_SUCCESS;
 }
 
-int aws_set_environment_value(const struct aws_string *variable_name, struct aws_string *value) {
+int aws_set_environment_value(const struct aws_string *variable_name, const struct aws_string *value) {
 
     if (setenv((const char *)variable_name->bytes, (const char *)value->bytes, 1) != 0) {
         return AWS_OP_ERR;
