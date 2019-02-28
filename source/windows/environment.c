@@ -20,34 +20,34 @@
 #include <stdlib.h>
 
 int aws_get_environment_value(
-	struct aws_allocator *allocator,
-	const struct aws_string *variable_name,
-	struct aws_string **value_out) {
+    struct aws_allocator *allocator,
+    const struct aws_string *variable_name,
+    struct aws_string **value_out) {
 
-#	pragma warning( push )
-#   pragma warning(disable : 4996)
+#pragma warning(push)
+#pragma warning(disable : 4996)
 
-	const char *value = getenv((const char *)variable_name->bytes);
+    const char *value = getenv((const char *)variable_name->bytes);
 
-#	pragma warning( pop )
+#pragma warning(pop)
 
-	if (value == NULL) {
-		*value_out = NULL;
-		return AWS_OP_SUCCESS;
-	}
+    if (value == NULL) {
+        *value_out = NULL;
+        return AWS_OP_SUCCESS;
+    }
 
-	*value_out = aws_string_new_from_c_str(allocator, value);
-	if (*value_out == NULL) {
-		return AWS_OP_ERR;
-	}
+    *value_out = aws_string_new_from_c_str(allocator, value);
+    if (*value_out == NULL) {
+        return AWS_OP_ERR;
+    }
 
-	return AWS_OP_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_set_environment_value(const struct aws_string *variable_name, const struct aws_string *value) {
-	if (_putenv_s((const char *)variable_name->bytes, (const char *)value->bytes) != 0) {
-		return AWS_OP_ERR;
-	}
+    if (_putenv_s((const char *)variable_name->bytes, (const char *)value->bytes) != 0) {
+        return AWS_OP_ERR;
+    }
 
     return AWS_OP_SUCCESS;
 }
@@ -55,5 +55,5 @@ int aws_set_environment_value(const struct aws_string *variable_name, const stru
 AWS_STATIC_STRING_FROM_LITERAL(s_empty_string, "");
 
 int aws_unset_environment_value(const struct aws_string *variable_name) {
-	return aws_set_environment_value(variable_name, s_empty_string);
+    return aws_set_environment_value(variable_name, s_empty_string);
 }
