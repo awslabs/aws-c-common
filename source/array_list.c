@@ -20,7 +20,11 @@
 
 int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
     if (list->alloc) {
-        size_t ideal_size = list->length * list->item_size;
+        size_t ideal_size;
+        if (aws_mul_size_checked(list->length, list->item_size, &ideal_size)) {
+            return AWS_OP_ERR;
+        }
+
         if (ideal_size < list->current_size) {
             void *raw_data = NULL;
 
@@ -46,7 +50,10 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
     assert(from->item_size == to->item_size);
     assert(from->data);
 
-    size_t copy_size = from->length * from->item_size;
+    size_t copy_size;
+    if (aws_mul_size_checked(from->length, from->item_size, &copy_size)) {
+        return AWS_OP_ERR;
+    }
 
     if (to->current_size >= copy_size) {
         if (copy_size > 0) {
@@ -78,7 +85,10 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
 }
 
 int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, size_t index) {
-    size_t necessary_size = (index + 1) * list->item_size;
+    size_t necessary_size;
+    if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
+        return AWS_OP_ERR;
+    }
 
     if (list->current_size < necessary_size) {
         if (!list->alloc) {
