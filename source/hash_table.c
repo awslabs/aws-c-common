@@ -164,7 +164,7 @@ static struct hash_table_state *s_alloc_state(const struct hash_table_state *tem
 
     /* We use size - 1 because the first slot is inlined into the
      * hash_table_state structure. */
-    if (!aws_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
+    if (aws_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
         return NULL;
     }
 

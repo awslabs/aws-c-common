@@ -16,6 +16,7 @@
  * permissions and limitations under the License.
  */
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
 #include <assert.h>
 #include <stdlib.h>
