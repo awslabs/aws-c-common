@@ -19,7 +19,11 @@ struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, co
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
-    struct aws_string *str = aws_mem_acquire(allocator, sizeof(struct aws_string) + len + 1);
+    size_t malloc_size;
+    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
+        return NULL;
+    }
+    struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
     if (!str) {
         return NULL;
     }
