@@ -32,7 +32,7 @@ int aws_get_environment_value(
 
     *value_out = aws_string_new_from_c_str(allocator, value);
     if (*value_out == NULL) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_ENVIRONMENT_GET);
     }
 
     return AWS_OP_SUCCESS;
@@ -41,7 +41,7 @@ int aws_get_environment_value(
 int aws_set_environment_value(const struct aws_string *variable_name, const struct aws_string *value) {
 
     if (setenv((const char *)variable_name->bytes, (const char *)value->bytes, 1) != 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_ENVIRONMENT_SET);
     }
 
     return AWS_OP_SUCCESS;
@@ -49,7 +49,7 @@ int aws_set_environment_value(const struct aws_string *variable_name, const stru
 
 int aws_unset_environment_value(const struct aws_string *variable_name) {
     if (unsetenv((const char *)variable_name->bytes) != 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_ENVIRONMENT_UNSET);
     }
 
     return AWS_OP_SUCCESS;
