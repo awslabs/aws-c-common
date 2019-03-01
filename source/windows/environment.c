@@ -13,8 +13,6 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/environment.h>
-
 #include <aws/common/string.h>
 
 #include <stdlib.h>
