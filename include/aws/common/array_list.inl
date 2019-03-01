@@ -28,7 +28,7 @@ int aws_array_list_init_dynamic(
     size_t item_size) {
     list->alloc = alloc;
     size_t allocation_size;
-    if(!aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
+    if(aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
         return AWS_OP_ERR;
     }
     list->data = NULL;
@@ -62,7 +62,7 @@ void aws_array_list_init_static(
 
     list->alloc = NULL;
 
-    int no_overflow = aws_mul_size_checked(item_count, item_size, &list->current_size);
+    int no_overflow = !aws_mul_size_checked(item_count, item_size, &list->current_size);
     AWS_FATAL_ASSERT(no_overflow);
 
     list->item_size = item_size;

@@ -40,23 +40,25 @@ AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
 }
 
 /**
- * Multiplies a * b and returns the truncated result in *r. If the result
- * overflows, returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
-    int flag;
+    char flag;
     uint64_t result = a;
-    __asm__("mulq %q[arg2]\n"    /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
-            "setno %%dl\n"       /* rdx = (OF = 0) */
-            "and $0xFF, %%edx\n" /* mask out flag */
-            : /* in/out: %rax (with first operand) */ "+&a"(result), "=&d"(flag)
+    __asm__("mulq %q[arg2]\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
+            "seto %[flag]\n"  /* flag = overflow_bit */
+            : /* in/out: %rax (with first operand) */ "+&a"(result), [flag] "=&r"(flag)
             : /* in: reg for 2nd operand */
             [arg2] "r"(b)
             : /* clobbers: cc */ "cc");
     *r = result;
-    return flag;
+    if (flag) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
 }
 
 /**
@@ -81,24 +83,95 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
 }
 
 /**
- * Multiplies a * b and returns the result in *r. If the result overflows,
- * returns 0, else returns 1.
+ * Multiplies a * b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
     uint32_t result = a;
-    int flag;
+    char flag;
     /**
      * Note: We use SETNO which only takes a byte register. To make this easy,
      * we'll write it to dl (which we throw away anyway) and mask off the high bits.
      */
-    __asm__("mull %k[arg2]\n"    /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
-            "setno %%dl\n"       /* flag = !OF ^ (junk in top 24 bits) */
-            "and $0xFF, %%edx\n" /* flag = flag & 0xFF */
-            /* we allocate flag to EDX since it'll be clobbered by MUL anyway */
-            : /* in/out: %eax = a, %dl = flag */ "+&a"(result), "=&d"(flag)
+    __asm__("mull %k[arg2]\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
+            "seto %[flag]\n"  /* flag = overflow_bit */
+            : /* in/out: %eax = a */ "+&a"(result), [flag] "=&r"(flag)
             : /* reg = b */ [arg2] "r"(b)
             : /* clobbers: cc */ "cc");
     *r = result;
-    return flag;
+    if (flag) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+/**
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
+AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    char flag;
+    __asm__("addq %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
+            "setc %[flag]\n"          /* [flag] = 1 if overflow, 0 otherwise */
+            : /* in/out: */ [arga] "+r"(a), [flag] "=&r"(flag)
+            : /* in: */ [argb] "r"(b)
+            : /* clobbers: */ "cc");
+    *r = a;
+    if (flag) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^64 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    uint64_t result = UINT64_MAX;
+    __asm__("addq %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
+            "cmovncq %[arga], %[result]\n" /* [result] = UINT64_MAX if overflow, a+b otherwise*/
+            : /* in/out: */ [result] "+r"(result)
+            : /* in: */ [arga] "r"(a), [argb] "r"(b)
+            : /* clobbers: */ "cc");
+    return result;
+}
+
+/**
+ * Adds a + b and returns the result in *r. If the result
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
+AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    char flag;
+    __asm__("addl %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
+            "setc %[flag]\n"          /* [flag] = 1 if overflow, 0 otherwise */
+            : /* in/out: */ [arga] "+r"(a), [flag] "=&r"(flag)
+            : /* in: */ [argb] "r"(b)
+            : /* clobbers: */ "cc");
+    *r = a;
+    if (flag) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+/**
+ * Adds a + b. If the result overflows, returns 2^32 - 1.
+ */
+AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+    /* We can use inline assembly to do this efficiently on x86-64 and x86. */
+
+    uint32_t result = UINT32_MAX;
+    __asm__("addl %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
+            "cmovncl %[arga], %[result]\n" /* [result] = UINT32_MAX if overflow, a+b otherwise*/
+            : /* in/out: */ [result] "+r"(result)
+            : /* in: */ [arga] "r"(a), [argb] "r"(b)
+            : /* clobbers: */ "cc");
+    return result;
 }
