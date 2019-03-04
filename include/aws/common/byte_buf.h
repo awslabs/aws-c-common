@@ -241,6 +241,15 @@ AWS_COMMON_API
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
 
 /**
+ * Perform a case-insensitive string comparison of two aws_byte_cursors.
+ * Returns true if a and b are equivalent.
+ * The "C" locale is used for comparing upper and lowercase letters.
+ * Data is assumed to be ASCII text, UTF-8 will work fine too.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_eq_case_insensitive(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
+
+/**
  * Compares an aws_byte_cursor against an aws_byte_buf
  * Returns true if a has the same length as b and their buffers have the same bytes
  * (or both buffers are null). When both a and b are null the function returns true
