@@ -1,8 +1,33 @@
-include ../Makefile
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You may not use
+# this file except in compliance with the License. A copy of the License is
+# located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing permissions and
+# limitations under the License.
 
-proofs.goto:
-	cd ../../..; \
-	goto-cc .cbmc-batch/array_list_proofs.c source/byte_buf.c \
-	source/array_list.c source/common.c source/error.c .cbmc-batch/patches/string.c \
-	-Iinclude/ -I.cbmc-batch/ -o .cbmc-batch/jobs/aws_array_list_set_at/proofs.goto \
-	--function aws_array_list_set_at_verify
+###########
+#NOTE: If we don't use the unwindset, leave it empty
+CBMC_UNWINDSET = --unwindset
+CBMC_UNWINDSET += __builtin___memcpy_chk.0:33,
+CBMC_UNWINDSET := $(CBMC_UNWINDSET)aws_mem_release:1,
+CBMC_UNWINDSET := $(CBMC_UNWINDSET)memcpy.0:33,
+CBMC_UNWINDSET := $(CBMC_UNWINDSET)strlen.0:33
+
+CBMCFLAGS +=
+
+DEPENDENCIES = $(SRCDIR)/source/array_list.c \
+	       $(SRCDIR)/source/byte_buf.c \
+	       $(SRCDIR)/source/common.c \
+	       $(SRCDIR)/source/error.c \
+	       $(HELPERDIR)/patches/string.c
+
+ENTRY = aws_array_list_set_at_harness
+###########
+
+include ../Makefile.common

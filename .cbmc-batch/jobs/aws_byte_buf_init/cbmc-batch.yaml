@@ -1,4 +1,4 @@
 jobos: ubuntu16
-cbmcflags: "--bounds-check;--pointer-check;--function;aws_byte_buf_init_verify"
-goto: proofs.goto
+cbmcflags: "--bounds-check;--pointer-check;--function;aws_byte_buf_init_harness"
+goto: aws_byte_buf_init_harness.goto
 expected: "SUCCESSFUL"
