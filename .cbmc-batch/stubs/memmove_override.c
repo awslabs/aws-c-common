@@ -13,89 +13,42 @@
  * permissions and limitations under the License.
  */
 
-/* FUNCTION: memmove */
-
-#ifndef __CPROVER_STRING_H_INCLUDED
-#    include <string.h>
-#    define __CPROVER_STRING_H_INCLUDED
-#endif
-
 #undef memmove
 
-void *memmove(void *dest, const void *src, size_t n) {
-__CPROVER_HIDE:;
-#ifdef __CPROVER_STRING_ABSTRACTION
-    __CPROVER_precondition(__CPROVER_buffer_size(src) >= n, "memmove buffer overflow");
-    /* dst = src (with overlap allowed) */
-    if (__CPROVER_is_zero_string(src) && n > __CPROVER_zero_string_length(src)) {
-        __CPROVER_is_zero_string(src) = 1;
-        __CPROVER_zero_string_length(dest) = __CPROVER_zero_string_length(src);
-    } else
-        __CPROVER_is_zero_string(dest) = 0;
-#else
-
-    if (n > 0) {
-        (void)*(char *)dest;                  /* check that the memory is accessible */
-        (void)*(const char *)src;             /* check that the memory is accessible */
-        (void)*(((char *)dest) + n - 1);      /* check that the memory is accessible */
-        (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
-        char src_n[n];
-        __CPROVER_array_copy(src_n, (char *)src);
-        __CPROVER_array_replace((char *)dest, src_n);
-    }
-#endif
-    return dest;
-}
-
-/* FUNCTION: __builtin___memmove_chk */
-
-#ifndef __CPROVER_STRING_H_INCLUDED
-#    include <string.h>
-#    define __CPROVER_STRING_H_INCLUDED
-#endif
-
-#undef memmove
+#include <proof_helpers/nondet.h>
+#include <stdint.h>
 
 /**
+ * Override the version of memmove used by CBMC.
  * Source: https://clc-wiki.net/wiki/memmove
  */
-void *impl_memmove(void *dest, const void *src, size_t n) {
-    unsigned char *pd = dest;
-    const unsigned char *ps = src;
-    if ((ps) < (pd))
-        for (pd += n, ps += n; n--;)
-            *--pd = *--ps;
-    else if (!n)
-        while (n--)
-            *pd++ = *ps++;
+void *memmove_impl(void *dest, const void *src, size_t n) {
+    if (n > 0) {
+        (void)*(char *)dest;                           /* check that the memory is accessible */
+        (void)*(const char *)src;                      /* check that the memory is accessible */
+        (void)*(((unsigned char *)dest) + n - 1);      /* check that the memory is accessible */
+        (void)*(((const unsigned char *)src) + n - 1); /* check that the memory is accessible */
+
+        unsigned char *pd = dest;
+        const unsigned char *ps = src;
+        if ((ps) < (pd)) {
+            for (pd += n, ps += n; n--;)
+                *--pd = *--ps;
+        } else {
+            while (n) {
+                *pd++ = *ps++;
+                n--;
+            }
+        }
+    }
     return dest;
 }
 
-void *__builtin___memmove_chk(void *dest, const void *src, size_t n, __CPROVER_size_t size) {
-__CPROVER_HIDE:;
-#ifdef __CPROVER_STRING_ABSTRACTION
-    __CPROVER_precondition(__CPROVER_buffer_size(src) >= n, "memmove buffer overflow");
-    __CPROVER_precondition(__CPROVER_buffer_size(dest) == size, "builtin object size");
-    /* dst = src (with overlap allowed) */
-    if (__CPROVER_is_zero_string(src) && n > __CPROVER_zero_string_length(src)) {
-        __CPROVER_is_zero_string(src) = 1;
-        __CPROVER_zero_string_length(dest) = __CPROVER_zero_string_length(src);
-    } else {
-        __CPROVER_is_zero_string(dest) = 0;
-    }
-#else
-    (void)size;
+void *memmove(void *dest, const void *src, size_t n) {
+    return memmove_impl(dest, src, n);
+}
 
-    if (n > 0) {
-        (void)*(char *)dest;                  /* check that the memory is accessible */
-        (void)*(const char *)src;             /* check that the memory is accessible */
-        (void)*(((char *)dest) + n - 1);      /* check that the memory is accessible */
-        (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
-        impl_memmove(dest, src, n);
-        // char src_n[n];
-        //__CPROVER_array_copy(src_n, (char *)src);
-        //__CPROVER_array_replace((char *)dest, src_n);
-    }
-#endif
-    return dest;
+void *__builtin___memmove_chk(void *dest, const void *src, size_t n, size_t size) {
+    (void)size;
+    return memmove_impl(dest, src, n);
 }

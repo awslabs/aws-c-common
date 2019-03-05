@@ -24,8 +24,6 @@
 
 #include <stdlib.h>
 
-#define MAX_INITIAL_ITEM_ALLOCATION 5
-#define MAX_ITEM_SIZE 2
 #define MAX_STR_LEN 2
 #define MAX_BUF_LEN 2
 
@@ -95,3 +93,8 @@ struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *al
  * Makes a valid string, with as much nondet as possible, len < max
  */
 struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max);
+
+/**
+ * Standard implementation of compare function for qsort
+ */
+int compare(const void *a, const void *b, size_t item_size);

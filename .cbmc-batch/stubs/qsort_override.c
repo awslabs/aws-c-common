@@ -21,5 +21,5 @@ void qsort(void *base, __CPROVER_size_t num, __CPROVER_size_t size, int (*compar
     __CPROVER_size_t index_b;
     __CPROVER_assume(index_b < num);
     __CPROVER_assume(index_a != index_b);
-    compare((void *)((unsigned int *)base + (size * index_a)), (void *)((unsigned int *)base + (size * index_b)));
+    compare((void *)((unsigned int *)base + (size * index_a)), (void *)((unsigned int *)base + (size * index_b)), size);
 }

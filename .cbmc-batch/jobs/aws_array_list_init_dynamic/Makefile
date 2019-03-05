@@ -17,10 +17,11 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
-		   $(HELPERDIR)/stubs/error.c \
-	       $(SRCDIR)/source/array_list.c \
-	       $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(SRCDIR)/source/array_list.c
+DEPENDENCIES += $(SRCDIR)/source/common.c
 
 ENTRY = aws_array_list_init_dynamic_harness
 ###########

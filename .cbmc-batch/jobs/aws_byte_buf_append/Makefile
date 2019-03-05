@@ -13,17 +13,15 @@
 
 ###########
 #NOTE: If we don't use the unwindset, leave it empty
-CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += memcpy_impl.0:33,
-CBMC_UNWINDSET := $(CBMC_UNWINDSET)memcpy.0:33
+#CBMC_UNWINDSET = --unwindset
 
 CBMCFLAGS +=
 
-DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
-		   $(HELPERDIR)/stubs/error.c \
-	       $(HELPERDIR)/stubs/memcpy_override.c \
-	       $(SRCDIR)/source/byte_buf.c \
-	       $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_loop.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
+DEPENDENCIES += $(SRCDIR)/source/common.c
 
 ENTRY = aws_byte_buf_append_harness
 ###########
