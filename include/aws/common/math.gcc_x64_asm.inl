@@ -50,10 +50,10 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint64_t result = a;
     __asm__("mulq %q[arg2]\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
             "seto %[flag]\n"  /* flag = overflow_bit */
-            : /* in/out: %rax (with first operand) */ "+&a"(result), [flag] "=&r"(flag)
+            : /* in/out: %rax (first arg & result), %d (flag) */ "+&a"(result), [flag] "=&d"(flag)
             : /* in: reg for 2nd operand */
             [arg2] "r"(b)
-            : /* clobbers: cc */ "cc");
+            : /* clobbers: cc (d is used for flag so no need to clobber)*/ "cc");
     *r = result;
     if (flag) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
@@ -96,9 +96,10 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
      */
     __asm__("mull %k[arg2]\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
             "seto %[flag]\n"  /* flag = overflow_bit */
-            : /* in/out: %eax = a */ "+&a"(result), [flag] "=&r"(flag)
-            : /* reg = b */ [arg2] "r"(b)
-            : /* clobbers: cc */ "cc");
+            : /* in/out: %eax (first arg & result), %d (flag) */ "+&a"(result), [flag] "=&d"(flag)
+            : /* in: reg for 2nd operand */
+            [arg2] "r"(b)
+            : /* clobbers: cc (d is used for flag so no need to clobber)*/ "cc");
     *r = result;
     if (flag) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
