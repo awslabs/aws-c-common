@@ -374,6 +374,18 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_INVALID_STATE,
         "An invalid state was encountered."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_ENVIRONMENT_GET,
+        "System call failure when getting an environment variable."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_ENVIRONMENT_SET,
+        "System call failure when setting an environment variable."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_ENVIRONMENT_UNSET,
+        "System call failure when unsetting an environment variable."
+    ),
 };
 /* clang-format on */
 
