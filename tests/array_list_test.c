@@ -816,7 +816,9 @@ static int s_array_list_not_enough_space_test_failure_fn(struct aws_allocator *a
         aws_array_list_init_dynamic(&list_a, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
+    ASSERT_TRUE(list_a.data);
     aws_array_list_init_static(&list_b, static_list, 1, sizeof(int));
+    ASSERT_TRUE(list_b.data);
 
     int first = 1, second = 2;
 

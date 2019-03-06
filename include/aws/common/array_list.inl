@@ -26,9 +26,13 @@ int aws_array_list_init_dynamic(
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
     size_t item_size) {
+    if (item_size == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
     list->alloc = alloc;
     size_t allocation_size;
-    if(aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
+    if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
         return AWS_OP_ERR;
     }
     list->data = NULL;
@@ -46,6 +50,7 @@ int aws_array_list_init_dynamic(
 #endif
         list->current_size = allocation_size;
     }
+    assert(list->current_size == 0 || list->data);
 
     return AWS_OP_SUCCESS;
 }
@@ -172,7 +177,9 @@ void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_swap_contents(struct aws_array_list *AWS_RESTRICT list_a, struct aws_array_list *AWS_RESTRICT list_b) {
+void aws_array_list_swap_contents(
+    struct aws_array_list *AWS_RESTRICT list_a,
+    struct aws_array_list *AWS_RESTRICT list_b) {
     assert(list_a->alloc);
     assert(list_a->alloc == list_b->alloc);
     assert(list_a->item_size == list_b->item_size);
@@ -219,14 +226,32 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, vo
 }
 
 AWS_STATIC_IMPL
+int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size) {
+    size_t index_inc;
+    if (aws_add_size_checked(index, 1, &index_inc)) {
+        return AWS_OP_ERR;
+    }
+
+    if (aws_mul_size_checked(index_inc, list->item_size, necessary_size)) {
+        return AWS_OP_ERR;
+    }
+    return AWS_OP_SUCCESS;
+}
+
+AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
-    size_t necessary_size = (index + 1) * list->item_size;
+    size_t necessary_size;
+    if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
+        return AWS_OP_ERR;
+    }
 
     if (list->current_size < necessary_size) {
         if (aws_array_list_ensure_capacity(list, index)) {
             return AWS_OP_ERR;
         }
     }
+
+    assert(list->data);
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 

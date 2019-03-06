@@ -22,7 +22,7 @@ struct aws_array_list *get_arbitrary_array_list(size_t item_count, size_t item_s
         /* Use default allocator */
         struct aws_allocator *allocator = malloc(sizeof(*allocator));
         ASSUME_DEFAULT_ALLOCATOR(allocator);
-        aws_array_list_init_dynamic(list, allocator, item_count, item_size);
+        __CPROVER_assume(!aws_array_list_init_dynamic(list, allocator, item_count, item_size));
     } else { /* Static initialization */
         __CPROVER_assume(item_count > 0);
         __CPROVER_assume(item_size > 0);
