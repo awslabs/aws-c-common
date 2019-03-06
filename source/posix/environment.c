@@ -13,8 +13,9 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/string.h>
+#include <aws/common/environment.h>
 
+#include <aws/common/string.h>
 #include <stdlib.h>
 
 int aws_get_environment_value(
