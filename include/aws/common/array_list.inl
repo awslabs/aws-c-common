@@ -26,6 +26,10 @@ int aws_array_list_init_dynamic(
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
     size_t item_size) {
+    if (item_size == 0) {
+        return AWS_OP_ERR;
+    }
+
     list->alloc = alloc;
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
