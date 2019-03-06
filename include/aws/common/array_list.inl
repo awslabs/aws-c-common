@@ -27,7 +27,7 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
     if (item_size == 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     list->alloc = alloc;
