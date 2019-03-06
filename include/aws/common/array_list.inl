@@ -46,6 +46,7 @@ int aws_array_list_init_dynamic(
 #endif
         list->current_size = allocation_size;
     }
+    assert(list->current_size == 0 || list->data);
 
     return AWS_OP_SUCCESS;
 }
@@ -245,6 +246,8 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
             return AWS_OP_ERR;
         }
     }
+
+    assert(list->data);
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 
