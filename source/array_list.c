@@ -163,8 +163,8 @@ static void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT
 }
 
 void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, size_t b) {
-    assert(a < list->length);
-    assert(b < list->length);
+    AWS_FATAL_ASSERT(a < list->length);
+    AWS_FATAL_ASSERT(b < list->length);
     if (a == b) {
         return;
     }

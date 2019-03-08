@@ -185,7 +185,7 @@ AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index);
 
 /**
- * Swap elements at the specified indices.
+ * Swap elements at the specified indices, which must be within the bounds of the array.
  */
 AWS_COMMON_API
 void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, size_t b);
