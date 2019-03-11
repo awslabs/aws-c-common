@@ -188,6 +188,12 @@ AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
 
 /**
+ * Returns true if the byte cursor's range of bytes all satisfy the predicate
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_satisfies_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
+
+/**
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
  * returned. dest->len will contain the amount of data actually copied to dest.
  *

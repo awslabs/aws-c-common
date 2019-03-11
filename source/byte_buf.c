@@ -284,3 +284,9 @@ struct aws_byte_cursor aws_byte_cursor_trim_pred(struct aws_byte_cursor *source,
     struct aws_byte_cursor left_trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
     return aws_byte_cursor_right_trim_pred(&left_trimmed, predicate);
 }
+
+bool aws_byte_cursor_satisfies_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate) {
+    struct aws_byte_cursor trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
+
+    return trimmed.len == 0;
+}
