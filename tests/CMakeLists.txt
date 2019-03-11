@@ -178,6 +178,7 @@ add_test_case(test_byte_cursor_right_trim_basic)
 add_test_case(test_byte_cursor_left_trim_empty)
 add_test_case(test_byte_cursor_left_trim_all_whitespace)
 add_test_case(test_byte_cursor_left_trim_basic)
+add_test_case(test_byte_cursor_trim_basic)
 
 add_test_case(string_tests)
 add_test_case(binary_string_test)
