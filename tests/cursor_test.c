@@ -248,9 +248,9 @@ static const char *s_both_whitespace = "  \t \r\n " TEST_STRING " \r \t \n";
 static const char *expected_non_empty_result = TEST_STRING;
 
 static bool s_is_whitespace(uint8_t value) {
-    char value_as_char = (char) value;
+    char value_as_char = (char)value;
 
-    switch(value_as_char) {
+    switch (value_as_char) {
         case '\t':
         case '\n':
         case '\r':
