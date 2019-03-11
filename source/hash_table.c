@@ -19,6 +19,7 @@
  */
 
 #include <aws/common/hash_table.h>
+#include <aws/common/private/hash_table.h>
 
 #include <aws/common/math.h>
 #include <aws/common/string.h>
@@ -31,7 +32,7 @@
  * macro. */
 #include <aws/common/private/lookup3.c>
 
-static void s_suppress_unused_lookup3_func_warnings(void) {
+AWS_STATIC void s_suppress_unused_lookup3_func_warnings(void) {
     /* We avoid making changes to lookup3 if we can avoid it, but since it has functions
      * we're not using, reference them somewhere to suppress the unused function warning.
      */
@@ -41,28 +42,7 @@ static void s_suppress_unused_lookup3_func_warnings(void) {
     (void)hashbig;
 }
 
-struct hash_table_entry {
-    struct aws_hash_element element;
-    uint64_t hash_code; /* hash code (0 signals empty) */
-};
-
-struct hash_table_state {
-    aws_hash_fn *hash_fn;
-    aws_hash_callback_eq_fn *equals_fn;
-    aws_hash_callback_destroy_fn *destroy_key_fn;
-    aws_hash_callback_destroy_fn *destroy_value_fn;
-    struct aws_allocator *alloc;
-
-    size_t size, entry_count;
-    size_t max_load;
-    /* We AND a hash value with mask to get the slot index */
-    size_t mask;
-    double max_load_factor;
-    /* actually variable length */
-    struct hash_table_entry slots[1];
-};
-
-static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
+AWS_STATIC uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
     s_suppress_unused_lookup3_func_warnings();
 
     uint64_t hash_code = state->hash_fn(key);
@@ -73,13 +53,13 @@ static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
     return hash_code;
 }
 
-static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
+AWS_STATIC size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
     return (size_t)(entry - map->slots);
 }
 
 #if 0
 /* Useful debugging code for anyone working on this in the future */
-static uint64_t s_distance(struct hash_table_state *state, int index) {
+AWS_STATIC uint64_t s_distance(struct hash_table_state *state, int index) {
     return (index - state->slots[index].hash_code) & state->mask;
 }
 
@@ -159,7 +139,7 @@ size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map) {
  * size, and copies the state header into this allocated memory, which is
  * returned.
  */
-static struct hash_table_state *s_alloc_state(const struct hash_table_state *template) {
+AWS_STATIC struct hash_table_state *s_alloc_state(const struct hash_table_state *template) {
     size_t elemsize;
 
     /* We use size - 1 because the first slot is inlined into the
@@ -187,7 +167,7 @@ static struct hash_table_state *s_alloc_state(const struct hash_table_state *tem
 }
 
 /* Computes the correct size and max_load based on a requested size. */
-static int s_update_template_size(struct hash_table_state *template, size_t expected_elements) {
+AWS_STATIC int s_update_template_size(struct hash_table_state *template, size_t expected_elements) {
     size_t min_size = expected_elements;
 
     if (min_size < 2) {
@@ -283,25 +263,9 @@ void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash
     memset(from, 0, sizeof(*from));
 }
 
-/* Tries to find where the requested key is or where it should go if put.
- * Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
- * or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
- * in *entry). Note that this does not take care of displacing whatever was in
- * that entry before.
- *
- * probe_idx is set to the probe index of the entry found.
- */
-
-static int s_find_entry1(
-    struct hash_table_state *state,
-    uint64_t hash_code,
-    const void *key,
-    struct hash_table_entry **p_entry,
-    size_t *p_probe_idx);
-
 /* Inlined fast path: Check the first slot, only. */
 /* TODO: Force inlining? */
-static int inline s_find_entry(
+AWS_STATIC int inline s_find_entry(
     struct hash_table_state *state,
     uint64_t hash_code,
     const void *key,
@@ -328,7 +292,15 @@ static int inline s_find_entry(
     return s_find_entry1(state, hash_code, key, p_entry, p_probe_idx);
 }
 
-static int s_find_entry1(
+/* Tries to find where the requested key is or where it should go if put.
+ * Returns AWS_ERROR_SUCCESS if the item existed (leaving it in *entry),
+ * or AWS_ERROR_HASHTBL_ITEM_NOT_FOUND if it did not (putting its destination
+ * in *entry). Note that this does not take care of displacing whatever was in
+ * that entry before.
+ *
+ * probe_idx is set to the probe index of the entry found.
+ */
+AWS_STATIC int s_find_entry1(
     struct hash_table_state *state,
     uint64_t hash_code,
     const void *key,
@@ -398,7 +370,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
  * Attempts to find a home for the given entry. Returns after doing nothing if
  * entry was not occupied.
  */
-static struct hash_table_entry *s_emplace_item(
+AWS_STATIC struct hash_table_entry *s_emplace_item(
     struct hash_table_state *state,
     struct hash_table_entry entry,
     size_t probe_idx) {
@@ -428,7 +400,7 @@ static struct hash_table_entry *s_emplace_item(
     return initial_placement;
 }
 
-static int s_expand_table(struct aws_hash_table *map) {
+AWS_STATIC int s_expand_table(struct aws_hash_table *map) {
     struct hash_table_state *old_state = map->p_impl;
     struct hash_table_state template = *old_state;
 
@@ -552,7 +524,7 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
  * Returns the last slot touched (note that if we wrap, we'll report an index
  * lower than the original entry's index)
  */
-static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
+AWS_STATIC size_t s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
     state->entry_count--;
 
     /* Shift subsequent entries back until we find an entry that belongs at its
@@ -677,7 +649,7 @@ bool aws_hash_table_eq(
     return true;
 }
 
-static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
+AWS_STATIC_IMPL void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
 
     struct hash_table_state *state = iter->map->p_impl;
     size_t limit = iter->limit;

@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef AWS_STATIC
+#    define AWS_STATIC static
+#endif
+
 #ifndef AWS_STATIC_IMPL
 /*
  * In order to allow us to export our inlinable methods in a DLL/.so, we have a designated .c
