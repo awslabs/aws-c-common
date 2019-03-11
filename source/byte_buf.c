@@ -256,3 +256,24 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     to->len += from->len;
     return AWS_OP_SUCCESS;
 }
+
+struct aws_byte_cursor aws_byte_cursor_right_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate) {
+    struct aws_byte_cursor trimmed = *source;
+
+    while (trimmed.len > 0 && predicate(*(trimmed.ptr + trimmed.len - 1))) {
+        --trimmed.len;
+    }
+
+    return trimmed;
+}
+
+struct aws_byte_cursor aws_byte_cursor_left_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate) {
+    struct aws_byte_cursor trimmed = *source;
+
+    while (trimmed.len > 0 && predicate(*(trimmed.ptr))) {
+        --trimmed.len;
+        ++trimmed.ptr;
+    }
+
+    return trimmed;
+}
