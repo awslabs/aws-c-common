@@ -51,6 +51,29 @@ struct aws_byte_cursor {
     uint8_t *ptr;
 };
 
+/**
+ * Format macro for strings of a specified length.
+ * Allows non null-terminated strings, such as those stored in aws_byte_cursor and aws_byte_buf,
+ * to be used with the printf family of functions.
+ *
+ * The AWS_BYTE_CURSOR_PRI() macro is a helper for passing an aws_byte_cursor in the args.
+ * Note that strings will be clipped if they contain '\0' or their length exceeds INT_MAX.
+ *
+ * Examples:
+ * \code
+ * printf("scheme is " PRInSTR, 4, "http://example.org"); // ouputs: "scheme is http"
+ *
+ * struct aws_byte_cursor c = aws_byte_cursor_from_c_str("https");
+ *
+ * printf("scheme is " PRInSTR, (int)c.len, c.ptr); // outputs: "scheme is https"
+ * printf("scheme is " PRInSTR, AWS_BYTE_CURSOR_PRI(c)); // outputs: "scheme is https"
+ * \endcode
+ */
+#define PRInSTR "%.*s"
+#define AWS_BYTE_CURSOR_PRI(C) ((int)(C).len < 0 ? 0 : (int)(C).len), (const char *)(C).ptr
+#define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
+#define AWS_STRING_PRI(S) ((int)(S).len < 0 ? 0 : (int)(S).len), (const char *)(S).bytes
+
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
