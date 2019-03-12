@@ -50,7 +50,7 @@ int aws_array_list_init_dynamic(
 #endif
         list->current_size = allocation_size;
     }
-    assert(list->current_size == 0 || list->data);
+    AWS_FATAL_ASSERT(list->current_size == 0 || list->data);
 
     return AWS_OP_SUCCESS;
 }
@@ -61,9 +61,9 @@ void aws_array_list_init_static(
     void *raw_array,
     size_t item_count,
     size_t item_size) {
-    assert(raw_array);
-    assert(item_count);
-    assert(item_size);
+    AWS_FATAL_ASSERT(raw_array);
+    AWS_FATAL_ASSERT(item_count);
+    AWS_FATAL_ASSERT(item_size);
 
     list->alloc = NULL;
 
@@ -154,7 +154,7 @@ AWS_STATIC_IMPL
 int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
     if (aws_array_list_length(list) > 0) {
 
-        assert(list->data);
+        AWS_FATAL_ASSERT(list->data);
 
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
 
@@ -180,10 +180,10 @@ AWS_STATIC_IMPL
 void aws_array_list_swap_contents(
     struct aws_array_list *AWS_RESTRICT list_a,
     struct aws_array_list *AWS_RESTRICT list_b) {
-    assert(list_a->alloc);
-    assert(list_a->alloc == list_b->alloc);
-    assert(list_a->item_size == list_b->item_size);
-    assert(list_a != list_b);
+    AWS_FATAL_ASSERT(list_a->alloc);
+    AWS_FATAL_ASSERT(list_a->alloc == list_b->alloc);
+    AWS_FATAL_ASSERT(list_a->item_size == list_b->item_size);
+    AWS_FATAL_ASSERT(list_a != list_b);
 
     struct aws_array_list tmp = *list_a;
     *list_a = *list_b;
@@ -192,7 +192,7 @@ void aws_array_list_swap_contents(
 
 AWS_STATIC_IMPL
 size_t aws_array_list_capacity(const struct aws_array_list *AWS_RESTRICT list) {
-    assert(list->item_size);
+    AWS_FATAL_ASSERT(list->item_size);
     return list->current_size / list->item_size;
 }
 
@@ -202,7 +202,7 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * This assert teaches clang-tidy and friends that list->data cannot be null in a non-empty
      * list.
      */
-    assert(!list->length || list->data);
+    AWS_FATAL_ASSERT(!list->length || list->data);
 
     return list->length;
 }
@@ -251,7 +251,7 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
         }
     }
 
-    assert(list->data);
+    AWS_FATAL_ASSERT(list->data);
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 
