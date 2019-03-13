@@ -58,6 +58,13 @@ struct aws_string {
 #endif
 
 /**
+ * Helper macro for passing aws_string to the printf family of functions.
+ * Intended for use with the PRInSTR format macro.
+ * Ex: printf(PRInSTR "\n", AWS_STRING_PRI(my_string));
+ */
+#define AWS_STRING_PRI(S) ((int)(S)->len < 0 ? 0 : (int)(S)->len), (const char *)(S)->bytes
+
+/**
  * Equivalent to str->bytes. Here for legacy reaasons.
  */
 AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {

@@ -260,6 +260,13 @@ AWS_EXTERN_C_END
 
 #define AWS_CACHE_LINE 64
 
+/**
+ * Format macro for strings of a specified length.
+ * Allows non null-terminated strings to be used with the printf family of functions.
+ * Ex: printf("scheme is " PRInSTR, 4, "http://example.org"); // ouputs: "scheme is http"
+ */
+#define PRInSTR "%.*s"
+
 #if defined(_MSC_VER)
 #    include <malloc.h>
 #    define AWS_ALIGN(alignment) __declspec(align(alignment))
