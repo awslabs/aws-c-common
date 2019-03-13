@@ -1,0 +1,19 @@
+version: 0.2
+#this buildspec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+      - sudo yum update -y
+      - sudo yum install -y gcc cmake3 ninja-build
+
+  pre_build:
+    commands:
+      - export CC=clang-3.9
+  build:
+    commands:
+      - echo Build started on `date`
+      - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
