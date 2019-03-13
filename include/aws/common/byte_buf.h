@@ -51,6 +51,20 @@ struct aws_byte_cursor {
     uint8_t *ptr;
 };
 
+/**
+ * Helper macro for passing aws_byte_cursor to the printf family of functions.
+ * Intended for use with the PRInSTR format macro.
+ * Ex: printf(PRInSTR "\n", AWS_BYTE_CURSOR_PRI(my_cursor));
+ */
+#define AWS_BYTE_CURSOR_PRI(C) ((int)(C).len < 0 ? 0 : (int)(C).len), (const char *)(C).ptr
+
+/**
+ * Helper macro for passing aws_byte_buf to the printf family of functions.
+ * Intended for use with the PRInSTR format macro.
+ * Ex: printf(PRInSTR "\n", AWS_BYTE_BUF_PRI(my_buf));
+ */
+#define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
+
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
