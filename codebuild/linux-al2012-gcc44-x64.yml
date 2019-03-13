@@ -4,7 +4,7 @@ phases:
   install:
     commands:
       - sudo yum update -y
-      - sudo yum install -y gcc cmake3 ninja-build
+      - sudo yum install -y gcc
 
   pre_build:
     commands:
