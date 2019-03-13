@@ -255,10 +255,14 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 
-    /* this isn't perfect but its the best I can come up with for detecting
-     * length changes*/
+    /*
+     * This isn't perfect, but its the best I can come up with for detecting
+     * length changes.
+     */
     if (index >= aws_array_list_length(list)) {
-        list->length = index + 1;
+        if (aws_add_size_checked(index, 1, &list->length)) {
+            return AWS_OP_ERR;
+        }
     }
 
     return AWS_OP_SUCCESS;
