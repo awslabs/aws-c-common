@@ -78,15 +78,15 @@ else ()
         endif ()
 
         set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS ${CORE_FOUNDATION_LIB})
+        set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS rt)
+        set(PLATFORM_LIBS pthread rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         set(PLATFORM_LIBS thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS execinfo)
+        set(PLATFORM_LIBS pthread execinfo)
     endif()
 
 endif()
