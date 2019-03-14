@@ -17,10 +17,10 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES = $(SRCDIR)/source/array_list.c \
+DEPENDENCIES = $(HELPERDIR)/source/error.c \
+	       $(HELPERDIR)/source/make_common_data_structures.c \
 	       $(SRCDIR)/source/byte_buf.c \
-	       $(SRCDIR)/source/common.c \
-	       $(SRCDIR)/source/error.c
+	       $(SRCDIR)/source/common.c
 
 ENTRY = aws_byte_buf_init_harness
 ###########
