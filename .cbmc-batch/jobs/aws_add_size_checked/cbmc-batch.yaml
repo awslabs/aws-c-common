@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--pointer-check;--unwinding-assertions;--function;aws_add_size_checked_harness"
+goto: aws_add_size_checked_harness.goto
+expected: "SUCCESSFUL"

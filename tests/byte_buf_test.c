@@ -284,3 +284,38 @@ static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
 
     return 0;
 }
+
+AWS_TEST_CASE(test_buffer_printf, s_test_buffer_printf)
+static int s_test_buffer_printf(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const char src[] = "abcdefg";
+
+    char dst[100] = {0};
+
+    /* check PRInSTR */
+    memset(dst, 0, sizeof(dst));
+    snprintf(dst, sizeof(dst), PRInSTR, 2, src);
+    ASSERT_UINT_EQUALS('a', dst[0]);
+    ASSERT_UINT_EQUALS('b', dst[1]);
+    ASSERT_UINT_EQUALS(0, dst[2]);
+
+    /* check AWS_BYTE_CURSOR_PRI() */
+    struct aws_byte_cursor cursor = aws_byte_cursor_from_array(src, 2);
+    memset(dst, 0, sizeof(dst));
+    snprintf(dst, sizeof(dst), PRInSTR, AWS_BYTE_CURSOR_PRI(cursor));
+    ASSERT_UINT_EQUALS('a', dst[0]);
+    ASSERT_UINT_EQUALS('b', dst[1]);
+    ASSERT_UINT_EQUALS(0, dst[2]);
+
+    /* check AWS_BYTE_BUF_PRI() */
+    struct aws_byte_buf buf = aws_byte_buf_from_array(src, 2);
+    memset(dst, 0, sizeof(dst));
+    snprintf(dst, sizeof(dst), PRInSTR, AWS_BYTE_BUF_PRI(buf));
+    ASSERT_UINT_EQUALS('a', dst[0]);
+    ASSERT_UINT_EQUALS('b', dst[1]);
+    ASSERT_UINT_EQUALS(0, dst[2]);
+
+    return AWS_OP_SUCCESS;
+}

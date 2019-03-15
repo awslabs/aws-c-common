@@ -47,8 +47,8 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
 }
 
 int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct aws_array_list *AWS_RESTRICT to) {
-    assert(from->item_size == to->item_size);
-    assert(from->data);
+    AWS_FATAL_ASSERT(from->item_size == to->item_size);
+    AWS_FATAL_ASSERT(from->data);
 
     size_t copy_size;
     if (aws_mul_size_checked(from->length, from->item_size, &copy_size)) {
@@ -142,8 +142,8 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
 static void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
-    assert(item1);
-    assert(item2);
+    AWS_FATAL_ASSERT(item1);
+    AWS_FATAL_ASSERT(item2);
 
     /* copy SLICE sized bytes at a time */
     size_t slice_count = item_size / SLICE;

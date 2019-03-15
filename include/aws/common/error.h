@@ -56,6 +56,12 @@ AWS_COMMON_API
 const char *aws_error_str(int err);
 
 /*
+ * Returns the enum name corresponding to `err`.
+ */
+AWS_COMMON_API
+const char *aws_error_name(int err);
+
+/*
  * Returns the error lib name corresponding to `err`.
  */
 AWS_COMMON_API

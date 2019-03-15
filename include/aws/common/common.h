@@ -61,6 +61,10 @@
 
 #ifndef NO_STDINT
 #    include <stdint.h>
+/* Android defines SIZE_MAX in limits.h, not stdint.h */
+#    ifdef ANDROID
+#        include <limits.h>
+#    endif
 #else
 #    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__) || defined(__ia64__) ||                   \
             defined(__powerpc64__)
@@ -259,6 +263,13 @@ AWS_EXTERN_C_END
 
 
 #define AWS_CACHE_LINE 64
+
+/**
+ * Format macro for strings of a specified length.
+ * Allows non null-terminated strings to be used with the printf family of functions.
+ * Ex: printf("scheme is " PRInSTR, 4, "http://example.org"); // ouputs: "scheme is http"
+ */
+#define PRInSTR "%.*s"
 
 #if defined(_MSC_VER)
 #    include <malloc.h>
