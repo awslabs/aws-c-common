@@ -54,8 +54,8 @@ extern "C" {
 AWS_COMMON_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
 
 /**
- * Multiplies a * b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
+ * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
@@ -65,21 +65,21 @@ AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 AWS_COMMON_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
 
 /**
- * Multiplies a * b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
+ * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
 /**
  * Adds a + b.  If the result overflows returns 2^64 - 1.
  */
-AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b)
+AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b);
 
-    /**
-     * Adds a + b and returns the result in *r. If the result
-     * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
-     */
-    AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
+/**
+ * If a + b overflows, returns AWS_OP_ERR; otherwise adds
+ * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ */
+AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
 /**
  * Adds a + b. If the result overflows returns 2^32 - 1.
@@ -87,8 +87,8 @@ AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b)
 AWS_COMMON_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
 
 /**
- * Adds a + b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ * If a + b overflows, returns AWS_OP_ERR; otherwise adds
+ * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 

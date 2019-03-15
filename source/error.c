@@ -76,6 +76,16 @@ const char *aws_error_str(int err) {
     return "Unknown Error Code";
 }
 
+const char *aws_error_name(int err) {
+    const struct aws_error_info *error_info = get_error_by_code(err);
+
+    if (error_info) {
+        return error_info->literal_name;
+    }
+
+    return "Unknown Error Code";
+}
+
 const char *aws_error_lib_name(int err) {
     const struct aws_error_info *error_info = get_error_by_code(err);
 
