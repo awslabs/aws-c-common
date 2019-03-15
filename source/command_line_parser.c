@@ -27,7 +27,7 @@ static const struct aws_cli_option *s_find_option_from_char(
     int index = 0;
     const struct aws_cli_option *option = &longopts[index];
 
-    while (option->val != 0 && option->val != 0) {
+    while (option->val != 0 && option->name != 0) {
         if (option->val == search_for) {
             if (longindex) {
                 *longindex = index;
@@ -70,7 +70,7 @@ int aws_cli_getopt_long(
     int *longindex) {
     aws_cli_optarg = NULL;
 
-    if (aws_cli_optind == argc) {
+    if (aws_cli_optind >= argc) {
         return -1;
     }
 
