@@ -77,13 +77,16 @@ else ()
             message(FATAL_ERROR "Core Foundation not found")
         endif ()
 
-        set(PLATFORM_LIBS pthread ${CORE_FOUNDATION_LIB})
+        set(PLATFORM_CFLAGS -pthread)
+        set(PLATFORM_LIBS -pthread pthread ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-        set(PLATFORM_LIBS pthread rt)
+        set(PLATFORM_CFLAGS -pthread)
+        set(PLATFORM_LIBS -pthread pthread rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         set(PLATFORM_LIBS thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        set(PLATFORM_LIBS pthread execinfo)
+        set(PLATFORM_CFLAGS -pthread)
+        set(PLATFORM_LIBS -pthread pthread execinfo)
     endif()
 
 endif()
@@ -108,6 +111,7 @@ endif()
 add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${CMAKE_PROJECT_NAME} "AWS_COMMON")
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.

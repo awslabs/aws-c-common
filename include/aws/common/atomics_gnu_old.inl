@@ -55,7 +55,7 @@ static inline void aws_atomic_private_barrier_after(enum aws_memory_order order)
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
-    var->u.intval = n;
+    AWS_ATOMIC_VAR_INTVAL(var) = n;
 }
 
 /**
@@ -64,7 +64,7 @@ void aws_atomic_init_int(volatile struct aws_atomic_var *var, size_t n) {
  */
 AWS_STATIC_IMPL
 void aws_atomic_init_ptr(volatile struct aws_atomic_var *var, void *p) {
-    var->u.ptrval = p;
+    AWS_ATOMIC_VAR_PTRVAL(var) = p;
 }
 
 /**
@@ -74,7 +74,7 @@ AWS_STATIC_IMPL
 size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
     aws_atomic_private_barrier_before(memory_order);
 
-    size_t retval = var->u.intval;
+    size_t retval = AWS_ATOMIC_VAR_INTVAL(var);
 
     /* Release barriers are not permitted for loads, so we just do a compiler barrier here */
     aws_atomic_private_compiler_barrier();
@@ -89,7 +89,7 @@ AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
     aws_atomic_private_barrier_before(memory_order);
 
-    void *retval = var->u.ptrval;
+    void *retval = AWS_ATOMIC_VAR_PTRVAL(var);
 
     /* Release barriers are not permitted for loads, so we just do a compiler barrier here */
     aws_atomic_private_compiler_barrier();
@@ -105,7 +105,7 @@ void aws_atomic_store_int_explicit(volatile struct aws_atomic_var *var, size_t n
     /* Acquire barriers are not permitted for stores, so just do a compiler barrier before */
     aws_atomic_private_compiler_barrier();
 
-    var->u.intval = n;
+    AWS_ATOMIC_VAR_INTVAL(var) = n;
 
     aws_atomic_private_barrier_after(memory_order);
 }
@@ -118,7 +118,7 @@ void aws_atomic_store_ptr_explicit(volatile struct aws_atomic_var *var, void *p,
     /* Acquire barriers are not permitted for stores, so just do a compiler barrier before */
     aws_atomic_private_compiler_barrier();
 
-    var->u.ptrval = p;
+    AWS_ATOMIC_VAR_PTRVAL(var) = p;
 
     aws_atomic_private_barrier_after(memory_order);
 }
@@ -141,8 +141,8 @@ size_t aws_atomic_exchange_int_explicit(
 
     size_t oldval;
     do {
-        oldval = var->u.intval;
-    } while (!__sync_bool_compare_and_swap(&var->u.intval, oldval, n));
+        oldval = AWS_ATOMIC_VAR_INTVAL(var);
+    } while (!__sync_bool_compare_and_swap(&AWS_ATOMIC_VAR_INTVAL(var), oldval, n));
 
     /* __sync_bool_compare_and_swap implies a full barrier */
 
@@ -166,8 +166,8 @@ void *aws_atomic_exchange_ptr_explicit(
      */
     void *oldval;
     do {
-        oldval = var->u.ptrval;
-    } while (!__sync_bool_compare_and_swap(&var->u.ptrval, oldval, p));
+        oldval = AWS_ATOMIC_VAR_PTRVAL(var);
+    } while (!__sync_bool_compare_and_swap(&AWS_ATOMIC_VAR_PTRVAL(var), oldval, p));
 
     /* __sync_bool_compare_and_swap implies a full barrier */
 
@@ -187,9 +187,9 @@ bool aws_atomic_compare_exchange_int_explicit(
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
 
-    bool result = __sync_bool_compare_and_swap(&var->u.intval, *expected, desired);
+    bool result = __sync_bool_compare_and_swap(&AWS_ATOMIC_VAR_INTVAL(var), *expected, desired);
     if (!result) {
-        *expected = var->u.intval;
+        *expected = AWS_ATOMIC_VAR_INTVAL(var);
     }
 
     return result;
@@ -208,9 +208,9 @@ bool aws_atomic_compare_exchange_ptr_explicit(
     enum aws_memory_order order_success,
     enum aws_memory_order order_failure) {
 
-    bool result = __sync_bool_compare_and_swap(&var->u.ptrval, *expected, desired);
+    bool result = __sync_bool_compare_and_swap(&AWS_ATOMIC_VAR_PTRVAL(var), *expected, desired);
     if (!result) {
-        *expected = var->u.ptrval;
+        *expected = AWS_ATOMIC_VAR_PTRVAL(var);
     }
 
     return result;
@@ -221,7 +221,7 @@ bool aws_atomic_compare_exchange_ptr_explicit(
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __sync_fetch_and_add(&var->u.intval, n);
+    return __sync_fetch_and_add(&AWS_ATOMIC_VAR_INTVAL(var), n);
 }
 
 /**
@@ -229,7 +229,7 @@ size_t aws_atomic_fetch_add_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __sync_fetch_and_sub(&var->u.intval, n);
+    return __sync_fetch_and_sub(&AWS_ATOMIC_VAR_INTVAL(var), n);
 }
 
 /**
@@ -237,7 +237,7 @@ size_t aws_atomic_fetch_sub_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __sync_fetch_and_or(&var->u.intval, n);
+    return __sync_fetch_and_or(&AWS_ATOMIC_VAR_INTVAL(var), n);
 }
 
 /**
@@ -245,7 +245,7 @@ size_t aws_atomic_fetch_or_explicit(volatile struct aws_atomic_var *var, size_t 
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __sync_fetch_and_and(&var->u.intval, n);
+    return __sync_fetch_and_and(&AWS_ATOMIC_VAR_INTVAL(var), n);
 }
 
 /**
@@ -253,7 +253,7 @@ size_t aws_atomic_fetch_and_explicit(volatile struct aws_atomic_var *var, size_t
  */
 AWS_STATIC_IMPL
 size_t aws_atomic_fetch_xor_explicit(volatile struct aws_atomic_var *var, size_t n, enum aws_memory_order order) {
-    return __sync_fetch_and_xor(&var->u.intval, n);
+    return __sync_fetch_and_xor(&AWS_ATOMIC_VAR_INTVAL(var), n);
 }
 
 /**
