@@ -27,7 +27,7 @@ static const struct aws_cli_option *s_find_option_from_char(
     int index = 0;
     const struct aws_cli_option *option = &longopts[index];
 
-    while (option->val != 0 && option->name != 0) {
+    while (option->val != 0 || option->name) {
         if (option->val == search_for) {
             if (longindex) {
                 *longindex = index;
@@ -48,12 +48,14 @@ static const struct aws_cli_option *s_find_option_from_c_str(
     int index = 0;
     const struct aws_cli_option *option = &longopts[index];
 
-    while (option->name != NULL && option->val != 0) {
-        if (option->name && !strcmp(search_for, option->name)) {
-            if (longindex) {
-                *longindex = index;
+    while (option->name || option->val != 0) {
+        if (option->name) {
+            if (option->name && !strcmp(search_for, option->name)) {
+                if (longindex) {
+                    *longindex = index;
+                }
+                return option;
             }
-            return option;
         }
 
         option = &longopts[++index];
@@ -89,6 +91,7 @@ int aws_cli_getopt_long(
         return -1;
     }
 
+    aws_cli_optind++;
     if (option) {
         bool has_arg = false;
         if (option) {
@@ -103,19 +106,15 @@ int aws_cli_getopt_long(
         }
 
         if (has_arg) {
-            aws_cli_optind += 1;
             if (aws_cli_optind >= argc - 1) {
                 return '?';
             }
-        }
 
-        if (aws_cli_optind < argc) {
             aws_cli_optarg = argv[aws_cli_optind++];
         }
 
         return option->val;
     }
 
-    aws_cli_optind++;
     return '?';
 }
