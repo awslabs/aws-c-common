@@ -1,5 +1,5 @@
 #include <aws/common/array_list.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 void aws_array_list_set_at_harness() {
     size_t initial_item_allocation = nondet_size_t();

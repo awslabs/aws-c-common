@@ -1,4 +1,4 @@
 jobos: ubuntu16
-cbmcflags: "--bounds-check;--pointer-check;--function;aws_array_list_set_at_harness;--unwindset;strlen.0:33,memcpy.0:33,__builtin___memcpy_chk.0:33,aws_mem_release:1;--unwinding-assertions"
+cbmcflags: "--bounds-check;--pointer-check;--function;aws_array_list_set_at_harness;--unwindset;strlen.0:5,memcpy.0:5,__builtin___memcpy_chk.0:5,aws_mem_release:1;--unwinding-assertions"
 goto: aws_array_list_set_at_harness.goto
 expected: "SUCCESSFUL"

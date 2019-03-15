@@ -1,5 +1,5 @@
 #include <aws/common/byte_buf.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 void aws_byte_buf_init_harness() {
     struct aws_allocator *allocator;

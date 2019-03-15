@@ -37,7 +37,7 @@ GOTO_INSTRUMENT ?= goto-instrument
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
 
 INC += \
-	-I$(HELPERDIR)/. \
+	-I$(HELPERDIR)/include/ \
 	-I$(SRCDIR)/include/
 
 SIMPLIFY ?= 0

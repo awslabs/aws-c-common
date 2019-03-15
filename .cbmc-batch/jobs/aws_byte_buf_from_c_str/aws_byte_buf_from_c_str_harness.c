@@ -1,5 +1,5 @@
 #include <aws/common/byte_buf.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 void aws_byte_buf_from_c_str_harness() {
     size_t len = nondet_size_t();
