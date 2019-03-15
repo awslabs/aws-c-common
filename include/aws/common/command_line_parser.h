@@ -43,7 +43,7 @@ AWS_COMMON_API extern const char *aws_cli_optarg;
 AWS_EXTERN_C_BEGIN
 /**
  * A mostly compliant implementation of posix getopt_long(). Parses command-line arguments. argc is the number of
- * command line arguments passed in argv. optstring contains the legitamate option characters. The option characters
+ * command line arguments passed in argv. optstring contains the legitimate option characters. The option characters
  * coorespond to aws_cli_option::val. If the character is followed by a :, the option requires an argument. If it is
  * followed by '::', the argument is optional (not implemented yet).
  *
