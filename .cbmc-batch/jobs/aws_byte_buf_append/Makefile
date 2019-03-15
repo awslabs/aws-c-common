@@ -19,8 +19,8 @@ CBMC_UNWINDSET := $(CBMC_UNWINDSET)memcpy.0:33
 
 CBMCFLAGS +=
 
-DEPENDENCIES = $(HELPERDIR)/source/error.c \
-	       $(HELPERDIR)/source/make_common_data_structures.c \
+DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
+		   $(HELPERDIR)/stubs/error.c \
 	       $(HELPERDIR)/stubs/memcpy_override.c \
 	       $(SRCDIR)/source/byte_buf.c \
 	       $(SRCDIR)/source/common.c
