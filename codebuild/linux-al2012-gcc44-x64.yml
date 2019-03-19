@@ -1,18 +1,6 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
+#this buildspec assumes the aws-sdk-common-runtime al2012:latest image
 phases:
-  install:
-    commands:
-      - sudo yum update -y
-      - sudo yum install -y gcc
-
-  pre_build:
-    commands:
-      - export CC=clang-3.9
   build:
     commands:
-      - echo Build started on `date`
-      - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-  post_build:
-    commands:
-      - echo Build completed on `date`
+      - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_SANITIZERS=OFF
