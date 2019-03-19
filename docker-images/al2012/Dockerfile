@@ -1,3 +1,4 @@
+# Stock image build from internal AL2012.3 image on the wiki
 FROM 123124136734.dkr.ecr.us-east-1.amazonaws.com/amzn-linux:2012.3
 
 # workaround to allow yum to work in a container, stolen shamelessly from
