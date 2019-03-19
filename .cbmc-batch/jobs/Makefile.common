@@ -138,7 +138,7 @@ clean:
 veryclean: clean
 	$(RM) -r html
 
-.PHONY: cbmc property coverage report clean veryclean batch-yaml
+.PHONY: cbmc property coverage report clean veryclean batch-yaml ci-yaml
 
 ################################################################
 # Launching cbmc on cbmc-batch
@@ -190,6 +190,14 @@ $(ENTRY).yaml: $(ENTRY).goto Makefile
 	echo 'expected: "SUCCESSFUL"' >> $@
 
 batch-yaml: $(ENTRY).yaml
+
+cbmc-batch.yaml: $(ENTRY).goto Makefile
+	echo 'jobos: ubuntu16' > $@
+	echo 'cbmcflags: $(call yaml_encode_options,$(CBMCFLAGS))' >> $@
+	echo 'goto: $(ENTRY).goto' >> $@
+	echo 'expected: "SUCCESSFUL"' >> $@
+
+ci-yaml: cbmc-batch.yaml
 
 launch: $(ENTRY).goto Makefile
 	mkdir -p $(WS)
