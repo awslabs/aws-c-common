@@ -3,4 +3,4 @@ version: 0.2
 phases:
   build:
     commands:
-      - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_SANITIZERS=OFF
+      - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_SANITIZERS=OFF -DPERFORM_HEADER_CHECK=OFF
