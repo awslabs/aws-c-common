@@ -17,12 +17,11 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
+DEPENDENCIES = $(HELPERDIR)/source/make_common_data_structures.c \
 		   $(HELPERDIR)/stubs/error.c \
-	       $(SRCDIR)/source/array_list.c \
 	       $(SRCDIR)/source/common.c
 
-ENTRY = aws_array_list_init_static_harness
+ENTRY = aws_add_size_checked_harness
 ###########
 
 include ../Makefile.common

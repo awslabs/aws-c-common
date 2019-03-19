@@ -61,6 +61,10 @@
 
 #ifndef NO_STDINT
 #    include <stdint.h>
+/* Android defines SIZE_MAX in limits.h, not stdint.h */
+#    ifdef ANDROID
+#        include <limits.h>
+#    endif
 #else
 #    if defined(__x86_64__) || defined(_M_AMD64) || defined(__aarch64__) || defined(__ia64__) ||                   \
             defined(__powerpc64__)
