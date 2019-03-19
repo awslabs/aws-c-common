@@ -264,6 +264,11 @@ add_test_case(uuid_string_parse_malformed)
 
 add_test_case(test_environment_functions)
 
+add_test_case(short_argument_parse)
+add_test_case(long_argument_parse)
+add_test_case(unqualified_argument_parse)
+add_test_case(unknown_argument_parse)
+
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
 if (NOT MSVC)

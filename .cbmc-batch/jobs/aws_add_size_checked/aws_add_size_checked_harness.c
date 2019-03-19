@@ -1,5 +1,5 @@
 #include <aws/common/math.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 /**
  * Adds a + b and returns the result in *r. If the result
