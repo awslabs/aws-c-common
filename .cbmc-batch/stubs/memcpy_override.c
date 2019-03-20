@@ -27,30 +27,25 @@
 #include <proof_helpers/nondet.h>
 #include <stdint.h>
 
-void* memcpy_impl( void * dst, const void * src, size_t n )
-{
-  __CPROVER_precondition(
-    __CPROVER_POINTER_OBJECT(dst) != __CPROVER_POINTER_OBJECT(src) ||
-      ((const char *)src >= (const char *)dst + n) ||
-      ((const char *)dst >= (const char *)src + n),
-    "memcpy src/dst overlap");
-  __CPROVER_precondition(
-    __CPROVER_r_ok(src, n), "memcpy source region readable");
-  __CPROVER_precondition(
-    __CPROVER_w_ok(dst, n), "memcpy destination region writeable");
+void *memcpy_impl(void *dst, const void *src, size_t n) {
+    __CPROVER_precondition(
+        __CPROVER_POINTER_OBJECT(dst) != __CPROVER_POINTER_OBJECT(src) ||
+            ((const char *)src >= (const char *)dst + n) || ((const char *)dst >= (const char *)src + n),
+        "memcpy src/dst overlap");
+    __CPROVER_precondition(__CPROVER_r_ok(src, n), "memcpy source region readable");
+    __CPROVER_precondition(__CPROVER_w_ok(dst, n), "memcpy destination region writeable");
 
-  for(__CPROVER_size_t i=0; i<n; ++i) ((char *)dst)[i]=((const char *)src)[i];
+    for (__CPROVER_size_t i = 0; i < n; ++i)
+        ((char *)dst)[i] = ((const char *)src)[i];
 
-  return dst;
+    return dst;
 }
 
-void * memcpy ( void * dst, const void * src, size_t n )
-{
-  return memcpy_impl(dst,src,n);
+void *memcpy(void *dst, const void *src, size_t n) {
+    return memcpy_impl(dst, src, n);
 }
 
-void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __CPROVER_size_t size)
-{
-  (void) size;
-  return memcpy_impl(dst,src,n);
+void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __CPROVER_size_t size) {
+    (void)size;
+    return memcpy_impl(dst, src, n);
 }
