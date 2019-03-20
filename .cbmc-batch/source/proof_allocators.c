@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/common.h>
 #include <proof_helpers/proof_allocators.h>
 #include <stdlib.h>
 
@@ -51,5 +52,5 @@ static void *can_fail_realloc(struct aws_allocator *allocator, void *ptr, size_t
 }
 
 struct aws_allocator *can_fail_allocator() {
-    return &can_fail_allocator_static;
+    return nondet_bool() ? &can_fail_allocator_static : aws_default_allocator();
 }
