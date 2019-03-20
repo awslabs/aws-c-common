@@ -19,7 +19,10 @@
 #include <stddef.h>
 
 const size_t MAX_STRING_LEN = 16;
-
+/**
+ * Coverage: 1.00 (19 lines out of 19 statically-reachable lines in 6 functions reached)
+ * Runtime: real	0m2.030s
+ */
 void aws_string_bytes_harness() {
     struct aws_string *str = make_arbitrary_aws_string_nondet_len(can_fail_allocator());
     assert(aws_string_bytes(str) == str->bytes);

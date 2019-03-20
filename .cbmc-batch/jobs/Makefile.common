@@ -24,12 +24,16 @@ ABSTRACTIONS ?= ""
 BASEDIR ?= $(abspath ../../../..)
 BATCH ?= cbmc-batch
 
-CBMCFLAGS += \
-	--bounds-check \
-	--pointer-check \
-	--unwinding-assertions \
-	--function $(ENTRY) \
-	$(CBMC_UNWINDSET)
+CBMCFLAGS += --bounds-check
+CBMCFLAGS += --pointer-check
+CBMCFLAGS += --div-by-zero-check
+CBMCFLAGS += --signed-overflow-check
+CBMCFLAGS += --unsigned-overflow-check
+CBMCFLAGS += --pointer-overflow-check
+CBMCFLAGS += --undefined-shift-check
+CBMCFLAGS += --float-overflow-check
+CBMCFLAGS += --nan-check
+CBMCFLAGS += $(CBMC_UNWINDSET)
 
 GOTO_ANALYZER ?= goto-analyzer
 GOTO_CC ?= goto-cc
