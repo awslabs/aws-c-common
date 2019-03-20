@@ -1,5 +1,5 @@
 #include <aws/common/array_list.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 void aws_array_list_init_dynamic_harness() {
     struct aws_array_list *list;

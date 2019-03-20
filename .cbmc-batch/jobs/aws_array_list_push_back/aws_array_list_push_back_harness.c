@@ -1,5 +1,5 @@
 #include <aws/common/array_list.h>
-#include <proof_helpers.h>
+#include <proof_helpers/make_common_data_structures.h>
 
 void aws_array_list_push_back_harness() {
     size_t item_count = nondet_size_t();
