@@ -22,69 +22,35 @@
  * *src parameters are at least n bytes and if they overlap.
  */
 
-#ifndef __CPROVER_STRING_H_INCLUDED
-#    include <string.h>
-#    define __CPROVER_STRING_H_INCLUDED
-#endif
-
 #undef memcpy
 
-void *memcpy(void *dst, const void *src, size_t n) {
-__CPROVER_HIDE:
-#ifdef __CPROVER_STRING_ABSTRACTION
-    __CPROVER_precondition(__CPROVER_buffer_size(src) >= n, "memcpy buffer overflow");
-    __CPROVER_precondition(__CPROVER_buffer_size(dst) >= n, "memcpy buffer overflow");
-    if (__CPROVER_is_zero_string(src) && n > __CPROVER_zero_string_length(src)) {
-        __CPROVER_is_zero_string(dst) = 1;
-        __CPROVER_zero_string_length(dst) = __CPROVER_zero_string_length(src);
-    } else if (!(__CPROVER_is_zero_string(dst) && n <= __CPROVER_zero_string_length(dst)))
-        __CPROVER_is_zero_string(dst) = 0;
-#else
-    __CPROVER_precondition(__CPROVER_POINTER_OBJECT(dst) != __CPROVER_POINTER_OBJECT(src), "memcpy src/dst overlap");
+#include <proof_helpers/nondet.h>
+#include <stdint.h>
 
-    if (n > 0) {
-        (void)*(char *)dst;                   /* check that the memory is accessible */
-        (void)*(const char *)src;             /* check that the memory is accessible */
-        (void)*(((char *)dst) + n - 1);       /* check that the memory is accessible */
-        (void)*(((const char *)src) + n - 1); /* check that the memory is accessible */
-        for (__CPROVER_size_t i = 0; i < n; i++)
-            ((char *)dst)[i] = ((const char *)src)[i];
-    }
-#endif
-    return dst;
+void* memcpy_impl( void * dst, const void * src, size_t n )
+{
+  __CPROVER_precondition(
+    __CPROVER_POINTER_OBJECT(dst) != __CPROVER_POINTER_OBJECT(src) ||
+      ((const char *)src >= (const char *)dst + n) ||
+      ((const char *)dst >= (const char *)src + n),
+    "memcpy src/dst overlap");
+  __CPROVER_precondition(
+    __CPROVER_r_ok(src, n), "memcpy source region readable");
+  __CPROVER_precondition(
+    __CPROVER_w_ok(dst, n), "memcpy destination region writeable");
+
+  for(__CPROVER_size_t i=0; i<n; ++i) ((char *)dst)[i]=((const char *)src)[i];
+
+  return dst;
 }
 
-/* FUNCTION: __builtin___memcpy_chk */
+void * memcpy ( void * dst, const void * src, size_t n )
+{
+  return memcpy_impl(dst,src,n);
+}
 
-void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __CPROVER_size_t size) {
-__CPROVER_HIDE:
-#ifdef __CPROVER_STRING_ABSTRACTION
-    __CPROVER_precondition(__CPROVER_buffer_size(src) >= n, "memcpy buffer overflow");
-    __CPROVER_precondition(__CPROVER_buffer_size(dst) >= n, "memcpy buffer overflow");
-    __CPROVER_precondition(__CPROVER_buffer_size(dst) == s, "builtin object size");
-    //  for(size_t i=0; i<n ; i++) dst[i]=src[i];
-    if (__CPROVER_is_zero_string(src) && n > __CPROVER_zero_string_length(src)) {
-        __CPROVER_is_zero_string(dst) = 1;
-        __CPROVER_zero_string_length(dst) = __CPROVER_zero_string_length(src);
-    } else if (!(__CPROVER_is_zero_string(dst) && n <= __CPROVER_zero_string_length(dst))) {
-        __CPROVER_is_zero_string(dst) = 0;
-    }
-#else
-    __CPROVER_precondition(
-        __CPROVER_POINTER_OBJECT(dst) != __CPROVER_POINTER_OBJECT(src) ||
-            ((const char *)src >= (const char *)dst + n) || ((const char *)dst >= (const char *)src + n),
-        "memcpy src/dst overlap");
-    __CPROVER_precondition(__CPROVER_r_ok(src, n), "memcpy source region readable");
-    __CPROVER_precondition(__CPROVER_w_ok(dst, n), "memcpy destination region writeable");
-    (void)size;
-
-    if (n > 0) {
-        for (__CPROVER_size_t i = 0; i < n; i++)
-            ((char *)dst)[i] = ((const char *)src)[i];
-        // char src_n[n];
-        //__CPROVER_array_copy(src_n, (char *)src);
-        //__CPROVER_array_replace((char *)dst, src_n);
-    }
-#endif
-    return dst;
+void *__builtin___memcpy_chk(void *dst, const void *src, __CPROVER_size_t n, __CPROVER_size_t size)
+{
+  (void) size;
+  return memcpy_impl(dst,src,n);
 }
