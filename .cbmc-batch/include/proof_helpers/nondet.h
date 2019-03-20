@@ -27,3 +27,5 @@ int nondet_int();
 uint8_t nondet_uint8_t();
 bool nondet_bool();
 void *nondet_voidp();
+uint32_t nondet_uint32_t();
+uint64_t nondet_uint64_t();
