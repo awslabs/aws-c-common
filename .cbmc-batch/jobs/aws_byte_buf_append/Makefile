@@ -14,7 +14,7 @@
 ###########
 #NOTE: If we don't use the unwindset, leave it empty
 CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += __builtin___memcpy_chk.0:33,
+CBMC_UNWINDSET += memcpy_impl.0:33,
 CBMC_UNWINDSET := $(CBMC_UNWINDSET)memcpy.0:33
 
 CBMCFLAGS +=
