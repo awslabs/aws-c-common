@@ -24,6 +24,7 @@ ABSTRACTIONS ?= ""
 BASEDIR ?= $(abspath ../../../..)
 BATCH ?= cbmc-batch
 
+CBMCFLAGS += --unwind 1
 CBMCFLAGS += --bounds-check
 CBMCFLAGS += --pointer-check
 CBMCFLAGS += --div-by-zero-check
