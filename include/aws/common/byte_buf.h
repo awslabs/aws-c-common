@@ -65,6 +65,11 @@ struct aws_byte_cursor {
  */
 #define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
 
+/**
+ * Signature for function argument to trim APIs
+ */
+typedef bool (*aws_byte_predicate_fn)(uint8_t value);
+
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
@@ -179,6 +184,31 @@ int aws_byte_cursor_split_on_char_n(
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output);
+
+/**
+ *
+ * Shrinks a byte cursor from the right for as long as the supplied predicate is true
+ */
+AWS_COMMON_API
+struct aws_byte_cursor aws_byte_cursor_right_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
+
+/**
+ * Shrinks a byte cursor from the left for as long as the supplied predicate is true
+ */
+AWS_COMMON_API
+struct aws_byte_cursor aws_byte_cursor_left_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
+
+/**
+ * Shrinks a byte cursor from both sides for as long as the supplied predicate is true
+ */
+AWS_COMMON_API
+struct aws_byte_cursor aws_byte_cursor_trim_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
+
+/**
+ * Returns true if the byte cursor's range of bytes all satisfy the predicate
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_satisfies_pred(struct aws_byte_cursor *source, aws_byte_predicate_fn predicate);
 
 /**
  * Copies from to to. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
