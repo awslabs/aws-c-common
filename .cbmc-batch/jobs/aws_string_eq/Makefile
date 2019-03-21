@@ -17,11 +17,11 @@ CBMC_UNWINDSET = --unwindset memcmp.0:17,strlen.0:17,memcpy_impl.0:17,memset_imp
 
 CBMCFLAGS +=
 
-DEPENDENCIES = $(SRCDIR)/source/string.c \
-	       $(HELPERDIR)/stubs/memcmp_override.c \
-	       $(HELPERDIR)/source/proof_allocators.c \
-	       $(HELPERDIR)/source/make_common_data_structures.c \
-	       $(HELPERDIR)/source/utils.c 
+DEPENDENCIES += $(SRCDIR)/source/string.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
 
 ENTRY = aws_string_eq_harness
 

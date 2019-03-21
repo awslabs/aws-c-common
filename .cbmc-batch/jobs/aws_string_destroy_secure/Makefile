@@ -17,17 +17,17 @@ CBMC_UNWINDSET = --unwindset memcmp.0:17,strlen.0:17,memcpy_impl.0:17,memset_imp
 
 CBMCFLAGS +=
 
-DEPENDENCIES = $(HELPERDIR)/source/make_common_data_structures.c \
-	       $(HELPERDIR)/source/proof_allocators.c \
-	       $(HELPERDIR)/source/utils.c \
-	       $(HELPERDIR)/stubs/memcmp_override.c \
-	       $(HELPERDIR)/stubs/memcpy_override.c \
-	       $(HELPERDIR)/stubs/memset_override.c \
-	       $(SRCDIR)/source/array_list.c \
-	       $(SRCDIR)/source/byte_buf.c \
-	       $(SRCDIR)/source/common.c \
-	       $(SRCDIR)/source/error.c \
-	       $(SRCDIR)/source/string.c 
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override.c
+DEPENDENCIES += $(SRCDIR)/source/array_list.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
+DEPENDENCIES += $(SRCDIR)/source/common.c
+DEPENDENCIES += $(SRCDIR)/source/error.c
+DEPENDENCIES += $(SRCDIR)/source/string.c
 
 ENTRY = aws_string_destroy_secure_harness
 
