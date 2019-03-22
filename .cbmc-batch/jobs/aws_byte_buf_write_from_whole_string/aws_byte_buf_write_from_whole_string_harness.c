@@ -29,7 +29,7 @@ const size_t MAX_STRING_LEN = 16;
 void aws_byte_buf_write_from_whole_string_harness() {
     struct aws_byte_buf *buf = allocate_arbitrary_byte_buf_nondet_len_max(can_fail_allocator(), MAX_STRING_LEN);
     struct aws_byte_buf old_buf = *buf;
-    // nondeterministially pick a btye. We can then track if it has changed
+    // nondeterministially pick a byte. We can then track if it has changed
     size_t index_to_check = nondet_size_t();
     __CPROVER_assume(index_to_check < buf->len);
     uint8_t byte_old = buf->buffer[index_to_check];
