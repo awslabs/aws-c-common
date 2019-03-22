@@ -39,13 +39,21 @@
 #define ASSUME_BOUNDED_ARRAY_LIST(list, max_initial_item_allocation, max_item_size)                                    \
     list = make_bounded_array_list((max_initial_item_allocation), (max_item_size))
 
+/**
+ * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size
+ */
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size);
 
+/**
+ * Makes an array list, with as much nondet as possible
+ */
 struct aws_array_list *make_nondet_array_list();
 
+/**
+ * Makes an array list, with as much nondet as possible, initial_item_allocation < max_initial_item_allocation
+ * item_size < max_item_size
+ */
 struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocation, size_t max_item_size);
-
-int compare(const void *a, const void *b);
 
 /**
  * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage
@@ -73,6 +81,17 @@ void make_arbitrary_byte_buf_nondet_len(struct aws_allocator *allocator, struct 
 void make_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t max);
 struct aws_byte_buf *allocate_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, size_t max);
 
+/**
+ * Makes a valid string, with as much nondet as possible, defined length
+ */
 struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, size_t size);
+
+/**
+ * Makes a valid string, with as much nondet as possible
+ */
 struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *allocator);
+
+/**
+ * Makes a valid string, with as much nondet as possible, len < max
+ */
 struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max);

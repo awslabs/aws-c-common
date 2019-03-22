@@ -60,14 +60,6 @@ struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocatio
     return list;
 }
 
-int compare(const void *a, const void *b) {
-    size_t n = nondet_size_t();
-    __CPROVER_assume(n <= MAX_ITEM_SIZE);
-    __CPROVER_precondition(__CPROVER_r_ok(a, n), "first element readable in compare function");
-    __CPROVER_precondition(__CPROVER_r_ok(b, n), "second element readable in compare function");
-    return nondet_int();
-}
-
 /*
 struct aws_byte_cursor {
     size_t len;
