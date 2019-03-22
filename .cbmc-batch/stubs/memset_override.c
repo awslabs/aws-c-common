@@ -15,7 +15,7 @@
 
 #include <proof_helpers/nondet.h>
 #include <stddef.h>
-#define NONDET_THIS_MANY_BYTES 8
+
 /**
  * Override the version of memset used by CBMC.
  */
