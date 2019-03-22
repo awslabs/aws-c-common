@@ -35,6 +35,16 @@ function(aws_set_common_properties target)
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
+
+        string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
+        if(STATIC_CRT)
+            string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
+        else()
+            string(REPLACE "/MT" "/MD" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
+        endif()
+        string(REPLACE " " ";" _FLAGS "${_FLAGS}")
+        list(APPEND AWS_C_FLAGS "${_FLAGS}")
+
     else()
         list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes)
 
@@ -117,17 +127,6 @@ function(aws_set_common_properties target)
         if (NOT MSVC)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
-    endif()
-    
-    if (MSVC)
-        string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
-        if(STATIC_CRT)
-            string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
-        else()
-            string(REPLACE "/MT" "/MD" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
-        endif()
-        string(REPLACE " " ";" _FLAGS "${_FLAGS}")
-        list(APPEND AWS_C_FLAGS "${_FLAGS}")
     endif()
     
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
