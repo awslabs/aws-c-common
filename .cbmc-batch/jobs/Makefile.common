@@ -24,21 +24,26 @@ ABSTRACTIONS ?= ""
 BASEDIR ?= $(abspath ../../../..)
 BATCH ?= cbmc-batch
 
-CBMCFLAGS += \
-	--bounds-check \
-	--pointer-check \
-	--unwinding-assertions \
-	--function $(ENTRY) \
-	$(CBMC_UNWINDSET)
+CBMCFLAGS += --bounds-check
+CBMCFLAGS += --div-by-zero-check
+CBMCFLAGS += --float-overflow-check
+CBMCFLAGS += --nan-check
+CBMCFLAGS += --pointer-check
+CBMCFLAGS += --pointer-overflow-check
+CBMCFLAGS += --signed-overflow-check
+CBMCFLAGS += --undefined-shift-check
+CBMCFLAGS += --unsigned-overflow-check
+CBMCFLAGS += --unwind 1
+CBMCFLAGS += --unwinding-assertions
+CBMCFLAGS += $(CBMC_UNWINDSET)
 
 GOTO_ANALYZER ?= goto-analyzer
 GOTO_CC ?= goto-cc
 GOTO_INSTRUMENT ?= goto-instrument
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
 
-INC += \
-	-I$(HELPERDIR)/include/ \
-	-I$(SRCDIR)/include/
+INC += -I$(HELPERDIR)/include/
+INC += -I$(SRCDIR)/include/
 
 SIMPLIFY ?= 0
 SRCDIR ?= $(abspath ../../..)
@@ -138,7 +143,7 @@ clean:
 veryclean: clean
 	$(RM) -r html
 
-.PHONY: cbmc property coverage report clean veryclean batch-yaml
+.PHONY: cbmc property coverage report clean veryclean batch-yaml ci-yaml
 
 ################################################################
 # Launching cbmc on cbmc-batch
@@ -190,6 +195,14 @@ $(ENTRY).yaml: $(ENTRY).goto Makefile
 	echo 'expected: "SUCCESSFUL"' >> $@
 
 batch-yaml: $(ENTRY).yaml
+
+cbmc-batch.yaml: $(ENTRY).goto Makefile
+	echo 'jobos: ubuntu16' > $@
+	echo 'cbmcflags: $(strip $(call yaml_encode_options,$(CBMCFLAGS)))' >> $@
+	echo 'goto: $(ENTRY).goto' >> $@
+	echo 'expected: "SUCCESSFUL"' >> $@
+
+ci-yaml: cbmc-batch.yaml
 
 launch: $(ENTRY).goto Makefile
 	mkdir -p $(WS)
