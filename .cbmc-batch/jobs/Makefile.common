@@ -42,9 +42,8 @@ GOTO_CC ?= goto-cc
 GOTO_INSTRUMENT ?= goto-instrument
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
 
-INC += \
-	-I$(HELPERDIR)/include/ \
-	-I$(SRCDIR)/include/
+INC += -I$(HELPERDIR)/include/
+INC += -I$(SRCDIR)/include/
 
 SIMPLIFY ?= 0
 SRCDIR ?= $(abspath ../../..)
@@ -199,7 +198,7 @@ batch-yaml: $(ENTRY).yaml
 
 cbmc-batch.yaml: $(ENTRY).goto Makefile
 	echo 'jobos: ubuntu16' > $@
-	echo 'cbmcflags: $(call yaml_encode_options,$(CBMCFLAGS))' >> $@
+	echo 'cbmcflags: $(strip $(call yaml_encode_options,$(CBMCFLAGS)))' >> $@
 	echo 'goto: $(ENTRY).goto' >> $@
 	echo 'expected: "SUCCESSFUL"' >> $@
 
