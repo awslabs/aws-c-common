@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
  * this file except in compliance with the License. A copy of the License is
@@ -15,17 +15,9 @@
 
 #pragma once
 
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-/**
- * Non-determinstic functions used in CBMC proofs
- */
-size_t nondet_size_t();
-int nondet_int();
-uint8_t nondet_uint8_t();
-bool nondet_bool();
-void *nondet_voidp();
-uint32_t nondet_uint32_t();
-uint64_t nondet_uint64_t();
+void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len);
+void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len);
+void assert_all_zeroes(const uint8_t *a, size_t len);

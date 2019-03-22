@@ -13,7 +13,27 @@
  * permissions and limitations under the License.
  */
 
-// Disable all compiler, and go to bare C
-#undef AWS_CRYPTOSDK_P_USE_X86_64_ASM
-#undef AWS_CRYPTOSDK_P_SPECTRE_MITIGATIONS
-#undef AWS_CRYPTOSDK_P_HAVE_BUILTIN_EXPECT
+#include <proof_helpers/nondet.h>
+#include <stddef.h>
+
+/**
+ * Override the version of memset used by CBMC.
+ */
+void *memset_impl(void *s, int c, size_t n) {
+    __CPROVER_precondition(__CPROVER_w_ok(s, n), "memset destination region writeable");
+    if (n > 0) {
+        char *sp = (char *)s;
+        for (__CPROVER_size_t i = 0; i < n; i++)
+            sp[i] = c;
+    }
+    return s;
+}
+
+void *memset(void *s, int c, size_t n) {
+    return memset_impl(s, c, n);
+}
+
+void *__builtin___memset_chk(void *s, int c, size_t n, size_t os) {
+    (void)os;
+    return memset_impl(s, c, n);
+}
