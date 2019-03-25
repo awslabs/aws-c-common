@@ -386,3 +386,32 @@ static int s_test_cursor_eq_case_insensitive(struct aws_allocator *allocator, vo
 
     return 0;
 }
+
+AWS_TEST_CASE(test_cursor_hash_case_insensitive, s_test_cursor_hash_case_insensitive)
+static int s_test_cursor_hash_case_insensitive(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    {
+        /* Check against known FNV-1A values */
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&a));
+
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("ABC");
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("aBc123");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("Abc123");
+        ASSERT_TRUE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("xyz");
+        ASSERT_FALSE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    return 0;
+}

@@ -260,6 +260,24 @@ bool aws_byte_cursor_eq_case_insensitive(const struct aws_byte_cursor *a, const 
     return true;
 }
 
+uint64_t aws_hash_byte_cursor_ptr_case_insensitive(const void *item) {
+    /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
+    const uint64_t fnv_offset_basis = 0xcbf29ce484222325ULL;
+    const uint64_t fnv_prime = 0x100000001b3ULL;
+
+    const struct aws_byte_cursor *cursor = item;
+    const uint8_t *i = cursor->ptr;
+    const uint8_t *end = cursor->ptr + cursor->len;
+
+    uint64_t hash = fnv_offset_basis;
+    while (i != end) {
+        const uint8_t lower = s_tolower_table[*i++];
+        hash ^= lower;
+        hash *= fnv_prime;
+    }
+    return hash;
+}
+
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
 
     if (!a || !b) {

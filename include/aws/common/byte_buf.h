@@ -250,6 +250,13 @@ AWS_COMMON_API
 bool aws_byte_cursor_eq_case_insensitive(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
 
 /**
+ * Case-insensitive hash function for aws_byte_cursors stored in an aws_hash_table.
+ * For case-sensitive hashing, use aws_hash_byte_cursor_ptr().
+ */
+AWS_COMMON_API
+uint64_t aws_hash_byte_cursor_ptr_case_insensitive(const void *item);
+
+/**
  * Compares an aws_byte_cursor against an aws_byte_buf
  * Returns true if a has the same length as b and their buffers have the same bytes
  * (or both buffers are null). When both a and b are null the function returns true

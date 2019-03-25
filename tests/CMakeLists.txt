@@ -208,6 +208,7 @@ add_test_case(test_buffer_init_copy_null_buffer)
 add_test_case(test_buffer_advance)
 add_test_case(test_buffer_printf)
 add_test_case(test_cursor_eq_case_insensitive)
+add_test_case(test_cursor_hash_case_insensitive)
 
 add_test_case(byte_swap_test)
 
