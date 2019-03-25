@@ -12,6 +12,8 @@
 # permissions and limitations under the License.
 
 cmake_minimum_required(VERSION 3.0)
+option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
+
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
