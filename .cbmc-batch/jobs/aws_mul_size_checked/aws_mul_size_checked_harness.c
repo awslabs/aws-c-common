@@ -2,7 +2,7 @@
 #include <proof_helpers/make_common_data_structures.h>
 
 /**
- * Coverage: 1.00 (29 lines out of 29 statically-reachable lines in 5 functions reached)
+ * Coverage: 1.00 (31 lines out of 31 statically-reachable lines in 5 functions reached)
  * Runtime: 0m3.302s
  *
  * Assumptions:
@@ -23,6 +23,8 @@ void aws_mul_size_checked_harness() {
         uint64_t r = nondet_uint64_t();
         if (!aws_mul_u64_checked(a, b, &r)) {
             assert(r == a * b);
+        } else {
+            assert((b > 0) && (a > (UINT64_MAX - b)));
         }
     } else {
         /*
@@ -34,6 +36,8 @@ void aws_mul_size_checked_harness() {
         uint32_t r = nondet_uint32_t();
         if (!aws_mul_u32_checked(a, b, &r)) {
             assert(r == a * b);
+        } else {
+            assert((b > 0) && (a > (UINT32_MAX - b)));
         }
     }
 }
