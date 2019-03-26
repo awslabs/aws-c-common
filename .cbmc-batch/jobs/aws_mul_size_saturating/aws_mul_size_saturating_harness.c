@@ -10,7 +10,7 @@
  *       functions must always return the corresponding saturated value.
  */
 void aws_mul_size_saturating_harness() {
-    if (nondet_int()) {
+    if (nondet_bool()) {
         /*
          * In this particular case, full range of nondet inputs leads
          * to excessively long runtimes, so use 0 or UINT64_MAX instead.
@@ -27,7 +27,7 @@ void aws_mul_size_saturating_harness() {
          * In this particular case, full range of nondet inputs leads
          * to excessively long runtimes, so use 0 or UINT32_MAX instead.
          */
-        uint32_t a = (nondet_int()) ? 0 : UINT32_MAX;
+        uint32_t a = (nondet_bool()) ? 0 : UINT32_MAX;
         uint32_t b = nondet_uint32_t();
         uint32_t r = aws_mul_u32_saturating(a, b);
         if (a > 0 && b > 0 && a > (UINT32_MAX / b))

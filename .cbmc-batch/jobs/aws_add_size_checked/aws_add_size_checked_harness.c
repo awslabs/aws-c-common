@@ -10,7 +10,7 @@
  *       aws_add_u64_checked functions return AWS_OP_SUCCESS.
  */
 void aws_add_size_checked_harness() {
-    if (nondet_int()) {
+    if (nondet_bool()) {
         uint64_t a = nondet_uint64_t();
         uint64_t b = nondet_uint64_t();
         uint64_t r = nondet_uint64_t();

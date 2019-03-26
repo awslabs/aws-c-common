@@ -10,7 +10,7 @@
  *       functions must always return the corresponding saturated value.
  */
 void aws_add_size_saturating_harness() {
-    if (nondet_int()) {
+    if (nondet_bool()) {
         uint64_t a = nondet_uint64_t();
         uint64_t b = nondet_uint64_t();
         uint64_t r = aws_add_u64_saturating(a, b);

@@ -10,7 +10,7 @@
  *       or aws_mul_u64_checked functions return AWS_OP_SUCCESS.
  */
 void aws_mul_size_checked_harness() {
-    if (nondet_int()) {
+    if (nondet_bool()) {
         /*
          * In this particular case, full range of nondet inputs leads
          * to excessively long runtimes, so use 0 or UINT64_MAX instead.
@@ -25,7 +25,7 @@ void aws_mul_size_checked_harness() {
          * In this particular case, full range of nondet inputs leads
          * to excessively long runtimes, so use 0 or UINT32_MAX instead.
          */
-        uint32_t a = (nondet_int()) ? 0 : UINT32_MAX;
+        uint32_t a = (nondet_bool()) ? 0 : UINT32_MAX;
         uint32_t b = nondet_uint32_t();
         uint32_t r = nondet_uint32_t();
         if (!aws_mul_u32_checked(a, b, &r))
