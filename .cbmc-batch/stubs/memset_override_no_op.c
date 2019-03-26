@@ -23,11 +23,7 @@
  */
 void *memset_impl(void *s, int c, size_t n) {
     __CPROVER_precondition(__CPROVER_w_ok(s, n), "memset destination region writeable");
-    if (n > 0) {
-        /*char *sp = (char *)s;
-        for (__CPROVER_size_t i = 0; i < n; i++)
-            sp[i] = c;*/
-    }
+
     return s;
 }
 

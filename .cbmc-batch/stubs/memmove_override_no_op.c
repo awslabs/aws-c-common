@@ -29,17 +29,6 @@ void *memmove_impl(void *dest, const void *src, size_t n) {
         (void)*(((unsigned char *)dest) + n - 1);      /* check that the memory is accessible */
         (void)*(((const unsigned char *)src) + n - 1); /* check that the memory is accessible */
 
-        /*unsigned char *pd = dest;
-        const unsigned char *ps = src;
-        if ((ps) < (pd)) {
-            for (pd += n, ps += n; n--;)
-                *--pd = *--ps;
-        } else {
-            while (n) {
-                *pd++ = *ps++;
-                n--;
-            }
-        }*/
     }
     return dest;
 }

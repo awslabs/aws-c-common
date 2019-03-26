@@ -21,6 +21,8 @@
 
 /**
  * Coverage: 0.99 (150 lines out of 151 statically-reachable lines in 21 functions reached)
+ * Missing lines are error handeling for impossible conditions
+ *
  * Runtime: 0m9.181s
  *
  * Assumptions:

@@ -13,15 +13,14 @@
 
 ###########
 #NOTE: If we don't use the unwindset, leave it empty
-CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += memcpy_impl.0:11
+#CBMC_UNWINDSET = --unwindset
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 

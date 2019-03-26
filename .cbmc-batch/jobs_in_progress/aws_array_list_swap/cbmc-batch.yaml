@@ -1,4 +1,0 @@
-jobos: ubuntu16
-cbmcflags: "--bounds-check;--pointer-check;--div-by-zero-check;--signed-overflow-check;--unsigned-overflow-check;--pointer-overflow-check;--undefined-shift-check;--float-overflow-check;--nan-check;--unwinding-assertions;--unwindset;__builtin___memcpy_chk.0:5,aws_array_list_mem_swap.0:2;--function;aws_array_list_copy_harness"
-goto: aws_array_list_copy_harness.goto
-expected: "SUCCESSFUL"
