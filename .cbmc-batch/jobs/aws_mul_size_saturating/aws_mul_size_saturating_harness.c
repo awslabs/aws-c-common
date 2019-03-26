@@ -6,8 +6,11 @@
  * Runtime: 0m2.962s
  *
  * Assumptions:
- *     - If a * b overflows, aws_mul_u32_saturating and aws_mul_u64_saturating
- *       functions must always return the corresponding saturated value.
+ *     - given 2 non-deterministics unsigned integers
+ *
+ * Assertions:
+ *     - if a * b overflows, aws_mul_u32_saturating and aws_mul_u64_saturating
+ *       functions must always return the corresponding saturated value
  */
 void aws_mul_size_saturating_harness() {
     if (nondet_bool()) {

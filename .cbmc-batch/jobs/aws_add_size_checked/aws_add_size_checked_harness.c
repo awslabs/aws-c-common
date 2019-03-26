@@ -6,8 +6,11 @@
  * Runtime: 0m2.025s
  *
  * Assumptions:
- *     - For any given inputs, r will never overflow, if aws_add_u32_checked or
- *       aws_add_u64_checked functions return AWS_OP_SUCCESS.
+ *     - given 2 non-deterministics unsigned integers
+ *
+ * Assertions:
+ *     - r does not overflow, if aws_add_u32_checked or
+ *       aws_add_u64_checked functions return AWS_OP_SUCCESS
  */
 void aws_add_size_checked_harness() {
     if (nondet_bool()) {

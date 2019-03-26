@@ -6,8 +6,11 @@
  * Runtime: 0m3.302s
  *
  * Assumptions:
- *     - For any given inputs, r will never overflow, if aws_mul_u32_checked
- *       or aws_mul_u64_checked functions return AWS_OP_SUCCESS.
+ *     - given 2 non-deterministics unsigned integers
+ *
+ * Assertions:
+ *     - r does not overflow, if aws_mul_u32_checked or
+ *       aws_mul_u64_checked functions return AWS_OP_SUCCESS
  */
 void aws_mul_size_checked_harness() {
     if (nondet_bool()) {
