@@ -17,7 +17,6 @@ CBMC_UNWINDSET = --unwindset memcmp.0:17,strlen.0:17,memcpy_impl.0:17,memset_imp
 
 CBMCFLAGS +=
 
-DEPENDENCIES =
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c

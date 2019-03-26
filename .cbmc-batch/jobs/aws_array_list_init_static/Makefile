@@ -12,15 +12,14 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-#CBMC_UNWINDSET = --unwindset
+CBMC_UNWINDSET =
 
 CBMCFLAGS +=
 
-DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
-		   $(HELPERDIR)/stubs/error.c \
-	       $(SRCDIR)/source/array_list.c \
-	       $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(SRCDIR)/source/array_list.c
 
 ENTRY = aws_array_list_init_static_harness
 ###########

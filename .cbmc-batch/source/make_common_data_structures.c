@@ -23,14 +23,14 @@
 
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {
     struct aws_array_list *list;
-
     /* Assume list is allocated */
     ASSUME_VALID_MEMORY(list);
 
     if (nondet_int()) { /* dynamic */
-        struct aws_allocator *allocator = malloc(sizeof(*allocator));
+        struct aws_allocator *allocator;
         ASSUME_CAN_FAIL_ALLOCATOR(allocator);
-        AWS_FATAL_ASSERT(!aws_array_list_init_dynamic(list, allocator, initial_item_allocation, item_size));
+        __CPROVER_assume(
+            aws_array_list_init_dynamic(list, allocator, initial_item_allocation, item_size) == AWS_OP_SUCCESS);
     } else { /* static */
         size_t len;
         __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
@@ -39,6 +39,7 @@ struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation,
     }
     list->length = nondet_size_t();
     __CPROVER_assume(list->length <= initial_item_allocation);
+
     return list;
 }
 
@@ -59,13 +60,6 @@ struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocatio
     ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size);
     return list;
 }
-
-/*
-struct aws_byte_cursor {
-    size_t len;
-    uint8_t *ptr;
-};
-*/
 
 struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max) {
     size_t len;
@@ -106,34 +100,6 @@ void make_arbitrary_byte_buf_nondet_len(struct aws_allocator *allocator, struct 
     make_arbitrary_byte_buf(allocator, buf, capacity, len);
 }
 
-/*
-struct aws_array_list {
-    struct aws_allocator *alloc;
-    size_t current_size;
-    size_t length;
-    size_t item_size;
-    void *data;
-};
-*/
-
-// based off of https://github.com/awslabs/aws-c-common/blob/master/include/aws/common/array_list.inl
-// aws_array_list_init_dynamic
-void make_arbitrary_list(
-    struct aws_array_list *AWS_RESTRICT list,
-    struct aws_allocator *alloc,
-    size_t initial_item_allocation,
-    size_t item_size) {
-    list->alloc = alloc;
-    size_t allocation_size = initial_item_allocation * item_size;
-    list->current_size = allocation_size;
-    //  list->length = nondet_size_t();
-    list->length = initial_item_allocation; // DSN HACK FOR NOW UNTIL we can use nondet with the constant propegator
-    __CPROVER_assume(list->length >= 0 && list->length <= initial_item_allocation);
-    list->item_size = item_size;
-    // since we want an allocation that can never fail, use straight malloc here
-    list->data = malloc(allocation_size); // allocation_size > 0 ? malloc(allocation_size) : NULL;
-}
-
 struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, size_t len) {
     //  __CPROVER_assume(len > 0);
     struct aws_string *str = malloc(sizeof(struct aws_string) + len + 1);
@@ -154,4 +120,10 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
     size_t len;
     __CPROVER_assume(len < max);
     return make_arbitrary_aws_string(allocator, len);
+}
+
+int compare(const void *a, const void *b, size_t item_size) {
+    __CPROVER_precondition(__CPROVER_r_ok(a, item_size), "first element readable in compare function");
+    __CPROVER_precondition(__CPROVER_r_ok(b, item_size), "second element readable in compare function");
+    return nondet_int();
 }
