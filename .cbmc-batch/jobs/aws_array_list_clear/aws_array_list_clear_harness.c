@@ -16,25 +16,24 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
+/* These values allow us to reach a higher coverage rate */
 #define MAX_ITEM_SIZE 2
 #define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
 
 /**
  * Runtime: 0m4.327s
- *
- * Assumptions:
- *     - A valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size
- *     - non-deterministic initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION
- *     - non-deterministic item_size <= MAX_ITEM_SIZE
- *     - non-deterministic length <= initial_item_allocation
- *     - After aws_array_list_clear
- *                       -> list->data == NULL -> list->length == length
- *                       -> list->data != NULL -> list->length == 0
- *     - All the other parameters remain the same
  */
 void aws_array_list_clear_harness() {
     struct aws_array_list *list;
+    /*
+     * Assumptions:
+     *     - a valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size;
+     *     - non-deterministic list->initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION;
+     *     - non-deterministic list->item_size <= MAX_ITEM_SIZE;
+     *     - non-deterministic list->length <= initial_item_allocation;
+     */
     ASSUME_BOUNDED_ARRAY_LIST(list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE);
+
     struct aws_allocator *alloc = list->alloc;
     size_t current_size = list->current_size;
     size_t length = list->length;
@@ -43,7 +42,6 @@ void aws_array_list_clear_harness() {
 
     aws_array_list_clear(list);
 
-    /* assertions */
     (list->data) ? assert(list->length == 0) : assert(list->length == length);
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);

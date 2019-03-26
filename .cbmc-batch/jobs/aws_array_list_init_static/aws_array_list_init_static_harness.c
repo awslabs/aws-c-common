@@ -16,23 +16,12 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
+/* These values allow us to reach a higher coverage rate */
 #define MAX_ITEM_SIZE 2
 #define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
 
 /**
  * Runtime: 0m3.378s
- *
- * Assumptions:
- *     - a valid aws_array_list structure
- *     - non-deterministic initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION
- *     - non-deterministic item_size <= MAX_ITEM_SIZE
- *     - void* raw_arry of length == initial_item_allocation * item_size
- *     - aws_array_list_init_static == AWS_OP_SUCCESS
- *                                 -> list->alloc == NULL
- *                                 -> list->item_size == item_size
- *                                 -> list->data == raw_array
- *                                 -> list->length == 0
- *                                 -> list->current_size == initial_item_allocation * item_size
  */
 void aws_array_list_init_static_harness() {
     struct aws_array_list *list;
@@ -47,7 +36,6 @@ void aws_array_list_init_static_harness() {
 
     aws_array_list_init_static(list, raw_array, initial_item_allocation, item_size);
 
-    /* assertions */
     assert(list->alloc == NULL);
     assert(list->item_size == item_size);
     assert(list->data == raw_array);

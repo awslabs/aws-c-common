@@ -16,26 +16,24 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
+/* These values allow us to reach a higher coverage rate */
 #define MAX_ITEM_SIZE 2
 #define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
 
 /**
  * Runtime: 0m9.181s
- *
- * Assumptions:
- *     - a valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size
- *     - non-deterministic initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION
- *     - non-deterministic item_size <= MAX_ITEM_SIZE
- *     - non-deterministic length <= initial_item_allocation
- *     - aws_array_list_ensure_capacity == AWS_OP_SUCCESS
- *                                 -> list->current_size is updated if current_size < necessary_size
- *     - aws_array_list_ensure_capacity == AWS_OP_ERR
- *                                 -> list->current_size does not change
- *     - item_size, alloc, and length do not change after the operation
  */
 void aws_array_list_ensure_capacity_harness() {
     struct aws_array_list *list;
+    /*
+     * Assumptions:
+     *     - a valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size;
+     *     - non-deterministic list->initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION;
+     *     - non-deterministic list->item_size <= MAX_ITEM_SIZE;
+     *     - non-deterministic list->length <= initial_item_allocation;
+     */
     ASSUME_BOUNDED_ARRAY_LIST(list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE);
+
     struct aws_allocator *alloc = list->alloc;
     size_t current_size = list->current_size;
     size_t length = list->length;
