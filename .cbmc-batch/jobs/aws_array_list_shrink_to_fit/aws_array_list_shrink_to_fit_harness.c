@@ -20,7 +20,6 @@
 #define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
 
 /**
- * Coverage: 0.99 (147 lines out of 148 statically-reachable lines in 23 functions reached)
  * Runtime: 0m51.653s
  *
  * Assumptions:
