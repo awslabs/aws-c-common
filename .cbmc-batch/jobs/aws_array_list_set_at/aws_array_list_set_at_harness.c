@@ -45,14 +45,14 @@ void aws_array_list_set_at_harness() {
     size_t index = nondet_size_t();
 
     if (!aws_array_list_set_at(list, val, index)) {
-        /* some guarantees */
+        /* assertions */
         if (index > length)
             assert(list->length == index + 1);
     } else {
-        /* some guarantees */
+        /* assertions */
         assert(list->length == length);
     }
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->item_size == item_size);
 }

@@ -44,15 +44,15 @@ void aws_array_list_pop_back_harness() {
     void *data = list->data;
 
     if (!aws_array_list_pop_back(list)) {
-        /* some guarantees */
+        /* assertions */
         assert(list->length == length - 1);
         assert(list->data);
     } else {
-        /* some guarantees */
+        /* assertions */
         assert(list->length == length);
     }
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);
     assert(list->item_size == item_size);

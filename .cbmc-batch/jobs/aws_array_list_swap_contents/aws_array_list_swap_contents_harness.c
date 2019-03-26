@@ -57,7 +57,7 @@ void aws_array_list_swap_contents_harness() {
 
     aws_array_list_swap_contents(from, to);
 
-    /* some guarantees */
+    /* assertions */
     assert(from->item_size == to_item_size);
     assert(from->length == to_length);
     assert(from->alloc == to_alloc);

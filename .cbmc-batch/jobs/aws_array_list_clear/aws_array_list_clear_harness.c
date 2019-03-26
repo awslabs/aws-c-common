@@ -44,7 +44,7 @@ void aws_array_list_clear_harness() {
 
     aws_array_list_clear(list);
 
-    /* some guarantees */
+    /* assertions */
     (list->data) ? assert(list->length == 0) : assert(list->length == length);
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);

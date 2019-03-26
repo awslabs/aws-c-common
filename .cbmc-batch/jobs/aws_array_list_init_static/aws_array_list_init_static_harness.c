@@ -48,7 +48,7 @@ void aws_array_list_init_static_harness() {
 
     aws_array_list_init_static(list, raw_array, initial_item_allocation, item_size);
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == NULL);
     assert(list->item_size == item_size);
     assert(list->data == raw_array);

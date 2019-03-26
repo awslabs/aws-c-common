@@ -45,7 +45,7 @@ void aws_array_list_swap_harness() {
 
     aws_array_list_swap(list, index_a, index_b);
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);
     assert(list->length == length);

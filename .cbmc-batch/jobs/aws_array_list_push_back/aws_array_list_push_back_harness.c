@@ -43,13 +43,13 @@ void aws_array_list_push_back_harness() {
     void *val = malloc(list->item_size);
 
     if (!aws_array_list_push_back(list, val)) {
-        /* some guarantees */
+        /* assertions */
         assert(list->length == length + 1);
     } else {
-        /* some guarantees */
+        /* assertions */
         assert(list->length == length);
     }
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->item_size == item_size);
 }

@@ -43,7 +43,7 @@ void aws_array_list_capacity_harness() {
 
     size_t capacity = aws_array_list_capacity(list);
 
-    /* some guarantees */
+    /* assertions */
     assert(capacity == list->current_size / list->item_size);
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);

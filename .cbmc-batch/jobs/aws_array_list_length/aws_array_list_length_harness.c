@@ -40,7 +40,7 @@ void aws_array_list_length_harness() {
 
     size_t len = aws_array_list_length(list);
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);
     assert(len == list->length);

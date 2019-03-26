@@ -46,7 +46,7 @@ void aws_array_list_pop_front_n_harness() {
 
     aws_array_list_pop_front_n(list, n);
 
-    /* some guarantees */
+    /* assertions */
     if (n == 0) {
         assert(list->length == length);
     } else if (n >= length) {

@@ -46,12 +46,12 @@ void aws_array_list_back_harness() {
     void *data = list->data;
 
     if (!aws_array_list_back(list, val)) {
-        /* some guarantees */
+        /* assertions */
         assert(list->data);
         assert(list->length);
     }
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);
     assert(list->length == length);

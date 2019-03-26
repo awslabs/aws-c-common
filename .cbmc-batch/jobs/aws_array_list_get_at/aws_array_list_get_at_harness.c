@@ -47,12 +47,12 @@ void aws_array_list_get_at_harness() {
     void *data = list->data;
 
     if (!aws_array_list_get_at(list, val, index)) {
-        /* some guarantees */
+        /* assertions */
         assert(list->data);
         assert(list->length > index);
     }
 
-    /* some guarantees */
+    /* assertions */
     assert(list->alloc == alloc);
     assert(list->current_size == current_size);
     assert(list->length == length);

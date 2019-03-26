@@ -46,7 +46,7 @@ void aws_array_list_init_dynamic_harness() {
     size_t item_size = nondet_size_t();
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
 
-    /* some guarantees */
+    /* assertions */
     if (!aws_array_list_init_dynamic(list, allocator, initial_item_allocation, item_size)) {
         assert(list->alloc == allocator);
         assert(list->item_size == item_size);

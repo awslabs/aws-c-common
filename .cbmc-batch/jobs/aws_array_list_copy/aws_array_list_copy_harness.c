@@ -58,18 +58,18 @@ void aws_array_list_copy_harness() {
     __CPROVER_assume(from->item_size == to->item_size);
 
     if (!aws_array_list_copy(from, to)) {
-        /* some guarantees */
+        /* assertions */
         assert(to->length == from->length);
         assert(to->current_size >= (from->length * from->item_size));
     } else {
-        /* some guarantees */
+        /* assertions */
         assert(to->length == to_length);
         assert(to->alloc == to_alloc);
         assert(to->current_size == to_current_size);
         assert(to->item_size == to_item_size);
         assert(to->data == to_data);
     }
-    /* some guarantees */
+    /* assertions */
     assert(from->item_size == to->item_size);
     assert(from->length == from_length);
     assert(from->alloc == from_alloc);
