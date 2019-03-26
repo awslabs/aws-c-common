@@ -319,3 +319,99 @@ static int s_test_buffer_printf(struct aws_allocator *allocator, void *ctx) {
 
     return AWS_OP_SUCCESS;
 }
+
+AWS_TEST_CASE(test_cursor_eq_case_insensitive, s_test_cursor_eq_case_insensitive)
+static int s_test_cursor_eq_case_insensitive(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("aBc123");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("Abc123");
+        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+    }
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("xyz");
+        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+    }
+
+    {
+        /* Vanilla strcmp() considers these equal, but not us */
+        uint8_t a_src[] = {'a', 0};
+        uint8_t b_src[] = {'a'};
+        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
+        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
+        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+    }
+
+    {
+        /* Comparison should continue beyond null-terminator */
+        uint8_t a_src[] = {'a', 0, 'b'};
+        uint8_t b_src[] = {'a', 0, 'c'};
+        uint8_t c_src[] = {'a', 0, 'b'};
+        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
+        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
+        struct aws_byte_cursor c = aws_byte_cursor_from_array(c_src, AWS_ARRAY_SIZE(c_src));
+        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &c));
+    }
+
+    {
+        /* Compare every possible uint8_t value, then lower against upper, then upper against lower.
+         * Ex:
+         * a_src = {0 ... 255, 'a' ... 'z', 'A' ... 'Z'};
+         * b_src = {0 ... 255, 'A' ... 'Z', 'a' ... 'z'};
+         */
+        uint8_t a_src[256 + 26 + 26];
+        uint8_t b_src[256 + 26 + 26];
+        for (size_t i = 0; i < 256; ++i) {
+            a_src[i] = (uint8_t)i;
+            b_src[i] = (uint8_t)i;
+        }
+        for (size_t i = 0, a = 'a'; a <= 'z'; ++i, ++a) {
+            a_src[256 + i] = (uint8_t)a;
+            b_src[256 + 26 + i] = (uint8_t)a;
+        }
+        for (size_t i = 0, a = 'A'; a <= 'Z'; ++i, ++a) {
+            a_src[256 + 26 + i] = (uint8_t)a;
+            b_src[256 + i] = (uint8_t)a;
+        }
+
+        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
+        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
+        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_cursor_hash_case_insensitive, s_test_cursor_hash_case_insensitive)
+static int s_test_cursor_hash_case_insensitive(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    {
+        /* Check against known FNV-1A values */
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&a));
+
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("ABC");
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("aBc123");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("Abc123");
+        ASSERT_TRUE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    {
+        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
+        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("xyz");
+        ASSERT_FALSE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+    }
+
+    return 0;
+}
