@@ -20,7 +20,7 @@
 
 /**
  * Override the version of memmove used by CBMC.
- * Source: https://clc-wiki.net/wiki/memmove
+ * Source: public domain code copied from https://clc-wiki.net/wiki/memmove
  */
 void *memmove_impl(void *dest, const void *src, size_t n) {
     if (n > 0) {

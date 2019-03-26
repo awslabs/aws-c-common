@@ -20,7 +20,6 @@
 
 /**
  * Override the version of memmove used by CBMC.
- * Source: https://clc-wiki.net/wiki/memmove
  */
 void *memmove_impl(void *dest, const void *src, size_t n) {
     if (n > 0) {
@@ -28,7 +27,6 @@ void *memmove_impl(void *dest, const void *src, size_t n) {
         (void)*(const char *)src;                      /* check that the memory is accessible */
         (void)*(((unsigned char *)dest) + n - 1);      /* check that the memory is accessible */
         (void)*(((const unsigned char *)src) + n - 1); /* check that the memory is accessible */
-
     }
     return dest;
 }
