@@ -17,9 +17,9 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES = $(HELPERDIR)/source/make_common_data_structures.c \
-		   $(HELPERDIR)/stubs/error.c \
-	       $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(SRCDIR)/source/common.c
 
 ENTRY = aws_add_size_checked_harness
 ###########
