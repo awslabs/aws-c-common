@@ -232,7 +232,8 @@ static int isupper(uint8_t ch) {
 }
 
 static uint8_t tolower(uint8_t ch) {
-    if (isupper(ch)) return ch | 32;
+    if (isupper(ch))
+        return ch | 32;
     return ch;
 }
 
