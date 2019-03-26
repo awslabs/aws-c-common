@@ -19,6 +19,11 @@ default: report
 sinclude Makefile.local
 
 ################################################################
+# Define some constants that are hard to reference otherwise
+SPACE :=$() $()
+COMMA :=,
+
+################################################################
 # Define locations and binaries
 ABSTRACTIONS ?= ""
 BASEDIR ?= $(abspath ../../../..)
@@ -49,6 +54,13 @@ SIMPLIFY ?= 0
 SRCDIR ?= $(abspath ../../..)
 UNWIND ?= 0
 VIEWER ?= cbmc-viewer
+
+################################################################
+# Preprocess the unwindset
+
+ifneq ($(UNWINDSET),)
+CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
+endif
 
 ################################################################
 
