@@ -17,17 +17,19 @@ void aws_add_size_saturating_harness() {
         uint64_t a = nondet_uint64_t();
         uint64_t b = nondet_uint64_t();
         uint64_t r = aws_add_u64_saturating(a, b);
-        if ((b > 0) && (a > (UINT64_MAX - b)))
+        if ((b > 0) && (a > (UINT64_MAX - b))) {
             assert(r == UINT64_MAX);
-        else
+        } else {
             assert(r == a + b);
+        }
     } else {
         uint32_t a = nondet_uint32_t();
         uint32_t b = nondet_uint32_t();
         uint32_t r = aws_add_u32_saturating(a, b);
-        if ((b > 0) && (a > (UINT32_MAX - b)))
+        if ((b > 0) && (a > (UINT32_MAX - b))) {
             assert(r == UINT32_MAX);
-        else
+        } else {
             assert(r == a + b);
+        }
     }
 }

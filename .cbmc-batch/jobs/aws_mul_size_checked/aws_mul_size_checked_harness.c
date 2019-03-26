@@ -21,8 +21,9 @@ void aws_mul_size_checked_harness() {
         uint64_t a = (nondet_int()) ? 0 : UINT64_MAX;
         uint64_t b = nondet_uint64_t();
         uint64_t r = nondet_uint64_t();
-        if (!aws_mul_u64_checked(a, b, &r))
+        if (!aws_mul_u64_checked(a, b, &r)) {
             assert(r == a * b);
+        }
     } else {
         /*
          * In this particular case, full range of nondet inputs leads
@@ -31,7 +32,8 @@ void aws_mul_size_checked_harness() {
         uint32_t a = (nondet_bool()) ? 0 : UINT32_MAX;
         uint32_t b = nondet_uint32_t();
         uint32_t r = nondet_uint32_t();
-        if (!aws_mul_u32_checked(a, b, &r))
+        if (!aws_mul_u32_checked(a, b, &r)) {
             assert(r == a * b);
+        }
     }
 }
