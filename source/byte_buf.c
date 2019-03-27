@@ -259,19 +259,19 @@ static const uint8_t s_tolower_table[256] = {
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
 
-bool aws_array_eq_ignore_case(const void *array_a, size_t size_a, const void *array_b, size_t size_b) {
-    if (size_a != size_b) {
+bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
+    if (len_a != len_b) {
         return false;
     }
 
     /* If either is null: true if both are null or the size is 0 */
     if (!array_a || !array_b) {
-        return (array_a == array_b) || (size_a == 0);
+        return (array_a == array_b) || (len_a == 0);
     }
 
     const uint8_t *bytes_a = array_a;
     const uint8_t *bytes_b = array_b;
-    for (size_t i = 0; i < size_a; ++i) {
+    for (size_t i = 0; i < len_a; ++i) {
         if (s_tolower_table[bytes_a[i]] != s_tolower_table[bytes_b[i]]) {
             return false;
         }
@@ -328,7 +328,7 @@ bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str) 
         return array_len == 0;
     }
 
-    if (!array_bytes && (array_len != 0)) {
+    if (!array_bytes && (array_len != 0))
         return false;
         /* If array_len is 0 we still must check that c_str is null terminated */
     }
