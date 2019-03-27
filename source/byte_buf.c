@@ -58,19 +58,35 @@ void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
 }
 
 bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b) {
-    if (!a || !b) {
-        return (a == b);
-    }
+    const uint8_t *a_ptr = a ? a->buffer : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->buffer : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    if (a->len != b->len) {
-        return false;
-    }
+    return aws_array_eq(a_ptr, a_len, b_ptr, b_len);
+}
 
-    if (!a->buffer || !b->buffer) {
-        return (a->buffer == b->buffer);
-    }
+bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_byte_buf *b) {
+    const uint8_t *a_ptr = a ? a->buffer : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->buffer : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    return !memcmp(a->buffer, b->buffer, a->len);
+    return aws_array_eq_ignore_case(a_ptr, a_len, b_ptr, b_len);
+}
+
+bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str) {
+    const uint8_t *ptr = buf ? buf->buffer : NULL;
+    size_t len = buf ? buf->len : 0;
+
+    return aws_array_eq_c_str(ptr, len, c_str);
+}
+
+bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *buf, const char *c_str) {
+    const uint8_t *ptr = buf ? buf->buffer : NULL;
+    size_t len = buf ? buf->len : 0;
+
+    return aws_array_eq_c_str_ignore_case(ptr, len, c_str);
 }
 
 int aws_byte_buf_init_copy_from_cursor(
@@ -211,20 +227,21 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
+    const uint8_t *a_ptr = a ? a->ptr : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->ptr : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    if (!a || !b) {
-        return (a == b);
-    }
+    return aws_array_eq(a_ptr, a_len, b_ptr, b_len);
+}
 
-    if (a->len != b->len) {
-        return false;
-    }
+bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
+    const uint8_t *a_ptr = a ? a->ptr : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->ptr : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    if (!a->ptr || !b->ptr) {
-        return (a->ptr == b->ptr);
-    }
-
-    return !memcmp(a->ptr, b->ptr, a->len);
+    return aws_array_eq_ignore_case(a_ptr, a_len, b_ptr, b_len);
 }
 
 /* Every possible uint8_t value, lowercased */
@@ -242,17 +259,20 @@ static const uint8_t s_tolower_table[256] = {
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
 
-bool aws_byte_cursor_eq_case_insensitive(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    if (!a || !b) {
-        return a == b;
-    }
-
-    if (a->len != b->len) {
+bool aws_array_eq_ignore_case(const void *array_a, size_t size_a, const void *array_b, size_t size_b) {
+    if (size_a != size_b) {
         return false;
     }
 
-    for (size_t i = 0; i < a->len; ++i) {
-        if (s_tolower_table[a->ptr[i]] != s_tolower_table[b->ptr[i]]) {
+    /* If either is null: true if both are null or the size is 0 */
+    if (!array_a || !array_b) {
+        return (array_a == array_b) || (size_a == 0);
+    }
+
+    const uint8_t *bytes_a = array_a;
+    const uint8_t *bytes_b = array_b;
+    for (size_t i = 0; i < size_a; ++i) {
+        if (s_tolower_table[bytes_a[i]] != s_tolower_table[bytes_b[i]]) {
             return false;
         }
     }
@@ -260,14 +280,81 @@ bool aws_byte_cursor_eq_case_insensitive(const struct aws_byte_cursor *a, const 
     return true;
 }
 
-uint64_t aws_hash_byte_cursor_ptr_case_insensitive(const void *item) {
+bool aws_array_eq(const void *array_a, size_t size_a, const void *array_b, size_t size_b) {
+    if (size_a != size_b) {
+        return false;
+    }
+
+    /* If either is null: true if both are null or the size is 0 */
+    if (!array_a || !array_b) {
+        return (array_a == array_b) || (size_a == 0);
+    }
+
+    return !memcmp(array_a, array_b, size_a);
+}
+
+bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_size, const char *c_str) {
+    const uint8_t *array_bytes = array;
+    const uint8_t *str_bytes = (const uint8_t *)c_str;
+
+    if (!str_bytes) {
+        return array_size == 0;
+    }
+
+    if (!array_bytes && (array_size != 0)) {
+        return false;
+        /* If array_size is 0 we still must check that c_str is null terminated */
+    }
+
+    for (size_t i = 0; i < array_size; ++i) {
+        uint8_t s = str_bytes[i];
+        if (s == '\0') {
+            return false;
+        }
+
+        if (s_tolower_table[array_bytes[i]] != s_tolower_table[s]) {
+            return false;
+        }
+    }
+
+    return str_bytes[array_size] == '\0';
+}
+
+bool aws_array_eq_c_str(const void *array, size_t array_size, const char *c_str) {
+    const uint8_t *array_bytes = array;
+    const uint8_t *str_bytes = (const uint8_t *)c_str;
+
+    if (!str_bytes) {
+        return array_size == 0;
+    }
+
+    if (!array_bytes && (array_size != 0)) {
+        return false;
+        /* If array_size is 0 we still must check that c_str is null terminated */
+    }
+
+    /* Could have used strlen() and memcmp() instead, but that would require 2 scans of c_str */
+    for (size_t i = 0; i < array_size; ++i) {
+        uint8_t s = str_bytes[i];
+        if (s == '\0') {
+            return false;
+        }
+
+        if (array_bytes[i] != s) {
+            return false;
+        }
+    }
+
+    return str_bytes[array_size] == '\0';
+}
+
+uint64_t aws_hash_array_ignore_case(const void *array, size_t size) {
     /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
     const uint64_t fnv_offset_basis = 0xcbf29ce484222325ULL;
     const uint64_t fnv_prime = 0x100000001b3ULL;
 
-    const struct aws_byte_cursor *cursor = item;
-    const uint8_t *i = cursor->ptr;
-    const uint8_t *end = cursor->ptr + cursor->len;
+    const uint8_t *i = array;
+    const uint8_t *end = i + size;
 
     uint64_t hash = fnv_offset_basis;
     while (i != end) {
@@ -278,21 +365,41 @@ uint64_t aws_hash_byte_cursor_ptr_case_insensitive(const void *item) {
     return hash;
 }
 
+uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
+    const struct aws_byte_cursor *cursor = item;
+    return aws_hash_array_ignore_case(cursor->ptr, cursor->len);
+}
+
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
+    const uint8_t *a_ptr = a ? a->ptr : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->buffer : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    if (!a || !b) {
-        return ((void *)a == (void *)b);
-    }
+    return aws_array_eq(a_ptr, a_len, b_ptr, b_len);
+}
 
-    if (a->len != b->len) {
-        return false;
-    }
+bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
+    const uint8_t *a_ptr = a ? a->ptr : NULL;
+    size_t a_len = a ? a->len : 0;
+    const uint8_t *b_ptr = b ? b->buffer : NULL;
+    size_t b_len = b ? b->len : 0;
 
-    if (!a->ptr || !b->buffer) {
-        return (a->ptr == b->buffer);
-    }
+    return aws_array_eq_ignore_case(a_ptr, a_len, b_ptr, b_len);
+}
 
-    return !memcmp(a->ptr, b->buffer, a->len);
+bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str) {
+    const uint8_t *ptr = cursor ? cursor->ptr : NULL;
+    size_t len = cursor ? cursor->len : 0;
+
+    return aws_array_eq_c_str(ptr, len, c_str);
+}
+
+bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, const char *c_str) {
+    const uint8_t *ptr = cursor ? cursor->ptr : NULL;
+    size_t len = cursor ? cursor->len : 0;
+
+    return aws_array_eq_c_str_ignore_case(ptr, len, c_str);
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
