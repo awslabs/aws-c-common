@@ -328,7 +328,7 @@ bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str) 
         return array_len == 0;
     }
 
-    if (!array_bytes && (array_len != 0))
+    if (!array_bytes && (array_len != 0)) {
         return false;
         /* If array_len is 0 we still must check that c_str is null terminated */
     }
