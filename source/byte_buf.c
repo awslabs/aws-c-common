@@ -280,33 +280,33 @@ bool aws_array_eq_ignore_case(const void *array_a, size_t size_a, const void *ar
     return true;
 }
 
-bool aws_array_eq(const void *array_a, size_t size_a, const void *array_b, size_t size_b) {
-    if (size_a != size_b) {
+bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
+    if (len_a != len_b) {
         return false;
     }
 
-    /* If either is null: true if both are null or the size is 0 */
+    /* If either is null: true if both are null or the length is 0 */
     if (!array_a || !array_b) {
-        return (array_a == array_b) || (size_a == 0);
+        return (array_a == array_b) || (len_a == 0);
     }
 
-    return !memcmp(array_a, array_b, size_a);
+    return !memcmp(array_a, array_b, len_a);
 }
 
-bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_size, const char *c_str) {
+bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const char *c_str) {
     const uint8_t *array_bytes = array;
     const uint8_t *str_bytes = (const uint8_t *)c_str;
 
     if (!str_bytes) {
-        return array_size == 0;
+        return array_len == 0;
     }
 
-    if (!array_bytes && (array_size != 0)) {
+    if (!array_bytes && (array_len != 0)) {
         return false;
-        /* If array_size is 0 we still must check that c_str is null terminated */
+        /* If array_len is 0 we still must check that c_str is null terminated */
     }
 
-    for (size_t i = 0; i < array_size; ++i) {
+    for (size_t i = 0; i < array_len; ++i) {
         uint8_t s = str_bytes[i];
         if (s == '\0') {
             return false;
@@ -317,24 +317,24 @@ bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_size, const 
         }
     }
 
-    return str_bytes[array_size] == '\0';
+    return str_bytes[array_len] == '\0';
 }
 
-bool aws_array_eq_c_str(const void *array, size_t array_size, const char *c_str) {
+bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str) {
     const uint8_t *array_bytes = array;
     const uint8_t *str_bytes = (const uint8_t *)c_str;
 
     if (!str_bytes) {
-        return array_size == 0;
+        return array_len == 0;
     }
 
-    if (!array_bytes && (array_size != 0)) {
+    if (!array_bytes && (array_len != 0)) {
         return false;
-        /* If array_size is 0 we still must check that c_str is null terminated */
+        /* If array_len is 0 we still must check that c_str is null terminated */
     }
 
     /* Could have used strlen() and memcmp() instead, but that would require 2 scans of c_str */
-    for (size_t i = 0; i < array_size; ++i) {
+    for (size_t i = 0; i < array_len; ++i) {
         uint8_t s = str_bytes[i];
         if (s == '\0') {
             return false;
@@ -345,16 +345,16 @@ bool aws_array_eq_c_str(const void *array, size_t array_size, const char *c_str)
         }
     }
 
-    return str_bytes[array_size] == '\0';
+    return str_bytes[array_len] == '\0';
 }
 
-uint64_t aws_hash_array_ignore_case(const void *array, size_t size) {
+uint64_t aws_hash_array_ignore_case(const void *array, size_t len) {
     /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
     const uint64_t fnv_offset_basis = 0xcbf29ce484222325ULL;
     const uint64_t fnv_prime = 0x100000001b3ULL;
 
     const uint8_t *i = array;
-    const uint8_t *end = i + size;
+    const uint8_t *end = i + len;
 
     uint64_t hash = fnv_offset_basis;
     while (i != end) {

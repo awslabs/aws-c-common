@@ -360,7 +360,7 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, 
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
  */
 AWS_COMMON_API
-uint64_t aws_hash_array_ignore_case(const void *array, size_t size);
+uint64_t aws_hash_array_ignore_case(const void *array, size_t len);
 
 /**
  * Case-insensitive hash function for aws_byte_cursors stored in an aws_hash_table.
