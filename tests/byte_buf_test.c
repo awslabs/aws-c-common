@@ -184,37 +184,19 @@ static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_eq_null_byte_buffer, s_test_buffer_eq_null_byte_buffer_fn)
-static int s_test_buffer_eq_null_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
-
-    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
-
-    ASSERT_TRUE(aws_byte_buf_eq(NULL, NULL));
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, NULL));
-    ASSERT_FALSE(aws_byte_buf_eq(NULL, &b1));
-
-    return 0;
-}
-
 AWS_TEST_CASE(test_buffer_eq_null_internal_byte_buffer, s_test_buffer_eq_null_internal_byte_buffer_fn)
 static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
-    struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
+    struct aws_byte_buf b1 = aws_byte_buf_from_array(NULL, 0);
+    struct aws_byte_buf b2 = aws_byte_buf_from_array(NULL, 0);
 
-    b1.buffer = NULL;
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
-    ASSERT_FALSE(aws_byte_buf_eq(&b2, &b1));
-
-    b2.buffer = NULL;
     ASSERT_TRUE(aws_byte_buf_eq(&b1, &b2));
+    ASSERT_TRUE(aws_byte_buf_eq(&b2, &b1));
 
-    b2.len++;
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+    struct aws_byte_buf b3 = aws_byte_buf_from_c_str("abc");
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b3));
     return 0;
 }
 
@@ -347,13 +329,6 @@ static int s_test_array_eq(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(aws_array_eq(a, 0, NULL, 0));
     ASSERT_TRUE(aws_array_eq(NULL, 0, b, 0));
 
-    /* Make sure we don't access NULL when length is > 0 */
-    ASSERT_FALSE(aws_array_eq(a, 3, NULL, 3));
-    ASSERT_FALSE(aws_array_eq(NULL, 3, b, 3));
-
-    /* NULL inputs are considered equivalent if their length is also the same. */
-    ASSERT_TRUE(aws_array_eq(NULL, 1, NULL, 1));
-
     return 0;
 }
 
@@ -382,13 +357,6 @@ static int s_test_array_eq_ignore_case(struct aws_allocator *allocator, void *ct
         ASSERT_TRUE(aws_array_eq_ignore_case(NULL, 0, NULL, 0));
         ASSERT_TRUE(aws_array_eq_ignore_case(a, 0, NULL, 0));
         ASSERT_TRUE(aws_array_eq_ignore_case(NULL, 0, b, 0));
-
-        /* Make sure we don't access NULL when length is > 0 */
-        ASSERT_FALSE(aws_array_eq_ignore_case(a, 5, NULL, 5));
-        ASSERT_FALSE(aws_array_eq_ignore_case(NULL, 5, b, 5));
-
-        /* NULL inputs are considered equivalent if their length is also the same. */
-        ASSERT_TRUE(aws_array_eq_ignore_case(NULL, 1, NULL, 1));
     }
 
     {
@@ -452,15 +420,9 @@ static int s_test_array_eq_c_str(struct aws_allocator *allocator, void *ctx) {
         ASSERT_TRUE(aws_array_eq_c_str(arr_a, 0, empty));
         ASSERT_FALSE(aws_array_eq_c_str(arr_a, 0, str_a));
 
-        /* NULL inputs are OK if length is 0 */
-        ASSERT_TRUE(aws_array_eq_c_str(NULL, 0, NULL));
-        ASSERT_TRUE(aws_array_eq_c_str(arr_a, 0, NULL));
+        /* NULL array is OK if length is 0 */
         ASSERT_TRUE(aws_array_eq_c_str(NULL, 0, empty));
         ASSERT_FALSE(aws_array_eq_c_str(NULL, 0, str_a));
-
-        /* Make sure we don't access NULL when length is > 0 */
-        ASSERT_FALSE(aws_array_eq_c_str(arr_a, 3, NULL));
-        ASSERT_FALSE(aws_array_eq_c_str(NULL, 3, str_a));
     }
 
     {
@@ -498,15 +460,9 @@ static int s_test_array_eq_c_str_ignore_case(struct aws_allocator *allocator, vo
         ASSERT_TRUE(aws_array_eq_c_str_ignore_case(arr_a, 0, empty));
         ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 0, str_a));
 
-        /* NULL inputs are OK if length is 0 */
-        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(NULL, 0, NULL));
-        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(arr_a, 0, NULL));
+        /* NULL array is OK if length is 0 */
         ASSERT_TRUE(aws_array_eq_c_str_ignore_case(NULL, 0, empty));
         ASSERT_FALSE(aws_array_eq_c_str_ignore_case(NULL, 0, str_a));
-
-        /* Make sure we don't access NULL when length is > 0 */
-        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 3, NULL));
-        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(NULL, 3, str_a));
     }
 
     {

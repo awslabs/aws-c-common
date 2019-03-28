@@ -75,7 +75,7 @@ AWS_EXTERN_C_BEGIN
 /**
  * Compare two arrays.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
+ * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
 bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b);
@@ -83,7 +83,7 @@ bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t
 /**
  * Perform a case-insensitive string comparison of two arrays.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
+ * NULL may be passed as the array pointer if its length is declared to be 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -94,7 +94,7 @@ bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *arr
  * Compare an array and a null-terminated string.
  * Returns true if their contents are equivalent.
  * The array should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
+ * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
 bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str);
@@ -103,7 +103,7 @@ bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str);
  * Perform a case-insensitive string comparison of an array and a null-terminated string.
  * Return whether their contents are equivalent.
  * The array should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
+ * NULL may be passed as the array pointer if its length is declared to be 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -146,7 +146,6 @@ void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
 /**
  * Compare two aws_byte_buf structures.
  * Return whether their contents are equivalent.
- * NULL buffers are considered equal if both are NULL, or both lengths are 0.
  */
 AWS_COMMON_API
 bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
@@ -154,7 +153,6 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
 /**
  * Perform a case-insensitive string comparison of two aws_byte_buf structures.
  * Return whether their contents are equivalent.
- * NULL buffers are considered equal if both are NULL, or both lengths are 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -165,7 +163,6 @@ bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_
  * Compare an aws_byte_buf and a null-terminated string.
  * Returns true if their contents are equivalent.
  * The buffer should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
  */
 AWS_COMMON_API
 bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str);
@@ -174,7 +171,6 @@ bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str);
  * Perform a case-insensitive string comparison of an aws_byte_buf and a null-terminated string.
  * Return whether their contents are equivalent.
  * The buffer should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -303,7 +299,6 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...);
 /**
  * Compare two aws_byte_cursor structures.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
  */
 AWS_COMMON_API
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
@@ -311,7 +306,6 @@ bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_c
 /**
  * Perform a case-insensitive string comparison of two aws_byte_cursor structures.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -321,7 +315,6 @@ bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struc
 /**
  * Compare an aws_byte_cursor and an aws_byte_buf.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
  */
 AWS_COMMON_API
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
@@ -329,7 +322,6 @@ bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct a
 /**
  * Perform a case-insensitive string comparison of an aws_byte_cursor and an aws_byte_buf.
  * Return whether their contents are equivalent.
- * NULL inputs are considered equal if both are NULL, or both lengths are 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
@@ -340,7 +332,6 @@ bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, co
  * Compare an aws_byte_cursor and a null-terminated string.
  * Returns true if their contents are equivalent.
  * The cursor should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
  */
 AWS_COMMON_API
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str);
@@ -349,7 +340,6 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *
  * Perform a case-insensitive string comparison of an aws_byte_cursor and a null-terminated string.
  * Return whether their contents are equivalent.
  * The cursor should NOT contain a null-terminator, or the comparison will always return false.
- * NULL inputs are considered equal if the length is 0.
  * The "C" locale is used for comparing upper and lowercase letters.
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
