@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+#undef memset
+
 #include <proof_helpers/nondet.h>
 #include <stddef.h>
 

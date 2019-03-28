@@ -13,13 +13,13 @@
 
 ###########
 #NOTE: If we don't use the unwindset, leave it empty
-#CBMC_UNWINDSET = --unwindset
+#CBMC_UNWINDSET =
 
 CBMCFLAGS +=
 
-DEPENDENCIES =  $(HELPERDIR)/source/make_common_data_structures.c \
-		   $(HELPERDIR)/stubs/error.c \
-  	       $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(SRCDIR)/source/common.c
 
 ENTRY = aws_mul_size_checked_harness
 ###########

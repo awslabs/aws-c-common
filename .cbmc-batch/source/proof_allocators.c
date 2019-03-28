@@ -53,5 +53,5 @@ static void *can_fail_realloc(struct aws_allocator *allocator, void *ptr, size_t
 }
 
 struct aws_allocator *can_fail_allocator() {
-    return nondet_bool() ? &can_fail_allocator_static : aws_default_allocator();
+    return &can_fail_allocator_static;
 }

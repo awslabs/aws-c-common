@@ -2,56 +2,42 @@
 #include <proof_helpers/make_common_data_structures.h>
 
 /**
- * Multiplies a * b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
- */
-AWS_STATIC_IMPL int __aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
-    uint64_t x = a * b;
-    *r = x;
-    if (a != 0 && (a > UINT32_MAX || b > UINT32_MAX) && x / a != b) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
-    return AWS_OP_SUCCESS;
-}
-
-/**
- * Multiplies a * b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
- */
-AWS_STATIC_IMPL int __aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    uint32_t x = a * b;
-    *r = x;
-    if (a != 0 && (a > UINT16_MAX || b > UINT16_MAX) && x / a != b) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
-    return AWS_OP_SUCCESS;
-}
-
-/**
- * Runtime: 0m3.872s
+ * Coverage: 1.00 (31 lines out of 31 statically-reachable lines in 5 functions reached)
+ * Runtime: 0m3.302s
+ *
+ * Assumptions:
+ *     - given 2 non-deterministics unsigned integers
+ *
+ * Assertions:
+ *     - r does not overflow, if aws_mul_u32_checked or
+ *       aws_mul_u64_checked functions return AWS_OP_SUCCESS
  */
 void aws_mul_size_checked_harness() {
-    size_t r = nondet_size_t();
-    size_t __r = nondet_size_t();
-    __CPROVER_assume(r == __r);
-
-    if (nondet_int()) {
+    if (nondet_bool()) {
         /*
          * In this particular case, full range of nondet inputs leads
-         * to excessively long runtimes, so use UINT64_MAX instead.
+         * to excessively long runtimes, so use 0 or UINT64_MAX instead.
          */
-        uint64_t a = UINT64_MAX;
+        uint64_t a = (nondet_int()) ? 0 : UINT64_MAX;
         uint64_t b = nondet_uint64_t();
-        if (aws_mul_u64_checked(a, b, &r) == AWS_OP_SUCCESS && __aws_mul_u64_checked(a, b, &__r) == AWS_OP_SUCCESS)
-            assert(r == __r);
+        uint64_t r = nondet_uint64_t();
+        if (!aws_mul_u64_checked(a, b, &r)) {
+            assert(r == a * b);
+        } else {
+            assert((b > 0) && (a > (UINT64_MAX - b)));
+        }
     } else {
         /*
          * In this particular case, full range of nondet inputs leads
-         * to excessively long runtimes, so use UINT32_MAX instead.
+         * to excessively long runtimes, so use 0 or UINT32_MAX instead.
          */
-        uint32_t a = UINT32_MAX;
+        uint32_t a = (nondet_bool()) ? 0 : UINT32_MAX;
         uint32_t b = nondet_uint32_t();
-        if (aws_mul_u32_checked(a, b, &r) == AWS_OP_SUCCESS && __aws_mul_u32_checked(a, b, &__r) == AWS_OP_SUCCESS)
-            assert(r == __r);
+        uint32_t r = nondet_uint32_t();
+        if (!aws_mul_u32_checked(a, b, &r)) {
+            assert(r == a * b);
+        } else {
+            assert((b > 0) && (a > (UINT32_MAX - b)));
+        }
     }
 }
