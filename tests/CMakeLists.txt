@@ -288,4 +288,4 @@ if (NOT MSVC)
 endif()
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")
-aws_add_fuzz_tests("${FUZZ_TESTS}" "")
+aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
