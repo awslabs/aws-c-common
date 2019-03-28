@@ -121,9 +121,3 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
     __CPROVER_assume(len < max);
     return make_arbitrary_aws_string(allocator, len);
 }
-
-int compare(const void *a, const void *b, size_t item_size) {
-    __CPROVER_precondition(__CPROVER_r_ok(a, item_size), "first element readable in compare function");
-    __CPROVER_precondition(__CPROVER_r_ok(b, item_size), "second element readable in compare function");
-    return nondet_int();
-}
