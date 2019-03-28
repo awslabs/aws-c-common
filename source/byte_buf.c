@@ -266,6 +266,10 @@ bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t
         return false;
     }
 
+    if (len_a == 0) {
+        return true;
+    }
+
     return !memcmp(array_a, array_b, len_a);
 }
 
