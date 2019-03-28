@@ -48,7 +48,7 @@ function(aws_add_fuzz_tests fuzz_files other_files corpus_dir)
                 file(TO_NATIVE_PATH "${corpus_dir}/${TEST_FILE_NAME}" TEST_CORPUS_DIR)
             endif()
 
-            if (TEST_CORPUS_DIR)
+            if (TEST_CORPUS_DIR AND (EXISTS "${TEST_CORPUS_DIR}"))
                 add_test(NAME fuzz_${TEST_FILE_NAME} COMMAND ${FUZZ_BINARY_NAME} -timeout=1 -max_total_time=${FUZZ_TESTS_MAX_TIME} "${TEST_CORPUS_DIR}")
             else()
                 add_test(NAME fuzz_${TEST_FILE_NAME} COMMAND ${FUZZ_BINARY_NAME} -timeout=1 -max_total_time=${FUZZ_TESTS_MAX_TIME})
