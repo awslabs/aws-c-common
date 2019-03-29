@@ -22,6 +22,7 @@ DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
 DEPENDENCIES += $(SRCDIR)/source/string.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 
 ENTRY = aws_string_eq_harness
 
