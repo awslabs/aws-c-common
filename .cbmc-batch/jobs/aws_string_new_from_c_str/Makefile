@@ -34,5 +34,5 @@ DEPENDENCIES += $(SRCDIR)/source/string.c
 ENTRY = aws_string_new_from_c_str_harness
 
 ###########
-
+include ../Makefile.aws_string
 include ../Makefile.common

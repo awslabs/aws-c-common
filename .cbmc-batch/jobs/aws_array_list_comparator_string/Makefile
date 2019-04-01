@@ -34,5 +34,5 @@ DEPENDENCIES += $(SRCDIR)/source/string.c
 ENTRY = aws_array_list_comparator_string_harness
 
 ###########
-
+include ../Makefile.aws_string
 include ../Makefile.common

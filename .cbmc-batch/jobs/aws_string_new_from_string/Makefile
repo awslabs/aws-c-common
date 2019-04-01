@@ -12,10 +12,7 @@
 # limitations under the License.
 
 ###########
-UNWINDSET += memcmp.0:17
 UNWINDSET += memcpy_impl.0:17
-UNWINDSET += memset_impl.0:17
-UNWINDSET += strlen.0:17
 
 CBMCFLAGS +=
 
@@ -34,5 +31,5 @@ DEPENDENCIES += $(SRCDIR)/source/string.c
 ENTRY = aws_string_new_from_string_harness
 
 ###########
-
+include ../Makefile.aws_string
 include ../Makefile.common

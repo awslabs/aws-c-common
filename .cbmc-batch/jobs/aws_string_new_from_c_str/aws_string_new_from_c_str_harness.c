@@ -19,7 +19,7 @@
 #include <proof_helpers/utils.h>
 #include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
+//MAX_STRING_LEN is defined in the Makefile
 
 /**
  * 0.93 (70 lines out of 75 statically-reachable lines in 15 functions reached)

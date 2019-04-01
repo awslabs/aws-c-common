@@ -69,7 +69,7 @@ endif
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
 $(ENTRY)1.goto: $(ENTRY).c $(DEPENDENCIES)
-	$(GOTO_CC) $< --function $(ENTRY) $(DEPENDENCIES) $(INC) -o $@ \
+	$(GOTO_CC) $< --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
 	        2>&1 | tee $(ENTRY)1.log
 
 $(ENTRY)2.goto: $(ENTRY)1.goto
