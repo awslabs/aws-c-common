@@ -19,7 +19,7 @@
 #include <proof_helpers/utils.h>
 #include <stddef.h>
 
-//MAX_STRING_LEN is defined in the makefile
+// MAX_STRING_LEN is defined in the makefile
 
 /**
  * Coverage: 0.94 (76 lines out of 81 statically-reachable lines in 17 functions reached)
