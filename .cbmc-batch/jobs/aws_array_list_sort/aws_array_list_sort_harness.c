@@ -21,6 +21,16 @@
 #define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
 
 /**
+ * Standard implementation of compare function for qsort
+ */
+int compare(const void *a, const void *b, size_t item_size) {
+    int res;
+    __CPROVER_precondition(__CPROVER_r_ok(a, item_size), "first element readable in compare function");
+    __CPROVER_precondition(__CPROVER_r_ok(b, item_size), "second element readable in compare function");
+    return res;
+}
+
+/**
  * Runtime: 0m3.399s
  */
 void aws_array_list_sort_harness() {
