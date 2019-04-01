@@ -64,3 +64,6 @@ cmake-build*
 *.out
 *.app
 
+# CBMC files
+*.goto
+*.log

@@ -184,37 +184,19 @@ static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *
     return 0;
 }
 
-AWS_TEST_CASE(test_buffer_eq_null_byte_buffer, s_test_buffer_eq_null_byte_buffer_fn)
-static int s_test_buffer_eq_null_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
-
-    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
-
-    ASSERT_TRUE(aws_byte_buf_eq(NULL, NULL));
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, NULL));
-    ASSERT_FALSE(aws_byte_buf_eq(NULL, &b1));
-
-    return 0;
-}
-
 AWS_TEST_CASE(test_buffer_eq_null_internal_byte_buffer, s_test_buffer_eq_null_internal_byte_buffer_fn)
 static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
-    struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
+    struct aws_byte_buf b1 = aws_byte_buf_from_array(NULL, 0);
+    struct aws_byte_buf b2 = aws_byte_buf_from_array(NULL, 0);
 
-    b1.buffer = NULL;
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
-    ASSERT_FALSE(aws_byte_buf_eq(&b2, &b1));
-
-    b2.buffer = NULL;
     ASSERT_TRUE(aws_byte_buf_eq(&b1, &b2));
+    ASSERT_TRUE(aws_byte_buf_eq(&b2, &b1));
 
-    b2.len++;
-    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b2));
+    struct aws_byte_buf b3 = aws_byte_buf_from_c_str("abc");
+    ASSERT_FALSE(aws_byte_buf_eq(&b1, &b3));
     return 0;
 }
 
@@ -320,42 +302,70 @@ static int s_test_buffer_printf(struct aws_allocator *allocator, void *ctx) {
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_cursor_eq_case_insensitive, s_test_cursor_eq_case_insensitive)
-static int s_test_cursor_eq_case_insensitive(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_array_eq, s_test_array_eq)
+static int s_test_array_eq(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
 
-    {
-        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("aBc123");
-        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("Abc123");
-        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &b));
-    }
+    uint8_t a[] = {1, 2, 3};
+    uint8_t b[] = {1, 2, 3};
+    uint8_t c[] = {7, 8, 9};
+    uint8_t d[] = {1, 2, 3, 4};
 
-    {
-        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
-        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("xyz");
-        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
-    }
+    /* Simple */
+    ASSERT_TRUE(aws_array_eq(a, 3, b, 3));
+    ASSERT_FALSE(aws_array_eq(a, 3, c, 3));
+    ASSERT_FALSE(aws_array_eq(a, 3, d, 4));
 
+    /* Comparisons agains self */
+    ASSERT_TRUE(aws_array_eq(a, 3, a, 3));
+    ASSERT_FALSE(aws_array_eq(a, 3, a, 2));
+
+    /* Different data but size is 0 */
+    ASSERT_TRUE(aws_array_eq(a, 0, c, 0));
+
+    /* NULL inputs are OK if length is 0 */
+    ASSERT_TRUE(aws_array_eq(NULL, 0, NULL, 0));
+    ASSERT_TRUE(aws_array_eq(a, 0, NULL, 0));
+    ASSERT_TRUE(aws_array_eq(NULL, 0, b, 0));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_array_eq_ignore_case, s_test_array_eq_ignore_case)
+static int s_test_array_eq_ignore_case(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
     {
-        /* Vanilla strcmp() considers these equal, but not us */
-        uint8_t a_src[] = {'a', 0};
-        uint8_t b_src[] = {'a'};
-        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
-        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
-        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+        uint8_t a[] = {'a', 'B', 'c', 'D', '1'};
+        uint8_t b[] = {'a', 'b', 'C', 'D', '1'}; /* same as a */
+        uint8_t c[] = {'a', 'b', 'c', 'd', '9'}; /* different */
+
+        /* Simple */
+        ASSERT_TRUE(aws_array_eq_ignore_case(a, 5, b, 5));
+        ASSERT_FALSE(aws_array_eq_ignore_case(a, 5, c, 5));
+        ASSERT_FALSE(aws_array_eq_ignore_case(a, 5, b, 3));
+
+        /* Comparisons against self */
+        ASSERT_TRUE(aws_array_eq_ignore_case(a, 5, a, 5));
+        ASSERT_FALSE(aws_array_eq_ignore_case(a, 5, a, 4));
+
+        /* Different data but size is 0 */
+        ASSERT_TRUE(aws_array_eq_ignore_case(a, 0, c, 0));
+
+        /* NULL inputs are OK if length is 0 */
+        ASSERT_TRUE(aws_array_eq_ignore_case(NULL, 0, NULL, 0));
+        ASSERT_TRUE(aws_array_eq_ignore_case(a, 0, NULL, 0));
+        ASSERT_TRUE(aws_array_eq_ignore_case(NULL, 0, b, 0));
     }
 
     {
         /* Comparison should continue beyond null-terminator */
-        uint8_t a_src[] = {'a', 0, 'b'};
-        uint8_t b_src[] = {'a', 0, 'c'};
-        uint8_t c_src[] = {'a', 0, 'b'};
-        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
-        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
-        struct aws_byte_cursor c = aws_byte_cursor_from_array(c_src, AWS_ARRAY_SIZE(c_src));
-        ASSERT_FALSE(aws_byte_cursor_eq_case_insensitive(&a, &b));
-        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &c));
+        uint8_t a[] = {'a', 0, 'b'};
+        uint8_t b[] = {'a', 0, 'c'};
+        uint8_t c[] = {'a', 0, 'b'};
+        ASSERT_FALSE(aws_array_eq_ignore_case(&a, 3, &b, 3));
+        ASSERT_TRUE(aws_array_eq_ignore_case(&a, 3, &c, 3));
     }
 
     {
@@ -364,53 +374,131 @@ static int s_test_cursor_eq_case_insensitive(struct aws_allocator *allocator, vo
          * a_src = {0 ... 255, 'a' ... 'z', 'A' ... 'Z'};
          * b_src = {0 ... 255, 'A' ... 'Z', 'a' ... 'z'};
          */
-        uint8_t a_src[256 + 26 + 26];
-        uint8_t b_src[256 + 26 + 26];
+        uint8_t a[256 + 26 + 26];
+        uint8_t b[256 + 26 + 26];
         for (size_t i = 0; i < 256; ++i) {
-            a_src[i] = (uint8_t)i;
-            b_src[i] = (uint8_t)i;
+            a[i] = (uint8_t)i;
+            b[i] = (uint8_t)i;
         }
-        for (size_t i = 0, a = 'a'; a <= 'z'; ++i, ++a) {
-            a_src[256 + i] = (uint8_t)a;
-            b_src[256 + 26 + i] = (uint8_t)a;
+        for (size_t i = 0, c = 'a'; c <= 'z'; ++i, ++c) {
+            a[256 + i] = (uint8_t)c;
+            b[256 + 26 + i] = (uint8_t)c;
         }
-        for (size_t i = 0, a = 'A'; a <= 'Z'; ++i, ++a) {
-            a_src[256 + 26 + i] = (uint8_t)a;
-            b_src[256 + i] = (uint8_t)a;
+        for (size_t i = 0, c = 'A'; c <= 'Z'; ++i, ++c) {
+            a[256 + 26 + i] = (uint8_t)c;
+            b[256 + i] = (uint8_t)c;
         }
 
-        struct aws_byte_cursor a = aws_byte_cursor_from_array(a_src, AWS_ARRAY_SIZE(a_src));
-        struct aws_byte_cursor b = aws_byte_cursor_from_array(b_src, AWS_ARRAY_SIZE(b_src));
-        ASSERT_TRUE(aws_byte_cursor_eq_case_insensitive(&a, &b));
+        ASSERT_TRUE(aws_array_eq_ignore_case(&a, sizeof(a), &b, sizeof(b)));
     }
 
     return 0;
 }
 
-AWS_TEST_CASE(test_cursor_hash_case_insensitive, s_test_cursor_hash_case_insensitive)
-static int s_test_cursor_hash_case_insensitive(struct aws_allocator *allocator, void *ctx) {
+AWS_TEST_CASE(test_array_eq_c_str, s_test_array_eq_c_str)
+static int s_test_array_eq_c_str(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    {
+        uint8_t arr_a[] = {'a', 'b', 'c'};
+        const char *str_a = "abc";
+        const char *str_b = "xyz";
+        const char *str_c = "abcd";
+        const char *empty = "";
+
+        /* Simple */
+        ASSERT_TRUE(aws_array_eq_c_str(arr_a, 3, str_a));
+        ASSERT_FALSE(aws_array_eq_c_str(arr_a, 3, str_b));
+        ASSERT_FALSE(aws_array_eq_c_str(arr_a, 3, str_c));
+
+        /* Referencing self */
+        ASSERT_TRUE(aws_array_eq_c_str(str_a, 3, str_a));
+        ASSERT_FALSE(aws_array_eq_c_str(str_a, 2, str_a));
+
+        /* Check length 0 */
+        ASSERT_TRUE(aws_array_eq_c_str(arr_a, 0, empty));
+        ASSERT_FALSE(aws_array_eq_c_str(arr_a, 0, str_a));
+
+        /* NULL array is OK if length is 0 */
+        ASSERT_TRUE(aws_array_eq_c_str(NULL, 0, empty));
+        ASSERT_FALSE(aws_array_eq_c_str(NULL, 0, str_a));
+    }
+
+    {
+        /* Array is not expected to contain null-terminator */
+        uint8_t arr_a[] = {'a', 'b', 'c', 0};
+        const char *str_a = "abc";
+        ASSERT_FALSE(aws_array_eq_c_str(arr_a, 4, str_a));
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_array_eq_c_str_ignore_case, s_test_array_eq_c_str_ignore_case)
+static int s_test_array_eq_c_str_ignore_case(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    {
+        uint8_t arr_a[] = {'a', 'B', 'c'};
+        const char *str_a = "Abc";
+        const char *str_b = "xyz";
+        const char *str_c = "aBcd";
+        const char *empty = "";
+
+        /* Simple */
+        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(arr_a, 3, str_a));
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 3, str_b));
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 3, str_c));
+
+        /* Referencing self */
+        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(str_a, 3, str_a));
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(str_a, 2, str_a));
+
+        /* Check length 0 */
+        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(arr_a, 0, empty));
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 0, str_a));
+
+        /* NULL array is OK if length is 0 */
+        ASSERT_TRUE(aws_array_eq_c_str_ignore_case(NULL, 0, empty));
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(NULL, 0, str_a));
+    }
+
+    {
+        /* Array is not expected to contain null-terminator */
+        uint8_t arr_a[] = {'a', 'b', 'c', 0};
+        const char *str_a = "abc";
+        ASSERT_FALSE(aws_array_eq_c_str_ignore_case(arr_a, 4, str_a));
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_array_hash_ignore_case, s_test_array_hash_ignore_case)
+static int s_test_array_hash_ignore_case(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
 
     {
         /* Check against known FNV-1A values */
-        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
-        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&a));
+        uint8_t a[] = {'a', 'b', 'c'};
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_array_ignore_case(a, 3));
 
-        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("ABC");
-        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_byte_cursor_ptr_case_insensitive(&b));
+        uint8_t b[] = {'A', 'B', 'C'};
+        ASSERT_UINT_EQUALS(0xe71fa2190541574bULL, aws_hash_array_ignore_case(&b, 3));
     }
 
     {
-        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("aBc123");
-        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("Abc123");
-        ASSERT_TRUE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+        uint8_t a[] = {'a', 'B', 'c', 1, 2, 3};
+        uint8_t b[] = {'A', 'b', 'c', 1, 2, 3};
+        ASSERT_TRUE(aws_hash_array_ignore_case(a, 6) == aws_hash_array_ignore_case(b, 6));
     }
 
     {
-        struct aws_byte_cursor a = aws_byte_cursor_from_c_str("abc");
-        struct aws_byte_cursor b = aws_byte_cursor_from_c_str("xyz");
-        ASSERT_FALSE(aws_hash_byte_cursor_ptr_case_insensitive(&a) == aws_hash_byte_cursor_ptr_case_insensitive(&b));
+        uint8_t a[] = {'a', 'b', 'c'};
+        uint8_t b[] = {'x', 'y', 'z'};
+        ASSERT_FALSE(aws_hash_array_ignore_case(a, 3) == aws_hash_array_ignore_case(b, 3));
     }
 
     return 0;

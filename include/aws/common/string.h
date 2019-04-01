@@ -68,27 +68,55 @@ AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
  * Returns true if bytes of string are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
-    return a->len == b->len && !memcmp(a->bytes, b->bytes, a->len);
+    return aws_array_eq(a->bytes, a->len, b->bytes, b->len);
+}
+
+/**
+ * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
+ */
+AWS_STATIC_IMPL bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b) {
+    return aws_array_eq_ignore_case(a->bytes, a->len, b->bytes, b->len);
 }
 
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
-    if (str->len != cur->len) {
-        return false;
-    }
-    return (!memcmp(aws_string_bytes(str), cur->ptr, cur->len));
+    return aws_array_eq(str->bytes, str->len, cur->ptr, cur->len);
+}
+
+/**
+ * Returns true if bytes of string and cursor are equivalent, using a case-insensitive comparison.
+ */
+AWS_STATIC_IMPL
+bool aws_string_eq_byte_cursor_ignore_case(const struct aws_string *str, const struct aws_byte_cursor *cur) {
+    return aws_array_eq_ignore_case(str->bytes, str->len, cur->ptr, cur->len);
 }
 
 /**
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
-    if (str->len != buf->len) {
-        return false;
-    }
-    return (!memcmp(aws_string_bytes(str), buf->buffer, buf->len));
+    return aws_array_eq(str->bytes, str->len, buf->buffer, buf->len);
+}
+
+/**
+ * Returns true if bytes of string and buffer are equivalent, using a case-insensitive comparison.
+ */
+AWS_STATIC_IMPL
+bool aws_string_eq_byte_buf_ignore_case(const struct aws_string *str, const struct aws_byte_buf *buf) {
+    return aws_array_eq_ignore_case(str->bytes, str->len, buf->buffer, buf->len);
+}
+
+AWS_STATIC_IMPL bool aws_string_eq_c_str(const struct aws_string *str, const char *c_str) {
+    return aws_array_eq_c_str(str->bytes, str->len, c_str);
+}
+
+/**
+ * Returns true if bytes of strings are equivalent, using a case-insensitive comparison.
+ */
+AWS_STATIC_IMPL bool aws_string_eq_c_str_ignore_case(const struct aws_string *str, const char *c_str) {
+    return aws_array_eq_c_str_ignore_case(str->bytes, str->len, c_str);
 }
 
 AWS_EXTERN_C_BEGIN
