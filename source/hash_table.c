@@ -19,9 +19,9 @@
  */
 
 #include <aws/common/hash_table.h>
-
 #include <aws/common/math.h>
 #include <aws/common/string.h>
+#include <aws/common/private/hash_table_impl.h>
 
 #include <limits.h>
 #include <stdio.h>
@@ -40,27 +40,6 @@ static void s_suppress_unused_lookup3_func_warnings(void) {
     (void)hashlittle;
     (void)hashbig;
 }
-
-struct hash_table_entry {
-    struct aws_hash_element element;
-    uint64_t hash_code; /* hash code (0 signals empty) */
-};
-
-struct hash_table_state {
-    aws_hash_fn *hash_fn;
-    aws_hash_callback_eq_fn *equals_fn;
-    aws_hash_callback_destroy_fn *destroy_key_fn;
-    aws_hash_callback_destroy_fn *destroy_value_fn;
-    struct aws_allocator *alloc;
-
-    size_t size, entry_count;
-    size_t max_load;
-    /* We AND a hash value with mask to get the slot index */
-    size_t mask;
-    double max_load_factor;
-    /* actually variable length */
-    struct hash_table_entry slots[1];
-};
 
 static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
     s_suppress_unused_lookup3_func_warnings();
