@@ -20,8 +20,8 @@
 
 #include <aws/common/hash_table.h>
 #include <aws/common/math.h>
-#include <aws/common/string.h>
 #include <aws/common/private/hash_table_impl.h>
+#include <aws/common/string.h>
 
 #include <limits.h>
 #include <stdio.h>
