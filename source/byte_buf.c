@@ -404,11 +404,9 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
         }
 
         uint64_t growth_capacity = 0;
-        if (aws_mul_u64_checked(to->capacity, 3, &growth_capacity)) {
+        if (aws_add_u64_checked(to->capacity, to->capacity / 2, &growth_capacity)) {
             return AWS_OP_ERR;
         }
-
-        growth_capacity /= 2;
 
         if (new_capacity < growth_capacity) {
             new_capacity = growth_capacity;
