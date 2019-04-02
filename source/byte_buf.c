@@ -380,7 +380,6 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     return AWS_OP_SUCCESS;
 }
 
-AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
