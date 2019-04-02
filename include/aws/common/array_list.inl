@@ -76,6 +76,16 @@ void aws_array_list_init_static(
 }
 
 AWS_STATIC_IMPL
+bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
+    size_t required_size;
+    bool required_size_is_valid = aws_mul_size_checked(list->length, list->item_size, &required_size) == AWS_OP_SUCCESS;
+    bool current_size_is_valid = list->current_size >= required_size;
+    bool item_size_is_valid = list->item_size != 0;
+    bool data_is_valid = ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
+    return required_size_is_valid && current_size_is_valid && item_size_is_valid && data_is_valid;
+}
+
+AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
     if (list->alloc && list->data) {
         aws_mem_release(list->alloc, list->data);
@@ -140,10 +150,12 @@ void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t
 
 AWS_STATIC_IMPL
 int aws_array_list_back(const struct aws_array_list *AWS_RESTRICT list, void *val) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
 
         memcpy(val, (void *)((uint8_t *)list->data + last_item_offset), list->item_size);
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
 

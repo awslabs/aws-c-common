@@ -69,6 +69,12 @@ void aws_array_list_init_static(
     size_t item_size);
 
 /**
+ * Set of properties of a valid aws_array_list.
+ */
+AWS_STATIC_IMPL
+bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list);
+
+/**
  * Deallocates any memory that was allocated for this list, and resets list for reuse or deletion.
  */
 AWS_STATIC_IMPL
