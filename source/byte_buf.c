@@ -440,7 +440,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
          * Switch to the new buffer
          */
         to->buffer = new_buffer;
-        to->capacity = new_capacity;
+        to->capacity = (size_t)new_capacity;
     } else {
         memcpy(to->buffer + to->len, from->ptr, from->len);
     }
