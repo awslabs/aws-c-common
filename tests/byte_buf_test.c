@@ -504,7 +504,11 @@ static int s_test_array_hash_ignore_case(struct aws_allocator *allocator, void *
     return 0;
 }
 
-static int s_do_append_dynamic_test(struct aws_allocator *allocator, size_t starting_size, size_t append_size, size_t iterations) {
+static int s_do_append_dynamic_test(
+    struct aws_allocator *allocator,
+    size_t starting_size,
+    size_t append_size,
+    size_t iterations) {
     struct aws_byte_buf accum_buf;
     aws_byte_buf_init(&accum_buf, allocator, starting_size);
     memset(accum_buf.buffer, 0, starting_size);
