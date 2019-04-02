@@ -380,6 +380,79 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     return AWS_OP_SUCCESS;
 }
 
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from)
+{
+    assert(from->ptr);
+    assert(to->buffer);
+
+    if (to->capacity - to->len < from->len) {
+        /*
+         * We don't have size_t math so use 64 bits for overflow checking.
+         * Then do a final check before allocating to verify that the computed
+         * new capacity is actually containable within the platform's size_t type.
+         *
+         * If size_t ever exceeds 64 bits, this won't be valid
+         */
+
+        /*
+         * NewCapacity = Max(OldCapacity * 1.5, OldCapacity + MissingCapacity)
+         */
+        uint64_t missing_capacity = (uint64_t)(from->len - (to->capacity - to->len));
+        uint64_t new_capacity = 0;
+        if (aws_add_u64_checked(to->capacity, missing_capacity, &new_capacity)) {
+            return AWS_OP_ERR;
+        }
+
+        uint64_t growth_capacity = 0;
+        if (aws_mul_u64_checked(to->capacity, 3, &growth_capacity)) {
+            return AWS_OP_ERR;
+        }
+
+        growth_capacity /= 2;
+
+        if (new_capacity < growth_capacity) {
+            new_capacity = growth_capacity;
+        }
+
+        if (new_capacity > SIZE_MAX) {
+            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+        }
+
+        uint8_t *new_buffer = aws_mem_acquire(to->allocator, (size_t)new_capacity);
+        if (new_buffer == NULL) {
+            return AWS_OP_ERR;
+        }
+
+        /*
+         * Copy old buffer -> new buffer
+         */
+        memcpy(new_buffer, to->buffer, to->len);
+
+        /*
+         * Copy what we actually wanted to append in the first place
+         */
+        memcpy(new_buffer + to->len, from->ptr, from->len);
+
+        /*
+         * Get rid of the old buffer
+         */
+        aws_mem_release(to->allocator, to->buffer);
+
+        /*
+         * Switch to the new buffer
+         */
+        to->buffer = new_buffer;
+        to->capacity = new_capacity;
+    } else {
+        memcpy(to->buffer + to->len, from->ptr, from->len);
+    }
+
+    to->len += from->len;
+
+    return AWS_OP_SUCCESS;
+}
+
 struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {

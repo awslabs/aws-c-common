@@ -290,6 +290,17 @@ AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copies from to to. If to is too small, the buffer will be grown appropriately and
+ * the old contents copied to, before the new contents are appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * from and to may be the same buffer, permitting copying a buffer into itself.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
  * Concatenates a variable number of struct aws_byte_buf * into destination.
  * Number of args must be greater than 1. If dest is too small,
  * AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len will contain the
