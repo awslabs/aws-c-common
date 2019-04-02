@@ -542,12 +542,12 @@ static int s_do_append_dynamic_test(
          * Check that the result has the right number of 0s followed by the right number of
          * 255s.
          */
-        for (size_t i = 0; i < before_size; ++i) {
-            ASSERT_TRUE(accum_buf.buffer[i] == 0);
+        for (size_t bi = 0; bi < before_size; ++bi) {
+            ASSERT_TRUE(accum_buf.buffer[bi] == 0);
         }
 
-        for (size_t i = before_size; i < after_size; ++i) {
-            ASSERT_TRUE(accum_buf.buffer[i] == 255);
+        for (size_t ai = before_size; ai < after_size; ++ai) {
+            ASSERT_TRUE(accum_buf.buffer[ai] == 255);
         }
     }
 
