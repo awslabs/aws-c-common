@@ -290,6 +290,17 @@ AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copies from to to while converting basic US alphabet characters to lower case.
+ * If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
+ * returned. dest->len will contain the amount of data actually copied to dest.
+ *
+ * from and to should not be the same buffer (overlap is not handled)
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+
+/**
  * Copies from to to. If to is too small, the buffer will be grown appropriately and
  * the old contents copied to, before the new contents are appended.
  *

@@ -380,6 +380,22 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    assert(from->ptr);
+    assert(to->buffer);
+
+    if (to->capacity - to->len < from->len) {
+        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+    }
+
+    for (size_t i = 0; i < from->len; ++i) {
+        to->buffer[to->len + i] = s_tolower_table[from->ptr[i]];
+    }
+
+    to->len += from->len;
+    return AWS_OP_SUCCESS;
+}
+
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
