@@ -402,38 +402,44 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
     if (to->capacity - to->len < from->len) {
         /*
-         * We don't have size_t math so use 64 bits for overflow checking.
-         * Then do a final check before allocating to verify that the computed
-         * new capacity is actually containable within the platform's size_t type.
-         *
-         * If size_t ever exceeds 64 bits, this won't be valid
+         * NewCapacity = Max(OldCapacity * 2, OldCapacity + MissingCapacity)
          */
+        size_t missing_capacity = from->len - (to->capacity - to->len);
+
+        size_t required_capacity = 0;
+        if (aws_add_size_checked(to->capacity, missing_capacity, &required_capacity)) {
+            return AWS_OP_ERR;
+        }
 
         /*
-         * NewCapacity = Max(OldCapacity * 1.5, OldCapacity + MissingCapacity)
+         * It's ok if this overflows, just clamp to max possible.
+         * In theory this lets us still grow a buffer that's larger than 1/2 size_t space
+         * at least enough to accommodate the append.
          */
-        uint64_t missing_capacity = (uint64_t)(from->len - (to->capacity - to->len));
-        uint64_t new_capacity = 0;
-        if (aws_add_u64_checked(to->capacity, missing_capacity, &new_capacity)) {
-            return AWS_OP_ERR;
-        }
+        size_t growth_capacity = aws_add_size_saturating(to->capacity, to->capacity);
 
-        uint64_t growth_capacity = 0;
-        if (aws_add_u64_checked(to->capacity, to->capacity / 2, &growth_capacity)) {
-            return AWS_OP_ERR;
-        }
-
+        size_t new_capacity = required_capacity;
         if (new_capacity < growth_capacity) {
             new_capacity = growth_capacity;
         }
 
-        if (new_capacity > SIZE_MAX) {
-            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-        }
+        /*
+         * Attempt to resize - we intentionally do not use reserve() in order to preserve
+         * the (unlikely) use case of from and to being the same buffer range.
+         */
 
-        uint8_t *new_buffer = aws_mem_acquire(to->allocator, (size_t)new_capacity);
+        /*
+         * Try the max, but if that fails and the required is smaller, try it in fallback
+         */
+        uint8_t *new_buffer = aws_mem_acquire(to->allocator, new_capacity);
         if (new_buffer == NULL) {
-            return AWS_OP_ERR;
+            if (new_capacity > required_capacity) {
+                new_capacity = required_capacity;
+                new_buffer = aws_mem_acquire(to->allocator, new_capacity);
+                if (new_buffer == NULL) {
+                    return AWS_OP_ERR;
+                }
+            }
         }
 
         /*
@@ -455,12 +461,30 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
          * Switch to the new buffer
          */
         to->buffer = new_buffer;
-        to->capacity = (size_t)new_capacity;
+        to->capacity = new_capacity;
     } else {
         memcpy(to->buffer + to->len, from->ptr, from->len);
     }
 
     to->len += from->len;
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
+    if (requested_capacity <= buffer->capacity) {
+        return AWS_OP_SUCCESS;
+    }
+
+    uint8_t *new_buffer = aws_mem_acquire(buffer->allocator, requested_capacity);
+    if (new_buffer == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    memcpy(new_buffer, buffer->buffer, buffer->len);
+    aws_mem_release(buffer->allocator, buffer->buffer);
+    buffer->buffer = new_buffer;
+    buffer->capacity = requested_capacity;
 
     return AWS_OP_SUCCESS;
 }

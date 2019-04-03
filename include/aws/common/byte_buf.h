@@ -299,7 +299,6 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 AWS_COMMON_API
 int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
-
 /**
  * Copies from to to. If to is too small, the buffer will be grown appropriately and
  * the old contents copied to, before the new contents are appended.
@@ -310,6 +309,15 @@ int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_
  */
 AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Attempts to increase the capacity of a buffer to the requested capacity
+ *
+ * If the the buffer's capacity is currently larger than the request capacity, the
+ * function does nothing (no shrink is performed).
+ */
+AWS_COMMON_API
+int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity);
 
 /**
  * Concatenates a variable number of struct aws_byte_buf * into destination.

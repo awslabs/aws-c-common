@@ -15,6 +15,7 @@
 
 #include <aws/common/byte_buf.h>
 
+#include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
 AWS_TEST_CASE(test_buffer_cat, s_test_buffer_cat_fn)
@@ -571,3 +572,65 @@ static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void 
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
+
+AWS_STATIC_STRING_FROM_LITERAL(s_to_lower_test, "UPPerANdLowercASE");
+
+static int s_test_byte_buf_append_to_lower_success(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, s_to_lower_test->len);
+
+    struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
+
+    ASSERT_TRUE(aws_byte_buf_append_to_lower(&buffer, &to_lower_cursor) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(buffer.len == s_to_lower_test->len);
+    for (size_t i = 0; i < s_to_lower_test->len; ++i) {
+        uint8_t value = buffer.buffer[i];
+        ASSERT_TRUE(value > 'Z' || value < 'A');
+    }
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_to_lower_success, s_test_byte_buf_append_to_lower_success)
+
+static int s_test_byte_buf_append_to_lower_failure(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 3);
+
+    struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
+
+    ASSERT_TRUE(aws_byte_buf_append_to_lower(&buffer, &to_lower_cursor) == AWS_OP_ERR);
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_to_lower_failure, s_test_byte_buf_append_to_lower_failure)
+
+AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test, "ReserveTest");
+
+static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 4);
+
+    struct aws_byte_cursor reserve_cursor = aws_byte_cursor_from_c_str((char *)s_reserve_test->bytes);
+
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &reserve_cursor) == AWS_OP_ERR);
+
+    aws_byte_buf_reserve(&buffer, s_reserve_test->len);
+
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &reserve_cursor) == AWS_OP_SUCCESS);
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reserve, s_test_byte_buf_reserve)
