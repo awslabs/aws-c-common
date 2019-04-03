@@ -396,8 +396,9 @@ AWS_COMMON_API
 uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item);
 
 /**
- * Returns the lookup table used internally to do case-insensitive comparisons.  Allows it to be
- * used in the lookup version of byte_buf append.
+ * Returns a lookup table for bytes that is the identity transformation with the exception
+ * of uppercase ascii characters getting replaced with lowercase characters.  Used in
+ * caseless comparisons.
  */
 AWS_COMMON_API
 const uint8_t *aws_lookup_table_to_lower_get(void);

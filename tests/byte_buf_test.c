@@ -614,22 +614,27 @@ static int s_test_byte_buf_append_lookup_failure(struct aws_allocator *allocator
 }
 AWS_TEST_CASE(test_byte_buf_append_lookup_failure, s_test_byte_buf_append_lookup_failure)
 
-AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test, "ReserveTest");
+AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test_suffix, "ReserveTest");
+AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test_prefix, "Successful");
+AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test_prefix_concatenated, "SuccessfulReserveTest");
 
 static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
 
     struct aws_byte_buf buffer;
-    aws_byte_buf_init(&buffer, allocator, 4);
+    aws_byte_buf_init(&buffer, allocator, s_reserve_test_prefix->len);
 
-    struct aws_byte_cursor reserve_cursor = aws_byte_cursor_from_c_str((char *)s_reserve_test->bytes);
+    struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_reserve_test_prefix);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
 
-    ASSERT_TRUE(aws_byte_buf_append(&buffer, &reserve_cursor) == AWS_OP_ERR);
+    struct aws_byte_cursor suffix_cursor = aws_byte_cursor_from_string(s_reserve_test_suffix);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &suffix_cursor) == AWS_OP_ERR);
 
-    aws_byte_buf_reserve(&buffer, s_reserve_test->len);
+    aws_byte_buf_reserve(&buffer, s_reserve_test_prefix_concatenated->len);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &suffix_cursor) == AWS_OP_SUCCESS);
 
-    ASSERT_TRUE(aws_byte_buf_append(&buffer, &reserve_cursor) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_eq_c_str(&buffer, (char *)s_reserve_test_prefix_concatenated->bytes));
 
     aws_byte_buf_clean_up(&buffer);
 

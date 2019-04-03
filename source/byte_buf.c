@@ -446,6 +446,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
                 if (new_buffer == NULL) {
                     return AWS_OP_ERR;
                 }
+            } else {
+                return AWS_OP_ERR;
             }
         }
 
@@ -483,14 +485,10 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
         return AWS_OP_SUCCESS;
     }
 
-    uint8_t *new_buffer = aws_mem_acquire(buffer->allocator, requested_capacity);
-    if (new_buffer == NULL) {
+    if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
         return AWS_OP_ERR;
     }
 
-    memcpy(new_buffer, buffer->buffer, buffer->len);
-    aws_mem_release(buffer->allocator, buffer->buffer);
-    buffer->buffer = new_buffer;
     buffer->capacity = requested_capacity;
 
     return AWS_OP_SUCCESS;
