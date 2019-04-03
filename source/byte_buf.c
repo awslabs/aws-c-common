@@ -35,6 +35,14 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
     return AWS_OP_SUCCESS;
 }
 
+bool is_valid_byte_buf(const struct aws_byte_buf *buf) {
+    return (buf->len <= buf->capacity) && (buf->allocator != NULL) && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len);
+}
+
+bool is_valid_byte_cursor(const struct aws_byte_cursor *cursor) {
+    return (cursor->ptr != NULL && cursor->len != 0) && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len);
+}
+
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
     if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
@@ -390,6 +398,9 @@ int aws_byte_buf_append_with_lookup(
     const uint8_t *lookup_table) {
     assert(from->ptr);
     assert(to->buffer);
+    AWS_PRECONDITION(is_valid_byte_buf(to));
+    AWS_PRECONDITION(is_valid_byte_cursor(from));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
 
     if (to->capacity - to->len < from->len) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
@@ -399,13 +410,20 @@ int aws_byte_buf_append_with_lookup(
         to->buffer[to->len + i] = lookup_table[from->ptr[i]];
     }
 
-    to->len += from->len;
+    if (aws_add_size_checked(to->len, from->len, &to->len)) {
+        return AWS_OP_ERR;
+    }
+
+    AWS_POSTCONDITION(is_valid_byte_buf(to));
+    AWS_POSTCONDITION(is_valid_byte_cursor(from));
     return AWS_OP_SUCCESS;
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     assert(from->ptr);
     assert(to->buffer);
+    AWS_PRECONDITION(is_valid_byte_buf(to));
+    AWS_PRECONDITION(is_valid_byte_cursor(from));
 
     if (to->capacity - to->len < from->len) {
         /*
@@ -477,10 +495,13 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
     to->len += from->len;
 
+    AWS_POSTCONDITION(is_valid_byte_buf(to));
+    AWS_POSTCONDITION(is_valid_byte_cursor(from));
     return AWS_OP_SUCCESS;
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
+    AWS_PRECONDITION(is_valid_byte_buf(buffer));
     if (requested_capacity <= buffer->capacity) {
         return AWS_OP_SUCCESS;
     }
@@ -491,6 +512,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
 
     buffer->capacity = requested_capacity;
 
+    AWS_POSTCONDITION(is_valid_byte_buf(buffer));
     return AWS_OP_SUCCESS;
 }
 
