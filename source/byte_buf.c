@@ -239,6 +239,10 @@ static const uint8_t s_tolower_table[256] = {
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
 
+const uint8_t *aws_lookup_table_to_lower_get(void) {
+    return s_tolower_table;
+}
+
 bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
     assert(array_a || (len_a == 0));
     assert(array_b || (len_b == 0));
@@ -380,7 +384,10 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+int aws_byte_buf_append_with_lookup(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    const uint8_t *lookup_table) {
     assert(from->ptr);
     assert(to->buffer);
 
@@ -389,7 +396,7 @@ int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_
     }
 
     for (size_t i = 0; i < from->len; ++i) {
-        to->buffer[to->len + i] = s_tolower_table[from->ptr[i]];
+        to->buffer[to->len + i] = lookup_table[from->ptr[i]];
     }
 
     to->len += from->len;

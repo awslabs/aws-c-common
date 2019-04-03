@@ -290,14 +290,18 @@ AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
- * Copies from to to while converting basic US alphabet characters to lower case.
+ * Copies from to to while converting bytes via the passed in lookup table.
  * If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
  * returned. dest->len will contain the amount of data actually copied to dest.
  *
  * from and to should not be the same buffer (overlap is not handled)
+ * lookup_table must be at least 256 bytes
  */
 AWS_COMMON_API
-int aws_byte_buf_append_to_lower(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+int aws_byte_buf_append_with_lookup(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    const uint8_t *lookup_table);
 
 /**
  * Copies from to to. If to is too small, the buffer will be grown appropriately and
@@ -390,6 +394,13 @@ uint64_t aws_hash_array_ignore_case(const void *array, size_t len);
  */
 AWS_COMMON_API
 uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item);
+
+/**
+ * Returns the lookup table used internally to do case-insensitive comparisons.  Allows it to be
+ * used in the lookup version of byte_buf append.
+ */
+AWS_COMMON_API
+const uint8_t *aws_lookup_table_to_lower_get(void);
 
 AWS_EXTERN_C_END
 

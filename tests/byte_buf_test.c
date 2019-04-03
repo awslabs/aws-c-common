@@ -575,7 +575,7 @@ AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
 
 AWS_STATIC_STRING_FROM_LITERAL(s_to_lower_test, "UPPerANdLowercASE");
 
-static int s_test_byte_buf_append_to_lower_success(struct aws_allocator *allocator, void *ctx) {
+static int s_test_byte_buf_append_lookup_success(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf buffer;
@@ -583,7 +583,8 @@ static int s_test_byte_buf_append_to_lower_success(struct aws_allocator *allocat
 
     struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
 
-    ASSERT_TRUE(aws_byte_buf_append_to_lower(&buffer, &to_lower_cursor) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(
+        aws_byte_buf_append_with_lookup(&buffer, &to_lower_cursor, aws_lookup_table_to_lower_get()) == AWS_OP_SUCCESS);
     ASSERT_TRUE(buffer.len == s_to_lower_test->len);
     for (size_t i = 0; i < s_to_lower_test->len; ++i) {
         uint8_t value = buffer.buffer[i];
@@ -594,9 +595,9 @@ static int s_test_byte_buf_append_to_lower_success(struct aws_allocator *allocat
 
     return 0;
 }
-AWS_TEST_CASE(test_byte_buf_append_to_lower_success, s_test_byte_buf_append_to_lower_success)
+AWS_TEST_CASE(test_byte_buf_append_lookup_success, s_test_byte_buf_append_lookup_success)
 
-static int s_test_byte_buf_append_to_lower_failure(struct aws_allocator *allocator, void *ctx) {
+static int s_test_byte_buf_append_lookup_failure(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_byte_buf buffer;
@@ -604,13 +605,14 @@ static int s_test_byte_buf_append_to_lower_failure(struct aws_allocator *allocat
 
     struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
 
-    ASSERT_TRUE(aws_byte_buf_append_to_lower(&buffer, &to_lower_cursor) == AWS_OP_ERR);
+    ASSERT_TRUE(
+        aws_byte_buf_append_with_lookup(&buffer, &to_lower_cursor, aws_lookup_table_to_lower_get()) == AWS_OP_ERR);
 
     aws_byte_buf_clean_up(&buffer);
 
     return 0;
 }
-AWS_TEST_CASE(test_byte_buf_append_to_lower_failure, s_test_byte_buf_append_to_lower_failure)
+AWS_TEST_CASE(test_byte_buf_append_lookup_failure, s_test_byte_buf_append_lookup_failure)
 
 AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test, "ReserveTest");
 
