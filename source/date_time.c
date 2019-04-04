@@ -29,6 +29,7 @@ static const char *RFC822_DATE_FORMAT_STR_WITH_Z = "%a, %d %b %Y %H:%M:%S %Z";
 static const char *RFC822_SHORT_DATE_FORMAT_STR = "%a, %d %b %Y";
 static const char *ISO_8601_LONG_DATE_FORMAT_STR = "%Y-%m-%dT%H:%M:%SZ";
 static const char *ISO_8601_SHORT_DATE_FORMAT_STR = "%Y-%m-%d";
+static const char *SIGV4_SIGNING_KEY_FORMAT_STR = "%Y%m%d";
 
 #define STR_TRIPLET_TO_INDEX(str)                                                                                      \
     (((uint32_t)(uint8_t)tolower((str)[0]) << 0) | ((uint32_t)(uint8_t)tolower((str)[1]) << 8) |                       \
@@ -211,15 +212,15 @@ enum parser_state {
     FINISHED,
 };
 
-static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *parsed_time) {
+static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struct tm *parsed_time) {
     size_t index = 0;
     size_t state_start_index = 0;
     enum parser_state state = ON_YEAR;
     bool error = false;
     bool advance = true;
 
-    while (state < FINISHED && !error && index < date_str->len) {
-        char c = date_str->buffer[index];
+    while (state < FINISHED && !error && index < date_str_cursor->len) {
+        char c = date_str_cursor->ptr[index];
         switch (state) {
             case ON_YEAR:
                 if (c == '-' && index - state_start_index == 4) {
@@ -329,8 +330,11 @@ static int s_parse_iso_8601(const struct aws_byte_buf *date_str, struct tm *pars
     return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }
 
-static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parsed_time, struct aws_date_time *dt) {
-    size_t len = date_str->len;
+static int s_parse_rfc_822(
+    const struct aws_byte_cursor *date_str_cursor,
+    struct tm *parsed_time,
+    struct aws_date_time *dt) {
+    size_t len = date_str_cursor->len;
 
     size_t index = 0;
     size_t state_start_index = 0;
@@ -338,7 +342,7 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
     bool error = false;
 
     while (!error && index < len) {
-        char c = date_str->buffer[index];
+        char c = date_str_cursor->ptr[index];
 
         switch (state) {
             /* week day abbr is optional. */
@@ -373,7 +377,7 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
             case ON_MONTH:
                 if (isspace(c)) {
                     int monthNumber =
-                        get_month_number_from_str((const char *)date_str->buffer, state_start_index, index + 1);
+                        get_month_number_from_str((const char *)date_str_cursor->ptr, state_start_index, index + 1);
 
                     if (monthNumber > -1) {
                         state = ON_YEAR;
@@ -459,11 +463,11 @@ static int s_parse_rfc_822(const struct aws_byte_buf *date_str, struct tm *parse
     return error || state != ON_TZ ? AWS_OP_ERR : AWS_OP_SUCCESS;
 }
 
-int aws_date_time_init_from_str(
+int aws_date_time_init_from_str_cursor(
     struct aws_date_time *dt,
-    const struct aws_byte_buf *date_str,
+    const struct aws_byte_cursor *date_str_cursor,
     enum aws_date_format fmt) {
-    if (date_str->len > AWS_DATE_TIME_STR_MAX_LEN) {
+    if (date_str_cursor->len > AWS_DATE_TIME_STR_MAX_LEN) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
@@ -475,14 +479,14 @@ int aws_date_time_init_from_str(
 
     time_t seconds_offset = 0;
     if (fmt == AWS_DATE_FORMAT_ISO_8601 || fmt == AWS_DATE_FORMAT_AUTO_DETECT) {
-        if (!s_parse_iso_8601(date_str, &parsed_time)) {
+        if (!s_parse_iso_8601(date_str_cursor, &parsed_time)) {
             dt->utc_assumed = true;
             successfully_parsed = true;
         }
     }
 
     if (fmt == AWS_DATE_FORMAT_RFC822 || (fmt == AWS_DATE_FORMAT_AUTO_DETECT && !successfully_parsed)) {
-        if (!s_parse_rfc_822(date_str, &parsed_time, dt)) {
+        if (!s_parse_rfc_822(date_str_cursor, &parsed_time, dt)) {
             successfully_parsed = true;
 
             if (dt->utc_assumed) {
@@ -526,6 +530,18 @@ int aws_date_time_init_from_str(
     dt->local_time = s_get_time_struct(dt, true);
 
     return AWS_OP_SUCCESS;
+}
+
+int aws_date_time_init_from_str(
+    struct aws_date_time *dt,
+    const struct aws_byte_buf *date_str,
+    enum aws_date_format fmt) {
+    if (date_str->len > AWS_DATE_TIME_STR_MAX_LEN) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+
+    struct aws_byte_cursor date_cursor = aws_byte_cursor_from_buf(date_str);
+    return aws_date_time_init_from_str_cursor(dt, &date_cursor, fmt);
 }
 
 static inline int s_date_to_str(const struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
@@ -608,6 +624,11 @@ int aws_date_time_to_utc_time_short_str(
     }
 
     return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
+}
+
+int aws_date_time_to_sigv4_signing_key_str(const struct aws_date_time *dt, struct aws_byte_buf *output_buf) {
+
+    return s_date_to_str(&dt->gmt_time, SIGV4_SIGNING_KEY_FORMAT_STR, output_buf);
 }
 
 double aws_date_time_as_epoch_secs(const struct aws_date_time *dt) {

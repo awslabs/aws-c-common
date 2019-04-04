@@ -21,6 +21,7 @@
 #define AWS_DATE_TIME_STR_MAX_LEN 100
 
 struct aws_byte_buf;
+struct aws_byte_cursor;
 
 enum aws_date_format {
     AWS_DATE_FORMAT_RFC822,
@@ -96,6 +97,14 @@ AWS_COMMON_API int aws_date_time_init_from_str(
     enum aws_date_format fmt);
 
 /**
+ * aws_date_time_init variant that takes a byte_cursor rather than a byte_buf
+ */
+AWS_COMMON_API int aws_date_time_init_from_str_cursor(
+    struct aws_date_time *dt,
+    const struct aws_byte_cursor *date_str_cursor,
+    enum aws_date_format fmt);
+
+/**
  * Copies the current time as a formatted date string in local time into output_buf. If buffer is too small, it will
  * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
  * allowed.
@@ -133,6 +142,15 @@ AWS_COMMON_API int aws_date_time_to_local_time_short_str(
 AWS_COMMON_API int aws_date_time_to_utc_time_short_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf);
+
+/**
+ * Copies the current time as a formatted short date string in utc time using the format required in the AWS sigv4
+ * signing key generation process (YYYYMMDD). If the buffer is too small, it will
+ * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes.
+ */
+AWS_COMMON_API int aws_date_time_to_sigv4_signing_key_str(
+    const struct aws_date_time *dt,
     struct aws_byte_buf *output_buf);
 
 AWS_COMMON_API double aws_date_time_as_epoch_secs(const struct aws_date_time *dt);
