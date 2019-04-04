@@ -114,6 +114,18 @@ AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
 
 /**
+ * Set of properties of a valid aws_byte_buf.
+ */
+AWS_COMMON_API
+bool aws_byte_buf_is_valid(const struct aws_byte_buf *buf);
+
+/**
+ * Set of properties of a valid aws_byte_cursor.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor);
+
+/**
  * Copies src buffer into dest and sets the correct len and capacity.
  * A new memory zone is allocated for dest->buffer. When dest is no longer needed it will have to be cleaned-up using
  * aws_byte_buf_clean_up(dest).
@@ -290,6 +302,40 @@ AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copies from to to while converting bytes via the passed in lookup table.
+ * If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
+ * returned. dest->len will contain the amount of data actually copied to dest.
+ *
+ * from and to should not be the same buffer (overlap is not handled)
+ * lookup_table must be at least 256 bytes
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_with_lookup(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    const uint8_t *lookup_table);
+
+/**
+ * Copies from to to. If to is too small, the buffer will be grown appropriately and
+ * the old contents copied to, before the new contents are appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * from and to may be the same buffer, permitting copying a buffer into itself.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Attempts to increase the capacity of a buffer to the requested capacity
+ *
+ * If the the buffer's capacity is currently larger than the request capacity, the
+ * function does nothing (no shrink is performed).
+ */
+AWS_COMMON_API
+int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity);
+
+/**
  * Concatenates a variable number of struct aws_byte_buf * into destination.
  * Number of args must be greater than 1. If dest is too small,
  * AWS_ERROR_DEST_COPY_TOO_SMALL will be returned. dest->len will contain the
@@ -360,6 +406,14 @@ uint64_t aws_hash_array_ignore_case(const void *array, size_t len);
  */
 AWS_COMMON_API
 uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item);
+
+/**
+ * Returns a lookup table for bytes that is the identity transformation with the exception
+ * of uppercase ascii characters getting replaced with lowercase characters.  Used in
+ * caseless comparisons.
+ */
+AWS_COMMON_API
+const uint8_t *aws_lookup_table_to_lower_get(void);
 
 AWS_EXTERN_C_END
 

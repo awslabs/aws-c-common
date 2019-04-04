@@ -35,6 +35,14 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
     return AWS_OP_SUCCESS;
 }
 
+bool aws_byte_buf_is_valid(const struct aws_byte_buf *buf) {
+    return (buf->len <= buf->capacity) && (buf->allocator != NULL) && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len);
+}
+
+bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
+    return (cursor->ptr != NULL && cursor->len != 0) && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len);
+}
+
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
     if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
@@ -239,6 +247,10 @@ static const uint8_t s_tolower_table[256] = {
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
 
+const uint8_t *aws_lookup_table_to_lower_get(void) {
+    return s_tolower_table;
+}
+
 bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
     assert(array_a || (len_a == 0));
     assert(array_b || (len_b == 0));
@@ -377,6 +389,130 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 
     memcpy(to->buffer + to->len, from->ptr, from->len);
     to->len += from->len;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_append_with_lookup(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    const uint8_t *lookup_table) {
+    assert(from->ptr);
+    assert(to->buffer);
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
+
+    if (to->capacity - to->len < from->len) {
+        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+    }
+
+    for (size_t i = 0; i < from->len; ++i) {
+        to->buffer[to->len + i] = lookup_table[from->ptr[i]];
+    }
+
+    if (aws_add_size_checked(to->len, from->len, &to->len)) {
+        return AWS_OP_ERR;
+    }
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    assert(from->ptr);
+    assert(to->buffer);
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+
+    if (to->capacity - to->len < from->len) {
+        /*
+         * NewCapacity = Max(OldCapacity * 2, OldCapacity + MissingCapacity)
+         */
+        size_t missing_capacity = from->len - (to->capacity - to->len);
+
+        size_t required_capacity = 0;
+        if (aws_add_size_checked(to->capacity, missing_capacity, &required_capacity)) {
+            return AWS_OP_ERR;
+        }
+
+        /*
+         * It's ok if this overflows, just clamp to max possible.
+         * In theory this lets us still grow a buffer that's larger than 1/2 size_t space
+         * at least enough to accommodate the append.
+         */
+        size_t growth_capacity = aws_add_size_saturating(to->capacity, to->capacity);
+
+        size_t new_capacity = required_capacity;
+        if (new_capacity < growth_capacity) {
+            new_capacity = growth_capacity;
+        }
+
+        /*
+         * Attempt to resize - we intentionally do not use reserve() in order to preserve
+         * the (unlikely) use case of from and to being the same buffer range.
+         */
+
+        /*
+         * Try the max, but if that fails and the required is smaller, try it in fallback
+         */
+        uint8_t *new_buffer = aws_mem_acquire(to->allocator, new_capacity);
+        if (new_buffer == NULL) {
+            if (new_capacity > required_capacity) {
+                new_capacity = required_capacity;
+                new_buffer = aws_mem_acquire(to->allocator, new_capacity);
+                if (new_buffer == NULL) {
+                    return AWS_OP_ERR;
+                }
+            } else {
+                return AWS_OP_ERR;
+            }
+        }
+
+        /*
+         * Copy old buffer -> new buffer
+         */
+        memcpy(new_buffer, to->buffer, to->len);
+
+        /*
+         * Copy what we actually wanted to append in the first place
+         */
+        memcpy(new_buffer + to->len, from->ptr, from->len);
+
+        /*
+         * Get rid of the old buffer
+         */
+        aws_mem_release(to->allocator, to->buffer);
+
+        /*
+         * Switch to the new buffer
+         */
+        to->buffer = new_buffer;
+        to->capacity = new_capacity;
+    } else {
+        memcpy(to->buffer + to->len, from->ptr, from->len);
+    }
+
+    to->len += from->len;
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    if (requested_capacity <= buffer->capacity) {
+        return AWS_OP_SUCCESS;
+    }
+
+    if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
+        return AWS_OP_ERR;
+    }
+
+    buffer->capacity = requested_capacity;
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
     return AWS_OP_SUCCESS;
 }
 
