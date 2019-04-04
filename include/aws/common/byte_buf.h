@@ -117,13 +117,13 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
  * Set of properties of a valid aws_byte_buf.
  */
 AWS_COMMON_API
-bool is_valid_byte_buf(const struct aws_byte_buf *buf);
+bool aws_byte_buf_is_valid(const struct aws_byte_buf *buf);
 
 /**
  * Set of properties of a valid aws_byte_cursor.
  */
 AWS_COMMON_API
-bool is_valid_byte_cursor(const struct aws_byte_cursor *cursor);
+bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor);
 
 /**
  * Copies src buffer into dest and sets the correct len and capacity.
