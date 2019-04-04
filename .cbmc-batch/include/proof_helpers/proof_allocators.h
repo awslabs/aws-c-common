@@ -32,6 +32,13 @@ static void *can_fail_malloc_allocator(struct aws_allocator *allocator, size_t s
 
 void *can_fail_malloc(size_t size);
 
+/**
+ * CBMC considers malloc always successed for any given size. However, a real machine
+ * can only provide the available size from the pointer until the end of the address space.
+ * This function models the real machine behaviour.
+ */
+void *bounded_malloc(size_t size);
+
 static void can_fail_free(struct aws_allocator *allocator, void *ptr);
 
 static void *can_fail_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize);

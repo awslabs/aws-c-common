@@ -38,6 +38,17 @@ void *can_fail_malloc(size_t size) {
     return (nondet) ? NULL : malloc(size);
 }
 
+void *bounded_malloc(size_t size) {
+    void *rval = malloc(size);
+    /*
+     * Malloc can only perform a successful allocation up to the amount of
+     * remaining memory: i.e. from the pointer until the end of the address space.
+     * On reasonable architectures, SIZE_MAX is the same # of bits as the address space.
+     */
+    __CPROVER_assume(size < SIZE_MAX - (size_t)(rval));
+    return rval;
+}
+
 static void can_fail_free(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
     free(ptr);

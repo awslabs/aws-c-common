@@ -37,6 +37,31 @@
 #define ASSUME_BOUNDED_ARRAY_LIST(list, max_initial_item_allocation, max_item_size)                                    \
     list = make_bounded_array_list((max_initial_item_allocation), (max_item_size))
 
+/*
+ * Checks whether aws_byte_buf is bounded by max_size
+ */
+bool is_bounded_byte_buf(struct aws_byte_buf *buf, size_t max_size);
+
+/*
+ * Checks whether aws_byte_buf has the correct allocator
+ */
+bool is_byte_buf_expected_alloc(struct aws_byte_buf *buf);
+
+/*
+ * Ensures aws_byte_buf has a proper allocated buffer member
+ */
+void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *buf);
+
+/*
+ * Checks whether aws_byte_cursor is bounded by max_size
+ */
+bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size);
+
+/*
+ * Ensures aws_byte_cursor has a proper allocated buffer member
+ */
+void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor);
+
 /**
  * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size
  */

@@ -114,6 +114,18 @@ AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
 
 /**
+ * Set of properties of a valid aws_byte_buf.
+ */
+AWS_COMMON_API
+bool is_valid_byte_buf(const struct aws_byte_buf *buf);
+
+/**
+ * Set of properties of a valid aws_byte_cursor.
+ */
+AWS_COMMON_API
+bool is_valid_byte_cursor(const struct aws_byte_cursor *cursor);
+
+/**
  * Copies src buffer into dest and sets the correct len and capacity.
  * A new memory zone is allocated for dest->buffer. When dest is no longer needed it will have to be cleaned-up using
  * aws_byte_buf_clean_up(dest).

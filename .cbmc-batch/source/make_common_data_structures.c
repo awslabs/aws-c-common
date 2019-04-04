@@ -21,6 +21,27 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+bool is_bounded_byte_buf(struct aws_byte_buf *buf, size_t max_size) {
+    return buf->capacity <= max_size;
+}
+
+bool is_byte_buf_expected_alloc(struct aws_byte_buf *buf) {
+    return (buf->allocator == can_fail_allocator());
+}
+
+void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *buf) {
+    buf->allocator = can_fail_allocator();
+    buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
+}
+
+bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size) {
+    return cursor->len <= max_size;
+}
+
+void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor) {
+    cursor->ptr = bounded_malloc(cursor->len);
+}
+
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {
     struct aws_array_list *list;
     /* Assume list is allocated */
