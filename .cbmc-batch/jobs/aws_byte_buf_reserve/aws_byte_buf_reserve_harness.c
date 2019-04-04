@@ -18,7 +18,7 @@
 
 void aws_byte_buf_reserve_harness() {
     struct aws_byte_buf buf;
-    __CPROVER_assume(is_valid_byte_buf(&buf));
+    __CPROVER_assume(aws_byte_buf_is_valid(&buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
 
     struct aws_byte_buf old = buf;
@@ -28,6 +28,6 @@ void aws_byte_buf_reserve_harness() {
     if (rval == AWS_OP_SUCCESS) {
         assert(buf.capacity >= requested_capacity);
     }
-    assert(is_valid_byte_buf(&buf));
+    assert(aws_byte_buf_is_valid(&buf));
     assert(is_byte_buf_expected_alloc(&buf));
 }
