@@ -28,13 +28,13 @@ static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
      * the same). So we'll just test that it behaves like memset.
      */
 
-    char buf[16];
+    unsigned char buf[16];
 
     for (size_t i = 0; i < sizeof(buf); i++) {
-        volatile char *ptr = buf;
+        volatile unsigned char *ptr = buf;
         ptr += i;
 
-        *ptr = (char)0xDD;
+        *ptr = (unsigned char)0xDD;
     }
 
     aws_secure_zero(buf, sizeof(buf) / 2);
