@@ -13,6 +13,7 @@
 
 import argparse
 import boto3
+import copy
 
 # Parse required options
 parser = argparse.ArgumentParser(description='Creates all required AWS CodeBuild projects for a repo')
@@ -80,6 +81,11 @@ BUILD_CONFIGS = [
         'privileged': True
     },
     {
+        'build': 'linux-clang8-x64',
+        'env': 'linux',
+        'privileged': True
+    },
+    {
         'build': 'linux-gcc-4x-x64',
         'env': 'linux'
     },
@@ -119,8 +125,8 @@ for config in BUILD_CONFIGS:
 
     build_name = config['build']
 
-    build = dict(CREATE_PARAM_TEMPLATE)
-    env = dict(ENVIRONMENTS[config['env']])
+    build = copy.deepcopy(CREATE_PARAM_TEMPLATE)
+    env = copy.deepcopy(ENVIRONMENTS[config['env']])
     if 'privileged' in config:
         env['privilegedMode'] = config['privileged']
     build['environment'] = env
