@@ -339,12 +339,12 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
         return AWS_OP_SUCCESS;
     }
 
-    int64_t block_count = (int)to_decode->len / 4;
+    int64_t block_count = (int64_t)to_decode->len / 4;
     size_t string_index = 0;
     uint8_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
     int64_t buffer_index = 0;
 
-    for (int32_t i = 0; i < block_count - 1; ++i) {
+    for (int64_t i = 0; i < block_count - 1; ++i) {
         if (AWS_UNLIKELY(
                 s_base64_get_decoded_value(to_decode->ptr[string_index++], &value1, 0) ||
                 s_base64_get_decoded_value(to_decode->ptr[string_index++], &value2, 0) ||
