@@ -30,16 +30,16 @@ static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
 
     char buf[16];
 
-    for (int i = 0; i < sizeof(buf); i++) {
+    for (size_t i = 0; i < sizeof(buf); i++) {
         volatile char *ptr = buf;
         ptr += i;
 
-        *ptr = (unsigned char)0xDD;
+        *ptr = (char)0xDD;
     }
 
     aws_secure_zero(buf, sizeof(buf) / 2);
 
-    for (int i = 0; i < sizeof(buf); i++) {
+    for (size_t i = 0; i < sizeof(buf); i++) {
         if (i < sizeof(buf) / 2) {
             ASSERT_INT_EQUALS(0, buf[i]);
         } else {

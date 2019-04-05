@@ -118,7 +118,7 @@ static inline __m256i pack_vec(__m256i in) {
     __m256i maskA = _mm256_set1_epi32(0xFF); // low bits
     __m256i maskB = _mm256_set1_epi32(0xFF00);
     __m256i maskC = _mm256_set1_epi32(0xFF0000);
-    __m256i maskD = _mm256_set1_epi32(0xFF000000);
+    __m256i maskD = _mm256_set1_epi32((int)0xFF000000);
 
     __m256i bitsA = _mm256_slli_epi32(_mm256_and_si256(in, maskA), 18);
     __m256i bitsB = _mm256_slli_epi32(_mm256_and_si256(in, maskB), 4);

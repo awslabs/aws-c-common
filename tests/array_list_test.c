@@ -349,7 +349,7 @@ static int s_array_list_set_at_overwrite_safety_fn(struct aws_allocator *allocat
 
     memset(overwrite_data, 0x11, sizeof(overwrite_data));
     list.current_size = list_size * sizeof(int);
-    int value = 0xFFFFFFFF;
+    unsigned value = 0xFFFFFFFF;
 
     ASSERT_SUCCESS(aws_array_list_set_at(&list, (void *)&value, 3));
     ASSERT_ERROR(AWS_ERROR_INVALID_INDEX, aws_array_list_set_at(&list, (void *)&value, 4));
