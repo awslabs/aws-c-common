@@ -46,6 +46,7 @@ static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *c
         uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
         AWS_ZERO_ARRAY(date_output);
         struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+        str_output.len = 0;
         ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
         const char *expected_long_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -88,6 +89,7 @@ static int s_test_rfc822_utc_parsing_auto_detect_fn(struct aws_allocator *alloca
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
     ASSERT_BIN_ARRAYS_EQUALS(date_buf.buffer, date_buf.len, str_output.buffer, str_output.len);
@@ -117,6 +119,7 @@ static int s_test_rfc822_local_time_east_of_gmt_parsing_fn(struct aws_allocator 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
     const char *expected_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -149,6 +152,7 @@ static int s_test_rfc822_local_time_west_of_gmt_parsing_fn(struct aws_allocator 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
     const char *expected_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -181,6 +185,7 @@ static int s_test_rfc822_utc_two_digit_year_parsing_fn(struct aws_allocator *all
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
     const char *expected_date_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -212,6 +217,7 @@ static int s_test_rfc822_utc_no_dow_parsing_fn(struct aws_allocator *allocator, 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_RFC822, &str_output));
 
     const char *expected_date_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -308,6 +314,7 @@ static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T08:05:09Z";
@@ -347,6 +354,7 @@ static int s_test_iso8601_utc_parsing_auto_detect_fn(struct aws_allocator *alloc
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T08:05:09Z";
@@ -378,6 +386,7 @@ static int s_test_iso8601_utc_no_colon_parsing_fn(struct aws_allocator *allocato
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T08:05:09Z";
@@ -409,6 +418,7 @@ static int s_test_iso8601_date_only_parsing_fn(struct aws_allocator *allocator, 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T00:00:00Z";
@@ -487,6 +497,7 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T08:05:09Z";
@@ -516,6 +527,7 @@ static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
     struct aws_byte_buf str_output = aws_byte_buf_from_array(date_output, sizeof(date_output));
+    str_output.len = 0;
     ASSERT_SUCCESS(aws_date_time_to_utc_time_str(&date_time, AWS_DATE_FORMAT_ISO_8601, &str_output));
 
     const char *expected_date_str = "2002-10-02T08:05:09Z";

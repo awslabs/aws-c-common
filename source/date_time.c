@@ -29,7 +29,8 @@ static const char *RFC822_DATE_FORMAT_STR_WITH_Z = "%a, %d %b %Y %H:%M:%S %Z";
 static const char *RFC822_SHORT_DATE_FORMAT_STR = "%a, %d %b %Y";
 static const char *ISO_8601_LONG_DATE_FORMAT_STR = "%Y-%m-%dT%H:%M:%SZ";
 static const char *ISO_8601_SHORT_DATE_FORMAT_STR = "%Y-%m-%d";
-static const char *SIGV4_SIGNING_KEY_FORMAT_STR = "%Y%m%d";
+static const char *SIGV4_LONG_DATE_FORMAT_STR = "%Y%m%dT%H%M%SZ";
+static const char *SIGV4_SHORT_DATE_FORMAT_STR = "%Y%m%d";
 
 #define STR_TRIPLET_TO_INDEX(str)                                                                                      \
     (((uint32_t)(uint8_t)tolower((str)[0]) << 0) | ((uint32_t)(uint8_t)tolower((str)[1]) << 8) |                       \
@@ -545,15 +546,14 @@ int aws_date_time_init_from_str(
 }
 
 static inline int s_date_to_str(const struct tm *tm, const char *format_str, struct aws_byte_buf *output_buf) {
-    if (output_buf->capacity < AWS_DATE_TIME_STR_MAX_LEN) {
+    size_t remaining_space = output_buf->capacity - output_buf->len;
+    size_t bytes_written = strftime((char *)output_buf->buffer + output_buf->len, remaining_space, format_str, tm);
+
+    if (bytes_written == 0) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    output_buf->len = strftime((char *)output_buf->buffer, output_buf->capacity, format_str, tm);
-
-    if (output_buf->len == 0) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
-    }
+    output_buf->len += bytes_written;
 
     return AWS_OP_SUCCESS;
 }
@@ -626,9 +626,12 @@ int aws_date_time_to_utc_time_short_str(
     return s_date_to_str(&dt->gmt_time, ISO_8601_SHORT_DATE_FORMAT_STR, output_buf);
 }
 
-int aws_date_time_to_sigv4_signing_key_str(const struct aws_date_time *dt, struct aws_byte_buf *output_buf) {
+int aws_date_time_to_sigv4_short_format_str(const struct aws_date_time *dt, struct aws_byte_buf *output_buf) {
+    return s_date_to_str(&dt->gmt_time, SIGV4_SHORT_DATE_FORMAT_STR, output_buf);
+}
 
-    return s_date_to_str(&dt->gmt_time, SIGV4_SIGNING_KEY_FORMAT_STR, output_buf);
+int aws_date_time_to_sigv4_long_format_str(const struct aws_date_time *dt, struct aws_byte_buf *output_buf) {
+    return s_date_to_str(&dt->gmt_time, SIGV4_LONG_DATE_FORMAT_STR, output_buf);
 }
 
 double aws_date_time_as_epoch_secs(const struct aws_date_time *dt) {
