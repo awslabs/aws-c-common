@@ -39,6 +39,68 @@
             (unsigned long long)(result));                                                                             \
     } while (0)
 
+AWS_TEST_CASE(test_is_power_of_two, s_test_is_power_of_two_fn)
+static int s_test_is_power_of_two_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_FALSE(aws_is_power_of_two(0));
+    for (size_t i = 0; i < SIZE_T_BITS; ++i) {
+        const size_t ith_power = (size_t)1 << i;
+        ASSERT_TRUE(aws_is_power_of_two(ith_power));
+        ASSERT_FALSE(aws_is_power_of_two(ith_power + 9));
+        ASSERT_FALSE(aws_is_power_of_two(ith_power - 9));
+        ASSERT_FALSE(aws_is_power_of_two(ith_power + 100));
+        ASSERT_FALSE(aws_is_power_of_two(ith_power - 100));
+    }
+    return 0;
+}
+
+#define CHECK_ROUND_OVERFLOWS(a)                                                                                       \
+    do {                                                                                                               \
+        size_t result_val;                                                                                             \
+        ASSERT_TRUE(aws_round_up_to_power_of_two((a), &result_val));                                                   \
+    } while (0)
+
+#define CHECK_ROUND_SUCCEEDS(a, r)                                                                                     \
+    do {                                                                                                               \
+        size_t result_val;                                                                                             \
+        ASSERT_FALSE(aws_round_up_to_power_of_two((a), &result_val));                                                  \
+        ASSERT_TRUE(aws_is_power_of_two(result_val));                                                                  \
+        ASSERT_INT_EQUALS(                                                                                             \
+            (uint64_t)result_val,                                                                                      \
+            (uint64_t)(r),                                                                                             \
+            "Expected %s(%016llx) = %016llx; got %016llx",                                                             \
+            "aws_round_up_to_power_of_two",                                                                            \
+            (unsigned long long)(a),                                                                                   \
+            (unsigned long long)(r),                                                                                   \
+            (unsigned long long)(result_val));                                                                         \
+    } while (0)
+
+AWS_TEST_CASE(test_round_up_to_power_of_two, s_test_round_up_to_power_of_two_fn)
+static int s_test_round_up_to_power_of_two_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    /*special case 0, 1 and 2, where subtracting from the number doesn't cause it to round back up */
+    CHECK_ROUND_SUCCEEDS(0, 1);
+    CHECK_ROUND_SUCCEEDS(1, 1);
+    CHECK_ROUND_SUCCEEDS(2, 2);
+
+    for (size_t i = 2; i < SIZE_T_BITS - 1; ++i) {
+        const size_t ith_power = (size_t)1 << i;
+        CHECK_ROUND_SUCCEEDS(ith_power, ith_power);
+        CHECK_ROUND_SUCCEEDS(ith_power - 1, ith_power);
+        CHECK_ROUND_SUCCEEDS(ith_power + 1, ith_power << 1);
+    }
+
+    /* Special case for the largest representable power of two, where addition causes overflow */
+    CHECK_ROUND_SUCCEEDS(SIZE_MAX_POWER_OF_TWO, SIZE_MAX_POWER_OF_TWO);
+    CHECK_ROUND_SUCCEEDS(SIZE_MAX_POWER_OF_TWO - 1, SIZE_MAX_POWER_OF_TWO);
+    CHECK_ROUND_OVERFLOWS(SIZE_MAX_POWER_OF_TWO + 1);
+    return 0;
+}
+
 AWS_TEST_CASE(test_mul_u64_saturating, s_test_mul_u64_saturating_fn)
 static int s_test_mul_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
