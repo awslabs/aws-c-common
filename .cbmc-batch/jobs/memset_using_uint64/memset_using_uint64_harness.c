@@ -16,15 +16,8 @@
 #include <proof_helpers/utils.h>
 #include <stddef.h>
 
-/**
- * Coverage: 100%
- * Runtime: 50 seconds
- */
-
 void *memset_impl(void *dst, int c, size_t n);
 void *memset_using_uint64_impl(void *dst, int c, size_t n);
-
-const int MAX = 160;
 
 /*
  * Check that the optimized version of memset is memory safe

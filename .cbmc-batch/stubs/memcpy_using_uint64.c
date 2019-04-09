@@ -19,7 +19,7 @@
  * This function overrides the original implementation of the memcpy function
  * from string.h. It copies the values of n bytes from the *src to the *dst.
  * It also checks if the size of the arrays pointed to by both the *dst and
- * *src parameters are at least n bytes and if they overlap.]
+ * *src parameters are at least n bytes and if they overlap.
  *
  * This takes advantage of the fact that 64bit operations require fewer array updates,
  * which can make this version faster than the naive unrolling when used in CBMC.

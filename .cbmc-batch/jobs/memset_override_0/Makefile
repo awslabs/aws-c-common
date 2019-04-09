@@ -12,9 +12,13 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-UNWINDSET += memset_impl.0:161
-UNWINDSET += memset_override_0_impl.0:21
+# Max needs to be big enough to have multiple loop unrollings to have full coverage
+# 160 is well larger than that, and still completes quite fast: ~ 40s
+MAX = 160
+DEFINES += -DMAX=$(MAX)
+
+UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX) + 1)))
+UNWINDSET += memset_override_0_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1)))
 
 CBMCFLAGS +=
 

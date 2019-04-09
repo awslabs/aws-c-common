@@ -19,14 +19,10 @@
 void *memcpy_impl(void *dst, const void *src, size_t n);
 void *memcpy_using_uint64_impl(void *dst, const void *src, size_t n);
 
-const int MAX = 160;
 /*
  * Check that the optimized version of memcpy is memory safe
  * And that it matches the naive version
- * Coverage 100%
- * Runtime: 40 seconds
  */
-
 void memcpy_using_uint64_harness() {
     char s[MAX];
     char d1[MAX];

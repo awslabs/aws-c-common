@@ -12,9 +12,13 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-UNWINDSET += memcpy_impl.0:161
-UNWINDSET += memcpy_using_uint64_impl.0:21
+# Max needs to be big enough to have multiple loop unrollings to have full coverage
+# 160 is well larger than that, and still completes quite fast: ~ 40s
+MAX = 160
+DEFINES += -DMAX=$(MAX)
+
+UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX) + 1)))
+UNWINDSET += memcpy_using_uint64_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1)))
 
 CBMCFLAGS +=
 
