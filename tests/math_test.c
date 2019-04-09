@@ -45,7 +45,7 @@ static int s_test_is_power_of_two_fn(struct aws_allocator *allocator, void *ctx)
     (void)ctx;
 
     ASSERT_FALSE(aws_is_power_of_two(0));
-    for (size_t i = 0; i < SIZE_T_BITS; ++i) {
+    for (size_t i = 0; i < SIZE_BITS; ++i) {
         const size_t ith_power = (size_t)1 << i;
         ASSERT_TRUE(aws_is_power_of_two(ith_power));
         ASSERT_FALSE(aws_is_power_of_two(ith_power + 9));
@@ -87,7 +87,7 @@ static int s_test_round_up_to_power_of_two_fn(struct aws_allocator *allocator, v
     CHECK_ROUND_SUCCEEDS(1, 1);
     CHECK_ROUND_SUCCEEDS(2, 2);
 
-    for (size_t i = 2; i < SIZE_T_BITS - 1; ++i) {
+    for (size_t i = 2; i < SIZE_BITS - 1; ++i) {
         const size_t ith_power = (size_t)1 << i;
         CHECK_ROUND_SUCCEEDS(ith_power, ith_power);
         CHECK_ROUND_SUCCEEDS(ith_power - 1, ith_power);
@@ -158,7 +158,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
     (void)allocator;
     (void)ctx;
 
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
     CHECK_SAT(aws_mul_size_saturating, 0, ~0U, 0);
@@ -176,7 +176,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
     CHECK_SAT(aws_mul_size_saturating, 0xFFFE, 0xFFFE, 0xFFFC0004U);
     CHECK_SAT(aws_mul_size_saturating, 0x1FFFF, 0x1FFFF, 0xFFFFFFFFU);
     CHECK_SAT(aws_mul_size_saturating, ~0U, ~0U, ~0U);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_size_saturating, 0, 1, 0);
     CHECK_SAT(aws_mul_size_saturating, 0, ~0LLU, 0);
@@ -291,7 +291,7 @@ static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx
     (void)allocator;
     (void)ctx;
 
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0u, 0);
@@ -309,7 +309,7 @@ static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
     CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFF, 0x1FFFF);
     CHECK_OVF(aws_mul_size_checked, size_t, ~0u, ~0u);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0LLU, 0);
@@ -338,10 +338,10 @@ static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx
     (void)allocator;
     (void)ctx;
 
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     const uint32_t HALF_MAX = UINT32_MAX / 2;
     const uint32_t ACTUAL_MAX = UINT32_MAX;
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;
 #else
@@ -376,10 +376,10 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
     (void)allocator;
     (void)ctx;
 
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     const uint32_t HALF_MAX = UINT32_MAX / 2;
     const uint32_t ACTUAL_MAX = UINT32_MAX;
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;
 #else

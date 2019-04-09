@@ -44,9 +44,9 @@ static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_UINT_EQUALS(0, aws_nospec_mask(4, 4));
     ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(4, 5));
 
-    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(SSIZE_MAX - 1, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_mask(SSIZE_MAX + 1, SSIZE_MAX));
-    ASSERT_UINT_EQUALS(0, aws_nospec_mask(SSIZE_MAX, SSIZE_MAX + 1));
+    ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask((SIZE_MAX >> 1) - 1, (SIZE_MAX >> 1)));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask((SIZE_MAX >> 1) + 1, (SIZE_MAX >> 1)));
+    ASSERT_UINT_EQUALS(0, aws_nospec_mask((SIZE_MAX >> 1), (SIZE_MAX >> 1) + 1));
 
     return 0;
 }
@@ -88,8 +88,8 @@ static int s_test_byte_cursor_advance_internal(
     ASSERT_ADVANCE(5, 5);
     ASSERT_NOADVANCE(6, 5);
 
-    ASSERT_NOADVANCE(SSIZE_MAX + 1, SSIZE_MAX);
-    ASSERT_NOADVANCE(SSIZE_MAX, (size_t)SSIZE_MAX + 1);
+    ASSERT_NOADVANCE((SIZE_MAX >> 1) + 1, (SIZE_MAX >> 1));
+    ASSERT_NOADVANCE((SIZE_MAX >> 1), (SIZE_MAX >> 1) + 1);
 
     return 0;
 }
