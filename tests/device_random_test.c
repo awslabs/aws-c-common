@@ -41,7 +41,7 @@ struct distribution_tester {
 
 static int s_distribution_tester_put(struct distribution_tester *tester, uint64_t rand_num) {
     ASSERT_TRUE(rand_num <= tester->max_value);
-    size_t bucket_size = (tester->max_value / DISTRIBUTION_BUCKET_COUNT) + 1;
+    uint64_t bucket_size = (tester->max_value / DISTRIBUTION_BUCKET_COUNT) + 1;
     uint64_t bucket_idx = rand_num / bucket_size;
     ASSERT_TRUE(bucket_idx < DISTRIBUTION_BUCKET_COUNT);
     tester->buckets[bucket_idx]++;
