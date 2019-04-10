@@ -311,8 +311,8 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
  */
 AWS_COMMON_API
 int aws_byte_buf_append_with_lookup(
-    struct aws_byte_buf *to,
-    const struct aws_byte_cursor *from,
+    struct aws_byte_buf *AWS_RESTRICT to,
+    const struct aws_byte_cursor *AWS_RESTRICT from,
     const uint8_t *lookup_table);
 
 /**
