@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;memcpy_impl.0:161,memcpy_using_uint64_impl.0:21"
+goto: memcpy_using_uint64_harness.goto
+expected: "SUCCESSFUL"
