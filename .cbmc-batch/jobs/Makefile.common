@@ -62,6 +62,10 @@ ifneq ($(UNWINDSET),)
 CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
 endif
 
+CBMC_OBJECT_BITS ?= 8
+CBMCFLAGS +=  --object-bits $(CBMC_OBJECT_BITS)
+DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
+
 ################################################################
 
 # Here, whenever there is a change in any of ANSI-C source
