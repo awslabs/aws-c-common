@@ -16,10 +16,12 @@
 #pragma once
 #include <aws/common/common.h>
 
-/**
- * Use 1GB limit for malloc in order to avoid spurious pointer offsets
+/*
+ * CBMC has an internal representation in which each object has an index and an offset
+ * A buffer cannot be larger than the max size of the offset
+ * The Makefile is expected to set CBMC_OBJECT_BITS to the value of --object-bits
  */
-#define MAX_MALLOC 1073741824
+#define MAX_MALLOC (SIZE_MAX >> (CBMC_OBJECT_BITS + 1))
 
 /**
  * The standard allocator in CBMC cannot fail.
