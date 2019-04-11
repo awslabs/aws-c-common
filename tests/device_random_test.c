@@ -21,7 +21,7 @@
 #include <math.h>
 
 /* Number of random numbers to generate and put in buckets. Higher numbers mean more tolerance */
-#define DISTRIBUTION_PUT_COUNT 100000
+#define DISTRIBUTION_PUT_COUNT 1000000
 
 /* Must be a power of 2. Lower numbers mean more tolerance. */
 #define DISTRIBUTION_BUCKET_COUNT 16
@@ -29,7 +29,7 @@
 /* Fail if a bucket's contents vary from expected by more than this ratio. Higher ratio means more tolerance.
  * For example, if putting 1000 numbers into 10 buckets, we expect 100 in each bucket.
  * If ratio is 0.25 than accept 75 -> 125 numbers per bucket. */
-#define DISTRIBUTION_ACCEPTED_DEVIATION_RATIO 0.25
+#define DISTRIBUTION_ACCEPTED_DEVIATION_RATIO 0.05
 
 /* For testing that random number generator has a uniform distribution.
  * They're RANDOM numbers, so to avoid RANDOM failures use lots of inputs and be tolerate some deviance */
