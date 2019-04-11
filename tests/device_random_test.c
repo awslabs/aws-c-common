@@ -18,90 +18,125 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-static int s_device_rand_u64_fn(struct aws_allocator *allocator, void *ctx) {
+#include <math.h>
+
+/* Number of random numbers to generate and put in buckets. Higher numbers mean more tolerance */
+#define DISTRIBUTION_PUT_COUNT 100000
+
+/* Must be a power of 2. Lower numbers mean more tolerance. */
+#define DISTRIBUTION_BUCKET_COUNT 16
+
+/* Fail if a bucket's contents vary from expected by more than this ratio. Higher ratio means more tolerance.
+ * For example, if putting 1000 numbers into 10 buckets, we expect 100 in each bucket.
+ * If ratio is 0.25 than accept 75 -> 125 numbers per bucket. */
+#define DISTRIBUTION_ACCEPTED_DEVIATION_RATIO 0.25
+
+/* For testing that random number generator has a uniform distribution.
+ * They're RANDOM numbers, so to avoid RANDOM failures use lots of inputs and be tolerate some deviance */
+struct distribution_tester {
+    uint64_t max_value;
+    uint64_t buckets[DISTRIBUTION_BUCKET_COUNT];
+    uint64_t num_puts;
+};
+
+static int s_distribution_tester_put(struct distribution_tester *tester, uint64_t rand_num) {
+    ASSERT_TRUE(rand_num <= tester->max_value);
+    uint64_t bucket_size = (tester->max_value / DISTRIBUTION_BUCKET_COUNT) + 1;
+    uint64_t bucket_idx = rand_num / bucket_size;
+    ASSERT_TRUE(bucket_idx < DISTRIBUTION_BUCKET_COUNT);
+    tester->buckets[bucket_idx]++;
+    tester->num_puts++;
+    return AWS_OP_SUCCESS;
+}
+
+static int s_distribution_tester_check_results(const struct distribution_tester *tester) {
+    ASSERT_TRUE(tester->num_puts == DISTRIBUTION_PUT_COUNT);
+
+    double expected_numbers_per_bucket = (double)DISTRIBUTION_PUT_COUNT / DISTRIBUTION_BUCKET_COUNT;
+
+    uint64_t max_acceptable_numbers_per_bucket =
+        (uint64_t)ceil(expected_numbers_per_bucket * (1.0 + DISTRIBUTION_ACCEPTED_DEVIATION_RATIO));
+
+    uint64_t min_acceptable_numbers_per_bucket =
+        (uint64_t)floor(expected_numbers_per_bucket * (1.0 - DISTRIBUTION_ACCEPTED_DEVIATION_RATIO));
+
+    for (uint64_t i = 0; i < DISTRIBUTION_BUCKET_COUNT; ++i) {
+        uint64_t numbers_in_bucket = tester->buckets[i];
+        ASSERT_TRUE(numbers_in_bucket <= max_acceptable_numbers_per_bucket);
+        ASSERT_TRUE(numbers_in_bucket >= min_acceptable_numbers_per_bucket);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_device_rand_u64_distribution_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
+    struct distribution_tester tester = {.max_value = UINT64_MAX};
 
-    uint64_t last_value = 0;
-
-    for (size_t i = 0; i < 100000; ++i) {
+    for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
         uint64_t next_value = 0;
         ASSERT_SUCCESS(aws_device_random_u64(&next_value));
-        ASSERT_FALSE(next_value == last_value);
-        ASSERT_TRUE(next_value != 0);
-        last_value = next_value;
+        ASSERT_SUCCESS(s_distribution_tester_put(&tester, next_value));
     }
 
+    ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(device_rand_u64, s_device_rand_u64_fn)
+AWS_TEST_CASE(device_rand_u64_distribution, s_device_rand_u64_distribution_fn)
 
-static int s_device_rand_u32_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_device_rand_u32_distribution_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
+    struct distribution_tester tester = {.max_value = UINT32_MAX};
 
-    uint32_t last_value = 0;
-
-    for (size_t i = 0; i < 100000; ++i) {
+    for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
         uint32_t next_value = 0;
         ASSERT_SUCCESS(aws_device_random_u32(&next_value));
-
-        ASSERT_FALSE(next_value == last_value);
-        ASSERT_TRUE(next_value != 0);
-
-        last_value = next_value;
+        ASSERT_SUCCESS(s_distribution_tester_put(&tester, next_value));
     }
 
+    ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(device_rand_u32, s_device_rand_u32_fn)
+AWS_TEST_CASE(device_rand_u32_distribution, s_device_rand_u32_distribution_fn)
 
-static int s_device_rand_u16_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_device_rand_u16_distribution_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
+    struct distribution_tester tester = {.max_value = UINT16_MAX};
 
-    uint64_t last_value = 0;
-
-    for (size_t i = 0; i < 100; ++i) {
+    for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
         uint16_t next_value = 0;
         ASSERT_SUCCESS(aws_device_random_u16(&next_value));
-
-        ASSERT_FALSE(next_value == last_value);
-        ASSERT_TRUE(next_value != 0);
-
-        last_value = next_value;
+        ASSERT_SUCCESS(s_distribution_tester_put(&tester, next_value));
     }
 
+    ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(device_rand_u16, s_device_rand_u16_fn)
+AWS_TEST_CASE(device_rand_u16_distribution, s_device_rand_u16_distribution_fn)
 
-static int s_device_rand_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_device_rand_buffer_distribution_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    /* why 23? 2 uint64, 1 uint32, 1 uint16, 1 byte left, make sure the leftovers are processed and every branch hit*/
-    uint8_t last_value[23] = {0};
+    uint8_t array[DISTRIBUTION_PUT_COUNT];
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));
+    ASSERT_SUCCESS(aws_device_random_buffer(&buf));
 
-    for (size_t i = 0; i < 100000; ++i) {
-        uint8_t next_value[23] = {0};
-        struct aws_byte_buf buf = aws_byte_buf_from_array(next_value, sizeof(next_value));
-        buf.len = 0;
+    /* Test each byte in the buffer */
+    struct distribution_tester tester = {.max_value = UINT8_MAX};
 
-        ASSERT_SUCCESS(aws_device_random_buffer(&buf));
-        ASSERT_UINT_EQUALS(buf.capacity, buf.len);
-        ASSERT_FALSE(0 == memcmp(last_value, next_value, sizeof(next_value)));
-
-        uint8_t zerod_buf[23] = {0};
-        ASSERT_FALSE(0 == memcmp(zerod_buf, next_value, sizeof(next_value)));
-
-        memcpy(last_value, next_value, sizeof(next_value));
+    for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
+        ASSERT_SUCCESS(s_distribution_tester_put(&tester, array[i]));
     }
 
+    ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(device_rand_buffer, s_device_rand_buffer_fn)
+AWS_TEST_CASE(device_rand_buffer_distribution, s_device_rand_buffer_distribution_fn)
