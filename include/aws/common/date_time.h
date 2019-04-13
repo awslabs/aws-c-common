@@ -19,7 +19,7 @@
 #include <time.h>
 
 #define AWS_DATE_TIME_STR_MAX_LEN 100
-#define AWS_DATE_TIME_STR_MAX_SIGV4_LEN 20
+#define AWS_DATE_TIME_STR_MAX_BASIC_LEN 20
 
 struct aws_byte_buf;
 struct aws_byte_cursor;
@@ -27,6 +27,7 @@ struct aws_byte_cursor;
 enum aws_date_format {
     AWS_DATE_FORMAT_RFC822,
     AWS_DATE_FORMAT_ISO_8601,
+    AWS_DATE_FORMAT_ISO_8601_BASIC,
     AWS_DATE_FORMAT_AUTO_DETECT,
 };
 
@@ -143,24 +144,6 @@ AWS_COMMON_API int aws_date_time_to_local_time_short_str(
 AWS_COMMON_API int aws_date_time_to_utc_time_short_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
-    struct aws_byte_buf *output_buf);
-
-/**
- * Copies the current time as a formatted short date string in utc time using the short format required in the AWS sigv4
- * signing key generation process (YYYYMMDD). If the buffer is too small, it will
- * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_SIGV4_LEN bytes.
- */
-AWS_COMMON_API int aws_date_time_to_sigv4_short_format_str(
-    const struct aws_date_time *dt,
-    struct aws_byte_buf *output_buf);
-
-/**
- * Copies the current time as a formatted short date string in utc time using the long format required in the AWS sigv4
- * signing key generation process (YYYYMMDD'T'HHMMSS'Z'). If the buffer is too small, it will
- * return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_SIGV4_LEN bytes.
- */
-AWS_COMMON_API int aws_date_time_to_sigv4_long_format_str(
-    const struct aws_date_time *dt,
     struct aws_byte_buf *output_buf);
 
 AWS_COMMON_API double aws_date_time_as_epoch_secs(const struct aws_date_time *dt);
