@@ -21,7 +21,6 @@ DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
 DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
-
 DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 
