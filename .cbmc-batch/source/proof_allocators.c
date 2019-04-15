@@ -48,7 +48,7 @@ static void *s_can_fail_realloc_allocator(struct aws_allocator *allocator, void 
 static struct aws_allocator s_can_fail_allocator_static = {
     .mem_acquire = s_can_fail_malloc_allocator,
     .mem_release = s_can_fail_free_allocator,
-    .mem_realloc = s_can_fail_realloc_allocator,
+    .mem_realloc = nondet_bool() ? NULL : s_can_fail_realloc_allocator,
 };
 
 struct aws_allocator *can_fail_allocator() {
