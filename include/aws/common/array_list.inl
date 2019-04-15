@@ -52,6 +52,7 @@ int aws_array_list_init_dynamic(
     }
     AWS_FATAL_ASSERT(list->current_size == 0 || list->data);
 
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
 }
 
@@ -73,6 +74,7 @@ void aws_array_list_init_static(
     list->item_size = item_size;
     list->length = 0;
     list->data = raw_array;
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
@@ -89,6 +91,7 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (list->alloc && list->data) {
         aws_mem_release(list->alloc, list->data);
     }
@@ -98,23 +101,30 @@ void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
     list->length = 0;
     list->data = NULL;
     list->alloc = NULL;
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
 int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     int err_code = aws_array_list_set_at(list, val, aws_array_list_length(list));
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
     }
 
+    if (err_code == AWS_OP_SUCCESS) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
+    }
     return err_code;
 }
 
 AWS_STATIC_IMPL
 int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *val) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
         memcpy(val, list->data, list->item_size);
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
 
@@ -123,8 +133,10 @@ int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *v
 
 AWS_STATIC_IMPL
 int aws_array_list_pop_front(struct aws_array_list *AWS_RESTRICT list) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
         aws_array_list_pop_front_n(list, 1);
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
 
@@ -133,8 +145,10 @@ int aws_array_list_pop_front(struct aws_array_list *AWS_RESTRICT list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t n) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (n >= aws_array_list_length(list)) {
         aws_array_list_clear(list);
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return;
     }
 
@@ -148,6 +162,7 @@ void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t
         memset((uint8_t *)list->data + remaining_bytes, AWS_ARRAY_LIST_DEBUG_FILL, popping_bytes);
 #endif
     }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
@@ -166,6 +181,7 @@ int aws_array_list_back(const struct aws_array_list *AWS_RESTRICT list, void *va
 
 AWS_STATIC_IMPL
 int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
 
         AWS_FATAL_ASSERT(list->data);
@@ -174,6 +190,7 @@ int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
 
         memset((void *)((uint8_t *)list->data + last_item_offset), 0, list->item_size);
         list->length--;
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
 
@@ -182,12 +199,14 @@ int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (list->data) {
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, list->current_size);
 #endif
         list->length = 0;
     }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
@@ -198,16 +217,22 @@ void aws_array_list_swap_contents(
     AWS_FATAL_ASSERT(list_a->alloc == list_b->alloc);
     AWS_FATAL_ASSERT(list_a->item_size == list_b->item_size);
     AWS_FATAL_ASSERT(list_a != list_b);
+    AWS_PRECONDITION(aws_array_list_is_valid(list_a));
+    AWS_PRECONDITION(aws_array_list_is_valid(list_b));
 
     struct aws_array_list tmp = *list_a;
     *list_a = *list_b;
     *list_b = tmp;
+    AWS_POSTCONDITION(aws_array_list_is_valid(list_a));
+    AWS_POSTCONDITION(aws_array_list_is_valid(list_b));
 }
 
 AWS_STATIC_IMPL
 size_t aws_array_list_capacity(const struct aws_array_list *AWS_RESTRICT list) {
     AWS_FATAL_ASSERT(list->item_size);
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     return list->current_size / list->item_size;
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
@@ -217,14 +242,17 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * list.
      */
     AWS_FATAL_ASSERT(!list->length || list->data);
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
 
     return list->length;
 }
 
 AWS_STATIC_IMPL
 int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *val, size_t index) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > index) {
         memcpy(val, (void *)((uint8_t *)list->data + (list->item_size * index)), list->item_size);
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
     return aws_raise_error(AWS_ERROR_INVALID_INDEX);
@@ -232,8 +260,10 @@ int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *
 
 AWS_STATIC_IMPL
 int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, void **val, size_t index) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > index) {
         *val = (void *)((uint8_t *)list->data + (list->item_size * index));
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
     return aws_raise_error(AWS_ERROR_INVALID_INDEX);
@@ -241,6 +271,7 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, vo
 
 AWS_STATIC_IMPL
 int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t index_inc;
     if (aws_add_size_checked(index, 1, &index_inc)) {
         return AWS_OP_ERR;
@@ -249,11 +280,13 @@ int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list,
     if (aws_mul_size_checked(index_inc, list->item_size, necessary_size)) {
         return AWS_OP_ERR;
     }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
 }
 
 AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t necessary_size;
     if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
         return AWS_OP_ERR;
@@ -279,12 +312,15 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
         }
     }
 
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
 }
 
 AWS_STATIC_IMPL
 void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (list->data) {
         qsort(list->data, aws_array_list_length(list), list->item_size, compare_fn);
     }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
