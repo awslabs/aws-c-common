@@ -18,12 +18,12 @@
 
 void aws_byte_buf_append_dynamic_harness() {
     struct aws_byte_buf to;
-    __CPROVER_assume(aws_byte_buf_is_valid(&to));
     ensure_byte_buf_has_allocated_buffer_member(&to);
+    __CPROVER_assume(aws_byte_buf_is_valid(&to));
 
     struct aws_byte_cursor from;
-    __CPROVER_assume(aws_byte_cursor_is_valid(&from));
     ensure_byte_cursor_has_allocated_buffer_member(&from);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&from));
 
     aws_byte_buf_append_dynamic(&to, &from);
 

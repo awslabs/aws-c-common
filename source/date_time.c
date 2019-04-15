@@ -22,7 +22,6 @@
 #include <aws/common/time.h>
 
 #include <ctype.h>
-#include <math.h>
 
 static const char *RFC822_DATE_FORMAT_STR_MINUS_Z = "%a, %d %b %Y %H:%M:%S GMT";
 static const char *RFC822_DATE_FORMAT_STR_WITH_Z = "%a, %d %b %Y %H:%M:%S %Z";

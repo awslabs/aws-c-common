@@ -12,19 +12,22 @@
 # limitations under the License.
 
 ###########
-CBMC_UNWINDSET =
+# Max needs to be big enough to have multiple loop unrollings to have full coverage
+# 160 is well larger than that, and still completes quite fast: ~ 40s
+MAX = 160
+DEFINES += -DMAX=$(MAX)
+
+UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX) + 1)))
+UNWINDSET += memset_override_0_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1)))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_0.c
 
-ENTRY = aws_byte_buf_reserve_harness
+ENTRY = memset_override_0_harness
+
 ###########
 
 include ../Makefile.common

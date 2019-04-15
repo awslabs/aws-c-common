@@ -19,7 +19,20 @@
 #include <aws/common/common.h>
 #include <aws/common/config.h>
 
+#include <limits.h>
 #include <stdlib.h>
+
+/* The number of bits in a size_t variable */
+#if SIZE_MAX == UINT32_MAX
+#    define SIZE_BITS 32
+#elif SIZE_MAX == UINT64_MAX
+#    define SIZE_BITS 64
+#else
+#    error "Target not supported"
+#endif
+
+/* The largest power of two that can be stored in a size_t */
+#define SIZE_MAX_POWER_OF_TWO (((size_t)1) << (SIZE_BITS - 1))
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,9 +117,9 @@ AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
  * Multiplies a * b. If the result overflows, returns SIZE_MAX.
  */
 AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     return (size_t)aws_mul_u32_saturating(a, b);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     return (size_t)aws_mul_u64_saturating(a, b);
 #else
 #    error "Target not supported"
@@ -118,9 +131,9 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
  * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     return aws_mul_u32_checked(a, b, (uint32_t *)r);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     return aws_mul_u64_checked(a, b, (uint64_t *)r);
 #else
 #    error "Target not supported"
@@ -131,9 +144,9 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
  * Adds a + b.  If the result overflows returns SIZE_MAX.
  */
 AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     return (size_t)aws_add_u32_saturating(a, b);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     return (size_t)aws_add_u64_saturating(a, b);
 #else
 #    error "Target not supported"
@@ -146,13 +159,48 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
  */
 
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
-#if SIZE_MAX == UINT32_MAX
+#if SIZE_BITS == 32
     return aws_add_u32_checked(a, b, (uint32_t *)r);
-#elif SIZE_MAX == UINT64_MAX
+#elif SIZE_BITS == 64
     return aws_add_u64_checked(a, b, (uint64_t *)r);
 #else
 #    error "Target not supported"
 #endif
+}
+
+/**
+ * Function to check if x is power of 2
+ */
+AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x) {
+    /* First x in the below expression is for the case when x is 0 */
+    return x && (!(x & (x - 1)));
+}
+
+/**
+ * Function to find the smallest result that is power of 2 >= n. Returns AWS_OP_ERR if this cannot
+ * be done without overflow
+ */
+AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
+    if (n == 0) {
+        *result = 1;
+        return AWS_OP_SUCCESS;
+    }
+    if (n > SIZE_MAX_POWER_OF_TWO) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+#if SIZE_BITS == 64
+    n |= n >> 32;
+#endif
+    n++;
+    *result = n;
+    return AWS_OP_SUCCESS;
 }
 
 #if _MSC_VER

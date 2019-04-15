@@ -467,7 +467,7 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
 
     fprintf(stderr, "--test\n");
     uint8_t test_data[32];
-    for (int i = 0; i < sizeof(test_data); i++) {
+    for (size_t i = 0; i < sizeof(test_data); i++) {
         /* 0000 0100 0010 0000 1100 0100 */
 #if 0
         test_data[i] = 0x;
@@ -528,7 +528,7 @@ static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator,
 
     uint8_t test_data[255] = {0};
 
-    for (uint8_t i = 0; i < sizeof(test_data); ++i) {
+    for (uint8_t i = 0; i < (uint8_t)sizeof(test_data); ++i) {
         test_data[i] = i;
     }
 

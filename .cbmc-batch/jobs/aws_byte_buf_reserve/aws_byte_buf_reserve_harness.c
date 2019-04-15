@@ -18,8 +18,8 @@
 
 void aws_byte_buf_reserve_harness() {
     struct aws_byte_buf buf;
-    __CPROVER_assume(aws_byte_buf_is_valid(&buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
+    __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
     struct aws_byte_buf old = buf;
     size_t requested_capacity;
