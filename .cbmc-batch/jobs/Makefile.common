@@ -62,24 +62,46 @@ ifneq ($(UNWINDSET),)
 CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
 endif
 
+################################################################
+# Set defines that will be used by the projects
 CBMC_OBJECT_BITS ?= 8
 CBMCFLAGS +=  --object-bits $(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
+DEFINES += -DCBMC=1
 
+################################################################
+# We always override allocator functions with our own allocator
+# Removing the function from the goto program helps CBMC's
+# function pointer analysis.
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
 ################################################################
 
 # Here, whenever there is a change in any of ANSI-C source
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)1.goto: $(ENTRY).c $(DEPENDENCIES)
+$(ENTRY)0.goto: $(ENTRY).c $(DEPENDENCIES)
 	$(GOTO_CC) $< --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
 	        2>&1 | tee $(ENTRY)1.log
 
+$(ENTRY)1.goto: $(ENTRY)0.goto
+ifeq ($(REMOVE_FNCTION_BODY), "")
+	cp $< $@
+	echo "Not removing function bodies" | tee $(ENTRY)1.log
+else
+	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
+		2>&1 | tee $(ENTRY)2.log
+endif
+
+
 $(ENTRY)2.goto: $(ENTRY)1.goto
 ifeq ($(ABSTRACTIONS), "")
-	$(GOTO_INSTRUMENT) $< $@ \
-		2>&1 | tee $(ENTRY)2.log
+	cp $< $@
+	echo "Not implementing abstractions" | tee $(ENTRY)2.log
 else
 	$(GOTO_INSTRUMENT) $(ABSTRACTIONS) --add-library $< $@ \
 		2>&1 | tee $(ENTRY)2.log
@@ -92,6 +114,7 @@ ifeq ($(UNWIND_GOTO), 1)
 		2>&1 | tee $(ENTRY)3.log
 else
 	cp $< $@
+	echo "Not unwinding goto program" | tee $(ENTRY)3.log
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
@@ -101,6 +124,7 @@ ifeq ($(SIMPLIFY), 1)
 		2>&1 | tee $(ENTRY)4.log
 else
 	cp $< $@
+	echo "Not generating-function-bodies in goto program" | tee $(ENTRY)4.log
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
@@ -110,6 +134,7 @@ ifeq ($(SIMPLIFY), 1)
 		2>&1 | tee $(ENTRY)5.log
 else
 	cp $< $@
+	echo "Not simplfying goto program" | tee $(ENTRY)5.log
 endif
 
 $(ENTRY)6.goto: $(ENTRY)5.goto

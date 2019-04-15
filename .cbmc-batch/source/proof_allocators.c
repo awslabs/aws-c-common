@@ -19,20 +19,40 @@
 #include <stdlib.h>
 
 /**
- * Use the same functions as the standard default allocator, but nondeterministically
- * have malloc return null.  This is needed because the CBMC model of malloc cannot
- * fail, so we cannot test the null case otherwise.
+ * Use the can_fail_malloc() defined above to specalize allocation for finding bugs
+ * using CBMC
  */
-static void *can_fail_malloc_allocator(struct aws_allocator *allocator, size_t size) {
+static void *s_can_fail_malloc_allocator(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
     return can_fail_malloc(size);
 }
 
-void *can_fail_malloc(size_t size) {
-    if (size > MAX_MALLOC) {
-        return NULL;
-    }
-    return (nondet_bool()) ? NULL : malloc(size);
+/**
+ * Since we always allocate with "malloc()", just free with "free()"
+ */
+static void s_can_fail_free_allocator(struct aws_allocator *allocator, void *ptr) {
+    (void)allocator;
+    free(ptr);
+}
+
+/**
+ * Use the can_fail_realloc() defined above to specalize allocation for finding bugs
+ * using CBMC
+ */
+static void *s_can_fail_realloc_allocator(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+    (void)oldsize;
+    return can_fail_realloc(ptr, newsize);
+}
+
+static struct aws_allocator s_can_fail_allocator_static = {
+    .mem_acquire = s_can_fail_malloc_allocator,
+    .mem_release = s_can_fail_free_allocator,
+    .mem_realloc = nondet_bool() ? NULL : s_can_fail_realloc_allocator,
+};
+
+struct aws_allocator *can_fail_allocator() {
+    return &s_can_fail_allocator_static;
 }
 
 void *bounded_malloc(size_t size) {
@@ -40,20 +60,29 @@ void *bounded_malloc(size_t size) {
     return malloc(size);
 }
 
-static void can_fail_free(struct aws_allocator *allocator, void *ptr) {
-    (void)allocator;
-    free(ptr);
+void *can_fail_malloc(size_t size) {
+    return nondet_bool() ? NULL : bounded_malloc(size);
 }
 
-static void *can_fail_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
-    (void)allocator;
-    (void)oldsize;
-    if (newsize > MAX_MALLOC)
+/**
+ * https://en.cppreference.com/w/c/memory/realloc
+ * If there is not enough memory, the old memory block is not freed and null pointer is returned.
+ *
+ * If ptr is NULL, the behavior is the same as calling malloc(new_size).
+ *
+ * If new_size is zero, the behavior is implementation defined (null pointer may be returned (in which case the old
+ * memory block may or may not be freed), or some non-null pointer may be returned that may not be used to access
+ * storage).
+ */
+void *can_fail_realloc(void *ptr, size_t newsize) {
+    if (newsize > MAX_MALLOC) {
         return NULL;
-    int nondet;
-    return (nondet) ? NULL : realloc(ptr, newsize);
-}
-
-struct aws_allocator *can_fail_allocator() {
-    return &can_fail_allocator_static;
+    }
+    if (newsize == 0) {
+        if (nondet_bool()) {
+            free(ptr);
+        }
+        return nondet_voidp();
+    }
+    return nondet_bool() ? NULL : realloc(ptr, newsize);
 }
