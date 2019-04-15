@@ -39,14 +39,14 @@ struct aws_allocator *can_fail_allocator();
 
 /**
  * CBMC model of malloc never returns NULL, which can mask bugs in C programs. Thus function:
- * 1) Deterministically returns NULL more memory is requested than CBMC can represent
+ * 1) Deterministically returns NULL if more memory is requested than CBMC can represent
  * 2) Nondeterminstically returns either valid memory or NULL otherwise
  */
 void *can_fail_malloc(size_t size);
 
 /**
  * CBMC model of realloc never returns NULL, which can mask bugs in C programs. Thus function:
- * 1) Deterministically returns NULL more memory is requested than CBMC can represent
+ * 1) Deterministically returns NULL if more memory is requested than CBMC can represent
  * 2) Does the full range of valid behaviours if (newsize == 0)
  * 3) Nondeterminstically returns either valid memory or NULL otherwise
  */

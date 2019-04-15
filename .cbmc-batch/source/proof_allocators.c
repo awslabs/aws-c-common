@@ -61,10 +61,7 @@ void *bounded_malloc(size_t size) {
 }
 
 void *can_fail_malloc(size_t size) {
-    if (size > MAX_MALLOC) {
-        return NULL;
-    }
-    return nondet_bool() ? NULL : malloc(size);
+    return nondet_bool() ? NULL : bounded_malloc(size);
 }
 
 /**
