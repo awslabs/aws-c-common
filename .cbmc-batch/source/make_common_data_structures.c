@@ -16,7 +16,6 @@
 #include <aws/common/common.h>
 #include <limits.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,6 +39,22 @@ bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size) {
 
 void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor) {
     cursor->ptr = bounded_malloc(cursor->len);
+}
+
+bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_item_allocation, size_t max_item_size) {
+    bool item_size_is_bounded = list->item_size <= max_item_size;
+    bool length_is_bounded = list->length <= max_initial_item_allocation;
+    return item_size_is_bounded && length_is_bounded;
+}
+
+void ensure_array_list_has_allocated_data_member(struct aws_array_list *list) {
+    if (list->current_size == 0) {
+        __CPROVER_assume(list->data == NULL);
+        list->alloc = can_fail_allocator();
+    } else {
+        list->data = bounded_malloc(list->current_size);
+        list->alloc = nondet_bool() ? NULL : can_fail_allocator();
+    }
 }
 
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {
