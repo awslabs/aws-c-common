@@ -62,9 +62,21 @@ ifneq ($(UNWINDSET),)
 CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
 endif
 
+################################################################
+# Set defines that will be used by the projects
 CBMC_OBJECT_BITS ?= 8
 CBMCFLAGS +=  --object-bits $(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
+DEFINES += -DCBMC=1
+
+################################################################
+# We always override allocator functions with our own allocator
+# Removing the function from the goto program helps CBMC's
+# function pointer analysis.
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
 
 ################################################################
 
@@ -72,9 +84,19 @@ DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)1.goto: $(ENTRY).c $(DEPENDENCIES)
+$(ENTRY)0.goto: $(ENTRY).c $(DEPENDENCIES)
 	$(GOTO_CC) $< --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
 	        2>&1 | tee $(ENTRY)1.log
+
+$(ENTRY)1.goto: $(ENTRY)0.goto
+ifeq ($(REMOVE_FNCTION_BODY), "")
+	$(GOTO_INSTRUMENT) $< $@ \
+		2>&1 | tee $(ENTRY)2.log
+else
+	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
+		2>&1 | tee $(ENTRY)2.log
+endif
+
 
 $(ENTRY)2.goto: $(ENTRY)1.goto
 ifeq ($(ABSTRACTIONS), "")
