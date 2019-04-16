@@ -64,16 +64,16 @@ bool hash_table_state_is_valid(struct hash_table_state *map) {
     if (!map) {
         return false;
     }
-    bool hash_fn_nonnull = map->hash_fn != NULL;
-    bool equals_fn_nonnull = map->equals_fn != NULL;
+    bool hash_fn_nonnull = (map->hash_fn != NULL);
+    bool equals_fn_nonnull = (map->equals_fn != NULL);
     /*destroy_key_fn and destroy_value_fn are both allowed to be NULL*/
-    bool alloc_nonnull = map->alloc != NULL;
-    bool size_at_least_two = map->size >= 2;
+    bool alloc_nonnull = (map->alloc != NULL);
+    bool size_at_least_two = (map->size >= 2);
     bool size_is_power_of_two = aws_is_power_of_two(map->size);
-    bool entry_count = map->entry_count < map->max_load;
-    bool max_load = map->max_load < map->size;
-    bool mask_is_correct = map->mask == (map->size - 1);
-    bool max_load_factor_bounded = map->max_load_factor < 1.0;
+    bool entry_count = (map->entry_count < map->max_load);
+    bool max_load = (map->max_load < map->size);
+    bool mask_is_correct = (map->mask == (map->size - 1));
+    bool max_load_factor_bounded = (map->max_load_factor < 1.0);
     bool slots_allocated = AWS_MEM_IS_WRITABLE(&map->slots[0], sizeof(map->slots[0]) * map->size);
 
     return hash_fn_nonnull && equals_fn_nonnull && alloc_nonnull && size_at_least_two && size_is_power_of_two &&
@@ -90,6 +90,12 @@ bool aws_hash_table_is_valid(struct aws_hash_table *map) {
     return map && map->p_impl && hash_table_state_is_valid(map->p_impl);
 }
 
+/**
+ * Determine the total number of bytes needed for a hash-table with
+ * "size" slots. If the result would overflow a size_t, return
+ * AWS_OP_ERR; otherwise, return AWS_OP_SUCCESS with the result in
+ * "required_bytes".
+ */
 AWS_STATIC_IMPL
 int hash_table_state_required_bytes(size_t size, size_t *required_bytes) {
 

@@ -151,6 +151,7 @@ static struct hash_table_state *s_alloc_state(const struct hash_table_state *tem
     }
 
     *state = *template;
+    /* An empty slot has hashcode 0. So this marks all slots as empty */
     memset(&state->slots[0], 0, state->size * sizeof(state->slots[0]));
 
     return state;
@@ -170,7 +171,7 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
         return AWS_OP_ERR;
     }
 
-    /* Don't update the template until we've calculated everything successfully */
+    /* Update the template once we've calculated everything successfully */
     template->size = size;
     template->max_load = (size_t)(template->max_load_factor * (double)template->size);
     /* Ensure that there is always at least one empty slot in the hash table */
