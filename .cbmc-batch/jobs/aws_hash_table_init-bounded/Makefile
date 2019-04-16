@@ -12,18 +12,24 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-#CBMC_UNWINDSET =
+# Sufficient for coverage for bounded inputs
+# Additional coverage is given using the -unbounded version of this proof
+# Runtime aprox 5 min at this size.
+MAX_TABLE_SIZE ?= 4
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
 
-CBMCFLAGS +=
+#A hash entry is 24 bytes, which is 3 iters. So we need 3 * MAX_TABLE_SIZE + 1
+UNWINDSET += memset_override_0_impl.0:$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 1)))
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_0.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
+DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-ENTRY = aws_byte_buf_init_harness
+ENTRY = aws_hash_table_init_bounded_harness
 ###########
 
 include ../Makefile.common

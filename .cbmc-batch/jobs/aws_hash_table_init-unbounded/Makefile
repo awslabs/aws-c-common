@@ -11,19 +11,15 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-###########
-#NOTE: If we don't use the unwindset, leave it empty
-#CBMC_UNWINDSET =
-
-CBMCFLAGS +=
-
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
+DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-ENTRY = aws_byte_buf_init_harness
+ENTRY = aws_hash_table_init_unbounded_harness
 ###########
 
 include ../Makefile.common

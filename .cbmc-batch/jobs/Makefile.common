@@ -78,6 +78,7 @@ REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
 REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
 REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
+REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
 ################################################################
 
 # Here, whenever there is a change in any of ANSI-C source
