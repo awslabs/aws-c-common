@@ -21,6 +21,7 @@
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
+#include <proof_helpers/utils.h>
 
 #include <stdlib.h>
 
@@ -61,6 +62,16 @@ bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size);
  * Ensures aws_byte_cursor has a proper allocated buffer member
  */
 void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor);
+
+/*
+ * Checks whether aws_array_list is bounded by max_initial_item_allocation and max_item_size
+ */
+bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_item_allocation, size_t max_item_size);
+
+/**
+ * Ensures the data member of an aws_array_list structure is correctly allocated
+ */
+void ensure_array_list_has_allocated_data_member(struct aws_array_list *list);
 
 /**
  * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size

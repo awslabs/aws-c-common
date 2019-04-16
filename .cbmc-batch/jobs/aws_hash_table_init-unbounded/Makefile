@@ -11,23 +11,15 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-###########
-include ../Makefile.aws_array_list
-
-# This bound allow us to reach full coverage rate
-UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
-
-CBMCFLAGS +=
-
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
+DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-ENTRY = aws_array_list_back_harness
+ENTRY = aws_hash_table_init_unbounded_harness
 ###########
 
 include ../Makefile.common

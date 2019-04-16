@@ -139,28 +139,20 @@ size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map) {
  * returned.
  */
 static struct hash_table_state *s_alloc_state(const struct hash_table_state *template) {
-    size_t elemsize;
-
-    /* We use size - 1 because the first slot is inlined into the
-     * hash_table_state structure. */
-    if (aws_mul_size_checked(template->size - 1, sizeof(template->slots[0]), &elemsize)) {
+    size_t required_bytes;
+    if (hash_table_state_required_bytes(template->size, &required_bytes)) {
         return NULL;
     }
 
-    size_t size = elemsize + sizeof(*template);
-
-    if (size < elemsize) {
-        return NULL;
-    }
-
-    struct hash_table_state *state = aws_mem_acquire(template->alloc, size);
+    struct hash_table_state *state = aws_mem_acquire(template->alloc, required_bytes);
 
     if (state == NULL) {
         return state;
     }
 
-    memcpy(state, template, sizeof(*template));
-    memset(&state->slots[0], 0, size - sizeof(*state) + sizeof(state->slots[0]));
+    *state = *template;
+    /* An empty slot has hashcode 0. So this marks all slots as empty */
+    memset(&state->slots[0], 0, state->size * sizeof(state->slots[0]));
 
     return state;
 }
@@ -173,37 +165,22 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
         min_size = 2;
     }
 
-    size_t mask = ~(size_t)0, size = 1;
-    while (size < min_size) {
-        size = size << 1;
-        mask = mask << 1;
-
-        if (size == 0) {
-            /* Overflow */
-            return aws_raise_error(AWS_ERROR_OOM);
-        }
-    }
-    mask = ~mask;
-
-    /* Cross-check - make sure we didn't just overflow somehow. */
-    if (size < expected_elements) {
-        return aws_raise_error(AWS_ERROR_OOM);
+    /* size is always a power of 2 */
+    size_t size;
+    if (aws_round_up_to_power_of_two(min_size, &size)) {
+        return AWS_OP_ERR;
     }
 
+    /* Update the template once we've calculated everything successfully */
     template->size = size;
     template->max_load = (size_t)(template->max_load_factor * (double)template->size);
+    /* Ensure that there is always at least one empty slot in the hash table */
     if (template->max_load >= size) {
         template->max_load = size - 1;
     }
 
-    /* Make sure we don't overflow when computing memory requirements either */
-    size_t required_mem = aws_mul_size_saturating(template->size, sizeof(struct hash_table_entry));
-    if (required_mem == SIZE_MAX || (required_mem + sizeof(struct hash_table_state)) < required_mem) {
-        return aws_raise_error(AWS_ERROR_OOM);
-    }
-
-    template->size = size;
-    template->mask = mask;
+    /* Since size is a power of 2: (index & (size - 1)) == (index % size) */
+    template->mask = size - 1;
 
     return AWS_OP_SUCCESS;
 }
@@ -216,6 +193,7 @@ int aws_hash_table_init(
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_key_fn,
     aws_hash_callback_destroy_fn *destroy_value_fn) {
+    AWS_PRECONDITION(map && alloc && hash_fn && equals_fn);
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -227,13 +205,16 @@ int aws_hash_table_init(
     template.entry_count = 0;
     template.max_load_factor = 0.95; /* TODO - make configurable? */
 
-    s_update_template_size(&template, size);
+    if (s_update_template_size(&template, size)) {
+        return AWS_OP_ERR;
+    }
     map->p_impl = s_alloc_state(&template);
 
     if (!map->p_impl) {
         return AWS_OP_ERR;
     }
 
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
     return AWS_OP_SUCCESS;
 }
 

@@ -14,7 +14,10 @@
  */
 
 #pragma once
+
 #include <aws/common/common.h>
+#include <proof_helpers/nondet.h>
+#include <stdlib.h>
 
 /*
  * CBMC has an internal representation in which each object has an index and a (signed) offset

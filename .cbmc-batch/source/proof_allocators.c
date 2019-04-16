@@ -13,10 +13,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
-#include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
-#include <stdlib.h>
 
 /**
  * Use the can_fail_malloc() defined above to specalize allocation for finding bugs

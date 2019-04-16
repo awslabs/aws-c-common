@@ -16,7 +16,8 @@
 #include <proof_helpers/utils.h>
 
 void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len) {
-    if (len > 0) {
+    assert(!a == !b);
+    if (len > 0 && a != NULL && b != NULL) {
         size_t i;
         __CPROVER_assume(i < len);
         assert(a[i] == b[i]);
@@ -24,7 +25,7 @@ void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len) {
 }
 
 void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len) {
-    if (len > 0) {
+    if (len > 0 && a != NULL) {
         size_t i;
         __CPROVER_assume(i < len);
         assert(a[i] == c);
@@ -33,4 +34,31 @@ void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len) {
 
 void assert_all_zeroes(const uint8_t *a, size_t len) {
     assert_all_bytes_are(a, 0, len);
+}
+
+void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_from_buffer *b) {
+    if (buffer) {
+        assert(*(buffer + b->index) == b->byte);
+    }
+}
+
+void save_byte_from_array(uint8_t *array, size_t size, struct store_byte_from_buffer *storage) {
+    if (size > 0) {
+        storage->index = nondet_size_t();
+        __CPROVER_assume(storage->index < size);
+        storage->byte = array[storage->index];
+    }
+}
+
+void assert_array_list_equivalence(
+    struct aws_array_list *lhs,
+    struct aws_array_list *rhs,
+    struct store_byte_from_buffer *rhs_byte) {
+    assert(lhs->alloc == rhs->alloc);
+    assert(lhs->current_size == rhs->current_size);
+    assert(lhs->length == rhs->length);
+    assert(lhs->item_size == rhs->item_size);
+    if (lhs->current_size > 0) {
+        assert_byte_from_buffer_matches((uint8_t *)lhs->data, rhs_byte);
+    }
 }

@@ -12,11 +12,10 @@
 # limitations under the License.
 
 ###########
-# This size is suficcient to get full code coverage 
+# This size is suficcient to get full code coverage
 MAX_BUF_SIZE ?= 10
 DEFINES += -DMAX_BUF_SIZE=$(MAX_BUF_SIZE)
 
-#A hash entry is 24 bytes, which is 3 iters. So we need 3 * MAX_TABLE_SIZE + 1
 UNWINDSET += aws_byte_buf_append_with_lookup.0:$(shell echo $$(($(MAX_BUF_SIZE) + 1)))
 
 CBMCFLAGS +=
