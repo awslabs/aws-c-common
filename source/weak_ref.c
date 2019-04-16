@@ -27,7 +27,7 @@ struct aws_weak_ref {
     struct aws_atomic_var ref_count;
 };
 
-void s_aws_weak_ref_destroy(struct aws_weak_ref *ref) {
+static void s_aws_weak_ref_destroy(struct aws_weak_ref *ref) {
     if (ref == NULL) {
         return;
     }
