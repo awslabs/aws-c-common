@@ -288,6 +288,9 @@ add_test_case(long_argument_parse)
 add_test_case(unqualified_argument_parse)
 add_test_case(unknown_argument_parse)
 
+add_test_case(weak_ref_test_basic)
+add_test_case(weak_ref_test_counting)
+
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
 if (NOT MSVC)
