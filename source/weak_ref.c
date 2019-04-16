@@ -22,7 +22,7 @@
 
 struct aws_weak_ref {
     struct aws_allocator *allocator;
-    void *data;
+    void *object;
     struct aws_mutex lock;
     struct aws_atomic_var ref_count;
 };
@@ -38,9 +38,9 @@ void s_aws_weak_ref_destroy(struct aws_weak_ref *ref) {
     aws_mem_release(ref->allocator, ref);
 }
 
-struct aws_weak_ref *aws_weak_ref_new(struct aws_allocator *allocator, void *data) {
-    assert(data != NULL);
-    if (data == NULL) {
+struct aws_weak_ref *aws_weak_ref_new(struct aws_allocator *allocator, void *object) {
+    assert(object != NULL);
+    if (object == NULL) {
         return NULL;
     }
 
@@ -51,7 +51,7 @@ struct aws_weak_ref *aws_weak_ref_new(struct aws_allocator *allocator, void *dat
 
     AWS_ZERO_STRUCT(*weak_ref);
     weak_ref->allocator = allocator;
-    weak_ref->data = data;
+    weak_ref->object = object;
     if (aws_mutex_init(&weak_ref->lock)) {
         goto on_error;
     }
@@ -80,15 +80,15 @@ void aws_weak_ref_release(struct aws_weak_ref *ref) {
 
 void *aws_weak_ref_lock(struct aws_weak_ref *ref) {
     aws_mutex_lock(&ref->lock);
-    return ref->data;
+    return ref->object;
 }
 
 void aws_weak_ref_unlock(struct aws_weak_ref *ref) {
     aws_mutex_unlock(&ref->lock);
 }
 
-void aws_weak_ref_set(struct aws_weak_ref *ref, void *data) {
+void aws_weak_ref_set(struct aws_weak_ref *ref, void *object) {
     aws_mutex_lock(&ref->lock);
-    ref->data = data;
+    ref->object = object;
     aws_mutex_unlock(&ref->lock);
 }
