@@ -36,6 +36,7 @@ void aws_array_list_front_harness() {
     /* perform operation under verification */
     void *val = malloc(list.item_size);
     if (!aws_array_list_front(&list, val)) {
+        /* In the case aws_array_list_front is successful, we can ensure the list isn't empty */
         assert(list.data);
         assert(list.length);
     }

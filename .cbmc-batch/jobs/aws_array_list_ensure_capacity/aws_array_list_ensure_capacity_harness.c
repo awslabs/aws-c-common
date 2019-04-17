@@ -43,6 +43,7 @@ void aws_array_list_ensure_capacity_harness() {
         assert(list.length == old.length);
         assert(list.current_size >= old.current_size);
     } else {
+        /* In the case aws_array_list_ensure_capacity is not successful, the list must not change */
         assert_array_list_equivalence(&list, &old, &old_byte);
     }
 }

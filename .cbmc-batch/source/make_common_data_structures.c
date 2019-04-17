@@ -48,7 +48,7 @@ bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_i
 }
 
 void ensure_array_list_has_allocated_data_member(struct aws_array_list *list) {
-    if (list->current_size == 0) {
+    if (list->current_size == 0 && list->length == 0) {
         __CPROVER_assume(list->data == NULL);
         list->alloc = can_fail_allocator();
     } else {
