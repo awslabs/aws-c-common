@@ -16,30 +16,26 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-/* These values allow us to reach a higher coverage rate */
-#define MAX_ITEM_SIZE 2
-#define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
-
 /**
- * Runtime: 0m4.908s
+ * Runtime: 4s
  */
 void aws_array_list_clean_up_harness() {
-    struct aws_array_list *list;
-    /*
-     * Assumptions:
-     *     - a valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size;
-     *     - non-deterministic list->initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION;
-     *     - non-deterministic list->item_size <= MAX_ITEM_SIZE;
-     *     - non-deterministic list->length <= initial_item_allocation;
-     */
-    ASSUME_BOUNDED_ARRAY_LIST(list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE);
+    /* data structure */
+    struct aws_array_list list;
 
-    aws_array_list_clean_up(list);
+    /* assumptions */
+    __CPROVER_assume(aws_array_list_is_bounded(&list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
+    ensure_array_list_has_allocated_data_member(&list);
+    __CPROVER_assume(aws_array_list_is_valid(&list));
+
+    /* perform operation under verification */
+    aws_array_list_clean_up(&list);
 
     /* assertions */
-    assert(list->alloc == NULL);
-    assert(list->current_size == 0);
-    assert(list->length == 0);
-    assert(list->item_size == 0);
-    assert(list->data == NULL);
+    assert(aws_array_list_is_valid(&list));
+    assert(list.alloc == NULL);
+    assert(list.current_size == 0);
+    assert(list.length == 0);
+    assert(list.item_size == 0);
+    assert(list.data == NULL);
 }
