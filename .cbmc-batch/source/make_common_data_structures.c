@@ -157,3 +157,15 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
     __CPROVER_assume(len < max);
     return make_arbitrary_aws_string(allocator, len);
 }
+
+void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries) {
+    size_t num_entries;
+    __CPROVER_assume(num_entries < max_table_entries);
+    __CPROVER_assume(aws_is_power_of_two(num_entries));
+
+    size_t required_bytes;
+    __CPROVER_assume(!hash_table_state_required_bytes(num_entries, &required_bytes));
+    struct hash_table_state *impl = bounded_malloc(required_bytes);
+    impl->size = num_entries;
+    map->p_impl = impl;
+}

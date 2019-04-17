@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/utils.h>
 
 void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len) {
@@ -61,4 +62,17 @@ void assert_array_list_equivalence(
     if (lhs->current_size > 0) {
         assert_byte_from_buffer_matches((uint8_t *)lhs->data, rhs_byte);
     }
+}
+
+void save_byte_from_hash_table(struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
+    struct hash_table_state *state = map->p_impl;
+    size_t size_in_bytes;
+    __CPROVER_assume(hash_table_state_required_bytes(state->size, &size_in_bytes) == AWS_OP_SUCCESS);
+    save_byte_from_array((uint8_t *)state, size_in_bytes, storage);
+}
+
+void check_hash_table_unchanged(struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
+    struct hash_table_state *state = map->p_impl;
+    uint8_t *byte_array = (uint8_t *)state;
+    assert(byte_array[storage->index] == storage->byte);
 }

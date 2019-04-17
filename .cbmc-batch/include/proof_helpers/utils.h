@@ -45,3 +45,14 @@ void assert_array_list_equivalence(
     struct aws_array_list *lhs,
     struct aws_array_list *rhs,
     struct store_byte_from_buffer *rhs_byte);
+
+/**
+ * Nondeterministically selects a byte from a hash_table implementation and stores it into a
+ * store_array_list_byte structure.
+ */
+void save_byte_from_hash_table(struct aws_hash_table *map, struct store_byte_from_buffer *storage);
+
+/**
+ * Checks that a no bytes in the hash_table have changed from when "storage" was stored.
+ */
+void check_hash_table_unchanged(struct aws_hash_table *map, struct store_byte_from_buffer *storage);
