@@ -57,3 +57,8 @@ void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_by
  * Checks that a no bytes in the hash_table have changed from when "storage" was stored.
  */
 void check_hash_table_unchanged(const struct aws_hash_table *map, const struct store_byte_from_buffer *storage);
+
+/**
+ * Standard stub function to compare two items
+ */
+int s_compare(const void *a, const void *b);

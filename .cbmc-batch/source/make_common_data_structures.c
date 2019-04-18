@@ -57,6 +57,23 @@ void ensure_array_list_has_allocated_data_member(struct aws_array_list *list) {
     }
 }
 
+bool aws_priority_queue_is_bounded(
+    struct aws_priority_queue *queue,
+    size_t max_initial_item_allocation,
+    size_t max_item_size) {
+    bool container_is_bounded =
+        aws_array_list_is_bounded(&queue->container, max_initial_item_allocation, max_item_size);
+    bool backpointers_is_bounded =
+        aws_array_list_is_bounded(&queue->backpointers, max_initial_item_allocation, max_item_size);
+    return container_is_bounded && backpointers_is_bounded;
+}
+
+void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queue) {
+    ensure_array_list_has_allocated_data_member(&queue->container);
+    ensure_array_list_has_allocated_data_member(&queue->backpointers);
+    queue->pred = s_compare;
+}
+
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {
     struct aws_array_list *list;
     /* Assume list is allocated */
