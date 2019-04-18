@@ -12,8 +12,9 @@
 # limitations under the License.
 
 ###########
-CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += aws_mem_release:1
+include ../Makefile.aws_array_list
+
+UNWINDSET +=
 
 CBMCFLAGS +=
 

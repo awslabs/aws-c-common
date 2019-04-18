@@ -12,7 +12,9 @@
 # limitations under the License.
 
 ###########
-CBMC_UNWINDSET =
+include ../Makefile.aws_array_list
+
+UNWINDSET +=
 
 CBMCFLAGS +=
 
