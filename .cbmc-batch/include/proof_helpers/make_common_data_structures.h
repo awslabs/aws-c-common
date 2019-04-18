@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/priority_queue.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
@@ -73,6 +74,19 @@ bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_i
  * Ensures the data member of an aws_array_list structure is correctly allocated
  */
 void ensure_array_list_has_allocated_data_member(struct aws_array_list *list);
+
+/*
+ * Checks whether aws_priority_queue is bounded by max_initial_item_allocation and max_item_size
+ */
+bool aws_priority_queue_is_bounded(
+    struct aws_priority_queue *queue,
+    size_t max_initial_item_allocation,
+    size_t max_item_size);
+
+/**
+ * Ensures members of an aws_priority_queue structure are correctly allocated
+ */
+void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queue);
 
 /**
  * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size
