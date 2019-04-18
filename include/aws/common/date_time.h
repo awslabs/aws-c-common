@@ -19,12 +19,15 @@
 #include <time.h>
 
 #define AWS_DATE_TIME_STR_MAX_LEN 100
+#define AWS_DATE_TIME_STR_MAX_BASIC_LEN 20
 
 struct aws_byte_buf;
+struct aws_byte_cursor;
 
 enum aws_date_format {
     AWS_DATE_FORMAT_RFC822,
     AWS_DATE_FORMAT_ISO_8601,
+    AWS_DATE_FORMAT_ISO_8601_BASIC,
     AWS_DATE_FORMAT_AUTO_DETECT,
 };
 
@@ -93,6 +96,14 @@ AWS_COMMON_API void aws_date_time_init_epoch_secs(struct aws_date_time *dt, doub
 AWS_COMMON_API int aws_date_time_init_from_str(
     struct aws_date_time *dt,
     const struct aws_byte_buf *date_str,
+    enum aws_date_format fmt);
+
+/**
+ * aws_date_time_init variant that takes a byte_cursor rather than a byte_buf
+ */
+AWS_COMMON_API int aws_date_time_init_from_str_cursor(
+    struct aws_date_time *dt,
+    const struct aws_byte_cursor *date_str_cursor,
     enum aws_date_format fmt);
 
 /**
