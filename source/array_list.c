@@ -23,6 +23,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
     if (list->alloc) {
         size_t ideal_size;
         if (aws_mul_size_checked(list->length, list->item_size, &ideal_size)) {
+            AWS_POSTCONDITION(aws_array_list_is_valid(list));
             return AWS_OP_ERR;
         }
 
@@ -32,6 +33,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
             if (ideal_size > 0) {
                 raw_data = aws_mem_acquire(list->alloc, ideal_size);
                 if (!raw_data) {
+                    AWS_POSTCONDITION(aws_array_list_is_valid(list));
                     return AWS_OP_ERR;
                 }
 
@@ -45,6 +47,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
         return AWS_OP_SUCCESS;
     }
 
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return aws_raise_error(AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK);
 }
 
@@ -56,6 +59,8 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
 
     size_t copy_size;
     if (aws_mul_size_checked(from->length, from->item_size, &copy_size)) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(from));
+        AWS_POSTCONDITION(aws_array_list_is_valid(to));
         return AWS_OP_ERR;
     }
 
@@ -73,6 +78,8 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
         void *tmp = aws_mem_acquire(to->alloc, copy_size);
 
         if (!tmp) {
+            AWS_POSTCONDITION(aws_array_list_is_valid(from));
+            AWS_POSTCONDITION(aws_array_list_is_valid(to));
             return AWS_OP_ERR;
         }
 
@@ -96,11 +103,13 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t necessary_size;
     if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_ERR;
     }
 
     if (list->current_size < necessary_size) {
         if (!list->alloc) {
+            AWS_POSTCONDITION(aws_array_list_is_valid(list));
             return aws_raise_error(AWS_ERROR_INVALID_INDEX);
         }
 
@@ -121,12 +130,14 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
              * most certainly out of addressable memory. But since we're simply
              * going to fail fast and say, sorry can't do it, we'll just tell
              * the user they can't grow the list anymore. */
+            AWS_POSTCONDITION(aws_array_list_is_valid(list));
             return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
         }
 
         void *temp = aws_mem_acquire(list->alloc, new_size);
 
         if (!temp) {
+            AWS_POSTCONDITION(aws_array_list_is_valid(list));
             return AWS_OP_ERR;
         }
 
@@ -176,7 +187,9 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
     AWS_FATAL_ASSERT(a < list->length);
     AWS_FATAL_ASSERT(b < list->length);
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+
     if (a == b) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return;
     }
 
