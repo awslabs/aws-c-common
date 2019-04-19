@@ -16,29 +16,33 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-/* These values allow us to reach a higher coverage rate */
-#define MAX_ITEM_SIZE 2
-#define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
-
 /**
- * Runtime: 0m3.378s
+ * Runtime: 7s
  */
 void aws_array_list_init_static_harness() {
+    /* data structure */
     struct aws_array_list *list;
-    ASSUME_VALID_MEMORY(list);
-    size_t initial_item_allocation = nondet_size_t();
-    __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
-    size_t item_size = nondet_size_t();
-    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
-    size_t len;
-    __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
-    void *raw_array = malloc(len);
 
+    /* parameters */
+    size_t item_size;
+    size_t initial_item_allocation;
+    size_t len;
+
+    /* assumptions */
+    ASSUME_VALID_MEMORY(list);
+    __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
+    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
+
+    /* perform operation under verification */
+    uint8_t *raw_array = bounded_malloc(len);
     aws_array_list_init_static(list, raw_array, initial_item_allocation, item_size);
 
+    /* assertions */
+    assert(aws_array_list_is_valid(list));
     assert(list->alloc == NULL);
     assert(list->item_size == item_size);
-    assert(list->data == raw_array);
     assert(list->length == 0);
     assert(list->current_size == initial_item_allocation * item_size);
+    assert_bytes_match((uint8_t *)list->data, raw_array, len);
 }

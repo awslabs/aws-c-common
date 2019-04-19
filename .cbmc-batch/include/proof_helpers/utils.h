@@ -31,8 +31,9 @@ void assert_all_zeroes(const uint8_t *a, size_t len);
 void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_from_buffer *b);
 
 /**
- * Nondeterministically selects a byte from array and stores it into a
- * store_array_list_byte structure.
+ * Nondeterministically selects a byte from array and stores it into a store_array_list_byte
+ * structure. Afterwards, one can prove using the assert_array_list_equivalence function
+ * whether no byte in the array has changed.
  */
 void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_from_buffer *storage);
 

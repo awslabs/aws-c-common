@@ -16,37 +16,33 @@
 #include <aws/common/array_list.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-/* These values allow us to reach a higher coverage rate */
-#define MAX_ITEM_SIZE 2
-#define MAX_INITIAL_ITEM_ALLOCATION (UINT64_MAX / MAX_ITEM_SIZE) + 1
-
 /**
- * Runtime: 0m7.093s
+ * Runtime: 9s
  */
 void aws_array_list_pop_front_harness() {
-    struct aws_array_list *list;
-    /*
-     * Assumptions:
-     *     - a valid non-deterministic aws_array_list bounded by initial_item_allocation and item_size;
-     *     - non-deterministic list->initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION;
-     *     - non-deterministic list->item_size <= MAX_ITEM_SIZE;
-     *     - non-deterministic list->length <= initial_item_allocation;
-     */
-    ASSUME_BOUNDED_ARRAY_LIST(list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE);
+    /* data structure */
+    struct aws_array_list list;
 
-    struct aws_allocator *alloc = list->alloc;
-    size_t current_size = list->current_size;
-    size_t length = list->length;
-    size_t item_size = list->item_size;
-    void *data = list->data;
+    /* assumptions */
+    __CPROVER_assume(aws_array_list_is_bounded(&list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
+    ensure_array_list_has_allocated_data_member(&list);
+    __CPROVER_assume(aws_array_list_is_valid(&list));
 
-    if (!aws_array_list_pop_front(list)) {
-        assert(list->length == length - 1);
+    /* save current state of the data structure */
+    struct aws_array_list old = list;
+    struct store_byte_from_buffer old_byte;
+    save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
+
+    /* perform operation under verification and assertions */
+    if (!aws_array_list_pop_front(&list)) {
+        assert(list.length == old.length - 1);
+        assert(list.data);
+        assert(list.alloc == old.alloc);
+        assert(list.current_size == old.current_size);
+        assert(list.item_size == old.item_size);
     } else {
-        assert(list->length == length);
+        /* In the case aws_array_list_pop_front is not successful, the list must not change */
+        assert_array_list_equivalence(&list, &old, &old_byte);
     }
-    assert(list->alloc == alloc);
-    assert(list->current_size == current_size);
-    assert(list->item_size == item_size);
-    assert(list->data == data);
+    assert(aws_array_list_is_valid(&list));
 }

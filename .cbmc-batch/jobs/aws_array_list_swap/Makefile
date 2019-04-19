@@ -12,13 +12,16 @@
 # limitations under the License.
 
 ###########
-CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += aws_array_list_mem_swap.0:2
+include ../Makefile.aws_array_list
+
+# This bound allows us to reach 100% coverage rate
+UNWINDSET += aws_array_list_mem_swap.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c

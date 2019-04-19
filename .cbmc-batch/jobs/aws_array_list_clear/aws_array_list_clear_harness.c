@@ -36,7 +36,7 @@ void aws_array_list_clear_harness() {
 
     /* assertions */
     assert(aws_array_list_is_valid(&list));
-    (list.data) ? assert(list.length == 0) : assert(list.length == old.length);
+    assert(list.length == 0);
     assert(list.alloc == old.alloc);
     assert(list.current_size == old.current_size);
     assert(list.item_size == old.item_size);

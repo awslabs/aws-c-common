@@ -14,7 +14,7 @@
 ###########
 include ../Makefile.aws_array_list
 
-# This bound allow us to reach full coverage rate
+# This bound allows us to reach 100% coverage rate
 UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 
 CBMCFLAGS +=

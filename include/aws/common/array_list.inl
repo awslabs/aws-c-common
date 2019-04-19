@@ -81,8 +81,8 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
         return false;
     }
     size_t required_size;
-    bool required_size_is_valid = aws_mul_size_checked(list->length, list->item_size, &required_size) == AWS_OP_SUCCESS;
-    bool current_size_is_valid = list->current_size >= required_size;
+    bool required_size_is_valid = (aws_mul_size_checked(list->length, list->item_size, &required_size) == AWS_OP_SUCCESS);
+    bool current_size_is_valid = (list->current_size >= required_size);
     bool data_is_valid = ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
     return required_size_is_valid && current_size_is_valid && data_is_valid;
 }
