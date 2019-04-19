@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/private/hash_table_impl.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
@@ -129,3 +130,8 @@ struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *al
  * Makes a valid string, with as much nondet as possible, len < max
  */
 struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max);
+
+/*
+ * Ensures aws_hash_table has a proper allocated p_impl member
+ */
+void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries);
