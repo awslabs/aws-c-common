@@ -24,7 +24,8 @@ void aws_hash_table_move_harness() {
     struct aws_hash_table to;
     struct aws_hash_table from;
 
-    ensure_allocated_hash_table(&from, MAX_TABLE_SIZE);
+    // There are no loops in the code under test, so use the biggest possible value
+    ensure_allocated_hash_table(&from, SIZE_MAX);
     __CPROVER_assume(aws_hash_table_is_valid(&from));
 
     struct store_byte_from_buffer stored_byte;

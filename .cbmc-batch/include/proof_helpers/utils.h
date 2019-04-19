@@ -34,7 +34,7 @@ void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_fr
  * Nondeterministically selects a byte from array and stores it into a
  * store_array_list_byte structure.
  */
-void save_byte_from_array(uint8_t *array, size_t size, struct store_byte_from_buffer *storage);
+void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_from_buffer *storage);
 
 /**
  * Asserts two aws_array_list structures are equivalent. Prior to using this function,
@@ -50,9 +50,9 @@ void assert_array_list_equivalence(
  * Nondeterministically selects a byte from a hash_table implementation and stores it into a
  * store_array_list_byte structure.
  */
-void save_byte_from_hash_table(struct aws_hash_table *map, struct store_byte_from_buffer *storage);
+void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_byte_from_buffer *storage);
 
 /**
  * Checks that a no bytes in the hash_table have changed from when "storage" was stored.
  */
-void check_hash_table_unchanged(struct aws_hash_table *map, struct store_byte_from_buffer *storage);
+void check_hash_table_unchanged(const struct aws_hash_table *map, const struct store_byte_from_buffer *storage);

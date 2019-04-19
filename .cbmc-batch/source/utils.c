@@ -43,7 +43,7 @@ void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_fr
     }
 }
 
-void save_byte_from_array(uint8_t *array, size_t size, struct store_byte_from_buffer *storage) {
+void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_from_buffer *storage) {
     if (size > 0) {
         storage->index = nondet_size_t();
         __CPROVER_assume(storage->index < size);
@@ -64,14 +64,14 @@ void assert_array_list_equivalence(
     }
 }
 
-void save_byte_from_hash_table(struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
+void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
     struct hash_table_state *state = map->p_impl;
     size_t size_in_bytes;
     __CPROVER_assume(hash_table_state_required_bytes(state->size, &size_in_bytes) == AWS_OP_SUCCESS);
     save_byte_from_array((uint8_t *)state, size_in_bytes, storage);
 }
 
-void check_hash_table_unchanged(struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
+void check_hash_table_unchanged(const struct aws_hash_table *map, const struct store_byte_from_buffer *storage) {
     struct hash_table_state *state = map->p_impl;
     uint8_t *byte_array = (uint8_t *)state;
     assert(byte_array[storage->index] == storage->byte);

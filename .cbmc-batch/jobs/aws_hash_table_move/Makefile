@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 # this file except in compliance with the License. A copy of the License is
@@ -12,9 +12,6 @@
 # limitations under the License.
 
 ###########
-#There are no loops in the code under test, so use the biggest possible value
-DEFINES += -DMAX_TABLE_SIZE=SIZE_MAX
-
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c

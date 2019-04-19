@@ -60,7 +60,7 @@ struct hash_table_state {
  * same as the entry_count field, would require a loop to check
  */
 AWS_STATIC_IMPL
-bool hash_table_state_is_valid(struct hash_table_state *map) {
+bool hash_table_state_is_valid(const struct hash_table_state *map) {
     if (!map) {
         return false;
     }
@@ -86,7 +86,7 @@ bool hash_table_state_is_valid(struct hash_table_state *map) {
  * same as the entry_count field, would require a loop to check
  */
 AWS_STATIC_IMPL
-bool aws_hash_table_is_valid(struct aws_hash_table *map) {
+bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
     return map && map->p_impl && hash_table_state_is_valid(map->p_impl);
 }
 
