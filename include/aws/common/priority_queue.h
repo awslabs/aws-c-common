@@ -95,7 +95,7 @@ void aws_priority_queue_init_static(
  * Set of properties of a valid aws_priority_queue.
  */
 AWS_COMMON_API
-bool aws_priority_queue_is_valid(struct aws_priority_queue *queue);
+bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue);
 
 /**
  * Cleans up any internally allocated memory and resets the struct for reuse or deletion.

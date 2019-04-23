@@ -25,17 +25,32 @@ struct store_byte_from_buffer {
     uint8_t byte;
 };
 
-void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len);
-void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len);
-void assert_all_zeroes(const uint8_t *a, size_t len);
-void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_from_buffer *b);
+/**
+ * Asserts whether all bytes from two arrays of same length match.
+ */
+void assert_bytes_match(const uint8_t *const a, const uint8_t *const b, const size_t len);
+
+/**
+ * Asserts whether all bytes from an array are equal to c.
+ */
+void assert_all_bytes_are(const uint8_t *const a, const uint8_t c, const size_t len);
+
+/**
+ * Asserts whether all bytes from an array are equal to 0.
+ */
+void assert_all_zeroes(const uint8_t *const a, const size_t len);
+
+/**
+ * Asserts whether the byte in storage correspond to the byte in the same position in buffer.
+ */
+void assert_byte_from_buffer_matches(const uint8_t *const buffer, const struct store_byte_from_buffer *const b);
 
 /**
  * Nondeterministically selects a byte from array and stores it into a store_array_list_byte
  * structure. Afterwards, one can prove using the assert_array_list_equivalence function
  * whether no byte in the array has changed.
  */
-void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_from_buffer *storage);
+void save_byte_from_array(const uint8_t *const array, const size_t size, struct store_byte_from_buffer *const storage);
 
 /**
  * Asserts two aws_array_list structures are equivalent. Prior to using this function,
@@ -43,9 +58,9 @@ void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_f
  * (use save_byte_from_array function), so it can properly assert all bytes match.
  */
 void assert_array_list_equivalence(
-    struct aws_array_list *lhs,
-    struct aws_array_list *rhs,
-    struct store_byte_from_buffer *rhs_byte);
+    const struct aws_array_list *const lhs,
+    const struct aws_array_list *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte);
 
 /**
  * Nondeterministically selects a byte from a hash_table implementation and stores it into a
@@ -59,6 +74,6 @@ void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_by
 void check_hash_table_unchanged(const struct aws_hash_table *map, const struct store_byte_from_buffer *storage);
 
 /**
- * Standard stub function to compare two items
+ * Standard stub function to compare two items.
  */
-int nondet_compare(const void *a, const void *b);
+int nondet_compare(const void *const a, const void *const b);

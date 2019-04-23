@@ -20,34 +20,37 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-bool is_bounded_byte_buf(struct aws_byte_buf *buf, size_t max_size) {
+bool is_bounded_byte_buf(const struct aws_byte_buf *const buf, const size_t max_size) {
     return buf->capacity <= max_size;
 }
 
-bool is_byte_buf_expected_alloc(struct aws_byte_buf *buf) {
+bool is_byte_buf_expected_alloc(const struct aws_byte_buf *const buf) {
     return (buf->allocator == can_fail_allocator());
 }
 
-void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *buf) {
+void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf) {
     buf->allocator = can_fail_allocator();
     buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
-bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size) {
+bool is_bounded_byte_cursor(const struct aws_byte_cursor *const cursor, const size_t max_size) {
     return cursor->len <= max_size;
 }
 
-void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor) {
+void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *const cursor) {
     cursor->ptr = bounded_malloc(cursor->len);
 }
 
-bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_item_allocation, size_t max_item_size) {
+bool aws_array_list_is_bounded(
+    const struct aws_array_list *const list,
+    const size_t max_initial_item_allocation,
+    const size_t max_item_size) {
     bool item_size_is_bounded = list->item_size <= max_item_size;
     bool length_is_bounded = list->length <= max_initial_item_allocation;
     return item_size_is_bounded && length_is_bounded;
 }
 
-void ensure_array_list_has_allocated_data_member(struct aws_array_list *list) {
+void ensure_array_list_has_allocated_data_member(struct aws_array_list *const list) {
     if (list->current_size == 0 && list->length == 0) {
         __CPROVER_assume(list->data == NULL);
         list->alloc = can_fail_allocator();
@@ -58,9 +61,9 @@ void ensure_array_list_has_allocated_data_member(struct aws_array_list *list) {
 }
 
 bool aws_priority_queue_is_bounded(
-    struct aws_priority_queue *queue,
-    size_t max_initial_item_allocation,
-    size_t max_item_size) {
+    const struct aws_priority_queue *const queue,
+    const size_t max_initial_item_allocation,
+    const size_t max_item_size) {
     bool container_is_bounded =
         aws_array_list_is_bounded(&queue->container, max_initial_item_allocation, max_item_size);
     bool backpointers_is_bounded =
@@ -68,7 +71,7 @@ bool aws_priority_queue_is_bounded(
     return container_is_bounded && backpointers_is_bounded;
 }
 
-void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queue) {
+void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue) {
     ensure_array_list_has_allocated_data_member(&queue->container);
     ensure_array_list_has_allocated_data_member(&queue->backpointers);
     queue->pred = nondet_compare;

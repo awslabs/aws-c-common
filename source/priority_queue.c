@@ -157,7 +157,7 @@ void aws_priority_queue_init_static(
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
 }
 
-bool aws_priority_queue_is_valid(struct aws_priority_queue *queue) {
+bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
     if (!queue) {
         return false;
     }

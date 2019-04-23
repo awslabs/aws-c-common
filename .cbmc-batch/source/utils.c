@@ -16,7 +16,7 @@
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/utils.h>
 
-void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len) {
+void assert_bytes_match(const uint8_t *const a, const uint8_t *const b, const size_t len) {
     assert(!a == !b);
     if (len > 0 && a != NULL && b != NULL) {
         size_t i;
@@ -25,7 +25,7 @@ void assert_bytes_match(const uint8_t *a, const uint8_t *b, size_t len) {
     }
 }
 
-void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len) {
+void assert_all_bytes_are(const uint8_t *const a, const uint8_t c, const size_t len) {
     if (len > 0 && a != NULL) {
         size_t i;
         __CPROVER_assume(i < len);
@@ -33,17 +33,17 @@ void assert_all_bytes_are(const uint8_t *a, const uint8_t c, size_t len) {
     }
 }
 
-void assert_all_zeroes(const uint8_t *a, size_t len) {
+void assert_all_zeroes(const uint8_t *const a, const size_t len) {
     assert_all_bytes_are(a, 0, len);
 }
 
-void assert_byte_from_buffer_matches(const uint8_t *buffer, struct store_byte_from_buffer *b) {
+void assert_byte_from_buffer_matches(const uint8_t *const buffer, const struct store_byte_from_buffer *const b) {
     if (buffer) {
         assert(*(buffer + b->index) == b->byte);
     }
 }
 
-void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_from_buffer *storage) {
+void save_byte_from_array(const uint8_t *const array, const size_t size, struct store_byte_from_buffer *const storage) {
     if (size > 0) {
         storage->index = nondet_size_t();
         __CPROVER_assume(storage->index < size);
@@ -52,9 +52,9 @@ void save_byte_from_array(const uint8_t *array, size_t size, struct store_byte_f
 }
 
 void assert_array_list_equivalence(
-    struct aws_array_list *lhs,
-    struct aws_array_list *rhs,
-    struct store_byte_from_buffer *rhs_byte) {
+    const struct aws_array_list *const lhs,
+    const struct aws_array_list *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte) {
     assert(lhs->alloc == rhs->alloc);
     assert(lhs->current_size == rhs->current_size);
     assert(lhs->length == rhs->length);
@@ -77,7 +77,7 @@ void check_hash_table_unchanged(const struct aws_hash_table *map, const struct s
     assert(byte_array[storage->index] == storage->byte);
 }
 
-int nondet_compare(const void *a, const void *b) {
+int nondet_compare(const void *const a, const void *const b) {
     assert(a != NULL);
     assert(b != NULL);
     int nondet;
