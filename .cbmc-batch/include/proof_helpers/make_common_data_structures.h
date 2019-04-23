@@ -34,11 +34,6 @@
 #define ASSUME_VALID_MEMORY_COUNT(ptr, count) ptr = malloc(sizeof(*(ptr)) * (count))
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
 #define ASSUME_CAN_FAIL_ALLOCATOR(allocator) allocator = can_fail_allocator()
-#define ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size)                                          \
-    list = make_arbitrary_array_list((initial_item_allocation), (item_size))
-#define ASSUME_NONDET_ARRAY_LIST(list) list = make_nondet_array_list()
-#define ASSUME_BOUNDED_ARRAY_LIST(list, max_initial_item_allocation, max_item_size)                                    \
-    list = make_bounded_array_list((max_initial_item_allocation), (max_item_size))
 
 /*
  * Checks whether aws_byte_buf is bounded by max_size
@@ -87,22 +82,6 @@ bool aws_priority_queue_is_bounded(
  * Ensures members of an aws_priority_queue structure are correctly allocated
  */
 void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queue);
-
-/**
- * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size
- */
-struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size);
-
-/**
- * Makes an array list, with as much nondet as possible
- */
-struct aws_array_list *make_nondet_array_list();
-
-/**
- * Makes an array list, with as much nondet as possible, initial_item_allocation < max_initial_item_allocation
- * item_size < max_item_size
- */
-struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocation, size_t max_item_size);
 
 /**
  * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage

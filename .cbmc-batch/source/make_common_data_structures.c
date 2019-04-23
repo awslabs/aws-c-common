@@ -74,46 +74,6 @@ void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queu
     queue->pred = nondet_compare;
 }
 
-struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {
-    struct aws_array_list *list;
-    /* Assume list is allocated */
-    ASSUME_VALID_MEMORY(list);
-
-    if (nondet_int()) { /* dynamic */
-        struct aws_allocator *allocator;
-        ASSUME_CAN_FAIL_ALLOCATOR(allocator);
-        __CPROVER_assume(
-            aws_array_list_init_dynamic(list, allocator, initial_item_allocation, item_size) == AWS_OP_SUCCESS);
-    } else { /* static */
-        size_t len;
-        __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
-        void *raw_array = can_fail_malloc(len);
-        aws_array_list_init_static(list, raw_array, initial_item_allocation, item_size);
-    }
-    list->length = nondet_size_t();
-    __CPROVER_assume(list->length <= initial_item_allocation);
-
-    return list;
-}
-
-struct aws_array_list *make_nondet_array_list() {
-    size_t initial_item_allocation = nondet_size_t();
-    size_t item_size = nondet_size_t();
-    struct aws_array_list *list;
-    ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size);
-    return list;
-}
-
-struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocation, size_t max_item_size) {
-    size_t initial_item_allocation = nondet_size_t();
-    __CPROVER_assume(initial_item_allocation <= max_initial_item_allocation);
-    size_t item_size = nondet_size_t();
-    __CPROVER_assume(item_size <= max_item_size);
-    struct aws_array_list *list;
-    ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size);
-    return list;
-}
-
 struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max) {
     size_t len;
     __CPROVER_assume(len <= max);
