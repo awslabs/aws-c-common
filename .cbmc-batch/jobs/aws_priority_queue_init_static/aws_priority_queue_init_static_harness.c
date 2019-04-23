@@ -37,7 +37,7 @@ void aws_priority_queue_init_static_harness() {
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
-    aws_priority_queue_init_static(queue, raw_array, initial_item_allocation, item_size, s_compare);
+    aws_priority_queue_init_static(queue, raw_array, initial_item_allocation, item_size, nondet_compare);
 
     /* assertions */
     assert(aws_priority_queue_is_valid(queue));

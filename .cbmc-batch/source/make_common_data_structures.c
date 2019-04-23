@@ -71,7 +71,7 @@ bool aws_priority_queue_is_bounded(
 void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *queue) {
     ensure_array_list_has_allocated_data_member(&queue->container);
     ensure_array_list_has_allocated_data_member(&queue->backpointers);
-    queue->pred = s_compare;
+    queue->pred = nondet_compare;
 }
 
 struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size) {

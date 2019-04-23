@@ -77,7 +77,7 @@ void check_hash_table_unchanged(const struct aws_hash_table *map, const struct s
     assert(byte_array[storage->index] == storage->byte);
 }
 
-int s_compare(const void *a, const void *b) {
+int nondet_compare(const void *a, const void *b) {
     assert(a != NULL);
     assert(b != NULL);
     int nondet;

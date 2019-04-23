@@ -61,4 +61,4 @@ void check_hash_table_unchanged(const struct aws_hash_table *map, const struct s
 /**
  * Standard stub function to compare two items
  */
-int s_compare(const void *a, const void *b);
+int nondet_compare(const void *a, const void *b);
