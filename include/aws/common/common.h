@@ -111,13 +111,12 @@
 #include <aws/common/assert.inl>
 
 /**
-* Define function contracts.
-* When the code is being verified using CBMC these contracts are formally verified;
-* When the code is built in debug mode, they are checked as much as possible using assertions
-* When the code is built in production mode, they are not checked.
-* Violations of the function contracts are undefined behaviour.
-otherwise they are checked
-*/
+ * Define function contracts.
+ * When the code is being verified using CBMC these contracts are formally verified;
+ * When the code is built in debug mode, they are checked as much as possible using assertions
+ * When the code is built in production mode, they are not checked.
+ * Violations of the function contracts are undefined behaviour.
+ */
 #ifdef CBMC
 #define AWS_PRECONDITION(cond) __CPROVER_assume(cond)
 #define AWS_POSTCONDITION(cond) assert(cond)

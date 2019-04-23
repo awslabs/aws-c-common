@@ -53,7 +53,10 @@ static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
 }
 
 static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
-    return (size_t)(entry - map->slots);
+    AWS_PRECONDITION(hash_table_state_is_valid(map));
+    size_t index = entry - map->slots;
+    AWS_POSTCONDITION(index < map->size);
+    return index;
 }
 
 #if 0
@@ -518,6 +521,9 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
  * lower than the original entry's index)
  */
 static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
+    AWS_PRECONDITION(hash_table_state_is_valid(state));
+    AWS_PRECONDITION(state->entry_count > 0);
+    AWS_PRECONDITION(entry >= &state->slots[0] && entry < &state->slots[state->size]);
     state->entry_count--;
 
     /* Shift subsequent entries back until we find an entry that belongs at its
@@ -525,8 +531,10 @@ static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_e
      * don't terminate at the removed element.
      */
     size_t index = s_index_for(state, entry);
+    /* There is always at least one empty slot in the hash table, so this loop always terminates */
     while (1) {
         size_t next_index = (index + 1) & state->mask;
+        // uint64_t hash_code = state->slots[next_index].hash_code;
 
         /* If we hit an empty slot, stop */
         if (!state->slots[next_index].hash_code) {
@@ -542,13 +550,14 @@ static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_e
         }
 
         /* Okay, shift this one back */
-        memcpy(&state->slots[index], &state->slots[next_index], sizeof(*state->slots));
+        state->slots[index] = state->slots[next_index];
         index = next_index;
     }
 
     /* Clear the entry we shifted out of */
     AWS_ZERO_STRUCT(state->slots[index]);
-
+    AWS_POSTCONDITION(hash_table_state_is_valid(state));
+    AWS_POSTCONDITION(index <= state->size);
     return index;
 }
 
@@ -642,8 +651,17 @@ bool aws_hash_table_eq(
     return true;
 }
 
+/**
+ * Given an iterator, and a start slot, find the next available filled slot if it exists
+ * Otherwise, return an iter that will return true for aws_hash_iter_done().
+ * Note that aws_hash_iter_is_valid() need not hold on entry to the function, since
+ * it can be called on a partially constructed iter from aws_hash_iter_begin().
+ *
+ * Note that calling this on an iterator which is "done" is idempotent: it will return another
+ * iterator which is "done".
+ */
 static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
-
+    AWS_PRECONDITION(iter != NULL);
     struct hash_table_state *state = iter->map->p_impl;
     size_t limit = iter->limit;
 
@@ -653,38 +671,61 @@ static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_s
         if (entry->hash_code) {
             iter->element = entry->element;
             iter->slot = i;
+            iter->status = AWS_HASH_ITER_STATUS_READY_FOR_USE;
             return;
         }
     }
     iter->element.key = NULL;
     iter->element.value = NULL;
     iter->slot = iter->limit;
+    iter->status = AWS_HASH_ITER_STATUS_DONE;
+    AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
 }
 
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
+    AWS_PRECONDITION(aws_hash_table_is_valid(map));
     struct hash_table_state *state = map->p_impl;
     struct aws_hash_iter iter;
     iter.map = map;
     iter.limit = state->size;
     s_get_next_element(&iter, 0);
+    AWS_POSTCONDITION(iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_POSTCONDITION(aws_hash_iter_is_valid(&iter));
     return iter;
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
+    AWS_PRECONDITION(iter);
+    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
     /*
      * SIZE_MAX is a valid (non-terminal) value for iter->slot in the event that
      * we delete slot 0. See comments in aws_hash_iter_delete.
      *
      * As such we must use == rather than >= here.
      */
-    return iter->slot == iter->limit;
+    bool rval = (iter->slot == iter->limit);
+    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_POSTCONDITION(rval == (iter->status == AWS_HASH_ITER_STATUS_DONE));
+    AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
+    return rval;
 }
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
     s_get_next_element(iter, iter->slot + 1);
+#pragma CPROVER check pop
+    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
 }
 
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
+    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+    AWS_PRECONDITION(iter->map->p_impl->entry_count > 0);
+
     struct hash_table_state *state = iter->map->p_impl;
     if (destroy_contents) {
         if (state->destroy_key_fn) {
@@ -722,7 +763,13 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
      * underflowing to SIZE_MAX; we have to take care in aws_hash_iter_done to avoid
      * treating this as an end-of-iteration condition.
      */
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
     iter->slot--;
+#pragma CPROVER check pop
+    iter->status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
+    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
+    AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
 }
 
 void aws_hash_table_clear(struct aws_hash_table *map) {

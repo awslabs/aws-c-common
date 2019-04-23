@@ -139,7 +139,7 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
 
 void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries) {
     size_t num_entries;
-    __CPROVER_assume(num_entries < max_table_entries);
+    __CPROVER_assume(num_entries <= max_table_entries);
     __CPROVER_assume(aws_is_power_of_two(num_entries));
 
     size_t required_bytes;

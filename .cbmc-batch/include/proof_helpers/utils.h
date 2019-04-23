@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define IMPLIES(a, b) (!(a) || (b))
+
 struct store_byte_from_buffer {
     size_t index;
     uint8_t byte;
