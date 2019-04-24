@@ -157,6 +157,16 @@ void aws_priority_queue_init_static(
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
 }
 
+bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
+    if (!queue) {
+        return false;
+    }
+    bool pred_is_valid = (queue->pred != NULL);
+    bool container_is_valid = aws_array_list_is_valid(&queue->container);
+    bool backpointers_is_valid = aws_array_list_is_valid(&queue->backpointers);
+    return pred_is_valid && container_is_valid && backpointers_is_valid;
+}
+
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
     aws_array_list_clean_up(&queue->container);
     aws_array_list_clean_up(&queue->backpointers);

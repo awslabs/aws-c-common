@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
  * this file except in compliance with the License. A copy of the License is
@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/priority_queue.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
@@ -33,62 +34,57 @@
 #define ASSUME_VALID_MEMORY_COUNT(ptr, count) ptr = malloc(sizeof(*(ptr)) * (count))
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
 #define ASSUME_CAN_FAIL_ALLOCATOR(allocator) allocator = can_fail_allocator()
-#define ASSUME_ARBITRARY_ARRAY_LIST(list, initial_item_allocation, item_size)                                          \
-    list = make_arbitrary_array_list((initial_item_allocation), (item_size))
-#define ASSUME_NONDET_ARRAY_LIST(list) list = make_nondet_array_list()
-#define ASSUME_BOUNDED_ARRAY_LIST(list, max_initial_item_allocation, max_item_size)                                    \
-    list = make_bounded_array_list((max_initial_item_allocation), (max_item_size))
 
 /*
  * Checks whether aws_byte_buf is bounded by max_size
  */
-bool is_bounded_byte_buf(struct aws_byte_buf *buf, size_t max_size);
+bool is_bounded_byte_buf(const struct aws_byte_buf *const buf, const size_t max_size);
 
 /*
  * Checks whether aws_byte_buf has the correct allocator
  */
-bool is_byte_buf_expected_alloc(struct aws_byte_buf *buf);
+bool is_byte_buf_expected_alloc(const struct aws_byte_buf *const buf);
 
 /*
  * Ensures aws_byte_buf has a proper allocated buffer member
  */
-void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *buf);
+void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf);
 
 /*
  * Checks whether aws_byte_cursor is bounded by max_size
  */
-bool is_bounded_byte_cursor(struct aws_byte_cursor *cursor, size_t max_size);
+bool is_bounded_byte_cursor(const struct aws_byte_cursor *const cursor, const size_t max_size);
 
 /*
  * Ensures aws_byte_cursor has a proper allocated buffer member
  */
-void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *cursor);
+void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *const cursor);
 
 /*
  * Checks whether aws_array_list is bounded by max_initial_item_allocation and max_item_size
  */
-bool aws_array_list_is_bounded(struct aws_array_list *list, size_t max_initial_item_allocation, size_t max_item_size);
+bool aws_array_list_is_bounded(
+    const struct aws_array_list *const list,
+    const size_t max_initial_item_allocation,
+    const size_t max_item_size);
 
 /**
  * Ensures the data member of an aws_array_list structure is correctly allocated
  */
-void ensure_array_list_has_allocated_data_member(struct aws_array_list *list);
+void ensure_array_list_has_allocated_data_member(struct aws_array_list *const list);
+
+/*
+ * Checks whether aws_priority_queue is bounded by max_initial_item_allocation and max_item_size
+ */
+bool aws_priority_queue_is_bounded(
+    const struct aws_priority_queue *const queue,
+    const size_t max_initial_item_allocation,
+    const size_t max_item_size);
 
 /**
- * Makes an array list, with as much nondet as possible, defined initial_item_allocation and defined item_size
+ * Ensures members of an aws_priority_queue structure are correctly allocated
  */
-struct aws_array_list *make_arbitrary_array_list(size_t initial_item_allocation, size_t item_size);
-
-/**
- * Makes an array list, with as much nondet as possible
- */
-struct aws_array_list *make_nondet_array_list();
-
-/**
- * Makes an array list, with as much nondet as possible, initial_item_allocation < max_initial_item_allocation
- * item_size < max_item_size
- */
-struct aws_array_list *make_bounded_array_list(size_t max_initial_item_allocation, size_t max_item_size);
+void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
 
 /**
  * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage
