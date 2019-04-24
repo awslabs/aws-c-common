@@ -160,6 +160,18 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif
 
+#if defined(_MSC_VER)
+typedef int64_t aws_off_t;
+#else
+#   if _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L
+typedef off_t aws_off_t;
+#   else
+typedef long aws_off_t;
+#   endif
+#endif
+
+AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
+
 #ifdef __cplusplus
 #    define AWS_EXTERN_C_BEGIN extern "C" {
 #    define AWS_EXTERN_C_END }
