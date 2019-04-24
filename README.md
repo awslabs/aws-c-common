@@ -101,7 +101,7 @@ returning control to the caller, if you have an error to raise, use the `aws_rai
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.
 
 #### Log Subjects & Error Codes
-The error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries
+The logging & error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries
 have pre-slotted log subjects & error codes for each library. The currently allocated error ranges are:
 
 | Range | Library Name |
