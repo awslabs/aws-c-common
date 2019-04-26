@@ -112,7 +112,8 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
 }
 
 static int s_test_mutex_safe_to_cleanup_zeroed(struct aws_allocator *allocator, void *ctx) {
-    (void) ctx;
+    (void)ctx;
+    (void)allocator;
 
     struct aws_mutex lock;
 
