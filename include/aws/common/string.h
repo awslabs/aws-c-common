@@ -188,6 +188,17 @@ AWS_EXTERN_C_END
     } name##_s = {NULL, sizeof(literal) - 1, literal};                                                                 \
     static const struct aws_string *(name) = (struct aws_string *)(&name##_s)
 
+/*
+ * A related macro that declares the string pointer without static, allowing it to be externed as a global constant
+ */
+#define AWS_STRING_FROM_LITERAL(name, literal)                                                                         \
+    static const struct {                                                                                              \
+        struct aws_allocator *const allocator;                                                                         \
+        const size_t len;                                                                                              \
+        const uint8_t bytes[sizeof(literal)];                                                                          \
+    } name##_s = {NULL, sizeof(literal) - 1, literal};                                                                 \
+    const struct aws_string *(name) = (struct aws_string *)(&name##_s)
+
 /**
  * Copies all bytes from string to buf.
  *
