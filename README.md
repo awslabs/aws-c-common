@@ -100,9 +100,9 @@ returning control to the caller, if you have an error to raise, use the `aws_rai
 * For APIs returning an allocated instance of an object, return the memory on success, and `NULL` on failure. Before
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.
 
-#### Error Codes
-The error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries
-have pre-slotted error codes for each library. The currently allocated error ranges are:
+#### Log Subjects & Error Codes
+The logging & error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries
+have pre-slotted log subjects & error codes for each library. The currently allocated error ranges are:
 
 | Range | Library Name |
 | --- | --- |
