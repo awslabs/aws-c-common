@@ -220,4 +220,24 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_string(const struct 
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }
 
+/**
+ * Best-effort checks data-structure invarients.
+ */
+AWS_STATIC_IMPL bool aws_string_is_valid(const struct aws_string *str) {
+    return str && AWS_MEM_IS_READABLE(&str->bytes[0], str->len + 1) && str->bytes[str->len] == 0;
+    // return str && AWS_MEM_IS_READABLE(str->bytes, str->len + 1) && str->bytes[str->len] == 0;
+}
+
+/**
+ * Best-effort checks data-structure invarients.
+ */
+AWS_STATIC_IMPL bool aws_c_string_is_valid(const struct aws_string *str) {
+    /* Knowing the actual length to check would require strlen(), which is
+     * a) linear time in the length of the string
+     * b) could already cause a memory violation for a non-zero-terminated string.
+     * But we know that a c-string must have at least one character, to store the null terminator
+     */
+    return str && AWS_MEM_IS_READABLE(str, 1);
+}
+
 #endif /* AWS_COMMON_STRING_H */
