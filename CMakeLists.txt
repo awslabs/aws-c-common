@@ -220,7 +220,9 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
 
 if (NOT CMAKE_CROSSCOMPILING)
     include(CTest)
-    add_subdirectory(tests)
+    if (BUILD_TESTING)
+        add_subdirectory(tests)
+    endif()
 endif()
 
 include(CPackConfig)
