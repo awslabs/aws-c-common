@@ -44,3 +44,8 @@ int main() {
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
 }" AWS_HAVE_GCC_INLINE_ASM)
 
+check_c_source_compiles("
+#include <execinfo.h>
+int main() {
+    return 0;
+}" AWS_HAS_EXECINFO)
