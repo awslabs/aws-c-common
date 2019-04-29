@@ -114,10 +114,18 @@ AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
 
 /**
+ * Initializes *dest by copying all the fields from *src.
+ */
+AWS_COMMON_API int aws_byte_buf_init_copy(
+    struct aws_byte_buf *dest,
+    struct aws_allocator *allocator,
+    const struct aws_byte_buf *src);
+
+/**
  * Set of properties of a valid aws_byte_buf.
  */
 AWS_COMMON_API
-bool aws_byte_buf_is_valid(const struct aws_byte_buf *buf);
+bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
 
 /**
  * Set of properties of a valid aws_byte_cursor.
@@ -466,15 +474,6 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *by
     cur.ptr = (uint8_t *)bytes;
     cur.len = len;
     return cur;
-}
-
-AWS_STATIC_IMPL int aws_byte_buf_init_copy(
-    struct aws_byte_buf *dest,
-    struct aws_allocator *allocator,
-    const struct aws_byte_buf *src) {
-
-    struct aws_byte_cursor src_cur = aws_byte_cursor_from_buf(src);
-    return aws_byte_buf_init_copy_from_cursor(dest, allocator, src_cur);
 }
 
 /**

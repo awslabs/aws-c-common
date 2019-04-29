@@ -19,13 +19,13 @@
 void aws_byte_buf_append_with_lookup_harness() {
     struct aws_byte_buf to;
     __CPROVER_assume(is_bounded_byte_buf(&to, MAX_BUF_SIZE));
-    __CPROVER_assume(aws_byte_buf_is_valid(&to));
     ensure_byte_buf_has_allocated_buffer_member(&to);
+    __CPROVER_assume(aws_byte_buf_is_valid(&to));
 
     struct aws_byte_cursor from;
     __CPROVER_assume(is_bounded_byte_cursor(&from, MAX_BUF_SIZE));
-    __CPROVER_assume(aws_byte_cursor_is_valid(&from));
     ensure_byte_cursor_has_allocated_buffer_member(&from);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&from));
 
     /**
      * The specification for the function requires that the buffer
