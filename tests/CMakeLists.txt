@@ -34,7 +34,6 @@ add_test_case(thread_creation_join_test)
 
 add_test_case(mutex_aquire_release_test)
 add_test_case(mutex_is_actually_mutex_test)
-add_test_case(test_mutex_safe_to_cleanup_zeroed)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)

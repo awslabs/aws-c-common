@@ -111,19 +111,5 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
     return 0;
 }
 
-static int s_test_mutex_safe_to_cleanup_zeroed(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
-
-    struct aws_mutex lock;
-
-    AWS_ZERO_STRUCT(lock);
-
-    aws_mutex_clean_up(&lock);
-
-    return 0;
-}
-
 AWS_TEST_CASE(mutex_aquire_release_test, s_test_mutex_acquire_release)
 AWS_TEST_CASE(mutex_is_actually_mutex_test, s_test_mutex_is_actually_mutex)
-AWS_TEST_CASE(test_mutex_safe_to_cleanup_zeroed, s_test_mutex_safe_to_cleanup_zeroed)
