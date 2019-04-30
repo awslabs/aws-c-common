@@ -114,7 +114,10 @@ AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
 
 /**
- * Initializes *dest by copying all the fields from *src.
+ * Initializes an aws_byte_buf structure base on another valid one.
+ * Requires: *src and *allocator are valid objects.
+ * Ensures: *dest is a valid aws_byte_buf with a new backing array dest->buffer
+ * which is a copy of the elements from src->buffer.
  */
 AWS_COMMON_API int aws_byte_buf_init_copy(
     struct aws_byte_buf *dest,
@@ -122,13 +125,15 @@ AWS_COMMON_API int aws_byte_buf_init_copy(
     const struct aws_byte_buf *src);
 
 /**
- * Set of properties of a valid aws_byte_buf.
+ * Evaluates the set of properties that define the shape of all valid aws_byte_buf structures.
+ * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
 AWS_COMMON_API
 bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
 
 /**
- * Set of properties of a valid aws_byte_cursor.
+ * Evaluates the set of properties that define the shape of all valid aws_byte_cursor structures.
+ * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
 AWS_COMMON_API
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor);
