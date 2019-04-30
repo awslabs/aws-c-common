@@ -58,9 +58,10 @@ bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
     if (!buf) {
         return false;
     }
-    bool buffer_is_valid = buf->buffer && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len);
-    bool capacity_is_valid = (buf->len <= buf->capacity);
-    return capacity_is_valid && buffer_is_valid;
+    bool buffer_is_valid = (buf->buffer && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len));
+    bool capacity_is_valid = (buf->capacity > 0);
+    bool len_is_valid = (buf->len <= buf->capacity);
+    return capacity_is_valid && buffer_is_valid && len_is_valid;
 }
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
