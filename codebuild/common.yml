@@ -1,0 +1,11 @@
+version: 0.2
+#this buildspec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+# To be uncommented when the file is properly updated in master
+#      - python3 -c "from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')"
+
+  build:
+    commands:
+      - python3 ./codebuild/builder.py --dry-run build $BUILD_SPEC
