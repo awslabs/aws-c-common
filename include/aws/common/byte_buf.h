@@ -133,7 +133,7 @@ bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
 
 /**
  * Evaluates the set of properties that define the shape of all valid aws_byte_cursor structures.
- * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
+ * It is also a cheap check, in the sense it runs in constant time (i.e., no loops or recursion).
  */
 AWS_COMMON_API
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor);

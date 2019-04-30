@@ -44,13 +44,11 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
     dest->allocator = allocator;
     dest->buffer = (uint8_t *)aws_mem_acquire(allocator, src->capacity);
     if (dest->buffer == NULL) {
-        *dest = (struct aws_byte_buf){0};
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(src));
+        AWS_ZERO_STRUCT(*dest);
         return AWS_OP_ERR;
     }
     memcpy(dest->buffer, src->buffer, src->len);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(src));
     return AWS_OP_SUCCESS;
 }
 
@@ -118,12 +116,10 @@ int aws_byte_buf_init_copy_from_cursor(
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    /* clear the dest before updating it. */
-    *dest = (struct aws_byte_buf){0};
+    AWS_ZERO_STRUCT(*dest);
 
     dest->buffer = (uint8_t *)aws_mem_acquire(allocator, src.len);
     if (dest->buffer == NULL) {
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(&src));
         return AWS_OP_ERR;
     }
 
@@ -131,7 +127,6 @@ int aws_byte_buf_init_copy_from_cursor(
     dest->capacity = src.len;
     dest->allocator = allocator;
     memcpy(dest->buffer, src.ptr, src.len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&src));
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
