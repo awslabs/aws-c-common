@@ -658,4 +658,3 @@ static int s_test_byte_buf_reserve_from_len(struct aws_allocator *allocator, voi
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_reserve_from_len, s_test_byte_buf_reserve_from_len)
-
