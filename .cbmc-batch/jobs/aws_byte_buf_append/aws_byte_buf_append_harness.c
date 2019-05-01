@@ -17,22 +17,34 @@
 #include <proof_helpers/make_common_data_structures.h>
 
 void aws_byte_buf_append_harness() {
-    size_t len1 = nondet_size_t();
-    __CPROVER_assume(len1 <= MAX_BUF_LEN);
-    size_t len2 = nondet_size_t();
+    struct aws_byte_buf to;
+    __CPROVER_assume(aws_byte_buf_is_bounded(&to, MAX_BUFFER_SIZE));
+    ensure_byte_buf_has_allocated_buffer_member(&to);
+    __CPROVER_assume(aws_byte_buf_is_valid(&to));
 
-    /* Need arbitrary buf that is "correct enough" */
-    struct aws_byte_buf *to;
-    ASSUME_VALID_MEMORY(to);
-    ASSUME_VALID_MEMORY_COUNT(to->buffer, len1);
-    to->capacity = len1;
-    __CPROVER_assume(to->len <= to->capacity);
+    /* save current state of the data structure */
+    struct aws_byte_buf to_old = to;
 
-    /* Need arbitrary cursor */
-    struct aws_byte_cursor *from;
-    ASSUME_VALID_MEMORY(from);
-    from->ptr = malloc(len2);
-    __CPROVER_assume(from->len <= len2);
+    struct aws_byte_cursor from;
+    __CPROVER_assume(aws_byte_cursor_is_bounded(&from, MAX_BUFFER_SIZE));
+    ensure_byte_cursor_has_allocated_buffer_member(&from);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&from));
 
-    aws_byte_buf_append(to, from);
+    /* save current state of the data structure */
+    struct aws_byte_cursor from_old = from;
+
+    if (aws_byte_buf_append(&to, &from) == AWS_OP_SUCCESS) {
+        assert(to.len == to_old.len + from.len);
+    } else {
+        /* if the operation return an error, to must not change */
+        assert_bytes_match(to_old.buffer, to.buffer, to.len);
+        assert(to_old.len == to.len);
+    }
+
+    assert(aws_byte_buf_is_valid(&to));
+    assert(aws_byte_cursor_is_valid(&from));
+    assert(to_old.allocator == to.allocator);
+    assert(to_old.capacity == to.capacity);
+    assert_bytes_match(from_old.ptr, from.ptr, from.len);
+    assert(from_old.len == from.len);
 }

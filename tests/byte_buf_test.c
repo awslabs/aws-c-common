@@ -220,9 +220,10 @@ AWS_TEST_CASE(test_buffer_init_copy_null_buffer, s_test_buffer_init_copy_null_bu
 static int s_test_buffer_init_copy_null_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_byte_buf src = {0};
+    struct aws_byte_buf src;
+    AWS_ZERO_STRUCT(src);
     struct aws_byte_buf dest;
-    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_buf_init_copy(&dest, allocator, &src));
+    ASSERT_SUCCESS(aws_byte_buf_init_copy(&dest, allocator, &src));
 
     return 0;
 }

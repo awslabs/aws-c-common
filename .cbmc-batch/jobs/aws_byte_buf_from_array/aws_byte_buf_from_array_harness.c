@@ -15,30 +15,25 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
-void aws_byte_buf_init_harness() {
-    /* data structure */
-    struct aws_byte_buf *buf;
-
+void aws_byte_buf_from_array_harness() {
     /* parameters */
-    struct aws_allocator *allocator;
-    size_t capacity;
+    size_t length;
+    uint8_t *array;
 
     /* assumptions */
-    ASSUME_VALID_MEMORY(buf);
-    if (nondet_bool()) {
-        ASSUME_CAN_FAIL_ALLOCATOR(allocator);
-    } else {
-        allocator = NULL;
-    }
-    __CPROVER_assume(capacity <= MAX_BUFFER_SIZE);
+    ASSUME_VALID_MEMORY_COUNT(array, length);
 
-    if (!aws_byte_buf_init(buf, allocator, capacity)) {
-        /* assertions */
-        assert(aws_byte_buf_is_valid(buf));
-        assert(buf->allocator == allocator);
-        assert(buf->len == 0);
-        assert(buf->capacity == capacity);
+    /* operation under verification */
+    struct aws_byte_buf buf = aws_byte_buf_from_array(array, length);
+
+    /* assertions */
+    assert(aws_byte_buf_is_valid(&buf));
+    size_t debug_len = buf.len;
+    assert(buf.len == length);
+    assert(buf.capacity == length);
+    assert(buf.allocator == NULL);
+    if (buf.buffer) {
+        assert_bytes_match(buf.buffer, array, buf.len);
     }
 }

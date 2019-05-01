@@ -16,19 +16,17 @@
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void aws_byte_buf_from_c_str_harness() {
-    size_t len = nondet_size_t();
+void aws_byte_buf_secure_zero_harness() {
+    struct aws_byte_buf buf;
 
-    char *c_str;
-    ASSUME_VALID_MEMORY_COUNT(c_str, len);
+    __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
+    ensure_byte_buf_has_allocated_buffer_member(&buf);
+    __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
-    /* Need *c_str to be a '\0'-terminated C string, so assume an arbitrary character is 0 */
-    int index = nondet_int();
-    __CPROVER_assume(index >= 0 && index < len);
-    c_str[index] = 0;
+    /* operation under verification */
+    aws_byte_buf_secure_zero(&buf);
 
-    /* Assume the length of the string is bounded by some max length */
-    __CPROVER_assume(len <= MAX_STR_LEN);
-
-    aws_byte_buf_from_c_str(c_str);
+    assert(aws_byte_buf_is_valid(&buf));
+    assert_all_zeroes(buf.buffer, buf.capacity);
+    assert(buf.len == 0);
 }

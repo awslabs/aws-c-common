@@ -25,19 +25,32 @@
 #endif
 
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
-    buf->buffer = (uint8_t *)aws_mem_acquire(allocator, capacity);
-    if (!buf->buffer) {
+    if (!buf || !allocator) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
+    if (capacity != 0 && buf->buffer == NULL) {
         return AWS_OP_ERR;
     }
+
     buf->len = 0;
     buf->capacity = capacity;
     buf->allocator = allocator;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return AWS_OP_SUCCESS;
 }
 
 int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allocator, const struct aws_byte_buf *src) {
     if (!allocator || !dest || !aws_byte_buf_is_valid(src)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    if (!src->buffer) {
+        AWS_ZERO_STRUCT(*dest);
+        dest->allocator = allocator;
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
+        return AWS_OP_SUCCESS;
     }
 
     *dest = *src;
@@ -53,26 +66,17 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
 }
 
 bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
-    if (!buf) {
-        return false;
-    }
-    bool buffer_is_valid = (buf->buffer && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len));
-    bool capacity_is_valid = (buf->capacity > 0);
-    bool len_is_valid = (buf->len <= buf->capacity);
-    return capacity_is_valid && buffer_is_valid && len_is_valid;
+    return buf && ((buf->buffer == NULL && buf->capacity == 0 && buf->len == 0) ||
+                   (buf->capacity > 0 && buf->len <= buf->capacity && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len)));
 }
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
-    bool ptr_is_valid;
-    if (cursor->ptr) {
-        ptr_is_valid = (cursor->len && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len));
-    } else {
-        ptr_is_valid = (!cursor->len);
-    }
-    return ptr_is_valid;
+    return cursor &&
+           ((cursor->len == 0) || (cursor->ptr && cursor->len > 0 && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len)));
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
     }
@@ -83,10 +87,12 @@ void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
 }
 
 void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     if (buf->buffer) {
         aws_secure_zero(buf->buffer, buf->capacity);
     }
     buf->len = 0;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
 }
 
 void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
@@ -118,21 +124,23 @@ int aws_byte_buf_init_copy_from_cursor(
     struct aws_byte_buf *dest,
     struct aws_allocator *allocator,
     struct aws_byte_cursor src) {
-    if (!allocator || !dest || !aws_byte_cursor_is_valid(&src) || !src.ptr) {
+    if (!allocator || !dest || !aws_byte_cursor_is_valid(&src)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     AWS_ZERO_STRUCT(*dest);
 
-    dest->buffer = (uint8_t *)aws_mem_acquire(allocator, src.len);
-    if (dest->buffer == NULL) {
+    dest->buffer = (src.len == 0) ? NULL : (uint8_t *)aws_mem_acquire(allocator, src.len);
+    if (src.len != 0 && dest->buffer == NULL) {
         return AWS_OP_ERR;
     }
 
     dest->len = src.len;
     dest->capacity = src.len;
     dest->allocator = allocator;
-    memcpy(dest->buffer, src.ptr, src.len);
+    if (dest->buffer) {
+        memcpy(dest->buffer, src.ptr, src.len);
+    }
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
@@ -405,15 +413,22 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, 
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    assert(from->ptr);
-    assert(to->buffer);
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    if (!from->ptr || !to->buffer) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
     if (to->capacity - to->len < from->len) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
     memcpy(to->buffer + to->len, from->ptr, from->len);
     to->len += from->len;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
 }
 
@@ -421,12 +436,16 @@ int aws_byte_buf_append_with_lookup(
     struct aws_byte_buf *AWS_RESTRICT to,
     const struct aws_byte_cursor *AWS_RESTRICT from,
     const uint8_t *lookup_table) {
-    AWS_PRECONDITION(from->ptr);
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
+    if (!from->ptr || !to->buffer) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
     if (to->capacity - to->len < from->len) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
@@ -444,9 +463,11 @@ int aws_byte_buf_append_with_lookup(
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(from->ptr);
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    if (!from->ptr || !to->buffer || !to->allocator) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
     if (to->capacity - to->len < from->len) {
         /*
@@ -456,6 +477,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
         size_t required_capacity = 0;
         if (aws_add_size_checked(to->capacity, missing_capacity, &required_capacity)) {
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
             return AWS_OP_ERR;
         }
 
@@ -485,9 +508,13 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
                 new_capacity = required_capacity;
                 new_buffer = aws_mem_acquire(to->allocator, new_capacity);
                 if (new_buffer == NULL) {
+                    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+                    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
                     return AWS_OP_ERR;
                 }
             } else {
+                AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+                AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
                 return AWS_OP_ERR;
             }
         }
@@ -524,12 +551,17 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    if (!buffer->allocator || !aws_byte_buf_is_valid(buffer)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
     if (requested_capacity <= buffer->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_SUCCESS;
     }
 
     if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_ERR;
     }
 
@@ -540,10 +572,13 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
 }
 
 int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    if (!buffer->allocator || !aws_byte_buf_is_valid(buffer)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
     size_t requested_capacity = 0;
     if (AWS_UNLIKELY(aws_add_size_checked(buffer->len, additional_length, &requested_capacity))) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_ERR;
     }
 
