@@ -232,6 +232,9 @@ add_test_case(test_realloc_passthrough_oom)
 add_test_case(test_cf_allocator_wrapper)
 add_test_case(test_acquire_many)
 
+add_test_case(test_calloc_fallback)
+add_test_case(test_calloc_from_default_allocator)
+
 add_test_case(test_lru_cache_overflow_static_members)
 add_test_case(test_lru_cache_lru_ness_static_members)
 add_test_case(test_lru_cache_entries_cleanup)

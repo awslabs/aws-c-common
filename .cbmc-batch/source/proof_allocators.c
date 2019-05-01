@@ -13,7 +13,17 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/math.h>
 #include <proof_helpers/proof_allocators.h>
+
+/**
+ * Use the can_fail_calloc() defined above to specalize allocation for finding bugs
+ * using CBMC
+ */
+static void *s_can_fail_calloc_allocator(struct aws_allocator *allocator, size_t num, size_t size) {
+    (void)allocator;
+    return can_fail_calloc(num, size);
+}
 
 /**
  * Use the can_fail_malloc() defined above to specalize allocation for finding bugs
@@ -46,15 +56,27 @@ static struct aws_allocator s_can_fail_allocator_static = {
     .mem_acquire = s_can_fail_malloc_allocator,
     .mem_release = s_can_fail_free_allocator,
     .mem_realloc = nondet_bool() ? NULL : s_can_fail_realloc_allocator,
+    .mem_calloc = s_can_fail_calloc_allocator,
 };
 
-struct aws_allocator *can_fail_allocator() {
-    return &s_can_fail_allocator_static;
+void *bounded_calloc(size_t num, size_t size) {
+    size_t required_bytes;
+    __CPROVER_assume(aws_mul_size_checked(num, size, &required_bytes) == AWS_OP_SUCCESS);
+    __CPROVER_assume(required_bytes <= MAX_MALLOC);
+    return calloc(num, size);
 }
 
 void *bounded_malloc(size_t size) {
     __CPROVER_assume(size <= MAX_MALLOC);
     return malloc(size);
+}
+
+struct aws_allocator *can_fail_allocator() {
+    return &s_can_fail_allocator_static;
+}
+
+void *can_fail_calloc(size_t num, size_t size) {
+    return nondet_bool() ? NULL : bounded_calloc(num, size);
 }
 
 void *can_fail_malloc(size_t size) {

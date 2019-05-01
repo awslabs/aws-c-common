@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -48,10 +49,16 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     return realloc(ptr, newsize);
 }
 
+static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    (void)allocator;
+    return calloc(num, size);
+}
+
 static struct aws_allocator default_allocator = {
     .mem_acquire = s_default_malloc,
     .mem_release = s_default_free,
     .mem_realloc = s_default_realloc,
+    .mem_calloc = s_default_calloc,
 };
 
 struct aws_allocator *aws_default_allocator(void) {
@@ -63,6 +70,36 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
     if (!mem) {
         aws_raise_error(AWS_ERROR_OOM);
     }
+    return mem;
+}
+
+void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    AWS_PRECONDITION(allocator);
+
+    /* Defensive check: never use calloc with size * num that would overflow
+     * https://wiki.sei.cmu.edu/confluence/display/c/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
+     */
+    size_t required_bytes;
+    if (aws_mul_size_checked(num, size, &required_bytes)) {
+        return NULL;
+    }
+
+    /* If there is a defined calloc, use it */
+    if (allocator->mem_calloc) {
+        void *mem = allocator->mem_calloc(allocator, num, size);
+        if (!mem) {
+            aws_raise_error(AWS_ERROR_OOM);
+        }
+        return mem;
+    }
+
+    /* Otherwise, emulate calloc */
+    void *mem = allocator->mem_acquire(allocator, required_bytes);
+    if (!mem) {
+        return NULL;
+    }
+    memset(mem, 0, required_bytes);
+    AWS_POSTCONDITION(mem != NULL);
     return mem;
 }
 
