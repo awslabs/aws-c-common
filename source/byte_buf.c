@@ -539,6 +539,17 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+
+    size_t requested_capacity = 0;
+    if (AWS_UNLIKELY(aws_add_size_checked(buffer->len, additional_length, &requested_capacity))) {
+        return AWS_OP_ERR;
+    }
+
+    return aws_byte_buf_reserve(buffer, requested_capacity);
+}
+
 struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {

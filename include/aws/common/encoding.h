@@ -34,10 +34,20 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length);
 
 /*
  * Base 16 (hex) encodes the contents of to_encode and stores the result in
- * output.
+ * output.  0 terminates the result.  Assumes the buffer is empty and does not resize on
+ * insufficient capacity.
  */
 AWS_COMMON_API
 int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output);
+
+/*
+ * Base 16 (hex) encodes the contents of to_encode and appends the result in
+ * output.  Does not 0-terminate.  Grows the destination buffer dynamically if necessary.
+ */
+AWS_COMMON_API
+int aws_hex_encode_append_dynamic(
+    const struct aws_byte_cursor *AWS_RESTRICT to_encode,
+    struct aws_byte_buf *AWS_RESTRICT output);
 
 /*
  * computes the length necessary to store the result of aws_hex_decode().

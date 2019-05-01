@@ -115,6 +115,33 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
     return AWS_OP_SUCCESS;
 }
 
+int aws_hex_encode_append_dynamic(
+    const struct aws_byte_cursor *AWS_RESTRICT to_encode,
+    struct aws_byte_buf *AWS_RESTRICT output) {
+    assert(to_encode->ptr);
+    assert(aws_byte_buf_is_valid(output));
+
+    size_t encoded_len = 0;
+    if (AWS_UNLIKELY(aws_add_size_checked(to_encode->len, to_encode->len, &encoded_len))) {
+        return AWS_OP_ERR;
+    }
+
+    if (AWS_UNLIKELY(aws_byte_buf_reserve_relative(output, encoded_len))) {
+        return AWS_OP_ERR;
+    }
+
+    size_t written = output->len;
+    for (size_t i = 0; i < to_encode->len; ++i) {
+
+        output->buffer[written++] = HEX_CHARS[to_encode->ptr[i] >> 4 & 0x0f];
+        output->buffer[written++] = HEX_CHARS[to_encode->ptr[i] & 0x0f];
+    }
+
+    output->len += encoded_len;
+
+    return AWS_OP_SUCCESS;
+}
+
 static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
     if (character >= 'a' && character <= 'f') {
         *int_val = (uint8_t)(10 + (character - 'a'));

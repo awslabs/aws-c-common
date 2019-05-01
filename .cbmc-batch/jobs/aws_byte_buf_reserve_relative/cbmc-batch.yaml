@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwinding-assertions;--unwind;1"
+goto: aws_byte_buf_reserve_relative_harness.goto
+expected: "SUCCESSFUL"
