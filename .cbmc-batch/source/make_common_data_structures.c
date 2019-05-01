@@ -38,7 +38,7 @@ bool is_bounded_byte_cursor(const struct aws_byte_cursor *const cursor, const si
 }
 
 void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *const cursor) {
-    cursor->ptr = bounded_malloc(cursor->len);
+    cursor->ptr = (nondet_bool()) ? NULL : bounded_malloc(cursor->len);
 }
 
 bool aws_array_list_is_bounded(
