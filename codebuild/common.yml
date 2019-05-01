@@ -1,5 +1,4 @@
 version: 0.2
-#this buildspec assumes the ubuntu 14.04 trusty image
 phases:
   install:
     commands:

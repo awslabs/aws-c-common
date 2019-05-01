@@ -102,8 +102,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    "-DCMAKE_C_FLAGS=\"-m32\"",
-                    "-DCMAKE_LINK_FLAGS=\"-m32\"",
+                    '-DCMAKE_C_FLAGS="-m32"',
+                    '-DCMAKE_LINK_FLAGS="-m32"',
                 ],
             },
         },
