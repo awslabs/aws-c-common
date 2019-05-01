@@ -126,7 +126,7 @@ int aws_hex_encode_append_dynamic(
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(aws_byte_buf_reserve_from_len(output, encoded_len))) {
+    if (AWS_UNLIKELY(aws_byte_buf_reserve_relative(output, encoded_len))) {
         return AWS_OP_ERR;
     }
 

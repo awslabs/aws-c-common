@@ -539,7 +539,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_reserve_from_len(struct aws_byte_buf *buffer, size_t additional_length) {
+int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
     size_t requested_capacity = 0;

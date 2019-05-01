@@ -24,7 +24,7 @@ DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 
-ENTRY = aws_byte_buf_reserve_from_len_harness
+ENTRY = aws_byte_buf_reserve_relative_harness
 ###########
 
 include ../Makefile.common

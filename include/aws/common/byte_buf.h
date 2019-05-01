@@ -352,11 +352,11 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
  * Convenience function that attempts to increase the capacity of a buffer relative to the current
  * length.
  *
- *  aws_byte_buf_reserve_from_len(buf, x) ~~ aws_byte_buf_reserve(buf, buf->len + x)
+ *  aws_byte_buf_reserve_relative(buf, x) ~~ aws_byte_buf_reserve(buf, buf->len + x)
  *
  */
 AWS_COMMON_API
-int aws_byte_buf_reserve_from_len(struct aws_byte_buf *buffer, size_t additional_length);
+int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length);
 
 /**
  * Concatenates a variable number of struct aws_byte_buf * into destination.

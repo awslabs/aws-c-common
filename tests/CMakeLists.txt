@@ -219,7 +219,7 @@ add_test_case(test_byte_buf_append_dynamic)
 add_test_case(test_byte_buf_append_lookup_success)
 add_test_case(test_byte_buf_append_lookup_failure)
 add_test_case(test_byte_buf_reserve)
-add_test_case(test_byte_buf_reserve_from_len)
+add_test_case(test_byte_buf_reserve_relative)
 
 add_test_case(byte_swap_test)
 

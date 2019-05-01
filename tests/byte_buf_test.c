@@ -635,7 +635,7 @@ static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(test_byte_buf_reserve, s_test_byte_buf_reserve)
 
-static int s_test_byte_buf_reserve_from_len(struct aws_allocator *allocator, void *ctx) {
+static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
 
@@ -644,11 +644,11 @@ static int s_test_byte_buf_reserve_from_len(struct aws_allocator *allocator, voi
 
     struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_reserve_test_prefix);
 
-    ASSERT_TRUE(aws_byte_buf_reserve_from_len(&buffer, prefix_cursor.len) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_reserve_relative(&buffer, prefix_cursor.len) == AWS_OP_SUCCESS);
     ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
 
     struct aws_byte_cursor suffix_cursor = aws_byte_cursor_from_string(s_reserve_test_suffix);
-    ASSERT_TRUE(aws_byte_buf_reserve_from_len(&buffer, suffix_cursor.len) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_reserve_relative(&buffer, suffix_cursor.len) == AWS_OP_SUCCESS);
     ASSERT_TRUE(aws_byte_buf_append(&buffer, &suffix_cursor) == AWS_OP_SUCCESS);
 
     ASSERT_TRUE(aws_byte_buf_eq_c_str(&buffer, (char *)s_reserve_test_prefix_concatenated->bytes));
@@ -657,4 +657,4 @@ static int s_test_byte_buf_reserve_from_len(struct aws_allocator *allocator, voi
 
     return 0;
 }
-AWS_TEST_CASE(test_byte_buf_reserve_from_len, s_test_byte_buf_reserve_from_len)
+AWS_TEST_CASE(test_byte_buf_reserve_relative, s_test_byte_buf_reserve_relative)
