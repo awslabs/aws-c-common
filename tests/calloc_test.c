@@ -23,6 +23,9 @@
 
 AWS_TEST_CASE(test_calloc_fallback, s_test_calloc_fallback_fn)
 static int s_test_calloc_fallback_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator my_alloc = *aws_default_allocator();
     my_alloc.mem_calloc = NULL;
 
@@ -48,6 +51,9 @@ static int s_test_calloc_fallback_fn(struct aws_allocator *allocator, void *ctx)
 
 AWS_TEST_CASE(test_calloc_from_default_allocator, s_test_calloc_from_default_allocator_fn)
 static int s_test_calloc_from_default_allocator_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
     struct aws_allocator *alloc = aws_default_allocator();
     /* Check that calloc gives 0ed memory */
     char *p = aws_mem_calloc(alloc, 2, 4);
