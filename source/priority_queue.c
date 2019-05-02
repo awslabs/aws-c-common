@@ -139,7 +139,7 @@ int aws_priority_queue_init_dynamic(
     aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
-    memset(&queue->backpointers, 0, sizeof(queue->backpointers));
+    AWS_ZERO_STRUCT(queue->backpointers);
 
     return aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
 }
@@ -152,7 +152,7 @@ void aws_priority_queue_init_static(
     aws_priority_queue_compare_fn *pred) {
 
     queue->pred = pred;
-    memset(&queue->backpointers, 0, sizeof(queue->backpointers));
+    AWS_ZERO_STRUCT(queue->backpointers);
 
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
 }

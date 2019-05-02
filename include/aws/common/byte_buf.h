@@ -747,7 +747,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_advance(
         output->len = 0;
         return true;
     } else {
-        memset(output, 0, sizeof(*output));
+        AWS_ZERO_STRUCT(*output);
         return false;
     }
 }

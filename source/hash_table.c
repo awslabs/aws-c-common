@@ -241,7 +241,7 @@ void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_
 void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash_table *AWS_RESTRICT from) {
     AWS_PRECONDITION(to != NULL && from != NULL && to != from && aws_hash_table_is_valid(from));
     *to = *from;
-    memset(from, 0, sizeof(*from));
+    AWS_ZERO_STRUCT(*from);
     AWS_POSTCONDITION(aws_hash_table_is_valid(to));
 }
 
