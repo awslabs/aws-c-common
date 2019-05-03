@@ -73,13 +73,18 @@ DEFINES += -DCBMC=1
 # We always override allocator functions with our own allocator
 # Removing the function from the goto program helps CBMC's
 # function pointer analysis.
-REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
-REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
-REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
-REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
-REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
-REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_allocate
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_preferred_size
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_calloc
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 ################################################################
+
+REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 
 # Here, whenever there is a change in any of ANSI-C source
 # dependency files, make will take action. However, to make

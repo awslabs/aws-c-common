@@ -144,16 +144,14 @@ static struct hash_table_state *s_alloc_state(const struct hash_table_state *tem
         return NULL;
     }
 
-    struct hash_table_state *state = aws_mem_acquire(template->alloc, required_bytes);
+    /* An empty slot has hashcode 0. So this marks all slots as empty */
+    struct hash_table_state *state = aws_mem_calloc(template->alloc, 1, required_bytes);
 
     if (state == NULL) {
         return state;
     }
 
     *state = *template;
-    /* An empty slot has hashcode 0. So this marks all slots as empty */
-    memset(&state->slots[0], 0, state->size * sizeof(state->slots[0]));
-
     return state;
 }
 

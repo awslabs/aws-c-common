@@ -18,6 +18,7 @@
 
 #include <aws/common/exports.h>
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -201,6 +202,8 @@ struct aws_allocator {
     void (*mem_release)(struct aws_allocator *allocator, void *ptr);
     /* Optional method; if not supported, this pointer must be NULL */
     void *(*mem_realloc)(struct aws_allocator *allocator, void *oldptr, size_t oldsize, size_t newsize);
+    /* Optional method; if not supported, this pointer must be NULL */
+    void *(*mem_calloc)(struct aws_allocator *allocator, size_t num, size_t size);
     void *impl;
 };
 
@@ -231,11 +234,18 @@ AWS_COMMON_API
 void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator);
 #endif
 
-/*
+/**
  * Returns at least `size` of memory ready for usage or returns NULL on failure.
  */
 AWS_COMMON_API
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
+
+/**
+ * Allocates a block of memory for an array of num elements, each of them size bytes long, and initializes all its bits to zero. 
+ * Returns null on failure.
+ */
+AWS_COMMON_API
+void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size);
 
 /**
  * Allocates many chunks of bytes into a single block. Expects to be called with alternating void ** (dest), size_t
@@ -249,7 +259,7 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
 AWS_COMMON_API
 void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...);
 
-/*
+/**
  * Releases ptr back to whatever allocated it.
  */
 AWS_COMMON_API

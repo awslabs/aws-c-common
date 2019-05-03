@@ -14,12 +14,15 @@
 ###########
 # Sufficient for coverage for bounded inputs
 # Additional coverage is given using the -unbounded version of this proof
-# Runtime aprox 5 min at this size.
-MAX_TABLE_SIZE ?= 4
+# 4 - 1 min
+# 8 - 2 min
+# 12 - 6 min
+MAX_TABLE_SIZE ?= 8
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
 
-#A hash entry is 24 bytes, which is 3 iters. So we need 3 * MAX_TABLE_SIZE + 1
-UNWINDSET += memset_override_0_impl.0:$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 1)))
+#The hash table struct itself is 80 bytes, which is 10 iters 
+#A hash entry is 24 bytes, which is 10 iters. So we need 3 * MAX_TABLE_SIZE + 10 + 1
+UNWINDSET += memset_override_0_impl.0:$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 11)))
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
