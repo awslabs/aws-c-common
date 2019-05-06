@@ -21,7 +21,12 @@
 
 void aws_hash_callback_string_eq_harness() {
     struct aws_allocator *alloc = can_fail_allocator();
-    const char *str1 = make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
-    const char *str2 = nondet_bool() ? str1 : make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
-    aws_hash_callback_string_eq(str1, str2);
+    const struct aws_string *str1 = make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
+    const struct aws_string *str2 =
+        nondet_bool() ? str1 : make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
+    bool rval = aws_hash_callback_string_eq(str1, str2);
+    if (rval) {
+        assert(str1->len == str2->len);
+        assert_bytes_match(str1->bytes, str2->bytes, str1->len);
+    }
 }

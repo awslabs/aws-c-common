@@ -22,5 +22,6 @@
 void aws_ptr_eq_harness() {
     void *p1;
     void *p2;
-    aws_ptr_eq(p1, p2);
+    bool rval = aws_ptr_eq(p1, p2);
+    assert(rval == (p1 == p2));
 }

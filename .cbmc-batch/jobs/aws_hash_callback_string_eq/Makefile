@@ -15,7 +15,7 @@
 #NOTE: Sufficient for full coverage
 #32: 6
 #64: 15s
-#96: 45s
+#96: 1m
 #128 2m 10s
 MAX_STRING_LEN ?= 96
 DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN) 

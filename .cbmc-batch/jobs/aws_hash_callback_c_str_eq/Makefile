@@ -14,13 +14,13 @@
 ###########
 #NOTE: Sufficient for full coverage
 #16: 4s
-#64: 5s
-#128 10s
-#256 53s
-MAX_STRING_LEN ?= 128
+#64: 14s
+#128 1m40ss
+MAX_STRING_LEN ?= 64
 DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN) 
 
 UNWINDSET +=strcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
+UNWINDSET +=strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
 CBMCFLAGS +=
 

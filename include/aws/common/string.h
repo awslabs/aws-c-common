@@ -225,7 +225,6 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_string(const struct 
  */
 AWS_STATIC_IMPL bool aws_string_is_valid(const struct aws_string *str) {
     return str && AWS_MEM_IS_READABLE(&str->bytes[0], str->len + 1) && str->bytes[str->len] == 0;
-    // return str && AWS_MEM_IS_READABLE(str->bytes, str->len + 1) && str->bytes[str->len] == 0;
 }
 
 /**
