@@ -191,7 +191,7 @@ int aws_hash_table_init(
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_key_fn,
     aws_hash_callback_destroy_fn *destroy_value_fn) {
-    AWS_PRECONDITION(map && alloc && hash_fn && equals_fn);
+    AWS_PRECONDITION_ERROR(map && alloc && hash_fn && equals_fn);
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -237,7 +237,7 @@ void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_
 }
 
 void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash_table *AWS_RESTRICT from) {
-    AWS_PRECONDITION(to != NULL && from != NULL && to != from && aws_hash_table_is_valid(from));
+    AWS_PRECONDITION_ASSERT(to != NULL && from != NULL && to != from && aws_hash_table_is_valid(from));
     *to = *from;
     AWS_ZERO_STRUCT(*from);
     AWS_POSTCONDITION(aws_hash_table_is_valid(to));

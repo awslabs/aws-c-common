@@ -36,9 +36,9 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
 }
 
 int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allocator, const struct aws_byte_buf *src) {
-    if (!allocator || !dest || !aws_byte_buf_is_valid(src)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_PRECONDITION_ERROR(allocator);
+    AWS_PRECONDITION_ERROR(dest);
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(src));
 
     *dest = *src;
     dest->allocator = allocator;
@@ -421,10 +421,10 @@ int aws_byte_buf_append_with_lookup(
     struct aws_byte_buf *AWS_RESTRICT to,
     const struct aws_byte_cursor *AWS_RESTRICT from,
     const uint8_t *lookup_table) {
-    AWS_PRECONDITION(from->ptr);
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
+    AWS_PRECONDITION_ERROR(from->ptr);
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION_ERROR(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION_ERROR(AWS_MEM_IS_READABLE(lookup_table, 256));
 
     if (to->capacity - to->len < from->len) {
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
@@ -444,9 +444,9 @@ int aws_byte_buf_append_with_lookup(
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(from->ptr);
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION_ERROR(from->ptr);
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION_ERROR(aws_byte_cursor_is_valid(from));
 
     if (to->capacity - to->len < from->len) {
         /*
@@ -524,7 +524,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(buffer));
     if (requested_capacity <= buffer->capacity) {
         return AWS_OP_SUCCESS;
     }
@@ -540,7 +540,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
 }
 
 int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(buffer));
 
     size_t requested_capacity = 0;
     if (AWS_UNLIKELY(aws_add_size_checked(buffer->len, additional_length, &requested_capacity))) {
