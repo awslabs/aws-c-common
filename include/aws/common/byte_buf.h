@@ -442,8 +442,8 @@ AWS_EXTERN_C_END
 
 /**
  */
-#define AWS_BYTE_CUR_INIT_FROM_LITERAL(literal)                                                                  \
-    { .ptr = (uint8_t *)(literal), .len = AWS_ARRAY_SIZE(literal) }
+#define AWS_BYTE_CUR_INIT_FROM_LITERAL(literal)                                                                        \
+    { .ptr = (uint8_t *)(literal), .len = AWS_ARRAY_SIZE(literal) - 1 }
 
 /**
  * For creating a byte buffer from a null-terminated string literal.
