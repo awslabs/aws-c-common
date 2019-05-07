@@ -441,6 +441,11 @@ const uint8_t *aws_lookup_table_to_lower_get(void);
 AWS_EXTERN_C_END
 
 /**
+ */
+#define AWS_BYTE_CUR_INIT_FROM_LITERAL(literal)                                                                  \
+    { .ptr = (uint8_t *)(literal), .len = AWS_ARRAY_SIZE(literal) }
+
+/**
  * For creating a byte buffer from a null-terminated string literal.
  */
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
