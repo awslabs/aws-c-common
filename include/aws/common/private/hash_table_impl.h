@@ -70,7 +70,7 @@ bool hash_table_state_is_valid(const struct hash_table_state *map) {
     bool alloc_nonnull = (map->alloc != NULL);
     bool size_at_least_two = (map->size >= 2);
     bool size_is_power_of_two = aws_is_power_of_two(map->size);
-    bool entry_count = (map->entry_count < map->max_load);
+    bool entry_count = (map->entry_count <= map->max_load);
     bool max_load = (map->max_load < map->size);
     bool mask_is_correct = (map->mask == (map->size - 1));
     bool max_load_factor_bounded = (map->max_load_factor < 1.0);
