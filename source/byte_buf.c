@@ -118,9 +118,9 @@ int aws_byte_buf_init_copy_from_cursor(
     struct aws_byte_buf *dest,
     struct aws_allocator *allocator,
     struct aws_byte_cursor src) {
-    if (!allocator || !dest || !aws_byte_cursor_is_valid(&src) || !src.ptr) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_PRECONDITION_ERROR(allocator);
+    AWS_PRECONDITION_ERROR(dest);
+    AWS_PRECONDITION_ERROR(aws_byte_cursor_is_valid(&src));
 
     AWS_ZERO_STRUCT(*dest);
 
@@ -405,12 +405,9 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, 
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    assert(from->ptr);
-    assert(to->buffer);
-
-    if (to->capacity - to->len < from->len) {
-        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
-    }
+    AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION_ERROR(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION_SPECIFIED_ERROR(to->capacity - to->len >= from->len, AWS_ERROR_DEST_COPY_TOO_SMALL);
 
     memcpy(to->buffer + to->len, from->ptr, from->len);
     to->len += from->len;
@@ -425,10 +422,7 @@ int aws_byte_buf_append_with_lookup(
     AWS_PRECONDITION_ERROR(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION_ERROR(aws_byte_cursor_is_valid(from));
     AWS_PRECONDITION_ERROR(AWS_MEM_IS_READABLE(lookup_table, 256));
-
-    if (to->capacity - to->len < from->len) {
-        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
-    }
+    AWS_PRECONDITION_SPECIFIED_ERROR(to->capacity - to->len >= from->len, AWS_ERROR_DEST_COPY_TOO_SMALL);
 
     for (size_t i = 0; i < from->len; ++i) {
         to->buffer[to->len + i] = lookup_table[from->ptr[i]];

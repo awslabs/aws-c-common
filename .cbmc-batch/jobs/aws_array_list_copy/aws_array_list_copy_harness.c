@@ -37,7 +37,7 @@ void aws_array_list_copy_harness() {
     if (aws_array_list_copy(&from, &to) == AWS_OP_SUCCESS) {
         /* In the case aws_array_list_copy is successful, both lists have the same length */
         assert(to.length == from.length);
-	assert(from.item_size == to.item_size);
+        assert(from.item_size == to.item_size);
         assert(to.current_size >= (from.length * from.item_size));
     }
 
