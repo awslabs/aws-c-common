@@ -28,7 +28,7 @@ void aws_hash_table_swap_harness() {
     struct store_byte_from_buffer stored_byte_a;
     struct store_byte_from_buffer stored_byte_b;
 
-    // There are no loops in the code under test, so use the biggest possible value
+    /* There are no loops in the code under test, so use the biggest possible value */
     if (inita) {
         ensure_allocated_hash_table(&a, SIZE_MAX);
         __CPROVER_assume(aws_hash_table_is_valid(&a));
