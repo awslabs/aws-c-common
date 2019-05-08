@@ -794,8 +794,8 @@ uint64_t aws_hash_ptr(const void *item) {
 }
 
 bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
-    AWS_PRECONDITION(aws_c_string_is_valid(a));
-    AWS_PRECONDITION(aws_c_string_is_valid(b));
+    AWS_PRECONDITION_ASSERT(aws_c_string_is_valid(a));
+    AWS_PRECONDITION_ASSERT(aws_c_string_is_valid(b));
     bool rval = !strcmp(a, b);
     AWS_POSTCONDITION(aws_c_string_is_valid(a));
     AWS_POSTCONDITION(aws_c_string_is_valid(b));
@@ -803,8 +803,8 @@ bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
 }
 
 bool aws_hash_callback_string_eq(const void *a, const void *b) {
-    AWS_PRECONDITION(aws_string_is_valid(a));
-    AWS_PRECONDITION(aws_string_is_valid(b));
+    AWS_PRECONDITION_ASSERT(aws_string_is_valid(a));
+    AWS_PRECONDITION_ASSERT(aws_string_is_valid(b));
     bool rval = aws_string_eq(a, b);
     AWS_POSTCONDITION(aws_string_is_valid(a));
     AWS_POSTCONDITION(aws_string_is_valid(b));
@@ -812,7 +812,7 @@ bool aws_hash_callback_string_eq(const void *a, const void *b) {
 }
 
 void aws_hash_callback_string_destroy(void *a) {
-    AWS_PRECONDITION(aws_string_is_valid(a));
+    AWS_PRECONDITION_ASSERT(aws_string_is_valid(a));
     aws_string_destroy(a);
 }
 
