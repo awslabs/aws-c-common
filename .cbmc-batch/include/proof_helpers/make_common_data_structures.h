@@ -131,3 +131,8 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
  * Ensures aws_hash_table has a proper allocated p_impl member
  */
 void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries);
+
+/**
+ * Makes a valid c string, with as much nondet as possible, len < max
+ */
+const char *make_arbitrary_c_str(size_t max_size);
