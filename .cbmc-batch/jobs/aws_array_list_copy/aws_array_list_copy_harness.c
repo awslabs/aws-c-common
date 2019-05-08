@@ -34,14 +34,14 @@ void aws_array_list_copy_harness() {
     __CPROVER_assume(aws_array_list_is_valid(&to));
 
     /* perform operation under verification */
-    if (!aws_array_list_copy(&from, &to)) {
+    if (aws_array_list_copy(&from, &to) == AWS_OP_SUCCESS) {
         /* In the case aws_array_list_copy is successful, both lists have the same length */
         assert(to.length == from.length);
+	assert(from.item_size == to.item_size);
         assert(to.current_size >= (from.length * from.item_size));
     }
 
     /* assertions */
     assert(aws_array_list_is_valid(&from));
     assert(aws_array_list_is_valid(&to));
-    assert(from.item_size == to.item_size);
 }
