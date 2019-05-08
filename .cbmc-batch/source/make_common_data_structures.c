@@ -124,7 +124,6 @@ struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, si
     *(struct aws_allocator **)(&str->allocator) = allocator;
     *(size_t *)(&str->len) = len;
     *(uint8_t *)&str->bytes[len] = '\0';
-
     return str;
 }
 
@@ -148,4 +147,15 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
     struct hash_table_state *impl = bounded_malloc(required_bytes);
     impl->size = num_entries;
     map->p_impl = impl;
+}
+
+const char *make_arbitrary_c_str(size_t max_size) {
+    size_t cap;
+    __CPROVER_assume(cap > 0 && cap <= max_size);
+    const char *str = bounded_malloc(cap);
+    /* Ensure that its a valid c string. Since all bytes are nondeterminstic, the actual
+     * string length is 0..str_cap
+     */
+    __CPROVER_assume(str[cap - 1] == 0);
+    return str;
 }
