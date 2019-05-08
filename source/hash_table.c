@@ -534,7 +534,6 @@ static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_e
     /* There is always at least one empty slot in the hash table, so this loop always terminates */
     while (1) {
         size_t next_index = (index + 1) & state->mask;
-        // uint64_t hash_code = state->slots[next_index].hash_code;
 
         /* If we hit an empty slot, stop */
         if (!state->slots[next_index].hash_code) {
