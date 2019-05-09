@@ -231,6 +231,7 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
 }
 
 void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b) {
+    AWS_PRECONDITION(a != b);
     struct aws_hash_table tmp = *a;
     *a = *b;
     *b = tmp;
@@ -686,8 +687,12 @@ void aws_hash_iter_next(struct aws_hash_iter *iter) {
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
     struct hash_table_state *state = iter->map->p_impl;
     if (destroy_contents) {
-        state->destroy_key_fn((void *)iter->element.key);
-        state->destroy_value_fn(iter->element.value);
+        if (state->destroy_key_fn) {
+            state->destroy_key_fn((void *)iter->element.key);
+        }
+        if (state->destroy_value_fn) {
+            state->destroy_value_fn(iter->element.value);
+        }
     }
 
     size_t last_index = s_remove_entry(state, &state->slots[iter->slot]);
