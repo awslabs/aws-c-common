@@ -14,7 +14,7 @@
 ###########
 #2: 1M 15s
 #4:  4m 40s
-MAX_TABLE_SIZE ?= 4
+MAX_TABLE_SIZE ?= 2
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
 
 UNWINDSET += s_remove_entry.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))

@@ -28,11 +28,23 @@ bool has_an_empty_slot(struct aws_hash_table *map, size_t *rval) {
     return state->slots[empty_slot_idx].hash_code == 0;
 }
 
+/**
+ * A correct implementation of the hash_destroy function should never have a memory
+ * error on valid input. There is the question of whether the destroy functions themselves
+ * are correctly called (i.e. only on valid input, no double free, etc.).  This will be tested in
+ * future proofs.
+ */
+void hash_proof_destroy_noop(void* p)
+{
+}
+
 void aws_hash_iter_delete_harness() {
 
     struct aws_hash_table map;
     ensure_allocated_hash_table(&map, MAX_TABLE_SIZE);
     __CPROVER_assume(aws_hash_table_is_valid(&map));
+    __CPROVER_assume(map.p_impl->destroy_key_fn == hash_proof_destroy_noop);
+    __CPROVER_assume(map.p_impl->destroy_value_fn == hash_proof_destroy_noop);
     size_t empty_slot_idx;
     __CPROVER_assume(has_an_empty_slot(&map, &empty_slot_idx));
     struct hash_table_state *state = map.p_impl;
@@ -42,7 +54,7 @@ void aws_hash_iter_delete_harness() {
     __CPROVER_assume(iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     __CPROVER_assume(aws_hash_iter_is_valid(&iter));
 
-    aws_hash_iter_delete(&iter, false);
+    aws_hash_iter_delete(&iter, nondet_bool());
     assert(iter.status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
     assert(aws_hash_iter_is_valid(&iter));
 
