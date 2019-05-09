@@ -31,3 +31,10 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
 }
 
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
+
+static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
+    aws_backtrace_print(stdout, NULL);
+    return 0;
+}
+
+AWS_TEST_CASE(test_stack_trace_decoding, s_test_stack_trace_decoding);

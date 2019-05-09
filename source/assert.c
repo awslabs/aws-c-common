@@ -13,22 +13,19 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/system_info.h>
+#include <aws/common/common.h>
 
-#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-size_t aws_system_info_processor_count(void) {
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
-    return info.dwNumberOfProcessors;
-}
-
-void aws_debug_break()
+void aws_fatal_assert(int cond, const char *cond_str, const char *file, int line)
 {
-    __debugbreak();
-}
+    if (AWS_UNLIKELY(cond)) {
+        return;
+    }
 
-void aws_backtrace_print(FILE *fp, void *call_site_data)
-{
-    fprintf(fp, "Implement me\n");
+    aws_debug_break();
+    fprintf(stderr, "Fatal error condition occurred in %s:%d: %s\nExiting Application\n", file, line, cond_str);
+    aws_backtrace_print(stderr, NULL);
+    abort();
 }

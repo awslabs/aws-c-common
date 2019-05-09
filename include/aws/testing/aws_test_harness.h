@@ -445,26 +445,11 @@ done:
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #elif AWS_HAS_EXECINFO
-#    include <execinfo.h>
-#    include <signal.h>
-
 static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
-    (void)sig_info;
+    (void)sig;
     (void)user_data;
 
-    void *array[100];
-    char **strings;
-    size_t i;
-
-    fprintf(stderr, "** Signal Thrown %d**\n", sig);
-    int size = (int)backtrace(array, 10);
-    strings = backtrace_symbols(array, size);
-    fprintf(stderr, "Stack Trace:\n");
-
-    for (i = 0; i < size; i++)
-        fprintf(stderr, "%s\n", strings[i]);
-
-    free(strings);
+    aws_backtrace_print(stderr, sig_info);
     exit(-1);
 }
 #endif
