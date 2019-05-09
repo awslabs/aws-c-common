@@ -24,7 +24,7 @@ bool aws_byte_buf_is_bounded(const struct aws_byte_buf *const buf, const size_t 
     return (buf->capacity <= max_size);
 }
 
-bool is_byte_buf_expected_alloc(const struct aws_byte_buf *const buf) {
+bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf) {
     return (buf->allocator == can_fail_allocator());
 }
 

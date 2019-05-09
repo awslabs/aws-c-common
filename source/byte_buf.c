@@ -66,13 +66,13 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
 }
 
 bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
-    return buf && ((buf->buffer == NULL && buf->capacity == 0 && buf->len == 0) ||
+    return buf && ((buf->capacity == 0 && buf->len == 0 && buf->buffer == NULL) ||
                    (buf->capacity > 0 && buf->len <= buf->capacity && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len)));
 }
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
     return cursor &&
-           ((cursor->len == 0) || (cursor->ptr && cursor->len > 0 && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len)));
+           ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len)));
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
@@ -130,7 +130,7 @@ int aws_byte_buf_init_copy_from_cursor(
 
     AWS_ZERO_STRUCT(*dest);
 
-    dest->buffer = (src.len == 0) ? NULL : (uint8_t *)aws_mem_acquire(allocator, src.len);
+    dest->buffer = (src.len > 0) ? (uint8_t *)aws_mem_acquire(allocator, src.len) : NULL;
     if (src.len != 0 && dest->buffer == NULL) {
         return AWS_OP_ERR;
     }
@@ -138,7 +138,7 @@ int aws_byte_buf_init_copy_from_cursor(
     dest->len = src.len;
     dest->capacity = src.len;
     dest->allocator = allocator;
-    if (dest->buffer) {
+    if (src.len > 0) {
         memcpy(dest->buffer, src.ptr, src.len);
     }
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -423,7 +423,7 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     }
 
     if (from->len > 0) {
-        /* This assert teaches clang-tidy and friends that from->ptr and to->buffer cannot be null in a non-empty */
+        /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
         assert(from->ptr);
         assert(to->buffer);
         memcpy(to->buffer + to->len, from->ptr, from->len);
@@ -469,7 +469,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    if (to->capacity - to->len < from->len || to->capacity == 0) {
+    if (to->capacity - to->len < from->len) {
         /*
          * NewCapacity = Max(OldCapacity * 2, OldCapacity + MissingCapacity)
          */
@@ -543,7 +543,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
         to->capacity = new_capacity;
     } else {
         if (from->len > 0) {
-            /* This assert teaches clang-tidy and friends that from->ptr and to->buffer cannot be null in a non-empty */
+            /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
             assert(from->ptr);
             assert(to->buffer);
             memcpy(to->buffer + to->len, from->ptr, from->len);

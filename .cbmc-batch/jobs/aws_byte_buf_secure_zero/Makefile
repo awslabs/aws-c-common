@@ -14,7 +14,10 @@
 ###########
 include ../Makefile.aws_byte_buf
 
-UNWINDSET += memset_impl.0:41
+MAX_BUFFER_SIZE=40
+
+# This bound allows us to reach 100% coverage rate
+UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
 

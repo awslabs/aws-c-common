@@ -41,7 +41,7 @@ void aws_byte_buf_init_copy_harness() {
     if (!aws_byte_buf_init_copy(dest, allocator, &src)) {
         /* assertions */
         assert(aws_byte_buf_is_valid(dest));
-        assert(is_byte_buf_expected_alloc(dest));
+        assert(aws_byte_buf_has_allocator(dest));
         assert(dest->len == src.len);
         assert(dest->capacity == src.capacity);
         assert_bytes_match(dest->buffer, src.buffer, dest->len);

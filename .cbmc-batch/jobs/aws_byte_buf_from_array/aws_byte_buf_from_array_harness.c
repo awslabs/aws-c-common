@@ -29,7 +29,6 @@ void aws_byte_buf_from_array_harness() {
 
     /* assertions */
     assert(aws_byte_buf_is_valid(&buf));
-    size_t debug_len = buf.len;
     assert(buf.len == length);
     assert(buf.capacity == length);
     assert(buf.allocator == NULL);
