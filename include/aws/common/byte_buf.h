@@ -163,6 +163,13 @@ AWS_COMMON_API
 void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf);
 
 /**
+ * Resets the len of the buffer to 0, but does not free the memory. The buffer can then be reused.
+ * Optionally zeroes the contents, if the "zero_contents" flag is true.
+ */
+AWS_COMMON_API
+void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents);
+
+/**
  * Sets all bytes of buffer to zero and resets len to zero.
  */
 AWS_COMMON_API

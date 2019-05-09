@@ -591,6 +591,47 @@ static int s_test_byte_buf_append_lookup_success(struct aws_allocator *allocator
 }
 AWS_TEST_CASE(test_byte_buf_append_lookup_success, s_test_byte_buf_append_lookup_success)
 
+static int s_test_reset_body(struct aws_byte_buf *buffer) {
+    struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
+
+    ASSERT_TRUE(
+        aws_byte_buf_append_with_lookup(buffer, &to_lower_cursor, aws_lookup_table_to_lower_get()) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(buffer->len == s_to_lower_test->len);
+    for (size_t i = 0; i < s_to_lower_test->len; ++i) {
+        uint8_t value = buffer->buffer[i];
+        ASSERT_TRUE(value > 'Z' || value < 'A');
+    }
+    return 0;
+}
+static int s_test_byte_buf_reset(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, s_to_lower_test->len);
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    size_t old_cap = buffer.capacity;
+    aws_byte_buf_reset(&buffer, false);
+    ASSERT_TRUE(buffer.len == 0);
+    ASSERT_TRUE(buffer.capacity == old_cap);
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    old_cap = buffer.capacity;
+    aws_byte_buf_reset(&buffer, true);
+    ASSERT_TRUE(buffer.len == 0);
+    ASSERT_TRUE(buffer.capacity == old_cap);
+    for (size_t i = 0; i < buffer.capacity; i++) {
+        ASSERT_TRUE(buffer.buffer[i] == 0);
+    }
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    aws_byte_buf_clean_up(&buffer);
+    /* check that reset succeeds even on an empty buffer */
+    aws_byte_buf_reset(&buffer, true);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reset, s_test_byte_buf_reset)
+
 static int s_test_byte_buf_append_lookup_failure(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
