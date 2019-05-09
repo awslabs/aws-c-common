@@ -34,17 +34,15 @@ bool has_an_empty_slot(struct aws_hash_table *map, size_t *rval) {
  * are correctly called (i.e. only on valid input, no double free, etc.).  This will be tested in
  * future proofs.
  */
-void hash_proof_destroy_noop(void* p)
-{
-}
+void hash_proof_destroy_noop(void *p) {}
 
 void aws_hash_iter_delete_harness() {
 
     struct aws_hash_table map;
     ensure_allocated_hash_table(&map, MAX_TABLE_SIZE);
     __CPROVER_assume(aws_hash_table_is_valid(&map));
-    __CPROVER_assume(map.p_impl->destroy_key_fn == hash_proof_destroy_noop);
-    __CPROVER_assume(map.p_impl->destroy_value_fn == hash_proof_destroy_noop);
+    __CPROVER_assume(map.p_impl->destroy_key_fn == hash_proof_destroy_noop || !map.p_impl->destroy_key_fn);
+    __CPROVER_assume(map.p_impl->destroy_value_fn == hash_proof_destroy_noop || !map.p_impl->destroy_value_fn);
     size_t empty_slot_idx;
     __CPROVER_assume(has_an_empty_slot(&map, &empty_slot_idx));
     struct hash_table_state *state = map.p_impl;
@@ -57,6 +55,4 @@ void aws_hash_iter_delete_harness() {
     aws_hash_iter_delete(&iter, nondet_bool());
     assert(iter.status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
     assert(aws_hash_iter_is_valid(&iter));
-
-    assert_hash_table_state_is_valid(map.p_impl);
 }
