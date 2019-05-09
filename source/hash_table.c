@@ -231,6 +231,7 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
 }
 
 void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b) {
+    AWS_PRECONDITION(a != b);
     struct aws_hash_table tmp = *a;
     *a = *b;
     *b = tmp;
