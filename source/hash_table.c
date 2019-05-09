@@ -440,7 +440,11 @@ int aws_hash_table_create(
     }
 
     /* Okay, we need to add an entry. Check the load factor first. */
-    if (state->entry_count + 1 > state->max_load) {
+    size_t incr_entry_count;
+    if (aws_add_size_checked(state->entry_count, 1, &incr_entry_count)) {
+        return AWS_OP_ERR;
+    }
+    if (incr_entry_count > state->max_load) {
         rv = s_expand_table(map);
         if (rv != AWS_OP_SUCCESS) {
             /* Any error was already raised in expand_table */
