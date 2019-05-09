@@ -40,7 +40,6 @@ static int s_run_hex_encoding_test_case(
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
-    output.len = 0;
 
     ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
@@ -69,12 +68,7 @@ static int s_run_hex_encoding_test_case(
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
-
-    output.capacity = output_size;
-    if (output.capacity == 0) {
-        output.buffer = NULL;
-    }
-    output.len = 0;
+    aws_byte_buf_reset(&output, false);
 
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
@@ -314,7 +308,6 @@ static int s_run_base64_encoding_test_case(
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
-    output.len = 0;
 
     ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
@@ -349,7 +342,6 @@ static int s_run_base64_encoding_test_case(
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
     output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
-    output.len = 0;
 
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
