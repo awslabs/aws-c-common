@@ -34,7 +34,72 @@
 
 #define AWS_CONCAT(A, B) A ## B
 
-#include <aws/common/assert.h>
+#define AWS_ZERO_STRUCT(object)                                                                                        \
+        do {                                                                                                           \
+            memset(&(object), 0, sizeof(object));                                                                      \
+        } while (0)
+#define AWS_ZERO_ARRAY(array)                                                                                          \
+        do {                                                                                                           \
+            memset((void *)array, 0, sizeof(array));                                                                   \
+        } while (0)
+#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+
+
+#define AWS_CACHE_LINE 64
+
+/**
+ * Format macro for strings of a specified length.
+ * Allows non null-terminated strings to be used with the printf family of functions.
+ * Ex: printf("scheme is " PRInSTR, 4, "http://example.org"); // ouputs: "scheme is http"
+ */
+#define PRInSTR "%.*s"
+
+#if defined(_MSC_VER)
+#    include <malloc.h>
+#    define AWS_ALIGN(alignment) __declspec(align(alignment))
+#    define AWS_LIKELY(x) x
+#    define AWS_UNLIKELY(x) x
+#    define AWS_FORCE_INLINE __forceinline
+#    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * length)
+#    define AWS_DECLSPEC_NORETURN __declspec(noreturn)
+#    define AWS_ATTRIBUTE_NORETURN
+#else
+#    if defined(__GNUC__) || defined(__clang__)
+#        define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
+#        define AWS_TYPE_OF(a) __typeof__(a)
+#        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
+#        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#        define AWS_FORCE_INLINE __attribute__((always_inline))
+#        define AWS_DECLSPEC_NORETURN
+#        define AWS_ATTRIBUTE_NORETURN __attribute__((noreturn))
+#        if defined(__cplusplus)
+#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = alloca(sizeof(type) * length)
+#        else
+#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type name[length];
+#        endif
+#    endif
+#endif
+
+/* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
+ * If visual C++ building in C mode, the restrict definition is __restrict.
+ * This just figures all of that out based on who's including this header file. */
+#if defined(__cplusplus)
+#    define AWS_RESTRICT
+#else
+#    if defined(_MSC_VER)
+#        define AWS_RESTRICT __restrict
+#    else
+#        if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#            define AWS_RESTRICT restrict
+#        else
+#            define AWS_RESTRICT
+#        endif
+#    endif
+#endif
+
+#define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
+
+#include <aws/common/assert.inl>
 
 /**
 * Define function contracts.
@@ -291,67 +356,6 @@ AWS_COMMON_API
 void aws_secure_zero(void *pBuf, size_t bufsize);
 
 AWS_EXTERN_C_END
-
-#define AWS_ZERO_STRUCT(object)                                                                                        \
-        do {                                                                                                           \
-            memset(&(object), 0, sizeof(object));                                                                      \
-        } while (0)
-#define AWS_ZERO_ARRAY(array)                                                                                          \
-        do {                                                                                                           \
-            memset((void *)array, 0, sizeof(array));                                                                   \
-        } while (0)
-#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-
-
-#define AWS_CACHE_LINE 64
-
-/**
- * Format macro for strings of a specified length.
- * Allows non null-terminated strings to be used with the printf family of functions.
- * Ex: printf("scheme is " PRInSTR, 4, "http://example.org"); // ouputs: "scheme is http"
- */
-#define PRInSTR "%.*s"
-
-#if defined(_MSC_VER)
-#    include <malloc.h>
-#    define AWS_ALIGN(alignment) __declspec(align(alignment))
-#    define AWS_LIKELY(x) x
-#    define AWS_UNLIKELY(x) x
-#    define AWS_FORCE_INLINE __forceinline
-#    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * length)
-#else
-#    if defined(__GNUC__) || defined(__clang__)
-#        define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
-#        define AWS_TYPE_OF(a) __typeof__(a)
-#        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
-#        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#        define AWS_FORCE_INLINE __attribute__((always_inline))
-#        if defined(__cplusplus)
-#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = alloca(sizeof(type) * length)
-#        else
-#            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type name[length];
-#        endif
-#    endif
-#endif
-
-/* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
- * If visual C++ building in C mode, the restrict definition is __restrict.
- * This just figures all of that out based on who's including this header file. */
-#if defined(__cplusplus)
-#    define AWS_RESTRICT
-#else
-#    if defined(_MSC_VER)
-#        define AWS_RESTRICT __restrict
-#    else
-#        if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#            define AWS_RESTRICT restrict
-#        else
-#            define AWS_RESTRICT
-#        endif
-#    endif
-#endif
-
-#define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
 enum aws_common_error {
     AWS_ERROR_SUCCESS = 0,

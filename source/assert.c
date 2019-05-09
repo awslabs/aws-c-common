@@ -18,12 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void aws_fatal_assert(int cond, const char *cond_str, const char *file, int line)
+void aws_fatal_assert(const char *cond_str, const char *file, int line)
 {
-    if (AWS_UNLIKELY(cond)) {
-        return;
-    }
-
     aws_debug_break();
     fprintf(stderr, "Fatal error condition occurred in %s:%d: %s\nExiting Application\n", file, line, cond_str);
     aws_backtrace_print(stderr, NULL);

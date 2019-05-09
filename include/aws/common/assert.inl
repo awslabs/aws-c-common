@@ -1,6 +1,3 @@
-#ifndef AWS_COMMON_ASSERT_H
-#define AWS_COMMON_ASSERT_H
-
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -16,28 +13,27 @@
  * permissions and limitations under the License.
  */
 
-#include <stdio.h>
-
-void aws_fatal_assert(int cond, const char *cond_str, const char *file, int line);
+AWS_DECLSPEC_NORETURN void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
 void aws_debug_break(void);
 
 /**
  * Print a backtrace from either the current stack, or (if provided) the current exception/signal
- *  call_site_data is siginfo_t* on POSIX, and LPEXCEPTION_POINTERS on Windows, and can be null 
+ *  call_site_data is siginfo_t* on POSIX, and LPEXCEPTION_POINTERS on Windows, and can be null
  */
 void aws_backtrace_print(FILE *fp, void *call_site_data);
 
 #if defined(DEBUG_BUILD)
-#define AWS_ASSERT(cond)
+#    define AWS_ASSERT(cond)
 #else
-#define AWS_ASSERT(cond) aws_fatal_assert((cond), #cond, __FILE__, __LINE__)
+#    define AWS_ASSERT(cond)                                                                                           \
+        if (!(cond)) {                                                                                                 \
+            aws_fatal_assert(#cond, __FILE__, __LINE__);                                                               \
+        }
 #endif
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
 #define AWS_FATAL_ASSERT(cond)                                                                                         \
     if (!(cond)) {                                                                                                     \
-        aws_fatal_assert(0, #cond, __FILE__, __LINE__);                                                                \
+        aws_fatal_assert(#cond, __FILE__, __LINE__);                                                                   \
     }
-
-#endif /* AWS_COMMON_ASSERT_H */
