@@ -81,24 +81,20 @@ enum aws_hash_iter_status {
     AWS_HASH_ITER_STATUS_READY_FOR_USE,
 };
 
-/* aws_hash_iter has reserved fields of type void*. If this assertion below is true, we can
- * use intptr_t in these fields without issue.
- */
-AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
-
 struct aws_hash_iter {
     const struct aws_hash_table *map;
     struct aws_hash_element element;
     size_t slot;
     size_t limit;
     /* Holds an enum aws_hash_iter_status */
-    intptr_t status;
+    enum aws_hash_iter_status status;
     /*
      * Reserving extra fields for binary compatibility with future expansion of
      * iterator in case hash table implementation changes.
      */
-    void *unused_0;
+    int unused_0;
     void *unused_1;
+    void *unused_2;
 };
 
 /**
