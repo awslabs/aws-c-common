@@ -12,8 +12,9 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-#CBMC_UNWINDSET =
+include ../Makefile.aws_byte_buf
+
+UNWINDSET +=
 
 CBMCFLAGS +=
 

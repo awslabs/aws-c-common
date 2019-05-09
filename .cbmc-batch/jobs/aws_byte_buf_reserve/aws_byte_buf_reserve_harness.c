@@ -23,11 +23,16 @@ void aws_byte_buf_reserve_harness() {
 
     struct aws_byte_buf old = buf;
     size_t requested_capacity;
-    int rval = aws_byte_buf_reserve(&buf, requested_capacity);
 
-    if (rval == AWS_OP_SUCCESS) {
+    if (aws_byte_buf_reserve(&buf, requested_capacity) == AWS_OP_SUCCESS) {
         assert(buf.capacity >= requested_capacity);
+        assert(aws_byte_buf_has_allocator(&buf));
     }
+
     assert(aws_byte_buf_is_valid(&buf));
-    assert(is_byte_buf_expected_alloc(&buf));
+    assert(old.len == buf.len);
+    assert(old.allocator == buf.allocator);
+    if (!buf.buffer) {
+        assert_bytes_match(old.buffer, buf.buffer, buf.len);
+    }
 }

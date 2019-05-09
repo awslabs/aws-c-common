@@ -12,18 +12,18 @@
 # limitations under the License.
 
 ###########
-#NOTE: If we don't use the unwindset, leave it empty
-CBMC_UNWINDSET = --unwindset
-CBMC_UNWINDSET += strlen.0:33
+UNWINDSET +=
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 
-ENTRY = aws_byte_buf_from_c_str_harness
+ENTRY = aws_byte_buf_from_empty_array_harness
 ###########
 
 include ../Makefile.common
