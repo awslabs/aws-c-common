@@ -115,6 +115,7 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
     aws_linked_list_init(&list);
 
     ASSERT_TRUE(aws_linked_list_empty(&list));
+    ASSERT_PTR_EQUALS(aws_linked_list_begin(&list), aws_linked_list_end(&list));
 
     struct int_value first = (struct int_value){.value = 1};
     struct int_value second = (struct int_value){.value = 2};
@@ -127,6 +128,7 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
     aws_linked_list_push_back(&list, &fourth.node);
 
     ASSERT_FALSE(aws_linked_list_empty(&list));
+    ASSERT_FALSE(aws_linked_list_begin(&list) == aws_linked_list_end(&list));
 
     int count = 1;
     for (struct aws_linked_list_node *iter = aws_linked_list_begin(&list); iter != aws_linked_list_end(&list);
@@ -135,6 +137,42 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
         int item = AWS_CONTAINER_OF(iter, struct int_value, node)->value;
         ASSERT_INT_EQUALS(count, item);
         ++count;
+    }
+
+    return 0;
+}
+
+static int s_test_linked_list_reverse_iteration(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list list;
+
+    aws_linked_list_init(&list);
+
+    ASSERT_TRUE(aws_linked_list_empty(&list));
+    ASSERT_PTR_EQUALS(aws_linked_list_rbegin(&list), aws_linked_list_rend(&list));
+
+    struct int_value first = (struct int_value){.value = 1};
+    struct int_value second = (struct int_value){.value = 2};
+    struct int_value third = (struct int_value){.value = 3};
+    struct int_value fourth = (struct int_value){.value = 4};
+
+    aws_linked_list_push_back(&list, &first.node);
+    aws_linked_list_push_back(&list, &second.node);
+    aws_linked_list_push_back(&list, &third.node);
+    aws_linked_list_push_back(&list, &fourth.node);
+
+    ASSERT_FALSE(aws_linked_list_empty(&list));
+    ASSERT_FALSE(aws_linked_list_rbegin(&list) == aws_linked_list_rend(&list));
+
+    int count = 4;
+    for (struct aws_linked_list_node *iter = aws_linked_list_rbegin(&list); iter != aws_linked_list_rend(&list);
+         iter = aws_linked_list_prev(iter)) {
+
+        int item = AWS_CONTAINER_OF(iter, struct int_value, node)->value;
+        ASSERT_INT_EQUALS(count, item);
+        --count;
     }
 
     return 0;
@@ -232,4 +270,5 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
 AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)
+AWS_TEST_CASE(linked_list_reverse_iteration, s_test_linked_list_reverse_iteration)
 AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)

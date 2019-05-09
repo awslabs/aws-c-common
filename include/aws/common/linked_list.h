@@ -70,10 +70,34 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const str
 }
 
 /**
+ * Returns a pointer for the last element in the list.
+ * Used to begin iterating the list in reverse. Ex:
+ *   for (i = aws_linked_list_rbegin(list); i != aws_linked_list_rend(list); i = aws_linked_list_prev(i)) {...}
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct aws_linked_list *list) {
+    return list->tail.prev;
+}
+
+/**
+ * Returns the pointer to one before the first element in the list.
+ * Used to end iterating the list in reverse.
+ */
+AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const struct aws_linked_list *list) {
+    return &list->head;
+}
+
+/**
  * Returns the next element in the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
     return node->next;
+}
+
+/**
+ * Returns the previous element in the list.
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_prev(const struct aws_linked_list_node *node) {
+    return node->prev;
 }
 
 /**
