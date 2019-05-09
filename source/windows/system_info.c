@@ -25,7 +25,9 @@ size_t aws_system_info_processor_count(void) {
 
 void aws_debug_break()
 {
+#ifdef DEBUG_BUILD
     __debugbreak();
+#endif
 }
 
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
