@@ -81,45 +81,53 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         return;
     }
 
-    /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>] */
-    /* start at 1 to skip the current frame (this function) */
+    /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
+     *                or: <exe-or-shared-lib> [0x<addr>]
+     * start at 1 to skip the current frame (this function) */
     for (int frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         const char *frame_info = symbols[frame_idx];
-        long open_paren_pos = strstr(symbols[frame_idx], "(") - symbols[frame_idx];
-        long close_paren_pos = strstr(symbols[frame_idx] + open_paren_pos, ")") - symbols[frame_idx];
-        if (open_paren_pos <= 0 || close_paren_pos < 0) {
-            goto unresolved;
+        const char *open_paren = strstr(frame_info, "(");
+        const char *close_paren = strstr(frame_info, ")");
+        const char *exe_end = open_paren;
+        /* there may not be a function in parens, or parens at all */
+        if (open_paren == NULL || close_paren == NULL) {
+            exe_end = strstr(frame_info, "[") - 1;
+        }
+        if (open_paren >= close_paren || !exe_end) {
+            goto parse_failed;
         }
 
         char exe[PATH_MAX] = {0};
-        strncpy(exe, symbols[frame_idx], open_paren_pos);
-        exe[open_paren_pos] = 0;
+        ptrdiff_t exe_len = exe_end - frame_info;
+        strncpy(exe, frame_info, exe_len);
 
-        long function_len = close_paren_pos - (open_paren_pos + 1);
-        if (function_len) { /* dynamic symbol was found */
-            goto unresolved;
+        long function_len = close_paren - open_paren - 1;
+        if (function_len > 0) { /* dynamic symbol was found */
+            goto no_resolve_needed;
         }
 
-        const char *addr_start = strstr(symbols[frame_idx], "[") + 1;
+        char addr[16] = {0};
+        const char *addr_start = strstr(exe_end, "[") + 1;
         char *addr_end = strstr(addr_start, "]");
         if (!addr_end) {
-            goto unresolved;
+            goto parse_failed;
         }
-        *addr_end = 0;
+        strncpy(addr, addr_start, addr_end - addr_start);
 
         /* TODO: Emulate libunwind */
         char cmd[1024] = {0};
-        snprintf(cmd, 1024, "addr2line -afips -e %s %s", exe, addr_start);
+        snprintf(cmd, 1024, "addr2line -afips -e %s %s", exe, addr);
         FILE *out = popen(cmd, "r");
         if (!out) {
-            goto unresolved;
+            goto parse_failed;
         }
         char output[1024];
         fgets(output, sizeof(output), out);
         pclose(out);
         frame_info = output;
-
-    unresolved:
+    
+    no_resolve_needed:
+    parse_failed:
         fprintf(fp, "%s%s", frame_info, (frame_info == symbols[frame_idx]) ? "\n" : "");
     }
     free(symbols);
