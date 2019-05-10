@@ -14,12 +14,15 @@
  */
 
 AWS_DECLSPEC_NORETURN void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
+
+AWS_COMMON_API
 void aws_debug_break(void);
 
 /**
  * Print a backtrace from either the current stack, or (if provided) the current exception/signal
  *  call_site_data is siginfo_t* on POSIX, and LPEXCEPTION_POINTERS on Windows, and can be null
  */
+AWS_COMMON_API
 void aws_backtrace_print(FILE *fp, void *call_site_data);
 
 #if defined(DEBUG_BUILD)
