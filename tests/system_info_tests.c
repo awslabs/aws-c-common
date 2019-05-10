@@ -73,6 +73,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
         found_file_line |= strstr(buffer, fileline) != NULL;
     }
 
+    ASSERT_INT_EQUALS(line, __LINE__);
     ASSERT_TRUE(found_file_line);
 #endif
 
