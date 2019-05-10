@@ -27,6 +27,7 @@ void aws_array_list_capacity_harness() {
     __CPROVER_assume(aws_array_list_is_bounded(&list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
     ensure_array_list_has_allocated_data_member(&list);
     __CPROVER_assume(aws_array_list_is_valid(&list));
+    __CPROVER_assume(list.item_size > 0);
 
     /* save current state of the data structure */
     struct aws_array_list old = list;
