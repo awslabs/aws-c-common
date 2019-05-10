@@ -33,6 +33,14 @@
 #    define AWS_STATIC_IMPL static inline
 #endif
 
+#ifdef __cplusplus
+#    define AWS_EXTERN_C_BEGIN extern "C" {
+#    define AWS_EXTERN_C_END }
+#else
+#    define AWS_EXTERN_C_BEGIN
+#    define AWS_EXTERN_C_END
+#endif
+
 #define AWS_CONCAT(A, B) A ## B
 
 #define AWS_ZERO_STRUCT(object)                                                                                        \
@@ -232,14 +240,6 @@ typedef long aws_off_t;
 #endif
 
 AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
-
-#ifdef __cplusplus
-#    define AWS_EXTERN_C_BEGIN extern "C" {
-#    define AWS_EXTERN_C_END }
-#else
-#    define AWS_EXTERN_C_BEGIN
-#    define AWS_EXTERN_C_END
-#endif
 
 /*
  * Due to the recursive inclusion of error.h and common.h, we need to define these

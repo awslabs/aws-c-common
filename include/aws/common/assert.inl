@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+AWS_EXTERN_C_BEGIN
+
 AWS_DECLSPEC_NORETURN void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
 
 AWS_COMMON_API
@@ -24,6 +26,8 @@ void aws_debug_break(void);
  */
 AWS_COMMON_API
 void aws_backtrace_print(FILE *fp, void *call_site_data);
+
+AWS_EXTERN_C_END
 
 #if defined(DEBUG_BUILD)
 #    define AWS_ASSERT(cond)

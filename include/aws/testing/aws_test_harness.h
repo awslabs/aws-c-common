@@ -347,7 +347,9 @@ struct aws_test_harness {
 #include <windows.h>
 #include <dbghelp.h>
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
+#if !defined(AWS_HEADER_CHECKER)
     aws_backtrace_print(stderr, exception_pointers);
+#endif
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #elif defined(AWS_HAVE_EXECINFO)
@@ -355,8 +357,9 @@ static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exceptio
 static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
     (void)sig;
     (void)user_data;
-
+#if !defined(AWS_HEADER_CHECKER)
     aws_backtrace_print(stderr, sig_info);
+#endif
     exit(-1);
 }
 #endif
