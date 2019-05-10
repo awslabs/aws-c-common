@@ -27,6 +27,7 @@ void aws_priority_queue_capacity_harness() {
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
     ensure_priority_queue_has_allocated_members(&queue);
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
+    __CPROVER_assume(queue.container.item_size > 0);
 
     /* save current state of the container structure */
     struct aws_array_list old_container = queue.container;
