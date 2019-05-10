@@ -41,7 +41,8 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     char tmp_filename[] = "backtraceXXXXXX";
     FILE *tmp_file = NULL;
 #if defined(_WIN32)
-    char *tmpname = _mktemp_s(tmp_filename, sizeof(tmp_filename));
+    errno_t tmp_err = _mktemp_s(tmp_filename, sizeof(tmp_filename));
+    ASSERT_INT_EQUALS(0, tmp_err);
     errno_t open = fopen_s(&tmp_file, tmpname, "r+");
     ASSERT_INT_EQUALS(0, open);
 #else
