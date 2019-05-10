@@ -210,7 +210,8 @@ static int s_test_buffer_init_copy_fn(struct aws_allocator *allocator, void *ctx
 
     ASSERT_SUCCESS(aws_byte_buf_init_copy(&dest, allocator, &src));
     ASSERT_TRUE(aws_byte_buf_eq(&src, &dest));
-    ASSERT_INT_EQUALS(src.len, dest.capacity);
+    ASSERT_INT_EQUALS(src.len, strlen("test_string"));
+    ASSERT_INT_EQUALS(src.capacity, sizeof("test_string"));
     ASSERT_PTR_EQUALS(allocator, dest.allocator);
     aws_byte_buf_clean_up(&dest);
     return 0;
