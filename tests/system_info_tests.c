@@ -32,6 +32,10 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
 
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
 
+#if defined(_WIN32)
+#include <io.h>
+#endif
+
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
     char tmp_filename[] = "backtraceXXXXXX";
     FILE *tmp_file = NULL;
