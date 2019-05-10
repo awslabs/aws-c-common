@@ -65,6 +65,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
      * in both directions depending on compiler, so we check a range around the call site __LINE__ 
+     * The line number can also be ? on old compilers
      */
     char fileline[4096];
     bool found_file_line = false;
@@ -72,8 +73,11 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
         snprintf(fileline, sizeof(fileline), "%s:%d", file, lineno);
         found_file_line |= strstr(buffer, fileline) != NULL;
     }
+    if (!found_file_line) {
+        snprintf(fileline, sizeof(fileline), "%s:?", file);
+        found_file_line = strstr(buffer, fileline) != NULL;
+    }
 
-    ASSERT_STR_EQUALS("LIES", buffer);
     ASSERT_TRUE(found_file_line);
 #endif
 
