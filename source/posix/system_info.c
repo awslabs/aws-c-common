@@ -92,9 +92,9 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         /* there may not be a function in parens, or parens at all */
         if (open_paren == NULL || close_paren == NULL) {
             exe_end = strstr(frame_info, "[") - 1;
-        }
-        if (open_paren >= close_paren || !exe_end) {
-            goto parse_failed;
+            if (!exe_end) {
+                goto parse_failed;
+            }
         }
 
         char exe[PATH_MAX] = {0};
