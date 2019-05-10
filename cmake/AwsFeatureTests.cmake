@@ -48,4 +48,4 @@ check_c_source_compiles("
 #include <execinfo.h>
 int main() {
     return 0;
-}" AWS_HAS_EXECINFO)
+}" AWS_HAVE_EXECINFO)

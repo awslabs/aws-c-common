@@ -343,13 +343,14 @@ struct aws_test_harness {
     int suppress_memcheck;
 };
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
     aws_backtrace_print(stderr, exception_pointers);
     return EXCEPTION_EXECUTE_HANDLER;
 }
-#elif AWS_HAS_EXECINFO
+#elif defined(AWS_HAVE_EXECINFO)
+#include <signal.h>
 static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
     (void)sig;
     (void)user_data;
@@ -362,9 +363,9 @@ static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     assert(harness->run);
 
-#ifdef _WIN32
+#if defined(_WIN32)
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
-#elif AWS_HAS_EXECINFO
+#elif defined(AWS_HAVE_EXECINFO)
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);

@@ -33,7 +33,47 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
-    aws_backtrace_print(stdout, NULL);
+    char tmp_filename[] = "backtraceXXXXXX";
+    int tmp_fileno = mkstemp(tmp_filename);
+    ASSERT_TRUE(tmp_fileno > -1);
+    FILE *tmp_file = fdopen(tmp_fileno, "r+");
+    ASSERT_NOT_NULL(tmp_file);
+
+    int line = 0; /* captured on next line to match call site */
+    aws_backtrace_print(tmp_file, (line = __LINE__, NULL));
+    fflush(tmp_file);
+
+    fseek(tmp_file, 0L, SEEK_END);
+    long file_size = ftell(tmp_file);
+    fseek(tmp_file, 0L, SEEK_SET);
+    char *buffer = aws_mem_acquire(allocator, file_size);
+    ASSERT_NOT_NULL(buffer);
+    ASSERT_INT_EQUALS(file_size, fread(buffer, 1, file_size, tmp_file));
+    fclose(tmp_file);
+
+#if defined(AWS_HAVE_EXECINFO)
+    /* ensure that this file/function is found */
+    char *file = __FILE__;
+    char *next = NULL;
+    /* strip path info, just filename will be found */
+    while ((next = strstr(file, "/"))) {
+        file = next + 1;
+    }
+    ASSERT_NOT_NULL(strstr(buffer, file));
+    ASSERT_NOT_NULL(strstr(buffer, __func__));
+
+    /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
+     * in both directions depending on compiler, so we check a range around the call site __LINE__ 
+     */
+    char fileline[4096];
+    bool found_file_line = false;
+    for (int lineno = line - 1; lineno <= line + 1; ++lineno) {
+        snprintf(fileline, sizeof(fileline), "%s:%d", file, lineno);
+        found_file_line |= strstr(buffer, fileline) != NULL;
+    }
+
+    ASSERT_TRUE(found_file_line);
+#endif
     return 0;
 }
 

@@ -59,7 +59,7 @@ void aws_debug_break(void)
 #endif /* DEBUG_BUILD */
 }
 
-#if defined(AWS_HAS_EXECINFO)
+#if defined(AWS_HAVE_EXECINFO)
 #include <execinfo.h>
 #include <limits.h>
 
@@ -132,4 +132,4 @@ void aws_backtrace_print(FILE *fp, void *call_site_data)
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     fprintf(fp, "No call stack information available\n");
 }
-#endif /* AWS_HAS_EXECINFO */
+#endif /* AWS_HAVE_EXECINFO */
