@@ -23,7 +23,7 @@
  * Runtime: 4.5s
  */
 void aws_hash_ptr_harness() {
-  void* ptr;
-  /* This function has no pre or post conditions */
-  uint64_t rval = aws_hash_ptr(ptr);
+    void *ptr;
+    /* This function has no pre or post conditions */
+    uint64_t rval = aws_hash_ptr(ptr);
 }

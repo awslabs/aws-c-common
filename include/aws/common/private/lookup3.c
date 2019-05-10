@@ -58,6 +58,11 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #pragma warning(disable:4127) /*Disable "conditional expression is constant" */
 #endif /* _MSC_VER */
 
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif /* CBMC */
+
 /*
  * My best guess at if you are big-endian or little-endian.  This may
  * need adjustment.
@@ -1017,3 +1022,7 @@ int main()
 #if _MSC_VER
 #pragma warning(pop)
 #endif /* _MSC_VER */
+
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif /* CBMC */
