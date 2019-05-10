@@ -74,6 +74,8 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
     ASSERT_TRUE(found_file_line);
 #endif
+
+    aws_mem_release(allocator, buffer);
     return 0;
 }
 
