@@ -43,7 +43,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 #if defined(_WIN32)
     errno_t tmp_err = _mktemp_s(tmp_filename, sizeof(tmp_filename));
     ASSERT_INT_EQUALS(0, tmp_err);
-    errno_t open = fopen_s(&tmp_file, tmpname, "r+");
+    errno_t open = fopen_s(&tmp_file, tmp_filename, "r+");
     ASSERT_INT_EQUALS(0, open);
 #else
     int tmp_fileno = mkstemp(tmp_filename);
