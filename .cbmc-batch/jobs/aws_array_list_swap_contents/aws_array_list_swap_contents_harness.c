@@ -36,6 +36,9 @@ void aws_array_list_swap_contents_harness() {
     __CPROVER_assume(from.alloc != NULL);
     __CPROVER_assume(to.alloc != NULL);
 
+    __CPROVER_assume(from.item_size > 0);
+    __CPROVER_assume(to.item_size > 0);
+
     /* save current state of the data structure */
     struct aws_array_list old_from = from;
     struct store_byte_from_buffer old_byte_from;

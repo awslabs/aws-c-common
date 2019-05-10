@@ -34,6 +34,7 @@ void aws_array_list_copy_harness() {
     __CPROVER_assume(aws_array_list_is_valid(&to));
 
     __CPROVER_assume(from.item_size == to.item_size);
+    __CPROVER_assume(from.data != NULL);
 
     /* perform operation under verification */
     if (!aws_array_list_copy(&from, &to)) {
