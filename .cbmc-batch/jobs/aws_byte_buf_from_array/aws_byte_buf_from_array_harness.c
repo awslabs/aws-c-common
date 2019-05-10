@@ -16,19 +16,23 @@
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void aws_byte_buf_from_c_str_harness() {
-    size_t len = nondet_size_t();
+void aws_byte_buf_from_array_harness() {
+    /* parameters */
+    size_t length;
+    uint8_t *array;
 
-    char *c_str;
-    ASSUME_VALID_MEMORY_COUNT(c_str, len);
+    /* assumptions */
+    ASSUME_VALID_MEMORY_COUNT(array, length);
 
-    /* Need *c_str to be a '\0'-terminated C string, so assume an arbitrary character is 0 */
-    int index = nondet_int();
-    __CPROVER_assume(index >= 0 && index < len);
-    c_str[index] = 0;
+    /* operation under verification */
+    struct aws_byte_buf buf = aws_byte_buf_from_array(array, length);
 
-    /* Assume the length of the string is bounded by some max length */
-    __CPROVER_assume(len <= MAX_STR_LEN);
-
-    aws_byte_buf_from_c_str(c_str);
+    /* assertions */
+    assert(aws_byte_buf_is_valid(&buf));
+    assert(buf.len == length);
+    assert(buf.capacity == length);
+    assert(buf.allocator == NULL);
+    if (buf.buffer) {
+        assert_bytes_match(buf.buffer, array, buf.len);
+    }
 }

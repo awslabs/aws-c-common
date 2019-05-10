@@ -71,7 +71,11 @@ static int s_run_hex_encoding_test_case(
     ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
 
     output.capacity = output_size;
+    if (output.capacity == 0) {
+        output.buffer = NULL;
+    }
     output.len = 0;
+
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size - 1);
     ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
 
@@ -304,6 +308,7 @@ static int s_run_base64_encoding_test_case(
     ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
 
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_size);
+
     struct aws_byte_buf allocation;
     ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
@@ -333,7 +338,6 @@ static int s_run_base64_encoding_test_case(
     aws_byte_buf_clean_up(&allocation);
 
     /* Part 2: decoding */
-
     struct aws_byte_cursor expected_cur = aws_byte_cursor_from_array(expected, expected_size - 1);
     ASSERT_SUCCESS(
         aws_base64_compute_decoded_len(&expected_cur, &output_size),

@@ -317,7 +317,7 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 /**
  * Copies from to to while converting bytes via the passed in lookup table.
  * If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
- * returned. dest->len will contain the amount of data actually copied to dest.
+ * returned. to->len will contain its original size plus the amount of data actually copied to to.
  *
  * from and to should not be the same buffer (overlap is not handled)
  * lookup_table must be at least 256 bytes
@@ -458,20 +458,24 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, size_t len) {
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len));
     struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)bytes;
+    buf.buffer = (len > 0) ? (uint8_t *)bytes : NULL;
     buf.len = len;
     buf.capacity = len;
     buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
     return buf;
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *bytes, size_t capacity) {
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, capacity));
     struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)bytes;
+    buf.buffer = (capacity > 0) ? (uint8_t *)bytes : NULL;
     buf.len = 0;
     buf.capacity = capacity;
     buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
     return buf;
 }
 

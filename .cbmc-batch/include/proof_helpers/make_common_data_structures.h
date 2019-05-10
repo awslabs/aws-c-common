@@ -27,23 +27,20 @@
 
 #include <stdlib.h>
 
-#define MAX_STR_LEN 2
-#define MAX_BUF_LEN 2
-
-#define ASSUME_VALID_MEMORY(ptr) ptr = malloc(sizeof(*(ptr)))
-#define ASSUME_VALID_MEMORY_COUNT(ptr, count) ptr = malloc(sizeof(*(ptr)) * (count))
+#define ASSUME_VALID_MEMORY(ptr) ptr = bounded_malloc(sizeof(*(ptr)))
+#define ASSUME_VALID_MEMORY_COUNT(ptr, count) ptr = bounded_malloc(sizeof(*(ptr)) * (count))
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
 #define ASSUME_CAN_FAIL_ALLOCATOR(allocator) allocator = can_fail_allocator()
 
 /*
  * Checks whether aws_byte_buf is bounded by max_size
  */
-bool is_bounded_byte_buf(const struct aws_byte_buf *const buf, const size_t max_size);
+bool aws_byte_buf_is_bounded(const struct aws_byte_buf *const buf, const size_t max_size);
 
 /*
  * Checks whether aws_byte_buf has the correct allocator
  */
-bool is_byte_buf_expected_alloc(const struct aws_byte_buf *const buf);
+bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf);
 
 /*
  * Ensures aws_byte_buf has a proper allocated buffer member
@@ -53,7 +50,7 @@ void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf)
 /*
  * Checks whether aws_byte_cursor is bounded by max_size
  */
-bool is_bounded_byte_cursor(const struct aws_byte_cursor *const cursor, const size_t max_size);
+bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size);
 
 /*
  * Ensures aws_byte_cursor has a proper allocated buffer member

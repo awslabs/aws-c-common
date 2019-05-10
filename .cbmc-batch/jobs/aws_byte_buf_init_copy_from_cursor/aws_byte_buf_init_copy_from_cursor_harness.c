@@ -19,27 +19,28 @@
 
 void aws_byte_buf_init_copy_from_cursor_harness() {
     /* data structure */
-    struct aws_byte_buf *buf;
+    struct aws_byte_buf buf;
 
     /* parameters */
     struct aws_allocator *allocator;
     struct aws_byte_cursor cursor;
 
     /* assumptions */
-    __CPROVER_assume(is_bounded_byte_cursor(&cursor, MAX_BUFFER_SIZE));
+    __CPROVER_assume(aws_byte_cursor_is_bounded(&cursor, MAX_BUFFER_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&cursor);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cursor));
-    ASSUME_VALID_MEMORY(buf);
+
     ASSUME_CAN_FAIL_ALLOCATOR(allocator);
 
-    if (!aws_byte_buf_init_copy_from_cursor(buf, allocator, cursor)) {
+    if (aws_byte_buf_init_copy_from_cursor(&buf, allocator, cursor) == AWS_OP_SUCCESS) {
         /* assertions */
-        assert(aws_byte_buf_is_valid(buf));
-        assert(buf->len == cursor.len);
-        assert(buf->capacity == cursor.len);
-        assert(buf->allocator == allocator);
-        assert_bytes_match(buf->buffer, cursor.ptr, buf->len);
+        assert(aws_byte_buf_is_valid(&buf));
+        assert(aws_byte_cursor_is_valid(&cursor));
+        assert(buf.len == cursor.len);
+        assert(buf.capacity == cursor.len);
+        assert(buf.allocator == allocator);
+        if (buf.buffer) {
+            assert_bytes_match(buf.buffer, cursor.ptr, buf.len);
+        }
     }
-    /* assertions */
-    assert(aws_byte_cursor_is_valid(&cursor));
 }

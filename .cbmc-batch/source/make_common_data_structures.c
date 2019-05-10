@@ -20,20 +20,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-bool is_bounded_byte_buf(const struct aws_byte_buf *const buf, const size_t max_size) {
-    return buf->capacity <= max_size;
+bool aws_byte_buf_is_bounded(const struct aws_byte_buf *const buf, const size_t max_size) {
+    return (buf->capacity <= max_size);
 }
 
-bool is_byte_buf_expected_alloc(const struct aws_byte_buf *const buf) {
+bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf) {
     return (buf->allocator == can_fail_allocator());
 }
 
 void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf) {
-    buf->allocator = can_fail_allocator();
+    buf->allocator = (nondet_bool()) ? NULL : can_fail_allocator();
     buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
-bool is_bounded_byte_cursor(const struct aws_byte_cursor *const cursor, const size_t max_size) {
+bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size) {
     return cursor->len <= max_size;
 }
 

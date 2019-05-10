@@ -89,8 +89,8 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
 }
 
 int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
-    assert(to_encode->ptr);
-    assert(output->buffer);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(to_encode));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
 
     size_t encoded_len = 0;
 
@@ -175,8 +175,8 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
 }
 
 int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
-    assert(to_decode->ptr);
-    assert(output->buffer);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(to_decode));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
 
     size_t decoded_length = 0;
 
