@@ -34,9 +34,16 @@ AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_l
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
     char tmp_filename[] = "backtraceXXXXXX";
+    FILE *tmp_file = NULL;
+#if defined(_WIN32)
+    char *tmpname = _mktemp(tmp_filename);
+    tmp_file = fopen(tmpname, "r+");
+#else
     int tmp_fileno = mkstemp(tmp_filename);
     ASSERT_TRUE(tmp_fileno > -1);
-    FILE *tmp_file = fdopen(tmp_fileno, "r+");
+    tmp_file = fdopen(tmp_fileno, "r+");
+#endif
+    
     ASSERT_NOT_NULL(tmp_file);
 
     int line = 0; /* captured on next line to match call site */
