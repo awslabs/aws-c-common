@@ -19,23 +19,6 @@
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
-bool has_an_empty_slot(struct aws_hash_table *map, size_t *rval) {
-    struct hash_table_state *state = map->p_impl;
-    __CPROVER_assume(state->entry_count > 0);
-    size_t empty_slot_idx;
-    __CPROVER_assume(empty_slot_idx < state->size);
-    *rval = empty_slot_idx;
-    return state->slots[empty_slot_idx].hash_code == 0;
-}
-
-/**
- * A correct implementation of the hash_destroy function should never have a memory
- * error on valid input. There is the question of whether the destroy functions themselves
- * are correctly called (i.e. only on valid input, no double free, etc.).  This will be tested in
- * future proofs.
- */
-void hash_proof_destroy_noop(void *p) {}
-
 void aws_hash_iter_delete_harness() {
 
     struct aws_hash_table map;
@@ -44,7 +27,7 @@ void aws_hash_iter_delete_harness() {
     __CPROVER_assume(map.p_impl->destroy_key_fn == hash_proof_destroy_noop || !map.p_impl->destroy_key_fn);
     __CPROVER_assume(map.p_impl->destroy_value_fn == hash_proof_destroy_noop || !map.p_impl->destroy_value_fn);
     size_t empty_slot_idx;
-    __CPROVER_assume(has_an_empty_slot(&map, &empty_slot_idx));
+    __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     struct hash_table_state *state = map.p_impl;
 
     struct aws_hash_iter iter;

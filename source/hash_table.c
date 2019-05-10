@@ -56,6 +56,7 @@ static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry 
     AWS_PRECONDITION(hash_table_state_is_valid(map));
     size_t index = entry - map->slots;
     AWS_POSTCONDITION(index < map->size);
+    AWS_PRECONDITION(hash_table_state_is_valid(map));
     return index;
 }
 
@@ -694,9 +695,8 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
-    AWS_PRECONDITION(iter);
-    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     /*
      * SIZE_MAX is a valid (non-terminal) value for iter->slot in the event that
      * we delete slot 0. See comments in aws_hash_iter_delete.

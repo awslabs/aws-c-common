@@ -12,8 +12,9 @@
 # limitations under the License.
 
 ###########
+# ensure_allocated_hash_table expects some max table size
+# using SIZE_MAX leaves it maximally unconstrained.
 DEFINES += -DMAX_TABLE_SIZE=SIZE_MAX 
-
 
 CBMCFLAGS +=
 

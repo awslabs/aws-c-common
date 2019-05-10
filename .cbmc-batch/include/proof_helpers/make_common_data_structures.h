@@ -133,3 +133,19 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
  * Makes a valid c string, with as much nondet as possible, len < max
  */
 const char *make_arbitrary_c_str(size_t max_size);
+
+/**
+ * A correct hash table has max_load < size.  This means that there is always one slot empty.
+ * This function is useful for assuming that there is some (nondet) slot which is empty
+ * which is necessary to prove termination for hash-table deletion code.  Should only be used inside
+ * an assume because of the way it does nondet.
+ */
+bool aws_hash_table_has_an_empty_slot(struct aws_hash_table *map, size_t *rval);
+
+/**
+ * A correct implementation of the hash_destroy function should never have a memory
+ * error on valid input. There is the question of whether the destroy functions themselves
+ * are correctly called (i.e. only on valid input, no double free, etc.).  Testing this would
+ * require a stronger function here.
+ */
+void hash_proof_destroy_noop(void *p);

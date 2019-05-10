@@ -159,3 +159,20 @@ const char *make_arbitrary_c_str(size_t max_size) {
     __CPROVER_assume(str[cap - 1] == 0);
     return str;
 }
+
+bool aws_hash_table_has_an_empty_slot(struct aws_hash_table *map, size_t *rval) {
+    struct hash_table_state *state = map->p_impl;
+    __CPROVER_assume(state->entry_count > 0);
+    size_t empty_slot_idx;
+    __CPROVER_assume(empty_slot_idx < state->size);
+    *rval = empty_slot_idx;
+    return state->slots[empty_slot_idx].hash_code == 0;
+}
+
+/**
+ * A correct implementation of the hash_destroy function should never have a memory
+ * error on valid input. There is the question of whether the destroy functions themselves
+ * are correctly called (i.e. only on valid input, no double free, etc.).  This will be tested in
+ * future proofs.
+ */
+void hash_proof_destroy_noop(void *p) {}
