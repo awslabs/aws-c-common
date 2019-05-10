@@ -44,10 +44,14 @@ size_t aws_system_info_processor_count(void) {
 
 #include <signal.h>
 
+#ifndef __has_builtin
+#   define __has_builtin(x) 0
+#endif
+
 void aws_debug_break(void)
 {
 #ifdef DEBUG_BUILD
-#   if defined(__clang__) && defined(__has_builtin) && __has_builtin(__builtin_debugtrap)
+#if __has_builtin(__builtin_debugtrap)
     __builtin_debugtrap();
 #   else
     raise(SIGTRAP);
