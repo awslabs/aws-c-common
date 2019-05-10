@@ -20,7 +20,6 @@
 MAX_STRING_SIZE ?= 256
 DEFINES += -DMAX_STRING_SIZE=$(MAX_STRING_SIZE) 
 
-UNWINDSET += strlen.0:$(shell echo $$(( $(MAX_STRING_SIZE) + 1)))
 UNWINDSET += hashlittle2.2:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
 
 CBMCFLAGS +=
@@ -32,7 +31,7 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-ENTRY = aws_hash_c_string_harness
+ENTRY = aws_hash_string_harness
 ###########
 
 include ../Makefile.common
