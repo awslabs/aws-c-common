@@ -50,7 +50,6 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     ASSERT_TRUE(tmp_fileno > -1);
     tmp_file = fdopen(tmp_fileno, "r+");
 #endif
-
     ASSERT_NOT_NULL(tmp_file);
 
     int line = 0; /* captured on next line to match call site */
