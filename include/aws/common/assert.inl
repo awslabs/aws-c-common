@@ -29,18 +29,26 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 
 AWS_EXTERN_C_END
 
-#if defined(DEBUG_BUILD)
-#    define AWS_ASSERT(cond)
-#else
+#if defined(CBMC)
+#   define AWS_ASSERT(cond) assert(cond)
+#elif defined(DEBUG_BUILD)
 #    define AWS_ASSERT(cond)                                                                                           \
         if (!(cond)) {                                                                                                 \
             aws_fatal_assert(#cond, __FILE__, __LINE__);                                                               \
         }
+#else
+#    define AWS_ASSERT(cond)
 #endif
+
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
+
+#if defined(CBMC)
+#define AWS_FATAL_ASSERT(cond) assert(cond)
+#else
 #define AWS_FATAL_ASSERT(cond)                                                                                         \
     if (!(cond)) {                                                                                                     \
         aws_fatal_assert(#cond, __FILE__, __LINE__);                                                                   \
     }
+#endif
