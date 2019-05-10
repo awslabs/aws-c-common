@@ -345,6 +345,7 @@ struct aws_test_harness {
 
 #if defined(_WIN32)
 #include <windows.h>
+#include <dbghelp.h>
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
     aws_backtrace_print(stderr, exception_pointers);
     return EXCEPTION_EXECUTE_HANDLER;
