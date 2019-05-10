@@ -32,7 +32,7 @@ void aws_priority_queue_init_static_harness() {
     /* assumptions */
     ASSUME_VALID_MEMORY(queue);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
-    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
