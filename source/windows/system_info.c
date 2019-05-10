@@ -23,8 +23,7 @@ size_t aws_system_info_processor_count(void) {
     return info.dwNumberOfProcessors;
 }
 
-void aws_debug_break()
-{
+void aws_debug_break() {
 #ifdef DEBUG_BUILD
     __debugbreak();
 #endif
@@ -63,13 +62,12 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #    define SymGetLineFromAddrName "SymGetLineFromAddr"
 #endif
 
-void aws_backtrace_print(FILE *fp, void *call_site_data)
-{
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
     struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
     if (exception_pointers) {
         fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     }
-    
+
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
     if (!dbghelp) {
         fprintf(stderr, "Failed to load DbgHelp.dll.\n");

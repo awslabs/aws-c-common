@@ -33,7 +33,7 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
 
 #if defined(_WIN32)
-#include <io.h>
+#    include <io.h>
 #endif
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
@@ -50,7 +50,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     ASSERT_TRUE(tmp_fileno > -1);
     tmp_file = fdopen(tmp_fileno, "r+");
 #endif
-    
+
     ASSERT_NOT_NULL(tmp_file);
 
     int line = 0; /* captured on next line to match call site */
@@ -78,7 +78,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     ASSERT_NOT_NULL(strstr(buffer, __func__));
 
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
-     * in both directions depending on compiler, so we check a range around the call site __LINE__ 
+     * in both directions depending on compiler, so we check a range around the call site __LINE__
      * The line number can also be ? on old compilers
      */
     char fileline[4096];

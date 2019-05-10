@@ -45,28 +45,26 @@ size_t aws_system_info_processor_count(void) {
 #include <signal.h>
 
 #ifndef __has_builtin
-#   define __has_builtin(x) 0
+#    define __has_builtin(x) 0
 #endif
 
-void aws_debug_break(void)
-{
+void aws_debug_break(void) {
 #ifdef DEBUG_BUILD
-#if __has_builtin(__builtin_debugtrap)
+#    if __has_builtin(__builtin_debugtrap)
     __builtin_debugtrap();
-#   else
+#    else
     raise(SIGTRAP);
-#   endif
+#    endif
 #endif /* DEBUG_BUILD */
 }
 
 #if defined(AWS_HAVE_EXECINFO)
-#include <execinfo.h>
-#include <limits.h>
+#    include <execinfo.h>
+#    include <limits.h>
 
-#define AWS_BACKTRACE_DEPTH 128
+#    define AWS_BACKTRACE_DEPTH 128
 
-void aws_backtrace_print(FILE *fp, void *call_site_data)
-{
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
     siginfo_t *siginfo = call_site_data;
     if (siginfo) {
         fprintf(fp, "Signal received: %d, errno: %d\n", siginfo->si_signo, siginfo->si_errno);
@@ -78,8 +76,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data)
     void *stack_frames[AWS_BACKTRACE_DEPTH];
     int stack_depth = backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
     char **symbols = backtrace_symbols(stack_frames, stack_depth);
-    if (symbols == NULL)
-    {
+    if (symbols == NULL) {
         fprintf(fp, "Unable to decode backtrace via backtrace_symbols\n");
         return;
     }

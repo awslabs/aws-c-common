@@ -344,21 +344,21 @@ struct aws_test_harness {
 };
 
 #if defined(_WIN32)
-#include <windows.h>
+#    include <windows.h>
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
-#if !defined(AWS_HEADER_CHECKER)
+#    if !defined(AWS_HEADER_CHECKER)
     aws_backtrace_print(stderr, exception_pointers);
-#endif
+#    endif
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #elif defined(AWS_HAVE_EXECINFO)
-#include <signal.h>
+#    include <signal.h>
 static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
     (void)sig;
     (void)user_data;
-#if !defined(AWS_HEADER_CHECKER)
+#    if !defined(AWS_HEADER_CHECKER)
     aws_backtrace_print(stderr, sig_info);
-#endif
+#    endif
     exit(-1);
 }
 #endif
