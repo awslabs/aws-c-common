@@ -125,7 +125,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         fgets(output, sizeof(output), out);
         pclose(out);
         frame_info = output;
-    
+
     no_resolve_needed:
     parse_failed:
         fprintf(fp, "%s%s", frame_info, (frame_info == symbols[frame_idx]) ? "\n" : "");
