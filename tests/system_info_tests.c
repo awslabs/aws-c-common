@@ -74,7 +74,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     while ((next = strstr(file, "/"))) {
         file = next + 1;
     }
-    ASSERT_STR_EQUALS("LIES", buffer);
+
     ASSERT_NOT_NULL(strstr(buffer, file));
     ASSERT_NOT_NULL(strstr(buffer, __func__));
 
