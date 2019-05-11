@@ -190,7 +190,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         }
 
         /* TODO: Emulate libunwind */
-        char cmd[1024] = {0};
+        char cmd[sizeof(struct aws_stack_frame_info)] = {0};
         s_resolve_cmd(cmd, sizeof(cmd), &frame);
         FILE *out = popen(cmd, "r");
         if (!out) {
