@@ -140,7 +140,7 @@ const char *make_arbitrary_c_str(size_t max_size);
  * which is necessary to prove termination for hash-table deletion code.  Should only be used inside
  * an assume because of the way it does nondet.
  */
-bool aws_hash_table_has_an_empty_slot(struct aws_hash_table *map, size_t *rval);
+bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *rval);
 
 /**
  * A correct implementation of the hash_destroy function should never have a memory

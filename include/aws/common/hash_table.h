@@ -86,7 +86,6 @@ struct aws_hash_iter {
     struct aws_hash_element element;
     size_t slot;
     size_t limit;
-    /* Holds an enum aws_hash_iter_status */
     enum aws_hash_iter_status status;
     /*
      * Reserving extra fields for binary compatibility with future expansion of

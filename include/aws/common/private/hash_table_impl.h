@@ -119,10 +119,9 @@ bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
         case AWS_HASH_ITER_STATUS_READY_FOR_USE:
             /* A slot must point to a valid location (i.e. hash_code != 0) */
             return iter->slot < iter->limit && iter->map->p_impl->slots[iter->slot].hash_code != 0;
-        default:
-            /* Invalid status code */
-            return false;
     }
+    /* Invalid status code */
+    return false;
 }
 
 /**
