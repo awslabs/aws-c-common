@@ -75,7 +75,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     }
 
     ASSERT_NOT_NULL(strstr(buffer, __func__));
-#if !defined(__APPLE__) /* apple doesn't always find file info */
+#    if !defined(__APPLE__) /* apple doesn't always find file info */
     ASSERT_NOT_NULL(strstr(buffer, file));
 
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
@@ -94,7 +94,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     }
 
     ASSERT_TRUE(found_file_line);
-#endif /* __APPLE__ */
+#    endif /* __APPLE__ */
 #endif
 
     aws_mem_release(allocator, buffer);

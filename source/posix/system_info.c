@@ -71,10 +71,10 @@ struct aws_stack_frame_info {
     char function[128];
 };
 
-#if defined(__APPLE__)
-#include <ctype.h>
-#include <mach-o/dyld.h>
-#include <dlfcn.h>
+#    if defined(__APPLE__)
+#        include <ctype.h>
+#        include <dlfcn.h>
+#        include <mach-o/dyld.h>
 static char s_exe_path[PATH_MAX];
 const char *s_get_executable_path() {
     static const char *s_exe = NULL;
@@ -106,7 +106,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     const char *addr_start = strstr(exe_end, "0x");
     const char *addr_end = strstr(addr_start, " ");
     strncpy(frame->addr, addr_start, addr_end - addr_start);
-    
+
     /* parse function */
     const char *function_start = strstr(addr_end, " ") + 1;
     const char *function_end = strstr(function_start, " ");
@@ -126,7 +126,7 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 #    else
 int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *frame) {
     /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
-     *                or: <exe-or-shared-lib> [0x<addr>] 
+     *                or: <exe-or-shared-lib> [0x<addr>]
      */
     const char *open_paren = strstr(symbol, "(");
     const char *close_paren = strstr(symbol, ")");
@@ -205,7 +205,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         }
         symbol = output;
 
-parse_failed:
+    parse_failed:
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
     free(symbols);
