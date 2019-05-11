@@ -92,6 +92,7 @@ cmake_project .
 cd $home_dir
 build_project aws-checksums
 build_project aws-c-event-stream
+build_project aws-c-compression
 build_project aws-c-io
 build_project aws-c-cal
 build_project aws-c-mqtt

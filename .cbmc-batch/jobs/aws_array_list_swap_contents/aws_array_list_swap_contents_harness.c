@@ -33,6 +33,13 @@ void aws_array_list_swap_contents_harness() {
     ensure_array_list_has_allocated_data_member(&to);
     __CPROVER_assume(aws_array_list_is_valid(&to));
 
+    __CPROVER_assume(from.alloc != NULL);
+    __CPROVER_assume(to.alloc != NULL);
+
+    __CPROVER_assume(from.item_size > 0);
+    __CPROVER_assume(to.item_size > 0);
+    __CPROVER_assume(from.item_size == to.item_size);
+
     /* save current state of the data structure */
     struct aws_array_list old_from = from;
     struct store_byte_from_buffer old_byte_from;

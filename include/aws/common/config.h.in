@@ -25,5 +25,6 @@
 #cmakedefine AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
 #cmakedefine AWS_HAVE_GCC_INLINE_ASM
 #cmakedefine AWS_HAVE_MSVC_MULX
+#cmakedefine AWS_HAVE_EXECINFO
 
 #endif

@@ -31,6 +31,7 @@ set(HEADER_CHECKER_LIB ${CMAKE_PROJECT_NAME}-header-check)
 add_executable(${HEADER_CHECKER_LIB} "${CMAKE_CURRENT_SOURCE_DIR}/stub.c")
 target_link_libraries(${HEADER_CHECKER_LIB} ${CMAKE_PROJECT_NAME})
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_UNSTABLE_TESTING_API=1)
+target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_HEADER_CHECKER=1)
 
 # We want to be able to verify that the proper C++ header guards are in place, so
 # build this target as a C++ application

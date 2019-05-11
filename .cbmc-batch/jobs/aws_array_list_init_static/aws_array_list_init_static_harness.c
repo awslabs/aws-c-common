@@ -30,8 +30,8 @@ void aws_array_list_init_static_harness() {
 
     /* assumptions */
     ASSUME_VALID_MEMORY(list);
-    __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
-    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    __CPROVER_assume(initial_item_allocation > 0 && initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
+    __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */

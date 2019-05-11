@@ -33,6 +33,9 @@ void aws_array_list_copy_harness() {
     ensure_array_list_has_allocated_data_member(&to);
     __CPROVER_assume(aws_array_list_is_valid(&to));
 
+    __CPROVER_assume(from.item_size == to.item_size);
+    __CPROVER_assume(from.data != NULL);
+
     /* perform operation under verification */
     if (!aws_array_list_copy(&from, &to)) {
         /* In the case aws_array_list_copy is successful, both lists have the same length */
