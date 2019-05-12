@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-#4: 4m 40s (smallest size that gives full coverage)
+#4: 4m40s (smallest size that gives full coverage)
 MAX_TABLE_SIZE ?= 4
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
 
