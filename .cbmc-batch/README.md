@@ -31,7 +31,7 @@ You can start the CBMC Batch jobs locally by running
 
 You can then check CBMC Batch results locally by running
 
-    bash cbmc-batch.sh --end
+	bash cbmc-batch.sh --end
 
 This will run until all the jobs have finished and output results in `results.txt`.
 
