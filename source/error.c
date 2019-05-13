@@ -146,15 +146,15 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
      * - we'll either segfault immediately (for the first two) or for the count
      * assert, the registration will be ineffective.
      */
-    assert(error_info);
-    assert(error_info->error_list);
-    assert(error_info->count);
+    AWS_ASSERT(error_info);
+    AWS_ASSERT(error_info->error_list);
+    AWS_ASSERT(error_info->count);
 
     int min_range = error_info->error_list[0].error_code;
 
     int slot_index = min_range >> SLOT_DIV_SHIFT;
 
-    assert(slot_index < AWS_MAX_ERROR_SLOTS && slot_index >= 0);
+    AWS_ASSERT(slot_index < AWS_MAX_ERROR_SLOTS && slot_index >= 0);
 
     if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than

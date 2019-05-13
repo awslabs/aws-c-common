@@ -28,7 +28,7 @@ static int s_compare_timestamps(const void *a, const void *b) {
 static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time, enum aws_task_status status);
 
 int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_allocator *alloc) {
-    assert(alloc);
+    AWS_ASSERT(alloc);
 
     scheduler->alloc = alloc;
     aws_linked_list_init(&scheduler->timed_list);
@@ -38,7 +38,7 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
-    assert(scheduler);
+    AWS_ASSERT(scheduler);
 
     /* Execute all remaining tasks as CANCELED.
      * Do this in a loop so that tasks scheduled by other tasks are executed */
@@ -51,7 +51,7 @@ void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
 }
 
 bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
-    assert(scheduler);
+    AWS_ASSERT(scheduler);
 
     uint64_t timestamp = UINT64_MAX;
     bool has_tasks = false;
@@ -85,9 +85,9 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
 }
 
 void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struct aws_task *task) {
-    assert(scheduler);
-    assert(task);
-    assert(task->fn);
+    AWS_ASSERT(scheduler);
+    AWS_ASSERT(task);
+    AWS_ASSERT(task->fn);
 
     task->priority_queue_node.current_index = SIZE_MAX;
     aws_linked_list_node_reset(&task->node);
@@ -101,9 +101,9 @@ void aws_task_scheduler_schedule_future(
     struct aws_task *task,
     uint64_t time_to_run) {
 
-    assert(scheduler);
-    assert(task);
-    assert(task->fn);
+    AWS_ASSERT(scheduler);
+    AWS_ASSERT(task);
+    AWS_ASSERT(task->fn);
 
     task->timestamp = time_to_run;
 
@@ -128,7 +128,7 @@ void aws_task_scheduler_schedule_future(
 }
 
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time) {
-    assert(scheduler);
+    AWS_ASSERT(scheduler);
 
     s_run_all(scheduler, current_time, AWS_TASK_STATUS_RUN_READY);
 }

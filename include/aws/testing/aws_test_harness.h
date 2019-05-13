@@ -364,7 +364,7 @@ static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
 #endif
 
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
-    assert(harness->run);
+    AWS_ASSERT(harness->run);
 
 #if defined(_WIN32)
     SetUnhandledExceptionFilter(s_test_print_stack_trace);

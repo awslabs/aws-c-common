@@ -33,14 +33,14 @@ static inline size_t aws_common_private_base64_decode_sse41(const unsigned char 
     (void)in;
     (void)out;
     (void)len;
-    assert(false);
+    AWS_ASSERT(false);
     return (size_t)-1; /* unreachable */
 }
 static inline void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;
     (void)out;
     (void)len;
-    assert(false);
+    AWS_ASSERT(false);
 }
 static inline bool aws_common_private_has_avx2(void) {
     return false;
@@ -75,7 +75,7 @@ static const uint8_t BASE64_DECODING_TABLE[256] = {
 /* clang-format on */
 
 int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
-    assert(encoded_length);
+    AWS_ASSERT(encoded_length);
 
     size_t temp = (to_encode_len << 1) + 1;
 
@@ -118,8 +118,8 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
 int aws_hex_encode_append_dynamic(
     const struct aws_byte_cursor *AWS_RESTRICT to_encode,
     struct aws_byte_buf *AWS_RESTRICT output) {
-    assert(to_encode->ptr);
-    assert(aws_byte_buf_is_valid(output));
+    AWS_ASSERT(to_encode->ptr);
+    AWS_ASSERT(aws_byte_buf_is_valid(output));
 
     size_t encoded_len = 0;
     if (AWS_UNLIKELY(aws_add_size_checked(to_encode->len, to_encode->len, &encoded_len))) {
@@ -162,7 +162,7 @@ static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
 }
 
 int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
-    assert(decoded_len);
+    AWS_ASSERT(decoded_len);
 
     size_t temp = (to_decode_len + 1);
 
@@ -221,7 +221,7 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
 }
 
 int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
-    assert(encoded_len);
+    AWS_ASSERT(encoded_len);
 
     size_t tmp = to_encode_len + 2;
 
@@ -243,8 +243,8 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 }
 
 int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to_decode, size_t *decoded_len) {
-    assert(to_decode);
-    assert(decoded_len);
+    AWS_ASSERT(to_decode);
+    AWS_ASSERT(decoded_len);
 
     const size_t len = to_decode->len;
     const uint8_t *input = to_decode->ptr;
@@ -277,8 +277,8 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
 }
 
 int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
-    assert(to_encode->ptr);
-    assert(output->buffer);
+    AWS_ASSERT(to_encode->ptr);
+    AWS_ASSERT(output->buffer);
 
     size_t encoded_length = 0;
     if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
