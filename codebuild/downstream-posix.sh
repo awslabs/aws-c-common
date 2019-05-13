@@ -15,7 +15,7 @@ build_dir=$home_dir/build/downstream
 # where deps will be installed
 install_prefix=$build_dir/install
 
-common_branch_name=$(git rev-parse --abbrev-ref HEAD)
+common_branch_name=$(git branch | grep \* | cut -d ' ' -f2)
 
 cmake_args=""
 
