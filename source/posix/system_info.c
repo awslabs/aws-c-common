@@ -128,6 +128,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      */
+    (void)addr;
     const char *open_paren = strstr(symbol, "(");
     const char *close_paren = strstr(symbol, ")");
     const char *exe_end = open_paren;
@@ -149,7 +150,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     }
     strncpy(frame->addr, addr_start, addr_end - addr_start);
 
-    long function_len = close_paren - open_paren - 1;
+    long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
     if (function_len > 0) { /* dynamic symbol was found */
         strncpy(frame->function, open_paren + 1, function_len);
     }
