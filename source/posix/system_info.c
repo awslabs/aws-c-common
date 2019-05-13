@@ -206,7 +206,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
             }
         }
         pclose(out);
-        
+
     parse_failed:
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
