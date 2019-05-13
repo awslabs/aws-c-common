@@ -14,8 +14,6 @@
  */
 #include <aws/common/lru_cache.h>
 
-#include <assert.h>
-
 struct cache_node {
     struct aws_linked_list_node node;
     struct aws_lru_cache *cache;

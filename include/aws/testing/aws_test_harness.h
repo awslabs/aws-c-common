@@ -19,7 +19,6 @@
 #include <aws/common/error.h>
 #include <aws/common/mutex.h>
 
-#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

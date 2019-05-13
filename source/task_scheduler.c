@@ -15,8 +15,6 @@
 
 #include <aws/common/task_scheduler.h>
 
-#include <assert.h>
-
 static const size_t DEFAULT_QUEUE_SIZE = 7;
 
 static int s_compare_timestamps(const void *a, const void *b) {

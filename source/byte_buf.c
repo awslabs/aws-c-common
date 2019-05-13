@@ -15,7 +15,6 @@
 
 #include <aws/common/byte_buf.h>
 
-#include <assert.h>
 #include <stdarg.h>
 
 #ifdef _MSC_VER

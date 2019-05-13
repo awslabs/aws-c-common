@@ -17,7 +17,6 @@
 
 #include <aws/common/common.h>
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 

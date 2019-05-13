@@ -19,7 +19,6 @@
 #include <aws/common/exports.h>
 #include <aws/common/config.h>
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>

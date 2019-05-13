@@ -17,7 +17,6 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 
-#include <assert.h>
 #include <intrin.h>
 #include <stdint.h>
 #include <stdlib.h>

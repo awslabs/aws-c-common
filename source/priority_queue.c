@@ -15,7 +15,6 @@
 
 #include <aws/common/priority_queue.h>
 
-#include <assert.h>
 #include <string.h>
 
 #define PARENT_OF(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
