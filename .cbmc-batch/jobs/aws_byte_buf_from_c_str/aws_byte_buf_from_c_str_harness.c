@@ -41,7 +41,7 @@ void aws_byte_buf_from_c_str_harness() {
     assert(buf.allocator == NULL);
     if (buf.buffer) {
         assert(buf.len == strlen(c_str));
-        assert(buf.capacity == buf.len + 1);
+        assert(buf.capacity == buf.len);
         assert_bytes_match(buf.buffer, (uint8_t *)c_str, buf.len);
     } else {
         assert(buf.len == 0);
