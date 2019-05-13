@@ -52,7 +52,7 @@ AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void 
 }
 
 AWS_STATIC_IMPL void aws_task_run(struct aws_task *task, enum aws_task_status status) {
-    assert(task->fn);
+    AWS_ASSERT(task->fn);
     task->fn(task, task->arg, status);
 }
 

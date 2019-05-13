@@ -15,7 +15,6 @@
 
 #include <aws/common/byte_buf.h>
 
-#include <assert.h>
 #include <stdarg.h>
 
 #ifdef _MSC_VER
@@ -101,22 +100,22 @@ void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
 }
 
 bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq(a->buffer, a->len, b->buffer, b->len);
 }
 
 bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_byte_buf *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq_ignore_case(a->buffer, a->len, b->buffer, b->len);
 }
 
 bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str) {
-    assert(buf && c_str);
+    AWS_ASSERT(buf && c_str);
     return aws_array_eq_c_str(buf->buffer, buf->len, c_str);
 }
 
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *buf, const char *c_str) {
-    assert(buf && c_str);
+    AWS_ASSERT(buf && c_str);
     return aws_array_eq_c_str_ignore_case(buf->buffer, buf->len, c_str);
 }
 
@@ -200,9 +199,9 @@ int aws_byte_cursor_split_on_char_n(
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output) {
-    assert(input_str && input_str->ptr);
-    assert(output);
-    assert(output->item_size >= sizeof(struct aws_byte_cursor));
+    AWS_ASSERT(input_str && input_str->ptr);
+    AWS_ASSERT(output);
+    AWS_ASSERT(output->item_size >= sizeof(struct aws_byte_cursor));
 
     size_t max_splits = n > 0 ? n : SIZE_MAX;
     size_t split_count = 0;
@@ -236,7 +235,7 @@ int aws_byte_cursor_split_on_char(
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
-    assert(dest);
+    AWS_ASSERT(dest);
 
     va_list ap;
     va_start(ap, number_of_args);
@@ -256,12 +255,12 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq(a->ptr, a->len, b->ptr, b->len);
 }
 
 bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq_ignore_case(a->ptr, a->len, b->ptr, b->len);
 }
 
@@ -285,8 +284,8 @@ const uint8_t *aws_lookup_table_to_lower_get(void) {
 }
 
 bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
-    assert(array_a || (len_a == 0));
-    assert(array_b || (len_b == 0));
+    AWS_ASSERT(array_a || (len_a == 0));
+    AWS_ASSERT(array_b || (len_b == 0));
 
     if (len_a != len_b) {
         return false;
@@ -304,8 +303,8 @@ bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *arr
 }
 
 bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
-    assert(array_a || (len_a == 0));
-    assert(array_b || (len_b == 0));
+    AWS_ASSERT(array_a || (len_a == 0));
+    AWS_ASSERT(array_b || (len_b == 0));
 
     if (len_a != len_b) {
         return false;
@@ -319,8 +318,8 @@ bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t
 }
 
 bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const char *c_str) {
-    assert(array || (array_len == 0));
-    assert(c_str);
+    AWS_ASSERT(array || (array_len == 0));
+    AWS_ASSERT(c_str);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq_ignore_case(array, array_len, c_str, strlen(c_str));
@@ -345,8 +344,8 @@ bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const c
 }
 
 bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str) {
-    assert(array || (array_len == 0));
-    assert(c_str);
+    AWS_ASSERT(array || (array_len == 0));
+    AWS_ASSERT(c_str);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq(array, array_len, c_str, strlen(c_str));
@@ -393,22 +392,22 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
 }
 
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq(a->ptr, a->len, b->buffer, b->len);
 }
 
 bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
-    assert(a && b);
+    AWS_ASSERT(a && b);
     return aws_array_eq_ignore_case(a->ptr, a->len, b->buffer, b->len);
 }
 
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str) {
-    assert(cursor && c_str);
+    AWS_ASSERT(cursor && c_str);
     return aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
 }
 
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, const char *c_str) {
-    assert(cursor && c_str);
+    AWS_ASSERT(cursor && c_str);
     return aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
 }
 
@@ -424,8 +423,8 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 
     if (from->len > 0) {
         /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
-        assert(from->ptr);
-        assert(to->buffer);
+        AWS_ASSERT(from->ptr);
+        AWS_ASSERT(to->buffer);
         memcpy(to->buffer + to->len, from->ptr, from->len);
         to->len += from->len;
     }
@@ -544,8 +543,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
     } else {
         if (from->len > 0) {
             /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
-            assert(from->ptr);
-            assert(to->buffer);
+            AWS_ASSERT(from->ptr);
+            AWS_ASSERT(to->buffer);
             memcpy(to->buffer + to->len, from->ptr, from->len);
         }
     }

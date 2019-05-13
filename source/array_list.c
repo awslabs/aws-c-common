@@ -15,7 +15,6 @@
 
 #include <aws/common/array_list.h>
 
-#include <assert.h>
 #include <stdlib.h> /* qsort */
 
 int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {

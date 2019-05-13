@@ -18,7 +18,6 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
-#include <assert.h>
 #include <stdlib.h>
 
 #define AWS_ARRAY_LIST_DEBUG_FILL 0xDD

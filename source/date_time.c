@@ -676,7 +676,7 @@ int aws_date_time_to_local_time_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
-    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+    AWS_ASSERT(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:
@@ -697,7 +697,7 @@ int aws_date_time_to_utc_time_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
-    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+    AWS_ASSERT(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:
@@ -718,7 +718,7 @@ int aws_date_time_to_local_time_short_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
-    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+    AWS_ASSERT(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:
@@ -739,7 +739,7 @@ int aws_date_time_to_utc_time_short_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
     struct aws_byte_buf *output_buf) {
-    assert(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+    AWS_ASSERT(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:

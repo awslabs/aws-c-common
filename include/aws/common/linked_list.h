@@ -18,7 +18,6 @@
 
 #include <aws/common/common.h>
 
-#include <assert.h>
 #include <stddef.h>
 
 /**
@@ -152,7 +151,7 @@ AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, str
  * Returns the element in the back of the list.
  */
 static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
-    assert(!aws_linked_list_empty(list));
+    AWS_ASSERT(!aws_linked_list_empty(list));
     return list->tail.prev;
 }
 
@@ -160,7 +159,7 @@ static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked
  * Returns the element in the back of the list and removes it
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
-    assert(!aws_linked_list_empty(list));
+    AWS_ASSERT(!aws_linked_list_empty(list));
     struct aws_linked_list_node *back = aws_linked_list_back(list);
     aws_linked_list_remove(back);
     return back;
@@ -177,7 +176,7 @@ AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, st
  * Returns the element in the front of the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
-    assert(!aws_linked_list_empty(list));
+    AWS_ASSERT(!aws_linked_list_empty(list));
     return list->head.next;
 }
 
@@ -185,15 +184,15 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct 
  * Returns the element in the front of the list and removes it
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
-    assert(!aws_linked_list_empty(list));
+    AWS_ASSERT(!aws_linked_list_empty(list));
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
     return front;
 }
 
 AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
-    assert(a);
-    assert(b);
+    AWS_ASSERT(a);
+    AWS_ASSERT(b);
     struct aws_linked_list_node *a_first = a->head.next;
     struct aws_linked_list_node *a_last = a->tail.prev;
 

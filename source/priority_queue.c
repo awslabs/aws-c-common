@@ -15,7 +15,6 @@
 
 #include <aws/common/priority_queue.h>
 
-#include <assert.h>
 #include <string.h>
 
 #define PARENT_OF(index) (((index)&1) ? (index) >> 1 : (index) > 1 ? ((index)-2) >> 1 : 0)
@@ -27,8 +26,8 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
 
     /* Invariant: If the backpointer array is initialized, we have enough room for all elements */
     if (queue->backpointers.data) {
-        assert(queue->backpointers.length > a);
-        assert(queue->backpointers.length > b);
+        AWS_ASSERT(queue->backpointers.length > a);
+        AWS_ASSERT(queue->backpointers.length > b);
 
         struct aws_priority_queue_node **bp_a = &((struct aws_priority_queue_node **)queue->backpointers.data)[a];
         struct aws_priority_queue_node **bp_b = &((struct aws_priority_queue_node **)queue->backpointers.data)[b];
