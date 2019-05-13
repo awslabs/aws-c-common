@@ -75,6 +75,7 @@ DEFINES += -DCBMC=1
 # function pointer analysis.
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_allocate
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_copy_description
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_preferred_size
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate

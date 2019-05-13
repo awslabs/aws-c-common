@@ -91,6 +91,40 @@ bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
 }
 
 /**
+ * Given a pointer to a hash_iter, checks that it is well-formed, with all data-structure invariants.
+ */
+AWS_STATIC_IMPL
+bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
+    if (!iter) {
+        return false;
+    }
+    if (!iter->map) {
+        return false;
+    }
+    if (!aws_hash_table_is_valid(iter->map)) {
+        return false;
+    }
+    if (iter->limit > iter->map->p_impl->size) {
+        return false;
+    }
+
+    switch (iter->status) {
+        case AWS_HASH_ITER_STATUS_DONE:
+            /* Done iff slot == limit */
+            return iter->slot == iter->limit;
+        case AWS_HASH_ITER_STATUS_DELETE_CALLED:
+            /* iter->slot can underflow to SIZE_MAX after a delete
+             * see the comments for aws_hash_iter_delete() */
+            return iter->slot <= iter->limit || iter->slot == SIZE_MAX;
+        case AWS_HASH_ITER_STATUS_READY_FOR_USE:
+            /* A slot must point to a valid location (i.e. hash_code != 0) */
+            return iter->slot < iter->limit && iter->map->p_impl->slots[iter->slot].hash_code != 0;
+    }
+    /* Invalid status code */
+    return false;
+}
+
+/**
  * Determine the total number of bytes needed for a hash-table with
  * "size" slots. If the result would overflow a size_t, return
  * AWS_OP_ERR; otherwise, return AWS_OP_SUCCESS with the result in

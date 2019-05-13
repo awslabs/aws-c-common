@@ -54,8 +54,9 @@
  * memory barrier must be used when transitioning from single-threaded mutating
  * usage to multithreaded usage.
  */
+struct hash_table_state; /* Opaque pointer */
 struct aws_hash_table {
-    void *p_impl;
+    struct hash_table_state *p_impl;
 };
 
 /**
@@ -74,16 +75,23 @@ struct aws_hash_element {
     void *value;
 };
 
+enum aws_hash_iter_status {
+    AWS_HASH_ITER_STATUS_DONE,
+    AWS_HASH_ITER_STATUS_DELETE_CALLED,
+    AWS_HASH_ITER_STATUS_READY_FOR_USE,
+};
+
 struct aws_hash_iter {
     const struct aws_hash_table *map;
     struct aws_hash_element element;
     size_t slot;
     size_t limit;
+    enum aws_hash_iter_status status;
     /*
      * Reserving extra fields for binary compatibility with future expansion of
      * iterator in case hash table implementation changes.
      */
-    void *unused_0;
+    int unused_0;
     void *unused_1;
     void *unused_2;
 };
@@ -207,6 +215,9 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter);
  *     value_type value = *(value_type *)iter.element.value;
  *     // etc.
  * }
+ *
+ * Note that calling this on an iter which is "done" is idempotent:
+ * i.e. it will return another iter which is "done".
  */
 AWS_COMMON_API
 void aws_hash_iter_next(struct aws_hash_iter *iter);
