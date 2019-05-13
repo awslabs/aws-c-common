@@ -198,14 +198,15 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
             goto parse_failed;
         }
         char output[1024];
-        fgets(output, sizeof(output), out);
-        pclose(out);
-        /* if addr2line or atos don't know what to do with an address, they just echo it */
-        if (!strstr(output, " ")) {
-            goto parse_failed;
+        if (fgets(output, sizeof(output), out)) {
+            /* if addr2line or atos don't know what to do with an address, they just echo it */
+            /* if there are spaces in the output, then they resolved something */
+            if (strstr(output, " ")) {
+                symbol = output;
+            }
         }
-        symbol = output;
-
+        pclose(out);
+        
     parse_failed:
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
