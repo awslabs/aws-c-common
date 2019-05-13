@@ -15,6 +15,8 @@ build_dir=$home_dir/build/downstream
 # where deps will be installed
 install_prefix=$build_dir/install
 
+common_branch_name=$(git rev-parse --abbrev-ref HEAD)
+
 cmake_args=""
 
 function cmake_project {
@@ -47,6 +49,10 @@ function build_project {
 
     if [ -n "$commit_or_branch" ]; then
         git checkout $commit_or_branch
+    elif [ -n "$common_branch_name" ]; then
+        # if there is a branch with the same name as this one, that probably has fixes to match
+        # so check it out and use that to evaluate downstream
+        git checkout $common_branch_name || true
     fi
     echo "Using git repo: $dep branch:" `git branch | grep \* | cut -d ' ' -f2` "commit: " `git rev-parse HEAD`
 
