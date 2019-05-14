@@ -14,4 +14,4 @@ install:
 script:
   - export CODEBUILD_SRC_DIR=$(pwd)
   - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-  - clang-tidy -p=/tmp/build **/*.c
+  - if [ -n $(which clang-tidy) ]; then; clang-tidy -p=/tmp/build **/*.c ; fi
