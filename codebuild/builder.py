@@ -538,28 +538,28 @@ run_build = {
 # CODEBUILD
 ########################################################################################################################
 
-CODEBUILD_BUILDS = [
-    'linux-clang-3-linux-x64',
-    'linux-clang-6-linux-x64',
-    'linux-clang-8-linux-x64',
+CODEBUILD_OVERRIDES = {
+    'linux-clang3-x64': 'linux-clang-3-linux-x64',
+    'linux-clang6-x64': 'linux-clang-6-linux-x64',
+    'linux-clang8-x64': 'linux-clang-8-linux-x64',
 
-    'linux-gcc-4-linux-x86',
-    'linux-gcc-4-linux-x64',
-    'linux-gcc-5-linux-x64',
-    'linux-gcc-6-linux-x64',
-    'linux-gcc-7-linux-x64',
+    'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
+    'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
+    'linux-gcc-5x-x64': 'linux-gcc-5-linux-x64',
+    'linux-gcc-6x-x64': 'linux-gcc-6-linux-x64',
+    'linux-gcc-7x-x64': 'linux-gcc-7-linux-x64',
 
-    'linux-ndk-19-android-arm64v8a',
+    'android-arm64-v8a': 'linux-ndk-19-android-arm64v8a',
 
-    'al2012-default-default-linux-x64',
+    "AL2012-gcc44": 'al2012-default-default-linux-x64',
 
-    'ancientlinux-default-default-linux-x86',
-    'ancientlinux-default-default-linux-x64',
+    "ancient-linux-x86": 'ancientlinux-default-default-linux-x86',
+    "ancient-linux-x64": 'ancientlinux-default-default-linux-x64',
 
-    'windows-msvc-2015-windows-x86',
-    'windows-msvc-2015-windows-x64',
-    'windows-msvc-2017-windows-x64',
-]
+    'windows-msvc-2015-x86': 'windows-msvc-2015-windows-x86',
+    'windows-msvc-2015': 'windows-msvc-2015-windows-x64',
+    'windows-msvc-2017': 'windows-msvc-2017-windows-x64',
+}
 
 def create_codebuild_project(config, project, github_account):
 
@@ -646,29 +646,46 @@ if __name__ == '__main__':
         codebuild = session.client('codebuild')
 
         # Get project status
-        all_project_names = ['{}-{}'.format(args.project, build) for build in CODEBUILD_BUILDS]
-        existing_projects = codebuild.batch_get_projects(names=all_project_names)
-        new_projects = existing_projects['projectsNotFound']
-        existing_projects = [project['name'] for project in existing_projects['projects']]
 
-        for build in CODEBUILD_BUILDS:
+        existing_projects = []
+        new_projects = []
 
-            build_spec = BuildSpec(spec=build)
+        project_prefix_len = len(args.project) + 1
+
+        old_project_names = ['{}-{}'.format(args.project, build) for build in CODEBUILD_OVERRIDES.keys()]
+        old_projects_response = codebuild.batch_get_projects(names=old_project_names)
+        existing_projects += [project['name'][project_prefix_len:] for project in old_projects_response['projects']]
+
+        old_missing_projects = [name[project_prefix_len:] for name in old_projects_response['projectsNotFound']]
+        # If old project names are not found, search for the new names, and if those aren't present, add for creation
+        if old_missing_projects:
+            new_project_names = [CODEBUILD_OVERRIDES[old_name] for old_name in old_missing_projects]
+            new_projects_response = codebuild.batch_get_projects(names=new_project_names)
+            existing_projects += [project['name'] for project in new_projects_response['projects']]
+            new_projects += new_projects_response['projectsNotFound']
+
+        # Update all existing projects
+        for cb_spec in existing_projects:
+            # If the project being updated is in CB_OVERRIDES, use it, otherwise just spec
+            new_spec = CODEBUILD_OVERRIDES.get(cb_spec, cb_spec)
+            build_name = '{}-{}'.format(args.project, cb_spec)
+
+            build_spec = BuildSpec(spec=new_spec)
+            config = produce_config(build_spec)
+            cb_project = create_codebuild_project(config, args.project, args.github_account)
+            cb_project['name'] = build_name
+
+            print('Updating: {} ({})'.format(new_spec, cb_spec))
+            if not args.dry_run:
+                codebuild.update_project(**cb_project)
+
+        # Create any missing projects
+        for spec in new_projects:
+            build_spec = BuildSpec(spec=spec)
             config = produce_config(build_spec)
             cb_project = create_codebuild_project(config, args.project, args.github_account)
 
-            cb_name = '{}-{}'.format(args.project, build)
-
-            if cb_name in new_projects:
-                print('Creating: {} ({})'.format(cb_name, build))
-                if not args.dry_run:
-                    codebuild.create_project(**cb_project)
-                    codebuild.create_webhook(projectName=cb_name)
-
-            elif cb_name in existing_projects:
-                print('Updating: {} ({})'.format(cb_name, build))
-                if not args.dry_run:
-                    codebuild.update_project(**cb_project)
-
-            else:
-                assert False, "Build name not found in new or existing projects"
+            print('Creating: {}'.format(spec))
+            if not args.dry_run:
+                codebuild.create_project(**cb_project)
+                codebuild.create_webhook(projectName=cb_project['name'])
