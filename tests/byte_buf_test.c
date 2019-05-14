@@ -161,7 +161,6 @@ static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testb");
 
     b1.capacity = 5;
-    b1_equal.capacity = 2;
     b1_equal.allocator = allocator;
 
     ASSERT_TRUE(aws_byte_buf_eq(&b1, &b1_equal));
