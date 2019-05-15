@@ -78,7 +78,7 @@ AWS_EXTERN_C_BEGIN
  * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
-bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b);
+bool aws_array_eq(const void *const array_a, const size_t len_a, const void *array_b, const size_t len_b);
 
 /**
  * Perform a case-insensitive string comparison of two arrays.
@@ -88,7 +88,11 @@ bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b);
+bool aws_array_eq_ignore_case(
+    const void *const array_a,
+    const size_t len_a,
+    const void *const array_b,
+    const size_t len_b);
 
 /**
  * Compare an array and a null-terminated string.
@@ -97,7 +101,7 @@ bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *arr
  * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
-bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str);
+bool aws_array_eq_c_str(const void *const array, const size_t array_len, const char *const c_str);
 
 /**
  * Perform a case-insensitive string comparison of an array and a null-terminated string.
@@ -108,7 +112,7 @@ bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str);
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const char *c_str);
+bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_len, const char *const c_str);
 
 AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
