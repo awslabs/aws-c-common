@@ -11,8 +11,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+from __future__ import print_function
+
 # Class to refer to a specific build permutation
-class BuildSpec():
+class BuildSpec(object):
     __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version')
 
     def __init__(self, **kwargs):
@@ -338,7 +340,7 @@ def _replace_variables(value, variables):
 
     elif key_type == dict:
         # Iterate each element and recursively apply the variables
-        return { key: _replace_variables(value, variables) for (key, value) in value.items() }
+        return dict([(key, _replace_variables(value, variables)) for (key, value) in value.items()])
 
     else:
         # Unsupported, just return it
