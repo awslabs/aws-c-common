@@ -30,6 +30,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 AWS_EXTERN_C_END
 
 #if defined(CBMC)
+#   include <assert.h>
 #    define AWS_ASSERT(cond) assert(cond)
 #elif defined(DEBUG_BUILD)
 #    define AWS_ASSERT(cond)                                                                                           \

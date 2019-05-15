@@ -17,7 +17,6 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 
-#include <assert.h>
 #include <intrin.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -97,7 +96,7 @@ enum aws_atomic_mode_priv { aws_atomic_priv_load, aws_atomic_priv_store };
 
 static inline void aws_atomic_priv_barrier_before(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
     aws_atomic_priv_check_order(order);
-    assert(mode != aws_atomic_priv_load || order != aws_memory_order_release);
+    AWS_ASSERT(mode != aws_atomic_priv_load || order != aws_memory_order_release);
 
     if (order == aws_memory_order_relaxed) {
         /* no barriers required for relaxed mode */
@@ -121,7 +120,7 @@ static inline void aws_atomic_priv_barrier_before(enum aws_memory_order order, e
 
 static inline void aws_atomic_priv_barrier_after(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
     aws_atomic_priv_check_order(order);
-    assert(mode != aws_atomic_priv_store || order != aws_memory_order_acquire);
+    AWS_ASSERT(mode != aws_atomic_priv_store || order != aws_memory_order_acquire);
 
     if (order == aws_memory_order_relaxed) {
         /* no barriers required for relaxed mode */

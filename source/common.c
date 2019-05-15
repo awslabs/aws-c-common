@@ -225,7 +225,7 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
     (void)hint;
 
     struct aws_allocator *allocator = info;
-    assert(allocator->mem_realloc);
+    AWS_ASSERT(allocator->mem_realloc);
 
     void *original_allocation = (uint8_t *)ptr - sizeof(size_t);
     size_t original_size = 0;

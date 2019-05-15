@@ -14,8 +14,6 @@
  */
 #include <aws/common/lru_cache.h>
 
-#include <assert.h>
-
 struct cache_node {
     struct aws_linked_list_node node;
     struct aws_lru_cache *cache;
@@ -42,8 +40,8 @@ int aws_lru_cache_init(
     aws_hash_callback_destroy_fn *destroy_key_fn,
     aws_hash_callback_destroy_fn *destroy_value_fn,
     size_t max_items) {
-    assert(allocator);
-    assert(max_items);
+    AWS_ASSERT(allocator);
+    AWS_ASSERT(max_items);
 
     cache->allocator = allocator;
     cache->max_items = max_items;
@@ -115,7 +113,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
         /* we're over the cache size limit. Remove whatever is in the back of
          * the list. */
         struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
-        assert(node_to_remove);
+        AWS_ASSERT(node_to_remove);
         struct cache_node *entry_to_remove = AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
         /*the callback will unlink and deallocate the node */
         aws_hash_table_remove(&cache->table, entry_to_remove->key, NULL, NULL);

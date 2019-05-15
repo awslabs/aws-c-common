@@ -30,7 +30,7 @@ static size_t s_executed_tasks_n;
 /* Updates tl_executed_tasks and tl_executed_task_n when function is executed */
 static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
     if (s_executed_tasks_n > AWS_ARRAY_SIZE(s_executed_tasks)) {
-        assert(0);
+        AWS_ASSERT(0);
     }
 
     struct executed_task_data *data = &s_executed_tasks[s_executed_tasks_n++];
