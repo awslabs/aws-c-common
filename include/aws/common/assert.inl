@@ -13,9 +13,11 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/exports.h>
+
 AWS_EXTERN_C_BEGIN
 
-AWS_DECLSPEC_NORETURN void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
+AWS_DECLSPEC_NORETURN void AWS_COMMON_API aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
 
 AWS_COMMON_API
 void aws_debug_break(void);
