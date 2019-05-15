@@ -641,11 +641,11 @@ int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const str
         return result;
     }
 
-    if (lhs->len == rhs->len) {
-        return 0;
-    } else {
+    if (lhs->len != rhs->len) {
         return comparison_length == lhs->len ? -1 : 1;
     }
+
+    return 0;
 }
 
 int aws_byte_cursor_compare_lookup(
