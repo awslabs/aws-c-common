@@ -13,7 +13,7 @@
 
 ###########
 include ../Makefile.aws_byte_buf
-UNWINDSET += memset_impl.0:41
+UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
 
