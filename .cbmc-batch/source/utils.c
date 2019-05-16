@@ -64,6 +64,18 @@ void assert_array_list_equivalence(
     }
 }
 
+void assert_byte_buf_equivalence(
+    const struct aws_byte_buf *const lhs,
+    const struct aws_byte_buf *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte) {
+    assert(lhs->len == rhs->len);
+    assert(lhs->capacity == rhs->capacity);
+    assert(lhs->allocator == rhs->allocator);
+    if (lhs->len > 0) {
+        assert_byte_from_buffer_matches(lhs->buffer, rhs_byte);
+    }
+}
+
 void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
     struct hash_table_state *state = map->p_impl;
     size_t size_in_bytes;
