@@ -8,4 +8,4 @@ phases:
   build:
     commands:
       - python --version
-      - python ./codebuild/builder.py --dry-run build $BUILD_SPEC
+      - python ./codebuild/builder.py build $BUILD_SPEC
