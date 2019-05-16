@@ -630,3 +630,60 @@ bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_by
 
     return trimmed.len == 0;
 }
+
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
+
+    size_t comparison_length = lhs->len;
+    if (comparison_length > rhs->len) {
+        comparison_length = rhs->len;
+    }
+
+    int result = memcmp(lhs->ptr, rhs->ptr, comparison_length);
+    if (result != 0) {
+        return result;
+    }
+
+    if (lhs->len != rhs->len) {
+        return comparison_length == lhs->len ? -1 : 1;
+    }
+
+    return 0;
+}
+
+int aws_byte_cursor_compare_lookup(
+    const struct aws_byte_cursor *lhs,
+    const struct aws_byte_cursor *rhs,
+    const uint8_t *lookup_table) {
+
+    const uint8_t *lhs_curr = lhs->ptr;
+    const uint8_t *lhs_end = lhs_curr + lhs->len;
+
+    const uint8_t *rhs_curr = rhs->ptr;
+    const uint8_t *rhs_end = rhs_curr + rhs->len;
+
+    while (lhs_curr < lhs_end && rhs_curr < rhs_end) {
+        uint8_t lhc = lookup_table[*lhs_curr];
+        uint8_t rhc = lookup_table[*rhs_curr];
+
+        if (lhc < rhc) {
+            return -1;
+        }
+
+        if (lhc > rhc) {
+            return 1;
+        }
+
+        lhs_curr++;
+        rhs_curr++;
+    }
+
+    if (lhs_curr < lhs_end) {
+        return 1;
+    }
+
+    if (rhs_curr < rhs_end) {
+        return -1;
+    }
+
+    return 0;
+}
