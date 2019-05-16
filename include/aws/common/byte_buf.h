@@ -438,6 +438,21 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item);
 AWS_COMMON_API
 const uint8_t *aws_lookup_table_to_lower_get(void);
 
+/**
+ * Lexical (byte value) comparison of two byte cursors
+ */
+AWS_COMMON_API
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs);
+
+/**
+ * Lexical (byte value) comparison of two byte cursors where the raw values are sent through a lookup table first
+ */
+AWS_COMMON_API
+int aws_byte_cursor_compare_lookup(
+    const struct aws_byte_cursor *lhs,
+    const struct aws_byte_cursor *rhs,
+    const uint8_t *lookup_table);
+
 AWS_EXTERN_C_END
 
 /**
