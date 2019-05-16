@@ -222,6 +222,8 @@ add_test_case(test_byte_buf_append_lookup_failure)
 add_test_case(test_byte_buf_reserve)
 add_test_case(test_byte_buf_reserve_relative)
 add_test_case(test_byte_buf_reset)
+add_test_case(test_byte_cursor_compare_lexical)
+add_test_case(test_byte_cursor_compare_lookup)
 
 add_test_case(byte_swap_test)
 
