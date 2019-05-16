@@ -516,6 +516,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *by
     return cur;
 }
 
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
 /**
  * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
  * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
@@ -580,6 +582,7 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
 
     return combined_mask;
 }
+#pragma CPROVER check pop
 
 /**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
