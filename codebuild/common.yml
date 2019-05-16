@@ -3,9 +3,9 @@ phases:
   install:
     commands:
 # To be uncommented when the file is properly updated in master
-#      - python3 -c "from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')"
+#      - $PYTHON -c "from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')"
 
   build:
     commands:
-      - python --version
-      - python ./codebuild/builder.py build $BUILD_SPEC
+      - $PYTHON --version
+      - $PYTHON ./codebuild/builder.py build $BUILD_SPEC

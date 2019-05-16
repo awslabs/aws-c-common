@@ -43,6 +43,7 @@ class BuildSpec(object):
 
 KEYS = {
     # Build
+    'python': str,
     'pre_build_steps': list,
     'post_build_steps': list,
     'build_env': dict,
@@ -71,6 +72,8 @@ HOSTS = {
             },
         },
 
+        'python': "python3",
+
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
@@ -84,6 +87,8 @@ HOSTS = {
             "-DENABLE_SANITIZERS=OFF",
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
+
+        'python': "python3",
 
         'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
@@ -99,10 +104,14 @@ HOSTS = {
             },
         },
 
+        'python': "/opt/python/cp37-cp37m/bin/python",
+
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
+        'python': "C:\Program Files\Python37\python.exe",
+
         'image_type': "WINDOWS_CONTAINER",
         'compute_type': "BUILD_GENERAL1_MEDIUM",
     },
@@ -578,6 +587,7 @@ def create_codebuild_project(config, project, github_account):
         'project': project,
         'account': github_account,
         'spec': config['spec'].name(),
+        'python': config['python'],
     }
 
     # This matches the CodeBuild API for expected format
@@ -604,6 +614,10 @@ def create_codebuild_project(config, project, github_account):
                 {
                     'name': "BUILD_SPEC",
                     'value': "{spec}",
+                },
+                {
+                    'name': "PYTHON",
+                    'value': "{python}",
                 }
             ],
             'privilegedMode': config['requires_privilege'],
