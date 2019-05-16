@@ -81,7 +81,7 @@ mkdir -p $build_dir
 if [ "$(uname)" != "Darwin" ]; then
     default_cmake_args=$cmake_args
     cmake_args="$cmake_args -DBUILD_TESTING=OFF"
-    build_project s2n
+    build_project s2n e23fb83e80f567c225279cdeb6c9e271b2ff459c
     cmake_args=$default_cmake_args
 fi
 

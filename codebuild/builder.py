@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os
+import os, sys, glob
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
@@ -40,6 +40,9 @@ class BuildSpec(object):
 ########################################################################################################################
 # DATA DEFINITIONS
 ########################################################################################################################
+
+# Can be used in build steps to insert a complete list of source files
+SOURCE_LIST = "__sources__"
 
 KEYS = {
     # Build
@@ -77,7 +80,6 @@ HOSTS = {
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
-        'apt_packages': ["cmake3"],
 
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
@@ -88,7 +90,7 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
 
-        'python': "python3",
+        'python': "python",
 
         'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
@@ -97,10 +99,10 @@ HOSTS = {
     'manylinux': {
         'architectures': {
             'x86': {
-                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux:x86",
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux1:x86",
             },
             'x64': {
-                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux:x64",
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux1:x64",
             },
         },
 
@@ -110,7 +112,7 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
-        'python': "C:\Program Files\Python37\python.exe",
+        'python': 'C:/Program\ Files/Python37/python.exe',
 
         'image_type': "WINDOWS_CONTAINER",
         'compute_type': "BUILD_GENERAL1_MEDIUM",
@@ -123,7 +125,7 @@ TARGETS = {
             'x86': {
                 'build_args': [
                     '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_LINK_FLAGS="-m32"',
+                    '-DCMAKE_CXX_FLAGS="-m32"',
                 ],
             },
         },
@@ -163,12 +165,12 @@ COMPILERS = {
         'targets': ['linux'],
 
         'post_build_steps': [
-            "./format-check.sh",
-            "{clang_tidy} -p build **/*.c"
+            ["./format-check.sh"],
+            ["{clang_tidy}", "-p", "/tmp/build", SOURCE_LIST],
         ],
         'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
 
-        'apt_keys': ["https://apt.llvm.org/llvm-snapshot.gpg.key"],
+        'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
         'versions': {
             '3': {
@@ -179,16 +181,19 @@ COMPILERS = {
                 'apt_packages': ["clang-3.9"],
                 'build_env': {
                     'CC': "clang-3.9",
+                    'CXX': "clang-3.9",
                 },
             },
             '6': {
                 'apt_repos': [
-                    "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main",
+                    "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main",
                 ],
                 'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
 
                 'build_env': {
                     'CC': "clang-6.0",
+                    'CXX': "clang-6.0",
+                    'CLANG_FORMAT': 'clang-format-6.0',
                 },
 
                 'variables': {
@@ -199,12 +204,14 @@ COMPILERS = {
             },
             '8': {
                 'apt_repos': [
-                    "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-8 main",
+                    "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main",
                 ],
                 'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
 
                 'build_env': {
                     'CC': "clang-8",
+                    'CXX': "clang-8",
+                    'CLANG_FORMAT': 'clang-format-8',
                 },
 
                 'variables': {
@@ -221,18 +228,22 @@ COMPILERS = {
 
         'build_env': {
             'CC': "gcc-{version}",
+            'CXX': "g++-{version}",
         },
-        'apt_packages': ["gcc-{version}"],
+        'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
             '4': {
-                '!apt_packages': ["gcc"],
-                '!build_env': { 'CC': "gcc" },
+                '!apt_packages': ["gcc", "g++"],
+                '!build_env': {
+                    'CC': "gcc",
+                    'CXX': 'g++',
+                },
                 '!apt_repos': [],
 
                 'architectures': {
                     'x86': {
-                        'apt_packages': ["gcc-multilib"],
+                        'apt_packages': ["gcc-multilib", "g++-multilib"],
                     },
                 },
             },
@@ -243,7 +254,7 @@ COMPILERS = {
 
         'architectures': {
             'x86': {
-                'apt_packages': ["gcc-{version}-multilib"],
+                'apt_packages': ["gcc-{version}-multilib", "g++-{version}-multilib"],
             },
         },
     },
@@ -437,53 +448,21 @@ def produce_config(build_spec):
 # RUN BUILD
 ########################################################################################################################
 
-def _quote_escape(args):
-    if type(args) == str:
-        return '"{}"'.format(args.replace('"', '\\"'))
-    elif type(args) == list:
-        return [_quote_escape(arg) for arg in args]
+def run_build(config):
 
-def run_build_linux(config):
+    sources = glob.glob('**/*.c')
+    def _replace_sources(command_list):
+        new_commands = []
+        for command in command_list:
+            try:
+                idx = command.index(SOURCE_LIST)
+            except ValueError:
+                new_commands.append(command)
+                continue
 
-    commands = []
+            new_commands.append(command[:idx] + sources + command[idx + 1:])
 
-    # INSTALL
-
-    # Install keys
-    for key in config['apt_keys']:
-        commands.append("wget -O - {} | sudo apt-key add -".format(key))
-
-    # Add APT repositories
-    for repo in config['apt_repos']:
-        commands.append("sudo apt-add-repository \"{}\"".format(repo))
-
-    # Install packages
-    if config['apt_packages']:
-        commands.append("sudo apt-get update -y")
-        commands.append("sudo apt-get install -y -f " + ' '.join(config['apt_packages']))
-
-    # PRE BUILD
-
-    # Set build environment
-    for var, value in config['build_env'].items():
-        os.environ[var] = value
-
-    # Run configured pre-build steps
-    commands += config['pre_build_steps']
-
-    # BUILD
-
-    # Run the repo's build script
-    commands.append("./codebuild/common-poxix.sh " + ' '.join(_quote_escape(config['build_args'])))
-
-    # POST BUILD
-
-    # Run configured post-build steps
-    commands += config['post_build_steps']
-
-    return commands
-
-def run_build_android(config):
+        return new_commands
 
     commands = []
 
@@ -491,16 +470,16 @@ def run_build_android(config):
 
     # Install keys
     for key in config['apt_keys']:
-        commands.append("wget -O - {} | sudo apt-key add -".format(key))
+        commands.append(["sudo", "apt-key", "adv", "--fetch-keys", key])
 
     # Add APT repositories
     for repo in config['apt_repos']:
-        commands.append("sudo apt-add-repository \"{}\"".format(repo))
+        commands.append(["sudo", "apt-add-repository", repo])
 
     # Install packages
     if config['apt_packages']:
-        commands.append("sudo apt-get update -y")
-        commands.append("sudo apt-get install -y -f " + ' '.join(config['apt_packages']))
+        commands.append(["sudo", "apt-get", "update", "-y"])
+        commands.append(["sudo", "apt-get", "install", "-y", "-f"] + config['apt_packages'])
 
     # PRE BUILD
 
@@ -509,50 +488,26 @@ def run_build_android(config):
         os.environ[var] = value
 
     # Run configured pre-build steps
-    commands += config['pre_build_steps']
+    commands += _replace_sources(config['pre_build_steps'])
 
     # BUILD
 
+    common_scripts = {
+        'linux': "./codebuild/common-posix.sh",
+        'android': "./codebuild/common-android.sh",
+        'windows': "./codebuild/common-windows.sh",
+    }
+    script = common_scripts[config['spec'].target]
+
     # Run the repo's build script
-    commands.append("./codebuild/common-android.sh " + ' '.join(_quote_escape(config['build_args'])))
+    commands.append([script] + config['build_args'])
 
     # POST BUILD
 
     # Run configured post-build steps
-    commands += config['post_build_steps']
+    commands += _replace_sources(config['post_build_steps'])
 
     return commands
-
-def run_build_windows(config):
-
-    commands = []
-
-    # PRE BUILD
-
-    # Set build environment
-    for var, value in config['build_env'].items():
-        os.environ[var] = value
-
-    # Run configured pre-build steps
-    commands += config['pre_build_steps']
-
-    # BUILD
-
-    # Run the repo's build script
-    commands.append("./codebuild/common-windows.sh " + ' '.join(_quote_escape(config['build_args'])))
-
-    # POST BUILD
-
-    # Run configured post-build steps
-    commands += config['post_build_steps']
-
-    return commands
-
-run_build = {
-    'linux': run_build_linux,
-    'android': run_build_android,
-    'windows': run_build_windows,
-}
 
 ########################################################################################################################
 # CODEBUILD
@@ -597,7 +552,13 @@ def create_codebuild_project(config, project, github_account):
             'type': 'GITHUB',
             'location': 'https://github.com/{account}/{project}.git',
             'gitCloneDepth': 1,
-            'buildspec': 'codebuild/common.yml',
+            'buildspec':
+                'version: 0.2\n' +
+                'phases:\n' +
+                '  build:\n' +
+                '    commands:\n' +
+                '      - "{python} --version"\n' +
+                '      - "{python} ./codebuild/builder.py build $BUILD_SPEC"',
             'auth': {
                 'type': 'OAUTH',
             },
@@ -615,10 +576,6 @@ def create_codebuild_project(config, project, github_account):
                     'name': "BUILD_SPEC",
                     'value': "{spec}",
                 },
-                {
-                    'name': "PYTHON",
-                    'value': "{python}",
-                }
             ],
             'privilegedMode': config['requires_privilege'],
         },
@@ -653,15 +610,17 @@ if __name__ == '__main__':
         build_spec = BuildSpec(spec=args.build)
         config = produce_config(build_spec)
 
-        print("Running build {}".format(config['spec'].name()))
+        print("Running build", config['spec'].name(), flush=True)
+        print("Current directory:", os.getcwd(), flush=True)
 
-        commands = run_build[build_spec.target](config)
+        commands = run_build(config)
         if args.dry_run:
-            print('\n'.join(commands))
+            print('\n'.join([' '.join(command) for command in commands]))
         else:
             import subprocess
             for command in commands:
-                subprocess.check_call(command)
+                print('>', ' '.join(command), flush=True)
+                subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
 
     if args.command == 'codebuild':
 
