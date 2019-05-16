@@ -1,6 +1,0 @@
-version: 0.2
-#this buildspec assumes the aws-sdk-common-runtime/android/ndk-r19c image
-phases:
-  build:
-    commands:
-      - ./codebuild/common-android.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
