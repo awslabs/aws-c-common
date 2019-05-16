@@ -12,6 +12,7 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
+import os
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
@@ -61,12 +62,20 @@ KEYS = {
 
 HOSTS = {
     'linux': {
+        'architectures': {
+            'x86': {
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/ubuntu-16.04:x86",
+            },
+            'x64': {
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/ubuntu-16.04:x64",
+            },
+        },
+
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
         'apt_packages': ["cmake3"],
 
-        'image': "aws/codebuild/ubuntu-base:14.04",
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
@@ -76,17 +85,17 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
 
-        'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/amzn-linux:latest",
+        'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
-    'ancientlinux': {
+    'manylinux': {
         'architectures': {
             'x86': {
-                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/ancientlinux-x86:latest",
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux:x86",
             },
             'x64': {
-                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/ancientlinux-x64:latest",
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/manylinux:x64",
             },
         },
 
@@ -133,7 +142,7 @@ TARGETS = {
 
 COMPILERS = {
     'default': {
-        'hosts': ['al2012', 'ancientlinux'],
+        'hosts': ['al2012', 'manylinux'],
         'targets': ['linux'],
 
         'versions': {
@@ -448,7 +457,7 @@ def run_build_linux(config):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        commands.append("export {}={}".format(var, value))
+        os.environ[var] = value
 
     # Run configured pre-build steps
     commands += config['pre_build_steps']
@@ -488,7 +497,7 @@ def run_build_android(config):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        commands.append("export {}={}".format(var, value))
+        os.environ[var] = value
 
     # Run configured pre-build steps
     commands += config['pre_build_steps']
@@ -513,7 +522,7 @@ def run_build_windows(config):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        commands.append("set {}=\"{}\"".format(var, value))
+        os.environ[var] = value
 
     # Run configured pre-build steps
     commands += config['pre_build_steps']
@@ -555,8 +564,8 @@ CODEBUILD_OVERRIDES = {
 
     "AL2012-gcc44": 'al2012-default-default-linux-x64',
 
-    "ancient-linux-x86": 'ancientlinux-default-default-linux-x86',
-    "ancient-linux-x64": 'ancientlinux-default-default-linux-x64',
+    "ancient-linux-x86": 'manylinux-default-default-linux-x86',
+    "ancient-linux-x64": 'manylinux-default-default-linux-x64',
 
     'windows-msvc-2015-x86': 'windows-msvc-2015-windows-x86',
     'windows-msvc-2015': 'windows-msvc-2015-windows-x64',
