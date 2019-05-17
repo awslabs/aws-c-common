@@ -1,23 +1,21 @@
-# Stock image build from internal AL2012.3 image on the wiki
-FROM 123124136734.dkr.ecr.us-east-1.amazonaws.com/amzn-linux:2012.3
+# See: https://github.com/pypa/manylinux
+# and: quay.io/pypa/manylinux1_x86_64
+FROM quay.io/pypa/manylinux1_i686
 
 # 3.13.5 is the last version to work with ancient glibc
 ENV CMAKE_VERSION=3.13.5
-
-# workaround to allow yum to work in a container, stolen shamelessly from
-# https://github.com/moby/moby/issues/10180#issuecomment-296977038
-RUN set -ex \
-    && rpm --rebuilddb \
-    && yum update -y \
-    && yum install -y tar gcc gcc-c++ git python27
 
 ###############################################################################
 # CMake
 ###############################################################################
 RUN set -ex \
     && cd /tmp \
-    && curl -LO https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz \
-    && tar xzf cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz -C /usr --strip-components 1 \
+    && curl -LO https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
+    && tar xzf cmake-${CMAKE_VERSION}.tar.gz \
+    && cd cmake-${CMAKE_VERSION} \
+    && ./bootstrap -- -DCMAKE_BUILD_TYPE=Release \
+    && make \
+    && make install \
     && cmake --version
 
 ###############################################################################
@@ -29,7 +27,7 @@ RUN set -ex \
     && git clone https://github.com/openssl/openssl.git \
     && pushd openssl \
     && git checkout OpenSSL_1_0_2-stable \
-    && ./config -fPIC \
+    && setarch i386 ./config -fPIC -m32 \
         no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 \
         no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng \
         no-unit-test no-tests \
@@ -44,10 +42,10 @@ RUN set -ex \
 # Elasticurl
 ###############################################################################
 
-
 ###############################################################################
 # Cleanup
 ###############################################################################
 RUN set -ex \
     && yum clean all \
     && rm -rf /tmp/*
+    
