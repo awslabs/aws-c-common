@@ -20,7 +20,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#define HEX_CHAR_FMT "%02" SCNx8
+#define HEX_CHAR_FMT "%x02"
 
 #define UUID_FORMAT                                                                                                    \
     HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT HEX_CHAR_FMT                                                                \
@@ -56,22 +56,22 @@ int aws_uuid_init_from_str(struct aws_uuid *uuid, const struct aws_byte_cursor *
     if (16 != sscanf(
                   cpy,
                   UUID_FORMAT,
-                  &uuid->uuid_data[0],
-                  &uuid->uuid_data[1],
-                  &uuid->uuid_data[2],
-                  &uuid->uuid_data[3],
-                  &uuid->uuid_data[4],
-                  &uuid->uuid_data[5],
-                  &uuid->uuid_data[6],
-                  &uuid->uuid_data[7],
-                  &uuid->uuid_data[8],
-                  &uuid->uuid_data[9],
-                  &uuid->uuid_data[10],
-                  &uuid->uuid_data[11],
-                  &uuid->uuid_data[12],
-                  &uuid->uuid_data[13],
-                  &uuid->uuid_data[14],
-                  &uuid->uuid_data[15])) {
+                  (unsigned*)&uuid->uuid_data[0],
+                  (unsigned*)&uuid->uuid_data[1],
+                  (unsigned*)&uuid->uuid_data[2],
+                  (unsigned*)&uuid->uuid_data[3],
+                  (unsigned*)&uuid->uuid_data[4],
+                  (unsigned*)&uuid->uuid_data[5],
+                  (unsigned*)&uuid->uuid_data[6],
+                  (unsigned*)&uuid->uuid_data[7],
+                  (unsigned*)&uuid->uuid_data[8],
+                  (unsigned*)&uuid->uuid_data[9],
+                  (unsigned*)&uuid->uuid_data[10],
+                  (unsigned*)&uuid->uuid_data[11],
+                  (unsigned*)&uuid->uuid_data[12],
+                  (unsigned*)&uuid->uuid_data[13],
+                  (unsigned*)&uuid->uuid_data[14],
+                  (unsigned*)&uuid->uuid_data[15])) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
 
