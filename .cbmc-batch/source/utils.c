@@ -74,15 +74,12 @@ void assert_byte_buf_equivalence(
     const struct aws_byte_buf *const lhs,
     const struct aws_byte_buf *const rhs,
     const struct store_byte_from_buffer *const rhs_byte) {
-<<<<<<< HEAD
     /* In order to be equivalent, either both are NULL or both are non-NULL */
     if (lhs == rhs) {
         return;
     } else {
         assert(lhs && rhs); /* if only one is null, they differ */
     }
-=======
->>>>>>> Adds assert_byte_buf_equivalence function to proof helpers
     assert(lhs->len == rhs->len);
     assert(lhs->capacity == rhs->capacity);
     assert(lhs->allocator == rhs->allocator);
