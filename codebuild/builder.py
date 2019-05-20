@@ -42,7 +42,12 @@ class BuildSpec(object):
 ########################################################################################################################
 
 # Can be used in build steps to insert a complete list of source files
-SOURCE_LIST = "__sources__"
+SOURCE_LIST = "__source_list__"
+# Can be used in build steps to represent the temp build directory
+BUILD_DIR = "__build_dir__"
+
+# CMake config to build with
+BUILD_CONFIG = "RelWithDebInfo"
 
 KEYS = {
     # Build
@@ -51,6 +56,7 @@ KEYS = {
     'post_build_steps': list,
     'build_env': dict,
     'build_args': list,
+    'run_tests': bool,
 
     # Linux
     'apt_keys': list,
@@ -76,6 +82,10 @@ HOSTS = {
         },
 
         'python': "python3",
+
+        'build_args': [
+            "-DPERFORM_HEADER_CHECK=ON",
+        ],
 
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
@@ -112,7 +122,11 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
-        'python': 'C:/Program\ Files/Python37/python.exe',
+        'python': 'C:/Program\\ Files/Python37/python.exe',
+
+        'build_args': [
+            "-DPERFORM_HEADER_CHECK=ON",
+        ],
 
         'image_type': "WINDOWS_CONTAINER",
         'compute_type': "BUILD_GENERAL1_MEDIUM",
@@ -129,6 +143,10 @@ TARGETS = {
                 ],
             },
         },
+
+        'build_args': [
+            "-DENABLE_SANITIZERS=ON",
+        ],
     },
     'android': {
         'build_args': [
@@ -136,6 +154,7 @@ TARGETS = {
             "-DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake",
             "-DANDROID_NDK=/opt/android-ndk",
         ],
+        'run_tests': False,
 
         'architectures': {
             'arm64v8a': {
@@ -166,7 +185,7 @@ COMPILERS = {
 
         'post_build_steps': [
             ["./format-check.sh"],
-            ["{clang_tidy}", "-p", "/tmp/build", SOURCE_LIST],
+            ["{clang_tidy}", "-p", BUILD_DIR, SOURCE_LIST],
         ],
         'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
 
@@ -448,38 +467,49 @@ def produce_config(build_spec):
 # RUN BUILD
 ########################################################################################################################
 
-def run_build(config):
+def run_build(config, is_dryrun):
 
-    sources = glob.glob('**/*.c')
-    def _replace_sources(command_list):
-        new_commands = []
-        for command in command_list:
-            try:
-                idx = command.index(SOURCE_LIST)
-            except ValueError:
-                new_commands.append(command)
-                continue
+    if not is_dryrun:
+        import tempfile, shutil, subprocess
 
-            new_commands.append(command[:idx] + sources + command[idx + 1:])
+    source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
+    sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-        return new_commands
+    def _run_command(command):
+        # Replace the sources list
+        try:
+            idx = command.index(SOURCE_LIST)
+            command = command[:idx] + sources + command[idx + 1:]
+        except ValueError:
+            pass
 
-    commands = []
+        # Replace the build dir
+        try:
+            idx = command.index(BUILD_DIR)
+            command[idx] = build_dir
+        except ValueError:
+            pass
+
+        if is_dryrun:
+            print(' '.join(command))
+        else:
+            print('>', ' '.join(command), flush=True)
+            subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
 
     # INSTALL
 
     # Install keys
     for key in config['apt_keys']:
-        commands.append(["sudo", "apt-key", "adv", "--fetch-keys", key])
+        _run_command(["sudo", "apt-key", "adv", "--fetch-keys", key])
 
     # Add APT repositories
     for repo in config['apt_repos']:
-        commands.append(["sudo", "apt-add-repository", repo])
+        _run_command(["sudo", "apt-add-repository", repo])
 
     # Install packages
     if config['apt_packages']:
-        commands.append(["sudo", "apt-get", "update", "-y"])
-        commands.append(["sudo", "apt-get", "install", "-y", "-f"] + config['apt_packages'])
+        _run_command(["sudo", "apt-get", "update", "-y"])
+        _run_command(["sudo", "apt-get", "install", "-y", "-f"] + config['apt_packages'])
 
     # PRE BUILD
 
@@ -488,24 +518,48 @@ def run_build(config):
         os.environ[var] = value
 
     # Run configured pre-build steps
-    commands += _replace_sources(config['pre_build_steps'])
+    for step in config['pre_build_steps']:
+        _run_command(step)
 
     # BUILD
 
-    common_scripts = {
-        'linux': "./codebuild/common-posix.sh",
-        'android': "./codebuild/common-android.sh",
-        'windows': "./codebuild/common-windows.sh",
-    }
-    script = common_scripts[config['spec'].target]
+    # Make & CD to the build directory
+    if is_dryrun:
+        build_dir = "$TEMP/build"
+        _run_command(["mkdir", build_dir])
+        _run_command(["cd", build_dir])
+    else:
+        build_dir = tempfile.mkdtemp()
+        os.chdir(build_dir)
 
-    # Run the repo's build script
-    commands.append([script] + config['build_args'])
+    # Run CMake
+    _run_command(["cmake"] + config['build_args'] + ["-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
+
+    # Run the build
+    if config['spec'].compiler == 'msvc':
+        _run_command(["msbuild.exe", "INSTALL.vcxproj", "/p:Configuration=" + BUILD_CONFIG])
+    else:
+        _run_command(["make", "-j"])
+
+    # Run tests if necessary
+    if config['run_tests']:
+        _run_command(["ctest", ".", "--output-on-failure"])
 
     # POST BUILD
 
+    # Go back to the source dir
+    if is_dryrun:
+        _run_command(["cd", source_dir])
+    else:
+        os.chdir(source_dir)
+
     # Run configured post-build steps
-    commands += _replace_sources(config['post_build_steps'])
+    for step in config['post_build_steps']:
+        _run_command(step)
+
+    # Delete temp dir
+    if not is_dryrun:
+        shutil.rmtree(build_dir)
 
     return commands
 
@@ -613,14 +667,7 @@ if __name__ == '__main__':
         print("Running build", config['spec'].name(), flush=True)
         print("Current directory:", os.getcwd(), flush=True)
 
-        commands = run_build(config)
-        if args.dry_run:
-            print('\n'.join([' '.join(command) for command in commands]))
-        else:
-            import subprocess
-            for command in commands:
-                print('>', ' '.join(command), flush=True)
-                subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
+        run_build(config, args.dry_run)
 
     if args.command == 'codebuild':
 
