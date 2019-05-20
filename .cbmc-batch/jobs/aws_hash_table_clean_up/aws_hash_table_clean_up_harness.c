@@ -24,12 +24,16 @@ void aws_hash_table_clean_up_harness() {
     struct aws_hash_table map;
     ensure_allocated_hash_table(&map, MAX_TABLE_SIZE);
     __CPROVER_assume(aws_hash_table_is_valid(&map));
-    map.p_impl->destroy_key_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
-    map.p_impl->destroy_value_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
+    ensure_hash_table_has_valid_destroy_functions(&map);
     map.p_impl->alloc = can_fail_allocator();
 
+    struct hash_table_state *state = map.p_impl;
     size_t empty_slot_idx;
+    size_t size_in_bytes = sizeof(struct hash_table_state) + sizeof(struct hash_table_entry) * state->size;
+    __CPROVER_allocated_memory(state, size_in_bytes); // tell CBMC to keep the buffer live after the free
+
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     aws_hash_table_clean_up(&map);
     assert(map.p_impl == NULL);
+    assert_all_zeroes(&state->slots[0], state->size * sizeof(state->slots[0]));
 }

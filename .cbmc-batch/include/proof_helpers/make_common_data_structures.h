@@ -129,6 +129,11 @@ struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allo
  */
 void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries);
 
+/*
+ * Ensures aws_hash_table has destroy function pointers that are enther null or valid
+ */
+void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map);
+
 /**
  * Makes a valid c string, with as much nondet as possible, len < max
  */

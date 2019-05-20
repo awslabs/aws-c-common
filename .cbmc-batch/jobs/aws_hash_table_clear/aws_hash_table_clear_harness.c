@@ -20,12 +20,11 @@
 #include <proof_helpers/utils.h>
 
 void aws_hash_table_clear_harness() {
-
     struct aws_hash_table map;
     ensure_allocated_hash_table(&map, MAX_TABLE_SIZE);
     __CPROVER_assume(aws_hash_table_is_valid(&map));
-    map.p_impl->destroy_key_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
-    map.p_impl->destroy_value_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
+    ensure_hash_table_has_valid_destroy_functions(&map);
+
     size_t empty_slot_idx;
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     aws_hash_table_clear(&map);

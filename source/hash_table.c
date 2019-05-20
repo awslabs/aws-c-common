@@ -263,7 +263,7 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
     aws_mem_release(map->p_impl->alloc, map->p_impl);
 
     map->p_impl = NULL;
-    AWS_PRECONDITION(map->p_impl == NULL);
+    AWS_POSTCONDITION(map->p_impl == NULL);
 }
 
 void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b) {

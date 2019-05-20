@@ -15,11 +15,12 @@
 #4: 35s
 #8: 1m10s
 #16: 6m30s
-MAX_TABLE_SIZE ?= 8
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+MAX_TABLE_SIZE ?= 4
+
+include ../Makefile.aws_hash_table
 
 UNWINDSET += aws_hash_table_clear.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
-UNWINDSET += memset_override_0_impl.0:$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 11)))
+UNWINDSET += memset_override_0_impl.0:$(shell echo $$((1 + $(TABLE_SIZE_IN_WORDS))))
 
 CBMCFLAGS +=
 
