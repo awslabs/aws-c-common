@@ -47,23 +47,23 @@ BUILD_CONFIG = ""
 
 KEYS = {
     # Build
-    'python': str,
-    'pre_build_steps': list,
-    'post_build_steps': list,
-    'build_env': dict,
-    'build_args': list,
-    'run_tests': bool,
+    'python': "",
+    'pre_build_steps': [],
+    'post_build_steps': [],
+    'build_env': {},
+    'build_args': [],
+    'run_tests': True,
 
     # Linux
-    'apt_keys': list,
-    'apt_repos': list,
-    'apt_packages': list,
+    'apt_keys': [],
+    'apt_repos': [],
+    'apt_packages': [],
 
     # CodeBuild
-    'image': str,
-    'image_type': str,
-    'compute_type': str,
-    'requires_privilege': bool,
+    'image': "",
+    'image_type': "",
+    'compute_type': "",
+    'requires_privilege': False,
 }
 
 HOSTS = {
@@ -163,7 +163,8 @@ TARGETS = {
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
-    'windows': { },
+    'windows': {
+    },
 }
 
 COMPILERS = {
@@ -425,8 +426,8 @@ def produce_config(build_spec, **additional_variables):
         'spec': build_spec,
     }
     # Iterate all keys and apply them
-    for key, key_type in KEYS.items():
-        new_version[key] = key_type()
+    for key, default in KEYS.items():
+        new_version[key] = default
 
         for config in configs:
             override_key = '!' + key
