@@ -66,9 +66,25 @@ bool aws_priority_queue_is_bounded(
     const size_t max_item_size) {
     bool container_is_bounded =
         aws_array_list_is_bounded(&queue->container, max_initial_item_allocation, max_item_size);
-    bool backpointers_is_bounded =
-        aws_array_list_is_bounded(&queue->backpointers, max_initial_item_allocation, max_item_size);
+
+    /* The backpointer list holds pointers to [struct
+     * aws_priority_queue_node] and so the max_item_size should be
+     * larger than the pointer size. */
+    bool backpointers_is_bounded = aws_array_list_is_bounded(
+        &queue->backpointers, max_initial_item_allocation, sizeof(struct aws_priority_queue_node *));
     return container_is_bounded && backpointers_is_bounded;
+}
+
+void ensure_backpointer_cell_points_to_allocated(struct aws_array_list *const backpointers, const size_t index) {
+    struct aws_priority_queue_node **backpointer = (uint8_t *)backpointers->data + (backpointers->item_size * index);
+
+    if (nondet_bool()) {
+        *backpointer = NULL;
+    } else {
+        struct aws_priority_queue_node *node = malloc(sizeof(struct aws_priority_queue_node));
+        __CPROVER_assume(node->current_index == index);
+        *backpointer = node;
+    }
 }
 
 void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue) {
