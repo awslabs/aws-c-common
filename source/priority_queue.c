@@ -25,7 +25,7 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(a < queue->container.length);
     AWS_PRECONDITION(b < queue->container.length);
-
+    
     aws_array_list_swap(&queue->container, a, b);
 
     /* Invariant: If the backpointer array is initialized, we have enough room for all elements */
@@ -192,7 +192,7 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
     bool backpointer_list_is_valid = aws_array_list_is_valid(&queue->backpointers);
 
     /* Backpointer struct should either be zero or should be
-     * initialized to be at most as long as the container, and having
+     * initialized to be the same length as the container, and having
      * as elements potentially null pointers to
      * aws_priority_queue_nodes */
     bool backpointer_list_item_size = queue->backpointers.item_size == sizeof(struct aws_priority_queue_node *);
