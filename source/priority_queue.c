@@ -180,6 +180,8 @@ void aws_priority_queue_init_static(
     AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
 }
 
+
+                                
 bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
     /* Pointer validity checks */
     if (!queue) {
