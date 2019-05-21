@@ -95,7 +95,7 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
 
-        'python': "python",
+        'python': "python27",
 
         'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
