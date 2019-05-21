@@ -163,6 +163,13 @@ AWS_COMMON_API
 void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf);
 
 /**
+ * Resets the len of the buffer to 0, but does not free the memory. The buffer can then be reused.
+ * Optionally zeroes the contents, if the "zero_contents" flag is true.
+ */
+AWS_COMMON_API
+void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents);
+
+/**
  * Sets all bytes of buffer to zero and resets len to zero.
  */
 AWS_COMMON_API
@@ -438,6 +445,21 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item);
 AWS_COMMON_API
 const uint8_t *aws_lookup_table_to_lower_get(void);
 
+/**
+ * Lexical (byte value) comparison of two byte cursors
+ */
+AWS_COMMON_API
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs);
+
+/**
+ * Lexical (byte value) comparison of two byte cursors where the raw values are sent through a lookup table first
+ */
+AWS_COMMON_API
+int aws_byte_cursor_compare_lookup(
+    const struct aws_byte_cursor *lhs,
+    const struct aws_byte_cursor *rhs,
+    const uint8_t *lookup_table);
+
 AWS_EXTERN_C_END
 
 /**
@@ -450,10 +472,11 @@ AWS_EXTERN_C_END
  */
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
     struct aws_byte_buf buf;
-    buf.buffer = (uint8_t *)c_str;
-    buf.len = strlen(c_str);
+    buf.len = (!c_str) ? 0 : strlen(c_str);
     buf.capacity = buf.len;
+    buf.buffer = (buf.capacity == 0) ? NULL : (uint8_t *)c_str;
     buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
     return buf;
 }
 
@@ -500,6 +523,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *by
     return cur;
 }
 
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
 /**
  * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
  * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
@@ -564,6 +589,7 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
 
     return combined_mask;
 }
+#pragma CPROVER check pop
 
 /**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
