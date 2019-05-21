@@ -12,25 +12,21 @@
 # limitations under the License.
 
 ###########
-# Sufficient for coverage for bounded inputs
-# Additional coverage is given using the -unbounded version of this proof
-# 4 - 1 min
-# 8 - 2 min
-# 12 - 6 min
-MAX_TABLE_SIZE ?= 8
+# Using the new calloc model, get full coverage in about 5s on unbounded sizes!
+MAX_TABLE_SIZE ?= SIZE_MAX
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
-
-#The hash table struct itself is 80 bytes, which is 10 iters 
-#A hash entry is 24 bytes, which is 10 iters. So we need 3 * MAX_TABLE_SIZE + 10 + 1
-UNWINDSET += memset_override_0_impl.0:$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 11)))
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_0.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body bounded_malloc
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body can_fail_malloc
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body nondet_compare
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body s_can_fail_malloc_allocator
 
 ENTRY = aws_hash_table_init_bounded_harness
 ###########
