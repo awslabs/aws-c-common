@@ -41,11 +41,6 @@ class BuildSpec(object):
 # DATA DEFINITIONS
 ########################################################################################################################
 
-# Can be used in build steps to insert a complete list of source files
-SOURCE_LIST = "__source_list__"
-# Can be used in build steps to represent the temp build directory
-BUILD_DIR = "__build_dir__"
-
 # CMake config to build with
 BUILD_CONFIG = "RelWithDebInfo"
 
@@ -185,7 +180,7 @@ COMPILERS = {
 
         'post_build_steps': [
             ["./format-check.sh"],
-            ["{clang_tidy}", "-p", BUILD_DIR, SOURCE_LIST],
+            ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
         'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
 
@@ -345,7 +340,6 @@ def validate_build(build_spec):
     supported_targets = compiler['targets']
     assert build_spec.target in supported_targets, "Compiler {} does not support target {}".format(build_spec.compiler, build_spec.target)
 
-
 # Moved outside merge_dicts to avoid variable shadowing
 def _apply_value(obj, key, new_value):
 
@@ -368,6 +362,10 @@ def _replace_variables(value, variables):
 
     key_type = type(value)
     if key_type == str:
+
+        # If the whole string is a variable, just replace it
+        if value[0] == '{' and value[-1] == '}':
+            return variables.get(value[1:-1], '')
 
         # Custom formatter for optional variables
         from string import Formatter
@@ -395,7 +393,7 @@ def _replace_variables(value, variables):
         return value
 
 # Traverse the configurations to produce one for the specified
-def produce_config(build_spec):
+def produce_config(build_spec, **additional_variables):
 
     validate_build(build_spec)
 
@@ -446,6 +444,7 @@ def produce_config(build_spec):
         'version': build_spec.compiler_version,
         'target': build_spec.target,
         'arch': build_spec.arch,
+        **additional_variables,
     }
 
     # Pull variables from the configs
@@ -467,7 +466,7 @@ def produce_config(build_spec):
 # RUN BUILD
 ########################################################################################################################
 
-def run_build(config, is_dryrun):
+def run_build(build_spec, is_dryrun):
 
     if not is_dryrun:
         import tempfile, shutil, subprocess
@@ -476,25 +475,30 @@ def run_build(config, is_dryrun):
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
     def _run_command(command):
-        # Replace the sources list
-        try:
-            idx = command.index(SOURCE_LIST)
-            command = command[:idx] + sources + command[idx + 1:]
-        except ValueError:
-            pass
-
-        # Replace the build dir
-        try:
-            idx = command.index(BUILD_DIR)
-            command[idx] = build_dir
-        except ValueError:
-            pass
+        # Process out lists
+        new_command = []
+        for e in command:
+            e_type = type(e)
+            if e_type == str:
+                new_command.append(e)
+            elif e_type == list:
+                new_command.extend(e)
 
         if is_dryrun:
-            print(' '.join(command))
+            print(' '.join(new_command))
         else:
-            print('>', ' '.join(command), flush=True)
-            subprocess.check_call(command, stdout=sys.stdout, stderr=sys.stderr)
+            print('>', ' '.join(new_command), flush=True)
+            subprocess.check_call(new_command, stdout=sys.stdout, stderr=sys.stderr)
+
+    # Make the build directory
+    if is_dryrun:
+        build_dir = "$TEMP/build"
+        _run_command(["mkdir", build_dir])
+    else:
+        build_dir = tempfile.mkdtemp()
+
+    # Build the config object
+    config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
 
     # INSTALL
 
@@ -509,7 +513,7 @@ def run_build(config, is_dryrun):
     # Install packages
     if config['apt_packages']:
         _run_command(["sudo", "apt-get", "update", "-y"])
-        _run_command(["sudo", "apt-get", "install", "-y", "-f"] + config['apt_packages'])
+        _run_command(["sudo", "apt-get", "install", "-y", "-f", config['apt_packages']])
 
     # PRE BUILD
 
@@ -523,17 +527,14 @@ def run_build(config, is_dryrun):
 
     # BUILD
 
-    # Make & CD to the build directory
+    # CD to the build directory
     if is_dryrun:
-        build_dir = "$TEMP/build"
-        _run_command(["mkdir", build_dir])
         _run_command(["cd", build_dir])
     else:
-        build_dir = tempfile.mkdtemp()
         os.chdir(build_dir)
 
     # Run CMake
-    _run_command(["cmake"] + config['build_args'] + ["-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
+    _run_command(["cmake", config['build_args'], "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
 
     # Run the build
     if config['spec'].compiler == 'msvc':
@@ -662,12 +663,11 @@ if __name__ == '__main__':
 
     if args.command == 'build':
         build_spec = BuildSpec(spec=args.build)
-        config = produce_config(build_spec)
 
-        print("Running build", config['spec'].name(), flush=True)
+        print("Running build", build_spec.name(), flush=True)
         print("Current directory:", os.getcwd(), flush=True)
 
-        run_build(config, args.dry_run)
+        run_build(build_spec, args.dry_run)
 
     if args.command == 'codebuild':
 
