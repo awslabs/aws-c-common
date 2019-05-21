@@ -42,7 +42,8 @@ class BuildSpec(object):
 ########################################################################################################################
 
 # CMake config to build with
-BUILD_CONFIG = "RelWithDebInfo"
+# BUILD_CONFIG = "RelWithDebInfo"
+BUILD_CONFIG = ""
 
 KEYS = {
     # Build
