@@ -95,7 +95,7 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
 
-        'python': "python27",
+        'python': "python3",
 
         'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
@@ -117,7 +117,7 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
-        'python': 'C:/Program\\ Files/Python37/python.exe',
+        'python': "python.exe",
 
         'build_args': [
             "-DPERFORM_HEADER_CHECK=ON",
