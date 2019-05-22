@@ -485,7 +485,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, size_t len) {
-    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len), "Input array [bytes] must be writable up to [len] bytes.");
     struct aws_byte_buf buf;
     buf.buffer = (len > 0) ? (uint8_t *)bytes : NULL;
     buf.len = len;
@@ -496,7 +496,8 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, s
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *bytes, size_t capacity) {
-    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, capacity));
+    AWS_PRECONDITION(
+        AWS_MEM_IS_WRITABLE(bytes, capacity), "Input array [bytes] must be writable up to [capacity] bytes.");
     struct aws_byte_buf buf;
     buf.buffer = (capacity > 0) ? (uint8_t *)bytes : NULL;
     buf.len = 0;

@@ -82,7 +82,7 @@ void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents) {
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input byte_buf [buf] must be valid.");
     if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
     }
@@ -93,7 +93,7 @@ void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
 }
 
 void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input byte_buf [buf] must be valid.");
     if (buf->buffer) {
         aws_secure_zero(buf->buffer, buf->capacity);
     }
@@ -102,7 +102,7 @@ void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
 }
 
 void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input byte_buf [buf] must be valid.");
     aws_byte_buf_secure_zero(buf);
     aws_byte_buf_clean_up(buf);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
@@ -447,8 +447,8 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cu
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input byte_buf [to] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input byte_cursor [from] must be valid.");
 
     if (to->capacity - to->len < from->len) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
@@ -473,9 +473,10 @@ int aws_byte_buf_append_with_lookup(
     struct aws_byte_buf *AWS_RESTRICT to,
     const struct aws_byte_cursor *AWS_RESTRICT from,
     const uint8_t *lookup_table) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input byte_buf [to] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input byte_cursor [from] must be valid.");
+    AWS_PRECONDITION(
+        AWS_MEM_IS_READABLE(lookup_table, 256), "Input array [lookup_table] must be at least 256 bytes long.");
 
     if (to->capacity - to->len < from->len) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
@@ -497,8 +498,8 @@ int aws_byte_buf_append_with_lookup(
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input byte_buf [to] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input byte_cursor [from] must be valid.");
     if (!to->allocator) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }

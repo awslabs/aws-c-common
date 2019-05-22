@@ -18,7 +18,7 @@
 #include <stdlib.h> /* qsort */
 
 int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(aws_array_list_is_valid(list), "Input array_list [list] must be valid.");
     if (list->alloc) {
         size_t ideal_size;
         if (aws_mul_size_checked(list->length, list->item_size, &ideal_size)) {
@@ -53,8 +53,8 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
 int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct aws_array_list *AWS_RESTRICT to) {
     AWS_FATAL_ASSERT(from->item_size == to->item_size);
     AWS_FATAL_ASSERT(from->data);
-    AWS_PRECONDITION(aws_array_list_is_valid(from));
-    AWS_PRECONDITION(aws_array_list_is_valid(to));
+    AWS_PRECONDITION(aws_array_list_is_valid(from), "Input array_list [from] must be valid.");
+    AWS_PRECONDITION(aws_array_list_is_valid(to), "Input array_list [to] must be valid.");
 
     size_t copy_size;
     if (aws_mul_size_checked(from->length, from->item_size, &copy_size)) {
@@ -99,7 +99,7 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
 }
 
 int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, size_t index) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(aws_array_list_is_valid(list), "Input array_list [list] must be valid.");
     size_t necessary_size;
     if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -185,7 +185,7 @@ static void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT
 void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, size_t b) {
     AWS_FATAL_ASSERT(a < list->length);
     AWS_FATAL_ASSERT(b < list->length);
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(aws_array_list_is_valid(list), "Input array_list [list] must be valid.");
 
     if (a == b) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
