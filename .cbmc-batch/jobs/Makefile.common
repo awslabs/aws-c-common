@@ -96,7 +96,7 @@ $(ENTRY)0.goto: $(ENTRY).c $(DEPENDENCIES)
 	        2>&1 | tee $(ENTRY)1.log
 
 $(ENTRY)1.goto: $(ENTRY)0.goto
-ifeq ($(REMOVE_FNCTION_BODY), "")
+ifeq ($(REMOVE_FUNCTION_BODY), "")
 	cp $< $@
 	echo "Not removing function bodies" | tee $(ENTRY)1.log
 else

@@ -87,7 +87,16 @@ int __CPROVER_uninterpreted_compare(const void *const a, const void *const b);
 int uninterpreted_compare(const void *const a, const void *const b) {
     assert(a != NULL);
     assert(b != NULL);
-    return __CPROVER_uninterpreted_compare(a, b);
+    int rval = __CPROVER_uninterpreted_compare(a, b);
+    /* Compare is reflexive */
+    __CPROVER_assume(IMPLIES(a == b, rval == 0));
+    /* Compare is anti-symmetric*/
+    __CPROVER_assume(__CPROVER_uninterpreted_compare(b, a) == -rval);
+    /* If two things are equal, their hashes are also equal */
+    if (rval == 0) {
+        __CPROVER_assume(__CPROVER_uninterpreted_hasher(a) == __CPROVER_uninterpreted_hasher(b));
+    }
+    return rval;
 }
 
 bool nondet_equals(const void *const a, const void *const b) {
@@ -103,8 +112,6 @@ uint64_t __CPROVER_uninterpreted_hasher(const void *const a);
  * transitivity because it doesn't cause any spurious proof failures on hash-table
  */
 bool uninterpreted_equals(const void *const a, const void *const b) {
-    assert(a != NULL);
-    assert(b != NULL);
     bool rval = __CPROVER_uninterpreted_equals(a, b);
     /* Equals is reflexive */
     __CPROVER_assume(IMPLIES(a == b, rval));
@@ -115,6 +122,12 @@ bool uninterpreted_equals(const void *const a, const void *const b) {
         __CPROVER_assume(__CPROVER_uninterpreted_hasher(a) == __CPROVER_uninterpreted_hasher(b));
     }
     return rval;
+}
+
+bool uninterpreted_equals_assert_inputs_nonnull(const void *const a, const void *const b) {
+    assert(a != NULL);
+    assert(b != NULL);
+    return uninterpreted_equals(a, b);
 }
 
 uint64_t nondet_hasher(const void *a) {
