@@ -71,7 +71,7 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  * Adds a + b.  If the result overflows returns 2^64 - 1.
  */
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
-    if (__CPROVER_overflow_add(a, b))
+    if (__CPROVER_overflow_plus(a, b))
         return UINT64_MAX;
     return a + b;
 }
@@ -81,7 +81,9 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
-    if (__CPROVER_overflow_add(a, b))
+  bool overflows = __CPROVER_overflow_plus(a, b);
+  if(overflows)
+  //if (__CPROVER_overflow_plus(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a + b;
     return AWS_OP_SUCCESS;
@@ -91,7 +93,7 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
  * Adds a + b. If the result overflows returns 2^32 - 1.
  */
 AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
-    if (__CPROVER_overflow_add(a, b))
+    if (__CPROVER_overflow_plus(a, b))
         return UINT32_MAX;
     return a + b;
 }
@@ -101,7 +103,7 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (__CPROVER_overflow_add(a, b))
+    if (__CPROVER_overflow_plus(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a + b;
     return AWS_OP_SUCCESS;
