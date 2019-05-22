@@ -591,6 +591,47 @@ static int s_test_byte_buf_append_lookup_success(struct aws_allocator *allocator
 }
 AWS_TEST_CASE(test_byte_buf_append_lookup_success, s_test_byte_buf_append_lookup_success)
 
+static int s_test_reset_body(struct aws_byte_buf *buffer) {
+    struct aws_byte_cursor to_lower_cursor = aws_byte_cursor_from_c_str((char *)s_to_lower_test->bytes);
+
+    ASSERT_TRUE(
+        aws_byte_buf_append_with_lookup(buffer, &to_lower_cursor, aws_lookup_table_to_lower_get()) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(buffer->len == s_to_lower_test->len);
+    for (size_t i = 0; i < s_to_lower_test->len; ++i) {
+        uint8_t value = buffer->buffer[i];
+        ASSERT_TRUE(value > 'Z' || value < 'A');
+    }
+    return 0;
+}
+static int s_test_byte_buf_reset(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, s_to_lower_test->len);
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    size_t old_cap = buffer.capacity;
+    aws_byte_buf_reset(&buffer, false);
+    ASSERT_TRUE(buffer.len == 0);
+    ASSERT_TRUE(buffer.capacity == old_cap);
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    old_cap = buffer.capacity;
+    aws_byte_buf_reset(&buffer, true);
+    ASSERT_TRUE(buffer.len == 0);
+    ASSERT_TRUE(buffer.capacity == old_cap);
+    for (size_t i = 0; i < buffer.capacity; i++) {
+        ASSERT_TRUE(buffer.buffer[i] == 0);
+    }
+    ASSERT_SUCCESS(s_test_reset_body(&buffer));
+
+    aws_byte_buf_clean_up(&buffer);
+    /* check that reset succeeds even on an empty buffer */
+    aws_byte_buf_reset(&buffer, true);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reset, s_test_byte_buf_reset)
+
 static int s_test_byte_buf_append_lookup_failure(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -659,3 +700,71 @@ static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, voi
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_reserve_relative, s_test_byte_buf_reserve_relative)
+
+static int s_test_byte_cursor_compare_lexical(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_cursor test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test");
+    struct aws_byte_cursor test_cursor2 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test");
+    struct aws_byte_cursor test1_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test1");
+    struct aws_byte_cursor test2_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test2");
+    struct aws_byte_cursor abc_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("abc");
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test_cursor, &test_cursor2) == 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test_cursor, &abc_cursor) > 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&abc_cursor, &test_cursor) < 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test_cursor, &test2_cursor) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test2_cursor, &test_cursor) > 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test1_cursor, &test2_cursor) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&test2_cursor, &test1_cursor) > 0);
+
+    struct aws_byte_cursor ff_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xFF\xFF");
+    struct aws_byte_cursor one_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01\x01");
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&ff_cursor, &one_cursor) > 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&one_cursor, &ff_cursor) < 0);
+
+    struct aws_byte_cursor Test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("Test");
+    struct aws_byte_cursor tesT_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("tesT");
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&Test_cursor, &tesT_cursor) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&tesT_cursor, &Test_cursor) > 0);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_cursor_compare_lexical, s_test_byte_cursor_compare_lexical)
+
+static int s_test_byte_cursor_compare_lookup(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_cursor Test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("Test");
+    struct aws_byte_cursor tesT_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("tesT");
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&Test_cursor, &tesT_cursor, aws_lookup_table_to_lower_get()) == 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&tesT_cursor, &Test_cursor, aws_lookup_table_to_lower_get()) == 0);
+
+    struct aws_byte_cursor ABC_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("ABC");
+    struct aws_byte_cursor abc_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("abc");
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lexical(&ABC_cursor, &abc_cursor) < 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&ABC_cursor, &abc_cursor, aws_lookup_table_to_lower_get()) == 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&abc_cursor, &ABC_cursor, aws_lookup_table_to_lower_get()) == 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&ABC_cursor, &tesT_cursor, aws_lookup_table_to_lower_get()) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&tesT_cursor, &ABC_cursor, aws_lookup_table_to_lower_get()) > 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&abc_cursor, &tesT_cursor, aws_lookup_table_to_lower_get()) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&tesT_cursor, &abc_cursor, aws_lookup_table_to_lower_get()) > 0);
+
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&abc_cursor, &Test_cursor, aws_lookup_table_to_lower_get()) < 0);
+    ASSERT_TRUE(aws_byte_cursor_compare_lookup(&Test_cursor, &abc_cursor, aws_lookup_table_to_lower_get()) > 0);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_cursor_compare_lookup, s_test_byte_cursor_compare_lookup)
