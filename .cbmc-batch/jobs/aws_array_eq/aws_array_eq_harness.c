@@ -18,17 +18,13 @@
 #include <proof_helpers/proof_allocators.h>
 
 void aws_array_eq_harness() {
-    /* parameters */
-    void *lhs;
-    void *rhs;
-    size_t lhs_len;
-    size_t rhs_len;
-
     /* assumptions */
+    size_t lhs_len;
     __CPROVER_assume(lhs_len <= MAX_BUFFER_SIZE);
-    lhs = bounded_malloc(lhs_len);
+    void *lhs = can_fail_malloc(lhs_len);
+    size_t rhs_len;
     __CPROVER_assume(rhs_len <= MAX_BUFFER_SIZE);
-    rhs = bounded_malloc(rhs_len);
+    void *rhs = can_fail_malloc(rhs_len);
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_lhs;

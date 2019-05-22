@@ -18,15 +18,11 @@
 #include <proof_helpers/proof_allocators.h>
 
 void aws_array_eq_c_str_ignore_case_harness() {
-    /* parameters */
-    void *array;
-    size_t array_len;
-    const char *c_str;
-
     /* assumptions */
+    size_t array_len;
     __CPROVER_assume(array_len <= MAX_BUFFER_SIZE);
-    array = bounded_malloc(array_len);
-    c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    void *array = can_fail_malloc(array_len);
+    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_array;
