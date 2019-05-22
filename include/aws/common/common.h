@@ -117,7 +117,7 @@
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
-#define AWS_PRECONDITION(cond, explanation) __CPROVER_precondition((cond), ("Precondition: " explanation))
+#define AWS_PRECONDITION(cond, explanation) __CPROVER_precondition((cond), (explanation))
 #define AWS_POSTCONDITION(cond) AWS_ASSERT(cond)
 #define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
