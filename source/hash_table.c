@@ -686,6 +686,7 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     AWS_PRECONDITION(aws_hash_table_is_valid(map));
     struct hash_table_state *state = map->p_impl;
     struct aws_hash_iter iter;
+    AWS_ZERO_STRUCT(iter);
     iter.map = map;
     iter.limit = state->size;
     s_get_next_element(&iter, 0);
