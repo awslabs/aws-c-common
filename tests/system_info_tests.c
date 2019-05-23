@@ -54,6 +54,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     ASSERT_NOT_NULL(tmp_file);
 
     int line = 0; /* captured on next line to match call site */
+    (void)line; /* may not be used if debug info is unavailable */
     aws_backtrace_print(tmp_file, (line = __LINE__, NULL));
     fflush(tmp_file);
 
