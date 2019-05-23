@@ -31,7 +31,7 @@ void aws_byte_cursor_from_buf_harness() {
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    struct aws_byte_cursor cur = aws_byte_cursor_from_buf(&buf);
+    struct aws_byte_cursor cur = aws_byte_cursor_from_buf(nondet_bool() ? &buf : NULL);
 
     /* assertions */
     assert(aws_byte_buf_is_valid(&buf));
