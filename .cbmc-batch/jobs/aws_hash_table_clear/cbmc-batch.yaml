@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;aws_hash_table_clear.0:5,memset_override_0_impl.0:23;--object-bits;8"
+goto: aws_hash_table_clear_harness.goto
+expected: "SUCCESSFUL"

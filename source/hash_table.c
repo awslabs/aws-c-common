@@ -250,6 +250,8 @@ int aws_hash_table_init(
 }
 
 void aws_hash_table_clean_up(struct aws_hash_table *map) {
+    AWS_PRECONDITION(map);
+    AWS_PRECONDITION(map->p_impl == NULL || aws_hash_table_is_valid(map));
     struct hash_table_state *state = map->p_impl;
 
     /* Ensure that we're idempotent */
@@ -258,9 +260,10 @@ void aws_hash_table_clean_up(struct aws_hash_table *map) {
     }
 
     aws_hash_table_clear(map);
-    aws_mem_release(((struct hash_table_state *)map->p_impl)->alloc, map->p_impl);
+    aws_mem_release(map->p_impl->alloc, map->p_impl);
 
     map->p_impl = NULL;
+    AWS_POSTCONDITION(map->p_impl == NULL);
 }
 
 void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_table *AWS_RESTRICT b) {
@@ -815,31 +818,20 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
 }
 
 void aws_hash_table_clear(struct aws_hash_table *map) {
+    AWS_PRECONDITION(aws_hash_table_is_valid(map));
     struct hash_table_state *state = map->p_impl;
-    if (state->destroy_key_fn) {
-        /* Check whether we have destructors once before traversing table. */
-        if (state->destroy_value_fn) {
-            for (size_t i = 0; i < state->size; ++i) {
-                struct hash_table_entry *entry = &state->slots[i];
-                if (entry->hash_code) {
-                    state->destroy_key_fn((void *)entry->element.key);
-                    state->destroy_value_fn(entry->element.value);
-                }
-            }
-        } else {
-            /* destroy_value_fn is not defined but destroy_key_fn is. */
-            for (size_t i = 0; i < state->size; ++i) {
-                struct hash_table_entry *entry = &state->slots[i];
-                if (entry->hash_code) {
-                    state->destroy_key_fn((void *)entry->element.key);
-                }
-            }
-        }
-    } else if (state->destroy_value_fn) {
-        /* destroy_key_fn is not defined but destroy_value_fn is. */
+
+    /* Check that we have at least one destructor before iterating over the table */
+    if (state->destroy_key_fn || state->destroy_value_fn) {
         for (size_t i = 0; i < state->size; ++i) {
             struct hash_table_entry *entry = &state->slots[i];
-            if (entry->hash_code) {
+            if (!entry->hash_code) {
+                continue;
+            }
+            if (state->destroy_key_fn) {
+                state->destroy_key_fn((void *)entry->element.key);
+            }
+            if (state->destroy_value_fn) {
                 state->destroy_value_fn(entry->element.value);
             }
         }
@@ -849,6 +841,7 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
     memset(state->slots, 0, sizeof(*state->slots) * state->size);
 
     state->entry_count = 0;
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
 }
 
 uint64_t aws_hash_c_string(const void *item) {

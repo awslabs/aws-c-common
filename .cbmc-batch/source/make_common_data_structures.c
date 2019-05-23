@@ -149,6 +149,11 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
     map->p_impl = impl;
 }
 
+void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map) {
+    map->p_impl->destroy_key_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
+    map->p_impl->destroy_value_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
+}
+
 const char *make_arbitrary_c_str(size_t max_size) {
     size_t cap;
     __CPROVER_assume(cap > 0 && cap <= max_size);
