@@ -286,7 +286,7 @@ COMPILERS = {
                     'generator_version': "14 2015",
                 },
 
-                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/win-vs2017:x64",
+                'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/win-vs2015:x64",
             },
             '2017': {
                 'variables': {
