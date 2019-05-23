@@ -602,13 +602,6 @@ def create_codebuild_project(config, project, github_account):
         'python': config['python'],
     }
 
-    if config['spec'].host == 'windows':
-        variables['env_prefix'] = '%'
-        variables['env_postfix'] = '%'
-    else:
-        variables['env_prefix'] = '$'
-        variables['env_postfix'] = ''
-
     # This matches the CodeBuild API for expected format
     CREATE_PARAM_TEMPLATE = {
         'name': '{project}-{spec}',
@@ -622,7 +615,7 @@ def create_codebuild_project(config, project, github_account):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '      - "{python} ./codebuild/builder.py build {env_prefix}BUILD_SPEC{env_postfix}"',
+                '      - "{python} ./codebuild/builder.py build"',
             'auth': {
                 'type': 'OAUTH',
             },
@@ -661,7 +654,7 @@ if __name__ == '__main__':
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser('build', help="Run the requested build")
-    build.add_argument('build', type=str)
+    build.add_argument('build', type=str, nargs='?', default=None)
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
@@ -671,7 +664,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.command == 'build':
-        build_spec = BuildSpec(spec=args.build)
+        # If build name not passed
+        build_name = args.build
+        if not build_name:
+            build_name = os.environ.get('BUILD_SPEC', None)
+            assert build_name, "Build must be specified via command line or BUILD_SPEC env variable"
+
+        build_spec = BuildSpec(spec=build_name)
 
         print("Running build", build_spec.name(), flush=True)
         print("Current directory:", os.getcwd(), flush=True)
