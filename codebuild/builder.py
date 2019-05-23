@@ -602,6 +602,13 @@ def create_codebuild_project(config, project, github_account):
         'python': config['python'],
     }
 
+    if config['spec'].host == 'windows':
+        variables['env_prefix'] = '%'
+        variables['env_postfix'] = '%'
+    else:
+        variables['env_prefix'] = '$'
+        variables['env_postfix'] = ''
+
     # This matches the CodeBuild API for expected format
     CREATE_PARAM_TEMPLATE = {
         'name': '{project}-{spec}',
@@ -615,7 +622,7 @@ def create_codebuild_project(config, project, github_account):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '      - "{python} ./codebuild/builder.py build $BUILD_SPEC"',
+                '      - "{python} ./codebuild/builder.py build {env_prefix}BUILD_SPEC{env_postfix}"',
             'auth': {
                 'type': 'OAUTH',
             },
