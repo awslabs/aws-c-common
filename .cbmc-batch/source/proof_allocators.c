@@ -55,11 +55,8 @@ static void *s_can_fail_realloc_allocator(struct aws_allocator *allocator, void 
 static struct aws_allocator s_can_fail_allocator_static = {
     .mem_acquire = s_can_fail_malloc_allocator,
     .mem_release = s_can_fail_free_allocator,
-    .mem_realloc = nondet_bool() ? NULL : s_can_fail_realloc_allocator,
-    /* define .mem_calloc once the following issues are fixed in CBMC. Until then, use the fallback.
-     * https://github.com/diffblue/cbmc/issues/4603
-     * https://github.com/diffblue/cbmc/issues/4602
-     */
+    .mem_realloc = s_can_fail_realloc_allocator,
+    .mem_calloc = s_can_fail_calloc_allocator,
 };
 
 void *bounded_calloc(size_t num, size_t size) {
