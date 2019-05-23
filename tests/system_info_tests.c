@@ -82,7 +82,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
-#if      defined(DEBUG_BUILD)
+#        if defined(DEBUG_BUILD)
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
      * in both directions depending on compiler, so we check a range around the call site __LINE__
      * The line number can also be ? on old compilers
