@@ -26,9 +26,13 @@ void aws_byte_buf_eq_ignore_case_harness() {
     __CPROVER_assume(aws_byte_buf_is_bounded(&lhs, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&lhs);
     __CPROVER_assume(aws_byte_buf_is_valid(&lhs));
-    __CPROVER_assume(aws_byte_buf_is_bounded(&rhs, MAX_BUFFER_SIZE));
-    ensure_byte_buf_has_allocated_buffer_member(&rhs);
-    __CPROVER_assume(aws_byte_buf_is_valid(&rhs));
+    if (nondet_bool()) {
+        rhs = lhs;
+    } else {
+        __CPROVER_assume(aws_byte_buf_is_bounded(&rhs, MAX_BUFFER_SIZE));
+        ensure_byte_buf_has_allocated_buffer_member(&rhs);
+        __CPROVER_assume(aws_byte_buf_is_valid(&rhs));
+    }
 
     /* save current state of the data structure */
     struct aws_byte_buf old_lhs = lhs;
@@ -39,7 +43,7 @@ void aws_byte_buf_eq_ignore_case_harness() {
     save_byte_from_array(rhs.buffer, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_ignore_case(&lhs, &rhs)) {
+    if (aws_byte_buf_eq_ignore_case((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL))) {
         assert(lhs.len == rhs.len);
     }
 

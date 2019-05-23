@@ -20,24 +20,23 @@
 void aws_byte_buf_eq_c_str_harness() {
     /* parameters */
     struct aws_byte_buf buf;
-    const char *c_str;
+    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* save current state of the parameters */
     struct aws_byte_buf old = buf;
     struct store_byte_from_buffer old_byte;
     save_byte_from_array(buf.buffer, buf.len, &old_byte);
-    size_t str_len = strlen(c_str);
+    size_t str_len = (c_str) ? strlen(c_str) : 0;
     struct store_byte_from_buffer old_byte_from_str;
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_c_str(&buf, c_str)) {
+    if (aws_byte_buf_eq_c_str((nondet_bool() ? NULL : &buf), c_str)) {
         assert(buf.len == str_len);
         if (buf.len > 0) {
             assert_bytes_match(buf.buffer, (uint8_t *)c_str, buf.len);
