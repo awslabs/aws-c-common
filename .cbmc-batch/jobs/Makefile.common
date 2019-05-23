@@ -92,7 +92,7 @@ REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
 $(ENTRY)0.goto: $(ENTRY).c $(DEPENDENCIES)
-	$(GOTO_CC) $< --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
+	$(GOTO_CC) $< --export-function-local-symbols --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
 	        2>&1 | tee $(ENTRY)1.log
 
 $(ENTRY)1.goto: $(ENTRY)0.goto
