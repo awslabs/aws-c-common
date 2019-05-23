@@ -17,7 +17,8 @@ void aws_add_size_checked_harness() {
         uint64_t a = nondet_uint64_t();
         uint64_t b = nondet_uint64_t();
         uint64_t r = nondet_uint64_t();
-        if (!aws_add_u64_checked(a, b, &r)) {
+        int rval = aws_add_u64_checked(a, b, &r);
+        if (!rval) {
             assert(r == a + b);
         } else {
             assert((b > 0) && (a > (UINT64_MAX - b)));
