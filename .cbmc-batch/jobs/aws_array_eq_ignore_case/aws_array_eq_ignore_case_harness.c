@@ -22,9 +22,16 @@ void aws_array_eq_ignore_case_harness() {
     size_t lhs_len;
     __CPROVER_assume(lhs_len <= MAX_BUFFER_SIZE);
     void *lhs = can_fail_malloc(lhs_len);
+
+    void *rhs;
     size_t rhs_len;
-    __CPROVER_assume(rhs_len <= MAX_BUFFER_SIZE);
-    void *rhs = can_fail_malloc(rhs_len);
+    if (nondet_bool()) { /* rhs could be equal to lhs */
+        rhs_len = lhs_len;
+        rhs = lhs;
+    } else {
+        __CPROVER_assume(rhs_len <= MAX_BUFFER_SIZE);
+        rhs = can_fail_malloc(rhs_len);
+    }
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_lhs;

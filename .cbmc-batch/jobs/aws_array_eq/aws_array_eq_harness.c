@@ -22,14 +22,15 @@ void aws_array_eq_harness() {
     size_t lhs_len;
     __CPROVER_assume(lhs_len <= MAX_BUFFER_SIZE);
     void *lhs = can_fail_malloc(lhs_len);
+
     void *rhs;
     size_t rhs_len;
-    if(nondet_bool()) { /* rhs could be equal to lhs */
+    if (nondet_bool()) { /* rhs could be equal to lhs */
         rhs_len = lhs_len;
         rhs = lhs;
     } else {
         __CPROVER_assume(rhs_len <= MAX_BUFFER_SIZE);
-        void *rhs = can_fail_malloc(rhs_len);
+        rhs = can_fail_malloc(rhs_len);
     }
 
     /* save current state of the parameters */
@@ -42,16 +43,16 @@ void aws_array_eq_harness() {
     if (aws_array_eq(lhs, lhs_len, rhs, rhs_len)) {
         /* asserts equivalence */
         assert(lhs_len == rhs_len);
-        if (lhs_len > 0) {
+        if (lhs_len > 0 && lhs) {
             assert_bytes_match((uint8_t *)lhs, (uint8_t *)rhs, lhs_len);
         }
     }
 
     /* asserts both parameters remain unchanged */
-    if (lhs_len > 0) {
+    if (lhs_len > 0 && lhs) {
         assert_byte_from_buffer_matches((uint8_t *)lhs, &old_byte_from_lhs);
     }
-    if (rhs_len > 0) {
+    if (rhs_len > 0 && rhs) {
         assert_byte_from_buffer_matches((uint8_t *)rhs, &old_byte_from_rhs);
     }
 }
