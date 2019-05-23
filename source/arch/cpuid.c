@@ -35,6 +35,7 @@
 #define CPUID_UNAVAILABLE 1
 static int cpuid_state = 2;
 
+#ifndef HAVE_BUILTIN_CPU_SUPPORTS
 #ifdef HAVE_MSVC_CPUIDEX
 static bool msvc_check_avx2(void) {
     int cpuInfo[4];
@@ -56,6 +57,7 @@ static bool msvc_check_avx2(void) {
     /* EBX bit 5: AVX2 support */
     return cpuInfo[1] & (1 << 5);
 }
+#endif
 #endif
 
 bool aws_common_private_has_avx2(void) {
