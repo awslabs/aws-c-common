@@ -21,7 +21,7 @@
  */
 #include <aws/common/common.h>
 
-/* This header does safe operations - supressing the checks within these functions
+/* This header does safe operations. Supressing the checks within these functions
  * avoids unnecessary CBMC assertions
  */
 #pragma CPROVER check push
