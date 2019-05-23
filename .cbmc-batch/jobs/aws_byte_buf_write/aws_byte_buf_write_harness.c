@@ -20,22 +20,20 @@ void aws_byte_buf_write_harness() {
     /* parameters */
     struct aws_byte_buf buf;
     size_t len;
-    uint8_t *array;
+    __CPROVER_assume(len <= MAX_BUFFER_SIZE);
+    uint8_t *array = can_fail_malloc(len);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(len <= MAX_BUFFER_SIZE);
-    array = nondet_bool() ? NULL : bounded_malloc(len);
 
     /* save current state of the parameters */
     struct aws_byte_buf old = buf;
     struct store_byte_from_buffer old_byte_from_buf;
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
-    /* Nondeterministically use len or SIZE_MAX to check whether aws_byte_buf_write handles overflow */
-    if (aws_byte_buf_write(&buf, array, nondet_bool() ? len : SIZE_MAX)) {
+    if (aws_byte_buf_write((nondet_bool() ? &buf : NULL), array, len)) {
         assert(buf.len == old.len + len);
         assert(old.capacity == buf.capacity);
         assert(old.allocator == buf.allocator);
