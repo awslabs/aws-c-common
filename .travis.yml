@@ -13,4 +13,4 @@ install:
 
 script:
   - export CODEBUILD_SRC_DIR=$(pwd)
-  - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  - python3 ./codebuild/builder.py build macos-clang-default-macos-x64
