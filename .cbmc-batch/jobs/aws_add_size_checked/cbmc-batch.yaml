@@ -1,4 +1,4 @@
 jobos: ubuntu16
-cbmcflags: "--bounds-check;--pointer-check;--div-by-zero-check;--signed-overflow-check;--pointer-overflow-check;--undefined-shift-check;--float-overflow-check;--nan-check;--unwinding-assertions;--function;aws_add_size_checked_harness"
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--object-bits;8"
 goto: aws_add_size_checked_harness.goto
 expected: "SUCCESSFUL"
