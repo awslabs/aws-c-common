@@ -40,6 +40,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     (void)ctx;
     char tmp_filename[] = "backtraceXXXXXX";
     FILE *tmp_file = NULL;
+
 #if defined(_WIN32)
     errno_t tmp_err = _mktemp_s(tmp_filename, sizeof(tmp_filename));
     ASSERT_INT_EQUALS(0, tmp_err);
@@ -78,6 +79,9 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 #    if !defined(__APPLE__) /* apple doesn't always find file info */
     ASSERT_NOT_NULL(strstr(buffer, file));
 
+    /* if this is not a debug build, there may not be symbols, so the test cannot
+     * verify if a best effort was made */
+#if      defined(DEBUG_BUILD)
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
      * in both directions depending on compiler, so we check a range around the call site __LINE__
      * The line number can also be ? on old compilers
@@ -94,6 +98,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     }
 
     ASSERT_TRUE(found_file_line);
+#        endif
 #    endif /* __APPLE__ */
 #endif
 
