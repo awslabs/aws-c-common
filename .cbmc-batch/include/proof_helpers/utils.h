@@ -66,7 +66,9 @@ void assert_array_list_equivalence(
     const struct store_byte_from_buffer *const rhs_byte);
 
 /**
- * Asserts two aws_byte_buf structures are equivalent. Prior to using this function,
+ * Asserts two aws_byte_buf structures are equivalent. In order to be considered equivalent,
+ * all member from both structures must match (i.e., len, *buffer, capacity, and *allocator),
+ * including all bytes from its underlying buffers. Prior to using this function,
  * it is necessary to select a non-deterministic byte from the rhs aws_byte_buf structure
  * (use save_byte_from_array function), so it can properly assert all bytes match.
  */

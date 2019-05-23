@@ -44,7 +44,7 @@ void assert_byte_from_buffer_matches(const uint8_t *const buffer, const struct s
 }
 
 void save_byte_from_array(const uint8_t *const array, const size_t size, struct store_byte_from_buffer *const storage) {
-    if (size > 0) {
+    if (size > 0 && array && storage) {
         storage->index = nondet_size_t();
         __CPROVER_assume(storage->index < size);
         storage->byte = array[storage->index];
@@ -55,6 +55,7 @@ void assert_array_list_equivalence(
     const struct aws_array_list *const lhs,
     const struct aws_array_list *const rhs,
     const struct store_byte_from_buffer *const rhs_byte) {
+    /* In order to be equivalent, either both are NULL or both are non-NULL */
     assert(!lhs == !rhs);
     if (lhs && rhs) {
         assert(lhs->alloc == rhs->alloc);
@@ -71,6 +72,7 @@ void assert_byte_buf_equivalence(
     const struct aws_byte_buf *const lhs,
     const struct aws_byte_buf *const rhs,
     const struct store_byte_from_buffer *const rhs_byte) {
+    /* In order to be equivalent, either both are NULL or both are non-NULL */
     assert(!lhs == !rhs);
     if (lhs && rhs) {
         assert(lhs->len == rhs->len);
