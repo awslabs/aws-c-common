@@ -87,7 +87,6 @@ DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 
 REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
-
 DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
 
 # Here, whenever there is a change in any of ANSI-C source
