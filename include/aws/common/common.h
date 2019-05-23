@@ -130,7 +130,8 @@
 #define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif
 
-
+#define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
+#define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
 
 #ifndef NO_STDBOOL
 #    include <stdbool.h>
