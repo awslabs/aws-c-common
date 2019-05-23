@@ -42,8 +42,7 @@ class BuildSpec(object):
 ########################################################################################################################
 
 # CMake config to build with
-# BUILD_CONFIG = "RelWithDebInfo"
-BUILD_CONFIG = ""
+BUILD_CONFIG = "RelWithDebInfo"
 
 KEYS = {
     # Build
@@ -473,6 +472,11 @@ def run_build(build_spec, is_dryrun):
     if not is_dryrun:
         import tempfile, shutil, subprocess
 
+    #TODO These platforms don't succeed when doing a RelWithDebInfo build
+    if build_spec.host in ("al2012", "manylinux"):
+        global BUILD_CONFIG
+        BUILD_CONFIG = "Debug"
+
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
@@ -539,10 +543,7 @@ def run_build(build_spec, is_dryrun):
     _run_command(["cmake", config['build_args'], "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
 
     # Run the build
-    if config['spec'].compiler == 'msvc':
-        _run_command(["msbuild.exe", "INSTALL.vcxproj", "/p:Configuration=" + BUILD_CONFIG])
-    else:
-        _run_command(["make", "-j"])
+    _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
 
     # Run tests if necessary
     if config['run_tests']:
