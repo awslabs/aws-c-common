@@ -80,6 +80,65 @@ void check_hash_table_unchanged(const struct aws_hash_table *map, const struct s
 int nondet_compare(const void *const a, const void *const b) {
     assert(a != NULL);
     assert(b != NULL);
-    int nondet;
-    return nondet;
+    return nondet_int();
+}
+
+int __CPROVER_uninterpreted_compare(const void *const a, const void *const b);
+int uninterpreted_compare(const void *const a, const void *const b) {
+    assert(a != NULL);
+    assert(b != NULL);
+    int rval = __CPROVER_uninterpreted_compare(a, b);
+    /* Compare is reflexive */
+    __CPROVER_assume(IMPLIES(a == b, rval == 0));
+    /* Compare is anti-symmetric*/
+    __CPROVER_assume(__CPROVER_uninterpreted_compare(b, a) == -rval);
+    /* If two things are equal, their hashes are also equal */
+    if (rval == 0) {
+        __CPROVER_assume(__CPROVER_uninterpreted_hasher(a) == __CPROVER_uninterpreted_hasher(b));
+    }
+    return rval;
+}
+
+bool nondet_equals(const void *const a, const void *const b) {
+    assert(a != NULL);
+    assert(b != NULL);
+    return nondet_bool();
+}
+
+bool __CPROVER_uninterpreted_equals(const void *const a, const void *const b);
+uint64_t __CPROVER_uninterpreted_hasher(const void *const a);
+/**
+ * Add assumptions that equality is reflexive and symmetric. Don't bother with
+ * transitivity because it doesn't cause any spurious proof failures on hash-table
+ */
+bool uninterpreted_equals(const void *const a, const void *const b) {
+    bool rval = __CPROVER_uninterpreted_equals(a, b);
+    /* Equals is reflexive */
+    __CPROVER_assume(IMPLIES(a == b, rval));
+    /* Equals is symmetric */
+    __CPROVER_assume(__CPROVER_uninterpreted_equals(b, a) == rval);
+    /* If two things are equal, their hashes are also equal */
+    if (rval) {
+        __CPROVER_assume(__CPROVER_uninterpreted_hasher(a) == __CPROVER_uninterpreted_hasher(b));
+    }
+    return rval;
+}
+
+bool uninterpreted_equals_assert_inputs_nonnull(const void *const a, const void *const b) {
+    assert(a != NULL);
+    assert(b != NULL);
+    return uninterpreted_equals(a, b);
+}
+
+uint64_t nondet_hasher(const void *a) {
+    assert(a != NULL);
+    return nondet_uint64_t();
+}
+
+/**
+ * Standard stub function to hash one item.
+ */
+uint64_t uninterpreted_hasher(const void *a) {
+    assert(a != NULL);
+    return __CPROVER_uninterpreted_hasher(a);
 }

@@ -79,3 +79,34 @@ void check_hash_table_unchanged(const struct aws_hash_table *map, const struct s
  * Standard stub function to compare two items.
  */
 int nondet_compare(const void *const a, const void *const b);
+
+/**
+ * Standard stub function to compare two items.
+ */
+int uninterpreted_compare(const void *const a, const void *const b);
+
+/**
+ * Standard stub function to compare two items.
+ */
+bool nondet_equals(const void *const a, const void *const b);
+
+/**
+ * Standard stub function to compare two items.
+ * Also enforces uninterpreted_hasher() to be equal for equal values.
+ */
+bool uninterpreted_equals(const void *const a, const void *const b);
+
+/**
+ * uninterpreted_equals(), but with an extra assertion that a and b are both not null
+ */
+bool uninterpreted_equals_assert_inputs_nonnull(const void *const a, const void *const b);
+
+/**
+ * Standard stub function to hash one item.
+ */
+uint64_t nondet_hasher(const void *a);
+
+/**
+ * Standard stub function to hash one item.
+ */
+uint64_t uninterpreted_hasher(const void *a);
