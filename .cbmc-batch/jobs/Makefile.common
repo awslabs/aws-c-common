@@ -86,6 +86,7 @@ DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 ################################################################
 
 REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
+REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
 
 # Here, whenever there is a change in any of ANSI-C source
 # dependency files, make will take action. However, to make
