@@ -81,9 +81,7 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
-  bool overflows = __CPROVER_overflow_plus(a, b);
-  if(overflows)
-  //if (__CPROVER_overflow_plus(a, b))
+    if (__CPROVER_overflow_plus(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a + b;
     return AWS_OP_SUCCESS;
