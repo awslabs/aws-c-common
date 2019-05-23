@@ -14,6 +14,7 @@
 ###########
 include ../Makefile.aws_byte_buf
 
+# Required to cover the size of aws_byte_buf structure
 MAX_BUFFER_SIZE=40
 
 # This bound allows us to reach 100% coverage rate
