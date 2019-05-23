@@ -404,25 +404,44 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
     return AWS_OP_SUCCESS;
 }
 
-/*
- * Attempts to find a home for the given entry. Returns after doing nothing if
- * entry was not occupied.
+/**
+ * Attempts to find a home for the given entry.
+ * If the entry was empty (i.e. hash-code of 0), then the function does nothing and returns NULL
+ * Otherwise, it emplaces the item, and returns a pointer to the newly emplaced entry.
+ * This function is only called after the hash-table has been expanded to fit the new element,
+ * so it should never fail.
  */
 static struct hash_table_entry *s_emplace_item(
     struct hash_table_state *state,
     struct hash_table_entry entry,
     size_t probe_idx) {
-    struct hash_table_entry *initial_placement = NULL;
+    AWS_PRECONDITION(hash_table_state_is_valid(state));
 
-    while (entry.hash_code) {
+    if (entry.hash_code == 0) {
+        AWS_POSTCONDITION(hash_table_state_is_valid(state));
+        return NULL;
+    }
+
+    struct hash_table_entry *rval = NULL;
+
+    /* Since a valid hash_table has at least one empty element, this loop will always terminate in at most linear time
+     */
+    while (entry.hash_code != 0) {
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
         size_t index = (size_t)(entry.hash_code + probe_idx) & state->mask;
+#pragma CPROVER check pop
         struct hash_table_entry *victim = &state->slots[index];
 
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
         size_t victim_probe_idx = (size_t)(index - victim->hash_code) & state->mask;
+#pragma CPROVER check pop
 
         if (!victim->hash_code || victim_probe_idx < probe_idx) {
-            if (!initial_placement) {
-                initial_placement = victim;
+            /* The first thing we emplace is the entry itself. A pointer to its location becomes the rval */
+            if (!rval) {
+                rval = victim;
             }
 
             struct hash_table_entry tmp = *victim;
@@ -435,14 +454,23 @@ static struct hash_table_entry *s_emplace_item(
         }
     }
 
-    return initial_placement;
+    AWS_POSTCONDITION(hash_table_state_is_valid(state));
+    AWS_POSTCONDITION(rval >= &state->slots[0] && rval < &state->slots[state->size]);
+    return rval;
 }
 
 static int s_expand_table(struct aws_hash_table *map) {
     struct hash_table_state *old_state = map->p_impl;
     struct hash_table_state template = *old_state;
 
-    s_update_template_size(&template, template.size * 2);
+    size_t new_size;
+    if (aws_mul_size_checked(template.size, 2, &new_size)) {
+        return AWS_OP_ERR;
+    }
+
+    if (s_update_template_size(&template, new_size)) {
+        return AWS_OP_ERR;
+    }
 
     struct hash_table_state *new_state = s_alloc_state(&template);
     if (!new_state) {
