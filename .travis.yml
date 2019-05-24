@@ -8,6 +8,12 @@ osx_image:
   - xcode10.1
 compiler: clang
 
+addons:
+  homebrew:
+    update: true
+    packages:
+      - python@3
+
 install:
   - export PATH=$(brew --prefix llvm)/bin:$PATH
 
