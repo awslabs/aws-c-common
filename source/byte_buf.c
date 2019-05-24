@@ -292,9 +292,13 @@ const uint8_t *aws_lookup_table_to_lower_get(void) {
     return s_tolower_table;
 }
 
-bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
-    AWS_ASSERT(array_a || (len_a == 0));
-    AWS_ASSERT(array_b || (len_b == 0));
+bool aws_array_eq_ignore_case(
+    const void *const array_a,
+    const size_t len_a,
+    const void *const array_b,
+    const size_t len_b) {
+    AWS_PRECONDITION((len_a == 0) || AWS_MEM_IS_READABLE(array_a, len_a));
+    AWS_PRECONDITION((len_b == 0) || AWS_MEM_IS_READABLE(array_b, len_b));
 
     if (len_a != len_b) {
         return false;
@@ -311,9 +315,9 @@ bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *arr
     return true;
 }
 
-bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b) {
-    AWS_ASSERT(array_a || (len_a == 0));
-    AWS_ASSERT(array_b || (len_b == 0));
+bool aws_array_eq(const void *const array_a, const size_t len_a, const void *const array_b, const size_t len_b) {
+    AWS_PRECONDITION((len_a == 0) || AWS_MEM_IS_READABLE(array_a, len_a));
+    AWS_PRECONDITION((len_b == 0) || AWS_MEM_IS_READABLE(array_b, len_b));
 
     if (len_a != len_b) {
         return false;
@@ -326,9 +330,9 @@ bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t
     return !memcmp(array_a, array_b, len_a);
 }
 
-bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const char *c_str) {
-    AWS_ASSERT(array || (array_len == 0));
-    AWS_ASSERT(c_str);
+bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_len, const char *const c_str) {
+    AWS_PRECONDITION(array || (array_len == 0));
+    AWS_PRECONDITION(c_str);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq_ignore_case(array, array_len, c_str, strlen(c_str));
@@ -352,9 +356,9 @@ bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const c
     return str_bytes[array_len] == '\0';
 }
 
-bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str) {
-    AWS_ASSERT(array || (array_len == 0));
-    AWS_ASSERT(c_str);
+bool aws_array_eq_c_str(const void *const array, const size_t array_len, const char *const c_str) {
+    AWS_PRECONDITION(array || (array_len == 0));
+    AWS_PRECONDITION(c_str);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq(array, array_len, c_str, strlen(c_str));
