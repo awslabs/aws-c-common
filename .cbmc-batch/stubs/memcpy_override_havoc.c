@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
  * this file except in compliance with the License. A copy of the License is
@@ -39,9 +39,11 @@ void *memcpy_impl(void *dst, const void *src, size_t n) {
     __CPROVER_precondition(src != NULL && __CPROVER_r_ok(src, n), "memcpy source region readable");
     __CPROVER_precondition(dst != NULL && __CPROVER_w_ok(dst, n), "memcpy destination region writeable");
 
-    size_t index;
-    __CPROVER_assume(index < n);
-    ((uint8_t *)dst)[index] = nondet_uint8_t();
+    if (n > 0) {
+        size_t index;
+        __CPROVER_assume(index < n);
+        ((uint8_t *)dst)[index] = nondet_uint8_t();
+    }
     return dst;
 }
 
