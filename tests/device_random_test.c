@@ -70,8 +70,8 @@ static int s_distribution_tester_check_results(const struct distribution_tester 
 }
 
 static int s_device_rand_u64_distribution_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct distribution_tester tester = {.max_value = UINT64_MAX};
 
     for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
@@ -87,8 +87,8 @@ static int s_device_rand_u64_distribution_fn(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(device_rand_u64_distribution, s_device_rand_u64_distribution_fn)
 
 static int s_device_rand_u32_distribution_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct distribution_tester tester = {.max_value = UINT32_MAX};
 
     for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
@@ -104,8 +104,8 @@ static int s_device_rand_u32_distribution_fn(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(device_rand_u32_distribution, s_device_rand_u32_distribution_fn)
 
 static int s_device_rand_u16_distribution_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct distribution_tester tester = {.max_value = UINT16_MAX};
 
     for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
@@ -121,8 +121,8 @@ static int s_device_rand_u16_distribution_fn(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(device_rand_u16_distribution, s_device_rand_u16_distribution_fn)
 
 static int s_device_rand_buffer_distribution_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t array[DISTRIBUTION_PUT_COUNT];
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));

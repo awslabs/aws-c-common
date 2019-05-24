@@ -45,8 +45,8 @@ struct callback_fn_wrapper {
 };
 
 BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
-    (void)context;
-    (void)init_once;
+    AWS_UNUSED_PARAM(context);
+    AWS_UNUSED_PARAM(init_once);
 
     struct callback_fn_wrapper *callback_fn_wrapper = param;
     callback_fn_wrapper->call_once();

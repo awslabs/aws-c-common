@@ -29,16 +29,16 @@ bool aws_common_private_has_avx2(void);
  * not be called - but we must provide them anyway to avoid link errors.
  */
 static inline size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
-    (void)in;
-    (void)out;
-    (void)len;
+    AWS_UNUSED_PARAM(in);
+    AWS_UNUSED_PARAM(out);
+    AWS_UNUSED_PARAM(len);
     AWS_ASSERT(false);
     return (size_t)-1; /* unreachable */
 }
 static inline void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
-    (void)in;
-    (void)out;
-    (void)len;
+    AWS_UNUSED_PARAM(in);
+    AWS_UNUSED_PARAM(out);
+    AWS_UNUSED_PARAM(len);
     AWS_ASSERT(false);
 }
 static inline bool aws_common_private_has_avx2(void) {

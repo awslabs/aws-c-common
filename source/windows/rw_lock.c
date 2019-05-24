@@ -29,7 +29,7 @@ int aws_rw_lock_init(struct aws_rw_lock *lock) {
 
 void aws_rw_lock_clean_up(struct aws_rw_lock *lock) {
 
-    (void)lock;
+    AWS_UNUSED_PARAM(lock);
 }
 
 int aws_rw_lock_rlock(struct aws_rw_lock *lock) {

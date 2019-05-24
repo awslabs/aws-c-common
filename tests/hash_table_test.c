@@ -53,7 +53,7 @@ static const char *TEST_VAL_STR_2 = "value 2";
 AWS_TEST_CASE(test_hash_table_create_find, s_test_hash_table_create_find_fn)
 static int s_test_hash_table_create_find_fn(struct aws_allocator *allocator, void *ctx) {
 
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     int err_code =
@@ -105,7 +105,7 @@ static int s_test_hash_table_create_find_fn(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(test_hash_table_string_create_find, s_test_hash_table_string_create_find_fn)
 static int s_test_hash_table_string_create_find_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
@@ -228,7 +228,7 @@ static void destroy_value_record(void *value) {
 
 AWS_TEST_CASE(test_hash_table_put, s_test_hash_table_put_fn)
 static int s_test_hash_table_put_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
@@ -286,7 +286,7 @@ static int s_test_hash_table_put_fn(struct aws_allocator *allocator, void *ctx) 
 }
 AWS_TEST_CASE(test_hash_table_put_null_dtor, s_test_hash_table_put_null_dtor_fn)
 static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
 
@@ -304,7 +304,7 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
 
 AWS_TEST_CASE(test_hash_table_swap_move, s_test_hash_table_swap_move)
 static int s_test_hash_table_swap_move(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
     AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
@@ -353,7 +353,7 @@ static int s_test_hash_table_swap_move(struct aws_allocator *allocator, void *ct
 AWS_TEST_CASE(test_hash_table_string_clean_up, s_test_hash_table_string_clean_up_fn)
 static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator, void *ctx) {
 
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* Verify that clean up happens properly when a destructor function is used only on keys or only on values. */
     struct aws_hash_table hash_table;
@@ -422,13 +422,13 @@ static int s_test_hash_table_string_clean_up_fn(struct aws_allocator *allocator,
 }
 
 static uint64_t hash_collide(const void *a) {
-    (void)a;
+    AWS_UNUSED_PARAM(a);
     return 4;
 }
 
 AWS_TEST_CASE(test_hash_table_hash_collision, s_test_hash_table_hash_collision_fn)
 static int s_test_hash_table_hash_collision_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
@@ -461,7 +461,7 @@ static int s_test_hash_table_hash_collision_fn(struct aws_allocator *allocator, 
 
 AWS_TEST_CASE(test_hash_table_hash_overwrite, s_test_hash_table_hash_overwrite_fn)
 static int s_test_hash_table_hash_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;
@@ -515,7 +515,7 @@ static void s_reset_destroy_ck(void) {
 AWS_TEST_CASE(test_hash_table_hash_remove, s_test_hash_table_hash_remove_fn)
 static int s_test_hash_table_hash_remove_fn(struct aws_allocator *allocator, void *ctx) {
 
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem, elem;
@@ -582,7 +582,7 @@ static int s_test_hash_table_hash_remove_fn(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(test_hash_table_hash_clear_allows_cleanup, s_test_hash_table_hash_clear_allows_cleanup_fn)
 static int s_test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     int err_code = aws_hash_table_init(
@@ -630,7 +630,7 @@ static int s_test_hash_table_hash_clear_allows_cleanup_fn(struct aws_allocator *
 
 AWS_TEST_CASE(test_hash_table_on_resize_returns_correct_entry, s_test_hash_table_on_resize_returns_correct_entry_fn)
 static int s_test_hash_table_on_resize_returns_correct_entry_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     int err_code = aws_hash_table_init(&hash_table, allocator, 10, aws_hash_ptr, aws_ptr_eq, NULL, NULL);
@@ -675,7 +675,7 @@ static int s_foreach_cb_deltarget(void *context, struct aws_hash_element *p_elem
 }
 
 static int s_foreach_cb_cutoff(void *context, struct aws_hash_element *p_element) {
-    (void)p_element;
+    AWS_UNUSED_PARAM(p_element);
 
     int *p_remain = context;
     s_iter_count++;
@@ -696,7 +696,7 @@ static int s_foreach_cb_cutoff_del(void *context, struct aws_hash_element *p_ele
 
 AWS_TEST_CASE(test_hash_table_foreach, s_test_hash_table_foreach_fn)
 static int s_test_hash_table_foreach_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     ASSERT_SUCCESS(
@@ -762,7 +762,7 @@ static bool s_hash_uint64_eq(const void *a, const void *b) {
 AWS_TEST_CASE(test_hash_table_iter, s_test_hash_table_iter_fn)
 static int s_test_hash_table_iter_fn(struct aws_allocator *allocator, void *ctx) {
 
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* Table entries are: (2^0 -> 2^10), (2^1 -> 2^11), (2^2 -> 2^12), ..., (2^9 -> 2^19).
      * We will iterate through the table and AND all the keys and all the values together
@@ -807,7 +807,7 @@ static int s_test_hash_table_iter_fn(struct aws_allocator *allocator, void *ctx)
 
 AWS_TEST_CASE(test_hash_table_empty_iter, s_test_hash_table_empty_iter_fn)
 static int s_test_hash_table_empty_iter_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table map;
     ASSERT_SUCCESS(aws_hash_table_init(&map, allocator, 10, s_hash_uint64_identity, s_hash_uint64_eq, NULL, NULL));
@@ -823,7 +823,7 @@ static int s_test_hash_table_empty_iter_fn(struct aws_allocator *allocator, void
 
 AWS_TEST_CASE(test_hash_table_iter_detail, s_test_hash_table_iter_detail)
 static int s_test_hash_table_iter_detail(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t keys[32], vals[32];
     for (uint64_t i = 0; i < 32; i++) {
@@ -914,21 +914,21 @@ static int s_test_hash_table_iter_detail(struct aws_allocator *allocator, void *
 }
 
 static uint64_t bad_hash_fn(const void *key) {
-    (void)key;
+    AWS_UNUSED_PARAM(key);
     return 4; // chosen by fair dice roll
               // guaranteed to be random
 }
 
 static bool everything_is_eq(const void *a, const void *b) {
-    (void)a;
-    (void)b;
+    AWS_UNUSED_PARAM(a);
+    AWS_UNUSED_PARAM(b);
 
     return true;
 }
 
 AWS_TEST_CASE(test_hash_table_eq, s_test_hash_table_eq)
 static int s_test_hash_table_eq(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table table_a, table_b;
 
@@ -1011,7 +1011,7 @@ static long s_timestamp(void) {
 
 AWS_TEST_CASE(test_hash_churn, s_test_hash_churn_fn)
 static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     int i = 0;
     struct aws_hash_table hash_table;
@@ -1123,7 +1123,7 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_hash_table_cleanup_idempotent, s_test_hash_table_cleanup_idempotent_fn)
 static int s_test_hash_table_cleanup_idempotent_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     ASSERT_SUCCESS(
@@ -1147,7 +1147,7 @@ static void s_hash_table_entry_destroy(void *item) {
 
 AWS_TEST_CASE(test_hash_table_byte_cursor_create_find, s_test_hash_table_byte_cursor_create_find_fn)
 static int s_test_hash_table_byte_cursor_create_find_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_hash_table hash_table;
     struct aws_hash_element *pElem;

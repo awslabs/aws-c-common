@@ -51,7 +51,7 @@
             memset((void *)array, 0, sizeof(array));                                                                   \
         } while (0)
 #define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-
+#define AWS_UNUSED_PARAM(param) (void)(param)
 
 #define AWS_CACHE_LINE 64
 

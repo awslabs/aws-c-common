@@ -18,8 +18,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     size_t processor_count = aws_system_info_processor_count();
     /* I think this is a fairly reasonable assumption given the circumstances
@@ -37,7 +37,7 @@ AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_l
 #endif
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     char tmp_filename[] = "backtraceXXXXXX";
     FILE *tmp_file = NULL;
 

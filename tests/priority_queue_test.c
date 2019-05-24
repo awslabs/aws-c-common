@@ -33,7 +33,7 @@ static int s_compare_ints(const void *a, const void *b) {
 }
 
 static int s_test_priority_queue_preserves_order(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
 
@@ -107,8 +107,8 @@ static int s_test_priority_queue_preserves_order(struct aws_allocator *allocator
 }
 
 static int s_test_priority_queue_random_values(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     enum { SIZE = 20 };
     struct aws_priority_queue queue;
@@ -155,7 +155,7 @@ static int s_test_priority_queue_random_values(struct aws_allocator *allocator, 
 }
 
 static int s_test_priority_queue_size_and_capacity(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
     int err = aws_priority_queue_init_dynamic(&queue, allocator, 5, sizeof(int), s_compare_ints);
@@ -202,7 +202,7 @@ static int s_test_priority_queue_size_and_capacity(struct aws_allocator *allocat
     } while (0)
 
 static int s_test_remove_root(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
     struct aws_priority_queue_node node = {12345};
@@ -225,7 +225,7 @@ static int s_test_remove_root(struct aws_allocator *allocator, void *ctx) {
 }
 
 static int s_test_remove_leaf(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
     struct aws_priority_queue_node node = {12345};
@@ -284,7 +284,7 @@ static int s_test_remove_leaf(struct aws_allocator *allocator, void *ctx) {
  *     15
  */
 static int s_test_remove_interior_sift_up(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
     struct aws_priority_queue_node node = {12345};
@@ -375,7 +375,7 @@ static int s_test_remove_interior_sift_up(struct aws_allocator *allocator, void 
  *     30
  */
 static int s_test_remove_interior_sift_down(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_priority_queue queue;
     struct aws_priority_queue_node node = {12345};

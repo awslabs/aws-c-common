@@ -24,7 +24,7 @@ AWS_STATIC_STRING_FROM_LITERAL(s_test_variable, "AWS_TEST_VAR");
 AWS_STATIC_STRING_FROM_LITERAL(s_test_value, "SOME_VALUE");
 
 static int s_test_environment_functions_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_string *value;
 

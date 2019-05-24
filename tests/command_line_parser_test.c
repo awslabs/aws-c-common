@@ -16,8 +16,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_short_argument_parse_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct aws_cli_option options[] = {
         {.name = NULL, .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .flag = NULL, .val = 'a'},
         {.name = "beeee", .has_arg = AWS_CLI_OPTIONS_REQUIRED_ARGUMENT, .flag = NULL, .val = 'b'},
@@ -54,8 +54,8 @@ static int s_test_short_argument_parse_fn(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(short_argument_parse, s_test_short_argument_parse_fn)
 
 static int s_test_long_argument_parse_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct aws_cli_option options[] = {
         {.name = "aaee", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .flag = NULL, .val = 'a'},
         {.name = "beeee", .has_arg = AWS_CLI_OPTIONS_REQUIRED_ARGUMENT, .flag = NULL, .val = 'b'},
@@ -93,8 +93,8 @@ static int s_test_long_argument_parse_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(long_argument_parse, s_test_long_argument_parse_fn)
 
 static int s_test_unqualified_argument_parse_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct aws_cli_option options[] = {
         {.name = "aaee", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .flag = NULL, .val = 'a'},
         {.name = "beeee", .has_arg = AWS_CLI_OPTIONS_REQUIRED_ARGUMENT, .flag = NULL, .val = 'b'},
@@ -128,8 +128,8 @@ static int s_test_unqualified_argument_parse_fn(struct aws_allocator *allocator,
 AWS_TEST_CASE(unqualified_argument_parse, s_test_unqualified_argument_parse_fn)
 
 static int s_test_unknown_argument_parse_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct aws_cli_option options[] = {
         {.name = "aaee", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .flag = NULL, .val = 'a'},
         {.name = "beeee", .has_arg = AWS_CLI_OPTIONS_REQUIRED_ARGUMENT, .flag = NULL, .val = 'b'},

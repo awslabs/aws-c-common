@@ -19,8 +19,8 @@
 
 AWS_TEST_CASE(test_secure_zero, s_test_secure_zero_fn)
 static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     /* We can't actually test the secure part of the zero operation - anything
      * we do to observe the buffer will teach the compiler that it needs to
@@ -52,7 +52,7 @@ static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_secure_zero, s_test_buffer_secure_zero_fn)
 static int s_test_buffer_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf buf;
     size_t len = 27;
@@ -74,7 +74,7 @@ static int s_test_buffer_secure_zero_fn(struct aws_allocator *allocator, void *c
 
 AWS_TEST_CASE(test_buffer_clean_up_secure, s_test_buffer_clean_up_secure_fn)
 static int s_test_buffer_clean_up_secure_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* We cannot test the zeroing of data here, because that would require reading
      * memory that has already been freed. Simply verifies that there is no memory leak.

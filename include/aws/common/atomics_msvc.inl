@@ -89,7 +89,7 @@ static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
             abort();
     }
 #endif
-    (void)order;
+    AWS_UNUSED_PARAM(order);
 }
 
 enum aws_atomic_mode_priv { aws_atomic_priv_load, aws_atomic_priv_store };

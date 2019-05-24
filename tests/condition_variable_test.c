@@ -71,7 +71,7 @@ static void s_conditional_thread_3_fn(void *arg) {
 }
 
 static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
@@ -109,7 +109,7 @@ static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(conditional_notify_one, s_test_conditional_notify_one_fn)
 
 static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
 

@@ -41,8 +41,8 @@
 
 AWS_TEST_CASE(test_is_power_of_two, s_test_is_power_of_two_fn)
 static int s_test_is_power_of_two_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     ASSERT_FALSE(aws_is_power_of_two(0));
     for (size_t i = 0; i < SIZE_BITS; ++i) {
@@ -79,8 +79,8 @@ static int s_test_is_power_of_two_fn(struct aws_allocator *allocator, void *ctx)
 
 AWS_TEST_CASE(test_round_up_to_power_of_two, s_test_round_up_to_power_of_two_fn)
 static int s_test_round_up_to_power_of_two_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     /*special case 0, 1 and 2, where subtracting from the number doesn't cause it to round back up */
     CHECK_ROUND_SUCCEEDS(0, 1);
@@ -103,8 +103,8 @@ static int s_test_round_up_to_power_of_two_fn(struct aws_allocator *allocator, v
 
 AWS_TEST_CASE(test_mul_u64_saturating, s_test_mul_u64_saturating_fn)
 static int s_test_mul_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     CHECK_SAT(aws_mul_u64_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_u64_saturating, 0, 1, 0);
@@ -128,8 +128,8 @@ static int s_test_mul_u64_saturating_fn(struct aws_allocator *allocator, void *c
 
 AWS_TEST_CASE(test_mul_u32_saturating, s_test_mul_u32_saturating_fn)
 static int s_test_mul_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     CHECK_SAT(aws_mul_u32_saturating, 0, 0, 0);
     CHECK_SAT(aws_mul_u32_saturating, 0, 1, 0);
@@ -155,8 +155,8 @@ static int s_test_mul_u32_saturating_fn(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(test_mul_size_saturating, s_test_mul_size_saturating_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
 #if SIZE_BITS == 32
     CHECK_SAT(aws_mul_size_saturating, 0, 0, 0);
@@ -235,8 +235,8 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
 
 AWS_TEST_CASE(test_mul_u64_checked, s_test_mul_u64_checked_fn)
 static int s_test_mul_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u64_checked, uint64_t, 0, 1, 0);
@@ -261,8 +261,8 @@ static int s_test_mul_u64_checked_fn(struct aws_allocator *allocator, void *ctx)
 AWS_TEST_CASE(test_mul_u32_checked, s_test_mul_u32_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_mul_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 1, 0);
@@ -288,8 +288,8 @@ static int s_test_mul_u32_checked_fn(struct aws_allocator *allocator, void *ctx)
 AWS_TEST_CASE(test_mul_size_checked, s_test_mul_size_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
 #if SIZE_BITS == 32
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
@@ -335,8 +335,8 @@ static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx
 AWS_TEST_CASE(test_add_size_checked, s_test_add_size_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
 #if SIZE_BITS == 32
     const uint32_t HALF_MAX = UINT32_MAX / 2;
@@ -373,8 +373,8 @@ static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx
 AWS_TEST_CASE(test_add_size_saturating, s_test_add_size_saturating_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
 #if SIZE_BITS == 32
     const uint32_t HALF_MAX = UINT32_MAX / 2;
@@ -385,8 +385,8 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
 #else
     FAIL("Unexpected size for size_t: %zu", sizeof(size_t));
 #endif
-    (void)HALF_MAX;
-    (void)ACTUAL_MAX;
+    AWS_UNUSED_PARAM(HALF_MAX);
+    AWS_UNUSED_PARAM(ACTUAL_MAX);
     /* No overflow expected */
     CHECK_SAT(aws_add_size_saturating, 0, 0, 0);
     CHECK_SAT(aws_add_size_saturating, 0, 1, 1);
@@ -414,8 +414,8 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(test_add_u32_checked, s_test_add_u32_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const uint32_t HALF_MAX = UINT32_MAX / 2;
     const uint32_t ACTUAL_MAX = UINT32_MAX;
@@ -444,8 +444,8 @@ static int s_test_add_u32_checked_fn(struct aws_allocator *allocator, void *ctx)
 AWS_TEST_CASE(test_add_u32_saturating, s_test_add_u32_saturating_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const uint32_t HALF_MAX = UINT32_MAX / 2;
     const uint32_t ACTUAL_MAX = UINT32_MAX;
@@ -477,8 +477,8 @@ static int s_test_add_u32_saturating_fn(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(test_add_u64_checked, s_test_add_u64_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;
@@ -507,8 +507,8 @@ static int s_test_add_u64_checked_fn(struct aws_allocator *allocator, void *ctx)
 AWS_TEST_CASE(test_add_u64_saturating, s_test_add_u64_saturating_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;

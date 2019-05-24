@@ -128,7 +128,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      */
-    (void)addr;
+    AWS_UNUSED_PARAM(addr);
     const char *open_paren = strstr(symbol, "(");
     const char *close_paren = strstr(symbol, ")");
     const char *exe_end = open_paren;

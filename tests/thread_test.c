@@ -27,7 +27,7 @@ static void s_thread_fn(void *arg) {
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     struct thread_test_data test_data;
     test_data.thread_id = 0;
 

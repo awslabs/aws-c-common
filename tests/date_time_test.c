@@ -19,8 +19,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const char *valid_utc_dates[] = {
         "Wed, 02 Oct 2002 08:05:09 GMT",
@@ -70,8 +70,8 @@ static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(rfc822_utc_parsing, s_test_rfc822_utc_parsing_fn)
 
 static int s_test_rfc822_utc_parsing_auto_detect_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002 08:05:09 GMT";
@@ -100,8 +100,8 @@ static int s_test_rfc822_utc_parsing_auto_detect_fn(struct aws_allocator *alloca
 AWS_TEST_CASE(rfc822_utc_parsing_auto_detect, s_test_rfc822_utc_parsing_auto_detect_fn)
 
 static int s_test_rfc822_local_time_east_of_gmt_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002 09:35:09 +0130";
@@ -133,8 +133,8 @@ static int s_test_rfc822_local_time_east_of_gmt_parsing_fn(struct aws_allocator 
 AWS_TEST_CASE(rfc822_local_time_east_of_gmt_parsing, s_test_rfc822_local_time_east_of_gmt_parsing_fn)
 
 static int s_test_rfc822_local_time_west_of_gmt_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002 07:05:09 -0100";
@@ -166,8 +166,8 @@ static int s_test_rfc822_local_time_west_of_gmt_parsing_fn(struct aws_allocator 
 AWS_TEST_CASE(rfc822_local_time_west_of_gmt_parsing, s_test_rfc822_local_time_west_of_gmt_parsing_fn)
 
 static int s_test_rfc822_utc_two_digit_year_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 02 08:05:09 GMT";
@@ -198,8 +198,8 @@ static int s_test_rfc822_utc_two_digit_year_parsing_fn(struct aws_allocator *all
 AWS_TEST_CASE(rfc822_utc_two_digit_year_parsing, s_test_rfc822_utc_two_digit_year_parsing_fn)
 
 static int s_test_rfc822_utc_no_dow_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "02 Oct 02 08:05:09 GMT";
@@ -230,8 +230,8 @@ static int s_test_rfc822_utc_no_dow_parsing_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(rfc822_utc_no_dow_parsing, s_test_rfc822_utc_no_dow_parsing_fn)
 
 static int s_test_rfc822_utc_dos_prevented_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Weddkasdiweijbnawei8eriojngsdgasdgsdf1gasd8asdgfasdfgsdikweisdfksdnsdksdklas"
@@ -247,8 +247,8 @@ static int s_test_rfc822_utc_dos_prevented_fn(struct aws_allocator *allocator, v
 AWS_TEST_CASE(rfc822_utc_dos_prevented, s_test_rfc822_utc_dos_prevented_fn)
 
 static int s_test_rfc822_invalid_format_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002";
@@ -263,8 +263,8 @@ static int s_test_rfc822_invalid_format_fn(struct aws_allocator *allocator, void
 AWS_TEST_CASE(rfc822_invalid_format, s_test_rfc822_invalid_format_fn)
 
 static int s_test_rfc822_invalid_tz_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002 08:05:09 DST";
@@ -279,8 +279,8 @@ static int s_test_rfc822_invalid_tz_fn(struct aws_allocator *allocator, void *ct
 AWS_TEST_CASE(rfc822_invalid_tz, s_test_rfc822_invalid_tz_fn)
 
 static int s_test_rfc822_invalid_auto_format_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Wed, 02 Oct 2002";
@@ -295,8 +295,8 @@ static int s_test_rfc822_invalid_auto_format_fn(struct aws_allocator *allocator,
 AWS_TEST_CASE(rfc822_invalid_auto_format, s_test_rfc822_invalid_auto_format_fn)
 
 static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02T08:05:09.000Z";
@@ -335,8 +335,8 @@ static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(iso8601_utc_parsing, s_test_iso8601_utc_parsing_fn)
 
 static int s_test_iso8601_basic_utc_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "20021002T080509000Z";
@@ -375,8 +375,8 @@ static int s_test_iso8601_basic_utc_parsing_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(iso8601_basic_utc_parsing, s_test_iso8601_basic_utc_parsing_fn)
 
 static int s_test_iso8601_utc_parsing_auto_detect_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02T08:05:09.000Z";
@@ -407,8 +407,8 @@ static int s_test_iso8601_utc_parsing_auto_detect_fn(struct aws_allocator *alloc
 AWS_TEST_CASE(iso8601_utc_parsing_auto_detect, s_test_iso8601_utc_parsing_auto_detect_fn)
 
 static int s_test_iso8601_basic_utc_parsing_auto_detect_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "20021002T080509000Z";
@@ -439,8 +439,8 @@ static int s_test_iso8601_basic_utc_parsing_auto_detect_fn(struct aws_allocator 
 AWS_TEST_CASE(iso8601_basic_utc_parsing_auto_detect, s_test_iso8601_basic_utc_parsing_auto_detect_fn)
 
 static int s_test_iso8601_utc_no_colon_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02T080509.000Z";
@@ -471,8 +471,8 @@ static int s_test_iso8601_utc_no_colon_parsing_fn(struct aws_allocator *allocato
 AWS_TEST_CASE(iso8601_utc_no_colon_parsing, s_test_iso8601_utc_no_colon_parsing_fn)
 
 static int s_test_iso8601_date_only_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02";
@@ -503,8 +503,8 @@ static int s_test_iso8601_date_only_parsing_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(iso8601_date_only_parsing, s_test_iso8601_date_only_parsing_fn)
 
 static int s_test_iso8601_basic_date_only_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "20021002";
@@ -535,8 +535,8 @@ static int s_test_iso8601_basic_date_only_parsing_fn(struct aws_allocator *alloc
 AWS_TEST_CASE(iso8601_basic_date_only_parsing, s_test_iso8601_basic_date_only_parsing_fn)
 
 static int s_test_iso8601_utc_dos_prevented_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "Weddkasdiweijbnawei8eriojngsdgasdgsdf1gasd8asdgfasdfgsdikweisdfksdnsdksdklas"
@@ -552,8 +552,8 @@ static int s_test_iso8601_utc_dos_prevented_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(iso8601_utc_dos_prevented, s_test_iso8601_utc_dos_prevented_fn)
 
 static int s_test_iso8601_invalid_format_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02T";
@@ -568,8 +568,8 @@ static int s_test_iso8601_invalid_format_fn(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(iso8601_invalid_format, s_test_iso8601_invalid_format_fn)
 
 static int s_test_iso8601_invalid_auto_format_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
     const char *date_str = "2002-10-02T";
@@ -584,8 +584,8 @@ static int s_test_iso8601_invalid_auto_format_fn(struct aws_allocator *allocator
 AWS_TEST_CASE(iso8601_invalid_auto_format, s_test_iso8601_invalid_auto_format_fn)
 
 static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
 
@@ -614,8 +614,8 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(unix_epoch_parsing, s_test_unix_epoch_parsing_fn)
 
 static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_date_time date_time;
 

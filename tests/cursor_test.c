@@ -25,8 +25,8 @@
 
 AWS_TEST_CASE(nospec_index_test, s_nospec_index_test_fn)
 static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     ASSERT_UINT_EQUALS(UINTPTR_MAX, aws_nospec_mask(0, 1));
     ASSERT_UINT_EQUALS(0, aws_nospec_mask(0, 0));
@@ -96,16 +96,16 @@ static int s_test_byte_cursor_advance_internal(
 
 AWS_TEST_CASE(test_byte_cursor_advance, s_test_byte_cursor_advance_fn)
 static int s_test_byte_cursor_advance_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     return s_test_byte_cursor_advance_internal(aws_byte_cursor_advance);
 }
 
 AWS_TEST_CASE(test_byte_cursor_advance_nospec, s_test_byte_cursor_advance_nospec_fn)
 static int s_test_byte_cursor_advance_nospec_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     return s_test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
 }
@@ -115,8 +115,8 @@ static const uint8_t TEST_VECTOR[] = {0xaa, 0xbb, 0xaa, 0xbb, 0xcc, 0xbb, 0x42, 
 
 AWS_TEST_CASE(byte_cursor_write_tests, s_byte_cursor_write_tests_fn);
 static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t buf[sizeof(TEST_VECTOR) + 1];
     memset(buf, 0, sizeof(buf));
@@ -145,8 +145,8 @@ static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *c
 
 AWS_TEST_CASE(byte_cursor_read_tests, s_byte_cursor_read_tests_fn);
 static int s_byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_cursor cur = aws_byte_cursor_from_array(TEST_VECTOR, sizeof(TEST_VECTOR));
 
@@ -179,8 +179,8 @@ static int s_byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ct
 
 AWS_TEST_CASE(byte_cursor_limit_tests, s_byte_cursor_limit_tests_fn);
 static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
     uint8_t starting_buf[sizeof(buf)];
@@ -254,8 +254,8 @@ static bool s_is_whitespace(uint8_t value) {
 }
 
 static int s_test_byte_cursor_right_trim_empty(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_empty);
 
@@ -268,8 +268,8 @@ static int s_test_byte_cursor_right_trim_empty(struct aws_allocator *allocator, 
 AWS_TEST_CASE(test_byte_cursor_right_trim_empty, s_test_byte_cursor_right_trim_empty)
 
 static int s_test_byte_cursor_right_trim_all_whitespace(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_all_whitespace);
 
@@ -282,8 +282,8 @@ static int s_test_byte_cursor_right_trim_all_whitespace(struct aws_allocator *al
 AWS_TEST_CASE(test_byte_cursor_right_trim_all_whitespace, s_test_byte_cursor_right_trim_all_whitespace)
 
 static int s_test_byte_cursor_right_trim_basic(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_right_whitespace);
 
@@ -298,8 +298,8 @@ static int s_test_byte_cursor_right_trim_basic(struct aws_allocator *allocator, 
 AWS_TEST_CASE(test_byte_cursor_right_trim_basic, s_test_byte_cursor_right_trim_basic)
 
 static int s_test_byte_cursor_left_trim_empty(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_empty);
 
@@ -312,8 +312,8 @@ static int s_test_byte_cursor_left_trim_empty(struct aws_allocator *allocator, v
 AWS_TEST_CASE(test_byte_cursor_left_trim_empty, s_test_byte_cursor_left_trim_empty)
 
 static int s_test_byte_cursor_left_trim_all_whitespace(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_all_whitespace);
 
@@ -326,8 +326,8 @@ static int s_test_byte_cursor_left_trim_all_whitespace(struct aws_allocator *all
 AWS_TEST_CASE(test_byte_cursor_left_trim_all_whitespace, s_test_byte_cursor_left_trim_all_whitespace)
 
 static int s_test_byte_cursor_left_trim_basic(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_left_whitespace);
 
@@ -340,8 +340,8 @@ static int s_test_byte_cursor_left_trim_basic(struct aws_allocator *allocator, v
 AWS_TEST_CASE(test_byte_cursor_left_trim_basic, s_test_byte_cursor_left_trim_basic)
 
 static int s_test_byte_cursor_trim_basic(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_both_whitespace);
 

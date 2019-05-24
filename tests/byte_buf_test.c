@@ -20,7 +20,7 @@
 
 AWS_TEST_CASE(test_buffer_cat, s_test_buffer_cat_fn)
 static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf str1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf str2 = aws_byte_buf_from_c_str(";testb");
@@ -52,7 +52,7 @@ static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_cat_dest_too_small, s_test_buffer_cat_dest_too_small_fn)
 static int s_test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf str1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf str2 = aws_byte_buf_from_c_str(";testb");
@@ -72,7 +72,7 @@ static int s_test_buffer_cat_dest_too_small_fn(struct aws_allocator *allocator, 
 
 AWS_TEST_CASE(test_buffer_cpy, s_test_buffer_cpy_fn)
 static int s_test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
@@ -93,7 +93,7 @@ static int s_test_buffer_cpy_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_cpy_offsets, s_test_buffer_cpy_offsets_fn)
 static int s_test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
@@ -117,7 +117,7 @@ static int s_test_buffer_cpy_offsets_fn(struct aws_allocator *allocator, void *c
 
 AWS_TEST_CASE(test_buffer_cpy_dest_too_small, s_test_buffer_cpy_dest_too_small_fn)
 static int s_test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
@@ -135,7 +135,7 @@ static int s_test_buffer_cpy_dest_too_small_fn(struct aws_allocator *allocator, 
 
 AWS_TEST_CASE(test_buffer_cpy_offsets_dest_too_small, s_test_buffer_cpy_offsets_dest_too_small_fn)
 static int s_test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf from_buf = aws_byte_buf_from_c_str("testa");
     struct aws_byte_cursor from = aws_byte_cursor_from_buf(&from_buf);
@@ -153,7 +153,7 @@ static int s_test_buffer_cpy_offsets_dest_too_small_fn(struct aws_allocator *all
 
 AWS_TEST_CASE(test_buffer_eq, s_test_buffer_eq_fn)
 static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf b1_equal = aws_byte_buf_from_c_str("testa");
@@ -173,8 +173,8 @@ static int s_test_buffer_eq_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_eq_same_content_different_len, s_test_buffer_eq_same_content_different_len_fn)
 static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf b1 = aws_byte_buf_from_c_str("testa");
     struct aws_byte_buf b2 = aws_byte_buf_from_c_str("testa");
@@ -187,8 +187,8 @@ static int s_test_buffer_eq_same_content_different_len_fn(struct aws_allocator *
 
 AWS_TEST_CASE(test_buffer_eq_null_internal_byte_buffer, s_test_buffer_eq_null_internal_byte_buffer_fn)
 static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf b1 = aws_byte_buf_from_array(NULL, 0);
     struct aws_byte_buf b2 = aws_byte_buf_from_array(NULL, 0);
@@ -203,7 +203,7 @@ static int s_test_buffer_eq_null_internal_byte_buffer_fn(struct aws_allocator *a
 
 AWS_TEST_CASE(test_buffer_init_copy, s_test_buffer_init_copy_fn)
 static int s_test_buffer_init_copy_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf src = aws_byte_buf_from_c_str("test_string");
     struct aws_byte_buf dest;
@@ -218,7 +218,7 @@ static int s_test_buffer_init_copy_fn(struct aws_allocator *allocator, void *ctx
 
 AWS_TEST_CASE(test_buffer_init_copy_null_buffer, s_test_buffer_init_copy_null_buffer_fn)
 static int s_test_buffer_init_copy_null_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf src;
     AWS_ZERO_STRUCT(src);
@@ -230,8 +230,8 @@ static int s_test_buffer_init_copy_null_buffer_fn(struct aws_allocator *allocato
 
 AWS_TEST_CASE(test_buffer_advance, s_test_buffer_advance)
 static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     uint8_t arr[16];
     struct aws_byte_buf src_buf = aws_byte_buf_from_array(arr, sizeof(arr));
@@ -264,8 +264,8 @@ static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_buffer_printf, s_test_buffer_printf)
 static int s_test_buffer_printf(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const char src[] = "abcdefg";
 
@@ -299,8 +299,8 @@ static int s_test_buffer_printf(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_array_eq, s_test_array_eq)
 static int s_test_array_eq(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     uint8_t a[] = {1, 2, 3};
     uint8_t b[] = {1, 2, 3};
@@ -329,8 +329,8 @@ static int s_test_array_eq(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_array_eq_ignore_case, s_test_array_eq_ignore_case)
 static int s_test_array_eq_ignore_case(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
     {
         uint8_t a[] = {'a', 'B', 'c', 'D', '1'};
         uint8_t b[] = {'a', 'b', 'C', 'D', '1'}; /* same as a */
@@ -392,8 +392,8 @@ static int s_test_array_eq_ignore_case(struct aws_allocator *allocator, void *ct
 
 AWS_TEST_CASE(test_array_eq_c_str, s_test_array_eq_c_str)
 static int s_test_array_eq_c_str(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     {
         uint8_t arr_a[] = {'a', 'b', 'c'};
@@ -432,8 +432,8 @@ static int s_test_array_eq_c_str(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_array_eq_c_str_ignore_case, s_test_array_eq_c_str_ignore_case)
 static int s_test_array_eq_c_str_ignore_case(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     {
         uint8_t arr_a[] = {'a', 'B', 'c'};
@@ -472,8 +472,8 @@ static int s_test_array_eq_c_str_ignore_case(struct aws_allocator *allocator, vo
 
 AWS_TEST_CASE(test_array_hash_ignore_case, s_test_array_hash_ignore_case)
 static int s_test_array_hash_ignore_case(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     {
         /* Check against known FNV-1A values */
@@ -553,7 +553,7 @@ static int s_do_append_dynamic_test(
 }
 
 static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /*
      * Throw a small sample of different growth request profiles at the function
@@ -570,7 +570,7 @@ AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
 AWS_STATIC_STRING_FROM_LITERAL(s_to_lower_test, "UPPerANdLowercASE");
 
 static int s_test_byte_buf_append_lookup_success(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf buffer;
     aws_byte_buf_init(&buffer, allocator, s_to_lower_test->len);
@@ -604,7 +604,7 @@ static int s_test_reset_body(struct aws_byte_buf *buffer) {
     return 0;
 }
 static int s_test_byte_buf_reset(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf buffer;
     aws_byte_buf_init(&buffer, allocator, s_to_lower_test->len);
@@ -633,7 +633,7 @@ static int s_test_byte_buf_reset(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(test_byte_buf_reset, s_test_byte_buf_reset)
 
 static int s_test_byte_buf_append_lookup_failure(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_byte_buf buffer;
     aws_byte_buf_init(&buffer, allocator, 3);
@@ -654,8 +654,8 @@ AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test_prefix, "Successful");
 AWS_STATIC_STRING_FROM_LITERAL(s_reserve_test_prefix_concatenated, "SuccessfulReserveTest");
 
 static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_buf buffer;
     aws_byte_buf_init(&buffer, allocator, s_reserve_test_prefix->len);
@@ -678,8 +678,8 @@ static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(test_byte_buf_reserve, s_test_byte_buf_reserve)
 
 static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_buf buffer;
     aws_byte_buf_init(&buffer, allocator, 1);
@@ -702,8 +702,8 @@ static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(test_byte_buf_reserve_relative, s_test_byte_buf_reserve_relative)
 
 static int s_test_byte_cursor_compare_lexical(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test");
     struct aws_byte_cursor test_cursor2 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test");
@@ -739,8 +739,8 @@ static int s_test_byte_cursor_compare_lexical(struct aws_allocator *allocator, v
 AWS_TEST_CASE(test_byte_cursor_compare_lexical, s_test_byte_cursor_compare_lexical)
 
 static int s_test_byte_cursor_compare_lookup(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     struct aws_byte_cursor Test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("Test");
     struct aws_byte_cursor tesT_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("tesT");

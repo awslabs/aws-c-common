@@ -58,8 +58,8 @@ static int s_test_calloc_on_given_allocator(struct aws_allocator *allocator, boo
 
 AWS_TEST_CASE(test_calloc_override, s_test_calloc_override_fn)
 static int s_test_calloc_override_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     struct aws_allocator my_alloc = {
         .mem_calloc = s_calloc_stub,
         .mem_release = s_mem_release_stub,
@@ -69,8 +69,8 @@ static int s_test_calloc_override_fn(struct aws_allocator *allocator, void *ctx)
 
 AWS_TEST_CASE(test_calloc_fallback_from_default_allocator, s_test_calloc_fallback_from_default_allocator_fn)
 static int s_test_calloc_fallback_from_default_allocator_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator my_alloc = *aws_default_allocator();
     my_alloc.mem_calloc = NULL;
@@ -79,8 +79,8 @@ static int s_test_calloc_fallback_from_default_allocator_fn(struct aws_allocator
 
 AWS_TEST_CASE(test_calloc_fallback_from_given, s_test_calloc_fallback_from_given_fn)
 static int s_test_calloc_fallback_from_given_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator my_alloc = *allocator;
     my_alloc.mem_calloc = NULL;
@@ -89,13 +89,13 @@ static int s_test_calloc_fallback_from_given_fn(struct aws_allocator *allocator,
 
 AWS_TEST_CASE(test_calloc_from_default_allocator, s_test_calloc_from_default_allocator_fn)
 static int s_test_calloc_from_default_allocator_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
     return s_test_calloc_on_given_allocator(aws_default_allocator(), false);
 }
 
 AWS_TEST_CASE(test_calloc_from_given_allocator, s_test_calloc_from_given_allocator_fn)
 static int s_test_calloc_from_given_allocator_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     return s_test_calloc_on_given_allocator(allocator, false);
 }

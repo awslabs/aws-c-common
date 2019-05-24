@@ -39,8 +39,8 @@ static int t_semantics(struct aws_allocator *allocator, void *ctx) {
      * doesn't matter. We do however use a variety of memory orders to ensure that they
      * are accepted.
      */
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     /* These provide us with some unique test pointers */
     int dummy_1, dummy_2, dummy_3;
@@ -106,8 +106,8 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
     /*
      * This test verifies that the non-_explicit atomics work properly on a single thread.
      */
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     /* These provide us with some unique test pointers */
     int dummy_1, dummy_2, dummy_3;
@@ -166,8 +166,8 @@ static int t_semantics_implicit(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(atomics_static_init, t_static_init)
 static int t_static_init(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     /* Verify that we have the right sign extension behavior - we should see zero extension here */
     struct aws_atomic_var int_init = AWS_ATOMIC_INIT_INT((uint8_t)0x80);
@@ -267,7 +267,7 @@ static void free_races(struct aws_allocator *alloc) {
 }
 
 static bool are_races_done(void *ignored) {
-    (void)ignored;
+    AWS_UNUSED_PARAM(ignored);
 
     return done_racing >= n_participants;
 }
@@ -383,7 +383,7 @@ DEFINE_RACE(loads_reordered_with_older_stores, participant, race) {
 
 AWS_TEST_CASE(atomics_loads_reordered_with_older_stores, t_loads_reordered_with_older_stores)
 static int t_loads_reordered_with_older_stores(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_atomic_var template[2];
     size_t last_race;
@@ -438,7 +438,7 @@ DEFINE_RACE(acquire_to_release_one_direction, participant, race) {
 
 AWS_TEST_CASE(atomics_acquire_to_release_one_direction, t_acquire_to_release_one_direction)
 static int t_acquire_to_release_one_direction(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_atomic_var template[2];
     size_t last_race;
@@ -500,7 +500,7 @@ DEFINE_RACE(acquire_to_release_mixed, participant, race) {
 
 AWS_TEST_CASE(atomics_acquire_to_release_mixed, t_acquire_to_release_mixed)
 static int t_acquire_to_release_mixed(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_atomic_var template[2];
     size_t last_race;

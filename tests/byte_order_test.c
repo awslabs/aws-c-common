@@ -18,8 +18,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t ans_x = 0x1122334455667788ULL;
     uint32_t ans_y = 0xaabbccdd;

@@ -20,7 +20,7 @@
 
 AWS_TEST_CASE(string_tests, s_string_tests_fn);
 static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* Test: static string creation from macro works. */
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
@@ -95,7 +95,7 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(binary_string_test, s_binary_string_test_fn);
 static int s_binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t test_array[] = {0x86, 0x75, 0x30, 0x90, 0x00, 0xde, 0xad, 0xbe, 0xef};
     size_t len = sizeof(test_array);
@@ -119,8 +119,8 @@ static int s_binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(string_compare_test, s_string_compare_test_fn);
 static int s_string_compare_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     AWS_STATIC_STRING_FROM_LITERAL(empty, "");
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
@@ -156,7 +156,7 @@ static int s_string_compare_test_fn(struct aws_allocator *allocator, void *ctx) 
 
 AWS_TEST_CASE(string_destroy_secure_test, string_destroy_secure_test_fn);
 static int string_destroy_secure_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* Just verifies all memory was freed. */
     struct aws_string *empty = aws_string_new_from_c_str(allocator, "");

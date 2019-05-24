@@ -24,7 +24,7 @@
 static size_t s_alloc_counter, s_alloc_total_size, s_call_ct_malloc, s_call_ct_free, s_call_ct_realloc;
 
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
 
     s_alloc_counter++;
     s_call_ct_malloc++;
@@ -37,7 +37,7 @@ static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) 
 }
 
 static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
 
     uint8_t *buf = ptr;
     s_call_ct_free++;
@@ -53,7 +53,7 @@ static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 static size_t s_original_size, s_reported_oldsize;
 
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
 
     uint8_t *buf = ptr;
     buf -= 16;
@@ -79,16 +79,16 @@ static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t o
 }
 
 static void *s_test_malloc_failing(struct aws_allocator *allocator, size_t size) {
-    (void)allocator;
-    (void)size;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(size);
     return NULL;
 }
 
 static void *s_test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
-    (void)allocator;
-    (void)ptr;
-    (void)oldsize;
-    (void)newsize;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ptr);
+    AWS_UNUSED_PARAM(oldsize);
+    AWS_UNUSED_PARAM(newsize);
     return NULL;
 }
 
@@ -98,8 +98,8 @@ static const uint8_t TEST_PATTERN[32] = {0xa5, 0x41, 0xcb, 0xe7, 0x00, 0x19, 0xd
 
 AWS_TEST_CASE(test_realloc_fallback, s_test_realloc_fallback_fn)
 static int s_test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator test_allocator = {
         .mem_acquire = s_test_alloc_acquire,
@@ -127,8 +127,8 @@ static int s_test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx
 
 AWS_TEST_CASE(test_realloc_fallback_oom, s_test_realloc_fallback_oom_fn)
 static int s_test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator test_allocator = {
         .mem_acquire = s_test_alloc_acquire,
@@ -153,8 +153,8 @@ static int s_test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(test_realloc_passthrough_oom, s_test_realloc_passthrough_oom_fn)
 static int s_test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator test_allocator = {
         .mem_acquire = s_test_alloc_acquire,
@@ -178,8 +178,8 @@ static int s_test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, vo
 
 AWS_TEST_CASE(test_realloc_passthrough, s_test_realloc_passthrough_fn)
 static int s_test_realloc_passthrough_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_allocator test_allocator = {
         .mem_acquire = s_test_alloc_acquire,
@@ -209,8 +209,8 @@ static int s_test_realloc_passthrough_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(test_cf_allocator_wrapper, s_test_cf_allocator_wrapper_fn)
 
 static int s_test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
 #ifdef __MACH__
     CFAllocatorRef cf_allocator = aws_wrapped_cf_allocator_new(allocator);
@@ -235,8 +235,8 @@ static int s_test_cf_allocator_wrapper_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(test_acquire_many, s_test_acquire_many_fn)
 static int s_test_acquire_many_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     void *a = NULL;
     void *b = NULL;

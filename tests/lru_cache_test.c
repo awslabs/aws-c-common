@@ -19,7 +19,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_lru_cache_overflow_static_members_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_lru_cache cache;
 
@@ -79,7 +79,7 @@ static int s_test_lru_cache_overflow_static_members_fn(struct aws_allocator *all
 AWS_TEST_CASE(test_lru_cache_overflow_static_members, s_test_lru_cache_overflow_static_members_fn)
 
 static int s_test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_lru_cache cache;
 
@@ -144,7 +144,7 @@ static void s_lru_test_element_value_destroy(void *value) {
 }
 
 static int s_test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_lru_cache cache;
 
@@ -193,7 +193,7 @@ static int s_test_lru_cache_entries_cleanup_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(test_lru_cache_entries_cleanup, s_test_lru_cache_entries_cleanup_fn)
 
 static int s_test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_lru_cache cache;
 
@@ -226,7 +226,7 @@ static int s_test_lru_cache_overwrite_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(test_lru_cache_overwrite, s_test_lru_cache_overwrite_fn)
 
 static int s_test_lru_cache_element_access_members_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_lru_cache cache;
 

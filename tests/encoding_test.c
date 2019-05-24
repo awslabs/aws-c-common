@@ -90,7 +90,7 @@ static int s_run_hex_encoding_test_case(
 }
 
 static int s_hex_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "";
     char expected[] = "";
@@ -101,7 +101,7 @@ static int s_hex_encoding_test_case_empty(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(hex_encoding_test_case_empty_test, s_hex_encoding_test_case_empty)
 
 static int s_hex_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "f";
     char expected[] = "66";
@@ -112,7 +112,7 @@ static int s_hex_encoding_test_case_f(struct aws_allocator *allocator, void *ctx
 AWS_TEST_CASE(hex_encoding_test_case_f_test, s_hex_encoding_test_case_f)
 
 static int s_hex_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "fo";
     char expected[] = "666f";
@@ -123,7 +123,7 @@ static int s_hex_encoding_test_case_fo(struct aws_allocator *allocator, void *ct
 AWS_TEST_CASE(hex_encoding_test_case_fo_test, s_hex_encoding_test_case_fo)
 
 static int s_hex_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foo";
     char expected[] = "666f6f";
@@ -134,7 +134,7 @@ static int s_hex_encoding_test_case_foo(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(hex_encoding_test_case_foo_test, s_hex_encoding_test_case_foo)
 
 static int s_hex_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foob";
     char expected[] = "666f6f62";
@@ -145,7 +145,7 @@ static int s_hex_encoding_test_case_foob(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(hex_encoding_test_case_foob_test, s_hex_encoding_test_case_foob)
 
 static int s_hex_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "fooba";
     char expected[] = "666f6f6261";
@@ -156,7 +156,7 @@ static int s_hex_encoding_test_case_fooba(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(hex_encoding_test_case_fooba_test, s_hex_encoding_test_case_fooba)
 
 static int s_hex_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     char expected[] = "666f6f626172";
@@ -167,7 +167,7 @@ static int s_hex_encoding_test_case_foobar(struct aws_allocator *allocator, void
 AWS_TEST_CASE(hex_encoding_test_case_foobar_test, s_hex_encoding_test_case_foobar)
 
 static int s_hex_encoding_append_test_case(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     char expected[] = "666f6f626172";
@@ -178,8 +178,8 @@ static int s_hex_encoding_append_test_case(struct aws_allocator *allocator, void
 AWS_TEST_CASE(hex_encoding_append_test_case, s_hex_encoding_append_test_case)
 
 static int s_hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t expected[] = {0x01, 0x02, 0x03, 0x04};
     char test_data[] = "1020304";
@@ -204,8 +204,8 @@ static int s_hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator
 AWS_TEST_CASE(hex_encoding_test_case_missing_leading_zero, s_hex_encoding_test_case_missing_leading_zero_fn)
 
 static int s_hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     size_t size_too_small = 2;
@@ -229,8 +229,8 @@ static int s_hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allo
 AWS_TEST_CASE(hex_encoding_invalid_buffer_size_test, s_hex_encoding_invalid_buffer_size_test_fn)
 
 static int s_hex_encoding_highbyte_string_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char bad_input[] = "66\xb6\xb6"
                        "6f6f6617";
@@ -245,8 +245,8 @@ static int s_hex_encoding_highbyte_string_test_fn(struct aws_allocator *allocato
 AWS_TEST_CASE(hex_encoding_highbyte_string_test, s_hex_encoding_highbyte_string_test_fn)
 
 static int s_hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     /* kill off the last two bits, so the not a multiple of 4 check doesn't
@@ -267,8 +267,8 @@ static int s_hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void
 AWS_TEST_CASE(hex_encoding_overflow_test, s_hex_encoding_overflow_test_fn)
 
 static int s_hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char bad_input[] = "666f6f6x6172";
     uint8_t output[sizeof(bad_input)] = {0};
@@ -369,7 +369,7 @@ static int s_run_base64_encoding_test_case(
 }
 
 static int s_base64_encoding_test_case_empty(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "";
     char expected[] = "";
@@ -380,7 +380,7 @@ static int s_base64_encoding_test_case_empty(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(base64_encoding_test_case_empty_test, s_base64_encoding_test_case_empty)
 
 static int s_base64_encoding_test_case_f(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "f";
     char expected[] = "Zg==";
@@ -391,7 +391,7 @@ static int s_base64_encoding_test_case_f(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(base64_encoding_test_case_f_test, s_base64_encoding_test_case_f)
 
 static int s_base64_encoding_test_case_fo(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "fo";
     char expected[] = "Zm8=";
@@ -402,7 +402,7 @@ static int s_base64_encoding_test_case_fo(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(base64_encoding_test_case_fo_test, s_base64_encoding_test_case_fo)
 
 static int s_base64_encoding_test_case_foo(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foo";
     char expected[] = "Zm9v";
@@ -413,7 +413,7 @@ static int s_base64_encoding_test_case_foo(struct aws_allocator *allocator, void
 AWS_TEST_CASE(base64_encoding_test_case_foo_test, s_base64_encoding_test_case_foo)
 
 static int s_base64_encoding_test_case_foob(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foob";
     char expected[] = "Zm9vYg==";
@@ -424,7 +424,7 @@ static int s_base64_encoding_test_case_foob(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(base64_encoding_test_case_foob_test, s_base64_encoding_test_case_foob)
 
 static int s_base64_encoding_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "fooba";
     char expected[] = "Zm9vYmE=";
@@ -435,7 +435,7 @@ static int s_base64_encoding_test_case_fooba(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(base64_encoding_test_case_fooba_test, s_base64_encoding_test_case_fooba)
 
 static int s_base64_encoding_test_case_foobar(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     char expected[] = "Zm9vYmFy";
@@ -446,7 +446,7 @@ static int s_base64_encoding_test_case_foobar(struct aws_allocator *allocator, v
 AWS_TEST_CASE(base64_encoding_test_case_foobar_test, s_base64_encoding_test_case_foobar)
 
 static int s_base64_encoding_test_case_32bytes(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /*                  01234567890123456789012345678901 */
     char test_data[] = "this is a 32 byte long string!!!";
@@ -458,7 +458,7 @@ static int s_base64_encoding_test_case_32bytes(struct aws_allocator *allocator, 
 AWS_TEST_CASE(base64_encoding_test_case_32bytes_test, s_base64_encoding_test_case_32bytes)
 
 static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t test_data[6] = {0};
     char expected[] = "AAAAAAAA";
@@ -469,8 +469,8 @@ static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void
 AWS_TEST_CASE(base64_encoding_test_zeros, s_base64_encoding_test_zeros_fn)
 
 static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-    (void)allocator;
+    AWS_UNUSED_PARAM(ctx);
+    AWS_UNUSED_PARAM(allocator);
 
     fprintf(stderr, "--test\n");
     uint8_t test_data[32];
@@ -531,7 +531,7 @@ AWS_TEST_CASE(base64_encoding_test_roundtrip, s_base64_encoding_test_roundtrip)
  * than character value of 65 -> "A" -> 0.
  */
 static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t test_data[255] = {0};
 
@@ -550,8 +550,8 @@ static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator,
 AWS_TEST_CASE(base64_encoding_test_all_values, s_base64_encoding_test_all_values_fn)
 
 static int s_base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     char encoded_data[] = "Zm9vYmFy";
@@ -578,8 +578,8 @@ static int s_base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator 
 AWS_TEST_CASE(base64_encoding_buffer_size_too_small_test, s_base64_encoding_buffer_size_too_small_test_fn)
 
 static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "foobar";
     char encoded_data[] = "Zm9vYmFy";
@@ -608,8 +608,8 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
 AWS_TEST_CASE(base64_encoding_buffer_size_overflow_test, s_base64_encoding_buffer_size_overflow_test_fn)
 
 static int s_base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char encoded_data[] = "Zm9vYmFy";
     /* kill off the last two bits, so the not a multiple of 4 check doesn't
@@ -629,8 +629,8 @@ static int s_base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *a
 AWS_TEST_CASE(base64_encoding_buffer_size_invalid_test, s_base64_encoding_buffer_size_invalid_test_fn)
 
 static int s_base64_encoding_invalid_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char encoded_data[] = "Z\n9vYmFy";
     uint8_t output[sizeof(encoded_data)] = {0};
@@ -648,8 +648,8 @@ static int s_base64_encoding_invalid_buffer_test_fn(struct aws_allocator *alloca
 AWS_TEST_CASE(base64_encoding_invalid_buffer_test, s_base64_encoding_invalid_buffer_test_fn)
 
 static int s_base64_encoding_highbyte_string_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char bad_input[] = "AAAA\xC1"
                        "AAA";
@@ -664,8 +664,8 @@ static int s_base64_encoding_highbyte_string_test_fn(struct aws_allocator *alloc
 AWS_TEST_CASE(base64_encoding_highbyte_string_test, s_base64_encoding_highbyte_string_test_fn)
 
 static int s_base64_encoding_invalid_padding_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     char encoded_data[] = "Zm9vY===";
     uint8_t output[sizeof(encoded_data)] = {0};
@@ -684,8 +684,8 @@ AWS_TEST_CASE(base64_encoding_invalid_padding_test, s_base64_encoding_invalid_pa
 
 /* network integer encoding tests */
 static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t test_value = 0x1020304050607080;
     uint8_t buffer[8] = {0};
@@ -702,8 +702,8 @@ static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uint64_buffer_test, s_uint64_buffer_test_fn)
 
 static int s_uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t test_value = 0x1020304050607080;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
@@ -726,8 +726,8 @@ static int s_uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(uint64_buffer_non_aligned_test, s_uint64_buffer_non_aligned_test_fn)
 
 static int s_uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint32_t test_value = 0x10203040;
     uint8_t buffer[4] = {0};
@@ -745,7 +745,7 @@ static int s_uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uint32_buffer_test, s_uint32_buffer_test_fn)
 
 static int s_uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint32_t test_value = 0x10203040;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
@@ -768,8 +768,8 @@ static int s_uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(uint32_buffer_non_aligned_test, s_uint32_buffer_non_aligned_test_fn)
 
 static int s_uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint32_t test_value = 0x102030;
     uint8_t buffer[3] = {0};
@@ -787,7 +787,7 @@ static int s_uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uint24_buffer_test, s_uint24_buffer_test_fn)
 
 static int s_uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint32_t test_value = 0x102030;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
@@ -808,8 +808,8 @@ static int s_uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
 AWS_TEST_CASE(uint24_buffer_non_aligned_test, s_uint24_buffer_non_aligned_test_fn)
 
 static int s_uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint16_t test_value = 0x1020;
     uint8_t buffer[2] = {0};
@@ -827,7 +827,7 @@ static int s_uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uint16_buffer_test, s_uint16_buffer_test_fn)
 
 static int s_uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     uint16_t test_value = 0x1020;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
@@ -849,8 +849,8 @@ AWS_TEST_CASE(uint16_buffer_non_aligned_test, s_uint16_buffer_non_aligned_test_f
 
 /* sanity check that signed/unsigned work the same */
 static int s_uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     int16_t test_value = 0x4030;
     uint8_t buffer[2] = {0};
@@ -868,8 +868,8 @@ static int s_uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocat
 AWS_TEST_CASE(uint16_buffer_signed_positive_test, s_uint16_buffer_signed_positive_test_fn)
 
 static int s_uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     int16_t test_value = -2;
     uint8_t buffer[2] = {0};
@@ -936,7 +936,7 @@ static int s_run_hex_encoding_append_dynamic_test_case(
 }
 
 static int s_hex_encoding_append_dynamic_test_case_fooba(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "fooba";
     char expected[] = "666f6f6261";
@@ -950,7 +950,7 @@ static int s_hex_encoding_append_dynamic_test_case_fooba(struct aws_allocator *a
 AWS_TEST_CASE(hex_encoding_append_dynamic_test_case_fooba, s_hex_encoding_append_dynamic_test_case_fooba)
 
 static int s_hex_encoding_append_dynamic_test_case_empty(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     char test_data[] = "";
     char expected[] = "";

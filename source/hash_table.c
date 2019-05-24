@@ -35,10 +35,10 @@ static void s_suppress_unused_lookup3_func_warnings(void) {
     /* We avoid making changes to lookup3 if we can avoid it, but since it has functions
      * we're not using, reference them somewhere to suppress the unused function warning.
      */
-    (void)hashword;
-    (void)hashword2;
-    (void)hashlittle;
-    (void)hashbig;
+    AWS_UNUSED_PARAM(hashword);
+    AWS_UNUSED_PARAM(hashword2);
+    AWS_UNUSED_PARAM(hashlittle);
+    AWS_UNUSED_PARAM(hashbig);
 }
 
 /**

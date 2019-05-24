@@ -32,7 +32,7 @@ int aws_condition_variable_init(struct aws_condition_variable *condition_variabl
 }
 
 void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
-    (void)condition_variable;
+    AWS_UNUSED_PARAM(condition_variable);
     /* no op */
 }
 

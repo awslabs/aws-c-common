@@ -26,9 +26,9 @@ static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p);
 static timefunc_t *volatile s_p_time_func = s_get_system_time_func_lazy_init;
 
 static BOOL CALLBACK s_get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
-    (void)init_once;
-    (void)param;
-    (void)context;
+    AWS_UNUSED_PARAM(init_once);
+    AWS_UNUSED_PARAM(param);
+    AWS_UNUSED_PARAM(context);
 
     HMODULE hkernel32 = GetModuleHandleW(L"kernel32.dll");
     timefunc_t *time_func = (timefunc_t *)GetProcAddress(hkernel32, "GetSystemTimePreciseAsFileTime");

@@ -19,8 +19,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_uuid uuid;
     ASSERT_SUCCESS(aws_uuid_init(&uuid));
@@ -40,8 +40,8 @@ static int s_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uuid_string, s_uuid_string_fn)
 
 static int s_prefilled_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_uuid uuid = {
         .uuid_data = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10},
@@ -63,8 +63,8 @@ static int s_prefilled_uuid_string_fn(struct aws_allocator *allocator, void *ctx
 AWS_TEST_CASE(prefilled_uuid_string, s_prefilled_uuid_string_fn)
 
 static int s_uuid_string_short_buffer_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_uuid uuid;
     ASSERT_SUCCESS(aws_uuid_init(&uuid));
@@ -81,8 +81,8 @@ static int s_uuid_string_short_buffer_fn(struct aws_allocator *allocator, void *
 AWS_TEST_CASE(uuid_string_short_buffer, s_uuid_string_short_buffer_fn)
 
 static int s_uuid_string_parse_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint8_t expected_uuid[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
@@ -101,8 +101,8 @@ static int s_uuid_string_parse_fn(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(uuid_string_parse, s_uuid_string_parse_fn)
 
 static int s_uuid_string_parse_too_short_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const char *uuid_str = "01020304-0506-0708-090a-0b0c0d0e0f1";
     struct aws_byte_buf uuid_buf = aws_byte_buf_from_c_str(uuid_str);
@@ -117,8 +117,8 @@ static int s_uuid_string_parse_too_short_fn(struct aws_allocator *allocator, voi
 AWS_TEST_CASE(uuid_string_parse_too_short, s_uuid_string_parse_too_short_fn)
 
 static int s_uuid_string_parse_malformed_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     const char *uuid_str = "010203-040506-0708-090a-0b0c0d0e0f10";
     struct aws_byte_buf uuid_buf = aws_byte_buf_from_c_str(uuid_str);

@@ -19,8 +19,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_high_res_clock_increments(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t ticks = 0, prev = 0;
 
@@ -40,8 +40,8 @@ static int s_test_high_res_clock_increments(struct aws_allocator *allocator, voi
 }
 
 static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t ticks = 0, prev = 0;
 
@@ -61,8 +61,8 @@ static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ct
 }
 
 static int s_test_sec_and_millis_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t secs = 10;
     ASSERT_UINT_EQUALS(10000, aws_timestamp_convert(secs, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MILLIS, NULL));
@@ -72,8 +72,8 @@ static int s_test_sec_and_millis_conversion(struct aws_allocator *allocator, voi
 }
 
 static int s_test_sec_and_micros_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t secs = 10;
     ASSERT_UINT_EQUALS(10000000, aws_timestamp_convert(secs, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MICROS, NULL));
@@ -83,8 +83,8 @@ static int s_test_sec_and_micros_conversion(struct aws_allocator *allocator, voi
 }
 
 static int s_test_sec_and_nanos_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t secs = 10;
     ASSERT_UINT_EQUALS(10000000000, aws_timestamp_convert(secs, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
@@ -94,8 +94,8 @@ static int s_test_sec_and_nanos_conversion(struct aws_allocator *allocator, void
 }
 
 static int s_test_milli_and_micros_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t ms = 10;
     ASSERT_UINT_EQUALS(10000, aws_timestamp_convert(ms, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_MICROS, NULL));
@@ -105,8 +105,8 @@ static int s_test_milli_and_micros_conversion(struct aws_allocator *allocator, v
 }
 
 static int s_test_milli_and_nanos_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t ms = 10;
     ASSERT_UINT_EQUALS(10000000, aws_timestamp_convert(ms, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL));
@@ -116,8 +116,8 @@ static int s_test_milli_and_nanos_conversion(struct aws_allocator *allocator, vo
 }
 
 static int s_test_micro_and_nanos_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t micros = 10;
     ASSERT_UINT_EQUALS(10000, aws_timestamp_convert(micros, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL));
@@ -127,8 +127,8 @@ static int s_test_micro_and_nanos_conversion(struct aws_allocator *allocator, vo
 }
 
 static int s_test_precision_loss_remainders_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     uint64_t nanos = 10123456789;
     uint64_t remainder = 0;
@@ -139,8 +139,8 @@ static int s_test_precision_loss_remainders_conversion(struct aws_allocator *all
 }
 
 static int s_test_overflow_conversion(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     ASSERT_UINT_EQUALS(
         UINT64_MAX, aws_timestamp_convert(100000000000ULL, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));

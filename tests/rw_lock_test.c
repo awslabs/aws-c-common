@@ -19,8 +19,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_rw_lock_acquire_release(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_rw_lock rw_lock;
     aws_rw_lock_init(&rw_lock);
@@ -73,7 +73,7 @@ static void s_rw_lock_thread_fn(void *rw_lock_data) {
 }
 
 static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct thread_rw_lock_data rw_lock_data = {
         .counter = 0,
@@ -129,7 +129,7 @@ static void s_thread_reader_fn(void *ud) {
 }
 
 static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_rw_lock lock;
     aws_rw_lock_init(&lock);

@@ -23,8 +23,8 @@ struct int_value {
 };
 
 static int s_test_linked_list_order_push_back_pop_front(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_linked_list list;
 
@@ -63,8 +63,8 @@ static int s_test_linked_list_order_push_back_pop_front(struct aws_allocator *al
 }
 
 static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_linked_list list;
 
@@ -107,8 +107,8 @@ static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *al
 }
 
 static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_linked_list list;
 
@@ -143,8 +143,8 @@ static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *c
 }
 
 static int s_test_linked_list_reverse_iteration(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_linked_list list;
 
@@ -179,8 +179,8 @@ static int s_test_linked_list_reverse_iteration(struct aws_allocator *allocator,
 }
 
 static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_linked_list a, b;
     struct aws_linked_list_node a1, a2, b1, b2;

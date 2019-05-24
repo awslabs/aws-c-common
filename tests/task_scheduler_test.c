@@ -40,7 +40,7 @@ static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status s
 }
 
 static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     s_executed_tasks_n = 0;
 
     struct aws_task_scheduler scheduler;
@@ -96,13 +96,13 @@ static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx)
 }
 
 static void s_null_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
-    (void)task;
-    (void)arg;
-    (void)status;
+    AWS_UNUSED_PARAM(task);
+    AWS_UNUSED_PARAM(arg);
+    AWS_UNUSED_PARAM(status);
 }
 
 static int s_test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, allocator);
@@ -133,7 +133,7 @@ static int s_test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx
 }
 
 static int s_test_scheduler_pops_task_fashionably_late(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     s_executed_tasks_n = 0;
 
     struct aws_task_scheduler scheduler;
@@ -172,7 +172,7 @@ struct task_scheduler_reentrancy_args {
 };
 
 static void s_reentrancy_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
-    (void)task;
+    AWS_UNUSED_PARAM(task);
     struct task_scheduler_reentrancy_args *reentrancy_args = (struct task_scheduler_reentrancy_args *)arg;
 
     if (reentrancy_args->next_task_args) {
@@ -196,7 +196,7 @@ static void s_reentrancy_args_init(
 }
 
 static int s_test_scheduler_reentrant_safe(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, allocator);
@@ -234,14 +234,14 @@ struct cancellation_args {
 
 static void s_cancellation_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
 
-    (void)task;
+    AWS_UNUSED_PARAM(task);
     struct cancellation_args *cancellation_args = (struct cancellation_args *)arg;
 
     cancellation_args->status = status;
 }
 
 static int s_test_scheduler_cleanup_cancellation(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, allocator);
@@ -264,7 +264,7 @@ static int s_test_scheduler_cleanup_cancellation(struct aws_allocator *allocator
 }
 
 static int s_test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     struct aws_task_scheduler scheduler;
     aws_task_scheduler_init(&scheduler, allocator);
@@ -349,13 +349,13 @@ static void s_oom_allocator_destroy(struct aws_allocator *oom_allocator) {
 }
 
 static void s_oom_task_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
-    (void)status;
+    AWS_UNUSED_PARAM(status);
     struct aws_linked_list *done_list = arg;
     aws_linked_list_push_back(done_list, &task->node);
 }
 
 static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
 
     /* Create allocator for scheduler that limits how many allocations it can make.
      * Note that timed_queue is an array-list under the hood, so it only grabs memory at init and resize time */
@@ -456,7 +456,7 @@ static void s_task_cancelling_task(struct aws_task *task, void *arg, enum aws_ta
 }
 
 static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
+    AWS_UNUSED_PARAM(ctx);
     s_executed_tasks_n = 0;
 
     struct aws_task_scheduler scheduler;

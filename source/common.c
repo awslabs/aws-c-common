@@ -34,23 +34,23 @@
 #endif
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
     return malloc(size);
 }
 
 static void s_default_free(struct aws_allocator *allocator, void *ptr) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
     free(ptr);
 }
 
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
-    (void)allocator;
-    (void)oldsize;
+    AWS_UNUSED_PARAM(allocator);
+    AWS_UNUSED_PARAM(oldsize);
     return realloc(ptr, newsize);
 }
 
 static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    (void)allocator;
+    AWS_UNUSED_PARAM(allocator);
     return calloc(num, size);
 }
 
@@ -198,7 +198,7 @@ static CFStringRef s_cf_allocator_description = CFSTR("CFAllocator wrapping aws_
 
 /* note we don't have a standard specification stating sizeof(size_t) == sizeof(void *) so we have some extra casts */
 static void *s_cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, void *info) {
-    (void)hint;
+    AWS_UNUSED_PARAM(hint);
 
     struct aws_allocator *allocator = info;
 
@@ -222,7 +222,7 @@ static void s_cf_allocator_deallocate(void *ptr, void *info) {
 }
 
 static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlags hint, void *info) {
-    (void)hint;
+    AWS_UNUSED_PARAM(hint);
 
     struct aws_allocator *allocator = info;
     AWS_ASSERT(allocator->mem_realloc);
@@ -242,14 +242,14 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
 }
 
 static CFStringRef s_cf_allocator_copy_description(const void *info) {
-    (void)info;
+    AWS_UNUSED_PARAM(info);
 
     return s_cf_allocator_description;
 }
 
 static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, void *info) {
-    (void)hint;
-    (void)info;
+    AWS_UNUSED_PARAM(hint);
+    AWS_UNUSED_PARAM(info);
 
     return size + sizeof(size_t);
 }
