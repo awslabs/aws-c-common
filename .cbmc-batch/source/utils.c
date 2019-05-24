@@ -38,7 +38,7 @@ void assert_all_zeroes(const uint8_t *const a, const size_t len) {
 }
 
 void assert_byte_from_buffer_matches(const uint8_t *const buffer, const struct store_byte_from_buffer *const b) {
-    if (buffer) {
+    if (buffer && b) {
         assert(*(buffer + b->index) == b->byte);
     }
 }
@@ -55,12 +55,36 @@ void assert_array_list_equivalence(
     const struct aws_array_list *const lhs,
     const struct aws_array_list *const rhs,
     const struct store_byte_from_buffer *const rhs_byte) {
+    /* In order to be equivalent, either both are NULL or both are non-NULL */
+    if (lhs == rhs) {
+        return;
+    } else {
+        assert(lhs && rhs); /* if only one is null, they differ */
+    }
     assert(lhs->alloc == rhs->alloc);
     assert(lhs->current_size == rhs->current_size);
     assert(lhs->length == rhs->length);
     assert(lhs->item_size == rhs->item_size);
     if (lhs->current_size > 0) {
         assert_byte_from_buffer_matches((uint8_t *)lhs->data, rhs_byte);
+    }
+}
+
+void assert_byte_buf_equivalence(
+    const struct aws_byte_buf *const lhs,
+    const struct aws_byte_buf *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte) {
+    /* In order to be equivalent, either both are NULL or both are non-NULL */
+    if (lhs == rhs) {
+        return;
+    } else {
+        assert(lhs && rhs); /* if only one is null, they differ */
+    }
+    assert(lhs->len == rhs->len);
+    assert(lhs->capacity == rhs->capacity);
+    assert(lhs->allocator == rhs->allocator);
+    if (lhs->len > 0) {
+        assert_byte_from_buffer_matches(lhs->buffer, rhs_byte);
     }
 }
 
