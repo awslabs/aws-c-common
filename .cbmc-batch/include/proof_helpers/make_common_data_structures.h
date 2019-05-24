@@ -141,11 +141,12 @@ const char *make_arbitrary_c_str(size_t max_size);
 
 /**
  * A correct hash table has max_load < size.  This means that there is always one slot empty.
- * This function is useful for assuming that there is some (nondet) slot which is empty
+ * These functions are useful for assuming that there is some (nondet) slot which is empty
  * which is necessary to prove termination for hash-table deletion code.  Should only be used inside
  * an assume because of the way it does nondet.
  */
-bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *rval);
+bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *const rval);
+bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const state, size_t *const rval);
 
 /**
  * A correct implementation of the hash_destroy function should never have a memory

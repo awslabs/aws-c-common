@@ -54,6 +54,7 @@ SIMPLIFY ?= 0
 SRCDIR ?= $(abspath ../../..)
 UNWIND ?= 0
 VIEWER ?= cbmc-viewer
+CBMC_VERBOSITY ?= ""
 
 ################################################################
 # Preprocess the unwindset
@@ -87,14 +88,16 @@ DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 
 REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
+DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
 
 # Here, whenever there is a change in any of ANSI-C source
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)0.goto: $(ENTRY).c $(DEPENDENCIES)
-	$(GOTO_CC) $< --export-function-local-symbols --function $(ENTRY) $(DEPENDENCIES) $(INC) $(DEFINES) -o $@ \
-	        2>&1 | tee $(ENTRY)1.log
+$(ENTRY)0.goto: $(ENTRY).c $(DEPENDENT_GOTOS)
+	$(GOTO_CC) $< --export-function-local-symbols $(CBMC_VERBOSITY) \
+	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
+	  2>&1 | tee $(ENTRY)1.log
 
 $(ENTRY)1.goto: $(ENTRY)0.goto
 ifeq ($(REMOVE_FUNCTION_BODY), "")
@@ -105,13 +108,12 @@ else
 		2>&1 | tee $(ENTRY)2.log
 endif
 
-
 $(ENTRY)2.goto: $(ENTRY)1.goto
 ifeq ($(ABSTRACTIONS), "")
 	cp $< $@
 	echo "Not implementing abstractions" | tee $(ENTRY)2.log
 else
-	$(GOTO_INSTRUMENT) $(ABSTRACTIONS) --add-library $< $@ \
+	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
 		2>&1 | tee $(ENTRY)2.log
 endif
 
@@ -155,6 +157,14 @@ $(ENTRY)7.goto: $(ENTRY)6.goto
 
 $(ENTRY).goto: $(ENTRY)7.goto
 	cp $< $@
+
+# Catch-all used for building goto-binaries of the individual
+# dependencies, which are then linked in the $(ENTRY)0.goto rule above
+%.goto: %.c
+	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
+	  $(INC) $(DEFINES) -o $@ \
+	  2>&1 | tee $(dir $<)/$(notdir $<).log
+
 
 goto: $(ENTRY).goto
 
