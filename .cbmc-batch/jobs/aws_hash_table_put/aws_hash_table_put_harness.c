@@ -26,7 +26,7 @@ void aws_hash_table_put_harness() {
     __CPROVER_assume(aws_hash_table_is_valid(&map));
     map.p_impl->destroy_key_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
     map.p_impl->destroy_value_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
-    map.p_impl->equals_fn = uninterpreted_equals;
+    map.p_impl->equals_fn = uninterpreted_equals_assert_inputs_nonnull;
     map.p_impl->hash_fn = uninterpreted_hasher;
     map.p_impl->alloc = can_fail_allocator();
 
@@ -35,9 +35,21 @@ void aws_hash_table_put_harness() {
 
     void *key;
     void *value;
+    bool track_was_created;
     int was_created;
+    struct hash_table_state old_state = *map.p_impl;
 
-    aws_hash_table_put(&map, key, value, nondet_bool() ? &was_created : NULL);
-
+    int rval = aws_hash_table_put(&map, key, value, track_was_created ? &was_created : NULL);
+    if (rval == AWS_OP_SUCCESS) {
+        if (track_was_created) {
+            assert(map.p_impl->entry_count == old_state.entry_count + was_created);
+        } else {
+            assert(
+                map.p_impl->entry_count == old_state.entry_count ||
+                map.p_impl->entry_count == old_state.entry_count + 1);
+        }
+    } else {
+        assert(map.p_impl->entry_count == old_state.entry_count);
+    }
     assert(aws_hash_table_is_valid(&map));
 }

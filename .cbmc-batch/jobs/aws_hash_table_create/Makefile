@@ -12,8 +12,8 @@
 # limitations under the License.
 
 ###########
-# 2: 2m
-# 4: 2m30s
+# 2: 2m30s
+# 4: 3m30s
 MAX_TABLE_SIZE ?= 4
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
 

@@ -54,6 +54,7 @@ SIMPLIFY ?= 0
 SRCDIR ?= $(abspath ../../..)
 UNWIND ?= 0
 VIEWER ?= cbmc-viewer
+CBMC_VERBOSITY ?= ""
 
 ################################################################
 # Preprocess the unwindset
@@ -94,7 +95,7 @@ DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
 $(ENTRY)0.goto: $(ENTRY).c $(DEPENDENT_GOTOS)
-	$(GOTO_CC) $< --export-function-local-symbols --verbosity 10 \
+	$(GOTO_CC) $< --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(ENTRY)1.log
 
@@ -160,7 +161,7 @@ $(ENTRY).goto: $(ENTRY)7.goto
 # Catch-all used for building goto-binaries of the individual
 # dependencies, which are then linked in the $(ENTRY)0.goto rule above
 %.goto: %.c
-	$(GOTO_CC) -c $< --export-function-local-symbols --verbosity 10 \
+	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(dir $<)/$(notdir $<).log
 
