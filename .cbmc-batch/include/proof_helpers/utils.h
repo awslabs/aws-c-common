@@ -16,6 +16,7 @@
 #pragma once
 
 #include <aws/common/array_list.h>
+#include <aws/common/byte_buf.h>
 #include <proof_helpers/nondet.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -62,6 +63,18 @@ void save_byte_from_array(const uint8_t *const array, const size_t size, struct 
 void assert_array_list_equivalence(
     const struct aws_array_list *const lhs,
     const struct aws_array_list *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte);
+
+/**
+ * Asserts two aws_byte_buf structures are equivalent. In order to be considered equivalent,
+ * all member from both structures must match (i.e., len, *buffer, capacity, and *allocator),
+ * including all bytes from its underlying buffers. Prior to using this function,
+ * it is necessary to select a non-deterministic byte from the rhs aws_byte_buf structure
+ * (use save_byte_from_array function), so it can properly assert all bytes match.
+ */
+void assert_byte_buf_equivalence(
+    const struct aws_byte_buf *const lhs,
+    const struct aws_byte_buf *const rhs,
     const struct store_byte_from_buffer *const rhs_byte);
 
 /**

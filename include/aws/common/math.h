@@ -50,6 +50,8 @@ extern "C" {
 #    include <aws/common/math.gcc_x64_asm.inl>
 #elif defined(AWS_HAVE_MSVC_MULX)
 #    include <aws/common/math.msvc.inl>
+#elif defined(CBMC)
+#    include <aws/common/math.cbmc.inl>
 #else
 #    ifndef AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
 /* Fall back to the pure-C implementations */

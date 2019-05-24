@@ -135,7 +135,7 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
 void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map);
 
 /**
- * Makes a valid c string, with as much nondet as possible, len < max
+ * Makes a valid c string, with as much nondet as possible, len < max_size
  */
 const char *make_arbitrary_c_str(size_t max_size);
 
