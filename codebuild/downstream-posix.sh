@@ -26,7 +26,7 @@ function cmake_project {
     cmake --build . --target all
     cmake --build . --target install
     if [[ $cmake_args != *"-DBUILD_TESTING=OFF"* ]]; then
-        cmake --build . --target test
+        ctest . --output-on-failure
     fi
     popd
 }
