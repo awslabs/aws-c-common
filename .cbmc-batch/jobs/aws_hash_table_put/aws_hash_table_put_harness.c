@@ -34,7 +34,7 @@ void aws_hash_table_put_harness() {
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
 
     void *key;
-    void* value;
+    void *value;
     int was_created;
 
     aws_hash_table_put(&map, key, value, nondet_bool() ? &was_created : NULL);
