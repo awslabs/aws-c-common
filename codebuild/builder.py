@@ -183,8 +183,8 @@ TARGETS = {
 
 COMPILERS = {
     'default': {
-        'hosts': ['al2012', 'manylinux'],
-        'targets': ['linux'],
+        'hosts': ['macos', 'al2012', 'manylinux'],
+        'targets': ['macos', 'linux'],
 
         'versions': {
             'default': { }
@@ -203,17 +203,6 @@ COMPILERS = {
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
         'versions': {
-            'default': {
-                '!post_build_steps': [],
-                '!apt_keys': [],
-                '!apt_repos': [],
-                '!apt_packages': [],
-
-                'build_env': {
-                    'CC': "clang",
-                    'CXX': "clang",
-                },
-            },
             '3': {
                 '!post_build_steps': [],
                 '!apt_repos': [],
