@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;__CPROVER_file_local_hash_table_c_s_find_entry1.0:5,__CPROVER_file_local_hash_table_c_s_emplace_item.0:9;--object-bits;8"
+goto: aws_hash_table_put_harness.goto
+expected: "SUCCESSFUL"
