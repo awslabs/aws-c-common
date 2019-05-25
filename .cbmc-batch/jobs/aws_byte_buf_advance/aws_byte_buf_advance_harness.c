@@ -26,9 +26,13 @@ void aws_byte_buf_advance_harness() {
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(aws_byte_buf_is_bounded(&output, MAX_BUFFER_SIZE));
-    ensure_byte_buf_has_allocated_buffer_member(&output);
-    __CPROVER_assume(aws_byte_buf_is_valid(&output));
+    if (nondet_bool()) {
+        output = buf;
+    } else {
+        __CPROVER_assume(aws_byte_buf_is_bounded(&output, MAX_BUFFER_SIZE));
+        ensure_byte_buf_has_allocated_buffer_member(&output);
+        __CPROVER_assume(aws_byte_buf_is_valid(&output));
+    }
 
     /* save current state of the parameters */
     struct aws_byte_buf old = buf;
@@ -36,7 +40,7 @@ void aws_byte_buf_advance_harness() {
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    if (aws_byte_buf_advance(&buf, &output, len)) {
+    if (aws_byte_buf_advance((nondet_bool() ? &buf : NULL), (nondet_bool() ? &output : NULL), len)) {
         assert(buf.len == old.len + len);
         assert(buf.capacity == old.capacity);
         assert(buf.allocator == old.allocator);
