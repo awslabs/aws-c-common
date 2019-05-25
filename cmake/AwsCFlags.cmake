@@ -37,6 +37,8 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS /volatile:iso)
         # Disable unknown pragma warnings
         list(APPEND AWS_C_FLAGS /wd4068)
+        # Disable non-constant aggregate initializer warnings
+        list(APPEND AWS_C_FLAGS /wd4204)
 
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
