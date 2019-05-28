@@ -85,9 +85,11 @@ bool aws_priority_queue_is_bounded(
 void ensure_backpointer_cell_points_to_allocated(struct aws_array_list *const backpointers, const size_t index);
 
 /**
- * Ensures members of an aws_priority_queue structure are correctly allocated
+ * Ensures members of an aws_priority_queue structure are correctly
+ * allocated and returns whether the backpointers list was allocated
+ * or not.
  */
-void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
+bool ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
 
 /**
  * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage

@@ -18,32 +18,30 @@
 
 void __CPROVER_file_local_priority_queue_c_s_swap(struct aws_priority_queue *queue, size_t a, size_t b);
 
-/**
- * Runtime: 180s
- */
 void aws_priority_queue_s_swap_harness() {
     /* Data structure */
     struct aws_priority_queue queue;
 
     /* Assumptions */
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
-    ensure_priority_queue_has_allocated_members(&queue);
+    bool backpointers_allocated = ensure_priority_queue_has_allocated_members(&queue);
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
-
-    /* Perform operation under verification */
     size_t a;
     size_t b;
     __CPROVER_assume(a < queue.container.length);
     __CPROVER_assume(b < queue.container.length);
 
-    /* Assume that the two backpointers a, b are valid, either by
-     * being NULL or by allocating their objects with their correct
-     * values. */
-    ensure_backpointer_cell_points_to_allocated(&(queue.backpointers), a);
-    ensure_backpointer_cell_points_to_allocated(&(queue.backpointers), b);
+    if (backpointers_allocated) {
+        /* Assume that the two backpointers a, b are valid, either by
+         * being NULL or by allocating their objects with their correct
+         * values. */
+        ensure_backpointer_cell_points_to_allocated(&(queue.backpointers), a);
+        ensure_backpointer_cell_points_to_allocated(&(queue.backpointers), b);
+    }
 
+    /* Perform operation under verification */
     __CPROVER_file_local_priority_queue_c_s_swap(&queue, a, b);
 
     /* Assert the postconditions */
