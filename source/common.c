@@ -99,7 +99,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
         return NULL;
     }
     memset(mem, 0, required_bytes);
-    AWS_POSTCONDITION(mem != NULL);
+    AWS_POSTCONDITION(mem != NULL, "Output pointer [mem] mustn't be NULL.");
     return mem;
 }
 

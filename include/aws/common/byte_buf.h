@@ -480,7 +480,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
     buf.capacity = buf.len;
     buf.buffer = (buf.capacity == 0) ? NULL : (uint8_t *)c_str;
     buf.allocator = NULL;
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf), "Output aws_byte_buf [buf] must be valid.");
     return buf;
 }
 
@@ -491,7 +491,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, s
     buf.len = len;
     buf.capacity = len;
     buf.allocator = NULL;
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf), "Output aws_byte_buf [buf] must be valid.");
     return buf;
 }
 
@@ -503,7 +503,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *by
     buf.len = 0;
     buf.capacity = capacity;
     buf.allocator = NULL;
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf), "Output aws_byte_buf [buf] must be valid.");
     return buf;
 }
 

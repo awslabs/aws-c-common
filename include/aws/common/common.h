@@ -118,12 +118,12 @@
  */
 #ifdef CBMC
 #define AWS_PRECONDITION(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#define AWS_POSTCONDITION(cond) AWS_ASSERT(cond)
+#define AWS_POSTCONDITION(cond, explanation) __CPROVER_assert((cond), (explanation))
 #define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
 #else
 #define AWS_PRECONDITION(cond, expl) AWS_ASSERT(cond)
-#define AWS_POSTCONDITION(cond) AWS_ASSERT(cond)
+#define AWS_POSTCONDITION(cond, expl) AWS_ASSERT(cond)
 /* the C runtime does not give a way to check these properties,
  * but we can at least check that the pointer is valid */
 #define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
