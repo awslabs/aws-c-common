@@ -39,6 +39,10 @@ void aws_array_eq_ignore_case_harness() {
     struct store_byte_from_buffer old_byte_from_rhs;
     save_byte_from_array((uint8_t *)rhs, rhs_len, &old_byte_from_rhs);
 
+    /* pre-conditions */
+    __CPROVER_assume((lhs_len == 0) || AWS_MEM_IS_READABLE(lhs, lhs_len));
+    __CPROVER_assume((rhs_len == 0) || AWS_MEM_IS_READABLE(rhs, rhs_len));
+
     /* operation under verification */
     if (aws_array_eq_ignore_case(lhs, lhs_len, rhs, rhs_len)) {
         assert(lhs_len == rhs_len);
