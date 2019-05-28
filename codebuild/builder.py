@@ -126,6 +126,11 @@ HOSTS = {
         'image_type': "WINDOWS_CONTAINER",
         'compute_type': "BUILD_GENERAL1_MEDIUM",
     },
+    'macos': {
+        'python': "python3",
+
+
+    }
 }
 
 TARGETS = {
@@ -142,6 +147,16 @@ TARGETS = {
         'build_args': [
             "-DENABLE_SANITIZERS=ON",
         ],
+    },
+    'macos': {
+        'architectures': {
+            'x86': {
+                'build_args': [
+                    '-DCMAKE_C_FLAGS="-m32"',
+                    '-DCMAKE_CXX_FLAGS="-m32"',
+                ],
+            },
+        },
     },
     'android': {
         'build_args': [
@@ -168,16 +183,16 @@ TARGETS = {
 
 COMPILERS = {
     'default': {
-        'hosts': ['al2012', 'manylinux'],
-        'targets': ['linux'],
+        'hosts': ['macos', 'al2012', 'manylinux'],
+        'targets': ['macos', 'linux'],
 
         'versions': {
             'default': { }
         }
     },
     'clang': {
-        'hosts': ['linux'],
-        'targets': ['linux'],
+        'hosts': ['linux', 'macos'],
+        'targets': ['linux', 'macos'],
 
         'post_build_steps': [
             ["./format-check.sh"],
@@ -365,7 +380,7 @@ def _replace_variables(value, variables):
     if key_type == str:
 
         # If the whole string is a variable, just replace it
-        if value[0] == '{' and value[-1] == '}':
+        if value and value[0] == '{' and value[-1] == '}':
             return variables.get(value[1:-1], '')
 
         # Custom formatter for optional variables
