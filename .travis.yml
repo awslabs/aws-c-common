@@ -8,9 +8,15 @@ osx_image:
   - xcode10.1
 compiler: clang
 
+addons:
+  homebrew:
+    update: true
+    packages:
+      - python@3
+
 install:
   - export PATH=$(brew --prefix llvm)/bin:$PATH
 
 script:
   - export CODEBUILD_SRC_DIR=$(pwd)
-  - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  - python3 ./codebuild/builder.py build macos-default-default-macos-x64
