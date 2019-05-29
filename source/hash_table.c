@@ -403,7 +403,6 @@ static int s_find_entry1(
 }
 
 int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **p_elem) {
-
     AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input aws_hash_table [map] must be valid.");
     AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(p_elem), "Input aws_hash_element pointer [p_elem] must be writable.");
 
