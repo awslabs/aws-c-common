@@ -227,6 +227,7 @@ and let the user figure it out.
 * There is only one valid character encoding-- UTF-8. Try not to ever need to care about character encodings, but
 where you do, the working assumption should always be UTF-8 unless it's something we don't get a choice in (e.g. a protocol
 explicitly mandates a character set).
+* If you are not using one or more parameters of a function within its body, use the `AWS_UNUSED_PARAM` macro to communicate explicit intent and avoid possible compilation warnings.
 * If you are adding/using a compiler specific keyword, macro, or intrinsic, hide it behind a platform independent macro
 definition. This mainly applies to header files. Obviously, if you are writing a file that will only be built on a certain
 platform, you have more liberty on this.
