@@ -35,7 +35,7 @@ void aws_array_list_push_back_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification and assertions */
-    void *val = malloc(list.item_size);
+    void *val = can_fail_malloc(list.item_size);
     if (!aws_array_list_push_back(&list, val)) {
         assert(list.length == old.length + 1);
     } else {
