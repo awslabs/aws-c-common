@@ -184,7 +184,7 @@ void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
  * Return whether their contents are equivalent.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
+bool aws_byte_buf_eq(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b);
 
 /**
  * Perform a case-insensitive string comparison of two aws_byte_buf structures.
@@ -193,7 +193,7 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b)
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
+bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b);
 
 /**
  * Compare an aws_byte_buf and a null-terminated string.
@@ -201,7 +201,7 @@ bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_
  * The buffer should NOT contain a null-terminator, or the comparison will always return false.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str);
+bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *const c_str);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_buf and a null-terminated string.
@@ -211,7 +211,7 @@ bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str);
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *buf, const char *c_str);
+bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str);
 
 /**
  * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.

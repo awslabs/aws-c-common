@@ -12,11 +12,11 @@
 # limitations under the License.
 
 ###########
-#4: 4m40s (smallest size that gives full coverage)
-MAX_TABLE_SIZE ?= 4
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+include ../Makefile.aws_byte_buf
 
-UNWINDSET +=  __CPROVER_file_local_hash_table_c_s_remove_entry.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
+UNWINDSET += memcmp.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
+UNWINDSET += aws_array_eq_ignore_case.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
+
 
 CBMCFLAGS +=
 
@@ -24,10 +24,11 @@ DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-ENTRY = aws_hash_iter_delete_harness
+ENTRY = aws_byte_buf_eq_ignore_case_harness
 ###########
 
 include ../Makefile.common

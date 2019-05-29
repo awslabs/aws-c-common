@@ -165,8 +165,11 @@ const char *make_arbitrary_c_str(size_t max_size) {
     return str;
 }
 
-bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *rval) {
-    struct hash_table_state *state = map->p_impl;
+bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *const rval) {
+    return hash_table_state_has_an_empty_slot(map->p_impl, rval);
+}
+
+bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const state, size_t *const rval) {
     __CPROVER_assume(state->entry_count > 0);
     size_t empty_slot_idx;
     __CPROVER_assume(empty_slot_idx < state->size);
