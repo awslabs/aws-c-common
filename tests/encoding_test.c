@@ -464,7 +464,8 @@ static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void
     uint8_t test_data[6] = {0};
     char expected[] = "AAAAAAAA";
 
-    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(
+        allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
 }
 
 AWS_TEST_CASE(base64_encoding_test_zeros, s_base64_encoding_test_zeros_fn)
@@ -545,7 +546,8 @@ static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator,
                       "jY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0t"
                       "PU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+";
 
-    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(
+        allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
 }
 
 AWS_TEST_CASE(base64_encoding_test_all_values, s_base64_encoding_test_all_values_fn)
