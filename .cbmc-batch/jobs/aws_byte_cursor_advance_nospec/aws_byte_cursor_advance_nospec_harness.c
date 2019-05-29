@@ -17,7 +17,7 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 
-void aws_byte_cursor_advance_harness() {
+void aws_byte_cursor_advance_nospec_harness() {
     /* data structure */
     struct aws_byte_cursor cursor;
     size_t len;
@@ -34,7 +34,7 @@ void aws_byte_cursor_advance_harness() {
     save_byte_from_array(cursor.ptr, cursor.len, &old_byte_from_cursor);
 
     /* operation under verification */
-    struct aws_byte_cursor rv = aws_byte_cursor_advance(&cursor, len);
+    struct aws_byte_cursor rv = aws_byte_cursor_advance_nospec(&cursor, len);
 
     /* assertions */
     assert(aws_byte_cursor_is_valid(&rv));
