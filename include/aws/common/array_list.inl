@@ -107,6 +107,7 @@ void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
 AWS_STATIC_IMPL
 int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val);
     int err_code = aws_array_list_set_at(list, val, aws_array_list_length(list));
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
@@ -296,6 +297,7 @@ int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list,
 AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val);
     size_t necessary_size;
     if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
