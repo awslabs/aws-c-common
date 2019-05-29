@@ -64,11 +64,9 @@ static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
 }
 
 /**
- * Check equality of two hash keys, with a reasonable semantics for null keys.
+ * Check equality of two objects, with a reasonable semantics for null.
  */
-static bool s_hash_keys_eq(struct hash_table_state *state, const void *a, const void *b) {
-    AWS_PRECONDITION(hash_table_state_is_valid(state));
-
+static bool s_safe_eq_check(aws_hash_callback_eq_fn *equals_fn, const void *a, const void *b) {
     /* Short circuit if the pointers are the same */
     if (a == b) {
         return true;
@@ -78,7 +76,17 @@ static bool s_hash_keys_eq(struct hash_table_state *state, const void *a, const 
         return false;
     }
     /* If both are non-null, call the underlying equals fn */
-    return state->equals_fn(a, b);
+    return equals_fn(a, b);
+}
+
+/**
+ * Check equality of two hash keys, with a reasonable semantics for null keys.
+ */
+static bool s_hash_keys_eq(struct hash_table_state *state, const void *a, const void *b) {
+    AWS_PRECONDITION(hash_table_state_is_valid(state));
+    bool rval = s_safe_eq_check(state->equals_fn, a, b);
+    AWS_POSTCONDITION(hash_table_state_is_valid(state));
+    return rval;
 }
 
 static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
@@ -400,7 +408,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
     } else {
         *p_elem = NULL;
     }
-
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
     return AWS_OP_SUCCESS;
 }
 
@@ -697,7 +705,14 @@ bool aws_hash_table_eq(
     const struct aws_hash_table *a,
     const struct aws_hash_table *b,
     aws_hash_callback_eq_fn *value_eq) {
+    AWS_PRECONDITION(aws_hash_table_is_valid(a));
+    AWS_PRECONDITION(aws_hash_table_is_valid(b));
+    AWS_PRECONDITION(value_eq != NULL);
+
     if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
+        AWS_POSTCONDITION(aws_hash_table_is_valid(a));
+        AWS_POSTCONDITION(aws_hash_table_is_valid(b));
+
         return false;
     }
 
@@ -706,21 +721,31 @@ bool aws_hash_table_eq(
      * entries, we can simply iterate one and compare against the same key in
      * the other.
      */
-    for (struct aws_hash_iter iter = aws_hash_iter_begin(a); !aws_hash_iter_done(&iter); aws_hash_iter_next(&iter)) {
+    for (size_t i = 0; i < a->p_impl->size; ++i) {
+        const struct hash_table_entry *const a_entry = &a->p_impl->slots[i];
+        if (a_entry->hash_code == 0) {
+            continue;
+        }
+
         struct aws_hash_element *b_element = NULL;
 
-        aws_hash_table_find(b, iter.element.key, &b_element);
+        aws_hash_table_find(b, a_entry->element.key, &b_element);
 
         if (!b_element) {
             /* Key is present in A only */
+            AWS_POSTCONDITION(aws_hash_table_is_valid(a));
+            AWS_POSTCONDITION(aws_hash_table_is_valid(b));
             return false;
         }
 
-        if (!value_eq(iter.element.value, b_element->value)) {
+        if (!s_safe_eq_check(value_eq, a_entry->element.value, b_element->value)) {
+            AWS_POSTCONDITION(aws_hash_table_is_valid(a));
+            AWS_POSTCONDITION(aws_hash_table_is_valid(b));
             return false;
         }
     }
-
+    AWS_POSTCONDITION(aws_hash_table_is_valid(a));
+    AWS_POSTCONDITION(aws_hash_table_is_valid(b));
     return true;
 }
 
