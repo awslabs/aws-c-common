@@ -93,8 +93,9 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     const char *current_exe = s_get_executable_path();
     /* parse exe/shared lib */
     const char *exe_start = strstr(symbol, " ");
-    while (isspace(*exe_start))
+    while (isspace(*exe_start)) {
         ++exe_start;
+    }
     const char *exe_end = strstr(exe_start, " ");
     strncpy(frame->exe, exe_start, exe_end - exe_start);
     /* executables get basename'd, so restore the path */
