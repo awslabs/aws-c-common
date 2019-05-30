@@ -88,18 +88,11 @@ AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
  * Convert 24 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x) {
-    AWS_PRECONDITION(x < (UINT32_MAX >> 8));
+    AWS_PRECONDITION(x <= 0xFFFFFF);
     if (aws_is_big_endian()) {
         return x;
     } else {
-        uint32_t result = 0;
-        uint8_t *result_ptr = (uint8_t *)&result;
-
-        *result_ptr++ = (x >> 16) & 0xFF;
-        *result_ptr++ = (x >> 8) & 0xFF;
-        *result_ptr++ = (x >> 0) & 0xFF;
-
-        return result;
+        return aws_hton32(x) >> 8;
     }
 }
 
@@ -107,18 +100,11 @@ AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x) {
  * Convert 24 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_ntoh24(uint32_t x) {
-    AWS_PRECONDITION(x < (UINT32_MAX >> 8));
+    AWS_PRECONDITION((x) <= 0xFFFFFFF);
     if (aws_is_big_endian()) {
         return x;
     } else {
-        uint32_t result = 0;
-        uint8_t *result_ptr = (uint8_t *)&result;
-
-        *result_ptr++ = (x >> 16) & 0xFF;
-        *result_ptr++ = (x >> 8) & 0xFF;
-        *result_ptr++ = (x >> 0) & 0xFF;
-
-        return result;
+        return aws_ntoh32(x) >> 8;
     }
 }
 

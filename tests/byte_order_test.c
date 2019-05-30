@@ -28,7 +28,7 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint8_t x[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
     uint8_t y[] = {0xaa, 0xbb, 0xcc, 0xdd};
-    uint8_t z[] = {0xaa, 0xbb, 0xcc};
+    uint8_t z[] = {0x00, 0xaa, 0xbb, 0xcc}; /* Leading 0 needed avoid buffer overflows */
     uint8_t w[] = {0xee, 0xff};
 
     uint64_t x64;
@@ -41,6 +41,8 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
     memcpy(&z24, z, sizeof(z));
     memcpy(&w16, w, sizeof(w));
 
+    z24 >>= 8; /* Throw away the fake byte */
+
     ASSERT_UINT_EQUALS(aws_ntoh64(x64), ans_x);
     ASSERT_UINT_EQUALS(aws_hton64(x64), ans_x);
 
@@ -49,6 +51,9 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(aws_ntoh24(z24), ans_z);
     ASSERT_UINT_EQUALS(aws_hton24(z24), ans_z);
+    /* Make sure top byte is untouched */
+    ASSERT_UINT_EQUALS(aws_ntoh24(z24) & 0xFF000000, 0);
+    ASSERT_UINT_EQUALS(aws_hton24(z24) & 0xFF000000, 0);
 
     ASSERT_UINT_EQUALS(aws_ntoh16(w16), ans_w);
     ASSERT_UINT_EQUALS(aws_hton16(w16), ans_w);
