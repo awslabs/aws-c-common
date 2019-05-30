@@ -75,18 +75,6 @@ bool aws_priority_queue_is_bounded(
     return container_is_bounded && backpointers_is_bounded;
 }
 
-void ensure_backpointer_cell_points_to_allocated(struct aws_array_list *const backpointers, const size_t index) {
-    struct aws_priority_queue_node **backpointer = (uint8_t *)backpointers->data + (backpointers->item_size * index);
-
-    if (nondet_bool()) {
-        *backpointer = NULL;
-    } else {
-        struct aws_priority_queue_node *node = malloc(sizeof(struct aws_priority_queue_node));
-        __CPROVER_assume(node->current_index == index);
-        *backpointer = node;
-    }
-}
-
 bool ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue) {
     ensure_array_list_has_allocated_data_member(&queue->container);
 
@@ -100,7 +88,7 @@ bool ensure_priority_queue_has_allocated_members(struct aws_priority_queue *cons
         __CPROVER_assume(backpointers_zero);
     }
     queue->pred = nondet_compare;
-    return allocate_backpointers;
+    return allocate_backpointers && (queue->backpointers.data != NULL);
 }
 
 struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max) {
