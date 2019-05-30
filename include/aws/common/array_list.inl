@@ -298,17 +298,10 @@ AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(val);
-    size_t necessary_size;
-    if (aws_array_list_calc_necessary_size(list, index, &necessary_size)) {
+    
+    if (aws_array_list_ensure_capacity(list, index)) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_ERR;
-    }
-
-    if (list->current_size < necessary_size) {
-        if (aws_array_list_ensure_capacity(list, index)) {
-            AWS_POSTCONDITION(aws_array_list_is_valid(list));
-            return AWS_OP_ERR;
-        }
     }
 
     AWS_FATAL_ASSERT(list->data);
