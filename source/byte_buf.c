@@ -272,13 +272,17 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_ASSERT(a && b);
-    return aws_array_eq(a->ptr, a->len, b->ptr, b->len);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b));
+    bool rv = aws_array_eq(a->ptr, a->len, b->ptr, b->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b));
+    return rv;
 }
 
 bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_ASSERT(a && b);
-    return aws_array_eq_ignore_case(a->ptr, a->len, b->ptr, b->len);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b));
+    bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->ptr, b->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b));
+    return rv;
 }
 
 /* Every possible uint8_t value, lowercased */
