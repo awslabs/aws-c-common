@@ -23,19 +23,23 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     uint64_t ans_x = 0x1122334455667788ULL;
     uint32_t ans_y = 0xaabbccdd;
-    uint16_t ans_z = 0xeeff;
+    uint32_t ans_z = 0xaabbcc;
+    uint16_t ans_w = 0xeeff;
 
     uint8_t x[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
     uint8_t y[] = {0xaa, 0xbb, 0xcc, 0xdd};
-    uint8_t z[] = {0xee, 0xff};
+    uint8_t z[] = {0xaa, 0xbb, 0xcc};
+    uint8_t w[] = {0xee, 0xff};
 
     uint64_t x64;
     uint32_t y32;
-    uint16_t z16;
+    uint32_t z24;
+    uint16_t w16;
 
-    memcpy(&x64, x, sizeof(x64));
-    memcpy(&y32, y, sizeof(y32));
-    memcpy(&z16, z, sizeof(z16));
+    memcpy(&x64, x, sizeof(x));
+    memcpy(&y32, y, sizeof(y));
+    memcpy(&z24, z, sizeof(z));
+    memcpy(&w16, w, sizeof(w));
 
     ASSERT_UINT_EQUALS(aws_ntoh64(x64), ans_x);
     ASSERT_UINT_EQUALS(aws_hton64(x64), ans_x);
@@ -43,8 +47,11 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_UINT_EQUALS(aws_ntoh32(y32), ans_y);
     ASSERT_UINT_EQUALS(aws_hton32(y32), ans_y);
 
-    ASSERT_UINT_EQUALS(aws_ntoh16(z16), ans_z);
-    ASSERT_UINT_EQUALS(aws_hton16(z16), ans_z);
+    ASSERT_UINT_EQUALS(aws_ntoh24(z24), ans_z);
+    ASSERT_UINT_EQUALS(aws_hton24(z24), ans_z);
+
+    ASSERT_UINT_EQUALS(aws_ntoh16(w16), ans_w);
+    ASSERT_UINT_EQUALS(aws_hton16(w16), ans_w);
 
     return 0;
 }
