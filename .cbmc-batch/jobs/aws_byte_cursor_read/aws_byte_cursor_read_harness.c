@@ -21,10 +21,9 @@ void aws_byte_cursor_read_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
     size_t length;
-    void* dest = can_fail_malloc(length);
+    void *dest = can_fail_malloc(length);
 
     /* assumptions */
-    __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&cur);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
 
@@ -32,25 +31,23 @@ void aws_byte_cursor_read_harness() {
     struct aws_byte_cursor old_cur = cur;
     struct store_byte_from_buffer old_byte_from_cur;
     save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
-    // struct aws_byte_cursor old_rhs = rhs;
-    // struct store_byte_from_buffer old_byte_from_rhs;
-    // save_byte_from_array(rhs.ptr, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
     if (aws_byte_cursor_read((nondet_bool() ? &cur : NULL), dest, length)) {
-        /*assert(lhs.len == rhs.len);
-        if (lhs.len > 0) {
-            assert_bytes_match(lhs.ptr, rhs.ptr, lhs.len);
-        }*/
+        assert_bytes_match(old_cur.ptr, (uint8_t *)dest, length);
     }
 
     /* assertions */
-    /*assert(aws_byte_cursor_is_valid(&lhs));
-    assert(aws_byte_cursor_is_valid(&rhs));
-    if (lhs.len != 0) {
-        assert_byte_from_buffer_matches(lhs.ptr, &old_byte_from_lhs);
+    assert(aws_byte_cursor_is_valid(&cur));
+    /* the following assertions are included, because aws_byte_cursor_read internally uses
+     * aws_byte_cursor_advance_nospec and it copies the bytes from the advanced cursor to *dest
+     */
+    if (old_cur.len > (SIZE_MAX >> 1) || length > (SIZE_MAX >> 1) || length > old_cur.len) {
+        if (old_cur.len != 0) {
+            assert_byte_from_buffer_matches(cur.ptr, &old_byte_from_cur);
+        }
+    } else {
+        assert(cur.ptr == old_cur.ptr + length);
+        assert(cur.len == old_cur.len - length);
     }
-    if (rhs.len != 0) {
-        assert_byte_from_buffer_matches(rhs.ptr, &old_byte_from_rhs);
-    }*/
 }
