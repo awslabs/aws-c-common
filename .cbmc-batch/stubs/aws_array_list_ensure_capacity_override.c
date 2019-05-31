@@ -1,4 +1,5 @@
 #include <aws/common/array_list.h>
+#include <proof_helpers/proof_allocators.h>
 
 int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
