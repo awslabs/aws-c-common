@@ -42,6 +42,42 @@ size_t aws_system_info_processor_count(void) {
 }
 #endif
 
+#include <ctype.h>
+#include <fcntl.h>
+
+bool aws_is_debugger_present(void) {
+    /* Open the status file */
+    const int status_fd = open("/proc/self/status", O_RDONLY);
+    if (status_fd == -1) {
+        return false;
+    }
+
+    /* Read its contents */
+    char buf[4096];
+    const ssize_t num_read = read(status_fd, buf, sizeof(buf) - 1);
+    close(status_fd);
+    if (num_read <= 0) {
+        return false;
+    }
+    buf[num_read] = '\0';
+
+    /* Search for the TracerPid field, which will indicate the debugger process */
+    const char tracerPidString[] = "TracerPid:";
+    const char *tracer_pid = strstr(buf, tracerPidString);
+    if (!tracer_pid) {
+        return false;
+    }
+
+    /* If it's not 0, then there's a debugger */
+    for (const char *cur = tracer_pid + sizeof(tracerPidString) - 1; cur <= buf + num_read; ++cur) {
+        if (!isspace(*cur)) {
+            return isdigit(*cur) != 0 && *cur != '0';
+        }
+    }
+
+    return false;
+}
+
 #include <signal.h>
 
 #ifndef __has_builtin
@@ -50,11 +86,13 @@ size_t aws_system_info_processor_count(void) {
 
 void aws_debug_break(void) {
 #ifdef DEBUG_BUILD
+    if (aws_is_debugger_present()) {
 #    if __has_builtin(__builtin_debugtrap)
-    __builtin_debugtrap();
+        __builtin_debugtrap();
 #    else
-    raise(SIGTRAP);
+        raise(SIGTRAP);
 #    endif
+    }
 #endif /* DEBUG_BUILD */
 }
 
