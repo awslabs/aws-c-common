@@ -24,6 +24,14 @@ AWS_EXTERN_C_BEGIN
 AWS_COMMON_API
 size_t aws_system_info_processor_count(void);
 
+/* Returns true if a debugger is currently attached to the process. */
+AWS_COMMON_API
+bool aws_is_debugger_present(void);
+
+/* If a debugger is attached to the process, trip a breakpoint. */
+AWS_COMMON_API
+void aws_debug_break(void);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_SYSTEM_INFO_H */
