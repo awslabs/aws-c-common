@@ -107,7 +107,7 @@ void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
 AWS_STATIC_IMPL
 int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
-    AWS_PRECONDITION(val);
+    AWS_PRECONDITION(val && AWS_MEM_IS_READABLE(val, list->item_size));
     int err_code = aws_array_list_set_at(list, val, aws_array_list_length(list));
 
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
@@ -122,6 +122,7 @@ int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const voi
 AWS_STATIC_IMPL
 int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val && AWS_MEM_IS_WRITABLE(val, list->item_size));
     if (aws_array_list_length(list) > 0) {
         memcpy(val, list->data, list->item_size);
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -170,6 +171,7 @@ void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t
 AWS_STATIC_IMPL
 int aws_array_list_back(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val && AWS_MEM_IS_WRITABLE(val, list->item_size));
     if (aws_array_list_length(list) > 0) {
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
 
@@ -256,6 +258,7 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
 AWS_STATIC_IMPL
 int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val && AWS_MEM_IS_WRITABLE(val, list->item_size));
     if (aws_array_list_length(list) > index) {
         memcpy(val, (void *)((uint8_t *)list->data + (list->item_size * index)), list->item_size);
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -268,6 +271,7 @@ int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *
 AWS_STATIC_IMPL
 int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, void **val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(val);
     if (aws_array_list_length(list) > index) {
         *val = (void *)((uint8_t *)list->data + (list->item_size * index));
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -297,7 +301,7 @@ int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list,
 AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
-    AWS_PRECONDITION(val);
+    AWS_PRECONDITION(val && AWS_MEM_IS_READABLE(val, list->item_size));
     
     if (aws_array_list_ensure_capacity(list, index)) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));

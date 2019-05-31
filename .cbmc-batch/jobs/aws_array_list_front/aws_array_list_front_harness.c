@@ -34,7 +34,9 @@ void aws_array_list_front_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification */
-    void *val = malloc(list.item_size);
+    size_t malloc_size;
+    __CPROVER_assume(malloc_size <= list.item_size);
+    void *val = can_fail_malloc(malloc_size);
     if (!aws_array_list_front(&list, val)) {
         /* In the case aws_array_list_front is successful, we can ensure the list isn't empty */
         assert(list.data);
