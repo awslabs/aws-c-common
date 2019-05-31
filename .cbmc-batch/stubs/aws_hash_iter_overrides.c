@@ -9,21 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* struct aws_hash_iter { */
-/*     const struct aws_hash_table *map; */
-/*     struct aws_hash_element element; */
-/*     size_t slot; */
-/*     size_t limit; */
-/*     enum aws_hash_iter_status status; */
-/*     /\* */
-/*      * Reserving extra fields for binary compatibility with future expansion of */
-/*      * iterator in case hash table implementation changes. */
-/*      *\/ */
-/*     int unused_0; */
-/*     void *unused_1; */
-/*     void *unused_2; */
-/* }; */
-
 /* Simple map for what the iterator does: it just chugs along, returns a nondet value, until its gone at most map->size
  * times */
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {

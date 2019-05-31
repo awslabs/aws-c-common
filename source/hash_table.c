@@ -788,7 +788,10 @@ static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_s
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     AWS_PRECONDITION(aws_hash_table_is_valid(map));
     struct hash_table_state *state = map->p_impl;
-    struct aws_hash_iter iter = {.map = map, .limit = state->size};
+    struct aws_hash_iter iter;
+    AWS_ZERO_STRUCT(iter);
+    iter.map = map;
+    iter.limit = state->size;
     s_get_next_element(&iter, 0);
     AWS_POSTCONDITION(iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     AWS_POSTCONDITION(aws_hash_iter_is_valid(&iter));

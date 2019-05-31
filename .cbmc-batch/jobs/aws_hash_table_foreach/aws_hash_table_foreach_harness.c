@@ -32,7 +32,7 @@ void aws_hash_table_foreach_harness() {
     map.p_impl->hash_fn = uninterpreted_hasher;
 
     void *context;
-    int rval = aws_hash_table_foreach(&map, hash_table_foreach_proof_callback, context);
+    aws_hash_table_foreach(&map, hash_table_foreach_proof_callback, context);
     /* No obvious postconditions, other than that the map remains valid. But the iterator could have modified the table
      */
     assert(aws_hash_table_is_valid(&map));
