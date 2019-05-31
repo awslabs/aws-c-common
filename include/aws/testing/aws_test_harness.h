@@ -451,11 +451,11 @@ static inline int enable_vt_mode(void) {
         AWS_MUTEX_INIT,                                                                                                \
     };                                                                                                                 \
     static struct aws_allocator name##_allocator = {                                                                   \
-        .mem_acquire = s_mem_acquire_malloc,                                                                           \
-        .mem_release = s_mem_release_free,                                                                             \
-        .mem_realloc = NULL,                                                                                           \
-        .mem_calloc = NULL,                                                                                            \
-        .impl = &name##_alloc_impl,                                                                                    \
+        s_mem_acquire_malloc,                                                                                          \
+        s_mem_release_free,                                                                                            \
+        NULL,                                                                                                          \
+        NULL,                                                                                                          \
+        &name##_alloc_impl,                                                                                            \
     };
 
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
