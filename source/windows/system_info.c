@@ -23,9 +23,15 @@ size_t aws_system_info_processor_count(void) {
     return info.dwNumberOfProcessors;
 }
 
-void aws_debug_break() {
+bool aws_is_debugger_present(void) {
+    return IsDebuggerPresent();
+}
+
+void aws_debug_break(void) {
 #ifdef DEBUG_BUILD
-    __debugbreak();
+    if (aws_is_debugger_present()) {
+        DebugBreak();
+    }
 #endif
 }
 
