@@ -24,7 +24,7 @@
 
 #ifdef HAVE_MSVC_CPUIDEX
 /* for __cpuidex */
-#    include <intrin.h>
+#include <intrin.h>
 #endif
 
 #include <aws/common/common.h>
@@ -38,54 +38,54 @@ static int cpuid_state = 2;
 #ifndef HAVE_BUILTIN_CPU_SUPPORTS
 #ifdef HAVE_MSVC_CPUIDEX
 static bool msvc_check_avx2(void) {
-    int cpuInfo[4];
+  int cpuInfo[4];
 
-    /* Check maximum supported function */
-    __cpuidex(cpuInfo, 0, 0);
+  /* Check maximum supported function */
+  __cpuidex(cpuInfo, 0, 0);
 
-    if (cpuInfo[0] < 7) {
-        /*
-         * AVX2 support bit is in function 7, so if function 7 is not
-         * supported, we know we have no AVX2 support
-         */
-        return false;
-    }
+  if (cpuInfo[0] < 7) {
+    /*
+     * AVX2 support bit is in function 7, so if function 7 is not
+     * supported, we know we have no AVX2 support
+     */
+    return false;
+  }
 
-    /* CPUID: Extended features */
-    __cpuidex(cpuInfo, 7, 0);
+  /* CPUID: Extended features */
+  __cpuidex(cpuInfo, 7, 0);
 
-    /* EBX bit 5: AVX2 support */
-    return cpuInfo[1] & (1 << 5);
+  /* EBX bit 5: AVX2 support */
+  return cpuInfo[1] & (1 << 5);
 }
 #endif
 #endif
 
 bool aws_common_private_has_avx2(void) {
-    if (AWS_LIKELY(cpuid_state == 0)) {
-        return true;
-    }
-    if (AWS_LIKELY(cpuid_state == 1)) {
-        return false;
-    }
+  if (AWS_LIKELY(cpuid_state == 0)) {
+    return true;
+  }
+  if (AWS_LIKELY(cpuid_state == 1)) {
+    return false;
+  }
 
-    /* Provide a hook for testing fallbacks and benchmarking */
-    const char *env_avx2_enabled = getenv("AWS_COMMON_AVX2");
-    if (env_avx2_enabled) {
-        int is_enabled = atoi(env_avx2_enabled);
-        cpuid_state = !is_enabled;
-        return is_enabled;
-    }
+  /* Provide a hook for testing fallbacks and benchmarking */
+  const char *env_avx2_enabled = getenv("AWS_COMMON_AVX2");
+  if (env_avx2_enabled) {
+    int is_enabled = atoi(env_avx2_enabled);
+    cpuid_state = !is_enabled;
+    return is_enabled;
+  }
 
 #ifdef HAVE_BUILTIN_CPU_SUPPORTS
-    bool available = __builtin_cpu_supports("avx2");
+  bool available = __builtin_cpu_supports("avx2");
 #elif defined(HAVE_MAY_I_USE)
-    bool available = _may_i_use_cpu_feature(_FEATURE_AVX2);
+  bool available = _may_i_use_cpu_feature(_FEATURE_AVX2);
 #elif defined(HAVE_MSVC_CPUIDEX)
-    bool available = msvc_check_avx2();
+  bool available = msvc_check_avx2();
 #else
-#    error No CPUID probe mechanism available
+#error No CPUID probe mechanism available
 #endif
-    cpuid_state = available ? CPUID_AVAILABLE : CPUID_UNAVAILABLE;
+  cpuid_state = available ? CPUID_AVAILABLE : CPUID_UNAVAILABLE;
 
-    return available;
+  return available;
 }
