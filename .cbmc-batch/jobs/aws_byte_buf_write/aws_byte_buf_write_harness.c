@@ -20,11 +20,9 @@ void aws_byte_buf_write_harness() {
     /* parameters */
     struct aws_byte_buf buf;
     size_t len;
-    __CPROVER_assume(len <= MAX_BUFFER_SIZE);
     uint8_t *array = can_fail_malloc(len);
 
     /* assumptions */
-    __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
