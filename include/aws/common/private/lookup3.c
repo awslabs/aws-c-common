@@ -67,12 +67,13 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
      (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
       __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || \
      (defined(i386) || defined(__i386__) || defined(__i486__) || \
-      defined(__i586__) || defined(__i686__) || defined(vax) || defined(MIPSEL))
+      defined(__i586__) || defined(__i686__) || defined(vax) || defined(MIPSEL) || \
+      defined(_M_IX86) || defined(_M_X64) || defined(_M_IA64) || defined(_M_ARM))
 # define HASH_LITTLE_ENDIAN 1
 # define HASH_BIG_ENDIAN 0
 #elif (defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && \
        __BYTE_ORDER == __BIG_ENDIAN) || \
-      (defined(sparc) || defined(POWERPC) || defined(mc68000) || defined(sel))
+      (defined(sparc) || defined(POWERPC) || defined(_M_PPC) || defined(mc68000) || defined(sel))
 # define HASH_LITTLE_ENDIAN 0
 # define HASH_BIG_ENDIAN 1
 #else
