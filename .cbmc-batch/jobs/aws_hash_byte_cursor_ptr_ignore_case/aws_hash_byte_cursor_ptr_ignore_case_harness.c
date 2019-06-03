@@ -16,15 +16,18 @@
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void aws_hash_array_ignore_case_harness() {
+void aws_hash_byte_cursor_ptr_ignore_case_harness() {
     /* parameters */
-    size_t length;
-    __CPROVER_assume(length < MAX_BUFFER_SIZE);
-    uint8_t *array = can_fail_malloc(length);
+    struct aws_byte_cursor cur;
+
+    /* assumptions */
+    __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
+    ensure_byte_cursor_has_allocated_buffer_member(&cur);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
 
     /* operation under verification */
-    uint64_t rval = aws_hash_array_ignore_case(array, length);
+    aws_hash_byte_cursor_ptr_ignore_case(nondet_bool() ? &cur : NULL);
 
     /* assertions */
-    assert(AWS_MEM_IS_READABLE(array, length));
+    assert(aws_byte_cursor_is_valid(&cur));
 }

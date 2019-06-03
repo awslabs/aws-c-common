@@ -414,8 +414,8 @@ bool aws_array_eq_c_str(const void *const array, const size_t array_len, const c
 
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
-uint64_t aws_hash_array_ignore_case(const void *array, size_t len) {
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(array,len));
+uint64_t aws_hash_array_ignore_case(const void *const array, const size_t len) {
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(array, len));
     /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
     const uint64_t fnv_offset_basis = 0xcbf29ce484222325ULL;
     const uint64_t fnv_prime = 0x100000001b3ULL;
@@ -433,9 +433,12 @@ uint64_t aws_hash_array_ignore_case(const void *array, size_t len) {
 }
 #pragma CPROVER check pop
 
-uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
-    const struct aws_byte_cursor *cursor = item;
-    return aws_hash_array_ignore_case(cursor->ptr, cursor->len);
+uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *const item) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(item));
+    const struct aws_byte_cursor *const cursor = item;
+    uint64_t rval = aws_hash_array_ignore_case(cursor->ptr, cursor->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(item));
+    return rval;
 }
 
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b) {
