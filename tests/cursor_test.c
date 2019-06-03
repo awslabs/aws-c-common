@@ -223,7 +223,7 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_UINT_EQUALS(0, arr[1]);
 
     cur.len = 0;
-    buffer.capacity = 0;
+    aws_byte_buf_clean_up(&buffer);
     ASSERT_FALSE(aws_byte_cursor_read_u8(&cur, &u8));
     ASSERT_UINT_EQUALS(0, u8);
     ASSERT_FALSE(aws_byte_buf_write_u8(&buffer, 0));

@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/nondet.h>
+#include <proof_helpers/proof_allocators.h>
 #include <stddef.h>
 #include <stdint.h>
 

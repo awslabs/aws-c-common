@@ -802,14 +802,17 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
     struct aws_byte_buf *AWS_RESTRICT buf,
     const uint8_t *AWS_RESTRICT src,
     size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && AWS_MEM_IS_WRITABLE(src, len));
 
     if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
         return false;
     }
 
     memcpy(buf->buffer + buf->len, src, len);
     buf->len += len;
 
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return true;
 }
 
