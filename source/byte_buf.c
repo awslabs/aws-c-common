@@ -71,7 +71,7 @@ bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
     return cursor &&
-           ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len)));
+           ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_READABLE(cursor->ptr, cursor->len)));
 }
 
 void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents) {
