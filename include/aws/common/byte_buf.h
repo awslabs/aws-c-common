@@ -506,24 +506,29 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *by
     return buf;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *buf) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *const buf) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     struct aws_byte_cursor cur;
     cur.ptr = buf->buffer;
     cur.len = buf->len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
     return cur;
 }
 
 AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_str) {
-    struct aws_byte_cursor cursor;
-    cursor.ptr = (uint8_t *)c_str;
-    cursor.len = strlen(c_str);
-    return cursor;
+    struct aws_byte_cursor cur;
+    cur.ptr = (uint8_t *)c_str;
+    cur.len = (cur.ptr) ? strlen(c_str) : 0;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
+    return cur;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *bytes, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len) {
+    AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len));
     struct aws_byte_cursor cur;
     cur.ptr = (uint8_t *)bytes;
     cur.len = len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
     return cur;
 }
 
@@ -777,16 +782,19 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint
  * false.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_advance(
-    struct aws_byte_buf *AWS_RESTRICT buffer,
-    struct aws_byte_buf *AWS_RESTRICT output,
-    size_t len) {
+    struct aws_byte_buf *const AWS_RESTRICT buffer,
+    struct aws_byte_buf *const AWS_RESTRICT output,
+    const size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
     if (buffer->capacity - buffer->len >= len) {
         *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
         buffer->len += len;
         output->len = 0;
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
         return true;
     } else {
         AWS_ZERO_STRUCT(*output);
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
         return false;
     }
 }

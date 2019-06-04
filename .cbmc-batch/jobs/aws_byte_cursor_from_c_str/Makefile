@@ -12,22 +12,20 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../Makefile.aws_byte_buf
 
-# This bound allows us to reach 100% coverage rate
-UNWINDSET += aws_array_list_mem_swap.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
+UNWINDSET += strlen.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_havoc.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 
-ENTRY = aws_array_list_swap_harness
+ENTRY = aws_byte_cursor_from_c_str_harness
 ###########
 
 include ../Makefile.common
