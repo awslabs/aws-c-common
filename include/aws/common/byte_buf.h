@@ -610,7 +610,8 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
  * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
  * a buffer overflow, and return NULL without changing *buf.
  */
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *cursor, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cursor, const size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
     struct aws_byte_cursor rv;
     if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || len > cursor->len) {
         rv.ptr = NULL;
@@ -622,7 +623,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
         cursor->ptr += len;
         cursor->len -= len;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
     return rv;
 }
 
@@ -636,7 +638,11 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
  * cursor->ptr points outside the true ptr length.
  */
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *cursor, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
+    struct aws_byte_cursor *const cursor,
+    size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
+
     struct aws_byte_cursor rv;
 
     if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
@@ -664,6 +670,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws
         rv.len = 0;
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
     return rv;
 }
 
