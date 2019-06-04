@@ -134,3 +134,8 @@ uint64_t nondet_hasher(const void *a);
  * Standard stub function to hash one item.
  */
 uint64_t uninterpreted_hasher(const void *a);
+
+/**
+ * Standard stub function of a predicate
+ */
+bool predicate_fn(uint8_t value);

@@ -179,3 +179,7 @@ uint64_t uninterpreted_hasher(const void *a) {
     assert(a != NULL);
     return __CPROVER_uninterpreted_hasher(a);
 }
+
+bool predicate_fn(uint8_t value) {
+    return nondet_bool();
+}

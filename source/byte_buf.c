@@ -685,8 +685,9 @@ struct aws_byte_cursor aws_byte_cursor_trim_pred(
 
 bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_byte_predicate_fn *predicate) {
     struct aws_byte_cursor trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
-
-    return trimmed.len == 0;
+    bool rval = (trimmed.len == 0);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
+    return rval;
 }
 
 int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
