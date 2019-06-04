@@ -15,12 +15,10 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
-void aws_byte_buf_eq_c_str_harness() {
-    /* parameters */
+void aws_byte_cursor_from_buf_harness() {
+    /* parameter */
     struct aws_byte_buf buf;
-    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
@@ -29,24 +27,18 @@ void aws_byte_buf_eq_c_str_harness() {
 
     /* save current state of the parameters */
     struct aws_byte_buf old = buf;
-    struct store_byte_from_buffer old_byte;
-    save_byte_from_array(buf.buffer, buf.len, &old_byte);
-    size_t str_len = (c_str) ? strlen(c_str) : 0;
-    struct store_byte_from_buffer old_byte_from_str;
-    save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
+    struct store_byte_from_buffer old_byte_from_buf;
+    save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_c_str(&buf, c_str)) {
-        assert(buf.len == str_len);
-        if (buf.len > 0) {
-            assert_bytes_match(buf.buffer, (uint8_t *)c_str, buf.len);
-        }
-    }
+    struct aws_byte_cursor cur = aws_byte_cursor_from_buf(nondet_bool() ? &buf : NULL);
 
-    /* asserts both parameters remain unchanged */
+    /* assertions */
     assert(aws_byte_buf_is_valid(&buf));
-    assert_byte_buf_equivalence(&buf, &old, &old_byte);
-    if (str_len > 0) {
-        assert_byte_from_buffer_matches((uint8_t *)c_str, &old_byte_from_str);
+    assert(aws_byte_cursor_is_valid(&cur));
+    assert_byte_buf_equivalence(&buf, &old, &old_byte_from_buf);
+    assert(cur.len == buf.len);
+    if (cur.ptr) {
+        assert_bytes_match(cur.ptr, buf.buffer, buf.len);
     }
 }

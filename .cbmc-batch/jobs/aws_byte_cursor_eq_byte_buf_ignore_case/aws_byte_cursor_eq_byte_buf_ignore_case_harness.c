@@ -17,36 +17,37 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 
-void aws_byte_buf_eq_c_str_harness() {
+void aws_byte_cursor_eq_byte_buf_ignore_case_harness() {
     /* parameters */
+    struct aws_byte_cursor cur;
     struct aws_byte_buf buf;
-    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* assumptions */
+    __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
+    ensure_byte_cursor_has_allocated_buffer_member(&cur);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
-    /* save current state of the parameters */
-    struct aws_byte_buf old = buf;
-    struct store_byte_from_buffer old_byte;
-    save_byte_from_array(buf.buffer, buf.len, &old_byte);
-    size_t str_len = (c_str) ? strlen(c_str) : 0;
-    struct store_byte_from_buffer old_byte_from_str;
-    save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
+    /* save current state of the data structure */
+    struct aws_byte_cursor old_cur = cur;
+    struct store_byte_from_buffer old_byte_from_cur;
+    save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
+    struct aws_byte_buf old_buf = buf;
+    struct store_byte_from_buffer old_byte_from_buf;
+    save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_c_str(&buf, c_str)) {
-        assert(buf.len == str_len);
-        if (buf.len > 0) {
-            assert_bytes_match(buf.buffer, (uint8_t *)c_str, buf.len);
-        }
+    if (aws_byte_cursor_eq_byte_buf_ignore_case((nondet_bool() ? &cur : NULL), (nondet_bool() ? &buf : NULL))) {
+        assert(cur.len == buf.len);
     }
 
-    /* asserts both parameters remain unchanged */
+    /* assertions */
+    assert(aws_byte_cursor_is_valid(&cur));
     assert(aws_byte_buf_is_valid(&buf));
-    assert_byte_buf_equivalence(&buf, &old, &old_byte);
-    if (str_len > 0) {
-        assert_byte_from_buffer_matches((uint8_t *)c_str, &old_byte_from_str);
+    if (cur.len > 0) {
+        assert_byte_from_buffer_matches(cur.ptr, &old_byte_from_cur);
     }
+    assert_byte_buf_equivalence(&buf, &old_buf, &old_byte_from_buf);
 }
