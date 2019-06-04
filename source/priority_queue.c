@@ -61,7 +61,6 @@ static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
 
     size_t len = aws_array_list_length(&queue->container);
 
-    /* Note: There is an unwinding loop assertion here. */
     while (LEFT_OF(root) < len) {
         size_t left = LEFT_OF(root);
         size_t right = RIGHT_OF(root);
@@ -88,9 +87,6 @@ static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
         }
 
         if (first != root) {
-            /* Note: If swap is called, we have to make sure that the
-             * backpointer cells are correctly allocated for cell, and
-             * thus for the whole array. */
             s_swap(queue, first, root);
             did_move = true;
             root = first;

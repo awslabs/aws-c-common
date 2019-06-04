@@ -22,14 +22,11 @@ include ../Makefile.aws_priority_queue_sift
 # - 300s for MAX_PRIORITY_QUEUE_ITEMS=4 items
 
 # Note:
-# In order to reach full coverage we have to unwind
-# log(NUMBER_PRIO_QUEUE_ITEMS) but this number is huge so we only
-# unwind a small number of times. However, this shouldn't be a problem
-# for checking memory safety and overflows as the index of the element
-# to be sifted down is left unconstrained.
-UNWINDSET += __CPROVER_file_local_priority_queue_c_s_sift_down.0:$(MAX_HEAP_HEIGHT)
+# In order to reach full coverage we need to unwind the harness loop
+# as many times as the number of queue items, and the sift down loop
+# log(NUMBER_PRIO_QUEUE_ITEMS) times.
 UNWINDSET += aws_priority_queue_s_sift_down_harness.0:$(shell echo $$((1 + $(MAX_PRIORITY_QUEUE_ITEMS))))
-
+UNWINDSET += __CPROVER_file_local_priority_queue_c_s_sift_down.0:$(MAX_HEAP_HEIGHT)
 
 CBMCFLAGS += 
 
