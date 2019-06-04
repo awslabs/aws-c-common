@@ -97,63 +97,63 @@ DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
 $(ENTRY)0.goto: $(ENTRY).c $(DEPENDENT_GOTOS)
 	$(GOTO_CC) $< --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(ENTRY)1.log
+	  2>&1 | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
 
 $(ENTRY)1.goto: $(ENTRY)0.goto
 ifeq ($(REMOVE_FUNCTION_BODY), "")
 	cp $< $@
-	echo "Not removing function bodies" | tee $(ENTRY)1.log
+	echo "Not removing function bodies" | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
-		2>&1 | tee $(ENTRY)2.log
+		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
 endif
 
 $(ENTRY)2.goto: $(ENTRY)1.goto
 ifeq ($(ABSTRACTIONS), "")
 	cp $< $@
-	echo "Not implementing abstractions" | tee $(ENTRY)2.log
+	echo "Not implementing abstractions" | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
-		2>&1 | tee $(ENTRY)2.log
+		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
 endif
 
 # Simplify and constant propagation may benefit from unwinding first
 $(ENTRY)3.goto: $(ENTRY)2.goto
 ifeq ($(UNWIND_GOTO), 1)
 	$(GOTO_INSTRUMENT) $(UNWINDING) $< $@ \
-		2>&1 | tee $(ENTRY)3.log
+		2>&1 | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not unwinding goto program" | tee $(ENTRY)3.log
+	echo "Not unwinding goto program" | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
 $(ENTRY)4.goto: $(ENTRY)3.goto
 ifeq ($(SIMPLIFY), 1)
 	$(GOTO_INSTRUMENT) --generate-function-body '.*' $< $@ \
-		2>&1 | tee $(ENTRY)4.log
+		2>&1 | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not generating-function-bodies in goto program" | tee $(ENTRY)4.log
+	echo "Not generating-function-bodies in goto program" | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
 $(ENTRY)5.goto: $(ENTRY)4.goto
 ifeq ($(SIMPLIFY), 1)
 	$(GOTO_ANALYZER) --simplify $@ $< \
-		2>&1 | tee $(ENTRY)5.log
+		2>&1 | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not simplfying goto program" | tee $(ENTRY)5.log
+	echo "Not simplfying goto program" | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
 endif
 
 $(ENTRY)6.goto: $(ENTRY)5.goto
 	$(GOTO_INSTRUMENT) --drop-unused-functions $< $@ \
-		2>&1 | tee $(ENTRY)6.log
+		2>&1 | tee $(ENTRY)6.log ; exit $${PIPESTATUS[0]}
 
 $(ENTRY)7.goto: $(ENTRY)6.goto
 	$(GOTO_INSTRUMENT) --slice-global-inits $< $@ \
-		2>&1 | tee $(ENTRY)7.log
+		2>&1 | tee $(ENTRY)7.log ; exit $${PIPESTATUS[0]}
 
 $(ENTRY).goto: $(ENTRY)7.goto
 	cp $< $@
@@ -163,7 +163,7 @@ $(ENTRY).goto: $(ENTRY)7.goto
 %.goto: %.c
 	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(dir $<)/$(notdir $<).log
+	  2>&1 | tee $(dir $<)/$(notdir $<).log ; exit $${PIPESTATUS[0]}
 
 
 goto: $(ENTRY).goto
@@ -194,8 +194,9 @@ report: cbmc.log property.xml coverage.xml
 	--block coverage.xml
 
 clean:
-	$(RM) $(ENTRY).goto $(ENTRY)[0-7].goto
-	$(RM) $(ENTRY)[0-7].log $(ENTRY).log
+	$(RM) *.goto
+	$(RM) $(DEPENDENT_GOTOS)
+	$(RM) *.log
 	$(RM) cbmc.log property.xml coverage.xml TAGS
 	$(RM) *~ \#*
 
