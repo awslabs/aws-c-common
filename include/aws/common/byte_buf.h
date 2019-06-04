@@ -807,14 +807,17 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
     struct aws_byte_buf *AWS_RESTRICT buf,
     const uint8_t *AWS_RESTRICT src,
     size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && AWS_MEM_IS_WRITABLE(src, len));
 
     if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
         return false;
     }
 
     memcpy(buf->buffer + buf->len, src, len);
     buf->len += len;
 
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return true;
 }
 
@@ -828,6 +831,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
     struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_buf src) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && aws_byte_buf_is_valid(&src));
     return aws_byte_buf_write(buf, src.buffer, src.len);
 }
 
@@ -841,6 +845,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_cursor(
     struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_cursor src) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && aws_byte_cursor_is_valid(&src));
     return aws_byte_buf_write(buf, src.ptr, src.len);
 }
 
@@ -854,6 +859,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_cursor(
  cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     return aws_byte_buf_write(buf, &c, 1);
 }
 
@@ -865,6 +871,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     x = aws_hton16(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 2);
 }
@@ -877,6 +884,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t 
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     x = aws_hton32(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 4);
 }
@@ -889,6 +897,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t 
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     x = aws_hton64(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
