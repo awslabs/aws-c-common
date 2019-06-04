@@ -633,7 +633,9 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
  * cursor->ptr points outside the true ptr length.
  */
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *cursor, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
+    struct aws_byte_cursor *const cursor,
+    size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
 
     struct aws_byte_cursor rv;
