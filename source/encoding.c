@@ -279,19 +279,27 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     AWS_ASSERT(to_encode->ptr);
     AWS_ASSERT(output->buffer);
 
+    size_t terminated_length = 0;
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &terminated_length))) {
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output->capacity < encoded_length)) {
+    if (AWS_UNLIKELY(output->capacity < terminated_length)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
+
+    /*
+     * For convenience to standard C functions expecting a null-terminated
+     * string, the output is terminated. As the encoding itself can be used in
+     * various ways, however, its length should never account for that byte.
+     */
+    encoded_length = (terminated_length - 1);
 
     if (aws_common_private_has_avx2()) {
         output->len = encoded_length;
         aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer, to_encode->len);
-        output->buffer[encoded_length - 1] = 0;
+        output->buffer[encoded_length] = 0;
         return AWS_OP_SUCCESS;
     }
 
@@ -327,7 +335,7 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     }
 
     /* it's a string add the null terminator. */
-    output->buffer[encoded_length - 1] = 0;
+    output->buffer[encoded_length] = 0;
 
     output->len = encoded_length;
     return AWS_OP_SUCCESS;
