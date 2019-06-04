@@ -714,8 +714,9 @@ bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_by
     return rval;
 }
 
-int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
-
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *const lhs, const struct aws_byte_cursor *const rhs) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
     size_t comparison_length = lhs->len;
     if (comparison_length > rhs->len) {
         comparison_length = rhs->len;
@@ -729,7 +730,8 @@ int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const str
     if (lhs->len != rhs->len) {
         return comparison_length == lhs->len ? -1 : 1;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
     return 0;
 }
 

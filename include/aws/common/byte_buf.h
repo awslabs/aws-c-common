@@ -453,7 +453,7 @@ const uint8_t *aws_lookup_table_to_lower_get(void);
  * Lexical (byte value) comparison of two byte cursors
  */
 AWS_COMMON_API
-int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs);
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *const lhs, const struct aws_byte_cursor *const rhs);
 
 /**
  * Lexical (byte value) comparison of two byte cursors where the raw values are sent through a lookup table first
