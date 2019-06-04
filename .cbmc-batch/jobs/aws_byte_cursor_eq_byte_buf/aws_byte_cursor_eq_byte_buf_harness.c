@@ -49,7 +49,7 @@ void aws_byte_cursor_eq_byte_buf_harness() {
     /* assertions */
     assert(aws_byte_cursor_is_valid(&cur));
     assert(aws_byte_buf_is_valid(&buf));
-    if (cur.len != 0) {
+    if (cur.len > 0) {
         assert_byte_from_buffer_matches(cur.ptr, &old_byte_from_cur);
     }
     assert_byte_buf_equivalence(&buf, &old_buf, &old_byte_from_buf);
