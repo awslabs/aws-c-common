@@ -26,7 +26,7 @@ DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
 DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 
-ENTRY = aws_byte_buf_init_copy_harness
+ENTRY = aws_byte_buf_write_be32_harness
 ###########
 
 include ../Makefile.common
