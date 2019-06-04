@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/nondet.h>
+#include <proof_helpers/proof_allocators.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -72,9 +73,19 @@ void assert_array_list_equivalence(
  * it is necessary to select a non-deterministic byte from the rhs aws_byte_buf structure
  * (use save_byte_from_array function), so it can properly assert all bytes match.
  */
-void assert_byte_buf_equivalence(
+void assert_byte_cursor_equivalence(
     const struct aws_byte_buf *const lhs,
     const struct aws_byte_buf *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte);
+
+/**
+ * Asserts two aws_byte_cursor structures are equivalent. Prior to using this function,
+ * it is necessary to select a non-deterministic byte from the rhs aws_byte_cursor structure
+ * (use save_byte_from_array function), so it can properly assert all bytes match.
+ */
+void assert_byte_buf_equivalence(
+    const struct aws_byte_cursor *const lhs,
+    const struct aws_byte_cursor *const rhs,
     const struct store_byte_from_buffer *const rhs_byte);
 
 /**
