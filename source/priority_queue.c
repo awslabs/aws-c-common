@@ -226,6 +226,7 @@ int aws_priority_queue_push_ref(
 
     int err = aws_array_list_push_back(&queue->container, item);
     if (err) {
+        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
         return err;
     }
 
