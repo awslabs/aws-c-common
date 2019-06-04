@@ -16,20 +16,19 @@
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void aws_byte_buf_from_array_harness() {
+void aws_byte_cursor_from_c_str_harness() {
     /* parameters */
-    size_t length;
-    uint8_t *array = can_fail_malloc(length);
+    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* operation under verification */
-    struct aws_byte_buf buf = aws_byte_buf_from_array(array, length);
+    struct aws_byte_cursor cur = aws_byte_cursor_from_c_str(c_str);
 
     /* assertions */
-    assert(aws_byte_buf_is_valid(&buf));
-    assert(buf.len == length);
-    assert(buf.capacity == length);
-    assert(buf.allocator == NULL);
-    if (buf.buffer) {
-        assert_bytes_match(buf.buffer, array, buf.len);
+    assert(aws_byte_cursor_is_valid(&cur));
+    if (cur.ptr) { /* if ptr is NULL len shoud be 0, otherwise equal to c_str */
+        assert(cur.len == strlen(c_str));
+        assert_bytes_match(cur.ptr, (uint8_t *)c_str, cur.len);
+    } else {
+        assert(cur.len == 0);
     }
 }
