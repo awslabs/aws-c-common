@@ -399,7 +399,7 @@ bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struc
  * Return whether their contents are equivalent.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
+bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_cursor and an aws_byte_buf.
@@ -408,7 +408,7 @@ bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct a
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
+bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b);
 
 /**
  * Compare an aws_byte_cursor and a null-terminated string.
@@ -506,24 +506,29 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *by
     return buf;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *buf) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *const buf) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     struct aws_byte_cursor cur;
     cur.ptr = buf->buffer;
     cur.len = buf->len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
     return cur;
 }
 
 AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_str) {
-    struct aws_byte_cursor cursor;
-    cursor.ptr = (uint8_t *)c_str;
-    cursor.len = strlen(c_str);
-    return cursor;
+    struct aws_byte_cursor cur;
+    cur.ptr = (uint8_t *)c_str;
+    cur.len = (cur.ptr) ? strlen(c_str) : 0;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
+    return cur;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *bytes, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len) {
+    AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len));
     struct aws_byte_cursor cur;
     cur.ptr = (uint8_t *)bytes;
     cur.len = len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
     return cur;
 }
 
@@ -605,7 +610,8 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
  * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
  * a buffer overflow, and return NULL without changing *buf.
  */
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *cursor, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cursor, const size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
     struct aws_byte_cursor rv;
     if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || len > cursor->len) {
         rv.ptr = NULL;
@@ -617,7 +623,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
         cursor->ptr += len;
         cursor->len -= len;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
     return rv;
 }
 
@@ -631,7 +638,11 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
  * cursor->ptr points outside the true ptr length.
  */
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *cursor, size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
+    struct aws_byte_cursor *const cursor,
+    size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
+
     struct aws_byte_cursor rv;
 
     if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
@@ -659,6 +670,8 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws
         rv.len = 0;
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
     return rv;
 }
 
@@ -777,16 +790,19 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint
  * false.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_advance(
-    struct aws_byte_buf *AWS_RESTRICT buffer,
-    struct aws_byte_buf *AWS_RESTRICT output,
-    size_t len) {
+    struct aws_byte_buf *const AWS_RESTRICT buffer,
+    struct aws_byte_buf *const AWS_RESTRICT output,
+    const size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
     if (buffer->capacity - buffer->len >= len) {
         *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
         buffer->len += len;
         output->len = 0;
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
         return true;
     } else {
         AWS_ZERO_STRUCT(*output);
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
         return false;
     }
 }

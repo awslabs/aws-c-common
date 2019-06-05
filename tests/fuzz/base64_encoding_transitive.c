@@ -32,7 +32,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     result = aws_base64_encode(&to_encode, &encode_output);
     AWS_ASSERT(result == AWS_OP_SUCCESS);
-    --encode_output.len; /* Remove null terminator */
 
     struct aws_byte_cursor to_decode = aws_byte_cursor_from_buf(&encode_output);
     result = aws_base64_compute_decoded_len(&to_decode, &output_size);
