@@ -17,7 +17,7 @@
 #128 6s
 #256 11s
 #1024: 2m 30s
-MAX_STRING_SIZE ?= 256
+MAX_STRING_SIZE ?= 32
 DEFINES += -DMAX_STRING_SIZE=$(MAX_STRING_SIZE) 
 
 UNWINDSET += hashlittle2.2:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
