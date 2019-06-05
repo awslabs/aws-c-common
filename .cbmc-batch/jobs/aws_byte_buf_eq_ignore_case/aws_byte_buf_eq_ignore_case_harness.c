@@ -43,7 +43,7 @@ void aws_byte_buf_eq_ignore_case_harness() {
     save_byte_from_array(rhs.buffer, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_ignore_case((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL))) {
+    if (aws_byte_buf_eq_ignore_case(&lhs, &rhs)) {
         assert(lhs.len == rhs.len);
     }
 
