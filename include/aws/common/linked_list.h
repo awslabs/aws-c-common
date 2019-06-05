@@ -38,83 +38,9 @@ struct aws_linked_list {
 };
 
 /**
- * Initializes the list. List will be empty after this call.
+ * These functions need to be defined first as they are used in pre
+ * and post conditions.
  */
-AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
-    list->head.next = &list->tail;
-    list->head.prev = NULL;
-    list->tail.prev = &list->head;
-    list->tail.next = NULL;
-}
-
-/**
- * Returns an iteration pointer for the first element in the list.
- */
-AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
-    return list->head.next;
-}
-
-/**
- * Returns an iteration pointer for one past the last element in the list.
- */
-AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
-    return &list->tail;
-}
-
-/**
- * Returns a pointer for the last element in the list.
- * Used to begin iterating the list in reverse. Ex:
- *   for (i = aws_linked_list_rbegin(list); i != aws_linked_list_rend(list); i = aws_linked_list_prev(i)) {...}
- */
-AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct aws_linked_list *list) {
-    return list->tail.prev;
-}
-
-/**
- * Returns the pointer to one before the first element in the list.
- * Used to end iterating the list in reverse.
- */
-AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const struct aws_linked_list *list) {
-    return &list->head;
-}
-
-/**
- * Returns the next element in the list.
- */
-AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
-    return node->next;
-}
-
-/**
- * Returns the previous element in the list.
- */
-AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_prev(const struct aws_linked_list_node *node) {
-    return node->prev;
-}
-
-/**
- * Inserts to_add immediately after after.
- */
-AWS_STATIC_IMPL void aws_linked_list_insert_after(
-    struct aws_linked_list_node *after,
-    struct aws_linked_list_node *to_add) {
-    to_add->prev = after;
-    to_add->next = after->next;
-    after->next->prev = to_add;
-    after->next = to_add;
-}
-
-/**
- * Inserts to_add immediately before before.
- */
-AWS_STATIC_IMPL void aws_linked_list_insert_before(
-    struct aws_linked_list_node *before,
-    struct aws_linked_list_node *to_add) {
-    to_add->next = before;
-    to_add->prev = before->prev;
-    before->prev->next = to_add;
-    before->prev = to_add;
-}
 
 /**
  * Tests if the list is empty.
@@ -124,37 +50,237 @@ AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
 }
 
 /**
+ * Checks that a linked list is valid.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_is_valid(const struct aws_linked_list *list) {
+    return list && list->head.next && list->tail.prev;
+}
+
+/**
+ * Checks that the prev of the next pointer of a node points to the node.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_node_next_is_valid(const struct aws_linked_list_node *node) {
+    return node && node->next && node->next->prev == node;
+}
+
+/**
+ * Checks that the next of the prev pointer of a node points to the node.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_list_node *node) {
+    return node && node->prev && node->prev->next == node;
+}
+
+/**
+ * Checks that a linked list satisfies double linked list semantic
+ * constraints.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_is_correct(const struct aws_linked_list *list) {
+    if (!aws_linked_list_is_valid(list)) {
+        return false;
+    }
+    /* Head must reach tail by following next pointers */
+    const struct aws_linked_list_node *temp = &list->head;
+    bool head_reaches_tail = false;
+    while (temp->next) {
+        if (temp->next == &list->tail) {
+            head_reaches_tail = true;
+        }
+        temp = temp->next;
+    }
+
+    /* Tail must reach head by following prev pointers */
+    temp = &list->tail;
+    bool tail_reaches_head = false;
+    while (temp->prev) {
+        if (temp->prev == &list->head) {
+            tail_reaches_head = true;
+        }
+        temp = temp->prev;
+    }
+
+    /* The next links must be valid for all nodes (except tail) */
+    temp = &list->head;
+    bool are_next_links_valid = true;
+    while (temp != &list->tail) {
+        if (!aws_linked_list_node_next_is_valid(temp)) {
+            are_next_links_valid = false;
+        }
+        temp = temp->next;
+    }
+
+    /* The prev links must be valid for all nodes (except head) */
+    temp = &list->tail;
+    bool are_prev_links_valid = true;
+    while (temp != &list->head) {
+        if (!aws_linked_list_node_prev_is_valid(temp)) {
+            are_prev_links_valid = false;
+        }
+        temp = temp->prev;
+    }
+    return head_reaches_tail && tail_reaches_head && are_next_links_valid && are_prev_links_valid;
+    /* return true; */
+}
+
+/**
+ * Initializes the list. List will be empty after this call.
+ */
+AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
+    AWS_PRECONDITION(list);
+    list->head.next = &list->tail;
+    list->head.prev = NULL;
+    list->tail.prev = &list->head;
+    list->tail.next = NULL;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    AWS_POSTCONDITION(aws_linked_list_empty(list));
+}
+
+/**
+ * Returns an iteration pointer for the first element in the list.
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    struct aws_linked_list_node *rval = list->head.next;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
+}
+
+/**
+ * Returns an iteration pointer for one past the last element in the list.
+ */
+AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    const struct aws_linked_list_node *rval = &list->tail;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
+}
+
+/**
+ * Returns a pointer for the last element in the list.
+ * Used to begin iterating the list in reverse. Ex:
+ *   for (i = aws_linked_list_rbegin(list); i != aws_linked_list_rend(list); i = aws_linked_list_prev(i)) {...}
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    struct aws_linked_list_node *rval = list->tail.prev;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
+}
+
+/**
+ * Returns the pointer to one before the first element in the list.
+ * Used to end iterating the list in reverse.
+ */
+AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    const struct aws_linked_list_node *rval = &list->head;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
+}
+
+/**
+ * Returns the next element in the list.
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_next(const struct aws_linked_list_node *node) {
+    AWS_PRECONDITION(node);
+    return node->next;
+}
+
+/**
+ * Returns the previous element in the list.
+ */
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_prev(const struct aws_linked_list_node *node) {
+    AWS_PRECONDITION(node);
+    return node->prev;
+}
+
+/**
+ * Inserts to_add immediately after after.
+ */
+AWS_STATIC_IMPL void aws_linked_list_insert_after(
+    struct aws_linked_list_node *after,
+    struct aws_linked_list_node *to_add) {
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(after));
+    AWS_PRECONDITION(to_add);
+    to_add->prev = after;
+    to_add->next = after->next;
+    after->next->prev = to_add;
+    after->next = to_add;
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(after));
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(to_add));
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(to_add));
+}
+
+/**
+ * Inserts to_add immediately before before.
+ */
+AWS_STATIC_IMPL void aws_linked_list_insert_before(
+    struct aws_linked_list_node *before,
+    struct aws_linked_list_node *to_add) {
+    AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(before));
+    AWS_PRECONDITION(to_add);
+    to_add->next = before;
+    to_add->prev = before->prev;
+    before->prev->next = to_add;
+    before->prev = to_add;
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(before));
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(to_add));
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(to_add));
+}
+
+/**
  * Removes the specified node from the list (prev/next point to each other) and
  * returns the next node in the list.
  */
 AWS_STATIC_IMPL void aws_linked_list_remove(struct aws_linked_list_node *node) {
+    AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(node));
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(node));
     node->prev->next = node->next;
     node->next->prev = node->prev;
     aws_linked_list_node_reset(node);
+    AWS_POSTCONDITION(node->prev == NULL && node->next == NULL);
 }
 
 /**
  * Append new_node.
  */
 AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(node);
     aws_linked_list_insert_before(&list->tail, node);
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
 }
 
 /**
  * Returns the element in the back of the list.
  */
-static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
-    return list->tail.prev;
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
+    struct aws_linked_list_node *rval = list->tail.prev;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
 }
 
 /**
  * Returns the element in the back of the list and removes it
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
     struct aws_linked_list_node *back = aws_linked_list_back(list);
     aws_linked_list_remove(back);
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return back;
 }
 
@@ -162,30 +288,46 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws
  * Prepend new_node.
  */
 AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(node);
     aws_linked_list_insert_before(list->head.next, node);
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
 }
 
 /**
  * Returns the element in the front of the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
-    return list->head.next;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
+    struct aws_linked_list_node *rval = list->head.next;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    return rval;
 }
 
 /**
  * Returns the element in the front of the list and removes it
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(aws_linked_list_is_correct(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return front;
 }
 
 AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
-    AWS_ASSERT(a);
-    AWS_ASSERT(b);
+    AWS_PRECONDITION(aws_linked_list_is_valid(a));
+    AWS_PRECONDITION(aws_linked_list_is_correct(a));
+    AWS_PRECONDITION(aws_linked_list_is_valid(b));
+    AWS_PRECONDITION(aws_linked_list_is_correct(b));
     struct aws_linked_list_node *a_first = a->head.next;
     struct aws_linked_list_node *a_last = a->tail.prev;
 
@@ -208,6 +350,10 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
         b->tail.prev = a_last;
         b->tail.prev->next = &b->tail;
     }
+    AWS_POSTCONDITION(aws_linked_list_is_valid(a));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(a));
+    AWS_POSTCONDITION(aws_linked_list_is_valid(b));
+    AWS_POSTCONDITION(aws_linked_list_is_correct(b));
 }
 
 #endif /* AWS_COMMON_LINKED_LIST_H */
