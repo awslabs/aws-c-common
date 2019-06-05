@@ -42,7 +42,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
     if (aws_is_big_endian()) {
         return x;
     }
-#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
+#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__)) && !defined(CBMC)
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));
     return v;
