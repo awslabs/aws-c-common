@@ -412,8 +412,6 @@ bool aws_array_eq_c_str(const void *const array, const size_t array_len, const c
     return str_bytes[array_len] == '\0';
 }
 
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
 uint64_t aws_hash_array_ignore_case(const void *const array, const size_t len) {
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(array, len));
     /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
@@ -427,11 +425,13 @@ uint64_t aws_hash_array_ignore_case(const void *const array, const size_t len) {
     while (i != end) {
         const uint8_t lower = s_tolower_table[*i++];
         hash ^= lower;
+#pragma CPROVER check push
+#pragma CPROVER check disable "unsigned-overflow"
         hash *= fnv_prime;
+#pragma CPROVER check pop
     }
     return hash;
 }
-#pragma CPROVER check pop
 
 uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *const item) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(item));

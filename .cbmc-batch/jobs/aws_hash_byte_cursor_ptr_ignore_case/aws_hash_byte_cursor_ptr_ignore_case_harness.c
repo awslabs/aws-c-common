@@ -24,9 +24,10 @@ void aws_hash_byte_cursor_ptr_ignore_case_harness() {
     __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&cur);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
+    __CPROVER_assume(AWS_MEM_IS_READABLE(cur.ptr, cur.len));
 
     /* operation under verification */
-    aws_hash_byte_cursor_ptr_ignore_case(nondet_bool() ? &cur : NULL);
+    aws_hash_byte_cursor_ptr_ignore_case(&cur);
 
     /* assertions */
     assert(aws_byte_cursor_is_valid(&cur));
