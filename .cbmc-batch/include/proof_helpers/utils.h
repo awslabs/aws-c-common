@@ -138,4 +138,4 @@ uint64_t uninterpreted_hasher(const void *a);
 /**
  * Standard stub function of a predicate
  */
-bool predicate_fn(uint8_t value);
+bool __CPROVER_uninterpreted_predicate_fn(uint8_t value);

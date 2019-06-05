@@ -31,8 +31,8 @@ void aws_byte_cursor_right_trim_pred_harness() {
     save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
 
     /* operation under verification */
-    struct aws_byte_cursor rv =
-        aws_byte_cursor_right_trim_pred(nondet_bool() ? &cur : NULL, nondet_bool() ? predicate_fn : NULL);
+    struct aws_byte_cursor rv = aws_byte_cursor_right_trim_pred(
+        nondet_bool() ? &cur : NULL, nondet_bool() ? __CPROVER_uninterpreted_predicate_fn : NULL);
 
     /* assertions */
     assert(aws_byte_cursor_is_valid(&cur));
