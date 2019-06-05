@@ -22,7 +22,7 @@
 void aws_hash_byte_cursor_ptr_harness() {
     struct aws_byte_cursor cur;
 
-    aws_byte_cursor_is_bounded(&cur, MAX_TABLE_SIZE);
+    __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_CURSOR_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&cur);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
 
