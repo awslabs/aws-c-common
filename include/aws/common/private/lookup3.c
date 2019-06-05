@@ -333,6 +333,8 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
      * noticably faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#pragma CPROVER check push
+#pragma CPROVER check disable "pointer"
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -352,6 +354,7 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
     case 0 : return c;              /* zero length strings require no mixing */
     }
 
+#pragma CPROVER check pop
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -517,6 +520,8 @@ static void hashlittle2(
      * noticably faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#pragma CPROVER check push
+#pragma CPROVER check disable "pointer"
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -536,6 +541,7 @@ static void hashlittle2(
     case 0 : *pc=c; *pb=b; return;  /* zero length strings require no mixing */
     }
 
+#pragma CPROVER check pop
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -693,6 +699,8 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
      * noticably faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#pragma CPROVER check push
+#pragma CPROVER check disable "pointer"
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -712,6 +720,7 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
     case 0 : return c;              /* zero length strings require no mixing */
     }
 
+#pragma CPROVER check pop
 #else  /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
