@@ -32,8 +32,6 @@ void aws_byte_cursor_read_and_fill_buffer_harness() {
     struct aws_byte_cursor old_cur = cur;
     struct store_byte_from_buffer old_byte_from_cur;
     save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
-
-    /* save current state of the data structure */
     struct aws_byte_buf old_buf = buf;
     struct store_byte_from_buffer old_byte_from_buf;
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
