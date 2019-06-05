@@ -35,7 +35,9 @@ void aws_array_list_set_at_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification and assertions */
-    void *val = can_fail_malloc(list.item_size);
+    size_t malloc_size;
+    __CPROVER_assume(malloc_size <= list.item_size);
+    void *val = can_fail_malloc(malloc_size);
     size_t index;
     if (!aws_array_list_set_at(&list, val, index)) {
         if (index > old.length)
