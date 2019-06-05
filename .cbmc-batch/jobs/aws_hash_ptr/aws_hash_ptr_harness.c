@@ -19,9 +19,6 @@
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
-/**
- * Runtime: 4.5s
- */
 void aws_hash_ptr_harness() {
     void *ptr;
     /* This function has no pre or post conditions */
