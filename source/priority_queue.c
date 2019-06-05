@@ -158,8 +158,8 @@ int aws_priority_queue_init_dynamic(
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);
 
-    bool ret = aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
-    if (!ret) {
+    int ret = aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
+    if (ret == AWS_OP_SUCCESS) {
         AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     }
     return ret;
