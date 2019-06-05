@@ -12,8 +12,7 @@
 # limitations under the License.
 
 ###########
-MAX_BUFFER_SIZE ?= 10
-DEFINES += -DMAX_BUFFER_SIZE=$(MAX_BUFFER_SIZE)
+include ../Makefile.aws_byte_buf
 
 UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 

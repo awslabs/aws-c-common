@@ -20,7 +20,7 @@ void assert_bytes_match(const uint8_t *const a, const uint8_t *const b, const si
     assert(!a == !b);
     if (len > 0 && a != NULL && b != NULL) {
         size_t i;
-        __CPROVER_assume(i < len);
+        __CPROVER_assume(i < len && len < MAX_MALLOC); /* prevent spurious pointer overflows */
         assert(a[i] == b[i]);
     }
 }
@@ -85,6 +85,19 @@ void assert_byte_buf_equivalence(
     assert(lhs->allocator == rhs->allocator);
     if (lhs->len > 0) {
         assert_byte_from_buffer_matches(lhs->buffer, rhs_byte);
+    }
+}
+
+void assert_byte_cursor_equivalence(
+    const struct aws_byte_cursor *const lhs,
+    const struct aws_byte_cursor *const rhs,
+    const struct store_byte_from_buffer *const rhs_byte) {
+    assert(!lhs == !rhs);
+    if (lhs && rhs) {
+        assert(lhs->len == rhs->len);
+        if (lhs->len > 0) {
+            assert_byte_from_buffer_matches(lhs->ptr, rhs_byte);
+        }
     }
 }
 
