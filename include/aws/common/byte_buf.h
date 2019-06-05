@@ -689,9 +689,9 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read(
-    struct aws_byte_cursor *const AWS_RESTRICT cur,
-    void *const AWS_RESTRICT dest,
-    size_t len) {
+    struct aws_byte_cursor *AWS_RESTRICT cur,
+    void *AWS_RESTRICT dest,
+    const size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(dest, len));
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
@@ -714,8 +714,8 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read(
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_and_fill_buffer(
-    struct aws_byte_cursor *const AWS_RESTRICT cur,
-    struct aws_byte_buf *const AWS_RESTRICT dest) {
+    struct aws_byte_cursor *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT dest) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
     if (aws_byte_cursor_read(cur, dest->buffer, dest->capacity)) {
@@ -736,9 +736,7 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_and_fill_buffer(
  * If there is insufficient space in the cursor, returns false, leaving the
  * cursor unchanged.
  */
-AWS_STATIC_IMPL bool aws_byte_cursor_read_u8(
-    struct aws_byte_cursor *const AWS_RESTRICT cur,
-    uint8_t *const AWS_RESTRICT var) {
+AWS_STATIC_IMPL bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     bool rv = aws_byte_cursor_read(cur, var, 1);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
