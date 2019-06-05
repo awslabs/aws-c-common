@@ -35,7 +35,9 @@ void aws_array_list_back_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification */
-    uint8_t *val = bounded_malloc(list.item_size);
+    size_t malloc_size;
+    __CPROVER_assume(malloc_size <= list.item_size);
+    void *val = can_fail_malloc(malloc_size);
     if (aws_array_list_back(&list, val) == AWS_OP_SUCCESS) {
         /* In the case aws_array_list_back is successful, we can ensure the list isn't empty */
         assert(list.data != NULL);
