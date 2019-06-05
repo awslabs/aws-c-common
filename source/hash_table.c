@@ -1007,7 +1007,7 @@ uint64_t aws_hash_byte_cursor_ptr(const void *item) {
 }
 
 uint64_t aws_hash_ptr(const void *item) {
-    /* Since the numberic value of the pointer is considered, not the memory behind it, 0 is an acceptable value */
+    /* Since the numeric value of the pointer is considered, not the memory behind it, 0 is an acceptable value */
     /* first digits of e in hex
      * 2.b7e 1516 28ae d2a6 */
     uint32_t b = 0x2b7e1516, c = 0x28aed2a6;
