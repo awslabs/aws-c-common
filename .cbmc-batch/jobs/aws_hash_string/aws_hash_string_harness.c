@@ -22,6 +22,8 @@
 void aws_hash_string_harness() {
     struct aws_string *str =
         make_arbitrary_aws_string_nondet_len_with_max(nondet_bool() ? NULL : can_fail_allocator(), MAX_STRING_SIZE);
-    /* This function has no pre or post conditions */
+    /* This function has no pre or post conditions. Currently, CBMC is unable to check
+     * all possible paths in these proof, but https://github.com/diffblue/cbmc/pull/1086
+     * should fix this. */
     uint64_t rval = aws_hash_string(str);
 }
