@@ -15,7 +15,6 @@
 include ../Makefile.aws_array_list
 
 ###########
-#
 # Runtime: 500s
 
 UNWINDSET += 
