@@ -22,27 +22,25 @@ void aws_priority_queue_remove_harness() {
 
     /* Assumptions */
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
-    bool backpointers_allocated = ensure_priority_queue_has_allocated_members(&queue);
+    ensure_priority_queue_has_allocated_members(&queue);
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
     void *item = can_fail_malloc(queue.container.item_size);
     struct aws_priority_queue_node *backpointer = can_fail_malloc(sizeof(struct aws_priority_queue_node));
 
-    if (backpointers_allocated) {
+    if (queue.backpointers.data && backpointer) {
         /* Assume that the two backpointers index, len-1 are valid,
          * either by being NULL or by allocating their objects. This
          * is important for the s_swap that happens in s_remove. */
-        if (backpointer) {
-            size_t index = backpointer->current_index;
-            size_t len = queue.backpointers.length;
-            if (index < len) {
-                ((struct aws_priority_queue_node **)queue.backpointers.data)[index] =
+        size_t index = backpointer->current_index;
+        size_t len = queue.backpointers.length;
+        if (index < len) {
+            ((struct aws_priority_queue_node **)queue.backpointers.data)[index] =
+                can_fail_malloc(sizeof(struct aws_priority_queue_node));
+            if (index != len - 1) {
+                ((struct aws_priority_queue_node **)queue.backpointers.data)[len - 1] =
                     can_fail_malloc(sizeof(struct aws_priority_queue_node));
-                if (index != len - 1) {
-                    ((struct aws_priority_queue_node **)queue.backpointers.data)[len - 1] =
-                        can_fail_malloc(sizeof(struct aws_priority_queue_node));
-                }
             }
         }
     }

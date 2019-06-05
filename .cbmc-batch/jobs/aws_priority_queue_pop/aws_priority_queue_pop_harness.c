@@ -22,13 +22,13 @@ void aws_priority_queue_pop_harness() {
 
     /* Assumptions */
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
-    bool backpointers_allocated = ensure_priority_queue_has_allocated_members(&queue);
+    ensure_priority_queue_has_allocated_members(&queue);
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
     void *item = can_fail_malloc(queue.container.item_size);
 
-    if (backpointers_allocated) {
+    if (queue.backpointers.data) {
         /* Assume that the two backpointers 0, len-1 are valid,
          * either by being NULL or by allocating their objects. This
          * is important for the s_swap that happens in s_remove. */
