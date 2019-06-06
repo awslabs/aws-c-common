@@ -27,7 +27,7 @@ int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator 
     ring_buf->allocator = allocator;
     aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation);
     aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
-    ring_buf->allocation_end = ring_buf->allocation + size;
+    ring_buf->allocation_end = ring_buf->allocation + size + 1;
 
     return AWS_OP_SUCCESS;
 }
@@ -40,7 +40,7 @@ void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
     AWS_ZERO_STRUCT(*ring_buf);
 }
 
-int aws_ring_buffer_acquire_hard(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
+int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
     if (requested_size == 0) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
@@ -48,6 +48,28 @@ int aws_ring_buffer_acquire_hard(struct aws_ring_buffer *ring_buf, size_t reques
     uint8_t *tail_cpy = aws_atomic_load_ptr(&ring_buf->tail);
     uint8_t *head_cpy = aws_atomic_load_ptr(&ring_buf->head);
 
+    /* this branch is, we don't have any vended buffers. */
+    if (head_cpy == tail_cpy) {
+        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t current_space = ring_buf->allocation_end - head_cpy;
+
+        if (requested_size > ring_space) {
+            return aws_raise_error(AWS_ERROR_NO_AVAILABLE_BUFFERS);
+        }
+
+        if (current_space >= requested_size) {
+            aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
+            *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
+            return AWS_OP_SUCCESS;
+        }
+
+        aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
+        *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
+        return AWS_OP_SUCCESS;
+    }
+
+    /* you'll constantly bounce between the next two branches as the ring buffer is traversed. */
+    /* after N + 1 wraps */
     if (tail_cpy > head_cpy) {
         size_t space = tail_cpy - head_cpy - 1;
 
@@ -56,9 +78,10 @@ int aws_ring_buffer_acquire_hard(struct aws_ring_buffer *ring_buf, size_t reques
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
         }
-
-    } else if (tail_cpy <= head_cpy) {
-        if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
+        /* After N wraps */
+    } else if (tail_cpy < head_cpy) {
+        /* prefer the head space for efficiency. */
+        if ((size_t)(ring_buf->allocation_end - head_cpy) > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
@@ -74,7 +97,7 @@ int aws_ring_buffer_acquire_hard(struct aws_ring_buffer *ring_buf, size_t reques
     return aws_raise_error(AWS_ERROR_NO_AVAILABLE_BUFFERS);
 }
 
-int aws_ring_buffer_acquire_soft(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
+int aws_ring_buffer_acquire_up_to(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
     if (requested_size == 0) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
@@ -82,18 +105,44 @@ int aws_ring_buffer_acquire_soft(struct aws_ring_buffer *ring_buf, size_t reques
     uint8_t *tail_cpy = aws_atomic_load_ptr(&ring_buf->tail);
     uint8_t *head_cpy = aws_atomic_load_ptr(&ring_buf->head);
 
+    /* this branch is, we don't have any vended buffers. */
+    if (head_cpy == tail_cpy) {
+        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t current_space = ring_buf->allocation_end - head_cpy;
+
+        if (!ring_space) {
+            return aws_raise_error(AWS_ERROR_NO_AVAILABLE_BUFFERS);
+        }
+
+        if (current_space >= requested_size) {
+            aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
+            *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
+            return AWS_OP_SUCCESS;
+        } else if (ring_space >= requested_size) {
+
+            aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
+            *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
+            return AWS_OP_SUCCESS;
+        }
+
+        /* go as big as we can. */
+        aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + ring_space);
+        *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, ring_space);
+        return AWS_OP_SUCCESS;
+    }
+    /* you'll constantly bounce between the next two branches as the ring buffer is traversed. */
+    /* after N + 1 wraps */
     if (tail_cpy > head_cpy) {
         size_t space = tail_cpy - head_cpy - 1;
-
         size_t returnable_size = space > requested_size ? requested_size : space;
 
-        if (space >= returnable_size) {
+        if (space > returnable_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + returnable_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
             return AWS_OP_SUCCESS;
         }
-
-    } else if (tail_cpy <= head_cpy) {
+        /* after N wraps */
+    } else if (tail_cpy < head_cpy) {
         size_t head_space = ring_buf->allocation_end - head_cpy;
         size_t tail_space = tail_cpy - ring_buf->allocation;
 
@@ -101,28 +150,33 @@ int aws_ring_buffer_acquire_soft(struct aws_ring_buffer *ring_buf, size_t reques
             return aws_raise_error(AWS_ERROR_NO_AVAILABLE_BUFFERS);
         }
 
-        if (head_space >= requested_size) {
+        /* if you can vend the whole thing do it. Also prefer head space to tail space. */
+        if ((size_t)(ring_buf->allocation_end - head_cpy) > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
         }
 
-        if (tail_space > requested_size) {
+        if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             return AWS_OP_SUCCESS;
         }
 
-
-        if (head_space > tail_space) {
-            aws_atomic_store_ptr(&ring_buf->head, head_cpy + head_space);
-            *dest = aws_byte_buf_from_empty_array(head_cpy, head_space);
+        /* now vend as much as possible, once again preferring head space. */
+        if (head_space > 1 && head_space > tail_space) {
+            size_t returnable_size = head_space - 1;
+            aws_atomic_store_ptr(&ring_buf->head, head_cpy + returnable_size);
+            *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
             return AWS_OP_SUCCESS;
         }
 
-        aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + tail_space);
-        *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, tail_space);
-        return AWS_OP_SUCCESS;
+        if (tail_space > 1) {
+            size_t returnable_size = tail_space - 1;
+            aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + returnable_size);
+            *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, returnable_size);
+            return AWS_OP_SUCCESS;
+        }
     }
 
     return aws_raise_error(AWS_ERROR_NO_AVAILABLE_BUFFERS);
