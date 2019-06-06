@@ -22,8 +22,14 @@
 void aws_hash_string_harness() {
     struct aws_string *str =
         make_arbitrary_aws_string_nondet_len_with_max(nondet_bool() ? NULL : can_fail_allocator(), MAX_STRING_SIZE);
-    /* This function has no pre or post conditions. Currently, CBMC is unable to check
-     * all possible paths in these proof, but https://github.com/diffblue/cbmc/pull/1086
-     * should fix this. */
+    /*
+     * aws_hash_string has no pre or post conditions. #TODO: Currently, CBMC is unable to
+     * check all possible paths in these proof. aws_hash_string function calls hashlittle2
+     * function, which calculates two 32-bit hash values. Internally, it contains two
+     * conditions that test for alignment to 4 byte/2 byte boundaries, but CBMC is unable
+     * to correctly evaluate such conditions, due to its pointer encoding. A potential
+     * fix to this problem is under development.
+     * For more details, see https://github.com/diffblue/cbmc/pull/1086.
+     */
     uint64_t rval = aws_hash_string(str);
 }
