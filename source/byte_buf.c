@@ -252,7 +252,7 @@ int aws_byte_cursor_split_on_char(
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
-    AWS_ASSERT(dest);
+    AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
 
     va_list ap;
     va_start(ap, number_of_args);
@@ -263,11 +263,13 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 
         if (aws_byte_buf_append(dest, &cursor)) {
             va_end(ap);
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return AWS_OP_ERR;
         }
     }
 
     va_end(ap);
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
 
