@@ -19,10 +19,7 @@
 void aws_byte_buf_from_array_harness() {
     /* parameters */
     size_t length;
-    uint8_t *array;
-
-    /* assumptions */
-    ASSUME_VALID_MEMORY_COUNT(array, length);
+    uint8_t *array = can_fail_malloc(length);
 
     /* operation under verification */
     struct aws_byte_buf buf = aws_byte_buf_from_array(array, length);
