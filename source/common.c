@@ -428,6 +428,10 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_ENVIRONMENT_UNSET,
         "System call failure when unsetting an environment variable."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_NO_AVAILABLE_BUFFERS,
+        "A buffer acquisition source (e.g. a ring buffer or something), does not have available buffers to vend."
+    ),
 };
 /* clang-format on */
 
