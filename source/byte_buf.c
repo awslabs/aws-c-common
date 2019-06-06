@@ -714,9 +714,11 @@ bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_by
     return rval;
 }
 
-int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *const lhs, const struct aws_byte_cursor *const rhs) {
+int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lhs->ptr, lhs->len));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(rhs->ptr, rhs->len));
     size_t comparison_length = lhs->len;
     if (comparison_length > rhs->len) {
         comparison_length = rhs->len;
@@ -724,10 +726,14 @@ int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *const lhs, con
 
     int result = memcmp(lhs->ptr, rhs->ptr, comparison_length);
     if (result != 0) {
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return result;
     }
 
     if (lhs->len != rhs->len) {
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return comparison_length == lhs->len ? -1 : 1;
     }
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
@@ -739,7 +745,9 @@ int aws_byte_cursor_compare_lookup(
     const struct aws_byte_cursor *lhs,
     const struct aws_byte_cursor *rhs,
     const uint8_t *lookup_table) {
-
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
     const uint8_t *lhs_curr = lhs->ptr;
     const uint8_t *lhs_end = lhs_curr + lhs->len;
 
@@ -751,10 +759,14 @@ int aws_byte_cursor_compare_lookup(
         uint8_t rhc = lookup_table[*rhs_curr];
 
         if (lhc < rhc) {
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
             return -1;
         }
 
         if (lhc > rhc) {
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
             return 1;
         }
 
@@ -763,12 +775,17 @@ int aws_byte_cursor_compare_lookup(
     }
 
     if (lhs_curr < lhs_end) {
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return 1;
     }
 
     if (rhs_curr < rhs_end) {
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return -1;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
     return 0;
 }

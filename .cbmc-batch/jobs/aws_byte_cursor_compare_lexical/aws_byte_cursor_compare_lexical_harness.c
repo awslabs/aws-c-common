@@ -43,11 +43,11 @@ void aws_byte_cursor_compare_lexical_harness() {
     save_byte_from_array(rhs.ptr, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_cursor_compare_lexical((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL))) {
+    if (aws_byte_cursor_compare_lexical((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL)) == 0) {
         assert(lhs.len == rhs.len);
-        /*if (lhs.len > 0) {
+        if (lhs.len > 0) {
             assert_bytes_match(lhs.ptr, rhs.ptr, lhs.len);
-        }*/
+        }
     }
 
     /* assertions */
