@@ -306,6 +306,8 @@ add_test_case(unqualified_argument_parse)
 add_test_case(unknown_argument_parse)
 
 add_test_case(ring_buffer_1_to_1_acquire_release_wraps_test)
+add_test_case(ring_buffer_release_after_full_test)
+add_test_case(ring_buffer_acquire_soft_test)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 

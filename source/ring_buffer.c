@@ -58,13 +58,13 @@ int aws_ring_buffer_acquire_hard(struct aws_ring_buffer *ring_buf, size_t reques
         }
 
     } else if (tail_cpy <= head_cpy) {
-        if (ring_buf->allocation_end - head_cpy >= requested_size) {
+        if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
         }
 
-        if (tail_cpy - ring_buf->allocation > requested_size) {
+        if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             return AWS_OP_SUCCESS;
@@ -129,7 +129,7 @@ int aws_ring_buffer_acquire_soft(struct aws_ring_buffer *ring_buf, size_t reques
 }
 
 static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf) {
-    return buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity < ring_buffer->allocation_end;
+    return buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
 }
 
 void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf) {
