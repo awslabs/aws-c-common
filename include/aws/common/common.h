@@ -41,6 +41,7 @@
 #endif
 
 #define AWS_CONCAT(A, B) A ## B
+#define GHOST(x) ghost_ ## x
 
 #define AWS_ZERO_STRUCT(object)                                                                                        \
         do {                                                                                                           \

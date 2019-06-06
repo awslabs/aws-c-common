@@ -913,4 +913,20 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t 
     return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
 
+#ifdef CBMC
+#    include <proof_helpers/make_common_data_structures.h>
+#    include <proof_helpers/proof_allocators.h>
+#    define GHOST_BYTE(buf) ghost_##buf##_byte
+#    define AWS_GHOST_BYTE_BUF(buf)                                                                                    \
+        struct aws_byte_buf GHOST(buf) = *buf;                                                                         \
+        struct store_byte_from_buffer GHOST_BYTE(buf);                                                                 \
+        save_byte_from_array((buf)->buffer, (buf)->len, &(GHOST_BYTE(buf)));
+#    define AWS_ASSERT_BYTE_BUF_UNCHANGED(buf) assert_byte_buf_equivalence((buf), &GHOST(buf), &(GHOST_BYTE(buf)));
+#else
+#    define AWS_GHOST_BYTE_BUF(buf)                                                                                    \
+        struct aws_byte_buf GHOST(buf);                                                                                \
+        aws_byte_buf_init_copy(&GHOST(buf), aws_default_allocator(), buf);
+#    define AWS_ASSERT_BYTE_BUF_UNCHANGED(buf) aws_array_eq(GHOST(buf).buffer, GHOST(buf).len, buf->buffer, buf->len)
+#endif
+
 #endif /* AWS_COMMON_BYTE_BUF_H */

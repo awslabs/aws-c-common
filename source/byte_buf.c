@@ -110,8 +110,12 @@ void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
 
 bool aws_byte_buf_eq(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(a) && aws_byte_buf_is_valid(b));
+    AWS_GHOST_BYTE_BUF(a);
+    AWS_GHOST_BYTE_BUF(b);
     bool rval = aws_array_eq(a->buffer, a->len, b->buffer, b->len);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(a) && aws_byte_buf_is_valid(b));
+    AWS_ASSERT_BYTE_BUF_UNCHANGED(a);
+    AWS_ASSERT_BYTE_BUF_UNCHANGED(b);
     return rval;
 }
 
