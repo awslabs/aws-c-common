@@ -29,7 +29,7 @@ int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator 
     ring_buf->allocator = allocator;
     aws_atomic_init_ptr(&ring_buf->head, ring_buf->allocation);
     aws_atomic_init_ptr(&ring_buf->tail, ring_buf->allocation);
-    ring_buf->allocation_end = ring_buf->allocation + size + 1;
+    ring_buf->allocation_end = ring_buf->allocation + size;
 
     return AWS_OP_SUCCESS;
 }
@@ -77,7 +77,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         /* After N wraps */
     } else if (tail_cpy < head_cpy) {
         /* prefer the head space for efficiency. */
-        if ((size_t)(ring_buf->allocation_end - head_cpy) > requested_size) {
+        if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
@@ -144,45 +144,29 @@ int aws_ring_buffer_acquire_up_to(
         size_t head_space = ring_buf->allocation_end - head_cpy;
         size_t tail_space = tail_cpy - ring_buf->allocation;
 
-        if (!head_space && tail_space <= 1) {
-            return aws_raise_error(AWS_ERROR_OOM);
-        }
-
         /* if you can vend the whole thing do it. Also prefer head space to tail space. */
-        if ((size_t)(ring_buf->allocation_end - head_cpy) > requested_size) {
+        if (head_space >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
         }
 
-        if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
+        if (tail_space > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             return AWS_OP_SUCCESS;
         }
 
         /* now vend as much as possible, once again preferring head space. */
-        if (head_space > 1 && head_space >= tail_space) {
-            size_t returnable_size = head_space - 1;
-
-            if (returnable_size < minimum_size) {
-                return aws_raise_error(AWS_ERROR_OOM);
-            }
-
-            aws_atomic_store_ptr(&ring_buf->head, head_cpy + returnable_size);
-            *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
+        if (head_space >= minimum_size && head_space >= tail_space) {
+            aws_atomic_store_ptr(&ring_buf->head, head_cpy + head_space);
+            *dest = aws_byte_buf_from_empty_array(head_cpy, head_space);
             return AWS_OP_SUCCESS;
         }
 
-        if (tail_space > 1) {
-            size_t returnable_size = tail_space - 1;
-
-            if (returnable_size < minimum_size) {
-                return aws_raise_error(AWS_ERROR_OOM);
-            }
-
-            aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + returnable_size);
-            *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, returnable_size);
+        if (tail_space > minimum_size) {
+            aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + tail_space - 1);
+            *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, tail_space - 1);
             return AWS_OP_SUCCESS;
         }
     }
