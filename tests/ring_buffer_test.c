@@ -221,7 +221,7 @@ struct mt_test_data {
     struct aws_mutex mutex;
     struct aws_condition_variable termination_signal;
     int consumer_count;
-    size_t max_count;
+    int max_count;
     size_t buffer_size;
     bool consumer_finished;
     bool match_failed;
@@ -312,7 +312,6 @@ static int s_test_acquire_any_muti_threaded(
         .consumer_count = 0,
         .mutex = AWS_MUTEX_INIT,
         .max_count = 1000000,
-        .buffer_size = MT_TEST_BUFFER_SIZE,
         .consumer_finished = false,
         .termination_signal = AWS_CONDITION_VARIABLE_INIT,
     };

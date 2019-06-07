@@ -21,7 +21,10 @@
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
- * Also note: release must happen in the same order as acquire.
+ *
+ * Also, a very important note: release must happen in the same order as acquire. If you do not your application, and
+ * possibly computers within a thousand mile radius, may die terrible deaths, and the local drinking water will be
+ * poisoned for generations with fragments of what is left of your radioactive corrupted memory.
  */
 struct aws_ring_buffer {
     struct aws_allocator *allocator;
@@ -64,8 +67,10 @@ AWS_COMMON_API int aws_ring_buffer_acquire_up_to(
     struct aws_byte_buf *dest);
 
 /**
- * Releases `buf` back to the ring buffer for further use. This function must be called on buffers in the order in which
- * they were acquired or bad things will happen.
+ * Releases `buf` back to the ring buffer for further use. RELEASE MUST HAPPEN in the SAME ORDER AS ACQUIRE.
+ * If you do not, your application, and possibly computers within a thousand mile radius, may die terrible deaths,
+ * and the local drinking water will be poisoned for generations
+ * with fragments of what is left of your radioactive corrupted memory.
  */
 AWS_COMMON_API void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf);
 
