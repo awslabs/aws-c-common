@@ -104,7 +104,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         /* After N wraps */
     } else if (tail_cpy < head_cpy) {
         /* prefer the head space for efficiency. */
-        if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
+        if ((size_t)(ring_buf->allocation_end - head_cpy - 1) >= requested_size) {
             AWS_ATOMIC_STORE_PTR(head_cpy + requested_size, ring_buf, &ring_buf->head);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
@@ -186,7 +186,7 @@ int aws_ring_buffer_acquire_up_to(
         }
         /* after N wraps */
     } else if (tail_cpy < head_cpy) {
-        size_t head_space = ring_buf->allocation_end - head_cpy;
+        size_t head_space = ring_buf->allocation_end - head_cpy - 1;
         size_t tail_space = tail_cpy - ring_buf->allocation;
 
         /* if you can vend the whole thing do it. Also prefer head space to tail space. */
@@ -208,7 +208,6 @@ int aws_ring_buffer_acquire_up_to(
 
         /* now vend as much as possible, once again preferring head space. */
         if (head_space >= minimum_size && head_space >= tail_space) {
-            aws_atomic_store_ptr(&ring_buf->head, head_cpy + head_space);
             AWS_ATOMIC_STORE_PTR(head_cpy + head_space, ring_buf, &ring_buf->head);
             *dest = aws_byte_buf_from_empty_array(head_cpy, head_space);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
