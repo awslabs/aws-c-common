@@ -20,6 +20,7 @@
 #include <aws/common/common.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/private/hash_table_impl.h>
+#include <aws/common/ring_buffer.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
@@ -46,6 +47,11 @@ bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf);
  * Ensures aws_byte_buf has a proper allocated buffer member
  */
 void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf);
+
+/*
+ * Ensures aws_ring_buffer has proper allocated members
+ */
+void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *const ring_buf, size_t size);
 
 /*
  * Checks whether aws_byte_cursor is bounded by max_size
