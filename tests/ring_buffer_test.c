@@ -176,7 +176,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
 
-    /* we should turn over right here. and capacity should now be one less than*/
+    /* we should turn over right here*/
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_1));
     ASSERT_PTR_EQUALS(ptr, vended_buffer_1.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer_1.capacity);
