@@ -23,6 +23,7 @@ void aws_ring_buffer_acquire_up_to_harness() {
     struct aws_ring_buffer ring_buf;
     size_t ring_buf_size;
     size_t requested_size;
+    size_t minimum_size;
     struct aws_byte_buf buf;
 
     /* assumptions */
@@ -31,12 +32,13 @@ void aws_ring_buffer_acquire_up_to_harness() {
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
-    if (aws_ring_buffer_acquire_up_to(nondet_bool() ? &ring_buf : NULL, requested_size, nondet_bool() ? &buf : NULL) ==
+    if (aws_ring_buffer_acquire_up_to(
+            nondet_bool() ? &ring_buf : NULL, minimum_size, requested_size, nondet_bool() ? &buf : NULL) ==
         AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(aws_byte_buf_is_valid(&buf));
-        assert(buf.capacity <= requested_size);
+        assert(buf.capacity >= minimum_size && buf.capacity <= requested_size);
         assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
         assert(buf.buffer >= ring_buf.allocation && (buf.buffer + buf.capacity) < (ring_buf.allocation_end));
     }

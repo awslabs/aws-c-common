@@ -130,7 +130,7 @@ int aws_ring_buffer_acquire_up_to(
     size_t minimum_size,
     size_t requested_size,
     struct aws_byte_buf *dest) {
-    AWS_PRECONDITION(requested_size >= minimum_size)
+    AWS_PRECONDITION(minimum_size > 0 && requested_size >= minimum_size);
     AWS_PRECONDITION(aws_ring_buffer_is_valid(ring_buf));
     AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
 
