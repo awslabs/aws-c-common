@@ -138,7 +138,7 @@ static int s_test_acquire_up_to(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 8, &vended_buffer_2));
     ASSERT_PTR_EQUALS(ptr + 8, vended_buffer_2.buffer);
-    ASSERT_UINT_EQUALS(7, vended_buffer_2.capacity);
+    ASSERT_UINT_EQUALS(8, vended_buffer_2.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
@@ -232,7 +232,8 @@ struct mt_test_buffer_node {
     struct aws_byte_buf buf;
 };
 
-#define MT_BUFFER_COUNT 10
+/* why so high? because the up_to allocs can get REALLY fragmented. */
+#define MT_BUFFER_COUNT 60
 #define MT_TEST_BUFFER_SIZE 16
 
 static void s_consumer_thread(void *args) {
@@ -265,14 +266,14 @@ static void s_consumer_thread(void *args) {
             int bytes_written =
                 snprintf(counter_data + written, buffer_node->buf.capacity - written, "%d", num_to_write);
 
-            if (bytes_written > 0) {
+            if (bytes_written > 0 && bytes_written < buffer_node->buf.capacity - written) {
                 written += bytes_written;
+            } else {
+                break;
             }
         }
 
-        int not_matched = memcmp(buffer_node->buf.buffer, counter_data, buffer_node->buf.capacity);
-
-        aws_ring_buffer_release(&test_data->ring_buf, &buffer_node->buf);
+        int not_matched = memcmp(buffer_node->buf.buffer, counter_data, written);
 
         if (not_matched) {
             fprintf(stderr, "match failed!\n");
@@ -280,8 +281,11 @@ static void s_consumer_thread(void *args) {
             fwrite(buffer_node->buf.buffer, 1, buffer_node->buf.capacity, stderr);
             fprintf(stderr, " but we were expecting %s\n", counter_data);
             test_data->match_failed = true;
+            aws_ring_buffer_release(&test_data->ring_buf, &buffer_node->buf);
             break;
         }
+
+        aws_ring_buffer_release(&test_data->ring_buf, &buffer_node->buf);
     }
 
     aws_mutex_lock(&test_data->mutex);
@@ -326,7 +330,9 @@ static int s_test_acquire_any_muti_threaded(
 
     int counter = 0;
 
-    while (counter < test_data.max_count) {
+    /* consumer_finished isn't protected and we don't need it to be immediately and it won't rip,
+     * we just need it eventually if the consumer thread fails prematurely. */
+    while (counter < test_data.max_count && !test_data.consumer_finished) {
         struct aws_byte_buf dest;
         AWS_ZERO_STRUCT(dest);
 
@@ -337,8 +343,10 @@ static int s_test_acquire_any_muti_threaded(
             while (written < dest.capacity) {
                 int bytes_written = snprintf((char *)dest.buffer + written, dest.capacity - written, "%d", counter);
 
-                if (bytes_written > 0) {
+                if (bytes_written > 0 && bytes_written < dest.capacity - written) {
                     written += bytes_written;
+                } else {
+                    break;
                 }
             }
 

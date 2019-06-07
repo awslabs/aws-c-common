@@ -64,6 +64,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         }
 
         aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
+        aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
         return AWS_OP_SUCCESS;
     }
@@ -118,25 +119,34 @@ int aws_ring_buffer_acquire_up_to(struct aws_ring_buffer *ring_buf, size_t reque
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             return AWS_OP_SUCCESS;
-        } else if (ring_space >= requested_size) {
+        }
 
+        if (ring_space >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
+            /* we don't have any vended, this should be safe. */
+            aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             return AWS_OP_SUCCESS;
         }
 
         /* go as big as we can. */
+        /* we don't have any vended, so this should be safe. */
         aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + ring_space);
+        aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, ring_space);
         return AWS_OP_SUCCESS;
     }
     /* you'll constantly bounce between the next two branches as the ring buffer is traversed. */
     /* after N + 1 wraps */
     if (tail_cpy > head_cpy) {
-        size_t space = tail_cpy - head_cpy - 1;
+        size_t space = tail_cpy - head_cpy;
+        /* this shouldn't be possible. */
+        AWS_ASSERT(space);
+        space -= 1;
+
         size_t returnable_size = space > requested_size ? requested_size : space;
 
-        if (space > returnable_size) {
+        if (returnable_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + returnable_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
             return AWS_OP_SUCCESS;
