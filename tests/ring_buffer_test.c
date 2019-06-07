@@ -266,7 +266,7 @@ static void s_consumer_thread(void *args) {
             int bytes_written =
                 snprintf(counter_data + written, buffer_node->buf.capacity - written, "%d", num_to_write);
 
-            if (bytes_written > 0 && bytes_written < buffer_node->buf.capacity - written) {
+            if (bytes_written > 0 && bytes_written < (int)(buffer_node->buf.capacity - written)) {
                 written += bytes_written;
             } else {
                 break;
@@ -342,7 +342,7 @@ static int s_test_acquire_any_muti_threaded(
             while (written < dest.capacity) {
                 int bytes_written = snprintf((char *)dest.buffer + written, dest.capacity - written, "%d", counter);
 
-                if (bytes_written > 0 && bytes_written < dest.capacity - written) {
+                if (bytes_written > 0 && bytes_written < (int)(dest.capacity - written)) {
                     written += bytes_written;
                 } else {
                     break;
