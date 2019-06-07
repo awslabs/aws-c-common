@@ -20,7 +20,7 @@
 void aws_byte_buf_eq_c_str_harness() {
     /* parameters */
     struct aws_byte_buf buf;
-    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));
@@ -36,7 +36,7 @@ void aws_byte_buf_eq_c_str_harness() {
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 
     /* operation under verification */
-    if (aws_byte_buf_eq_c_str((nondet_bool() ? NULL : &buf), c_str)) {
+    if (aws_byte_buf_eq_c_str(&buf, c_str)) {
         assert(buf.len == str_len);
         if (buf.len > 0) {
             assert_bytes_match(buf.buffer, (uint8_t *)c_str, buf.len);

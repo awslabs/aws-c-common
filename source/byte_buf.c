@@ -71,7 +71,7 @@ bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
     return cursor &&
-           ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_WRITABLE(cursor->ptr, cursor->len)));
+           ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_READABLE(cursor->ptr, cursor->len)));
 }
 
 void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents) {
@@ -416,24 +416,34 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
     return aws_hash_array_ignore_case(cursor->ptr, cursor->len);
 }
 
-bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
-    AWS_ASSERT(a && b);
-    return aws_array_eq(a->ptr, a->len, b->buffer, b->len);
+bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b));
+    bool rv = aws_array_eq(a->ptr, a->len, b->buffer, b->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b));
+    return rv;
 }
 
-bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_buf *b) {
-    AWS_ASSERT(a && b);
-    return aws_array_eq_ignore_case(a->ptr, a->len, b->buffer, b->len);
+bool aws_byte_cursor_eq_byte_buf_ignore_case(
+    const struct aws_byte_cursor *const a,
+    const struct aws_byte_buf *const b) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b));
+    bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->buffer, b->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b));
+    return rv;
 }
 
-bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str) {
-    AWS_ASSERT(cursor && c_str);
-    return aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
+bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor) && c_str);
+    bool rv = aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    return rv;
 }
 
-bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, const char *c_str) {
-    AWS_ASSERT(cursor && c_str);
-    return aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
+bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor) && c_str);
+    bool rv = aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    return rv;
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
