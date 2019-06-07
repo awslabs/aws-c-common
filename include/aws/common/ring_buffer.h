@@ -16,7 +16,6 @@
  */
 
 #include <aws/common/atomics.h>
-#include <aws/common/byte_buf.h>
 
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
@@ -33,6 +32,8 @@ struct aws_ring_buffer {
     struct aws_atomic_var tail;
     uint8_t *allocation_end;
 };
+
+struct aws_byte_buf;
 
 AWS_EXTERN_C_BEGIN
 
@@ -63,6 +64,7 @@ AWS_COMMON_API int aws_ring_buffer_acquire(
  */
 AWS_COMMON_API int aws_ring_buffer_acquire_up_to(
     struct aws_ring_buffer *ring_buf,
+    size_t minimum_size,
     size_t requested_size,
     struct aws_byte_buf *dest);
 
@@ -72,7 +74,7 @@ AWS_COMMON_API int aws_ring_buffer_acquire_up_to(
  * and the local drinking water will be poisoned for generations
  * with fragments of what is left of your radioactive corrupted memory.
  */
-AWS_COMMON_API void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf);
+AWS_COMMON_API void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, struct aws_byte_buf *buf);
 
 /**
  * Returns true if the memory in `buf` was vended by this ring buffer, false otherwise.

@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/byte_buf.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/mutex.h>
@@ -36,18 +37,17 @@ static int s_test_1_to_1_acquire_release_wraps(struct aws_allocator *allocator, 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer);
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer));
-    ASSERT_PTR_EQUALS(ptr + 4, vended_buffer.buffer);
+    ASSERT_PTR_EQUALS(ptr, vended_buffer.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer));
     aws_ring_buffer_release(&ring_buffer, &vended_buffer);
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 4, &vended_buffer));
-    ASSERT_PTR_EQUALS(ptr + 12, vended_buffer.buffer);
+    ASSERT_PTR_EQUALS(ptr, vended_buffer.buffer);
     ASSERT_UINT_EQUALS(4, vended_buffer.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer));
     aws_ring_buffer_release(&ring_buffer, &vended_buffer);
 
-    /* should loop around here. */
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer));
     ASSERT_PTR_EQUALS(ptr, vended_buffer.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer.capacity);
@@ -55,7 +55,7 @@ static int s_test_1_to_1_acquire_release_wraps(struct aws_allocator *allocator, 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer);
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer));
-    ASSERT_PTR_EQUALS(ptr + 8, vended_buffer.buffer);
+    ASSERT_PTR_EQUALS(ptr, vended_buffer.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer));
     aws_ring_buffer_release(&ring_buffer, &vended_buffer);
@@ -88,7 +88,7 @@ static int s_test_release_after_full(struct aws_allocator *allocator, void *ctx)
     ASSERT_UINT_EQUALS(4, vended_buffer_2.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire(&ring_buffer, 1, &vended_buffer_1));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire(&ring_buffer, 1, &vended_buffer_1));
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
 
@@ -114,29 +114,33 @@ static int s_test_acquire_up_to(struct aws_allocator *allocator, void *ctx) {
     struct aws_byte_buf vended_buffer_1;
     AWS_ZERO_STRUCT(vended_buffer_1);
 
-    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 12, &vended_buffer_1));
+    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 1, 12, &vended_buffer_1));
     uint8_t *ptr = vended_buffer_1.buffer;
     ASSERT_UINT_EQUALS(12, vended_buffer_1.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_1));
 
     struct aws_byte_buf vended_buffer_2;
     AWS_ZERO_STRUCT(vended_buffer_2);
-    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 8, &vended_buffer_2));
+
+    /* only 4 are available, so this should error. */
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire_up_to(&ring_buffer, 5, 8, &vended_buffer_2));
+
+    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 4, 8, &vended_buffer_2));
     ASSERT_PTR_EQUALS(ptr + 12, vended_buffer_2.buffer);
     ASSERT_UINT_EQUALS(4, vended_buffer_2.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire_up_to(&ring_buffer, 1, &vended_buffer_1));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire_up_to(&ring_buffer, 1, 1, &vended_buffer_1));
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_2);
 
-    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 8, &vended_buffer_1));
+    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 1, 8, &vended_buffer_1));
     ASSERT_PTR_EQUALS(ptr, vended_buffer_1.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer_1.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_1));
 
-    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 8, &vended_buffer_2));
+    ASSERT_SUCCESS(aws_ring_buffer_acquire_up_to(&ring_buffer, 1, 8, &vended_buffer_2));
     ASSERT_PTR_EQUALS(ptr + 8, vended_buffer_2.buffer);
     ASSERT_UINT_EQUALS(8, vended_buffer_2.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
@@ -172,7 +176,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
     ASSERT_UINT_EQUALS(4, vended_buffer_2.capacity);
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire(&ring_buffer, 1, &vended_buffer_1));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire(&ring_buffer, 1, &vended_buffer_1));
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
 
@@ -184,7 +188,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_2);
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_2));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_2));
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 7, &vended_buffer_2));
     ASSERT_PTR_EQUALS(ptr + 8, vended_buffer_2.buffer);
@@ -193,7 +197,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
     /* tail will flip here. */
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_1);
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_1));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_1));
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 7, &vended_buffer_1));
     ASSERT_PTR_EQUALS(ptr, vended_buffer_1.buffer);
@@ -202,7 +206,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
 
     aws_ring_buffer_release(&ring_buffer, &vended_buffer_2);
 
-    ASSERT_ERROR(AWS_ERROR_NO_AVAILABLE_BUFFERS, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_2));
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_ring_buffer_acquire(&ring_buffer, 8, &vended_buffer_2));
 
     ASSERT_SUCCESS(aws_ring_buffer_acquire(&ring_buffer, 7, &vended_buffer_2));
     ASSERT_PTR_EQUALS(ptr + 7, vended_buffer_2.buffer);
@@ -222,7 +226,6 @@ struct mt_test_data {
     struct aws_condition_variable termination_signal;
     int consumer_count;
     int max_count;
-    size_t buffer_size;
     bool consumer_finished;
     bool match_failed;
 };
@@ -299,6 +302,14 @@ static bool s_termination_predicate(void *args) {
     struct mt_test_data *test_data = args;
 
     return test_data->consumer_finished;
+}
+
+static int s_acquire_up_to_wrapper(struct aws_ring_buffer *ring_buf, size_t requested, struct aws_byte_buf *dest) {
+    if (requested >= 4) {
+        return aws_ring_buffer_acquire_up_to(ring_buf, 4, requested, dest);
+    }
+
+    return aws_ring_buffer_acquire_up_to(ring_buf, 1, requested, dest);
 }
 
 static int s_test_acquire_any_muti_threaded(
@@ -383,7 +394,7 @@ AWS_TEST_CASE(ring_buffer_acquire_multi_threaded_test, s_test_acquire_multi_thre
 static int s_test_acquire_up_to_multi_threaded(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    return s_test_acquire_any_muti_threaded(allocator, aws_ring_buffer_acquire_up_to);
+    return s_test_acquire_any_muti_threaded(allocator, s_acquire_up_to_wrapper);
 }
 
 AWS_TEST_CASE(ring_buffer_acquire_up_to_multi_threaded_test, s_test_acquire_up_to_multi_threaded)
