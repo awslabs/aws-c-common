@@ -37,6 +37,8 @@ void aws_ring_buffer_acquire_harness() {
         assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(aws_byte_buf_is_valid(&buf));
         assert(AWS_MEM_IS_WRITABLE(buf.buffer, requested_size));
-        assert(buf.buffer >= ring_buf.allocation && (buf.buffer + requested_size) < (ring_buf.allocation_end));
+        assert(buf.capacity == requested_size);
+        assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
+        assert(buf.buffer >= ring_buf.allocation && (buf.buffer + buf.capacity) < (ring_buf.allocation_end));
     }
 }
