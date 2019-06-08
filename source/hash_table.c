@@ -686,6 +686,19 @@ int aws_hash_table_remove(
     return AWS_OP_SUCCESS;
 }
 
+int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value) {
+    AWS_PRECONDITION(aws_hash_table_is_valid(map));
+    AWS_PRECONDITION(p_value);
+
+    struct hash_table_state *state = map->p_impl;
+    struct hash_table_entry *entry = AWS_CONTAINER_OF(p_value, struct hash_table_entry, element);
+
+    s_remove_entry(state, entry);
+
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
+    return AWS_OP_SUCCESS;
+}
+
 int aws_hash_table_foreach(
     struct aws_hash_table *map,
     int (*callback)(void *context, struct aws_hash_element *pElement),

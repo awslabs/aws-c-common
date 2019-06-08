@@ -240,6 +240,13 @@ typedef long aws_off_t;
 
 AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
 
+/**
+ * from a pointer and a type of the struct containing the node
+ * this will get you back to the pointer of the object. member is the name of
+ * the instance of struct aws_linked_list_node in your struct.
+ */
+#define AWS_CONTAINER_OF(ptr, type, member) ((type *)((uint8_t *)(ptr)-offsetof(type, member)))
+
 /*
  * Due to the recursive inclusion of error.h and common.h, we need to define these
  * before including error.h
