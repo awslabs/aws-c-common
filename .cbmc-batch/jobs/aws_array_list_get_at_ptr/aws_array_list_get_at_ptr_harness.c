@@ -34,9 +34,9 @@ void aws_array_list_get_at_ptr_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification */
-    void *val = malloc(list.item_size);
+    void **val = can_fail_malloc(sizeof(void *));
     size_t index;
-    if (!aws_array_list_get_at_ptr(&list, &val, index)) {
+    if (!aws_array_list_get_at_ptr(&list, val, index)) {
         /* In the case aws_array_list_get_at is successful, we can ensure the list isn't empty
          * and index is within bounds.
          */

@@ -416,7 +416,7 @@ bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *const
  * The cursor should NOT contain a null-terminator, or the comparison will always return false.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str);
+bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_cursor and a null-terminated string.
@@ -426,7 +426,7 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, const char *c_str);
+bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str);
 
 /**
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
