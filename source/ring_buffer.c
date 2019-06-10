@@ -222,9 +222,12 @@ static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buff
 }
 
 void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, struct aws_byte_buf *buf) {
-    AWS_ASSERT(s_buf_belongs_to_pool(ring_buffer, buf));
-    aws_atomic_store_ptr(&ring_buffer->tail, buf->buffer + buf->capacity);
+    AWS_PRECONDITION(aws_ring_buffer_is_valid(ring_buffer));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(s_buf_belongs_to_pool(ring_buffer, buf));
+    AWS_ATOMIC_STORE_PTR(buf->buffer + buf->capacity, ring_buffer, &ring_buffer->tail);
     AWS_ZERO_STRUCT(*buf);
+    AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buffer));
 }
 
 bool aws_ring_buffer_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf) {
