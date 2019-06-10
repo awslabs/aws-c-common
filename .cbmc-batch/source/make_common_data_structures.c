@@ -33,6 +33,18 @@ void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf)
     buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
+void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *const ring_buf, size_t size) {
+    ring_buf->allocator = can_fail_allocator();
+    ring_buf->allocation = bounded_malloc(sizeof(*(ring_buf->allocation)) * size);
+    size_t position_head;
+    size_t position_tail;
+    __CPROVER_assume(position_head < size);
+    __CPROVER_assume(position_tail < size);
+    aws_atomic_store_ptr(&ring_buf->head, (ring_buf->allocation + position_head));
+    aws_atomic_store_ptr(&ring_buf->tail, (ring_buf->allocation + position_tail));
+    ring_buf->allocation_end = ring_buf->allocation + size;
+}
+
 bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size) {
     return cursor->len <= max_size;
 }
