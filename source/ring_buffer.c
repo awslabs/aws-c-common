@@ -18,6 +18,8 @@
 #include <aws/common/byte_buf.h>
 
 int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size) {
+    AWS_PRECONDITION(ring_buf != NULL);
+    AWS_PRECONDITION(allocator != NULL);
     AWS_ZERO_STRUCT(*ring_buf);
 
     ring_buf->allocation = aws_mem_acquire(allocator, size);
@@ -31,7 +33,17 @@ int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator 
     aws_atomic_init_ptr(&ring_buf->tail, ring_buf->allocation);
     ring_buf->allocation_end = ring_buf->allocation + size;
 
+    AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
     return AWS_OP_SUCCESS;
+}
+
+bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf) {
+    if (!ring_buf) {
+        return false;
+    }
+    bool readable = AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation);
+    bool alloc = (ring_buf->allocator != NULL);
+    return readable && alloc;
 }
 
 void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
@@ -98,7 +110,7 @@ int aws_ring_buffer_acquire_up_to(
     size_t minimum_size,
     size_t requested_size,
     struct aws_byte_buf *dest) {
-    AWS_ASSERT(requested_size >= minimum_size)
+    AWS_PRECONDITION(requested_size >= minimum_size);
 
     if (requested_size == 0) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);

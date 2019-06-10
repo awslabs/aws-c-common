@@ -17,6 +17,19 @@
 
 #include <aws/common/atomics.h>
 
+#ifdef CBMC
+#    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr)                                                        \
+        dest_ptr = aws_atomic_load_ptr(atomic_ptr);                                                                    \
+        __CPROVER_assume(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
+#    define AWS_ATOMIC_STORE_PTR(src_ptr, ring_buf, atomic_ptr)                                                        \
+        __CPROVER_assert(                                                                                              \
+            aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr), "check_atomic_ptr(ring_buf, src_ptr) failed");        \
+        aws_atomic_store_ptr(atomic_ptr, src_ptr);
+#else
+#    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
+#    define AWS_ATOMIC_STORE_PTR(src_ptr, ring_buf, atomic_ptr) aws_atomic_store_ptr(atomic_ptr, src_ptr);
+#endif
+
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
@@ -42,6 +55,16 @@ AWS_EXTERN_C_BEGIN
  * AWS_OP_ERR otherwise.
  */
 AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size);
+
+/**
+ * Evaluates the set of properties that define the shape of all valid aws_ring_buffer structures.
+ * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
+ */
+AWS_COMMON_API bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf);
+
+AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(struct aws_ring_buffer *const ring_buf, uint8_t *atomic_ptr) {
+    return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
+}
 
 /**
  * Cleans up the ring buffer's resources.
