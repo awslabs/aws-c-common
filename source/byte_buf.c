@@ -278,16 +278,20 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b), "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(b), "Input aws_byte_cursor [b] must be valid.");
     bool rv = aws_array_eq(a->ptr, a->len, b->ptr, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b), "Output aws_byte_cursor [b] must be valid.");
     return rv;
 }
 
 bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b), "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(b), "Input aws_byte_cursor [b] must be valid.");
     bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->ptr, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_cursor_is_valid(b), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b), "Output aws_byte_cursor [b] must be valid.");
     return rv;
 }
 
@@ -431,32 +435,38 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
 }
 
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b), "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
     bool rv = aws_array_eq(a->ptr, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
     return rv;
 }
 
 bool aws_byte_cursor_eq_byte_buf_ignore_case(
     const struct aws_byte_cursor *const a,
     const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b), "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
     bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a) && aws_byte_buf_is_valid(b), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
     return rv;
 }
 
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor) && c_str, "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor), "Input aws_byte_cursor [cursor] must be valid.");
+    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rv = aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "Output aws_byte_cursor [cursor] must be valid.");
     return rv;
 }
 
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor) && c_str, "");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor), "Input aws_byte_cursor [cursor] must be valid.");
+    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rv = aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "Output aws_byte_cursor [cursor] must be valid.");
     return rv;
 }
 
