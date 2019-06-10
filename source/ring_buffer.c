@@ -37,15 +37,6 @@ int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator 
     return AWS_OP_SUCCESS;
 }
 
-bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf) {
-    if (!ring_buf) {
-        return false;
-    }
-    bool readable = AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation);
-    bool alloc = (ring_buf->allocator != NULL);
-    return readable && alloc;
-}
-
 void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
     if (ring_buf->allocation) {
         aws_mem_release(ring_buf->allocator, ring_buf->allocation);

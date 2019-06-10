@@ -60,8 +60,14 @@ AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct
  * Evaluates the set of properties that define the shape of all valid aws_ring_buffer structures.
  * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
-AWS_COMMON_API bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf);
+AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf) {
+    return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
+           (ring_buf->allocator != NULL);
+}
 
+/*
+ * Checks whether atomic_ptr correctly points to a memory location within the bounds of the aws_ring_buffer
+ */
 AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(struct aws_ring_buffer *const ring_buf, uint8_t *atomic_ptr) {
     return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
 }
