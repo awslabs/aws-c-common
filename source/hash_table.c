@@ -661,8 +661,11 @@ int aws_hash_table_remove(
     struct aws_hash_element *p_value,
     int *was_present) {
     AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input hash_table [map] must be valid.");
-    AWS_PRECONDITION(p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value), "Input pointer [p_value] must be NULL or writable.");
-    AWS_PRECONDITION(was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present), "Input pointer [was_present] must be NULL or writable.");
+    AWS_PRECONDITION(
+        p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value), "Input pointer [p_value] must be NULL or writable.");
+    AWS_PRECONDITION(
+        was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present),
+        "Input pointer [was_present] must be NULL or writable.");
 
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
