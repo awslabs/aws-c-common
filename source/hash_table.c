@@ -83,9 +83,9 @@ static bool s_safe_eq_check(aws_hash_callback_eq_fn *equals_fn, const void *a, c
  * Check equality of two hash keys, with a reasonable semantics for null keys.
  */
 static bool s_hash_keys_eq(struct hash_table_state *state, const void *a, const void *b) {
-    AWS_PRECONDITION(hash_table_state_is_valid(state), "");
+    AWS_PRECONDITION(hash_table_state_is_valid(state), "Input hash_table_state [state] must be valid.");
     bool rval = s_safe_eq_check(state->equals_fn, a, b);
-    AWS_POSTCONDITION(hash_table_state_is_valid(state), "");
+    AWS_POSTCONDITION(hash_table_state_is_valid(state), "Output hash_table_state [state] must be valid.");
     return rval;
 }
 
@@ -417,7 +417,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
     } else {
         *p_elem = NULL;
     }
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "");
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "Output hash_table_state [map] must be valid.");
     return AWS_OP_SUCCESS;
 }
 
@@ -660,9 +660,9 @@ int aws_hash_table_remove(
     const void *key,
     struct aws_hash_element *p_value,
     int *was_present) {
-    AWS_PRECONDITION(aws_hash_table_is_valid(map), "");
-    AWS_PRECONDITION(p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value), "");
-    AWS_PRECONDITION(was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present), "");
+    AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input hash_table [map] must be valid.");
+    AWS_PRECONDITION(p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value), "Input pointer [p_value] must be NULL or writable.");
+    AWS_PRECONDITION(was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present), "Input pointer [was_present] must be NULL or writable.");
 
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
@@ -677,7 +677,7 @@ int aws_hash_table_remove(
 
     if (rv != AWS_ERROR_SUCCESS) {
         *was_present = 0;
-        AWS_POSTCONDITION(aws_hash_table_is_valid(map), "");
+        AWS_POSTCONDITION(aws_hash_table_is_valid(map), "Output hash_table [map] must be valid.");
         return AWS_OP_SUCCESS;
     }
 
@@ -695,20 +695,20 @@ int aws_hash_table_remove(
     }
     s_remove_entry(state, entry);
 
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "");
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "Output hash_table [map] must be valid.");
     return AWS_OP_SUCCESS;
 }
 
 int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value) {
-    AWS_PRECONDITION(aws_hash_table_is_valid(map), "");
-    AWS_PRECONDITION(p_value, "");
+    AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input hash_table [map] must be valid.");
+    AWS_PRECONDITION(p_value, "Input pointer [p_value] mustn't be NULL.");
 
     struct hash_table_state *state = map->p_impl;
     struct hash_table_entry *entry = AWS_CONTAINER_OF(p_value, struct hash_table_entry, element);
 
     s_remove_entry(state, entry);
 
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "");
+    AWS_POSTCONDITION(aws_hash_table_is_valid(map), "Output hash_table [map] must be valid.");
     return AWS_OP_SUCCESS;
 }
 
@@ -736,13 +736,13 @@ bool aws_hash_table_eq(
     const struct aws_hash_table *a,
     const struct aws_hash_table *b,
     aws_hash_callback_eq_fn *value_eq) {
-    AWS_PRECONDITION(aws_hash_table_is_valid(a), "");
-    AWS_PRECONDITION(aws_hash_table_is_valid(b), "");
-    AWS_PRECONDITION(value_eq != NULL, "");
+    AWS_PRECONDITION(aws_hash_table_is_valid(a), "Input hash_table [a] must be valid.");
+    AWS_PRECONDITION(aws_hash_table_is_valid(b), "Input hash_table [b] must be valid.");
+    AWS_PRECONDITION(value_eq != NULL, "Input pointer [value_eq] mustn't be NULL.");
 
     if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
-        AWS_POSTCONDITION(aws_hash_table_is_valid(a), "");
-        AWS_POSTCONDITION(aws_hash_table_is_valid(b), "");
+        AWS_POSTCONDITION(aws_hash_table_is_valid(a), "Output hash_table [a] must be valid.");
+        AWS_POSTCONDITION(aws_hash_table_is_valid(b), "Output hash_table [b] must be valid.");
 
         return false;
     }
@@ -764,19 +764,19 @@ bool aws_hash_table_eq(
 
         if (!b_element) {
             /* Key is present in A only */
-            AWS_POSTCONDITION(aws_hash_table_is_valid(a), "");
-            AWS_POSTCONDITION(aws_hash_table_is_valid(b), "");
+            AWS_POSTCONDITION(aws_hash_table_is_valid(a), "Output hash_table [a] must be valid.");
+            AWS_POSTCONDITION(aws_hash_table_is_valid(b), "Output hash_table [b] must be valid.");
             return false;
         }
 
         if (!s_safe_eq_check(value_eq, a_entry->element.value, b_element->value)) {
-            AWS_POSTCONDITION(aws_hash_table_is_valid(a), "");
-            AWS_POSTCONDITION(aws_hash_table_is_valid(b), "");
+            AWS_POSTCONDITION(aws_hash_table_is_valid(a), "Output hash_table [a] must be valid.");
+            AWS_POSTCONDITION(aws_hash_table_is_valid(b), "Output hash_table [b] must be valid.");
             return false;
         }
     }
-    AWS_POSTCONDITION(aws_hash_table_is_valid(a), "");
-    AWS_POSTCONDITION(aws_hash_table_is_valid(b), "");
+    AWS_POSTCONDITION(aws_hash_table_is_valid(a), "Output hash_table [a] must be valid.");
+    AWS_POSTCONDITION(aws_hash_table_is_valid(b), "Output hash_table [b] must be valid.");
     return true;
 }
 

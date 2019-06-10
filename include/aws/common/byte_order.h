@@ -88,7 +88,7 @@ AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
  * Convert 24 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x) {
-    AWS_PRECONDITION(x <= 0xFFFFFF, "");
+    AWS_PRECONDITION(x <= 0xFFFFFF, "Input [x] must be representable with at most 3 bytes.");
     if (aws_is_big_endian()) {
         return x;
     } else {
@@ -100,7 +100,7 @@ AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x) {
  * Convert 24 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_ntoh24(uint32_t x) {
-    AWS_PRECONDITION((x) <= 0xFFFFFFF, "");
+    AWS_PRECONDITION((x) <= 0xFFFFFFF, "Input [x] must be representable with at most 3 bytes.");
     if (aws_is_big_endian()) {
         return x;
     } else {
