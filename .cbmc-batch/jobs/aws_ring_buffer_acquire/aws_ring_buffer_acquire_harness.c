@@ -31,14 +31,13 @@ void aws_ring_buffer_acquire_harness() {
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 
-    if (aws_ring_buffer_acquire(nondet_bool() ? &ring_buf : NULL, requested_size, nondet_bool() ? &buf : NULL) ==
-        AWS_OP_SUCCESS) {
+    if (aws_ring_buffer_acquire(&ring_buf, requested_size, &buf) == AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(aws_byte_buf_is_valid(&buf));
-        assert(AWS_MEM_IS_WRITABLE(buf.buffer, requested_size));
         assert(buf.capacity == requested_size);
+        assert(AWS_MEM_IS_WRITABLE(buf.buffer, buf.capacity));
         assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
-        assert(buf.buffer >= ring_buf.allocation && (buf.buffer + buf.capacity) <= (ring_buf.allocation_end));
+        assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
     }
 }

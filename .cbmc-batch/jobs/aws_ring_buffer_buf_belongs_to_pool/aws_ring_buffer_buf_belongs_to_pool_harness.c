@@ -29,10 +29,9 @@ void aws_ring_buffer_buf_belongs_to_pool_harness() {
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(
-        aws_ring_buffer_acquire_up_to(&ring_buf, nondet_size_t(), nondet_size_t(), &buf) == AWS_OP_SUCCESS);
+    __CPROVER_assume(__CPROVER_POINTER_OBJECT(buf.buffer) == __CPROVER_POINTER_OBJECT(ring_buf.allocation));
 
-    aws_ring_buffer_buf_belongs_to_pool(nondet_bool() ? &ring_buf : NULL, nondet_bool() ? &buf : NULL);
+    assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
 
     /* assertions */
     assert(aws_ring_buffer_is_valid(&ring_buf));

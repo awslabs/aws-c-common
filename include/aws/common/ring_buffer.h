@@ -20,10 +20,10 @@
 #ifdef CBMC
 #    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr)                                                        \
         dest_ptr = aws_atomic_load_ptr(atomic_ptr);                                                                    \
-        __CPROVER_assume(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
+        assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
+        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
 #    define AWS_ATOMIC_STORE_PTR(src_ptr, ring_buf, atomic_ptr)                                                        \
-        __CPROVER_assert(                                                                                              \
-            aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr), "check_atomic_ptr(ring_buf, src_ptr) failed");        \
+        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
         aws_atomic_store_ptr(atomic_ptr, src_ptr);
 #else
 #    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
