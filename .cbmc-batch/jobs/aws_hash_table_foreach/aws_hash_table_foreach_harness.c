@@ -20,7 +20,7 @@
 #include <proof_helpers/utils.h>
 
 int hash_table_foreach_proof_callback(void *context, struct aws_hash_element *pElement) {
-    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(pElement));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(pElement), "Input pointer [pElement] must be writable.");
     return nondet_int();
 }
 

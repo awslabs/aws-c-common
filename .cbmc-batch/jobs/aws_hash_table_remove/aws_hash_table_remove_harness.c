@@ -39,6 +39,11 @@ void aws_hash_table_remove_harness() {
 
     struct hash_table_state old_state = *map.p_impl;
 
+    /* assume the preconditions */
+    __CPROVER_assume(aws_hash_table_is_valid(&map));
+    __CPROVER_assume(AWS_OBJECT_PTR_IS_WRITABLE(&p_elem));
+    __CPROVER_assume(AWS_OBJECT_PTR_IS_WRITABLE(&was_present));
+
     int rval = aws_hash_table_remove(&map, key, get_p_elem ? &p_elem : NULL, track_was_present ? &was_present : NULL);
     assert(aws_hash_table_is_valid(&map));
     if (rval == AWS_OP_SUCCESS) {

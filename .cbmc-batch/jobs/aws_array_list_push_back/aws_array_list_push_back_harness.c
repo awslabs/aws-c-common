@@ -28,16 +28,20 @@ void aws_array_list_push_back_harness() {
     ensure_array_list_has_allocated_data_member(&list);
     __CPROVER_assume(aws_array_list_is_valid(&list));
     __CPROVER_assume(list.data != NULL);
+    size_t malloc_size;
+    __CPROVER_assume(malloc_size <= list.item_size);
+    void *val = can_fail_malloc(malloc_size);
 
     /* save current state of the data structure */
     struct aws_array_list old = list;
     struct store_byte_from_buffer old_byte;
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
+    /* assume preconditions */
+    __CPROVER_assume(aws_array_list_is_valid(&list));
+    __CPROVER_assume(val && AWS_MEM_IS_READABLE(val, list.item_size));
+
     /* perform operation under verification and assertions */
-    size_t malloc_size;
-    __CPROVER_assume(malloc_size <= list.item_size);
-    void *val = can_fail_malloc(malloc_size);
     if (!aws_array_list_push_back(&list, val)) {
         assert(list.length == old.length + 1);
     } else {
