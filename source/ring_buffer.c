@@ -55,24 +55,33 @@ void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
 }
 
 int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
+    AWS_PRECONDITION(aws_ring_buffer_is_valid(ring_buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
     if (requested_size == 0) {
+        AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    uint8_t *tail_cpy = aws_atomic_load_ptr(&ring_buf->tail);
-    uint8_t *head_cpy = aws_atomic_load_ptr(&ring_buf->head);
+    uint8_t *tail_cpy;
+    uint8_t *head_cpy;
+    AWS_ATOMIC_LOAD_PTR(tail_cpy, ring_buf, &ring_buf->tail);
+    AWS_ATOMIC_LOAD_PTR(head_cpy, ring_buf, &ring_buf->head);
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
         size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
 
         if (requested_size > ring_space) {
+            AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return aws_raise_error(AWS_ERROR_OOM);
         }
-
-        aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
-        aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
+        AWS_ATOMIC_STORE_PTR(ring_buf->allocation + requested_size, ring_buf, &ring_buf->head);
+        AWS_ATOMIC_STORE_PTR(ring_buf->allocation, ring_buf, &ring_buf->tail);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
+        AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
         return AWS_OP_SUCCESS;
     }
 
@@ -82,26 +91,34 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         size_t space = tail_cpy - head_cpy - 1;
 
         if (space >= requested_size) {
-            aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
+            AWS_ATOMIC_STORE_PTR(head_cpy + requested_size, ring_buf, &ring_buf->head);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
+            AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return AWS_OP_SUCCESS;
         }
         /* After N wraps */
     } else if (tail_cpy < head_cpy) {
         /* prefer the head space for efficiency. */
         if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
-            aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
+            AWS_ATOMIC_STORE_PTR(head_cpy + requested_size, ring_buf, &ring_buf->head);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
+            AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return AWS_OP_SUCCESS;
         }
 
         if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
-            aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
+            AWS_ATOMIC_STORE_PTR(ring_buf->allocation + requested_size, ring_buf, &ring_buf->head);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
+            AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return AWS_OP_SUCCESS;
         }
     }
 
+    AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return aws_raise_error(AWS_ERROR_OOM);
 }
 
