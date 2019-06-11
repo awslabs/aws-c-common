@@ -109,6 +109,8 @@
 
 #include <aws/common/assert.inl>
 
+#define GET_MACRO(_1,_2,NAME,...) NAME
+
 /**
  * Define function contracts.
  * When the code is being verified using CBMC these contracts are formally verified;
@@ -117,18 +119,25 @@
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
-#define AWS_PRECONDITION(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#define AWS_POSTCONDITION(cond, explanation) __CPROVER_assert((cond), (explanation))
+#define AWS_PRECONDITION_2(cond, explanation) __CPROVER_precondition((cond), (explanation))
+#define AWS_PRECONDITION_1(cond, explanation) __CPROVER_precondition((cond), "")
+#define AWS_POSTCONDITION_2(cond, explanation) __CPROVER_assert((cond), (explanation))
+#define AWS_POSTCONDITION_1(cond, explanation) __CPROVER_assert((cond), "")
 #define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
 #else
-#define AWS_PRECONDITION(cond, expl) AWS_ASSERT(cond)
-#define AWS_POSTCONDITION(cond, expl) AWS_ASSERT(cond)
+#define AWS_PRECONDITION_2(cond, expl) AWS_ASSERT(cond)
+#define AWS_PRECONDITION_1(cond) AWS_ASSERT(cond)
+#define AWS_POSTCONDITION_2(cond, expl) AWS_ASSERT(cond)
+#define AWS_POSTCONDITION_1(cond) AWS_ASSERT(cond)
 /* the C runtime does not give a way to check these properties,
  * but we can at least check that the pointer is valid */
 #define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
 #define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif
+
+#define AWS_PRECONDITION(...) GET_MACRO(__VA_ARGS__, AWS_PRECONDITION_2, AWS_PRECONDITION_1)(__VA_ARGS__)
+#define AWS_POSTCONDITION(...) GET_MACRO(__VA_ARGS__, AWS_POSTCONDITION_2, AWS_POSTCONDITION_1)(__VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
