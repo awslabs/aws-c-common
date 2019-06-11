@@ -128,7 +128,7 @@ bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struc
 
 bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
     bool rval = aws_array_eq_c_str(buf->buffer, buf->len, c_str);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
@@ -136,7 +136,7 @@ bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *con
 
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
     bool rval = aws_array_eq_c_str_ignore_case(buf->buffer, buf->len, c_str);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
@@ -360,7 +360,7 @@ bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_
     AWS_PRECONDITION(
         array || (array_len == 0),
         "Either input pointer [array_a] mustn't be NULL or input [array_len] mustn't be zero.");
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq_ignore_case(array, array_len, c_str, strlen(c_str));
@@ -388,7 +388,7 @@ bool aws_array_eq_c_str(const void *const array, const size_t array_len, const c
     AWS_PRECONDITION(
         array || (array_len == 0),
         "Either input pointer [array_a] mustn't be NULL or input [array_len] mustn't be zero.");
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
 
     /* Simpler implementation could have been:
      *   return aws_array_eq(array, array_len, c_str, strlen(c_str));
@@ -456,7 +456,7 @@ bool aws_byte_cursor_eq_byte_buf_ignore_case(
 
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
     bool rv = aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
@@ -464,7 +464,7 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const 
 
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
-    AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
+    AWS_PRECONDITION(c_str != NULL);
     bool rv = aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
