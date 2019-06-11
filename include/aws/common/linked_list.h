@@ -20,13 +20,6 @@
 
 #include <stddef.h>
 
-/**
- * from a pointer and a type of the struct containing the node
- * this will get you back to the pointer of the object. member is the name of
- * the instance of struct aws_linked_list_node in your struct.
- */
-#define AWS_CONTAINER_OF(ptr, type, member) ((type *)((uint8_t *)(ptr)-offsetof(type, member)))
-
 struct aws_linked_list_node {
     struct aws_linked_list_node *next;
     struct aws_linked_list_node *prev;
