@@ -652,8 +652,8 @@ int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional
 }
 
 struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
-    const struct aws_byte_cursor *const source,
-    aws_byte_predicate_fn *const predicate) {
+    const struct aws_byte_cursor *source,
+    aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
     AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor trimmed = *source;
@@ -667,8 +667,8 @@ struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
 }
 
 struct aws_byte_cursor aws_byte_cursor_left_trim_pred(
-    const struct aws_byte_cursor *const source,
-    aws_byte_predicate_fn *const predicate) {
+    const struct aws_byte_cursor *source,
+    aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
     AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor trimmed = *source;
@@ -683,8 +683,8 @@ struct aws_byte_cursor aws_byte_cursor_left_trim_pred(
 }
 
 struct aws_byte_cursor aws_byte_cursor_trim_pred(
-    const struct aws_byte_cursor *const source,
-    aws_byte_predicate_fn *const predicate) {
+    const struct aws_byte_cursor *source,
+    aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
     AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor left_trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
