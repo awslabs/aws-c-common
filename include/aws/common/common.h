@@ -120,9 +120,9 @@
  */
 #ifdef CBMC
 #define AWS_PRECONDITION_2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#define AWS_PRECONDITION_1(cond, explanation) __CPROVER_precondition((cond), #cond " check failed")
+#define AWS_PRECONDITION_1(cond) __CPROVER_precondition((cond), #cond " check failed")
 #define AWS_POSTCONDITION_2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#define AWS_POSTCONDITION_1(cond, explanation) __CPROVER_assert((cond), #cond " check failed")
+#define AWS_POSTCONDITION_1(cond) __CPROVER_assert((cond), #cond " check failed")
 #define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
 #else
