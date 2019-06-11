@@ -27,12 +27,13 @@ void aws_ring_buffer_clean_up_harness() {
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
 
-    aws_ring_buffer_clean_up(nondet_bool() ? &ring_buf : NULL);
+    /* operation under verification */
+    aws_ring_buffer_clean_up(&ring_buf);
 
     /* assertions */
     assert(ring_buf.allocator == NULL);
     assert(ring_buf.allocation == NULL);
-    assert(ring_buf.head.value == NULL);
-    assert(ring_buf.tail.value == NULL);
+    assert(aws_atomic_load_ptr(&ring_buf.head) == NULL);
+    assert(aws_atomic_load_ptr(&ring_buf.tail) == NULL);
     assert(ring_buf.allocation_end == NULL);
 }
