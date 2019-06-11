@@ -99,6 +99,11 @@ static int s_test_hash_table_create_find_fn(struct aws_allocator *allocator, voi
         TEST_VAL_STR_2);
 
     ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 2);
+
+    err_code = aws_hash_table_remove_element(&hash_table, pElem);
+    ASSERT_SUCCESS(err_code, "Hash Map remove element should have succeeded.");
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 1);
+
     aws_hash_table_clean_up(&hash_table);
     return 0;
 }
@@ -211,6 +216,13 @@ static int s_test_hash_table_string_create_find_fn(struct aws_allocator *allocat
         ((struct aws_string *)pElem->value)->len,
         "Returned value for binary bytes should have been %s",
         "hunter2");
+
+    aws_string_destroy((struct aws_string *)pElem->key);
+    aws_string_destroy(pElem->value);
+    ret = aws_hash_table_remove_element(&hash_table, pElem);
+    ASSERT_SUCCESS(ret, "Hash Map remove element should have succeeded.");
+    ASSERT_HASH_TABLE_ENTRY_COUNT(&hash_table, 2);
+
     aws_hash_table_clean_up(&hash_table);
 
     return 0;
