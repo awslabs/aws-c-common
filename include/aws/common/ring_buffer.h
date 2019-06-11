@@ -107,6 +107,7 @@ AWS_COMMON_API void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer,
 
 /**
  * Returns true if the memory in `buf` was vended by this ring buffer, false otherwise.
+ * Make sure `buf->buffer` and `ring_buffer->allocation` refer to the same memory region.
  */
 AWS_COMMON_API bool aws_ring_buffer_buf_belongs_to_pool(
     const struct aws_ring_buffer *ring_buffer,

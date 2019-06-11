@@ -40,6 +40,6 @@ void aws_ring_buffer_acquire_up_to_harness() {
         assert(aws_byte_buf_is_valid(&buf));
         assert(buf.capacity >= minimum_size && buf.capacity <= requested_size);
         assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
-        assert(buf.buffer >= ring_buf.allocation && (buf.buffer + buf.capacity) <= (ring_buf.allocation_end));
+        assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
     }
 }
