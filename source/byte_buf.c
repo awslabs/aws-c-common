@@ -36,7 +36,7 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
     buf->len = 0;
     buf->capacity = capacity;
     buf->allocator = allocator;
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf), "Output aws_byte_buf [buf] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return AWS_OP_SUCCESS;
 }
 
@@ -48,7 +48,7 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
     if (!src->buffer) {
         AWS_ZERO_STRUCT(*dest);
         dest->allocator = allocator;
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest), "Output aws_byte_buf [dest] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
         return AWS_OP_SUCCESS;
     }
 
@@ -60,7 +60,7 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
         return AWS_OP_ERR;
     }
     memcpy(dest->buffer, src->buffer, src->len);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest), "Output aws_byte_buf [dest] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
 
@@ -82,7 +82,7 @@ void aws_byte_buf_reset(struct aws_byte_buf *buf, bool zero_contents) {
 }
 
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input aws_byte_buf [buf] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     if (buf->allocator && buf->buffer) {
         aws_mem_release(buf->allocator, (void *)buf->buffer);
     }
@@ -93,52 +93,52 @@ void aws_byte_buf_clean_up(struct aws_byte_buf *buf) {
 }
 
 void aws_byte_buf_secure_zero(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input aws_byte_buf [buf] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     if (buf->buffer) {
         aws_secure_zero(buf->buffer, buf->capacity);
     }
     buf->len = 0;
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf), "Output aws_byte_buf [buf] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
 }
 
 void aws_byte_buf_clean_up_secure(struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input aws_byte_buf [buf] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     aws_byte_buf_secure_zero(buf);
     aws_byte_buf_clean_up(buf);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf), "Output aws_byte_buf [buf] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
 }
 
 bool aws_byte_buf_eq(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(a), "Input aws_byte_buf [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(a));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b));
     bool rval = aws_array_eq(a->buffer, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(a), "Output aws_byte_buf [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b));
     return rval;
 }
 
 bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(a), "Input aws_byte_buf [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(a));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b));
     bool rval = aws_array_eq_ignore_case(a->buffer, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(a), "Output aws_byte_buf [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b));
     return rval;
 }
 
 bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input aws_byte_buf [buf] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rval = aws_array_eq_c_str(buf->buffer, buf->len, c_str);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf), "Output aws_byte_buf [buf] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
 }
 
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf), "Input aws_byte_buf [buf] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rval = aws_array_eq_c_str_ignore_case(buf->buffer, buf->len, c_str);
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf), "Output aws_byte_buf [buf] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
 }
 
@@ -163,7 +163,7 @@ int aws_byte_buf_init_copy_from_cursor(
     if (src.len > 0) {
         memcpy(dest->buffer, src.ptr, src.len);
     }
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest), "Output aws_byte_buf [dest] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
 
@@ -278,20 +278,20 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(b), "Input aws_byte_cursor [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(b));
     bool rv = aws_array_eq(a->ptr, a->len, b->ptr, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b), "Output aws_byte_cursor [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b));
     return rv;
 }
 
 bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(b), "Input aws_byte_cursor [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(b));
     bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->ptr, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b), "Output aws_byte_cursor [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(b));
     return rv;
 }
 
@@ -435,48 +435,48 @@ uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
 }
 
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b));
     bool rv = aws_array_eq(a->ptr, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b));
     return rv;
 }
 
 bool aws_byte_cursor_eq_byte_buf_ignore_case(
     const struct aws_byte_cursor *const a,
     const struct aws_byte_buf *const b) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(a), "Input aws_byte_cursor [a] must be valid.");
-    AWS_PRECONDITION(aws_byte_buf_is_valid(b), "Input aws_byte_buf [b] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(a));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(b));
     bool rv = aws_array_eq_ignore_case(a->ptr, a->len, b->buffer, b->len);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a), "Output aws_byte_cursor [a] must be valid.");
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(b), "Output aws_byte_buf [b] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(a));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(b));
     return rv;
 }
 
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor), "Input aws_byte_cursor [cursor] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
     AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rv = aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "Output aws_byte_cursor [cursor] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
 }
 
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor), "Input aws_byte_cursor [cursor] must be valid.");
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
     AWS_PRECONDITION(c_str, "Input pointer [c_str] mustn't be NULL.");
     bool rv = aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor), "Output aws_byte_cursor [cursor] must be valid.");
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
 }
 
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input aws_byte_buf [to] must be valid.");
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input aws_byte_cursor [from] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
 
     if (to->capacity - to->len < from->len) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
@@ -488,8 +488,8 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
         to->len += from->len;
     }
 
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
 }
 
@@ -497,14 +497,14 @@ int aws_byte_buf_append_with_lookup(
     struct aws_byte_buf *AWS_RESTRICT to,
     const struct aws_byte_cursor *AWS_RESTRICT from,
     const uint8_t *lookup_table) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input aws_byte_buf [to] must be valid.");
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input aws_byte_cursor [from] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
     AWS_PRECONDITION(
         AWS_MEM_IS_READABLE(lookup_table, 256), "Input array [lookup_table] must be at least 256 bytes long.");
 
     if (to->capacity - to->len < from->len) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
         return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
     }
 
@@ -516,14 +516,14 @@ int aws_byte_buf_append_with_lookup(
         return AWS_OP_ERR;
     }
 
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(to), "Input aws_byte_buf [to] must be valid.");
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(from), "Input aws_byte_cursor [from] must be valid.");
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
     if (!to->allocator) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
@@ -536,8 +536,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
         size_t required_capacity = 0;
         if (aws_add_size_checked(to->capacity, missing_capacity, &required_capacity)) {
-            AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-            AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+            AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
             return AWS_OP_ERR;
         }
 
@@ -567,13 +567,13 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
                 new_capacity = required_capacity;
                 new_buffer = aws_mem_acquire(to->allocator, new_capacity);
                 if (new_buffer == NULL) {
-                    AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-                    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+                    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+                    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
                     return AWS_OP_ERR;
                 }
             } else {
-                AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-                AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+                AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+                AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
                 return AWS_OP_ERR;
             }
         }
@@ -611,8 +611,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
     to->len += from->len;
 
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(to), "Output aws_byte_buf [to] must be valid.");
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from), "Output aws_byte_cursor [from] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
 }
 
@@ -622,18 +622,18 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
     }
 
     if (requested_capacity <= buffer->capacity) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer), "Output aws_byte_buf [buffer] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_SUCCESS;
     }
 
     if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer), "Output aws_byte_buf [buffer] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_ERR;
     }
 
     buffer->capacity = requested_capacity;
 
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer), "Output aws_byte_buf [buffer] must be valid.");
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
     return AWS_OP_SUCCESS;
 }
 
@@ -644,7 +644,7 @@ int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional
 
     size_t requested_capacity = 0;
     if (AWS_UNLIKELY(aws_add_size_checked(buffer->len, additional_length, &requested_capacity))) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer), "Output aws_byte_buf [buffer] must be valid.");
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_ERR;
     }
 

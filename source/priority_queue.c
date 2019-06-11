@@ -22,11 +22,11 @@
 #define RIGHT_OF(index) (((index) << 1) + 2)
 
 static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
-    AWS_PRECONDITION(aws_priority_queue_is_valid(queue), "Input aws_prority_queue [queue] must be valid.");
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(
-        a < queue->container.length, "Input index [a] must be less than the length of the queue container.");
+        a < queue->container.length);
     AWS_PRECONDITION(
-        b < queue->container.length, "Input index [b] must be less than the length of the queue container.");
+        b < queue->container.length);
 
     aws_array_list_swap(&queue->container, a, b);
 
@@ -50,15 +50,15 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
             (*bp_b)->current_index = b;
         }
     }
-    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
 }
 
 /* Precondition: with the exception of the given root element, the container must be
  * in heap order */
 static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
-    AWS_PRECONDITION(aws_priority_queue_is_valid(queue), "Input aws_prority_queue [queue] must be valid.");
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(
-        root < queue->container.length, "Input index [root] must be less than the length of the queue container.");
+        root < queue->container.length);
 
     bool did_move = false;
 
@@ -98,15 +98,15 @@ static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
         }
     }
 
-    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     return did_move;
 }
 
 /* Precondition: Elements prior to the specified index must be in heap order. */
 static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
-    AWS_PRECONDITION(aws_priority_queue_is_valid(queue), "Input aws_prority_queue [queue] must be valid.");
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(
-        index < queue->container.length, "Input index [index] must be less than the length of the queue container.");
+        index < queue->container.length);
 
     bool did_move = false;
 
@@ -133,7 +133,7 @@ static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
         }
     }
 
-    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     return did_move;
 }
 
@@ -142,15 +142,15 @@ static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
  * In particular, the parent of the current index is a predecessor of all children of the current index.
  */
 static void s_sift_either(struct aws_priority_queue *queue, size_t index) {
-    AWS_PRECONDITION(aws_priority_queue_is_valid(queue), "Input aws_prority_queue [queue] must be valid.");
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(
-        index < queue->container.length, "Input index [index] must be less than the length of the queue container.");
+        index < queue->container.length);
 
     if (!index || !s_sift_up(queue, index)) {
         s_sift_down(queue, index);
     }
 
-    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
 }
 
 int aws_priority_queue_init_dynamic(
@@ -165,7 +165,7 @@ int aws_priority_queue_init_dynamic(
 
     int ret = aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
     if (ret == AWS_OP_SUCCESS) {
-        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     }
     return ret;
 }
@@ -182,7 +182,7 @@ void aws_priority_queue_init_static(
 
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
 
-    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue), "Output aws_prority_queue [queue] must be valid.");
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
 }
 
 bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
