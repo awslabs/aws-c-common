@@ -92,6 +92,11 @@ void aws_priority_queue_init_static(
     aws_priority_queue_compare_fn *pred);
 
 /**
+ * Checks that the backpointer at a specific index of the queue is valid.
+ */
+bool aws_backpointer_index_valid(const struct aws_priority_queue *const queue, size_t index);
+
+/**
  * Set of properties of a valid aws_priority_queue.
  */
 AWS_COMMON_API

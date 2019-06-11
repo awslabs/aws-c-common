@@ -25,6 +25,8 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(a < queue->container.length);
     AWS_PRECONDITION(b < queue->container.length);
+    AWS_PRECONDITION(aws_backpointer_index_valid(queue, a));
+    AWS_PRECONDITION(aws_backpointer_index_valid(queue, b));
 
     aws_array_list_swap(&queue->container, a, b);
 
@@ -49,6 +51,8 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
         }
     }
     AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
+    AWS_POSTCONDITION(aws_backpointer_index_valid(queue, a));
+    AWS_POSTCONDITION(aws_backpointer_index_valid(queue, b));
 }
 
 /* Precondition: with the exception of the given root element, the container must be
@@ -204,6 +208,14 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
         backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_current_size);
 
     return pred_is_valid && container_is_valid && backpointer_list_is_valid && backpointer_struct_is_valid;
+}
+
+bool aws_backpointer_index_valid(const struct aws_priority_queue *const queue, size_t index) {
+    if (queue->backpointers.data && index < queue->backpointers.length) {
+        struct aws_priority_queue_node *node = ((struct aws_priority_queue_node **)queue->backpointers.data)[index];
+        return node == NULL || AWS_MEM_IS_WRITABLE(node, sizeof(struct aws_priority_queue_node));
+    }
+    return true;
 }
 
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
