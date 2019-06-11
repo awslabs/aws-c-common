@@ -54,6 +54,7 @@ void aws_byte_cursor_compare_lookup_harness() {
     }
 
     /* assertions */
+    assert(aws_byte_cursor_compare_lookup(&lhs, &lhs, lookup_table) == 0);
     assert(aws_byte_cursor_is_valid(&lhs));
     assert(aws_byte_cursor_is_valid(&rhs));
     if (lhs.len != 0) {

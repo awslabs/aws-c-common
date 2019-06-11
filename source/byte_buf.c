@@ -717,8 +717,9 @@ bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_by
 int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(lhs->ptr, lhs->len));
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(rhs->ptr, rhs->len));
+    /* make sure we don't pass NULL pointers to memcmp */
+    AWS_PRECONDITION(lhs->ptr != NULL);
+    AWS_PRECONDITION(rhs->ptr != NULL);
     size_t comparison_length = lhs->len;
     if (comparison_length > rhs->len) {
         comparison_length = rhs->len;

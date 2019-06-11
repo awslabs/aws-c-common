@@ -51,6 +51,7 @@ void aws_byte_cursor_compare_lexical_harness() {
     }
 
     /* assertions */
+    assert(aws_byte_cursor_compare_lexical(&lhs, &lhs) == 0);
     assert(aws_byte_cursor_is_valid(&lhs));
     assert(aws_byte_cursor_is_valid(&rhs));
     if (lhs.len != 0) {
