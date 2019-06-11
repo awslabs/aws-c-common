@@ -23,10 +23,8 @@
 
 static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
-    AWS_PRECONDITION(
-        a < queue->container.length);
-    AWS_PRECONDITION(
-        b < queue->container.length);
+    AWS_PRECONDITION(a < queue->container.length);
+    AWS_PRECONDITION(b < queue->container.length);
 
     aws_array_list_swap(&queue->container, a, b);
 
@@ -57,8 +55,7 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
  * in heap order */
 static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
-    AWS_PRECONDITION(
-        root < queue->container.length);
+    AWS_PRECONDITION(root < queue->container.length);
 
     bool did_move = false;
 
@@ -105,8 +102,7 @@ static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
 /* Precondition: Elements prior to the specified index must be in heap order. */
 static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
-    AWS_PRECONDITION(
-        index < queue->container.length);
+    AWS_PRECONDITION(index < queue->container.length);
 
     bool did_move = false;
 
@@ -143,8 +139,7 @@ static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
  */
 static void s_sift_either(struct aws_priority_queue *queue, size_t index) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
-    AWS_PRECONDITION(
-        index < queue->container.length);
+    AWS_PRECONDITION(index < queue->container.length);
 
     if (!index || !s_sift_up(queue, index)) {
         s_sift_down(queue, index);
