@@ -34,7 +34,12 @@ void aws_hash_table_find_harness() {
 
     void *key;
     struct aws_hash_element *p_elem;
-    int rval = aws_hash_table_find(&map, key, nondet_bool() ? &p_elem : NULL);
+
+    /* Preconditions */
+    __CPROVER_assume(aws_hash_table_is_valid(&map));
+    __CPROVER_assume(AWS_OBJECT_PTR_IS_WRITABLE(&p_elem));
+
+    int rval = aws_hash_table_find(&map, key, &p_elem);
     assert(rval == AWS_OP_SUCCESS);
     if (p_elem) {
         assert(AWS_OBJECT_PTR_IS_READABLE(p_elem));
