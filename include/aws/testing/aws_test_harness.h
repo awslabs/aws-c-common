@@ -292,6 +292,8 @@ static int total_failures;
 
 #define ASSERT_STR_EQUALS(expected, got, ...)                                                                          \
     do {                                                                                                               \
+        ASSERT_NOT_NULL(expected);                                                                                     \
+        ASSERT_NOT_NULL(got);                                                                                          \
         const char *assert_expected = (expected);                                                                      \
         const char *assert_got = (got);                                                                                \
         if (strcmp(assert_expected, assert_got) != 0) {                                                                \
@@ -306,6 +308,8 @@ static int total_failures;
 
 #define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, ...)                                          \
     do {                                                                                                               \
+        ASSERT_NOT_NULL(expected);                                                                                     \
+        ASSERT_NOT_NULL(got);                                                                                          \
         const uint8_t *assert_ex_p = (const uint8_t *)(expected);                                                      \
         size_t assert_ex_s = (expected_size);                                                                          \
         const uint8_t *assert_got_p = (const uint8_t *)(got);                                                          \
