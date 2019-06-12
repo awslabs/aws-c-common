@@ -469,7 +469,7 @@ AWS_EXTERN_C_END
 /**
  */
 #define AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(literal)                                                                 \
-    { .ptr = (uint8_t *)(const char *)(literal), .len = sizeof(literal) - 1 }
+    (struct aws_byte_cursor) { .ptr = (uint8_t *)(const char *)(literal), .len = sizeof(literal) - 1 }
 
 /**
  * For creating a byte buffer from a null-terminated string literal.
