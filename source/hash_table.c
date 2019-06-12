@@ -93,7 +93,7 @@ static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry 
     AWS_PRECONDITION(hash_table_state_is_valid(map));
     size_t index = entry - map->slots;
     AWS_POSTCONDITION(index < map->size);
-    AWS_PRECONDITION(hash_table_state_is_valid(map));
+    AWS_POSTCONDITION(hash_table_state_is_valid(map));
     return index;
 }
 
@@ -232,7 +232,10 @@ int aws_hash_table_init(
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_key_fn,
     aws_hash_callback_destroy_fn *destroy_value_fn) {
-    AWS_PRECONDITION(map && alloc && hash_fn && equals_fn);
+    AWS_PRECONDITION(map != NULL);
+    AWS_PRECONDITION(alloc != NULL);
+    AWS_PRECONDITION(hash_fn != NULL);
+    AWS_PRECONDITION(equals_fn != NULL);
 
     struct hash_table_state template;
     template.hash_fn = hash_fn;
@@ -258,8 +261,11 @@ int aws_hash_table_init(
 }
 
 void aws_hash_table_clean_up(struct aws_hash_table *map) {
-    AWS_PRECONDITION(map);
-    AWS_PRECONDITION(map->p_impl == NULL || aws_hash_table_is_valid(map));
+    AWS_PRECONDITION(map != NULL);
+    AWS_PRECONDITION(
+        map->p_impl == NULL || aws_hash_table_is_valid(map),
+        "Input aws_hash_table [map] must be valid or hash_table_state pointer [map->p_impl] must be NULL, in case "
+        "aws_hash_table_clean_up was called twice.");
     struct hash_table_state *state = map->p_impl;
 
     /* Ensure that we're idempotent */
@@ -282,7 +288,11 @@ void aws_hash_table_swap(struct aws_hash_table *AWS_RESTRICT a, struct aws_hash_
 }
 
 void aws_hash_table_move(struct aws_hash_table *AWS_RESTRICT to, struct aws_hash_table *AWS_RESTRICT from) {
-    AWS_PRECONDITION(to != NULL && from != NULL && to != from && aws_hash_table_is_valid(from));
+    AWS_PRECONDITION(to != NULL);
+    AWS_PRECONDITION(from != NULL);
+    AWS_PRECONDITION(to != from);
+    AWS_PRECONDITION(aws_hash_table_is_valid(from));
+
     *to = *from;
     AWS_ZERO_STRUCT(*from);
     AWS_POSTCONDITION(aws_hash_table_is_valid(to));
@@ -393,9 +403,8 @@ static int s_find_entry1(
 }
 
 int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struct aws_hash_element **p_elem) {
-
     AWS_PRECONDITION(aws_hash_table_is_valid(map));
-    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(p_elem));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(p_elem), "Input aws_hash_element pointer [p_elem] must be writable.");
 
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
@@ -463,7 +472,9 @@ static struct hash_table_entry *s_emplace_item(
     }
 
     AWS_POSTCONDITION(hash_table_state_is_valid(state));
-    AWS_POSTCONDITION(rval >= &state->slots[0] && rval < &state->slots[state->size]);
+    AWS_POSTCONDITION(
+        rval >= &state->slots[0] && rval < &state->slots[state->size],
+        "Output hash_table_entry pointer [rval] must point in the slots of [state].");
     return rval;
 }
 
@@ -605,7 +616,9 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
 static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_entry *entry) {
     AWS_PRECONDITION(hash_table_state_is_valid(state));
     AWS_PRECONDITION(state->entry_count > 0);
-    AWS_PRECONDITION(entry >= &state->slots[0] && entry < &state->slots[state->size]);
+    AWS_PRECONDITION(
+        entry >= &state->slots[0] && entry < &state->slots[state->size],
+        "Input hash_table_entry [entry] pointer must point in the available slots.");
     state->entry_count--;
 
     /* Shift subsequent entries back until we find an entry that belongs at its
@@ -648,8 +661,11 @@ int aws_hash_table_remove(
     struct aws_hash_element *p_value,
     int *was_present) {
     AWS_PRECONDITION(aws_hash_table_is_valid(map));
-    AWS_PRECONDITION(p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value));
-    AWS_PRECONDITION(was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present));
+    AWS_PRECONDITION(
+        p_value == NULL || AWS_OBJECT_PTR_IS_WRITABLE(p_value), "Input pointer [p_value] must be NULL or writable.");
+    AWS_PRECONDITION(
+        was_present == NULL || AWS_OBJECT_PTR_IS_WRITABLE(was_present),
+        "Input pointer [was_present] must be NULL or writable.");
 
     struct hash_table_state *state = map->p_impl;
     uint64_t hash_code = s_hash_for(state, key);
@@ -688,7 +704,7 @@ int aws_hash_table_remove(
 
 int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value) {
     AWS_PRECONDITION(aws_hash_table_is_valid(map));
-    AWS_PRECONDITION(p_value);
+    AWS_PRECONDITION(p_value != NULL);
 
     struct hash_table_state *state = map->p_impl;
     struct hash_table_entry *entry = AWS_CONTAINER_OF(p_value, struct hash_table_entry, element);
@@ -778,6 +794,7 @@ bool aws_hash_table_eq(
  */
 static inline void s_get_next_element(struct aws_hash_iter *iter, size_t start_slot) {
     AWS_PRECONDITION(iter != NULL);
+    AWS_PRECONDITION(aws_hash_table_is_valid(iter->map));
     struct hash_table_state *state = iter->map->p_impl;
     size_t limit = iter->limit;
 
@@ -806,14 +823,18 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     iter.map = map;
     iter.limit = state->size;
     s_get_next_element(&iter, 0);
-    AWS_POSTCONDITION(iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_POSTCONDITION(
+        iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
     AWS_POSTCONDITION(aws_hash_iter_is_valid(&iter));
     return iter;
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
     AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
-    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_PRECONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "Input aws_hash_iter [iter] must either be done, or ready to use.");
     /*
      * SIZE_MAX is a valid (non-terminal) value for iter->slot in the event that
      * we delete slot 0. See comments in aws_hash_iter_delete.
@@ -821,8 +842,12 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
      * As such we must use == rather than >= here.
      */
     bool rval = (iter->slot == iter->limit);
-    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
-    AWS_POSTCONDITION(rval == (iter->status == AWS_HASH_ITER_STATUS_DONE));
+    AWS_POSTCONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
+    AWS_POSTCONDITION(
+        rval == (iter->status == AWS_HASH_ITER_STATUS_DONE),
+        "Output bool [rval] must be true if and only if the status of [iter] is DONE.");
     AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
     return rval;
 }
@@ -833,14 +858,19 @@ void aws_hash_iter_next(struct aws_hash_iter *iter) {
 #pragma CPROVER check disable "unsigned-overflow"
     s_get_next_element(iter, iter->slot + 1);
 #pragma CPROVER check pop
-    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_POSTCONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
     AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
 }
 
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
-    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_PRECONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE, "Input aws_hash_iter [iter] must be ready for use.");
     AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
-    AWS_PRECONDITION(iter->map->p_impl->entry_count > 0);
+    AWS_PRECONDITION(
+        iter->map->p_impl->entry_count > 0,
+        "The hash_table_state pointed by input [iter] must contain at least one entry.");
 
     struct hash_table_state *state = iter->map->p_impl;
     if (destroy_contents) {
@@ -884,7 +914,9 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
     iter->slot--;
 #pragma CPROVER check pop
     iter->status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
-    AWS_POSTCONDITION(iter->status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
+    AWS_POSTCONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DELETE_CALLED,
+        "The status of output aws_hash_iter [iter] must be DELETE_CALLED.");
     AWS_POSTCONDITION(aws_hash_iter_is_valid(iter));
 }
 

@@ -13,7 +13,7 @@
  * times */
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     /* Leave it as non-det as possible */
-    AWS_PRECONDITION(aws_hash_table_is_valid(map));
+    AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input hash_table [map] must be valid.");
     struct aws_hash_iter rval;
     rval.limit = map->p_impl->size;
     __CPROVER_assume(rval.slot <= rval.limit);
@@ -22,7 +22,9 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
-    AWS_PRECONDITION(iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
+    AWS_PRECONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "Input aws_hash_iter [iter] status should either be done or ready to use.");
     bool rval = iter->slot == iter->limit;
     assert(rval == (iter->status == AWS_HASH_ITER_STATUS_DONE));
     return rval;
