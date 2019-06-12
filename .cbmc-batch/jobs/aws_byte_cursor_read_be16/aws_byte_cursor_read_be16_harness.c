@@ -13,44 +13,13 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/byte_buf.h>
-#include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
+#define DEST_TYPE uint16_t
+#define BYTE_WIDTH 2
+#define BYTE_CURSOR_READ aws_byte_cursor_read_be16
+#define AWS_NTOH aws_ntoh16
+
+#include <proof_helpers/aws_byte_cursor_read_common.h>
 
 void aws_byte_cursor_read_be16_harness() {
-    /* parameters */
-    struct aws_byte_cursor cur;
-    size_t length;
-    uint16_t *dest = can_fail_malloc(length);
-
-    /* assumptions */
-    ensure_byte_cursor_has_allocated_buffer_member(&cur);
-    __CPROVER_assume(aws_byte_cursor_is_valid(&cur));
-
-    /* save current state of the data structure */
-    struct aws_byte_cursor old_cur = cur;
-    struct store_byte_from_buffer old_byte_from_cur;
-    save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
-
-    /* operation under verification */
-    if (aws_byte_cursor_read_be16((nondet_bool() ? &cur : NULL), dest)) {
-        uint16_t dest_copy;
-        memcpy(&dest_copy, old_cur.ptr, 2);
-        dest_copy = aws_ntoh16(dest_copy);
-        assert_bytes_match((uint8_t *)&dest_copy, (uint8_t *)dest, 2);
-        /* the following assertions are included, because aws_byte_cursor_read internally uses
-         * aws_byte_cursor_advance_nospec and it copies the bytes from the advanced cursor to *dest
-         */
-        assert(2 <= old_cur.len && old_cur.len <= (SIZE_MAX >> 1));
-        assert(cur.ptr == old_cur.ptr + 2);
-        assert(cur.len == old_cur.len - 2);
-    } else {
-        assert(cur.len == old_cur.len);
-        if (cur.len != 0) {
-            assert_byte_from_buffer_matches(cur.ptr, &old_byte_from_cur);
-        }
-    }
-
-    /* assertions */
-    assert(aws_byte_cursor_is_valid(&cur));
+    aws_byte_cursor_read_common_harness();
 }
