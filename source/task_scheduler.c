@@ -17,6 +17,8 @@
 
 #include <aws/common/logging.h>
 
+#include <inttypes.h>
+
 static const size_t DEFAULT_QUEUE_SIZE = 7;
 
 const char *aws_task_status_to_c_string(enum aws_task_status status) {
@@ -138,7 +140,7 @@ void aws_task_scheduler_schedule_future(
 
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Scheduling %s task for future execution at time %zu",
+        "id=%p: Scheduling %s task for future execution at time %" PRIu64,
         (void *)task,
         task->type_tag,
         time_to_run);
