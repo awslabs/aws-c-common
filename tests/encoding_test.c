@@ -347,14 +347,16 @@ static int s_run_base64_encoding_test_case(
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
-        test_str,
-        test_str_size,
-        output.buffer,
-        output_size,
-        "Decode output should have been {%s} (len=%zu).",
-        test_str,
-        test_str_size);
+    if (test_str_size > 0) {
+        ASSERT_BIN_ARRAYS_EQUALS(
+            test_str,
+            test_str_size,
+            output.buffer,
+            output_size,
+            "Decode output should have been {%s} (len=%zu).",
+            test_str,
+            test_str_size);
+    }
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,

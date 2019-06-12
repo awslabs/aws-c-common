@@ -292,10 +292,10 @@ static int total_failures;
 
 #define ASSERT_STR_EQUALS(expected, got, ...)                                                                          \
     do {                                                                                                               \
-        ASSERT_NOT_NULL(expected);                                                                                     \
-        ASSERT_NOT_NULL(got);                                                                                          \
         const char *assert_expected = (expected);                                                                      \
         const char *assert_got = (got);                                                                                \
+        ASSERT_NOT_NULL(assert_expected);                                                                              \
+        ASSERT_NOT_NULL(assert_got);                                                                                   \
         if (strcmp(assert_expected, assert_got) != 0) {                                                                \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD, "%sExpected: \"%s\"; got: \"%s\": ", FAIL_PREFIX, assert_expected, assert_got); \
@@ -308,12 +308,12 @@ static int total_failures;
 
 #define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, ...)                                          \
     do {                                                                                                               \
-        ASSERT_NOT_NULL(expected);                                                                                     \
-        ASSERT_NOT_NULL(got);                                                                                          \
         const uint8_t *assert_ex_p = (const uint8_t *)(expected);                                                      \
         size_t assert_ex_s = (expected_size);                                                                          \
         const uint8_t *assert_got_p = (const uint8_t *)(got);                                                          \
         size_t assert_got_s = (got_size);                                                                              \
+        ASSERT_NOT_NULL(assert_ex_p);                                                                                  \
+        ASSERT_NOT_NULL(assert_got_p);                                                                                 \
         if (assert_ex_s != assert_got_s) {                                                                             \
             fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
