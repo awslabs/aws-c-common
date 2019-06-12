@@ -303,6 +303,17 @@ int aws_hash_table_remove(
     int *was_present);
 
 /**
+ * Removes element already known (typically by find()).
+ *
+ * p_value should point to a valid element returned by create() or find().
+ *
+ * NOTE: DO NOT call this method from inside of a aws_hash_table_foreach callback, return
+ * AWS_COMMON_HASH_TABLE_ITER_DELETE instead.
+ */
+AWS_COMMON_API
+int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value);
+
+/**
  * Iterates through every element in the map and invokes the callback on
  * that item. Iteration is performed in an arbitrary, implementation-defined
  * order, and is not guaranteed to be consistent across invocations.
