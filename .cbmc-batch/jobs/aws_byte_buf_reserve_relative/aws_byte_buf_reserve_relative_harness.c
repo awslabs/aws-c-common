@@ -25,7 +25,7 @@ void aws_byte_buf_reserve_relative_harness() {
     size_t requested_capacity;
     int rval = aws_byte_buf_reserve_relative(&buf, requested_capacity);
 
-    if (rval == AWS_OP_SUCCESS) {
+    if (rval == AWS_OP_SUCC) {
         assert(buf.capacity >= (old.len + requested_capacity));
         assert(aws_byte_buf_has_allocator(&buf));
     }

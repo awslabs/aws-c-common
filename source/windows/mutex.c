@@ -22,7 +22,7 @@ AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(struct aws_mutex));
 
 int aws_mutex_init(struct aws_mutex *mutex) {
     InitializeSRWLock(AWSMUTEX_TO_WINDOWS(mutex));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /* turn off unused named parameter warning on msvc.*/
@@ -35,14 +35,14 @@ void aws_mutex_clean_up(struct aws_mutex *mutex) {}
 
 int aws_mutex_lock(struct aws_mutex *mutex) {
     AcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
     BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
 
     if (!res) {
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
@@ -50,7 +50,7 @@ int aws_mutex_try_lock(struct aws_mutex *mutex) {
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
     ReleaseSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #ifdef _MSC_VER

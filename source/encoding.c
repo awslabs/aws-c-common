@@ -84,7 +84,7 @@ int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
 
     *encoded_length = temp;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
@@ -111,7 +111,7 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
     output->buffer[written] = '\0';
     output->len = encoded_len;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hex_encode_append_dynamic(
@@ -138,7 +138,7 @@ int aws_hex_encode_append_dynamic(
 
     output->len += encoded_len;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
@@ -170,7 +170,7 @@ int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     }
 
     *decoded_len = temp >> 1;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output) {
@@ -216,7 +216,7 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
 
     output->len = decoded_length;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
@@ -238,7 +238,7 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 
     *encoded_len = tmp;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to_decode, size_t *decoded_len) {
@@ -250,7 +250,7 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
 
     if (len == 0) {
         *decoded_len = 0;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     if (AWS_UNLIKELY(len & 0x03)) {
@@ -272,7 +272,7 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
     }
 
     *decoded_len = (tmp / 4 - padding);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
@@ -300,7 +300,7 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
         output->len = encoded_length;
         aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer, to_encode->len);
         output->buffer[encoded_length] = 0;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     size_t buffer_length = to_encode->len;
@@ -338,7 +338,7 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     output->buffer[encoded_length] = 0;
 
     output->len = encoded_length;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *value, int8_t allow_sentinal) {
@@ -346,7 +346,7 @@ static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *v
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
     if (decode_value != 0xDD && (decode_value != BASE64_SENTIANAL_VALUE || allow_sentinal)) {
         *value = decode_value;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return AWS_OP_ERR;
@@ -370,7 +370,7 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
         }
 
         output->len = result;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     int64_t block_count = (int64_t)to_decode->len / 4;
@@ -413,5 +413,5 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
         }
     }
     output->len = decoded_length;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }

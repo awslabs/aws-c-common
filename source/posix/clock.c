@@ -46,7 +46,7 @@ static int s_legacy_get_time(uint64_t *timestamp) {
     }
 
     *timestamp = tv.tv_sec * NS_PER_SEC + tv.tv_usec * 1000;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #    if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
@@ -70,7 +70,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
         }
 
         *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return s_legacy_get_time(timestamp);
@@ -88,7 +88,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
         }
 
         *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
     return s_legacy_get_time(timestamp);
 }
@@ -116,7 +116,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_sys_clock_get_ticks(uint64_t *timestamp) {
@@ -129,6 +129,6 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     }
 
     *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 #endif /* defined(__MACH__) */

@@ -264,7 +264,7 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
     ASSERT_TRUE(aws_linked_list_empty(&a));
     ASSERT_TRUE(aws_linked_list_empty(&b));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)

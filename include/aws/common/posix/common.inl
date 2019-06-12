@@ -25,7 +25,7 @@ AWS_EXTERN_C_BEGIN
 static inline int aws_private_convert_and_raise_error_code(int error_code) {
     switch (error_code) {
         case 0:
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         case EINVAL:
             return aws_raise_error(AWS_ERROR_MUTEX_NOT_INIT);
         case EBUSY:

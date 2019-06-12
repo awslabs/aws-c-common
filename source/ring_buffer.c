@@ -31,7 +31,7 @@ int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator 
     aws_atomic_init_ptr(&ring_buf->tail, ring_buf->allocation);
     ring_buf->allocation_end = ring_buf->allocation + size;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
@@ -61,7 +61,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
         aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     /* you'll constantly bounce between the next two branches as the ring buffer is traversed. */
@@ -72,7 +72,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         if (space >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
         /* After N wraps */
     } else if (tail_cpy < head_cpy) {
@@ -80,13 +80,13 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
 
         if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
     }
 
@@ -122,7 +122,7 @@ int aws_ring_buffer_acquire_up_to(
         aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + allocation_size);
         aws_atomic_store_ptr(&ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, allocation_size);
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
     /* you'll constantly bounce between the next two branches as the ring buffer is traversed. */
     /* after N + 1 wraps */
@@ -137,7 +137,7 @@ int aws_ring_buffer_acquire_up_to(
         if (returnable_size >= minimum_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + returnable_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
         /* after N wraps */
     } else if (tail_cpy < head_cpy) {
@@ -148,26 +148,26 @@ int aws_ring_buffer_acquire_up_to(
         if (head_space >= requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
 
         if (tail_space > requested_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
 
         /* now vend as much as possible, once again preferring head space. */
         if (head_space >= minimum_size && head_space >= tail_space) {
             aws_atomic_store_ptr(&ring_buf->head, head_cpy + head_space);
             *dest = aws_byte_buf_from_empty_array(head_cpy, head_space);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
 
         if (tail_space > minimum_size) {
             aws_atomic_store_ptr(&ring_buf->head, ring_buf->allocation + tail_space - 1);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, tail_space - 1);
-            return AWS_OP_SUCCESS;
+            return AWS_OP_SUCC;
         }
     }
 

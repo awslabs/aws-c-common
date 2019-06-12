@@ -68,7 +68,7 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
         }
 
         struct aws_task **task_ptrptr = NULL;
-        if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&task_ptrptr) == AWS_OP_SUCCESS) {
+        if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&task_ptrptr) == AWS_OP_SUCC) {
             if ((*task_ptrptr)->timestamp < timestamp) {
                 timestamp = (*task_ptrptr)->timestamp;
             }
@@ -156,7 +156,7 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
 
         /* Check if timed_queue has a task which is sooner */
         struct aws_task **timed_queue_task_ptrptr = NULL;
-        if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCCESS) {
+        if (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCC) {
             if ((*timed_queue_task_ptrptr)->timestamp <= current_time) {
                 if ((*timed_queue_task_ptrptr)->timestamp < timed_list_task->timestamp) {
                     /* Take task from timed_queue */
@@ -175,7 +175,7 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
 
     /* Simpler loop that moves remaining valid tasks from timed_queue */
     struct aws_task **timed_queue_task_ptrptr = NULL;
-    while (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCCESS) {
+    while (aws_priority_queue_top(&scheduler->timed_queue, (void **)&timed_queue_task_ptrptr) == AWS_OP_SUCC) {
         if ((*timed_queue_task_ptrptr)->timestamp > current_time) {
             break;
         }

@@ -159,7 +159,7 @@ int aws_priority_queue_init_dynamic(
     AWS_ZERO_STRUCT(queue->backpointers);
 
     int ret = aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
-    if (ret == AWS_OP_SUCCESS) {
+    if (ret == AWS_OP_SUCC) {
         AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     }
     return ret;
@@ -258,7 +258,7 @@ int aws_priority_queue_push_ref(
 
     s_sift_up(queue, aws_array_list_length(&queue->container) - 1);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 
 backpointer_update_failed:
     /* Failed to initialize or grow the backpointer array, back out the node addition */
@@ -291,7 +291,7 @@ static int s_remove_node(struct aws_priority_queue *queue, void *item, size_t it
         s_sift_either(queue, item_index);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_priority_queue_remove(

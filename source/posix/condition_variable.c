@@ -36,7 +36,7 @@ int aws_condition_variable_init(struct aws_condition_variable *condition_variabl
         return aws_raise_error(AWS_ERROR_COND_VARIABLE_INIT_FAILED);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
@@ -50,7 +50,7 @@ int aws_condition_variable_notify_one(struct aws_condition_variable *condition_v
         return process_error_code(err_code);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
@@ -60,7 +60,7 @@ int aws_condition_variable_notify_all(struct aws_condition_variable *condition_v
         return process_error_code(err_code);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
@@ -70,7 +70,7 @@ int aws_condition_variable_wait(struct aws_condition_variable *condition_variabl
         return process_error_code(err_code);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_condition_variable_wait_for(
@@ -97,5 +97,5 @@ int aws_condition_variable_wait_for(
         return process_error_code(err_code);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }

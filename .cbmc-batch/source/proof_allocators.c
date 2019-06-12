@@ -61,7 +61,7 @@ static struct aws_allocator s_can_fail_allocator_static = {
 
 void *bounded_calloc(size_t num, size_t size) {
     size_t required_bytes;
-    __CPROVER_assume(aws_mul_size_checked(num, size, &required_bytes) == AWS_OP_SUCCESS);
+    __CPROVER_assume(aws_mul_size_checked(num, size, &required_bytes) == AWS_OP_SUCC);
     __CPROVER_assume(required_bytes <= MAX_MALLOC);
     return calloc(num, size);
 }

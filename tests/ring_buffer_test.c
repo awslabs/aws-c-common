@@ -62,7 +62,7 @@ static int s_test_1_to_1_acquire_release_wraps(struct aws_allocator *allocator, 
 
     aws_ring_buffer_clean_up(&ring_buffer);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(ring_buffer_1_to_1_acquire_release_wraps_test, s_test_1_to_1_acquire_release_wraps)
@@ -100,7 +100,7 @@ static int s_test_release_after_full(struct aws_allocator *allocator, void *ctx)
 
     aws_ring_buffer_clean_up(&ring_buffer);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(ring_buffer_release_after_full_test, s_test_release_after_full)
@@ -150,7 +150,7 @@ static int s_test_acquire_up_to(struct aws_allocator *allocator, void *ctx) {
 
     aws_ring_buffer_clean_up(&ring_buffer);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(ring_buffer_acquire_up_to_test, s_test_acquire_up_to)
@@ -214,7 +214,7 @@ static int s_test_acquire_tail_always_chases_head(struct aws_allocator *allocato
     ASSERT_TRUE(aws_ring_buffer_buf_belongs_to_pool(&ring_buffer, &vended_buffer_2));
     aws_ring_buffer_clean_up(&ring_buffer);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(ring_buffer_acquire_tail_always_chases_head_test, s_test_acquire_tail_always_chases_head)
@@ -380,7 +380,7 @@ static int s_test_acquire_any_muti_threaded(
 
     ASSERT_FALSE(test_data.match_failed);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static int s_test_acquire_multi_threaded(struct aws_allocator *allocator, void *ctx) {

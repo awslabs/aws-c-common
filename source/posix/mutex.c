@@ -25,7 +25,7 @@ void aws_mutex_clean_up(struct aws_mutex *mutex) {
 int aws_mutex_init(struct aws_mutex *mutex) {
     pthread_mutexattr_t attr;
     int err_code = pthread_mutexattr_init(&attr);
-    int return_code = AWS_OP_SUCCESS;
+    int return_code = AWS_OP_SUCC;
 
     if (!err_code) {
         if ((err_code = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL)) ||

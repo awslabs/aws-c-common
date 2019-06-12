@@ -148,7 +148,7 @@ bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor);
  * aws_byte_buf_clean_up(dest).
  * Dest capacity and len will be equal to the src len. Allocator of the dest will be identical with parameter allocator.
  * If src buffer is null the dest will have a null buffer with a len and a capacity of 0
- * Returns AWS_OP_SUCCESS in case of success or AWS_OP_ERR when memory can't be allocated.
+ * Returns AWS_OP_SUCC in case of success or AWS_OP_ERR when memory can't be allocated.
  */
 AWS_COMMON_API
 int aws_byte_buf_init_copy_from_cursor(

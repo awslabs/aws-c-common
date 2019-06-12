@@ -70,7 +70,7 @@ AWS_COMMON_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a * b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
@@ -81,7 +81,7 @@ AWS_COMMON_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a * b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
@@ -92,7 +92,7 @@ AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b);
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a + b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
@@ -103,7 +103,7 @@ AWS_COMMON_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a + b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
@@ -130,7 +130,7 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 
 /**
  * Multiplies a * b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCC.
  */
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
@@ -157,7 +157,7 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
 
 /**
  * Adds a + b and returns the result in *r. If the result
- * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCC.
  */
 
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
@@ -185,7 +185,7 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x) {
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
     if (n == 0) {
         *result = 1;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
     if (n > SIZE_MAX_POWER_OF_TWO) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
@@ -202,7 +202,7 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 #endif
     n++;
     *result = n;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #if _MSC_VER

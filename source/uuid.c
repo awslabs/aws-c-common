@@ -75,7 +75,7 @@ int aws_uuid_init_from_str(struct aws_uuid *uuid, const struct aws_byte_cursor *
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_uuid_to_str(const struct aws_uuid *uuid, struct aws_byte_buf *output) {
@@ -105,7 +105,7 @@ int aws_uuid_to_str(const struct aws_uuid *uuid, struct aws_byte_buf *output) {
 
     output->len += AWS_UUID_STR_LEN - 1;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 bool aws_uuid_equals(const struct aws_uuid *a, const struct aws_uuid *b) {

@@ -41,7 +41,7 @@ void aws_hash_table_remove_harness() {
 
     int rval = aws_hash_table_remove(&map, key, get_p_elem ? &p_elem : NULL, track_was_present ? &was_present : NULL);
     assert(aws_hash_table_is_valid(&map));
-    if (rval == AWS_OP_SUCCESS) {
+    if (rval == AWS_OP_SUCC) {
         if (track_was_present) {
             assert(map.p_impl->entry_count == old_state.entry_count - was_present);
         } else {

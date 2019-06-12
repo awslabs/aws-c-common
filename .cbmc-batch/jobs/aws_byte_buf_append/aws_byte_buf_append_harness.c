@@ -33,7 +33,7 @@ void aws_byte_buf_append_harness() {
     /* save current state of the data structure */
     struct aws_byte_cursor from_old = from;
 
-    if (aws_byte_buf_append(&to, &from) == AWS_OP_SUCCESS) {
+    if (aws_byte_buf_append(&to, &from) == AWS_OP_SUCC) {
         assert(to.len == to_old.len + from.len);
     } else {
         /* if the operation return an error, to must not change */

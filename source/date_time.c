@@ -314,7 +314,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
     }
 
     /* ISO8601 supports date only with no time portion. state ==ON_MONTH_DAY catches this case. */
-    return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
+    return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCC : AWS_OP_ERR;
 }
 
 static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struct tm *parsed_time) {
@@ -434,7 +434,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
     }
 
     /* ISO8601 supports date only with no time portion. state ==ON_MONTH_DAY catches this case. */
-    return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCCESS : AWS_OP_ERR;
+    return (state == FINISHED || state == ON_MONTH_DAY) && !error ? AWS_OP_SUCC : AWS_OP_ERR;
 }
 
 static int s_parse_rfc_822(
@@ -569,7 +569,7 @@ static int s_parse_rfc_822(
         }
     }
 
-    return error || state != ON_TZ ? AWS_OP_ERR : AWS_OP_SUCCESS;
+    return error || state != ON_TZ ? AWS_OP_ERR : AWS_OP_SUCC;
 }
 
 int aws_date_time_init_from_str_cursor(
@@ -644,7 +644,7 @@ int aws_date_time_init_from_str_cursor(
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_date_time_init_from_str(
@@ -669,7 +669,7 @@ static inline int s_date_to_str(const struct tm *tm, const char *format_str, str
 
     output_buf->len += bytes_written;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_date_time_to_local_time_str(

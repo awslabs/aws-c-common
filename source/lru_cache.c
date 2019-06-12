@@ -76,7 +76,7 @@ int aws_lru_cache_find(struct aws_lru_cache *cache, const void *key, void **p_va
     aws_linked_list_remove(&cache_node->node);
     aws_linked_list_push_front(&cache->list, &cache_node->node);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_value) {
@@ -119,7 +119,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
         aws_hash_table_remove(&cache->table, entry_to_remove->key, NULL, NULL);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_lru_cache_remove(struct aws_lru_cache *cache, const void *key) {

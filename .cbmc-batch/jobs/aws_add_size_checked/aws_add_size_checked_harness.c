@@ -10,7 +10,7 @@
  *
  * Assertions:
  *     - r does not overflow, if aws_add_u32_checked or
- *       aws_add_u64_checked functions return AWS_OP_SUCCESS
+ *       aws_add_u64_checked functions return AWS_OP_SUCC
  */
 void aws_add_size_checked_harness() {
     if (nondet_bool()) {

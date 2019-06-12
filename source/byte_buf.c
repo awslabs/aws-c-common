@@ -37,7 +37,7 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
     buf->capacity = capacity;
     buf->allocator = allocator;
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allocator, const struct aws_byte_buf *src) {
@@ -49,7 +49,7 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
         AWS_ZERO_STRUCT(*dest);
         dest->allocator = allocator;
         AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     *dest = *src;
@@ -61,7 +61,7 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
     }
     memcpy(dest->buffer, src->buffer, src->len);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
@@ -158,7 +158,7 @@ int aws_byte_buf_init_copy_from_cursor(
         memcpy(dest->buffer, src.ptr, src.len);
     }
     AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 bool aws_byte_cursor_next_split(
@@ -240,7 +240,7 @@ int aws_byte_cursor_split_on_char_n(
         ++split_count;
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_cursor_split_on_char(
@@ -268,7 +268,7 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     }
 
     va_end(ap);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 bool aws_byte_cursor_eq(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b) {
@@ -466,7 +466,7 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_buf_append_with_lookup(
@@ -493,7 +493,7 @@ int aws_byte_buf_append_with_lookup(
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
@@ -588,7 +588,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
@@ -598,7 +598,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
 
     if (requested_capacity <= buffer->capacity) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
@@ -609,7 +609,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
     buffer->capacity = requested_capacity;
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {

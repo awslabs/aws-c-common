@@ -50,7 +50,7 @@ Every API has a specific set of styles and conventions. We'll outline them here.
 library in the AWS C SDK ecosystem.
 
 #### Error handling
-Every function that returns an `int` type, returns `AWS_OP_SUCCESS` ( 0 ) or `AWS_OP_ERR` (-1) on failure. To retrieve
+Every function that returns an `int` type, returns `AWS_OP_SUCC` ( 0 ) or `AWS_OP_ERR` (-1) on failure. To retrieve
 the error code, use the function `aws_last_error()`. Each error code also has a corresponding error string that can be
 accessed via the `aws_error_str()` function.
 
@@ -67,7 +67,7 @@ functions are available, the variants should be named like `new_x` or `destroy_x
 
 Any function that initializes an existing object will be suffixed with `init`. These objects will have a corresponding
 `clean_up` function if necessary. In these cases, you are responsible for making the decisions for how your object is
-allocated. The `init` functions return `AWS_OP_SUCCESS` ( 0 ) or `AWS_OP_ERR` (-1) on failure. If several `init` or
+allocated. The `init` functions return `AWS_OP_SUCC` ( 0 ) or `AWS_OP_ERR` (-1) on failure. If several `init` or
 `clean_up` functions are available, they should be named like `init_x` or `clean_up_x` (e.g. `init_static` or
 `clean_up_secure`).
 
@@ -95,7 +95,7 @@ a thread barrier it should be a complete ownership hand-off. Bias towards, "if I
 * Do not expose blocking APIs.
 
 ### Error Handling
-* For APIs returning an `int` error code. The only acceptable return types are `AWS_OP_SUCCESS` and `AWS_OP_ERR`. Before
+* For APIs returning an `int` error code. The only acceptable return types are `AWS_OP_SUCC` and `AWS_OP_ERR`. Before
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.
 * For APIs returning an allocated instance of an object, return the memory on success, and `NULL` on failure. Before
 returning control to the caller, if you have an error to raise, use the `aws_raise_error()` function.

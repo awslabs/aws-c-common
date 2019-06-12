@@ -251,7 +251,7 @@ AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
  * Due to the recursive inclusion of error.h and common.h, we need to define these
  * before including error.h
  */
-#define AWS_OP_SUCCESS (0)
+#define AWS_OP_SUCC (0)
 #define AWS_OP_ERR (-1)
 
 #include <aws/common/error.h>
@@ -307,7 +307,7 @@ AWS_COMMON_API
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size);
 
 /**
- * Allocates a block of memory for an array of num elements, each of them size bytes long, and initializes all its bits to zero. 
+ * Allocates a block of memory for an array of num elements, each of them size bytes long, and initializes all its bits to zero.
  * Returns null on failure.
  */
 AWS_COMMON_API

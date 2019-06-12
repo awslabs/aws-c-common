@@ -236,7 +236,7 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents);
 /**
  * Attempts to locate an element at key.  If the element is found, a
  * pointer to the value is placed in *p_elem; if it is not found,
- * *pElem is set to NULL. Either way, AWS_OP_SUCCESS is returned.
+ * *pElem is set to NULL. Either way, AWS_OP_SUCC is returned.
  *
  * This method does not change the state of the hash table. Therefore, it
  * is safe to call _find from multiple threads on the same hash table,
@@ -259,7 +259,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
  * If was_created is non-NULL, *was_created is set to 0 if an existing
  * element was found, or 1 is a new element was created.
  *
- * Returns AWS_OP_SUCCESS if an item was found or created.
+ * Returns AWS_OP_SUCC if an item was found or created.
  * Raises AWS_ERROR_OOM if hash table expansion was required and memory
  * allocation failed.
  */
@@ -278,14 +278,14 @@ int aws_hash_table_create(
  * If was_created is non-NULL, *was_created is set to 0 if an existing
  * element was found, or 1 is a new element was created.
  *
- * Returns AWS_OP_SUCCESS if an item was found or created.
+ * Returns AWS_OP_SUCC if an item was found or created.
  * Raises AWS_ERROR_OOM if hash table expansion was required and memory
  */
 AWS_COMMON_API
 int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value, int *was_created);
 
 /**
- * Removes element at key. Always returns AWS_OP_SUCCESS.
+ * Removes element at key. Always returns AWS_OP_SUCC.
  *
  * If pValue is non-NULL, the existing value (if any) is moved into
  * (*value) before removing from the table, and destroy_fn is _not_

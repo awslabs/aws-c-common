@@ -64,7 +64,7 @@ static int s_test_rfc822_utc_parsing_fn(struct aws_allocator *allocator, void *c
         ASSERT_BIN_ARRAYS_EQUALS(expected_short_buf.buffer, expected_short_buf.len, str_output.buffer, str_output.len);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_utc_parsing, s_test_rfc822_utc_parsing_fn)
@@ -94,7 +94,7 @@ static int s_test_rfc822_utc_parsing_auto_detect_fn(struct aws_allocator *alloca
 
     ASSERT_BIN_ARRAYS_EQUALS(date_buf.buffer, date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_utc_parsing_auto_detect, s_test_rfc822_utc_parsing_auto_detect_fn)
@@ -127,7 +127,7 @@ static int s_test_rfc822_local_time_east_of_gmt_parsing_fn(struct aws_allocator 
 
     ASSERT_BIN_ARRAYS_EQUALS(expected_buf.buffer, expected_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_local_time_east_of_gmt_parsing, s_test_rfc822_local_time_east_of_gmt_parsing_fn)
@@ -160,7 +160,7 @@ static int s_test_rfc822_local_time_west_of_gmt_parsing_fn(struct aws_allocator 
 
     ASSERT_BIN_ARRAYS_EQUALS(expected_buf.buffer, expected_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_local_time_west_of_gmt_parsing, s_test_rfc822_local_time_west_of_gmt_parsing_fn)
@@ -192,7 +192,7 @@ static int s_test_rfc822_utc_two_digit_year_parsing_fn(struct aws_allocator *all
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_utc_two_digit_year_parsing, s_test_rfc822_utc_two_digit_year_parsing_fn)
@@ -224,7 +224,7 @@ static int s_test_rfc822_utc_no_dow_parsing_fn(struct aws_allocator *allocator, 
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_utc_no_dow_parsing, s_test_rfc822_utc_no_dow_parsing_fn)
@@ -241,7 +241,7 @@ static int s_test_rfc822_utc_dos_prevented_fn(struct aws_allocator *allocator, v
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_utc_dos_prevented, s_test_rfc822_utc_dos_prevented_fn)
@@ -257,7 +257,7 @@ static int s_test_rfc822_invalid_format_fn(struct aws_allocator *allocator, void
     ASSERT_ERROR(
         AWS_ERROR_INVALID_DATE_STR, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_invalid_format, s_test_rfc822_invalid_format_fn)
@@ -273,7 +273,7 @@ static int s_test_rfc822_invalid_tz_fn(struct aws_allocator *allocator, void *ct
     ASSERT_ERROR(
         AWS_ERROR_INVALID_DATE_STR, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_invalid_tz, s_test_rfc822_invalid_tz_fn)
@@ -289,7 +289,7 @@ static int s_test_rfc822_invalid_auto_format_fn(struct aws_allocator *allocator,
     ASSERT_ERROR(
         AWS_ERROR_INVALID_DATE_STR, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_AUTO_DETECT));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(rfc822_invalid_auto_format, s_test_rfc822_invalid_auto_format_fn)
@@ -329,7 +329,7 @@ static int s_test_iso8601_utc_parsing_fn(struct aws_allocator *allocator, void *
     struct aws_byte_buf expected_short_buf = aws_byte_buf_from_c_str(expected_short_str);
 
     ASSERT_BIN_ARRAYS_EQUALS(expected_short_buf.buffer, expected_short_buf.len, str_output.buffer, str_output.len);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_utc_parsing, s_test_iso8601_utc_parsing_fn)
@@ -369,7 +369,7 @@ static int s_test_iso8601_basic_utc_parsing_fn(struct aws_allocator *allocator, 
     struct aws_byte_buf expected_short_buf = aws_byte_buf_from_c_str(expected_short_str);
 
     ASSERT_BIN_ARRAYS_EQUALS(expected_short_buf.buffer, expected_short_buf.len, str_output.buffer, str_output.len);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_basic_utc_parsing, s_test_iso8601_basic_utc_parsing_fn)
@@ -401,7 +401,7 @@ static int s_test_iso8601_utc_parsing_auto_detect_fn(struct aws_allocator *alloc
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_utc_parsing_auto_detect, s_test_iso8601_utc_parsing_auto_detect_fn)
@@ -433,7 +433,7 @@ static int s_test_iso8601_basic_utc_parsing_auto_detect_fn(struct aws_allocator 
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_basic_utc_parsing_auto_detect, s_test_iso8601_basic_utc_parsing_auto_detect_fn)
@@ -465,7 +465,7 @@ static int s_test_iso8601_utc_no_colon_parsing_fn(struct aws_allocator *allocato
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_utc_no_colon_parsing, s_test_iso8601_utc_no_colon_parsing_fn)
@@ -497,7 +497,7 @@ static int s_test_iso8601_date_only_parsing_fn(struct aws_allocator *allocator, 
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_date_only_parsing, s_test_iso8601_date_only_parsing_fn)
@@ -529,7 +529,7 @@ static int s_test_iso8601_basic_date_only_parsing_fn(struct aws_allocator *alloc
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_basic_date_only_parsing, s_test_iso8601_basic_date_only_parsing_fn)
@@ -546,7 +546,7 @@ static int s_test_iso8601_utc_dos_prevented_fn(struct aws_allocator *allocator, 
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_ISO_8601));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_utc_dos_prevented, s_test_iso8601_utc_dos_prevented_fn)
@@ -562,7 +562,7 @@ static int s_test_iso8601_invalid_format_fn(struct aws_allocator *allocator, voi
     ASSERT_ERROR(
         AWS_ERROR_INVALID_DATE_STR, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_ISO_8601));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_invalid_format, s_test_iso8601_invalid_format_fn)
@@ -578,7 +578,7 @@ static int s_test_iso8601_invalid_auto_format_fn(struct aws_allocator *allocator
     ASSERT_ERROR(
         AWS_ERROR_INVALID_DATE_STR, aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_AUTO_DETECT));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(iso8601_invalid_auto_format, s_test_iso8601_invalid_auto_format_fn)
@@ -608,7 +608,7 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(unix_epoch_parsing, s_test_unix_epoch_parsing_fn)
@@ -638,7 +638,7 @@ static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) 
     struct aws_byte_buf expected_date_buf = aws_byte_buf_from_c_str(expected_date_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected_date_buf.buffer, expected_date_buf.len, str_output.buffer, str_output.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(millis_parsing, s_test_millis_parsing_fn)

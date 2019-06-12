@@ -40,7 +40,7 @@ void aws_hash_table_put_harness() {
     struct hash_table_state old_state = *map.p_impl;
 
     int rval = aws_hash_table_put(&map, key, value, track_was_created ? &was_created : NULL);
-    if (rval == AWS_OP_SUCCESS) {
+    if (rval == AWS_OP_SUCC) {
         if (track_was_created) {
             assert(map.p_impl->entry_count == old_state.entry_count + was_created);
         } else {

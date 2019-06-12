@@ -32,7 +32,7 @@ void aws_byte_buf_init_copy_from_cursor_harness() {
 
     ASSUME_CAN_FAIL_ALLOCATOR(allocator);
 
-    if (aws_byte_buf_init_copy_from_cursor(&buf, allocator, cursor) == AWS_OP_SUCCESS) {
+    if (aws_byte_buf_init_copy_from_cursor(&buf, allocator, cursor) == AWS_OP_SUCC) {
         /* assertions */
         assert(aws_byte_buf_is_valid(&buf));
         assert(aws_byte_cursor_is_valid(&cursor));

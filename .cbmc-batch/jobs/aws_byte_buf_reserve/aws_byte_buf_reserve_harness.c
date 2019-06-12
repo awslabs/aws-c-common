@@ -24,7 +24,7 @@ void aws_byte_buf_reserve_harness() {
     struct aws_byte_buf old = buf;
     size_t requested_capacity;
 
-    if (aws_byte_buf_reserve(&buf, requested_capacity) == AWS_OP_SUCCESS) {
+    if (aws_byte_buf_reserve(&buf, requested_capacity) == AWS_OP_SUCC) {
         assert(buf.capacity >= requested_capacity);
         assert(aws_byte_buf_has_allocator(&buf));
     }

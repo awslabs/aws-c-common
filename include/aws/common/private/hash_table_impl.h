@@ -127,7 +127,7 @@ bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
 /**
  * Determine the total number of bytes needed for a hash-table with
  * "size" slots. If the result would overflow a size_t, return
- * AWS_OP_ERR; otherwise, return AWS_OP_SUCCESS with the result in
+ * AWS_OP_ERR; otherwise, return AWS_OP_SUCC with the result in
  * "required_bytes".
  */
 AWS_STATIC_IMPL
@@ -142,7 +142,7 @@ int hash_table_state_required_bytes(size_t size, size_t *required_bytes) {
         return AWS_OP_ERR;
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #endif /* AWS_COMMON_PRIVATE_HASH_TABLE_IMPL_H */

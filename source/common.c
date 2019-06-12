@@ -166,13 +166,13 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
             return aws_raise_error(AWS_ERROR_OOM);
         }
         *ptr = newptr;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     /* Since the allocator doesn't support realloc, we'll need to emulate it
      * (inefficiently). */
     if (oldsize >= newsize) {
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     void *newptr = aws_mem_acquire(allocator, newsize);
@@ -188,7 +188,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     *ptr = newptr;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /* Wraps a CFAllocator around aws_allocator. For Mac only. */

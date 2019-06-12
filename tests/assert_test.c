@@ -81,13 +81,13 @@ int test_asserts(int *index) {
     TEST_SUCCESS(assert_bool) { ASSERT_TRUE(1); }
     TEST_SUCCESS(assert_bool) { ASSERT_TRUE(2); }
     TEST_SUCCESS(assert_bool) { ASSERT_FALSE(0); }
-    TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS); }
-    TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS, "foo"); }
+    TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCC); }
+    TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCC, "foo"); }
     TEST_FAILURE(assert_success) { ASSERT_SUCCESS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
 
     TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM)); }
     TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
-    TEST_FAILURE(assert_fails) { ASSERT_FAILS(AWS_OP_SUCCESS, "foo"); }
+    TEST_FAILURE(assert_fails) { ASSERT_FAILS(AWS_OP_SUCC, "foo"); }
 
     TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM)); }
     TEST_SUCCESS(assert_error_side_effect) {
@@ -99,7 +99,7 @@ int test_asserts(int *index) {
     TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM), "foo"); }
     TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, aws_raise_error(AWS_ERROR_OOM), "foo"); }
     aws_raise_error(AWS_ERROR_CLOCK_FAILURE); // set last error
-    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo"); }
+    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCC, "foo"); }
 
     TEST_SUCCESS(assert_null) { ASSERT_NULL(NULL); }
     {

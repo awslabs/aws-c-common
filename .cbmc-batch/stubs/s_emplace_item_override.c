@@ -17,7 +17,7 @@
  * If was_created is non-NULL, *was_created is set to 0 if an existing
  * element was found, or 1 is a new element was created.
  *
- * Returns AWS_OP_SUCCESS if an item was found or created.
+ * Returns AWS_OP_SUCC if an item was found or created.
  * Raises AWS_ERROR_OOM if hash table expansion was required and memory
  * allocation failed.
  */

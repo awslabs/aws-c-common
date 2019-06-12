@@ -156,7 +156,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     dladdr(addr, &addr_info);
     snprintf(frame->base, sizeof(frame->base), "0x%p", addr_info.dli_fbase);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
@@ -194,7 +194,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
         strncpy(frame->function, open_paren + 1, function_len);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
     snprintf(cmd, len, "addr2line -afips -e %s %s", frame->exe, frame->addr);

@@ -34,7 +34,7 @@ static int s_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_UINT_EQUALS(AWS_UUID_STR_LEN - 1, uuid_buf.len);
     ASSERT_FALSE(0 == memcmp(zerod_buf, uuid_array, sizeof(uuid_array)));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(uuid_string, s_uuid_string_fn)
@@ -57,7 +57,7 @@ static int s_prefilled_uuid_string_fn(struct aws_allocator *allocator, void *ctx
     struct aws_byte_buf expected = aws_byte_buf_from_c_str(expected_str);
     ASSERT_BIN_ARRAYS_EQUALS(expected.buffer, expected.len, uuid_buf.buffer, uuid_buf.len);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(prefilled_uuid_string, s_prefilled_uuid_string_fn)
@@ -75,7 +75,7 @@ static int s_uuid_string_short_buffer_fn(struct aws_allocator *allocator, void *
 
     ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_uuid_to_str(&uuid, &uuid_buf));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(uuid_string_short_buffer, s_uuid_string_short_buffer_fn)
@@ -95,7 +95,7 @@ static int s_uuid_string_parse_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_SUCCESS(aws_uuid_init_from_str(&uuid, &uuid_cur));
     ASSERT_BIN_ARRAYS_EQUALS(expected_uuid, sizeof(expected_uuid), uuid.uuid_data, sizeof(uuid.uuid_data));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(uuid_string_parse, s_uuid_string_parse_fn)
@@ -111,7 +111,7 @@ static int s_uuid_string_parse_too_short_fn(struct aws_allocator *allocator, voi
     struct aws_uuid uuid;
     ASSERT_ERROR(AWS_ERROR_INVALID_BUFFER_SIZE, aws_uuid_init_from_str(&uuid, &uuid_cur));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(uuid_string_parse_too_short, s_uuid_string_parse_too_short_fn)
@@ -127,7 +127,7 @@ static int s_uuid_string_parse_malformed_fn(struct aws_allocator *allocator, voi
     struct aws_uuid uuid;
     ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_uuid_init_from_str(&uuid, &uuid_cur));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(uuid_string_parse_malformed, s_uuid_string_parse_malformed_fn)

@@ -43,7 +43,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
             list->current_size = ideal_size;
         }
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -70,7 +70,7 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
         to->length = from->length;
         AWS_POSTCONDITION(aws_array_list_is_valid(from));
         AWS_POSTCONDITION(aws_array_list_is_valid(to));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
     /* if to is in dynamic mode, we can just reallocate it and copy */
     if (to->alloc != NULL) {
@@ -92,7 +92,7 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
         to->current_size = copy_size;
         AWS_POSTCONDITION(aws_array_list_is_valid(from));
         AWS_POSTCONDITION(aws_array_list_is_valid(to));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
@@ -156,7 +156,7 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
     }
 
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {

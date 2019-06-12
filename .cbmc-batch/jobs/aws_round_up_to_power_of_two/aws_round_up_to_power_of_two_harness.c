@@ -27,7 +27,7 @@ void aws_round_up_to_power_of_two_harness() {
 #else
 #    error
 #endif
-    if (rval == AWS_OP_SUCCESS) {
+    if (rval == AWS_OP_SUCC) {
         assert(popcount == 1);
         assert(test_val <= result);
         assert(test_val >= result >> 1);

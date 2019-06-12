@@ -29,26 +29,26 @@ static int s_test_environment_functions_fn(struct aws_allocator *allocator, void
     struct aws_string *value;
 
     int result = aws_get_environment_value(allocator, s_test_variable, &value);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_TRUE(result == AWS_OP_SUCC);
     ASSERT_TRUE(value == NULL);
 
     result = aws_set_environment_value(s_test_variable, (struct aws_string *)s_test_value);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_TRUE(result == AWS_OP_SUCC);
 
     result = aws_get_environment_value(allocator, s_test_variable, &value);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_TRUE(result == AWS_OP_SUCC);
     ASSERT_TRUE(aws_string_compare(value, s_test_value) == 0);
 
     aws_string_destroy(value);
 
     result = aws_unset_environment_value(s_test_variable);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_TRUE(result == AWS_OP_SUCC);
 
     result = aws_get_environment_value(allocator, s_test_variable, &value);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_TRUE(result == AWS_OP_SUCC);
     ASSERT_TRUE(value == NULL);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(test_environment_functions, s_test_environment_functions_fn)

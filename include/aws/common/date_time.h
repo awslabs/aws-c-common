@@ -82,7 +82,7 @@ AWS_COMMON_API void aws_date_time_init_epoch_millis(struct aws_date_time *dt, ui
 AWS_COMMON_API void aws_date_time_init_epoch_secs(struct aws_date_time *dt, double sec_ms);
 
 /**
- * Initializes dt to be the time represented by date_str in format 'fmt'. Returns AWS_OP_SUCCESS if the
+ * Initializes dt to be the time represented by date_str in format 'fmt'. Returns AWS_OP_SUCC if the
  * string was successfully parsed, returns  AWS_OP_ERR if parsing failed.
  *
  * Notes for AWS_DATE_FORMAT_RFC822:

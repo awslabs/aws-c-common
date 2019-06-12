@@ -160,7 +160,7 @@ static int total_failures;
 #define ASSERT_SUCCESS(condition, ...)                                                                                 \
     do {                                                                                                               \
         int assert_rv = (condition);                                                                                   \
-        if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
+        if (assert_rv != AWS_OP_SUCC) {                                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
                     "Expected success at %s; got return value %d with last error 0x%04x\n",                            \
@@ -433,7 +433,7 @@ static inline int enable_vt_mode(void) {
     if (!SetConsoleMode(hOut, dwMode)) {
         return AWS_OP_ERR;
     }
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #else

@@ -61,7 +61,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
                      (uint64_t)frequency.QuadPart;
 
         *timestamp = aws_timestamp_convert(*timestamp, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL);
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
@@ -81,5 +81,5 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     int_conv.HighPart = ticks.dwHighDateTime;
 
     *timestamp = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }

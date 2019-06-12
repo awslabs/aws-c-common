@@ -46,7 +46,7 @@ static int s_distribution_tester_put(struct distribution_tester *tester, uint64_
     ASSERT_TRUE(bucket_idx < DISTRIBUTION_BUCKET_COUNT);
     tester->buckets[bucket_idx]++;
     tester->num_puts++;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static int s_distribution_tester_check_results(const struct distribution_tester *tester) {
@@ -66,7 +66,7 @@ static int s_distribution_tester_check_results(const struct distribution_tester 
         ASSERT_TRUE(numbers_in_bucket >= min_acceptable_numbers_per_bucket);
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 static int s_device_rand_u64_distribution_fn(struct aws_allocator *allocator, void *ctx) {
@@ -81,7 +81,7 @@ static int s_device_rand_u64_distribution_fn(struct aws_allocator *allocator, vo
     }
 
     ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(device_rand_u64_distribution, s_device_rand_u64_distribution_fn)
@@ -98,7 +98,7 @@ static int s_device_rand_u32_distribution_fn(struct aws_allocator *allocator, vo
     }
 
     ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(device_rand_u32_distribution, s_device_rand_u32_distribution_fn)
@@ -115,7 +115,7 @@ static int s_device_rand_u16_distribution_fn(struct aws_allocator *allocator, vo
     }
 
     ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(device_rand_u16_distribution, s_device_rand_u16_distribution_fn)
@@ -136,7 +136,7 @@ static int s_device_rand_buffer_distribution_fn(struct aws_allocator *allocator,
     }
 
     ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(device_rand_buffer_distribution, s_device_rand_buffer_distribution_fn)

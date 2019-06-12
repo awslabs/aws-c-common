@@ -28,7 +28,7 @@ AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(struct aws_condition_vari
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
 
     InitializeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
@@ -39,19 +39,19 @@ void aws_condition_variable_clean_up(struct aws_condition_variable *condition_va
 int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable) {
 
     WakeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
 
     WakeAllConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
 
     if (SleepConditionVariableSRW(AWSCV_TO_WINDOWS(condition_variable), AWSMUTEX_TO_WINDOWS(mutex), INFINITE, 0)) {
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return aws_raise_error(AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN);
@@ -65,7 +65,7 @@ int aws_condition_variable_wait_for(
     DWORD time_ms = (DWORD)aws_timestamp_convert(time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
 
     if (SleepConditionVariableSRW(AWSCV_TO_WINDOWS(condition_variable), AWSMUTEX_TO_WINDOWS(mutex), time_ms, 0)) {
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return aws_raise_error(AWS_ERROR_COND_VARIABLE_TIMED_OUT);

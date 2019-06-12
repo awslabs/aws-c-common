@@ -58,8 +58,8 @@ void aws_lru_cache_clean_up(struct aws_lru_cache *cache);
 
 /**
  * Finds element in the cache by key. If found, it will become most-recently
- * used, *p_value will hold the stored value, and AWS_OP_SUCCESS will be
- * returned. If not found, AWS_OP_SUCCESS will be returned and *p_value will be
+ * used, *p_value will hold the stored value, and AWS_OP_SUCC will be
+ * returned. If not found, AWS_OP_SUCC will be returned and *p_value will be
  * NULL.
  *
  * If any errors occur AWS_OP_ERR will be returned.

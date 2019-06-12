@@ -65,7 +65,7 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     thread->allocator = allocator;
     thread->detach_state = AWS_THREAD_NOT_CREATED;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_thread_launch(
@@ -93,7 +93,7 @@ int aws_thread_launch(
     }
 
     thread->detach_state = AWS_THREAD_JOINABLE;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 uint64_t aws_thread_get_id(struct aws_thread *thread) {
@@ -110,7 +110,7 @@ int aws_thread_join(struct aws_thread *thread) {
         thread->detach_state = AWS_THREAD_JOIN_COMPLETED;
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void aws_thread_clean_up(struct aws_thread *thread) {

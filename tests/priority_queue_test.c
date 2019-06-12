@@ -193,7 +193,7 @@ static int s_test_priority_queue_size_and_capacity(struct aws_allocator *allocat
         size_t CHECK_ORDER_count = sizeof(CHECK_ORDER_elems) / sizeof(*CHECK_ORDER_elems);                             \
         size_t CHECK_ORDER_i = 0;                                                                                      \
         int CHECK_ORDER_val;                                                                                           \
-        while (aws_priority_queue_pop(&(pq), &CHECK_ORDER_val) == AWS_OP_SUCCESS) {                                    \
+        while (aws_priority_queue_pop(&(pq), &CHECK_ORDER_val) == AWS_OP_SUCC) {                                    \
             ASSERT_TRUE(CHECK_ORDER_i < CHECK_ORDER_count);                                                            \
             ASSERT_INT_EQUALS(CHECK_ORDER_val, CHECK_ORDER_elems[CHECK_ORDER_i]);                                      \
             CHECK_ORDER_i++;                                                                                           \

@@ -13,7 +13,7 @@ int __CPROVER_file_local_hash_table_c_s_expand_table(struct aws_hash_table *map)
     struct hash_table_state *old_state = map->p_impl;
     struct hash_table_state template = *old_state;
 
-    if (__CPROVER_file_local_hash_table_c_s_update_template_size(&template, template.size * 2) != AWS_OP_SUCCESS) {
+    if (__CPROVER_file_local_hash_table_c_s_update_template_size(&template, template.size * 2) != AWS_OP_SUCC) {
         return AWS_OP_ERR;
     }
 
@@ -37,5 +37,5 @@ int __CPROVER_file_local_hash_table_c_s_expand_table(struct aws_hash_table *map)
     __CPROVER_assume(aws_hash_table_is_valid(map));
     size_t empty_slot_idx;
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(map, &empty_slot_idx));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }

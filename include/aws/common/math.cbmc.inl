@@ -38,13 +38,13 @@ AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a * b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     if (__CPROVER_overflow_mult(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a * b;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /**
@@ -58,13 +58,13 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a * b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     if (__CPROVER_overflow_mult(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a * b;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /**
@@ -78,13 +78,13 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a + b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     if (__CPROVER_overflow_plus(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a + b;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /**
@@ -98,13 +98,13 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ * a + b, returns the result in *r, and returns AWS_OP_SUCC.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     if (__CPROVER_overflow_plus(a, b))
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     *r = a + b;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 #pragma CPROVER check pop

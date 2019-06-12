@@ -944,8 +944,8 @@ static int s_hex_encoding_append_dynamic_test_case_fooba(struct aws_allocator *a
     char test_data[] = "fooba";
     char expected[] = "666f6f6261";
 
-    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 5, 3) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 50, 3) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 5, 3) == AWS_OP_SUCC);
+    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 50, 3) == AWS_OP_SUCC);
 
     return 0;
 }
@@ -958,8 +958,8 @@ static int s_hex_encoding_append_dynamic_test_case_empty(struct aws_allocator *a
     char test_data[] = "";
     char expected[] = "";
 
-    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 5, 3) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 50, 3) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 5, 3) == AWS_OP_SUCC);
+    ASSERT_TRUE(s_run_hex_encoding_append_dynamic_test_case(allocator, test_data, expected, 50, 3) == AWS_OP_SUCC);
 
     return 0;
 }

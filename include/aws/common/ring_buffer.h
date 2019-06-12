@@ -38,7 +38,7 @@ struct aws_byte_buf;
 AWS_EXTERN_C_BEGIN
 
 /**
- * Initializes a ring buffer with an allocation of size `size`. Returns AWS_OP_SUCCESS on a successful initialization,
+ * Initializes a ring buffer with an allocation of size `size`. Returns AWS_OP_SUCC on a successful initialization,
  * AWS_OP_ERR otherwise.
  */
 AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size);
@@ -49,7 +49,7 @@ AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct
 AWS_COMMON_API void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf);
 
 /**
- * Attempts to acquire `requested_size` buffer and stores the result in `dest` if successful. Returns AWS_OP_SUCCESS if
+ * Attempts to acquire `requested_size` buffer and stores the result in `dest` if successful. Returns AWS_OP_SUCC if
  * the requested size was available for use, AWS_OP_ERR otherwise.
  */
 AWS_COMMON_API int aws_ring_buffer_acquire(
@@ -59,7 +59,7 @@ AWS_COMMON_API int aws_ring_buffer_acquire(
 
 /**
  * Attempts to acquire `requested_size` buffer and stores the result in `dest` if successful. If not available, it will
- * attempt to acquire anywhere from 1 byte to `requested_size`. Returns AWS_OP_SUCCESS if some buffer space is available
+ * attempt to acquire anywhere from 1 byte to `requested_size`. Returns AWS_OP_SUCC if some buffer space is available
  * for use, AWS_OP_ERR otherwise.
  */
 AWS_COMMON_API int aws_ring_buffer_acquire_up_to(

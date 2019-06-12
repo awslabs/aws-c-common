@@ -221,7 +221,7 @@ static int s_update_template_size(struct hash_table_state *template, size_t expe
     /* Since size is a power of 2: (index & (size - 1)) == (index % size) */
     template->mask = size - 1;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hash_table_init(
@@ -254,7 +254,7 @@ int aws_hash_table_init(
     }
 
     AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 void aws_hash_table_clean_up(struct aws_hash_table *map) {
@@ -327,7 +327,7 @@ static int inline s_find_entry(
             *p_probe_idx = 0;
         }
         *p_entry = entry;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     return s_find_entry1(state, hash_code, key, p_entry, p_probe_idx);
@@ -409,7 +409,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
         *p_elem = NULL;
     }
     AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /**
@@ -496,7 +496,7 @@ static int s_expand_table(struct aws_hash_table *map) {
     map->p_impl = new_state;
     aws_mem_release(new_state->alloc, old_state);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hash_table_create(
@@ -521,7 +521,7 @@ int aws_hash_table_create(
             *p_elem = &entry->element;
         }
         *was_created = 0;
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     /* Okay, we need to add an entry. Check the load factor first. */
@@ -531,7 +531,7 @@ int aws_hash_table_create(
     }
     if (incr_entry_count > state->max_load) {
         rv = s_expand_table(map);
-        if (rv != AWS_OP_SUCCESS) {
+        if (rv != AWS_OP_SUCC) {
             /* Any error was already raised in expand_table */
             return rv;
         }
@@ -560,7 +560,7 @@ int aws_hash_table_create(
 
     *was_created = 1;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_COMMON_API
@@ -595,7 +595,7 @@ int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value,
     p_elem->key = key;
     p_elem->value = value;
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /* Clears an entry. Does _not_ invoke destructor callbacks.
@@ -665,7 +665,7 @@ int aws_hash_table_remove(
     if (rv != AWS_ERROR_SUCCESS) {
         *was_present = 0;
         AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-        return AWS_OP_SUCCESS;
+        return AWS_OP_SUCC;
     }
 
     *was_present = 1;
@@ -683,7 +683,7 @@ int aws_hash_table_remove(
     s_remove_entry(state, entry);
 
     AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value) {
@@ -696,7 +696,7 @@ int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_el
     s_remove_entry(state, entry);
 
     AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 int aws_hash_table_foreach(
@@ -716,7 +716,7 @@ int aws_hash_table_foreach(
         }
     }
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 bool aws_hash_table_eq(

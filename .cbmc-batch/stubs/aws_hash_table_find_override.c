@@ -26,5 +26,5 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
         *p_elem = &entry->element;
     }
     AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }

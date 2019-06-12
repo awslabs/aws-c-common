@@ -103,7 +103,7 @@ static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, voi
     aws_thread_clean_up(&thread);
     ASSERT_TRUE(predicate_args.call_count >= 2);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(conditional_notify_one, s_test_conditional_notify_one_fn)
@@ -148,7 +148,7 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
 
     ASSERT_TRUE(predicate_args.call_count >= 2);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(conditional_notify_all, s_test_conditional_notify_all_fn)

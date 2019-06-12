@@ -295,7 +295,7 @@ static int s_test_scheduler_cleanup_reentrants(struct aws_allocator *allocator, 
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, future_task1_args.status);
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, future_task2_args.status);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 /* Allocator that only works N times. Not at all thread safe. */
@@ -441,7 +441,7 @@ static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, voi
     ASSERT_UINT_EQUALS(scheduled_task_count, done_task_count);
 
     s_oom_allocator_destroy(oom_allocator);
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 struct task_cancelling_task_data {

@@ -48,7 +48,7 @@ static int s_test_short_argument_parse_fn(struct aws_allocator *allocator, void 
     ASSERT_INT_EQUALS(2, longindex);
     ASSERT_INT_EQUALS(-1, aws_cli_getopt_long(argc, args, "ab:c", options, &longindex));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(short_argument_parse, s_test_short_argument_parse_fn)
@@ -87,7 +87,7 @@ static int s_test_long_argument_parse_fn(struct aws_allocator *allocator, void *
 
     ASSERT_INT_EQUALS(-1, aws_cli_getopt_long(argc, args, "ab:c", options, &longindex));
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(long_argument_parse, s_test_long_argument_parse_fn)
@@ -122,7 +122,7 @@ static int s_test_unqualified_argument_parse_fn(struct aws_allocator *allocator,
     ASSERT_TRUE(aws_cli_optind < argc);
     ASSERT_STR_EQUALS("operand", args[aws_cli_optind++]);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(unqualified_argument_parse, s_test_unqualified_argument_parse_fn)
@@ -157,7 +157,7 @@ static int s_test_unknown_argument_parse_fn(struct aws_allocator *allocator, voi
     ASSERT_TRUE(aws_cli_optind < argc);
     ASSERT_STR_EQUALS("operand", args[aws_cli_optind++]);
 
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
 
 AWS_TEST_CASE(unknown_argument_parse, s_test_unknown_argument_parse_fn)

@@ -44,5 +44,5 @@ int aws_device_random_buffer(struct aws_byte_buf *output) {
     }
 
     output->len += offset;
-    return AWS_OP_SUCCESS;
+    return AWS_OP_SUCC;
 }
