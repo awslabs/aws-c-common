@@ -23,7 +23,7 @@ void aws_byte_buf_cat_harness() {
     struct aws_byte_buf buffer2;
     struct aws_byte_buf buffer3;
     struct aws_byte_buf dest;
-    size_t number_of_args;
+    size_t number_of_args = 3;
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buffer1, MAX_BUFFER_SIZE));
@@ -37,7 +37,6 @@ void aws_byte_buf_cat_harness() {
     __CPROVER_assume(aws_byte_buf_is_valid(&buffer3));
     ensure_byte_buf_has_allocated_buffer_member(&dest);
     __CPROVER_assume(aws_byte_buf_is_valid(&dest));
-    __CPROVER_assume(number_of_args == 3);
 
     /* save current state of the data structure */
     struct aws_byte_buf old_buffer1 = buffer1;
