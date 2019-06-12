@@ -312,8 +312,9 @@ static int total_failures;
         size_t assert_ex_s = (expected_size);                                                                          \
         const uint8_t *assert_got_p = (const uint8_t *)(got);                                                          \
         size_t assert_got_s = (got_size);                                                                              \
-        ASSERT_NOT_NULL(assert_ex_p);                                                                                  \
-        ASSERT_NOT_NULL(assert_got_p);                                                                                 \
+        if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
+            break;                                                                                                     \
+        }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
             fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
