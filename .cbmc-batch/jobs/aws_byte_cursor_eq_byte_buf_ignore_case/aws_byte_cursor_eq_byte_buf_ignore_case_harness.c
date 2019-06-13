@@ -39,7 +39,7 @@ void aws_byte_cursor_eq_byte_buf_ignore_case_harness() {
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    if (aws_byte_cursor_eq_byte_buf_ignore_case((nondet_bool() ? &cur : NULL), (nondet_bool() ? &buf : NULL))) {
+    if (aws_byte_cursor_eq_byte_buf_ignore_case(&cur, &buf)) {
         assert(cur.len == buf.len);
     }
 

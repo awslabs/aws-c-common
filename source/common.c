@@ -74,7 +74,7 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 }
 
 void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(allocator != NULL);
 
     /* Defensive check: never use calloc with size * num that would overflow
      * https://wiki.sei.cmu.edu/confluence/display/c/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
