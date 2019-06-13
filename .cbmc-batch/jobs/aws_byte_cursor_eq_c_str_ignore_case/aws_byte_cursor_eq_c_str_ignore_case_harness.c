@@ -20,7 +20,7 @@
 void aws_byte_cursor_eq_c_str_ignore_case_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
-    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
@@ -36,7 +36,7 @@ void aws_byte_cursor_eq_c_str_ignore_case_harness() {
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 
     /* operation under verification */
-    if (aws_byte_cursor_eq_c_str_ignore_case((nondet_bool() ? NULL : &cur), c_str)) {
+    if (aws_byte_cursor_eq_c_str_ignore_case(&cur, c_str)) {
         assert(cur.len == str_len);
     }
 
