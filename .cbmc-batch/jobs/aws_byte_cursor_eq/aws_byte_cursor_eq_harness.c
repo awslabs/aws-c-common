@@ -43,7 +43,7 @@ void aws_byte_cursor_eq_harness() {
     save_byte_from_array(rhs.ptr, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_cursor_eq((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL))) {
+    if (aws_byte_cursor_eq(&lhs, &rhs)) {
         assert(lhs.len == rhs.len);
         if (lhs.len > 0) {
             assert_bytes_match(lhs.ptr, rhs.ptr, lhs.len);

@@ -36,6 +36,10 @@ void aws_hash_table_eq_harness() {
     struct store_byte_from_buffer old_byte_b;
     save_byte_from_hash_table(&map_b, &old_byte_b);
 
+    /* assume the preconditions */
+    __CPROVER_assume(aws_hash_table_is_valid(&map_a));
+    __CPROVER_assume(aws_hash_table_is_valid(&map_b));
+
     bool rval = aws_hash_table_eq(&map_a, &map_b, uninterpreted_equals_assert_inputs_nonnull);
 
     assert(aws_hash_table_is_valid(&map_a));

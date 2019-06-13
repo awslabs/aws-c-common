@@ -26,10 +26,10 @@ struct hash_table_entry *__CPROVER_file_local_hash_table_c_s_emplace_item(
     struct hash_table_state *state,
     struct hash_table_entry entry,
     size_t probe_idx) {
-    AWS_PRECONDITION(hash_table_state_is_valid(state));
+    AWS_PRECONDITION(hash_table_state_is_valid(state), "Input hash_table_state [state] must be valid.");
 
     if (entry.hash_code == 0) {
-        AWS_POSTCONDITION(hash_table_state_is_valid(state));
+        AWS_POSTCONDITION(hash_table_state_is_valid(state), "Output hash_table_state [state] must be valid.");
         return NULL;
     }
 
@@ -39,6 +39,6 @@ struct hash_table_entry *__CPROVER_file_local_hash_table_c_s_emplace_item(
     state->slots[index] = entry;
     size_t empty_slot_idx;
     __CPROVER_assume(hash_table_state_has_an_empty_slot(state, &empty_slot_idx));
-    AWS_POSTCONDITION(hash_table_state_is_valid(state));
+    AWS_POSTCONDITION(hash_table_state_is_valid(state), "Output hash_table_state [state] must be valid.");
     return &state->slots[index];
 }

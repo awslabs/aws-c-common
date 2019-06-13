@@ -20,7 +20,7 @@ void aws_byte_buf_write_harness() {
     /* parameters */
     struct aws_byte_buf buf;
     size_t len;
-    uint8_t *array = can_fail_malloc(len);
+    uint8_t *array = bounded_malloc(len);
 
     /* assumptions */
     ensure_byte_buf_has_allocated_buffer_member(&buf);
@@ -31,7 +31,7 @@ void aws_byte_buf_write_harness() {
     struct store_byte_from_buffer old_byte_from_buf;
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
-    if (aws_byte_buf_write((nondet_bool() ? &buf : NULL), array, len)) {
+    if (aws_byte_buf_write(&buf, array, len)) {
         assert(buf.len == old.len + len);
         assert(old.capacity == buf.capacity);
         assert(old.allocator == buf.allocator);

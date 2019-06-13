@@ -36,7 +36,7 @@ void aws_hash_iter_done_harness() {
     bool rval = aws_hash_iter_done(&iter);
 
     assert(aws_hash_iter_is_valid(&iter));
-    AWS_POSTCONDITION(rval == (iter.status == AWS_HASH_ITER_STATUS_DONE));
+    assert(rval == (iter.status == AWS_HASH_ITER_STATUS_DONE));
     assert(iter.status == old_status);
     assert(aws_hash_table_is_valid(&map));
     check_hash_table_unchanged(&map, &old_byte);
