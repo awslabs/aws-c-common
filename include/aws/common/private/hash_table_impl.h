@@ -55,8 +55,8 @@ struct hash_table_state {
 #endif
 
 /**
- * Best-effort check of hash_table_state data-structure invarients
- * Some invarients, such as that the number of entries is actually the
+ * Best-effort check of hash_table_state data-structure invariants
+ * Some invariants, such as that the number of entries is actually the
  * same as the entry_count field, would require a loop to check
  */
 AWS_STATIC_IMPL
@@ -81,8 +81,8 @@ bool hash_table_state_is_valid(const struct hash_table_state *map) {
 }
 
 /**
- * Best-effort check of hash_table_state data-structure invarients
- * Some invarients, such as that the number of entries is actually the
+ * Best-effort check of hash_table_state data-structure invariants
+ * Some invariants, such as that the number of entries is actually the
  * same as the entry_count field, would require a loop to check
  */
 AWS_STATIC_IMPL

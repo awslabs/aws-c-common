@@ -32,12 +32,17 @@ void aws_hash_table_remove_harness() {
     size_t empty_slot_idx;
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     void *key;
-    struct aws_hash_element *p_elem;
+    struct aws_hash_element p_elem;
     bool get_p_elem;
     bool track_was_present;
     int was_present;
 
     struct hash_table_state old_state = *map.p_impl;
+
+    /* assume the preconditions */
+    __CPROVER_assume(aws_hash_table_is_valid(&map));
+    __CPROVER_assume(AWS_OBJECT_PTR_IS_WRITABLE(&p_elem));
+    __CPROVER_assume(AWS_OBJECT_PTR_IS_WRITABLE(&was_present));
 
     int rval = aws_hash_table_remove(&map, key, get_p_elem ? &p_elem : NULL, track_was_present ? &was_present : NULL);
     assert(aws_hash_table_is_valid(&map));
@@ -50,8 +55,8 @@ void aws_hash_table_remove_harness() {
                 map.p_impl->entry_count == old_state.entry_count - 1);
         }
 
-        if (get_p_elem) {
-            assert(uninterpreted_equals(p_elem->key, key));
+        if (get_p_elem && track_was_present && was_present == 1) {
+            assert(uninterpreted_equals(p_elem.key, key));
         }
     } else {
         assert(map.p_impl->entry_count == old_state.entry_count);
