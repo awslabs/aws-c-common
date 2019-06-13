@@ -40,7 +40,7 @@ void aws_byte_buf_advance_harness() {
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     /* operation under verification */
-    if (aws_byte_buf_advance((nondet_bool() ? &buf : NULL), (nondet_bool() ? &output : NULL), len)) {
+    if (aws_byte_buf_advance(&buf, &output, len)) {
         assert(buf.len == old.len + len);
         assert(buf.capacity == old.capacity);
         assert(buf.allocator == old.allocator);

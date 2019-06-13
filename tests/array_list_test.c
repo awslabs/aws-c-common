@@ -48,7 +48,7 @@ static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc
     ASSERT_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
@@ -117,7 +117,7 @@ static int s_array_list_order_push_back_pop_back_fn(struct aws_allocator *alloca
     ASSERT_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
@@ -160,7 +160,7 @@ static int s_array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ct
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, allocator, 8, sizeof(int)));
 
     int first = 1, second = 2, third = 3, fourth = 4;
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&first));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&second));
     ASSERT_SUCCESS(aws_array_list_push_back(&list, (void *)&third));
@@ -237,7 +237,7 @@ static int s_array_list_exponential_mem_model_test_fn(struct aws_allocator *allo
 
     ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
@@ -307,7 +307,7 @@ static int s_array_list_exponential_mem_model_iteration_test_fn(struct aws_alloc
 
     ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
     ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
@@ -387,7 +387,7 @@ static int s_array_list_iteration_test_fn(struct aws_allocator *allocator, void 
         aws_array_list_set_at(&list, (void *)&fourth, 3), "Array set failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(4, list.length, "List size should be %d.", 4);
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
@@ -484,7 +484,7 @@ static int s_array_list_preallocated_iteration_test_fn(struct aws_allocator *all
         "Error code should have been INVALID_INDEX but was %d",
         aws_last_error());
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
@@ -567,7 +567,7 @@ static int s_array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, v
     ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
     ASSERT_INT_EQUALS(2, list.current_size / sizeof(int), "Shrunken size should be %d.", 2 * sizeof(int));
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(aws_array_list_get_at(&list, &item, 0), "Array set failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
     ASSERT_SUCCESS(aws_array_list_get_at(&list, &item, 1), "Array set failed with error code %d", aws_last_error());
@@ -689,7 +689,7 @@ static int s_array_list_copy_test_fn(struct aws_allocator *allocator, void *ctx)
 
     ASSERT_SUCCESS(aws_array_list_copy(&list_a, &list_b), "List copy failed with error code %d", aws_last_error());
 
-    int item;
+    int item = 0;
     ASSERT_SUCCESS(
         aws_array_list_get_at(&list_b, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
     ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");

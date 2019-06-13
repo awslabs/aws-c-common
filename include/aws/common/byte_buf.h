@@ -485,7 +485,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, size_t len) {
-    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len), "Input array [bytes] must be writable up to [len] bytes.");
     struct aws_byte_buf buf;
     buf.buffer = (len > 0) ? (uint8_t *)bytes : NULL;
     buf.len = len;
@@ -496,7 +496,8 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, s
 }
 
 AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *bytes, size_t capacity) {
-    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, capacity));
+    AWS_PRECONDITION(
+        AWS_MEM_IS_WRITABLE(bytes, capacity), "Input array [bytes] must be writable up to [capacity] bytes.");
     struct aws_byte_buf buf;
     buf.buffer = (capacity > 0) ? (uint8_t *)bytes : NULL;
     buf.len = 0;
@@ -524,7 +525,7 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_
 }
 
 AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len) {
-    AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len));
+    AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len), "Input array [bytes] must be readable up to [len].");
     struct aws_byte_cursor cur;
     cur.ptr = (uint8_t *)bytes;
     cur.len = len;
@@ -793,16 +794,19 @@ AWS_STATIC_IMPL bool aws_byte_buf_advance(
     struct aws_byte_buf *const AWS_RESTRICT buffer,
     struct aws_byte_buf *const AWS_RESTRICT output,
     const size_t len) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
     if (buffer->capacity - buffer->len >= len) {
         *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
         buffer->len += len;
         output->len = 0;
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return true;
     } else {
         AWS_ZERO_STRUCT(*output);
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer) && aws_byte_buf_is_valid(output));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return false;
     }
 }
@@ -818,7 +822,8 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
     struct aws_byte_buf *AWS_RESTRICT buf,
     const uint8_t *AWS_RESTRICT src,
     size_t len) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && AWS_MEM_IS_WRITABLE(src, len));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
 
     if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
@@ -842,7 +847,8 @@ AWS_STATIC_IMPL bool aws_byte_buf_write(
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
     struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_buf src) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && aws_byte_buf_is_valid(&src));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(&src));
     return aws_byte_buf_write(buf, src.buffer, src.len);
 }
 
@@ -856,7 +862,8 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_buffer(
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_cursor(
     struct aws_byte_buf *AWS_RESTRICT buf,
     struct aws_byte_cursor src) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf) && aws_byte_cursor_is_valid(&src));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&src));
     return aws_byte_buf_write(buf, src.ptr, src.len);
 }
 
