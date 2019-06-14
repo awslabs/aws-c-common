@@ -18,7 +18,10 @@ include ../Makefile.aws_array_list
 #
 # Runtime: 500s
 
-UNWINDSET += 
+## This is here for the backpointer array list which contains pointers
+## to aws_priority_queue_node elements. As pointers are 64bits, it is
+## adequate to unroll the memcpy loop twice.
+UNWINDSET += memcpy_using_uint64_impl.0:2
 
 CBMCFLAGS +=
 
@@ -26,7 +29,7 @@ DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_using_uint64.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
