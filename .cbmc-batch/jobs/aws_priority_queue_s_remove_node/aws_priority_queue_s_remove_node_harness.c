@@ -16,7 +16,7 @@
 #include <aws/common/priority_queue.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void __CPROVER_file_local_priority_queue_c_s_remove_node(struct aws_priority_queue *queue, void *item, size_t index);
+int __CPROVER_file_local_priority_queue_c_s_remove_node(struct aws_priority_queue *queue, void *item, size_t index);
 
 void aws_priority_queue_s_remove_node_harness() {
     /* Data structure */
@@ -47,8 +47,19 @@ void aws_priority_queue_s_remove_node_harness() {
         }
     }
 
+    /* Save the old priority queue state */
+    struct aws_priority_queue old_queue = queue;
+
+    /* Assume the preconditions */
+    __CPROVER_assume(item && AWS_MEM_IS_WRITABLE(item, queue.container.item_size));
+
     /* Perform operation under verification */
-    __CPROVER_file_local_priority_queue_c_s_remove_node(&queue, item, index);
+    if (__CPROVER_file_local_priority_queue_c_s_remove_node(&queue, item, index) == AWS_OP_SUCCESS) {
+        assert(old_queue.container.length == 1 + queue.container.length);
+        if (queue.backpointers.data) {
+            assert(old_queue.backpointers.length == 1 + queue.backpointers.length);
+        }
+    }
 
     /* Assert the postconditions */
     assert(aws_priority_queue_is_valid(&queue));
