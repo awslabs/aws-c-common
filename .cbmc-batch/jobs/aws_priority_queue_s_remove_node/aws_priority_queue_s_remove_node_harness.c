@@ -32,14 +32,15 @@ void aws_priority_queue_s_remove_node_harness() {
     size_t index;
     __CPROVER_assume(index < queue.container.length);
 
+    struct aws_priority_queue_node *node = can_fail_malloc(sizeof(struct aws_priority_queue_node));
+
     if (queue.backpointers.data) {
         /* Assume that the two backpointers index, len-1 are valid,
          * either by being NULL or by allocating their objects. This
          * is important for the s_swap that happens in s_remove. */
         size_t len = queue.backpointers.length;
         if (index < len) {
-            ((struct aws_priority_queue_node **)queue.backpointers.data)[index] =
-                can_fail_malloc(sizeof(struct aws_priority_queue_node));
+            ((struct aws_priority_queue_node **)queue.backpointers.data)[index] = node;
             if (index != len - 1) {
                 ((struct aws_priority_queue_node **)queue.backpointers.data)[len - 1] =
                     can_fail_malloc(sizeof(struct aws_priority_queue_node));
@@ -58,6 +59,12 @@ void aws_priority_queue_s_remove_node_harness() {
         assert(old_queue.container.length == 1 + queue.container.length);
         if (queue.backpointers.data) {
             assert(old_queue.backpointers.length == 1 + queue.backpointers.length);
+            if (node) {
+                /* The node pointing in the element of the priority queue
+                 * now points to SIZE_MAX to indicate that the item was
+                 * removed */
+                assert(node->current_index == SIZE_MAX);
+            }
         }
     }
 
