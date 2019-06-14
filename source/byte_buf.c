@@ -425,10 +425,14 @@ uint64_t aws_hash_array_ignore_case(const void *const array, const size_t len) {
     while (i != end) {
         const uint8_t lower = s_tolower_table[*i++];
         hash ^= lower;
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         hash *= fnv_prime;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
     }
     return hash;
 }
