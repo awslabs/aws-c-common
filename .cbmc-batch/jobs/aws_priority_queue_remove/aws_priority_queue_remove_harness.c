@@ -45,8 +45,20 @@ void aws_priority_queue_remove_harness() {
         }
     }
 
+    /* Save the old priority queue state */
+    struct aws_priority_queue old_queue = queue;
+
+    /* Assume the preconditions */
+    __CPROVER_assume(item && AWS_MEM_IS_WRITABLE(item, queue.container.item_size));
+    __CPROVER_assume(backpointer && AWS_MEM_IS_READABLE(backpointer, sizeof(struct aws_priority_queue_node)));
+
     /* Perform operation under verification */
-    aws_priority_queue_remove(&queue, item, backpointer);
+    if (aws_priority_queue_remove(&queue, item, backpointer) == AWS_OP_SUCCESS) {
+        assert(old_queue.container.length == 1 + queue.container.length);
+        if (queue.backpointers.data) {
+            assert(old_queue.backpointers.length == 1 + queue.backpointers.length);
+        }
+    }
 
     /* Assert the postconditions */
     assert(aws_priority_queue_is_valid(&queue));

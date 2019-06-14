@@ -31,9 +31,9 @@ DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
 
-ABSTRACTIONS +=  $(HELPERDIR)/stubs/s_sift_either_override.c
+ABSTRACTIONS +=  $(HELPERDIR)/stubs/s_remove_node_override.c
 
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_priority_queue_c_s_sift_either
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_priority_queue_c_s_remove_node
 
 ENTRY = aws_priority_queue_pop_harness
 ###########
