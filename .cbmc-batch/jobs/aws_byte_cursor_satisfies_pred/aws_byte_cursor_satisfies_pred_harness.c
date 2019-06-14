@@ -31,8 +31,7 @@ void aws_byte_cursor_satisfies_pred_harness() {
     save_byte_from_array(cur.ptr, cur.len, &old_byte_from_cur);
 
     /* operation under verification */
-    aws_byte_cursor_satisfies_pred(
-        nondet_bool() ? &cur : NULL, nondet_bool() ? __CPROVER_uninterpreted_predicate_fn : NULL);
+    aws_byte_cursor_satisfies_pred(&cur, uninterpreted_predicate_fn);
 
     /* assertions */
     assert(aws_byte_cursor_is_valid(&cur));
