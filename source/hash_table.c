@@ -361,10 +361,14 @@ static int s_find_entry1(
      * transitions and the loop will exit (if it hasn't already)
      */
     while (1) {
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
         uint64_t index = (hash_code + probe_idx) & state->mask;
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
         entry = &state->slots[index];
         if (!entry->hash_code) {
             rv = AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
@@ -376,10 +380,14 @@ static int s_find_entry1(
             break;
         }
 
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
         uint64_t entry_probe = (index - entry->hash_code) & state->mask;
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
 
         if (entry_probe < probe_idx) {
             /* We now know that our target entry cannot exist; if it did exist,
@@ -444,16 +452,24 @@ static struct hash_table_entry *s_emplace_item(
     /* Since a valid hash_table has at least one empty element, this loop will always terminate in at most linear time
      */
     while (entry.hash_code != 0) {
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
         size_t index = (size_t)(entry.hash_code + probe_idx) & state->mask;
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
         struct hash_table_entry *victim = &state->slots[index];
 
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
         size_t victim_probe_idx = (size_t)(index - victim->hash_code) & state->mask;
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
 
         if (!victim->hash_code || victim_probe_idx < probe_idx) {
             /* The first thing we emplace is the entry itself. A pointer to its location becomes the rval */
@@ -854,10 +870,14 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
     AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
     s_get_next_element(iter, iter->slot + 1);
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
     AWS_POSTCONDITION(
         iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
         "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
@@ -909,10 +929,14 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
      * underflowing to SIZE_MAX; we have to take care in aws_hash_iter_done to avoid
      * treating this as an end-of-iteration condition.
      */
+#ifdef CBMC
 #pragma CPROVER check push
 #pragma CPROVER check disable "unsigned-overflow"
+#endif
     iter->slot--;
+#ifdef CBMC
 #pragma CPROVER check pop
+#endif
     iter->status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
     AWS_POSTCONDITION(
         iter->status == AWS_HASH_ITER_STATUS_DELETE_CALLED,
