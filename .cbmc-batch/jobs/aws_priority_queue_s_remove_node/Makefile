@@ -30,6 +30,7 @@ DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_using_uint64.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
