@@ -197,8 +197,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
         const char *function_end = (plus) ? plus : close_paren;
         if (function_end > function_start) {
             strncpy(frame->function, function_start, function_end - function_start);
-        }
-        else if (plus) {
+        } else if (plus) {
             strncpy(frame->addr, plus + 1, close_paren - plus - 1);
         }
     }
