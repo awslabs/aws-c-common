@@ -35,9 +35,7 @@ function(aws_set_common_properties target)
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
-        # Disable unknown pragma warnings
-        list(APPEND AWS_C_FLAGS /wd4068)
-
+        
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
             string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
@@ -59,7 +57,7 @@ function(aws_set_common_properties target)
         endif()
 
         # Warning disables always go last to avoid future flags re-enabling them
-        list(APPEND AWS_C_FLAGS -Wno-long-long -Wno-unknown-pragmas)
+        list(APPEND AWS_C_FLAGS -Wno-long-long)
 
         # Avoid exporting symbols we don't intend to export
         list(APPEND AWS_C_FLAGS -fvisibility=hidden)
