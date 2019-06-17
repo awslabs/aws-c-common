@@ -195,7 +195,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
             long addr_len = close_paren - plus - 1;
             strncpy(frame->addr, plus + 1, addr_len);
         }
-    } 
+    }
     if (frame->addr[0] == 0) {
         /* use the address in []'s, since it's all we have */
         const char *addr_start = strstr(exe_end, "[") + 1;
