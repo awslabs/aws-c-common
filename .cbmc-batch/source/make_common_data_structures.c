@@ -84,6 +84,7 @@ void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t 
         struct aws_linked_list_node *node = malloc(sizeof(struct aws_linked_list_node));
         curr->next = node;
         node->prev = curr;
+        curr = node;
     }
 
     curr->next = &list->tail;
