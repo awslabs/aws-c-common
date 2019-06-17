@@ -164,7 +164,7 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    else
 int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *frame) {
-    /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
+    /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      */
     (void)addr;
@@ -191,7 +191,16 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
 
     long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
     if (function_len > 0) { /* dynamic symbol was found */
-        strncpy(frame->function, open_paren + 1, function_len);
+        /* there might be (<function>+<addr>) or just (<function>) */
+        const char *function_start = open_paren + 1;
+        const char *plus = strstr(function_start, "+");
+        const char *function_end = (plus) ? plus : close_paren;
+        if (function_end > function_start) {
+            strncpy(frame->function, function_start, function_end - function_start);
+        }
+        else if (plus) {
+            strncpy(frame->addr, plus + 1, close_paren - plus - 1);
+        }
     }
 
     return AWS_OP_SUCCESS;
@@ -218,7 +227,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         return;
     }
 
-    /* symbols look like: <exe-or-shared-lib>(<function>) [0x<addr>]
+    /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      * start at 1 to skip the current frame (this function) */
     for (int frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
