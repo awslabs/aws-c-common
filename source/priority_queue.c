@@ -176,6 +176,8 @@ void aws_priority_queue_init_static(
     AWS_ZERO_STRUCT(queue->backpointers);
 
     aws_array_list_init_static(&queue->container, heap, item_count, item_size);
+
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
 }
 
 bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
