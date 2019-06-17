@@ -31,10 +31,9 @@ void aws_ring_buffer_acquire_up_to_harness() {
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
+    __CPROVER_assume(requested_size >= minimum_size);
 
-    if (aws_ring_buffer_acquire_up_to(
-            nondet_bool() ? &ring_buf : NULL, minimum_size, requested_size, nondet_bool() ? &buf : NULL) ==
-        AWS_OP_SUCCESS) {
+    if (aws_ring_buffer_acquire_up_to(&ring_buf, minimum_size, requested_size, &buf) == AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(aws_byte_buf_is_valid(&buf));

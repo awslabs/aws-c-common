@@ -18,16 +18,16 @@
 #include <aws/common/atomics.h>
 
 #ifdef CBMC
-#    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr)                                                        \
+#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr)                                                        \
         dest_ptr = aws_atomic_load_ptr(atomic_ptr);                                                                    \
         assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
         assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
-#    define AWS_ATOMIC_STORE_PTR(src_ptr, ring_buf, atomic_ptr)                                                        \
+#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr)                                                        \
         assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
         aws_atomic_store_ptr(atomic_ptr, src_ptr);
 #else
-#    define AWS_ATOMIC_LOAD_PTR(dest_ptr, ring_buf, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
-#    define AWS_ATOMIC_STORE_PTR(src_ptr, ring_buf, atomic_ptr) aws_atomic_store_ptr(atomic_ptr, src_ptr);
+#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
+#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr) aws_atomic_store_ptr(atomic_ptr, src_ptr);
 #endif
 
 /**
@@ -60,7 +60,7 @@ AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct
  * Evaluates the set of properties that define the shape of all valid aws_ring_buffer structures.
  * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
-AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *const ring_buf) {
+AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring_buf) {
     return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
            (ring_buf->allocator != NULL);
 }
@@ -68,7 +68,9 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *cons
 /*
  * Checks whether atomic_ptr correctly points to a memory location within the bounds of the aws_ring_buffer
  */
-AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(struct aws_ring_buffer *const ring_buf, uint8_t *atomic_ptr) {
+AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(
+    const struct aws_ring_buffer *ring_buf,
+    const uint8_t *atomic_ptr) {
     return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
 }
 

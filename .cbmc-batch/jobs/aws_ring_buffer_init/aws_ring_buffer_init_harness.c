@@ -23,8 +23,7 @@ void aws_ring_buffer_init_harness() {
     struct aws_allocator *allocator = can_fail_allocator();
     size_t size;
 
-    if (aws_ring_buffer_init(nondet_bool() ? &ring_buf : NULL, nondet_bool() ? allocator : NULL, size) ==
-        AWS_OP_SUCCESS) {
+    if (aws_ring_buffer_init(&ring_buf, allocator, size) == AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(ring_buf.allocator == allocator);

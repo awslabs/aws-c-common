@@ -33,7 +33,7 @@ void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf)
     buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
-void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *const ring_buf, size_t size) {
+void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, const size_t size) {
     ring_buf->allocator = can_fail_allocator();
     ring_buf->allocation = bounded_malloc(sizeof(*(ring_buf->allocation)) * size);
     size_t position_head;
