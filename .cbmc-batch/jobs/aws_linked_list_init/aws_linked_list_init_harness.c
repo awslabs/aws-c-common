@@ -22,6 +22,7 @@ void aws_linked_list_init_harness() {
 
     /* Note: list is assumed to be a valid pointer in the function's
      *       precondition */
+
     
     /* perform operation under verification */
     aws_linked_list_init(&list);
