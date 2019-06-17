@@ -85,7 +85,7 @@ void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t 
         curr->next = node;
         node->prev = curr;
         curr = node;
-    }
+     }
 
     curr->next = &list->tail;
     list->tail.prev = curr;
