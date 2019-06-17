@@ -72,6 +72,24 @@ void ensure_array_list_has_allocated_data_member(struct aws_array_list *const li
     }
 }
 
+void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t max_length) {
+    size_t length;
+    __CPROVER_assume(length <= max_length);
+
+    struct aws_linked_list_node *curr = &list->head;
+
+    for (size_t i = 0; i < length; i++) {
+        /* This malloc should never fail as it wouldn't be valid to
+         * have NULL nodes in the middle of the linked list. */
+        struct aws_linked_list_node *node = malloc(sizeof(struct aws_linked_list_node));
+        curr->next = node;
+        node->prev = curr;
+    }
+
+    curr->next = &list->tail;
+    list->tail.prev = curr;
+}
+
 bool aws_priority_queue_is_bounded(
     const struct aws_priority_queue *const queue,
     const size_t max_initial_item_allocation,
