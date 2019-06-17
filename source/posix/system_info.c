@@ -182,13 +182,6 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     ptrdiff_t exe_len = exe_end - symbol;
     strncpy(frame->exe, symbol, exe_len);
 
-    const char *addr_start = strstr(exe_end, "[") + 1;
-    char *addr_end = strstr(addr_start, "]");
-    if (!addr_end) {
-        return AWS_OP_ERR;
-    }
-    strncpy(frame->addr, addr_start, addr_end - addr_start);
-
     long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
     if (function_len > 0) { /* dynamic symbol was found */
         /* there might be (<function>+<addr>) or just (<function>) */
@@ -196,10 +189,21 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
         const char *plus = strstr(function_start, "+");
         const char *function_end = (plus) ? plus : close_paren;
         if (function_end > function_start) {
-            strncpy(frame->function, function_start, function_end - function_start);
+            function_len = function_end - function_start;
+            strncpy(frame->function, function_start, function_len);
         } else if (plus) {
-            strncpy(frame->addr, plus + 1, close_paren - plus - 1);
+            long addr_len = close_paren - plus - 1;
+            strncpy(frame->addr, plus + 1, addr_len);
         }
+    } 
+    if (frame->addr[0] == 0) {
+        /* use the address in []'s, since it's all we have */
+        const char *addr_start = strstr(exe_end, "[") + 1;
+        char *addr_end = strstr(addr_start, "]");
+        if (!addr_end) {
+            return AWS_OP_ERR;
+        }
+        strncpy(frame->addr, addr_start, addr_end - addr_start);
     }
 
     return AWS_OP_SUCCESS;
