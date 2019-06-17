@@ -142,7 +142,6 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct 
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *rval = list->head.next;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return rval;
 }
 
@@ -153,7 +152,6 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const str
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     const struct aws_linked_list_node *rval = &list->tail;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return rval;
 }
 
@@ -166,7 +164,6 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *rval = list->tail.prev;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return rval;
 }
 
@@ -178,7 +175,6 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const st
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     const struct aws_linked_list_node *rval = &list->head;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
     return rval;
 }
 
