@@ -654,39 +654,51 @@ int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional
 struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
+    AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor trimmed = *source;
 
     while (trimmed.len > 0 && predicate(*(trimmed.ptr + trimmed.len - 1))) {
         --trimmed.len;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&trimmed));
     return trimmed;
 }
 
 struct aws_byte_cursor aws_byte_cursor_left_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
+    AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor trimmed = *source;
 
     while (trimmed.len > 0 && predicate(*(trimmed.ptr))) {
         --trimmed.len;
         ++trimmed.ptr;
     }
-
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&trimmed));
     return trimmed;
 }
 
 struct aws_byte_cursor aws_byte_cursor_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
+    AWS_PRECONDITION(predicate != NULL);
     struct aws_byte_cursor left_trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
-    return aws_byte_cursor_right_trim_pred(&left_trimmed, predicate);
+    struct aws_byte_cursor dest = aws_byte_cursor_right_trim_pred(&left_trimmed, predicate);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&dest));
+    return dest;
 }
 
 bool aws_byte_cursor_satisfies_pred(const struct aws_byte_cursor *source, aws_byte_predicate_fn *predicate) {
     struct aws_byte_cursor trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
-
-    return trimmed.len == 0;
+    bool rval = (trimmed.len == 0);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
+    return rval;
 }
 
 int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const struct aws_byte_cursor *rhs) {
