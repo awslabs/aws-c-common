@@ -76,6 +76,9 @@ void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t 
     size_t length;
     __CPROVER_assume(length <= max_length);
 
+    list->head.prev = NULL;
+    list->tail.next = NULL;
+
     struct aws_linked_list_node *curr = &list->head;
 
     for (size_t i = 0; i < length; i++) {
