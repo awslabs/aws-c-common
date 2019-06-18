@@ -53,7 +53,7 @@ AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
  * Checks that a linked list is valid.
  */
 AWS_STATIC_IMPL bool aws_linked_list_is_valid(const struct aws_linked_list *list) {
-    return list && list->head.next && list->tail.prev;
+    return list && list->head.next && list->head.prev == NULL && list->tail.prev && list->tail.next == NULL;
 }
 
 /**
@@ -71,54 +71,32 @@ AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_
 }
 
 /**
- * Checks that a linked list satisfies double linked list semantic
+ * Checks that a linked list satisfies double linked list connectivity
  * constraints.
  */
-AWS_STATIC_IMPL bool aws_linked_list_is_correct(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL bool aws_linked_list_is_connected(const struct aws_linked_list *list) {
     if (!aws_linked_list_is_valid(list)) {
         return false;
     }
-    /* Head must reach tail by following next pointers */
+    /* This could go into an infinite loop for a circular list */
     const struct aws_linked_list_node *temp = &list->head;
+    /* Head must reach tail by following next pointers */
     bool head_reaches_tail = false;
-    while (temp->next) {
-        if (temp->next == &list->tail) {
+    /* Next and prev pointers should connect the same nodes */
+    bool are_links_valid = true;
+    /* By satisfying both of the above, we also guarantee that tail
+     * reaches head by following prev pointers */
+    while (temp) {
+        if (temp == &list->tail) {
             head_reaches_tail = true;
+            break;
+        } else if (!aws_linked_list_node_next_is_valid(temp)) {
+            are_links_valid = false;
+            break;
         }
         temp = temp->next;
     }
-
-    /* Tail must reach head by following prev pointers */
-    temp = &list->tail;
-    bool tail_reaches_head = false;
-    while (temp->prev) {
-        if (temp->prev == &list->head) {
-            tail_reaches_head = true;
-        }
-        temp = temp->prev;
-    }
-
-    /* The next links must be valid for all nodes (except tail) */
-    temp = &list->head;
-    bool are_next_links_valid = true;
-    while (temp != &list->tail) {
-        if (!aws_linked_list_node_next_is_valid(temp)) {
-            are_next_links_valid = false;
-        }
-        temp = temp->next;
-    }
-
-    /* The prev links must be valid for all nodes (except head) */
-    temp = &list->tail;
-    bool are_prev_links_valid = true;
-    while (temp != &list->head) {
-        if (!aws_linked_list_node_prev_is_valid(temp)) {
-            are_prev_links_valid = false;
-        }
-        temp = temp->prev;
-    }
-    return head_reaches_tail && tail_reaches_head && are_next_links_valid && are_prev_links_valid;
-    /* return true; */
+    return head_reaches_tail && are_links_valid;
 }
 
 /**
@@ -131,7 +109,7 @@ AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
     list->tail.prev = &list->head;
     list->tail.next = NULL;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_correct(list));
+    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     AWS_POSTCONDITION(aws_linked_list_empty(list));
 }
 

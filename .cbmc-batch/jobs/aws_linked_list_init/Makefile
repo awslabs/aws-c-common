@@ -16,10 +16,10 @@
 # The loops have to be unwinded as many times as the elements of the
 # list + 2. In this case, aws_linked_list_init returns an empty list
 # so it is just 2.
-UNWINDSET += aws_linked_list_is_correct.0:2
-UNWINDSET += aws_linked_list_is_correct.1:2
-UNWINDSET += aws_linked_list_is_correct.2:2
-UNWINDSET += aws_linked_list_is_correct.3:2
+UNWINDSET += aws_linked_list_is_connected.0:2
+UNWINDSET += aws_linked_list_is_connected.1:2
+UNWINDSET += aws_linked_list_is_connected.2:2
+UNWINDSET += aws_linked_list_is_connected.3:2
 
 CBMCFLAGS +=
 
