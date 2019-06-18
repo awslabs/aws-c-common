@@ -131,7 +131,6 @@ AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
     AWS_POSTCONDITION(aws_linked_list_empty(list));
 }
 
-
 /**
  * Returns an iteration pointer for the first element in the list.
  */
