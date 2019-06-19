@@ -50,4 +50,5 @@ void aws_priority_queue_s_sift_either_harness() {
 
     /* Assert the postconditions */
     assert(aws_priority_queue_is_valid(&queue));
+    assert(aws_priority_queue_backpointers_valid_deep(&queue));
 }
