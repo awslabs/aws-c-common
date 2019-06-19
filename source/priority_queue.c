@@ -197,11 +197,11 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
      * aws_priority_queue_nodes */
     bool backpointer_list_item_size = queue->backpointers.item_size == sizeof(struct aws_priority_queue_node *);
     bool lists_equal_lengths = queue->backpointers.length == queue->container.length;
-    bool backpointers_non_zero_length = queue->backpointers.length > 0;
+    bool backpointers_non_zero_current_size = queue->backpointers.current_size > 0;
     bool backpointers_zero =
         (queue->backpointers.current_size == 0 && queue->backpointers.length == 0 && queue->backpointers.data == NULL);
     bool backpointer_struct_is_valid =
-        backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_length);
+        backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_current_size);
 
     return pred_is_valid && container_is_valid && backpointer_list_is_valid && backpointer_struct_is_valid;
 }
@@ -212,15 +212,23 @@ void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
 }
 
 int aws_priority_queue_push(struct aws_priority_queue *queue, void *item) {
-    return aws_priority_queue_push_ref(queue, item, NULL);
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
+    AWS_PRECONDITION(item && AWS_MEM_IS_READABLE(item, queue->container.item_size));
+    int rval = aws_priority_queue_push_ref(queue, item, NULL);
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
+    return rval;
 }
 
 int aws_priority_queue_push_ref(
     struct aws_priority_queue *queue,
     void *item,
     struct aws_priority_queue_node *backpointer) {
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
+    AWS_PRECONDITION(item && AWS_MEM_IS_READABLE(item, queue->container.item_size));
+
     int err = aws_array_list_push_back(&queue->container, item);
     if (err) {
+        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
         return err;
     }
 
@@ -258,11 +266,13 @@ int aws_priority_queue_push_ref(
 
     s_sift_up(queue, aws_array_list_length(&queue->container) - 1);
 
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     return AWS_OP_SUCCESS;
 
 backpointer_update_failed:
     /* Failed to initialize or grow the backpointer array, back out the node addition */
     aws_array_list_pop_back(&queue->container);
+    AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
     return AWS_OP_ERR;
 }
 
