@@ -25,8 +25,8 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(a < queue->container.length);
     AWS_PRECONDITION(b < queue->container.length);
-    AWS_PRECONDITION(aws_backpointer_index_valid(queue, a));
-    AWS_PRECONDITION(aws_backpointer_index_valid(queue, b));
+    AWS_PRECONDITION(aws_priority_queue_backpointer_index_valid(queue, a));
+    AWS_PRECONDITION(aws_priority_queue_backpointer_index_valid(queue, b));
 
     aws_array_list_swap(&queue->container, a, b);
 
@@ -51,8 +51,8 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
         }
     }
     AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
-    AWS_POSTCONDITION(aws_backpointer_index_valid(queue, a));
-    AWS_POSTCONDITION(aws_backpointer_index_valid(queue, b));
+    AWS_POSTCONDITION(aws_priority_queue_backpointer_index_valid(queue, a));
+    AWS_POSTCONDITION(aws_priority_queue_backpointer_index_valid(queue, b));
 }
 
 /* Precondition: with the exception of the given root element, the container must be
@@ -232,8 +232,9 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
 #endif
     bool backpointers_zero =
         (queue->backpointers.current_size == 0 && queue->backpointers.length == 0 && queue->backpointers.data == NULL);
-    bool backpointer_struct_is_valid = backpointers_zero || (backpointer_list_item_size && lists_equal_lengths &&
-                                                             backpointers_non_zero_current_size && backpointers_allocated);
+    bool backpointer_struct_is_valid =
+        backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_current_size &&
+                              backpointers_allocated);
 
     return backpointer_list_is_valid && backpointer_struct_is_valid;
 }
