@@ -92,9 +92,22 @@ void aws_priority_queue_init_static(
     aws_priority_queue_compare_fn *pred);
 
 /**
- * Checks that the backpointer at a specific index of the queue is valid.
+ * Checks that the backpointer at a specific index of the queue is
+ * NULL or points to a correctly allocated aws_priority_queue_node.
  */
-bool aws_backpointer_index_valid(const struct aws_priority_queue *const queue, size_t index);
+bool aws_priority_queue_backpointer_index_valid(const struct aws_priority_queue *const queue, size_t index);
+
+/**
+ * Checks that the backpointers of the priority queue are either NULL
+ * or correctly allocated to point at aws_priority_queue_nodes.
+ */
+bool aws_priority_queue_backpointers_valid_deep(const struct aws_priority_queue *const queue);
+
+/**
+ * Checks that the backpointers of the priority queue satisfy validity
+ * constraints.
+ */
+bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *const queue);
 
 /**
  * Set of properties of a valid aws_priority_queue.
