@@ -80,10 +80,9 @@ bool aws_priority_queue_is_bounded(
 
 /**
  * Ensures members of an aws_priority_queue structure are correctly
- * allocated and returns whether the backpointers list was allocated
- * or not.
+ * allocated.
  */
-bool ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
+void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
 
 /**
  * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage
