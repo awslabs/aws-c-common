@@ -225,7 +225,7 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
 
     /* This check must be guarded, as it is not efficient, neither
      * when running tests nor CBMC */
-#ifdef AWS_DEEP_CHECKS
+#if (AWS_DEEP_CHECKS == 1)
     bool backpointers_valid_deep = aws_priority_queue_backpointers_valid_deep(queue);
 #else
     bool backpointers_valid_deep = true;
