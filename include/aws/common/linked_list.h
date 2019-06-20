@@ -241,11 +241,9 @@ AWS_STATIC_IMPL void aws_linked_list_remove(struct aws_linked_list_node *node) {
  */
 AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(aws_linked_list_is_connected(list));
     AWS_PRECONDITION(node != NULL);
     aws_linked_list_insert_before(&list->tail, node);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     AWS_POSTCONDITION(list->tail.prev == node, "[node] is the new last element of [list]");
 }
 
@@ -272,11 +270,9 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws
  */
 AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(aws_linked_list_is_connected(list));
     AWS_PRECONDITION(node != NULL);
     aws_linked_list_insert_before(list->head.next, node);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     AWS_POSTCONDITION(list->head.next == node, "[node] is the new first element of [list]");
 }
 

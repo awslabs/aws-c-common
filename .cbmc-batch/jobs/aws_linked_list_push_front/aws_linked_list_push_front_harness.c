@@ -29,7 +29,6 @@ void aws_linked_list_push_front_harness() {
 
     /* assertions */
     assert(aws_linked_list_is_valid(&list));
-    assert(aws_linked_list_is_connected(&list));
     assert(aws_linked_list_node_prev_is_valid(&to_add));
     assert(aws_linked_list_node_next_is_valid(&to_add));
     assert(list.head.next == &to_add);
