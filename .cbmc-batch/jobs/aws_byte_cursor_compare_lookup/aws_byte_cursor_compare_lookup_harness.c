@@ -48,13 +48,12 @@ void aws_byte_cursor_compare_lookup_harness() {
     save_byte_from_array(rhs.ptr, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_cursor_compare_lookup((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL), lookup_table) ==
-        0) {
+    if (aws_byte_cursor_compare_lookup(&lhs, &rhs, lookup_table) == 0) {
         assert(lhs.len == rhs.len);
     }
+    assert(aws_byte_cursor_compare_lookup(&lhs, &lhs, lookup_table) == 0);
 
     /* assertions */
-    assert(aws_byte_cursor_compare_lookup(&lhs, &lhs, lookup_table) == 0);
     assert(aws_byte_cursor_is_valid(&lhs));
     assert(aws_byte_cursor_is_valid(&rhs));
     if (lhs.len != 0) {

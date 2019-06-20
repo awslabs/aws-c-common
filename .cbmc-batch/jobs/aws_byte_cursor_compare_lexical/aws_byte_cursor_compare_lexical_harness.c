@@ -26,12 +26,14 @@ void aws_byte_cursor_compare_lexical_harness() {
     __CPROVER_assume(aws_byte_cursor_is_bounded(&lhs, MAX_BUFFER_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&lhs);
     __CPROVER_assume(aws_byte_cursor_is_valid(&lhs));
+    __CPROVER_assume(lhs.ptr != NULL);
     if (nondet_bool()) {
         rhs = lhs;
     } else {
         __CPROVER_assume(aws_byte_cursor_is_bounded(&rhs, MAX_BUFFER_SIZE));
         ensure_byte_cursor_has_allocated_buffer_member(&rhs);
         __CPROVER_assume(aws_byte_cursor_is_valid(&rhs));
+        __CPROVER_assume(rhs.ptr != NULL);
     }
 
     /* save current state of the data structure */
@@ -43,15 +45,15 @@ void aws_byte_cursor_compare_lexical_harness() {
     save_byte_from_array(rhs.ptr, rhs.len, &old_byte_from_rhs);
 
     /* operation under verification */
-    if (aws_byte_cursor_compare_lexical((nondet_bool() ? &lhs : NULL), (nondet_bool() ? &rhs : NULL)) == 0) {
+    if (aws_byte_cursor_compare_lexical(&lhs, &rhs) == 0) {
         assert(lhs.len == rhs.len);
         if (lhs.len > 0) {
             assert_bytes_match(lhs.ptr, rhs.ptr, lhs.len);
         }
     }
+    assert(aws_byte_cursor_compare_lexical(&lhs, &lhs) == 0);
 
     /* assertions */
-    assert(aws_byte_cursor_compare_lexical(&lhs, &lhs) == 0);
     assert(aws_byte_cursor_is_valid(&lhs));
     assert(aws_byte_cursor_is_valid(&rhs));
     if (lhs.len != 0) {

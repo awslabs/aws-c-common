@@ -726,19 +726,17 @@ int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const str
     }
 
     int result = memcmp(lhs->ptr, rhs->ptr, comparison_length);
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
     if (result != 0) {
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return result;
     }
 
     if (lhs->len != rhs->len) {
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return comparison_length == lhs->len ? -1 : 1;
     }
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
+
     return 0;
 }
 
@@ -759,15 +757,13 @@ int aws_byte_cursor_compare_lookup(
         uint8_t lhc = lookup_table[*lhs_curr];
         uint8_t rhc = lookup_table[*rhs_curr];
 
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         if (lhc < rhc) {
-            AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-            AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
             return -1;
         }
 
         if (lhc > rhc) {
-            AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-            AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
             return 1;
         }
 
@@ -775,18 +771,15 @@ int aws_byte_cursor_compare_lookup(
         rhs_curr++;
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
     if (lhs_curr < lhs_end) {
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return 1;
     }
 
     if (rhs_curr < rhs_end) {
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-        AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
         return -1;
     }
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(lhs));
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(rhs));
+
     return 0;
 }
