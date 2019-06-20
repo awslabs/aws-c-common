@@ -13,36 +13,28 @@
 
 ###########
 include ../Makefile.aws_array_list
-include ../Makefile.aws_priority_queue_sift
 
 ###########
-#
-# Runtime:
-# - 300s for MAX_PRIORITY_QUEUE_ITEMS=3 items
-# - 450s for MAX_PRIORITY_QUEUE_ITEMS=5 items 
+# Runtime: 500s
 
+UNWINDSET += 
 
-# Note:
-# In order to reach full coverage we need to unwind the harness loop
-# as many times as the number of queue items, and the sift down loop
-# log(NUMBER_PRIO_QUEUE_ITEMS) times.
-UNWINDSET += aws_priority_queue_s_sift_up_harness.0:$(shell echo $$((1 + $(MAX_PRIORITY_QUEUE_ITEMS))))
-UNWINDSET += __CPROVER_file_local_priority_queue_c_s_sift_up.0:$(MAX_HEAP_HEIGHT)
-
-CBMCFLAGS += 
+CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_havoc.c
+DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override_no_op.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
 
+ABSTRACTIONS +=  $(HELPERDIR)/stubs/s_remove_node_override.c
 
-ENTRY = aws_priority_queue_s_sift_up_harness
+ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_priority_queue_c_s_remove_node
+
+ENTRY = aws_priority_queue_remove_harness
 ###########
 
 include ../Makefile.common
-
