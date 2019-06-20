@@ -172,7 +172,7 @@ void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t
 int aws_array_list_erase(struct aws_array_list *AWS_RESTRICT list, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
 
-    size_t length  = aws_array_list_length(list);
+    const size_t length  = aws_array_list_length(list);
 
     if (index >= length) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -182,7 +182,7 @@ int aws_array_list_erase(struct aws_array_list *AWS_RESTRICT list, size_t index)
     if (index == 0) {
         /* Removing front element */
         aws_array_list_pop_front(list);
-    } else if (index == length - 1) {
+    } else if (index == (length - 1)) {
         /* Removing back element */
         aws_array_list_pop_back(list);
     } else {

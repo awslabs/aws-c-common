@@ -247,7 +247,6 @@ static int s_array_list_erase_fn(struct aws_allocator *allocator, void *ctx) {
         const int starting_values[] = {1, 2, 3, 4};
         ASSERT_SUCCESS(s_reset_list(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
 
-
         ASSERT_SUCCESS(aws_array_list_erase(&list, 3));
 
         const int expected_values[] = {1, 2, 3};
