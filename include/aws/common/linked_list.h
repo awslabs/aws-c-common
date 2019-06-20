@@ -64,14 +64,18 @@ AWS_STATIC_IMPL bool aws_linked_list_is_valid(const struct aws_linked_list *list
 }
 
 /**
- * Checks that the prev of the next pointer of a node points to the node.
+ * Checks that the prev of the next pointer of a node points to the
+ * node. As this checks whether the [next] connection of a node is
+ * bidirectional, it returns false if used for the list tail.
  */
 AWS_STATIC_IMPL bool aws_linked_list_node_next_is_valid(const struct aws_linked_list_node *node) {
     return node && node->next && node->next->prev == node;
 }
 
 /**
- * Checks that the next of the prev pointer of a node points to the node.
+ * Checks that the next of the prev pointer of a node points to the
+ * node. Similarly to the above, this returns false if used for the
+ * head of a list.
  */
 AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_list_node *node) {
     return node && node->prev && node->prev->next == node;
