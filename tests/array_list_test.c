@@ -196,6 +196,81 @@ static int s_array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ct
 
 AWS_TEST_CASE(array_list_pop_front_n_test, s_array_list_pop_front_n_fn)
 
+static int s_reset_list(struct aws_array_list *list, const int *array, size_t array_len) {
+    aws_array_list_clear(list);
+    for (size_t i = 0; i < array_len; ++i) {
+        ASSERT_SUCCESS(aws_array_list_push_back(list, &array[i]));
+    }
+    return AWS_OP_SUCCESS;
+}
+
+static int s_check_list_eq(const struct aws_array_list *list, const int *array, size_t array_len) {
+    ASSERT_UINT_EQUALS(array_len, aws_array_list_length(list));
+    for (size_t i = 0; i < array_len; ++i) {
+        int item;
+        ASSERT_SUCCESS(aws_array_list_get_at(list, &item, i));
+        ASSERT_INT_EQUALS(array[i], item);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+static int s_array_list_erase_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_array_list list;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, allocator, 10, sizeof(int)));
+
+    {
+        /* Attempts to erase invalid indices should fail */
+        const int starting_values[] = {1, 2, 3, 4};
+        ASSERT_SUCCESS(s_reset_list(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
+
+        ASSERT_ERROR(AWS_ERROR_INVALID_INDEX, aws_array_list_erase(&list, AWS_ARRAY_SIZE(starting_values)));
+        ASSERT_ERROR(AWS_ERROR_INVALID_INDEX, aws_array_list_erase(&list, AWS_ARRAY_SIZE(starting_values) + 100));
+
+        ASSERT_SUCCESS(s_check_list_eq(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
+    }
+
+    {
+        /* Erase front item */
+        const int starting_values[] = {1, 2, 3, 4};
+        ASSERT_SUCCESS(s_reset_list(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
+
+        ASSERT_SUCCESS(aws_array_list_erase(&list, 0));
+
+        const int expected_values[] = {2, 3, 4};
+        ASSERT_SUCCESS(s_check_list_eq(&list, expected_values, AWS_ARRAY_SIZE(expected_values)));
+    }
+
+    {
+        /* Erase back item */
+        const int starting_values[] = {1, 2, 3, 4};
+        ASSERT_SUCCESS(s_reset_list(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
+
+
+        ASSERT_SUCCESS(aws_array_list_erase(&list, 3));
+
+        const int expected_values[] = {1, 2, 3};
+        ASSERT_SUCCESS(s_check_list_eq(&list, expected_values, AWS_ARRAY_SIZE(expected_values)));
+    }
+
+    {
+        /* Erase middle item */
+        const int starting_values[] = {1, 2, 3, 4};
+        ASSERT_SUCCESS(s_reset_list(&list, starting_values, AWS_ARRAY_SIZE(starting_values)));
+
+        ASSERT_SUCCESS(aws_array_list_erase(&list, 1));
+
+        const int expected_values[] = {1, 3, 4};
+        ASSERT_SUCCESS(s_check_list_eq(&list, expected_values, AWS_ARRAY_SIZE(expected_values)));
+    }
+
+    aws_array_list_clean_up(&list);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(array_list_erase_test, s_array_list_erase_fn)
+
 static int s_array_list_exponential_mem_model_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
