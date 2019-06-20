@@ -28,6 +28,8 @@ void aws_linked_list_remove_harness() {
     next.prev = &node;
     node.next = &next;
 
+    /* Note: The function has a precondition that node != NULL */
+
     /* perform operation under verification */
     aws_linked_list_remove(&node);
 

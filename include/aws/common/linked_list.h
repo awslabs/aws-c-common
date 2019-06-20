@@ -258,12 +258,13 @@ AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, str
  * Returns the element in the back of the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
-    return list->tail.prev;
-    /* Since we have as a precondition that the list is not empty we
-     * can also assert that the returning node is not head or
-     * tail. This can be encapsulated by the fact that the returnign
-     * node has valid prev and next */
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
+    struct aws_linked_list_node *rval = list->tail.prev; 
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(rval));
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));    
+    return rval;
 }
 
 /**
@@ -272,12 +273,10 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct a
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
     AWS_PRECONDITION(!aws_linked_list_empty(list));
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(aws_linked_list_is_connected(list));
     struct aws_linked_list_node *back = aws_linked_list_back(list);
     aws_linked_list_remove(back);
     AWS_POSTCONDITION(back->next == NULL && back->prev == NULL);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     return back;
 }
 
@@ -306,12 +305,10 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct 
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
     AWS_PRECONDITION(!aws_linked_list_empty(list));
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(aws_linked_list_is_connected(list));
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
     AWS_POSTCONDITION(front->next == NULL && front->prev == NULL);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     return front;
 }
 
