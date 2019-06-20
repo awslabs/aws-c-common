@@ -335,8 +335,10 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
      * faster for short strings (like English words).
      */
 #ifndef VALGRIND
-#pragma CPROVER check push
-#pragma CPROVER check disable "pointer"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -355,8 +357,9 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
     case 1 : a+=k[0]&0xff; break;
     case 0 : return c;              /* zero length strings require no mixing */
     }
-
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -524,8 +527,10 @@ static void hashlittle2(
      * faster for short strings (like English words).
      */
 #ifndef VALGRIND
-#pragma CPROVER check push
-#pragma CPROVER check disable "pointer"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -545,7 +550,9 @@ static void hashlittle2(
     case 0 : *pc=c; *pb=b; return;  /* zero length strings require no mixing */
     }
 
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -705,8 +712,10 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
      * faster for short strings (like English words).
      */
 #ifndef VALGRIND
-#pragma CPROVER check push
-#pragma CPROVER check disable "pointer"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -725,8 +734,9 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
     case 1 : a+=k[0]&0xff000000; break;
     case 0 : return c;              /* zero length strings require no mixing */
     }
-
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else  /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
