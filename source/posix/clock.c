@@ -45,7 +45,9 @@ static int s_legacy_get_time(uint64_t *timestamp) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
-    *timestamp = tv.tv_sec * NS_PER_SEC + tv.tv_usec * 1000;
+    uint64_t secs = (uint64_t)ts.tv_sec;
+    uint64_t n_secs = (uint64_t)ts.tv_usec;
+    *timestamp = secs * NS_PER_SEC + (n_secs * 1000);
     return AWS_OP_SUCCESS;
 }
 
@@ -69,7 +71,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
             return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
         }
 
-        *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
+        uint64_t secs = (uint64_t)ts.tv_sec;
+        uint64_t n_secs = (uint64_t)ts.tv_nsec;
+        *timestamp = secs * NS_PER_SEC + n_secs;
         return AWS_OP_SUCCESS;
     }
 
@@ -87,7 +91,9 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
             return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
         }
 
-        *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
+        uint64_t secs = (uint64_t)ts.tv_sec;
+        uint64_t n_secs = (uint64_t)ts.tv_nsec;
+        *timestamp = secs * NS_PER_SEC + n_secs;
         return AWS_OP_SUCCESS;
     }
     return s_legacy_get_time(timestamp);
@@ -115,7 +121,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
-    *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
+    uint64_t secs = (uint64_t)ts.tv_sec;
+    uint64_t n_secs = (uint64_t)ts.tv_nsec;
+    *timestamp = secs * NS_PER_SEC + n_secs;
     return AWS_OP_SUCCESS;
 }
 
@@ -128,7 +136,10 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
-    *timestamp = (uint64_t)((ts.tv_sec * NS_PER_SEC) + ts.tv_nsec);
+    uint64_t secs = (uint64_t)ts.tv_sec;
+    uint64_t n_secs = (uint64_t)ts.tv_nsec;
+    *timestamp = secs * NS_PER_SEC + n_secs;
+
     return AWS_OP_SUCCESS;
 }
 #endif /* defined(__MACH__) */
