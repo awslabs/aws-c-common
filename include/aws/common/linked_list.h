@@ -53,7 +53,14 @@ AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
  * Checks that a linked list is valid.
  */
 AWS_STATIC_IMPL bool aws_linked_list_is_valid(const struct aws_linked_list *list) {
-    return list && list->head.next && list->head.prev == NULL && list->tail.prev && list->tail.next == NULL;
+    if (list && list->head.next && list->head.prev == NULL && list->tail.prev && list->tail.next == NULL) {
+#if (AWS_DEEP_CHECKS == 1)
+        return aws_linked_list_is_valid_deep(list);
+#else
+        return true;
+#endif
+    }
+    return false;
 }
 
 /**
@@ -72,10 +79,15 @@ AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_
 
 /**
  * Checks that a linked list satisfies double linked list connectivity
- * constraints.
+ * constraints. This check is O(n) as it traverses the whole linked
+ * list to ensure that tail is reachable from head (and vice versa)
+ * and that every connection is bidirectional.
+ *
+ * Note: This check could go into an inginite loop if the list is
+ * circular.
  */
-AWS_STATIC_IMPL bool aws_linked_list_is_connected(const struct aws_linked_list *list) {
-    if (!aws_linked_list_is_valid(list)) {
+AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list *list) {
+    if (!list) {
         return false;
     }
     /* This could go into an infinite loop for a circular list */
@@ -109,7 +121,6 @@ AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
     list->tail.prev = &list->head;
     list->tail.next = NULL;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(aws_linked_list_is_connected(list));
     AWS_POSTCONDITION(aws_linked_list_empty(list));
 }
 

@@ -18,14 +18,11 @@
 
 void aws_linked_list_init_harness() {
     /* data structure */
-    struct aws_linked_list *list = can_fail_malloc(sizeof(struct aws_linked_list));
-
-    /* Assert the preconditions */
-    __CPROVER_assume(list);
+    struct aws_linked_list list;
 
     /* perform operation under verification */
-    aws_linked_list_init(list);
+    aws_linked_list_init(&list);
 
     /* assertions */
-    assert(aws_linked_list_is_valid(list));
+    assert(aws_linked_list_is_valid(&list));
 }
