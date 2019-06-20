@@ -979,7 +979,6 @@ uint64_t aws_hash_c_string(const void *item) {
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(str, strlen(str), &c, &b);
 
-    AWS_POSTCONDITION(aws_c_string_is_valid(item));
     return ((uint64_t)b << 32) | c;
 }
 
@@ -990,6 +989,7 @@ uint64_t aws_hash_string(const void *item) {
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(aws_string_bytes(str), str->len, &c, &b);
+    AWS_POSTCONDITION(aws_string_is_valid(str));
 
     return ((uint64_t)b << 32) | c;
 }
@@ -1001,8 +1001,8 @@ uint64_t aws_hash_byte_cursor_ptr(const void *item) {
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(cur->ptr, cur->len, &c, &b);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
 
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(item));
     return ((uint64_t)b << 32) | c;
 }
 
