@@ -45,8 +45,8 @@ static int s_legacy_get_time(uint64_t *timestamp) {
         return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
     }
 
-    uint64_t secs = (uint64_t)ts.tv_sec;
-    uint64_t u_secs = (uint64_t)ts.tv_usec;
+    uint64_t secs = (uint64_t)tv.tv_sec;
+    uint64_t u_secs = (uint64_t)tv.tv_usec;
     *timestamp = (secs * NS_PER_SEC) + (u_secs * 1000);
     return AWS_OP_SUCCESS;
 }
