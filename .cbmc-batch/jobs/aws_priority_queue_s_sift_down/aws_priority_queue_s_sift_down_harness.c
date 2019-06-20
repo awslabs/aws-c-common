@@ -24,14 +24,14 @@ void aws_priority_queue_s_sift_down_harness() {
 
     /* Assumptions */
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_PRIORITY_QUEUE_ITEMS, MAX_ITEM_SIZE));
-    bool backpointers_allocated = ensure_priority_queue_has_allocated_members(&queue);
+    ensure_priority_queue_has_allocated_members(&queue);
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
     size_t root;
     __CPROVER_assume(root < queue.container.length);
 
-    if (backpointers_allocated) {
+    if (queue.backpointers.data) {
         /* Assume that all backpointers are valid valid, either by
          * being NULL or by allocating their objects. */
 
