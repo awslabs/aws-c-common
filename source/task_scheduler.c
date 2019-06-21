@@ -34,18 +34,6 @@ const char *aws_task_status_to_c_string(enum aws_task_status status) {
     }
 }
 
-void aws_task_run(struct aws_task *task, enum aws_task_status status) {
-    AWS_ASSERT(task->fn);
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Running %s task with %s status",
-        (void *)task,
-        task->type_tag,
-        aws_task_status_to_c_string(status));
-
-    task->fn(task, task->arg, status);
-}
-
 static int s_compare_timestamps(const void *a, const void *b) {
     uint64_t a_time = (*(struct aws_task **)a)->timestamp;
     uint64_t b_time = (*(struct aws_task **)b)->timestamp;
