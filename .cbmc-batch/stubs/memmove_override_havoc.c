@@ -23,7 +23,7 @@
  */
 void *memmove_impl(void *dest, const void *src, size_t n) {
     __CPROVER_precondition(src != NULL && __CPROVER_r_ok(src, n), "memmove source region readable");
-    __CPROVER_precondition(dst != NULL && __CPROVER_w_ok(dest, n), "memmove destination region writeable");
+    __CPROVER_precondition(dest != NULL && __CPROVER_w_ok(dest, n), "memmove destination region writeable");
 
     if (n > 0) {
         size_t index;
