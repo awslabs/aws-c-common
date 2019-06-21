@@ -20,8 +20,6 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/priority_queue.h>
 
-#include <aws/common/logging.h>
-
 struct aws_task;
 
 typedef enum aws_task_status {
@@ -63,6 +61,12 @@ struct aws_task_scheduler {
 };
 
 AWS_EXTERN_C_BEGIN
+
+/*
+ * Runs or cancels a task
+ */
+AWS_COMMON_API
+void aws_task_run(struct aws_task *task, enum aws_task_status status);
 
 /**
  * Initializes a task scheduler instance.
@@ -124,17 +128,5 @@ AWS_COMMON_API
 const char *aws_task_status_to_c_string(enum aws_task_status status);
 
 AWS_EXTERN_C_END
-
-AWS_STATIC_IMPL void aws_task_run(struct aws_task *task, enum aws_task_status status) {
-    AWS_ASSERT(task->fn);
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Running %s task with %s status",
-        (void *)task,
-        task->type_tag,
-        aws_task_status_to_c_string(status));
-
-    task->fn(task, task->arg, status);
-}
 
 #endif /* AWS_COMMON_TASK_SCHEDULER_H */
