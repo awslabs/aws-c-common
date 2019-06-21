@@ -361,10 +361,14 @@ static int s_find_entry1(
      * transitions and the loop will exit (if it hasn't already)
      */
     while (1) {
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         uint64_t index = (hash_code + probe_idx) & state->mask;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
         entry = &state->slots[index];
         if (!entry->hash_code) {
             rv = AWS_ERROR_HASHTBL_ITEM_NOT_FOUND;
@@ -376,10 +380,14 @@ static int s_find_entry1(
             break;
         }
 
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         uint64_t entry_probe = (index - entry->hash_code) & state->mask;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 
         if (entry_probe < probe_idx) {
             /* We now know that our target entry cannot exist; if it did exist,
@@ -444,16 +452,24 @@ static struct hash_table_entry *s_emplace_item(
     /* Since a valid hash_table has at least one empty element, this loop will always terminate in at most linear time
      */
     while (entry.hash_code != 0) {
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         size_t index = (size_t)(entry.hash_code + probe_idx) & state->mask;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
         struct hash_table_entry *victim = &state->slots[index];
 
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         size_t victim_probe_idx = (size_t)(index - victim->hash_code) & state->mask;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 
         if (!victim->hash_code || victim_probe_idx < probe_idx) {
             /* The first thing we emplace is the entry itself. A pointer to its location becomes the rval */
@@ -854,10 +870,14 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
     AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
     s_get_next_element(iter, iter->slot + 1);
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
     AWS_POSTCONDITION(
         iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
         "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
@@ -909,10 +929,14 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
      * underflowing to SIZE_MAX; we have to take care in aws_hash_iter_done to avoid
      * treating this as an end-of-iteration condition.
      */
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
     iter->slot--;
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
     iter->status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
     AWS_POSTCONDITION(
         iter->status == AWS_HASH_ITER_STATUS_DELETE_CALLED,
@@ -948,6 +972,7 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
 }
 
 uint64_t aws_hash_c_string(const void *item) {
+    AWS_PRECONDITION(aws_c_string_is_valid(item));
     const char *str = item;
 
     /* first digits of pi in hex */
@@ -958,26 +983,31 @@ uint64_t aws_hash_c_string(const void *item) {
 }
 
 uint64_t aws_hash_string(const void *item) {
+    AWS_PRECONDITION(aws_string_is_valid(item));
     const struct aws_string *str = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(aws_string_bytes(str), str->len, &c, &b);
+    AWS_POSTCONDITION(aws_string_is_valid(str));
 
     return ((uint64_t)b << 32) | c;
 }
 
 uint64_t aws_hash_byte_cursor_ptr(const void *item) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(item));
     const struct aws_byte_cursor *cur = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(cur->ptr, cur->len, &c, &b);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
 
     return ((uint64_t)b << 32) | c;
 }
 
 uint64_t aws_hash_ptr(const void *item) {
+    /* Since the numeric value of the pointer is considered, not the memory behind it, 0 is an acceptable value */
     /* first digits of e in hex
      * 2.b7e 1516 28ae d2a6 */
     uint32_t b = 0x2b7e1516, c = 0x28aed2a6;

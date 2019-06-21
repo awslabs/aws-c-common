@@ -432,7 +432,7 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cu
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
  */
 AWS_COMMON_API
-uint64_t aws_hash_array_ignore_case(const void *array, size_t len);
+uint64_t aws_hash_array_ignore_case(const void *array, const size_t len);
 
 /**
  * Case-insensitive hash function for aws_byte_cursors stored in an aws_hash_table.
@@ -533,8 +533,10 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *co
     return cur;
 }
 
-#pragma CPROVER check push
-#pragma CPROVER check disable "unsigned-overflow"
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
 /**
  * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
  * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
@@ -599,7 +601,9 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
 
     return combined_mask;
 }
-#pragma CPROVER check pop
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 
 /**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
