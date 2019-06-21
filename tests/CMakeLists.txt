@@ -248,6 +248,8 @@ add_test_case(test_calloc_fallback_from_given)
 add_test_case(test_calloc_from_default_allocator)
 add_test_case(test_calloc_from_given_allocator)
 
+add_test_case(timebomb_allocator)
+
 add_test_case(test_lru_cache_overflow_static_members)
 add_test_case(test_lru_cache_lru_ness_static_members)
 add_test_case(test_lru_cache_entries_cleanup)
