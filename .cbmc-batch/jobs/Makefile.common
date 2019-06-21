@@ -71,6 +71,11 @@ DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC=1
 
 ################################################################
+# Don't execute deep checks by default
+AWS_DEEP_CHECKS ?= 0
+DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
+
+################################################################
 # We always override allocator functions with our own allocator
 # Removing the function from the goto program helps CBMC's
 # function pointer analysis.
