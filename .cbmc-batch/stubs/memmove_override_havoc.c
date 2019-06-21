@@ -22,12 +22,8 @@
  * Override the version of memmove used by CBMC.
  */
 void *memmove_impl(void *dest, const void *src, size_t n) {
-    if (n > 0) {
-        (void)*(char *)dest;                           /* check that the memory is accessible */
-        (void)*(const char *)src;                      /* check that the memory is accessible */
-        (void)*(((unsigned char *)dest) + n - 1);      /* check that the memory is accessible */
-        (void)*(((const unsigned char *)src) + n - 1); /* check that the memory is accessible */
-    }
+    __CPROVER_precondition(src != NULL && __CPROVER_r_ok(src, n), "memmove source region readable");
+    __CPROVER_precondition(dst != NULL && __CPROVER_w_ok(dest, n), "memmove destination region writeable");
 
     if (n > 0) {
         size_t index;
