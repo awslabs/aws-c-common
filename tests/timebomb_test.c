@@ -35,7 +35,7 @@ static int s_test_timebomb_allocator(struct aws_allocator *allocator, void *ctx)
     ASSERT_NULL(aws_mem_acquire(&timebomb, 1));
 
     /* Reset should allow allocations to succeed again (until bomb goes off). */
-    aws_timebomb_allocator_reset(&timebomb, 1);
+    aws_timebomb_allocator_reset_countdown(&timebomb, 1);
     one = aws_mem_acquire(&timebomb, 1);
     ASSERT_NOT_NULL(one);
 

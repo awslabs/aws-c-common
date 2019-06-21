@@ -34,7 +34,7 @@ struct aws_timebomb_impl {
 };
 
 static void *s_timebomb_mem_acquire(struct aws_allocator *timebomb_alloc, size_t size) {
-    struct aws_timebomb_impl *timebomb_impl = timebomb_alloc->impl;
+    struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
     void *ptr = NULL;
 
     aws_mutex_lock(&timebomb_impl->mutex);
@@ -50,7 +50,7 @@ static void *s_timebomb_mem_acquire(struct aws_allocator *timebomb_alloc, size_t
 }
 
 static void s_timebomb_mem_release(struct aws_allocator *timebomb_alloc, void *ptr) {
-    struct aws_timebomb_impl *timebomb_impl = timebomb_alloc->impl;
+    struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
 
     aws_mutex_lock(&timebomb_impl->mutex);
     timebomb_impl->wrapped_allocator->mem_release(timebomb_impl->wrapped_allocator, ptr);
@@ -64,11 +64,14 @@ static int aws_timebomb_allocator_init(
 
     AWS_ZERO_STRUCT(*timebomb_allocator);
 
-    struct aws_timebomb_impl *timebomb_impl = aws_mem_calloc(wrapped_allocator, 1, sizeof(struct aws_timebomb_impl));
+    struct aws_timebomb_impl *timebomb_impl =
+        (struct aws_timebomb_impl *)aws_mem_calloc(wrapped_allocator, 1, sizeof(struct aws_timebomb_impl));
     ASSERT_NOT_NULL(timebomb_impl);
 
     timebomb_allocator->mem_acquire = s_timebomb_mem_acquire;
     timebomb_allocator->mem_release = s_timebomb_mem_release;
+    /* Not defining calloc/realloc, all allocation will be piped through the one mem_acquire fn */
+
     timebomb_allocator->impl = timebomb_impl;
 
     timebomb_impl->fail_after_n_allocations = fail_after_n_allocations;
@@ -80,14 +83,17 @@ static int aws_timebomb_allocator_init(
 
 static void aws_timebomb_allocator_clean_up(struct aws_allocator *timebomb_alloc) {
     if (timebomb_alloc) {
-        struct aws_timebomb_impl *timebomb_impl = timebomb_alloc->impl;
+        struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
         aws_mutex_clean_up(&timebomb_impl->mutex);
         aws_mem_release(timebomb_impl->wrapped_allocator, timebomb_impl);
     }
 }
 
-static void aws_timebomb_allocator_reset(struct aws_allocator *timebomb_alloc, size_t fail_after_n_allocations) {
-    struct aws_timebomb_impl *timebomb_impl = timebomb_alloc->impl;
+static void aws_timebomb_allocator_reset_countdown(
+    struct aws_allocator *timebomb_alloc,
+    size_t fail_after_n_allocations) {
+
+    struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
     aws_mutex_lock(&timebomb_impl->mutex);
     timebomb_impl->allocation_tally = 0;
     timebomb_impl->fail_after_n_allocations = fail_after_n_allocations;
