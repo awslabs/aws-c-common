@@ -258,7 +258,7 @@ int aws_byte_cursor_split_on_char(
 }
 
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
-    AWS_ASSERT(dest);
+    AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
 
     va_list ap;
     va_start(ap, number_of_args);
@@ -269,11 +269,13 @@ int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
 
         if (aws_byte_buf_append(dest, &cursor)) {
             va_end(ap);
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return AWS_OP_ERR;
         }
     }
 
     va_end(ap);
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return AWS_OP_SUCCESS;
 }
 
@@ -412,7 +414,8 @@ bool aws_array_eq_c_str(const void *const array, const size_t array_len, const c
     return str_bytes[array_len] == '\0';
 }
 
-uint64_t aws_hash_array_ignore_case(const void *array, size_t len) {
+uint64_t aws_hash_array_ignore_case(const void *array, const size_t len) {
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(array, len));
     /* FNV-1a: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function */
     const uint64_t fnv_offset_basis = 0xcbf29ce484222325ULL;
     const uint64_t fnv_prime = 0x100000001b3ULL;
@@ -424,14 +427,24 @@ uint64_t aws_hash_array_ignore_case(const void *array, size_t len) {
     while (i != end) {
         const uint8_t lower = s_tolower_table[*i++];
         hash ^= lower;
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
         hash *= fnv_prime;
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
     }
     return hash;
 }
 
 uint64_t aws_hash_byte_cursor_ptr_ignore_case(const void *item) {
-    const struct aws_byte_cursor *cursor = item;
-    return aws_hash_array_ignore_case(cursor->ptr, cursor->len);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(item));
+    const struct aws_byte_cursor *const cursor = item;
+    uint64_t rval = aws_hash_array_ignore_case(cursor->ptr, cursor->len);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(item));
+    return rval;
 }
 
 bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b) {

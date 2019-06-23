@@ -972,6 +972,7 @@ void aws_hash_table_clear(struct aws_hash_table *map) {
 }
 
 uint64_t aws_hash_c_string(const void *item) {
+    AWS_PRECONDITION(aws_c_string_is_valid(item));
     const char *str = item;
 
     /* first digits of pi in hex */
@@ -982,26 +983,31 @@ uint64_t aws_hash_c_string(const void *item) {
 }
 
 uint64_t aws_hash_string(const void *item) {
+    AWS_PRECONDITION(aws_string_is_valid(item));
     const struct aws_string *str = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(aws_string_bytes(str), str->len, &c, &b);
+    AWS_POSTCONDITION(aws_string_is_valid(str));
 
     return ((uint64_t)b << 32) | c;
 }
 
 uint64_t aws_hash_byte_cursor_ptr(const void *item) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(item));
     const struct aws_byte_cursor *cur = item;
 
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(cur->ptr, cur->len, &c, &b);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
 
     return ((uint64_t)b << 32) | c;
 }
 
 uint64_t aws_hash_ptr(const void *item) {
+    /* Since the numeric value of the pointer is considered, not the memory behind it, 0 is an acceptable value */
     /* first digits of e in hex
      * 2.b7e 1516 28ae d2a6 */
     uint32_t b = 0x2b7e1516, c = 0x28aed2a6;
