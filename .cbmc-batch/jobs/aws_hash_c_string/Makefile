@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 # this file except in compliance with the License. A copy of the License is
@@ -12,15 +12,18 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+#32: 4s
+#64: 5s
+#128 6s
+#256 11s
+#1024: 2m30s
+MAX_STRING_SIZE ?= 32
+DEFINES += -DMAX_STRING_SIZE=$(MAX_STRING_SIZE) 
 
-###########
-#
-# Runtime: 180s
-
-# This is the minimum bound to reach full coverage rate
-UNWINDSET += __CPROVER_file_local_array_list_c_aws_array_list_mem_swap.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
-UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
+UNWINDSET += strlen.0:$(shell echo $$(( $(MAX_STRING_SIZE) + 1)))
+UNWINDSET += __CPROVER_file_local_lookup3_c_hashlittle2.0:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
+UNWINDSET += __CPROVER_file_local_lookup3_c_hashlittle2.1:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
+UNWINDSET += __CPROVER_file_local_lookup3_c_hashlittle2.2:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
 
 CBMCFLAGS +=
 
@@ -28,13 +31,10 @@ DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
+DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 
-
-ENTRY = aws_priority_queue_s_swap_harness
+ENTRY = aws_hash_c_string_harness
 ###########
 
 include ../Makefile.common

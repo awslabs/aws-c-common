@@ -12,15 +12,9 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../Makefile.aws_byte_buf
 
-###########
-#
-# Runtime: 180s
-
-# This is the minimum bound to reach full coverage rate
-UNWINDSET += __CPROVER_file_local_array_list_c_aws_array_list_mem_swap.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
-UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
+UNWINDSET += aws_hash_array_ignore_case.0:$(shell echo $$((1 + $(MAX_BUFFER_SIZE))))
 
 CBMCFLAGS +=
 
@@ -28,13 +22,10 @@ DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
 
-
-ENTRY = aws_priority_queue_s_swap_harness
+ENTRY = aws_hash_array_ignore_case_harness
 ###########
 
 include ../Makefile.common
