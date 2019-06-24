@@ -198,7 +198,7 @@ COMPILERS = {
             ["./format-check.sh"],
             ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
-        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
+        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
