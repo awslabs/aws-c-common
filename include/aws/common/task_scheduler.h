@@ -125,7 +125,7 @@ void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t c
  * Convert a status value to a c-string suitable for logging
  */
 AWS_COMMON_API
-const char *aws_task_status_to_c_string(enum aws_task_status status);
+const char *aws_task_status_to_c_str(enum aws_task_status status);
 
 AWS_EXTERN_C_END
 

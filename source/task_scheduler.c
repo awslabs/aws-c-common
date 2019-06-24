@@ -21,7 +21,7 @@
 
 static const size_t DEFAULT_QUEUE_SIZE = 7;
 
-const char *aws_task_status_to_c_string(enum aws_task_status status) {
+const char *aws_task_status_to_c_str(enum aws_task_status status) {
     switch (status) {
         case AWS_TASK_STATUS_RUN_READY:
             return "<Running>";
@@ -41,7 +41,7 @@ void aws_task_run(struct aws_task *task, enum aws_task_status status) {
         "id=%p: Running %s task with %s status",
         (void *)task,
         task->type_tag,
-        aws_task_status_to_c_string(status));
+        aws_task_status_to_c_str(status));
 
     task->fn(task, task->arg, status);
 }
