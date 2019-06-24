@@ -19,7 +19,10 @@
 #include <stdint.h>
 
 /**
- * Override the version of memmove used by CBMC.
+ * Override the version of memmove used by CBMC. Users may not want to pay
+ * for the cost of performing the computation of memmove in proofs. In that
+ * case, this stub at least checks for the preconditions and make sure to
+ * havoc all elements pointed by *dest up to n.
  */
 void *memmove_impl(void *dest, const void *src, size_t n) {
     __CPROVER_precondition(src != NULL && __CPROVER_r_ok(src, n), "memmove source region readable");

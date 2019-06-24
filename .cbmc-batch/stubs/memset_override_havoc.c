@@ -19,7 +19,10 @@
 #include <stddef.h>
 
 /**
- * Override the version of memset used by CBMC.
+ * Override the version of memset used by CBMC. Users may not want to pay
+ * for the cost of performing the computation of memset in proofs. In that
+ * case, this stub at least checks for the preconditions and make sure to
+ * havoc all elements pointed by *s up to n.
  */
 void *memset_impl(void *s, int c, size_t n) {
     __CPROVER_precondition(__CPROVER_w_ok(s, n), "memset destination region writeable");
