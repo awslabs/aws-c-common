@@ -24,14 +24,14 @@ void aws_priority_queue_s_sift_up_harness() {
 
     /* Assumptions */
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_PRIORITY_QUEUE_ITEMS, MAX_ITEM_SIZE));
-    bool backpointers_allocated = ensure_priority_queue_has_allocated_members(&queue);
+    ensure_priority_queue_has_allocated_members(&queue);
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
     size_t root;
     __CPROVER_assume(root < queue.container.length);
 
-    if (backpointers_allocated) {
+    if (queue.backpointers.data) {
         /* Ensuring that just the root cell is correctly allocated is
          * not enough, as the swap requires that both the swapped
          * cells are correctly allocated.  Therefore, if swap is to
@@ -50,4 +50,5 @@ void aws_priority_queue_s_sift_up_harness() {
 
     /* Assert the postconditions */
     assert(aws_priority_queue_is_valid(&queue));
+    assert(aws_priority_queue_backpointers_valid_deep(&queue));
 }

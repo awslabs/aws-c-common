@@ -109,6 +109,15 @@ AWS_STATIC_IMPL
 void aws_array_list_pop_front_n(struct aws_array_list *AWS_RESTRICT list, size_t n);
 
 /**
+ * Deletes the element this index in the list if it exists.
+ * If element does not exist, AWS_ERROR_INVALID_INDEX will be raised.
+ * This call results in shifting all remaining elements towards the front.
+ * Avoid this call unless that is intended behavior.
+ */
+AWS_STATIC_IMPL
+int aws_array_list_erase(struct aws_array_list *AWS_RESTRICT list, size_t index);
+
+/**
  * Copies the element at the end of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
  */
 AWS_STATIC_IMPL

@@ -58,19 +58,27 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #pragma warning(disable:4127) /*Disable "conditional expression is constant" */
 #endif /* _MSC_VER */
 
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif /* CBMC */
+
 /*
  * My best guess at if you are big-endian or little-endian.  This may
  * need adjustment.
  */
-#if (defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && \
-     __BYTE_ORDER == __LITTLE_ENDIAN) || \
-    (defined(i386) || defined(__i386__) || defined(__i486__) || \
-     defined(__i586__) || defined(__i686__) || defined(vax) || defined(MIPSEL))
+ #if (defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && \
+      __BYTE_ORDER == __LITTLE_ENDIAN) || \
+     (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+      __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || \
+     (defined(i386) || defined(__i386__) || defined(__i486__) || \
+      defined(__i586__) || defined(__i686__) || defined(vax) || defined(MIPSEL) || \
+      defined(_M_IX86) || defined(_M_X64) || defined(_M_IA64) || defined(_M_ARM))
 # define HASH_LITTLE_ENDIAN 1
 # define HASH_BIG_ENDIAN 0
 #elif (defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && \
        __BYTE_ORDER == __BIG_ENDIAN) || \
-      (defined(sparc) || defined(POWERPC) || defined(mc68000) || defined(sel))
+      (defined(sparc) || defined(POWERPC) || defined(_M_PPC) || defined(mc68000) || defined(sel))
 # define HASH_LITTLE_ENDIAN 0
 # define HASH_BIG_ENDIAN 1
 #else
@@ -322,12 +330,18 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
      * "k[2]&0xffffff" actually reads beyond the end of the string, but
      * then masks off the part it's not allowed to read.  Because the
      * string is aligned, the masked-off tail is in the same word as the
-     * rest of the string.  Every machine with memory protection I've seen
-     * does it on word boundaries, so is OK with this.  But VALGRIND will
-     * still catch it and complain.  The masking trick does make the hash
-     * noticably faster for short strings (like English words).
+     * rest of the string. Every machine with memory protection I've seen
+     * does it on word boundaries, so is OK with this. But VALGRIND and CBMC
+     * will still catch it and complain. CBMC will ignore this type of error
+     * in the code block between the pragmas "CPROVER check push" and
+     * "CPROVER check pop". The masking trick does make the hash noticably
+     * faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -346,7 +360,9 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
     case 1 : a+=k[0]&0xff; break;
     case 0 : return c;              /* zero length strings require no mixing */
     }
-
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -506,12 +522,18 @@ static void hashlittle2(
      * "k[2]&0xffffff" actually reads beyond the end of the string, but
      * then masks off the part it's not allowed to read.  Because the
      * string is aligned, the masked-off tail is in the same word as the
-     * rest of the string.  Every machine with memory protection I've seen
-     * does it on word boundaries, so is OK with this.  But VALGRIND will
-     * still catch it and complain.  The masking trick does make the hash
-     * noticably faster for short strings (like English words).
+     * rest of the string. Every machine with memory protection I've seen
+     * does it on word boundaries, so is OK with this. But VALGRIND and CBMC
+     * will still catch it and complain. CBMC will ignore this type of error
+     * in the code block between the pragmas "CPROVER check push" and
+     * "CPROVER check pop". The masking trick does make the hash noticably
+     * faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -531,6 +553,9 @@ static void hashlittle2(
     case 0 : *pc=c; *pb=b; return;  /* zero length strings require no mixing */
     }
 
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -682,12 +707,18 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
      * "k[2]<<8" actually reads beyond the end of the string, but
      * then shifts out the part it's not allowed to read.  Because the
      * string is aligned, the illegal read is in the same word as the
-     * rest of the string.  Every machine with memory protection I've seen
-     * does it on word boundaries, so is OK with this.  But VALGRIND will
-     * still catch it and complain.  The masking trick does make the hash
-     * noticably faster for short strings (like English words).
+     * rest of the string. Every machine with memory protection I've seen
+     * does it on word boundaries, so is OK with this. But VALGRIND and CBMC
+     * will still catch it and complain. CBMC will ignore this type of error
+     * in the code block between the pragmas "CPROVER check push" and
+     * "CPROVER check pop". The masking trick does make the hash noticably
+     * faster for short strings (like English words).
      */
 #ifndef VALGRIND
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
     // changed in aws-c-common: fix unused variable warning
 
     switch(length)
@@ -706,7 +737,9 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
     case 1 : a+=k[0]&0xff000000; break;
     case 0 : return c;              /* zero length strings require no mixing */
     }
-
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 #else  /* make valgrind happy */
 
     const uint8_t *k8 = (const uint8_t *)k;
@@ -1017,3 +1050,7 @@ int main()
 #if _MSC_VER
 #pragma warning(pop)
 #endif /* _MSC_VER */
+
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif /* CBMC */
