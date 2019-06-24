@@ -50,7 +50,7 @@ int aws_array_list_init_dynamic(
 #endif
         list->current_size = allocation_size;
     }
-    AWS_FATAL_ASSERT(list->current_size == 0 || list->data);
+    AWS_FATAL_POSTCONDITION_1(list->current_size == 0 || list->data);
 
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
@@ -62,14 +62,14 @@ void aws_array_list_init_static(
     void *raw_array,
     size_t item_count,
     size_t item_size) {
-    AWS_FATAL_ASSERT(raw_array);
-    AWS_FATAL_ASSERT(item_count);
-    AWS_FATAL_ASSERT(item_size);
+    AWS_FATAL_PRECONDITION_1(raw_array);
+    AWS_FATAL_PRECONDITION_1(item_count);
+    AWS_FATAL_PRECONDITION_1(item_size);
 
     list->alloc = NULL;
 
     int no_overflow = !aws_mul_size_checked(item_count, item_size, &list->current_size);
-    AWS_FATAL_ASSERT(no_overflow);
+    AWS_FATAL_PRECONDITION_1(no_overflow);
 
     list->item_size = item_size;
     list->length = 0;
@@ -221,7 +221,7 @@ int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
 
-        AWS_FATAL_ASSERT(list->data);
+        AWS_FATAL_PRECONDITION_1(list->data);
 
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
 
@@ -251,10 +251,10 @@ AWS_STATIC_IMPL
 void aws_array_list_swap_contents(
     struct aws_array_list *AWS_RESTRICT list_a,
     struct aws_array_list *AWS_RESTRICT list_b) {
-    AWS_FATAL_ASSERT(list_a->alloc);
-    AWS_FATAL_ASSERT(list_a->alloc == list_b->alloc);
-    AWS_FATAL_ASSERT(list_a->item_size == list_b->item_size);
-    AWS_FATAL_ASSERT(list_a != list_b);
+    AWS_FATAL_PRECONDITION_1(list_a->alloc);
+    AWS_FATAL_PRECONDITION_1(list_a->alloc == list_b->alloc);
+    AWS_FATAL_PRECONDITION_1(list_a->item_size == list_b->item_size);
+    AWS_FATAL_PRECONDITION_1(list_a != list_b);
     AWS_PRECONDITION(aws_array_list_is_valid(list_a));
     AWS_PRECONDITION(aws_array_list_is_valid(list_b));
 
@@ -267,7 +267,7 @@ void aws_array_list_swap_contents(
 
 AWS_STATIC_IMPL
 size_t aws_array_list_capacity(const struct aws_array_list *AWS_RESTRICT list) {
-    AWS_FATAL_ASSERT(list->item_size);
+    AWS_FATAL_PRECONDITION_1(list->item_size);
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t capacity = list->current_size / list->item_size;
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -280,7 +280,7 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * This assert teaches clang-tidy and friends that list->data cannot be null in a non-empty
      * list.
      */
-    AWS_FATAL_ASSERT(!list->length || list->data);
+    AWS_FATAL_PRECONDITION_1(!list->length || list->data);
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t len = list->length;
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -340,7 +340,7 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
         return AWS_OP_ERR;
     }
 
-    AWS_FATAL_ASSERT(list->data);
+    AWS_FATAL_PRECONDITION_1(list->data);
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 

@@ -68,7 +68,7 @@ AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
  * Returns true if bytes of string are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
-    AWS_FATAL_ASSERT(a != NULL && b != NULL);
+    AWS_FATAL_PRECONDITION_1(a != NULL && b != NULL);
     return aws_array_eq(a->bytes, a->len, b->bytes, b->len);
 }
 
