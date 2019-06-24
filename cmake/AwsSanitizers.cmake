@@ -55,36 +55,34 @@ function(aws_add_sanitizers target)
     set(multiValueArgs SANITIZERS)
     cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-        check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
-        if(HAS_SANITIZERS)
+    check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
+    if(HAS_SANITIZERS)
 
-            list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
-            message(STATUS "attempting to use sanitizer list ${SANITIZER_SANITIZERS}")
+        list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
+        message(STATUS "attempting to use sanitizer list ${SANITIZER_SANITIZERS}")
 
-            foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
+        foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
-                set(sanitizer_variable HAS_SANITIZER_${sanitizer})
-                # Sanitize the variable name to remove illegal characters
-                string(MAKE_C_IDENTIFIER ${sanitizer_variable} sanitizer_variable)
+            set(sanitizer_variable HAS_SANITIZER_${sanitizer})
+            # Sanitize the variable name to remove illegal characters
+            string(MAKE_C_IDENTIFIER ${sanitizer_variable} sanitizer_variable)
 
-                aws_check_sanitizer(${sanitizer} ${sanitizer_variable})
-                if(${${sanitizer_variable}})
-                    set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS},${sanitizer}")
-                endif()
-            endforeach()
-
-            if(PRESENT_SANITIZERS)
-                target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
-                target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
-
-                if(SANITIZER_BLACKLIST)
-                    target_compile_options(${target} PRIVATE -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/${SANITIZER_BLACKLIST})
-                endif()
-
-                string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
-                set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
+            aws_check_sanitizer(${sanitizer} ${sanitizer_variable})
+            if(${${sanitizer_variable}})
+                set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS},${sanitizer}")
             endif()
+        endforeach()
+
+        if(PRESENT_SANITIZERS)
+            target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
+            target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+
+            if(SANITIZER_BLACKLIST)
+                target_compile_options(${target} PRIVATE -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/${SANITIZER_BLACKLIST})
+            endif()
+
+            string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
+            set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
         endif()
     endif()
 endfunction()
