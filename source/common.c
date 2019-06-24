@@ -96,6 +96,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     /* Otherwise, emulate calloc */
     void *mem = allocator->mem_acquire(allocator, required_bytes);
     if (!mem) {
+        aws_raise_error(AWS_ERROR_OOM);
         return NULL;
     }
     memset(mem, 0, required_bytes);
@@ -131,6 +132,7 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
 
         allocation = aws_mem_acquire(allocator, total_size);
         if (!allocation) {
+            aws_raise_error(AWS_ERROR_OOM);
             goto cleanup;
         }
 
@@ -175,9 +177,9 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
         return AWS_OP_SUCCESS;
     }
 
-    void *newptr = aws_mem_acquire(allocator, newsize);
+    void *newptr = allocator->mem_acquire(allocator, newsize);
     if (!newptr) {
-        /* AWS_ERROR_OOM already raised */
+        aws_raise_error(AWS_ERROR_OOM);
         return AWS_OP_ERR;
     }
 
