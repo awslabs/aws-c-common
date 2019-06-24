@@ -329,7 +329,7 @@ static int s_test_acquire_any_muti_threaded(
 
     static struct mt_test_buffer_node s_buffer_nodes[MT_BUFFER_COUNT];
 
-    /* 3 16 byte acquirable buffers + 15 bytes == 54 */
+    /* 3 16 byte acquirable buffers + 15 bytes == 63 */
     ASSERT_SUCCESS(aws_ring_buffer_init(&test_data.ring_buf, allocator, 3 * MT_TEST_BUFFER_SIZE + 15));
     aws_linked_list_init(&test_data.buffer_queue);
 
