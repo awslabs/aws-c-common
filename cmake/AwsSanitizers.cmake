@@ -14,6 +14,7 @@
 include(CheckCCompilerFlag)
 
 option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" OFF)
+set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build with")
 
 # This function checks if a sanitizer is available
 # Options:
@@ -47,21 +48,16 @@ endfunction()
 
 # This function enables sanitizers on the given target
 # Options:
-#  SANITIZERS: The list of sanitizers to enable. Defaults to address;undefined
 #  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
 function(aws_add_sanitizers target)
     set(oneValueArgs BLACKLIST)
-    set(multiValueArgs SANITIZERS)
-    cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "" ${ARGN})
 
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
         if(HAS_SANITIZERS)
-            if(NOT SANITIZER_SANITIZERS)
-                set(SANITIZER_SANITIZERS "address;undefined")
-            endif()
 
-            foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
+            foreach(sanitizer IN LISTS SANITIZERS)
 
                 set(sanitizer_variable HAS_SANITIZER_${sanitizer})
                 # Sanitize the variable name to remove illegal characters
