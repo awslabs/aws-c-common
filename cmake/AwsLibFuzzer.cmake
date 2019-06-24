@@ -40,7 +40,7 @@ function(aws_add_fuzz_tests fuzz_files other_files corpus_dir)
             add_executable(${FUZZ_BINARY_NAME} ${test_file} ${other_files})
             target_link_libraries(${FUZZ_BINARY_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
             aws_set_common_properties(${FUZZ_BINARY_NAME})
-            aws_add_sanitizers(${FUZZ_BINARY_NAME} SANITIZERS "${${CMAKE_PROJECT_NAME}_SANITIZERS};fuzzer")
+            aws_add_sanitizers(${FUZZ_BINARY_NAME} SANITIZERS "fuzzer")
             target_compile_definitions(${FUZZ_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
             target_include_directories(${FUZZ_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 

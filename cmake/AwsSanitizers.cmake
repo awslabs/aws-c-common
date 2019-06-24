@@ -48,16 +48,20 @@ endfunction()
 
 # This function enables sanitizers on the given target
 # Options:
+#  SANITIZERS: The list of extra sanitizers to enable
 #  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
 function(aws_add_sanitizers target)
     set(oneValueArgs BLACKLIST)
-    cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "" ${ARGN})
+    set(multiValueArgs SANITIZERS)
+    cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
         if(HAS_SANITIZERS)
 
-            foreach(sanitizer IN LISTS SANITIZERS)
+            list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
+
+            foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
                 set(sanitizer_variable HAS_SANITIZER_${sanitizer})
                 # Sanitize the variable name to remove illegal characters
