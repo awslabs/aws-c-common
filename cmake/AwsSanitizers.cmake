@@ -60,6 +60,7 @@ function(aws_add_sanitizers target)
         if(HAS_SANITIZERS)
 
             list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
+            message(STATUS "attempting to use sanitizer list ${SANITIZER_SANITIZERS}")
 
             foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
