@@ -24,8 +24,9 @@ void aws_linked_list_rend_harness() {
     __CPROVER_assume(aws_linked_list_is_valid(&list));
 
     /* perform operation under verification */
-    aws_linked_list_rend(&list);
+    struct aws_linked_list_node *rval = aws_linked_list_rend(&list);
 
     /* assertions */
+    assert(rval == &list.head);
     assert(aws_linked_list_is_valid(&list));
 }

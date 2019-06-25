@@ -24,8 +24,9 @@ void aws_linked_list_rbegin_harness() {
     __CPROVER_assume(aws_linked_list_is_valid(&list));
 
     /* perform operation under verification */
-    aws_linked_list_rbegin(&list);
+    struct aws_linked_list_node *rval = aws_linked_list_rbegin(&list);
 
     /* assertions */
+    assert(rval == list.tail.prev);
     assert(aws_linked_list_is_valid(&list));
 }

@@ -87,7 +87,7 @@ AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_
  * list to ensure that tail is reachable from head (and vice versa)
  * and that every connection is bidirectional.
  *
- * Note: This check could go into an inginite loop if the list is
+ * Note: This check could go into an infinite loop if the list is
  * circular.
  */
 AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list *list) {
@@ -98,21 +98,20 @@ AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list 
     const struct aws_linked_list_node *temp = &list->head;
     /* Head must reach tail by following next pointers */
     bool head_reaches_tail = false;
-    /* Next and prev pointers should connect the same nodes */
-    bool are_links_valid = true;
-    /* By satisfying both of the above, we also guarantee that tail
-     * reaches head by following prev pointers */
+    /* By satisfying the above and that edges are bidirectional, we
+     * also guarantee that tail reaches head by following prev
+     * pointers */
     while (temp) {
         if (temp == &list->tail) {
             head_reaches_tail = true;
             break;
         } else if (!aws_linked_list_node_next_is_valid(temp)) {
-            are_links_valid = false;
-            break;
+            /* Next and prev pointers should connect the same nodes */
+            return false;
         }
         temp = temp->next;
     }
-    return head_reaches_tail && are_links_valid;
+    return head_reaches_tail;
 }
 
 /**
@@ -135,6 +134,7 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct 
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *rval = list->head.next;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == list->head.next);
     return rval;
 }
 
@@ -145,6 +145,7 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const str
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     const struct aws_linked_list_node *rval = &list->tail;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == &list->tail);
     return rval;
 }
 
@@ -157,6 +158,7 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *rval = list->tail.prev;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == list->tail.prev);
     return rval;
 }
 
@@ -168,6 +170,7 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const st
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     const struct aws_linked_list_node *rval = &list->head;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == &list->head);
     return rval;
 }
 
