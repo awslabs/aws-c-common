@@ -13,23 +13,16 @@
  * limitations under the License.
  */
 
-/**
- * FUNCTION: memcpy
- *
- * This function overrides the original implementation of the memcpy
- * function from string.h. It just assignes a non deterministic value
- * to a non deterministic index [i] <= [n] of the destination array It
- * also checks if the size of the arrays pointed to by both the [*dst]
- * and [*src] parameters are at least [n] bytes and if they overlap.
- */
-
 #undef memcpy
 
 #include <proof_helpers/nondet.h>
 #include <stdint.h>
 
 /**
- * Override the version of memcpy used by CBMC.
+ * Override the version of memcpy used by CBMC. Users may not want to pay
+ * for the cost of performing the computation of memcpy in proofs. In that
+ * case, this stub at least checks for the preconditions and make sure to
+ * havoc all elements pointed by *dst up to n.
  */
 void *memcpy_impl(void *dst, const void *src, size_t n) {
     __CPROVER_precondition(
