@@ -97,9 +97,34 @@ AWS_EXTERN_C_END
 #    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
 
+#define AWS_ERROR_PRECONDITION_2(cond, err)                                                                            \
+    do {                                                                                                               \
+        if (!(cond)) {                                                                                                 \
+            return aws_raise_error(err);                                                                               \
+        }                                                                                                              \
+    } while (0)
+#define AWS_ERROR_PRECONDITION_3(cond, err, explanation) AWS_ERROR_PRECONDITION_2(cond, err)
+#define AWS_ERROR_PRECONDITION_1(cond) AWS_ERROR_PRECONDITION_2(cond, AWS_ERROR_INVALID_ARGUMENT)
+
+#define AWS_ERROR_POSTCONDITION_2(cond, err)                                                                           \
+    do {                                                                                                               \
+        if (!(cond)) {                                                                                                 \
+            return aws_raise_error(err);                                                                               \
+        }                                                                                                              \
+    } while (0)
+#define AWS_ERROR_POSTCONDITION_3(cond, err, explanation) AWS_ERROR_POSTCONDITION_2(cond, err)
+
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
-#define AWS_PRECONDITION(...) GET_MACRO(__VA_ARGS__, AWS_PRECONDITION_2, AWS_PRECONDITION_1, UNUSED)(__VA_ARGS__)
-#define AWS_POSTCONDITION(...) GET_MACRO(__VA_ARGS__, AWS_POSTCONDITION_2, AWS_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
+#define AWS_PRECONDITION(...)                                                                                          \
+    GET_MACRO(__VA_ARGS__, UNUSED, AWS_PRECONDITION_2, AWS_PRECONDITION_1, UNUSED)(__VA_ARGS__)
+#define AWS_POSTCONDITION(...)                                                                                         \
+    GET_MACRO(__VA_ARGS__, UNUSED, AWS_POSTCONDITION_2, AWS_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
+#define AWS_ERROR_PRECONDITION(...)                                                                                    \
+    GET_MACRO(__VA_ARGS__, AWS_ERROR_PRECONDITION_3, AWS_ERROR_PRECONDITION_2, AWS_ERROR_PRECONDITION_1, UNUSED)       \
+    (__VA_ARGS__)
+#define AWS_ERROR_POSTCONDITION(...)                                                                                   \
+    GET_MACRO(__VA_ARGS__, AWS_ERROR_POSTCONDITION_3, AWS_ERROR_POSTCONDITION_2, AWS_ERROR_POSTCONDITION_1, UNUSED)    \
+    (__VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))

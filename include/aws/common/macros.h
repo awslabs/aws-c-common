@@ -32,7 +32,8 @@
 #endif /*  __cplusplus */
 
 #define AWS_CONCAT(A, B) A##B
-#define GET_MACRO(_1, _2, NAME, ...) NAME
+/* https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments */
+#define GET_MACRO(_1, _2, _3, NAME, ...) NAME
 
 #define AWS_CACHE_LINE 64
 
