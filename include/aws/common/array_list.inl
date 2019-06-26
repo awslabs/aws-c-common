@@ -26,7 +26,7 @@ int aws_array_list_init_dynamic(
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
     size_t item_size) {
-    if (item_size == 0) {
+    if (item_size == 0 || list == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
@@ -62,6 +62,7 @@ void aws_array_list_init_static(
     void *raw_array,
     size_t item_count,
     size_t item_size) {
+    AWS_FATAL_PRECONDITION(list);
     AWS_FATAL_PRECONDITION(raw_array);
     AWS_FATAL_PRECONDITION(item_count);
     AWS_FATAL_PRECONDITION(item_size);

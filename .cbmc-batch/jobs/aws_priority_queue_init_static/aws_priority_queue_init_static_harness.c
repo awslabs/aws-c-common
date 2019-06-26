@@ -22,7 +22,7 @@
 void aws_priority_queue_init_static_harness() {
 
     /* data structure */
-    struct aws_priority_queue *queue;
+    struct aws_priority_queue queue;
 
     /* parameters */
     size_t item_size;
@@ -30,20 +30,20 @@ void aws_priority_queue_init_static_harness() {
     size_t len;
 
     /* assumptions */
-    ASSUME_VALID_MEMORY(queue);
+    __CPROVER_assume(&queue != NULL);
     __CPROVER_assume(initial_item_allocation > 0 && initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
-    aws_priority_queue_init_static(queue, raw_array, initial_item_allocation, item_size, nondet_compare);
+    aws_priority_queue_init_static(&queue, raw_array, initial_item_allocation, item_size, nondet_compare);
 
     /* assertions */
-    assert(aws_priority_queue_is_valid(queue));
-    assert(queue->container.alloc == NULL);
-    assert(queue->container.item_size == item_size);
-    assert(queue->container.length == 0);
-    assert(queue->container.current_size == initial_item_allocation * item_size);
-    assert_bytes_match((uint8_t *)queue->container.data, raw_array, len);
+    assert(aws_priority_queue_is_valid(&queue));
+    assert(queue.container.alloc == NULL);
+    assert(queue.container.item_size == item_size);
+    assert(queue.container.length == 0);
+    assert(queue.container.current_size == initial_item_allocation * item_size);
+    assert_bytes_match((uint8_t *)queue.container.data, raw_array, len);
 }

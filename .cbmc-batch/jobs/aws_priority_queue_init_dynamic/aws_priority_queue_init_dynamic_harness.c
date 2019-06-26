@@ -22,7 +22,7 @@
 void aws_priority_queue_init_dynamic_harness() {
 
     /* data structure */
-    struct aws_priority_queue *queue;
+    struct aws_priority_queue queue;
 
     /* parameters */
     struct aws_allocator *allocator;
@@ -31,7 +31,6 @@ void aws_priority_queue_init_dynamic_harness() {
     size_t len;
 
     /* assumptions */
-    ASSUME_VALID_MEMORY(queue);
     ASSUME_CAN_FAIL_ALLOCATOR(allocator);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
@@ -39,14 +38,15 @@ void aws_priority_queue_init_dynamic_harness() {
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
-    if (!aws_priority_queue_init_dynamic(queue, allocator, initial_item_allocation, item_size, nondet_compare)) {
+    if (!aws_priority_queue_init_dynamic(
+            nondet_bool() ? &queue : NULL, allocator, initial_item_allocation, item_size, nondet_compare)) {
         /* assertions */
-        assert(aws_priority_queue_is_valid(queue));
-        assert(queue->container.alloc == allocator);
-        assert(queue->container.item_size == item_size);
-        assert(queue->container.length == 0);
+        assert(aws_priority_queue_is_valid(&queue));
+        assert(queue.container.alloc == allocator);
+        assert(queue.container.item_size == item_size);
+        assert(queue.container.length == 0);
         assert(
-            (queue->container.data == NULL && queue->container.current_size == 0) ||
-            (queue->container.data && queue->container.current_size == (initial_item_allocation * item_size)));
+            (queue.container.data == NULL && queue.container.current_size == 0) ||
+            (queue.container.data && queue.container.current_size == (initial_item_allocation * item_size)));
     }
 }

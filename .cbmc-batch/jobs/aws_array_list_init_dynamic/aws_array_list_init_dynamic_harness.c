@@ -21,7 +21,7 @@
  */
 void aws_array_list_init_dynamic_harness() {
     /* data structure */
-    struct aws_array_list *list;
+    struct aws_array_list list;
 
     /* parameters */
     struct aws_allocator *allocator;
@@ -29,18 +29,17 @@ void aws_array_list_init_dynamic_harness() {
     size_t initial_item_allocation;
 
     /* assumptions */
-    ASSUME_VALID_MEMORY(list);
     ASSUME_CAN_FAIL_ALLOCATOR(allocator);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
 
     /* perform operation under verification */
-    if (!aws_array_list_init_dynamic(list, allocator, initial_item_allocation, item_size)) {
+    if (!aws_array_list_init_dynamic(nondet_bool() ? &list : NULL, allocator, initial_item_allocation, item_size)) {
         /* assertions */
-        assert(aws_array_list_is_valid(list));
-        assert(list->alloc == allocator);
-        assert(list->item_size == item_size);
-        assert(list->length == 0);
-        assert(list->current_size == item_size * initial_item_allocation);
+        assert(aws_array_list_is_valid(&list));
+        assert(list.alloc == allocator);
+        assert(list.item_size == item_size);
+        assert(list.length == 0);
+        assert(list.current_size == item_size * initial_item_allocation);
     }
 }

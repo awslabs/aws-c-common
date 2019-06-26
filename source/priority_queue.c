@@ -159,6 +159,10 @@ int aws_priority_queue_init_dynamic(
     size_t item_size,
     aws_priority_queue_compare_fn *pred) {
 
+    if (queue == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);
 
@@ -175,6 +179,8 @@ void aws_priority_queue_init_static(
     size_t item_count,
     size_t item_size,
     aws_priority_queue_compare_fn *pred) {
+
+    AWS_FATAL_PRECONDITION(queue);
 
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);
@@ -276,7 +282,6 @@ int aws_priority_queue_push_ref(
         AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
         return err;
     }
-
     size_t index = aws_array_list_length(&queue->container) - 1;
 
     if (backpointer && !queue->backpointers.alloc) {
