@@ -46,6 +46,7 @@ struct aws_linked_list {
  * Tests if the list is empty.
  */
 AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(list);
     return list->head.next == &list->tail;
 }
 
@@ -87,8 +88,11 @@ AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_
  * list to ensure that tail is reachable from head (and vice versa)
  * and that every connection is bidirectional.
  *
- * Note: This check could go into an infinite loop if the list is
- * circular.
+ * Note: This check *cannot* go into an infinite loop, because we
+ * ensure that the connection to the next node is
+ * bidirectional. Therefore, if a node's [a] a.next is a previous node
+ * [b] in the list, b.prev != &a and so this check would fail, thus
+ * terminating the loop.
  */
 AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list *list) {
     if (!list) {
