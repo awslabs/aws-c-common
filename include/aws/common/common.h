@@ -20,9 +20,8 @@
 #include <aws/common/exports.h>
 
 #include <aws/common/allocator.h>
-#include <aws/common/assert.inl>
+#include <aws/common/assert.h>
 #include <aws/common/error.h>
-#include <aws/common/invariants.h>
 #include <aws/common/macros.h>
 #include <aws/common/stdbool.h>
 #include <aws/common/stdint.h>

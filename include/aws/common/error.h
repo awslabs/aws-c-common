@@ -16,7 +16,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/assert.inl>
+#include <aws/common/assert.h>
 #include <aws/common/exports.h>
 #include <aws/common/macros.h>
 #include <aws/common/stdint.h>

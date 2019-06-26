@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/assert.inl>
+#include <aws/common/assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
