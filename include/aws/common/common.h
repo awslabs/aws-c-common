@@ -41,6 +41,4 @@ void aws_secure_zero(void *pBuf, size_t bufsize);
 
 AWS_EXTERN_C_END
 
-#include <aws/common/error_codes.h>
-
 #endif /* AWS_COMMON_COMMON_H */

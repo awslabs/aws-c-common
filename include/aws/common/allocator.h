@@ -31,16 +31,14 @@ struct aws_allocator {
     void *impl;
 };
 
-/* Avoid pulling in CoreFoundation headers in a header file. */
-#ifdef __MACH__
-struct __CFAllocator;
-typedef const struct __CFAllocator *CFAllocatorRef;
-#endif
-
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator(void);
 
 #ifdef __MACH__
+/* Avoid pulling in CoreFoundation headers in a header file. */
+struct __CFAllocator;
+typedef const struct __CFAllocator *CFAllocatorRef;
+
 /**
  * Wraps a CFAllocator around aws_allocator. For Mac only. Use this anytime you need a CFAllocatorRef for interacting
  * with Apple Frameworks. Unfortunately, it allocates memory so we can't make it static file scope, be sure to call
