@@ -16,8 +16,13 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
+#include <aws/common/assert.inl>
 #include <aws/common/exports.h>
+#include <aws/common/macros.h>
+#include <aws/common/stdint.h>
+
+#define AWS_OP_SUCCESS (0)
+#define AWS_OP_ERR (-1)
 
 struct aws_error_info {
     int error_code;
@@ -131,6 +136,12 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
  */
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
+
+/**
+ * Loads error strings for debugging and logging purposes.
+ */
+AWS_COMMON_API
+void aws_load_error_strings(void);
 
 AWS_EXTERN_C_END
 

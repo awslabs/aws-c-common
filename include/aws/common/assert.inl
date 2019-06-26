@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ASSERT_INL
+#define AWS_COMMON_ASSERT_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -12,6 +15,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+
+#include <stdio.h>
+#include <aws/common/macros.h>
+#include <aws/common/exports.h>
 
 AWS_EXTERN_C_BEGIN
 
@@ -49,8 +56,8 @@ AWS_EXTERN_C_END
             if (!(cond)) {                                                                                             \
                 aws_fatal_assert(#cond, __FILE__, __LINE__);                                                           \
             }
-#    endif
-#endif
+#    endif /* defined(_MSC_VER) */
+#endif /* defined(CBMC) || __clang_analyzer__ */
 
 #if defined(CBMC)
 #    include <assert.h>
@@ -59,8 +66,10 @@ AWS_EXTERN_C_END
 #    define AWS_ASSERT(cond) AWS_FATAL_ASSERT(cond)
 #else
 #    define AWS_ASSERT(cond)
-#endif
+#endif /*  defined(CBMC) */
 
 #define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
 #define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
 #define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
+
+#endif /* AWS_COMMON_ASSERT_INL */
