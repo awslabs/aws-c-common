@@ -16,6 +16,8 @@
  */
 
 #include <aws/common/assert.inl>
+#include <stddef.h>
+#include <stdio.h>
 
 #ifndef NO_STDINT
 #    include <stdint.h>
@@ -99,8 +101,8 @@ typedef int64_t aws_off_t;
 typedef off_t aws_off_t;
 #    else
 typedef long aws_off_t;
-#    endif /* defined(_MSC_VER) */
-#endif
+#    endif /*  _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L */
+#endif     /* defined(_MSC_VER) */
 
 AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
 
