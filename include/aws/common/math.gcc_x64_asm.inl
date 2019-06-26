@@ -32,8 +32,8 @@ AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     __asm__("mulq %q[arg2]\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
             "cmovc %q[saturate], %%rax\n"
             : /* in/out: %rax = a, out: rdx (ignored) */ "+&a"(a), "=&d"(rdx)
-            : /* in: register only */ [arg2] "r"(b),
-              /* in: saturation value (reg/memory) */ [saturate] "rm"(~0LL)
+            : /* in: register only */[ arg2 ] "r"(b),
+              /* in: saturation value (reg/memory) */[ saturate ] "rm"(~0LL)
             : /* clobbers: cc */ "cc");
     (void)rdx; /* suppress unused warnings */
     return a;
@@ -50,9 +50,9 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint64_t result = a;
     __asm__("mulq %q[arg2]\n" /* rax * b, result is in RDX:RAX, OF=CF=(RDX != 0) */
             "seto %[flag]\n"  /* flag = overflow_bit */
-            : /* in/out: %rax (first arg & result), %d (flag) */ "+&a"(result), [flag] "=&d"(flag)
+            : /* in/out: %rax (first arg & result), %d (flag) */ "+&a"(result), [ flag ] "=&d"(flag)
             : /* in: reg for 2nd operand */
-            [arg2] "r"(b)
+            [ arg2 ] "r"(b)
             : /* clobbers: cc (d is used for flag so no need to clobber)*/ "cc");
     *r = result;
     if (flag) {
@@ -76,7 +76,7 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
             "mov $0xFFFFFFFF, %%eax\n"
             ".1f%=:"
             : /* in/out: %eax = result/a, out: edx (ignored) */ "+&a"(a), "=&d"(edx)
-            : /* in: operand 2 in reg */ [arg2] "r"(b)
+            : /* in: operand 2 in reg */[ arg2 ] "r"(b)
             : /* clobbers: cc */ "cc");
     (void)edx; /* suppress unused warnings */
     return a;
@@ -96,9 +96,9 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
      */
     __asm__("mull %k[arg2]\n" /* eax * b, result is in EDX:EAX, OF=CF=(EDX != 0) */
             "seto %[flag]\n"  /* flag = overflow_bit */
-            : /* in/out: %eax (first arg & result), %d (flag) */ "+&a"(result), [flag] "=&d"(flag)
+            : /* in/out: %eax (first arg & result), %d (flag) */ "+&a"(result), [ flag ] "=&d"(flag)
             : /* in: reg for 2nd operand */
-            [arg2] "r"(b)
+            [ arg2 ] "r"(b)
             : /* clobbers: cc (d is used for flag so no need to clobber)*/ "cc");
     *r = result;
     if (flag) {
@@ -117,8 +117,8 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     char flag;
     __asm__("addq %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
             "setc %[flag]\n"          /* [flag] = 1 if overflow, 0 otherwise */
-            : /* in/out: */ [arga] "+r"(a), [flag] "=&r"(flag)
-            : /* in: */ [argb] "r"(b)
+            : /* in/out: */[ arga ] "+r"(a), [ flag ] "=&r"(flag)
+            : /* in: */[ argb ] "r"(b)
             : /* clobbers: */ "cc");
     *r = a;
     if (flag) {
@@ -136,8 +136,8 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t result = UINT64_MAX;
     __asm__("addq %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
             "cmovncq %[arga], %[result]\n" /* [result] = UINT64_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
+            : /* in/out: */[ result ] "+r"(result)
+            : /* in: */[ arga ] "r"(a), [ argb ] "r"(b)
             : /* clobbers: */ "cc");
     return result;
 }
@@ -152,8 +152,8 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     char flag;
     __asm__("addl %[argb], %[arga]\n" /* [arga] = [arga] + [argb] */
             "setc %[flag]\n"          /* [flag] = 1 if overflow, 0 otherwise */
-            : /* in/out: */ [arga] "+r"(a), [flag] "=&r"(flag)
-            : /* in: */ [argb] "r"(b)
+            : /* in/out: */[ arga ] "+r"(a), [ flag ] "=&r"(flag)
+            : /* in: */[ argb ] "r"(b)
             : /* clobbers: */ "cc");
     *r = a;
     if (flag) {
@@ -171,8 +171,8 @@ AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t result = UINT32_MAX;
     __asm__("addl %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
             "cmovncl %[arga], %[result]\n" /* [result] = UINT32_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
+            : /* in/out: */[ result ] "+r"(result)
+            : /* in: */[ arga ] "r"(a), [ argb ] "r"(b)
             : /* clobbers: */ "cc");
     return result;
 }
