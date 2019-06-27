@@ -18,8 +18,8 @@ include ../Makefile.aws_linked_list
 # Run deep validity checks in linked_list_is_valid
 AWS_DEEP_CHECKS = 1
 
-UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 UNWINDSET += aws_linked_list_is_valid_deep.0:$(shell echo $$((2 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
+UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 
 CBMCFLAGS +=
 
