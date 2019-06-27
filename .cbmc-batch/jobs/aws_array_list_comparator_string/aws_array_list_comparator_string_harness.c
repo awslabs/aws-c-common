@@ -19,18 +19,10 @@
 #include <proof_helpers/utils.h>
 #include <stddef.h>
 
-// MAX_STRING_LEN is defined in the makefile
-
-/**
- * Coverage: 1.00 (56 lines out of 56 statically-reachable lines in 10 functions reached)
- * Runtime: real	0m4.682s
- */
 void aws_array_list_comparator_string_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_string *str_b =
-        nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    int rval = aws_array_list_comparator_string(&str_a, &str_b);
-    if (!rval) {
+    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str_b = nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    if (aws_array_list_comparator_string(&str_a, &str_b) == 0) {
         assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
     }
 }
