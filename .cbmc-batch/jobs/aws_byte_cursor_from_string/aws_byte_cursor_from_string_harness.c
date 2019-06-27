@@ -17,17 +17,12 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (35 lines out of 35 statically-reachable lines in 9 functions reached)
- * Runtime: real	0m3.614s
- */
 void aws_byte_cursor_from_string_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
+    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
     struct aws_byte_cursor cursor = aws_byte_cursor_from_string(str);
+    assert(aws_string_is_valid(str));
+    assert(aws_byte_cursor_is_valid(&cursor));
     assert(cursor.len == str->len);
     assert(cursor.ptr == str->bytes);
     assert_bytes_match(str->bytes, cursor.ptr, str->len);
