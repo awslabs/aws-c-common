@@ -90,6 +90,11 @@ DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
 DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 ################################################################
+# We override abort() to be assert(0), as it is not caught by
+# CBMC as a violation
+ABSTRACTIONS += $(HELPERDIR)/stubs/abort_override_assert_false.c
+DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body abort
+################################################################
 
 REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
