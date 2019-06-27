@@ -108,9 +108,11 @@ AWS_EXTERN_C_END
 
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
 #define AWS_PRECONDITION(...) GET_MACRO(__VA_ARGS__, AWS_PRECONDITION_2, AWS_PRECONDITION_1, UNUSED)(__VA_ARGS__)
-#define AWS_FATAL_PRECONDITION(...) GET_MACRO(__VA_ARGS__, AWS_FATAL_PRECONDITION_2, AWS_FATAL_PRECONDITION_1, UNUSED)(__VA_ARGS__)
+#define AWS_FATAL_PRECONDITION(...)                                                                                    \
+    GET_MACRO(__VA_ARGS__, AWS_FATAL_PRECONDITION_2, AWS_FATAL_PRECONDITION_1, UNUSED)(__VA_ARGS__)
 #define AWS_POSTCONDITION(...) GET_MACRO(__VA_ARGS__, AWS_POSTCONDITION_2, AWS_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
-#define AWS_FATAL_POSTCONDITION(...) GET_MACRO(__VA_ARGS__, AWS_FATAL_POSTCONDITION_2, AWS_FATAL_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
+#define AWS_FATAL_POSTCONDITION(...)                                                                                   \
+    GET_MACRO(__VA_ARGS__, AWS_FATAL_POSTCONDITION_2, AWS_FATAL_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
