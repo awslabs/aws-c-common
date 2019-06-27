@@ -87,7 +87,8 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
     bool current_size_is_valid = (list->current_size >= required_size);
     bool data_is_valid = ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
     bool item_size_is_valid = (list->item_size!=0);
-    return required_size_is_valid && current_size_is_valid && data_is_valid && item_size_is_valid;}
+    return required_size_is_valid && current_size_is_valid && data_is_valid && item_size_is_valid;
+}
 
 AWS_STATIC_IMPL
 bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
