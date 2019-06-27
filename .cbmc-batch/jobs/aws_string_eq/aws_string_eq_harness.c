@@ -17,21 +17,14 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (39 lines out of 39 statically-reachable lines in 7 functions reached)
- * Runtime: real	0m4.469s
- */
 void aws_string_eq_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_string *str_b =
-        nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    bool rval = aws_string_eq(str_a, str_b);
-    if (rval) {
+    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str_b = nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    if (aws_string_eq(str_a, str_b)) {
         assert(str_a->len == str_b->len);
         assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
     }
+    assert(aws_string_is_valid(str_a));
+    assert(aws_string_is_valid(str_b));
 }
