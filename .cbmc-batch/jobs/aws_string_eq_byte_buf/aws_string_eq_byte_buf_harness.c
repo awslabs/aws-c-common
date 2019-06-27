@@ -33,5 +33,5 @@ void aws_string_eq_byte_buf_harness() {
     }
 
     assert(aws_string_is_valid(str));
-    assert(aws_byte_buf_is_valid(buf));
+    assert(aws_byte_buf_is_valid(&buf));
 }
