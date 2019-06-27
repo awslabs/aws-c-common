@@ -16,16 +16,8 @@
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
-#include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (25 lines out of 25 statically-reachable lines in 8 functions reached)
- * Runtime: real	0m3.769s
- */
 void aws_string_destroy_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len(can_fail_allocator());
+    struct aws_string *str = make_arbitrary_aws_string_nondet_len();
     aws_string_destroy(str);
 }
