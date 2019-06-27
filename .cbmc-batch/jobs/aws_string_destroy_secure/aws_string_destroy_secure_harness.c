@@ -16,21 +16,13 @@
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
-#include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (59 lines out of 59 statically-reachable lines in 15 functions reached)
- * Runtime: real	0m5.907s
- */
 void aws_string_destroy_secure_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    assert(str);
+    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
     char *bytes = str->bytes;
     size_t len = str->len;
-    __CPROVER_allocated_memory(bytes, len); // tell CBMC to keep the buffer live after the free
+    /* Tell CBMC to keep the buffer live after the free */
+    __CPROVER_allocated_memory(bytes, len);
     aws_string_destroy_secure(str);
     assert_all_zeroes(bytes, len);
 }
