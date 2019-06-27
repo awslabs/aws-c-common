@@ -207,6 +207,7 @@ AWS_STATIC_IMPL void aws_linked_list_insert_after(
     AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(after));
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(to_add));
     AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(to_add));
+    AWS_POSTCONDITION(after->next == to_add);
 }
 
 /**
@@ -224,6 +225,7 @@ AWS_STATIC_IMPL void aws_linked_list_insert_before(
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(before));
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(to_add));
     AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(to_add));
+    AWS_POSTCONDITION(before->prev == to_add);
 }
 
 /**

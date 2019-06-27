@@ -16,24 +16,18 @@
 # Run deep validity checks in linked_list_is_valid
 AWS_DEEP_CHECKS = 1
 
-## We have to override the MAX_LINKED_LIST_ITEM_ALLOCATION defined in
-## Makefile.aws_linked_list because otherwise there are too many
-## unwindings
-MAX_LINKED_LIST_ITEM_ALLOCATION ?= 20
-
 include ../Makefile.aws_linked_list
-
-UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 
 ## This has to take into account that a new element has been added to
 ## the list afterwards so we have to unwind one more time (instead of
 ## the standard 2 + MAX_LINKED_LIST_ITEM_ALLOCATION)
 UNWINDSET += aws_linked_list_is_valid_deep.0:$(shell echo $$((3 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
+UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 
