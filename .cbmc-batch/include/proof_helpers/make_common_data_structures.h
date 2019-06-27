@@ -95,47 +95,6 @@ bool aws_priority_queue_is_bounded(
  */
 void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
 
-/**
- * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage
- */
-struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max);
-
-/**
- * Makes a byte_buf, with as much nondet as possible, defined len and capacity
- */
-void make_arbitrary_byte_buf(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity, size_t len);
-
-/**
- * Makes a byte_buf, with as much nondet as possible, len = capacity
- */
-void make_arbitrary_byte_buf_full(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity);
-
-/**
- * Makes a valid header, with as much nondet as possible, nondet len
- */
-void make_arbitrary_byte_buf_nondet_len(struct aws_allocator *allocator, struct aws_byte_buf *buf);
-
-/**
- * Makes a valid header, with as much nondet as possible, nondet len <= max
- */
-void make_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t max);
-struct aws_byte_buf *allocate_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, size_t max);
-
-/**
- * Makes a valid string, with as much nondet as possible, defined length
- */
-struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, size_t size);
-
-/**
- * Makes a valid string, with as much nondet as possible
- */
-struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *allocator);
-
-/**
- * Makes a valid string, with as much nondet as possible, len < max
- */
-struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max);
-
 /*
  * Ensures aws_hash_table has a proper allocated p_impl member
  */
@@ -145,11 +104,6 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
  * Ensures aws_hash_table has destroy function pointers that are enther null or valid
  */
 void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map);
-
-/**
- * Makes a valid c string, with as much nondet as possible, len < max_size
- */
-const char *make_arbitrary_c_str(size_t max_size);
 
 /**
  * A correct hash table has max_load < size.  This means that there is always one slot empty.
@@ -167,3 +121,23 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
  * require a stronger function here.
  */
 void hash_proof_destroy_noop(void *p);
+
+/**
+ * Makes a valid string, with as much nondet as possible, defined length
+ */
+struct aws_string *make_arbitrary_aws_string(size_t size);
+
+/**
+ * Makes a valid string, with as much nondet as possible
+ */
+struct aws_string *make_arbitrary_aws_string_nondet_len();
+
+/**
+ * Makes a valid string, with as much nondet as possible, len < max
+ */
+struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(size_t max_size);
+
+/**
+ * Makes a valid c string, with as much nondet as possible, len < max_size
+ */
+const char *make_arbitrary_c_str(size_t max_size);
