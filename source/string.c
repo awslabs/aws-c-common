@@ -15,12 +15,16 @@
 #include <aws/common/string.h>
 
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
+    if (c_str == NULL || allocator == NULL) {
+        return NULL;
+    }
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
     size_t malloc_size;
-    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
+    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size) || !allocator) {
         return NULL;
     }
     struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
@@ -33,21 +37,27 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     *(size_t *)(&str->len) = len;
     memcpy((void *)str->bytes, bytes, len);
     *(uint8_t *)&str->bytes[len] = '\0';
-
+    AWS_POSTCONDITION(aws_string_is_valid(str));
     return str;
 }
 
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
+    if (allocator == NULL || str == NULL) {
+        return NULL;
+    }
     return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 
 void aws_string_destroy(struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
     if (str && str->allocator) {
         aws_mem_release(str->allocator, str);
     }
 }
 
 void aws_string_destroy_secure(struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
     if (str) {
         aws_secure_zero((void *)aws_string_bytes(str), str->len);
         if (str->allocator) {
@@ -57,11 +67,23 @@ void aws_string_destroy_secure(struct aws_string *str) {
 }
 
 int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
+    AWS_PRECONDITION(aws_string_is_valid(a));
+    AWS_PRECONDITION(aws_string_is_valid(b));
+    if (a == b) {
+        return 0;
+    } else if (a == NULL) {
+        return -1;
+    } else if (b == NULL) {
+        return 1;
+    }
+
     size_t len_a = a->len;
     size_t len_b = b->len;
     size_t min_len = len_a < len_b ? len_a : len_b;
 
     int ret = memcmp(aws_string_bytes(a), aws_string_bytes(b), min_len);
+    AWS_POSTCONDITION(aws_string_is_valid(a));
+    AWS_POSTCONDITION(aws_string_is_valid(b));
     if (ret) {
         return ret; /* overlapping characters differ */
     }
