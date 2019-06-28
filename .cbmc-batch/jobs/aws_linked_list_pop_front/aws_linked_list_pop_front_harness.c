@@ -24,7 +24,7 @@ void aws_linked_list_pop_front_harness() {
 
     /* Assume the preconditions. The function requires that list != NULL */
     __CPROVER_assume(!aws_linked_list_empty(&list));
-    
+
     /* Keep the old last node of the linked list */
     struct aws_linked_list_node *old_next_first = (list.head.next)->next;
 

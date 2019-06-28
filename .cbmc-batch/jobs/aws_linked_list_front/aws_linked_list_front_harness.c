@@ -27,7 +27,7 @@ void aws_linked_list_front_harness() {
 
     /* Assume the preconditions. The function requires that list != NULL */
     __CPROVER_assume(!aws_linked_list_empty(&list));
-        
+
     /* perform operation under verification */
     struct aws_linked_list_node *front = aws_linked_list_front(&list);
 

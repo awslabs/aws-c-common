@@ -260,10 +260,10 @@ AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, str
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     AWS_PRECONDITION(!aws_linked_list_empty(list));
-    struct aws_linked_list_node *rval = list->tail.prev; 
+    struct aws_linked_list_node *rval = list->tail.prev;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(rval));
-    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));    
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));
     return rval;
 }
 
@@ -297,10 +297,10 @@ AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, st
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     AWS_PRECONDITION(!aws_linked_list_empty(list));
-    struct aws_linked_list_node *rval = list->head.next; 
+    struct aws_linked_list_node *rval = list->head.next;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(rval));
-    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));    
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));
     return rval;
 }
 
