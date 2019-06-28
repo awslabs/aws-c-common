@@ -24,8 +24,8 @@
 #endif
 
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
-    AWS_ERROR_PRECONDITION(buf);
-    AWS_ERROR_PRECONDITION(allocator);
+    AWS_PRECONDITION(buf);
+    AWS_PRECONDITION(allocator);
 
     buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
     if (capacity != 0 && buf->buffer == NULL) {
@@ -40,8 +40,8 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
 }
 
 int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allocator, const struct aws_byte_buf *src) {
-    AWS_ERROR_PRECONDITION(allocator);
-    AWS_ERROR_PRECONDITION(dest);
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(dest);
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(src));
 
     if (!src->buffer) {
@@ -145,8 +145,8 @@ int aws_byte_buf_init_copy_from_cursor(
     struct aws_byte_buf *dest,
     struct aws_allocator *allocator,
     struct aws_byte_cursor src) {
-    AWS_ERROR_PRECONDITION(allocator);
-    AWS_ERROR_PRECONDITION(dest);
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(dest);
     AWS_ERROR_PRECONDITION(aws_byte_cursor_is_valid(&src));
 
     AWS_ZERO_STRUCT(*dest);

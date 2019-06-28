@@ -49,7 +49,7 @@ void aws_ring_buffer_clean_up(struct aws_ring_buffer *ring_buf) {
 int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_size, struct aws_byte_buf *dest) {
     AWS_PRECONDITION(aws_ring_buffer_is_valid(ring_buf));
     AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
-    AWS_ERROR_PRECONDITION(requested_size != 0, AWS_ERROR_INVALID_ARGUMENT);
+    AWS_ERROR_PRECONDITION(requested_size != 0);
 
     uint8_t *tail_cpy;
     uint8_t *head_cpy;
