@@ -21,7 +21,7 @@
 void aws_string_new_from_string_harness() {
     /* parameters */
     struct aws_string *source = ensure_string_is_allocated_nondet_length();
-    struct aws_allocator *allocator = nondet_bool() ? (nondet_bool() ? can_fail_allocator() : source->allocator) : NULL;
+    struct aws_allocator *allocator = (source->allocator) ? source->allocator : can_fail_allocator();
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_string(allocator, source);

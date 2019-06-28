@@ -21,8 +21,8 @@
 void aws_string_new_from_array_harness() {
     /* parameters */
     size_t alloc_size;
-    uint8_t *array = can_fail_malloc(alloc_size);
-    struct aws_allocator *allocator = nondet_bool() ? can_fail_allocator() : NULL;
+    uint8_t *array = bounded_malloc(alloc_size);
+    struct aws_allocator *allocator = can_fail_allocator();
     size_t reported_size;
 
     /* precondition */

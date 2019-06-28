@@ -15,13 +15,13 @@
 #include <aws/common/string.h>
 
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
-    AWS_FATAL_ASSERT(allocator && c_str);
+    AWS_PRECONDITION(allocator && c_str);
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
-    AWS_FATAL_ASSERT(allocator);
-    AWS_FATAL_ASSERT(AWS_MEM_IS_READABLE(bytes, len));
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
     size_t malloc_size;
     if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
         return NULL;
@@ -41,7 +41,7 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
 }
 
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
-    AWS_FATAL_ASSERT(allocator && aws_string_is_valid(str));
+    AWS_PRECONDITION(allocator && aws_string_is_valid(str));
     return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 

@@ -20,8 +20,8 @@
 
 void aws_string_new_from_c_str_harness() {
     /* parameters */
-    const char *c_str = nondet_bool() ? ensure_c_str_is_allocated(MAX_STRING_LEN) : NULL;
-    struct aws_allocator *allocator = nondet_bool() ? can_fail_allocator() : NULL;
+    const char *c_str = ensure_c_str_is_allocated(MAX_STRING_LEN);
+    struct aws_allocator *allocator = can_fail_allocator();
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_c_str(allocator, c_str);
@@ -33,4 +33,5 @@ void aws_string_new_from_c_str_harness() {
         assert_bytes_match(str->bytes, c_str, str->len);
         assert(aws_string_is_valid(str));
     }
+    assert(aws_c_string_is_valid(c_str));
 }

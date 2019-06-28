@@ -81,7 +81,7 @@ AWS_STATIC_IMPL bool aws_c_string_is_valid(const struct aws_string *str) {
  * Equivalent to str->bytes. Here for legacy reasons.
  */
 AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
-    AWS_FATAL_ASSERT(aws_string_is_valid(str));
+    AWS_PRECONDITION(aws_string_is_valid(str));
     return str->bytes;
 }
 
@@ -304,7 +304,7 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_string(
  * Creates an aws_byte_cursor from an existing string.
  */
 AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
-    AWS_FATAL_ASSERT(aws_string_is_valid(src));
+    AWS_PRECONDITION(aws_string_is_valid(src));
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }
 
