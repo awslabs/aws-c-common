@@ -32,10 +32,5 @@ void aws_array_list_clean_up_harness() {
     aws_array_list_clean_up(&list);
 
     /* assertions */
-    assert(aws_array_list_is_valid(&list));
-    assert(list.alloc == NULL);
-    assert(list.current_size == 0);
-    assert(list.length == 0);
-    assert(list.item_size == 0);
-    assert(list.data == NULL);
+    assert(aws_array_list_is_wiped(&list));
 }
