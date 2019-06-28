@@ -89,8 +89,8 @@ AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {
  * Returns true if bytes of string are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
-    AWS_PRECONDITION(aws_string_is_valid(a));
-    AWS_PRECONDITION(aws_string_is_valid(b));
+    AWS_PRECONDITION(!a || aws_string_is_valid(a));
+    AWS_PRECONDITION(!b || aws_string_is_valid(b));
     if (a == b) {
         return true;
     }
@@ -104,8 +104,8 @@ AWS_STATIC_IMPL bool aws_string_eq(const struct aws_string *a, const struct aws_
  * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
  */
 AWS_STATIC_IMPL bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b) {
-    AWS_PRECONDITION(aws_string_is_valid(a));
-    AWS_PRECONDITION(aws_string_is_valid(b));
+    AWS_PRECONDITION(!a || aws_string_is_valid(a));
+    AWS_PRECONDITION(!b || aws_string_is_valid(b));
     if (a == b) {
         return true;
     }
@@ -119,8 +119,11 @@ AWS_STATIC_IMPL bool aws_string_eq_ignore_case(const struct aws_string *a, const
  * Returns true if bytes of string and cursor are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!cur || aws_byte_cursor_is_valid(cur));
+    if (str == NULL && cur == NULL) {
+        return true;
+    }
     if (str == NULL || cur == NULL) {
         return false;
     }
@@ -132,8 +135,11 @@ AWS_STATIC_IMPL bool aws_string_eq_byte_cursor(const struct aws_string *str, con
  */
 AWS_STATIC_IMPL
 bool aws_string_eq_byte_cursor_ignore_case(const struct aws_string *str, const struct aws_byte_cursor *cur) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!cur || aws_byte_cursor_is_valid(cur));
+    if (str == NULL && cur == NULL) {
+        return true;
+    }
     if (str == NULL || cur == NULL) {
         return false;
     }
@@ -144,8 +150,11 @@ bool aws_string_eq_byte_cursor_ignore_case(const struct aws_string *str, const s
  * Returns true if bytes of string and buffer are the same, false otherwise.
  */
 AWS_STATIC_IMPL bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    if (str == NULL && buf == NULL) {
+        return true;
+    }
     if (str == NULL || buf == NULL) {
         return false;
     }
@@ -157,8 +166,11 @@ AWS_STATIC_IMPL bool aws_string_eq_byte_buf(const struct aws_string *str, const 
  */
 AWS_STATIC_IMPL
 bool aws_string_eq_byte_buf_ignore_case(const struct aws_string *str, const struct aws_byte_buf *buf) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    if (str == NULL && buf == NULL) {
+        return true;
+    }
     if (str == NULL || buf == NULL) {
         return false;
     }
@@ -166,7 +178,10 @@ bool aws_string_eq_byte_buf_ignore_case(const struct aws_string *str, const stru
 }
 
 AWS_STATIC_IMPL bool aws_string_eq_c_str(const struct aws_string *str, const char *c_str) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    if (str == NULL && c_str == NULL) {
+        return true;
+    }
     if (str == NULL || c_str == NULL) {
         return false;
     }
@@ -177,7 +192,10 @@ AWS_STATIC_IMPL bool aws_string_eq_c_str(const struct aws_string *str, const cha
  * Returns true if bytes of strings are equivalent, using a case-insensitive comparison.
  */
 AWS_STATIC_IMPL bool aws_string_eq_c_str_ignore_case(const struct aws_string *str, const char *c_str) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    if (str == NULL && c_str == NULL) {
+        return true;
+    }
     if (str == NULL || c_str == NULL) {
         return false;
     }
@@ -274,8 +292,8 @@ AWS_EXTERN_C_END
 AWS_STATIC_IMPL bool aws_byte_buf_write_from_whole_string(
     struct aws_byte_buf *AWS_RESTRICT buf,
     const struct aws_string *AWS_RESTRICT src) {
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(aws_string_is_valid(src));
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(!src || aws_string_is_valid(src));
     if (buf == NULL || src == NULL) {
         return false;
     }

@@ -15,16 +15,15 @@
 #include <aws/common/string.h>
 
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
-    if (c_str == NULL || allocator == NULL) {
-        return NULL;
-    }
+    AWS_FATAL_ASSERT(allocator && c_str);
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
 }
 
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
+    AWS_FATAL_ASSERT(allocator);
+    AWS_FATAL_ASSERT(AWS_MEM_IS_READABLE(bytes, len));
     size_t malloc_size;
-    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size) || !allocator || !bytes) {
+    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
         return NULL;
     }
     struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
@@ -42,20 +41,19 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
 }
 
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    if (allocator == NULL || str == NULL) {
-        return NULL;
-    }
+    AWS_FATAL_ASSERT(allocator && aws_string_is_valid(str));
     return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 
 void aws_string_destroy(struct aws_string *str) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
     if (str && str->allocator) {
         aws_mem_release(str->allocator, str);
     }
 }
 
 void aws_string_destroy_secure(struct aws_string *str) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
     if (str) {
         aws_secure_zero((void *)aws_string_bytes(str), str->len);
         if (str->allocator) {
@@ -65,8 +63,8 @@ void aws_string_destroy_secure(struct aws_string *str) {
 }
 
 int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
-    AWS_PRECONDITION(aws_string_is_valid(a));
-    AWS_PRECONDITION(aws_string_is_valid(b));
+    AWS_PRECONDITION(!a || aws_string_is_valid(a));
+    AWS_PRECONDITION(!b || aws_string_is_valid(b));
     if (a == b) {
         return 0; /* strings identical */
     }
@@ -97,6 +95,15 @@ int aws_string_compare(const struct aws_string *a, const struct aws_string *b) {
 }
 
 int aws_array_list_comparator_string(const void *a, const void *b) {
+    if (a == b) {
+        return 0; /* strings identical */
+    }
+    if (a == NULL) {
+        return -1;
+    }
+    if (b == NULL) {
+        return 1;
+    }
     const struct aws_string *str_a = *(const struct aws_string **)a;
     const struct aws_string *str_b = *(const struct aws_string **)b;
     return aws_string_compare(str_a, str_b);
