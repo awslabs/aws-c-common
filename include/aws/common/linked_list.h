@@ -38,27 +38,119 @@ struct aws_linked_list {
 };
 
 /**
+ * These functions need to be defined first as they are used in pre
+ * and post conditions.
+ */
+
+/**
+ * Tests if the list is empty.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
+    AWS_PRECONDITION(list);
+    return list->head.next == &list->tail;
+}
+
+/**
+ * Checks that a linked list is valid.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_is_valid(const struct aws_linked_list *list) {
+    if (list && list->head.next && list->head.prev == NULL && list->tail.prev && list->tail.next == NULL) {
+#if (AWS_DEEP_CHECKS == 1)
+        return aws_linked_list_is_valid_deep(list);
+#else
+        return true;
+#endif
+    }
+    return false;
+}
+
+/**
+ * Checks that the prev of the next pointer of a node points to the
+ * node. As this checks whether the [next] connection of a node is
+ * bidirectional, it returns false if used for the list tail.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_node_next_is_valid(const struct aws_linked_list_node *node) {
+    return node && node->next && node->next->prev == node;
+}
+
+/**
+ * Checks that the next of the prev pointer of a node points to the
+ * node. Similarly to the above, this returns false if used for the
+ * head of a list.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_list_node *node) {
+    return node && node->prev && node->prev->next == node;
+}
+
+/**
+ * Checks that a linked list satisfies double linked list connectivity
+ * constraints. This check is O(n) as it traverses the whole linked
+ * list to ensure that tail is reachable from head (and vice versa)
+ * and that every connection is bidirectional.
+ *
+ * Note: This check *cannot* go into an infinite loop, because we
+ * ensure that the connection to the next node is
+ * bidirectional. Therefore, if a node's [a] a.next is a previous node
+ * [b] in the list, b.prev != &a and so this check would fail, thus
+ * terminating the loop.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list *list) {
+    if (!list) {
+        return false;
+    }
+    /* This could go into an infinite loop for a circular list */
+    const struct aws_linked_list_node *temp = &list->head;
+    /* Head must reach tail by following next pointers */
+    bool head_reaches_tail = false;
+    /* By satisfying the above and that edges are bidirectional, we
+     * also guarantee that tail reaches head by following prev
+     * pointers */
+    while (temp) {
+        if (temp == &list->tail) {
+            head_reaches_tail = true;
+            break;
+        } else if (!aws_linked_list_node_next_is_valid(temp)) {
+            /* Next and prev pointers should connect the same nodes */
+            return false;
+        }
+        temp = temp->next;
+    }
+    return head_reaches_tail;
+}
+
+/**
  * Initializes the list. List will be empty after this call.
  */
 AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
+    AWS_PRECONDITION(list);
     list->head.next = &list->tail;
     list->head.prev = NULL;
     list->tail.prev = &list->head;
     list->tail.next = NULL;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_empty(list));
 }
 
 /**
  * Returns an iteration pointer for the first element in the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_begin(const struct aws_linked_list *list) {
-    return list->head.next;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    struct aws_linked_list_node *rval = list->head.next;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == list->head.next);
+    return rval;
 }
 
 /**
  * Returns an iteration pointer for one past the last element in the list.
  */
 AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const struct aws_linked_list *list) {
-    return &list->tail;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    const struct aws_linked_list_node *rval = &list->tail;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == &list->tail);
+    return rval;
 }
 
 /**
@@ -67,7 +159,11 @@ AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_end(const str
  *   for (i = aws_linked_list_rbegin(list); i != aws_linked_list_rend(list); i = aws_linked_list_prev(i)) {...}
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct aws_linked_list *list) {
-    return list->tail.prev;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    struct aws_linked_list_node *rval = list->tail.prev;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == list->tail.prev);
+    return rval;
 }
 
 /**
@@ -75,7 +171,11 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_rbegin(const struct
  * Used to end iterating the list in reverse.
  */
 AWS_STATIC_IMPL const struct aws_linked_list_node *aws_linked_list_rend(const struct aws_linked_list *list) {
-    return &list->head;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    const struct aws_linked_list_node *rval = &list->head;
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(rval == &list->head);
+    return rval;
 }
 
 /**
@@ -117,13 +217,6 @@ AWS_STATIC_IMPL void aws_linked_list_insert_before(
 }
 
 /**
- * Tests if the list is empty.
- */
-AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
-    return list->head.next == &list->tail;
-}
-
-/**
  * Removes the specified node from the list (prev/next point to each other) and
  * returns the next node in the list.
  */
@@ -143,7 +236,7 @@ AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, str
 /**
  * Returns the element in the back of the list.
  */
-static struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
+AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct aws_linked_list *list) {
     AWS_ASSERT(!aws_linked_list_empty(list));
     return list->tail.prev;
 }
