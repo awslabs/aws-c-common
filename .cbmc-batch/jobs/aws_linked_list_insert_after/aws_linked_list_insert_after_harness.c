@@ -22,6 +22,8 @@ void aws_linked_list_insert_after_harness() {
     struct aws_linked_list_node after_next;
     struct aws_linked_list_node to_add;
 
+    /* Assume the preconditions. The function requires that both
+     * [after] and [to_add] are not NULL */
     after.next = &after_next;
     after_next.prev = &after;
 

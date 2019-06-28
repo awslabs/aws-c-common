@@ -23,6 +23,9 @@ void aws_linked_list_push_back_harness() {
 
     ensure_linked_list_is_allocated(&list, MAX_LINKED_LIST_ITEM_ALLOCATION);
 
+    /* The function requires that both [list] and [to_add] are not
+     * NULL */
+
     /* Keep the old last node of the linked list */
     struct aws_linked_list_node *old_last = list.tail.prev;
 
