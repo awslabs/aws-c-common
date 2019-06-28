@@ -18,6 +18,6 @@
 #include <proof_helpers/proof_allocators.h>
 
 void aws_string_destroy_harness() {
-    struct aws_string *str = ensure_string_is_allocated_nondet_length();
+    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_nondet_length() : NULL;
     aws_string_destroy(str);
 }

@@ -22,7 +22,11 @@
 void aws_array_list_comparator_string_harness() {
     struct aws_string *str_a = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     struct aws_string *str_b = nondet_bool() ? str_a : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
-    if (aws_array_list_comparator_string(&str_a, &str_b) == 0) {
-        assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
+    bool nondet_parameter_a;
+    bool nondet_parameter_b;
+    if (aws_array_list_comparator_string(nondet_parameter_a ? &str_a : NULL, nondet_parameter_b ? &str_b : NULL) == 0) {
+        if (nondet_parameter_a && nondet_parameter_b) {
+            assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
+        }
     }
 }

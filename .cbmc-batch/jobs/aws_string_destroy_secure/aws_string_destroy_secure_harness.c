@@ -23,6 +23,9 @@ void aws_string_destroy_secure_harness() {
     size_t len = str->len;
     /* Tell CBMC to keep the buffer live after the free */
     __CPROVER_allocated_memory(bytes, len);
-    aws_string_destroy_secure(str);
-    assert_all_zeroes(bytes, len);
+    bool nondet_parameter;
+    aws_string_destroy_secure(nondet_parameter ? str : NULL);
+    if (nondet_parameter) {
+        assert_all_zeroes(bytes, len);
+    }
 }

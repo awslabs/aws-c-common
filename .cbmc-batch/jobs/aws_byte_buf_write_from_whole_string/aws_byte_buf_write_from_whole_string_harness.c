@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 void aws_byte_buf_write_from_whole_string_harness() {
-    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
     struct aws_byte_buf buf;
 
     ensure_byte_buf_has_allocated_buffer_member(&buf);
@@ -32,19 +32,22 @@ void aws_byte_buf_write_from_whole_string_harness() {
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
     size_t availabie_cap = buf.capacity - buf.len;
+    bool nondet_parameter;
 
-    if (aws_byte_buf_write_from_whole_string(&buf, str)) {
+    if (aws_byte_buf_write_from_whole_string(nondet_parameter ? &buf : NULL, str) && str) {
+        assert(aws_string_is_valid(str));
         assert(availabie_cap >= str->len);
-        assert(buf.len == old_buf.len + str->len);
-        assert(old_buf.capacity == buf.capacity);
-        assert(old_buf.allocator == buf.allocator);
-        if (str->len > 0 && buf.len > 0) {
-            assert_bytes_match(buf.buffer + old_buf.len, str->bytes, str->len);
+        if (nondet_parameter) {
+            assert(buf.len == old_buf.len + str->len);
+            assert(old_buf.capacity == buf.capacity);
+            assert(old_buf.allocator == buf.allocator);
+            if (str->len > 0 && buf.len > 0) {
+                assert_bytes_match(buf.buffer + old_buf.len, str->bytes, str->len);
+            }
         }
     } else {
         assert_byte_buf_equivalence(&buf, &old_buf, &old_byte_from_buf);
     }
 
     assert(aws_byte_buf_is_valid(&buf));
-    assert(aws_string_is_valid(str));
 }
