@@ -295,8 +295,13 @@ AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, st
  * Returns the element in the front of the list.
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct aws_linked_list *list) {
-    AWS_ASSERT(!aws_linked_list_empty(list));
-    return list->head.next;
+    AWS_PRECONDITION(aws_linked_list_is_valid(list));
+    AWS_PRECONDITION(!aws_linked_list_empty(list));
+    struct aws_linked_list_node *rval = list->head.next; 
+    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(rval));
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(rval));    
+    return rval;
 }
 
 /**
