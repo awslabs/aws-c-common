@@ -66,6 +66,18 @@ AWS_STATIC_IMPL bool aws_string_is_valid(const struct aws_string *str) {
 }
 
 /**
+ * Best-effort checks aws_string invariants, when the str->len is unknown
+ */
+AWS_STATIC_IMPL bool aws_c_string_is_valid(const struct aws_string *str) {
+    /* Knowing the actual length to check would require strlen(), which is
+     * a) linear time in the length of the string
+     * b) could already cause a memory violation for a non-zero-terminated string.
+     * But we know that a c-string must have at least one character, to store the null terminator
+     */
+    return str && AWS_MEM_IS_READABLE(str, 1);
+}
+
+/**
  * Equivalent to str->bytes. Here for legacy reasons.
  */
 AWS_STATIC_IMPL const uint8_t *aws_string_bytes(const struct aws_string *str) {

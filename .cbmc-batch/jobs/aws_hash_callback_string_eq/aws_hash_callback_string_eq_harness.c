@@ -20,10 +20,9 @@
 #include <stddef.h>
 
 void aws_hash_callback_string_eq_harness() {
-    struct aws_allocator *alloc = can_fail_allocator();
-    const struct aws_string *str1 = make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
+    const struct aws_string *str1 = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
     const struct aws_string *str2 =
-        nondet_bool() ? str1 : make_arbitrary_aws_string_nondet_len_with_max(alloc, MAX_STRING_LEN);
+        nondet_bool() ? str1 : make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
     bool rval = aws_hash_callback_string_eq(str1, str2);
     if (rval) {
         assert(str1->len == str2->len);
