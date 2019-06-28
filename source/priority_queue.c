@@ -214,7 +214,8 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
 
     /* Internal container validity */
     bool backpointer_list_is_valid =
-        (aws_array_list_is_valid(&queue->backpointers) || aws_array_list_is_wiped(&queue->backpointers));
+        ((aws_array_list_is_valid(&queue->backpointers) && (queue->backpointers.current_size != 0) &&
+          (queue->backpointers.data != NULL)));
 
     /* Backpointer struct should either be zero or should be
      * initialized to be at most as long as the container, and having
@@ -237,7 +238,8 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
         backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_current_size &&
                               backpointers_valid_deep);
 
-    return backpointer_list_is_valid && backpointer_struct_is_valid;
+    return (
+        (backpointer_list_is_valid && backpointer_struct_is_valid) || aws_array_list_is_wiped(&queue->backpointers));
 }
 
 bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
