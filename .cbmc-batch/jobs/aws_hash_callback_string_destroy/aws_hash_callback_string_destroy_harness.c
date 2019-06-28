@@ -20,6 +20,6 @@
 #include <stddef.h>
 
 void aws_hash_callback_string_destroy_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     aws_hash_callback_string_destroy(str);
 }

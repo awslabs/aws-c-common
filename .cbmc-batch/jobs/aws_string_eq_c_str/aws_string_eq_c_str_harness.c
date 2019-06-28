@@ -19,8 +19,8 @@
 #include <proof_helpers/utils.h>
 
 void aws_string_eq_c_str_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
-    const char *c_str = nondet_bool() ? make_arbitrary_c_str(MAX_STRING_LEN) : NULL;
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    const char *c_str = nondet_bool() ? ensure_c_str_is_allocated(MAX_STRING_LEN) : NULL;
     if (aws_string_eq_c_str(str, c_str)) {
         assert(str->len == strlen(c_str));
         assert_bytes_match(str->bytes, c_str, str->len);

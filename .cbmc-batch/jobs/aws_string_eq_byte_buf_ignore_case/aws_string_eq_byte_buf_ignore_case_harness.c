@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 void aws_string_eq_byte_buf_ignore_case_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     struct aws_byte_buf buf;
 
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_STRING_LEN));

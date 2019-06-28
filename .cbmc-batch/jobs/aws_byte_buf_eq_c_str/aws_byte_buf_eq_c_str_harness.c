@@ -20,7 +20,7 @@
 void aws_byte_buf_eq_c_str_harness() {
     /* parameters */
     struct aws_byte_buf buf;
-    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_BUFFER_SIZE));

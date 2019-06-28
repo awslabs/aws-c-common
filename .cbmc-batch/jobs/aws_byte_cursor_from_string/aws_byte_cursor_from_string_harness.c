@@ -19,7 +19,7 @@
 #include <proof_helpers/utils.h>
 
 void aws_byte_cursor_from_string_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     struct aws_byte_cursor cursor = aws_byte_cursor_from_string(str);
     assert(aws_string_is_valid(str));
     assert(aws_byte_cursor_is_valid(&cursor));

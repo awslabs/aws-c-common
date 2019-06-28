@@ -20,8 +20,8 @@
 #include <stddef.h>
 
 void aws_array_list_comparator_string_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
-    struct aws_string *str_b = nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str_a = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    struct aws_string *str_b = nondet_bool() ? str_a : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     if (aws_array_list_comparator_string(&str_a, &str_b) == 0) {
         assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
     }

@@ -18,7 +18,7 @@
 #include <proof_helpers/proof_allocators.h>
 
 void aws_string_bytes_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len();
+    struct aws_string *str = ensure_string_is_allocated_nondet_length();
     assert(aws_string_bytes(str) == str->bytes);
     assert(aws_string_is_valid(str));
 }

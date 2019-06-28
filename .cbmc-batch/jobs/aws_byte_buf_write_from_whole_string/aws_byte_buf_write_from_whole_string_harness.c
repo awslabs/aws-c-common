@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 void aws_byte_buf_write_from_whole_string_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     struct aws_byte_buf buf;
 
     ensure_byte_buf_has_allocated_buffer_member(&buf);

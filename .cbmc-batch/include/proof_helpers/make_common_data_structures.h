@@ -123,21 +123,21 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
 void hash_proof_destroy_noop(void *p);
 
 /**
- * Makes a valid string, with as much nondet as possible, defined length
+ * Ensures a valid string is allocated, with as much nondet as possible
  */
-struct aws_string *make_arbitrary_aws_string(size_t size);
+struct aws_string *ensure_string_is_allocated_nondet_length();
 
 /**
- * Makes a valid string, with as much nondet as possible
+ * Ensures a valid string is allocated, with as much nondet as possible, but len < max
  */
-struct aws_string *make_arbitrary_aws_string_nondet_len();
+struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size);
 
 /**
- * Makes a valid string, with as much nondet as possible, len < max
+ * Ensures a valid string is allocated, with as much nondet as possible, but fixed defined len
  */
-struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(size_t max_size);
+struct aws_string *ensure_string_is_allocated(size_t size);
 
 /**
- * Makes a valid c string, with as much nondet as possible, len < max_size
+ * Ensures a valid const string is allocated, with as much nondet as possible, len < max_size
  */
-const char *make_arbitrary_c_str(size_t max_size);
+const char *ensure_c_str_is_allocated(size_t max_size);

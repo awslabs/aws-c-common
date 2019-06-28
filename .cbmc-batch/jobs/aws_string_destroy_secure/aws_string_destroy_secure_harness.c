@@ -18,7 +18,7 @@
 #include <proof_helpers/proof_allocators.h>
 
 void aws_string_destroy_secure_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     char *bytes = str->bytes;
     size_t len = str->len;
     /* Tell CBMC to keep the buffer live after the free */

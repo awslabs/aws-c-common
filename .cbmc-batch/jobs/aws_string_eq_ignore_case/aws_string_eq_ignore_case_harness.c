@@ -19,8 +19,8 @@
 #include <proof_helpers/utils.h>
 
 void aws_string_eq_ignore_case_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
-    struct aws_string *str_b = nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(MAX_STRING_LEN);
+    struct aws_string *str_a = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    struct aws_string *str_b = nondet_bool() ? str_a : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
     if (aws_string_eq_ignore_case(str_a, str_b)) {
         assert(str_a->len == str_b->len);
     }

@@ -20,7 +20,7 @@
 
 void aws_string_new_from_c_str_harness() {
     /* parameters */
-    const char *c_str = nondet_bool() ? make_arbitrary_c_str(MAX_STRING_LEN) : NULL;
+    const char *c_str = nondet_bool() ? ensure_c_str_is_allocated(MAX_STRING_LEN) : NULL;
     struct aws_allocator *allocator = nondet_bool() ? can_fail_allocator() : NULL;
 
     /* operation under verification */

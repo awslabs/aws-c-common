@@ -152,7 +152,18 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
  */
 void hash_proof_destroy_noop(void *p) {}
 
-struct aws_string *make_arbitrary_aws_string(size_t len) {
+struct aws_string *ensure_string_is_allocated_nondet_length() {
+    /* Considers any size up to the maximum possible size for the array [bytes] in aws_string */
+    return ensure_string_is_allocated_bounded_length(SIZE_MAX - 1 - sizeof(struct aws_string));
+}
+
+struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size) {
+    size_t len;
+    __CPROVER_assume(len < max_size);
+    return ensure_string_is_allocated(len);
+}
+
+struct aws_string *ensure_string_is_allocated(size_t len) {
     struct aws_string *str = bounded_malloc(sizeof(struct aws_string) + len + 1);
 
     /* Fields are declared const, so we need to copy them in like this */
@@ -162,17 +173,7 @@ struct aws_string *make_arbitrary_aws_string(size_t len) {
     return str;
 }
 
-struct aws_string *make_arbitrary_aws_string_nondet_len() {
-    return make_arbitrary_aws_string_nondet_len_with_max(INT_MAX - 1 - sizeof(struct aws_string));
-}
-
-struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(size_t max_size) {
-    size_t len;
-    __CPROVER_assume(len < max_size);
-    return make_arbitrary_aws_string(len);
-}
-
-const char *make_arbitrary_c_str(size_t max_size) {
+const char *ensure_c_str_is_allocated(size_t max_size) {
     size_t cap;
     __CPROVER_assume(cap > 0 && cap <= max_size);
     const char *str = bounded_malloc(cap);
