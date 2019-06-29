@@ -68,7 +68,7 @@ AWS_STATIC_IMPL bool aws_string_is_valid(const struct aws_string *str) {
 /**
  * Best-effort checks aws_string invariants, when the str->len is unknown
  */
-AWS_STATIC_IMPL bool aws_c_string_is_valid(const struct aws_string *str) {
+AWS_STATIC_IMPL bool aws_c_string_is_valid(const char *str) {
     /* Knowing the actual length to check would require strlen(), which is
      * a) linear time in the length of the string
      * b) could already cause a memory violation for a non-zero-terminated string.
