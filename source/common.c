@@ -96,6 +96,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     /* Otherwise, emulate calloc */
     void *mem = allocator->mem_acquire(allocator, required_bytes);
     if (!mem) {
+        aws_raise_error(AWS_ERROR_OOM);
         return NULL;
     }
     memset(mem, 0, required_bytes);
@@ -131,6 +132,7 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
 
         allocation = aws_mem_acquire(allocator, total_size);
         if (!allocation) {
+            aws_raise_error(AWS_ERROR_OOM);
             goto cleanup;
         }
 
@@ -175,9 +177,9 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
         return AWS_OP_SUCCESS;
     }
 
-    void *newptr = aws_mem_acquire(allocator, newsize);
+    void *newptr = allocator->mem_acquire(allocator, newsize);
     if (!newptr) {
-        /* AWS_ERROR_OOM already raised */
+        aws_raise_error(AWS_ERROR_OOM);
         return AWS_OP_ERR;
     }
 
@@ -289,159 +291,6 @@ void aws_wrapped_cf_allocator_destroy(CFAllocatorRef allocator) {
 }
 
 #endif /*__MACH__ */
-
-static int8_t s_error_strings_loaded = 0;
-
-#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
-
-/* clang-format off */
-static struct aws_error_info errors[] = {
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_SUCCESS,
-        "Success."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_OOM,
-        "Out of memory."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_UNKNOWN,
-        "Unknown error."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_SHORT_BUFFER,
-        "Buffer is not large enough to hold result."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_OVERFLOW_DETECTED,
-        "Fixed size value overflow was detected."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_UNSUPPORTED_OPERATION,
-        "Unsupported operation."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_BUFFER_SIZE,
-        "Invalid buffer size."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_HEX_STR,
-        "Invalid hex string."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_BASE64_STR,
-        "Invalid base64 string."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_INDEX,
-        "Invalid index for list access."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_INVALID_SETTINGS,
-        "Invalid thread settings."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE,
-        "Insufficent resources for thread."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_NO_PERMISSIONS,
-        "Insufficient permissions for thread operation."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_NOT_JOINABLE,
-        "Thread not joinable."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_NO_SUCH_THREAD_ID,
-        "No such thread ID."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_THREAD_DEADLOCK_DETECTED,
-        "Deadlock detected in thread."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_MUTEX_NOT_INIT,
-        "Mutex not initialized."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_MUTEX_TIMEOUT,
-        "Mutex operation timed out."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_MUTEX_CALLER_NOT_OWNER,
-        "The caller of a mutex operation was not the owner."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_MUTEX_FAILED,
-        "Mutex operation failed."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_COND_VARIABLE_INIT_FAILED,
-        "Condition variable initialization failed."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_COND_VARIABLE_TIMED_OUT,
-        "Condition variable wait timed out."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN,
-        "Condition variable unknown error."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_CLOCK_FAILURE,
-        "Clock operation failed."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_LIST_EMPTY,
-        "Empty list."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_DEST_COPY_TOO_SMALL,
-        "Destination of copy is too small."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
-        "A requested operation on a list would exceed it's max size."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
-        "Attempt to shrink a list in static mode."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_PRIORITY_QUEUE_FULL,
-        "Attempt to add items to a full preallocated queue in static mode."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_PRIORITY_QUEUE_EMPTY,
-        "Attempt to pop an item from an empty queue."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_PRIORITY_QUEUE_BAD_NODE,
-        "Bad node handle passed to remove."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
-        "Item not found in hash table."),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_DATE_STR,
-        "Date string is invalid and cannot be parsed."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_ARGUMENT,
-        "An invalid argument was passed to a function."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_RANDOM_GEN_FAILED,
-        "A call to the random number generator failed. Retry later."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_MALFORMED_INPUT_STRING,
-        "An input string was passed to a parser and the string was incorrectly formatted."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_UNIMPLEMENTED,
-        "A function was called, but is not implemented."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_INVALID_STATE,
-        "An invalid state was encountered."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_ENVIRONMENT_GET,
-        "System call failure when getting an environment variable."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_ENVIRONMENT_SET,
-        "System call failure when setting an environment variable."
-    ),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_ENVIRONMENT_UNSET,
-        "System call failure when unsetting an environment variable."
-    ),
-};
-/* clang-format on */
-
-static struct aws_error_info_list s_list = {
-    .error_list = errors,
-    .count = AWS_ARRAY_SIZE(errors),
-};
-
-void aws_load_error_strings(void) {
-    if (!s_error_strings_loaded) {
-        s_error_strings_loaded = 1;
-        aws_register_error_info(&s_list);
-    }
-}
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
 #if defined(_WIN32)

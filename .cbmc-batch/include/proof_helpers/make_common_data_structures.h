@@ -18,6 +18,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/linked_list.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <aws/common/ring_buffer.h>
@@ -74,6 +75,11 @@ bool aws_array_list_is_bounded(
  * Ensures the data member of an aws_array_list structure is correctly allocated
  */
 void ensure_array_list_has_allocated_data_member(struct aws_array_list *const list);
+
+/**
+ * Ensures that the aws_linked_list [list] is correctly allocated
+ */
+void ensure_linked_list_is_allocated(struct aws_linked_list *list, size_t max_length);
 
 /*
  * Checks whether aws_priority_queue is bounded by max_initial_item_allocation and max_item_size

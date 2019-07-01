@@ -195,10 +195,9 @@ COMPILERS = {
         'targets': ['linux', 'macos'],
 
         'post_build_steps': [
-            ["./format-check.sh"],
             ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
-        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
+        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
@@ -225,6 +224,9 @@ COMPILERS = {
                     'CXX': "clang-6.0",
                     'CLANG_FORMAT': 'clang-format-6.0',
                 },
+                'post_build_steps': [
+                    ["./format-check.sh"],
+                ],
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-6.0',
