@@ -26,32 +26,37 @@ int aws_array_list_init_dynamic(
     struct aws_allocator *alloc,
     size_t initial_item_allocation,
     size_t item_size) {
+
+    list->current_size = 0;
+    list->item_size = 0;
+    list->length = 0;
+    list->data = NULL;
+    list->alloc = NULL;
+
     if (item_size == 0) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    list->alloc = alloc;
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
         return AWS_OP_ERR;
     }
-    list->data = NULL;
-    list->item_size = item_size;
-    list->current_size = 0;
-    list->length = 0;
 
     if (allocation_size > 0) {
-        list->data = aws_mem_acquire(list->alloc, allocation_size);
+        list->data = aws_mem_acquire(alloc, allocation_size);
         if (!list->data) {
             return AWS_OP_ERR;
         }
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, allocation_size);
+
 #endif
         list->current_size = allocation_size;
     }
-    AWS_FATAL_POSTCONDITION(list->current_size == 0 || list->data);
+    list->item_size = item_size;
+    list->alloc = alloc;
 
+    AWS_FATAL_POSTCONDITION(list->current_size == 0 || list->data);
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
 }
