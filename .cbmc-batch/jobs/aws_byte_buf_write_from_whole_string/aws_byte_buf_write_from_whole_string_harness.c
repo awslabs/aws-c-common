@@ -19,32 +19,35 @@
 #include <proof_helpers/utils.h>
 #include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage:1.00 (70 lines out of 70 statically-reachable lines in 14 functions reached)
- * Runtime: real	0m7.394s
- */
-
 void aws_byte_buf_write_from_whole_string_harness() {
-    struct aws_byte_buf *buf = allocate_arbitrary_byte_buf_nondet_len_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_byte_buf old_buf = *buf;
-    // nondeterministially pick a byte. We can then track if it has changed
-    size_t index_to_check = nondet_size_t();
-    __CPROVER_assume(index_to_check < buf->len);
-    uint8_t byte_old = buf->buffer[index_to_check];
-    size_t availabie_cap = buf->capacity - buf->len;
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
+    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
+    struct aws_byte_buf buf;
 
-    bool rval = aws_byte_buf_write_from_whole_string(buf, str);
-    // The value is appended to the end of the byte buf.  Make sure that worked.
-    if (rval) {
-        assert(availabie_cap >= str->len);
-        assert(buf->len == str->len + old_buf.len);
-        assert_bytes_match(str->bytes, buf->buffer + old_buf.len, str->len);
+    ensure_byte_buf_has_allocated_buffer_member(&buf);
+    __CPROVER_assume(aws_byte_buf_is_valid(&buf));
+
+    /* save current state of the data structure */
+    struct aws_byte_buf old_buf = buf;
+    struct store_byte_from_buffer old_byte_from_buf;
+    save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
+
+    size_t available_cap = buf.capacity - buf.len;
+    bool nondet_parameter;
+
+    if (aws_byte_buf_write_from_whole_string(nondet_parameter ? &buf : NULL, str) && str) {
+        assert(aws_string_is_valid(str));
+        assert(available_cap >= str->len);
+        if (nondet_parameter) {
+            assert(buf.len == old_buf.len + str->len);
+            assert(old_buf.capacity == buf.capacity);
+            assert(old_buf.allocator == buf.allocator);
+            if (str->len > 0 && buf.len > 0) {
+                assert_bytes_match(buf.buffer + old_buf.len, str->bytes, str->len);
+            }
+        }
     } else {
-        assert(availabie_cap < str->len);
+        assert_byte_buf_equivalence(&buf, &old_buf, &old_byte_from_buf);
     }
-    // In either case, the existing bytes in the buffer were unchanged.
-    assert(buf->buffer[index_to_check] == byte_old);
+
+    assert(aws_byte_buf_is_valid(&buf));
 }

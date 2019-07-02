@@ -72,6 +72,28 @@ void ensure_array_list_has_allocated_data_member(struct aws_array_list *const li
     }
 }
 
+void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t max_length) {
+    size_t length;
+    __CPROVER_assume(length <= max_length);
+
+    list->head.prev = NULL;
+    list->tail.next = NULL;
+
+    struct aws_linked_list_node *curr = &list->head;
+
+    for (size_t i = 0; i < length; i++) {
+        /* This malloc should never fail as it wouldn't be valid to
+         * have NULL nodes in the middle of the linked list. */
+        struct aws_linked_list_node *node = malloc(sizeof(struct aws_linked_list_node));
+        curr->next = node;
+        node->prev = curr;
+        curr = node;
+    }
+
+    curr->next = &list->tail;
+    list->tail.prev = curr;
+}
+
 bool aws_priority_queue_is_bounded(
     const struct aws_priority_queue *const queue,
     const size_t max_initial_item_allocation,
@@ -93,66 +115,6 @@ void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *cons
     queue->pred = nondet_compare;
 }
 
-struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max) {
-    size_t len;
-    __CPROVER_assume(len <= max);
-    struct aws_byte_cursor rval = {.len = len, .ptr = malloc(len)};
-    return rval;
-}
-
-void make_arbitrary_byte_buf(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity, size_t len) {
-    buf->buffer = malloc(capacity); // use malloc because we will need to deallocate later
-    buf->len = len;
-    buf->capacity = capacity;
-    buf->allocator = allocator;
-}
-
-void make_arbitrary_byte_buf_full(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity) {
-    make_arbitrary_byte_buf(allocator, buf, capacity, capacity);
-}
-
-void make_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t max) {
-    size_t capacity = nondet_size_t();
-    __CPROVER_assume(capacity <= max);
-    size_t len = nondet_size_t();
-    __CPROVER_assume(len <= capacity);
-    make_arbitrary_byte_buf(allocator, buf, capacity, len);
-}
-
-struct aws_byte_buf *allocate_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, size_t max) {
-    struct aws_byte_buf *buf = malloc(sizeof(*buf));
-    make_arbitrary_byte_buf_nondet_len_max(allocator, buf, max);
-    return buf;
-}
-
-void make_arbitrary_byte_buf_nondet_len(struct aws_allocator *allocator, struct aws_byte_buf *buf) {
-    size_t capacity = nondet_size_t();
-    size_t len = nondet_size_t();
-    __CPROVER_assume(len <= capacity);
-    make_arbitrary_byte_buf(allocator, buf, capacity, len);
-}
-
-struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, size_t len) {
-    //  __CPROVER_assume(len > 0);
-    struct aws_string *str = malloc(sizeof(struct aws_string) + len + 1);
-
-    /* Fields are declared const, so we need to copy them in like this */
-    *(struct aws_allocator **)(&str->allocator) = allocator;
-    *(size_t *)(&str->len) = len;
-    *(uint8_t *)&str->bytes[len] = '\0';
-    return str;
-}
-
-struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *allocator) {
-    return make_arbitrary_aws_string_nondet_len_with_max(allocator, INT_MAX - 1 - sizeof(struct aws_string));
-}
-
-struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max) {
-    size_t len;
-    __CPROVER_assume(len < max);
-    return make_arbitrary_aws_string(allocator, len);
-}
-
 void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries) {
     size_t num_entries;
     __CPROVER_assume(num_entries <= max_table_entries);
@@ -168,17 +130,6 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
 void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map) {
     map->p_impl->destroy_key_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
     map->p_impl->destroy_value_fn = nondet_bool() ? NULL : hash_proof_destroy_noop;
-}
-
-const char *make_arbitrary_c_str(size_t max_size) {
-    size_t cap;
-    __CPROVER_assume(cap > 0 && cap <= max_size);
-    const char *str = bounded_malloc(cap);
-    /* Ensure that its a valid c string. Since all bytes are nondeterminstic, the actual
-     * string length is 0..str_cap
-     */
-    __CPROVER_assume(str[cap - 1] == 0);
-    return str;
 }
 
 bool aws_hash_table_has_an_empty_slot(const struct aws_hash_table *const map, size_t *const rval) {
@@ -200,3 +151,35 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
  * future proofs.
  */
 void hash_proof_destroy_noop(void *p) {}
+
+struct aws_string *ensure_string_is_allocated_nondet_length() {
+    /* Considers any size up to the maximum possible size for the array [bytes] in aws_string */
+    return ensure_string_is_allocated_bounded_length(SIZE_MAX - 1 - sizeof(struct aws_string));
+}
+
+struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size) {
+    size_t len;
+    __CPROVER_assume(len < max_size);
+    return ensure_string_is_allocated(len);
+}
+
+struct aws_string *ensure_string_is_allocated(size_t len) {
+    struct aws_string *str = bounded_malloc(sizeof(struct aws_string) + len + 1);
+
+    /* Fields are declared const, so we need to copy them in like this */
+    *(struct aws_allocator **)(&str->allocator) = nondet_bool() ? can_fail_allocator() : NULL;
+    *(size_t *)(&str->len) = len;
+    *(uint8_t *)&str->bytes[len] = '\0';
+    return str;
+}
+
+const char *ensure_c_str_is_allocated(size_t max_size) {
+    size_t cap;
+    __CPROVER_assume(cap > 0 && cap <= max_size);
+    const char *str = bounded_malloc(cap);
+    /* Ensure that its a valid c string. Since all bytes are nondeterminstic, the actual
+     * string length is 0..str_cap
+     */
+    __CPROVER_assume(str[cap - 1] == 0);
+    return str;
+}

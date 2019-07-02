@@ -23,7 +23,7 @@ void aws_array_eq_c_str_harness() {
     size_t array_len;
     __CPROVER_assume(array_len <= MAX_BUFFER_SIZE);
     array = can_fail_malloc(array_len);
-    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = nondet_bool() ? NULL : ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_array;

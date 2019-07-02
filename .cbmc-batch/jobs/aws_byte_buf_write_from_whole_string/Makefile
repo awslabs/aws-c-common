@@ -11,17 +11,13 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-###########
-#NOTE: If we don't use the unwindset, leave it empty
-CBMC_UNWINDSET = --unwindset memcmp.0:17,strlen.0:17,memcpy_impl.0:17,memset_impl.0:17
+include ../Makefile.aws_string
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
 DEPENDENCIES += $(SRCDIR)/source/array_list.c
 DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
@@ -29,7 +25,5 @@ DEPENDENCIES += $(SRCDIR)/source/error.c
 DEPENDENCIES += $(SRCDIR)/source/string.c
 
 ENTRY = aws_byte_buf_write_from_whole_string_harness
-
-###########
 
 include ../Makefile.common

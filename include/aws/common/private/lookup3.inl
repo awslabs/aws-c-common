@@ -1,3 +1,7 @@
+#ifndef AWS_COMMON_PRIVATE_LOOKUP3_INL
+#define AWS_COMMON_PRIVATE_LOOKUP3_INL
+/* clang-format off */
+
 /*
  * The following public domain code has been modified as follows:
  * # All functions have been made static.
@@ -1054,3 +1058,6 @@ int main()
 #ifdef CBMC
 #    pragma CPROVER check pop
 #endif /* CBMC */
+
+/* clang-format on */
+#endif /* AWS_COMMON_PRIVATE_LOOKUP3_INL */
