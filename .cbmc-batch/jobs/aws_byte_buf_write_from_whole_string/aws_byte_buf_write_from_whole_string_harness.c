@@ -31,12 +31,12 @@ void aws_byte_buf_write_from_whole_string_harness() {
     struct store_byte_from_buffer old_byte_from_buf;
     save_byte_from_array(buf.buffer, buf.len, &old_byte_from_buf);
 
-    size_t availabie_cap = buf.capacity - buf.len;
+    size_t available_cap = buf.capacity - buf.len;
     bool nondet_parameter;
 
     if (aws_byte_buf_write_from_whole_string(nondet_parameter ? &buf : NULL, str) && str) {
         assert(aws_string_is_valid(str));
-        assert(availabie_cap >= str->len);
+        assert(available_cap >= str->len);
         if (nondet_parameter) {
             assert(buf.len == old_buf.len + str->len);
             assert(old_buf.capacity == buf.capacity);
