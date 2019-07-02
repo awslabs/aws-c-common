@@ -101,7 +101,7 @@ AWS_EXTERN_C_END
 
 #define AWS_ERROR_CHECK(type, cond, err, explanation)                                                                  \
     do {                                                                                                               \
-        fprintf(stderr, "%s check at %s %d: %d\n", type, __FILE__, __LINE__, !!(cond));                                \
+        fprintf(stderr, "%s check at %s %d:\n\t%s\t%d\n", type, __FILE__, __LINE__, #cond, !!(cond));                  \
         if (!(cond)) {                                                                                                 \
             fprintf(                                                                                                   \
                 stderr,                                                                                                \
