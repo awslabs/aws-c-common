@@ -91,15 +91,15 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
     bool required_size_is_valid =
         (aws_mul_size_checked(list->length, list->item_size, &required_size) == AWS_OP_SUCCESS);
     bool current_size_is_valid = (list->current_size >= required_size);
-    bool data_is_valid = 
+    bool data_is_valid =
         ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
-    bool item_size_is_valid = (list->item_size!=0);
+    bool item_size_is_valid = (list->item_size != 0);
     return required_size_is_valid && current_size_is_valid && data_is_valid && item_size_is_valid;
 }
 
 AWS_STATIC_IMPL
 bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
-    if(!list) {
+    if (!list) {
         return false;
     }
     bool current_size_is_wiped = (list->current_size == 0);
@@ -111,14 +111,15 @@ bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_debug_print(const struct aws_array_list * list) {
-    printf("arraylist %p. Alloc %p. current_size %zu. length %zu. item_size %zu. data %p\n", 
-        (void*) list, (void*)list->alloc, list->current_size, list->length, list->item_size, (void*)list->data);
-=======
-    bool data_is_valid =
-        ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
-    return required_size_is_valid && current_size_is_valid && data_is_valid;
->>>>>>> 6f23e1de3c90cc64fa11678ea0c4bcabec7d5d65
+void aws_array_list_debug_print(const struct aws_array_list *list) {
+    printf(
+        "arraylist %p. Alloc %p. current_size %zu. length %zu. item_size %zu. data %p\n",
+        (void *)list,
+        (void *)list->alloc,
+        list->current_size,
+        list->length,
+        list->item_size,
+        (void *)list->data);
 }
 
 AWS_STATIC_IMPL
