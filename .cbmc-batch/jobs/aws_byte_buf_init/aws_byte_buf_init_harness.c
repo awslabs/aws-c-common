@@ -26,11 +26,8 @@ void aws_byte_buf_init_harness() {
     size_t capacity;
 
     /* assumptions */
-    if (nondet_bool()) {
-        ASSUME_CAN_FAIL_ALLOCATOR(allocator);
-    } else {
-        allocator = NULL;
-    }
+    /* Precondition: allocator is non-null */
+    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
     __CPROVER_assume(capacity <= MAX_BUFFER_SIZE);
 
     if (!aws_byte_buf_init(&buf, allocator, capacity)) {
