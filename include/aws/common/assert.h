@@ -97,21 +97,28 @@ AWS_EXTERN_C_END
 #    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
 
-#define AWS_ERROR_PRECONDITION_3(cond, err, explanation)                                                               \
+#define AWS_ERROR_CHECK(type, cond, err, explanation)                                                                  \
     do {                                                                                                               \
+        fprintf(stderr, "%s check at %s %d\n", type, __FILE__, __LINE__);                                              \
         if (!(cond)) {                                                                                                 \
+            fprintf(                                                                                                   \
+                stderr,                                                                                                \
+                "%s violation at %s %d:\n\t%d\n\t%s\n\t%s\n",                                                          \
+                type,                                                                                                  \
+                __FILE__,                                                                                              \
+                __LINE__,                                                                                              \
+                err,                                                                                                   \
+                #cond,                                                                                                 \
+                (explanation));                                                                                        \
             return aws_raise_error(err);                                                                               \
         }                                                                                                              \
     } while (0)
+
+#define AWS_ERROR_PRECONDITION_3(cond, err, explanation) AWS_ERROR_CHECK("Precondition", cond, err, explanation)
 #define AWS_ERROR_PRECONDITION_2(cond, err) AWS_ERROR_PRECONDITION_3(cond, err, #cond " check failed")
 #define AWS_ERROR_PRECONDITION_1(cond) AWS_ERROR_PRECONDITION_2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
-#define AWS_ERROR_POSTCONDITION_3(cond, err, explanation)                                                              \
-    do {                                                                                                               \
-        if (!(cond)) {                                                                                                 \
-            return aws_raise_error(err);                                                                               \
-        }                                                                                                              \
-    } while (0)
+#define AWS_ERROR_POSTCONDITION_3(cond, err, explanation) AWS_ERROR_CHECK("Postcondition", cond, err, explanation)
 #define AWS_ERROR_POSTCONDITION_2(cond, err) AWS_ERROR_POSTCONDITION_3(cond, err, #cond " check failed")
 #define AWS_ERROR_POSTCONDITION_1(cond) AWS_ERROR_POSTCONDITION_2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
