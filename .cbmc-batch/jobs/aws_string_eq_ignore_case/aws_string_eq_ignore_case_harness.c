@@ -17,20 +17,14 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (57 lines out of 57 statically-reachable lines in 11 functions reached)
- * Runtime: real	0m4.590s
- */
-void aws_string_eq_byte_buffer_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_byte_buf *buf = allocate_arbitrary_byte_buf_nondet_len_max(can_fail_allocator(), MAX_STRING_LEN);
-    bool rval = aws_string_eq_byte_buf(str, buf);
-    if (rval) {
-        assert(str->len == buf->len);
-        assert_bytes_match(str->bytes, buf->buffer, str->len);
+void aws_string_eq_ignore_case_harness() {
+    struct aws_string *str_a = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
+    struct aws_string *str_b =
+        nondet_bool() ? (nondet_bool() ? str_a : NULL) : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    if (aws_string_eq_ignore_case(str_a, str_b) && str_a && str_b) {
+        assert(aws_string_is_valid(str_a));
+        assert(aws_string_is_valid(str_b));
+        assert(str_a->len == str_b->len);
     }
 }

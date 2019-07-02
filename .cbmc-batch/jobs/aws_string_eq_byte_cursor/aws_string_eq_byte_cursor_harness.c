@@ -17,21 +17,23 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (55 lines out of 55 statically-reachable lines in 11 functions reached)
- * Runtime: real	0m4.863s
- */
 void aws_string_eq_byte_cursor_harness() {
-    struct aws_string *str = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_byte_cursor cursor =
-        nondet_bool() ? aws_byte_cursor_from_string(str) : make_arbitrary_byte_cursor_nondet_len_max(MAX_STRING_LEN);
-    bool rval = aws_string_eq_byte_cursor(str, &cursor);
-    if (rval) {
-        assert(str->len == cursor.len);
-        assert_bytes_match(str->bytes, cursor.ptr, str->len);
+    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
+    struct aws_byte_cursor cursor;
+
+    ensure_byte_cursor_has_allocated_buffer_member(&cursor);
+    __CPROVER_assume(aws_byte_cursor_is_valid(&cursor));
+
+    bool nondet_parameter;
+    if (aws_string_eq_byte_cursor(str, nondet_parameter ? &cursor : NULL) && str) {
+        assert(aws_string_is_valid(str));
+        if (nondet_parameter) {
+            assert(str->len == cursor.len);
+            if (str->len > 0) {
+                assert_bytes_match(str->bytes, cursor.ptr, str->len);
+            }
+        }
     }
+    assert(aws_byte_cursor_is_valid(&cursor));
 }

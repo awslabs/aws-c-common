@@ -17,21 +17,22 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-// MAX_STRING_LEN is defined in the makefile
-
-/**
- * Coverage: 0.94 (76 lines out of 81 statically-reachable lines in 17 functions reached)
- * Missing lines are error handeling for impossible conditions
- * Runtime: real	0m24.870s
- */
 void aws_string_new_from_string_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    struct aws_string *str_b = aws_string_new_from_string(str_a->allocator, str_a);
-    if (str_b) {
-        assert(str_a->len == str_b->len);
-        assert(str_b->bytes[str_b->len] == '\0');
-        assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
+    /* parameters */
+    struct aws_string *source = ensure_string_is_allocated_nondet_length();
+    struct aws_allocator *allocator = (source->allocator) ? source->allocator : can_fail_allocator();
+
+    /* operation under verification */
+    struct aws_string *str = aws_string_new_from_string(allocator, source);
+
+    /* assertions */
+    if (str) {
+        assert(source->len == str->len);
+        assert(str->allocator == allocator);
+        assert(str->bytes[str->len] == '\0');
+        assert_bytes_match(source->bytes, str->bytes, source->len);
+        assert(aws_string_is_valid(str));
     }
+    assert(aws_string_is_valid(source));
 }
