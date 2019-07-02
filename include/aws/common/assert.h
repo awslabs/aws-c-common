@@ -97,9 +97,11 @@ AWS_EXTERN_C_END
 #    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
 
+#define AWS_RAISE_ERROR_IF(cond, err, explanation)
+
 #define AWS_ERROR_CHECK(type, cond, err, explanation)                                                                  \
     do {                                                                                                               \
-        fprintf(stderr, "%s check at %s %d\n", type, __FILE__, __LINE__);                                              \
+        fprintf(stderr, "%s check at %s %d: %d\n", type, __FILE__, __LINE__, !!(cond));                                \
         if (!(cond)) {                                                                                                 \
             fprintf(                                                                                                   \
                 stderr,                                                                                                \
