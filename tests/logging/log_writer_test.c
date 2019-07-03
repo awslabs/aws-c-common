@@ -161,7 +161,7 @@ static int s_log_writer_bad_file_test(struct aws_allocator *allocator, void *ctx
     ASSERT_TRUE(result == AWS_OP_ERR, "Log file open succeeded despite an invalid file name");
 
 #ifdef WIN32
-    ASSERT_TRUE(aws_error == AWS_IO_NO_PERMISSION, "File open error was not no permission as expected");
+    ASSERT_TRUE(aws_error == AWS_ERROR_NO_PERMISSION, "File open error was not no permission as expected");
 #else
     ASSERT_TRUE(aws_error == AWS_ERROR_FILE_INVALID_PATH, "File open error was not invalid path as expected");
 #endif /* WIN32 */

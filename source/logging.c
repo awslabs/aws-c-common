@@ -279,9 +279,7 @@ void aws_logger_clean_up(struct aws_logger *logger) {
 static const char *s_log_level_strings[AWS_LL_COUNT] = {"NONE ", "FATAL", "ERROR", "WARN ", "INFO ", "DEBUG", "TRACE"};
 
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string) {
-    if (log_level >= AWS_LL_COUNT) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_ERROR_PRECONDITION(log_level < AWS_LL_COUNT);
 
     if (level_string != NULL) {
         *level_string = s_log_level_strings[log_level];
