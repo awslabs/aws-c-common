@@ -56,8 +56,10 @@ static void s_aws_file_writer_clean_up(struct aws_log_writer *writer) {
     aws_mem_release(writer->allocator, impl);
 }
 
-static struct aws_log_writer_vtable s_aws_file_writer_vtable = {.write = s_aws_file_writer_write,
-                                                                .clean_up = s_aws_file_writer_clean_up};
+static struct aws_log_writer_vtable s_aws_file_writer_vtable = {
+    .write = s_aws_file_writer_write,
+    .clean_up = s_aws_file_writer_clean_up,
+};
 
 /*
  * Shared internal init implementation

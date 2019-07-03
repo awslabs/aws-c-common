@@ -59,8 +59,10 @@ static void s_foreground_channel_clean_up(struct aws_log_channel *channel) {
     aws_mem_release(channel->allocator, impl);
 }
 
-static struct aws_log_channel_vtable s_foreground_channel_vtable = {.send = s_foreground_channel_send,
-                                                                    .clean_up = s_foreground_channel_clean_up};
+static struct aws_log_channel_vtable s_foreground_channel_vtable = {
+    .send = s_foreground_channel_send,
+    .clean_up = s_foreground_channel_clean_up,
+};
 
 int aws_log_channel_init_foreground(
     struct aws_log_channel *channel,
@@ -121,8 +123,10 @@ static void s_background_channel_clean_up(struct aws_log_channel *channel) {
     aws_mem_release(channel->allocator, impl);
 }
 
-static struct aws_log_channel_vtable s_background_channel_vtable = {.send = s_background_channel_send,
-                                                                    .clean_up = s_background_channel_clean_up};
+static struct aws_log_channel_vtable s_background_channel_vtable = {
+    .send = s_background_channel_send,
+    .clean_up = s_background_channel_clean_up,
+};
 
 static bool s_background_wait(void *context) {
     struct aws_log_background_channel *impl = (struct aws_log_background_channel *)context;
@@ -170,9 +174,7 @@ static void s_background_thread_writer(void *thread_data) {
          */
         for (size_t i = 0; i < line_count; ++i) {
             struct aws_string *log_line = NULL;
-            if (aws_array_list_get_at(&log_lines, &log_line, i)) {
-                continue;
-            }
+            AWS_FATAL_ASSERT(aws_array_list_get_at(&log_lines, &log_line, i) == AWS_OP_SUCCESS);
 
             (channel->writer->vtable->write)(channel->writer, log_line);
 
