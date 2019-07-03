@@ -76,61 +76,44 @@ AWS_EXTERN_C_END
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
-#    define AWS_PRECONDITION_2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_PRECONDITION_1(cond) __CPROVER_precondition((cond), #    cond " check failed")
-#    define AWS_POSTCONDITION_2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#    define AWS_POSTCONDITION_1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
+#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #    cond " check failed")
+#    define AWS_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
+#    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
 #    define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #    define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
 #else
-#    define AWS_PRECONDITION_2(cond, expl) AWS_ASSERT(cond)
-#    define AWS_PRECONDITION_1(cond) AWS_ASSERT(cond)
-#    define AWS_POSTCONDITION_2(cond, expl) AWS_ASSERT(cond)
-#    define AWS_POSTCONDITION_1(cond) AWS_ASSERT(cond)
+#    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
+#    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
+#    define AWS_POSTCONDITION2(cond, expl) AWS_ASSERT(cond)
+#    define AWS_POSTCONDITION1(cond) AWS_ASSERT(cond)
 /* the C runtime does not give a way to check these properties,
  * but we can at least check that the pointer is valid */
 #    define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
 #    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
 
-#define AWS_RAISE_ERROR_IF(cond, err, explanation)
-
-#define AWS_ERROR_CHECK(type, cond, err, explanation)                                                                  \
+#define AWS_RETURN_ERROR_IF_IMPL(type, cond, err, explanation)                                                         \
     do {                                                                                                               \
-        fprintf(stderr, "%s check at %s %d:\n\t%s\t%d\n", type, __FILE__, __LINE__, #cond, !!(cond));                  \
         if (!(cond)) {                                                                                                 \
-            fprintf(                                                                                                   \
-                stderr,                                                                                                \
-                "%s violation at %s %d:\n\t%d\n\t%s\n\t%s\n",                                                          \
-                type,                                                                                                  \
-                __FILE__,                                                                                              \
-                __LINE__,                                                                                              \
-                err,                                                                                                   \
-                #cond,                                                                                                 \
-                (explanation));                                                                                        \
             return aws_raise_error(err);                                                                               \
         }                                                                                                              \
     } while (0)
 
-#define AWS_ERROR_PRECONDITION_3(cond, err, explanation) AWS_ERROR_CHECK("Precondition", cond, err, explanation)
-#define AWS_ERROR_PRECONDITION_2(cond, err) AWS_ERROR_PRECONDITION_3(cond, err, #cond " check failed")
-#define AWS_ERROR_PRECONDITION_1(cond) AWS_ERROR_PRECONDITION_2(cond, AWS_ERROR_INVALID_ARGUMENT)
+#define AWS_ERROR_PRECONDITION3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("Precondition", cond, err, explanation)
+#define AWS_ERROR_PRECONDITION2(cond, err) AWS_ERROR_PRECONDITION3(cond, err, #cond " check failed")
+#define AWS_ERROR_PRECONDITION1(cond) AWS_ERROR_PRECONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
-#define AWS_ERROR_POSTCONDITION_3(cond, err, explanation) AWS_ERROR_CHECK("Postcondition", cond, err, explanation)
-#define AWS_ERROR_POSTCONDITION_2(cond, err) AWS_ERROR_POSTCONDITION_3(cond, err, #cond " check failed")
-#define AWS_ERROR_POSTCONDITION_1(cond) AWS_ERROR_POSTCONDITION_2(cond, AWS_ERROR_INVALID_ARGUMENT)
+#define AWS_ERROR_POSTCONDITION3(cond, err, explanation)                                                               \
+    AWS_RETURN_ERROR_IF_IMPL("Postcondition", cond, err, explanation)
+#define AWS_ERROR_POSTCONDITION2(cond, err) AWS_ERROR_POSTCONDITION3(cond, err, #cond " check failed")
+#define AWS_ERROR_POSTCONDITION1(cond) AWS_ERROR_POSTCONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
-#define AWS_PRECONDITION(...)                                                                                          \
-    GET_MACRO(__VA_ARGS__, UNUSED, AWS_PRECONDITION_2, AWS_PRECONDITION_1, UNUSED)(__VA_ARGS__)
-#define AWS_POSTCONDITION(...)                                                                                         \
-    GET_MACRO(__VA_ARGS__, UNUSED, AWS_POSTCONDITION_2, AWS_POSTCONDITION_1, UNUSED)(__VA_ARGS__)
-#define AWS_ERROR_PRECONDITION(...)                                                                                    \
-    GET_MACRO(__VA_ARGS__, AWS_ERROR_PRECONDITION_3, AWS_ERROR_PRECONDITION_2, AWS_ERROR_PRECONDITION_1, UNUSED)       \
-    (__VA_ARGS__)
-#define AWS_ERROR_POSTCONDITION(...)                                                                                   \
-    GET_MACRO(__VA_ARGS__, AWS_ERROR_POSTCONDITION_3, AWS_ERROR_POSTCONDITION_2, AWS_ERROR_POSTCONDITION_1, UNUSED)    \
-    (__VA_ARGS__)
+#define AWS_PRECONDITION(...) CALL_OVERLOAD(AWS_PRECONDITION, __VA_ARGS__)
+#define AWS_POSTCONDITION(...) CALL_OVERLOAD(AWS_POSTCONDITION, __VA_ARGS__)
+#define AWS_ERROR_PRECONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
+#define AWS_ERROR_POSTCONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
