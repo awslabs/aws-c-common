@@ -382,7 +382,7 @@ def _replace_variables(value, variables):
     if key_type == str:
 
         # If the whole string is a variable, just replace it
-        if value and value[0] == '{' and value[-1] == '}':
+        if value and value.rfind('{') == 0 and value.find('}') == len(value) - 1:
             return variables.get(value[1:-1], '')
 
         # Custom formatter for optional variables
@@ -745,4 +745,3 @@ if __name__ == '__main__':
             print('Creating: {}'.format(spec))
             if not args.dry_run:
                 codebuild.create_project(**cb_project)
-                codebuild.create_webhook(projectName=cb_project['name'])
