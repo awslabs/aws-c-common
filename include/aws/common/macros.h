@@ -32,10 +32,19 @@
 #endif /*  __cplusplus */
 
 #define AWS_CONCAT(A, B) A##B
-/* https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments */
-#define GET_MACRO(_1, _2, _3, NAME, ...)                                                                               \
-    fprintf(stderr, "%s\n", #NAME);                                                                                    \
-    NAME
+#define GET_MACRO(_1, _2, _3, NAME, ...) NAME
+#define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
+#define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
+#define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
+
+#define GET_MACRO_TEST_1(x) x
+#define GET_MACRO_TEST_2(x, y) y
+#define GET_MACRO_TEST_3(x, y, z) z
+#define GET_MACRO_TEST(...)                                                                                            \
+    GET_MACRO(__VA_ARGS__, GET_MACRO_TEST_3, GET_MACRO_TEST_2, GET_MACRO_TEST_1, UNUSED)(__VA_ARGS__)
+AWS_STATIC_ASSERT(GET_MACRO_TEST(1) == 1);
+AWS_STATIC_ASSERT(GET_MACRO_TEST(1, 2) == 2);
+AWS_STATIC_ASSERT(GET_MACRO_TEST(1, 2, 3) == 3);
 
 #define AWS_CACHE_LINE 64
 

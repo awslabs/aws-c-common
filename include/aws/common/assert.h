@@ -68,10 +68,6 @@ AWS_EXTERN_C_END
 #    define AWS_ASSERT(cond)
 #endif /*  defined(CBMC) */
 
-#define AWS_STATIC_ASSERT0(cond, msg) typedef char AWS_CONCAT(static_assertion_, msg)[(!!(cond)) * 2 - 1]
-#define AWS_STATIC_ASSERT1(cond, line) AWS_STATIC_ASSERT0(cond, AWS_CONCAT(at_line_, line))
-#define AWS_STATIC_ASSERT(cond) AWS_STATIC_ASSERT1(cond, __LINE__)
-
 /**
  * Define function contracts.
  * When the code is being verified using CBMC these contracts are formally verified;
