@@ -36,8 +36,7 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     *(size_t *)(&str->len) = len;
     memcpy((void *)str->bytes, bytes, len);
     *(uint8_t *)&str->bytes[len] = '\0';
-    AWS_POSTCONDITION(aws_string_is_valid(str));
-    return str;
+    AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
 }
 
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
