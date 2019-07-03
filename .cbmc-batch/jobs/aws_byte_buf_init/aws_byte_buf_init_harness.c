@@ -19,21 +19,13 @@
 
 void aws_byte_buf_init_harness() {
     /* data structure */
-    struct aws_byte_buf buf;
+    struct aws_byte_buf buf; /* Precondition: buf is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator;
+    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
     size_t capacity;
 
-    /* assumptions */
-    if (nondet_bool()) {
-        ASSUME_CAN_FAIL_ALLOCATOR(allocator);
-    } else {
-        allocator = NULL;
-    }
-    __CPROVER_assume(capacity <= MAX_BUFFER_SIZE);
-
-    if (!aws_byte_buf_init(&buf, allocator, capacity)) {
+    if (aws_byte_buf_init(&buf, allocator, capacity) == AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_byte_buf_is_valid(&buf));
         assert(buf.allocator == allocator);
