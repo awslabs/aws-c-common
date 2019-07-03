@@ -342,17 +342,13 @@ static int s_remove_node(struct aws_priority_queue *queue, void *item, size_t it
         s_swap(queue, item_index, swap_with);
     }
 
-    if (!aws_array_list_is_wiped(&queue->backpointers)) {
-        aws_array_list_get_at(&queue->backpointers, &backpointer, swap_with);
-    }
-
-    if (backpointer) {
-        backpointer->current_index = SIZE_MAX;
-    }
-
     aws_array_list_pop_back(&queue->container);
 
     if (!aws_array_list_is_wiped(&queue->backpointers)) {
+        aws_array_list_get_at(&queue->backpointers, &backpointer, swap_with);
+        if (backpointer) {
+            backpointer->current_index = SIZE_MAX;
+        }
         aws_array_list_pop_back(&queue->backpointers);
     }
 
