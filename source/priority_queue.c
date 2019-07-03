@@ -372,13 +372,6 @@ int aws_priority_queue_remove(
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(item && AWS_MEM_IS_WRITABLE(item, queue->container.item_size));
-    fprintf(
-        stderr,
-        "%s %d: aws_array_list_length(&queue->container): %zu %d\n",
-        __FILE__,
-        __LINE__,
-        aws_array_list_length(&queue->container),
-        !!(aws_array_list_length(&queue->container) != 0));
     AWS_ERROR_PRECONDITION(aws_array_list_length(&queue->container) != 0, AWS_ERROR_PRIORITY_QUEUE_EMPTY);
 
     int rval = s_remove_node(queue, item, 0);
