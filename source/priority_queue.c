@@ -367,11 +367,9 @@ int aws_priority_queue_remove(
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(item && AWS_MEM_IS_WRITABLE(item, queue->container.item_size));
     AWS_PRECONDITION(node && AWS_MEM_IS_READABLE(node, sizeof(struct aws_priority_queue_node)));
-
-    if (node->current_index >= aws_array_list_length(&queue->container) || !queue->backpointers.data) {
-        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
-    }
+    AWS_ERROR_PRECONDITION(
+        node->current_index < aws_array_list_length(&queue->container), AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
+    AWS_ERROR_PRECONDITION(queue->backpointers.data, AWS_ERROR_PRIORITY_QUEUE_BAD_NODE);
 
     int rval = s_remove_node(queue, item, node->current_index);
     AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
@@ -381,10 +379,7 @@ int aws_priority_queue_remove(
 int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
     AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
     AWS_PRECONDITION(item && AWS_MEM_IS_WRITABLE(item, queue->container.item_size));
-    if (0 == aws_array_list_length(&queue->container)) {
-        AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
-    }
+    AWS_ERROR_PRECONDITION(aws_array_list_length(&queue->container) != 0, AWS_ERROR_PRIORITY_QUEUE_EMPTY);
 
     int rval = s_remove_node(queue, item, 0);
     AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
@@ -392,9 +387,7 @@ int aws_priority_queue_pop(struct aws_priority_queue *queue, void *item) {
 }
 
 int aws_priority_queue_top(const struct aws_priority_queue *queue, void **item) {
-    if (0 == aws_array_list_length(&queue->container)) {
-        return aws_raise_error(AWS_ERROR_PRIORITY_QUEUE_EMPTY);
-    }
+    AWS_ERROR_PRECONDITION(aws_array_list_length(&queue->container) != 0, AWS_ERROR_PRIORITY_QUEUE_EMPTY);
     return aws_array_list_get_at_ptr(&queue->container, item, 0);
 }
 

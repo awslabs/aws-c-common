@@ -576,9 +576,7 @@ int aws_date_time_init_from_str_cursor(
     struct aws_date_time *dt,
     const struct aws_byte_cursor *date_str_cursor,
     enum aws_date_format fmt) {
-    if (date_str_cursor->len > AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_ERROR_PRECONDITION(date_str_cursor->len <= AWS_DATE_TIME_STR_MAX_LEN, AWS_ERROR_OVERFLOW_DETECTED);
 
     AWS_ZERO_STRUCT(*dt);
 
@@ -651,9 +649,7 @@ int aws_date_time_init_from_str(
     struct aws_date_time *dt,
     const struct aws_byte_buf *date_str,
     enum aws_date_format fmt) {
-    if (date_str->len > AWS_DATE_TIME_STR_MAX_LEN) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
+    AWS_ERROR_PRECONDITION(date_str->len <= AWS_DATE_TIME_STR_MAX_LEN, AWS_ERROR_OVERFLOW_DETECTED);
 
     struct aws_byte_cursor date_cursor = aws_byte_cursor_from_buf(date_str);
     return aws_date_time_init_from_str_cursor(dt, &date_cursor, fmt);
