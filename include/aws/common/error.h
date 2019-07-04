@@ -143,6 +143,12 @@ void aws_register_error_info(const struct aws_error_info_list *error_info);
 AWS_COMMON_API
 void aws_load_error_strings(void);
 
+/**
+ * Convert a c library io error into an aws error.
+ */
+AWS_COMMON_API
+int aws_translate_and_raise_io_error(int error_no);
+
 AWS_EXTERN_C_END
 
 enum aws_common_error {
@@ -187,6 +193,13 @@ enum aws_common_error {
     AWS_ERROR_ENVIRONMENT_GET,
     AWS_ERROR_ENVIRONMENT_SET,
     AWS_ERROR_ENVIRONMENT_UNSET,
+
+    AWS_ERROR_STREAM_UNSEEKABLE,
+    AWS_ERROR_NO_PERMISSION,
+    AWS_ERROR_FILE_INVALID_PATH,
+    AWS_ERROR_MAX_FDS_EXCEEDED,
+    AWS_ERROR_SYS_CALL_FAILURE,
+
     AWS_ERROR_END_COMMON_RANGE = 0x03FF
 };
 
