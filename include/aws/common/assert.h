@@ -72,21 +72,30 @@ AWS_EXTERN_C_END
  * Define function contracts.
  * When the code is being verified using CBMC these contracts are formally verified;
  * When the code is built in debug mode, they are checked as much as possible using assertions
- * When the code is built in production mode, they are not checked.
+ * When the code is built in production mode, non-fatal contracts are not checked.
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
 #    define AWS_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
 #    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #    cond " check failed")
+#    define AWS_FATAL_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
+#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), #    cond " check failed")
 #    define AWS_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
 #    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
+#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
 #    define AWS_MEM_IS_READABLE(base, len) __CPROVER_r_ok((base), (len))
 #    define AWS_MEM_IS_WRITABLE(base, len) __CPROVER_w_ok((base), (len))
 #else
 #    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
+#    define AWS_FATAL_PRECONDITION2(cond, expl) AWS_FATAL_ASSERT(cond)
+#    define AWS_FATAL_PRECONDITION1(cond) AWS_FATAL_ASSERT(cond)
 #    define AWS_POSTCONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_POSTCONDITION1(cond) AWS_ASSERT(cond)
+#    define AWS_FATAL_POSTCONDITION2(cond, expl) AWS_FATAL_ASSERT(cond)
+#    define AWS_FATAL_POSTCONDITION1(cond) AWS_FATAL_ASSERT(cond)
+
 /* the C runtime does not give a way to check these properties,
  * but we can at least check that the pointer is valid */
 #    define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
@@ -115,7 +124,9 @@ AWS_EXTERN_C_END
 
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
 #define AWS_PRECONDITION(...) CALL_OVERLOAD(AWS_PRECONDITION, __VA_ARGS__)
+#define AWS_FATAL_PRECONDITION(...) CALL_OVERLOAD(AWS_FATAL_PRECONDITION, __VA_ARGS__)
 #define AWS_POSTCONDITION(...) CALL_OVERLOAD(AWS_POSTCONDITION, __VA_ARGS__)
+#define AWS_FATAL_POSTCONDITION(...) CALL_OVERLOAD(AWS_FATAL_POSTCONDITION, __VA_ARGS__)
 #define AWS_ERROR_PRECONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 #define AWS_ERROR_POSTCONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 
