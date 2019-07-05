@@ -49,7 +49,7 @@ AWS_EXTERN_C_END
 
 #if defined(CBMC)
 #    define AWS_FATAL_ASSERT(cond) AWS_ASSERT(cond)
-#elif  __clang_analyzer__
+#elif __clang_analyzer__
 #    define AWS_FATAL_ASSERT(cond)                                                                                     \
         if (!(cond)) {                                                                                                 \
             abort();                                                                                                   \
