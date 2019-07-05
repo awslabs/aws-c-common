@@ -11,25 +11,20 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-###########
-#NOTE: If we don't use the unwindset, leave it empty
-CBMC_UNWINDSET = --unwindset memcmp.0:17,strlen.0:17,memcpy_impl.0:17,memset_impl.0:17
+include ../Makefile.aws_string
+
+UNWINDSET += aws_array_eq_c_str_ignore_case.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
+UNWINDSET += memcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
+UNWINDSET += strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
 DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcmp_override.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/error.c
 DEPENDENCIES += $(SRCDIR)/source/string.c
+DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 
-ENTRY = aws_string_eq_byte_buffer_harness
-
-###########
+ENTRY = aws_string_eq_c_str_ignore_case_harness
 
 include ../Makefile.common

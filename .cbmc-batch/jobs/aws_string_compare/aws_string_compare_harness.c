@@ -15,23 +15,23 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-#include <stddef.h>
 
-const size_t MAX_STRING_LEN = 16;
-
-/**
- * Coverage: 1.00 (52 lines out of 52 statically-reachable lines in 9 functions reached)
- * Runtime: real	0m5.082s
- */
 void aws_string_compare_harness() {
-    struct aws_string *str_a = make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
+    struct aws_string *str_a = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
     struct aws_string *str_b =
-        nondet_bool() ? str_a : make_arbitrary_aws_string_nondet_len_with_max(can_fail_allocator(), MAX_STRING_LEN);
-    int rval = aws_string_compare(str_a, str_b);
-    if (!rval) {
-        assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
+        nondet_bool() ? (nondet_bool() ? str_a : NULL) : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    bool nondet_parameter = nondet_bool();
+    if (aws_string_compare(str_a, nondet_parameter ? str_b : str_a) == AWS_OP_SUCCESS) {
+        if (nondet_parameter && str_a && str_b) {
+            assert_bytes_match(str_a->bytes, str_b->bytes, str_a->len);
+        }
+    }
+    if (str_a) {
+        assert(aws_string_is_valid(str_a));
+    }
+    if (str_b) {
+        assert(aws_string_is_valid(str_b));
     }
 }

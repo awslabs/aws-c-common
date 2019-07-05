@@ -1,0 +1,4 @@
+jobos: ubuntu16
+cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;aws_array_eq_c_str_ignore_case.0:17,memcmp.0:17,strlen.0:17;--object-bits;8"
+goto: aws_string_eq_c_str_ignore_case_harness.goto
+expected: "SUCCESSFUL"

@@ -20,8 +20,8 @@
 #include <stddef.h>
 
 void aws_hash_callback_c_str_eq_harness() {
-    const char *str1 = make_arbitrary_c_str(MAX_STRING_LEN);
-    const char *str2 = nondet_bool() ? str1 : make_arbitrary_c_str(MAX_STRING_LEN);
+    const char *str1 = ensure_c_str_is_allocated(MAX_STRING_LEN);
+    const char *str2 = nondet_bool() ? str1 : ensure_c_str_is_allocated(MAX_STRING_LEN);
     bool rval = aws_hash_callback_c_str_eq(str1, str2);
     if (rval) {
         size_t len = strlen(str1);
