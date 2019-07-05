@@ -16,4 +16,4 @@
 # short enough that all proofs complete quickly
 MAX_STRING_LEN ?= 16
 
-DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN) 
+DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)
