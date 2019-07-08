@@ -18,8 +18,10 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/linked_list.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/private/hash_table_impl.h>
+#include <aws/common/ring_buffer.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
@@ -48,6 +50,10 @@ bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf);
 void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf);
 
 /*
+ * Ensures aws_ring_buffer has proper allocated members
+ */
+void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, const size_t size);
+/*
  * Checks whether aws_byte_cursor is bounded by max_size
  */
 bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size);
@@ -70,6 +76,11 @@ bool aws_array_list_is_bounded(
  */
 void ensure_array_list_has_allocated_data_member(struct aws_array_list *const list);
 
+/**
+ * Ensures that the aws_linked_list [list] is correctly allocated
+ */
+void ensure_linked_list_is_allocated(struct aws_linked_list *list, size_t max_length);
+
 /*
  * Checks whether aws_priority_queue is bounded by max_initial_item_allocation and max_item_size
  */
@@ -84,47 +95,6 @@ bool aws_priority_queue_is_bounded(
  */
 void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *const queue);
 
-/**
- * Makes a byte_buf, with as much nondet as possible, len < max, valid backing storage
- */
-struct aws_byte_cursor make_arbitrary_byte_cursor_nondet_len_max(size_t max);
-
-/**
- * Makes a byte_buf, with as much nondet as possible, defined len and capacity
- */
-void make_arbitrary_byte_buf(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity, size_t len);
-
-/**
- * Makes a byte_buf, with as much nondet as possible, len = capacity
- */
-void make_arbitrary_byte_buf_full(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t capacity);
-
-/**
- * Makes a valid header, with as much nondet as possible, nondet len
- */
-void make_arbitrary_byte_buf_nondet_len(struct aws_allocator *allocator, struct aws_byte_buf *buf);
-
-/**
- * Makes a valid header, with as much nondet as possible, nondet len <= max
- */
-void make_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, struct aws_byte_buf *buf, size_t max);
-struct aws_byte_buf *allocate_arbitrary_byte_buf_nondet_len_max(struct aws_allocator *allocator, size_t max);
-
-/**
- * Makes a valid string, with as much nondet as possible, defined length
- */
-struct aws_string *make_arbitrary_aws_string(struct aws_allocator *allocator, size_t size);
-
-/**
- * Makes a valid string, with as much nondet as possible
- */
-struct aws_string *make_arbitrary_aws_string_nondet_len(struct aws_allocator *allocator);
-
-/**
- * Makes a valid string, with as much nondet as possible, len < max
- */
-struct aws_string *make_arbitrary_aws_string_nondet_len_with_max(struct aws_allocator *allocator, size_t max);
-
 /*
  * Ensures aws_hash_table has a proper allocated p_impl member
  */
@@ -134,11 +104,6 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
  * Ensures aws_hash_table has destroy function pointers that are enther null or valid
  */
 void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map);
-
-/**
- * Makes a valid c string, with as much nondet as possible, len < max_size
- */
-const char *make_arbitrary_c_str(size_t max_size);
 
 /**
  * A correct hash table has max_load < size.  This means that there is always one slot empty.
@@ -156,3 +121,23 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
  * require a stronger function here.
  */
 void hash_proof_destroy_noop(void *p);
+
+/**
+ * Ensures a valid string is allocated, with as much nondet as possible
+ */
+struct aws_string *ensure_string_is_allocated_nondet_length();
+
+/**
+ * Ensures a valid string is allocated, with as much nondet as possible, but len < max
+ */
+struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size);
+
+/**
+ * Ensures a valid string is allocated, with as much nondet as possible, but fixed defined len
+ */
+struct aws_string *ensure_string_is_allocated(size_t size);
+
+/**
+ * Ensures a valid const string is allocated, with as much nondet as possible, len < max_size
+ */
+const char *ensure_c_str_is_allocated(size_t max_size);

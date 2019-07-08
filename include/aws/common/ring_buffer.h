@@ -17,6 +17,19 @@
 
 #include <aws/common/atomics.h>
 
+#ifdef CBMC
+#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr)                                                        \
+        dest_ptr = aws_atomic_load_ptr(atomic_ptr);                                                                    \
+        assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
+        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
+#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr)                                                        \
+        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
+        aws_atomic_store_ptr(atomic_ptr, src_ptr);
+#else
+#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
+#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr) aws_atomic_store_ptr(atomic_ptr, src_ptr);
+#endif
+
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
@@ -42,6 +55,24 @@ AWS_EXTERN_C_BEGIN
  * AWS_OP_ERR otherwise.
  */
 AWS_COMMON_API int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size);
+
+/**
+ * Evaluates the set of properties that define the shape of all valid aws_ring_buffer structures.
+ * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
+ */
+AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring_buf) {
+    return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
+           (ring_buf->allocator != NULL);
+}
+
+/*
+ * Checks whether atomic_ptr correctly points to a memory location within the bounds of the aws_ring_buffer
+ */
+AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(
+    const struct aws_ring_buffer *ring_buf,
+    const uint8_t *atomic_ptr) {
+    return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
+}
 
 /**
  * Cleans up the ring buffer's resources.
@@ -78,6 +109,7 @@ AWS_COMMON_API void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer,
 
 /**
  * Returns true if the memory in `buf` was vended by this ring buffer, false otherwise.
+ * Make sure `buf->buffer` and `ring_buffer->allocation` refer to the same memory region.
  */
 AWS_COMMON_API bool aws_ring_buffer_buf_belongs_to_pool(
     const struct aws_ring_buffer *ring_buffer,

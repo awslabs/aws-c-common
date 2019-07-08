@@ -20,8 +20,7 @@
 #include <proof_helpers/utils.h>
 
 void aws_hash_string_harness() {
-    struct aws_string *str =
-        make_arbitrary_aws_string_nondet_len_with_max(nondet_bool() ? NULL : can_fail_allocator(), MAX_STRING_SIZE);
+    struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_SIZE);
     /*
      * aws_hash_string has no pre or post conditions. #TODO: Currently, CBMC is unable to
      * check all possible paths in these proof. aws_hash_string function calls hashlittle2

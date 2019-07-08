@@ -18,7 +18,7 @@
 
 void aws_byte_cursor_from_c_str_harness() {
     /* parameters */
-    const char *c_str = nondet_bool() ? NULL : make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = nondet_bool() ? NULL : ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* operation under verification */
     struct aws_byte_cursor cur = aws_byte_cursor_from_c_str(c_str);

@@ -15,6 +15,21 @@
 
 #include <aws/common/logging.h>
 
+#include <aws/common/string.h>
+
+#include <aws/common/log_channel.h>
+#include <aws/common/log_formatter.h>
+#include <aws/common/log_writer.h>
+
+#include <stdarg.h>
+
+#if _MSC_VER
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
+/*
+ * Null logger implementation
+ */
 static enum aws_log_level s_null_logger_get_log_level(struct aws_logger *logger, aws_log_subject_t subject) {
     (void)logger;
     (void)subject;
@@ -49,6 +64,198 @@ static struct aws_logger_vtable s_null_vtable = {
 
 static struct aws_logger s_null_logger = {.vtable = &s_null_vtable, .allocator = NULL, .p_impl = NULL};
 
+/*
+ * Pipeline logger implementation
+ */
+static void s_aws_logger_pipeline_owned_clean_up(struct aws_logger *logger) {
+    struct aws_logger_pipeline *impl = logger->p_impl;
+
+    AWS_ASSERT(impl->channel->vtable->clean_up != NULL);
+    (impl->channel->vtable->clean_up)(impl->channel);
+
+    AWS_ASSERT(impl->formatter->vtable->clean_up != NULL);
+    (impl->formatter->vtable->clean_up)(impl->formatter);
+
+    AWS_ASSERT(impl->writer->vtable->clean_up != NULL);
+    (impl->writer->vtable->clean_up)(impl->writer);
+
+    aws_mem_release(impl->allocator, impl->channel);
+    aws_mem_release(impl->allocator, impl->formatter);
+    aws_mem_release(impl->allocator, impl->writer);
+
+    aws_mem_release(impl->allocator, impl);
+}
+
+/*
+ * Pipeline logger implementation
+ */
+static int s_aws_logger_pipeline_log(
+    struct aws_logger *logger,
+    enum aws_log_level log_level,
+    aws_log_subject_t subject,
+    const char *format,
+    ...) {
+    va_list format_args;
+    va_start(format_args, format);
+
+    struct aws_logger_pipeline *impl = logger->p_impl;
+    struct aws_string *output = NULL;
+
+    AWS_ASSERT(impl->formatter->vtable->format != NULL);
+    int result = (impl->formatter->vtable->format)(impl->formatter, &output, log_level, subject, format, format_args);
+
+    va_end(format_args);
+
+    if (result != AWS_OP_SUCCESS || output == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    AWS_ASSERT(impl->channel->vtable->send != NULL);
+    if ((impl->channel->vtable->send)(impl->channel, output)) {
+        /*
+         * failure to send implies failure to transfer ownership
+         */
+        aws_string_destroy(output);
+        return AWS_OP_ERR;
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+static enum aws_log_level s_aws_logger_pipeline_get_log_level(struct aws_logger *logger, aws_log_subject_t subject) {
+    (void)subject;
+
+    struct aws_logger_pipeline *impl = logger->p_impl;
+
+    return impl->level;
+}
+
+struct aws_logger_vtable g_pipeline_logger_owned_vtable = {
+    .get_log_level = s_aws_logger_pipeline_get_log_level,
+    .log = s_aws_logger_pipeline_log,
+    .clean_up = s_aws_logger_pipeline_owned_clean_up,
+};
+
+int aws_logger_init_standard(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    struct aws_logger_standard_options *options) {
+
+    struct aws_logger_pipeline *impl = aws_mem_calloc(allocator, 1, sizeof(struct aws_logger_pipeline));
+    if (impl == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    struct aws_log_writer *writer = aws_mem_acquire(allocator, sizeof(struct aws_log_writer));
+    if (writer == NULL) {
+        goto on_allocate_writer_failure;
+    }
+
+    struct aws_log_writer_file_options file_writer_options = {
+        .filename = options->filename,
+        .file = options->file,
+    };
+
+    if (aws_log_writer_init_file(writer, allocator, &file_writer_options)) {
+        goto on_init_writer_failure;
+    }
+
+    struct aws_log_formatter *formatter = aws_mem_acquire(allocator, sizeof(struct aws_log_formatter));
+    if (formatter == NULL) {
+        goto on_allocate_formatter_failure;
+    }
+
+    struct aws_log_formatter_standard_options formatter_options = {.date_format = AWS_DATE_FORMAT_ISO_8601};
+
+    if (aws_log_formatter_init_default(formatter, allocator, &formatter_options)) {
+        goto on_init_formatter_failure;
+    }
+
+    struct aws_log_channel *channel = aws_mem_acquire(allocator, sizeof(struct aws_log_channel));
+    if (channel == NULL) {
+        goto on_allocate_channel_failure;
+    }
+
+    if (aws_log_channel_init_background(channel, allocator, writer) == AWS_OP_SUCCESS) {
+        impl->formatter = formatter;
+        impl->channel = channel;
+        impl->writer = writer;
+        impl->allocator = allocator;
+        impl->level = options->level;
+
+        logger->vtable = &g_pipeline_logger_owned_vtable;
+        logger->allocator = allocator;
+        logger->p_impl = impl;
+
+        return AWS_OP_SUCCESS;
+    }
+
+    aws_mem_release(allocator, channel);
+
+on_allocate_channel_failure:
+    aws_log_formatter_clean_up(formatter);
+
+on_init_formatter_failure:
+    aws_mem_release(allocator, formatter);
+
+on_allocate_formatter_failure:
+    aws_log_writer_clean_up(writer);
+
+on_init_writer_failure:
+    aws_mem_release(allocator, writer);
+
+on_allocate_writer_failure:
+    aws_mem_release(allocator, impl);
+
+    return AWS_OP_ERR;
+}
+
+/*
+ * Pipeline logger implementation where all the components are externally owned.  No clean up
+ * is done on the components.  Useful for tests where components are on the stack and often mocked.
+ */
+static void s_aws_pipeline_logger_unowned_clean_up(struct aws_logger *logger) {
+    struct aws_logger_pipeline *impl = (struct aws_logger_pipeline *)logger->p_impl;
+
+    aws_mem_release(impl->allocator, impl);
+}
+
+static struct aws_logger_vtable s_pipeline_logger_unowned_vtable = {
+    .get_log_level = s_aws_logger_pipeline_get_log_level,
+    .log = s_aws_logger_pipeline_log,
+    .clean_up = s_aws_pipeline_logger_unowned_clean_up,
+};
+
+int aws_logger_init_from_external(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    struct aws_log_formatter *formatter,
+    struct aws_log_channel *channel,
+    struct aws_log_writer *writer,
+    enum aws_log_level level) {
+
+    struct aws_logger_pipeline *impl = aws_mem_acquire(allocator, sizeof(struct aws_logger_pipeline));
+
+    if (impl == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    impl->formatter = formatter;
+    impl->channel = channel;
+    impl->writer = writer;
+    impl->allocator = allocator;
+    impl->level = level;
+
+    logger->vtable = &s_pipeline_logger_unowned_vtable;
+    logger->allocator = allocator;
+    logger->p_impl = impl;
+
+    return AWS_OP_SUCCESS;
+}
+
+/*
+ * Global API
+ */
 static struct aws_logger *s_root_logger_ptr = &s_null_logger;
 
 void aws_logger_set(struct aws_logger *logger) {
@@ -72,9 +279,7 @@ void aws_logger_clean_up(struct aws_logger *logger) {
 static const char *s_log_level_strings[AWS_LL_COUNT] = {"NONE ", "FATAL", "ERROR", "WARN ", "INFO ", "DEBUG", "TRACE"};
 
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string) {
-    if (log_level >= AWS_LL_COUNT) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_ERROR_PRECONDITION(log_level < AWS_LL_COUNT);
 
     if (level_string != NULL) {
         *level_string = s_log_level_strings[log_level];

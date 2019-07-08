@@ -15,7 +15,36 @@
 
 #include <aws/common/task_scheduler.h>
 
+#include <aws/common/logging.h>
+
+#include <inttypes.h>
+
 static const size_t DEFAULT_QUEUE_SIZE = 7;
+
+const char *aws_task_status_to_c_str(enum aws_task_status status) {
+    switch (status) {
+        case AWS_TASK_STATUS_RUN_READY:
+            return "<Running>";
+
+        case AWS_TASK_STATUS_CANCELED:
+            return "<Canceled>";
+
+        default:
+            return "<Unknown>";
+    }
+}
+
+void aws_task_run(struct aws_task *task, enum aws_task_status status) {
+    AWS_ASSERT(task->fn);
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_TASK_SCHEDULER,
+        "id=%p: Running %s task with %s status",
+        (void *)task,
+        task->type_tag,
+        aws_task_status_to_c_str(status));
+
+    task->fn(task, task->arg, status);
+}
 
 static int s_compare_timestamps(const void *a, const void *b) {
     uint64_t a_time = (*(struct aws_task **)a)->timestamp;
@@ -87,6 +116,12 @@ void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struc
     AWS_ASSERT(task);
     AWS_ASSERT(task->fn);
 
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_TASK_SCHEDULER,
+        "id=%p: Scheduling %s task for immediate execution",
+        (void *)task,
+        task->type_tag);
+
     task->priority_queue_node.current_index = SIZE_MAX;
     aws_linked_list_node_reset(&task->node);
     task->timestamp = 0;
@@ -102,6 +137,13 @@ void aws_task_scheduler_schedule_future(
     AWS_ASSERT(scheduler);
     AWS_ASSERT(task);
     AWS_ASSERT(task->fn);
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_TASK_SCHEDULER,
+        "id=%p: Scheduling %s task for future execution at time %" PRIu64,
+        (void *)task,
+        task->type_tag,
+        time_to_run);
 
     task->timestamp = time_to_run;
 
@@ -202,5 +244,9 @@ void aws_task_scheduler_cancel_task(struct aws_task_scheduler *scheduler, struct
     } else {
         aws_priority_queue_remove(&scheduler->timed_queue, &task, &task->priority_queue_node);
     }
+
+    /*
+     * No need to log cancellation specially; it will get logged during the run call with the canceled status
+     */
     aws_task_run(task, AWS_TASK_STATUS_CANCELED);
 }
