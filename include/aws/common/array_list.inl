@@ -27,15 +27,15 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
 
+    if (item_size == 0 || list == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
     list->current_size = 0;
     list->item_size = 0;
     list->length = 0;
     list->data = NULL;
     list->alloc = NULL;
-
-    if (item_size == 0 || list == NULL) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
 
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
