@@ -32,15 +32,6 @@ void aws_priority_queue_clean_up_harness() {
     aws_priority_queue_clean_up(&queue);
 
     /* assertions */
-    assert(aws_priority_queue_is_valid(&queue));
-    assert(queue.container.alloc == NULL);
-    assert(queue.container.current_size == 0);
-    assert(queue.container.length == 0);
-    assert(queue.container.item_size == 0);
-    assert(queue.container.data == NULL);
-    assert(queue.backpointers.alloc == NULL);
-    assert(queue.backpointers.current_size == 0);
-    assert(queue.backpointers.length == 0);
-    assert(queue.backpointers.item_size == 0);
-    assert(queue.backpointers.data == NULL);
+    assert(aws_array_list_is_wiped(&queue.container));
+    assert(aws_array_list_is_wiped(&queue.backpointers));
 }

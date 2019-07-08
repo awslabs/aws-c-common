@@ -16,8 +16,13 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
+#include <aws/common/assert.h>
 #include <aws/common/exports.h>
+#include <aws/common/macros.h>
+#include <aws/common/stdint.h>
+
+#define AWS_OP_SUCCESS (0)
+#define AWS_OP_ERR (-1)
 
 struct aws_error_info {
     int error_code;
@@ -132,6 +137,70 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
 
+/**
+ * Loads error strings for debugging and logging purposes.
+ */
+AWS_COMMON_API
+void aws_load_error_strings(void);
+
+/**
+ * Convert a c library io error into an aws error.
+ */
+AWS_COMMON_API
+int aws_translate_and_raise_io_error(int error_no);
+
 AWS_EXTERN_C_END
+
+enum aws_common_error {
+    AWS_ERROR_SUCCESS = 0,
+    AWS_ERROR_OOM,
+    AWS_ERROR_UNKNOWN,
+    AWS_ERROR_SHORT_BUFFER,
+    AWS_ERROR_OVERFLOW_DETECTED,
+    AWS_ERROR_UNSUPPORTED_OPERATION,
+    AWS_ERROR_INVALID_BUFFER_SIZE,
+    AWS_ERROR_INVALID_HEX_STR,
+    AWS_ERROR_INVALID_BASE64_STR,
+    AWS_ERROR_INVALID_INDEX,
+    AWS_ERROR_THREAD_INVALID_SETTINGS,
+    AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE,
+    AWS_ERROR_THREAD_NO_PERMISSIONS,
+    AWS_ERROR_THREAD_NOT_JOINABLE,
+    AWS_ERROR_THREAD_NO_SUCH_THREAD_ID,
+    AWS_ERROR_THREAD_DEADLOCK_DETECTED,
+    AWS_ERROR_MUTEX_NOT_INIT,
+    AWS_ERROR_MUTEX_TIMEOUT,
+    AWS_ERROR_MUTEX_CALLER_NOT_OWNER,
+    AWS_ERROR_MUTEX_FAILED,
+    AWS_ERROR_COND_VARIABLE_INIT_FAILED,
+    AWS_ERROR_COND_VARIABLE_TIMED_OUT,
+    AWS_ERROR_COND_VARIABLE_ERROR_UNKNOWN,
+    AWS_ERROR_CLOCK_FAILURE,
+    AWS_ERROR_LIST_EMPTY,
+    AWS_ERROR_DEST_COPY_TOO_SMALL,
+    AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
+    AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
+    AWS_ERROR_PRIORITY_QUEUE_FULL,
+    AWS_ERROR_PRIORITY_QUEUE_EMPTY,
+    AWS_ERROR_PRIORITY_QUEUE_BAD_NODE,
+    AWS_ERROR_HASHTBL_ITEM_NOT_FOUND,
+    AWS_ERROR_INVALID_DATE_STR,
+    AWS_ERROR_INVALID_ARGUMENT,
+    AWS_ERROR_RANDOM_GEN_FAILED,
+    AWS_ERROR_MALFORMED_INPUT_STRING,
+    AWS_ERROR_UNIMPLEMENTED,
+    AWS_ERROR_INVALID_STATE,
+    AWS_ERROR_ENVIRONMENT_GET,
+    AWS_ERROR_ENVIRONMENT_SET,
+    AWS_ERROR_ENVIRONMENT_UNSET,
+
+    AWS_ERROR_STREAM_UNSEEKABLE,
+    AWS_ERROR_NO_PERMISSION,
+    AWS_ERROR_FILE_INVALID_PATH,
+    AWS_ERROR_MAX_FDS_EXCEEDED,
+    AWS_ERROR_SYS_CALL_FAILURE,
+
+    AWS_ERROR_END_COMMON_RANGE = 0x03FF
+};
 
 #endif /* AWS_COMMON_ERROR_H */

@@ -20,7 +20,7 @@
 #include <proof_helpers/utils.h>
 
 void aws_hash_c_string_harness() {
-    const char *str = make_arbitrary_c_str(MAX_STRING_SIZE);
+    const char *str = ensure_c_str_is_allocated(MAX_STRING_SIZE);
     /* This function has no pre or post conditions */
     uint64_t rval = aws_hash_c_string(str);
 }

@@ -47,20 +47,20 @@ static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx)
     aws_task_scheduler_init(&scheduler, allocator);
 
     struct aws_task task2;
-    aws_task_init(&task2, s_task_n_fn, (void *)2);
+    aws_task_init(&task2, s_task_n_fn, (void *)2, "scheduler_ordering_1");
 
     /* schedule 250 ns in the future. */
     uint64_t task2_timestamp = 250;
     aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp);
 
     struct aws_task task1;
-    aws_task_init(&task1, s_task_n_fn, (void *)1);
+    aws_task_init(&task1, s_task_n_fn, (void *)1, "scheduler_ordering_2");
 
     /* schedule now. */
     aws_task_scheduler_schedule_now(&scheduler, &task1);
 
     struct aws_task task3;
-    aws_task_init(&task3, s_task_n_fn, (void *)3);
+    aws_task_init(&task3, s_task_n_fn, (void *)3, "scheduler_ordering_3");
 
     /* schedule 500 ns in the future. */
     uint64_t task3_timestamp = 500;
@@ -114,7 +114,7 @@ static int s_test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx
 
     /* Check when a task is scheduled for the future */
     struct aws_task timed_task;
-    aws_task_init(&timed_task, s_null_fn, (void *)1);
+    aws_task_init(&timed_task, s_null_fn, (void *)1, "scheduler_has_tasks_1");
 
     aws_task_scheduler_schedule_future(&scheduler, &timed_task, 10);
     ASSERT_TRUE(aws_task_scheduler_has_tasks(&scheduler, &next_task_time));
@@ -122,7 +122,7 @@ static int s_test_scheduler_has_tasks(struct aws_allocator *allocator, void *ctx
 
     /* Check when a task is scheduled for now */
     struct aws_task now_task;
-    aws_task_init(&now_task, s_null_fn, (void *)2);
+    aws_task_init(&now_task, s_null_fn, (void *)2, "scheduler_has_tasks_2");
 
     aws_task_scheduler_schedule_now(&scheduler, &now_task);
     ASSERT_TRUE(aws_task_scheduler_has_tasks(&scheduler, &next_task_time));
@@ -140,7 +140,7 @@ static int s_test_scheduler_pops_task_fashionably_late(struct aws_allocator *all
     aws_task_scheduler_init(&scheduler, allocator);
 
     struct aws_task task;
-    aws_task_init(&task, s_task_n_fn, (void *)0);
+    aws_task_init(&task, s_task_n_fn, (void *)0, "scheduler_pops_task_fashionably_late");
 
     aws_task_scheduler_schedule_future(&scheduler, &task, 10);
 
@@ -190,7 +190,7 @@ static void s_reentrancy_args_init(
 
     AWS_ZERO_STRUCT(*args);
     args->scheduler = scheduler;
-    aws_task_init(&args->task, s_reentrancy_fn, args);
+    aws_task_init(&args->task, s_reentrancy_fn, args, "scheduler_reentrancy");
     args->status = -1;
     args->next_task_args = next_task_args;
 }
@@ -248,12 +248,12 @@ static int s_test_scheduler_cleanup_cancellation(struct aws_allocator *allocator
 
     struct cancellation_args now_task_args = {.status = 100000};
     struct aws_task now_task;
-    aws_task_init(&now_task, s_cancellation_fn, &now_task_args);
+    aws_task_init(&now_task, s_cancellation_fn, &now_task_args, "scheduler_cleanup_cancellation_1");
     aws_task_scheduler_schedule_now(&scheduler, &now_task);
 
     struct cancellation_args future_task_args = {.status = 100000};
     struct aws_task future_task;
-    aws_task_init(&future_task, s_cancellation_fn, &future_task_args);
+    aws_task_init(&future_task, s_cancellation_fn, &future_task_args, "scheduler_cleanup_cancellation_2");
     aws_task_scheduler_schedule_future(&scheduler, &future_task, 9999999999999);
 
     aws_task_scheduler_clean_up(&scheduler);
@@ -377,7 +377,7 @@ static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, voi
     do {
         struct aws_task *task = aws_mem_acquire(allocator, sizeof(struct aws_task));
         ASSERT_NOT_NULL(task);
-        aws_task_init(task, s_oom_task_fn, &done_tasks);
+        aws_task_init(task, s_oom_task_fn, &done_tasks, "scheduler_oom_still_works1");
 
         size_t prev_rejects = oom_impl->num_allocations_rejected;
 
@@ -406,7 +406,7 @@ static int s_test_scheduler_oom_still_works(struct aws_allocator *allocator, voi
     for (now_count = 0; now_count < 10; ++now_count) {
         struct aws_task *task = aws_mem_acquire(allocator, sizeof(struct aws_task));
         ASSERT_NOT_NULL(task);
-        aws_task_init(task, s_oom_task_fn, &done_tasks);
+        aws_task_init(task, s_oom_task_fn, &done_tasks, "scheduler_oom_still_works2");
 
         aws_task_scheduler_schedule_now(&scheduler, task);
     }
@@ -463,27 +463,27 @@ static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocato
     aws_task_scheduler_init(&scheduler, allocator);
 
     struct aws_task task2;
-    aws_task_init(&task2, s_task_n_fn, (void *)2);
+    aws_task_init(&task2, s_task_n_fn, (void *)2, "scheduler_schedule_cancellation1");
 
     /* schedule 250 ns in the future. */
     uint64_t task2_timestamp = 250;
     aws_task_scheduler_schedule_future(&scheduler, &task2, task2_timestamp);
 
     struct aws_task task1;
-    aws_task_init(&task1, s_task_n_fn, (void *)1);
+    aws_task_init(&task1, s_task_n_fn, (void *)1, "scheduler_schedule_cancellation2");
 
     /* schedule now. */
     aws_task_scheduler_schedule_now(&scheduler, &task1);
 
     struct aws_task task5;
-    aws_task_init(&task5, s_task_n_fn, (void *)3);
+    aws_task_init(&task5, s_task_n_fn, (void *)3, "scheduler_schedule_cancellation5");
 
     /* schedule 500 ns in the future. */
     uint64_t task5_timestamp = 500;
     aws_task_scheduler_schedule_future(&scheduler, &task5, task5_timestamp);
 
     struct aws_task task4;
-    aws_task_init(&task4, s_task_n_fn, (void *)5);
+    aws_task_init(&task4, s_task_n_fn, (void *)5, "scheduler_schedule_cancellation4");
 
     struct task_cancelling_task_data task_cancel_data = {
         .scheduler = &scheduler,
@@ -492,7 +492,7 @@ static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocato
 
     struct aws_task task3;
 
-    aws_task_init(&task3, s_task_cancelling_task, &task_cancel_data);
+    aws_task_init(&task3, s_task_cancelling_task, &task_cancel_data, "scheduler_schedule_cancellation3");
     aws_task_scheduler_schedule_now(&scheduler, &task3);
     aws_task_scheduler_schedule_now(&scheduler, &task4);
 

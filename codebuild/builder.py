@@ -195,10 +195,9 @@ COMPILERS = {
         'targets': ['linux', 'macos'],
 
         'post_build_steps': [
-            ["./format-check.sh"],
             ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
-        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'],
+        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
@@ -225,6 +224,9 @@ COMPILERS = {
                     'CXX': "clang-6.0",
                     'CLANG_FORMAT': 'clang-format-6.0',
                 },
+                'post_build_steps': [
+                    ["./format-check.sh"],
+                ],
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-6.0',
@@ -380,7 +382,7 @@ def _replace_variables(value, variables):
     if key_type == str:
 
         # If the whole string is a variable, just replace it
-        if value and value[0] == '{' and value[-1] == '}':
+        if value and value.rfind('{') == 0 and value.find('}') == len(value) - 1:
             return variables.get(value[1:-1], '')
 
         # Custom formatter for optional variables
@@ -743,4 +745,3 @@ if __name__ == '__main__':
             print('Creating: {}'.format(spec))
             if not args.dry_run:
                 codebuild.create_project(**cb_project)
-                codebuild.create_webhook(projectName=cb_project['name'])

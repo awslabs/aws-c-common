@@ -20,7 +20,7 @@
 void aws_byte_cursor_eq_c_str_ignore_case_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
-    const char *c_str = make_arbitrary_c_str(MAX_BUFFER_SIZE);
+    const char *c_str = ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* assumptions */
     __CPROVER_assume(aws_byte_cursor_is_bounded(&cur, MAX_BUFFER_SIZE));
