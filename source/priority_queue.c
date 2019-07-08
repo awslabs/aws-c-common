@@ -167,6 +167,8 @@ int aws_priority_queue_init_dynamic(
     int ret = aws_array_list_init_dynamic(&queue->container, alloc, default_size, item_size);
     if (ret == AWS_OP_SUCCESS) {
         AWS_POSTCONDITION(aws_priority_queue_is_valid(queue));
+    } else {
+        AWS_POSTCONDITION(aws_priority_queue_is_wiped(queue));
     }
     return ret;
 }
@@ -256,6 +258,16 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
 
     bool backpointers_valid = aws_priority_queue_backpointers_valid(queue);
     return pred_is_valid && container_is_valid && backpointers_valid;
+}
+
+bool aws_priority_queue_is_wiped(const struct aws_priority_queue *const queue) {
+    if (!queue) {
+        return false;
+    }
+    bool container_is_wiped = aws_array_list_is_wiped(&queue->container);
+    bool backpointers_is_wiped = aws_array_list_is_wiped(&queue->backpointers);
+
+    return container_is_wiped && backpointers_is_wiped;
 }
 
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
