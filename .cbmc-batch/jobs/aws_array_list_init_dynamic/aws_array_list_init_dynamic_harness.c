@@ -29,13 +29,13 @@ void aws_array_list_init_dynamic_harness() {
     size_t initial_item_allocation;
 
     /* assumptions */
+    __CPROVER_assume(&list != NULL);
+    __CPROVER_assume(allocator != NULL);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
-    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
 
     /* perform operation under verification */
-    if (aws_array_list_init_dynamic(
-            nondet_bool() ? &list : NULL, nondet_bool() ? allocator : NULL, initial_item_allocation, item_size) ==
-        AWS_OP_SUCCESS) {
+    if (aws_array_list_init_dynamic(&list, allocator, initial_item_allocation, item_size) == AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_array_list_is_valid(&list));
         assert(list.alloc == allocator);
