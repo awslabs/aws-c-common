@@ -25,13 +25,12 @@ void aws_priority_queue_init_dynamic_harness() {
     struct aws_priority_queue queue;
 
     /* parameters */
-    struct aws_allocator *allocator;
+    struct aws_allocator *allocator = can_fail_allocator();
     size_t item_size;
     size_t initial_item_allocation;
     size_t len;
 
     /* assumptions */
-    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
