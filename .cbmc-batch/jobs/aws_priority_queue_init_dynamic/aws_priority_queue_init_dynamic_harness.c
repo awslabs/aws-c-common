@@ -38,7 +38,11 @@ void aws_priority_queue_init_dynamic_harness() {
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
     if (!aws_priority_queue_init_dynamic(
-            nondet_bool() ? &queue : NULL, allocator, initial_item_allocation, item_size, nondet_compare)) {
+            nondet_bool() ? &queue : NULL,
+            nondet_bool() ? allocator : NULL,
+            initial_item_allocation,
+            item_size,
+            nondet_compare)) {
         /* assertions */
         assert(aws_priority_queue_is_valid(&queue));
         assert(queue.container.alloc == allocator);
