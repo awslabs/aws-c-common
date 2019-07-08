@@ -37,8 +37,11 @@ void aws_priority_queue_init_dynamic_harness() {
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
+
+    /* Store which parameter choice is made for queue to confirm postconditions */
+    bool null_choice = nondet_bool();
     if (!aws_priority_queue_init_dynamic(
-            nondet_bool() ? &queue : NULL,
+            null_choice ? &queue : NULL,
             nondet_bool() ? allocator : NULL,
             initial_item_allocation,
             item_size,
@@ -51,5 +54,10 @@ void aws_priority_queue_init_dynamic_harness() {
         assert(
             (queue.container.data == NULL && queue.container.current_size == 0) ||
             (queue.container.data && queue.container.current_size == (initial_item_allocation * item_size)));
+    } else {
+        /* assertions */
+        if (null_choice) {
+            assert(aws_priority_queue_is_wiped(&queue));
+        }
     }
 }
