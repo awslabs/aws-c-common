@@ -28,14 +28,15 @@ int aws_array_list_init_dynamic(
     size_t item_size) {
 
     AWS_ERROR_PRECONDITION(list != NULL);
-    AWS_ERROR_PRECONDITION(alloc != NULL);
-    AWS_ERROR_PRECONDITION(item_size > 0);
 
     list->current_size = 0;
     list->item_size = 0;
     list->length = 0;
     list->data = NULL;
     list->alloc = NULL;
+
+    AWS_ERROR_PRECONDITION(alloc != NULL);
+    AWS_ERROR_PRECONDITION(item_size > 0);
 
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {

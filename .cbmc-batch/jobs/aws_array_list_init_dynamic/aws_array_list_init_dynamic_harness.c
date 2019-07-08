@@ -33,8 +33,11 @@ void aws_array_list_init_dynamic_harness() {
     __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
 
     /* perform operation under verification */
+
+    /* Store which parameter choice is made for list to confirm postconditions */
+    bool null_choice = nondet_bool();
     if (aws_array_list_init_dynamic(
-            nondet_bool() ? &list : NULL, nondet_bool() ? allocator : NULL, initial_item_allocation, item_size) ==
+            null_choice ? &list : NULL, nondet_bool() ? allocator : NULL, initial_item_allocation, item_size) ==
         AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_array_list_is_valid(&list));
@@ -42,5 +45,12 @@ void aws_array_list_init_dynamic_harness() {
         assert(list.item_size == item_size);
         assert(list.length == 0);
         assert(list.current_size == item_size * initial_item_allocation);
+    }
+
+    else {
+        /*assertions */
+        if (null_choice) {
+            assert(aws_array_list_is_wiped(&list));
+        }
     }
 }
