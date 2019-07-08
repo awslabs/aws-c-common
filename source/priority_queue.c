@@ -159,9 +159,7 @@ int aws_priority_queue_init_dynamic(
     size_t item_size,
     aws_priority_queue_compare_fn *pred) {
 
-    if (queue == NULL) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_ERROR_PRECONDITION(queue != NULL);
 
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);
