@@ -53,12 +53,7 @@ void aws_byte_buf_cat_harness() {
     save_byte_from_array(dest.buffer, dest.len, &old_byte_from_dest);
 
     /* operation under verification */
-    if (aws_byte_buf_cat(
-            nondet_bool() ? &dest : NULL,
-            number_of_args,
-            nondet_bool() ? &buffer1 : NULL,
-            nondet_bool() ? &buffer2 : NULL,
-            nondet_bool() ? &buffer3 : NULL) == AWS_OP_SUCCESS) {
+    if (aws_byte_buf_cat(&dest, number_of_args, &buffer1, &buffer2, &buffer3) == AWS_OP_SUCCESS) {
         assert((old_dest.capacity - old_dest.len) >= (buffer1.len + buffer2.len + buffer3.len));
     } else {
         assert((old_dest.capacity - old_dest.len) < (buffer1.len + buffer2.len + buffer3.len));
