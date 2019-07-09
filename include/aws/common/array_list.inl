@@ -20,7 +20,18 @@
  * which might break system headers.
  */
 
-static bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list);
+AWS_STATIC_IMPL
+bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
+    if (!list) {
+        return false;
+    }
+    bool current_size_is_wiped = (list->current_size == 0);
+    bool item_size_is_wiped = (list->item_size == 0);
+    bool length_is_wiped = (list->length == 0);
+    bool data_is_wiped = (list->data == NULL);
+    bool alloc_is_wiped = (list->alloc == NULL);
+    return current_size_is_wiped && item_size_is_wiped && length_is_wiped && data_is_wiped && alloc_is_wiped;
+}
 
 AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
@@ -102,19 +113,6 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
         ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
     bool item_size_is_valid = (list->item_size != 0);
     return required_size_is_valid && current_size_is_valid && data_is_valid && item_size_is_valid;
-}
-
-AWS_STATIC_IMPL
-bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
-    if (!list) {
-        return false;
-    }
-    bool current_size_is_wiped = (list->current_size == 0);
-    bool item_size_is_wiped = (list->item_size == 0);
-    bool length_is_wiped = (list->length == 0);
-    bool data_is_wiped = (list->data == NULL);
-    bool alloc_is_wiped = (list->alloc == NULL);
-    return current_size_is_wiped && item_size_is_wiped && length_is_wiped && data_is_wiped && alloc_is_wiped;
 }
 
 AWS_STATIC_IMPL
