@@ -28,13 +28,13 @@ size_t aws_system_info_processor_count(void) {
         return (size_t)nprocs;
     }
 
-    AWS_FATAL_ASSERT(nprocs >= 0);
+    AWS_FATAL_POSTCONDITION(nprocs >= 0);
     return 0;
 }
 #else
 size_t aws_system_info_processor_count(void) {
 #    if defined(AWS_NUM_CPU_CORES)
-    AWS_FATAL_ASSERT(AWS_NUM_CPU_CORES > 0);
+    AWS_FATAL_PRECONDITION(AWS_NUM_CPU_CORES > 0);
     return AWS_NUM_CPU_CORES;
 #    else
     return 1;

@@ -17,6 +17,7 @@
 
 #include <aws/common/common.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -303,6 +304,21 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_ENVIRONMENT_UNSET,
         "System call failure when unsetting an environment variable."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_SYS_CALL_FAILURE,
+        "System call failure"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_FILE_INVALID_PATH,
+        "Invalid file path."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_MAX_FDS_EXCEEDED,
+        "The maximum number of fds has been exceeded."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_NO_PERMISSION,
+        "User does not have permission to perform the requested action."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_STREAM_UNSEEKABLE,
+        "Stream does not support seek operations"),
 };
 /* clang-format on */
 
@@ -315,5 +331,27 @@ void aws_load_error_strings(void) {
     if (!s_error_strings_loaded) {
         s_error_strings_loaded = 1;
         aws_register_error_info(&s_list);
+    }
+}
+
+int aws_translate_and_raise_io_error(int error_no) {
+    switch (error_no) {
+        case EINVAL:
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        case ESPIPE:
+            return aws_raise_error(AWS_ERROR_STREAM_UNSEEKABLE);
+        case EPERM:
+        case EACCES:
+            return aws_raise_error(AWS_ERROR_NO_PERMISSION);
+        case EISDIR:
+        case ENAMETOOLONG:
+        case ENOENT:
+            return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        case ENFILE:
+            return aws_raise_error(AWS_ERROR_MAX_FDS_EXCEEDED);
+        case ENOMEM:
+            return aws_raise_error(AWS_ERROR_OOM);
+        default:
+            return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
 }
