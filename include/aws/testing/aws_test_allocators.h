@@ -73,20 +73,20 @@ static int aws_timebomb_allocator_init(
     /* Not defining calloc/realloc, all allocation will be piped through the one mem_acquire fn */
 
     timebomb_allocator->impl = timebomb_impl;
-
+    timebomb_impl->wrapped_allocator = wrapped_allocator;
     timebomb_impl->fail_after_n_allocations = fail_after_n_allocations;
     ASSERT_SUCCESS(aws_mutex_init(&timebomb_impl->mutex));
-    timebomb_impl->wrapped_allocator = wrapped_allocator;
 
     return AWS_OP_SUCCESS;
 }
 
 static void aws_timebomb_allocator_clean_up(struct aws_allocator *timebomb_alloc) {
-    if (timebomb_alloc) {
-        struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
+    struct aws_timebomb_impl *timebomb_impl = (struct aws_timebomb_impl *)timebomb_alloc->impl;
+    if (timebomb_impl) {
         aws_mutex_clean_up(&timebomb_impl->mutex);
         aws_mem_release(timebomb_impl->wrapped_allocator, timebomb_impl);
     }
+    AWS_ZERO_STRUCT(*timebomb_alloc);
 }
 
 static void aws_timebomb_allocator_reset_countdown(

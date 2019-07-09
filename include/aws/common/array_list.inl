@@ -20,6 +20,8 @@
  * which might break system headers.
  */
 
+static bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list);
+
 AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
     struct aws_array_list *AWS_RESTRICT list,
@@ -34,18 +36,19 @@ int aws_array_list_init_dynamic(
     list->alloc = NULL;
 
     if (item_size == 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        goto error;
     }
 
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
-        return AWS_OP_ERR;
+        goto error;
     }
 
     if (allocation_size > 0) {
         list->data = aws_mem_acquire(alloc, allocation_size);
         if (!list->data) {
-            return AWS_OP_ERR;
+            goto error;
         }
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, allocation_size);
@@ -59,6 +62,10 @@ int aws_array_list_init_dynamic(
     AWS_FATAL_POSTCONDITION(list->current_size == 0 || list->data);
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
+
+error:
+    AWS_POSTCONDITION(aws_array_list_is_wiped(list));
+    return AWS_OP_ERR;
 }
 
 AWS_STATIC_IMPL
@@ -124,7 +131,7 @@ void aws_array_list_debug_print(const struct aws_array_list *list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(aws_array_list_is_wiped(list) || aws_array_list_is_valid(list));
     if (list->alloc && list->data) {
         aws_mem_release(list->alloc, list->data);
     }
