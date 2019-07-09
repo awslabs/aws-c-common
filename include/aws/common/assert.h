@@ -130,21 +130,13 @@ AWS_EXTERN_C_END
 #define AWS_ERROR_PRECONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 #define AWS_ERROR_POSTCONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 
-#define AWS_RETURN_WITH_POSTCONDITION3(_rval, postcondition, explanation)                                              \
+#define AWS_RETURN_WITH_POSTCONDITION(_rval, ...)                                                                      \
     do {                                                                                                               \
-        AWS_POSTCONDITION2(postcondition, explanation);                                                                \
+        AWS_POSTCONDITION(__VA_ARGS__);                                                                                \
         return _rval;                                                                                                  \
     } while (0)
 
-#define AWS_RETURN_WITH_POSTCONDITION2(_rval, postcondition)                                                           \
-    do {                                                                                                               \
-        AWS_POSTCONDITION1(postcondition);                                                                             \
-        return _rval;                                                                                                  \
-    } while (0)
-
-#define AWS_SUCCEED_WITH_POSTCONDITION(postcondition) AWS_RETURN_WITH_POSTCONDITION2(AWS_OP_SUCCESS, postcondition)
-
-#define AWS_RETURN_WITH_POSTCONDITION(...) CALL_OVERLOAD(AWS_RETURN_WITH_POSTCONDITION, __VA_ARGS__)
+#define AWS_SUCCEED_WITH_POSTCONDITION(...) AWS_RETURN_WITH_POSTCONDITION(AWS_OP_SUCCESS, __VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
