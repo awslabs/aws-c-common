@@ -532,6 +532,30 @@ static int s_test_scheduler_schedule_cancellation(struct aws_allocator *allocato
     return 0;
 }
 
+static int s_test_scheduler_cleanup_idempotent(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_task_scheduler scheduler;
+    ASSERT_SUCCESS(aws_task_scheduler_init(&scheduler, allocator));
+    aws_task_scheduler_clean_up(&scheduler);
+    aws_task_scheduler_clean_up(&scheduler);
+    return 0;
+}
+
+static int s_test_scheduler_oom_during_init(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_allocator *oom_allocator = s_oom_allocator_new(allocator, 0);
+    ASSERT_NOT_NULL(oom_allocator);
+
+    struct aws_task_scheduler scheduler;
+    ASSERT_ERROR(AWS_ERROR_OOM, aws_task_scheduler_init(&scheduler, oom_allocator));
+    aws_task_scheduler_clean_up(&scheduler);
+
+    s_oom_allocator_destroy(oom_allocator);
+    return 0;
+}
+
 AWS_TEST_CASE(scheduler_pops_task_late_test, s_test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, s_test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_has_tasks_test, s_test_scheduler_has_tasks);
@@ -540,3 +564,5 @@ AWS_TEST_CASE(scheduler_cleanup_cancellation, s_test_scheduler_cleanup_cancellat
 AWS_TEST_CASE(scheduler_cleanup_reentrants, s_test_scheduler_cleanup_reentrants);
 AWS_TEST_CASE(scheduler_oom_still_works, s_test_scheduler_oom_still_works);
 AWS_TEST_CASE(scheduler_schedule_cancellation, s_test_scheduler_schedule_cancellation);
+AWS_TEST_CASE(scheduler_cleanup_idempotent, s_test_scheduler_cleanup_idempotent);
+AWS_TEST_CASE(scheduler_oom_during_init, s_test_scheduler_oom_during_init);
