@@ -21,16 +21,14 @@
  */
 void aws_array_list_init_dynamic_harness() {
     /* data structure */
-    struct aws_array_list list;
+    struct aws_array_list list; /* Precondition: list is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator = can_fail_allocator();
+    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
     size_t item_size;
     size_t initial_item_allocation;
 
     /* assumptions */
-    // A precondition is that the list is not null.
-    __CPROVER_assume(allocator != NULL);
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
 
