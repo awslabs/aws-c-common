@@ -67,6 +67,8 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
     scheduler->alloc = alloc;
     aws_linked_list_init(&scheduler->timed_list);
     aws_linked_list_init(&scheduler->asap_list);
+
+    AWS_POSTCONDITION(aws_task_scheduler_is_valid(scheduler));
     return AWS_OP_SUCCESS;
 }
 
