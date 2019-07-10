@@ -264,6 +264,7 @@ add_test_case(rw_lock_many_readers_test)
 add_test_case(test_secure_zero)
 add_test_case(test_buffer_secure_zero)
 add_test_case(test_buffer_clean_up_secure)
+add_test_case(is_zeroed)
 
 add_test_case(atomics_semantics)
 add_test_case(atomics_semantics_implicit)

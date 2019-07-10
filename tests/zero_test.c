@@ -88,3 +88,25 @@ static int s_test_buffer_clean_up_secure_fn(struct aws_allocator *allocator, voi
     ASSERT_NULL(buf.allocator);
     return SUCCESS;
 }
+
+AWS_TEST_CASE(is_zeroed, s_test_is_zeroed_fn)
+static int s_test_is_zeroed_fn(struct aws_allocator *allocator, void *ctx) {
+    /* Using a value that's 2X the largest amount we check in a single CPU instruction */
+    enum { max_size = 64 * 2};
+    uint8_t buf[max_size];
+
+    for (size_t size = 1; size <= max_size; ++size) {
+        /* Zero out buffer and check */
+        memset(buf, 0, size);
+        ASSERT_TRUE(aws_is_zeroed(buf, size));
+
+        /* Set 1 byte to be non-zero and check */
+        for (size_t non_zero_byte = 0; non_zero_byte < size; ++non_zero_byte) {
+            buf[non_zero_byte] = 1;
+            ASSERT_FALSE(aws_is_zeroed(buf, size));
+            buf[non_zero_byte] = 0;
+        }
+    }
+
+    return SUCCESS;
+}
