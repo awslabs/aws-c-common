@@ -30,7 +30,7 @@ void aws_priority_queue_init_static_harness() {
     size_t len;
 
     /* assumptions */
-    __CPROVER_assume(&queue != NULL);
+    // A precondition is that the queue is not null.
     __CPROVER_assume(initial_item_allocation > 0 && initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
