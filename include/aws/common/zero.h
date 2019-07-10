@@ -50,10 +50,11 @@ bool aws_is_zeroed(const void *buf, size_t bufsize) {
     /* Optimization idea: vectorized instructions to check more than 64 bits at a time. */
 
     /* Check 64 bits at a time */
-    const uint64_t *buf_u64 = buf;
+    const uint64_t *buf_u64 = (const uint64_t *)buf;
     const size_t num_u64_checks = bufsize / 8;
-    for (size_t u64_i = 0; u64_i < num_u64_checks; ++u64_i) {
-        if (buf_u64[u64_i]) {
+    size_t i;
+    for (i = 0; i < num_u64_checks; ++i) {
+        if (buf_u64[i]) {
             return false;
         }
     }
@@ -63,9 +64,9 @@ bool aws_is_zeroed(const void *buf, size_t bufsize) {
     bufsize = bufsize % 8;
 
     /* Check 8 bits at a time */
-    const uint8_t *buf_u8 = buf;
-    for (size_t u8_i = 0; u8_i < bufsize; ++u8_i) {
-        if (buf_u8[u8_i]) {
+    const uint8_t *buf_u8 = (const uint8_t *)buf;
+    for (i = 0; i < bufsize; ++i) {
+        if (buf_u8[i]) {
             return false;
         }
     }
