@@ -91,6 +91,7 @@ static int s_test_buffer_clean_up_secure_fn(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(is_zeroed, s_test_is_zeroed_fn)
 static int s_test_is_zeroed_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
     (void)ctx;
 
     /* Using a value that's 2X the largest amount we check in a single CPU instruction */
