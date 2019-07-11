@@ -21,7 +21,7 @@
  */
 void aws_array_list_init_static_harness() {
     /* data structure */
-    struct aws_array_list *list;
+    struct aws_array_list list; /* Precondition: list is non-null */
 
     /* parameters */
     size_t item_size;
@@ -29,20 +29,24 @@ void aws_array_list_init_static_harness() {
     size_t len;
 
     /* assumptions */
-    ASSUME_VALID_MEMORY(list);
     __CPROVER_assume(initial_item_allocation > 0 && initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
     __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
-    aws_array_list_init_static(list, raw_array, initial_item_allocation, item_size);
+    struct store_byte_from_buffer old_byte;
+    save_byte_from_array(raw_array, len, &old_byte);
+
+    aws_array_list_init_static(&list, raw_array, initial_item_allocation, item_size);
 
     /* assertions */
-    assert(aws_array_list_is_valid(list));
-    assert(list->alloc == NULL);
-    assert(list->item_size == item_size);
-    assert(list->length == 0);
-    assert(list->current_size == initial_item_allocation * item_size);
-    assert_bytes_match((uint8_t *)list->data, raw_array, len);
+    assert(aws_array_list_is_valid(&list));
+    assert(list.alloc == NULL);
+    assert(list.item_size == item_size);
+    assert(list.length == 0);
+    assert(list.current_size == initial_item_allocation * item_size);
+    assert_bytes_match((uint8_t *)list.data, raw_array, len);
+
+    assert_byte_from_buffer_matches(raw_array, &old_byte);
 }
