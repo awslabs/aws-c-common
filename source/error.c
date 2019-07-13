@@ -163,12 +163,23 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
         abort();
     }
 
+#if DEBUG_BUILD
+    /* Assert that error info entries are in the right order. */
+    for (int i = 1; i < error_info->count; ++i) {
+        int expected_code = min_range + i;
+        if (error_info->error_list[i].error_code != expected_code) {
+            fprintf(stderr, "Error %s is at wrong index of error info list.\n", error_info->error_list[i].literal_name);
+            abort();
+        }
+    }
+#endif /* DEBUG_BUILD */
+
     ERROR_SLOTS[slot_index] = error_info;
 }
 
 static int8_t s_error_strings_loaded = 0;
 
-#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
+#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) [C - AWS_ERROR_SUCCESS] = AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
 
 /* clang-format off */
 static struct aws_error_info errors[] = {
