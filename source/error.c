@@ -179,7 +179,7 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
 
 static int8_t s_error_strings_loaded = 0;
 
-#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) [C - AWS_ERROR_SUCCESS] = AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
+#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) [C - 0x0000] = AWS_DEFINE_ERROR_INFO(C, ES, "libaws-c-common")
 
 /* clang-format off */
 static struct aws_error_info errors[] = {
