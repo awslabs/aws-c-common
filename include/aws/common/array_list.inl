@@ -27,12 +27,11 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
 
-    AWS_ZERO_STRUCT(*list);
+    AWS_FATAL_PRECONDITION(list != NULL);
+    AWS_FATAL_PRECONDITION(alloc != NULL);
+    AWS_FATAL_PRECONDITION(item_size > 0);
 
-    if (item_size == 0) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto error;
-    }
+    AWS_ZERO_STRUCT(*list);
 
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
@@ -68,9 +67,11 @@ void aws_array_list_init_static(
     void *raw_array,
     size_t item_count,
     size_t item_size) {
-    AWS_FATAL_PRECONDITION(raw_array);
-    AWS_FATAL_PRECONDITION(item_count);
-    AWS_FATAL_PRECONDITION(item_size);
+
+    AWS_FATAL_PRECONDITION(list != NULL);
+    AWS_FATAL_PRECONDITION(raw_array != NULL);
+    AWS_FATAL_PRECONDITION(item_count > 0);
+    AWS_FATAL_PRECONDITION(item_size > 0);
 
     list->alloc = NULL;
 
