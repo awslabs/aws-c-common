@@ -159,14 +159,14 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
     if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
-        fprintf(stderr, "Bad error slot index 0x%016x\n", slot_index);
-        abort();
+        fprintf(stderr, "Bad error slot index %d\n", slot_index);
+        AWS_FATAL_ASSERT(0);
     }
 
 #if DEBUG_BUILD
     /* Assert that error info entries are in the right order. */
     for (int i = 1; i < error_info->count; ++i) {
-        int expected_code = min_range + i;
+        const int expected_code = min_range + i;
         const struct aws_error_info *info = &error_info->error_list[i];
         if (info->error_code != expected_code) {
             if (info->error_code) {
@@ -174,7 +174,7 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
             } else {
                 fprintf(stderr, "Error %d is missing from error info list.\n", expected_code);
             }
-            abort();
+            AWS_FATAL_ASSERT(0);
         }
     }
 #endif /* DEBUG_BUILD */
