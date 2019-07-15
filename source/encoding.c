@@ -33,7 +33,6 @@ static inline size_t aws_common_private_base64_decode_sse41(const unsigned char 
     (void)out;
     (void)len;
     AWS_ASSERT(false);
-    return (size_t)-1; /* unreachable */
 }
 static inline void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;

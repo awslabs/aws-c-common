@@ -319,6 +319,11 @@ COMPILERS = {
                     'generator_postfix': " Win64",
                 },
             },
+            'arm': {
+                'variables': {
+                    'generator_postfix': " ARM",
+                },
+            },
         },
     },
     'ndk': {
@@ -588,6 +593,10 @@ def run_build(build_spec, is_dryrun):
 # CODEBUILD
 ########################################################################################################################
 
+CODEBUILD_PROJECTS = [
+    'windows-msvc-2017-windows-arm',
+]
+
 CODEBUILD_OVERRIDES = {
     'linux-clang3-x64': 'linux-clang-3-linux-x64',
     'linux-clang6-x64': 'linux-clang-6-linux-x64',
@@ -720,6 +729,11 @@ if __name__ == '__main__':
             new_projects_response = codebuild.batch_get_projects(names=new_project_names)
             existing_projects += [project['name'] for project in new_projects_response['projects']]
             new_projects += new_projects_response['projectsNotFound']
+
+        # Check for projects that don't have overrides
+        fresh_projects_response = codebuild.batch_get_projects(names=CODEBUILD_PROJECTS)
+        existing_projects += [project['name'] for project in fresh_projects_response['projects']]
+        new_projects += fresh_projects_response['projectsNotFound']
 
         # Update all existing projects
         for cb_spec in existing_projects:
