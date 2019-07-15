@@ -167,8 +167,13 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
     /* Assert that error info entries are in the right order. */
     for (int i = 1; i < error_info->count; ++i) {
         int expected_code = min_range + i;
-        if (error_info->error_list[i].error_code != expected_code) {
-            fprintf(stderr, "Error %s is at wrong index of error info list.\n", error_info->error_list[i].literal_name);
+        const struct aws_error_info *info = &error_info->error_list[i];
+        if (info->error_code != expected_code) {
+            if (info->error_code) {
+                fprintf(stderr, "Error %s is at wrong index of error info list.\n", info->literal_name);
+            } else {
+                fprintf(stderr, "Error %d is missing from error info list.\n", expected_code);
+            }
             abort();
         }
     }
