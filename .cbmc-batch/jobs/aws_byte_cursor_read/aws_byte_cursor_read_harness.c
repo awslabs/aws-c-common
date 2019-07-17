@@ -37,7 +37,7 @@ void aws_byte_cursor_read_harness() {
 
     /* operation under verification */
     if (aws_byte_cursor_read(&cur, dest, length)) {
-        /* assert_bytes_match(old_cur.ptr, dest, length); */
+        assert_bytes_match(old_cur.ptr, dest, length);
     }
 
     /* assertions */

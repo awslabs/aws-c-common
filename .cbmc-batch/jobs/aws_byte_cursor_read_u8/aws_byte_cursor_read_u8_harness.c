@@ -37,7 +37,7 @@ void aws_byte_cursor_read_u8_harness() {
 
     /* operation under verification */
     if (aws_byte_cursor_read_u8(&cur, dest)) {
-        /* assert_bytes_match(old_cur.ptr, dest, 1); */
+        assert_bytes_match(old_cur.ptr, dest, 1);
     }
 
     /* assertions */

@@ -39,7 +39,7 @@ void aws_byte_cursor_read_and_fill_buffer_harness() {
     /* operation under verification */
     if (aws_byte_cursor_read_and_fill_buffer(&cur, &buf)) {
         assert(buf.len == buf.capacity);
-        /* assert_bytes_match(old_cur.ptr, buf.buffer, buf.capacity); */
+        assert_bytes_match(old_cur.ptr, buf.buffer, buf.capacity);
     }
 
     /* assertions */
