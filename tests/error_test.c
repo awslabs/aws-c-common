@@ -444,6 +444,16 @@ static int s_error_code_cross_thread_test_fn(struct aws_allocator *allocator, vo
     return 0;
 }
 
+static int s_aws_load_error_strings_test(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    /* Load aws-c-common's actual error info.
+     * This will fail if the error info list is out of sync with the error enums. */
+    aws_load_error_strings();
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE_FIXTURE(
     raise_errors_test,
     s_setup_errors_test_fn,
@@ -486,3 +496,4 @@ AWS_TEST_CASE_FIXTURE(
     s_error_code_cross_thread_test_fn,
     s_teardown_errors_test_fn,
     NULL)
+AWS_TEST_CASE(aws_load_error_strings_test, s_aws_load_error_strings_test)

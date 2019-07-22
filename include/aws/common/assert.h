@@ -38,7 +38,18 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 
 AWS_EXTERN_C_END
 
-#if defined(CBMC) || __clang_analyzer__
+#if defined(CBMC)
+#    include <assert.h>
+#    define AWS_ASSERT(cond) assert(cond)
+#elif defined(DEBUG_BUILD) || __clang_analyzer__
+#    define AWS_ASSERT(cond) AWS_FATAL_ASSERT(cond)
+#else
+#    define AWS_ASSERT(cond)
+#endif /*  defined(CBMC) */
+
+#if defined(CBMC)
+#    define AWS_FATAL_ASSERT(cond) AWS_ASSERT(cond)
+#elif __clang_analyzer__
 #    define AWS_FATAL_ASSERT(cond)                                                                                     \
         if (!(cond)) {                                                                                                 \
             abort();                                                                                                   \
@@ -57,16 +68,7 @@ AWS_EXTERN_C_END
                 aws_fatal_assert(#cond, __FILE__, __LINE__);                                                           \
             }
 #    endif /* defined(_MSC_VER) */
-#endif     /* defined(CBMC) || __clang_analyzer__ */
-
-#if defined(CBMC)
-#    include <assert.h>
-#    define AWS_ASSERT(cond) assert(cond)
-#elif defined(DEBUG_BUILD) || __clang_analyzer__
-#    define AWS_ASSERT(cond) AWS_FATAL_ASSERT(cond)
-#else
-#    define AWS_ASSERT(cond)
-#endif /*  defined(CBMC) */
+#endif     /* defined(CBMC) */
 
 /**
  * Define function contracts.
@@ -129,6 +131,14 @@ AWS_EXTERN_C_END
 #define AWS_FATAL_POSTCONDITION(...) CALL_OVERLOAD(AWS_FATAL_POSTCONDITION, __VA_ARGS__)
 #define AWS_ERROR_PRECONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
 #define AWS_ERROR_POSTCONDITION(...) CALL_OVERLOAD(AWS_ERROR_PRECONDITION, __VA_ARGS__)
+
+#define AWS_RETURN_WITH_POSTCONDITION(_rval, ...)                                                                      \
+    do {                                                                                                               \
+        AWS_POSTCONDITION(__VA_ARGS__);                                                                                \
+        return _rval;                                                                                                  \
+    } while (0)
+
+#define AWS_SUCCEED_WITH_POSTCONDITION(...) AWS_RETURN_WITH_POSTCONDITION(AWS_OP_SUCCESS, __VA_ARGS__)
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))

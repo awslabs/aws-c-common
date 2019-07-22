@@ -159,7 +159,9 @@ int aws_priority_queue_init_dynamic(
     size_t item_size,
     aws_priority_queue_compare_fn *pred) {
 
-    AWS_ERROR_PRECONDITION(queue != NULL);
+    AWS_FATAL_PRECONDITION(queue != NULL);
+    AWS_FATAL_PRECONDITION(alloc != NULL);
+    AWS_FATAL_PRECONDITION(item_size > 0);
 
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);
@@ -180,7 +182,10 @@ void aws_priority_queue_init_static(
     size_t item_size,
     aws_priority_queue_compare_fn *pred) {
 
-    AWS_FATAL_PRECONDITION(queue);
+    AWS_FATAL_PRECONDITION(queue != NULL);
+    AWS_FATAL_PRECONDITION(heap != NULL);
+    AWS_FATAL_PRECONDITION(item_count > 0);
+    AWS_FATAL_PRECONDITION(item_size > 0);
 
     queue->pred = pred;
     AWS_ZERO_STRUCT(queue->backpointers);

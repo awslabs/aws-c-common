@@ -59,8 +59,7 @@ static uint64_t s_hash_for(struct hash_table_state *state, const void *key) {
     if (!hash_code) {
         hash_code = 1;
     }
-    AWS_POSTCONDITION(hash_code != 0);
-    return hash_code;
+    AWS_RETURN_WITH_POSTCONDITION(hash_code, hash_code != 0);
 }
 
 /**
@@ -85,16 +84,13 @@ static bool s_safe_eq_check(aws_hash_callback_eq_fn *equals_fn, const void *a, c
 static bool s_hash_keys_eq(struct hash_table_state *state, const void *a, const void *b) {
     AWS_PRECONDITION(hash_table_state_is_valid(state));
     bool rval = s_safe_eq_check(state->equals_fn, a, b);
-    AWS_POSTCONDITION(hash_table_state_is_valid(state));
-    return rval;
+    AWS_RETURN_WITH_POSTCONDITION(rval, hash_table_state_is_valid(state));
 }
 
 static size_t s_index_for(struct hash_table_state *map, struct hash_table_entry *entry) {
     AWS_PRECONDITION(hash_table_state_is_valid(map));
     size_t index = entry - map->slots;
-    AWS_POSTCONDITION(index < map->size);
-    AWS_POSTCONDITION(hash_table_state_is_valid(map));
-    return index;
+    AWS_RETURN_WITH_POSTCONDITION(index, index < map->size && hash_table_state_is_valid(map));
 }
 
 #if 0
@@ -256,8 +252,7 @@ int aws_hash_table_init(
         return AWS_OP_ERR;
     }
 
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
 }
 
 void aws_hash_table_clean_up(struct aws_hash_table *map) {
@@ -425,8 +420,7 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
     } else {
         *p_elem = NULL;
     }
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
 }
 
 /**
@@ -443,8 +437,7 @@ static struct hash_table_entry *s_emplace_item(
     AWS_PRECONDITION(hash_table_state_is_valid(state));
 
     if (entry.hash_code == 0) {
-        AWS_POSTCONDITION(hash_table_state_is_valid(state));
-        return NULL;
+        AWS_RETURN_WITH_POSTCONDITION(NULL, hash_table_state_is_valid(state));
     }
 
     struct hash_table_entry *rval = NULL;
@@ -487,11 +480,10 @@ static struct hash_table_entry *s_emplace_item(
         }
     }
 
-    AWS_POSTCONDITION(hash_table_state_is_valid(state));
-    AWS_POSTCONDITION(
-        rval >= &state->slots[0] && rval < &state->slots[state->size],
+    AWS_RETURN_WITH_POSTCONDITION(
+        rval,
+        hash_table_state_is_valid(state) && rval >= &state->slots[0] && rval < &state->slots[state->size],
         "Output hash_table_entry pointer [rval] must point in the slots of [state].");
-    return rval;
 }
 
 static int s_expand_table(struct aws_hash_table *map) {
@@ -666,9 +658,7 @@ static size_t s_remove_entry(struct hash_table_state *state, struct hash_table_e
 
     /* Clear the entry we shifted out of */
     AWS_ZERO_STRUCT(state->slots[index]);
-    AWS_POSTCONDITION(hash_table_state_is_valid(state));
-    AWS_POSTCONDITION(index <= state->size);
-    return index;
+    AWS_RETURN_WITH_POSTCONDITION(index, hash_table_state_is_valid(state) && index <= state->size);
 }
 
 int aws_hash_table_remove(
@@ -696,8 +686,7 @@ int aws_hash_table_remove(
 
     if (rv != AWS_ERROR_SUCCESS) {
         *was_present = 0;
-        AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-        return AWS_OP_SUCCESS;
+        AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
     }
 
     *was_present = 1;
@@ -714,8 +703,7 @@ int aws_hash_table_remove(
     }
     s_remove_entry(state, entry);
 
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
 }
 
 int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_element *p_value) {
@@ -727,8 +715,7 @@ int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_el
 
     s_remove_entry(state, entry);
 
-    AWS_POSTCONDITION(aws_hash_table_is_valid(map));
-    return AWS_OP_SUCCESS;
+    AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
 }
 
 int aws_hash_table_foreach(
@@ -760,10 +747,7 @@ bool aws_hash_table_eq(
     AWS_PRECONDITION(value_eq != NULL);
 
     if (aws_hash_table_get_entry_count(a) != aws_hash_table_get_entry_count(b)) {
-        AWS_POSTCONDITION(aws_hash_table_is_valid(a));
-        AWS_POSTCONDITION(aws_hash_table_is_valid(b));
-
-        return false;
+        AWS_RETURN_WITH_POSTCONDITION(false, aws_hash_table_is_valid(a) && aws_hash_table_is_valid(b));
     }
 
     /*
@@ -783,20 +767,14 @@ bool aws_hash_table_eq(
 
         if (!b_element) {
             /* Key is present in A only */
-            AWS_POSTCONDITION(aws_hash_table_is_valid(a));
-            AWS_POSTCONDITION(aws_hash_table_is_valid(b));
-            return false;
+            AWS_RETURN_WITH_POSTCONDITION(false, aws_hash_table_is_valid(a) && aws_hash_table_is_valid(b));
         }
 
         if (!s_safe_eq_check(value_eq, a_entry->element.value, b_element->value)) {
-            AWS_POSTCONDITION(aws_hash_table_is_valid(a));
-            AWS_POSTCONDITION(aws_hash_table_is_valid(b));
-            return false;
+            AWS_RETURN_WITH_POSTCONDITION(false, aws_hash_table_is_valid(a) && aws_hash_table_is_valid(b));
         }
     }
-    AWS_POSTCONDITION(aws_hash_table_is_valid(a));
-    AWS_POSTCONDITION(aws_hash_table_is_valid(b));
-    return true;
+    AWS_RETURN_WITH_POSTCONDITION(true, aws_hash_table_is_valid(a) && aws_hash_table_is_valid(b));
 }
 
 /**
@@ -839,11 +817,11 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     iter.map = map;
     iter.limit = state->size;
     s_get_next_element(&iter, 0);
-    AWS_POSTCONDITION(
-        iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+    AWS_RETURN_WITH_POSTCONDITION(
+        iter,
+        aws_hash_iter_is_valid(&iter) &&
+            (iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE),
         "The status of output aws_hash_iter [iter] must either be DONE or READY_FOR_USE.");
-    AWS_POSTCONDITION(aws_hash_iter_is_valid(&iter));
-    return iter;
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
@@ -989,9 +967,7 @@ uint64_t aws_hash_string(const void *item) {
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(aws_string_bytes(str), str->len, &c, &b);
-    AWS_POSTCONDITION(aws_string_is_valid(str));
-
-    return ((uint64_t)b << 32) | c;
+    AWS_RETURN_WITH_POSTCONDITION(((uint64_t)b << 32) | c, aws_string_is_valid(str));
 }
 
 uint64_t aws_hash_byte_cursor_ptr(const void *item) {
@@ -1001,9 +977,7 @@ uint64_t aws_hash_byte_cursor_ptr(const void *item) {
     /* first digits of pi in hex */
     uint32_t b = 0x3243F6A8, c = 0x885A308D;
     hashlittle2(cur->ptr, cur->len, &c, &b);
-    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
-
-    return ((uint64_t)b << 32) | c;
+    AWS_RETURN_WITH_POSTCONDITION(((uint64_t)b << 32) | c, aws_byte_cursor_is_valid(cur));
 }
 
 uint64_t aws_hash_ptr(const void *item) {
@@ -1021,18 +995,14 @@ bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
     AWS_PRECONDITION(aws_c_string_is_valid(a));
     AWS_PRECONDITION(aws_c_string_is_valid(b));
     bool rval = !strcmp(a, b);
-    AWS_POSTCONDITION(aws_c_string_is_valid(a));
-    AWS_POSTCONDITION(aws_c_string_is_valid(b));
-    return rval;
+    AWS_RETURN_WITH_POSTCONDITION(rval, aws_c_string_is_valid(a) && aws_c_string_is_valid(b));
 }
 
 bool aws_hash_callback_string_eq(const void *a, const void *b) {
     AWS_PRECONDITION(aws_string_is_valid(a));
     AWS_PRECONDITION(aws_string_is_valid(b));
     bool rval = aws_string_eq(a, b);
-    AWS_POSTCONDITION(aws_string_is_valid(a));
-    AWS_POSTCONDITION(aws_string_is_valid(b));
-    return rval;
+    AWS_RETURN_WITH_POSTCONDITION(rval, aws_c_string_is_valid(a) && aws_c_string_is_valid(b));
 }
 
 void aws_hash_callback_string_destroy(void *a) {

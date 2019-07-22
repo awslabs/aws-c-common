@@ -22,30 +22,25 @@
 void aws_priority_queue_init_dynamic_harness() {
 
     /* data structure */
-    struct aws_priority_queue queue;
+    struct aws_priority_queue queue; /* Precondition: queue is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator = can_fail_allocator();
+    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
     size_t item_size;
     size_t initial_item_allocation;
     size_t len;
 
     /* assumptions */
     __CPROVER_assume(initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
-    __CPROVER_assume(item_size <= MAX_ITEM_SIZE);
+    __CPROVER_assume(item_size > 0 && item_size <= MAX_ITEM_SIZE);
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
 
     /* Store which parameter choice is made for queue to confirm postconditions */
-    bool null_choice = nondet_bool();
-    if (!aws_priority_queue_init_dynamic(
-            null_choice ? &queue : NULL,
-            nondet_bool() ? allocator : NULL,
-            initial_item_allocation,
-            item_size,
-            nondet_compare)) {
+    if (aws_priority_queue_init_dynamic(&queue, allocator, initial_item_allocation, item_size, nondet_compare) ==
+        AWS_OP_SUCCESS) {
         /* assertions */
         assert(aws_priority_queue_is_valid(&queue));
         assert(queue.container.alloc == allocator);
@@ -56,8 +51,6 @@ void aws_priority_queue_init_dynamic_harness() {
             (queue.container.data && queue.container.current_size == (initial_item_allocation * item_size)));
     } else {
         /* assertions */
-        if (null_choice) {
-            assert(aws_priority_queue_is_wiped(&queue));
-        }
+        assert(aws_priority_queue_is_wiped(&queue));
     }
 }
