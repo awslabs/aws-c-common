@@ -117,6 +117,6 @@ size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_tabl
     return aws_hash_table_get_entry_count(&table->table);
 }
 
-struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table) {
+const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table) {
     return &table->list;
 }

@@ -99,14 +99,12 @@ AWS_COMMON_API
 size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_table *table);
 
 /**
- * returns the underlying linked list for iteration. You must not do this in a multi-threaded context
- * where you may be mutating this table from a different thread. You may not mutate this table at all, while you
- * are iterating this list. However, you MAY alter the ordering on the returned list.
+ * returns the underlying linked list for iteration. You must not do this in a multi-threaded context.
  *
  * The returned list has nodes of the type: aws_linked_hash_table_node. Use AWS_CONTAINER_OF for access to the element.
  */
 AWS_COMMON_API
-struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table);
+const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table);
 
 AWS_EXTERN_C_END
 

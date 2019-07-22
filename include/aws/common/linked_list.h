@@ -213,6 +213,34 @@ AWS_STATIC_IMPL void aws_linked_list_insert_after(
 }
 
 /**
+ * Swaps the order two nodes in the linked list.
+ */
+AWS_STATIC_IMPL void aws_linked_list_swap_nodes(struct aws_linked_list_node *a, struct aws_linked_list_node *b) {
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(a));
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(b));
+    AWS_PRECONDITION(a != NULL);
+    AWS_PRECONDITION(b != NULL);
+
+    struct aws_linked_list_node *a_prev_cpy = a->prev;
+    struct aws_linked_list_node *a_prev_next = a->next;
+
+    a->prev->next = b;
+    a->prev = b->prev;
+    a->next = b->next;
+
+    b->prev->next = a;
+    b->prev = a_prev_cpy;
+    b->next->prev = a;
+    b->next = a_prev_next;
+
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(a));
+    AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(b));
+    AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(b));
+    AWS_POSTCONDITION(b->next == a);
+    AWS_POSTCONDITION(a->prev == b);
+}
+
+/**
  * Inserts to_add immediately before before.
  */
 AWS_STATIC_IMPL void aws_linked_list_insert_before(
