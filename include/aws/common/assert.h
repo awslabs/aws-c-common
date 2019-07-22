@@ -26,9 +26,6 @@ AWS_COMMON_API
 AWS_DECLSPEC_NORETURN
 void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
 
-AWS_COMMON_API
-void aws_debug_break(void);
-
 /**
  * Print a backtrace from either the current stack, or (if provided) the current exception/signal
  *  call_site_data is siginfo_t* on POSIX, and LPEXCEPTION_POINTERS on Windows, and can be null
@@ -140,7 +137,7 @@ AWS_EXTERN_C_END
 
 #define AWS_SUCCEED_WITH_POSTCONDITION(...) AWS_RETURN_WITH_POSTCONDITION(AWS_OP_SUCCESS, __VA_ARGS__)
 
-#define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*ptr))
-#define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*ptr))
+#define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*(ptr)))
+#define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*(ptr)))
 
-#endif /* AWS_COMMON_ASSERT_INL */
+#endif /* AWS_COMMON_ASSERT_H */

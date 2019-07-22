@@ -78,7 +78,7 @@ AWS_EXTERN_C_BEGIN
  * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
-bool aws_array_eq(const void *const array_a, const size_t len_a, const void *array_b, const size_t len_b);
+bool aws_array_eq(const void *array_a, size_t len_a, const void *array_b, size_t len_b);
 
 /**
  * Perform a case-insensitive string comparison of two arrays.
@@ -88,11 +88,7 @@ bool aws_array_eq(const void *const array_a, const size_t len_a, const void *arr
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_array_eq_ignore_case(
-    const void *const array_a,
-    const size_t len_a,
-    const void *const array_b,
-    const size_t len_b);
+bool aws_array_eq_ignore_case(const void *array_a, size_t len_a, const void *array_b, size_t len_b);
 
 /**
  * Compare an array and a null-terminated string.
@@ -101,7 +97,7 @@ bool aws_array_eq_ignore_case(
  * NULL may be passed as the array pointer if its length is declared to be 0.
  */
 AWS_COMMON_API
-bool aws_array_eq_c_str(const void *const array, const size_t array_len, const char *const c_str);
+bool aws_array_eq_c_str(const void *array, size_t array_len, const char *c_str);
 
 /**
  * Perform a case-insensitive string comparison of an array and a null-terminated string.
@@ -112,7 +108,7 @@ bool aws_array_eq_c_str(const void *const array, const size_t array_len, const c
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_len, const char *const c_str);
+bool aws_array_eq_c_str_ignore_case(const void *array, size_t array_len, const char *c_str);
 
 AWS_COMMON_API
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity);
@@ -133,7 +129,7 @@ AWS_COMMON_API int aws_byte_buf_init_copy(
  * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
 AWS_COMMON_API
-bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
+bool aws_byte_buf_is_valid(const struct aws_byte_buf *buf);
 
 /**
  * Evaluates the set of properties that define the shape of all valid aws_byte_cursor structures.
@@ -184,7 +180,7 @@ void aws_byte_buf_secure_zero(struct aws_byte_buf *buf);
  * Return whether their contents are equivalent.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b);
+bool aws_byte_buf_eq(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
 
 /**
  * Perform a case-insensitive string comparison of two aws_byte_buf structures.
@@ -193,7 +189,7 @@ bool aws_byte_buf_eq(const struct aws_byte_buf *const a, const struct aws_byte_b
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struct aws_byte_buf *const b);
+bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *a, const struct aws_byte_buf *b);
 
 /**
  * Compare an aws_byte_buf and a null-terminated string.
@@ -201,7 +197,7 @@ bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struc
  * The buffer should NOT contain a null-terminator, or the comparison will always return false.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *const c_str);
+bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *buf, const char *c_str);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_buf and a null-terminated string.
@@ -211,7 +207,7 @@ bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *con
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str);
+bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *buf, const char *c_str);
 
 /**
  * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.
@@ -399,7 +395,7 @@ bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struc
  * Return whether their contents are equivalent.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b);
+bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_cursor and an aws_byte_buf.
@@ -408,7 +404,7 @@ bool aws_byte_cursor_eq_byte_buf(const struct aws_byte_cursor *const a, const st
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *const a, const struct aws_byte_buf *const b);
+bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_buf *b);
 
 /**
  * Compare an aws_byte_cursor and a null-terminated string.
@@ -416,7 +412,7 @@ bool aws_byte_cursor_eq_byte_buf_ignore_case(const struct aws_byte_cursor *const
  * The cursor should NOT contain a null-terminator, or the comparison will always return false.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str);
+bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *cursor, const char *c_str);
 
 /**
  * Perform a case-insensitive string comparison of an aws_byte_cursor and a null-terminated string.
@@ -426,13 +422,13 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const 
  * Data is assumed to be ASCII text, UTF-8 will work fine too.
  */
 AWS_COMMON_API
-bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str);
+bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *cursor, const char *c_str);
 
 /**
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
  */
 AWS_COMMON_API
-uint64_t aws_hash_array_ignore_case(const void *array, const size_t len);
+uint64_t aws_hash_array_ignore_case(const void *array, size_t len);
 
 /**
  * Case-insensitive hash function for aws_byte_cursors stored in an aws_hash_table.
@@ -507,7 +503,7 @@ AWS_STATIC_IMPL struct aws_byte_buf aws_byte_buf_from_empty_array(const void *by
     return buf;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *const buf) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *buf) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     struct aws_byte_cursor cur;
     cur.ptr = buf->buffer;
@@ -524,7 +520,7 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_
     return cur;
 }
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_from_array(const void *bytes, size_t len) {
     AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len), "Input array [bytes] must be readable up to [len].");
     struct aws_byte_cursor cur;
     cur.ptr = (uint8_t *)bytes;
@@ -615,7 +611,7 @@ AWS_STATIC_IMPL size_t aws_nospec_mask(size_t index, size_t bound) {
  * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
  * a buffer overflow, and return NULL without changing *buf.
  */
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cursor, const size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *cursor, size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
     struct aws_byte_cursor rv;
     if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || len > cursor->len) {
@@ -643,9 +639,7 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_c
  * cursor->ptr points outside the true ptr length.
  */
 
-AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
-    struct aws_byte_cursor *const cursor,
-    size_t len) {
+AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *cursor, size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
 
     struct aws_byte_cursor rv;
@@ -809,9 +803,9 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint
  * false.
  */
 AWS_STATIC_IMPL bool aws_byte_buf_advance(
-    struct aws_byte_buf *const AWS_RESTRICT buffer,
-    struct aws_byte_buf *const AWS_RESTRICT output,
-    const size_t len) {
+    struct aws_byte_buf *AWS_RESTRICT buffer,
+    struct aws_byte_buf *AWS_RESTRICT output,
+    size_t len) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
     AWS_PRECONDITION(aws_byte_buf_is_valid(output));
     if (buffer->capacity - buffer->len >= len) {
@@ -821,12 +815,13 @@ AWS_STATIC_IMPL bool aws_byte_buf_advance(
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return true;
-    } else {
-        AWS_ZERO_STRUCT(*output);
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
-        return false;
     }
+
+    /* Error case */
+    AWS_ZERO_STRUCT(*output);
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
+    return false;
 }
 
 /**

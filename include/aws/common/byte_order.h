@@ -91,9 +91,8 @@ AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x) {
     AWS_PRECONDITION(x <= 0xFFFFFF, "Input [x] must be representable with at most 3 bytes.");
     if (aws_is_big_endian()) {
         return x;
-    } else {
-        return aws_hton32(x) >> 8;
     }
+    return aws_hton32(x) >> 8;
 }
 
 /**
@@ -103,9 +102,8 @@ AWS_STATIC_IMPL uint32_t aws_ntoh24(uint32_t x) {
     AWS_PRECONDITION((x) <= 0xFFFFFFF, "Input [x] must be representable with at most 3 bytes.");
     if (aws_is_big_endian()) {
         return x;
-    } else {
-        return aws_ntoh32(x) >> 8;
     }
+        return aws_ntoh32(x) >> 8;
 }
 
 /**

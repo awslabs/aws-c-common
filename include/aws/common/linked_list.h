@@ -109,7 +109,8 @@ AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list 
         if (temp == &list->tail) {
             head_reaches_tail = true;
             break;
-        } else if (!aws_linked_list_node_next_is_valid(temp)) {
+        }
+        if (!aws_linked_list_node_next_is_valid(temp)) {
             /* Next and prev pointers should connect the same nodes */
             return false;
         }

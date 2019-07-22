@@ -1,4 +1,4 @@
-
+/* NOLINTNEXTLINE(llvm-header-guard) */
 #ifndef AWS_COMMON_TEST_LOGGER_H
 #define AWS_COMMON_TEST_LOGGER_H
 

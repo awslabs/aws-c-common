@@ -43,7 +43,8 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     if (convert_to > convert_from) {
         diff = convert_to / convert_from;
         return aws_mul_u64_saturating(timestamp, diff);
-    } else if (convert_to < convert_from) {
+    }
+    if (convert_to < convert_from) {
         diff = convert_from / convert_to;
 
         if (remainder) {
@@ -51,9 +52,8 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
         }
 
         return timestamp / diff;
-    } else {
-        return timestamp;
     }
+    return timestamp;
 }
 
 AWS_EXTERN_C_BEGIN
