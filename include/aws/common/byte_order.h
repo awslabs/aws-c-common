@@ -103,7 +103,7 @@ AWS_STATIC_IMPL uint32_t aws_ntoh24(uint32_t x) {
     if (aws_is_big_endian()) {
         return x;
     }
-        return aws_ntoh32(x) >> 8;
+    return aws_ntoh32(x) >> 8;
 }
 
 /**

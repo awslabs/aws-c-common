@@ -355,8 +355,6 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
 AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order);
 
-
-
 /* Include the backend implementation now, because we'll use its typedefs and #defines below */
 #if defined(__GNUC__) || defined(__clang__)
 #    if defined(__ATOMIC_RELAXED)
