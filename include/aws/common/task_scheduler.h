@@ -81,6 +81,9 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
 AWS_COMMON_API
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler);
 
+AWS_COMMON_API
+bool aws_task_scheduler_is_valid(const struct aws_task_scheduler *scheduler);
+
 /**
  * Returns whether the scheduler has any scheduled tasks.
  * next_task_time (optional) will be set to time of the next task, note that 0 will be set if tasks were

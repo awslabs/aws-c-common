@@ -57,24 +57,39 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
 int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_allocator *alloc) {
     AWS_ASSERT(alloc);
 
+    AWS_ZERO_STRUCT(*scheduler);
+
+    if (aws_priority_queue_init_dynamic(
+            &scheduler->timed_queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct aws_task *), &s_compare_timestamps)) {
+        return AWS_OP_ERR;
+    };
+
     scheduler->alloc = alloc;
     aws_linked_list_init(&scheduler->timed_list);
     aws_linked_list_init(&scheduler->asap_list);
-    return aws_priority_queue_init_dynamic(
-        &scheduler->timed_queue, alloc, DEFAULT_QUEUE_SIZE, sizeof(struct aws_task *), &s_compare_timestamps);
+
+    AWS_POSTCONDITION(aws_task_scheduler_is_valid(scheduler));
+    return AWS_OP_SUCCESS;
 }
 
 void aws_task_scheduler_clean_up(struct aws_task_scheduler *scheduler) {
     AWS_ASSERT(scheduler);
 
-    /* Execute all remaining tasks as CANCELED.
-     * Do this in a loop so that tasks scheduled by other tasks are executed */
-    while (aws_task_scheduler_has_tasks(scheduler, NULL)) {
-        s_run_all(scheduler, UINT64_MAX, AWS_TASK_STATUS_CANCELED);
+    if (aws_task_scheduler_is_valid(scheduler)) {
+        /* Execute all remaining tasks as CANCELED.
+         * Do this in a loop so that tasks scheduled by other tasks are executed */
+        while (aws_task_scheduler_has_tasks(scheduler, NULL)) {
+            s_run_all(scheduler, UINT64_MAX, AWS_TASK_STATUS_CANCELED);
+        }
     }
 
     aws_priority_queue_clean_up(&scheduler->timed_queue);
-    AWS_ZERO_STRUCT(scheduler);
+    AWS_ZERO_STRUCT(*scheduler);
+}
+
+bool aws_task_scheduler_is_valid(const struct aws_task_scheduler *scheduler) {
+    return scheduler && scheduler->alloc && aws_priority_queue_is_valid(&scheduler->timed_queue) &&
+           aws_linked_list_is_valid(&scheduler->asap_list) && aws_linked_list_is_valid(&scheduler->timed_list);
 }
 
 bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, uint64_t *next_task_time) {
