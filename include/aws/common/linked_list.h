@@ -226,10 +226,11 @@ AWS_STATIC_IMPL void aws_linked_list_swap_nodes(struct aws_linked_list_node *a, 
 
     /* test if A and B are adjacent */
     struct aws_linked_list_node *first_adjacent = NULL;
-    if (a->next == b)
+    if (a->next == b) {
         first_adjacent = a;
-    else if (b->next == a)
+    } else if (b->next == a) {
         first_adjacent = b;
+    }
 
     if (first_adjacent) {
         /* number nodes by the order we WANT them to be */
