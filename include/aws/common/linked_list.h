@@ -216,26 +216,51 @@ AWS_STATIC_IMPL void aws_linked_list_insert_after(
  * Swaps the order two nodes in the linked list.
  */
 AWS_STATIC_IMPL void aws_linked_list_swap_nodes(struct aws_linked_list_node *a, struct aws_linked_list_node *b) {
-    AWS_PRECONDITION(a != NULL);
-    AWS_PRECONDITION(b != NULL);
-
-    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(a));
     AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(a));
-    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(b));
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(a));
     AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(b));
+    AWS_PRECONDITION(aws_linked_list_node_next_is_valid(b));
 
-    struct aws_linked_list_node *a_prev_cpy = a->prev;
-    struct aws_linked_list_node *a_next_cpy = a->next;
+    if (a == b)
+        return;
 
-    a->prev->next = b;
-    a->prev = b->prev;
-    a->next->prev = b;
-    a->next = b->next;
+    /* test if A and B are adjacent */
+    struct aws_linked_list_node *first_adjacent = NULL;
+    if (a->next == b)
+        first_adjacent = a;
+    else if (b->next == a)
+        first_adjacent = b;
 
-    b->prev->next = a;
-    b->prev = a_prev_cpy;
-    b->next->prev = a;
-    b->next = a_next_cpy;
+    if (first_adjacent) {
+        /* number nodes by the order we WANT them to be */
+        struct aws_linked_list_node *node_1 = first_adjacent->prev;
+        struct aws_linked_list_node *node_2 = first_adjacent->next;
+        struct aws_linked_list_node *node_3 = first_adjacent;
+        struct aws_linked_list_node *node_4 = first_adjacent->next->next;
+
+        /* now put them in that order */
+        node_1->next = node_2;
+
+        node_2->prev = node_1;
+        node_2->next = node_3;
+
+        node_3->prev = node_2;
+        node_3->next = node_4;
+
+        node_4->prev = node_3;
+    } else {
+        /* swap non-adjacent A and B */
+        struct aws_linked_list_node tmp = *a;
+        *a = *b;
+        *b = tmp;
+
+        /* fix up nodes adjacent to A and B */
+        a->prev->next = a;
+        a->next->prev = a;
+
+        b->prev->next = b;
+        b->next->prev = b;
+    }
 
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(a));
     AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(a));
