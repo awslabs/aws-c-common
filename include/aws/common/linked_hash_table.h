@@ -99,7 +99,7 @@ AWS_COMMON_API
 size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_table *table);
 
 /**
- * returns the underlying linked list for iteration. You must not do this in a multi-threaded context.
+ * returns the underlying linked list for iteration.
  *
  * The returned list has nodes of the type: aws_linked_hash_table_node. Use AWS_CONTAINER_OF for access to the element.
  */

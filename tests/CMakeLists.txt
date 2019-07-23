@@ -86,6 +86,7 @@ add_test_case(priority_queue_remove_interior_sift_down_test)
 
 add_test_case(linked_list_push_back_pop_front)
 add_test_case(linked_list_push_front_pop_back)
+add_test_case(linked_list_swap_nodes)
 add_test_case(linked_list_iteration)
 add_test_case(linked_list_reverse_iteration)
 add_test_case(linked_list_swap_contents)
