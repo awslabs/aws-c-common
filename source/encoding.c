@@ -302,9 +302,9 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     encoded_length = (terminated_length - 1);
 
     if (aws_common_private_has_avx2()) {
-        output->len = encoded_length;
-        aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer, to_encode->len);
-        output->buffer[encoded_length] = 0;
+        aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer + output->len, to_encode->len);
+        output->buffer[output->len + encoded_length] = 0;
+        output->len += encoded_length;
         return AWS_OP_SUCCESS;
     }
 

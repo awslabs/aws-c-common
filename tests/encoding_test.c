@@ -15,6 +15,8 @@
 
 #include <aws/common/encoding.h>
 
+#include <aws/common/string.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 /* Test cases from rfc4648 for Base 16 Encoding */
@@ -285,6 +287,8 @@ static int s_hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator
 
 AWS_TEST_CASE(hex_encoding_invalid_string_test, s_hex_encoding_invalid_string_test_fn)
 
+AWS_STATIC_STRING_FROM_LITERAL(s_base64_encode_prefix, "Prefix");
+
 /*base64 encoding test cases */
 static int s_run_base64_encoding_test_case(
     struct aws_allocator *allocator,
@@ -331,7 +335,35 @@ static int s_run_base64_encoding_test_case(
 
     aws_byte_buf_clean_up(&allocation);
 
-    /* Part 2: decoding */
+    /* part 2 - encoding properly appends rather than overwrites */
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + s_base64_encode_prefix->len));
+    struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_base64_encode_prefix);
+    ASSERT_SUCCESS(aws_byte_buf_append(&allocation, &prefix_cursor));
+
+    ASSERT_SUCCESS(aws_base64_encode(&to_encode, &allocation), "encode call should have succeeded");
+
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected,
+        expected_size,
+        allocation.buffer + s_base64_encode_prefix->len,
+        expected_size,
+        "Encode output should have been {%s}, was {%s}.",
+        expected,
+        allocation.buffer + s_base64_encode_prefix->len);
+
+    struct aws_byte_cursor prefix_output = {.ptr = allocation.buffer, .len = s_base64_encode_prefix->len};
+    ASSERT_BIN_ARRAYS_EQUALS(
+        s_base64_encode_prefix->bytes,
+        s_base64_encode_prefix->len,
+        allocation.buffer,
+        s_base64_encode_prefix->len,
+        "Encode prefix should have been {%s}, was {" PRInSTR "}.",
+        s_base64_encode_prefix->bytes,
+        AWS_BYTE_CURSOR_PRI(prefix_output));
+
+    aws_byte_buf_clean_up(&allocation);
+
+    /* Part 3: decoding */
     struct aws_byte_cursor expected_cur = aws_byte_cursor_from_array(expected, expected_size);
     ASSERT_SUCCESS(
         aws_base64_compute_decoded_len(&expected_cur, &output_size),
