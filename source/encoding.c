@@ -285,7 +285,12 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
         return AWS_OP_ERR;
     }
 
-    if (AWS_UNLIKELY(output->capacity < terminated_length)) {
+    size_t needed_capacity = 0;
+    if (AWS_UNLIKELY(aws_add_size_checked(output->len, terminated_length, &needed_capacity))) {
+        return AWS_OP_ERR;
+    }
+
+    if (AWS_UNLIKELY(output->capacity < needed_capacity)) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
@@ -297,16 +302,16 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     encoded_length = (terminated_length - 1);
 
     if (aws_common_private_has_avx2()) {
-        output->len = encoded_length;
-        aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer, to_encode->len);
-        output->buffer[encoded_length] = 0;
+        aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer + output->len, to_encode->len);
+        output->buffer[output->len + encoded_length] = 0;
+        output->len += encoded_length;
         return AWS_OP_SUCCESS;
     }
 
     size_t buffer_length = to_encode->len;
     size_t block_count = (buffer_length + 2) / 3;
     size_t remainder_count = (buffer_length % 3);
-    size_t str_index = 0;
+    size_t str_index = output->len;
 
     for (size_t i = 0; i < to_encode->len; i += 3) {
         uint32_t block = to_encode->ptr[i];
@@ -328,16 +333,17 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     }
 
     if (remainder_count > 0) {
-        output->buffer[block_count * 4 - 1] = '=';
+        output->buffer[output->len + block_count * 4 - 1] = '=';
         if (remainder_count == 1) {
-            output->buffer[block_count * 4 - 2] = '=';
+            output->buffer[output->len + block_count * 4 - 2] = '=';
         }
     }
 
     /* it's a string add the null terminator. */
-    output->buffer[encoded_length] = 0;
+    output->buffer[output->len + encoded_length] = 0;
 
-    output->len = encoded_length;
+    output->len += encoded_length;
+
     return AWS_OP_SUCCESS;
 }
 

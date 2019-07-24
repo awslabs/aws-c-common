@@ -106,6 +106,51 @@ static int s_test_linked_list_order_push_front_pop_back(struct aws_allocator *al
     return 0;
 }
 
+static int s_test_linked_list_swap_nodes(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list list;
+
+    aws_linked_list_init(&list);
+    ASSERT_TRUE(aws_linked_list_empty(&list));
+
+    struct int_value first = (struct int_value){.value = 1};
+    struct int_value second = (struct int_value){.value = 2};
+    struct int_value third = (struct int_value){.value = 3};
+    struct int_value fourth = (struct int_value){.value = 4};
+
+    aws_linked_list_push_back(&list, &first.node);
+    aws_linked_list_push_back(&list, &second.node);
+    aws_linked_list_push_back(&list, &third.node);
+    aws_linked_list_push_back(&list, &fourth.node);
+
+    /* non-adjacent swap: new order becomes 3, 2, 1, 4 */
+    aws_linked_list_swap_nodes(&first.node, &third.node);
+    /* adjacent swap: new order becomes 3, 2, 4, 1 */
+    aws_linked_list_swap_nodes(&first.node, &fourth.node);
+
+    int item;
+    struct aws_linked_list_node *node = aws_linked_list_pop_front(&list);
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(third.value, item);
+
+    node = aws_linked_list_pop_front(&list);
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(second.value, item);
+
+    node = aws_linked_list_pop_front(&list);
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(fourth.value, item);
+
+    node = aws_linked_list_pop_front(&list);
+    item = AWS_CONTAINER_OF(node, struct int_value, node)->value;
+    ASSERT_INT_EQUALS(first.value, item);
+
+    ASSERT_TRUE(aws_linked_list_empty(&list));
+    return 0;
+}
+
 static int s_test_linked_list_iteration(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
@@ -269,6 +314,7 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
 
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
+AWS_TEST_CASE(linked_list_swap_nodes, s_test_linked_list_swap_nodes)
 AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)
 AWS_TEST_CASE(linked_list_reverse_iteration, s_test_linked_list_reverse_iteration)
 AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)
