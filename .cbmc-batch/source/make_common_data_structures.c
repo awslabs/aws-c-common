@@ -33,16 +33,49 @@ void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf)
     buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
+void ensure_ring_buffer_is_not_empty(struct aws_ring_buffer *ring_buf) {
+    void *head = aws_atomic_load_ptr(&ring_buf->head);
+    void *tail = aws_atomic_load_ptr(&ring_buf->tail);
+    __CPROVER_assume(head != tail);
+}
+
 void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, const size_t size) {
     ring_buf->allocator = can_fail_allocator();
     ring_buf->allocation = bounded_malloc(sizeof(*(ring_buf->allocation)) * size);
     size_t position_head;
     size_t position_tail;
-    __CPROVER_assume(position_head < size);
-    __CPROVER_assume(position_tail < size);
+    __CPROVER_assume(position_head <= size);
+    __CPROVER_assume(position_tail <= size);
     aws_atomic_store_ptr(&ring_buf->head, (ring_buf->allocation + position_head));
     aws_atomic_store_ptr(&ring_buf->tail, (ring_buf->allocation + position_tail));
     ring_buf->allocation_end = ring_buf->allocation + size;
+}
+
+void ensure_byte_buf_has_allocated_buffer_member_in_range(struct aws_byte_buf *buf, uint8_t *lo, uint8_t *hi) {
+    assert(lo < hi);
+    size_t space = hi - lo;
+    size_t pos = nondet_sizet();
+    __CPROVER_assume(pos < space);
+    buf->buffer = lo + pos;
+    size_t max_capacity = hi - buf->buffer;
+    assert(0 < max_capacity);
+    __CPROVER_assume(0 < buf->capacity && buf->capacity <= max_capacity);
+}
+
+void ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(struct aws_byte_buf *buf, struct aws_ring_buffer *ring_buf) {
+    buf->allocator = (nondet_bool()) ? NULL : can_fail_allocator();
+    void *head = aws_atomic_load_ptr(&ring_buf->head);
+    void *tail = aws_atomic_load_ptr(&ring_buf->tail);
+    if (head < tail) { // [....H    T....]
+        if (nondet_bool()) {
+            __CPROVER_assume(tail < ring_buf->allocation_end);
+            ensure_byte_buf_has_allocated_buffer_member_in_range(buf, tail, ring_buf->allocation_end);
+        } else {
+            ensure_byte_buf_has_allocated_buffer_member_in_range(buf, ring_buf->allocation, head);
+        }
+    } else {           // [    T....H    ]
+        ensure_byte_buf_has_allocated_buffer_member_in_range(buf, tail, head);
+    }
 }
 
 bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size) {

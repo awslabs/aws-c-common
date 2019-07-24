@@ -26,14 +26,18 @@ void aws_ring_buffer_release_harness() {
 
     /* assumptions */
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
+    ensure_ring_buffer_is_not_empty(&ring_buf);
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
-    ensure_byte_buf_has_allocated_buffer_member(&buf);
+    ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(&buf, &ring_buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(__CPROVER_POINTER_OBJECT(buf.buffer) == __CPROVER_POINTER_OBJECT(ring_buf.allocation));
+
+    struct aws_ring_buffer ring_buf_pre = ring_buf;
 
     aws_ring_buffer_release(&ring_buf, &buf);
 
     /* assertions */
+    assert(aws_ring_buffer_is_valid(&ring_buf));
+    assert(aws_atomic_load_ptr(&ring_buf.head) == aws_atomic_load_ptr(&ring_buf_pre.head));
     assert(buf.allocator == NULL);
     assert(buf.buffer == NULL);
     assert(buf.len == 0);
