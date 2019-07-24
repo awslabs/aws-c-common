@@ -130,7 +130,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
     } while (0)
 #define AWS_ZERO_ARRAY(array)                                                                                          \
     do {                                                                                                               \
-        memset((void *)(array), 0, sizeof(array));                                                                       \
+        memset((void *)(array), 0, sizeof(array));                                                                     \
     } while (0)
 
 #endif /* AWS_COMMON_MACROS_H */
