@@ -22,10 +22,12 @@ enum aws_cli_options_has_arg {
     AWS_CLI_OPTIONS_OPTIONAL_ARGUMENT = 2,
 };
 
+/* Ignoring padding since we're trying to maintain getopt.h compatibility */
+/* NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding) */
 struct aws_cli_option {
     const char *name;
-    int *flag;
     enum aws_cli_options_has_arg has_arg;
+    int *flag;
     int val;
 };
 
