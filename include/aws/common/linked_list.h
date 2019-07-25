@@ -221,8 +221,9 @@ AWS_STATIC_IMPL void aws_linked_list_swap_nodes(struct aws_linked_list_node *a, 
     AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(b));
     AWS_PRECONDITION(aws_linked_list_node_next_is_valid(b));
 
-    if (a == b)
+    if (a == b) {
         return;
+    }
 
     /* snapshot b's value to avoid clobbering its next/prev pointers if a/b are adjacent */
     struct aws_linked_list_node tmp = *b;

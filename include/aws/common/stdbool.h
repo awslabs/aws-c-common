@@ -19,7 +19,7 @@
  */
 
 #ifndef NO_STDBOOL
-#    include <stdbool.h>
+#    include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #else
 #    ifndef __cplusplus
 #        define bool _Bool
