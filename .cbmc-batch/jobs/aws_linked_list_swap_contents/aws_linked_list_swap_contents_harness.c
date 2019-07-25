@@ -23,7 +23,10 @@ void aws_linked_list_swap_contents_harness() {
     ensure_linked_list_is_allocated(&a, MAX_LINKED_LIST_ITEM_ALLOCATION);
     ensure_linked_list_is_allocated(&b, MAX_LINKED_LIST_ITEM_ALLOCATION);
 
-    /* Keep the old first/last node of the linked lists */
+    /* Keep the old first node of the linked lists. Note that we need
+     * to save the old head address separately from the list itself
+     * because &old_a.head != &a.head (since they are different
+     * variables). */
     struct aws_linked_list_node *old_a_head = &a.head;
     struct aws_linked_list old_a = a;
     struct aws_linked_list_node *old_b_head = &b.head;
