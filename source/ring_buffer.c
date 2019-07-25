@@ -214,7 +214,16 @@ int aws_ring_buffer_acquire_up_to(
 }
 
 static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf) {
-    return buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
+/* comparison of pointers to different objects is undefined (C11 6.5.8) */
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "pointer"
+#endif
+    return buf->buffer && ring_buffer->allocation && ring_buffer->allocation_end &&
+           buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
 }
 
 void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, struct aws_byte_buf *buf) {

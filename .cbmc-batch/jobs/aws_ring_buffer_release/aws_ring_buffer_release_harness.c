@@ -26,14 +26,28 @@ void aws_ring_buffer_release_harness() {
 
     /* assumptions */
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
+    __CPROVER_assume(!aws_ring_buffer_is_empty(&ring_buf));
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
-    ensure_byte_buf_has_allocated_buffer_member(&buf);
+    ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(&buf, &ring_buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(__CPROVER_POINTER_OBJECT(buf.buffer) == __CPROVER_POINTER_OBJECT(ring_buf.allocation));
+
+    /* copy of state before call */
+    struct aws_ring_buffer ring_buf_old = ring_buf;
+    struct aws_byte_buf buf_old = buf;
 
     aws_ring_buffer_release(&ring_buf, &buf);
 
     /* assertions */
+    uint8_t *old_head = aws_atomic_load_ptr(&ring_buf_old.head);
+    /*       old_tail unused */
+    uint8_t *new_head = aws_atomic_load_ptr(&ring_buf.head);
+    uint8_t *new_tail = aws_atomic_load_ptr(&ring_buf.tail);
+    assert(aws_ring_buffer_is_valid(&ring_buf));
+    assert(ring_buf.allocator == ring_buf_old.allocator);
+    assert(ring_buf.allocation == ring_buf_old.allocation);
+    assert(new_head == old_head);
+    assert(new_tail == buf_old.buffer + buf_old.capacity);
+    assert(ring_buf.allocation_end == ring_buf_old.allocation_end);
     assert(buf.allocator == NULL);
     assert(buf.buffer == NULL);
     assert(buf.len == 0);

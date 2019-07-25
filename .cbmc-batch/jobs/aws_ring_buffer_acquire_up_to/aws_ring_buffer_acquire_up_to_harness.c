@@ -35,10 +35,10 @@ void aws_ring_buffer_acquire_up_to_harness() {
 
     if (aws_ring_buffer_acquire_up_to(&ring_buf, minimum_size, requested_size, &buf) == AWS_OP_SUCCESS) {
         /* assertions */
-        assert(aws_ring_buffer_is_valid(&ring_buf));
         assert(aws_byte_buf_is_valid(&buf));
         assert(buf.capacity >= minimum_size && buf.capacity <= requested_size);
         assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
         assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
     }
+    assert(aws_ring_buffer_is_valid(&ring_buf));
 }

@@ -26,14 +26,26 @@ void aws_ring_buffer_buf_belongs_to_pool_harness() {
 
     /* assumptions */
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
+    bool is_member = nondet_bool(); /* nondet assignment required to force true/false */
+    if (is_member) {
+        __CPROVER_assume(!aws_ring_buffer_is_empty(&ring_buf));
+        ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(&buf, &ring_buf);
+    } else {
+        /* we will fail the same-object check */
+        ensure_byte_buf_has_allocated_buffer_member(&buf);
+    }
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
-    ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(__CPROVER_POINTER_OBJECT(buf.buffer) == __CPROVER_POINTER_OBJECT(ring_buf.allocation));
 
-    assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
+    struct aws_ring_buffer ring_buf_pre = ring_buf;
+    struct aws_byte_buf buf_pre = buf;
+
+    bool result = aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf);
 
     /* assertions */
+    assert(is_member == result);
     assert(aws_ring_buffer_is_valid(&ring_buf));
     assert(aws_byte_buf_is_valid(&buf));
+    assert(ring_buf_pre == ring_buf);
+    assert(buf_pre == buf);
 }
