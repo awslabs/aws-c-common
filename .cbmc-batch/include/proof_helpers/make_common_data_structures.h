@@ -59,14 +59,11 @@ void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, 
 bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, const size_t max_size);
 
 /*
- * Ensures aws_ring_buffer has valid data
- */
-void ensure_ring_buffer_is_not_empty(struct aws_ring_buffer *ring_buf);
-
-/*
  * Ensure a byte_buf is allocated within a ring_buf (a relational invariant)
  */
-void ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(struct aws_byte_buf *buf, struct aws_ring_buffer *ring_buf);
+void ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(
+    struct aws_byte_buf *buf,
+    struct aws_ring_buffer *ring_buf);
 
 /*
  * Ensures aws_byte_cursor has a proper allocated buffer member
