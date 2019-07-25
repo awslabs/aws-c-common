@@ -89,8 +89,9 @@ static int s_cunit_failure_message0(
     int line,
     const char *format,
     ...) {
-    if (!format)
+    if (!format) {
         return 0;
+    }
 
     fprintf(AWS_TESTING_REPORT_FD, "%s", prefix);
 
