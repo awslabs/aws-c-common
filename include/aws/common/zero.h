@@ -40,7 +40,15 @@
 /**
  * Returns whether each byte in the object is zero.
  */
-#define AWS_IS_ZEROED(object) aws_is_zeroed(&(object), sizeof(object))
+#ifdef CBMC
+#  define AWS_IS_ZEROED(object)                                                                                        \
+     __CPROVER_forall {                                                                                                \
+       int i;                                                                                                          \
+       (i >= 0 && i < sizeof(object)) ==> ((const uint8_t *)&object)[i] == 0                                           \
+     }
+#else
+#  define AWS_IS_ZEROED(object) aws_is_zeroed(&(object), sizeof(object))
+#endif
 
 /**
  * Returns whether each byte is zero.
