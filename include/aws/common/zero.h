@@ -31,6 +31,7 @@
 
 /**
  * Set each byte in the array to zero.
+ * Does not work with arrays of unknown bound.
  */
 #define AWS_ZERO_ARRAY(array)                                                                                          \
     do {                                                                                                               \
