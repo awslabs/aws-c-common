@@ -1,5 +1,5 @@
-#ifndef AWS_COMMAND_LINE_PARSER_H
-#define AWS_COMMAND_LINE_PARSER_H
+#ifndef AWS_COMMON_COMMAND_LINE_PARSER_H
+#define AWS_COMMON_COMMAND_LINE_PARSER_H
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -22,6 +22,8 @@ enum aws_cli_options_has_arg {
     AWS_CLI_OPTIONS_OPTIONAL_ARGUMENT = 2,
 };
 
+/* Ignoring padding since we're trying to maintain getopt.h compatibility */
+/* NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding) */
 struct aws_cli_option {
     const char *name;
     enum aws_cli_options_has_arg has_arg;
@@ -63,4 +65,4 @@ AWS_COMMON_API int aws_cli_getopt_long(
     int *longindex);
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMAND_LINE_PARSER_H */
+#endif /* AWS_COMMON_COMMAND_LINE_PARSER_H */

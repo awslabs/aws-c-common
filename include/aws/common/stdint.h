@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #ifndef NO_STDINT
-#    include <stdint.h>
+#    include <stdint.h> /* NOLINT(fuchsia-restrict-system-includes) */
 /* Android defines SIZE_MAX in limits.h, not stdint.h */
 #    ifdef ANDROID
 #        include <limits.h>
