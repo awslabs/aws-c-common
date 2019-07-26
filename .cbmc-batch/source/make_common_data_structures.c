@@ -45,6 +45,9 @@ void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, 
     ring_buf->allocation_end = ring_buf->allocation + size;
 }
 
+/**
+ * Constrain a buffer to point-into and be contained within a range [lo,hi]
+ */
 void ensure_byte_buf_has_allocated_buffer_member_in_range(struct aws_byte_buf *buf, uint8_t *lo, uint8_t *hi) {
     assert(lo < hi);
     size_t space = hi - lo;
@@ -56,6 +59,9 @@ void ensure_byte_buf_has_allocated_buffer_member_in_range(struct aws_byte_buf *b
     __CPROVER_assume(0 < buf->capacity && buf->capacity <= max_capacity);
 }
 
+/**
+ * Constrain a buffer to point-into the valid elements of a ring_buffer
+ */
 void ensure_byte_buf_has_allocated_buffer_member_in_ring_buf(
     struct aws_byte_buf *buf,
     struct aws_ring_buffer *ring_buf) {

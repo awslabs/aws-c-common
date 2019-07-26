@@ -84,7 +84,7 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring
     bool head_in_range = aws_ring_buffer_check_atomic_ptr(ring_buf, head);
     bool tail_in_range = aws_ring_buffer_check_atomic_ptr(ring_buf, tail);
     /* if head points-to the first element of the buffer then tail must too */
-    bool valid_head_tail = head != ring_buf->allocation || tail == ring_buf->allocation;
+    bool valid_head_tail = (head != ring_buf->allocation) || (tail == ring_buf->allocation);
     return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
            head_in_range && tail_in_range && valid_head_tail && (ring_buf->allocator != NULL);
 }
