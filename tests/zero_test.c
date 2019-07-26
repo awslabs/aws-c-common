@@ -101,12 +101,12 @@ static int s_test_is_zeroed_fn(struct aws_allocator *allocator, void *ctx) {
     for (size_t size = 1; size <= max_size; ++size) {
         /* Zero out buffer and check */
         memset(buf, 0, size);
-        ASSERT_TRUE(aws_is_zeroed(buf, size));
+        ASSERT_TRUE(aws_is_mem_zeroed(buf, size));
 
         /* Set 1 byte to be non-zero and check */
         for (size_t non_zero_byte = 0; non_zero_byte < size; ++non_zero_byte) {
             buf[non_zero_byte] = 1;
-            ASSERT_FALSE(aws_is_zeroed(buf, size));
+            ASSERT_FALSE(aws_is_mem_zeroed(buf, size));
             buf[non_zero_byte] = 0;
         }
     }

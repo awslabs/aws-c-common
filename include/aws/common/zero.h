@@ -33,10 +33,7 @@
  * Set each byte in the array to zero.
  * Does not work with arrays of unknown bound.
  */
-#define AWS_ZERO_ARRAY(array)                                                                                          \
-    do {                                                                                                               \
-        memset((void *)(array), 0, sizeof(array));                                                                     \
-    } while (0)
+#define AWS_ZERO_ARRAY(array) memset((void *)(array), 0, sizeof(array))
 
 /**
  * Returns whether each byte in the object is zero.
@@ -50,14 +47,14 @@
         }
 /* clang-format on */
 #else
-#    define AWS_IS_ZEROED(object) aws_is_zeroed(&(object), sizeof(object))
+#    define AWS_IS_ZEROED(object) aws_is_mem_zeroed(&(object), sizeof(object))
 #endif
 
 /**
  * Returns whether each byte is zero.
  */
 AWS_STATIC_IMPL
-bool aws_is_zeroed(const void *buf, size_t bufsize) {
+bool aws_is_mem_zeroed(const void *buf, size_t bufsize) {
     /* Optimization idea: vectorized instructions to check more than 64 bits at a time. */
 
     /* Check 64 bits at a time */
