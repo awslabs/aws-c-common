@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 
+#include <assert.h>
 #include <aws/testing/aws_test_harness.h>
 
 #ifdef __MACH__
