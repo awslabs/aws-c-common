@@ -15,7 +15,7 @@
 
 #include <aws/common/common.h>
 
-#include <assert.h>
+#include <aws/common/assert.h>
 #include <aws/testing/aws_test_harness.h>
 
 #ifdef __MACH__
@@ -24,26 +24,26 @@
 
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
-    assert(size > 0);
+    AWS_ASSERT(size > 0);
     return malloc(size);
 }
 
 static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
-    assert(ptr != NULL);
+    AWS_ASSERT(ptr != NULL);
     free(ptr);
 }
 
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    assert(newsize > 0);
+    AWS_ASSERT(newsize > 0);
     return realloc(ptr, newsize);
 }
 
 static void *s_test_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     (void)allocator;
-    assert(num > 0 || size > 0);
+    AWS_ASSERT(num > 0 || size > 0);
     return calloc(num, size);
 }
 
