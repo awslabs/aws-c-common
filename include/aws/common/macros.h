@@ -116,7 +116,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    define AWS_THREAD_LOCAL __thread
 #endif
 
-#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+#define AWS_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 /**
  * from a pointer and a type of the struct containing the node
  * this will get you back to the pointer of the object. member is the name of
