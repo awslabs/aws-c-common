@@ -36,6 +36,7 @@ static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
+    (void)oldsize;
     assert(newsize > 0);
     return realloc(ptr, newsize);
 }
