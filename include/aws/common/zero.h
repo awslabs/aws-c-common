@@ -41,13 +41,15 @@
  * Returns whether each byte in the object is zero.
  */
 #ifdef CBMC
-#  define AWS_IS_ZEROED(object)                                                                                        \
-     __CPROVER_forall {                                                                                                \
-       int i;                                                                                                          \
-       (i >= 0 && i < sizeof(object)) ==> ((const uint8_t *)&object)[i] == 0                                           \
-     }
+/* clang-format off */
+#    define AWS_IS_ZEROED(object)                                                                                      \
+        __CPROVER_forall {                                                                                             \
+            int i;                                                                                                     \
+            (i >= 0 && i < sizeof(object)) ==> ((const uint8_t *)&object)[i] == 0                                      \
+        }
+/* clang-format on */
 #else
-#  define AWS_IS_ZEROED(object) aws_is_zeroed(&(object), sizeof(object))
+#    define AWS_IS_ZEROED(object) aws_is_zeroed(&(object), sizeof(object))
 #endif
 
 /**
