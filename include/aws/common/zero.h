@@ -34,7 +34,7 @@
  */
 #define AWS_ZERO_ARRAY(array)                                                                                          \
     do {                                                                                                               \
-        memset((void *)(array), 0, sizeof(array));                                                                       \
+        memset((void *)(array), 0, sizeof(array));                                                                     \
     } while (0)
 
 /**
