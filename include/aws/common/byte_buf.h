@@ -691,13 +691,18 @@ AWS_STATIC_IMPL struct aws_byte_cursor aws_byte_cursor_advance_nospec(
 AWS_STATIC_IMPL bool aws_byte_cursor_read(
     struct aws_byte_cursor *AWS_RESTRICT cur,
     void *AWS_RESTRICT dest,
-    size_t len) {
+    const size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(dest, len));
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
     if (slice.ptr) {
         memcpy(dest, slice.ptr, len);
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+        AWS_POSTCONDITION(AWS_MEM_IS_READABLE(dest, len));
         return true;
     }
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return false;
 }
 
@@ -711,10 +716,16 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read(
 AWS_STATIC_IMPL bool aws_byte_cursor_read_and_fill_buffer(
     struct aws_byte_cursor *AWS_RESTRICT cur,
     struct aws_byte_buf *AWS_RESTRICT dest) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
     if (aws_byte_cursor_read(cur, dest->buffer, dest->capacity)) {
         dest->len = dest->capacity;
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
         return true;
     }
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
     return false;
 }
 
@@ -726,7 +737,10 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_and_fill_buffer(
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
-    return aws_byte_cursor_read(cur, var, 1);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    bool rv = aws_byte_cursor_read(cur, var, 1);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
 }
 
 /**
@@ -738,12 +752,15 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRIC
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, 2);
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh16(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
@@ -756,12 +773,15 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, 4);
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh32(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
@@ -774,12 +794,15 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, sizeof(*var));
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh64(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
