@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/common.h>
+#define DEST_TYPE uint32_t
+#define BYTE_WIDTH 4
+#define BYTE_CURSOR_READ aws_byte_cursor_read_be32
+#define AWS_NTOH aws_ntoh32
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <proof_helpers/aws_byte_cursor_read_common.h>
 
-void aws_debug_break(void);
-
-void aws_fatal_assert(const char *cond_str, const char *file, int line) {
-    aws_debug_break();
-    fprintf(stderr, "Fatal error condition occurred in %s:%d: %s\nExiting Application\n", file, line, cond_str);
-    aws_backtrace_print(stderr, NULL);
-    abort();
+void aws_byte_cursor_read_be32_harness() {
+    aws_byte_cursor_read_common_harness();
 }

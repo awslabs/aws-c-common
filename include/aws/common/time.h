@@ -37,4 +37,4 @@ AWS_COMMON_API void aws_gmtime(time_t time, struct tm *t);
 
 AWS_EXTERN_C_END
 
-#endif /*AWS_COMMON_TIME_H */
+#endif /* AWS_COMMON_TIME_H */

@@ -31,7 +31,7 @@ static void s_swap(struct aws_priority_queue *queue, size_t a, size_t b) {
     aws_array_list_swap(&queue->container, a, b);
 
     /* Invariant: If the backpointer array is initialized, we have enough room for all elements */
-    if (!aws_array_list_is_wiped(&queue->backpointers)) {
+    if (!AWS_IS_ZEROED(queue->backpointers)) {
         AWS_ASSERT(queue->backpointers.length > a);
         AWS_ASSERT(queue->backpointers.length > b);
 
@@ -194,7 +194,7 @@ void aws_priority_queue_init_static(
 }
 
 bool aws_priority_queue_backpointer_index_valid(const struct aws_priority_queue *const queue, size_t index) {
-    if (aws_array_list_is_wiped(&queue->backpointers)) {
+    if (AWS_IS_ZEROED(queue->backpointers)) {
         return true;
     }
     if (index < queue->backpointers.length) {
@@ -247,8 +247,7 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
         backpointers_zero || (backpointer_list_item_size && lists_equal_lengths && backpointers_non_zero_current_size &&
                               backpointers_valid_deep);
 
-    return (
-        (backpointer_list_is_valid && backpointer_struct_is_valid) || aws_array_list_is_wiped(&queue->backpointers));
+    return ((backpointer_list_is_valid && backpointer_struct_is_valid) || AWS_IS_ZEROED(queue->backpointers));
 }
 
 bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
@@ -265,7 +264,7 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
 
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
     aws_array_list_clean_up(&queue->container);
-    if (!aws_array_list_is_wiped(&queue->backpointers)) {
+    if (!AWS_IS_ZEROED(queue->backpointers)) {
         aws_array_list_clean_up(&queue->backpointers);
     }
 }
@@ -312,7 +311,7 @@ int aws_priority_queue_push_ref(
      * for all elements; otherwise, sift_down gets complicated if it runs out of memory when sifting an
      * element with a backpointer down in the array.
      */
-    if (!aws_array_list_is_wiped(&queue->backpointers)) {
+    if (!AWS_IS_ZEROED(queue->backpointers)) {
         if (aws_array_list_set_at(&queue->backpointers, &backpointer, index)) {
             goto backpointer_update_failed;
         }
@@ -352,7 +351,7 @@ static int s_remove_node(struct aws_priority_queue *queue, void *item, size_t it
 
     aws_array_list_pop_back(&queue->container);
 
-    if (!aws_array_list_is_wiped(&queue->backpointers)) {
+    if (!AWS_IS_ZEROED(queue->backpointers)) {
         aws_array_list_get_at(&queue->backpointers, &backpointer, swap_with);
         if (backpointer) {
             backpointer->current_index = SIZE_MAX;

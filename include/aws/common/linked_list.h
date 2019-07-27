@@ -241,47 +241,21 @@ AWS_STATIC_IMPL void aws_linked_list_swap_nodes(struct aws_linked_list_node *a, 
     AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(b));
     AWS_PRECONDITION(aws_linked_list_node_next_is_valid(b));
 
-    if (a == b)
+    if (a == b) {
         return;
-
-    /* test if A and B are adjacent */
-    struct aws_linked_list_node *first_adjacent = NULL;
-    if (a->next == b) {
-        first_adjacent = a;
-    } else if (b->next == a) {
-        first_adjacent = b;
     }
 
-    if (first_adjacent) {
-        /* number nodes by the order we WANT them to be */
-        struct aws_linked_list_node *node_1 = first_adjacent->prev;
-        struct aws_linked_list_node *node_2 = first_adjacent->next;
-        struct aws_linked_list_node *node_3 = first_adjacent;
-        struct aws_linked_list_node *node_4 = first_adjacent->next->next;
+    /* snapshot b's value to avoid clobbering its next/prev pointers if a/b are adjacent */
+    struct aws_linked_list_node tmp = *b;
+    a->prev->next = b;
+    a->next->prev = b;
 
-        /* now put them in that order */
-        node_1->next = node_2;
+    tmp.prev->next = a;
+    tmp.next->prev = a;
 
-        node_2->prev = node_1;
-        node_2->next = node_3;
-
-        node_3->prev = node_2;
-        node_3->next = node_4;
-
-        node_4->prev = node_3;
-    } else {
-        /* swap non-adjacent A and B */
-        struct aws_linked_list_node tmp = *a;
-        *a = *b;
-        *b = tmp;
-
-        /* fix up nodes adjacent to A and B */
-        a->prev->next = a;
-        a->next->prev = a;
-
-        b->prev->next = b;
-        b->next->prev = b;
-    }
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
 
     AWS_POSTCONDITION(aws_linked_list_node_prev_is_valid(a));
     AWS_POSTCONDITION(aws_linked_list_node_next_is_valid(a));
