@@ -25,12 +25,15 @@
 static int assertion_violations = 0;
 
 void assert_handler(const char *cond_str, const char *file, int line) {
+    (void)cond_str;
+    (void)file;
+    (void)line;
     assertion_violations++;
 }
 
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
-    return malloc(size);
+    return (size > 0) ? malloc(size) : NULL;
 }
 
 static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
@@ -41,12 +44,14 @@ static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
+    /* Realloc should ensure that newsize is never 0 */
+    AWS_FATAL_ASSERT(newsize != 0);
     return realloc(ptr, newsize);
 }
 
 static void *s_test_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     (void)allocator;
-    return calloc(num, size);
+    return (num > 0 && size > 0) ? calloc(num, size) : NULL;
 }
 
 #define EXPECT_ASSERTION_VIOLATION(call)                                                                               \
