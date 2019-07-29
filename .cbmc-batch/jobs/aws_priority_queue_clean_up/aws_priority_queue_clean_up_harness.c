@@ -32,6 +32,6 @@ void aws_priority_queue_clean_up_harness() {
     aws_priority_queue_clean_up(&queue);
 
     /* assertions */
-    assert(aws_array_list_is_wiped(&queue.container));
-    assert(aws_array_list_is_wiped(&queue.backpointers));
+    assert(AWS_IS_ZEROED(queue.container));
+    assert(AWS_IS_ZEROED(queue.backpointers));
 }

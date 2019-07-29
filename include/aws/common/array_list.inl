@@ -21,19 +21,6 @@
  */
 
 AWS_STATIC_IMPL
-bool aws_array_list_is_wiped(const struct aws_array_list *AWS_RESTRICT list) {
-    if (!list) {
-        return false;
-    }
-    bool current_size_is_wiped = (list->current_size == 0);
-    bool item_size_is_wiped = (list->item_size == 0);
-    bool length_is_wiped = (list->length == 0);
-    bool data_is_wiped = (list->data == NULL);
-    bool alloc_is_wiped = (list->alloc == NULL);
-    return current_size_is_wiped && item_size_is_wiped && length_is_wiped && data_is_wiped && alloc_is_wiped;
-}
-
-AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
     struct aws_array_list *AWS_RESTRICT list,
     struct aws_allocator *alloc,
@@ -44,11 +31,7 @@ int aws_array_list_init_dynamic(
     AWS_FATAL_PRECONDITION(alloc != NULL);
     AWS_FATAL_PRECONDITION(item_size > 0);
 
-    list->current_size = 0;
-    list->item_size = 0;
-    list->length = 0;
-    list->data = NULL;
-    list->alloc = NULL;
+    AWS_ZERO_STRUCT(*list);
 
     size_t allocation_size;
     if (aws_mul_size_checked(initial_item_allocation, item_size, &allocation_size)) {
@@ -74,7 +57,7 @@ int aws_array_list_init_dynamic(
     return AWS_OP_SUCCESS;
 
 error:
-    AWS_POSTCONDITION(aws_array_list_is_wiped(list));
+    AWS_POSTCONDITION(AWS_IS_ZEROED(*list));
     return AWS_OP_ERR;
 }
 
@@ -130,17 +113,12 @@ void aws_array_list_debug_print(const struct aws_array_list *list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
-    AWS_PRECONDITION(aws_array_list_is_wiped(list) || aws_array_list_is_valid(list));
+    AWS_PRECONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     if (list->alloc && list->data) {
         aws_mem_release(list->alloc, list->data);
     }
 
-    list->current_size = 0;
-    list->item_size = 0;
-    list->length = 0;
-    list->data = NULL;
-    list->alloc = NULL;
-    AWS_POSTCONDITION(aws_array_list_is_wiped(list));
+    AWS_ZERO_STRUCT(*list);
 }
 
 AWS_STATIC_IMPL
