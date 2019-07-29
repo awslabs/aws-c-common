@@ -81,16 +81,6 @@ bool hash_table_state_is_valid(const struct hash_table_state *map) {
 }
 
 /**
- * Best-effort check of hash_table_state data-structure invariants
- * Some invariants, such as that the number of entries is actually the
- * same as the entry_count field, would require a loop to check
- */
-AWS_STATIC_IMPL
-bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
-    return map && map->p_impl && hash_table_state_is_valid(map->p_impl);
-}
-
-/**
  * Given a pointer to a hash_iter, checks that it is well-formed, with all data-structure invariants.
  */
 AWS_STATIC_IMPL
