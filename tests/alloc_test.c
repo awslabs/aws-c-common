@@ -22,30 +22,46 @@
 #    include <CoreFoundation/CoreFoundation.h>
 #endif
 
+static int assertion_violations = 0;
+
+void assert_handler(const char *cond_str, const char *file, int line) {
+    assertion_violations++;
+}
+
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
-    AWS_ASSERT(size > 0);
     return malloc(size);
 }
 
 static void s_test_alloc_release(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
-    AWS_ASSERT(ptr != NULL);
     free(ptr);
 }
 
 static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    AWS_ASSERT(newsize > 0);
     return realloc(ptr, newsize);
 }
 
 static void *s_test_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     (void)allocator;
-    AWS_ASSERT(num > 0 || size > 0);
     return calloc(num, size);
 }
+
+#define EXPECT_ASSERTION_VIOLATION(call)                                                                               \
+    do {                                                                                                               \
+        assertion_violations = 0;                                                                                      \
+        call;                                                                                                          \
+        ASSERT_TRUE(assertion_violations == 1);                                                                        \
+    } while (0)
+
+#define EXPECT_NO_ASSERTION_VIOLATION(call)                                                                            \
+    do {                                                                                                               \
+        assertion_violations = 0;                                                                                      \
+        call;                                                                                                          \
+        ASSERT_TRUE(assertion_violations == 0);                                                                        \
+    } while (0)
 
 /**
  * Check that we correctly protect against
@@ -60,16 +76,21 @@ static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
                                            .mem_release = s_test_alloc_release,
                                            .mem_realloc = s_test_realloc,
                                            .mem_calloc = s_test_calloc};
+    assert_handler_fn_t old_assert_handler = register_assert_handler(assert_handler);
+    /* mem_acquire and calloc fatal assert on 0 input */
+    EXPECT_ASSERTION_VIOLATION(aws_mem_acquire(&test_allocator, 0));
+    EXPECT_ASSERTION_VIOLATION(aws_mem_calloc(&test_allocator, 0, 12));
+    EXPECT_ASSERTION_VIOLATION(aws_mem_calloc(&test_allocator, 12, 0));
 
-    ASSERT_NULL(aws_mem_acquire(&test_allocator, 0));
+    /* mem_release should handle null input */
+    EXPECT_NO_ASSERTION_VIOLATION(aws_mem_release(&test_allocator, NULL));
 
-    ASSERT_NULL(aws_mem_calloc(&test_allocator, 0, 12));
-    ASSERT_NULL(aws_mem_calloc(&test_allocator, 12, 0));
-
-    aws_mem_release(&test_allocator, NULL);
-
+    /* realloc should handle the case correctly and return null */
+    assertion_violations = 0;
     void *p = aws_mem_acquire(&test_allocator, 12);
     ASSERT_SUCCESS(aws_mem_realloc(&test_allocator, &p, 12, 0));
     ASSERT_NULL(p);
+    ASSERT_TRUE(assertion_violations == 0);
+    register_assert_handler(old_assert_handler);
     return 0;
 }

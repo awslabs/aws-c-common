@@ -18,11 +18,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static assert_handler_fn_t at_assert = NULL;
+
 void aws_debug_break(void);
 
 void aws_fatal_assert(const char *cond_str, const char *file, int line) {
     aws_debug_break();
-    fprintf(stderr, "Fatal error condition occurred in %s:%d: %s\nExiting Application\n", file, line, cond_str);
-    aws_backtrace_print(stderr, NULL);
-    abort();
+
+    if (at_assert) {
+        at_assert(cond_str, file, line);
+    } else {
+        fprintf(stderr, "Fatal error condition occurred in %s:%d: %s\nExiting Application\n", file, line, cond_str);
+        aws_backtrace_print(stderr, NULL);
+        abort();
+    }
+}
+
+assert_handler_fn_t register_assert_handler(assert_handler_fn_t the_fn) {
+    assert_handler_fn_t rval = at_assert;
+    at_assert = the_fn;
+    return rval;
 }

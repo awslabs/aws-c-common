@@ -23,8 +23,7 @@
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
-AWS_DECLSPEC_NORETURN
-void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTRIBUTE_NORETURN;
+void aws_fatal_assert(const char *cond_str, const char *file, int line);
 
 /**
  * Print a backtrace from either the current stack, or (if provided) the current exception/signal
@@ -32,6 +31,21 @@ void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTR
  */
 AWS_COMMON_API
 void aws_backtrace_print(FILE *fp, void *call_site_data);
+
+typedef void (*assert_handler_fn_t)(const char *cond_str, const char *file, int line);
+
+/**
+ * Register a function which will be called when an assert is triggered (similar to atexit() in standard c).
+ * This is useful in testing, where you might wish to test that a given assert has triggered.
+ * It may also be useful in cases where you may want to add addional debug information to the log.
+ * Note that this will NOT call abort(); you are expected to do this yourself if you require.
+ * This is not guaraneed to be thread
+ *
+ * Returns the existing handler: this is useful in case you want to temporarily swap handlers, and then restore the old
+ * one.
+ */
+AWS_COMMON_API
+assert_handler_fn_t register_assert_handler(assert_handler_fn_t the_fn);
 
 AWS_EXTERN_C_END
 
