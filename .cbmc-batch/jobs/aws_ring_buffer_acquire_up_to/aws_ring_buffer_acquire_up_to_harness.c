@@ -17,6 +17,7 @@
 #include <aws/common/ring_buffer.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
+#include <proof_helpers/ring_buffer_abstract_states.h>
 
 void aws_ring_buffer_acquire_up_to_harness() {
     /* parameters */
@@ -33,12 +34,28 @@ void aws_ring_buffer_acquire_up_to_harness() {
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
     __CPROVER_assume(requested_size >= minimum_size);
 
-    if (aws_ring_buffer_acquire_up_to(&ring_buf, minimum_size, requested_size, &buf) == AWS_OP_SUCCESS) {
-        /* assertions */
+    /* copy of state before call */
+    struct aws_ring_buffer ring_buf_old = ring_buf;
+
+    int result = aws_ring_buffer_acquire_up_to(&ring_buf, minimum_size, requested_size, &buf);
+
+    /* assertions */
+    if (result == AWS_OP_SUCCESS) {
         assert(aws_byte_buf_is_valid(&buf));
         assert(buf.capacity >= minimum_size && buf.capacity <= requested_size);
         assert(buf.len == 0); /* aws_byte_buf always created with aws_byte_buf_from_empty_array */
         assert(aws_ring_buffer_buf_belongs_to_pool(&ring_buf, &buf));
+        assert(IMPLIES(is_empty_state(&ring_buf_old), is_front_valid_state(&ring_buf)));
+        assert(IMPLIES(is_front_valid_state(&ring_buf_old), is_front_valid_state(&ring_buf)));
+        assert(IMPLIES(
+            is_middle_valid_state(&ring_buf_old), is_middle_valid_state(&ring_buf) || is_ends_valid_state(&ring_buf)));
+        assert(IMPLIES(is_ends_valid_state(&ring_buf_old), is_ends_valid_state(&ring_buf)));
+        assert(!(is_front_valid_state(&ring_buf_old) && is_middle_valid_state(&ring_buf)));
+    } else {
+        assert(ring_buf == ring_buf_old);
     }
     assert(aws_ring_buffer_is_valid(&ring_buf));
+    assert(ring_buf.allocator == ring_buf_old.allocator);
+    assert(ring_buf.allocation == ring_buf_old.allocation);
+    assert(ring_buf.allocation_end == ring_buf_old.allocation_end);
 }

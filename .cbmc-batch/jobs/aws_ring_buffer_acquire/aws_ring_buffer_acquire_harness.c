@@ -17,6 +17,7 @@
 #include <aws/common/ring_buffer.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
+#include <proof_helpers/ring_buffer_abstract_states.h>
 
 void aws_ring_buffer_acquire_harness() {
     /* parameters */
@@ -54,9 +55,14 @@ void aws_ring_buffer_acquire_harness() {
             assert(new_head == ring_buf_old.allocation + requested_size || new_head == old_head + requested_size);
             assert(new_tail == old_tail);
         }
+        assert(IMPLIES(is_empty_state(&ring_buf_old), is_front_valid_state(&ring_buf)));
+        assert(IMPLIES(is_front_valid_state(&ring_buf_old), is_front_valid_state(&ring_buf)));
+        assert(IMPLIES(
+            is_middle_valid_state(&ring_buf_old), is_middle_valid_state(&ring_buf) || is_ends_valid_state(&ring_buf)));
+        assert(IMPLIES(is_ends_valid_state(&ring_buf_old), is_ends_valid_state(&ring_buf)));
+        assert(!(is_front_valid_state(&ring_buf_old) && is_middle_valid_state(&ring_buf)));
     } else {
-        assert(new_head == old_head);
-        assert(new_tail == old_tail);
+        assert(ring_buf == ring_buf_old);
     }
     assert(aws_ring_buffer_is_valid(&ring_buf));
     assert(ring_buf.allocator == ring_buf_old.allocator);

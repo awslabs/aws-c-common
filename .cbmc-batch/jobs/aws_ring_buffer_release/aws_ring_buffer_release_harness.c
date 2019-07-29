@@ -17,6 +17,7 @@
 #include <aws/common/ring_buffer.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
+#include <proof_helpers/ring_buffer_abstract_states.h>
 
 void aws_ring_buffer_release_harness() {
     /* parameters */
@@ -39,7 +40,7 @@ void aws_ring_buffer_release_harness() {
 
     /* assertions */
     uint8_t *old_head = aws_atomic_load_ptr(&ring_buf_old.head);
-    /*       old_tail unused */
+    uint8_t *old_tail = aws_atomic_load_ptr(&ring_buf_old.tail);
     uint8_t *new_head = aws_atomic_load_ptr(&ring_buf.head);
     uint8_t *new_tail = aws_atomic_load_ptr(&ring_buf.tail);
     assert(aws_ring_buffer_is_valid(&ring_buf));
@@ -52,4 +53,11 @@ void aws_ring_buffer_release_harness() {
     assert(buf.buffer == NULL);
     assert(buf.len == 0);
     assert(buf.capacity == 0);
+    assert(IMPLIES(is_front_valid_state(&ring_buf_old), is_empty_state(&ring_buf) || is_middle_valid_state(&ring_buf)));
+    assert(IMPLIES(
+        is_middle_valid_state(&ring_buf_old),
+        is_empty_state(&ring_buf) || is_middle_valid_state(&ring_buf) || is_ends_valid_state(&ring_buf)));
+    assert(IMPLIES(
+        is_ends_valid_state(&ring_buf_old),
+        is_empty_state(&ring_buf) || is_middle_valid_state(&ring_buf) || is_ends_valid_state(&ring_buf)));
 }
