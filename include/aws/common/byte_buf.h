@@ -796,7 +796,7 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint
 AWS_STATIC_IMPL bool aws_byte_cursor_read_float_be32(struct aws_byte_cursor *cur, float *var) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
-    bool rv = aws_byte_cursor_read(cur, var, 4);
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(float));
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntohf32(*var);
@@ -817,7 +817,7 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_float_be32(struct aws_byte_cursor *cur
 AWS_STATIC_IMPL bool aws_byte_cursor_read_float_be64(struct aws_byte_cursor *cur, double *var) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
-    bool rv = aws_byte_cursor_read(cur, var, 8);
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(double));
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntohf64(*var);
