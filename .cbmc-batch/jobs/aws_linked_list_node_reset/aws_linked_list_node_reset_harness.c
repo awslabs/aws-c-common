@@ -24,5 +24,5 @@ void aws_linked_list_node_reset_harness() {
     aws_linked_list_node_reset(&node);
 
     /* assertions */
-    assert(aws_linked_list_node_is_wiped(&node));
+    assert(AWS_IS_ZEROED(node));
 }

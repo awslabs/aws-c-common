@@ -26,22 +26,12 @@ struct aws_linked_list_node {
 };
 
 /**
- * Checks that a node's next and prev pointers are NULL.
- */
-AWS_STATIC_IMPL bool aws_linked_list_node_is_wiped(struct aws_linked_list_node *node) {
-    if (node == NULL) {
-        return false;
-    }
-    return node->next == NULL && node->prev == NULL;
-}
-
-/**
  * Set node's next and prev pointers to NULL.
  */
 AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
     AWS_PRECONDITION(node != NULL);
     AWS_ZERO_STRUCT(*node);
-    AWS_POSTCONDITION(aws_linked_list_node_is_wiped(node));
+    AWS_POSTCONDITION(AWS_IS_ZEROED(*node));
 }
 
 struct aws_linked_list {
