@@ -32,5 +32,5 @@ void aws_array_list_clean_up_harness() {
     aws_array_list_clean_up(&list);
 
     /* assertions */
-    assert(aws_array_list_is_wiped(&list));
+    assert(AWS_IS_ZEROED(list));
 }
