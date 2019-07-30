@@ -22,15 +22,6 @@
 #    include <CoreFoundation/CoreFoundation.h>
 #endif
 
-static int assertion_violations = 0;
-
-void assert_handler(const char *cond_str, const char *file, int line) {
-    (void)cond_str;
-    (void)file;
-    (void)line;
-    assertion_violations++;
-}
-
 static void *s_test_alloc_acquire(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
     return (size > 0) ? malloc(size) : NULL;
@@ -54,23 +45,11 @@ static void *s_test_calloc(struct aws_allocator *allocator, size_t num, size_t s
     return (num > 0 && size > 0) ? calloc(num, size) : NULL;
 }
 
-#define EXPECT_ASSERTION_VIOLATION(call)                                                                               \
-    do {                                                                                                               \
-        assertion_violations = 0;                                                                                      \
-        call;                                                                                                          \
-        ASSERT_TRUE(assertion_violations == 1);                                                                        \
-    } while (0)
-
-#define EXPECT_NO_ASSERTION_VIOLATION(call)                                                                            \
-    do {                                                                                                               \
-        assertion_violations = 0;                                                                                      \
-        call;                                                                                                          \
-        ASSERT_TRUE(assertion_violations == 0);                                                                        \
-    } while (0)
-
 /**
  * Check that we correctly protect against
  * https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations
+ * For now, can only test the realloc case, because it returns NULL on error
+ * Test the remaining cases once https://github.com/awslabs/aws-c-common/issues/471 is solved
  */
 AWS_TEST_CASE(test_alloc_nothing, s_test_alloc_nothing_fn)
 static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
@@ -81,21 +60,10 @@ static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
                                            .mem_release = s_test_alloc_release,
                                            .mem_realloc = s_test_realloc,
                                            .mem_calloc = s_test_calloc};
-    assert_handler_fn_t old_assert_handler = register_assert_handler(assert_handler);
-    /* mem_acquire and calloc fatal assert on 0 input */
-    EXPECT_ASSERTION_VIOLATION(aws_mem_acquire(&test_allocator, 0));
-    EXPECT_ASSERTION_VIOLATION(aws_mem_calloc(&test_allocator, 0, 12));
-    EXPECT_ASSERTION_VIOLATION(aws_mem_calloc(&test_allocator, 12, 0));
 
-    /* mem_release should handle null input */
-    EXPECT_NO_ASSERTION_VIOLATION(aws_mem_release(&test_allocator, NULL));
-
-    /* realloc should handle the case correctly and return null */
-    assertion_violations = 0;
+    /* realloc should handle the case correctly, return null, and free the memory */
     void *p = aws_mem_acquire(&test_allocator, 12);
     ASSERT_SUCCESS(aws_mem_realloc(&test_allocator, &p, 12, 0));
     ASSERT_NULL(p);
-    ASSERT_TRUE(assertion_violations == 0);
-    register_assert_handler(old_assert_handler);
     return 0;
 }
