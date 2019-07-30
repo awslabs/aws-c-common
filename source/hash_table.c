@@ -1013,3 +1013,12 @@ void aws_hash_callback_string_destroy(void *a) {
 bool aws_ptr_eq(const void *a, const void *b) {
     return a == b;
 }
+
+/**
+ * Best-effort check of hash_table_state data-structure invariants
+ * Some invariants, such as that the number of entries is actually the
+ * same as the entry_count field, would require a loop to check
+ */
+bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
+    return map && map->p_impl && hash_table_state_is_valid(map->p_impl);
+}

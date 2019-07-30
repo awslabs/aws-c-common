@@ -418,6 +418,12 @@ void aws_hash_callback_string_destroy(void *a);
 AWS_COMMON_API
 bool aws_ptr_eq(const void *a, const void *b);
 
+/**
+ * Best-effort check of hash_table_state data-structure invariants
+ */
+AWS_COMMON_API
+bool aws_hash_table_is_valid(const struct aws_hash_table *map);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_HASH_TABLE_H */
