@@ -20,6 +20,8 @@
 int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size) {
     AWS_PRECONDITION(ring_buf != NULL);
     AWS_PRECONDITION(allocator != NULL);
+    AWS_PRECONDITION(size > 0);
+
     AWS_ZERO_STRUCT(*ring_buf);
 
     ring_buf->allocation = aws_mem_acquire(allocator, size);
