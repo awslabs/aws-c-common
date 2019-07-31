@@ -66,6 +66,11 @@ struct aws_allocator *aws_default_allocator(void) {
 }
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
+    AWS_FATAL_PRECONDITION(allocator != NULL);
+    AWS_FATAL_PRECONDITION(allocator->mem_acquire != NULL);
+    /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
+    AWS_FATAL_PRECONDITION(size != 0);
+
     void *mem = allocator->mem_acquire(allocator, size);
     if (!mem) {
         aws_raise_error(AWS_ERROR_OOM);
@@ -74,7 +79,10 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 }
 
 void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    AWS_PRECONDITION(allocator != NULL);
+    AWS_FATAL_PRECONDITION(allocator != NULL);
+    AWS_FATAL_PRECONDITION(allocator->mem_calloc || allocator->mem_acquire);
+    /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
+    AWS_FATAL_PRECONDITION(num != 0 && size != 0);
 
     /* Defensive check: never use calloc with size * num that would overflow
      * https://wiki.sei.cmu.edu/confluence/display/c/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
@@ -158,10 +166,26 @@ cleanup:
 #undef AWS_ALIGN_ROUND_UP
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
-    allocator->mem_release(allocator, ptr);
+    AWS_FATAL_PRECONDITION(allocator != NULL);
+    AWS_FATAL_PRECONDITION(allocator->mem_release != NULL);
+
+    if (ptr != NULL) {
+        allocator->mem_release(allocator, ptr);
+    }
 }
 
 int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
+    AWS_FATAL_PRECONDITION(allocator != NULL);
+    AWS_FATAL_PRECONDITION(allocator->mem_realloc || allocator->mem_acquire);
+    AWS_FATAL_PRECONDITION(allocator->mem_release);
+
+    /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
+    if (newsize == 0) {
+        aws_mem_release(allocator, *ptr);
+        *ptr = NULL;
+        return AWS_OP_SUCCESS;
+    }
+
     if (allocator->mem_realloc) {
         void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
         if (!newptr) {
@@ -171,8 +195,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
         return AWS_OP_SUCCESS;
     }
 
-    /* Since the allocator doesn't support realloc, we'll need to emulate it
-     * (inefficiently). */
+    /* Since the allocator doesn't support realloc, we'll need to emulate it (inefficiently). */
     if (oldsize >= newsize) {
         return AWS_OP_SUCCESS;
     }
