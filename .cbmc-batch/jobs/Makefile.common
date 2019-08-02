@@ -24,11 +24,21 @@ SPACE :=$() $()
 COMMA :=,
 
 ################################################################
+# Setup paths to binaries
+# By default, use the version on your path; this can be overriden to select particular
+# versions of the tools. /usr/bin/goto-analyzer or ${HOME}/sw/goto-analyzer etc
+GOTO_ANALYZER ?= goto-analyzer
+GOTO_CC ?= goto-cc
+GOTO_INSTRUMENT ?= goto-instrument
+VIEWER ?= cbmc-viewer
+
+################################################################
 # Define locations and binaries
 ABSTRACTIONS ?= ""
-BASEDIR ?= $(abspath ../../../..)
-BATCH ?= cbmc-batch
 
+################################################################
+# Default CBMC flags
+CBMC_VERBOSITY ?= ""
 CBMCFLAGS += --bounds-check
 CBMCFLAGS += --div-by-zero-check
 CBMCFLAGS += --float-overflow-check
@@ -40,37 +50,41 @@ CBMCFLAGS += --undefined-shift-check
 CBMCFLAGS += --unsigned-overflow-check
 CBMCFLAGS += --unwind 1
 CBMCFLAGS += --unwinding-assertions
-CBMCFLAGS += $(CBMC_UNWINDSET)
-
-GOTO_ANALYZER ?= goto-analyzer
-GOTO_CC ?= goto-cc
-GOTO_INSTRUMENT ?= goto-instrument
-HELPERDIR ?= $(SRCDIR)/.cbmc-batch
-
-INC += -I$(HELPERDIR)/include/
-INC += -I$(SRCDIR)/include/
-
-SIMPLIFY ?= 0
-SRCDIR ?= $(abspath ../../..)
-UNWIND ?= 0
-VIEWER ?= cbmc-viewer
-CBMC_VERBOSITY ?= ""
 
 ################################################################
 # Preprocess the unwindset
-
 ifneq ($(UNWINDSET),)
 CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
 endif
+CBMCFLAGS += $(CBMC_UNWINDSET)
 
 ################################################################
-# Set defines that will be used by the projects
+# Set C compiler defines
 CBMC_OBJECT_BITS ?= 8
 CBMCFLAGS +=  --object-bits $(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC=1
 
 ################################################################
+# Setup directory aliases
+SRCDIR ?= $(abspath ../../..)
+HELPERDIR ?= $(SRCDIR)/.cbmc-batch
+
+################################################################
+# Setup include directory order
+# HELPERDIR must go before any other includes to override default
+# implementations by stubs
+INC += -I$(HELPERDIR)/include/
+INC += -I$(SRCDIR)/include/
+
+################################################################
+# Temporarily disable UNWIND_GOTO, SIMPLIFY until the feature is
+# stable
+UNWIND_GOTO ?= 0
+SIMPLIFY ?= 0
+
+################################################################
+# Enables costly checks (e.g. ones that contain loops)
 # Don't execute deep checks by default
 AWS_DEEP_CHECKS ?= 0
 DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
@@ -79,36 +93,45 @@ DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
 # We always override allocator functions with our own allocator
 # Removing the function from the goto program helps CBMC's
 # function pointer analysis.
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_allocate
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_copy_description
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_preferred_size
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_calloc
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
+REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_allocate
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_copy_description
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_deallocate
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_preferred_size
+REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_reallocate
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_calloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
+REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
+
 ################################################################
 # We override abort() to be assert(0), as it is not caught by
 # CBMC as a violation
 ABSTRACTIONS += $(HELPERDIR)/stubs/abort_override_assert_false.c
-DEFAULT_REMOVE_FUNCTION_BODY += --remove-function-body abort
+REMOVE_FUNCTION_BODY += --remove-function-body abort
 ################################################################
 
-REMOVE_FUNCTION_BODY ?= $(DEFAULT_REMOVE_FUNCTION_BODY)
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
 DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
+
+################################################################
+# Other libraries that use this Makefile template may wish to do
+# actual work here
+setup_dependencies:
+	echo "Setting up dependencies"
 
 # Here, whenever there is a change in any of ANSI-C source
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)0.goto: $(ENTRY).c $(DEPENDENT_GOTOS)
-	$(GOTO_CC) $< --export-function-local-symbols $(CBMC_VERBOSITY) \
+$(ENTRY)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
+	  --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
 
+# Removes specified function bodies. This allows us to replace
+# function definitions with ABSTRACTIONS.
 $(ENTRY)1.goto: $(ENTRY)0.goto
 ifeq ($(REMOVE_FUNCTION_BODY), "")
 	cp $< $@
@@ -118,6 +141,9 @@ else
 		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
 endif
 
+# ABSTRACTIONS is a list of function stubs to use. If a function body
+# is missing and is not abstracted, then it returnes a non
+# deterministic value.
 $(ENTRY)2.goto: $(ENTRY)1.goto
 ifeq ($(ABSTRACTIONS), "")
 	cp $< $@
@@ -126,6 +152,9 @@ else
 	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
 		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
 endif
+
+
+## Temporarily skipped steps
 
 # Simplify and constant propagation may benefit from unwinding first
 $(ENTRY)3.goto: $(ENTRY)2.goto
@@ -157,10 +186,13 @@ else
 	echo "Not simplfying goto program" | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
 endif
 
+# Simplify the goto program by removing any unused function bodies
 $(ENTRY)6.goto: $(ENTRY)5.goto
 	$(GOTO_INSTRUMENT) --drop-unused-functions $< $@ \
 		2>&1 | tee $(ENTRY)6.log ; exit $${PIPESTATUS[0]}
 
+# Simplify the goto program by slicing away initializations of unused
+# global variables
 $(ENTRY)7.goto: $(ENTRY)6.goto
 	$(GOTO_INSTRUMENT) --slice-global-inits $< $@ \
 		2>&1 | tee $(ENTRY)7.log ; exit $${PIPESTATUS[0]}
@@ -174,7 +206,6 @@ $(ENTRY).goto: $(ENTRY)7.goto
 	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(dir $<)/$(notdir $<).log ; exit $${PIPESTATUS[0]}
-
 
 goto: $(ENTRY).goto
 
@@ -195,13 +226,13 @@ coverage: coverage.xml
 
 report: cbmc.log property.xml coverage.xml
 	$(VIEWER) \
+	--block coverage.xml \
 	--goto $(ENTRY).goto \
-	--srcdir $(SRCDIR) \
 	--htmldir html \
-	--srcexclude "(./verification|./tests|./tools|./lib/third_party)" \
-	--result cbmc.log \
 	--property property.xml \
-	--block coverage.xml
+	--result cbmc.log \
+	--srcdir $(SRCDIR) \
+	--srcexclude "(./verification|./tests|./tools|./lib/third_party)"
 
 clean:
 	$(RM) *.goto
@@ -213,83 +244,6 @@ clean:
 veryclean: clean
 	$(RM) -r html
 
-.PHONY: cbmc property coverage report clean veryclean batch-yaml ci-yaml
+.PHONY: setup_dependencies cbmc property coverage report clean veryclean
 
-################################################################
-# Launching cbmc on cbmc-batch
-BATCH ?= cbmc-batch
-
-BATCHFLAGS ?= \
-  --bucket $(BUCKET) \
-	--srcdir $(SRCDIR) \
-	--wsdir $(WS) \
-	--jobprefix $(ENTRY) \
-	--no-build \
-	--goto $(ENTRY).goto \
-	--cbmcflags $(call encode_options,$(CBMCFLAGS)) \
-	--property-memory $(PROPMEM) \
-	--coverage-memory $(COVMEM) \
-	--cbmcpkg $(CBMCPKG) \
-	--batchpkg $(BATCHPKG) \
-	--viewerpkg $(VIEWERPKG) \
-	--no-copysrc \
-	--blddir $(SRCDIR) \
-
-BATCHPKG ?= cbmc-batch.tar.gz
-BUCKET ?= cbmc
-CBMCPKG ?= cbmc.tar.gz
-COVMEM ?= 64000
-
-define encode_options
-       '=$(shell echo $(1) | sed 's/ ,/ /g' | sed 's/ /;/g')='
-endef
-
-PROPMEM ?= 64000
-VIEWERPKG ?= cbmc-viewer.tar.gz
-WS ?= ws
-
-define yaml_encode_options
-       "$(shell echo $(1) | sed 's/ ,/ /g' | sed 's/ /;/g')"
-endef
-
-$(ENTRY).yaml: $(ENTRY).goto Makefile
-	echo 'jobos: ubuntu16' > $@
-	echo 'cbmcpkg: $(CBMCPKG)' >> $@
-	echo 'batchpkg: $(BATCHPKG)' >> $@
-	echo 'viewerpkg: $(VIEWERPKG)' >> $@
-	echo 'goto: $(ENTRY).goto' >> $@
-	echo 'build: true' >> $@
-	echo 'cbmcflags: $(call yaml_encode_options,$(CBMCFLAGS))' >> $@
-	echo 'property_memory: $(PROPMEM)' >> $@
-	echo 'coverage_memory: $(COVMEM)' >> $@
-	echo 'expected: "SUCCESSFUL"' >> $@
-
-batch-yaml: $(ENTRY).yaml
-
-cbmc-batch.yaml: $(ENTRY).goto Makefile
-	echo 'jobos: ubuntu16' > $@
-	echo 'cbmcflags: $(strip $(call yaml_encode_options,$(CBMCFLAGS)))' >> $@
-	echo 'goto: $(ENTRY).goto' >> $@
-	echo 'expected: "SUCCESSFUL"' >> $@
-
-ci-yaml: cbmc-batch.yaml
-
-launch: $(ENTRY).goto Makefile
-	mkdir -p $(WS)
-	cp $(ENTRY).goto $(WS)
-	$(BATCH) $(BATCHFLAGS)
-
-launch-clean:
-	for d in $(ENTRY)*; do \
-	  if [ -d $$d ]; then \
-	    for f in $$d.json $$d.yaml Makefile-$$d; do \
-	      if [ -f $$f ]; then mv $$f $$d; fi \
-	    done\
-	  fi \
-	done
-	$(RM) Makefile-$(ENTRY)-[0-7]*-[0-7]*
-	$(RM) $(ENTRY)-[0-7]*-[0-7]*.json $(ENTRY)-[0-7]*-[0-7]*.yaml
-	$(RM) -r $(WS)
-
-launch-veryclean: launch-clean
-	$(RM) -r $(ENTRY)-[0-7]*-[0-7]*
+include $(HELPERDIR)/jobs/Makefile.cbmc_batch
