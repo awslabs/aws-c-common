@@ -34,9 +34,7 @@
 /* The largest power of two that can be stored in a size_t */
 #define SIZE_MAX_POWER_OF_TWO (((size_t)1) << (SIZE_BITS - 1))
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+AWS_EXTERN_C_BEGIN
 
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
 /*
@@ -209,8 +207,6 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 #    pragma warning(pop)
 #endif /* _MSC_VER */
 
-#ifdef __cplusplus
-}
-#endif
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_MATH_H */

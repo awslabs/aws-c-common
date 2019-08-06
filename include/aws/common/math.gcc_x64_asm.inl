@@ -133,13 +133,13 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
-    uint64_t result = UINT64_MAX;
-    __asm__("addq %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
-            "cmovncq %[arga], %[result]\n" /* [result] = UINT64_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
-            : /* clobbers: */ "cc");
-    return result;
+    __asm__("addq %[arg1], %[arg2]\n" /* [arga] = [arga] + [argb] */
+            "cmovc %q[saturate], %[arg2]\n"
+            : /* in/out: %rax = a, out: rdx (ignored) */ [arg2] "+r"(b)
+            : /* in: register only */ [arg1] "r"(a),
+              /* in: saturation value (reg/memory) */ [saturate] "rm"(~0LL)
+            : /* clobbers: cc */ "cc");
+    return b;
 }
 
 /**
@@ -168,11 +168,13 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
-    uint32_t result = UINT32_MAX;
-    __asm__("addl %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
-            "cmovncl %[arga], %[result]\n" /* [result] = UINT32_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
-            : /* clobbers: */ "cc");
-    return result;
+    __asm__("addl %[arg1], %[arg2]\n" /* [arga] = [arga] + [argb] */
+            /* cmov isn't guaranteed to be available on x86-32 */
+            "jnc .1f%=\n"
+            "mov $0xFFFFFFFF, %%eax\n"
+            ".1f%=:"
+            : /* in/out: %rax = a, out: rdx (ignored) */ [arg2] "+a"(b)
+            : /* in: register only */ [arg1] "r"(a)
+            : /* clobbers: cc */ "cc");
+    return b;
 }
