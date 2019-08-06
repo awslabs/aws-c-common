@@ -20,6 +20,8 @@
 int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size) {
     AWS_PRECONDITION(ring_buf != NULL);
     AWS_PRECONDITION(allocator != NULL);
+    AWS_PRECONDITION(size > 0);
+
     AWS_ZERO_STRUCT(*ring_buf);
 
     ring_buf->allocation = aws_mem_acquire(allocator, size);
@@ -214,7 +216,16 @@ int aws_ring_buffer_acquire_up_to(
 }
 
 static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buffer, const struct aws_byte_buf *buf) {
-    return buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
+#ifdef CBMC
+    /* only continue if buf points-into ring_buffer because comparison of pointers to different objects is undefined
+     * (C11 6.5.8) */
+    if ((__CPROVER_POINTER_OBJECT(buf->buffer) != __CPROVER_POINTER_OBJECT(ring_buffer->allocation)) ||
+        (__CPROVER_POINTER_OBJECT(buf->buffer) != __CPROVER_POINTER_OBJECT(ring_buffer->allocation_end))) {
+        return false;
+    }
+#endif
+    return buf->buffer && ring_buffer->allocation && ring_buffer->allocation_end &&
+           buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
 }
 
 void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, struct aws_byte_buf *buf) {
