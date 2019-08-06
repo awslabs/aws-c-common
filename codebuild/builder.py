@@ -266,16 +266,16 @@ COMPILERS = {
 
         'versions': {
             '4': {
-                '!apt_packages': ["gcc-4.9", "g++-4.9"],
+                '!apt_packages': ["gcc-4.8", "g++-4.8"],
                 '!build_env': {
-                    'CC': "gcc-4.9",
-                    'CXX': 'g++-4.9',
+                    'CC': "gcc-4.8",
+                    'CXX': 'g++-4.8',
                 },
                 '!apt_repos': [],
 
                 'architectures': {
                     'x86': {
-                        'apt_packages': ["gcc-4.9-multilib", "g++-4.9-multilib"],
+                        'apt_packages': ["gcc-4.8-multilib", "g++-4.8-multilib"],
                     },
                 },
             },
