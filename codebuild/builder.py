@@ -47,6 +47,8 @@ BUILD_CONFIG = "RelWithDebInfo"
 KEYS = {
     # Build
     'python': "",
+    'c': None,
+    'cxx': None,
     'pre_build_steps': [],
     'post_build_steps': [],
     'build_env': {},
@@ -208,10 +210,8 @@ COMPILERS = {
                 '!build_args': [],
 
                 'apt_packages': ["clang-3.9"],
-                'build_env': {
-                    'CC': "clang-3.9",
-                    'CXX': "clang-3.9",
-                },
+                'c': "clang-3.9",
+                'cxx': "clang-3.9",
             },
             '6': {
                 'apt_repos': [
@@ -219,9 +219,9 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
 
+                'c': "clang-6.0",
+                'cxx': "clang-6.0",
                 'build_env': {
-                    'CC': "clang-6.0",
-                    'CXX': "clang-6.0",
                     'CLANG_FORMAT': 'clang-format-6.0',
                 },
                 'post_build_steps': [
@@ -240,11 +240,8 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
 
-                'build_env': {
-                    'CC': "clang-8",
-                    'CXX': "clang-8",
-                    'CLANG_FORMAT': 'clang-format-8',
-                },
+                'c': "clang-8",
+                'cxx': "clang-8",
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-8',
@@ -258,19 +255,15 @@ COMPILERS = {
         'hosts': ['linux'],
         'targets': ['linux'],
 
-        'build_env': {
-            'CC': "gcc-{version}",
-            'CXX': "g++-{version}",
-        },
+        'c': "gcc-{version}",
+        'cxx': "g++-{version}",
         'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
             '4': {
                 '!apt_packages': ["gcc-4.8", "g++-4.8"],
-                '!build_env': {
-                    'CC': "gcc-4.8",
-                    'CXX': 'g++-4.8',
-                },
+                '!c': "gcc-4.8",
+                '!cxx': 'g++-4.8',
                 '!apt_repos': [],
 
                 'architectures': {
@@ -542,7 +535,11 @@ def run_build(build_spec, is_dryrun):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        os.environ[var] = value
+        if is_dryrun:
+            _run_command(["export {}={}".format(var, value)])
+        else:
+            os.environ[var] = value
+
 
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
@@ -556,8 +553,14 @@ def run_build(build_spec, is_dryrun):
     else:
         os.chdir(build_dir)
 
+    # Set compiler flags
+    compiler_flags = []
+    for opt in ['c', 'cxx']:
+        if opt in config and config[opt]:
+            compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
     # Run CMake
-    _run_command(["cmake", config['build_args'], "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
+    _run_command(["cmake", config['build_args'], compiler_flags, "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
 
     # Run the build
     _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
