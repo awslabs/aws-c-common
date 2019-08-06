@@ -35,7 +35,7 @@ function(aws_set_common_properties target)
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
-        
+
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
             string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
@@ -124,8 +124,8 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
     endif()
-    
+
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
 endfunction()
