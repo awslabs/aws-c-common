@@ -560,6 +560,7 @@ def run_build(build_spec, is_dryrun):
             compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
 
     # Run CMake
+    _run_command(["cmake", "--version"])
     _run_command(["cmake", config['build_args'], compiler_flags, "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
 
     # Run the build
