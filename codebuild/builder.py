@@ -538,10 +538,9 @@ def run_build(build_spec, is_dryrun):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        if is_dryrun:
-            _log_command(["export", "{}={}".format(var, value)])
-        else:
+        if not is_dryrun:
             os.environ[var] = value
+        _log_command(["export", "{}={}".format(var, value)])
 
 
     # Run configured pre-build steps
