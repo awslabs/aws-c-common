@@ -14,6 +14,9 @@
 ###########
 include ../Makefile.aws_array_list
 
+# Set deep checks to enable the AWS_BYTES_EQ
+AWS_DEEP_CHECKS = 1
+
 # This bound allows us to reach 100% coverage rate
 UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 

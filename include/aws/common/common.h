@@ -23,6 +23,7 @@
 #include <aws/common/assert.h>
 #include <aws/common/error.h>
 #include <aws/common/macros.h>
+#include <aws/common/predicates.h>
 #include <aws/common/stdbool.h>
 #include <aws/common/stdint.h>
 #include <aws/common/zero.h>
