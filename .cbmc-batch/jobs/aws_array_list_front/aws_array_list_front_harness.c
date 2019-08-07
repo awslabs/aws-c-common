@@ -43,6 +43,7 @@ void aws_array_list_front_harness() {
     /* perform operation under verification */
     if (!aws_array_list_front(&list, val)) {
         /* In the case aws_array_list_front is successful, we can ensure the list isn't empty */
+        assert(AWS_BYTES_EQ(val, list.data, list.item_size));
         assert(list.data);
         assert(list.length);
     }

@@ -147,6 +147,7 @@ int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *v
         "Input pointer [val] must point writable memory of [list->item_size] bytes.");
     if (aws_array_list_length(list) > 0) {
         memcpy(val, list->data, list->item_size);
+        AWS_POSTCONDITION(AWS_BYTES_EQ(val, list->data, list->item_size));
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_SUCCESS;
     }
