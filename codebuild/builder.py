@@ -490,7 +490,7 @@ def run_build(build_spec, is_dryrun):
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-    def _run_command(command):
+    def _flatten_command(command):
         # Process out lists
         new_command = []
         for e in command:
@@ -499,19 +499,22 @@ def run_build(build_spec, is_dryrun):
                 new_command.append(e)
             elif e_type == list:
                 new_command.extend(e)
+        return new_command
 
-        if is_dryrun:
-            print(' '.join(new_command))
-        else:
-            print('>', ' '.join(new_command), flush=True)
-            subprocess.check_call(new_command, stdout=sys.stdout, stderr=sys.stderr)
+    def _log_command(command):
+        print('>', ' '.join(_flatten_command(command)), flush=True)
+
+    def _run_command(command):
+        _log_command(command)
+        if not is_dryrun:
+            subprocess.check_call(_flatten_command(command), stdout=sys.stdout, stderr=sys.stderr)
 
     # Make the build directory
     if is_dryrun:
         build_dir = "$TEMP/build"
-        _run_command(["mkdir", build_dir])
     else:
         build_dir = tempfile.mkdtemp()
+    _log_command(['mkdir', build_dir])
 
     # Build the config object
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
@@ -536,7 +539,7 @@ def run_build(build_spec, is_dryrun):
     # Set build environment
     for var, value in config['build_env'].items():
         if is_dryrun:
-            _run_command(["export {}={}".format(var, value)])
+            _log_command(["export", "{}={}".format(var, value)])
         else:
             os.environ[var] = value
 
@@ -548,10 +551,9 @@ def run_build(build_spec, is_dryrun):
     # BUILD
 
     # CD to the build directory
-    if is_dryrun:
-        _run_command(["cd", build_dir])
-    else:
+    if not is_dryrun:
         os.chdir(build_dir)
+    _log_command(["cd", build_dir])
 
     # Set compiler flags
     compiler_flags = []
@@ -573,10 +575,9 @@ def run_build(build_spec, is_dryrun):
     # POST BUILD
 
     # Go back to the source dir
-    if is_dryrun:
-        _run_command(["cd", source_dir])
-    else:
+    if not is_dryrun:
         os.chdir(source_dir)
+    _log_command(["cd", source_dir])
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
@@ -585,6 +586,7 @@ def run_build(build_spec, is_dryrun):
     # Delete temp dir
     if not is_dryrun:
         shutil.rmtree(build_dir)
+    _log_command(["rm", "-rf", build_dir])
 
     return commands
 
