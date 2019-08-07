@@ -752,12 +752,15 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRIC
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, 2);
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh16(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
@@ -770,12 +773,57 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, 4);
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh32(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_STATIC_IMPL bool aws_byte_cursor_read_float_be32(struct aws_byte_cursor *cur, float *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(float));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntohf32(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 64-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_STATIC_IMPL bool aws_byte_cursor_read_float_be64(struct aws_byte_cursor *cur, double *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(double));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntohf64(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
@@ -788,12 +836,15 @@ AWS_STATIC_IMPL bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint
  * cursor unchanged.
  */
 AWS_STATIC_IMPL bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
     bool rv = aws_byte_cursor_read(cur, var, sizeof(*var));
 
     if (AWS_LIKELY(rv)) {
         *var = aws_ntoh64(*var);
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
 }
 
@@ -926,6 +977,19 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t 
 }
 
 /**
+ * Writes a 32-bit float in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_STATIC_IMPL bool aws_byte_buf_write_float_be32(struct aws_byte_buf *buf, float x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_htonf32(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 4);
+}
+
+/**
  * Writes a 64-bit integer in network byte order (big endian) to buffer.
  *
  * On success, returns true and updates the cursor /length accordingly.
@@ -935,6 +999,19 @@ AWS_STATIC_IMPL bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t 
 AWS_STATIC_IMPL bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     x = aws_hton64(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
+}
+
+/**
+ * Writes a 64-bit float in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_STATIC_IMPL bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_htonf64(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
 

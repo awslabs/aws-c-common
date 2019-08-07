@@ -73,22 +73,21 @@ else ()
     file(GLOB AWS_COMMON_OS_SRC
         "source/posix/*.c"
         )
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
     if (APPLE)
         find_library(CORE_FOUNDATION_LIB CoreFoundation)
         if (NOT CORE_FOUNDATION_LIB)
             message(FATAL_ERROR "Core Foundation not found")
         endif ()
 
-        set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS -pthread pthread ${CORE_FOUNDATION_LIB})
+        set(PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-        set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS m -pthread pthread rt)
+        set(PLATFORM_LIBS m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         set(PLATFORM_LIBS m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        set(PLATFORM_CFLAGS -pthread)
-        set(PLATFORM_LIBS m -pthread pthread execinfo)
+        set(PLATFORM_LIBS m Threads::Threads execinfo)
     endif()
 
 endif()
