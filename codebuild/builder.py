@@ -140,8 +140,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
@@ -154,8 +154,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
