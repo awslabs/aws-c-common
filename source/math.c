@@ -21,7 +21,7 @@ AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...) {
     va_start(argp, r);
 
     size_t accum = 0;
-    for (unsigned i = 0; i < num; ++i) {
+    for (size_t i = 0; i < num; ++i) {
         size_t next = va_arg(argp, size_t);
         if (aws_add_size_checked(accum, next, &accum) == AWS_OP_ERR) {
             va_end(argp);
