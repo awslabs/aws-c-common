@@ -20,7 +20,6 @@
 #include <aws/common/config.h>
 
 #include <limits.h>
-#include <stdarg.h>
 #include <stdlib.h>
 
 /* The number of bits in a size_t variable */
@@ -172,22 +171,7 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
  * Adds [num] arguments (expected to be of size_t), and returns the result in *r.
  * If the result overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
-AWS_STATIC_IMPL int aws_add_size_checked_varargs(size_t num, size_t *r, ...) {
-    va_list argp;
-    va_start(argp, r);
-
-    size_t accum = 0;
-    for (unsigned i = 0; i < num; ++i) {
-        size_t next = va_arg(argp, size_t);
-        if (aws_add_size_checked(accum, next, &accum) == AWS_OP_ERR) {
-            va_end(argp);
-            return AWS_OP_ERR;
-        }
-    }
-    *r = accum;
-    va_end(argp);
-    return AWS_OP_SUCCESS;
-}
+AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...);
 
 /**
  * Function to check if x is power of 2
