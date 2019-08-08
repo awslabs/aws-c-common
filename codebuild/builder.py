@@ -47,6 +47,8 @@ BUILD_CONFIG = "RelWithDebInfo"
 KEYS = {
     # Build
     'python': "",
+    'c': None,
+    'cxx': None,
     'pre_build_steps': [],
     'post_build_steps': [],
     'build_env': {},
@@ -138,8 +140,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
@@ -152,8 +154,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
@@ -208,10 +210,8 @@ COMPILERS = {
                 '!build_args': [],
 
                 'apt_packages': ["clang-3.9"],
-                'build_env': {
-                    'CC': "clang-3.9",
-                    'CXX': "clang-3.9",
-                },
+                'c': "clang-3.9",
+                'cxx': "clang-3.9",
             },
             '6': {
                 'apt_repos': [
@@ -219,9 +219,9 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
 
+                'c': "clang-6.0",
+                'cxx': "clang-6.0",
                 'build_env': {
-                    'CC': "clang-6.0",
-                    'CXX': "clang-6.0",
                     'CLANG_FORMAT': 'clang-format-6.0',
                 },
                 'post_build_steps': [
@@ -240,11 +240,8 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
 
-                'build_env': {
-                    'CC': "clang-8",
-                    'CXX': "clang-8",
-                    'CLANG_FORMAT': 'clang-format-8',
-                },
+                'c': "clang-8",
+                'cxx': "clang-8",
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-8',
@@ -258,24 +255,20 @@ COMPILERS = {
         'hosts': ['linux'],
         'targets': ['linux'],
 
-        'build_env': {
-            'CC': "gcc-{version}",
-            'CXX': "g++-{version}",
-        },
+        'c': "gcc-{version}",
+        'cxx': "g++-{version}",
         'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
             '4': {
-                '!apt_packages': ["gcc", "g++"],
-                '!build_env': {
-                    'CC': "gcc",
-                    'CXX': 'g++',
-                },
+                '!apt_packages': ["gcc-4.8", "g++-4.8"],
+                '!c': "gcc-4.8",
+                '!cxx': 'g++-4.8',
                 '!apt_repos': [],
 
                 'architectures': {
                     'x86': {
-                        'apt_packages': ["gcc-multilib", "g++-multilib"],
+                        'apt_packages': ["gcc-4.8-multilib", "g++-4.8-multilib"],
                     },
                 },
             },
@@ -497,7 +490,7 @@ def run_build(build_spec, is_dryrun):
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-    def _run_command(command):
+    def _flatten_command(command):
         # Process out lists
         new_command = []
         for e in command:
@@ -506,19 +499,22 @@ def run_build(build_spec, is_dryrun):
                 new_command.append(e)
             elif e_type == list:
                 new_command.extend(e)
+        return new_command
 
-        if is_dryrun:
-            print(' '.join(new_command))
-        else:
-            print('>', ' '.join(new_command), flush=True)
-            subprocess.check_call(new_command, stdout=sys.stdout, stderr=sys.stderr)
+    def _log_command(command):
+        print('>', ' '.join(_flatten_command(command)), flush=True)
+
+    def _run_command(command):
+        _log_command(command)
+        if not is_dryrun:
+            subprocess.check_call(_flatten_command(command), stdout=sys.stdout, stderr=sys.stderr)
 
     # Make the build directory
     if is_dryrun:
         build_dir = "$TEMP/build"
-        _run_command(["mkdir", build_dir])
     else:
         build_dir = tempfile.mkdtemp()
+    _log_command(['mkdir', build_dir])
 
     # Build the config object
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
@@ -542,7 +538,10 @@ def run_build(build_spec, is_dryrun):
 
     # Set build environment
     for var, value in config['build_env'].items():
-        os.environ[var] = value
+        if not is_dryrun:
+            os.environ[var] = value
+        _log_command(["export", "{}={}".format(var, value)])
+
 
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
@@ -551,13 +550,19 @@ def run_build(build_spec, is_dryrun):
     # BUILD
 
     # CD to the build directory
-    if is_dryrun:
-        _run_command(["cd", build_dir])
-    else:
+    if not is_dryrun:
         os.chdir(build_dir)
+    _log_command(["cd", build_dir])
+
+    # Set compiler flags
+    compiler_flags = []
+    for opt in ['c', 'cxx']:
+        if opt in config and config[opt]:
+            compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
 
     # Run CMake
-    _run_command(["cmake", config['build_args'], "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
+    _run_command(["cmake", "--version"])
+    _run_command(["cmake", config['build_args'], compiler_flags, "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
 
     # Run the build
     _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
@@ -569,10 +574,9 @@ def run_build(build_spec, is_dryrun):
     # POST BUILD
 
     # Go back to the source dir
-    if is_dryrun:
-        _run_command(["cd", source_dir])
-    else:
+    if not is_dryrun:
         os.chdir(source_dir)
+    _log_command(["cd", source_dir])
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
@@ -581,6 +585,7 @@ def run_build(build_spec, is_dryrun):
     # Delete temp dir
     if not is_dryrun:
         shutil.rmtree(build_dir)
+    _log_command(["rm", "-rf", build_dir])
 
     return commands
 
