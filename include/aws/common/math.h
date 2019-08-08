@@ -157,7 +157,6 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
  * Adds a + b and returns the result in *r. If the result
  * overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
  */
-
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
     return aws_add_u32_checked(a, b, (uint32_t *)r);
@@ -167,6 +166,12 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #    error "Target not supported"
 #endif
 }
+
+/**
+ * Adds [num] arguments (expected to be of size_t), and returns the result in *r.
+ * If the result overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
+ */
+AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...);
 
 /**
  * Function to check if x is power of 2
