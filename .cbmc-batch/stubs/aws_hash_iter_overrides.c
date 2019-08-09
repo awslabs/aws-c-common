@@ -9,15 +9,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* If the consumer of the iterator doesn't use the .element in the iterator, we can just leave it undef
+ * This is sound, as it gives you a totally nondet value every time you call the iterator, and free under CBMC.
+ * But if it is used, we need a way for the harness to specify valid values for the element, for example
+ * if they are copying values out of the table.
+ * They can do this by defining -DHASH_ITER_ELEMENT_GENERATOR=the_generator_fn
+ * Two obvious generators are:
+ * (a) one that simply creates a new non-determinsitic value each time its called using malloc
+ * (b) one that uses a value stored in the underlying map, and copies it into the iterator.
+ */
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+void HASH_ITER_ELEMENT_GENERATOR(struct aws_hash_iter *iter);
+#endif
+
 /* Simple map for what the iterator does: it just chugs along, returns a nondet value, until its gone at most map->size
  * times */
 struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
     /* Leave it as non-det as possible */
     AWS_PRECONDITION(aws_hash_table_is_valid(map), "Input hash_table [map] must be valid.");
+
+    /* Build a nondet iterator, set the required fields, and return it */
     struct aws_hash_iter rval;
+    rval.map = map;
     rval.limit = map->p_impl->size;
     __CPROVER_assume(rval.slot <= rval.limit);
     rval.status = (rval.slot == rval.limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+    HASH_ITER_ELEMENT_GENERATOR(&rval);
+#endif
     return rval;
 }
 
@@ -36,18 +55,27 @@ void aws_hash_iter_next(struct aws_hash_iter *iter) {
         return;
     }
 
+    /* Build a nondet iterator, set the required fields, and copy it over */
     struct aws_hash_iter rval;
+    rval.map = iter->map;
     rval.limit = iter->limit;
     size_t next_step;
     __CPROVER_assume(next_step > 0 && next_step <= iter->limit - iter->slot);
     rval.limit = iter->limit;
     rval.slot = iter->slot + next_step;
     rval.status = (rval.slot == rval.limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+    HASH_ITER_ELEMENT_GENERATOR(&rval);
+#endif
+
     *iter = rval;
 }
 
+/* delete always leaves the element unusable, so we'll just leave the element totally nondet */
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
+    /* Build a nondet iterator, set the required fields, and copy it over */
     struct aws_hash_iter rval;
+    rval.map = iter->map;
     rval.slot = iter->slot;
     rval.limit = iter->limit - 1;
     rval.status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
