@@ -13,7 +13,7 @@
  * This is sound, as it gives you a totally nondet value every time you call the iterator, and is the default behaviour
  * of CBMC. But if it is used, we need a way for the harness to specify valid values for the element, for example if
  * they are copying values out of the table. They can do this by defining
- * -DHASH_ITER_ELEMENT_GENERATOR=the_generator_fn, wher the_generator_fn has signature:
+ * -DHASH_ITER_ELEMENT_GENERATOR=the_generator_fn, where the_generator_fn has signature:
  *   the_generator_fn(struct aws_hash_iter *new_iter, const struct aws_hash_iter* old_iter).
  *
  * [new_iter] is a pointer to the iterator that will be returned from this function, and the generator function can
