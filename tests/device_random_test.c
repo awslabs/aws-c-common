@@ -124,7 +124,7 @@ static int s_device_rand_buffer_distribution_fn(struct aws_allocator *allocator,
     (void)allocator;
     (void)ctx;
 
-    uint8_t array[DISTRIBUTION_PUT_COUNT];
+    uint8_t array[DISTRIBUTION_PUT_COUNT] = {0};
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));
     ASSERT_SUCCESS(aws_device_random_buffer(&buf));
 
