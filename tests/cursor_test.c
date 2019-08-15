@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/private/byte_buf.h>
 
 #include <aws/testing/aws_test_harness.h>
 

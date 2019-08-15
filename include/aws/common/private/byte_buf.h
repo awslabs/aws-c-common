@@ -1,3 +1,5 @@
+#ifndef AWS_COMMON_PRIVATE_BYTE_BUF_H
+#define AWS_COMMON_PRIVATE_BYTE_BUF_H
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -14,23 +16,13 @@
  */
 
 #include <aws/common/byte_buf.h>
-#include <aws/common/private/byte_buf.h>
-#include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
-void aws_nospec_mask_harness() {
-    /* parameters */
-    size_t index;
-    size_t bound;
+/**
+ * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
+ * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
+ * value even under CPU speculation conditions, and is intended to be used for
+ * SPECTRE mitigation purposes.
+ */
+size_t aws_nospec_mask(size_t index, size_t bound);
 
-    /* operation under verification */
-    size_t rval = aws_nospec_mask(index, bound);
-
-    /* assertions */
-    if (rval == 0) {
-        assert((index >= bound) || (bound > (SIZE_MAX / 2)) || (index > (SIZE_MAX / 2)));
-    } else {
-        assert(rval == UINTPTR_MAX);
-        assert(!((index >= bound) || (bound > (SIZE_MAX / 2)) || (index > (SIZE_MAX / 2))));
-    }
-}
+#endif /* AWS_COMMON_PRIVATE_BYTE_BUF_H */

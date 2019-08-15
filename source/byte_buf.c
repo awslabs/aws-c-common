@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/private/byte_buf.h>
 
 #include <stdarg.h>
 
@@ -777,4 +778,536 @@ int aws_byte_cursor_compare_lookup(
     }
 
     return 0;
+}
+
+/**
+ * For creating a byte buffer from a null-terminated string literal.
+ */
+struct aws_byte_buf aws_byte_buf_from_c_str(const char *c_str) {
+    struct aws_byte_buf buf;
+    buf.len = (!c_str) ? 0 : strlen(c_str);
+    buf.capacity = buf.len;
+    buf.buffer = (buf.capacity == 0) ? NULL : (uint8_t *)c_str;
+    buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    return buf;
+}
+
+struct aws_byte_buf aws_byte_buf_from_array(const void *bytes, size_t len) {
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(bytes, len), "Input array [bytes] must be writable up to [len] bytes.");
+    struct aws_byte_buf buf;
+    buf.buffer = (len > 0) ? (uint8_t *)bytes : NULL;
+    buf.len = len;
+    buf.capacity = len;
+    buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    return buf;
+}
+
+struct aws_byte_buf aws_byte_buf_from_empty_array(const void *bytes, size_t capacity) {
+    AWS_PRECONDITION(
+        AWS_MEM_IS_WRITABLE(bytes, capacity), "Input array [bytes] must be writable up to [capacity] bytes.");
+    struct aws_byte_buf buf;
+    buf.buffer = (capacity > 0) ? (uint8_t *)bytes : NULL;
+    buf.len = 0;
+    buf.capacity = capacity;
+    buf.allocator = NULL;
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(&buf));
+    return buf;
+}
+
+struct aws_byte_cursor aws_byte_cursor_from_buf(const struct aws_byte_buf *const buf) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    struct aws_byte_cursor cur;
+    cur.ptr = buf->buffer;
+    cur.len = buf->len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
+    return cur;
+}
+
+struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_str) {
+    struct aws_byte_cursor cur;
+    cur.ptr = (uint8_t *)c_str;
+    cur.len = (cur.ptr) ? strlen(c_str) : 0;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
+    return cur;
+}
+
+struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len) {
+    AWS_PRECONDITION(len == 0 || AWS_MEM_IS_READABLE(bytes, len), "Input array [bytes] must be readable up to [len].");
+    struct aws_byte_cursor cur;
+    cur.ptr = (uint8_t *)bytes;
+    cur.len = len;
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&cur));
+    return cur;
+}
+
+#ifdef CBMC
+#    pragma CPROVER check push
+#    pragma CPROVER check disable "unsigned-overflow"
+#endif
+/**
+ * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
+ * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
+ * value even under CPU speculation conditions, and is intended to be used for
+ * SPECTRE mitigation purposes.
+ */
+size_t aws_nospec_mask(size_t index, size_t bound) {
+    /*
+     * SPECTRE mitigation - we compute a mask that will be zero if len < 0
+     * or len >= buf->len, and all-ones otherwise, and AND it into the index.
+     * It is critical that we avoid any branches in this logic.
+     */
+
+    /*
+     * Hide the index value from the optimizer. This helps ensure that all this
+     * logic doesn't get eliminated.
+     */
+#if defined(__GNUC__) || defined(__clang__)
+    __asm__ __volatile__("" : "+r"(index));
+#endif
+#if defined(_MSVC_LANG)
+    /*
+     * MSVC doesn't have a good way for us to blind the optimizer, and doesn't
+     * even have inline asm on x64. Some experimentation indicates that this
+     * hack seems to confuse it sufficiently for our needs.
+     */
+    *((volatile uint8_t *)&index) += 0;
+#endif
+
+    /*
+     * If len > (SIZE_MAX / 2), then we can end up with len - buf->len being
+     * positive simply because the sign bit got inverted away. So we also check
+     * that the sign bit isn't set from the start.
+     *
+     * We also check that bound <= (SIZE_MAX / 2) to catch cases where the
+     * buffer is _already_ out of bounds.
+     */
+    size_t negative_mask = index | bound;
+    size_t toobig_mask = bound - index - (uintptr_t)1;
+    size_t combined_mask = negative_mask | toobig_mask;
+
+    /*
+     * combined_mask needs to have its sign bit OFF for us to be in range.
+     * We'd like to expand this to a mask we can AND into our index, so flip
+     * that bit (and everything else), shift it over so it's the only bit in the
+     * ones position, and multiply across the entire register.
+     *
+     * First, extract the (inverse) top bit and move it to the lowest bit.
+     * Because there's no standard SIZE_BIT in C99, we'll divide by a mask with
+     * just the top bit set instead.
+     */
+
+    combined_mask = (~combined_mask) / (SIZE_MAX - (SIZE_MAX >> 1));
+
+    /*
+     * Now multiply it to replicate it across all bits.
+     *
+     * Note that GCC is smart enough to optimize the divide-and-multiply into
+     * an arithmetic right shift operation on x86.
+     */
+    combined_mask = combined_mask * UINTPTR_MAX;
+
+    return combined_mask;
+}
+#ifdef CBMC
+#    pragma CPROVER check pop
+#endif
+
+/**
+ * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
+ * *buf is advanced by len bytes (incrementing ->ptr and decrementing ->len),
+ * and an aws_byte_cursor referring to the first len bytes of the original *buf
+ * is returned. Otherwise, an aws_byte_cursor with ->ptr = NULL, ->len = 0 is
+ * returned.
+ *
+ * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
+ * a buffer overflow, and return NULL without changing *buf.
+ */
+struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cursor, const size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
+    struct aws_byte_cursor rv;
+    if (cursor->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || len > cursor->len) {
+        rv.ptr = NULL;
+        rv.len = 0;
+    } else {
+        rv.ptr = cursor->ptr;
+        rv.len = len;
+
+        cursor->ptr += len;
+        cursor->len -= len;
+    }
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
+    return rv;
+}
+
+/**
+ * Behaves identically to aws_byte_cursor_advance, but avoids speculative
+ * execution potentially reading out-of-bounds pointers (by returning an
+ * empty ptr in such speculated paths).
+ *
+ * This should generally be done when using an untrusted or
+ * data-dependent value for 'len', to avoid speculating into a path where
+ * cursor->ptr points outside the true ptr length.
+ */
+
+struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *const cursor, size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
+
+    struct aws_byte_cursor rv;
+
+    if (len <= cursor->len && len <= (SIZE_MAX >> 1) && cursor->len <= (SIZE_MAX >> 1)) {
+        /*
+         * If we're speculating past a failed bounds check, null out the pointer. This ensures
+         * that we don't try to read past the end of the buffer and leak information about other
+         * memory through timing side-channels.
+         */
+        uintptr_t mask = aws_nospec_mask(len, cursor->len + 1);
+
+        /* Make sure we don't speculate-underflow len either */
+        len = len & mask;
+        cursor->ptr = (uint8_t *)((uintptr_t)cursor->ptr & mask);
+        /* Make sure subsequent nospec accesses don't advance ptr past NULL */
+        cursor->len = cursor->len & mask;
+
+        rv.ptr = cursor->ptr;
+        /* Make sure anything acting upon the returned cursor _also_ doesn't advance past NULL */
+        rv.len = len & mask;
+
+        cursor->ptr += len;
+        cursor->len -= len;
+    } else {
+        rv.ptr = NULL;
+        rv.len = 0;
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(&rv));
+    return rv;
+}
+
+/**
+ * Reads specified length of data from byte cursor and copies it to the
+ * destination array.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, const size_t len) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(dest, len));
+    struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
+
+    if (slice.ptr) {
+        memcpy(dest, slice.ptr, len);
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+        AWS_POSTCONDITION(AWS_MEM_IS_READABLE(dest, len));
+        return true;
+    }
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return false;
+}
+
+/**
+ * Reads as many bytes from cursor as size of buffer, and copies them to buffer.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_and_fill_buffer(
+    struct aws_byte_cursor *AWS_RESTRICT cur,
+    struct aws_byte_buf *AWS_RESTRICT dest) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
+    if (aws_byte_cursor_read(cur, dest->buffer, dest->capacity)) {
+        dest->len = dest->capacity;
+        AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
+        return true;
+    }
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
+    return false;
+}
+
+/**
+ * Reads a single byte from cursor, placing it in *var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    bool rv = aws_byte_cursor_read(cur, var, 1);
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 16-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, 2);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh16(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, 4);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh32(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_float_be32(struct aws_byte_cursor *cur, float *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(float));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntohf32(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 64-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_float_be64(struct aws_byte_cursor *cur, double *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(double));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntohf64(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Reads a 64-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, sizeof(*var));
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_ntoh64(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
+ * Appends a sub-buffer to the specified buffer.
+ *
+ * If the buffer has at least `len' bytes remaining (buffer->capacity - buffer->len >= len),
+ * then buffer->len is incremented by len, and an aws_byte_buf is assigned to *output corresponding
+ * to the last len bytes of the input buffer. The aws_byte_buf at *output will have a null
+ * allocator, a zero initial length, and a capacity of 'len'. The function then returns true.
+ *
+ * If there is insufficient space, then this function nulls all fields in *output and returns
+ * false.
+ */
+bool aws_byte_buf_advance(
+    struct aws_byte_buf *const AWS_RESTRICT buffer,
+    struct aws_byte_buf *const AWS_RESTRICT output,
+    const size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
+    if (buffer->capacity - buffer->len >= len) {
+        *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
+        buffer->len += len;
+        output->len = 0;
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
+        return true;
+    } else {
+        AWS_ZERO_STRUCT(*output);
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
+        return false;
+    }
+}
+
+/**
+ * Write specified number of bytes from array to byte buffer.
+ *
+ * On success, returns true and updates the buffer length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
+ */
+bool aws_byte_buf_write(struct aws_byte_buf *AWS_RESTRICT buf, const uint8_t *AWS_RESTRICT src, size_t len) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
+
+    if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+        return false;
+    }
+
+    memcpy(buf->buffer + buf->len, src, len);
+    buf->len += len;
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+    return true;
+}
+
+/**
+ * Copies all bytes from buffer to buffer.
+ *
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
+ */
+bool aws_byte_buf_write_from_whole_buffer(struct aws_byte_buf *AWS_RESTRICT buf, struct aws_byte_buf src) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(&src));
+    return aws_byte_buf_write(buf, src.buffer, src.len);
+}
+
+/**
+ * Copies all bytes from buffer to buffer.
+ *
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
+ */
+bool aws_byte_buf_write_from_whole_cursor(struct aws_byte_buf *AWS_RESTRICT buf, struct aws_byte_cursor src) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&src));
+    return aws_byte_buf_write(buf, src.ptr, src.len);
+}
+
+/**
+ * Copies one byte to buffer.
+ *
+ * On success, returns true and updates the cursor /length
+ accordingly.
+
+ * If there is insufficient space in the cursor, returns false, leaving the
+ cursor unchanged.
+ */
+bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    return aws_byte_buf_write(buf, &c, 1);
+}
+
+/**
+ * Writes a 16-bit integer in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_hton16(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 2);
+}
+
+/**
+ * Writes a 32-bit integer in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_hton32(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 4);
+}
+
+/**
+ * Writes a 32-bit float in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_buf_write_float_be32(struct aws_byte_buf *buf, float x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_htonf32(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 4);
+}
+
+/**
+ * Writes a 64-bit integer in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_hton64(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
+}
+
+/**
+ * Writes a 64-bit float in network byte order (big endian) to buffer.
+ *
+ * On success, returns true and updates the cursor /length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    x = aws_htonf64(x);
+    return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
