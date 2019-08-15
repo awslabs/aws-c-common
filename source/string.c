@@ -109,34 +109,6 @@ int aws_array_list_comparator_string(const void *a, const void *b) {
 }
 
 /**
- * Evaluates the set of properties that define the shape of all valid aws_string structures.
- * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
- */
-bool aws_string_is_valid(const struct aws_string *str) {
-    return str && AWS_MEM_IS_READABLE(&str->bytes[0], str->len + 1) && str->bytes[str->len] == 0;
-}
-
-/**
- * Best-effort checks aws_string invariants, when the str->len is unknown
- */
-bool aws_c_string_is_valid(const char *str) {
-    /* Knowing the actual length to check would require strlen(), which is
-     * a) linear time in the length of the string
-     * b) could already cause a memory violation for a non-zero-terminated string.
-     * But we know that a c-string must have at least one character, to store the null terminator
-     */
-    return str && AWS_MEM_IS_READABLE(str, 1);
-}
-
-/**
- * Equivalent to str->bytes. Here for legacy reasons.
- */
-const uint8_t *aws_string_bytes(const struct aws_string *str) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
-    return str->bytes;
-}
-
-/**
  * Returns true if bytes of string are the same, false otherwise.
  */
 bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {

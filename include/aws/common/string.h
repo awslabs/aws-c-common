@@ -60,25 +60,6 @@ struct aws_string {
 AWS_EXTERN_C_BEGIN
 
 /**
- * Evaluates the set of properties that define the shape of all valid aws_string structures.
- * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
- */
-AWS_COMMON_API
-bool aws_string_is_valid(const struct aws_string *str);
-
-/**
- * Best-effort checks aws_string invariants, when the str->len is unknown
- */
-AWS_COMMON_API
-bool aws_c_string_is_valid(const char *str);
-
-/**
- * Equivalent to str->bytes. Here for legacy reasons.
- */
-AWS_COMMON_API
-const uint8_t *aws_string_bytes(const struct aws_string *str);
-
-/**
  * Returns true if bytes of string are the same, false otherwise.
  */
 AWS_COMMON_API
@@ -218,5 +199,26 @@ AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
 
 AWS_EXTERN_C_END
+
+/**
+ * Equivalent to str->bytes.
+ */
+AWS_STATIC_IMPL
+const uint8_t *aws_string_bytes(const struct aws_string *str);
+
+/**
+ * Evaluates the set of properties that define the shape of all valid aws_string structures.
+ * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
+ */
+AWS_STATIC_IMPL
+bool aws_string_is_valid(const struct aws_string *str);
+
+/**
+ * Best-effort checks aws_string invariants, when the str->len is unknown
+ */
+AWS_STATIC_IMPL
+bool aws_c_string_is_valid(const char *str);
+
+#include <aws/common/string.inl>
 
 #endif /* AWS_COMMON_STRING_H */
