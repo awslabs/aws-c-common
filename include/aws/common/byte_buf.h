@@ -486,6 +486,14 @@ AWS_COMMON_API struct aws_byte_cursor aws_byte_cursor_from_c_str(const char *c_s
 AWS_COMMON_API struct aws_byte_cursor aws_byte_cursor_from_array(const void *const bytes, const size_t len);
 
 /**
+ * If index >= bound, bound > (SIZE_MAX / 2), or index > (SIZE_MAX / 2), returns
+ * 0. Otherwise, returns UINTPTR_MAX.  This function is designed to return the correct
+ * value even under CPU speculation conditions, and is intended to be used for
+ * SPECTRE mitigation purposes.
+ */
+AWS_COMMON_API size_t aws_nospec_mask(size_t index, size_t bound);
+
+/**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
  * *buf is advanced by len bytes (incrementing ->ptr and decrementing ->len),
  * and an aws_byte_cursor referring to the first len bytes of the original *buf
