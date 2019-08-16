@@ -23,6 +23,6 @@
  * value even under CPU speculation conditions, and is intended to be used for
  * SPECTRE mitigation purposes.
  */
-size_t aws_nospec_mask(size_t index, size_t bound);
+AWS_COMMON_API size_t aws_nospec_mask(size_t index, size_t bound);
 
 #endif /* AWS_COMMON_PRIVATE_BYTE_BUF_H */
