@@ -13,27 +13,14 @@
  * limitations under the License.
  */
 
-#include <aws/common/array_list.h>
+#include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
 #include <aws/common/common.h>
-
 #include <string.h>
 
-/* We can't include byte_buf.h, because that defines this as a static inline function, and we need to override it.
- * So just include the struct definition we need */
-struct aws_byte_buf {
-    /* do not reorder this, this struct lines up nicely with windows buffer structures--saving us allocations.*/
-    size_t len;
-    uint8_t *buffer;
-    size_t capacity;
-    struct aws_allocator *allocator;
-};
-
-bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
-
 /**
- * Stub for aws_byte_buf_write (the weird name is due to CBMC name mangling)
- * Has the same behaviour as the actual function except id doesn't actually write the bytes.
+ * Stub for aws_byte_buf_write.
+ * Has the same behaviour as the actual function except it doesn't actually write the bytes.
  * In order to use this function safely, the user must check that the byte_buf bytes are not actually
  * used by the function under test.
  * TODO: Once CBMC supports proper havocing, should havoc the bytes to get full soundness.
@@ -42,10 +29,7 @@ bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf);
  * If there is insufficient space in the buffer, returns false, leaving the
  * buffer unchanged.
  */
-bool __CPROVER_file_local_byte_buf_h_aws_byte_buf_write(
-    struct aws_byte_buf *AWS_RESTRICT buf,
-    const uint8_t *AWS_RESTRICT src,
-    size_t len) {
+bool aws_byte_buf_write(struct aws_byte_buf *AWS_RESTRICT buf, const uint8_t *AWS_RESTRICT src, size_t len) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
 
