@@ -13,20 +13,16 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <aws/common/string.h>
 
 /**
- * Non-determinstic functions used in CBMC proofs
+ * Saves the function pointer dereferences when doing the delloc. Otherwise the same as the
+ * real function.
  */
-bool nondet_bool();
-int nondet_int();
-size_t nondet_size_t();
-uint16_t nondet_uint16_t();
-uint32_t nondet_uint32_t();
-uint64_t nondet_uint64_t();
-uint8_t nondet_uint8_t();
-void *nondet_voidp();
+void aws_string_destroy(struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
+    /* If the string has no allocator, its a static string and can't be freed */
+    if (str->allocator) {
+        free(str);
+    }
+}
