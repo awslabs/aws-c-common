@@ -529,7 +529,9 @@ static struct aws_log_subject_info_list s_common_log_subject_list = {
 
 static bool s_common_library_initialized = false;
 
-void aws_common_library_init(void) {
+void aws_common_library_init(struct aws_allocator *allocator) {
+    (void)allocator;
+
     if (!s_common_library_initialized) {
         s_common_library_initialized = true;
         aws_register_error_info(&s_list);
