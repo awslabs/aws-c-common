@@ -14,8 +14,8 @@
  */
 
 #include <aws/common/common.h>
-#include <aws/common/math.h>
 #include <aws/common/logging.h>
+#include <aws/common/math.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
