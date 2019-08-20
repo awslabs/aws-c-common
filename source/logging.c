@@ -324,8 +324,6 @@ const char *aws_log_subject_name(aws_log_subject_t subject) {
 }
 
 void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_subject_list) {
-    (void)log_subject_list;
-
     /*
      * We're not so worried about these asserts being removed in an NDEBUG build
      * - we'll either segfault immediately (for the first two) or for the count
@@ -335,9 +333,8 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
     AWS_ASSERT(log_subject_list->subject_list);
     AWS_ASSERT(log_subject_list->count);
 
-    uint32_t min_range = log_subject_list->subject_list[0].subject_id;
-
-    uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
+    const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
+    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
 
     AWS_ASSERT(slot_index < AWS_MAX_LOG_SUBJECT_SLOTS);
 
@@ -351,22 +348,27 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
     s_log_subject_slots[slot_index] = log_subject_list;
 }
 
-static struct aws_log_subject_info s_common_log_subject_infos[] = {
-    DEFINE_LOG_SUBJECT_INFO(
-        AWS_LS_COMMON_GENERAL,
-        "aws-c-common",
-        "Subject for aws-c-common logging that doesn't belong to any particular category"),
-    DEFINE_LOG_SUBJECT_INFO(
-        AWS_LS_COMMON_TASK_SCHEDULER,
-        "task-scheduler",
-        "Subject for task scheduler or task specific logging."),
-};
+void aws_unregister_log_subject_info_list(struct aws_log_subject_info_list *log_subject_list) {
+    /*
+     * We're not so worried about these asserts being removed in an NDEBUG build
+     * - we'll either segfault immediately (for the first two) or for the count
+     * assert, the registration will be ineffective.
+     */
+    AWS_ASSERT(log_subject_list);
+    AWS_ASSERT(log_subject_list->subject_list);
+    AWS_ASSERT(log_subject_list->count);
 
-static struct aws_log_subject_info_list s_common_log_subject_list = {
-    .subject_list = s_common_log_subject_infos,
-    .count = AWS_ARRAY_SIZE(s_common_log_subject_infos),
-};
+    const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
+    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
 
-void aws_common_load_log_subject_strings(void) {
-    aws_register_log_subject_info_list(&s_common_log_subject_list);
+    AWS_ASSERT(slot_index < AWS_MAX_LOG_SUBJECT_SLOTS);
+
+    if (slot_index >= AWS_MAX_LOG_SUBJECT_SLOTS) {
+        /* This is an NDEBUG build apparently. Kill the process rather than
+         * corrupting heap. */
+        fprintf(stderr, "Bad log subject slot index 0x%016x\n", slot_index);
+        abort();
+    }
+
+    s_log_subject_slots[slot_index] = NULL;
 }

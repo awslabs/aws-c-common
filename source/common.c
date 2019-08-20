@@ -15,6 +15,7 @@
 
 #include <aws/common/common.h>
 #include <aws/common/math.h>
+#include <aws/common/logging.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -510,12 +511,29 @@ static struct aws_error_info_list s_list = {
     .count = AWS_ARRAY_SIZE(errors),
 };
 
+static struct aws_log_subject_info s_common_log_subject_infos[] = {
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_COMMON_GENERAL,
+        "aws-c-common",
+        "Subject for aws-c-common logging that doesn't belong to any particular category"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_COMMON_TASK_SCHEDULER,
+        "task-scheduler",
+        "Subject for task scheduler or task specific logging."),
+};
+
+static struct aws_log_subject_info_list s_common_log_subject_list = {
+    .subject_list = s_common_log_subject_infos,
+    .count = AWS_ARRAY_SIZE(s_common_log_subject_infos),
+};
+
 static bool s_common_library_initialized = false;
 
 void aws_common_library_init(void) {
     if (!s_common_library_initialized) {
         s_common_library_initialized = true;
         aws_register_error_info(&s_list);
+        aws_register_log_subject_info_list(&s_common_log_subject_list);
     }
 }
 
@@ -523,6 +541,7 @@ void aws_common_library_clean_up(void) {
     if (s_common_library_initialized) {
         s_common_library_initialized = false;
         aws_unregister_error_info(&s_list);
+        aws_unregister_log_subject_info_list(&s_common_log_subject_list);
     }
 }
 

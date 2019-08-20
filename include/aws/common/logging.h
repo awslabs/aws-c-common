@@ -249,10 +249,10 @@ AWS_COMMON_API
 void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_subject_list);
 
 /**
- * Load aws-c-commons's log subject strings.
+ * Disconnects log subject strings with log subject integer values
  */
 AWS_COMMON_API
-void aws_common_load_log_subject_strings(void);
+void aws_unregister_log_subject_info_list(struct aws_log_subject_info_list *log_subject_list);
 
 /*
  * Initializes a pipeline logger that is built from the default formatter, a background thread-based channel, and
