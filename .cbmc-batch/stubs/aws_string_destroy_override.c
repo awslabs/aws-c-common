@@ -16,13 +16,16 @@
 #include <aws/common/string.h>
 
 /**
- * Saves the function pointer dereferences when doing the delloc. Otherwise the same as the
- * real function.
+ * Allocation/Deallocation using the standard aws-c-common allocators requires
+ * calls through function pointers.  Until we get better function pointer support in
+ * CBMC, this is expensive.  Instead, since we know we're using "malloc" to do allocation
+ * in CBMC proofs, we can just directly use "free" here, saving the function pointer derefences.
+ * Otherwise the same as the real function.
  */
 void aws_string_destroy(struct aws_string *str) {
-    AWS_PRECONDITION(aws_string_is_valid(str));
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
     /* If the string has no allocator, its a static string and can't be freed */
-    if (str->allocator) {
+    if (str && str->allocator) {
         free(str);
     }
 }

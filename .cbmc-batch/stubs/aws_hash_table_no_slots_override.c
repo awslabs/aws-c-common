@@ -14,7 +14,6 @@
  */
 
 #include <aws/common/private/hash_table_impl.h>
-
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
 
@@ -25,7 +24,7 @@
  * pre/post conditions.
  *
  * Since we're making almost everything nondet, the only externally visible property
- * of the hash-table is the [entry_count].
+ * of the hash-table is the entry_count.
  */
 
 /**
@@ -39,8 +38,9 @@ bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
  * The allocator for the hash_table
  */
 void make_hash_table_with_no_backing_store(struct aws_hash_table *map, size_t max_table_entries) {
-    /* Allocate a hash_table_state with no memory for the slots.
-     * This ensures that if I actually try to use the slots, CBMC will throw a fit.
+    /* Allocate a hash_table_state with no memory for the slots.  Since CBMC runs with memory safety assertions on,
+     * CBMC will detect any attempt to use the slots.  This ensures that no code will ever accidentally use the values
+     * in the slots, ensuring maximal nondeterminism.
      */
     map->p_impl = bounded_malloc(sizeof(struct hash_table_state));
     __CPROVER_assume(map->p_impl->entry_count <= max_table_entries);
@@ -118,8 +118,8 @@ int aws_hash_table_create(
  * -DHASH_TABLE_FIND_ELEMENT_GENERATOR=the_generator_fn, where the_generator_fn has signature:
  *   the_generator_fnconst struct aws_hash_table *map, const void *key, struct aws_hash_element *p_elem).
  *
- * NOTE: If you want a version of aws_hash_table_find() that implements it be assuming the value on
- * the slot matched the value returned, that can be found in [aws_hash_table_find_override.c]
+ * NOTE: If you want a version of aws_hash_table_find() that that ensures that the table actually has the found value
+ * when find returns success, that can be found in aws_hash_table_find_override.c
  */
 #ifdef HASH_TABLE_FIND_ELEMENT_GENERATOR
 void HASH_TABLE_FIND_ELEMENT_GENERATOR(
@@ -142,4 +142,68 @@ int aws_hash_table_find(const struct aws_hash_table *map, const void *key, struc
     }
     AWS_POSTCONDITION(aws_hash_table_is_valid(map), "Output hash_table [map] must be valid.");
     return AWS_OP_SUCCESS;
+}
+
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+void HASH_ITER_ELEMENT_GENERATOR(struct aws_hash_iter *new_iter, const struct aws_hash_iter *old_iter);
+#endif
+
+/* Simple map for what the iterator does: it just chugs along, returns a nondet value, until its gone at most
+ * map->entry_count times */
+struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
+    /* Leave it as non-det as possible */
+    AWS_PRECONDITION(aws_hash_table_is_valid(map));
+
+    /* Build a nondet iterator, set the required fields, and return it */
+    struct aws_hash_iter rval;
+    rval.map = map;
+    rval.limit = map->p_impl->entry_count;
+    rval.slot = 0;
+    rval.status = (rval.slot == rval.limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+    HASH_ITER_ELEMENT_GENERATOR(&rval, NULL);
+#endif
+    return rval;
+}
+
+bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
+    AWS_PRECONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
+        "Input aws_hash_iter [iter] status should either be done or ready to use.");
+    bool rval = iter->slot == iter->limit;
+    assert(rval == (iter->status == AWS_HASH_ITER_STATUS_DONE));
+    return rval;
+}
+
+void aws_hash_iter_next(struct aws_hash_iter *iter) {
+    if (iter->slot == iter->limit) {
+        iter->status = AWS_HASH_ITER_STATUS_DONE;
+        return;
+    }
+
+    /* Build a nondet iterator, set the required fields, and copy it over */
+    struct aws_hash_iter rval;
+    rval.map = iter->map;
+    rval.limit = iter->limit;
+    rval.slot = iter->slot + 1;
+    rval.status = (rval.slot == rval.limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
+#ifdef HASH_ITER_ELEMENT_GENERATOR
+    HASH_ITER_ELEMENT_GENERATOR(&rval, iter);
+#endif
+
+    *iter = rval;
+}
+
+/* delete always leaves the element unusable, so we'll just leave the element totally nondet */
+void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
+    /* reduce the size of the underlying map */
+    iter->map->p_impl->entry_count--;
+
+    /* Build a nondet iterator, set the required fields, and copy it over */
+    struct aws_hash_iter rval;
+    rval.map = iter->map;
+    rval.slot = iter->slot;
+    rval.limit = iter->limit - 1;
+    rval.status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
+    *iter = rval;
 }

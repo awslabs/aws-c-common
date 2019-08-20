@@ -19,11 +19,16 @@
 
 /**
  * Override the aws_string_new_from_array to just give non-det bytes, rather than doing the memcpy.
- * Since we already check AWS_MEM_IS_READABLE(bytes, len) in the precondition, this is totally sound
+ * Since we already check AWS_MEM_IS_READABLE(bytes, len) in the precondition, this is sound - it overapproximates
+ * the behaviour of the real function, butand has all the same memory safety checks.
  */
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
+
+    if (nondet_bool()) {
+        return NULL;
+    }
 
     size_t malloc_size = sizeof(struct aws_string) + 1 + len;
 
@@ -32,9 +37,5 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     __CPROVER_assume(str->allocator == allocator);
     __CPROVER_assume(str->len == len);
     __CPROVER_assume(str->bytes[len] == '\0');
-    /* Fields are declared const, so we need to copy them in like this */
-    // *(struct aws_allocator **)(&str->allocator) = allocator;
-    //*(size_t *)(&str->len) = len;
-    //*(uint8_t *)&str->bytes[len] = '\0';
     AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
 }
