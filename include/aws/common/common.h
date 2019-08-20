@@ -32,4 +32,21 @@
 #include <stdlib.h> /* for abort() */
 #include <string.h>
 
+AWS_EXTERN_C_BEGIN
+
+/**
+ * Initializes internal datastructures used by aws-c-common.
+ * Must be called before using any functionality in aws-c-common.
+ */
+AWS_COMMON_API
+void aws_common_library_init(void);
+
+/**
+ * Shuts down the internal datastructures used by aws-c-common.
+ */
+AWS_COMMON_API
+void aws_common_library_clean_up(void);
+
+AWS_EXTERN_C_END
+
 #endif /* AWS_COMMON_COMMON_H */
