@@ -55,8 +55,8 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
 
     uint8_t *tail_cpy;
     uint8_t *head_cpy;
-    AWS_ATOMIC_LOAD_PTR(ring_buf, tail_cpy, &ring_buf->tail);
-    AWS_ATOMIC_LOAD_PTR(ring_buf, head_cpy, &ring_buf->head);
+    AWS_ATOMIC_LOAD_TAIL_PTR(ring_buf, tail_cpy, &ring_buf->tail);
+    AWS_ATOMIC_LOAD_HEAD_PTR(ring_buf, head_cpy, &ring_buf->head);
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
@@ -67,8 +67,8 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
             return aws_raise_error(AWS_ERROR_OOM);
         }
-        AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
-        AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->tail, ring_buf->allocation);
+        AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
+        AWS_ATOMIC_STORE_TAIL_PTR(ring_buf, &ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
         AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
         AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -81,7 +81,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         size_t space = tail_cpy - head_cpy - 1;
 
         if (space >= requested_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -91,7 +91,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
     } else if (tail_cpy < head_cpy) {
         /* prefer the head space for efficiency. */
         if ((size_t)(ring_buf->allocation_end - head_cpy) >= requested_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -99,7 +99,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
         }
 
         if ((size_t)(tail_cpy - ring_buf->allocation) > requested_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -129,8 +129,8 @@ int aws_ring_buffer_acquire_up_to(
 
     uint8_t *tail_cpy;
     uint8_t *head_cpy;
-    AWS_ATOMIC_LOAD_PTR(ring_buf, tail_cpy, &ring_buf->tail);
-    AWS_ATOMIC_LOAD_PTR(ring_buf, head_cpy, &ring_buf->head);
+    AWS_ATOMIC_LOAD_TAIL_PTR(ring_buf, tail_cpy, &ring_buf->tail);
+    AWS_ATOMIC_LOAD_HEAD_PTR(ring_buf, head_cpy, &ring_buf->head);
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
@@ -146,8 +146,8 @@ int aws_ring_buffer_acquire_up_to(
 
         /* go as big as we can. */
         /* we don't have any vended, so this should be safe. */
-        AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + allocation_size);
-        AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->tail, ring_buf->allocation);
+        AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + allocation_size);
+        AWS_ATOMIC_STORE_TAIL_PTR(ring_buf, &ring_buf->tail, ring_buf->allocation);
         *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, allocation_size);
         AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
         AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -164,7 +164,7 @@ int aws_ring_buffer_acquire_up_to(
         size_t returnable_size = space > requested_size ? requested_size : space;
 
         if (returnable_size >= minimum_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, head_cpy + returnable_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, head_cpy + returnable_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, returnable_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -177,7 +177,7 @@ int aws_ring_buffer_acquire_up_to(
 
         /* if you can vend the whole thing do it. Also prefer head space to tail space. */
         if (head_space >= requested_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, head_cpy + requested_size);
             *dest = aws_byte_buf_from_empty_array(head_cpy, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -185,7 +185,7 @@ int aws_ring_buffer_acquire_up_to(
         }
 
         if (tail_space > requested_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + requested_size);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, requested_size);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -194,7 +194,7 @@ int aws_ring_buffer_acquire_up_to(
 
         /* now vend as much as possible, once again preferring head space. */
         if (head_space >= minimum_size && head_space >= tail_space) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, head_cpy + head_space);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, head_cpy + head_space);
             *dest = aws_byte_buf_from_empty_array(head_cpy, head_space);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -202,7 +202,7 @@ int aws_ring_buffer_acquire_up_to(
         }
 
         if (tail_space > minimum_size) {
-            AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + tail_space - 1);
+            AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, &ring_buf->head, ring_buf->allocation + tail_space - 1);
             *dest = aws_byte_buf_from_empty_array(ring_buf->allocation, tail_space - 1);
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
             AWS_POSTCONDITION(aws_byte_buf_is_valid(dest));
@@ -232,7 +232,7 @@ void aws_ring_buffer_release(struct aws_ring_buffer *ring_buffer, struct aws_byt
     AWS_PRECONDITION(aws_ring_buffer_is_valid(ring_buffer));
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     AWS_PRECONDITION(s_buf_belongs_to_pool(ring_buffer, buf));
-    AWS_ATOMIC_STORE_PTR(ring_buffer, &ring_buffer->tail, buf->buffer + buf->capacity);
+    AWS_ATOMIC_STORE_TAIL_PTR(ring_buffer, &ring_buffer->tail, buf->buffer + buf->capacity);
     AWS_ZERO_STRUCT(*buf);
     AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buffer));
 }
