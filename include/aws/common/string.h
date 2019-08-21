@@ -198,6 +198,13 @@ bool aws_byte_buf_write_from_whole_string(
 AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
 
+/**
+ * If the string was dynamically allocated, clones it. If the string was statically allocated (i.e. has no allocator),
+ * returns the original string.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str);
+
 AWS_EXTERN_C_END
 
 /**
