@@ -22,10 +22,11 @@
 /**
  * Non-determinstic functions used in CBMC proofs
  */
-size_t nondet_size_t();
-int nondet_int();
-uint8_t nondet_uint8_t();
 bool nondet_bool();
-void *nondet_voidp();
+int nondet_int();
+size_t nondet_size_t();
+uint16_t nondet_uint16_t();
 uint32_t nondet_uint32_t();
 uint64_t nondet_uint64_t();
+uint8_t nondet_uint8_t();
+void *nondet_voidp();
