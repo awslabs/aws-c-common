@@ -25,7 +25,7 @@ uint16_t AWS_BYTE_CURSOR_READ_BE16_GENERATOR(const struct aws_byte_cursor *curso
 
 /**
  * This function is used in deserializing values from a byte cursor.
- * Sometimes, for CBMB proof, it is expected that certain values in byte stream are constrained.
+ * Sometimes, for CBMC proof, it is expected that certain values in byte stream are constrained.
  * For example, in the aws_cryptosdk_enc_ctx_deserilize() proof, the first value we read is the number of elements,
  * which we need to be constrained in order to ensure that CBMC can fully unwind all loops. All other values can be left
  * nondet. In this case, define -DAWS_BYTE_CURSOR_READ_BE16_GENERATOR=generator_name, and the correct generator will be

@@ -35,6 +35,39 @@ bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
 }
 
 /**
+ * Given a pointer to a hash_iter, checks that it is well-formed, with all data-structure invariants.
+ */
+bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
+    if (!iter) {
+        return false;
+    }
+    if (!iter->map) {
+        return false;
+    }
+    if (!aws_hash_table_is_valid(iter->map)) {
+        return false;
+    }
+    if (iter->limit != iter->map->p_impl->entry_count) {
+        return false;
+    }
+
+    switch (iter->status) {
+        case AWS_HASH_ITER_STATUS_DONE:
+            /* Done iff slot == limit */
+            return iter->slot == iter->limit;
+        case AWS_HASH_ITER_STATUS_DELETE_CALLED:
+            /* iter->slot can underflow to SIZE_MAX after a delete
+             * see the comments for aws_hash_iter_delete() */
+            return iter->slot <= iter->limit;
+        case AWS_HASH_ITER_STATUS_READY_FOR_USE:
+            /* A slot must point to a valid location (i.e. hash_code != 0) */
+            return iter->slot < iter->limit;
+    }
+    /* Invalid status code */
+    return false;
+}
+
+/**
  * The allocator for the hash_table
  */
 void make_hash_table_with_no_backing_store(struct aws_hash_table *map, size_t max_table_entries) {
@@ -167,6 +200,7 @@ struct aws_hash_iter aws_hash_iter_begin(const struct aws_hash_table *map) {
 }
 
 bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
     AWS_PRECONDITION(
         iter->status == AWS_HASH_ITER_STATUS_DONE || iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE,
         "Input aws_hash_iter [iter] status should either be done or ready to use.");
@@ -176,6 +210,8 @@ bool aws_hash_iter_done(const struct aws_hash_iter *iter) {
 }
 
 void aws_hash_iter_next(struct aws_hash_iter *iter) {
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+
     if (iter->slot == iter->limit) {
         iter->status = AWS_HASH_ITER_STATUS_DONE;
         return;
@@ -196,6 +232,14 @@ void aws_hash_iter_next(struct aws_hash_iter *iter) {
 
 /* delete always leaves the element unusable, so we'll just leave the element totally nondet */
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+    AWS_PRECONDITION(
+        iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE, "Input aws_hash_iter [iter] must be ready for use.");
+    AWS_PRECONDITION(aws_hash_iter_is_valid(iter));
+    AWS_PRECONDITION(
+        iter->map->p_impl->entry_count > 0,
+        "The hash_table_state pointed by input [iter] must contain at least one entry.");
+
     /* reduce the size of the underlying map */
     iter->map->p_impl->entry_count--;
 

@@ -424,6 +424,12 @@ bool aws_ptr_eq(const void *a, const void *b);
 AWS_COMMON_API
 bool aws_hash_table_is_valid(const struct aws_hash_table *map);
 
+/**
+ * Given a pointer to a hash_iter, checks that it is well-formed, with all data-structure invariants.
+ */
+AWS_COMMON_API
+bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_HASH_TABLE_H */

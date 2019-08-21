@@ -20,7 +20,7 @@
 /**
  * Override the aws_string_new_from_array to just give non-det bytes, rather than doing the memcpy.
  * Since we already check AWS_MEM_IS_READABLE(bytes, len) in the precondition, this is sound - it overapproximates
- * the behaviour of the real function, butand has all the same memory safety checks.
+ * the behaviour of the real function, and has all the same memory safety checks.
  */
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
     AWS_PRECONDITION(allocator);
