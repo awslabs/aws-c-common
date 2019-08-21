@@ -549,9 +549,8 @@ void aws_common_library_clean_up(void) {
 
 void aws_common_fatal_assert_library_initialized(void) {
     if (!s_common_library_initialized) {
-        AWS_LOGF_FATAL(
-            AWS_LS_COMMON_GENERAL,
-            "aws_common_library_init() must be called before using any functionality in aws-c-common.");
+        fprintf(
+            stderr, "%s", "aws_common_library_init() must be called before using any functionality in aws-c-common.");
 
         AWS_FATAL_ASSERT(s_common_library_initialized);
     }

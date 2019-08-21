@@ -146,20 +146,18 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
      * - we'll either segfault immediately (for the first two) or for the count
      * assert, the registration will be ineffective.
      */
-    AWS_ASSERT(error_info);
-    AWS_ASSERT(error_info->error_list);
-    AWS_ASSERT(error_info->count);
+    AWS_FATAL_ASSERT(error_info);
+    AWS_FATAL_ASSERT(error_info->error_list);
+    AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;
     const int slot_index = min_range >> SLOT_DIV_SHIFT;
-
-    AWS_ASSERT(slot_index < AWS_MAX_ERROR_SLOTS && slot_index >= 0);
 
     if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad error slot index %d\n", slot_index);
-        AWS_FATAL_ASSERT(0);
+        AWS_FATAL_ASSERT(false);
     }
 
 #if DEBUG_BUILD
@@ -182,14 +180,12 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
 }
 
 void aws_unregister_error_info(const struct aws_error_info_list *error_info) {
-    AWS_ASSERT(error_info);
-    AWS_ASSERT(error_info->error_list);
-    AWS_ASSERT(error_info->count);
+    AWS_FATAL_ASSERT(error_info);
+    AWS_FATAL_ASSERT(error_info->error_list);
+    AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;
     const int slot_index = min_range >> SLOT_DIV_SHIFT;
-
-    AWS_ASSERT(slot_index < AWS_MAX_ERROR_SLOTS && slot_index >= 0);
 
     if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than

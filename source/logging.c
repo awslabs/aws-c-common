@@ -329,14 +329,12 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
      * - we'll either segfault immediately (for the first two) or for the count
      * assert, the registration will be ineffective.
      */
-    AWS_ASSERT(log_subject_list);
-    AWS_ASSERT(log_subject_list->subject_list);
-    AWS_ASSERT(log_subject_list->count);
+    AWS_FATAL_ASSERT(log_subject_list);
+    AWS_FATAL_ASSERT(log_subject_list->subject_list);
+    AWS_FATAL_ASSERT(log_subject_list->count);
 
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
     const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
-
-    AWS_ASSERT(slot_index < AWS_MAX_LOG_SUBJECT_SLOTS);
 
     if (slot_index >= AWS_MAX_LOG_SUBJECT_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
@@ -354,20 +352,18 @@ void aws_unregister_log_subject_info_list(struct aws_log_subject_info_list *log_
      * - we'll either segfault immediately (for the first two) or for the count
      * assert, the registration will be ineffective.
      */
-    AWS_ASSERT(log_subject_list);
-    AWS_ASSERT(log_subject_list->subject_list);
-    AWS_ASSERT(log_subject_list->count);
+    AWS_FATAL_ASSERT(log_subject_list);
+    AWS_FATAL_ASSERT(log_subject_list->subject_list);
+    AWS_FATAL_ASSERT(log_subject_list->count);
 
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
     const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
-
-    AWS_ASSERT(slot_index < AWS_MAX_LOG_SUBJECT_SLOTS);
 
     if (slot_index >= AWS_MAX_LOG_SUBJECT_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad log subject slot index 0x%016x\n", slot_index);
-        abort();
+        AWS_FATAL_ASSERT(false);
     }
 
     s_log_subject_slots[slot_index] = NULL;
