@@ -137,11 +137,8 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
 
-/**
- * Loads error strings for debugging and logging purposes.
- */
 AWS_COMMON_API
-void aws_load_error_strings(void);
+void aws_unregister_error_info(const struct aws_error_info_list *error_info);
 
 /**
  * Convert a c library io error into an aws error.
