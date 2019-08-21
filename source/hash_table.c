@@ -1022,3 +1022,81 @@ bool aws_ptr_eq(const void *a, const void *b) {
 bool aws_hash_table_is_valid(const struct aws_hash_table *map) {
     return map && map->p_impl && hash_table_state_is_valid(map->p_impl);
 }
+
+/**
+ * Best-effort check of hash_table_state data-structure invariants
+ * Some invariants, such as that the number of entries is actually the
+ * same as the entry_count field, would require a loop to check
+ */
+bool hash_table_state_is_valid(const struct hash_table_state *map) {
+    if (!map) {
+        return false;
+    }
+    bool hash_fn_nonnull = (map->hash_fn != NULL);
+    bool equals_fn_nonnull = (map->equals_fn != NULL);
+    /*destroy_key_fn and destroy_value_fn are both allowed to be NULL*/
+    bool alloc_nonnull = (map->alloc != NULL);
+    bool size_at_least_two = (map->size >= 2);
+    bool size_is_power_of_two = aws_is_power_of_two(map->size);
+    bool entry_count = (map->entry_count <= map->max_load);
+    bool max_load = (map->max_load < map->size);
+    bool mask_is_correct = (map->mask == (map->size - 1));
+    bool max_load_factor_bounded = map->max_load_factor == 0.95; //(map->max_load_factor < 1.0);
+    bool slots_allocated = AWS_MEM_IS_WRITABLE(&map->slots[0], sizeof(map->slots[0]) * map->size);
+
+    return hash_fn_nonnull && equals_fn_nonnull && alloc_nonnull && size_at_least_two && size_is_power_of_two &&
+           entry_count && max_load && mask_is_correct && max_load_factor_bounded && slots_allocated;
+}
+
+/**
+ * Given a pointer to a hash_iter, checks that it is well-formed, with all data-structure invariants.
+ */
+bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
+    if (!iter) {
+        return false;
+    }
+    if (!iter->map) {
+        return false;
+    }
+    if (!aws_hash_table_is_valid(iter->map)) {
+        return false;
+    }
+    if (iter->limit > iter->map->p_impl->size) {
+        return false;
+    }
+
+    switch (iter->status) {
+        case AWS_HASH_ITER_STATUS_DONE:
+            /* Done iff slot == limit */
+            return iter->slot == iter->limit;
+        case AWS_HASH_ITER_STATUS_DELETE_CALLED:
+            /* iter->slot can underflow to SIZE_MAX after a delete
+             * see the comments for aws_hash_iter_delete() */
+            return iter->slot <= iter->limit || iter->slot == SIZE_MAX;
+        case AWS_HASH_ITER_STATUS_READY_FOR_USE:
+            /* A slot must point to a valid location (i.e. hash_code != 0) */
+            return iter->slot < iter->limit && iter->map->p_impl->slots[iter->slot].hash_code != 0;
+    }
+    /* Invalid status code */
+    return false;
+}
+
+/**
+ * Determine the total number of bytes needed for a hash-table with
+ * "size" slots. If the result would overflow a size_t, return
+ * AWS_OP_ERR; otherwise, return AWS_OP_SUCCESS with the result in
+ * "required_bytes".
+ */
+int hash_table_state_required_bytes(size_t size, size_t *required_bytes) {
+
+    size_t elemsize;
+    if (aws_mul_size_checked(size, sizeof(struct hash_table_entry), &elemsize)) {
+        return AWS_OP_ERR;
+    }
+
+    if (aws_add_size_checked(elemsize, sizeof(struct hash_table_state), required_bytes)) {
+        return AWS_OP_ERR;
+    }
+
+    return AWS_OP_SUCCESS;
+}
