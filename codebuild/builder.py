@@ -490,24 +490,103 @@ def run_build(build_spec, is_dryrun):
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-    def _flatten_command(command):
+    def _flatten_command(*command):
         # Process out lists
         new_command = []
-        for e in command:
-            e_type = type(e)
+        def _proc_segment(command_segment):
+            e_type = type(command_segment)
             if e_type == str:
-                new_command.append(e)
-            elif e_type == list:
-                new_command.extend(e)
+                new_command.append(command_segment)
+            elif e_type == list or e_type == tuple:
+                for segment in command_segment:
+                    _proc_segment(segment)
+        _proc_segment(command)
         return new_command
 
-    def _log_command(command):
-        print('>', ' '.join(_flatten_command(command)), flush=True)
+    def _log_command(*command):
+        print('>', ' '.join(_flatten_command(*command)), flush=True)
 
-    def _run_command(command):
-        _log_command(command)
+    def _run_command(*command):
+        _log_command(*command)
         if not is_dryrun:
-            subprocess.check_call(_flatten_command(command), stdout=sys.stdout, stderr=sys.stderr)
+            subprocess.check_call(_flatten_command(*command), stdout=sys.stdout, stderr=sys.stderr)
+
+    # Helper to run makedirs regardless of dry run status
+    def _mkdir(directory):
+        if not is_dryrun:
+            os.makedirs(directory, exist_ok=True)
+        _log_command("mkdir", "-p", directory)
+
+    # Helper to run chdir regardless of dry run status
+    def _cd(directory):
+        if not is_dryrun:
+            os.chdir(directory)
+        _log_command("cd", directory)
+
+    # Helper to build
+    def _build_project(project=None, build_tests=False, install=False):
+
+        #TODO: project-customizable hooks
+
+        if not project:
+            project_source_dir = source_dir
+            project_build_dir = build_dir
+        else:
+            project_source_dir = os.path.join(build_dir, project)
+            project_build_dir = os.path.join(project_source_dir, 'build')
+
+        # If the build directory doesn't already exist, make it
+        _mkdir(project_build_dir)
+
+        # CD to the build directory
+        pwd = os.getcwd()
+        _cd(project_build_dir)
+
+        # Set compiler flags
+        compiler_flags = []
+        for opt in ['c', 'cxx']:
+            if opt in config and config[opt]:
+                compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
+        # Run CMake
+        cmake_args = [
+            "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+            "-DCMAKE_PREFIX_PATH=" + install_dir,
+            "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
+            "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+        ]
+        _run_command("cmake", "--version")
+        _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
+
+        # Run the build
+        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG)
+
+        # Do install
+        if install:
+            _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG, "--target", "install")
+
+        # CD back to the beginning directory
+        _cd(pwd)
+
+    # Helper to git pull, build, and install a dependant project
+    def _install_dependency(project, pin=None):
+
+        # CD to the build directory
+        pwd = os.getcwd()
+        _cd(build_dir)
+
+        _run_command("git", "clone", "https://github.com/awslabs/{}.git".format(project))
+        _cd(project)
+
+        # Attempt to checkout the pinned revision
+        if pin:
+            _run_command("git", "checkout", pin)
+
+        # Build/install
+        _build_project(project, install=True)
+
+        # CD back to the beginning directory
+        _cd(pwd)
 
     # Make the build directory
     if is_dryrun:
@@ -516,6 +595,10 @@ def run_build(build_spec, is_dryrun):
         build_dir = tempfile.mkdtemp()
     _log_command(['mkdir', build_dir])
 
+    # Make the install directory
+    install_dir = os.path.join(build_dir, 'install')
+    _mkdir(install_dir)
+
     # Build the config object
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
 
@@ -523,16 +606,16 @@ def run_build(build_spec, is_dryrun):
 
     # Install keys
     for key in config['apt_keys']:
-        _run_command(["sudo", "apt-key", "adv", "--fetch-keys", key])
+        _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
 
     # Add APT repositories
     for repo in config['apt_repos']:
-        _run_command(["sudo", "apt-add-repository", repo])
+        _run_command("sudo", "apt-add-repository", repo)
 
     # Install packages
     if config['apt_packages']:
-        _run_command(["sudo", "apt-get", "update", "-y"])
-        _run_command(["sudo", "apt-get", "install", "-y", "-f", config['apt_packages']])
+        _run_command("sudo", "apt-get", "update", "-y")
+        _run_command("sudo", "apt-get", "install", "-y", "-f", config['apt_packages'])
 
     # PRE BUILD
 
@@ -549,34 +632,21 @@ def run_build(build_spec, is_dryrun):
 
     # BUILD
 
-    # CD to the build directory
-    if not is_dryrun:
-        os.chdir(build_dir)
-    _log_command(["cd", build_dir])
-
-    # Set compiler flags
-    compiler_flags = []
-    for opt in ['c', 'cxx']:
-        if opt in config and config[opt]:
-            compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
-
-    # Run CMake
-    _run_command(["cmake", "--version"])
-    _run_command(["cmake", config['build_args'], compiler_flags, "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
-
-    # Run the build
-    _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
+    # Actually run the build (always build tests, even if we won't run them)
+    _build_project(build_tests=True)
 
     # Run tests if necessary
     if config['run_tests']:
-        _run_command(["ctest", ".", "--output-on-failure"])
+        # Go to the build folder
+        _cd(build_dir)
+
+        # Run the tests
+        _run_command("ctest", ".", "--output-on-failure")
+
+        # Go back to the source dir
+        _cd(source_dir)
 
     # POST BUILD
-
-    # Go back to the source dir
-    if not is_dryrun:
-        os.chdir(source_dir)
-    _log_command(["cd", source_dir])
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
@@ -696,7 +766,6 @@ if __name__ == '__main__':
         build_spec = BuildSpec(spec=build_name)
 
         print("Running build", build_spec.name(), flush=True)
-        print("Current directory:", os.getcwd(), flush=True)
 
         run_build(build_spec, args.dry_run)
 
