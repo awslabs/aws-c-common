@@ -209,8 +209,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     void *newptr = allocator->mem_acquire(allocator, newsize);
     if (!newptr) {
-        aws_raise_error(AWS_ERROR_OOM);
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_OOM);
     }
 
     memcpy(newptr, *ptr, oldsize);

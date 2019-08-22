@@ -146,7 +146,6 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
         return NULL;
     }
 
-    /* If there is a defined calloc, use it */
     void *mem = can_fail_calloc(num, size);
     if (!mem) {
         aws_raise_error(AWS_ERROR_OOM);
