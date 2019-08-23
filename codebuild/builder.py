@@ -16,12 +16,18 @@ import os, sys, glob
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
-    __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version')
+    __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version', 'downstream')
 
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
-            self.host, self.compiler, self.compiler_version, self.target, self.arch = kwargs['spec'].split('-')
+            self.host, self.compiler, self.compiler_version, self.target, self.arch, *rest = kwargs['spec'].split('-')
+
+            for variant in rest:
+                if variant in BuildSpec.__slots__:
+                    setattr(self, variant, True)
+                else:
+                    raise Exception("Unknown build variant '{}'".format(variant))
 
         # Pull out individual fields. Note this is not in an else to support overriding at construction time
         for slot in BuildSpec.__slots__:
@@ -480,7 +486,7 @@ def produce_config(build_spec, **additional_variables):
 # Used in dry-run builds to track simulated working directory
 cwd = os.getcwd()
 
-def run_build(build_spec, build_downstream, is_dryrun):
+def run_build(build_spec, is_dryrun):
 
     if not is_dryrun:
         import tempfile, shutil, subprocess
@@ -632,7 +638,7 @@ def run_build(build_spec, build_downstream, is_dryrun):
             built_projects.append(project)
 
         # Build downstream dependencies (build and run their tests if this build is setup for that)
-        if build_downstream:
+        if build_spec.downstream:
             _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
 
         # CD back to the beginning directory
@@ -705,6 +711,7 @@ CODEBUILD_OVERRIDES = {
     'linux-clang3-x64': 'linux-clang-3-linux-x64',
     'linux-clang6-x64': 'linux-clang-6-linux-x64',
     'linux-clang8-x64': 'linux-clang-8-linux-x64',
+    'downstream': 'linux-clang-6-linux-x64-downstream',
 
     'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
     'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
@@ -780,7 +787,6 @@ if __name__ == '__main__':
 
     build = commands.add_parser('build', help="Run the requested build")
     build.add_argument('build', type=str)
-    build.add_argument('--downstream', dest='downstream', action='store_true')
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
@@ -796,7 +802,7 @@ if __name__ == '__main__':
 
         print("Running build", build_spec.name(), flush=True)
 
-        run_build(build_spec, args.downstream, args.dry_run)
+        run_build(build_spec, args.dry_run)
 
     if args.command == 'codebuild':
 
