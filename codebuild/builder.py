@@ -523,9 +523,9 @@ def run_build(build_spec, is_dryrun):
 
     # Helper to run makedirs regardless of dry run status
     def _mkdir(directory):
+        _log_command("mkdir", "-p", directory)
         if not is_dryrun:
             os.makedirs(directory, exist_ok=True)
-        _log_command("mkdir", "-p", directory)
 
     def _cwd():
         if is_dryrun:
@@ -536,6 +536,7 @@ def run_build(build_spec, is_dryrun):
 
     # Helper to run chdir regardless of dry run status
     def _cd(directory):
+        _log_command("cd", directory)
         if is_dryrun:
             global cwd
             if os.path.isabs(directory) or directory.startswith('$'):
@@ -544,7 +545,6 @@ def run_build(build_spec, is_dryrun):
                 cwd = os.path.join(cwd, directory)
         else:
             os.chdir(directory)
-        _log_command("cd", directory)
 
     # Build a list of projects from a config file
     def _build_dependencies(project_list, build_tests, run_tests):
@@ -676,9 +676,9 @@ def run_build(build_spec, is_dryrun):
 
     # Set build environment
     for var, value in config['build_env'].items():
+        _log_command(["export", "{}={}".format(var, value)])
         if not is_dryrun:
             os.environ[var] = value
-        _log_command(["export", "{}={}".format(var, value)])
 
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
@@ -696,9 +696,9 @@ def run_build(build_spec, is_dryrun):
         _run_command(step)
 
     # Delete temp dir
+    _log_command(["rm", "-rf", build_dir])
     if not is_dryrun:
         shutil.rmtree(build_dir)
-    _log_command(["rm", "-rf", build_dir])
 
     return commands
 
