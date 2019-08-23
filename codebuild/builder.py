@@ -12,30 +12,35 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob
+import os, sys, glob, subprocess
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
-    __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version')
-
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
-            self.host, self.compiler, self.compiler_version, self.target, self.arch = kwargs['spec'].split('-')
+            self.host, self.compiler, self.compiler_version, self.target, self.arch, *rest = kwargs['spec'].split('-')
+
+            for variant in ('downstream',):
+                if variant in rest:
+                    setattr(self, variant, True)
+                else:
+                    setattr(self, variant, False)
 
         # Pull out individual fields. Note this is not in an else to support overriding at construction time
-        for slot in BuildSpec.__slots__:
+        for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
             if slot in kwargs:
                 setattr(self, slot, kwargs[slot])
 
-    def name(self):
-        return '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        self.name = '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        if self.downstream:
+            self.name += "-downstream"
 
     def __str__(self):
-        return self.name()
+        return self.name
 
     def __repr__(self):
-        return self.name()
+        return self.name
 
 ########################################################################################################################
 # DATA DEFINITIONS
@@ -86,6 +91,9 @@ HOSTS = {
 
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
+        ],
+        "apt_packages": [
+            "libssl-dev",
         ],
 
         'image_type': "LINUX_CONTAINER",
@@ -477,10 +485,31 @@ def produce_config(build_spec, **additional_variables):
 # RUN BUILD
 ########################################################################################################################
 
+# Used in dry-run builds to track simulated working directory
+cwd = os.getcwd()
+
+def _get_git_branch():
+    branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
+    branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
+
+    print("Found branches:", branches)
+
+    for branch in branches:
+        if branch == "(no branch)":
+            continue
+
+        origin_str = "remotes/origin/"
+        if branch.startswith(origin_str):
+            branch = branch[len(origin_str):]
+
+        return branch
+
+    return None
+
 def run_build(build_spec, is_dryrun):
 
     if not is_dryrun:
-        import tempfile, shutil, subprocess
+        import tempfile, shutil
 
     #TODO These platforms don't succeed when doing a RelWithDebInfo build
     if build_spec.host in ("al2012", "manylinux"):
@@ -490,24 +519,180 @@ def run_build(build_spec, is_dryrun):
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-    def _flatten_command(command):
+    built_projects = []
+
+    git_branch = _get_git_branch()
+    if git_branch:
+        print("On git branch {}".format(git_branch))
+
+    def _flatten_command(*command):
         # Process out lists
         new_command = []
-        for e in command:
-            e_type = type(e)
+        def _proc_segment(command_segment):
+            e_type = type(command_segment)
             if e_type == str:
-                new_command.append(e)
-            elif e_type == list:
-                new_command.extend(e)
+                new_command.append(command_segment)
+            elif e_type == list or e_type == tuple:
+                for segment in command_segment:
+                    _proc_segment(segment)
+        _proc_segment(command)
         return new_command
 
-    def _log_command(command):
-        print('>', ' '.join(_flatten_command(command)), flush=True)
+    def _log_command(*command):
+        print('>', ' '.join(_flatten_command(*command)), flush=True)
 
-    def _run_command(command):
-        _log_command(command)
+    def _run_command(*command):
+        _log_command(*command)
         if not is_dryrun:
-            subprocess.check_call(_flatten_command(command), stdout=sys.stdout, stderr=sys.stderr)
+            subprocess.check_call(_flatten_command(*command), stdout=sys.stdout, stderr=sys.stderr)
+
+    # Helper to run makedirs regardless of dry run status
+    def _mkdir(directory):
+        _log_command("mkdir", "-p", directory)
+        if not is_dryrun:
+            os.makedirs(directory, exist_ok=True)
+
+    def _cwd():
+        if is_dryrun:
+            global cwd
+            return cwd
+        else:
+            return os.getcwd()
+
+    # Helper to run chdir regardless of dry run status
+    def _cd(directory):
+        _log_command("cd", directory)
+        if is_dryrun:
+            global cwd
+            if os.path.isabs(directory) or directory.startswith('$'):
+                cwd = directory
+            else:
+                cwd = os.path.join(cwd, directory)
+        else:
+            os.chdir(directory)
+
+    # Build a list of projects from a config file
+    def _build_dependencies(project_list, build_tests, run_tests):
+
+        pwd_1 = _cwd()
+        _cd(build_dir)
+
+        for project in project_list:
+            name = project.get("name", None)
+            if not name:
+                raise Exception("Project definition missing name: " + project)
+
+            # Skip project if already built
+            if name in built_projects:
+                continue
+
+            hosts = project.get("hosts", None)
+
+            if hosts and build_spec.host not in hosts:
+                print("Skipping dependency {} as it is not enabled for this host".format(name))
+                continue
+
+            account = project.get("account", "awslabs")
+            pin = project.get("revision", None)
+
+            git = "https://github.com/{}/{}".format(account, name)
+            _run_command("git", "clone", git)
+
+            pwd_2 = _cwd()
+            _cd(name)
+
+            # Attempt to checkout a branch with the same name as the current branch
+            try:
+                _run_command("git", "checkout", git_branch)
+            except:
+                print("Project {} does not have a branch {}".format(name, git_branch))
+                # Attempt to checkout the pinned revision
+                if pin:
+                    _run_command("git", "checkout", pin)
+
+            # Build/install
+            _build_project(name, build_tests=build_tests, run_tests=run_tests)
+
+            _cd(pwd_2)
+
+        _cd(pwd_1)
+
+    # Helper to build
+    def _build_project(project=None, build_tests=False, run_tests=False):
+
+        if not project:
+            project_source_dir = source_dir
+            project_build_dir = build_dir
+        else:
+            project_source_dir = os.path.join(build_dir, project)
+            project_build_dir = os.path.join(project_source_dir, 'build')
+
+        upstream = []
+        downstream = []
+
+        project_config_file = os.path.join(project_source_dir, "builder.json")
+        if os.path.exists(project_config_file):
+            import json
+            with open(project_config_file, 'r') as config_fp:
+                try:
+                    project_config = json.load(config_fp)
+                except Exception as e:
+                    print("Failed to parse config file", project_config_file, e)
+                    sys.exit(1)
+
+            project = project_config.get("name", project)
+            upstream = project_config.get("upstream", [])
+            downstream = project_config.get("downstream", [])
+
+        # If project not specified, and not pulled from the config file, default to file path
+        if not project:
+            project = os.path.basename(source_dir)
+
+        # Build upstream dependencies (don't build or run their tests)
+        _build_dependencies(upstream, build_tests=False, run_tests=False)
+
+        # If the build directory doesn't already exist, make it
+        _mkdir(project_build_dir)
+
+        # CD to the build directory
+        pwd = _cwd()
+        _cd(project_build_dir)
+
+        # Set compiler flags
+        compiler_flags = []
+        for opt in ['c', 'cxx']:
+            if opt in config and config[opt]:
+                compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
+        # Run CMake
+        cmake_args = [
+            "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+            "-DCMAKE_PREFIX_PATH=" + install_dir,
+            "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
+            "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+        ]
+        _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
+
+        # Run the build
+        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG)
+
+        # Do install
+        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG, "--target", "install")
+
+        # Run the tests
+        if run_tests:
+            _run_command("ctest", ".", "--output-on-failure")
+
+        # Mark project as built
+        if project:
+            built_projects.append(project)
+
+        # Build downstream dependencies (build and run their tests if this build is setup for that)
+        if build_spec.downstream:
+            _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
+
+        # CD back to the beginning directory
+        _cd(pwd)
 
     # Make the build directory
     if is_dryrun:
@@ -516,6 +701,10 @@ def run_build(build_spec, is_dryrun):
         build_dir = tempfile.mkdtemp()
     _log_command(['mkdir', build_dir])
 
+    # Make the install directory
+    install_dir = os.path.join(build_dir, 'install')
+    _mkdir(install_dir)
+
     # Build the config object
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
 
@@ -523,25 +712,24 @@ def run_build(build_spec, is_dryrun):
 
     # Install keys
     for key in config['apt_keys']:
-        _run_command(["sudo", "apt-key", "adv", "--fetch-keys", key])
+        _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
 
     # Add APT repositories
     for repo in config['apt_repos']:
-        _run_command(["sudo", "apt-add-repository", repo])
+        _run_command("sudo", "apt-add-repository", repo)
 
     # Install packages
     if config['apt_packages']:
-        _run_command(["sudo", "apt-get", "update", "-y"])
-        _run_command(["sudo", "apt-get", "install", "-y", "-f", config['apt_packages']])
+        _run_command("sudo", "apt-get", "-q", "update", "-y")
+        _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
 
     # PRE BUILD
 
     # Set build environment
     for var, value in config['build_env'].items():
+        _log_command(["export", "{}={}".format(var, value)])
         if not is_dryrun:
             os.environ[var] = value
-        _log_command(["export", "{}={}".format(var, value)])
-
 
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
@@ -549,43 +737,19 @@ def run_build(build_spec, is_dryrun):
 
     # BUILD
 
-    # CD to the build directory
-    if not is_dryrun:
-        os.chdir(build_dir)
-    _log_command(["cd", build_dir])
-
-    # Set compiler flags
-    compiler_flags = []
-    for opt in ['c', 'cxx']:
-        if opt in config and config[opt]:
-            compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
-
-    # Run CMake
-    _run_command(["cmake", "--version"])
-    _run_command(["cmake", config['build_args'], compiler_flags, "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
-
-    # Run the build
-    _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
-
-    # Run tests if necessary
-    if config['run_tests']:
-        _run_command(["ctest", ".", "--output-on-failure"])
+    # Actually run the build (always build tests, even if we won't run them)
+    _build_project(project=None, build_tests=True, run_tests=config['run_tests'])
 
     # POST BUILD
-
-    # Go back to the source dir
-    if not is_dryrun:
-        os.chdir(source_dir)
-    _log_command(["cd", source_dir])
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
         _run_command(step)
 
     # Delete temp dir
+    _log_command(["rm", "-rf", build_dir])
     if not is_dryrun:
         shutil.rmtree(build_dir)
-    _log_command(["rm", "-rf", build_dir])
 
     return commands
 
@@ -597,6 +761,7 @@ CODEBUILD_OVERRIDES = {
     'linux-clang3-x64': 'linux-clang-3-linux-x64',
     'linux-clang6-x64': 'linux-clang-6-linux-x64',
     'linux-clang8-x64': 'linux-clang-8-linux-x64',
+    'downstream': 'linux-clang-6-linux-x64-downstream',
 
     'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
     'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
@@ -621,7 +786,7 @@ def create_codebuild_project(config, project, github_account):
     variables = {
         'project': project,
         'account': github_account,
-        'spec': config['spec'].name(),
+        'spec': config['spec'].name,
         'python': config['python'],
     }
 
@@ -638,7 +803,7 @@ def create_codebuild_project(config, project, github_account):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '      - "{python} ./codebuild/builder.py build"',
+                '      - "{python} ./codebuild/builder.py build {spec}"',
             'auth': {
                 'type': 'OAUTH',
             },
@@ -651,12 +816,6 @@ def create_codebuild_project(config, project, github_account):
             'type': config['image_type'],
             'image': config['image'],
             'computeType': config['compute_type'],
-            'environmentVariables': [
-                {
-                    'name': "BUILD_SPEC",
-                    'value': "{spec}",
-                },
-            ],
             'privilegedMode': config['requires_privilege'],
         },
         'serviceRole': 'arn:aws:iam::123124136734:role/CodeBuildServiceRole',
@@ -677,7 +836,7 @@ if __name__ == '__main__':
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser('build', help="Run the requested build")
-    build.add_argument('build', type=str, nargs='?', default=None)
+    build.add_argument('build', type=str)
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
@@ -689,14 +848,9 @@ if __name__ == '__main__':
     if args.command == 'build':
         # If build name not passed
         build_name = args.build
-        if not build_name:
-            build_name = os.environ.get('BUILD_SPEC', None)
-            assert build_name, "Build must be specified via command line or BUILD_SPEC env variable"
-
         build_spec = BuildSpec(spec=build_name)
 
-        print("Running build", build_spec.name(), flush=True)
-        print("Current directory:", os.getcwd(), flush=True)
+        print("Running build", build_spec.name, flush=True)
 
         run_build(build_spec, args.dry_run)
 
