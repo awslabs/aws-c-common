@@ -32,14 +32,15 @@ class BuildSpec(object):
             if slot in kwargs:
                 setattr(self, slot, kwargs[slot])
 
-    def name(self):
-        return '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        self.name = '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        if self.downstream:
+            self.name += "-downstream"
 
     def __str__(self):
-        return self.name()
+        return self.name
 
     def __repr__(self):
-        return self.name()
+        return self.name
 
 ########################################################################################################################
 # DATA DEFINITIONS
@@ -734,7 +735,7 @@ def create_codebuild_project(config, project, github_account):
     variables = {
         'project': project,
         'account': github_account,
-        'spec': config['spec'].name(),
+        'spec': config['spec'].name,
         'python': config['python'],
     }
 
@@ -798,7 +799,7 @@ if __name__ == '__main__':
         build_name = args.build
         build_spec = BuildSpec(spec=build_name)
 
-        print("Running build", build_spec.name(), flush=True)
+        print("Running build", build_spec.name, flush=True)
 
         run_build(build_spec, args.dry_run)
 
