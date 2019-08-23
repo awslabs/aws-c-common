@@ -775,7 +775,7 @@ def create_codebuild_project(config, project, github_account):
         'source': {
             'type': 'GITHUB',
             'location': 'https://github.com/{account}/{project}.git',
-            'gitCloneDepth': 1,
+            'gitCloneDepth': 0 if config['spec'].downstream else 1,
             'buildspec':
                 'version: 0.2\n' +
                 'phases:\n' +
