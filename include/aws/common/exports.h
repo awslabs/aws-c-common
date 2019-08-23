@@ -35,4 +35,16 @@
 
 #endif /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
 
+#ifdef AWS_NO_STATIC_IMPL
+#    define AWS_STATIC_IMPL AWS_COMMON_API
+#endif
+
+#ifndef AWS_STATIC_IMPL
+/*
+ * In order to allow us to export our inlinable methods in a DLL/.so, we have a designated .c
+ * file where this AWS_STATIC_IMPL macro will be redefined to be non-static.
+ */
+#    define AWS_STATIC_IMPL static inline
+#endif
+
 #endif /* AWS_COMMON_EXPORTS_H */

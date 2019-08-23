@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ARRAY_LIST_INL
+#define AWS_COMMON_ARRAY_LIST_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -395,3 +398,5 @@ void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_lis
     }
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
+
+#endif /*  AWS_COMMON_ARRAY_LIST_INL */

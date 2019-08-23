@@ -20,6 +20,7 @@
 #define AWS_STATIC_IMPL AWS_COMMON_API
 
 #include <aws/common/array_list.h>
+#include <aws/common/array_list.inl>
 #include <aws/common/atomics.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
@@ -37,6 +38,7 @@
 #include <aws/common/priority_queue.h>
 #include <aws/common/rw_lock.h>
 #include <aws/common/string.h>
+#include <aws/common/string.inl>
 #include <aws/common/system_info.h>
 #include <aws/common/task_scheduler.h>
 #include <aws/common/thread.h>

@@ -226,6 +226,8 @@ bool aws_string_is_valid(const struct aws_string *str);
 AWS_STATIC_IMPL
 bool aws_c_string_is_valid(const char *str);
 
-#include <aws/common/string.inl>
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/string.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 #endif /* AWS_COMMON_STRING_H */

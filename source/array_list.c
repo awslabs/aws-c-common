@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/array_list.h>
+#include <aws/common/private/array_list.h>
 
 #include <stdlib.h> /* qsort */
 
