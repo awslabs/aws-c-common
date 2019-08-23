@@ -16,21 +16,19 @@ import os, sys, glob
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
-    __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version', 'downstream')
-
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
             self.host, self.compiler, self.compiler_version, self.target, self.arch, *rest = kwargs['spec'].split('-')
 
-            for variant in rest:
-                if variant in BuildSpec.__slots__:
+            for variant in ('downstream',):
+                if variant in rest:
                     setattr(self, variant, True)
                 else:
-                    raise Exception("Unknown build variant '{}'".format(variant))
+                    setattr(self, variant, False)
 
         # Pull out individual fields. Note this is not in an else to support overriding at construction time
-        for slot in BuildSpec.__slots__:
+        for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
             if slot in kwargs:
                 setattr(self, slot, kwargs[slot])
 
