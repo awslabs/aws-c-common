@@ -501,8 +501,9 @@ def run_build(build_spec, is_dryrun):
 
     built_projects = []
 
-    git_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode("utf-8").strip()
-    print("On git branch {}".format(git_branch))
+    git_branch = subprocess.check_output(["git", "symbolic-ref", "HEAD", "--short"]).decode("utf-8").strip()
+    if git_branch:
+        print("On git branch {}".format(git_branch))
 
     def _flatten_command(*command):
         # Process out lists
@@ -573,6 +574,7 @@ def run_build(build_spec, is_dryrun):
             git = "https://github.com/{}/{}".format(account, name)
             _run_command("git", "clone", git)
 
+            pwd = _cwd()
             _cd(name)
 
             # Attempt to checkout a branch with the same name as the current branch
@@ -586,6 +588,8 @@ def run_build(build_spec, is_dryrun):
 
             # Build/install
             _build_project(name, build_tests=build_tests, run_tests=run_tests)
+
+            _cd(pwd)
 
     # Helper to build
     def _build_project(project=None, build_tests=False, run_tests=False):
