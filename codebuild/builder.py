@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob
+import os, sys, glob, subprocess
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
@@ -485,9 +485,19 @@ def produce_config(build_spec, **additional_variables):
 # Used in dry-run builds to track simulated working directory
 cwd = os.getcwd()
 
+def _get_git_branch():
+    branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
+    branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
+    branch = branches[0]
+
+    origin_str = "remotes/origin/"
+    if branch.startswith(origin_str):
+        branch = branch[len(origin_str):]
+
+    return branch
+
 def run_build(build_spec, is_dryrun):
 
-    import subprocess
     if not is_dryrun:
         import tempfile, shutil
 
@@ -501,7 +511,7 @@ def run_build(build_spec, is_dryrun):
 
     built_projects = []
 
-    git_branch = subprocess.check_output(["git", "symbolic-ref", "HEAD", "--short"]).decode("utf-8").strip()
+    git_branch = _get_git_branch()
     if git_branch:
         print("On git branch {}".format(git_branch))
 
