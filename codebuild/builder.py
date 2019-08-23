@@ -685,8 +685,8 @@ def run_build(build_spec, is_dryrun):
 
     # Install packages
     if config['apt_packages']:
-        _run_command("sudo", "apt-get", "update", "-y")
-        _run_command("sudo", "apt-get", "install", "-y", "-f", config['apt_packages'])
+        _run_command("sudo", "apt-get", "-q", "update", "-y")
+        _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
 
     # PRE BUILD
 
