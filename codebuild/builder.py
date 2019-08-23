@@ -573,6 +573,7 @@ def run_build(build_spec, is_dryrun):
             git = "https://github.com/{}/{}".format(account, name)
             _run_command("git", "clone", git)
 
+            _cd(name)
 
             # Attempt to checkout a branch with the same name as the current branch
             try:
