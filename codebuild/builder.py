@@ -92,6 +92,9 @@ HOSTS = {
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
+        "apt_packages": [
+            "libssl-dev",
+        ],
 
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
