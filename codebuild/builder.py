@@ -551,11 +551,16 @@ def run_build(build_spec, is_dryrun):
         for project in project_list:
             name = project.get("name", None)
             if not name:
-                print("Project definition missing name:", project)
-                sys.exit(1)
+                raise Exception("Project definition missing name: " + project)
 
             # Skip project if already built
             if name in built_projects:
+                continue
+
+            hosts = project.get("hosts", None)
+
+            if hosts and build_spec.host not in hosts:
+                print("Skipping dependency {} as it is not enabled for this host".format(name))
                 continue
 
             account = project.get("account", "awslabs")
