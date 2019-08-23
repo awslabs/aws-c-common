@@ -488,11 +488,17 @@ cwd = os.getcwd()
 def _get_git_branch():
     branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
     branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
+
+    print("Found branches:", branches)
+
     branch = branches[0]
 
     origin_str = "remotes/origin/"
     if branch.startswith(origin_str):
         branch = branch[len(origin_str):]
+
+    if branch == "(no branch)":
+        return None
 
     return branch
 
