@@ -570,6 +570,10 @@ def run_build(build_spec, is_dryrun):
 
     # Build a list of projects from a config file
     def _build_dependencies(project_list, build_tests, run_tests):
+
+        pwd_1 = _cwd()
+        _cd(build_dir)
+
         for project in project_list:
             name = project.get("name", None)
             if not name:
@@ -591,7 +595,7 @@ def run_build(build_spec, is_dryrun):
             git = "https://github.com/{}/{}".format(account, name)
             _run_command("git", "clone", git)
 
-            pwd = _cwd()
+            pwd_2 = _cwd()
             _cd(name)
 
             # Attempt to checkout a branch with the same name as the current branch
@@ -606,7 +610,9 @@ def run_build(build_spec, is_dryrun):
             # Build/install
             _build_project(name, build_tests=build_tests, run_tests=run_tests)
 
-            _cd(pwd)
+            _cd(pwd_2)
+
+        _cd(pwd_1)
 
     # Helper to build
     def _build_project(project=None, build_tests=False, run_tests=False):
@@ -631,8 +637,13 @@ def run_build(build_spec, is_dryrun):
                     print("Failed to parse config file", project_config_file, e)
                     sys.exit(1)
 
+            project = project_config.get("name", project)
             upstream = project_config.get("upstream", [])
             downstream = project_config.get("downstream", [])
+
+        # If project not specified, and not pulled from the config file, default to file path
+        if not project:
+            project = os.path.basename(source_dir)
 
         # Build upstream dependencies (don't build or run their tests)
         _build_dependencies(upstream, build_tests=False, run_tests=False)
@@ -724,7 +735,7 @@ def run_build(build_spec, is_dryrun):
     # BUILD
 
     # Actually run the build (always build tests, even if we won't run them)
-    _build_project(build_tests=True, run_tests=config['run_tests'])
+    _build_project(project=None, build_tests=True, run_tests=config['run_tests'])
 
     # POST BUILD
 

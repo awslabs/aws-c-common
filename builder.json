@@ -1,4 +1,5 @@
 {
+    "name": "aws-c-common",
     "upstream": [],
     "downstream": [
         { "name": "aws-checksums" },
