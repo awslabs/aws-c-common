@@ -589,7 +589,7 @@ def run_build(build_spec, is_dryrun):
         upstream = []
         downstream = []
 
-        project_config_file = os.path.join(project_source_dir, ".codebuild.json")
+        project_config_file = os.path.join(project_source_dir, "builder.json")
         if os.path.exists(project_config_file):
             import json
             with open(project_config_file, 'r') as config_fp:
