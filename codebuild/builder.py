@@ -491,16 +491,17 @@ def _get_git_branch():
 
     print("Found branches:", branches)
 
-    branch = branches[0]
+    for branch in branches:
+        if branch == "(no branch)":
+            continue
 
-    origin_str = "remotes/origin/"
-    if branch.startswith(origin_str):
-        branch = branch[len(origin_str):]
+        origin_str = "remotes/origin/"
+        if branch.startswith(origin_str):
+            branch = branch[len(origin_str):]
 
-    if branch == "(no branch)":
-        return None
+        return branch
 
-    return branch
+    return None
 
 def run_build(build_spec, is_dryrun):
 
@@ -781,7 +782,7 @@ def create_codebuild_project(config, project, github_account):
         'source': {
             'type': 'GITHUB',
             'location': 'https://github.com/{account}/{project}.git',
-            'gitCloneDepth': 0 if config['spec'].downstream else 1,
+            'gitCloneDepth': 1,
             'buildspec':
                 'version: 0.2\n' +
                 'phases:\n' +
