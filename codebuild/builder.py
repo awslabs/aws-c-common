@@ -487,8 +487,9 @@ cwd = os.getcwd()
 
 def run_build(build_spec, is_dryrun):
 
+    import subprocess
     if not is_dryrun:
-        import tempfile, shutil, subprocess
+        import tempfile, shutil
 
     #TODO These platforms don't succeed when doing a RelWithDebInfo build
     if build_spec.host in ("al2012", "manylinux"):
@@ -499,6 +500,9 @@ def run_build(build_spec, is_dryrun):
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
     built_projects = []
+
+    git_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode("utf-8").strip()
+    print("On git branch {}".format(git_branch))
 
     def _flatten_command(*command):
         # Process out lists
@@ -569,9 +573,15 @@ def run_build(build_spec, is_dryrun):
             git = "https://github.com/{}/{}".format(account, name)
             _run_command("git", "clone", git)
 
-            # Attempt to checkout the pinned revision
-            if pin:
-                _run_command("git", "checkout", pin)
+
+            # Attempt to checkout a branch with the same name as the current branch
+            try:
+                _run_command("git", "checkout", git_branch)
+            except:
+                print("Project {} does not have a branch {}".format(name, git_branch))
+                # Attempt to checkout the pinned revision
+                if pin:
+                    _run_command("git", "checkout", pin)
 
             # Build/install
             _build_project(name, build_tests=build_tests, run_tests=run_tests)
