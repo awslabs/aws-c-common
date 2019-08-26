@@ -33,6 +33,7 @@
 #include <aws/common/exports.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
+#include <aws/common/linked_list.inl>
 #include <aws/common/lru_cache.h>
 #include <aws/common/math.h>
 #include <aws/common/math.inl>
