@@ -36,82 +36,59 @@
 
 AWS_EXTERN_C_BEGIN
 
-#if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
-/*
- * GCC and clang have these super convenient overflow checking builtins...
- * but (in the case of GCC) they're only available when building C source.
- * We'll fall back to one of the other inlinable variants (or a non-inlined version)
- * if we are building this header on G++.
- */
-#    include <aws/common/math.gcc_overflow.inl>
-#elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
-#    include <aws/common/math.gcc_x64_asm.inl>
-#elif defined(AWS_HAVE_MSVC_MULX)
-#    include <aws/common/math.msvc.inl>
-#elif defined(CBMC)
-#    include <aws/common/math.cbmc.inl>
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/math.inl>
+#endif /* AWS_NO_STATIC_IMPL */
+
+#ifdef AWS_COMMON_MATH_NOINLINE
+#    define AWS_COMMON_MATH_API AWS_COMMON_API
 #else
-#    ifndef AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
-/* Fall back to the pure-C implementations */
-#        include <aws/common/math.fallback.inl>
-#    else
-/*
- * We got here because we are building in C++ mode but we only support overflow extensions
- * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
- * non-inline call to the fast C intrinsics.
- */
+#    define AWS_COMMON_MATH_API AWS_STATIC_IMPL
+#endif
 
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
-AWS_COMMON_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
+AWS_COMMON_MATH_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
  * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
-AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
+AWS_COMMON_MATH_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
-AWS_COMMON_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
+AWS_COMMON_MATH_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
 
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
  * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
-AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
+AWS_COMMON_MATH_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
 /**
  * Adds a + b.  If the result overflows returns 2^64 - 1.
  */
-AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b);
+AWS_COMMON_MATH_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b);
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
-AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
+AWS_COMMON_MATH_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
 
 /**
  * Adds a + b. If the result overflows returns 2^32 - 1.
  */
-AWS_COMMON_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
+AWS_COMMON_MATH_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
 
 /**
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
-AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
-
-#    endif
-#endif
-
-#if _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
-#endif                              /* _MSC_VER */
+AWS_COMMON_MATH_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
 /**
  * Multiplies a * b. If the result overflows, returns SIZE_MAX.
@@ -150,14 +127,6 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
  * be done without overflow
  */
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result);
-
-#if _MSC_VER
-#    pragma warning(pop)
-#endif /* _MSC_VER */
-
-#ifndef AWS_NO_STATIC_IMPL
-#include <aws/common/math.inl>
-#endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 

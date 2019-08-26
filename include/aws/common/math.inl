@@ -22,6 +22,35 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
+/*
+ * GCC and clang have these super convenient overflow checking builtins...
+ * but (in the case of GCC) they're only available when building C source.
+ * We'll fall back to one of the other inlinable variants (or a non-inlined version)
+ * if we are building this header on G++.
+ */
+#    include <aws/common/math.gcc_overflow.inl>
+#elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
+#    include <aws/common/math.gcc_x64_asm.inl>
+#elif defined(AWS_HAVE_MSVC_MULX)
+#    include <aws/common/math.msvc.inl>
+#elif defined(CBMC)
+#    include <aws/common/math.cbmc.inl>
+#else
+#    ifndef AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
+/* Fall back to the pure-C implementations */
+#        include <aws/common/math.fallback.inl>
+#    else
+/*
+ * We got here because we are building in C++ mode but we only support overflow extensions
+ * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
+ * non-inline call to the fast C intrinsics.
+ */
+#        define AWS_COMMON_MATH_NOINLINE = 1
+
+#    endif
+#endif
+
 #if _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
@@ -125,6 +154,5 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 #if _MSC_VER
 #    pragma warning(pop)
 #endif /* _MSC_VER */
-
 
 #endif /* AWS_COMMON_MATH_INL */
