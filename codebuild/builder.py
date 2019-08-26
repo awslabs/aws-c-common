@@ -743,7 +743,10 @@ def run_build(build_spec, is_dryrun):
     # Delete temp dir
     _log_command(["rm", "-rf", build_dir])
     if not is_dryrun:
-        shutil.rmtree(build_dir)
+        try:
+            shutil.rmtree(build_dir)
+        except Exception as e:
+            print("Failed to delete temp dir {}: {}".format(build_dir, e))
 
     return commands
 
