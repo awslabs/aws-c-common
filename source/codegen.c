@@ -34,6 +34,7 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/lru_cache.h>
 #include <aws/common/math.h>
+#include <aws/common/math.inl>
 #include <aws/common/mutex.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/rw_lock.h>
