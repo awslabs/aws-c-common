@@ -15,6 +15,8 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/string.h>
+
 /**
  * Equivalent to str->bytes.
  */
