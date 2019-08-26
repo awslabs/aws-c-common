@@ -29,6 +29,7 @@
 #include <aws/common/common.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/encoding.h>
+#include <aws/common/encoding.inl>
 #include <aws/common/error.h>
 #include <aws/common/error.inl>
 #include <aws/common/exports.h>
