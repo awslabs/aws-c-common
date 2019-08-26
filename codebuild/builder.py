@@ -268,18 +268,7 @@ COMPILERS = {
         'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
-            '4': {
-                '!apt_packages': ["gcc-4.8", "g++-4.8"],
-                '!c': "gcc-4.8",
-                '!cxx': 'g++-4.8',
-                '!apt_repos': [],
-
-                'architectures': {
-                    'x86': {
-                        'apt_packages': ["gcc-4.8-multilib", "g++-4.8-multilib"],
-                    },
-                },
-            },
+            '4.8': {},
             '5': {},
             '6': {},
             '7': {},
@@ -758,27 +747,27 @@ def run_build(build_spec, is_dryrun):
 ########################################################################################################################
 
 CODEBUILD_OVERRIDES = {
-    'linux-clang3-x64': 'linux-clang-3-linux-x64',
-    'linux-clang6-x64': 'linux-clang-6-linux-x64',
-    'linux-clang8-x64': 'linux-clang-8-linux-x64',
-    'downstream': 'linux-clang-6-linux-x64-downstream',
+    'linux-clang-3-linux-x64': ['linux-clang3-x64'],
+    'linux-clang-6-linux-x64': ['linux-clang6-x64'],
+    'linux-clang-8-linux-x64': ['linux-clang8-x64'],
+    'linux-clang-6-linux-x64-downstream': ['downstream'],
 
-    'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
-    'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
-    'linux-gcc-5x-x64': 'linux-gcc-5-linux-x64',
-    'linux-gcc-6x-x64': 'linux-gcc-6-linux-x64',
-    'linux-gcc-7x-x64': 'linux-gcc-7-linux-x64',
+    'linux-gcc-4.8-linux-x86': ['linux-gcc-4x-x86', 'linux-gcc-4-linux-x86'],
+    'linux-gcc-4.8-linux-x64': ['linux-gcc-4x-x64', 'linux-gcc-4-linux-x64'],
+    'linux-gcc-5-linux-x64': ['linux-gcc-5x-x64'],
+    'linux-gcc-6-linux-x64': ['linux-gcc-6x-x64'],
+    'linux-gcc-7-linux-x64': ['linux-gcc-7x-x64'],
 
-    'android-arm64-v8a': 'linux-ndk-19-android-arm64v8a',
+    'linux-ndk-19-android-arm64v8a': ['android-arm64-v8a'],
 
-    "AL2012-gcc44": 'al2012-default-default-linux-x64',
+    'al2012-default-default-linux-x64': ["AL2012-gcc44"],
 
-    "ancient-linux-x86": 'manylinux-default-default-linux-x86',
-    "ancient-linux-x64": 'manylinux-default-default-linux-x64',
+    'manylinux-default-default-linux-x86': ["ancient-linux-x86"],
+    'manylinux-default-default-linux-x64': ["ancient-linux-x64"],
 
-    'windows-msvc-2015-x86': 'windows-msvc-2015-windows-x86',
-    'windows-msvc-2015': 'windows-msvc-2015-windows-x64',
-    'windows-msvc-2017': 'windows-msvc-2017-windows-x64',
+    'windows-msvc-2015-windows-x86': ['windows-msvc-2015-x86'],
+    'windows-msvc-2015-windows-x64': ['windows-msvc-2015'],
+    'windows-msvc-2017-windows-x64': ['windows-msvc-2017'],
 }
 
 def create_codebuild_project(config, project, github_account, inplace_script):
@@ -794,7 +783,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
@@ -877,6 +866,7 @@ if __name__ == '__main__':
 
         project_prefix_len = len(args.project) + 1
 
+        #TODO Fix reverse ordering
         old_project_names = ['{}-{}'.format(args.project, build) for build in CODEBUILD_OVERRIDES.keys()]
         old_projects_response = codebuild.batch_get_projects(names=old_project_names)
         existing_projects += [project['name'][project_prefix_len:] for project in old_projects_response['projects']]
@@ -884,10 +874,10 @@ if __name__ == '__main__':
         old_missing_projects = [name[project_prefix_len:] for name in old_projects_response['projectsNotFound']]
         # If old project names are not found, search for the new names, and if those aren't present, add for creation
         if old_missing_projects:
-            new_project_names = [CODEBUILD_OVERRIDES[old_name] for old_name in old_missing_projects]
+            new_project_names = ['{}-{}'.format(args.project, CODEBUILD_OVERRIDES[old_name]) for old_name in old_missing_projects]
             new_projects_response = codebuild.batch_get_projects(names=new_project_names)
-            existing_projects += [project['name'] for project in new_projects_response['projects']]
-            new_projects += new_projects_response['projectsNotFound']
+            existing_projects += [project['name'][project_prefix_len:] for project in new_projects_response['projects']]
+            new_projects += [project[project_prefix_len:] for project in new_projects_response['projectsNotFound']]
 
         # Update all existing projects
         for cb_spec in existing_projects:
