@@ -22,6 +22,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/array_list.inl>
 #include <aws/common/atomics.h>
+#include <aws/common/atomics.inl>
 #include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
 #include <aws/common/byte_order.inl>
