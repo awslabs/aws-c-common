@@ -30,6 +30,7 @@
 #include <aws/common/condition_variable.h>
 #include <aws/common/encoding.h>
 #include <aws/common/error.h>
+#include <aws/common/error.inl>
 #include <aws/common/exports.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
