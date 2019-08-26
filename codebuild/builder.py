@@ -151,10 +151,6 @@ TARGETS = {
             },
         },
 
-        "apt_packages": [
-            # "libssl-dev",
-        ],
-
         'build_args': [
             "-DENABLE_SANITIZERS=ON",
         ],
@@ -661,7 +657,7 @@ def run_build(build_spec, is_dryrun):
         # Run CMake
         cmake_args = [
             "-DCMAKE_INSTALL_PREFIX=" + install_dir,
-            "-DCMAKE_PREFIX_PATH=" + install_dir,
+            "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
             "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
             "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
         ]
