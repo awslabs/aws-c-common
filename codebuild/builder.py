@@ -781,7 +781,7 @@ CODEBUILD_OVERRIDES = {
     'windows-msvc-2017': 'windows-msvc-2017-windows-x64',
 }
 
-def create_codebuild_project(config, project, github_account):
+def create_codebuild_project(config, project, github_account, inplace_script):
 
     variables = {
         'project': project,
@@ -789,6 +789,14 @@ def create_codebuild_project(config, project, github_account):
         'spec': config['spec'].name,
         'python': config['python'],
     }
+
+    if inplace_script:
+        run_commands = ["{python} ./codebuild/builder.py build {spec}"]
+    else:
+        run_commands = [
+            "{python} -c \"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\"",
+            "{python} builder.py build {spec}"
+        ]
 
     # This matches the CodeBuild API for expected format
     CREATE_PARAM_TEMPLATE = {
@@ -803,7 +811,7 @@ def create_codebuild_project(config, project, github_account):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '      - "{python} ./codebuild/builder.py build {spec}"',
+                '\n'.join(['      - "{}"'.format(command) for command in run_commands]),
             'auth': {
                 'type': 'OAUTH',
             },
@@ -842,6 +850,7 @@ if __name__ == '__main__':
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
     codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
     codebuild.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
+    codebuild.add_argument('--inplace-script', action='store_true', help='Use the python script in codebuild/builder.py instead of downloading it')
 
     args = parser.parse_args()
 
@@ -888,7 +897,7 @@ if __name__ == '__main__':
 
             build_spec = BuildSpec(spec=new_spec)
             config = produce_config(build_spec)
-            cb_project = create_codebuild_project(config, args.project, args.github_account)
+            cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
             cb_project['name'] = build_name
 
             print('Updating: {} ({})'.format(new_spec, cb_spec))
@@ -899,7 +908,7 @@ if __name__ == '__main__':
         for spec in new_projects:
             build_spec = BuildSpec(spec=spec)
             config = produce_config(build_spec)
-            cb_project = create_codebuild_project(config, args.project, args.github_account)
+            cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
 
             print('Creating: {}'.format(spec))
             if not args.dry_run:
