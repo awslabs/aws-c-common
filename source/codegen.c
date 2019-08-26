@@ -24,6 +24,7 @@
 #include <aws/common/atomics.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/byte_order.h>
+#include <aws/common/byte_order.inl>
 #include <aws/common/clock.h>
 #include <aws/common/common.h>
 #include <aws/common/condition_variable.h>
