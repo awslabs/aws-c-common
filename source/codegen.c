@@ -43,6 +43,7 @@
 #include <aws/common/math.inl>
 #include <aws/common/mutex.h>
 #include <aws/common/priority_queue.h>
+#include <aws/common/ring_buffer.inl>
 #include <aws/common/rw_lock.h>
 #include <aws/common/string.h>
 #include <aws/common/string.inl>
