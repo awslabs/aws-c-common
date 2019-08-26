@@ -152,7 +152,7 @@ TARGETS = {
         },
 
         "apt_packages": [
-            "libssl-dev",
+            # "libssl-dev",
         ],
 
         'build_args': [
