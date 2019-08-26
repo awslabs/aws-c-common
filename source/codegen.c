@@ -27,6 +27,7 @@
 #include <aws/common/byte_order.h>
 #include <aws/common/byte_order.inl>
 #include <aws/common/clock.h>
+#include <aws/common/clock.inl>
 #include <aws/common/common.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/encoding.h>

@@ -2,7 +2,7 @@
 #define AWS_COMMON_TASK_SCHEDULER_H
 
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -46,13 +46,6 @@ struct aws_task {
     size_t reserved;
 };
 
-AWS_STATIC_IMPL void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg, const char *type_tag) {
-    AWS_ZERO_STRUCT(*task);
-    task->fn = fn;
-    task->arg = arg;
-    task->type_tag = type_tag;
-}
-
 struct aws_task_scheduler {
     struct aws_allocator *alloc;
     struct aws_priority_queue timed_queue; /* Tasks scheduled to run at specific times */
@@ -61,6 +54,12 @@ struct aws_task_scheduler {
 };
 
 AWS_EXTERN_C_BEGIN
+
+/**
+ * Init an aws_task
+ */
+AWS_COMMON_API
+void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg, const char *type_tag);
 
 /*
  * Runs or cancels a task

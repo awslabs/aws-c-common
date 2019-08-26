@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -20,6 +20,13 @@
 #include <inttypes.h>
 
 static const size_t DEFAULT_QUEUE_SIZE = 7;
+
+void aws_task_init(struct aws_task *task, aws_task_fn *fn, void *arg, const char *type_tag) {
+    AWS_ZERO_STRUCT(*task);
+    task->fn = fn;
+    task->arg = arg;
+    task->type_tag = type_tag;
+}
 
 const char *aws_task_status_to_c_str(enum aws_task_status status) {
     switch (status) {

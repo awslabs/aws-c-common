@@ -2,7 +2,7 @@
 #define AWS_COMMON_CLOCK_H
 
 /*
- * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -37,24 +37,7 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     uint64_t timestamp,
     enum aws_timestamp_unit convert_from,
     enum aws_timestamp_unit convert_to,
-    uint64_t *remainder) {
-    uint64_t diff = 0;
-
-    if (convert_to > convert_from) {
-        diff = convert_to / convert_from;
-        return aws_mul_u64_saturating(timestamp, diff);
-    } else if (convert_to < convert_from) {
-        diff = convert_from / convert_to;
-
-        if (remainder) {
-            *remainder = timestamp % diff;
-        }
-
-        return timestamp / diff;
-    } else {
-        return timestamp;
-    }
-}
+    uint64_t *remainder);
 
 AWS_EXTERN_C_BEGIN
 /**
@@ -73,5 +56,9 @@ AWS_COMMON_API
 int aws_sys_clock_get_ticks(uint64_t *timestamp);
 
 AWS_EXTERN_C_END
+
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/clock.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 #endif /* AWS_COMMON_CLOCK_H */
