@@ -92,9 +92,6 @@ HOSTS = {
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
-        "apt_packages": [
-            "libssl-dev",
-        ],
 
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
@@ -153,6 +150,10 @@ TARGETS = {
                 ],
             },
         },
+
+        "apt_packages": [
+            "libssl-dev",
+        ],
 
         'build_args': [
             "-DENABLE_SANITIZERS=ON",
@@ -576,9 +577,13 @@ def run_build(build_spec, is_dryrun):
                 continue
 
             hosts = project.get("hosts", None)
-
             if hosts and build_spec.host not in hosts:
                 print("Skipping dependency {} as it is not enabled for this host".format(name))
+                continue
+
+            targets = project.get("targets", None)
+            if targets and build_spec.target not in targets:
+                print("Skipping dependency {} as it is not enabled for this target".format(name))
                 continue
 
             account = project.get("account", "awslabs")
@@ -783,7 +788,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/ci-script-wip/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('http://raw.githubusercontent.com/awslabs/aws-c-common/ci-script-wip/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
