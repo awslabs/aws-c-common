@@ -243,3 +243,18 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
     AWS_PRECONDITION(aws_string_is_valid(src));
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }
+
+struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str) {
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(aws_string_is_valid(str));
+
+    if (str->allocator == NULL) {
+        /* Since the string cannot be deallocated, we assume that it will remain valid for the lifetime of the
+         * application */
+        AWS_POSTCONDITION(aws_string_is_valid(str));
+        return (struct aws_string *)str;
+    }
+
+    AWS_POSTCONDITION(aws_string_is_valid(str));
+    return aws_string_new_from_string(allocator, str);
+}

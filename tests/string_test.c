@@ -85,10 +85,23 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_NOT_NULL(dup_string_2, "Memory allocation of string should have succeeded.");
     ASSERT_TRUE(aws_string_eq(test_string_2, dup_string_2), "Strings should be equal.");
 
+    /* Test: can clone_or_reuse both a static string and an allocated one. */
+    struct aws_string *clone_string_1 = aws_string_clone_or_reuse(allocator, test_string_1);
+    ASSERT_NOT_NULL(clone_string_1, "Memory allocation of string should have succeeded.");
+    ASSERT_TRUE(aws_string_eq(test_string_1, clone_string_1), "Strings should be equal.");
+    ASSERT_TRUE(test_string_1 == clone_string_1, "Static strings should be reused");
+
+    struct aws_string *clone_string_2 = aws_string_clone_or_reuse(allocator, test_string_2);
+    ASSERT_NOT_NULL(clone_string_2, "Memory allocation of string should have succeeded.");
+    ASSERT_TRUE(aws_string_eq(test_string_2, clone_string_2), "Strings should be equal.");
+    ASSERT_TRUE(test_string_2 != clone_string_2, "Dynamic strings should not be reused");
+
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy(test_string_2);
     aws_string_destroy(dup_string_1);
     aws_string_destroy(dup_string_2);
+    aws_string_destroy(clone_string_1);
+    aws_string_destroy(clone_string_2);
 
     return 0;
 }
