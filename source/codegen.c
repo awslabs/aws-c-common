@@ -45,3 +45,5 @@
 #include <aws/common/system_info.h>
 #include <aws/common/task_scheduler.h>
 #include <aws/common/thread.h>
+#include <aws/common/zero.h>
+#include <aws/common/zero.inl>
