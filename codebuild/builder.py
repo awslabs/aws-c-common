@@ -657,6 +657,7 @@ def run_build(build_spec, is_dryrun):
         # Run CMake
         cmake_args = [
             "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+            # Each image has a custom installed openssl build, make sure CMake knows where to find it
             "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
             "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
             "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
@@ -787,7 +788,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('http://raw.githubusercontent.com/awslabs/aws-c-common/ci-script-wip/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
