@@ -608,7 +608,7 @@ def run_build(build_spec, is_dryrun):
         _cd(pwd_1)
 
     # Helper to build
-    def _build_project(project=None, build_tests=False, run_tests=False):
+    def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
 
         if not project:
             project_source_dir = source_dir
@@ -678,7 +678,7 @@ def run_build(build_spec, is_dryrun):
             built_projects.append(project)
 
         # Build downstream dependencies (build and run their tests if this build is setup for that)
-        if build_spec.downstream:
+        if build_downstream:
             _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
 
         # CD back to the beginning directory
@@ -728,7 +728,7 @@ def run_build(build_spec, is_dryrun):
     # BUILD
 
     # Actually run the build (always build tests, even if we won't run them)
-    _build_project(project=None, build_tests=True, run_tests=config['run_tests'])
+    _build_project(project=None, build_tests=True, run_tests=config['run_tests'], build_downstream=build_spec.downstream)
 
     # POST BUILD
 
