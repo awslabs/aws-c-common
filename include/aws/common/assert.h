@@ -40,7 +40,11 @@ AWS_EXTERN_C_END
 #elif defined(_MSC_VER)
 #    define AWS_ASSUME(cond) __assume(cond)
 #elif defined(__clang__)
-#    define AWS_ASSUME(cond) do { bool _result = (cond); __builtin_assume(_result); } while(false)
+#    define AWS_ASSUME(cond)                                                                                           \
+        do {                                                                                                           \
+            bool _result = (cond);                                                                                     \
+            __builtin_assume(_result);                                                                                 \
+        } while (false)
 #elif defined(__GNUC__)
 #    define AWS_ASSUME(cond) ((cond) ? (void)0 : __builtin_unreachable())
 #endif
