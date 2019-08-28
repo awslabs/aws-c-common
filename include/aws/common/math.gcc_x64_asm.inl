@@ -23,7 +23,6 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
-
 AWS_EXTERN_C_BEGIN
 
 /**
