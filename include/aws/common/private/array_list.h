@@ -16,11 +16,14 @@
  * permissions and limitations under the License.
  */
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Helper function that calculates the number of bytes needed by an array_list, where "index" is the last valid
  * index.
  */
-AWS_STATIC_IMPL
 int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size);
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_PRIVATE_ARRAY_LIST_H */
