@@ -36,6 +36,16 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 AWS_EXTERN_C_END
 
 #if defined(CBMC)
+#    define AWS_ASSUME(cond) __CPROVER_assume(cond)
+#elif defined(_MSC_VER)
+#    define AWS_ASSUME(cond) __assume(cond)
+#elif defined(__clang__)
+#    define AWS_ASSUME(cond) do { bool _result = (cond); __builtin_assume(_result); } while(false)
+#elif defined(__GNUC__)
+#    define AWS_ASSUME(cond) ((cond) ? (void)0 : __builtin_unreachable())
+#endif
+
+#if defined(CBMC)
 #    include <assert.h>
 #    define AWS_ASSERT(cond) assert(cond)
 #elif defined(DEBUG_BUILD) || __clang_analyzer__
