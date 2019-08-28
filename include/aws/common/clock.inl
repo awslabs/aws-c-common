@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_CLOCK_H
-#define AWS_COMMON_CLOCK_H
+#ifndef AWS_COMMON_CLOCK_INL
+#define AWS_COMMON_CLOCK_INL
 
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -16,15 +16,9 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/clock.h>
 #include <aws/common/common.h>
 #include <aws/common/math.h>
-
-enum aws_timestamp_unit {
-    AWS_TIMESTAMP_SECS = 1,
-    AWS_TIMESTAMP_MILLIS = 1000,
-    AWS_TIMESTAMP_MICROS = 1000000,
-    AWS_TIMESTAMP_NANOS = 1000000000,
-};
 
 AWS_EXTERN_C_BEGIN
 
@@ -39,27 +33,25 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     uint64_t timestamp,
     enum aws_timestamp_unit convert_from,
     enum aws_timestamp_unit convert_to,
-    uint64_t *remainder);
+    uint64_t *remainder) {
+    uint64_t diff = 0;
 
-/**
- * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This
- * clock has no bearing on the actual system time. On success, timestamp will be set.
- */
-AWS_COMMON_API
-int aws_high_res_clock_get_ticks(uint64_t *timestamp);
+    if (convert_to > convert_from) {
+        diff = convert_to / convert_from;
+        return aws_mul_u64_saturating(timestamp, diff);
+    } else if (convert_to < convert_from) {
+        diff = convert_from / convert_to;
 
-/**
- * Get ticks in nanoseconds (usually 100 nanosecond precision) on the system clock. Reflects actual system time via
- * nanoseconds since unix epoch. Use with care since an inaccurately set clock will probably cause bugs. On success,
- * timestamp will be set.
- */
-AWS_COMMON_API
-int aws_sys_clock_get_ticks(uint64_t *timestamp);
+        if (remainder) {
+            *remainder = timestamp % diff;
+        }
 
-#ifndef AWS_NO_STATIC_IMPL
-#    include <aws/common/clock.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+        return timestamp / diff;
+    } else {
+        return timestamp;
+    }
+}
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_CLOCK_H */
+#endif /* AWS_COMMON_CLOCK_INL */

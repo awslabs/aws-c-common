@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_MATH_CBMC_INL
+#define AWS_COMMON_MATH_CBMC_INL
+
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,13 +16,13 @@
  * permissions and limitations under the License.
  */
 
-#pragma once
-
 /*
  * This header is already included, but include it again to make editor
  * highlighting happier.
  */
 #include <aws/common/common.h>
+
+AWS_EXTERN_C_BEGIN
 
 /* This header does safe operations. Supressing the checks within these functions
  * avoids unnecessary CBMC assertions
@@ -108,3 +111,7 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 }
 
 #pragma CPROVER check pop
+
+AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_MATH_CBMC_INL */
