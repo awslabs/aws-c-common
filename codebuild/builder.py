@@ -92,9 +92,6 @@ HOSTS = {
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
-        "apt_packages": [
-            "libssl-dev",
-        ],
 
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
@@ -268,18 +265,7 @@ COMPILERS = {
         'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
-            '4': {
-                '!apt_packages': ["gcc-4.8", "g++-4.8"],
-                '!c': "gcc-4.8",
-                '!cxx': 'g++-4.8',
-                '!apt_repos': [],
-
-                'architectures': {
-                    'x86': {
-                        'apt_packages': ["gcc-4.8-multilib", "g++-4.8-multilib"],
-                    },
-                },
-            },
+            '4.8': {},
             '5': {},
             '6': {},
             '7': {},
@@ -587,9 +573,13 @@ def run_build(build_spec, is_dryrun):
                 continue
 
             hosts = project.get("hosts", None)
-
             if hosts and build_spec.host not in hosts:
                 print("Skipping dependency {} as it is not enabled for this host".format(name))
+                continue
+
+            targets = project.get("targets", None)
+            if targets and build_spec.target not in targets:
+                print("Skipping dependency {} as it is not enabled for this target".format(name))
                 continue
 
             account = project.get("account", "awslabs")
@@ -618,7 +608,7 @@ def run_build(build_spec, is_dryrun):
         _cd(pwd_1)
 
     # Helper to build
-    def _build_project(project=None, build_tests=False, run_tests=False):
+    def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
 
         if not project:
             project_source_dir = source_dir
@@ -667,7 +657,8 @@ def run_build(build_spec, is_dryrun):
         # Run CMake
         cmake_args = [
             "-DCMAKE_INSTALL_PREFIX=" + install_dir,
-            "-DCMAKE_PREFIX_PATH=" + install_dir,
+            # Each image has a custom installed openssl build, make sure CMake knows where to find it
+            "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
             "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
             "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
         ]
@@ -688,7 +679,7 @@ def run_build(build_spec, is_dryrun):
             built_projects.append(project)
 
         # Build downstream dependencies (build and run their tests if this build is setup for that)
-        if build_spec.downstream:
+        if build_downstream:
             _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
 
         # CD back to the beginning directory
@@ -738,7 +729,7 @@ def run_build(build_spec, is_dryrun):
     # BUILD
 
     # Actually run the build (always build tests, even if we won't run them)
-    _build_project(project=None, build_tests=True, run_tests=config['run_tests'])
+    _build_project(project=None, build_tests=True, run_tests=config['run_tests'], build_downstream=build_spec.downstream)
 
     # POST BUILD
 
@@ -749,7 +740,10 @@ def run_build(build_spec, is_dryrun):
     # Delete temp dir
     _log_command(["rm", "-rf", build_dir])
     if not is_dryrun:
-        shutil.rmtree(build_dir)
+        try:
+            shutil.rmtree(build_dir)
+        except Exception as e:
+            print("Failed to delete temp dir {}: {}".format(build_dir, e))
 
     return commands
 
@@ -758,27 +752,27 @@ def run_build(build_spec, is_dryrun):
 ########################################################################################################################
 
 CODEBUILD_OVERRIDES = {
-    'linux-clang3-x64': 'linux-clang-3-linux-x64',
-    'linux-clang6-x64': 'linux-clang-6-linux-x64',
-    'linux-clang8-x64': 'linux-clang-8-linux-x64',
-    'downstream': 'linux-clang-6-linux-x64-downstream',
+    'linux-clang-3-linux-x64': ['linux-clang3-x64'],
+    'linux-clang-6-linux-x64': ['linux-clang6-x64'],
+    'linux-clang-8-linux-x64': ['linux-clang8-x64'],
+    'linux-clang-6-linux-x64-downstream': ['downstream'],
 
-    'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
-    'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
-    'linux-gcc-5x-x64': 'linux-gcc-5-linux-x64',
-    'linux-gcc-6x-x64': 'linux-gcc-6-linux-x64',
-    'linux-gcc-7x-x64': 'linux-gcc-7-linux-x64',
+    'linux-gcc-4.8-linux-x86': ['linux-gcc-4x-x86', 'linux-gcc-4-linux-x86'],
+    'linux-gcc-4.8-linux-x64': ['linux-gcc-4x-x64', 'linux-gcc-4-linux-x64'],
+    'linux-gcc-5-linux-x64': ['linux-gcc-5x-x64'],
+    'linux-gcc-6-linux-x64': ['linux-gcc-6x-x64'],
+    'linux-gcc-7-linux-x64': ['linux-gcc-7x-x64'],
 
-    'android-arm64-v8a': 'linux-ndk-19-android-arm64v8a',
+    'linux-ndk-19-android-arm64v8a': ['android-arm64-v8a'],
 
-    "AL2012-gcc44": 'al2012-default-default-linux-x64',
+    'al2012-default-default-linux-x64': ["AL2012-gcc44"],
 
-    "ancient-linux-x86": 'manylinux-default-default-linux-x86',
-    "ancient-linux-x64": 'manylinux-default-default-linux-x64',
+    'manylinux-default-default-linux-x86': ["ancient-linux-x86"],
+    'manylinux-default-default-linux-x64': ["ancient-linux-x64"],
 
-    'windows-msvc-2015-x86': 'windows-msvc-2015-windows-x86',
-    'windows-msvc-2015': 'windows-msvc-2015-windows-x64',
-    'windows-msvc-2017': 'windows-msvc-2017-windows-x64',
+    'windows-msvc-2015-windows-x86': ['windows-msvc-2015-x86'],
+    'windows-msvc-2015-windows-x64': ['windows-msvc-2015'],
+    'windows-msvc-2017-windows-x64': ['windows-msvc-2017'],
 }
 
 def create_codebuild_project(config, project, github_account, inplace_script):
@@ -794,7 +788,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
@@ -877,39 +871,47 @@ if __name__ == '__main__':
 
         project_prefix_len = len(args.project) + 1
 
-        old_project_names = ['{}-{}'.format(args.project, build) for build in CODEBUILD_OVERRIDES.keys()]
-        old_projects_response = codebuild.batch_get_projects(names=old_project_names)
+        # Map of canonical builds to their existing codebuild projects (None if creation required)
+        canonical_list = {key: None for key in CODEBUILD_OVERRIDES.keys()}
+        # List of all potential names to search for
+        all_potential_builds = list(CODEBUILD_OVERRIDES.keys())
+        # Reverse mapping of codebuild name to canonical name
+        full_codebuild_to_canonical = {key: key for key in CODEBUILD_OVERRIDES.keys()}
+        for canonical, cb_list in CODEBUILD_OVERRIDES.items():
+            all_potential_builds += cb_list
+            for cb in cb_list:
+                full_codebuild_to_canonical[cb] = canonical
+
+        # Search for the projects
+        full_project_names = ['{}-{}'.format(args.project, build.replace('.', '')) for build in all_potential_builds]
+        old_projects_response = codebuild.batch_get_projects(names=full_project_names)
         existing_projects += [project['name'][project_prefix_len:] for project in old_projects_response['projects']]
 
-        old_missing_projects = [name[project_prefix_len:] for name in old_projects_response['projectsNotFound']]
-        # If old project names are not found, search for the new names, and if those aren't present, add for creation
-        if old_missing_projects:
-            new_project_names = [CODEBUILD_OVERRIDES[old_name] for old_name in old_missing_projects]
-            new_projects_response = codebuild.batch_get_projects(names=new_project_names)
-            existing_projects += [project['name'] for project in new_projects_response['projects']]
-            new_projects += new_projects_response['projectsNotFound']
+        # Mark the found projects with their found names
+        for project in existing_projects:
+            canonical = full_codebuild_to_canonical[project]
+            canonical_list[canonical] = project
 
         # Update all existing projects
-        for cb_spec in existing_projects:
-            # If the project being updated is in CB_OVERRIDES, use it, otherwise just spec
-            new_spec = CODEBUILD_OVERRIDES.get(cb_spec, cb_spec)
-            build_name = '{}-{}'.format(args.project, cb_spec)
+        for canonical, cb_name in canonical_list.items():
+            if cb_name:
+                create = False
+            else:
+                cb_name = canonical
+                create = True
 
-            build_spec = BuildSpec(spec=new_spec)
+            build_name = '{}-{}'.format(args.project, cb_name)
+
+            build_spec = BuildSpec(spec=canonical)
             config = produce_config(build_spec)
             cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
-            cb_project['name'] = build_name
+            cb_project['name'] = build_name.replace('.', '')
 
-            print('Updating: {} ({})'.format(new_spec, cb_spec))
-            if not args.dry_run:
-                codebuild.update_project(**cb_project)
-
-        # Create any missing projects
-        for spec in new_projects:
-            build_spec = BuildSpec(spec=spec)
-            config = produce_config(build_spec)
-            cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
-
-            print('Creating: {}'.format(spec))
-            if not args.dry_run:
-                codebuild.create_project(**cb_project)
+            if create:
+                print('Creating: {}'.format(canonical))
+                if not args.dry_run:
+                    codebuild.create_project(**cb_project)
+            else:
+                print('Updating: {} ({})'.format(canonical, cb_name))
+                if not args.dry_run:
+                    codebuild.update_project(**cb_project)

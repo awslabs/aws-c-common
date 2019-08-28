@@ -8,6 +8,7 @@
         { "name": "aws-c-io" },
         { "name": "aws-c-cal" },
         { "name": "aws-c-mqtt" },
-        { "name": "aws-c-http" }
+        { "name": "aws-c-http" },
+        { "name": "aws-c-auth" }
     ]
 }
