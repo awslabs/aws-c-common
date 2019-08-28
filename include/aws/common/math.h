@@ -36,14 +36,18 @@
 
 AWS_EXTERN_C_BEGIN
 
-#ifndef AWS_NO_STATIC_IMPL
-#    include <aws/common/math.inl>
-#endif /* AWS_NO_STATIC_IMPL */
-
-#ifdef AWS_COMMON_MATH_NOINLINE
-#    define AWS_COMMON_MATH_API AWS_COMMON_API
-#else
+#if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) ||                 \
+    defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM) || defined(AWS_HAVE_MSVC_MULX) || defined(CBMC) ||         \
+    !defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
+/* In all these cases, we can use fast static inline versions of this code */
 #    define AWS_COMMON_MATH_API AWS_STATIC_IMPL
+#else
+/*
+ * We got here because we are building in C++ mode but we only support overflow extensions
+ * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
+ * non-inline call to the fast C intrinsics.
+ */
+#    define AWS_COMMON_MATH_API AWS_COMMON_API
 #endif
 
 /**
@@ -127,6 +131,10 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
  * be done without overflow
  */
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result);
+
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/math.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 

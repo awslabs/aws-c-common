@@ -49,54 +49,8 @@ AWS_EXTERN_C_BEGIN
  * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
  * non-inline call to the fast C intrinsics.
  */
-#        define AWS_COMMON_MATH_NOINLINE = 1
-
-/**
- * Multiplies a * b. If the result overflows, returns 2^64 - 1.
- */
-AWS_COMMON_API uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b);
-
-/**
- * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
- */
-AWS_COMMON_API int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
-
-/**
- * Multiplies a * b. If the result overflows, returns 2^32 - 1.
- */
-AWS_COMMON_API uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b);
-
-/**
- * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
- * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
- */
-AWS_COMMON_API int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
-
-/**
- * Adds a + b.  If the result overflows returns 2^64 - 1.
- */
-AWS_COMMON_API uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b);
-
-/**
- * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
- */
-AWS_COMMON_API int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
-
-/**
- * Adds a + b. If the result overflows returns 2^32 - 1.
- */
-AWS_COMMON_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
-
-/**
- * If a + b overflows, returns AWS_OP_ERR; otherwise adds
- * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
- */
-AWS_COMMON_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
-
-#    endif
-#endif
+#    endif /*  AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS */
+#endif     /*  defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) */
 
 #if _MSC_VER
 #    pragma warning(push)
@@ -156,12 +110,6 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #    error "Target not supported"
 #endif
 }
-
-/**
- * Adds [num] arguments (expected to be of size_t), and returns the result in *r.
- * If the result overflows, returns AWS_OP_ERR; otherwise returns AWS_OP_SUCCESS.
- */
-AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...);
 
 /**
  * Function to check if x is power of 2
