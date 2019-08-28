@@ -26,6 +26,8 @@ enum aws_timestamp_unit {
     AWS_TIMESTAMP_NANOS = 1000000000,
 };
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is
  * returned. If 'remainder' is NOT NULL, it will be set to the remainder if convert_from is a more precise unit than
@@ -39,7 +41,6 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     enum aws_timestamp_unit convert_to,
     uint64_t *remainder);
 
-AWS_EXTERN_C_BEGIN
 /**
  * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This
  * clock has no bearing on the actual system time. On success, timestamp will be set.
