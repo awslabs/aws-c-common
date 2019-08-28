@@ -55,10 +55,10 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp);
 AWS_COMMON_API
 int aws_sys_clock_get_ticks(uint64_t *timestamp);
 
-AWS_EXTERN_C_END
-
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/clock.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_CLOCK_H */

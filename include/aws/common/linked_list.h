@@ -25,15 +25,17 @@ struct aws_linked_list_node {
     struct aws_linked_list_node *prev;
 };
 
-/**
- * Set node's next and prev pointers to NULL.
- */
-AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *node);
-
 struct aws_linked_list {
     struct aws_linked_list_node head;
     struct aws_linked_list_node tail;
 };
+
+AWS_EXTERN_C_BEGIN
+
+/**
+ * Set node's next and prev pointers to NULL.
+ */
+AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *node);
 
 /**
  * These functions need to be defined first as they are used in pre
@@ -171,5 +173,6 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/linked_list.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_LINKED_LIST_H */

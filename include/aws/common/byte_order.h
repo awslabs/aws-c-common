@@ -18,6 +18,8 @@
 
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Returns 1 if machine is big endian, 0 if little endian.
  * If you compile with even -O1 optimization, this check is completely optimized
@@ -86,5 +88,7 @@ AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x);
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/byte_order.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BYTE_ORDER_H */

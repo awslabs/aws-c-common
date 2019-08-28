@@ -91,8 +91,6 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
 AWS_COMMON_API
 int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct aws_byte_buf *AWS_RESTRICT output);
 
-AWS_EXTERN_C_END
-
 /* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 8 bytes.
  */
@@ -145,5 +143,7 @@ AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer);
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/encoding.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ENCODING_H */

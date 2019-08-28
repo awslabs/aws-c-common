@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Set each byte in the struct to zero.
  */
@@ -55,8 +57,6 @@
  */
 AWS_STATIC_IMPL
 bool aws_is_mem_zeroed(const void *buf, size_t bufsize);
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Securely zeroes a memory buffer. This function will attempt to ensure that

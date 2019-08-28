@@ -96,6 +96,8 @@ enum aws_memory_order {
 #define AWS_ATOMIC_INIT_PTR(x)                                                                                         \
     { .value = (void *)(x) }
 
+AWS_EXTERN_C_BEGIN
+
 /*
  * Note: We do not use the C11 atomics API; this is because we want to make sure the representation
  * (and behavior) of atomic values is consistent, regardless of what --std= flag you pass to your compiler.
@@ -329,5 +331,7 @@ void aws_atomic_thread_fence(enum aws_memory_order order);
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/atomics.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+AWS_EXTERN_C_END
 
 #endif
