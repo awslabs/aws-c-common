@@ -18,6 +18,8 @@
 
 #include <aws/common/error.h>
 
+AWS_EXTERN_C_BEGIN
+
 /*
  * Raises `err` to the installed callbacks, and sets the thread's error.
  */
@@ -33,5 +35,7 @@ int aws_raise_error(int err) {
 
     return AWS_OP_ERR;
 }
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ERROR_INL */

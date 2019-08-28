@@ -20,6 +20,8 @@
 #include <aws/common/linked_list.h>
 #include <stddef.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Set node's next and prev pointers to NULL.
  */
@@ -376,5 +378,7 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
     AWS_POSTCONDITION(aws_linked_list_is_valid(a));
     AWS_POSTCONDITION(aws_linked_list_is_valid(b));
 }
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_LINKED_LIST_INL */

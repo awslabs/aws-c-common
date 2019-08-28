@@ -16,6 +16,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/byte_order.h>
 #include <aws/common/common.h>
 
 #ifdef _MSC_VER
@@ -23,6 +24,8 @@
 #else
 #    include <netinet/in.h>
 #endif /* _MSC_VER */
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Returns 1 if machine is big endian, 0 if little endian.
@@ -189,5 +192,7 @@ AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
     return ntohs(x);
 #endif
 }
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BYTE_ORDER_INL */

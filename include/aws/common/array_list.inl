@@ -22,6 +22,7 @@
  * Do not add system headers here; add them to array_list.h. This file is included under extern "C" guards,
  * which might break system headers.
  */
+AWS_EXTERN_C_BEGIN
 
 AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
@@ -398,5 +399,7 @@ void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_lis
     }
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
+
+AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_ARRAY_LIST_INL */

@@ -18,9 +18,12 @@
 
 #include <aws/common/common.h>
 #include <aws/common/config.h>
+#include <aws/common/math.h>
 
 #include <limits.h>
 #include <stdlib.h>
+
+AWS_EXTERN_C_BEGIN
 
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
 /*
@@ -198,5 +201,7 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 #if _MSC_VER
 #    pragma warning(pop)
 #endif /* _MSC_VER */
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_MATH_INL */

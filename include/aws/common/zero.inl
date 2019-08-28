@@ -21,6 +21,7 @@
 #include <aws/common/zero.h>
 #include <string.h>
 
+AWS_EXTERN_C_BEGIN
 /**
  * Returns whether each byte is zero.
  */
@@ -52,5 +53,7 @@ bool aws_is_mem_zeroed(const void *buf, size_t bufsize) {
 
     return true;
 }
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ZERO_INL */

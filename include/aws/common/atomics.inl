@@ -19,6 +19,8 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Reads an atomic var as an integer, using sequentially consistent ordering, and returns the result.
  */
@@ -151,4 +153,6 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
 
 #include <aws/common/atomics_fallback.inl>
 
-#endif
+AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_ATOMICS_INL */

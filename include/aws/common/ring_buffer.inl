@@ -17,6 +17,7 @@
 
 #include <aws/common/ring_buffer.h>
 
+AWS_EXTERN_C_BEGIN
 /*
  * Checks whether atomic_ptr correctly points to a memory location within the bounds of the aws_ring_buffer
  */
@@ -49,5 +50,5 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring
     return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
            head_in_range && tail_in_range && valid_head_tail && (ring_buf->allocator != NULL);
 }
-
+AWS_EXTERN_C_END
 #endif /* AWS_COMMON_RING_BUFFER_INL */

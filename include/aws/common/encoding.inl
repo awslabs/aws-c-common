@@ -21,6 +21,8 @@
 #include <aws/common/common.h>
 #include <aws/common/encoding.h>
 
+AWS_EXTERN_C_BEGIN
+
 /* Add a 64 bit unsigned integer to the buffer, ensuring network - byte order
  * Assumes the buffer size is at least 8 bytes.
  */
@@ -106,5 +108,7 @@ AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer) {
 
     return aws_ntoh16(value);
 }
+
+AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_ENCODING_INL */

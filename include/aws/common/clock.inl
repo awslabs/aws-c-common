@@ -20,6 +20,8 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is
  * returned. If 'remainder' is NOT NULL, it will be set to the remainder if convert_from is a more precise unit than
@@ -49,5 +51,7 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
         return timestamp;
     }
 }
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_CLOCK_INL */
