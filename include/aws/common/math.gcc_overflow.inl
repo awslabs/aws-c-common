@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_MATH_GCC_OVERFLOW_INL
+#define AWS_COMMON_MATH_GCC_OVERFLOW_INL
+
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,7 +21,9 @@
  * highlighting happier.
  */
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
+AWS_EXTERN_C_BEGIN
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
@@ -105,7 +110,7 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 /**
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
-AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t res;
 
     if (__builtin_add_overflow(a, b, &res)) {
@@ -114,3 +119,7 @@ AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 
     return res;
 }
+
+AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_MATH_GCC_OVERFLOW_INL */

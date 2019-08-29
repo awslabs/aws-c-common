@@ -210,7 +210,9 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
 AWS_STATIC_IMPL
 void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn);
 
-#include <aws/common/array_list.inl>
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/array_list.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 
