@@ -453,6 +453,15 @@ static int s_aws_load_error_strings_test(struct aws_allocator *allocator, void *
     return AWS_OP_SUCCESS;
 }
 
+static int s_aws_assume_compiles_test(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    AWS_ASSUME(true);
+
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE_FIXTURE(
     raise_errors_test,
     s_setup_errors_test_fn,
@@ -496,3 +505,4 @@ AWS_TEST_CASE_FIXTURE(
     s_teardown_errors_test_fn,
     NULL)
 AWS_TEST_CASE(aws_load_error_strings_test, s_aws_load_error_strings_test)
+AWS_TEST_CASE(aws_assume_compiles_test, s_aws_assume_compiles_test)
