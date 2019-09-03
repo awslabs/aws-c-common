@@ -50,6 +50,7 @@ void aws_priority_queue_init_dynamic_harness() {
             (queue.container.data && queue.container.current_size == (initial_item_allocation * item_size)));
     } else {
         /* assertions */
-        assert(aws_priority_queue_is_wiped(&queue));
+        assert(AWS_IS_ZEROED(queue.container));
+        assert(AWS_IS_ZEROED(queue.backpointers));
     }
 }
