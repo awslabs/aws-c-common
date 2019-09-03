@@ -16,7 +16,9 @@ option(STATIC_CRT "Windows specific option that to specify static/dynamic run-ti
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
-cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
+if (POLICY CMP0069)
+    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
