@@ -120,6 +120,7 @@ function(aws_set_common_properties target)
     else() # release build
         if (POLICY CMP0069)
             if (NOT SET_PROPERTIES_NO_LTO)
+                cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
                 include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
                 if (ipo_check_exists)
                     check_ipo_supported(RESULT ipo_supported)
