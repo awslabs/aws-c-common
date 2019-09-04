@@ -265,7 +265,6 @@ bool aws_priority_queue_is_valid(const struct aws_priority_queue *const queue) {
     return pred_is_valid && container_is_valid && backpointers_valid;
 }
 
-
 void aws_priority_queue_clean_up(struct aws_priority_queue *queue) {
     aws_array_list_clean_up(&queue->container);
     if (!AWS_IS_ZEROED(queue->backpointers)) {
