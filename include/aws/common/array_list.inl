@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ARRAY_LIST_INL
+#define AWS_COMMON_ARRAY_LIST_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -19,6 +22,7 @@
  * Do not add system headers here; add them to array_list.h. This file is included under extern "C" guards,
  * which might break system headers.
  */
+AWS_EXTERN_C_BEGIN
 
 AWS_STATIC_IMPL
 int aws_array_list_init_dynamic(
@@ -340,23 +344,6 @@ int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, vo
 }
 
 AWS_STATIC_IMPL
-int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
-    size_t index_inc;
-    if (aws_add_size_checked(index, 1, &index_inc)) {
-        AWS_POSTCONDITION(aws_array_list_is_valid(list));
-        return AWS_OP_ERR;
-    }
-
-    if (aws_mul_size_checked(index_inc, list->item_size, necessary_size)) {
-        AWS_POSTCONDITION(aws_array_list_is_valid(list));
-        return AWS_OP_ERR;
-    }
-    AWS_POSTCONDITION(aws_array_list_is_valid(list));
-    return AWS_OP_SUCCESS;
-}
-
-AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
@@ -395,3 +382,7 @@ void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_lis
     }
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
+
+AWS_EXTERN_C_END
+
+#endif /*  AWS_COMMON_ARRAY_LIST_INL */

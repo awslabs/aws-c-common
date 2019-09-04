@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ATOMICS_MSVC_INL
+#define AWS_COMMON_ATOMICS_MSVC_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -20,6 +23,8 @@
 #include <intrin.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+AWS_EXTERN_C_BEGIN
 
 #if !(defined(_M_IX86) || defined(_M_X64))
 #    error Atomics are not currently supported for non-x86 MSVC platforms
@@ -355,3 +360,5 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
 }
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE
+AWS_EXTERN_C_END
+#endif

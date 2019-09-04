@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_MATH_MSVC_INL
+#define AWS_COMMON_MATH_MSVC_INL
+
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,10 +21,12 @@
  * highlighting happier.
  */
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
 #include <immintrin.h>
 #include <intrin.h>
 
+AWS_EXTERN_C_BEGIN
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
  */
@@ -115,3 +120,6 @@ AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 
     return res;
 }
+
+AWS_EXTERN_C_END
+#endif /* WS_COMMON_MATH_MSVC_INL */

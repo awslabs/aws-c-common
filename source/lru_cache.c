@@ -113,7 +113,7 @@ int aws_lru_cache_put(struct aws_lru_cache *cache, const void *key, void *p_valu
         /* we're over the cache size limit. Remove whatever is in the back of
          * the list. */
         struct aws_linked_list_node *node_to_remove = aws_linked_list_back(&cache->list);
-        AWS_ASSERT(node_to_remove);
+        AWS_ASSUME(node_to_remove);
         struct cache_node *entry_to_remove = AWS_CONTAINER_OF(node_to_remove, struct cache_node, node);
         /*the callback will unlink and deallocate the node */
         aws_hash_table_remove(&cache->table, entry_to_remove->key, NULL, NULL);

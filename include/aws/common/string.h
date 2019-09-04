@@ -205,8 +205,6 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
 AWS_COMMON_API
 struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str);
 
-AWS_EXTERN_C_END
-
 /**
  * Equivalent to str->bytes.
  */
@@ -226,6 +224,10 @@ bool aws_string_is_valid(const struct aws_string *str);
 AWS_STATIC_IMPL
 bool aws_c_string_is_valid(const char *str);
 
-#include <aws/common/string.inl>
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/string.inl>
+#endif /* AWS_NO_STATIC_IMPL */
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_STRING_H */

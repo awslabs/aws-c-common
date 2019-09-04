@@ -15,14 +15,6 @@
  * permissions and limitations under the License.
  */
 
-#ifndef AWS_STATIC_IMPL
-/*
- * In order to allow us to export our inlinable methods in a DLL/.so, we have a designated .c
- * file where this AWS_STATIC_IMPL macro will be redefined to be non-static.
- */
-#    define AWS_STATIC_IMPL static inline
-#endif
-
 #ifdef __cplusplus
 #    define AWS_EXTERN_C_BEGIN extern "C" {
 #    define AWS_EXTERN_C_END }

@@ -15,6 +15,9 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/string.h>
+
+AWS_EXTERN_C_BEGIN
 /**
  * Equivalent to str->bytes.
  */
@@ -45,5 +48,5 @@ bool aws_c_string_is_valid(const char *str) {
      */
     return str && AWS_MEM_IS_READABLE(str, 1);
 }
-
+AWS_EXTERN_C_END
 #endif /* AWS_COMMON_STRING_INL */
