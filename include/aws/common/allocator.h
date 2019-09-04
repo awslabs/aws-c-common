@@ -16,6 +16,7 @@
  */
 
 #include <aws/common/macros.h>
+#include <aws/common/stdbool.h>
 #include <aws/common/stdint.h>
 
 AWS_EXTERN_C_BEGIN
@@ -30,6 +31,12 @@ struct aws_allocator {
     void *(*mem_calloc)(struct aws_allocator *allocator, size_t num, size_t size);
     void *impl;
 };
+
+/**
+ * Inexpensive (constant time) check of data-structure invariants.
+ */
+AWS_COMMON_API
+bool aws_allocator_is_valid(const struct aws_allocator *alloc);
 
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator(void);

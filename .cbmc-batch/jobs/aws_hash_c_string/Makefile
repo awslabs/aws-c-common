@@ -33,6 +33,7 @@ DEPENDENCIES += $(HELPERDIR)/source/utils.c
 DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 DEPENDENCIES += $(SRCDIR)/source/common.c
 DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+DEPENDENCIES += $(SRCDIR)/source/string.c
 
 ENTRY = aws_hash_c_string_harness
 ###########

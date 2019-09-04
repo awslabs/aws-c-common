@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_MATH_GCC_X64_ASM_INL
+#define AWS_COMMON_MATH_GCC_X64_ASM_INL
+
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,6 +21,9 @@
  * highlighting happier.
  */
 #include <aws/common/common.h>
+#include <aws/common/math.h>
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.
@@ -133,13 +139,13 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
-    uint64_t result = UINT64_MAX;
-    __asm__("addq %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
-            "cmovncq %[arga], %[result]\n" /* [result] = UINT64_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
-            : /* clobbers: */ "cc");
-    return result;
+    __asm__("addq %[arg1], %[arg2]\n" /* [arga] = [arga] + [argb] */
+            "cmovc %q[saturate], %[arg2]\n"
+            : /* in/out: %rax = a, out: rdx (ignored) */ [arg2] "+r"(b)
+            : /* in: register only */ [arg1] "r"(a),
+              /* in: saturation value (reg/memory) */ [saturate] "rm"(~0LL)
+            : /* clobbers: cc */ "cc");
+    return b;
 }
 
 /**
@@ -165,14 +171,20 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 /**
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
-AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     /* We can use inline assembly to do this efficiently on x86-64 and x86. */
 
-    uint32_t result = UINT32_MAX;
-    __asm__("addl %[argb], %[arga]\n"      /* [arga] = [arga] + [argb] */
-            "cmovncl %[arga], %[result]\n" /* [result] = UINT32_MAX if overflow, a+b otherwise*/
-            : /* in/out: */ [result] "+r"(result)
-            : /* in: */ [arga] "r"(a), [argb] "r"(b)
-            : /* clobbers: */ "cc");
-    return result;
+    __asm__("addl %[arg1], %[arg2]\n" /* [arga] = [arga] + [argb] */
+            /* cmov isn't guaranteed to be available on x86-32 */
+            "jnc .1f%=\n"
+            "mov $0xFFFFFFFF, %%eax\n"
+            ".1f%=:"
+            : /* in/out: %rax = a, out: rdx (ignored) */ [arg2] "+a"(b)
+            : /* in: register only */ [arg1] "r"(a)
+            : /* clobbers: cc */ "cc");
+    return b;
 }
+
+AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_MATH_GCC_X64_ASM_INL */

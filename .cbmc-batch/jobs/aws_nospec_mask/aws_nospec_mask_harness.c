@@ -14,6 +14,7 @@
  */
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/private/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 

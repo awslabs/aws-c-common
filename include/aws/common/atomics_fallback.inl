@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ATOMICS_FALLBACK_INL
+#define AWS_COMMON_ATOMICS_FALLBACK_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,6 +16,8 @@
  * permissions and limitations under the License.
  */
 
+AWS_EXTERN_C_BEGIN
+
 #ifndef AWS_ATOMICS_HAVE_THREAD_FENCE
 
 void aws_atomic_thread_fence(enum aws_memory_order order) {
@@ -23,4 +28,7 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
     aws_atomic_compare_exchange_int(&var, &expected, 1, order, aws_memory_order_relaxed);
 }
 
-#endif
+#endif /* AWS_ATOMICS_HAVE_THREAD_FENCE */
+
+AWS_EXTERN_C_END
+#endif /* AWS_COMMON_ATOMICS_FALLBACK_INL */

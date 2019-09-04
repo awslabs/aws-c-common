@@ -12,30 +12,35 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob
+import os, sys, glob, subprocess
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
-    __slots__ = ('host', 'target', 'arch', 'compiler', 'compiler_version')
-
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
-            self.host, self.compiler, self.compiler_version, self.target, self.arch = kwargs['spec'].split('-')
+            self.host, self.compiler, self.compiler_version, self.target, self.arch, *rest = kwargs['spec'].split('-')
+
+            for variant in ('downstream',):
+                if variant in rest:
+                    setattr(self, variant, True)
+                else:
+                    setattr(self, variant, False)
 
         # Pull out individual fields. Note this is not in an else to support overriding at construction time
-        for slot in BuildSpec.__slots__:
+        for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
             if slot in kwargs:
                 setattr(self, slot, kwargs[slot])
 
-    def name(self):
-        return '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        self.name = '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        if self.downstream:
+            self.name += "-downstream"
 
     def __str__(self):
-        return self.name()
+        return self.name
 
     def __repr__(self):
-        return self.name()
+        return self.name
 
 ########################################################################################################################
 # DATA DEFINITIONS
@@ -47,6 +52,8 @@ BUILD_CONFIG = "RelWithDebInfo"
 KEYS = {
     # Build
     'python': "",
+    'c': None,
+    'cxx': None,
     'pre_build_steps': [],
     'post_build_steps': [],
     'build_env': {},
@@ -138,8 +145,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
@@ -152,8 +159,8 @@ TARGETS = {
         'architectures': {
             'x86': {
                 'build_args': [
-                    '-DCMAKE_C_FLAGS="-m32"',
-                    '-DCMAKE_CXX_FLAGS="-m32"',
+                    '-DCMAKE_C_FLAGS=-m32',
+                    '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
@@ -208,10 +215,8 @@ COMPILERS = {
                 '!build_args': [],
 
                 'apt_packages': ["clang-3.9"],
-                'build_env': {
-                    'CC': "clang-3.9",
-                    'CXX': "clang-3.9",
-                },
+                'c': "clang-3.9",
+                'cxx': "clang-3.9",
             },
             '6': {
                 'apt_repos': [
@@ -219,9 +224,9 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
 
+                'c': "clang-6.0",
+                'cxx': "clang-6.0",
                 'build_env': {
-                    'CC': "clang-6.0",
-                    'CXX': "clang-6.0",
                     'CLANG_FORMAT': 'clang-format-6.0',
                 },
                 'post_build_steps': [
@@ -240,11 +245,8 @@ COMPILERS = {
                 ],
                 'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
 
-                'build_env': {
-                    'CC': "clang-8",
-                    'CXX': "clang-8",
-                    'CLANG_FORMAT': 'clang-format-8',
-                },
+                'c': "clang-8",
+                'cxx': "clang-8",
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-8',
@@ -258,27 +260,12 @@ COMPILERS = {
         'hosts': ['linux'],
         'targets': ['linux'],
 
-        'build_env': {
-            'CC': "gcc-{version}",
-            'CXX': "g++-{version}",
-        },
+        'c': "gcc-{version}",
+        'cxx': "g++-{version}",
         'apt_packages': ["gcc-{version}", "g++-{version}"],
 
         'versions': {
-            '4': {
-                '!apt_packages': ["gcc", "g++"],
-                '!build_env': {
-                    'CC': "gcc",
-                    'CXX': 'g++',
-                },
-                '!apt_repos': [],
-
-                'architectures': {
-                    'x86': {
-                        'apt_packages': ["gcc-multilib", "g++-multilib"],
-                    },
-                },
-            },
+            '4.8': {},
             '5': {},
             '6': {},
             '7': {},
@@ -484,10 +471,31 @@ def produce_config(build_spec, **additional_variables):
 # RUN BUILD
 ########################################################################################################################
 
+# Used in dry-run builds to track simulated working directory
+cwd = os.getcwd()
+
+def _get_git_branch():
+    branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
+    branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
+
+    print("Found branches:", branches)
+
+    for branch in branches:
+        if branch == "(no branch)":
+            continue
+
+        origin_str = "remotes/origin/"
+        if branch.startswith(origin_str):
+            branch = branch[len(origin_str):]
+
+        return branch
+
+    return None
+
 def run_build(build_spec, is_dryrun):
 
     if not is_dryrun:
-        import tempfile, shutil, subprocess
+        import tempfile, shutil
 
     #TODO These platforms don't succeed when doing a RelWithDebInfo build
     if build_spec.host in ("al2012", "manylinux"):
@@ -497,28 +505,196 @@ def run_build(build_spec, is_dryrun):
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
 
-    def _run_command(command):
+    built_projects = []
+
+    git_branch = _get_git_branch()
+    if git_branch:
+        print("On git branch {}".format(git_branch))
+
+    def _flatten_command(*command):
         # Process out lists
         new_command = []
-        for e in command:
-            e_type = type(e)
+        def _proc_segment(command_segment):
+            e_type = type(command_segment)
             if e_type == str:
-                new_command.append(e)
-            elif e_type == list:
-                new_command.extend(e)
+                new_command.append(command_segment)
+            elif e_type == list or e_type == tuple:
+                for segment in command_segment:
+                    _proc_segment(segment)
+        _proc_segment(command)
+        return new_command
 
+    def _log_command(*command):
+        print('>', ' '.join(_flatten_command(*command)), flush=True)
+
+    def _run_command(*command):
+        _log_command(*command)
+        if not is_dryrun:
+            subprocess.check_call(_flatten_command(*command), stdout=sys.stdout, stderr=sys.stderr)
+
+    # Helper to run makedirs regardless of dry run status
+    def _mkdir(directory):
+        _log_command("mkdir", "-p", directory)
+        if not is_dryrun:
+            os.makedirs(directory, exist_ok=True)
+
+    def _cwd():
         if is_dryrun:
-            print(' '.join(new_command))
+            global cwd
+            return cwd
         else:
-            print('>', ' '.join(new_command), flush=True)
-            subprocess.check_call(new_command, stdout=sys.stdout, stderr=sys.stderr)
+            return os.getcwd()
+
+    # Helper to run chdir regardless of dry run status
+    def _cd(directory):
+        _log_command("cd", directory)
+        if is_dryrun:
+            global cwd
+            if os.path.isabs(directory) or directory.startswith('$'):
+                cwd = directory
+            else:
+                cwd = os.path.join(cwd, directory)
+        else:
+            os.chdir(directory)
+
+    # Build a list of projects from a config file
+    def _build_dependencies(project_list, build_tests, run_tests):
+
+        pwd_1 = _cwd()
+        _cd(build_dir)
+
+        for project in project_list:
+            name = project.get("name", None)
+            if not name:
+                raise Exception("Project definition missing name: " + project)
+
+            # Skip project if already built
+            if name in built_projects:
+                continue
+
+            hosts = project.get("hosts", None)
+            if hosts and build_spec.host not in hosts:
+                print("Skipping dependency {} as it is not enabled for this host".format(name))
+                continue
+
+            targets = project.get("targets", None)
+            if targets and build_spec.target not in targets:
+                print("Skipping dependency {} as it is not enabled for this target".format(name))
+                continue
+
+            account = project.get("account", "awslabs")
+            pin = project.get("revision", None)
+
+            git = "https://github.com/{}/{}".format(account, name)
+            _run_command("git", "clone", git)
+
+            pwd_2 = _cwd()
+            _cd(name)
+
+            # Attempt to checkout a branch with the same name as the current branch
+            try:
+                _run_command("git", "checkout", git_branch)
+            except:
+                print("Project {} does not have a branch {}".format(name, git_branch))
+                # Attempt to checkout the pinned revision
+                if pin:
+                    _run_command("git", "checkout", pin)
+
+            # Build/install
+            _build_project(name, build_tests=build_tests, run_tests=run_tests)
+
+            _cd(pwd_2)
+
+        _cd(pwd_1)
+
+    # Helper to build
+    def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
+
+        if not project:
+            project_source_dir = source_dir
+            project_build_dir = build_dir
+        else:
+            project_source_dir = os.path.join(build_dir, project)
+            project_build_dir = os.path.join(project_source_dir, 'build')
+
+        upstream = []
+        downstream = []
+
+        project_config_file = os.path.join(project_source_dir, "builder.json")
+        if os.path.exists(project_config_file):
+            import json
+            with open(project_config_file, 'r') as config_fp:
+                try:
+                    project_config = json.load(config_fp)
+                except Exception as e:
+                    print("Failed to parse config file", project_config_file, e)
+                    sys.exit(1)
+
+            project = project_config.get("name", project)
+            upstream = project_config.get("upstream", [])
+            downstream = project_config.get("downstream", [])
+
+        # If project not specified, and not pulled from the config file, default to file path
+        if not project:
+            project = os.path.basename(source_dir)
+
+        # Build upstream dependencies (don't build or run their tests)
+        _build_dependencies(upstream, build_tests=False, run_tests=False)
+
+        # If the build directory doesn't already exist, make it
+        _mkdir(project_build_dir)
+
+        # CD to the build directory
+        pwd = _cwd()
+        _cd(project_build_dir)
+
+        # Set compiler flags
+        compiler_flags = []
+        for opt in ['c', 'cxx']:
+            if opt in config and config[opt]:
+                compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
+        # Run CMake
+        cmake_args = [
+            "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+            # Each image has a custom installed openssl build, make sure CMake knows where to find it
+            "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
+            "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
+            "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+        ]
+        _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
+
+        # Run the build
+        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG)
+
+        # Do install
+        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG, "--target", "install")
+
+        # Run the tests
+        if run_tests:
+            _run_command("ctest", ".", "--output-on-failure")
+
+        # Mark project as built
+        if project:
+            built_projects.append(project)
+
+        # Build downstream dependencies (build and run their tests if this build is setup for that)
+        if build_downstream:
+            _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
+
+        # CD back to the beginning directory
+        _cd(pwd)
 
     # Make the build directory
     if is_dryrun:
         build_dir = "$TEMP/build"
-        _run_command(["mkdir", build_dir])
     else:
         build_dir = tempfile.mkdtemp()
+    _log_command(['mkdir', build_dir])
+
+    # Make the install directory
+    install_dir = os.path.join(build_dir, 'install')
+    _mkdir(install_dir)
 
     # Build the config object
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
@@ -527,22 +703,24 @@ def run_build(build_spec, is_dryrun):
 
     # Install keys
     for key in config['apt_keys']:
-        _run_command(["sudo", "apt-key", "adv", "--fetch-keys", key])
+        _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
 
     # Add APT repositories
     for repo in config['apt_repos']:
-        _run_command(["sudo", "apt-add-repository", repo])
+        _run_command("sudo", "apt-add-repository", repo)
 
     # Install packages
     if config['apt_packages']:
-        _run_command(["sudo", "apt-get", "update", "-y"])
-        _run_command(["sudo", "apt-get", "install", "-y", "-f", config['apt_packages']])
+        _run_command("sudo", "apt-get", "-q", "update", "-y")
+        _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
 
     # PRE BUILD
 
     # Set build environment
     for var, value in config['build_env'].items():
-        os.environ[var] = value
+        _log_command(["export", "{}={}".format(var, value)])
+        if not is_dryrun:
+            os.environ[var] = value
 
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
@@ -550,37 +728,22 @@ def run_build(build_spec, is_dryrun):
 
     # BUILD
 
-    # CD to the build directory
-    if is_dryrun:
-        _run_command(["cd", build_dir])
-    else:
-        os.chdir(build_dir)
-
-    # Run CMake
-    _run_command(["cmake", config['build_args'], "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG, source_dir])
-
-    # Run the build
-    _run_command(["cmake", "--build", ".", "--config", BUILD_CONFIG])
-
-    # Run tests if necessary
-    if config['run_tests']:
-        _run_command(["ctest", ".", "--output-on-failure"])
+    # Actually run the build (always build tests, even if we won't run them)
+    _build_project(project=None, build_tests=True, run_tests=config['run_tests'], build_downstream=build_spec.downstream)
 
     # POST BUILD
-
-    # Go back to the source dir
-    if is_dryrun:
-        _run_command(["cd", source_dir])
-    else:
-        os.chdir(source_dir)
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
         _run_command(step)
 
     # Delete temp dir
+    _log_command(["rm", "-rf", build_dir])
     if not is_dryrun:
-        shutil.rmtree(build_dir)
+        try:
+            shutil.rmtree(build_dir)
+        except Exception as e:
+            print("Failed to delete temp dir {}: {}".format(build_dir, e))
 
     return commands
 
@@ -589,36 +752,45 @@ def run_build(build_spec, is_dryrun):
 ########################################################################################################################
 
 CODEBUILD_OVERRIDES = {
-    'linux-clang3-x64': 'linux-clang-3-linux-x64',
-    'linux-clang6-x64': 'linux-clang-6-linux-x64',
-    'linux-clang8-x64': 'linux-clang-8-linux-x64',
+    'linux-clang-3-linux-x64': ['linux-clang3-x64'],
+    'linux-clang-6-linux-x64': ['linux-clang6-x64'],
+    'linux-clang-8-linux-x64': ['linux-clang8-x64'],
+    'linux-clang-6-linux-x64-downstream': ['downstream'],
 
-    'linux-gcc-4x-x86': 'linux-gcc-4-linux-x86',
-    'linux-gcc-4x-x64': 'linux-gcc-4-linux-x64',
-    'linux-gcc-5x-x64': 'linux-gcc-5-linux-x64',
-    'linux-gcc-6x-x64': 'linux-gcc-6-linux-x64',
-    'linux-gcc-7x-x64': 'linux-gcc-7-linux-x64',
+    'linux-gcc-4.8-linux-x86': ['linux-gcc-4x-x86', 'linux-gcc-4-linux-x86'],
+    'linux-gcc-4.8-linux-x64': ['linux-gcc-4x-x64', 'linux-gcc-4-linux-x64'],
+    'linux-gcc-5-linux-x64': ['linux-gcc-5x-x64'],
+    'linux-gcc-6-linux-x64': ['linux-gcc-6x-x64'],
+    'linux-gcc-7-linux-x64': ['linux-gcc-7x-x64'],
 
-    'android-arm64-v8a': 'linux-ndk-19-android-arm64v8a',
+    'linux-ndk-19-android-arm64v8a': ['android-arm64-v8a'],
 
-    "AL2012-gcc44": 'al2012-default-default-linux-x64',
+    'al2012-default-default-linux-x64': ["AL2012-gcc44"],
 
-    "ancient-linux-x86": 'manylinux-default-default-linux-x86',
-    "ancient-linux-x64": 'manylinux-default-default-linux-x64',
+    'manylinux-default-default-linux-x86': ["ancient-linux-x86"],
+    'manylinux-default-default-linux-x64': ["ancient-linux-x64"],
 
-    'windows-msvc-2015-x86': 'windows-msvc-2015-windows-x86',
-    'windows-msvc-2015': 'windows-msvc-2015-windows-x64',
-    'windows-msvc-2017': 'windows-msvc-2017-windows-x64',
+    'windows-msvc-2015-windows-x86': ['windows-msvc-2015-x86'],
+    'windows-msvc-2015-windows-x64': ['windows-msvc-2015'],
+    'windows-msvc-2017-windows-x64': ['windows-msvc-2017'],
 }
 
-def create_codebuild_project(config, project, github_account):
+def create_codebuild_project(config, project, github_account, inplace_script):
 
     variables = {
         'project': project,
         'account': github_account,
-        'spec': config['spec'].name(),
+        'spec': config['spec'].name,
         'python': config['python'],
     }
+
+    if inplace_script:
+        run_commands = ["{python} ./codebuild/builder.py build {spec}"]
+    else:
+        run_commands = [
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} builder.py build {spec}"
+        ]
 
     # This matches the CodeBuild API for expected format
     CREATE_PARAM_TEMPLATE = {
@@ -633,7 +805,7 @@ def create_codebuild_project(config, project, github_account):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '      - "{python} ./codebuild/builder.py build"',
+                '\n'.join(['      - "{}"'.format(command) for command in run_commands]),
             'auth': {
                 'type': 'OAUTH',
             },
@@ -646,12 +818,6 @@ def create_codebuild_project(config, project, github_account):
             'type': config['image_type'],
             'image': config['image'],
             'computeType': config['compute_type'],
-            'environmentVariables': [
-                {
-                    'name': "BUILD_SPEC",
-                    'value': "{spec}",
-                },
-            ],
             'privilegedMode': config['requires_privilege'],
         },
         'serviceRole': 'arn:aws:iam::123124136734:role/CodeBuildServiceRole',
@@ -672,26 +838,22 @@ if __name__ == '__main__':
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser('build', help="Run the requested build")
-    build.add_argument('build', type=str, nargs='?', default=None)
+    build.add_argument('build', type=str)
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
     codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
     codebuild.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
+    codebuild.add_argument('--inplace-script', action='store_true', help='Use the python script in codebuild/builder.py instead of downloading it')
 
     args = parser.parse_args()
 
     if args.command == 'build':
         # If build name not passed
         build_name = args.build
-        if not build_name:
-            build_name = os.environ.get('BUILD_SPEC', None)
-            assert build_name, "Build must be specified via command line or BUILD_SPEC env variable"
-
         build_spec = BuildSpec(spec=build_name)
 
-        print("Running build", build_spec.name(), flush=True)
-        print("Current directory:", os.getcwd(), flush=True)
+        print("Running build", build_spec.name, flush=True)
 
         run_build(build_spec, args.dry_run)
 
@@ -709,39 +871,47 @@ if __name__ == '__main__':
 
         project_prefix_len = len(args.project) + 1
 
-        old_project_names = ['{}-{}'.format(args.project, build) for build in CODEBUILD_OVERRIDES.keys()]
-        old_projects_response = codebuild.batch_get_projects(names=old_project_names)
+        # Map of canonical builds to their existing codebuild projects (None if creation required)
+        canonical_list = {key: None for key in CODEBUILD_OVERRIDES.keys()}
+        # List of all potential names to search for
+        all_potential_builds = list(CODEBUILD_OVERRIDES.keys())
+        # Reverse mapping of codebuild name to canonical name
+        full_codebuild_to_canonical = {key: key for key in CODEBUILD_OVERRIDES.keys()}
+        for canonical, cb_list in CODEBUILD_OVERRIDES.items():
+            all_potential_builds += cb_list
+            for cb in cb_list:
+                full_codebuild_to_canonical[cb] = canonical
+
+        # Search for the projects
+        full_project_names = ['{}-{}'.format(args.project, build.replace('.', '')) for build in all_potential_builds]
+        old_projects_response = codebuild.batch_get_projects(names=full_project_names)
         existing_projects += [project['name'][project_prefix_len:] for project in old_projects_response['projects']]
 
-        old_missing_projects = [name[project_prefix_len:] for name in old_projects_response['projectsNotFound']]
-        # If old project names are not found, search for the new names, and if those aren't present, add for creation
-        if old_missing_projects:
-            new_project_names = [CODEBUILD_OVERRIDES[old_name] for old_name in old_missing_projects]
-            new_projects_response = codebuild.batch_get_projects(names=new_project_names)
-            existing_projects += [project['name'] for project in new_projects_response['projects']]
-            new_projects += new_projects_response['projectsNotFound']
+        # Mark the found projects with their found names
+        for project in existing_projects:
+            canonical = full_codebuild_to_canonical[project]
+            canonical_list[canonical] = project
 
         # Update all existing projects
-        for cb_spec in existing_projects:
-            # If the project being updated is in CB_OVERRIDES, use it, otherwise just spec
-            new_spec = CODEBUILD_OVERRIDES.get(cb_spec, cb_spec)
-            build_name = '{}-{}'.format(args.project, cb_spec)
+        for canonical, cb_name in canonical_list.items():
+            if cb_name:
+                create = False
+            else:
+                cb_name = canonical
+                create = True
 
-            build_spec = BuildSpec(spec=new_spec)
+            build_name = '{}-{}'.format(args.project, cb_name)
+
+            build_spec = BuildSpec(spec=canonical)
             config = produce_config(build_spec)
-            cb_project = create_codebuild_project(config, args.project, args.github_account)
-            cb_project['name'] = build_name
+            cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
+            cb_project['name'] = build_name.replace('.', '')
 
-            print('Updating: {} ({})'.format(new_spec, cb_spec))
-            if not args.dry_run:
-                codebuild.update_project(**cb_project)
-
-        # Create any missing projects
-        for spec in new_projects:
-            build_spec = BuildSpec(spec=spec)
-            config = produce_config(build_spec)
-            cb_project = create_codebuild_project(config, args.project, args.github_account)
-
-            print('Creating: {}'.format(spec))
-            if not args.dry_run:
-                codebuild.create_project(**cb_project)
+            if create:
+                print('Creating: {}'.format(canonical))
+                if not args.dry_run:
+                    codebuild.create_project(**cb_project)
+            else:
+                print('Updating: {} ({})'.format(canonical, cb_name))
+                if not args.dry_run:
+                    codebuild.update_project(**cb_project)

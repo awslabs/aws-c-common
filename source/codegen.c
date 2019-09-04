@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -19,24 +19,14 @@
 
 #define AWS_STATIC_IMPL AWS_COMMON_API
 
-#include <aws/common/array_list.h>
-#include <aws/common/atomics.h>
-#include <aws/common/byte_buf.h>
-#include <aws/common/byte_order.h>
-#include <aws/common/clock.h>
-#include <aws/common/common.h>
-#include <aws/common/condition_variable.h>
-#include <aws/common/encoding.h>
-#include <aws/common/error.h>
-#include <aws/common/exports.h>
-#include <aws/common/hash_table.h>
-#include <aws/common/linked_list.h>
-#include <aws/common/lru_cache.h>
-#include <aws/common/math.h>
-#include <aws/common/mutex.h>
-#include <aws/common/priority_queue.h>
-#include <aws/common/rw_lock.h>
-#include <aws/common/string.h>
-#include <aws/common/system_info.h>
-#include <aws/common/task_scheduler.h>
-#include <aws/common/thread.h>
+#include <aws/common/array_list.inl>
+#include <aws/common/atomics.inl>
+#include <aws/common/byte_order.inl>
+#include <aws/common/clock.inl>
+#include <aws/common/encoding.inl>
+#include <aws/common/error.inl>
+#include <aws/common/linked_list.inl>
+#include <aws/common/math.inl>
+#include <aws/common/ring_buffer.inl>
+#include <aws/common/string.inl>
+#include <aws/common/zero.inl>

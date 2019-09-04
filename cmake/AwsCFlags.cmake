@@ -21,7 +21,7 @@ include(CMakeParseArguments) # needed for CMake v3.4 and lower
 #  NO_WEXTRA: Disable -Wextra
 #  NO_PEDANTIC: Disable -pedantic
 function(aws_set_common_properties target)
-    set(options NO_WGNU NO_WEXTRA NO_PEDANTIC)
+    set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
     if(MSVC)
@@ -35,7 +35,7 @@ function(aws_set_common_properties target)
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
-        
+
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
             string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
@@ -117,6 +117,20 @@ function(aws_set_common_properties target)
 
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
+    else() # release build
+        if (POLICY CMP0069)
+            if (NOT SET_PROPERTIES_NO_LTO)
+                cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
+                include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
+                if (ipo_check_exists)
+                    check_ipo_supported(RESULT ipo_supported)
+                    if (ipo_supported)
+                        message(STATUS "Enabling IPO/LTO for Release builds")
+                        set(AWS_ENABLE_LTO ON)
+                    endif()
+                endif()
+            endif()
+        endif()
     endif()
 
     if(BUILD_SHARED_LIBS)
@@ -124,8 +138,11 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
     endif()
-    
+
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
+    if (AWS_ENABLE_LTO)
+        set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
 endfunction()

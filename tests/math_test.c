@@ -370,6 +370,159 @@ static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx
     return 0;
 }
 
+#define CHECK_OVF_VARARGS(fn, type, num, ...)                                                                          \
+    do {                                                                                                               \
+        type result_val;                                                                                               \
+        ASSERT_TRUE(fn(num, &result_val, __VA_ARGS__));                                                                \
+    } while (0)
+
+#define CHECK_NO_OVF_VARARGS(fn, type, num, r, ...)                                                                    \
+    do {                                                                                                               \
+        type result_val;                                                                                               \
+        ASSERT_FALSE(fn(num, &result_val, __VA_ARGS__));                                                               \
+        ASSERT_INT_EQUALS(                                                                                             \
+            (uint64_t)result_val,                                                                                      \
+            (uint64_t)(r),                                                                                             \
+            "From fn %s num %016llx: Expected %016llx; got %016llx",                                                   \
+            #fn,                                                                                                       \
+            (unsigned long long)(num),                                                                                 \
+            (unsigned long long)(r),                                                                                   \
+            (unsigned long long)(result_val));                                                                         \
+    } while (0)
+
+void print_array(size_t *a, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        fprintf(AWS_TESTING_REPORT_FD, "a: %zu\t%zu\n", i, a[i]);
+    }
+}
+
+static int check_add_varargs_no_overflow(size_t a, size_t b, size_t r) {
+    // Check for 2 inputs
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; i < 2; ++i) {
+            size_t array[2] = {0};
+            if (i != j) {
+                // fprintf(AWS_TESTING_REPORT_FD,"i: %zu j: %zu\n", i, j);
+                array[i] = a;
+                array[j] = b;
+                // print_array(array,2);
+
+                CHECK_NO_OVF_VARARGS(aws_add_size_checked_varargs, size_t, 2, r, array[0], array[1]);
+            }
+        }
+    }
+
+    // Check for 3 inputs
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; i < 3; ++i) {
+            size_t array[3] = {0};
+            if (i != j) {
+                array[i] = a;
+                array[j] = b;
+                CHECK_NO_OVF_VARARGS(aws_add_size_checked_varargs, size_t, 3, r, array[0], array[1], array[2]);
+            }
+        }
+    }
+
+    // Check for 5 inputs
+    for (size_t i = 0; i < 5; ++i) {
+        for (size_t j = 0; i < 5; ++i) {
+            size_t array[5] = {0};
+            if (i != j) {
+                array[i] = a;
+                array[j] = b;
+                CHECK_NO_OVF_VARARGS(
+                    aws_add_size_checked_varargs, size_t, 5, r, array[0], array[1], array[2], array[3], array[4]);
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int check_add_varargs_overflow(size_t a, size_t b) {
+    // Check for 2 inputs
+    for (size_t i = 0; i < 2; ++i) {
+        for (size_t j = 0; i < 2; ++i) {
+            size_t array[2] = {0};
+            if (i != j) {
+                // fprintf(AWS_TESTING_REPORT_FD,"i: %zu j: %zu\n", i, j);
+                array[i] = a;
+                array[j] = b;
+                // print_array(array,2);
+
+                CHECK_OVF_VARARGS(aws_add_size_checked_varargs, size_t, 2, array[0], array[1]);
+            }
+        }
+    }
+
+    // Check for 3 inputs
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; i < 3; ++i) {
+            size_t array[3] = {0};
+            if (i != j) {
+                array[i] = a;
+                array[j] = b;
+                CHECK_OVF_VARARGS(aws_add_size_checked_varargs, size_t, 3, array[0], array[1], array[2]);
+            }
+        }
+    }
+
+    // Check for 5 inputs
+    for (size_t i = 0; i < 5; ++i) {
+        for (size_t j = 0; i < 5; ++i) {
+            size_t array[5] = {0};
+            if (i != j) {
+                array[i] = a;
+                array[j] = b;
+                CHECK_OVF_VARARGS(
+                    aws_add_size_checked_varargs, size_t, 5, array[0], array[1], array[2], array[3], array[4]);
+            }
+        }
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_aws_add_size_checked_varargs, s_test_add_size_checked_varargs_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_add_size_checked_varargs_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+#if SIZE_BITS == 32
+    const uint32_t HALF_MAX = UINT32_MAX / 2;
+    const uint32_t ACTUAL_MAX = UINT32_MAX;
+#elif SIZE_BITS == 64
+    const uint64_t HALF_MAX = UINT64_MAX / 2;
+    const uint64_t ACTUAL_MAX = UINT64_MAX;
+#else
+    FAIL("Unexpected size for size_t: %zu", sizeof(size_t));
+#endif
+
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(0, 0, 0));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(0, 1, 1));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(4, 5, 9));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(1234, 4321, 5555));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(0, ACTUAL_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(HALF_MAX, HALF_MAX, ACTUAL_MAX - 1));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(HALF_MAX + 1, HALF_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(100, ACTUAL_MAX - 102, ACTUAL_MAX - 2));
+    ASSERT_SUCCESS(check_add_varargs_no_overflow(100, ACTUAL_MAX - 100, ACTUAL_MAX));
+
+    ASSERT_SUCCESS(check_add_varargs_overflow(1, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(100, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(HALF_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(ACTUAL_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(HALF_MAX + 1, HALF_MAX + 1));
+    ASSERT_SUCCESS(check_add_varargs_overflow(HALF_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(HALF_MAX, ACTUAL_MAX));
+    ASSERT_SUCCESS(check_add_varargs_overflow(100, ACTUAL_MAX - 99));
+    ASSERT_SUCCESS(check_add_varargs_overflow(100, ACTUAL_MAX - 1));
+
+    return 0;
+}
+
 AWS_TEST_CASE(test_add_size_saturating, s_test_add_size_saturating_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *ctx) {

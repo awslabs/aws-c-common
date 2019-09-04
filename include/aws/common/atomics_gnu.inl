@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_ATOMICS_GNU_INL
+#define AWS_COMMON_ATOMICS_GNU_INL
+
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -19,6 +22,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+
+AWS_EXTERN_C_BEGIN
 
 #ifdef __clang__
 #    pragma clang diagnostic push
@@ -219,3 +224,5 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
 #endif
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE
+AWS_EXTERN_C_END
+#endif /* AWS_COMMON_ATOMICS_GNU_INL */

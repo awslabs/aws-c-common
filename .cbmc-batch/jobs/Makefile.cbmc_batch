@@ -51,24 +51,24 @@ define yaml_encode_options
 endef
 
 $(ENTRY).yaml: $(ENTRY).goto Makefile
-	echo 'batchpkg: $(BATCHPKG)' >> $@
+	echo 'batchpkg: $(BATCHPKG)' > $@
 	echo 'build: true' >> $@
 	echo 'cbmcflags: $(call yaml_encode_options,$(CBMCFLAGS))' >> $@
 	echo 'cbmcpkg: $(CBMCPKG)' >> $@
 	echo 'coverage_memory: $(COVMEM)' >> $@
 	echo 'expected: "SUCCESSFUL"' >> $@
 	echo 'goto: $(ENTRY).goto' >> $@
-	echo 'jobos: ubuntu16' > $@
+	echo 'jobos: ubuntu16' >> $@
 	echo 'property_memory: $(PROPMEM)' >> $@
 	echo 'viewerpkg: $(VIEWERPKG)' >> $@
 
 batch-yaml: $(ENTRY).yaml
 
 cbmc-batch.yaml: $(ENTRY).goto Makefile
-	echo 'cbmcflags: $(strip $(call yaml_encode_options,$(CBMCFLAGS)))' >> $@
+	echo 'cbmcflags: $(strip $(call yaml_encode_options,$(CBMCFLAGS)))' > $@
 	echo 'expected: "SUCCESSFUL"' >> $@
 	echo 'goto: $(ENTRY).goto' >> $@
-	echo 'jobos: ubuntu16' > $@
+	echo 'jobos: ubuntu16' >> $@
 
 ci-yaml: cbmc-batch.yaml
 

@@ -78,11 +78,10 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
     ASSERT_NOT_NULL(strstr(buffer, __func__));
 #    if !defined(__APPLE__) /* apple doesn't always find file info */
-    ASSERT_NOT_NULL(strstr(buffer, file));
-
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
 #        if defined(DEBUG_BUILD)
+    ASSERT_NOT_NULL(strstr(buffer, file));
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
      * in both directions depending on compiler, so we check a range around the call site __LINE__
      * The line number can also be ? on old compilers

@@ -88,17 +88,8 @@ void aws_raise_error_private(int err);
  * Raises `err` to the installed callbacks, and sets the thread's error.
  */
 AWS_STATIC_IMPL
-int aws_raise_error(int err) {
-    /*
-     * Certain static analyzers can't see through the out-of-line call to aws_raise_error,
-     * and assume that this might return AWS_OP_SUCCESS. We'll put the return inline just
-     * to help with their assumptions.
-     */
+int aws_raise_error(int err);
 
-    aws_raise_error_private(err);
-
-    return AWS_OP_ERR;
-}
 /*
  * Resets the `err` back to defaults
  */
@@ -137,17 +128,18 @@ aws_error_handler_fn *aws_set_thread_local_error_handler_fn(aws_error_handler_fn
 AWS_COMMON_API
 void aws_register_error_info(const struct aws_error_info_list *error_info);
 
-/**
- * Loads error strings for debugging and logging purposes.
- */
 AWS_COMMON_API
-void aws_load_error_strings(void);
+void aws_unregister_error_info(const struct aws_error_info_list *error_info);
 
 /**
  * Convert a c library io error into an aws error.
  */
 AWS_COMMON_API
 int aws_translate_and_raise_io_error(int error_no);
+
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/error.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 

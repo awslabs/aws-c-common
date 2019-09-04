@@ -2,7 +2,7 @@
 #define AWS_COMMON_CLOCK_H
 
 /*
- * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ enum aws_timestamp_unit {
     AWS_TIMESTAMP_NANOS = 1000000000,
 };
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is
  * returned. If 'remainder' is NOT NULL, it will be set to the remainder if convert_from is a more precise unit than
@@ -37,26 +39,8 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     uint64_t timestamp,
     enum aws_timestamp_unit convert_from,
     enum aws_timestamp_unit convert_to,
-    uint64_t *remainder) {
-    uint64_t diff = 0;
+    uint64_t *remainder);
 
-    if (convert_to > convert_from) {
-        diff = convert_to / convert_from;
-        return aws_mul_u64_saturating(timestamp, diff);
-    } else if (convert_to < convert_from) {
-        diff = convert_from / convert_to;
-
-        if (remainder) {
-            *remainder = timestamp % diff;
-        }
-
-        return timestamp / diff;
-    } else {
-        return timestamp;
-    }
-}
-
-AWS_EXTERN_C_BEGIN
 /**
  * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This
  * clock has no bearing on the actual system time. On success, timestamp will be set.
@@ -71,6 +55,10 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp);
  */
 AWS_COMMON_API
 int aws_sys_clock_get_ticks(uint64_t *timestamp);
+
+#ifndef AWS_NO_STATIC_IMPL
+#    include <aws/common/clock.inl>
+#endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 

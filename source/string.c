@@ -107,3 +107,154 @@ int aws_array_list_comparator_string(const void *a, const void *b) {
     const struct aws_string *str_b = *(const struct aws_string **)b;
     return aws_string_compare(str_a, str_b);
 }
+
+/**
+ * Returns true if bytes of string are the same, false otherwise.
+ */
+bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
+    AWS_PRECONDITION(!a || aws_string_is_valid(a));
+    AWS_PRECONDITION(!b || aws_string_is_valid(b));
+    if (a == b) {
+        return true;
+    }
+    if (a == NULL || b == NULL) {
+        return false;
+    }
+    return aws_array_eq(a->bytes, a->len, b->bytes, b->len);
+}
+
+/**
+ * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
+ */
+bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b) {
+    AWS_PRECONDITION(!a || aws_string_is_valid(a));
+    AWS_PRECONDITION(!b || aws_string_is_valid(b));
+    if (a == b) {
+        return true;
+    }
+    if (a == NULL || b == NULL) {
+        return false;
+    }
+    return aws_array_eq_ignore_case(a->bytes, a->len, b->bytes, b->len);
+}
+
+/**
+ * Returns true if bytes of string and cursor are the same, false otherwise.
+ */
+bool aws_string_eq_byte_cursor(const struct aws_string *str, const struct aws_byte_cursor *cur) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!cur || aws_byte_cursor_is_valid(cur));
+    if (str == NULL && cur == NULL) {
+        return true;
+    }
+    if (str == NULL || cur == NULL) {
+        return false;
+    }
+    return aws_array_eq(str->bytes, str->len, cur->ptr, cur->len);
+}
+
+/**
+ * Returns true if bytes of string and cursor are equivalent, using a case-insensitive comparison.
+ */
+
+bool aws_string_eq_byte_cursor_ignore_case(const struct aws_string *str, const struct aws_byte_cursor *cur) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!cur || aws_byte_cursor_is_valid(cur));
+    if (str == NULL && cur == NULL) {
+        return true;
+    }
+    if (str == NULL || cur == NULL) {
+        return false;
+    }
+    return aws_array_eq_ignore_case(str->bytes, str->len, cur->ptr, cur->len);
+}
+
+/**
+ * Returns true if bytes of string and buffer are the same, false otherwise.
+ */
+bool aws_string_eq_byte_buf(const struct aws_string *str, const struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    if (str == NULL && buf == NULL) {
+        return true;
+    }
+    if (str == NULL || buf == NULL) {
+        return false;
+    }
+    return aws_array_eq(str->bytes, str->len, buf->buffer, buf->len);
+}
+
+/**
+ * Returns true if bytes of string and buffer are equivalent, using a case-insensitive comparison.
+ */
+
+bool aws_string_eq_byte_buf_ignore_case(const struct aws_string *str, const struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    if (str == NULL && buf == NULL) {
+        return true;
+    }
+    if (str == NULL || buf == NULL) {
+        return false;
+    }
+    return aws_array_eq_ignore_case(str->bytes, str->len, buf->buffer, buf->len);
+}
+
+bool aws_string_eq_c_str(const struct aws_string *str, const char *c_str) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    if (str == NULL && c_str == NULL) {
+        return true;
+    }
+    if (str == NULL || c_str == NULL) {
+        return false;
+    }
+    return aws_array_eq_c_str(str->bytes, str->len, c_str);
+}
+
+/**
+ * Returns true if bytes of strings are equivalent, using a case-insensitive comparison.
+ */
+bool aws_string_eq_c_str_ignore_case(const struct aws_string *str, const char *c_str) {
+    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    if (str == NULL && c_str == NULL) {
+        return true;
+    }
+    if (str == NULL || c_str == NULL) {
+        return false;
+    }
+    return aws_array_eq_c_str_ignore_case(str->bytes, str->len, c_str);
+}
+
+bool aws_byte_buf_write_from_whole_string(
+    struct aws_byte_buf *AWS_RESTRICT buf,
+    const struct aws_string *AWS_RESTRICT src) {
+    AWS_PRECONDITION(!buf || aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(!src || aws_string_is_valid(src));
+    if (buf == NULL || src == NULL) {
+        return false;
+    }
+    return aws_byte_buf_write(buf, aws_string_bytes(src), src->len);
+}
+
+/**
+ * Creates an aws_byte_cursor from an existing string.
+ */
+struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
+    AWS_PRECONDITION(aws_string_is_valid(src));
+    return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
+}
+
+struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str) {
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(aws_string_is_valid(str));
+
+    if (str->allocator == NULL) {
+        /* Since the string cannot be deallocated, we assume that it will remain valid for the lifetime of the
+         * application */
+        AWS_POSTCONDITION(aws_string_is_valid(str));
+        return (struct aws_string *)str;
+    }
+
+    AWS_POSTCONDITION(aws_string_is_valid(str));
+    return aws_string_new_from_string(allocator, str);
+}
