@@ -656,6 +656,8 @@ def run_build(build_spec, is_dryrun):
 
         # Run CMake
         cmake_args = [
+            "-Werror=dev",
+            "-Werror=deprecated",
             "-DCMAKE_INSTALL_PREFIX=" + install_dir,
             # Each image has a custom installed openssl build, make sure CMake knows where to find it
             "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
