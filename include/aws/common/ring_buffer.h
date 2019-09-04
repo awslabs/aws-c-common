@@ -17,29 +17,6 @@
 
 #include <aws/common/atomics.h>
 
-#ifdef CBMC
-#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr, memory_order)                                          \
-        dest_ptr = aws_atomic_load_ptr_explicit(atomic_ptr, memory_order);                                             \
-        assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
-        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
-#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr, memory_order)                                          \
-        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
-        aws_atomic_store_ptr_explicit(atomic_ptr, src_ptr, memory_order);
-#else
-#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr, memory_order)                                          \
-        dest_ptr = aws_atomic_load_ptr_explicit(atomic_ptr, memory_order);
-#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr, memory_order)                                          \
-        aws_atomic_store_ptr_explicit(atomic_ptr, src_ptr, memory_order);
-#endif
-#define AWS_ATOMIC_LOAD_TAIL_PTR(ring_buf, dest_ptr, atomic_ptr)                                                       \
-    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr, aws_memory_order_acquire);
-#define AWS_ATOMIC_STORE_TAIL_PTR(ring_buf, atomic_ptr, src_ptr)                                                       \
-    AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr, aws_memory_order_release);
-#define AWS_ATOMIC_LOAD_HEAD_PTR(ring_buf, dest_ptr, atomic_ptr)                                                       \
-    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr, aws_memory_order_relaxed);
-#define AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, atomic_ptr, src_ptr)                                                       \
-    AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr, aws_memory_order_relaxed);
-
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
