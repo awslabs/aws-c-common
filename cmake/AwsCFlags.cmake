@@ -15,6 +15,10 @@ include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
+if (POLICY CMP0069)
+    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
+endif()
+
 # This function will set all common flags on a target
 # Options:
 #  NO_WGNU: Disable -Wgnu
