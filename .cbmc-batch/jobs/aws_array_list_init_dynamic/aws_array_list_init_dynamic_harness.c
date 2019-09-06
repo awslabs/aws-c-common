@@ -40,5 +40,8 @@ void aws_array_list_init_dynamic_harness() {
         assert(list.item_size == item_size);
         assert(list.length == 0);
         assert(list.current_size == item_size * initial_item_allocation);
+    } else {
+        /*assertions */
+        assert(AWS_IS_ZEROED(list));
     }
 }

@@ -37,6 +37,7 @@ void aws_priority_queue_init_dynamic_harness() {
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
+
     if (aws_priority_queue_init_dynamic(&queue, allocator, initial_item_allocation, item_size, nondet_compare) ==
         AWS_OP_SUCCESS) {
         /* assertions */
@@ -47,5 +48,9 @@ void aws_priority_queue_init_dynamic_harness() {
         assert(
             (queue.container.data == NULL && queue.container.current_size == 0) ||
             (queue.container.data && queue.container.current_size == (initial_item_allocation * item_size)));
+    } else {
+        /* assertions */
+        assert(AWS_IS_ZEROED(queue.container));
+        assert(AWS_IS_ZEROED(queue.backpointers));
     }
 }
