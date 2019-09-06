@@ -32,13 +32,13 @@
         aws_atomic_store_ptr_explicit(atomic_ptr, src_ptr, memory_order);
 #endif
 #define AWS_ATOMIC_LOAD_TAIL_PTR(ring_buf, dest_ptr)                                                                   \
-    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, &ring_buf->tail, aws_memory_order_acquire);
+    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, &(ring_buf)->tail, aws_memory_order_acquire);
 #define AWS_ATOMIC_STORE_TAIL_PTR(ring_buf, src_ptr)                                                                   \
-    AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->tail, src_ptr, aws_memory_order_release);
+    AWS_ATOMIC_STORE_PTR(ring_buf, &(ring_buf)->tail, src_ptr, aws_memory_order_release);
 #define AWS_ATOMIC_LOAD_HEAD_PTR(ring_buf, dest_ptr)                                                                   \
-    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, &ring_buf->head, aws_memory_order_relaxed);
+    AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, &(ring_buf)->head, aws_memory_order_relaxed);
 #define AWS_ATOMIC_STORE_HEAD_PTR(ring_buf, src_ptr)                                                                   \
-    AWS_ATOMIC_STORE_PTR(ring_buf, &ring_buf->head, src_ptr, aws_memory_order_relaxed);
+    AWS_ATOMIC_STORE_PTR(ring_buf, &(ring_buf)->head, src_ptr, aws_memory_order_relaxed);
 
 int aws_ring_buffer_init(struct aws_ring_buffer *ring_buf, struct aws_allocator *allocator, size_t size) {
     AWS_PRECONDITION(ring_buf != NULL);
