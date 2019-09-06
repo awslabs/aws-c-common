@@ -102,7 +102,7 @@ RUN yes | sdkmanager \
     "build-tools;28.0.3" \
     "extras;android;m2repository" \
     "extras;google;m2repository" \
-    "cmake;3.6.4111459" 
+    "cmake;3.6.4111459"
 
 ###############################################################################
 # Gradle
@@ -126,7 +126,7 @@ RUN set -ex \
     && cd /tmp/android-ndk-tmp \
     && curl -LO https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux-x86_64.zip \
     && unzip -q android-ndk-${ANDROID_NDK_VERSION}-linux-x86_64.zip \
-    && mv ./android-ndk-${ANDROID_NDK_VERSION} ${ANDROID_NDK_HOME} 
+    && mv ./android-ndk-${ANDROID_NDK_VERSION} ${ANDROID_NDK_HOME}
 
 # add to PATH
 ENV PATH ${PATH}:${ANDROID_NDK_HOME}
@@ -140,6 +140,29 @@ RUN set -ex \
     && curl -LO https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz \
     && tar xzf cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz --strip-components 1 -C /usr \
     && cmake --version
+
+###############################################################################
+# OpenSSL
+###############################################################################
+RUN set -ex \
+    && ([ -d /opt/openssl ] && rm -rf /opt/openssl) || true \
+    && mkdir -p /tmp/build \
+    && cd /tmp/build \
+    && git clone --branch OpenSSL_1_1_1-stable --depth 1 https://github.com/openssl/openssl.git \
+    && cd openssl \
+    && export CROSS_COMPILE=aarch64-linux-android- \
+    && export OLD_PATH=$PATH \
+    && export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/:$PATH \
+    && ./Configure android-arm64 no-asm -fPIC \
+        no-md2 no-rc5 no-rfc3779 no-sctp no-ssl-trace no-zlib no-hw no-mdc2 \
+        no-seed no-idea no-camellia no-bf no-dsa no-ssl3 no-capieng \
+        no-unit-test no-tests \
+        -DSSL_FORBID_ENULL -DOPENSSL_NO_DTLS1 -DOPENSSL_NO_HEARTBEATS \
+        --prefix=/opt/openssl --openssldir=/opt/openssl \
+    && make -j \
+    && make install_sw \
+    && export PATH=$OLD_PATH \
+    && unset CROSS_COMPILE
 
 ###############################################################################
 # Cleanup
