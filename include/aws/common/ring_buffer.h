@@ -17,19 +17,6 @@
 
 #include <aws/common/atomics.h>
 
-#ifdef CBMC
-#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr)                                                        \
-        dest_ptr = aws_atomic_load_ptr(atomic_ptr);                                                                    \
-        assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
-        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
-#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr)                                                        \
-        assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
-        aws_atomic_store_ptr(atomic_ptr, src_ptr);
-#else
-#    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr) dest_ptr = aws_atomic_load_ptr(atomic_ptr);
-#    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr) aws_atomic_store_ptr(atomic_ptr, src_ptr);
-#endif
-
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
