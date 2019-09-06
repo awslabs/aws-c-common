@@ -1,3 +1,6 @@
+#ifndef AWS_COMMON_PRIVATE_ARRAY_LIST_H
+#define AWS_COMMON_PRIVATE_ARRAY_LIST_H
+
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,20 +16,14 @@
  * permissions and limitations under the License.
  */
 
-/*
- * This file generates exportable implementations for inlineable functions.
+AWS_EXTERN_C_BEGIN
+
+/**
+ * Helper function that calculates the number of bytes needed by an array_list, where "index" is the last valid
+ * index.
  */
+int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size);
 
-#define AWS_STATIC_IMPL AWS_COMMON_API
+AWS_EXTERN_C_END
 
-#include <aws/common/array_list.inl>
-#include <aws/common/atomics.inl>
-#include <aws/common/byte_order.inl>
-#include <aws/common/clock.inl>
-#include <aws/common/encoding.inl>
-#include <aws/common/error.inl>
-#include <aws/common/linked_list.inl>
-#include <aws/common/math.inl>
-#include <aws/common/ring_buffer.inl>
-#include <aws/common/string.inl>
-#include <aws/common/zero.inl>
+#endif /* AWS_COMMON_PRIVATE_ARRAY_LIST_H */

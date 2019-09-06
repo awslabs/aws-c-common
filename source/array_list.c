@@ -14,8 +14,25 @@
  */
 
 #include <aws/common/array_list.h>
+#include <aws/common/private/array_list.h>
 
 #include <stdlib.h> /* qsort */
+
+int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    size_t index_inc;
+    if (aws_add_size_checked(index, 1, &index_inc)) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
+        return AWS_OP_ERR;
+    }
+
+    if (aws_mul_size_checked(index_inc, list->item_size, necessary_size)) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
+        return AWS_OP_ERR;
+    }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
+    return AWS_OP_SUCCESS;
+}
 
 int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));

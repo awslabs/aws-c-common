@@ -34,6 +34,7 @@ add_test_case(unknown_error_code_in_slot_test)
 add_test_case(unknown_error_code_no_slot_test)
 add_test_case(unknown_error_code_range_too_large_test)
 add_test_case(aws_load_error_strings_test)
+add_test_case(aws_assume_compiles_test)
 
 add_test_case(thread_creation_join_test)
 
@@ -163,9 +164,6 @@ add_test_case(test_hash_table_eq)
 add_test_case(test_hash_churn)
 add_test_case(test_hash_table_cleanup_idempotent)
 add_test_case(test_hash_table_byte_cursor_create_find)
-
-add_test_case(test_linked_hash_table_preserves_insertion_order)
-add_test_case(test_linked_hash_table_entries_cleanup)
 
 add_test_case(test_is_power_of_two)
 add_test_case(test_round_up_to_power_of_two)
