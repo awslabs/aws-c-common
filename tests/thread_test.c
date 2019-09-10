@@ -57,11 +57,13 @@ AWS_TEST_CASE(thread_creation_join_test, s_test_thread_creation_join_fn)
 static uint32_t s_atexit_call_count = 0;
 static void s_thread_atexit_fn(void *user_data) {
     (void)user_data;
+    AWS_FATAL_ASSERT(s_atexit_call_count == 0);
     s_atexit_call_count = 1;
 }
 
 static void s_thread_atexit_fn2(void *user_data) {
     (void)user_data;
+    AWS_FATAL_ASSERT(s_atexit_call_count == 1);
     s_atexit_call_count = 2;
 }
 
