@@ -613,8 +613,47 @@ def run_build(build_spec, build_config, is_dryrun):
             project_source_dir = os.path.join(build_dir, project)
             project_build_dir = os.path.join(project_source_dir, 'build')
 
+        def _build_project_cmake():
+            # If the build directory doesn't already exist, make it
+            _mkdir(project_build_dir)
+
+            # CD to the build directory
+            _cd(project_build_dir)
+
+            # Set compiler flags
+            compiler_flags = []
+            for opt in ['c', 'cxx']:
+                if opt in config and config[opt]:
+                    compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
+            # Run CMake
+            cmake_args = [
+                "-Werror=dev",
+                "-Werror=deprecated",
+                "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+                "-DCMAKE_PREFIX_PATH=" + install_dir,
+                # Each image has a custom installed openssl build, make sure CMake knows where to find it
+                "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
+                "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
+                "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
+                "-DCMAKE_BUILD_TYPE=" + build_config,
+                "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+            ]
+            _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
+
+            # Run the build
+            _run_command("cmake", "--build", ".", "--config", build_config)
+
+            # Do install
+            _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
+
+        def _test_project_ctest():
+            _run_command("ctest", ".", "--output-on-failure")
+
         upstream = []
         downstream = []
+        build_fn = _build_project_cmake
+        test_fn = _test_project_ctest
 
         project_config_file = os.path.join(project_source_dir, "builder.json")
         if os.path.exists(project_config_file):
@@ -630,6 +669,27 @@ def run_build(build_spec, build_config, is_dryrun):
             upstream = project_config.get("upstream", [])
             downstream = project_config.get("downstream", [])
 
+            config_build = project_config.get("build", None)
+            if config_build:
+                assert isinstance(config_build, list)
+                def _build_project_config():
+                    for command in config_build:
+                        final_command = _replace_variables(command, config)
+                        _run_command(final_command)
+
+                build_fn = _build_project_config
+
+            config_test = project_config.get("test", None)
+            if config_test:
+                assert isinstance(config_test, list)
+                def _test_project_config():
+                    for command in config_test:
+                        final_command = _replace_variables(command, config)
+                        _run_command(final_command)
+                test_fn = _test_project_config
+
+        pwd = _cwd()
+
         # If project not specified, and not pulled from the config file, default to file path
         if not project:
             project = os.path.basename(source_dir)
@@ -637,43 +697,11 @@ def run_build(build_spec, build_config, is_dryrun):
         # Build upstream dependencies (don't build or run their tests)
         _build_dependencies(upstream, build_tests=False, run_tests=False)
 
-        # If the build directory doesn't already exist, make it
-        _mkdir(project_build_dir)
-
-        # CD to the build directory
-        pwd = _cwd()
-        _cd(project_build_dir)
-
-        # Set compiler flags
-        compiler_flags = []
-        for opt in ['c', 'cxx']:
-            if opt in config and config[opt]:
-                compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
-
-        # Run CMake
-        cmake_args = [
-            "-Werror=dev",
-            "-Werror=deprecated",
-            "-DCMAKE_INSTALL_PREFIX=" + install_dir,
-            "-DCMAKE_PREFIX_PATH=" + install_dir,
-            # Each image has a custom installed openssl build, make sure CMake knows where to find it
-            "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
-            "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
-            "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
-            "-DCMAKE_BUILD_TYPE=" + build_config,
-            "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
-        ]
-        _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
-
-        # Run the build
-        _run_command("cmake", "--build", ".", "--config", build_config)
-
-        # Do install
-        _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
+        build_fn()
 
         # Run the tests
         if run_tests:
-            _run_command("ctest", ".", "--output-on-failure")
+            test_fn()
 
         # Mark project as built
         if project:
