@@ -125,10 +125,10 @@ typedef void(aws_thread_atexit_fn)(void);
 
 /**
  * Adds a callback to the chain to be called when the current thread joins.
- * Callbacks are called from the current thread, in the reverse order they 
+ * Callbacks are called from the current thread, in the reverse order they
  * were added, after the thread function returns.
  * If not called from within an aws_thread, has no effect.
- */ 
+ */
 AWS_COMMON_API
 void aws_thread_current_atexit(aws_thread_atexit_fn *callback);
 
