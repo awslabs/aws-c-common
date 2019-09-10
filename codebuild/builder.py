@@ -46,9 +46,6 @@ class BuildSpec(object):
 # DATA DEFINITIONS
 ########################################################################################################################
 
-# CMake config to build with
-BUILD_CONFIG = "RelWithDebInfo"
-
 KEYS = {
     # Build
     'python': "",
@@ -492,15 +489,14 @@ def _get_git_branch():
 
     return None
 
-def run_build(build_spec, is_dryrun):
+def run_build(build_spec, build_config, is_dryrun):
 
     if not is_dryrun:
         import tempfile, shutil
 
     #TODO These platforms don't succeed when doing a RelWithDebInfo build
     if build_spec.host in ("al2012", "manylinux"):
-        global BUILD_CONFIG
-        BUILD_CONFIG = "Debug"
+        build_config = "Debug"
 
     source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
     sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
@@ -656,19 +652,24 @@ def run_build(build_spec, is_dryrun):
 
         # Run CMake
         cmake_args = [
+            "-Werror=dev",
+            "-Werror=deprecated",
             "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+            "-DCMAKE_PREFIX_PATH=" + install_dir,
             # Each image has a custom installed openssl build, make sure CMake knows where to find it
-            "-DCMAKE_PREFIX_PATH=/opt/openssl;" + install_dir,
-            "-DCMAKE_BUILD_TYPE=" + BUILD_CONFIG,
+            "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
+            "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
+            "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
+            "-DCMAKE_BUILD_TYPE=" + build_config,
             "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
         ]
         _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
 
         # Run the build
-        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG)
+        _run_command("cmake", "--build", ".", "--config", build_config)
 
         # Do install
-        _run_command("cmake", "--build", ".", "--config", BUILD_CONFIG, "--target", "install")
+        _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
 
         # Run the tests
         if run_tests:
@@ -839,6 +840,7 @@ if __name__ == '__main__':
 
     build = commands.add_parser('build', help="Run the requested build")
     build.add_argument('build', type=str)
+    build.add_argument('--config', type=str, default='RelWithDebInfo', help='The CMake configuration to build with')
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
@@ -855,7 +857,7 @@ if __name__ == '__main__':
 
         print("Running build", build_spec.name, flush=True)
 
-        run_build(build_spec, args.dry_run)
+        run_build(build_spec, args.config, args.dry_run)
 
     if args.command == 'codebuild':
 
