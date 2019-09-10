@@ -130,7 +130,7 @@ typedef void(aws_thread_atexit_fn)(void *user_data);
  * If not called from within an aws_thread, has no effect.
  */
 AWS_COMMON_API
-void aws_thread_current_atexit(aws_thread_atexit_fn *callback, void *user_data);
+int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
 
 AWS_EXTERN_C_END
 

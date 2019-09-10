@@ -69,14 +69,14 @@ static void s_thread_atexit_fn2(void *user_data) {
 
 static void s_thread_worker_with_atexit(void *arg) {
     (void)arg;
-    aws_thread_current_atexit(s_thread_atexit_fn2, NULL);
-    aws_thread_current_atexit(s_thread_atexit_fn, NULL);
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_thread_atexit_fn2, NULL));
+    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_thread_atexit_fn, NULL));
 }
 
 static int s_test_thread_atexit(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     struct aws_thread thread;
-    aws_thread_init(&thread, allocator);
+    ASSERT_SUCCESS(aws_thread_init(&thread, allocator));
 
     ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_worker_with_atexit, NULL, 0), "thread creation failed");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");

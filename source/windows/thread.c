@@ -148,14 +148,18 @@ void aws_thread_current_sleep(uint64_t nanos) {
     Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL));
 }
 
-void aws_thread_current_atexit(aws_thread_atexit_fn *callback, void *user_data) {
+int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) {
     if (!tl_wrapper) {
-        return;
+        return AWS_OP_ERR;
     }
 
     struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
+    if (!cb) {
+        return AWS_OP_ERR;
+    }
     cb->callback = callback;
     cb->user_data = user_data;
     cb->next = tl_wrapper->atexit;
     tl_wrapper->atexit = cb;
+    return AWS_OP_SUCCESS;
 }
