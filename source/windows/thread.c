@@ -41,7 +41,6 @@ static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     struct thread_wrapper *thread_wrapper = arg;
     tl_wrapper = thread_wrapper;
-    aws_mem_release(thread_wrapper->allocator, (void *)arg);
     thread_wrapper->func(thread_wrapper->arg);
     while (thread_wrapper->atexit) {
         struct thread_atexit_callback *cb = thread_wrapper->atexit;
