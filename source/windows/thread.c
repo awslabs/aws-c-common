@@ -25,6 +25,7 @@ static struct aws_thread_options s_default_options = {
 
 struct thread_atexit_callback {
     aws_thread_atexit_fn *callback;
+    void *user_data;
     struct thread_atexit_callback *next;
 };
 
@@ -44,7 +45,7 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     thread_wrapper->func(thread_wrapper->arg);
     while (thread_wrapper->atexit) {
         struct thread_atexit_callback *cb = thread_wrapper->atexit;
-        cb->callback();
+        cb->callback(cb->user_data);
         thread_wrapper->atexit = thread_wrapper->atexit->next;
         aws_mem_release(thread_wrapper->allocator, cb);
     }
@@ -148,13 +149,14 @@ void aws_thread_current_sleep(uint64_t nanos) {
     Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL));
 }
 
-void aws_thread_current_atexit(aws_thread_atexit_fn *callback) {
+void aws_thread_current_atexit(aws_thread_atexit_fn *callback, void *user_data) {
     if (!tl_wrapper) {
         return;
     }
 
     struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
     cb->callback = callback;
+    cb->user_data = user_data;
     cb->next = tl_wrapper->atexit;
     tl_wrapper->atexit = cb;
 }

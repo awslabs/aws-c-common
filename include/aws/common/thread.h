@@ -121,7 +121,7 @@ uint64_t aws_thread_current_thread_id(void);
 AWS_COMMON_API
 void aws_thread_current_sleep(uint64_t nanos);
 
-typedef void(aws_thread_atexit_fn)(void);
+typedef void(aws_thread_atexit_fn)(void *user_data);
 
 /**
  * Adds a callback to the chain to be called when the current thread joins.
@@ -130,7 +130,7 @@ typedef void(aws_thread_atexit_fn)(void);
  * If not called from within an aws_thread, has no effect.
  */
 AWS_COMMON_API
-void aws_thread_current_atexit(aws_thread_atexit_fn *callback);
+void aws_thread_current_atexit(aws_thread_atexit_fn *callback, void *user_data);
 
 AWS_EXTERN_C_END
 

@@ -27,6 +27,7 @@ static struct aws_thread_options s_default_options = {
 
 struct thread_atexit_callback {
     aws_thread_atexit_fn *callback;
+    void *user_data;
     struct thread_atexit_callback *next;
 };
 
@@ -45,7 +46,7 @@ static void *thread_fn(void *arg) {
     wrapper->func(wrapper->arg);
     while (wrapper->atexit) {
         struct thread_atexit_callback *cb = wrapper->atexit;
-        cb->callback();
+        cb->callback(cb->user_data);
         wrapper->atexit = wrapper->atexit->next;
         aws_mem_release(wrapper->allocator, cb);
     }
@@ -196,13 +197,14 @@ void aws_thread_current_sleep(uint64_t nanos) {
     nanosleep(&tm, &output);
 }
 
-void aws_thread_current_atexit(aws_thread_atexit_fn *callback) {
+void aws_thread_current_atexit(aws_thread_atexit_fn *callback, void *user_data) {
     if (!tl_wrapper) {
         return;
     }
 
     struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
     cb->callback = callback;
+    cb->user_data = user_data;
     cb->next = tl_wrapper->atexit;
     tl_wrapper->atexit = cb;
 }
