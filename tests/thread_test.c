@@ -53,3 +53,35 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
 }
 
 AWS_TEST_CASE(thread_creation_join_test, s_test_thread_creation_join_fn)
+
+static uint32_t s_atexit_call_count = 0;
+static void s_thread_atexit_fn(void) {
+    s_atexit_call_count = 1;
+}
+
+static void s_thread_atexit_fn2(void) {
+    s_atexit_call_count = 2;
+}
+
+static void s_thread_worker_with_atexit(void *arg) {
+    (void)arg;
+    aws_thread_current_atexit(s_thread_atexit_fn2);
+    aws_thread_current_atexit(s_thread_atexit_fn);
+}
+
+static int s_test_thread_atexit(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_thread thread;
+    aws_thread_init(&thread, allocator);
+
+    ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_worker_with_atexit, NULL, 0), "thread creation failed");
+    ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
+
+    ASSERT_INT_EQUALS(2, s_atexit_call_count);
+
+    aws_thread_clean_up(&thread);
+
+    return 0;
+}
+
+AWS_TEST_CASE(thread_atexit_test, s_test_thread_atexit)

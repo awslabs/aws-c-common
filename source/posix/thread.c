@@ -25,17 +25,32 @@ static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
     .stack_size = 0};
 
+struct thread_atexit_callback {
+    aws_thread_atexit_fn *callback;
+    struct thread_atexit_callback *next;
+};
+
 struct thread_wrapper {
     struct aws_allocator *allocator;
     void (*func)(void *arg);
     void *arg;
+    struct thread_atexit_callback *atexit;
 };
 
-static void *thread_fn(void *arg) {
-    struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
-    aws_mem_release(wrapper.allocator, arg);
+static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
-    wrapper.func(wrapper.arg);
+static void *thread_fn(void *arg) {
+    struct thread_wrapper *wrapper = arg;
+    tl_wrapper = wrapper;
+    wrapper->func(wrapper->arg);
+    while (wrapper->atexit) {
+        struct thread_atexit_callback *cb = wrapper->atexit;
+        cb->callback();
+        wrapper->atexit = wrapper->atexit->next;
+        aws_mem_release(wrapper->allocator, cb);
+    }
+    tl_wrapper = NULL;
+    aws_mem_release(wrapper->allocator, wrapper);
     return NULL;
 }
 
@@ -101,6 +116,7 @@ int aws_thread_launch(
     wrapper->allocator = thread->allocator;
     wrapper->func = func;
     wrapper->arg = arg;
+    wrapper->atexit = NULL;
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if (attr_return) {
@@ -178,4 +194,15 @@ void aws_thread_current_sleep(uint64_t nanos) {
     struct timespec output;
 
     nanosleep(&tm, &output);
+}
+
+void aws_thread_current_atexit(aws_thread_atexit_fn *callback) {
+    if (!tl_wrapper) {
+        return;
+    }
+
+    struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
+    cb->callback = callback;
+    cb->next = tl_wrapper->atexit;
+    tl_wrapper->atexit = cb;
 }
