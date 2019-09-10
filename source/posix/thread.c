@@ -199,7 +199,7 @@ void aws_thread_current_sleep(uint64_t nanos) {
 
 int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) {
     if (!tl_wrapper) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
     }
 
     struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
