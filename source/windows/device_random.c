@@ -23,7 +23,8 @@
 static BCRYPT_ALG_HANDLE s_alg_handle = NULL;
 static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
 
-static void s_init_rand(void) {
+static void s_init_rand(void *user_data) {
+    (void)user_data;
     NTSTATUS status = 0;
 
     status = BCryptOpenAlgorithmProvider(&s_alg_handle, BCRYPT_RNG_ALGORITHM, NULL, 0);
@@ -34,7 +35,7 @@ static void s_init_rand(void) {
 }
 
 int aws_device_random_buffer(struct aws_byte_buf *output) {
-    aws_thread_call_once(&s_rand_init, s_init_rand);
+    aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
     size_t offset = output->capacity - output->len;
     NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, (ULONG)offset, 0);
