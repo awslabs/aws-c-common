@@ -59,6 +59,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 
 struct callback_fn_wrapper {
     void (*call_once)(void);
+    void *user_data;
 };
 
 BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
@@ -66,13 +67,14 @@ BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **contex
     (void)init_once;
 
     struct callback_fn_wrapper *callback_fn_wrapper = param;
-    callback_fn_wrapper->call_once();
+    callback_fn_wrapper->call_once(callback_fn_wrapper->user_data);
     return TRUE;
 }
 
-void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void), void *user_data) {
     struct callback_fn_wrapper wrapper;
     wrapper.call_once = call_once;
+    wrapper.user_data = user_data;
     InitOnceExecuteOnce((PINIT_ONCE)flag, s_init_once_wrapper, &wrapper, NULL);
 }
 
