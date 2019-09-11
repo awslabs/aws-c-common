@@ -119,7 +119,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     else() # release build
         if (POLICY CMP0069)
-            if (NOT SET_PROPERTIES_NO_LTO)
+            if ((NOT SET_PROPERTIES_NO_LTO) AND ((NOT DEFINED AWS_ENABLE_LTO) OR (AWS_ENABLE_LTO)))
                 cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
                 include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
                 if (ipo_check_exists)
