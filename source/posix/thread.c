@@ -67,11 +67,11 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     }
 }
 
-static void s_call_once() {
+static void s_call_once(void) {
     tl_wrapper->call_once(tl_wrapper->once_arg);
 }
 
-void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void*), void *user_data) {
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void *user_data) {
     // If this is a non-aws_thread, then gin up a temp thread wrapper
     struct thread_wrapper temp_wrapper;
     if (!tl_wrapper) {
@@ -81,7 +81,7 @@ void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void*), void 
     tl_wrapper->call_once = call_once;
     tl_wrapper->once_arg = user_data;
     pthread_once(flag, s_call_once);
-    
+
     if (tl_wrapper == &temp_wrapper) {
         tl_wrapper = NULL;
     }

@@ -61,7 +61,7 @@ AWS_EXTERN_C_BEGIN
 AWS_COMMON_API
 const struct aws_thread_options *aws_default_thread_options(void);
 
-AWS_COMMON_API void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void*), void *user_data);
+AWS_COMMON_API void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void *user_data);
 
 /**
  * Initializes a new platform specific thread object struct (not the os-level
