@@ -23,16 +23,33 @@ static struct aws_thread_options s_default_options = {
     .stack_size = 0,
 };
 
+struct thread_atexit_callback {
+    aws_thread_atexit_fn *callback;
+    void *user_data;
+    struct thread_atexit_callback *next;
+};
+
 struct thread_wrapper {
     struct aws_allocator *allocator;
     void (*func)(void *arg);
     void *arg;
+    struct thread_atexit_callback *atexit;
 };
 
+static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
+
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
-    struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
-    aws_mem_release(thread_wrapper.allocator, (void *)arg);
-    thread_wrapper.func(thread_wrapper.arg);
+    struct thread_wrapper *thread_wrapper = arg;
+    tl_wrapper = thread_wrapper;
+    thread_wrapper->func(thread_wrapper->arg);
+    while (thread_wrapper->atexit) {
+        struct thread_atexit_callback *cb = thread_wrapper->atexit;
+        cb->callback(cb->user_data);
+        thread_wrapper->atexit = thread_wrapper->atexit->next;
+        aws_mem_release(thread_wrapper->allocator, cb);
+    }
+    tl_wrapper = NULL;
+    aws_mem_release(thread_wrapper->allocator, thread_wrapper);
     return 0;
 }
 
@@ -41,7 +58,8 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 }
 
 struct callback_fn_wrapper {
-    void (*call_once)(void);
+    void (*call_once)(void *);
+    void *user_data;
 };
 
 BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **context) {
@@ -49,13 +67,14 @@ BOOL WINAPI s_init_once_wrapper(PINIT_ONCE init_once, void *param, void **contex
     (void)init_once;
 
     struct callback_fn_wrapper *callback_fn_wrapper = param;
-    callback_fn_wrapper->call_once();
+    callback_fn_wrapper->call_once(callback_fn_wrapper->user_data);
     return TRUE;
 }
 
-void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void *user_data) {
     struct callback_fn_wrapper wrapper;
     wrapper.call_once = call_once;
+    wrapper.user_data = user_data;
     InitOnceExecuteOnce((PINIT_ONCE)flag, s_init_once_wrapper, &wrapper, NULL);
 }
 
@@ -81,10 +100,11 @@ int aws_thread_launch(
     }
 
     struct thread_wrapper *thread_wrapper =
-        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+        (struct thread_wrapper *)aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
+
     thread->thread_handle =
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
@@ -128,4 +148,20 @@ void aws_thread_current_sleep(uint64_t nanos) {
      * anywhere other than for context switches and testing. When that time
      * arises put the effort in here. */
     Sleep((DWORD)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL));
+}
+
+int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) {
+    if (!tl_wrapper) {
+        return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+    }
+
+    struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
+    if (!cb) {
+        return AWS_OP_ERR;
+    }
+    cb->callback = callback;
+    cb->user_data = user_data;
+    cb->next = tl_wrapper->atexit;
+    tl_wrapper->atexit = cb;
+    return AWS_OP_SUCCESS;
 }

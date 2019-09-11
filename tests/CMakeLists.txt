@@ -37,6 +37,7 @@ add_test_case(aws_load_error_strings_test)
 add_test_case(aws_assume_compiles_test)
 
 add_test_case(thread_creation_join_test)
+add_test_case(thread_atexit_test)
 
 add_test_case(mutex_aquire_release_test)
 add_test_case(mutex_is_actually_mutex_test)

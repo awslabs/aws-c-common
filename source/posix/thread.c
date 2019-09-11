@@ -25,17 +25,35 @@ static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
     .stack_size = 0};
 
+struct thread_atexit_callback {
+    aws_thread_atexit_fn *callback;
+    void *user_data;
+    struct thread_atexit_callback *next;
+};
+
 struct thread_wrapper {
     struct aws_allocator *allocator;
     void (*func)(void *arg);
     void *arg;
+    struct thread_atexit_callback *atexit;
+    void (*call_once)(void *);
+    void *once_arg;
 };
 
-static void *thread_fn(void *arg) {
-    struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
-    aws_mem_release(wrapper.allocator, arg);
+static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
-    wrapper.func(wrapper.arg);
+static void *thread_fn(void *arg) {
+    struct thread_wrapper *wrapper = arg;
+    tl_wrapper = wrapper;
+    wrapper->func(wrapper->arg);
+    while (wrapper->atexit) {
+        struct thread_atexit_callback *cb = wrapper->atexit;
+        cb->callback(cb->user_data);
+        wrapper->atexit = wrapper->atexit->next;
+        aws_mem_release(wrapper->allocator, cb);
+    }
+    tl_wrapper = NULL;
+    aws_mem_release(wrapper->allocator, wrapper);
     return NULL;
 }
 
@@ -49,8 +67,24 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     }
 }
 
-void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void)) {
-    pthread_once(flag, call_once);
+static void s_call_once(void) {
+    tl_wrapper->call_once(tl_wrapper->once_arg);
+}
+
+void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void *user_data) {
+    // If this is a non-aws_thread, then gin up a temp thread wrapper
+    struct thread_wrapper temp_wrapper;
+    if (!tl_wrapper) {
+        tl_wrapper = &temp_wrapper;
+    }
+
+    tl_wrapper->call_once = call_once;
+    tl_wrapper->once_arg = user_data;
+    pthread_once(flag, s_call_once);
+
+    if (tl_wrapper == &temp_wrapper) {
+        tl_wrapper = NULL;
+    }
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
@@ -91,7 +125,7 @@ int aws_thread_launch(
     }
 
     struct thread_wrapper *wrapper =
-        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+        (struct thread_wrapper *)aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
 
     if (!wrapper) {
         allocation_failed = 1;
@@ -178,4 +212,20 @@ void aws_thread_current_sleep(uint64_t nanos) {
     struct timespec output;
 
     nanosleep(&tm, &output);
+}
+
+int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) {
+    if (!tl_wrapper) {
+        return aws_raise_error(AWS_ERROR_THREAD_NOT_JOINABLE);
+    }
+
+    struct thread_atexit_callback *cb = aws_mem_calloc(tl_wrapper->allocator, 1, sizeof(struct thread_atexit_callback));
+    if (!cb) {
+        return AWS_OP_ERR;
+    }
+    cb->callback = callback;
+    cb->user_data = user_data;
+    cb->next = tl_wrapper->atexit;
+    tl_wrapper->atexit = cb;
+    return AWS_OP_SUCCESS;
 }

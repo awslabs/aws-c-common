@@ -28,7 +28,8 @@ static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
 #else
 #    define OPEN_FLAGS (O_RDONLY)
 #endif
-static void s_init_rand(void) {
+static void s_init_rand(void *user_data) {
+    (void)user_data;
     s_rand_fd = open("/dev/urandom", OPEN_FLAGS);
 
     if (s_rand_fd == -1) {
@@ -46,7 +47,7 @@ static void s_init_rand(void) {
 
 static int s_fallback_device_random_buffer(struct aws_byte_buf *output) {
 
-    aws_thread_call_once(&s_rand_init, s_init_rand);
+    aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
     size_t diff = output->capacity - output->len;
 
