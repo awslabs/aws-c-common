@@ -82,7 +82,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
 }
 
 int aws_sys_clock_get_ticks(uint64_t *timestamp) {
-    aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads);
+    aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads, NULL);
     int ret_val = 0;
 
     if (s_gettime_fn) {
