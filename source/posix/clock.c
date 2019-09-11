@@ -55,7 +55,7 @@ static int s_legacy_get_time(uint64_t *timestamp) {
 static aws_thread_once s_thread_once_flag = AWS_THREAD_ONCE_STATIC_INIT;
 static int (*s_gettime_fn)(clockid_t __clock_id, struct timespec *__tp) = NULL;
 
-static void s_do_osx_loads(void* user_data) {
+static void s_do_osx_loads(void *user_data) {
     (void)user_data;
     s_gettime_fn = (int (*)(clockid_t __clock_id, struct timespec * __tp)) dlsym(RTLD_DEFAULT, "clock_gettime");
 }
