@@ -15,6 +15,8 @@ include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
+option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
+
 # This function will set all common flags on a target
 # Options:
 #  NO_WGNU: Disable -Wgnu
@@ -119,7 +121,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     else() # release build
         if (POLICY CMP0069)
-            if ((NOT SET_PROPERTIES_NO_LTO) AND ((NOT DEFINED AWS_ENABLE_LTO) OR (AWS_ENABLE_LTO)))
+            if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
                 cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
                 include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
                 if (ipo_check_exists)
@@ -127,6 +129,9 @@ function(aws_set_common_properties target)
                     if (ipo_supported)
                         message(STATUS "Enabling IPO/LTO for Release builds")
                         set(AWS_ENABLE_LTO ON)
+                    else()
+                        message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
+                        set(AWS_ENABLE_LTO OFF)
                     endif()
                 endif()
             endif()
