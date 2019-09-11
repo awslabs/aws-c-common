@@ -125,7 +125,7 @@ int aws_thread_launch(
     }
 
     struct thread_wrapper *wrapper =
-        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+        (struct thread_wrapper *)aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
 
     if (!wrapper) {
         allocation_failed = 1;
@@ -135,7 +135,6 @@ int aws_thread_launch(
     wrapper->allocator = thread->allocator;
     wrapper->func = func;
     wrapper->arg = arg;
-    wrapper->atexit = NULL;
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if (attr_return) {

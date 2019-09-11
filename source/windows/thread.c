@@ -100,11 +100,11 @@ int aws_thread_launch(
     }
 
     struct thread_wrapper *thread_wrapper =
-        (struct thread_wrapper *)aws_mem_acquire(thread->allocator, sizeof(struct thread_wrapper));
+        (struct thread_wrapper *)aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
-    thread_wrapper->atexit = NULL;
+
     thread->thread_handle =
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
