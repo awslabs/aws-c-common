@@ -58,9 +58,14 @@ KEYS = {
     'run_tests': True,
 
     # Linux
+    'use_apt': False,
     'apt_keys': [],
     'apt_repos': [],
     'apt_packages': [],
+
+    # macOS
+    'use_brew': False,
+    'brew_packages': [],
 
     # CodeBuild
     'image': "",
@@ -86,6 +91,7 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=ON",
         ],
 
+        'use_apt': True,
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
@@ -133,7 +139,7 @@ HOSTS = {
     'macos': {
         'python': "python3",
 
-
+        'use_brew': True,
     }
 }
 
@@ -729,19 +735,23 @@ def run_build(build_spec, build_config, is_dryrun):
     config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
 
     # INSTALL
+    if config['use_apt']:
+        # Install keys
+        for key in config['apt_keys']:
+            _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
 
-    # Install keys
-    for key in config['apt_keys']:
-        _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
+        # Add APT repositories
+        for repo in config['apt_repos']:
+            _run_command("sudo", "apt-add-repository", repo)
 
-    # Add APT repositories
-    for repo in config['apt_repos']:
-        _run_command("sudo", "apt-add-repository", repo)
+        # Install packages
+        if config['apt_packages']:
+            _run_command("sudo", "apt-get", "-q", "update", "-y")
+            _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
 
-    # Install packages
-    if config['apt_packages']:
-        _run_command("sudo", "apt-get", "-q", "update", "-y")
-        _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
+    if config['use_brew']:
+        for package in config['brew_packages']:
+            _run_command("brew", "install", package)
 
     # PRE BUILD
 
