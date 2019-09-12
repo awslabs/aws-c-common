@@ -679,6 +679,9 @@ def run_build(build_spec, build_config, is_dryrun):
             if config_build:
                 assert isinstance(config_build, list)
                 def _build_project_config():
+                    for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
+                        if opt in config and config[opt]:
+                            os.environ[variable] = config[opt]
                     for command in config_build:
                         final_command = _replace_variables(command, config)
                         _run_command(final_command)
@@ -827,7 +830,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/custom-builder/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
