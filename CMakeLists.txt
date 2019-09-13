@@ -194,8 +194,14 @@ configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
   @ONLY)
 
+if (BUILD_SHARED_LIBS)
+   set (TARGET_DIR "shared")
+else()
+   set (TARGET_DIR "static")
+endif()
+
 install(EXPORT "${CMAKE_PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake"
+    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/${TARGET_DIR}"
     NAMESPACE AWS::
     COMPONENT Development)
 
