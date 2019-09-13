@@ -43,17 +43,26 @@ struct thread_wrapper {
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
 static void *thread_fn(void *arg) {
-    struct thread_wrapper *wrapper = arg;
-    tl_wrapper = wrapper;
-    wrapper->func(wrapper->arg);
-    while (wrapper->atexit) {
-        struct thread_atexit_callback *cb = wrapper->atexit;
-        cb->callback(cb->user_data);
-        wrapper->atexit = wrapper->atexit->next;
-        aws_mem_release(wrapper->allocator, cb);
+    struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
+    struct aws_allocator *allocator = wrapper.allocator;
+    tl_wrapper = &wrapper;
+    wrapper.func(wrapper.arg);
+
+    struct thread_atexit_callback *exit_callback_data = wrapper.atexit;
+    aws_mem_release(allocator, arg);
+
+    while (exit_callback_data) {
+        aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
+        void *exit_callback_user_data = exit_callback_data->user_data;
+        struct thread_atexit_callback *next_exit_callback_data = exit_callback_data->next;
+
+        aws_mem_release(allocator, exit_callback_data);
+
+        exit_callback(exit_callback_user_data);
+        exit_callback_data = next_exit_callback_data;
     }
     tl_wrapper = NULL;
-    aws_mem_release(wrapper->allocator, wrapper);
+
     return NULL;
 }
 
