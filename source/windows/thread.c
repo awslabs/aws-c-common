@@ -39,17 +39,26 @@ struct thread_wrapper {
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
-    struct thread_wrapper *thread_wrapper = arg;
-    tl_wrapper = thread_wrapper;
-    thread_wrapper->func(thread_wrapper->arg);
-    while (thread_wrapper->atexit) {
-        struct thread_atexit_callback *cb = thread_wrapper->atexit;
-        cb->callback(cb->user_data);
-        thread_wrapper->atexit = thread_wrapper->atexit->next;
-        aws_mem_release(thread_wrapper->allocator, cb);
+    struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
+    struct aws_allocator *allocator = thread_wrapper.allocator;
+    tl_wrapper = &thread_wrapper;
+    thread_wrapper.func(thread_wrapper.arg);
+
+    struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
+    aws_mem_release(allocator, arg);
+
+    while (exit_callback_data) {
+        aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
+        void *exit_callback_user_data = exit_callback_data->user_data;
+        struct thread_atexit_callback *next_exit_callback_data = exit_callback_data->next;
+
+        aws_mem_release(allocator, exit_callback_data);
+
+        exit_callback(exit_callback_user_data);
+        exit_callback_data = next_exit_callback_data;
     }
     tl_wrapper = NULL;
-    aws_mem_release(thread_wrapper->allocator, thread_wrapper);
+
     return 0;
 }
 
