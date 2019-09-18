@@ -12,6 +12,7 @@
 # permissions and limitations under the License.
 
 include(CheckCSourceRuns)
+include(AwsCFlags)
 
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
@@ -44,8 +45,10 @@ int main() {
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
 }" AWS_HAVE_GCC_INLINE_ASM)
 
-check_c_source_compiles("
-#include <execinfo.h>
-int main() {
-    return 0;
-}" AWS_HAVE_EXECINFO)
+if(NOT LEGACY_COMPILER_SUPPORT)
+    check_c_source_compiles("
+    #include <execinfo.h>
+    int main() {
+        return 0;
+    }" AWS_HAVE_EXECINFO)
+endif()
