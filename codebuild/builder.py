@@ -749,8 +749,8 @@ def run_build(build_spec, build_config, is_dryrun):
 
         # Install packages
         if config['apt_packages']:
-            _run_command("sudo", "apt-get", "-q", "update", "-y")
-            _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
+            _run_command("sudo", "apt-get", "-qq", "update", "-y")
+            _run_command("sudo", "apt-get", "-qq", "install", "-y", "-f", config['apt_packages'])
 
     if config['use_brew']:
         for package in config['brew_packages']:
