@@ -69,8 +69,8 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS -fPIC)
 
         if (LEGACY_COMPILER_SUPPORT)
-+            list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
-+        endif()
+            list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
+        endif()
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
