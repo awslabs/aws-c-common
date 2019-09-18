@@ -675,6 +675,12 @@ def run_build(build_spec, build_config, is_dryrun):
             upstream = project_config.get("upstream", [])
             downstream = project_config.get("downstream", [])
 
+            command_variables = {
+                'source_dir': project_source_dir,
+                'build_dir': project_build_dir,
+                **config
+            }
+
             config_build = project_config.get("build", None)
             if config_build:
                 assert isinstance(config_build, list)
@@ -683,7 +689,7 @@ def run_build(build_spec, build_config, is_dryrun):
                         if opt in config and config[opt]:
                             os.environ[variable] = config[opt]
                     for command in config_build:
-                        final_command = _replace_variables(command, config)
+                        final_command = _replace_variables(command, command_variables)
                         _run_command(final_command)
 
                 build_fn = _build_project_config
@@ -693,7 +699,7 @@ def run_build(build_spec, build_config, is_dryrun):
                 assert isinstance(config_test, list)
                 def _test_project_config():
                     for command in config_test:
-                        final_command = _replace_variables(command, config)
+                        final_command = _replace_variables(command, command_variables)
                         _run_command(final_command)
                 test_fn = _test_project_config
 
