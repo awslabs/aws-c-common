@@ -14,18 +14,20 @@ file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 
 set(METATEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-assert-tests)
 
-add_executable(${METATEST_BINARY_NAME} ${META_TEST_SRC})
-aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
-aws_add_sanitizers(${METATEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
-target_link_libraries(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
+if (NOT LEGACY_COMPILER_SUPPORT)
+    add_executable(${METATEST_BINARY_NAME} ${META_TEST_SRC})
+    aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
+    aws_add_sanitizers(${METATEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
+    target_link_libraries(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
 
-target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
-target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-if(MSVC)
-    target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE "-D_CRT_SECURE_NO_WARNINGS")
+    target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
+    target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+    if(MSVC)
+        target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE "-D_CRT_SECURE_NO_WARNINGS")
+    endif()
+
+    add_test(assert_test ${METATEST_BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/metatest.tmp)
 endif()
-
-add_test(assert_test ${METATEST_BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/metatest.tmp)
 
 add_test_case(raise_errors_test)
 add_test_case(reset_errors_test)
@@ -275,7 +277,12 @@ add_test_case(is_zeroed)
 add_test_case(atomics_semantics)
 add_test_case(atomics_semantics_implicit)
 add_test_case(atomics_static_init)
-add_test_case(atomics_loads_reordered_with_older_stores)
+
+# atomics aren't 'fully' supported on gcc 4.1.2
+if (NOT LEGACY_COMPILER_SUPPORT)
+    add_test_case(atomics_loads_reordered_with_older_stores)
+endif()
+
 add_test_case(atomics_acquire_to_release_one_direction)
 add_test_case(atomics_acquire_to_release_mixed)
 
@@ -368,7 +375,7 @@ add_test_case(test_pipeline_logger_formatted_test)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
-if (NOT MSVC)
+if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
     #we have some tests here that purposely overflow
     target_compile_options(${CMAKE_PROJECT_NAME}-tests PRIVATE -Wno-overflow)
 endif()

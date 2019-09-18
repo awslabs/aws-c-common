@@ -16,6 +16,7 @@ include(CheckIncludeFile)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
+option(LEGACY_COMPILER_SUPPORT "Do not use this unless you're trying to build this library on legacy compilers that you shouldn't be using in the first place" OFF)
 
 # This function will set all common flags on a target
 # Options:
@@ -67,6 +68,9 @@ function(aws_set_common_properties target)
         # Always enable position independent code, since this code will always end up in a shared lib
         list(APPEND AWS_C_FLAGS -fPIC)
 
+        if (LEGACY_COMPILER_SUPPORT)
++            list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
++        endif()
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
