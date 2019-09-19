@@ -45,12 +45,8 @@ AWS_EXTERN_C_END
             bool _result = (cond);                                                                                     \
             __builtin_assume(_result);                                                                                 \
         } while (false)
-#elif defined(__GNUC__)
-#    if __GNUC__ == 4 && __GNUC_MINOR__ <= 4
-#        define AWS_ASSUME(cond)
-#    else
-#        define AWS_ASSUME(cond) ((cond) ? (void)0 : __builtin_unreachable())
-#    endif
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#    define AWS_ASSUME(cond) ((cond) ? (void)0 : __builtin_unreachable())
 #else
 #    define AWS_ASSUME(cond)
 #endif
