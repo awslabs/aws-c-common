@@ -408,25 +408,42 @@ def produce_config(build_spec, **additional_variables):
     # Build the list of config options to poll
     configs = []
 
-    def process_config(map, key):
-        config = map[key]
-        configs.append(config)
+    # Processes a config object (could come from a file), searching for keys hosts, targets, and compilers
+    def process_config(config):
 
-        config_arches = config.get('architectures')
-        if config_arches:
-            config_arch = config_arches.get(build_spec.arch)
-            if config_arch:
-                configs.append(config_arch)
+        def process_element(map, element_name, instance):
+            if not map:
+                return
 
-        return config
+            element = map.get(element_name)
+            if not element:
+                return
 
+            new_config = map.get(key)
+            if not new_config:
+                return
 
-    # Host isn't allowed to specify architectures
-    process_config(HOSTS, build_spec.host)
-    process_config(TARGETS, build_spec.target)
+            configs.append(new_config)
 
-    compiler = process_config(COMPILERS, build_spec.compiler)
-    process_config(compiler['versions'], build_spec.compiler_version)
+            config_arches = new_config.get('architectures')
+            if config_arches:
+                config_arch = config_arches.get(build_spec.arch)
+                if config_arch:
+                    configs.append(config_arch)
+
+            return new_config
+
+        process_element(config, 'hosts', build_spec.host)
+        process_element(config, 'targets', build_spec.target)
+
+        compiler = process_element(config, 'compilers', build_spec.compiler)
+        process_element(compiler, 'versions', build_spec.compiler_version)
+
+    process_config({
+        'hosts': HOSTS,
+        'targets': TARGETS,
+        'compilers': COMPILERS,
+    })
 
     new_version = {
         'spec': build_spec,
@@ -894,6 +911,7 @@ if __name__ == '__main__':
     codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
     codebuild.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
     codebuild.add_argument('--inplace-script', action='store_true', help='Use the python script in codebuild/builder.py instead of downloading it')
+    codebuild.add_argument('--config', type=str, help='The config file to use when generating the projects')
 
     args = parser.parse_args()
 
