@@ -869,7 +869,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/custom-builder/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
