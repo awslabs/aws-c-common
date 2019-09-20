@@ -54,7 +54,7 @@ KEYS = {
     'pre_build_steps': [],
     'post_build_steps': [],
     'build_env': {},
-    'build_args': [],
+    'cmake_args': [],
     'run_tests': True,
 
     # Linux
@@ -88,7 +88,7 @@ HOSTS = {
 
         'python': "python3",
 
-        'build_args': [
+        'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
         ],
 
@@ -101,7 +101,7 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'al2012': {
-        'build_args': [
+        'cmake_args': [
             "-DENABLE_SANITIZERS=OFF",
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
@@ -130,7 +130,7 @@ HOSTS = {
     'windows': {
         'python': "python.exe",
 
-        'build_args': [
+        'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
         ],
 
@@ -148,21 +148,21 @@ TARGETS = {
     'linux': {
         'architectures': {
             'x86': {
-                'build_args': [
+                'cmake_args': [
                     '-DCMAKE_C_FLAGS=-m32',
                     '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
 
-        'build_args': [
+        'cmake_args': [
             "-DENABLE_SANITIZERS=ON",
         ],
     },
     'macos': {
         'architectures': {
             'x86': {
-                'build_args': [
+                'cmake_args': [
                     '-DCMAKE_C_FLAGS=-m32',
                     '-DCMAKE_CXX_FLAGS=-m32',
                 ],
@@ -170,7 +170,7 @@ TARGETS = {
         },
     },
     'android': {
-        'build_args': [
+        'cmake_args': [
             "-DTARGET_ARCH=ANDROID",
             "-DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake",
             "-DANDROID_NDK=/opt/android-ndk",
@@ -179,7 +179,7 @@ TARGETS = {
 
         'architectures': {
             'arm64v8a': {
-                'build_args': [
+                'cmake_args': [
                     "-DANDROID_ABI=arm64-v8a",
                 ],
             },
@@ -208,7 +208,7 @@ COMPILERS = {
         'post_build_steps': [
             ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
-        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
+        'cmake_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
@@ -216,7 +216,7 @@ COMPILERS = {
             '3': {
                 '!post_build_steps': [],
                 '!apt_repos': [],
-                '!build_args': [],
+                '!cmake_args': [],
 
                 'apt_packages': ["clang-3.9"],
                 'c': "clang-3.9",
@@ -285,7 +285,7 @@ COMPILERS = {
         'hosts': ['windows'],
         'targets': ['windows'],
 
-        'build_args': ["-G", "Visual Studio {generator_version}{generator_postfix}"],
+        'cmake_args': ["-G", "Visual Studio {generator_version}{generator_postfix}"],
 
         'versions': {
             '2015': {
@@ -318,7 +318,7 @@ COMPILERS = {
 
         'versions': {
             '19': {
-                'build_args': [
+                'cmake_args': [
                     "-DANDROID_NATIVE_API_LEVEL=19",
                 ],
 
@@ -426,9 +426,9 @@ def produce_config(build_spec, config_file, **additional_variables):
 
             configs.append(new_config)
 
-            config_arches = new_config.get('architectures')
-            if config_arches:
-                config_arch = config_arches.get(build_spec.arch)
+            config_archs = new_config.get('architectures')
+            if config_archs:
+                config_arch = config_archs.get(build_spec.arch)
                 if config_arch:
                     configs.append(config_arch)
 
@@ -676,7 +676,7 @@ def run_build(build_spec, build_config, is_dryrun):
                 "-DCMAKE_BUILD_TYPE=" + build_config,
                 "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
             ]
-            _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
+            _run_command("cmake", config['cmake_args'], compiler_flags, cmake_args, project_source_dir)
 
             # Run the build
             _run_command("cmake", "--build", ".", "--config", build_config)
@@ -774,7 +774,7 @@ def run_build(build_spec, build_config, is_dryrun):
     # Build the config object
     config = produce_config(build_spec, os.path.join(_cwd(), "builder.json"), sources=sources, source_dir=source_dir, build_dir=build_dir)
     if not config['enabled']:
-        raise Exception("The project is disable in this configuration")
+        raise Exception("The project is disabled in this configuration")
 
     # INSTALL
     if config['use_apt']:
