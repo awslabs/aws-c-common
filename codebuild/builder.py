@@ -68,6 +68,7 @@ KEYS = {
     'brew_packages': [],
 
     # CodeBuild
+    'enabled': True,
     'image': "",
     'image_type': "",
     'compute_type': "",
@@ -401,7 +402,7 @@ def _replace_variables(value, variables):
         return value
 
 # Traverse the configurations to produce one for the specified
-def produce_config(build_spec, **additional_variables):
+def produce_config(build_spec, config_file, **additional_variables):
 
     validate_build(build_spec)
 
@@ -419,7 +420,7 @@ def produce_config(build_spec, **additional_variables):
             if not element:
                 return
 
-            new_config = map.get(key)
+            new_config = element.get(instance)
             if not new_config:
                 return
 
@@ -444,6 +445,19 @@ def produce_config(build_spec, **additional_variables):
         'targets': TARGETS,
         'compilers': COMPILERS,
     })
+
+    if config_file:
+        if not os.path.exists(config_file):
+            raise Exception("Config file {} specified, but could not be found".format(config_file))
+
+        import json
+        with open(config_file, 'r') as config_fp:
+            try:
+                project_config = json.load(config_fp)
+                process_config(project_config)
+            except Exception as e:
+                print("Failed to parse config file", config_file, e)
+                sys.exit(1)
 
     new_version = {
         'spec': build_spec,
@@ -758,7 +772,9 @@ def run_build(build_spec, build_config, is_dryrun):
     _mkdir(install_dir)
 
     # Build the config object
-    config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
+    config = produce_config(build_spec, os.path.join(_cwd(), "builder.json"), sources=sources, source_dir=source_dir, build_dir=build_dir)
+    if not config['enabled']:
+        raise Exception("The project is disable in this configuration")
 
     # INSTALL
     if config['use_apt']:
@@ -943,7 +959,7 @@ if __name__ == '__main__':
         # List of all potential names to search for
         all_potential_builds = list(CODEBUILD_OVERRIDES.keys())
         # Reverse mapping of codebuild name to canonical name
-        full_codebuild_to_canonical = {key: key for key in CODEBUILD_OVERRIDES.keys()}
+        full_codebuild_to_canonical = {key.replace('.', ''): key for key in CODEBUILD_OVERRIDES.keys()}
         for canonical, cb_list in CODEBUILD_OVERRIDES.items():
             all_potential_builds += cb_list
             for cb in cb_list:
@@ -970,7 +986,11 @@ if __name__ == '__main__':
             build_name = '{}-{}'.format(args.project, cb_name)
 
             build_spec = BuildSpec(spec=canonical)
-            config = produce_config(build_spec)
+            config = produce_config(build_spec, args.config)
+            if not config['enabled']:
+                print("Skipping spec {}, as it's disabled".format(build_spec.name))
+                continue
+
             cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
             cb_project['name'] = build_name.replace('.', '')
 
