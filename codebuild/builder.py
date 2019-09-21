@@ -54,15 +54,21 @@ KEYS = {
     'pre_build_steps': [],
     'post_build_steps': [],
     'build_env': {},
-    'build_args': [],
+    'cmake_args': [],
     'run_tests': True,
 
     # Linux
+    'use_apt': False,
     'apt_keys': [],
     'apt_repos': [],
     'apt_packages': [],
 
+    # macOS
+    'use_brew': False,
+    'brew_packages': [],
+
     # CodeBuild
+    'enabled': True,
     'image': "",
     'image_type': "",
     'compute_type': "",
@@ -82,10 +88,11 @@ HOSTS = {
 
         'python': "python3",
 
-        'build_args': [
+        'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
         ],
 
+        'use_apt': True,
         'apt_repos': [
             "ppa:ubuntu-toolchain-r/test",
         ],
@@ -94,7 +101,7 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'al2012': {
-        'build_args': [
+        'cmake_args': [
             "-DENABLE_SANITIZERS=OFF",
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
@@ -123,7 +130,7 @@ HOSTS = {
     'windows': {
         'python': "python.exe",
 
-        'build_args': [
+        'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
         ],
 
@@ -133,7 +140,7 @@ HOSTS = {
     'macos': {
         'python': "python3",
 
-
+        'use_brew': True,
     }
 }
 
@@ -141,21 +148,21 @@ TARGETS = {
     'linux': {
         'architectures': {
             'x86': {
-                'build_args': [
+                'cmake_args': [
                     '-DCMAKE_C_FLAGS=-m32',
                     '-DCMAKE_CXX_FLAGS=-m32',
                 ],
             },
         },
 
-        'build_args': [
+        'cmake_args': [
             "-DENABLE_SANITIZERS=ON",
         ],
     },
     'macos': {
         'architectures': {
             'x86': {
-                'build_args': [
+                'cmake_args': [
                     '-DCMAKE_C_FLAGS=-m32',
                     '-DCMAKE_CXX_FLAGS=-m32',
                 ],
@@ -163,7 +170,7 @@ TARGETS = {
         },
     },
     'android': {
-        'build_args': [
+        'cmake_args': [
             "-DTARGET_ARCH=ANDROID",
             "-DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake",
             "-DANDROID_NDK=/opt/android-ndk",
@@ -172,7 +179,7 @@ TARGETS = {
 
         'architectures': {
             'arm64v8a': {
-                'build_args': [
+                'cmake_args': [
                     "-DANDROID_ABI=arm64-v8a",
                 ],
             },
@@ -201,7 +208,7 @@ COMPILERS = {
         'post_build_steps': [
             ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
         ],
-        'build_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
+        'cmake_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
 
@@ -209,7 +216,7 @@ COMPILERS = {
             '3': {
                 '!post_build_steps': [],
                 '!apt_repos': [],
-                '!build_args': [],
+                '!cmake_args': [],
 
                 'apt_packages': ["clang-3.9"],
                 'c': "clang-3.9",
@@ -278,7 +285,7 @@ COMPILERS = {
         'hosts': ['windows'],
         'targets': ['windows'],
 
-        'build_args': ["-G", "Visual Studio {generator_version}{generator_postfix}"],
+        'cmake_args': ["-G", "Visual Studio {generator_version}{generator_postfix}"],
 
         'versions': {
             '2015': {
@@ -311,7 +318,7 @@ COMPILERS = {
 
         'versions': {
             '19': {
-                'build_args': [
+                'cmake_args': [
                     "-DANDROID_NATIVE_API_LEVEL=19",
                 ],
 
@@ -395,32 +402,62 @@ def _replace_variables(value, variables):
         return value
 
 # Traverse the configurations to produce one for the specified
-def produce_config(build_spec, **additional_variables):
+def produce_config(build_spec, config_file, **additional_variables):
 
     validate_build(build_spec)
 
     # Build the list of config options to poll
     configs = []
 
-    def process_config(map, key):
-        config = map[key]
-        configs.append(config)
+    # Processes a config object (could come from a file), searching for keys hosts, targets, and compilers
+    def process_config(config):
 
-        config_arches = config.get('architectures')
-        if config_arches:
-            config_arch = config_arches.get(build_spec.arch)
-            if config_arch:
-                configs.append(config_arch)
+        def process_element(map, element_name, instance):
+            if not map:
+                return
 
-        return config
+            element = map.get(element_name)
+            if not element:
+                return
 
+            new_config = element.get(instance)
+            if not new_config:
+                return
 
-    # Host isn't allowed to specify architectures
-    process_config(HOSTS, build_spec.host)
-    process_config(TARGETS, build_spec.target)
+            configs.append(new_config)
 
-    compiler = process_config(COMPILERS, build_spec.compiler)
-    process_config(compiler['versions'], build_spec.compiler_version)
+            config_archs = new_config.get('architectures')
+            if config_archs:
+                config_arch = config_archs.get(build_spec.arch)
+                if config_arch:
+                    configs.append(config_arch)
+
+            return new_config
+
+        process_element(config, 'hosts', build_spec.host)
+        process_element(config, 'targets', build_spec.target)
+
+        compiler = process_element(config, 'compilers', build_spec.compiler)
+        process_element(compiler, 'versions', build_spec.compiler_version)
+
+    process_config({
+        'hosts': HOSTS,
+        'targets': TARGETS,
+        'compilers': COMPILERS,
+    })
+
+    if config_file:
+        if not os.path.exists(config_file):
+            raise Exception("Config file {} specified, but could not be found".format(config_file))
+
+        import json
+        with open(config_file, 'r') as config_fp:
+            try:
+                project_config = json.load(config_fp)
+                process_config(project_config)
+            except Exception as e:
+                print("Failed to parse config file", config_file, e)
+                sys.exit(1)
 
     new_version = {
         'spec': build_spec,
@@ -613,8 +650,47 @@ def run_build(build_spec, build_config, is_dryrun):
             project_source_dir = os.path.join(build_dir, project)
             project_build_dir = os.path.join(project_source_dir, 'build')
 
+        def _build_project_cmake():
+            # If the build directory doesn't already exist, make it
+            _mkdir(project_build_dir)
+
+            # CD to the build directory
+            _cd(project_build_dir)
+
+            # Set compiler flags
+            compiler_flags = []
+            for opt in ['c', 'cxx']:
+                if opt in config and config[opt]:
+                    compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
+
+            # Run CMake
+            cmake_args = [
+                "-Werror=dev",
+                "-Werror=deprecated",
+                "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+                "-DCMAKE_PREFIX_PATH=" + install_dir,
+                # Each image has a custom installed openssl build, make sure CMake knows where to find it
+                "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
+                "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
+                "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
+                "-DCMAKE_BUILD_TYPE=" + build_config,
+                "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+            ]
+            _run_command("cmake", config['cmake_args'], compiler_flags, cmake_args, project_source_dir)
+
+            # Run the build
+            _run_command("cmake", "--build", ".", "--config", build_config)
+
+            # Do install
+            _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
+
+        def _test_project_ctest():
+            _run_command("ctest", ".", "--output-on-failure")
+
         upstream = []
         downstream = []
+        build_fn = _build_project_cmake
+        test_fn = _test_project_ctest
 
         project_config_file = os.path.join(project_source_dir, "builder.json")
         if os.path.exists(project_config_file):
@@ -630,6 +706,36 @@ def run_build(build_spec, build_config, is_dryrun):
             upstream = project_config.get("upstream", [])
             downstream = project_config.get("downstream", [])
 
+            command_variables = {
+                'source_dir': project_source_dir,
+                'build_dir': project_build_dir,
+                **config
+            }
+
+            config_build = project_config.get("build", None)
+            if config_build:
+                assert isinstance(config_build, list)
+                def _build_project_config():
+                    for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
+                        if opt in config and config[opt]:
+                            os.environ[variable] = config[opt]
+                    for command in config_build:
+                        final_command = _replace_variables(command, command_variables)
+                        _run_command(final_command)
+
+                build_fn = _build_project_config
+
+            config_test = project_config.get("test", None)
+            if config_test:
+                assert isinstance(config_test, list)
+                def _test_project_config():
+                    for command in config_test:
+                        final_command = _replace_variables(command, command_variables)
+                        _run_command(final_command)
+                test_fn = _test_project_config
+
+        pwd = _cwd()
+
         # If project not specified, and not pulled from the config file, default to file path
         if not project:
             project = os.path.basename(source_dir)
@@ -637,43 +743,11 @@ def run_build(build_spec, build_config, is_dryrun):
         # Build upstream dependencies (don't build or run their tests)
         _build_dependencies(upstream, build_tests=False, run_tests=False)
 
-        # If the build directory doesn't already exist, make it
-        _mkdir(project_build_dir)
-
-        # CD to the build directory
-        pwd = _cwd()
-        _cd(project_build_dir)
-
-        # Set compiler flags
-        compiler_flags = []
-        for opt in ['c', 'cxx']:
-            if opt in config and config[opt]:
-                compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
-
-        # Run CMake
-        cmake_args = [
-            "-Werror=dev",
-            "-Werror=deprecated",
-            "-DCMAKE_INSTALL_PREFIX=" + install_dir,
-            "-DCMAKE_PREFIX_PATH=" + install_dir,
-            # Each image has a custom installed openssl build, make sure CMake knows where to find it
-            "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
-            "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
-            "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
-            "-DCMAKE_BUILD_TYPE=" + build_config,
-            "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
-        ]
-        _run_command("cmake", config['build_args'], compiler_flags, cmake_args, project_source_dir)
-
-        # Run the build
-        _run_command("cmake", "--build", ".", "--config", build_config)
-
-        # Do install
-        _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
+        build_fn()
 
         # Run the tests
         if run_tests:
-            _run_command("ctest", ".", "--output-on-failure")
+            test_fn()
 
         # Mark project as built
         if project:
@@ -698,22 +772,28 @@ def run_build(build_spec, build_config, is_dryrun):
     _mkdir(install_dir)
 
     # Build the config object
-    config = produce_config(build_spec, sources=sources, source_dir=source_dir, build_dir=build_dir)
+    config = produce_config(build_spec, os.path.join(_cwd(), "builder.json"), sources=sources, source_dir=source_dir, build_dir=build_dir)
+    if not config['enabled']:
+        raise Exception("The project is disabled in this configuration")
 
     # INSTALL
+    if config['use_apt']:
+        # Install keys
+        for key in config['apt_keys']:
+            _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
 
-    # Install keys
-    for key in config['apt_keys']:
-        _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
+        # Add APT repositories
+        for repo in config['apt_repos']:
+            _run_command("sudo", "apt-add-repository", repo)
 
-    # Add APT repositories
-    for repo in config['apt_repos']:
-        _run_command("sudo", "apt-add-repository", repo)
+        # Install packages
+        if config['apt_packages']:
+            _run_command("sudo", "apt-get", "-qq", "update", "-y")
+            _run_command("sudo", "apt-get", "-qq", "install", "-y", "-f", config['apt_packages'])
 
-    # Install packages
-    if config['apt_packages']:
-        _run_command("sudo", "apt-get", "-q", "update", "-y")
-        _run_command("sudo", "apt-get", "-q", "install", "-y", "-f", config['apt_packages'])
+    if config['use_brew']:
+        for package in config['brew_packages']:
+            _run_command("brew", "install", package)
 
     # PRE BUILD
 
@@ -847,6 +927,7 @@ if __name__ == '__main__':
     codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
     codebuild.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
     codebuild.add_argument('--inplace-script', action='store_true', help='Use the python script in codebuild/builder.py instead of downloading it')
+    codebuild.add_argument('--config', type=str, help='The config file to use when generating the projects')
 
     args = parser.parse_args()
 
@@ -878,7 +959,7 @@ if __name__ == '__main__':
         # List of all potential names to search for
         all_potential_builds = list(CODEBUILD_OVERRIDES.keys())
         # Reverse mapping of codebuild name to canonical name
-        full_codebuild_to_canonical = {key: key for key in CODEBUILD_OVERRIDES.keys()}
+        full_codebuild_to_canonical = {key.replace('.', ''): key for key in CODEBUILD_OVERRIDES.keys()}
         for canonical, cb_list in CODEBUILD_OVERRIDES.items():
             all_potential_builds += cb_list
             for cb in cb_list:
@@ -905,7 +986,11 @@ if __name__ == '__main__':
             build_name = '{}-{}'.format(args.project, cb_name)
 
             build_spec = BuildSpec(spec=canonical)
-            config = produce_config(build_spec)
+            config = produce_config(build_spec, args.config)
+            if not config['enabled']:
+                print("Skipping spec {}, as it's disabled".format(build_spec.name))
+                continue
+
             cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
             cb_project['name'] = build_name.replace('.', '')
 
