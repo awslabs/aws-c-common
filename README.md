@@ -102,7 +102,7 @@ returning control to the caller, if you have an error to raise, use the `aws_rai
 
 #### Log Subjects & Error Codes
 The logging & error handling infrastructure is designed to support multiple libraries. For this to work, AWS maintained libraries
-have pre-slotted log subjects & error codes for each library. The currently allocated error ranges are:
+have pre-slotted log subjects & error codes for each library. The currently allocated ranges are:
 
 | Range | Library Name |
 | --- | --- |
@@ -112,19 +112,19 @@ have pre-slotted log subjects & error codes for each library. The currently allo
 | [0x0C00, 0x1000) | aws-c-compression |
 | [0x1000, 0x1400) | aws-c-eventstream |
 | [0x1400, 0x1800) | aws-c-mqtt |
-| [0x1800, 0x1C00) | (reserved for future project) |
-| [0x1C00, 0x2000) | (reserved for future project) |
-| [0x2000, 0x2400) | (reserved for future project) |
-| [0x2400, 0x2800) | (reserved for future project) |
-| [0x2800, 0x2C00) | (reserved for future project) |
-| [0x2C00, 0x3000) | (reserved for future project) |
-| [0x3000, 0x3400) | (reserved for future project) |
+| [0x1800, 0x1C00) | aws-c-auth |
+| [0x1C00, 0x2000) | aws-c-cal |
+| [0x2000, 0x2400) | aws-crt-cpp |
+| [0x2400, 0x2800) | aws-crt-java |
+| [0x2800, 0x2C00) | aws-crt-python |
+| [0x2C00, 0x3000) | aws-crt-nodejs |
+| [0x3000, 0x3400) | aws-crt-dotnet |
 | [0x3400, 0x3800) | (reserved for future project) |
 | [0x3800, 0x3C00) | (reserved for future project) |
 | [0x3C00, 0x4000) | (reserved for future project) |
 
-Each library should begin its error codes at the beginning of its range and follow in sequence (don't skip codes). Upon
-adding an AWS maintained library, an error code range must be approved and added to the above table.
+Each library should begin its error and log subject values at the beginning of its range and follow in sequence (don't skip codes). Upon
+adding an AWS maintained library, a new enum range must be approved and added to the above table.
 
 ### Testing
 We have a high bar for test coverage, and PRs fixing bugs or introducing new functionality need to have tests before
