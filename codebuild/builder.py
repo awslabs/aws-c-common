@@ -273,6 +273,7 @@ COMPILERS = {
             '5': {},
             '6': {},
             '7': {},
+            '8': {},
         },
 
         'architectures': {
@@ -843,6 +844,7 @@ CODEBUILD_OVERRIDES = {
     'linux-gcc-5-linux-x64': ['linux-gcc-5x-x64'],
     'linux-gcc-6-linux-x64': ['linux-gcc-6x-x64'],
     'linux-gcc-7-linux-x64': ['linux-gcc-7x-x64'],
+    'linux-gcc-8-linux-x64': [],
 
     'linux-ndk-19-android-arm64v8a': ['android-arm64-v8a'],
 
