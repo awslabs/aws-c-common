@@ -149,6 +149,11 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     /* parse function */
     const char *function_start = strstr(addr_end, " ") + 1;
     const char *function_end = strstr(function_start, " ");
+    /* truncate function name if needed */
+    size_t function_len = function_end - function_start;
+    if (function_len >= (sizeof(frame->function) - 1)) {
+        function_len = sizeof(frame->function) - 1;
+    }
     strncpy(frame->function, function_start, function_end - function_start);
 
     /* find base addr for library/exe */
