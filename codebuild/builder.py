@@ -499,6 +499,7 @@ def produce_config(build_spec, config_file, **additional_variables):
 
     # Post process
     new_version = _replace_variables(new_version, replacements)
+    new_version['variables'] = replacements
 
     return new_version
 
@@ -559,7 +560,7 @@ def run_build(build_spec, build_config, is_dryrun):
         return new_command
 
     def _log_command(*command):
-        print('>', ' '.join(_flatten_command(*command)), flush=True)
+        print('>', subprocess.list2cmdline(_flatten_command(*command)), flush=True)
 
     def _run_command(*command):
         _log_command(*command)
@@ -710,7 +711,8 @@ def run_build(build_spec, build_config, is_dryrun):
             command_variables = {
                 'source_dir': project_source_dir,
                 'build_dir': project_build_dir,
-                **config
+                **config,
+                **config['variables'],
             }
 
             config_build = project_config.get("build", None)
@@ -871,7 +873,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/py-ci/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
@@ -920,7 +922,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dry-run', action='store_true', help="Don't run the build, just print the commands that would run")
     commands = parser.add_subparsers(dest='command')
 
-    build = commands.add_parser('build', help="Run the requested build")
+    build = commands.add_parser('build', help="Run target build, formatted 'host-compiler-compilerversion-target-arch'. Ex: linux-ndk-19-android-arm64v8a")
     build.add_argument('build', type=str)
     build.add_argument('--config', type=str, default='RelWithDebInfo', help='The CMake configuration to build with')
 
