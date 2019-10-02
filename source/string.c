@@ -260,9 +260,7 @@ struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, co
 }
 
 int aws_c_string_secure_string_length(const char *str, size_t max_read_len, size_t *str_len) {
-    if (!str || !str_len) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-    }
+    AWS_ERROR_PRECONDITION(str && str_len, AWS_ERROR_INVALID_ARGUMENT);
 
     /* why not strnlen? It doesn't work everywhere as it wasn't standardized til C11, and is considered
      * a GNU extension. This should be faster anyways. This should work for ascii and utf8.
