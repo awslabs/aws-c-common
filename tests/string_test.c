@@ -197,8 +197,8 @@ static int cstring_secure_string_length_test_fn(struct aws_allocator *allocator,
     ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_c_string_secure_string_length(NULL, sizeof(test_string), &str_len));
     ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_c_string_secure_string_length(test_string, sizeof(test_string), NULL));
     ASSERT_ERROR(
-            AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
-            aws_c_string_secure_string_length(test_string, sizeof(test_string) - 1, &str_len));
+        AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
+        aws_c_string_secure_string_length(test_string, sizeof(test_string) - 1, &str_len));
     return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(cstring_secure_string_length_test, cstring_secure_string_length_test_fn)
