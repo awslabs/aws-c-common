@@ -184,3 +184,21 @@ static int string_destroy_secure_test_fn(struct aws_allocator *allocator, void *
     aws_string_destroy_secure(deadbeef);
     return 0;
 }
+
+static int cstring_secure_strlen_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    size_t str_len = 0;
+    const char test_string[] = "HelloWorld!";
+    ASSERT_SUCCESS(aws_c_string_secure_strlen(test_string, sizeof(test_string), &str_len));
+    ASSERT_UINT_EQUALS(sizeof(test_string) - 1, str_len);
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_c_string_secure_strlen(NULL, sizeof(test_string), &str_len));
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_c_string_secure_strlen(test_string, sizeof(test_string), NULL));
+    ASSERT_ERROR(
+        AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
+        aws_c_string_secure_strlen(test_string, sizeof(test_string) - 1, &str_len));
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(cstring_secure_strlen_test, cstring_secure_strlen_test_fn)

@@ -258,3 +258,21 @@ struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, co
     AWS_POSTCONDITION(aws_string_is_valid(str));
     return aws_string_new_from_string(allocator, str);
 }
+
+int aws_c_string_secure_strlen(const char *str, size_t max_read_len, size_t *str_len) {
+    if (!str || !str_len) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    /* why not strnlen? It doesn't work everywhere as it wasn't standardized til C11, and is considered
+     * a GNU extension. This should be faster anyways. This should work for ascii and utf8.
+     * Any other character sets in use deserve what they get. */
+    char *null_char_ptr = memchr(str, '\0', max_read_len);
+
+    if (null_char_ptr) {
+        *str_len = null_char_ptr - str;
+        return AWS_OP_SUCCESS;
+    }
+
+    return aws_raise_error(AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED);
+}
