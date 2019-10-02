@@ -109,35 +109,16 @@ struct aws_stack_frame_info {
     char function[128];
 };
 
-/* strip shell special characters from the exe in case someone tries to
+/* Ensure only safe characters in a path buffer in case someone tries to
    rename the exe and trigger shell execution via the sub commands used to
    resolve symbols */
-char *s_strip_shell_chars(char *path) {
+char *s_whitelist_chars(char *path) {
     char *cur = path;
     while (*cur) {
-        switch (*cur) {
-            case '\\':
-            case '>':
-            case '<':
-            case '$':
-            case ';':
-            case '|':
-            case '[':
-            case ']':
-            case '`':
-            case '(':
-            case ')':
-            case '&':
-            case '#':
-            case '@':
-            case '!':
-            case '^':
-            case '=':
-            case '?':
-                *cur = '_';
-                break;
-            default:
-                break;
+        bool whitelisted =
+            isalnum(*cur) || isspace(*cur) || *cur == '/' || *cur == '_' || *cur == '.' || (cur > path && *cur == '-');
+        if (!whitelisted) {
+            *cur = '_';
         }
         ++cur;
     }
@@ -175,7 +156,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     if (strstr(current_exe, frame->exe)) {
         strncpy(frame->exe, current_exe, strlen(current_exe));
     }
-    s_strip_shell_chars(frame->exe);
+    s_whitelist_chars(frame->exe);
 
     /* parse addr */
     const char *addr_start = strstr(exe_end, "0x");
@@ -222,7 +203,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
 
     ptrdiff_t exe_len = exe_end - symbol;
     strncpy(frame->exe, symbol, exe_len);
-    s_strip_shell_chars(frame->exe);
+    s_whitelist_chars(frame->exe);
 
     long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
     if (function_len > 0) { /* dynamic symbol was found */
