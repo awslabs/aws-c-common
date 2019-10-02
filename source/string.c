@@ -259,7 +259,7 @@ struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, co
     return aws_string_new_from_string(allocator, str);
 }
 
-int aws_c_string_secure_strlen(const char *str, size_t max_read_len, size_t *str_len) {
+int aws_c_string_secure_string_length(const char *str, size_t max_read_len, size_t *str_len) {
     if (!str || !str_len) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }

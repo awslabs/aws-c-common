@@ -209,7 +209,7 @@ struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, co
  * is found within max_read_len of str, AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED is raised. Otherwise, str_len
  * will contain the string length minus the NULL character, and AWS_OP_SUCCESS will be returned. */
 AWS_COMMON_API
-int aws_c_string_secure_strlen(const char *str, size_t max_read_len, size_t *str_len);
+int aws_c_string_secure_string_length(const char *str, size_t max_read_len, size_t *str_len);
 
 /**
  * Equivalent to str->bytes.
