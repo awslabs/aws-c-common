@@ -109,7 +109,10 @@ struct aws_stack_frame_info {
     char function[128];
 };
 
-char* s_strip_shell_chars(char *path) {
+/* strip shell special characters from the exe in case someone tries to
+   rename the exe and trigger shell execution via the sub commands used to
+   resolve symbols */
+char *s_strip_shell_chars(char *path) {
     char *cur = path;
     while (*cur) {
         switch (*cur) {
