@@ -13,9 +13,9 @@ RUN set -ex \
     && nvm install $NODE_VERSION \
     && ln -s `nvm which $NODE_VERSION` /usr/local/bin/node \
     && ln -s `nvm which $NODE_VERSION` /usr/local/bin/nodejs \
+    && ln -s `dirname $(nvm which 10)`/npm /usr/local/bin/npm \
     && node --version \
-    && npm --version \
-    && echo export PATH=$PATH:`dirname $(nvm which 10)` >> $HOME/.profile
+    && npm --version
 
 ###############################################################################
 # Cleanup
