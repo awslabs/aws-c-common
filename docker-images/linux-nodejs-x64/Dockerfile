@@ -7,9 +7,12 @@ ENV NODE_VERSION="10"
 ###############################################################################
 RUN set -ex \
     && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash \
+    && export NVM_DIR="$HOME/.nvm" \
+    && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" \
     && command -v nvm \
     && nvm install $NODE_VERSION \
-    && ln -s /usr/local/bin/node `nvm which $NODE_VERSION` \
+    && ln -s `nvm which $NODE_VERSION` /usr/local/bin/node \
+    && ln -s `nvm which $NODE_VERSION` /usr/local/bin/nodejs \
     && node --version \
     && npm --version
 
