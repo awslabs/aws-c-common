@@ -62,9 +62,6 @@ function(aws_set_common_properties target)
         # Warning disables always go last to avoid future flags re-enabling them
         list(APPEND AWS_C_FLAGS -Wno-long-long)
 
-        # Avoid exporting symbols we don't intend to export
-        list(APPEND AWS_C_FLAGS -fvisibility=hidden)
-
         # Always enable position independent code, since this code will always end up in a shared lib
         list(APPEND AWS_C_FLAGS -fPIC)
 
@@ -144,6 +141,7 @@ function(aws_set_common_properties target)
 
     if(BUILD_SHARED_LIBS)
         if (NOT MSVC)
+            # this should only be set when building shared libs.
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
     endif()
