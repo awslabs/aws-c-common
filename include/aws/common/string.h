@@ -205,6 +205,12 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
 AWS_COMMON_API
 struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str);
 
+/* Computes the length of a c string in bytes assuming the character set is either ASCII or UTF-8. If no NULL character
+ * is found within max_read_len of str, AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED is raised. Otherwise, str_len
+ * will contain the string length minus the NULL character, and AWS_OP_SUCCESS will be returned. */
+AWS_COMMON_API
+int aws_secure_strlen(const char *str, size_t max_read_len, size_t *str_len);
+
 /**
  * Equivalent to str->bytes.
  */

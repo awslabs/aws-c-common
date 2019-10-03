@@ -203,6 +203,7 @@ add_test_case(string_tests)
 add_test_case(binary_string_test)
 add_test_case(string_compare_test)
 add_test_case(string_destroy_secure_test)
+add_test_case(secure_strlen_test)
 
 add_test_case(test_char_split_happy_path)
 add_test_case(test_char_split_ends_with_token)

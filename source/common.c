@@ -221,6 +221,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_STREAM_UNSEEKABLE,
         "Stream does not support seek operations"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
+        "A c-string like buffer was passed but a null terminator was not found within the bounds of the buffer."),
 };
 /* clang-format on */
 
