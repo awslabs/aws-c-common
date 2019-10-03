@@ -109,6 +109,22 @@ struct aws_stack_frame_info {
     char function[128];
 };
 
+/* Ensure only safe characters in a path buffer in case someone tries to
+   rename the exe and trigger shell execution via the sub commands used to
+   resolve symbols */
+char *s_whitelist_chars(char *path) {
+    char *cur = path;
+    while (*cur) {
+        bool whitelisted =
+            isalnum(*cur) || isspace(*cur) || *cur == '/' || *cur == '_' || *cur == '.' || (cur > path && *cur == '-');
+        if (!whitelisted) {
+            *cur = '_';
+        }
+        ++cur;
+    }
+    return path;
+}
+
 #    if defined(__APPLE__)
 #        include <ctype.h>
 #        include <dlfcn.h>
@@ -140,6 +156,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     if (strstr(current_exe, frame->exe)) {
         strncpy(frame->exe, current_exe, strlen(current_exe));
     }
+    s_whitelist_chars(frame->exe);
 
     /* parse addr */
     const char *addr_start = strstr(exe_end, "0x");
@@ -149,6 +166,11 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     /* parse function */
     const char *function_start = strstr(addr_end, " ") + 1;
     const char *function_end = strstr(function_start, " ");
+    /* truncate function name if needed */
+    size_t function_len = function_end - function_start;
+    if (function_len >= (sizeof(frame->function) - 1)) {
+        function_len = sizeof(frame->function) - 1;
+    }
     strncpy(frame->function, function_start, function_end - function_start);
 
     /* find base addr for library/exe */
@@ -181,6 +203,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
 
     ptrdiff_t exe_len = exe_end - symbol;
     strncpy(frame->exe, symbol, exe_len);
+    s_whitelist_chars(frame->exe);
 
     long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
     if (function_len > 0) { /* dynamic symbol was found */
