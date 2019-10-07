@@ -805,7 +805,7 @@ def run_build(build_spec, build_config, is_dryrun):
             _run_command("brew", "install", package)
 
     if config['use_choco']:
-        _run_command("choco", "install", "-y", config['choco_packages'])
+        _run_command("choco", "install", "--no-progress", "-y", config['choco_packages'])
         _run_command("call", "RefreshEnv.cmd")
 
     # PRE BUILD
@@ -883,7 +883,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
         run_commands = ["{python} ./codebuild/builder.py build {spec}"]
     else:
         run_commands = [
-            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/master/codebuild/builder.py', 'builder.py')\\\"",
+            "{python} -c \\\"from urllib.request import urlretrieve; urlretrieve('https://raw.githubusercontent.com/awslabs/aws-c-common/choco/codebuild/builder.py', 'builder.py')\\\"",
             "{python} builder.py build {spec}"
         ]
 
