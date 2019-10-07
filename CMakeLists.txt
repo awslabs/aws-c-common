@@ -54,6 +54,8 @@ option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can b
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
+    set(WINDOWS_KERNEL_LIB "Kernel32" CACHE STRING "The name of the kernel library to link against (default: Kernel32)")
+
     file(GLOB AWS_COMMON_OS_HEADERS
             "include/aws/common/windows/*"
             )
@@ -69,7 +71,8 @@ if (WIN32)
         source_group("Source Files\\windows" FILES ${AWS_COMMON_OS_SRC})
     endif ()
 
-    set(PLATFORM_LIBS BCrypt Kernel32 Ws2_32)
+    list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
+    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
@@ -85,13 +88,13 @@ else ()
             message(FATAL_ERROR "Core Foundation not found")
         endif ()
 
-        set(PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
+        list(APPEND PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-        set(PLATFORM_LIBS m Threads::Threads rt)
+        list(APPEND PLATFORM_LIBS m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        set(PLATFORM_LIBS m thr execinfo)
+        list(APPEND PLATFORM_LIBS m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        set(PLATFORM_LIBS m Threads::Threads execinfo)
+        list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
     endif()
 
 endif()
@@ -127,6 +130,7 @@ endif()
 
 aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
 if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
