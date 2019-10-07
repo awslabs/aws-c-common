@@ -25,13 +25,17 @@ typedef VOID WINAPI timefunc_t(LPFILETIME);
 static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p);
 static timefunc_t *volatile s_p_time_func = s_get_system_time_func_lazy_init;
 
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L#s
+#define WIDEN(s) WIDEN2(s)
+
 static BOOL CALLBACK s_get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
     (void)init_once;
     (void)param;
     (void)context;
 
-    HMODULE hkernel32 = GetModuleHandleW(L"kernel32.dll");
-    timefunc_t *time_func = (timefunc_t *)GetProcAddress(hkernel32, "GetSystemTimePreciseAsFileTime");
+    HMODULE kernel = GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll");
+    timefunc_t *time_func = (timefunc_t *)GetProcAddress(kernel, "GetSystemTimePreciseAsFileTime");
 
     if (time_func == NULL) {
         time_func = GetSystemTimeAsFileTime;
