@@ -806,7 +806,7 @@ def run_build(build_spec, build_config, is_dryrun):
 
     if config['use_choco']:
         _run_command("choco", "install", "--no-progress", "-y", config['choco_packages'])
-        _run_command("call", "RefreshEnv.cmd")
+        _run_command("RefreshEnv.cmd")
 
     # PRE BUILD
 
