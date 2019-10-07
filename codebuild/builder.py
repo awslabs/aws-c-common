@@ -67,6 +67,10 @@ KEYS = {
     'use_brew': False,
     'brew_packages': [],
 
+    # Windows
+    'use_choco': False,
+    'choco_packages': [],
+
     # CodeBuild
     'enabled': True,
     'image': "",
@@ -129,6 +133,8 @@ HOSTS = {
     },
     'windows': {
         'python': "python.exe",
+
+        'use_choco': True,
 
         'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
@@ -797,6 +803,10 @@ def run_build(build_spec, build_config, is_dryrun):
     if config['use_brew']:
         for package in config['brew_packages']:
             _run_command("brew", "install", package)
+
+    if config['use_choco']:
+        _run_command("choco", "install", "-y", config['choco_packages'])
+        _run_command("call", "RefreshEnv.cmd")
 
     # PRE BUILD
 
