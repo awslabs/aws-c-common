@@ -570,8 +570,16 @@ def run_build(build_spec, build_config, is_dryrun):
 
     def _run_command(*command):
         _log_command(*command)
+
         if not is_dryrun:
-            subprocess.check_call(_flatten_command(*command), stdout=sys.stdout, stderr=sys.stderr)
+            flat_command = _flatten_command(*command)
+
+            # On Windows, force search PATH for the executable (subprocess does not by default)
+            if sys.platform == 'win32':
+                import shutil
+                flat_command[0] = shutil.which(flat_command[0])
+
+            subprocess.check_call(flat_command, stdout=sys.stdout, stderr=sys.stderr)
 
     # Helper to run makedirs regardless of dry run status
     def _mkdir(directory):
