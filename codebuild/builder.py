@@ -807,16 +807,18 @@ def run_build(build_spec, build_config, is_dryrun):
     if config['use_choco']:
         _run_command("choco", "install", "--no-progress", "-y", config['choco_packages'])
         # I'm 99% sure choco will only ever run on Windows, so let's get nasty
-        import winreg
-        key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"System\CurrentControlSet\Control\Session Manager\Environment")
-        system_path = winreg.QueryValueEx(key, "PATH")[0]
-        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Environment")
-        user_path = winreg.QueryValueEx(key, "PATH")[0]
 
-        new_path = user_path + ';' + system_path
-        print("!!! NEW PATH:", new_path)
-        print("!!! M2 home:", os.environ.get("M2_HOME"))
-        os.environ["PATH"] = new_path
+        import winreg
+        system_key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, r"System\CurrentControlSet\Control\Session Manager\Environment", access=winreg.KEY_READ)
+        user_key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, r"Environment", access=winreg.KEY_READ)
+
+        system_path = winreg.QueryValueEx(system_key, "PATH")[0]
+        user_path = winreg.QueryValueEx(user_key, "PATH")[0]
+
+        os.environ["M2_HOME"] = winreg.QueryValueEx(system_key, "M2_HOME")[0]
+        os.environ["PATH"] = os.path.expandvars(user_path + ';' + system_path)
+
+        print("!!! NEW PATH:", os.environ["PATH"])
 
     # PRE BUILD
 
