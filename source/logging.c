@@ -288,20 +288,18 @@ int aws_log_level_to_string(enum aws_log_level log_level, const char **level_str
     return AWS_OP_SUCCESS;
 }
 
-#ifndef AWS_MAX_LOG_SUBJECT_SLOTS
-#    define AWS_MAX_LOG_SUBJECT_SLOTS 16u
-#endif
+#define AWS_LOG_SUBJECT_SPACE_MASK (AWS_LOG_SUBJECT_STRIDE - 1)
 
-static const uint32_t S_MAX_LOG_SUBJECT = AWS_LOG_SUBJECT_SPACE_SIZE * AWS_MAX_LOG_SUBJECT_SLOTS - 1;
+static const uint32_t S_MAX_LOG_SUBJECT = AWS_LOG_SUBJECT_STRIDE_BITS * AWS_PACKAGE_SLOTS - 1;
 
-static const struct aws_log_subject_info_list *volatile s_log_subject_slots[AWS_MAX_LOG_SUBJECT_SLOTS] = {0};
+static const struct aws_log_subject_info_list *volatile s_log_subject_slots[AWS_PACKAGE_SLOTS] = {0};
 
 static const struct aws_log_subject_info *s_get_log_subject_info_by_id(aws_log_subject_t subject) {
     if (subject > S_MAX_LOG_SUBJECT) {
         return NULL;
     }
 
-    uint32_t slot_index = subject >> AWS_LOG_SUBJECT_BIT_SPACE;
+    uint32_t slot_index = subject >> AWS_LOG_SUBJECT_STRIDE_BITS;
     uint32_t subject_index = subject & AWS_LOG_SUBJECT_SPACE_MASK;
 
     const struct aws_log_subject_info_list *subject_slot = s_log_subject_slots[slot_index];
@@ -334,9 +332,9 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
     AWS_FATAL_ASSERT(log_subject_list->count);
 
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
-    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
+    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_STRIDE_BITS;
 
-    if (slot_index >= AWS_MAX_LOG_SUBJECT_SLOTS) {
+    if (slot_index >= AWS_PACKAGE_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad log subject slot index 0x%016x\n", slot_index);
@@ -357,9 +355,9 @@ void aws_unregister_log_subject_info_list(struct aws_log_subject_info_list *log_
     AWS_FATAL_ASSERT(log_subject_list->count);
 
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
-    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_BIT_SPACE;
+    const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_STRIDE_BITS;
 
-    if (slot_index >= AWS_MAX_LOG_SUBJECT_SLOTS) {
+    if (slot_index >= AWS_PACKAGE_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad log subject slot index 0x%016x\n", slot_index);

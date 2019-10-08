@@ -63,9 +63,8 @@ enum aws_log_level {
  */
 typedef uint32_t aws_log_subject_t;
 
-#define AWS_LOG_SUBJECT_BIT_SPACE 10
-#define AWS_LOG_SUBJECT_SPACE_SIZE (1 << AWS_LOG_SUBJECT_BIT_SPACE)
-#define AWS_LOG_SUBJECT_SPACE_MASK (AWS_LOG_SUBJECT_SPACE_SIZE - 1)
+#define AWS_LOG_SUBJECT_STRIDE_BITS 10
+#define AWS_LOG_SUBJECT_STRIDE (1U << AWS_LOG_SUBJECT_STRIDE_BITS)
 
 struct aws_log_subject_info {
     aws_log_subject_t subject_id;
@@ -82,10 +81,10 @@ struct aws_log_subject_info_list {
 };
 
 enum aws_common_log_subject {
-    AWS_LS_COMMON_GENERAL = 0,
+    AWS_LS_COMMON_GENERAL = AWS_C_COMMON_PACKAGE_ID * AWS_LOG_SUBJECT_STRIDE,
     AWS_LS_COMMON_TASK_SCHEDULER,
 
-    AWS_LS_COMMON_LAST = (AWS_LS_COMMON_GENERAL + AWS_LOG_SUBJECT_SPACE_SIZE - 1)
+    AWS_LS_COMMON_LAST = (AWS_C_COMMON_PACKAGE_ID + 1) * AWS_LOG_SUBJECT_STRIDE - 1
 };
 
 struct aws_logger;
