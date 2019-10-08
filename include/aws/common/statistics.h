@@ -16,6 +16,7 @@
  * permissions and limitations under the License.
  */
 
+#include <aws/common/macros.h>
 #include <aws/common/package.h>
 
 typedef uint32_t aws_statistics_category_t;
@@ -31,6 +32,35 @@ struct aws_statistics_set_base {
     aws_statistics_category_t category;
 };
 
-typedef void (*aws_statistics_handler_function)(struct aws_array_list *, void *);
+struct aws_statistic_set_sample_interval {
+    uint64_t begin_time_ms;
+    uint64_t end_time_ms;
+};
+
+struct aws_statistics_handler;
+
+typedef void(aws_statistics_handler_process_statistics_set_fn)(
+    struct aws_statistics_handler *,
+    struct aws_statistic_set_sample_interval *,
+    struct aws_array_list *);
+typedef void(aws_statistics_handler_cleanup_fn)(struct aws_statistics_handler *);
+
+struct aws_statistics_handler_vtable {
+    aws_statistics_handler_process_statistics_set_fn *process_statistics_set;
+    aws_statistics_handler_cleanup_fn *cleanup;
+};
+
+struct aws_statistics_handler {
+    struct aws_statistics_handler_vtable *vtable;
+    struct aws_allocator *allocator;
+    void *impl;
+};
+
+AWS_EXTERN_C_BEGIN
+
+AWS_COMMON_API
+void aws_statistics_handler_destroy(struct aws_statistics_handler *handler);
+
+AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_STATISTICS_H */
