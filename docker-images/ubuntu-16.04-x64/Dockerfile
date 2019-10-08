@@ -19,16 +19,17 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
     python3-dev \
     python3-pip \
     build-essential \
-    awscli \
     cmake \
     # For PPAs
     software-properties-common \
     apt-transport-https
 
 ###############################################################################
-# Elasticurl
+# AWS CLI
 ###############################################################################
-
+RUN set -ex \
+    && pip3 install awscli \
+    && aws --version
 
 ###############################################################################
 # OpenSSL

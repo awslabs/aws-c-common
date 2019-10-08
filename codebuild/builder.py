@@ -577,8 +577,11 @@ def run_build(build_spec, build_config, is_dryrun):
             # On Windows, force search PATH for the executable (subprocess does not by default)
             if sys.platform == 'win32':
                 import shutil
-                flat_command[0] = shutil.which(flat_command[0])
+                path = os.path.expandvars(os.environ["PATH"])
+                print("USING PATH:", path)
+                flat_command[0] = shutil.which(flat_command[0], path=path)
 
+            print("Using exe:", flat_command)
             subprocess.check_call(flat_command, stdout=sys.stdout, stderr=sys.stderr)
 
     # Helper to run makedirs regardless of dry run status
@@ -815,18 +818,25 @@ def run_build(build_spec, build_config, is_dryrun):
     if config['use_choco']:
         _run_command("choco", "install", "--no-progress", "-y", config['choco_packages'])
         # I'm 99% sure choco will only ever run on Windows, so let's get nasty
-
         import winreg
+
         system_key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, r"System\CurrentControlSet\Control\Session Manager\Environment", access=winreg.KEY_READ)
         user_key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, r"Environment", access=winreg.KEY_READ)
 
+        for key in [system_key, user_key]:
+            num_values = winreg.QueryInfoKey(key)[1]
+            print("Updating {} keys".format(num_values))
+            for value_i in range(num_values):
+                value = winreg.EnumValue(key, value_i)
+                if value[0].lower() != "path":
+                    print("Updating Environment variable", value[0], ":", value[1])
+                    if value[0] not in os.environ:
+                        os.environ[value[0]] = value[1]
+
+        # Handle path separately, since the 2 values need to be merged
         system_path = winreg.QueryValueEx(system_key, "PATH")[0]
         user_path = winreg.QueryValueEx(user_key, "PATH")[0]
-
-        os.environ["M2_HOME"] = winreg.QueryValueEx(system_key, "M2_HOME")[0]
-        os.environ["PATH"] = os.path.expandvars(user_path + ';' + system_path)
-
-        print("!!! NEW PATH:", os.environ["PATH"])
+        os.environ["PATH"] = user_path + ';' + system_path
 
     # PRE BUILD
 
