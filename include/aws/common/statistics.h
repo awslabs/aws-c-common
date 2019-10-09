@@ -16,42 +16,49 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/macros.h>
+#include <aws/common/common.h>
 #include <aws/common/package.h>
 
-typedef uint32_t aws_statistics_category_t;
+#include <stdint.h>
 
-#define AWS_STATISTICS_CATEGORY_TYPE_STRIDE_BITS 8
-#define AWS_STATISTICS_CATEGORY_TYPE_STRIDE (1U << AWS_STATISTICS_CATEGORY_TYPE_STRIDE_BITS)
+struct aws_array_list;
 
-enum aws_common_statistics_category_type {
-    AWS_COMMON_STAT_CAT_INVALID = AWS_C_COMMON_PACKAGE_ID * AWS_STATISTICS_CATEGORY_TYPE_STRIDE
+typedef uint32_t aws_crt_statistics_category_t;
+
+#define AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS 8
+#define AWS_CRT_STATISTICS_CATEGORY_STRIDE (1U << AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS)
+
+enum aws_crt_common_statistics_category {
+    AWSCRT_STAT_CAT_INVALID = AWS_C_COMMON_PACKAGE_ID * AWS_CRT_STATISTICS_CATEGORY_STRIDE
 };
 
-struct aws_statistics_set_base {
-    aws_statistics_category_t category;
+struct aws_crt_statistics_base {
+    aws_crt_statistics_category_t category;
 };
 
-struct aws_statistic_set_sample_interval {
+struct aws_crt_statistics_sample_interval {
     uint64_t begin_time_ms;
     uint64_t end_time_ms;
 };
 
-struct aws_statistics_handler;
+struct aws_crt_statistics_handler;
 
-typedef void(aws_statistics_handler_process_statistics_set_fn)(
-    struct aws_statistics_handler *,
-    struct aws_statistic_set_sample_interval *,
+typedef void(aws_crt_statistics_handler_process_statistics_fn)(
+    struct aws_crt_statistics_handler *,
+    struct aws_crt_statistics_sample_interval *,
     struct aws_array_list *);
-typedef void(aws_statistics_handler_cleanup_fn)(struct aws_statistics_handler *);
 
-struct aws_statistics_handler_vtable {
-    aws_statistics_handler_process_statistics_set_fn *process_statistics_set;
-    aws_statistics_handler_cleanup_fn *cleanup;
+typedef void(aws_crt_statistics_handler_cleanup_fn)(struct aws_crt_statistics_handler *);
+typedef uint64_t(aws_crt_statistics_handler_get_report_interval_ms_fn)(struct aws_crt_statistics_handler *);
+
+struct aws_crt_statistics_handler_vtable {
+    aws_crt_statistics_handler_process_statistics_fn *process_statistics;
+    aws_crt_statistics_handler_cleanup_fn *cleanup;
+    aws_crt_statistics_handler_get_report_interval_ms_fn *get_report_interval_ms;
 };
 
-struct aws_statistics_handler {
-    struct aws_statistics_handler_vtable *vtable;
+struct aws_crt_statistics_handler {
+    struct aws_crt_statistics_handler_vtable *vtable;
     struct aws_allocator *allocator;
     void *impl;
 };
@@ -59,7 +66,7 @@ struct aws_statistics_handler {
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
-void aws_statistics_handler_destroy(struct aws_statistics_handler *handler);
+void aws_crt_statistics_handler_destroy(struct aws_crt_statistics_handler *handler);
 
 AWS_EXTERN_C_END
 
