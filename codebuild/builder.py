@@ -578,10 +578,8 @@ def run_build(build_spec, build_config, is_dryrun):
             if sys.platform == 'win32':
                 import shutil
                 path = os.path.expandvars(os.environ["PATH"])
-                print("USING PATH:", path)
                 flat_command[0] = shutil.which(flat_command[0], path=path)
 
-            print("Using exe:", flat_command)
             subprocess.check_call(flat_command, stdout=sys.stdout, stderr=sys.stderr)
 
     # Helper to run makedirs regardless of dry run status
@@ -823,13 +821,12 @@ def run_build(build_spec, build_config, is_dryrun):
         system_key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, r"System\CurrentControlSet\Control\Session Manager\Environment", access=winreg.KEY_READ)
         user_key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, r"Environment", access=winreg.KEY_READ)
 
+        # Add newly created environment variables
         for key in [system_key, user_key]:
             num_values = winreg.QueryInfoKey(key)[1]
-            print("Updating {} keys".format(num_values))
             for value_i in range(num_values):
                 value = winreg.EnumValue(key, value_i)
                 if value[0].lower() != "path":
-                    print("Updating Environment variable", value[0], ":", value[1])
                     if value[0] not in os.environ:
                         os.environ[value[0]] = value[1]
 
