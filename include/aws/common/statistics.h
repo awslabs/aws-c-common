@@ -12,14 +12,14 @@
  *
  * or in the "license" file accompanying this file. This file is distributed
  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
+ * expressaws_crt_statistics_base or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
 
 #include <aws/common/common.h>
 #include <aws/common/package.h>
 
-#include <stdint.h>
+#include <aws/common/stdint.h>
 
 struct aws_array_list;
 
@@ -61,12 +61,26 @@ struct aws_crt_statistics_sample_interval {
 
 struct aws_crt_statistics_handler;
 
+/*
+ * Statistics intake function.  The array_list is a list of pointers to aws_crt_statistics_base "derived" (via
+ * pattern) objects.  The handler should iterate the list and downcast elements whose RTTI category it understands,
+ * while skipping those it does not understand.
+ */
 typedef void(aws_crt_statistics_handler_process_statistics_fn)(
     struct aws_crt_statistics_handler *,
     struct aws_crt_statistics_sample_interval *,
     struct aws_array_list *);
 
+/*
+ * Cleans up all additional resources, including the impl itself if appropriate, related to a specific statistics
+ * handler implementation.
+ */
 typedef void(aws_crt_statistics_handler_cleanup_fn)(struct aws_crt_statistics_handler *);
+
+/*
+ * The period, in milliseconds, that the handler would like to be informed of statistics.  Statistics generators are
+ * not required to honor this value, but should if able.
+ */
 typedef uint64_t(aws_crt_statistics_handler_get_report_interval_ms_fn)(struct aws_crt_statistics_handler *);
 
 /**
