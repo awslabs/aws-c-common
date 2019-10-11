@@ -28,14 +28,32 @@ typedef uint32_t aws_crt_statistics_category_t;
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS 8
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE (1U << AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS)
 
+/**
+ * The common-specific range of the aws_crt_statistics_category cross-library enum.
+ *
+ * This enum functions as an RTTI value that lets statistics handler's interpret (via cast) a
+ * specific statistics structure if the RTTI value is understood.
+ *
+ * Common doesn't have any statistics structures presently, so its range is essentially empty.
+ *
+ */
 enum aws_crt_common_statistics_category {
     AWSCRT_STAT_CAT_INVALID = AWS_C_COMMON_PACKAGE_ID * AWS_CRT_STATISTICS_CATEGORY_STRIDE
 };
 
+/**
+ * Pattern-struct that functions as a base "class" for all statistics structures.  To conform
+ * to the pattern, a statistics structure must have its first member be the category.  In that
+ * case it becomes "safe" to cast from aws_crt_statistics_base to the specific statistics structure
+ * based on the category value.
+ */
 struct aws_crt_statistics_base {
     aws_crt_statistics_category_t category;
 };
 
+/**
+ * The start and end time, in milliseconds-since-epoch, that a set of statistics was gathered over.
+ */
 struct aws_crt_statistics_sample_interval {
     uint64_t begin_time_ms;
     uint64_t end_time_ms;
@@ -51,12 +69,27 @@ typedef void(aws_crt_statistics_handler_process_statistics_fn)(
 typedef void(aws_crt_statistics_handler_cleanup_fn)(struct aws_crt_statistics_handler *);
 typedef uint64_t(aws_crt_statistics_handler_get_report_interval_ms_fn)(struct aws_crt_statistics_handler *);
 
+/**
+ * Vtable for functions that all statistics handlers must implement
+ */
 struct aws_crt_statistics_handler_vtable {
     aws_crt_statistics_handler_process_statistics_fn *process_statistics;
     aws_crt_statistics_handler_cleanup_fn *cleanup;
     aws_crt_statistics_handler_get_report_interval_ms_fn *get_report_interval_ms;
 };
 
+/**
+ * Base structure for all statistics handler implementations.
+ *
+ * A statistics handler is an object that listens to a stream of polymorphic (via the category RTTI enum) statistics
+ * structures emitted from some arbitrary source.  In the initial implementation, statistics handlers are primarily
+ * attached to channels, where they monitor IO throughput and state data (from channel handlers) to determine a
+ * connection's health.
+ *
+ * Statistics handlers are a generalization of the timeout and bandwidth filters that are often associated with
+ * SDK network connections.  Configurable, default implementations are defined at the protocol level (http, etc...)
+ * where they can be attached at connection (channel) creation time.
+ */
 struct aws_crt_statistics_handler {
     struct aws_crt_statistics_handler_vtable *vtable;
     struct aws_allocator *allocator;
@@ -65,6 +98,10 @@ struct aws_crt_statistics_handler {
 
 AWS_EXTERN_C_BEGIN
 
+/**
+ * completely destroys a statistics handler.  The handler's cleanup function must clean up the impl portion completely
+ * (including its allocation, if done separately).
+ */
 AWS_COMMON_API
 void aws_crt_statistics_handler_destroy(struct aws_crt_statistics_handler *handler);
 
