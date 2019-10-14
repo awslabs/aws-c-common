@@ -29,21 +29,15 @@ static void *s_global_error_context = NULL;
 static AWS_THREAD_LOCAL aws_error_handler_fn *tl_thread_handler = NULL;
 AWS_THREAD_LOCAL void *tl_thread_handler_context = NULL;
 
-#ifndef AWS_MAX_ERROR_SLOTS
-#    define AWS_MAX_ERROR_SLOTS 16
-#endif
-
 /* Since slot size is 00000100 00000000, to divide, we need to shift right by 10
  * bits to find the slot, and to find the modulus, we use a binary and with
- * 00000011 11111111 to find the index in that slot. The next three values
- * define those constants */
-#define AWS_ERROR_SLOT_SIZE 0x0400
-#define SLOT_DIV_SHIFT 0x0A
-#define SLOT_MASK 0x03FF
+ * 00000011 11111111 to find the index in that slot.
+ */
+#define SLOT_MASK (AWS_ERROR_ENUM_STRIDE - 1)
 
-static const int MAX_ERROR_CODE = AWS_ERROR_SLOT_SIZE * AWS_MAX_ERROR_SLOTS;
+static const int MAX_ERROR_CODE = AWS_ERROR_ENUM_STRIDE * AWS_PACKAGE_SLOTS;
 
-static const struct aws_error_info_list *volatile ERROR_SLOTS[AWS_MAX_ERROR_SLOTS] = {0};
+static const struct aws_error_info_list *volatile ERROR_SLOTS[AWS_PACKAGE_SLOTS] = {0};
 
 int aws_last_error(void) {
     return tl_last_error;
@@ -54,8 +48,8 @@ static const struct aws_error_info *get_error_by_code(int err) {
         return NULL;
     }
 
-    int slot_index = err >> SLOT_DIV_SHIFT;
-    int error_index = err & SLOT_MASK;
+    unsigned int slot_index = (unsigned int)err >> AWS_ERROR_ENUM_STRIDE_BITS;
+    unsigned int error_index = (unsigned int)err & SLOT_MASK;
 
     const struct aws_error_info_list *error_slot = ERROR_SLOTS[slot_index];
 
@@ -151,9 +145,9 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
     AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;
-    const int slot_index = min_range >> SLOT_DIV_SHIFT;
+    const int slot_index = min_range >> AWS_ERROR_ENUM_STRIDE_BITS;
 
-    if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
+    if (slot_index >= AWS_PACKAGE_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad error slot index %d\n", slot_index);
@@ -185,9 +179,9 @@ void aws_unregister_error_info(const struct aws_error_info_list *error_info) {
     AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;
-    const int slot_index = min_range >> SLOT_DIV_SHIFT;
+    const int slot_index = min_range >> AWS_ERROR_ENUM_STRIDE_BITS;
 
-    if (slot_index >= AWS_MAX_ERROR_SLOTS || slot_index < 0) {
+    if (slot_index >= AWS_PACKAGE_SLOTS || slot_index < 0) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
         fprintf(stderr, "Bad error slot index %d\n", slot_index);
