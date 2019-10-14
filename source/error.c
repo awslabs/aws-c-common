@@ -48,8 +48,8 @@ static const struct aws_error_info *get_error_by_code(int err) {
         return NULL;
     }
 
-    int slot_index = err >> AWS_ERROR_ENUM_STRIDE_BITS;
-    int error_index = err & SLOT_MASK;
+    unsigned int slot_index = (unsigned int)err >> AWS_ERROR_ENUM_STRIDE_BITS;
+    unsigned int error_index = (unsigned int)err & SLOT_MASK;
 
     const struct aws_error_info_list *error_slot = ERROR_SLOTS[slot_index];
 
