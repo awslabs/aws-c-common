@@ -27,6 +27,8 @@ typedef uint32_t aws_crt_statistics_category_t;
 
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS 8
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE (1U << AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS)
+#define AWS_CRT_STATISTICS_CATEGORY_BEGIN_RANGE(x) (x * AWS_CRT_STATISTICS_CATEGORY_STRIDE)
+#define AWS_CRT_STATISTICS_CATEGORY_END_RANGE(x) ((x + 1) * AWS_CRT_STATISTICS_CATEGORY_STRIDE - 1)
 
 /**
  * The common-specific range of the aws_crt_statistics_category cross-library enum.
@@ -38,7 +40,7 @@ typedef uint32_t aws_crt_statistics_category_t;
  *
  */
 enum aws_crt_common_statistics_category {
-    AWSCRT_STAT_CAT_INVALID = AWS_C_COMMON_PACKAGE_ID * AWS_CRT_STATISTICS_CATEGORY_STRIDE
+    AWSCRT_STAT_CAT_INVALID = AWS_CRT_STATISTICS_CATEGORY_BEGIN_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
 
 /**
