@@ -19,16 +19,10 @@
 #include <aws/common/assert.h>
 #include <aws/common/exports.h>
 #include <aws/common/macros.h>
-#include <aws/common/package.h>
 #include <aws/common/stdint.h>
 
 #define AWS_OP_SUCCESS (0)
 #define AWS_OP_ERR (-1)
-
-#define AWS_ERROR_ENUM_STRIDE_BITS 10
-#define AWS_ERROR_ENUM_STRIDE (1U << AWS_ERROR_ENUM_STRIDE_BITS)
-#define AWS_ERROR_ENUM_BEGIN_RANGE(x) ((x)*AWS_ERROR_ENUM_STRIDE)
-#define AWS_ERROR_ENUM_END_RANGE(x) (((x) + 1) * AWS_ERROR_ENUM_STRIDE - 1)
 
 struct aws_error_info {
     int error_code;
@@ -150,7 +144,7 @@ int aws_translate_and_raise_io_error(int error_no);
 AWS_EXTERN_C_END
 
 enum aws_common_error {
-    AWS_ERROR_SUCCESS = AWS_ERROR_ENUM_BEGIN_RANGE(AWS_C_COMMON_PACKAGE_ID),
+    AWS_ERROR_SUCCESS = 0,
     AWS_ERROR_OOM,
     AWS_ERROR_UNKNOWN,
     AWS_ERROR_SHORT_BUFFER,
@@ -198,7 +192,7 @@ enum aws_common_error {
     AWS_ERROR_SYS_CALL_FAILURE,
     AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
 
-    AWS_ERROR_END_COMMON_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
+    AWS_ERROR_END_COMMON_RANGE = 0x03FF
 };
 
 #endif /* AWS_COMMON_ERROR_H */
