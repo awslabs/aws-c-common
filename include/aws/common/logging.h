@@ -65,8 +65,8 @@ typedef uint32_t aws_log_subject_t;
 
 #define AWS_LOG_SUBJECT_STRIDE_BITS 10
 #define AWS_LOG_SUBJECT_STRIDE (1U << AWS_LOG_SUBJECT_STRIDE_BITS)
-#define AWS_LOG_SUBJECT_BEGIN_RANGE(x) (x * AWS_LOG_SUBJECT_STRIDE)
-#define AWS_LOG_SUBJECT_END_RANGE(x) ((x + 1) * AWS_LOG_SUBJECT_STRIDE - 1)
+#define AWS_LOG_SUBJECT_BEGIN_RANGE(x) ((x)*AWS_LOG_SUBJECT_STRIDE)
+#define AWS_LOG_SUBJECT_END_RANGE(x) (((x) + 1) * AWS_LOG_SUBJECT_STRIDE - 1)
 
 struct aws_log_subject_info {
     aws_log_subject_t subject_id;
