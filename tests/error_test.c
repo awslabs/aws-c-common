@@ -459,6 +459,10 @@ static int s_aws_assume_compiles_test(struct aws_allocator *allocator, void *ctx
 
     AWS_ASSUME(true);
 
+    if (false) {
+        AWS_UNREACHABLE();
+    }
+
     return AWS_OP_SUCCESS;
 }
 
