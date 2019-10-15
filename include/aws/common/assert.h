@@ -39,16 +39,20 @@ AWS_EXTERN_C_END
 #    define AWS_ASSUME(cond) __CPROVER_assume(cond)
 #elif defined(_MSC_VER)
 #    define AWS_ASSUME(cond) __assume(cond)
+#    define AWS_UNREACHABLE() __assume(0)
 #elif defined(__clang__)
 #    define AWS_ASSUME(cond)                                                                                           \
         do {                                                                                                           \
             bool _result = (cond);                                                                                     \
             __builtin_assume(_result);                                                                                 \
         } while (false)
+#    define AWS_UNREACHABLE() __builtin_unreachable()
 #elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
 #    define AWS_ASSUME(cond) ((cond) ? (void)0 : __builtin_unreachable())
+#    define AWS_UNREACHABLE() __builtin_unreachable()
 #else
 #    define AWS_ASSUME(cond)
+#    define AWS_UNREACHABLE()
 #endif
 
 #if defined(CBMC)
