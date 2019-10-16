@@ -26,7 +26,7 @@ static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p);
 static timefunc_t *volatile s_p_time_func = s_get_system_time_func_lazy_init;
 
 /* Convert a string from a macro to a wide string */
-#define WIDEN2(s) L ## #s
+#define WIDEN2(s) L## #s
 #define WIDEN(s) WIDEN2(s)
 
 static BOOL CALLBACK s_get_system_time_init_once(PINIT_ONCE init_once, PVOID param, PVOID *context) {
