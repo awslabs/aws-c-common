@@ -309,7 +309,7 @@ static void *s_ring_buffer_mem_realloc(struct aws_allocator *allocator, void *pt
     (void)ptr;
     (void)old_size;
     (void)new_size;
-    AWS_FATAL_ASSERT(false && "ring_buffer_allocator does not support realloc, as it breaks allocation ordering");
+    AWS_FATAL_ASSERT(!"ring_buffer_allocator does not support realloc, as it breaks allocation ordering");
     return NULL;
 }
 
