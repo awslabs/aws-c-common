@@ -104,7 +104,7 @@ AWS_COMMON_API bool aws_ring_buffer_buf_belongs_to_pool(
 /**
  * Initializes the supplied allocator to be based on the provided ring buffer. Allocations must be allocated
  * and freed in the same order, or the ring buffer will assert.
- */ 
+ */
 AWS_COMMON_API int aws_ring_buffer_allocator_init(struct aws_allocator *allocator, struct aws_ring_buffer *ring_buffer);
 
 /**
