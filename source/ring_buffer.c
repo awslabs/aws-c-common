@@ -285,14 +285,12 @@ static void *s_ring_buffer_mem_acquire(struct aws_allocator *allocator, size_t s
 
 static void s_ring_buffer_mem_release(struct aws_allocator *allocator, void *ptr) {
     /* back up to where the size is stored */
-    void *addr = ((uint8_t *)ptr - sizeof(size_t));
-    size_t size = *((size_t *)addr);
-    struct aws_byte_buf buf = {
-        .allocator = allocator,
-        .buffer = addr,
-        .capacity = size,
-        .len = 0,
-    };
+    const void *addr = ((uint8_t *)ptr - sizeof(size_t));
+    const size_t size = *((size_t *)addr);
+    
+    struct aws_byte_buf buf = aws_byte_buf_from_array(addr, size);
+    buf.allocator = allocator;
+
     struct aws_ring_buffer *buffer = allocator->impl;
     aws_ring_buffer_release(buffer, &buf);
 }
