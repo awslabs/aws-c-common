@@ -304,6 +304,15 @@ static void *s_ring_buffer_mem_calloc(struct aws_allocator *allocator, size_t nu
     return mem;
 }
 
+static void *s_ring_buffer_mem_realloc(struct aws_allocator *allocator, void *ptr, size_t old_size, size_t new_size) {
+    (void)allocator;
+    (void)ptr;
+    (void)old_size;
+    (void)new_size;
+    AWS_FATAL_ASSERT(false && "ring_buffer_allocator does not support realloc, as it breaks allocation ordering");
+    return NULL;
+}
+
 int aws_ring_buffer_allocator_init(struct aws_allocator *allocator, struct aws_ring_buffer *ring_buffer) {
     if (allocator == NULL || ring_buffer == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -313,7 +322,7 @@ int aws_ring_buffer_allocator_init(struct aws_allocator *allocator, struct aws_r
     allocator->mem_acquire = s_ring_buffer_mem_acquire;
     allocator->mem_release = s_ring_buffer_mem_release;
     allocator->mem_calloc = s_ring_buffer_mem_calloc;
-    allocator->mem_realloc = NULL;
+    allocator->mem_realloc = s_ring_buffer_mem_realloc;
     return AWS_OP_SUCCESS;
 }
 
