@@ -268,3 +268,54 @@ bool aws_ring_buffer_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buff
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
 }
+
+/* Ring buffer allocator implementation */
+static void *s_ring_buffer_mem_acquire(struct aws_allocator *allocator, size_t size) {
+    struct aws_ring_buffer *buffer = allocator->impl;
+    struct aws_byte_buf buf;
+    AWS_ZERO_STRUCT(buf);
+    if (aws_ring_buffer_acquire(buffer, size + sizeof(size_t), &buf)) {
+        return NULL;
+    }
+    *((size_t *)buf.buffer) = buf.capacity;
+    return buf.buffer + sizeof(size_t);
+}
+
+static void s_ring_buffer_mem_release(struct aws_allocator *allocator, void *ptr) {
+    void *addr = ((uint8_t *)ptr - sizeof(size_t));
+    size_t size = *((size_t *)addr);
+    struct aws_byte_buf buf = {
+        .allocator = allocator,
+        .buffer = addr,
+        .capacity = size,
+        .len = 0,
+    };
+    struct aws_ring_buffer *buffer = allocator->impl;
+    aws_ring_buffer_release(buffer, &buf);
+}
+
+static void *s_ring_buffer_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    void *mem = s_ring_buffer_mem_acquire(allocator, num * size);
+    if (!mem) {
+        return NULL;
+    }
+    memset(mem, 0, num * size);
+    return mem;
+}
+
+int aws_ring_buffer_allocator_init(struct aws_allocator *allocator, struct aws_ring_buffer *ring_buffer) {
+    if (allocator == NULL || ring_buffer == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    allocator->impl = ring_buffer;
+    allocator->mem_acquire = s_ring_buffer_mem_acquire;
+    allocator->mem_release = s_ring_buffer_mem_release;
+    allocator->mem_calloc = s_ring_buffer_mem_calloc;
+    allocator->mem_realloc = NULL;
+    return AWS_OP_SUCCESS;
+}
+
+void aws_ring_buffer_allocator_clean_up(struct aws_allocator *allocator) {
+    AWS_ZERO_STRUCT(*allocator);
+}
