@@ -287,7 +287,7 @@ static void s_ring_buffer_mem_release(struct aws_allocator *allocator, void *ptr
     /* back up to where the size is stored */
     const void *addr = ((uint8_t *)ptr - sizeof(size_t));
     const size_t size = *((size_t *)addr);
-    
+
     struct aws_byte_buf buf = aws_byte_buf_from_array(addr, size);
     buf.allocator = allocator;
 
