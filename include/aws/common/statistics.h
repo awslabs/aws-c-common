@@ -74,10 +74,9 @@ typedef void(aws_crt_statistics_handler_process_statistics_fn)(
     struct aws_array_list *);
 
 /*
- * Cleans up all additional resources, including the impl itself if appropriate, related to a specific statistics
- * handler implementation.
+ * Destroys a statistics handler implementation
  */
-typedef void(aws_crt_statistics_handler_cleanup_fn)(struct aws_crt_statistics_handler *);
+typedef void(aws_crt_statistics_handler_destroy_fn)(struct aws_crt_statistics_handler *);
 
 /*
  * The period, in milliseconds, that the handler would like to be informed of statistics.  Statistics generators are
