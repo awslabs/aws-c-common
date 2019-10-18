@@ -19,7 +19,5 @@ void aws_crt_statistics_handler_destroy(struct aws_crt_statistics_handler *handl
         return;
     }
 
-    handler->vtable->cleanup(handler);
-
-    aws_mem_release(handler->allocator, handler);
+    handler->vtable->destroy(handler);
 }

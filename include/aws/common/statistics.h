@@ -90,7 +90,7 @@ typedef uint64_t(aws_crt_statistics_handler_get_report_interval_ms_fn)(struct aw
  */
 struct aws_crt_statistics_handler_vtable {
     aws_crt_statistics_handler_process_statistics_fn *process_statistics;
-    aws_crt_statistics_handler_cleanup_fn *cleanup;
+    aws_crt_statistics_handler_destroy_fn *destroy;
     aws_crt_statistics_handler_get_report_interval_ms_fn *get_report_interval_ms;
 };
 
