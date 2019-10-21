@@ -71,7 +71,8 @@ struct aws_crt_statistics_handler;
 typedef void(aws_crt_statistics_handler_process_statistics_fn)(
     struct aws_crt_statistics_handler *,
     struct aws_crt_statistics_sample_interval *,
-    struct aws_array_list *);
+    struct aws_array_list *,
+    void *);
 
 /*
  * Destroys a statistics handler implementation
