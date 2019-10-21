@@ -115,6 +115,29 @@ struct aws_crt_statistics_handler {
 AWS_EXTERN_C_BEGIN
 
 /**
+ * Submits a list of statistics objects to a statistics handler for processing
+ *
+ * handler - the statistics handler that will process the statistics objects
+ * interval - time period over which the statistics were gathered
+ * stats - list of pointers to structures that can be case to aws_crt_statistics_base (i.e. have category as a first
+ *   member)
+ * context - (optional) additional context specific to where the statistics handler has been attached
+ */
+AWS_COMMON_API
+void aws_crt_statistics_handler_process_statistics(
+    struct aws_crt_statistics_handler *handler,
+    struct aws_crt_statistics_sample_interval *interval,
+    struct aws_array_list *stats,
+    void *context);
+
+/**
+ * Queries the frequency (via an interval in milliseconds) which a statistics handler would like to be informed
+ * of statistics.
+ */
+AWS_COMMON_API
+uint64_t aws_crt_statistics_handler_get_report_interval_ms(struct aws_crt_statistics_handler *handler);
+
+/**
  * completely destroys a statistics handler.  The handler's cleanup function must clean up the impl portion completely
  * (including its allocation, if done separately).
  */
