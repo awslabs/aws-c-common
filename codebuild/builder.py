@@ -511,6 +511,12 @@ def produce_config(build_spec, config_file, **additional_variables):
 cwd = os.getcwd()
 
 def _get_git_branch():
+
+    travis_pr_branch = os.environ.get("TRAVIS_PULL_REQUEST_BRANCH")
+    if travis_pr_branch:
+        print("Found branch:", travis_pr_branch)
+        return travis_pr_branch
+
     branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
     branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
 
