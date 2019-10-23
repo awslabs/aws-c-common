@@ -25,6 +25,7 @@ struct aws_array_list;
 
 typedef uint32_t aws_crt_statistics_category_t;
 
+/* Each library gets space for 2^^8 category entries */
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS 8
 #define AWS_CRT_STATISTICS_CATEGORY_STRIDE (1U << AWS_CRT_STATISTICS_CATEGORY_STRIDE_BITS)
 #define AWS_CRT_STATISTICS_CATEGORY_BEGIN_RANGE(x) ((x)*AWS_CRT_STATISTICS_CATEGORY_STRIDE)
@@ -69,15 +70,15 @@ struct aws_crt_statistics_handler;
  * while skipping those it does not understand.
  */
 typedef void(aws_crt_statistics_handler_process_statistics_fn)(
-    struct aws_crt_statistics_handler *,
-    struct aws_crt_statistics_sample_interval *,
-    struct aws_array_list *,
-    void *);
+    struct aws_crt_statistics_handler *handler,
+    struct aws_crt_statistics_sample_interval *interval,
+    struct aws_array_list *stats,
+    void *context);
 
 /*
  * Destroys a statistics handler implementation
  */
-typedef void(aws_crt_statistics_handler_destroy_fn)(struct aws_crt_statistics_handler *);
+typedef void(aws_crt_statistics_handler_destroy_fn)(struct aws_crt_statistics_handler *handler);
 
 /*
  * The period, in milliseconds, that the handler would like to be informed of statistics.  Statistics generators are
