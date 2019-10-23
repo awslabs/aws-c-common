@@ -88,9 +88,7 @@ static inline bool decode_vec(__m256i *in) {
     return _mm256_testz_si256(mask, mask);
 }
 
-struct aligned256 {
-    unsigned char bytes[32];
-} AWS_ALIGN(32);
+AWS_ALIGNED_TYPEDEF(uint8_t, aligned256[32], 32);
 
 /*
  * Input: a 256-bit vector, interpreted as 32 * 6-bit values
@@ -140,7 +138,7 @@ static inline __m256i pack_vec(__m256i in) {
      * those fragments in little endian but the order of fragments within the overall
      * vector is in memory order (big endian)
      */
-    const struct aligned256 shufvec_buf = {{
+    const aligned256 shufvec_buf = {
         /* clang-format off */
         /* MSB */
         0xFF, 0xFF, 0xFF, 0xFF, /* Zero out the top 4 bytes of the lane */
@@ -156,7 +154,7 @@ static inline __m256i pack_vec(__m256i in) {
         14, 13, 12
         /* LSB */
         /* clang-format on */
-    }};
+    };
     __m256i shufvec = _mm256_load_si256((__m256i const *)&shufvec_buf);
 
     dwords = _mm256_shuffle_epi8(dwords, shufvec);
@@ -298,7 +296,7 @@ static inline __m256i encode_stride(__m256i vec) {
      * -- -- -- -- 11 10 09 08 07 06 05 04 03 02 01 00
      */
 
-    const struct aligned256 shufvec_buf = {{
+    const aligned256 shufvec_buf = {
         /* clang-format off */
         /* MSB */
         2, 1, 0, 0xFF,
@@ -312,7 +310,7 @@ static inline __m256i encode_stride(__m256i vec) {
         11, 10, 9, 0xFF
         /* LSB */
         /* clang-format on */
-    }};
+    };
     vec = _mm256_shuffle_epi8(vec, _mm256_load_si256((__m256i const *)&shufvec_buf));
 
     /*
