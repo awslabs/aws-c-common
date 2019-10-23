@@ -17,6 +17,10 @@
 
 #include <aws/testing/aws_test_harness.h>
 
+#ifdef _MSC_VER
+#    pragma warning(disable : 4324) /* structure was padded due to alignment specifier */
+#endif
+
 static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
