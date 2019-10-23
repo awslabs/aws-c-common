@@ -53,20 +53,21 @@ static int s_legacy_get_time(uint64_t *timestamp) {
 
 #    if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
 static aws_thread_once s_thread_once_flag = AWS_THREAD_ONCE_STATIC_INIT;
-static int (*s_gettime_fn)(clockid_t __clock_id, struct timespec *__tp) = NULL;
+typedef int(s_gettime_fn)(clockid_t __clock_id, struct timespec *__tp);
+static s_gettime_fn *s_gettime = NULL;
 
 static void s_do_osx_loads(void *user_data) {
     (void)user_data;
-    s_gettime_fn = (int (*)(clockid_t __clock_id, struct timespec * __tp)) dlsym(RTLD_DEFAULT, "clock_gettime");
+    s_gettime = (s_gettime_fn *)(void *)dlsym(RTLD_DEFAULT, "clock_gettime");
 }
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads, NULL);
     int ret_val = 0;
 
-    if (s_gettime_fn) {
+    if (s_gettime) {
         struct timespec ts;
-        ret_val = s_gettime_fn(HIGH_RES_CLOCK, &ts);
+        ret_val = s_gettime(HIGH_RES_CLOCK, &ts);
 
         if (ret_val) {
             return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
@@ -85,9 +86,9 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
     aws_thread_call_once(&s_thread_once_flag, s_do_osx_loads, NULL);
     int ret_val = 0;
 
-    if (s_gettime_fn) {
+    if (s_gettime) {
         struct timespec ts;
-        ret_val = s_gettime_fn(CLOCK_REALTIME, &ts);
+        ret_val = s_gettime(CLOCK_REALTIME, &ts);
         if (ret_val) {
             return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
         }
