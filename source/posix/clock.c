@@ -58,7 +58,7 @@ static s_gettime_fn *s_gettime = NULL;
 
 static void s_do_osx_loads(void *user_data) {
     (void)user_data;
-    s_gettime = (s_gettime_fn *)(void *)dlsym(RTLD_DEFAULT, "clock_gettime");
+    *(void **)&s_gettime = dlsym(RTLD_DEFAULT, "clock_gettime");
 }
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
