@@ -28,6 +28,7 @@ COMMA :=,
 C_FROM_GOTO = $(patsubst $(GOTODIR)%, $(SRCDIR)%, $(1:.goto=.c))
 GOTO_FROM_C = $(patsubst $(SRCDIR)%, $(GOTODIR)%, $(1:.c=.goto))
 LOG_FROM_GOTO = $(patsubst $(GOTODIR)%, $(LOGDIR)%, $(1:.goto=.log))
+LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
 ################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
@@ -121,6 +122,8 @@ REMOVE_FUNCTION_BODY += --remove-function-body abort
 
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
 DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
+ENTRY_GOTO = $(GOTODIR)/$(ENTRY)
+
 ################################################################
 # Other libraries that use this Makefile template may wish to do
 # actual work here
@@ -131,86 +134,91 @@ setup_dependencies:
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+$(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+	echo "FOOOO"
+	echo $(call LOG_FROM_ENTRY, $@)
+	echo $(dir $(call LOG_FROM_ENTRY, $@))
+	mkdir -p $(dir $(call LOG_FROM_ENTRY, $@))
 	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
 	  --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
+	  2>&1 | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 
 # Removes specified function bodies. This allows us to replace
 # function definitions with ABSTRACTIONS.
-$(ENTRY)1.goto: $(ENTRY)0.goto
+$(ENTRY_GOTO)1.goto: $(ENTRY_GOTO)0.goto
 ifeq ($(REMOVE_FUNCTION_BODY), "")
 	cp $< $@
-	echo "Not removing function bodies" | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
+	echo "Not removing function bodies" | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
-		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 endif
 
 # ABSTRACTIONS is a list of function stubs to use. If a function body
 # is missing and is not abstracted, then it returnes a non
 # deterministic value.
-$(ENTRY)2.goto: $(ENTRY)1.goto
+$(ENTRY_GOTO)2.goto: $(ENTRY_GOTO)1.goto
 ifeq ($(ABSTRACTIONS), "")
 	cp $< $@
-	echo "Not implementing abstractions" | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+	echo "Not implementing abstractions" | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
-		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@); exit $${PIPESTATUS[0]}
 endif
 
 
 ## Temporarily skipped steps
 
 # Simplify and constant propagation may benefit from unwinding first
-$(ENTRY)3.goto: $(ENTRY)2.goto
+$(ENTRY_GOTO)3.goto: $(ENTRY_GOTO)2.goto
 ifeq ($(UNWIND_GOTO), 1)
 	$(GOTO_INSTRUMENT) $(UNWINDING) $< $@ \
-		2>&1 | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not unwinding goto program" | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
+	echo "Not unwinding goto program" | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
-$(ENTRY)4.goto: $(ENTRY)3.goto
+$(ENTRY_GOTO)4.goto: $(ENTRY_GOTO)3.goto
 ifeq ($(SIMPLIFY), 1)
 	$(GOTO_INSTRUMENT) --generate-function-body '.*' $< $@ \
-		2>&1 | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee$(call LOG_FROM_ENTRY, $@); exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not generating-function-bodies in goto program" | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
+	echo "Not generating-function-bodies in goto program" | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
-$(ENTRY)5.goto: $(ENTRY)4.goto
+$(ENTRY_GOTO)5.goto: $(ENTRY_GOTO)4.goto
 ifeq ($(SIMPLIFY), 1)
 	$(GOTO_ANALYZER) --simplify $@ $< \
-		2>&1 | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@); exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not simplfying goto program" | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
+	echo "Not simplfying goto program" | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Simplify the goto program by removing any unused function bodies
-$(ENTRY)6.goto: $(ENTRY)5.goto
+$(ENTRY_GOTO)6.goto: $(ENTRY_GOTO)5.goto
 	$(GOTO_INSTRUMENT) --drop-unused-functions $< $@ \
-		2>&1 | tee $(ENTRY)6.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 
 # Simplify the goto program by slicing away initializations of unused
 # global variables
-$(ENTRY)7.goto: $(ENTRY)6.goto
+$(ENTRY_GOTO)7.goto: $(ENTRY_GOTO)6.goto
 	$(GOTO_INSTRUMENT) --slice-global-inits $< $@ \
-		2>&1 | tee $(ENTRY)7.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY, $@) ; exit $${PIPESTATUS[0]}
 
-$(ENTRY).goto: $(ENTRY)7.goto
+$(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 	cp $< $@
 
 # Catch-all used for building goto-binaries of the individual
-# dependencies, which are then linked in the $(ENTRY)0.goto rule above
+# dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
 # DSN TODO Make this depend on the correct thing.
 %.goto:
+	echo "BARRRRRRR"
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_GOTO, $@))
 	echo $(call C_FROM_GOTO,$@)
@@ -218,16 +226,16 @@ $(ENTRY).goto: $(ENTRY)7.goto
 	  $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(call LOG_FROM_GOTO, $@) ; exit $${PIPESTATUS[0]}
 
-goto: $(ENTRY).goto
+goto: $(ENTRY_GOTO).goto
 	echo $(DEPENDENT_GOTOS)
 
-cbmc.log: $(ENTRY).goto
+cbmc.log: $(ENTRY_GOTO).goto
 	cbmc $(CBMCFLAGS) --trace $< 2>&1 | tee $@
 
-property.xml: $(ENTRY).goto
+property.xml: $(ENTRY_GOTO).goto
 	cbmc $(CBMCFLAGS) --show-properties --xml-ui $< 2>&1 > $@
 
-coverage.xml: $(ENTRY).goto
+coverage.xml: $(ENTRY_GOTO).goto
 	cbmc $(filter-out --unwinding-assertions,$(CBMCFLAGS)) --cover location --xml-ui $< 2>&1 > $@
 
 cbmc: cbmc.log
@@ -239,7 +247,7 @@ coverage: coverage.xml
 report: cbmc.log property.xml coverage.xml
 	$(VIEWER) \
 	--block coverage.xml \
-	--goto $(ENTRY).goto \
+	--goto $(ENTRY_GOTO).goto \
 	--htmldir html \
 	--property property.xml \
 	--result cbmc.log \
