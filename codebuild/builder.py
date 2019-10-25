@@ -693,7 +693,7 @@ def run_build(build_spec, build_config, is_dryrun):
             _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
 
         def _test_project_ctest():
-            _run_command("ctest", ".", "--output-on-failure")
+            _run_command("ctest", ".", "--output-on-failure", "--timeout", "600")
 
         upstream = []
         downstream = []
