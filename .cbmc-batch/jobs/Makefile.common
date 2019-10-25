@@ -24,6 +24,11 @@ SPACE :=$() $()
 COMMA :=,
 
 ################################################################
+# Useful macros
+C_FROM_GOTO = $(patsubst $(GOTODIR)%, $(SRCDIR)%, $(1:.goto=.c))
+GOTO_FROM_C = $(patsubst $(SRCDIR)%, $(GOTODIR)%, $(1:.c=.goto))
+LOG_FROM_GOTO = $(patsubst $(GOTODIR)%, $(LOGDIR)%, $(1:.goto=.log))
+################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
 # versions of the tools. /usr/bin/goto-analyzer or ${HOME}/sw/goto-analyzer etc
@@ -69,6 +74,9 @@ DEFINES += -DCBMC=1
 # Setup directory aliases
 SRCDIR ?= $(abspath ../../..)
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
+PROOFDIR = $(abspath .)
+GOTODIR = $(PROOFDIR)/gotos
+LOGDIR = $(PROOFDIR)/logs
 
 ################################################################
 # Setup include directory order
@@ -112,8 +120,7 @@ REMOVE_FUNCTION_BODY += --remove-function-body abort
 ################################################################
 
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
-DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
-
+DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
 ################################################################
 # Other libraries that use this Makefile template may wish to do
 # actual work here
@@ -202,12 +209,17 @@ $(ENTRY).goto: $(ENTRY)7.goto
 
 # Catch-all used for building goto-binaries of the individual
 # dependencies, which are then linked in the $(ENTRY)0.goto rule above
-%.goto: %.c
-	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
+# DSN TODO Make this depend on the correct thing.
+%.goto:
+	mkdir -p $(dir $@)
+	mkdir -p $(dir $(call LOG_FROM_GOTO, $@))
+	echo $(call C_FROM_GOTO,$@)
+	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(dir $<)/$(notdir $<).log ; exit $${PIPESTATUS[0]}
+	  2>&1 | tee $(call LOG_FROM_GOTO, $@) ; exit $${PIPESTATUS[0]}
 
 goto: $(ENTRY).goto
+	echo $(DEPENDENT_GOTOS)
 
 cbmc.log: $(ENTRY).goto
 	cbmc $(CBMCFLAGS) --trace $< 2>&1 | tee $@
@@ -240,10 +252,30 @@ clean:
 	$(RM) *.log
 	$(RM) cbmc.log property.xml coverage.xml TAGS
 	$(RM) *~ \#*
+	$(RM) -r gotos
+
 
 veryclean: clean
 	$(RM) -r html
+	$(RM) -r logs
 
-.PHONY: setup_dependencies cbmc property coverage report clean veryclean
+.PHONY: setup_dependencies cbmc property coverage report clean veryclean testdeps
+
+PROOFDIR = $(abspath .)
+PROOF_GOTOS = "$(PROOFDIR)/gotos"
+
+DIRS = $(dir $(DEPENDENCIES))
+GOTO_DIRS= $(patsubst $(SRCDIR)%,$(PROOF_GOTOS)%, $(DIRS))
+
+testdeps:
+	mkdir -p $(GOTO_DIRS)
+#	echo $(DEPENDENCIES)
+#	echo $(PROOFDIR)
+#	echo $(DEPENDENCIES:$(SRCDIR)=$(PROOF_GOTOS))
+#	echo $(patsubst(a%,e%,"ab")\
+#	echo $(dir $(DEPENDENCIES))
+#	echo $(notdir $(DEPENDENCIES))
+#	echo $(patsubst $(PREFIX)%,%, $(DEPENDENCIES))
+	echo $(DEPENDENT_GOTOS2)
 
 include $(HELPERDIR)/jobs/Makefile.cbmc_batch
