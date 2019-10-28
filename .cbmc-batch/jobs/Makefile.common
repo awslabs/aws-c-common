@@ -135,6 +135,7 @@ setup_dependencies:
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY, $@))
 	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
 	  --export-function-local-symbols $(CBMC_VERBOSITY) \
