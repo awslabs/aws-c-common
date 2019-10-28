@@ -28,6 +28,15 @@ const uint8_t *aws_string_bytes(const struct aws_string *str) {
 }
 
 /**
+ * Equivalent to `(const char *)str->bytes`.
+ */
+AWS_STATIC_IMPL
+const char *aws_string_c_str(const struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
+    return (const char *)str->bytes;
+}
+
+/**
  * Evaluates the set of properties that define the shape of all valid aws_string structures.
  * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
