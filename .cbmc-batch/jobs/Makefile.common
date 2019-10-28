@@ -135,9 +135,6 @@ setup_dependencies:
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
-	echo "FOOOO"
-	echo $(call LOG_FROM_ENTRY, $@)
-	echo $(dir $(call LOG_FROM_ENTRY, $@))
 	mkdir -p $(dir $(call LOG_FROM_ENTRY, $@))
 	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
 	  --export-function-local-symbols $(CBMC_VERBOSITY) \
@@ -218,7 +215,6 @@ $(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 # dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
 # DSN TODO Make this depend on the correct thing.
 %.goto:
-	echo "BARRRRRRR"
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_GOTO, $@))
 	echo $(call C_FROM_GOTO,$@)
@@ -274,16 +270,5 @@ PROOF_GOTOS = "$(PROOFDIR)/gotos"
 
 DIRS = $(dir $(DEPENDENCIES))
 GOTO_DIRS= $(patsubst $(SRCDIR)%,$(PROOF_GOTOS)%, $(DIRS))
-
-testdeps:
-	mkdir -p $(GOTO_DIRS)
-#	echo $(DEPENDENCIES)
-#	echo $(PROOFDIR)
-#	echo $(DEPENDENCIES:$(SRCDIR)=$(PROOF_GOTOS))
-#	echo $(patsubst(a%,e%,"ab")\
-#	echo $(dir $(DEPENDENCIES))
-#	echo $(notdir $(DEPENDENCIES))
-#	echo $(patsubst $(PREFIX)%,%, $(DEPENDENCIES))
-	echo $(DEPENDENT_GOTOS2)
 
 include $(HELPERDIR)/jobs/Makefile.cbmc_batch
