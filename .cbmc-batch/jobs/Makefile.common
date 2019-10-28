@@ -211,6 +211,12 @@ $(ENTRY_GOTO)7.goto: $(ENTRY_GOTO)6.goto
 $(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 	cp $< $@
 
+# For now, CBMC batch expects the goto in the same folder.  I could update the
+# .yaml file for all 160 proofs, or I could copy it, and have one goto file
+# in the main directory.  
+$(ENTRY).goto: $(ENTRY_GOTO).goto
+	cp $< $@
+
 # Catch-all used for building goto-binaries of the individual
 # dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
 # DSN TODO Make this depend on the correct thing.
@@ -222,16 +228,16 @@ $(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 	  $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(call LOG_FROM_GOTO, $@) ; exit $${PIPESTATUS[0]}
 
-goto: $(ENTRY_GOTO).goto
+goto: $(ENTRY).goto
 	echo $(DEPENDENT_GOTOS)
 
-cbmc.log: $(ENTRY_GOTO).goto
+cbmc.log: $(ENTRY).goto
 	cbmc $(CBMCFLAGS) --trace $< 2>&1 | tee $@
 
-property.xml: $(ENTRY_GOTO).goto
+property.xml: $(ENTRY).goto
 	cbmc $(CBMCFLAGS) --show-properties --xml-ui $< 2>&1 > $@
 
-coverage.xml: $(ENTRY_GOTO).goto
+coverage.xml: $(ENTRY).goto
 	cbmc $(filter-out --unwinding-assertions,$(CBMCFLAGS)) --cover location --xml-ui $< 2>&1 > $@
 
 cbmc: cbmc.log
@@ -243,7 +249,7 @@ coverage: coverage.xml
 report: cbmc.log property.xml coverage.xml
 	$(VIEWER) \
 	--block coverage.xml \
-	--goto $(ENTRY_GOTO).goto \
+	--goto $(ENTRY).goto \
 	--htmldir html \
 	--property property.xml \
 	--result cbmc.log \
