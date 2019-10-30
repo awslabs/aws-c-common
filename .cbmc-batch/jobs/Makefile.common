@@ -46,8 +46,15 @@ C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
 GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
 LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
 LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
+#1: command, 2: flags, 3: log target
 DO_AND_LOG_COMMAND = $(1) $(2) 2>&1 | tee $(3); exit $${PIPESTATUS[0]}
-
+#1: flags, 2: source, 3: target
+DO_GOTO_INSTRUMENT = $(call DO_AND_LOG_COMMAND,$(GOTO_INSTRUMENT),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
+DO_GOTO_ANALYZER = $(call DO_AND_LOG_COMMAND,$(GOTO_ANALYZER),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
+#1: message 2: source 3: dest 
+DO_NOOP_COPY = cp $(2) $(3); echo $(1) | tee $(call LOG_FROM_ENTRY,$(3))
+#1: flags, 2: source, 3: target
+DO_GOTO_CC =  $(call DO_AND_LOG_COMMAND,$(GOTO_CC),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
 ################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
@@ -156,27 +163,26 @@ setup_dependencies:
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
-	$(call DO_AND_LOG_COMMAND,$(GOTO_CC),\
+	$(call DO_AND_LOG_COMMAND,\
+	$(GOTO_CC),\
 	$(ENTRY).c \
-	$(DEPENDENT_GOTOS) \
-	--export-function-local-symbols \
-	$(CBMC_VERBOSITY) \
-	--function $(ENTRY) \
-	$(INC) \
-	$(DEFINES) \
-	-o $@,\
-	$(call LOG_FROM_ENTRY,$@)\
+		$(DEPENDENT_GOTOS) \
+		--export-function-local-symbols \
+		$(CBMC_VERBOSITY) \
+		--function $(ENTRY) \
+		$(INC) \
+		$(DEFINES) \
+		-o $@,\
+	$(call LOG_FROM_ENTRY,$@) \
 	)
 
 # Removes specified function bodies. This allows us to replace
 # function definitions with ABSTRACTIONS.
 $(ENTRY_GOTO)1.goto: $(ENTRY_GOTO)0.goto
 ifeq ($(REMOVE_FUNCTION_BODY),"")
-	cp $< $@
-	echo "Not removing function bodies" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_NOOP_COPY,"Not removing function bodies",$<,$@)
 else
-	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_INSTRUMENT,$(REMOVE_FUNCTION_BODY),$<,$@)
 endif
 
 # ABSTRACTIONS is a list of function stubs to use. If a function body
@@ -184,8 +190,7 @@ endif
 # deterministic value.
 $(ENTRY_GOTO)2.goto: $(ENTRY_GOTO)1.goto
 ifeq ($(ABSTRACTIONS),"")
-	cp $< $@
-	echo "Not implementing abstractions" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_NOOP_COPY,"Not implementing abstractions",$<,$@)
 else
 	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
 		2>&1 | tee $(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
@@ -197,43 +202,35 @@ endif
 # Simplify and constant propagation may benefit from unwinding first
 $(ENTRY_GOTO)3.goto: $(ENTRY_GOTO)2.goto
 ifeq ($(UNWIND_GOTO),1)
-	$(GOTO_INSTRUMENT) $(UNWINDING) $< $@ \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_INSTRUMENT,$(UNWINDING),$<,$@)
 else
-	cp $< $@
-	echo "Not unwinding goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_NOOP_COPY,"Not unwinding goto program",$<,$@)
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
 $(ENTRY_GOTO)4.goto: $(ENTRY_GOTO)3.goto
 ifeq ($(SIMPLIFY),1)
-	$(GOTO_INSTRUMENT) --generate-function-body '.*' $< $@ \
-		2>&1 | tee$(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_INSTRUMENT,--generate-function-body '.*',$<,$@)
 else
-	cp $< $@
-	echo "Not generating-function-bodies in goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_NOOP_COPY,"Not generating-function-bodies in goto program",$<,$@)
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
 $(ENTRY_GOTO)5.goto: $(ENTRY_GOTO)4.goto
 ifeq ($(SIMPLIFY),1)
-	$(GOTO_ANALYZER) --simplify $@ $< \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_ANALYZER,--simplify,$@,$<)
 else
-	cp $< $@
-	echo "Not simplfying goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_NOOP_COPY,"Not simplfying goto program",$<,$@)
 endif
 
 # Simplify the goto program by removing any unused function bodies
 $(ENTRY_GOTO)6.goto: $(ENTRY_GOTO)5.goto
-	$(GOTO_INSTRUMENT) --drop-unused-functions $< $@ \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_INSTRUMENT,--drop-unused-functions,$<,$@)
 
 # Simplify the goto program by slicing away initializations of unused
 # global variables
 $(ENTRY_GOTO)7.goto: $(ENTRY_GOTO)6.goto
-	$(GOTO_INSTRUMENT) --slice-global-inits $< $@ \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_INSTRUMENT,--slice-global-inits,$<,$@)
 
 $(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 	cp $< $@
