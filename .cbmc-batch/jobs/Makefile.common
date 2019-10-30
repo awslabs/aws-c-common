@@ -54,7 +54,7 @@ DO_GOTO_ANALYZER = $(call DO_AND_LOG_COMMAND,$(GOTO_ANALYZER),$(1) $(2) $(3), $(
 #1: message 2: source 3: dest 
 DO_NOOP_COPY = cp $(2) $(3); echo $(1) | tee $(call LOG_FROM_ENTRY,$(3))
 #1: flags, 2: source, 3: target
-DO_GOTO_CC =  $(call DO_AND_LOG_COMMAND,$(GOTO_CC),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
+DO_GOTO_CC =  $(call DO_AND_LOG_COMMAND,$(GOTO_CC),$(1) $(2) -o $(3), $(call LOG_FROM_ENTRY,$(3)))
 ################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
@@ -163,18 +163,14 @@ setup_dependencies:
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
-	$(call DO_AND_LOG_COMMAND,\
-	$(GOTO_CC),\
-	$(ENTRY).c \
-		$(DEPENDENT_GOTOS) \
+	$(call DO_GOTO_CC,\
 		--export-function-local-symbols \
-		$(CBMC_VERBOSITY) \
-		--function $(ENTRY) \
-		$(INC) \
-		$(DEFINES) \
-		-o $@,\
-	$(call LOG_FROM_ENTRY,$@) \
-	)
+			$(CBMC_VERBOSITY) \
+			--function $(ENTRY) \
+			$(INC) \
+			$(DEFINES), \
+		$(ENTRY).c $(DEPENDENT_GOTOS),\
+		$@)
 
 # Removes specified function bodies. This allows us to replace
 # function definitions with ABSTRACTIONS.
@@ -192,8 +188,7 @@ $(ENTRY_GOTO)2.goto: $(ENTRY_GOTO)1.goto
 ifeq ($(ABSTRACTIONS),"")
 	$(call DO_NOOP_COPY,"Not implementing abstractions",$<,$@)
 else
-	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
-		2>&1 | tee $(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
+	$(call DO_GOTO_CC,--function $(ENTRY) $(ABSTRACTIONS) $(INC) $(DEFINES),$<,$@)
 endif
 
 
