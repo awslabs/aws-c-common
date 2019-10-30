@@ -76,10 +76,10 @@ DO_NOOP_COPY = cp $(2) $(3); echo $(1) | tee $(call LOG_FROM_ENTRY,$(3))
 
 ################################################################
 # Useful macros translating filenames
-C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
-GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
+#C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
+#GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
 LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
-LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
+#LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
 
 ################################################################
 # Default CBMC flags
@@ -151,7 +151,7 @@ REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
 
 ################################################################
 # Determine the names of the goto files to build
-DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
+#DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
 ENTRY_GOTO = $(GOTODIR)/$(ENTRY)
 
 ################################################################
@@ -172,7 +172,7 @@ setup_dependencies:
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+$(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENCIES)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
 	$(call DO_GOTO_CC,\
@@ -181,7 +181,7 @@ $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 			--function $(ENTRY) \
 			$(INC) \
 			$(DEFINES), \
-		$(ENTRY).c $(DEPENDENT_GOTOS),\
+		$(ENTRY).c $(DEPENDENCIES),\
 		$@)
 
 # Removes specified function bodies. This allows us to replace
@@ -248,17 +248,17 @@ $(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
 $(ENTRY).goto: $(ENTRY_GOTO).goto
 	cp $< $@
 
-# Catch-all used for building goto-binaries of the individual
-# dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
-# DSN TODO This should be able to go away once we have static removal working
-# properly.
-%.goto:
-	mkdir -p $(dir $@)
-	mkdir -p $(dir $(call LOG_FROM_GOTO,$@))
-	echo $(call C_FROM_GOTO,$@)
-	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-function-local-symbols $(CBMC_VERBOSITY) \
-	  $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(call LOG_FROM_GOTO,$@) ; exit $${PIPESTATUS[0]}
+# # Catch-all used for building goto-binaries of the individual
+# # dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
+# # DSN TODO This should be able to go away once we have static removal working
+# # properly.
+# %.goto:
+# 	mkdir -p $(dir $@)
+# 	mkdir -p $(dir $(call LOG_FROM_GOTO,$@))
+# 	echo $(call C_FROM_GOTO,$@)
+# 	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-function-local-symbols $(CBMC_VERBOSITY) \
+# 	  $(INC) $(DEFINES) -o $@ \
+# 	  2>&1 | tee $(call LOG_FROM_GOTO,$@) ; exit $${PIPESTATUS[0]}
 
 goto: $(ENTRY).goto
 	echo $(DEPENDENT_GOTOS)
