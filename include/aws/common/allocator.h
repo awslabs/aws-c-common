@@ -110,6 +110,28 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
  * that we can leave unchanged on failure.
  */
 
+enum aws_mem_trace_level {
+    AWS_MEMTRACE_NONE = 0, /* no tracing */
+    AWS_MEMTRACE_BYTES = 1, /* just track allocation sizes and total allocated */
+    AWS_MEMTRACE_STACKS = 2, /* capture callstacks for each allocation */
+};
+
+/*
+ * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
+ * and there are still allocations active, they will be reported to stderr.
+ * frames_per_stack is how many frames to store per callstack if AWS_MEMTRACE_STACKS is in use,
+ * otherwise it is ignored.
+ * Returns the wrapper allocator, which should be used for all allocations that should be tracked.
+ */
+struct aws_allocator *aws_mem_trace(struct aws_allocator *allocator, enum aws_mem_trace_level level, size_t frames_per_stack);
+
+/*
+ * If there are outstanding allocations, dumps them to stderr, along with any information gathered
+ * based on the trace level set when aws_mem_trace() was called.
+ * Should be passed the wrapper allocator returned from aws_mem_trace().
+ */
+void aws_mem_trace_dump(struct aws_allocator *allocator);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ALLOCATOR_H */
