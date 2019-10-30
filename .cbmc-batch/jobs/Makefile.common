@@ -46,6 +46,8 @@ C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
 GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
 LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
 LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
+DO_AND_LOG_COMMAND = $(1) $(2) 2>&1 | tee $(3); exit $${PIPESTATUS[0]}
+
 ################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
@@ -154,10 +156,17 @@ setup_dependencies:
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
-	$(GOTO_CC) $(ENTRY).c \
-	  --export-function-local-symbols $(CBMC_VERBOSITY) \
-	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
+	$(call DO_AND_LOG_COMMAND,$(GOTO_CC),\
+	$(ENTRY).c \
+	$(DEPENDENT_GOTOS) \
+	--export-function-local-symbols \
+	$(CBMC_VERBOSITY) \
+	--function $(ENTRY) \
+	$(INC) \
+	$(DEFINES) \
+	-o $@,\
+	$(call LOG_FROM_ENTRY,$@)\
+	)
 
 # Removes specified function bodies. This allows us to replace
 # function definitions with ABSTRACTIONS.
