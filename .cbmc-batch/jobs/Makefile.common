@@ -41,22 +41,7 @@ SPACE :=$() $()
 COMMA :=,
 
 ################################################################
-# Useful macros
-C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
-GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
-LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
-LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
-#1: command, 2: flags, 3: log target
-DO_AND_LOG_COMMAND = $(1) $(2) 2>&1 | tee $(3); exit $${PIPESTATUS[0]}
-#1: flags, 2: source, 3: target
-DO_GOTO_INSTRUMENT = $(call DO_AND_LOG_COMMAND,$(GOTO_INSTRUMENT),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
-DO_GOTO_ANALYZER = $(call DO_AND_LOG_COMMAND,$(GOTO_ANALYZER),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
-#1: message 2: source 3: dest 
-DO_NOOP_COPY = cp $(2) $(3); echo $(1) | tee $(call LOG_FROM_ENTRY,$(3))
-#1: flags, 2: source, 3: target
-DO_GOTO_CC =  $(call DO_AND_LOG_COMMAND,$(GOTO_CC),$(1) $(2) -o $(3), $(call LOG_FROM_ENTRY,$(3)))
-################################################################
-# Setup paths to binaries
+# Paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
 # versions of the tools. /usr/bin/goto-analyzer or ${HOME}/sw/goto-analyzer etc
 GOTO_ANALYZER ?= goto-analyzer
@@ -65,8 +50,36 @@ GOTO_INSTRUMENT ?= goto-instrument
 VIEWER ?= cbmc-viewer
 
 ################################################################
-# Define locations and binaries
-ABSTRACTIONS ?=
+# Setup directory aliases
+SRCDIR ?= $(abspath ../../..)
+HELPERDIR ?= $(SRCDIR)/.cbmc-batch
+PROOFDIR = $(abspath .)
+GOTODIR = $(PROOFDIR)/gotos
+LOGDIR = $(PROOFDIR)/logs
+
+################################################################
+# Useful macros for running commands
+#1: command, 2: flags, 3: log file
+DO_AND_LOG_COMMAND = $(1) $(2) 2>&1 | tee $(3); exit $${PIPESTATUS[0]}
+
+#1: flags, 2: source, 3: target
+DO_GOTO_ANALYZER = $(call DO_AND_LOG_COMMAND,$(GOTO_ANALYZER),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
+
+#1: flags, 2: source, 3: target
+DO_GOTO_CC =  $(call DO_AND_LOG_COMMAND,$(GOTO_CC),$(1) $(2) -o $(3), $(call LOG_FROM_ENTRY,$(3)))
+
+#1: flags, 2: source, 3: target
+DO_GOTO_INSTRUMENT = $(call DO_AND_LOG_COMMAND,$(GOTO_INSTRUMENT),$(1) $(2) $(3), $(call LOG_FROM_ENTRY,$(3)))
+
+#1: message 2: source 3: dest 
+DO_NOOP_COPY = cp $(2) $(3); echo $(1) | tee $(call LOG_FROM_ENTRY,$(3))
+
+################################################################
+# Useful macros translating filenames
+C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
+GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
+LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
+LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
 
 ################################################################
 # Default CBMC flags
@@ -84,7 +97,9 @@ CBMCFLAGS += --unwind 1
 CBMCFLAGS += --unwinding-assertions
 
 ################################################################
-# Preprocess the unwindset
+# Setup the unwindset
+# TODO: CBMC should accept multiple unwindset flags, making the substutions here
+# unnecessary
 ifneq ($(UNWINDSET),)
 CBMC_UNWINDSET := --unwindset $(subst $(SPACE),$(COMMA),$(strip $(UNWINDSET)))
 endif
@@ -98,25 +113,11 @@ DEFINES += -DCBMC_OBJECT_BITS=$(CBMC_OBJECT_BITS)
 DEFINES += -DCBMC=1
 
 ################################################################
-# Setup directory aliases
-SRCDIR ?= $(abspath ../../..)
-HELPERDIR ?= $(SRCDIR)/.cbmc-batch
-PROOFDIR = $(abspath .)
-GOTODIR = $(PROOFDIR)/gotos
-LOGDIR = $(PROOFDIR)/logs
-
-################################################################
 # Setup include directory order
 # HELPERDIR must go before any other includes to override default
 # implementations by stubs
 INC += -I$(HELPERDIR)/include/
 INC += -I$(SRCDIR)/include/
-
-################################################################
-# Temporarily disable UNWIND_GOTO, SIMPLIFY until the feature is
-# stable
-UNWIND_GOTO ?= 0
-SIMPLIFY ?= 0
 
 ################################################################
 # Enables costly checks (e.g. ones that contain loops)
@@ -125,9 +126,15 @@ AWS_DEEP_CHECKS ?= 0
 DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
 
 ################################################################
-# We always override allocator functions with our own allocator
+# Remove function bodies that are not used in the proofs. 
 # Removing the function from the goto program helps CBMC's
-# function pointer analysis.
+# function pointer analysis
+
+# We override abort() to be assert(0)
+ABSTRACTIONS += $(HELPERDIR)/stubs/abort_override_assert_false.c
+REMOVE_FUNCTION_BODY += --remove-function-body abort
+
+# We always override allocator functions with our own allocator
 REMOVE_FUNCTION_BODY += --remove-function-body aws_default_allocator
 REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_allocate
 REMOVE_FUNCTION_BODY += --remove-function-body s_cf_allocator_copy_description
@@ -139,18 +146,23 @@ REMOVE_FUNCTION_BODY += --remove-function-body s_default_free
 REMOVE_FUNCTION_BODY += --remove-function-body s_default_malloc
 REMOVE_FUNCTION_BODY += --remove-function-body s_default_realloc
 
-################################################################
-# We override abort() to be assert(0), as it is not caught by
-# CBMC as a violation
-ABSTRACTIONS += $(HELPERDIR)/stubs/abort_override_assert_false.c
-REMOVE_FUNCTION_BODY += --remove-function-body abort
-################################################################
-
+# Users can remove additonal functions using this paramater
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
+
+################################################################
+# Determine the names of the goto files to build
 DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
 ENTRY_GOTO = $(GOTODIR)/$(ENTRY)
 
 ################################################################
+# Temporarily disable UNWIND_GOTO, SIMPLIFY until the feature is
+# stable
+UNWIND_GOTO ?= 0
+SIMPLIFY ?= 0
+
+################################################################
+# Build targets that make the relevant .goto files
+
 # Other libraries that use this Makefile template may wish to do
 # actual work here
 setup_dependencies:
@@ -190,9 +202,6 @@ ifeq ($(ABSTRACTIONS),"")
 else
 	$(call DO_GOTO_CC,--function $(ENTRY) $(ABSTRACTIONS) $(INC) $(DEFINES),$<,$@)
 endif
-
-
-## Temporarily skipped steps
 
 # Simplify and constant propagation may benefit from unwinding first
 $(ENTRY_GOTO)3.goto: $(ENTRY_GOTO)2.goto
@@ -241,7 +250,8 @@ $(ENTRY).goto: $(ENTRY_GOTO).goto
 
 # Catch-all used for building goto-binaries of the individual
 # dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
-# DSN TODO Make this depend on the correct thing.
+# DSN TODO This should be able to go away once we have static removal working
+# properly.
 %.goto:
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_GOTO,$@))
@@ -253,6 +263,8 @@ $(ENTRY).goto: $(ENTRY_GOTO).goto
 goto: $(ENTRY).goto
 	echo $(DEPENDENT_GOTOS)
 
+################################################################
+# Targets to run the analysis commands
 cbmc.log: $(ENTRY).goto
 	cbmc $(CBMCFLAGS) --trace $< 2>&1 | tee $@
 
@@ -278,6 +290,8 @@ report: cbmc.log property.xml coverage.xml
 	--srcdir $(SRCDIR) \
 	--srcexclude "(./verification|./tests|./tools|./lib/third_party)"
 
+################################################################
+# Targets to clean up after ourselves
 clean:
 	$(RM) *.goto
 	$(RM) $(DEPENDENT_GOTOS)
@@ -292,11 +306,5 @@ veryclean: clean
 	$(RM) -r logs
 
 .PHONY: setup_dependencies cbmc property coverage report clean veryclean testdeps
-
-PROOFDIR = $(abspath .)
-PROOF_GOTOS = "$(PROOFDIR)/gotos"
-
-DIRS = $(dir $(DEPENDENCIES))
-GOTO_DIRS= $(patsubst $(SRCDIR)%,$(PROOF_GOTOS)%,$(DIRS))
 
 include $(HELPERDIR)/jobs/Makefile.cbmc_batch
