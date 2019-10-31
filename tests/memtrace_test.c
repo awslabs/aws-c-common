@@ -32,7 +32,7 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
-        size %= 1024; /* not necessary to allocate a gajillion bytes */
+        size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
         allocs[idx] = aws_mem_acquire(tracer, size);
         sizes[idx] = size;
         total += size;

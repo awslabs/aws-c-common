@@ -121,7 +121,7 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
         return;
     }
 
-    struct alloc_t *alloc = aws_mem_calloc(tracer->allocator, 1, sizeof(struct alloc_t));
+    struct alloc_t *alloc = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct alloc_t));
     alloc->size = size;
     alloc->time = time(NULL);
     aws_atomic_fetch_add(&tracer->allocated, size);
@@ -171,6 +171,7 @@ static void s_alloc_tracer_untrack(struct alloc_tracer *tracer, void *ptr) {
     AWS_FATAL_ASSERT(item->key == ptr && item->value);
     struct alloc_t *alloc = item->value;
     aws_atomic_fetch_sub(&tracer->allocated, alloc->size);
+    s_destroy_alloc(item->value);
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove_element(&tracer->allocs, item));
     aws_mutex_unlock(&tracer->mutex);
 }
