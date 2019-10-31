@@ -11,6 +11,23 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+################################################################
+# This Makefile is the base makefile for CBMC proofs in this repository
+# Consumers of this makefile are expected to set the relevant variables
+# e.g. ENTRY, CBMCFLAGS, UNWINDSET etc
+# and then include this makefile.  To see how to use this makefile, take a look
+# at any of the existing proofs in this repository.
+#
+# This makefile is designed so that all files created during a proof are
+# placed in the proof directory, or subdirectories of it.
+# In particular, all gotos are built into the "gotos" folder, and logs go into
+# the "logs" folder. This means that the main source directories are untouched by
+# doing a build, and should make it safe to simultaniously build multiple proofs,
+# including proofs with different configurations and -D defines.
+#
+# Dependency handling in this file may not be perfect.  It is recommended that
+# you "make clean" or "make veryclean" before rerunning a proof.
+
 SHELL=/bin/bash
 
 default: report
@@ -23,6 +40,12 @@ sinclude Makefile.local
 SPACE :=$() $()
 COMMA :=,
 
+################################################################
+# Useful macros
+C_FROM_GOTO = $(patsubst $(GOTODIR)%,$(SRCDIR)%,$(1:.goto=.c))
+GOTO_FROM_C = $(patsubst $(SRCDIR)%,$(GOTODIR)%,$(1:.c=.goto))
+LOG_FROM_GOTO = $(patsubst $(GOTODIR)%,$(LOGDIR)%,$(1:.goto=.log))
+LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
 ################################################################
 # Setup paths to binaries
 # By default, use the version on your path; this can be overriden to select particular
@@ -69,6 +92,9 @@ DEFINES += -DCBMC=1
 # Setup directory aliases
 SRCDIR ?= $(abspath ../../..)
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
+PROOFDIR = $(abspath .)
+GOTODIR = $(PROOFDIR)/gotos
+LOGDIR = $(PROOFDIR)/logs
 
 ################################################################
 # Setup include directory order
@@ -112,7 +138,8 @@ REMOVE_FUNCTION_BODY += --remove-function-body abort
 ################################################################
 
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
-DEPENDENT_GOTOS = $(patsubst %.c,%.goto,$(DEPENDENCIES))
+DEPENDENT_GOTOS = $(call GOTO_FROM_C,$(DEPENDENCIES))
+ENTRY_GOTO = $(GOTODIR)/$(ENTRY)
 
 ################################################################
 # Other libraries that use this Makefile template may wish to do
@@ -124,90 +151,106 @@ setup_dependencies:
 # dependency files, make will take action. However, to make
 # sure changes in the headers files will also trigger make,
 # the user must run make clean first.
-$(ENTRY)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+$(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
+	mkdir -p $(dir $@)
+	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
 	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
 	  --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
+	  2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 
 # Removes specified function bodies. This allows us to replace
 # function definitions with ABSTRACTIONS.
-$(ENTRY)1.goto: $(ENTRY)0.goto
-ifeq ($(REMOVE_FUNCTION_BODY), "")
+$(ENTRY_GOTO)1.goto: $(ENTRY_GOTO)0.goto
+ifeq ($(REMOVE_FUNCTION_BODY),"")
 	cp $< $@
-	echo "Not removing function bodies" | tee $(ENTRY)1.log ; exit $${PIPESTATUS[0]}
+	echo "Not removing function bodies" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_INSTRUMENT) $(REMOVE_FUNCTION_BODY) $< $@ \
-		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 endif
 
 # ABSTRACTIONS is a list of function stubs to use. If a function body
 # is missing and is not abstracted, then it returnes a non
 # deterministic value.
-$(ENTRY)2.goto: $(ENTRY)1.goto
-ifeq ($(ABSTRACTIONS), "")
+$(ENTRY_GOTO)2.goto: $(ENTRY_GOTO)1.goto
+ifeq ($(ABSTRACTIONS),"")
 	cp $< $@
-	echo "Not implementing abstractions" | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+	echo "Not implementing abstractions" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 else
 	$(GOTO_CC) --function $(ENTRY) $(ABSTRACTIONS) $< $(INC) $(DEFINES) -o $@ \
-		2>&1 | tee $(ENTRY)2.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
 endif
 
 
 ## Temporarily skipped steps
 
 # Simplify and constant propagation may benefit from unwinding first
-$(ENTRY)3.goto: $(ENTRY)2.goto
-ifeq ($(UNWIND_GOTO), 1)
+$(ENTRY_GOTO)3.goto: $(ENTRY_GOTO)2.goto
+ifeq ($(UNWIND_GOTO),1)
 	$(GOTO_INSTRUMENT) $(UNWINDING) $< $@ \
-		2>&1 | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not unwinding goto program" | tee $(ENTRY)3.log ; exit $${PIPESTATUS[0]}
+	echo "Not unwinding goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
-$(ENTRY)4.goto: $(ENTRY)3.goto
-ifeq ($(SIMPLIFY), 1)
+$(ENTRY_GOTO)4.goto: $(ENTRY_GOTO)3.goto
+ifeq ($(SIMPLIFY),1)
 	$(GOTO_INSTRUMENT) --generate-function-body '.*' $< $@ \
-		2>&1 | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee$(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not generating-function-bodies in goto program" | tee $(ENTRY)4.log ; exit $${PIPESTATUS[0]}
+	echo "Not generating-function-bodies in goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Skip simplify (and hence generate-function-body) until missing source locations debugged
-$(ENTRY)5.goto: $(ENTRY)4.goto
-ifeq ($(SIMPLIFY), 1)
+$(ENTRY_GOTO)5.goto: $(ENTRY_GOTO)4.goto
+ifeq ($(SIMPLIFY),1)
 	$(GOTO_ANALYZER) --simplify $@ $< \
-		2>&1 | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@); exit $${PIPESTATUS[0]}
 else
 	cp $< $@
-	echo "Not simplfying goto program" | tee $(ENTRY)5.log ; exit $${PIPESTATUS[0]}
+	echo "Not simplfying goto program" | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 endif
 
 # Simplify the goto program by removing any unused function bodies
-$(ENTRY)6.goto: $(ENTRY)5.goto
+$(ENTRY_GOTO)6.goto: $(ENTRY_GOTO)5.goto
 	$(GOTO_INSTRUMENT) --drop-unused-functions $< $@ \
-		2>&1 | tee $(ENTRY)6.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 
 # Simplify the goto program by slicing away initializations of unused
 # global variables
-$(ENTRY)7.goto: $(ENTRY)6.goto
+$(ENTRY_GOTO)7.goto: $(ENTRY_GOTO)6.goto
 	$(GOTO_INSTRUMENT) --slice-global-inits $< $@ \
-		2>&1 | tee $(ENTRY)7.log ; exit $${PIPESTATUS[0]}
+		2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 
-$(ENTRY).goto: $(ENTRY)7.goto
+$(ENTRY_GOTO).goto: $(ENTRY_GOTO)7.goto
+	cp $< $@
+
+# For now, CBMC batch expects the goto in the same folder as the proof itself,
+# instead of the proof/gotos folder all other gotos go in.  This isn't a problem
+# for out-of-tree or parallel builds, it just clutters the proof directory.
+# I could update the .yaml file for all 160 proofs, or I could copy it, and
+# have one goto file in the proof directory.  Doing the second option for now.
+# TODO: cleanup which files go in which directories.
+$(ENTRY).goto: $(ENTRY_GOTO).goto
 	cp $< $@
 
 # Catch-all used for building goto-binaries of the individual
-# dependencies, which are then linked in the $(ENTRY)0.goto rule above
-%.goto: %.c
-	$(GOTO_CC) -c $< --export-function-local-symbols $(CBMC_VERBOSITY) \
+# dependencies, which are then linked in the $(ENTRY_GOTO)0.goto rule above
+# DSN TODO Make this depend on the correct thing.
+%.goto:
+	mkdir -p $(dir $@)
+	mkdir -p $(dir $(call LOG_FROM_GOTO,$@))
+	echo $(call C_FROM_GOTO,$@)
+	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
-	  2>&1 | tee $(dir $<)/$(notdir $<).log ; exit $${PIPESTATUS[0]}
+	  2>&1 | tee $(call LOG_FROM_GOTO,$@) ; exit $${PIPESTATUS[0]}
 
 goto: $(ENTRY).goto
+	echo $(DEPENDENT_GOTOS)
 
 cbmc.log: $(ENTRY).goto
 	cbmc $(CBMCFLAGS) --trace $< 2>&1 | tee $@
@@ -240,10 +283,19 @@ clean:
 	$(RM) *.log
 	$(RM) cbmc.log property.xml coverage.xml TAGS
 	$(RM) *~ \#*
+	$(RM) -r gotos
+
 
 veryclean: clean
 	$(RM) -r html
+	$(RM) -r logs
 
-.PHONY: setup_dependencies cbmc property coverage report clean veryclean
+.PHONY: setup_dependencies cbmc property coverage report clean veryclean testdeps
+
+PROOFDIR = $(abspath .)
+PROOF_GOTOS = "$(PROOFDIR)/gotos"
+
+DIRS = $(dir $(DEPENDENCIES))
+GOTO_DIRS= $(patsubst $(SRCDIR)%,$(PROOF_GOTOS)%,$(DIRS))
 
 include $(HELPERDIR)/jobs/Makefile.cbmc_batch

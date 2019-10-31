@@ -59,7 +59,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 
 #if defined(_MSC_VER)
 #    include <malloc.h>
-#    define AWS_ALIGN(alignment) __declspec(align(alignment))
+#    define AWS_ALIGNED_TYPEDEF(from, to, alignment) typedef __declspec(align(alignment)) from to
 #    define AWS_LIKELY(x) x
 #    define AWS_UNLIKELY(x) x
 #    define AWS_FORCE_INLINE __forceinline
@@ -68,7 +68,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    define AWS_ATTRIBUTE_NORETURN
 #else
 #    if defined(__GNUC__) || defined(__clang__)
-#        define AWS_ALIGN(alignment) __attribute__((aligned(alignment)))
+#        define AWS_ALIGNED_TYPEDEF(from, to, alignment) typedef from to __attribute__((aligned(alignment)))
 #        define AWS_TYPE_OF(a) __typeof__(a)
 #        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -99,8 +99,6 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #        endif /* defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L */
 #    endif     /* defined(_MSC_VER) */
 #endif         /* defined(__cplusplus) */
-
-#define AWS_CACHE_ALIGN AWS_ALIGN(AWS_CACHE_LINE)
 
 #if defined(_MSC_VER)
 #    define AWS_THREAD_LOCAL __declspec(thread)

@@ -241,6 +241,7 @@ add_test_case(test_byte_cursor_compare_lexical)
 add_test_case(test_byte_cursor_compare_lookup)
 
 add_test_case(byte_swap_test)
+add_test_case(alignment_test)
 
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
