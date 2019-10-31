@@ -120,17 +120,32 @@ enum aws_mem_trace_level {
  * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
  * and there are still allocations active, they will be reported to stderr.
  * frames_per_stack is how many frames to store per callstack if AWS_MEMTRACE_STACKS is in use,
- * otherwise it is ignored.
- * Returns the wrapper allocator, which should be used for all allocations that should be tracked.
+ * otherwise it is ignored. 8 tends to be a pretty good number balancing storage space vs useful stacks.
+ * Returns the tracer allocator, which should be used for all allocations that should be tracked.
  */
-struct aws_allocator *aws_mem_trace(struct aws_allocator *allocator, enum aws_mem_trace_level level, size_t frames_per_stack);
+AWS_COMMON_API
+struct aws_allocator *aws_mem_tracer_new(struct aws_allocator *allocator, enum aws_mem_trace_level level, size_t frames_per_stack);
 
 /*
- * If there are outstanding allocations, dumps them to stderr, along with any information gathered
- * based on the trace level set when aws_mem_trace() was called.
- * Should be passed the wrapper allocator returned from aws_mem_trace().
+ * Unwraps the traced allocator and cleans up the tracer.
+ * Returns the original allocator
  */
-void aws_mem_trace_dump(struct aws_allocator *allocator);
+AWS_COMMON_API
+struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *tracer);
+
+/*
+ * If there are outstanding allocations, dumps them to log, along with any information gathered
+ * based on the trace level set when aws_mem_trace() was called.
+ * Should be passed the tracer allocator returned from aws_mem_trace().
+ */
+AWS_COMMON_API
+void aws_mem_trace_dump(struct aws_allocator *tracer);
+
+/*
+ * Returns the current number of bytes in oustanding allocations
+ */
+AWS_COMMON_API
+size_t aws_mem_tracer_count(struct aws_allocator *tracer);
 
 AWS_EXTERN_C_END
 

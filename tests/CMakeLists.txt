@@ -254,6 +254,8 @@ add_test_case(test_cf_allocator_wrapper)
 add_test_case(test_acquire_many)
 add_test_case(test_alloc_nothing)
 
+add_test_case(test_memtrace_count)
+
 add_test_case(test_calloc_override)
 add_test_case(test_calloc_fallback_from_default_allocator)
 add_test_case(test_calloc_fallback_from_given)
