@@ -66,3 +66,14 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(test_memtrace_count, s_test_memtrace_count)
+
+static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
+    return 0;
+}
+AWS_TEST_CASE(test_memtrace_stacks, s_test_memtrace_stacks)
+
+static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
+    return 0;
+}
+AWS_TEST_CASE(test_memtrace_none, s_test_memtrace_none)
+
