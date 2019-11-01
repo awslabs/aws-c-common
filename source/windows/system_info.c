@@ -92,7 +92,7 @@ bool s_init_dbghelp() {
     }
 
     SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
-            (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
     if (!p_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
@@ -121,8 +121,8 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     struct aws_byte_buf symbols;
     aws_byte_buf_init(&symbols, aws_default_allocator(), num_frames * 256);
     /* pointers for each stack entry */
-    memset(symbols.buffer, 0, num_frames * sizeof(void*));
-    symbols.len += num_frames * sizeof(void*);
+    memset(symbols.buffer, 0, num_frames * sizeof(void *));
+    symbols.len += num_frames * sizeof(void *);
 
     DWORD64 displacement = 0;
     DWORD disp = 0;
@@ -137,21 +137,23 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
         /* record a pointer to where the symbol will be */
-        *((char**)&buf.buffer[i * sizeof(void*)]) = (char*)buf.buffer + buf.len;
+        *((char **)&buf.buffer[i * sizeof(void *)]) = (char *)buf.buffer + buf.len;
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
         if (p_SymGetLineFromAddr(process, address, &disp, &line)) {
             char buf[1024];
-            int len = snprintf(buf, AWS_ARRAY_SIZE(buf),
-                    "at %s(%s:%lu): address: 0x%llX",
-                     sym_info.sym_info.Name,
-                     line.FileName,
-                     line.LineNumber,
-                     sym_info.sym_info.Address);
+            int len = snprintf(
+                buf,
+                AWS_ARRAY_SIZE(buf),
+                "at %s(%s:%lu): address: 0x%llX",
+                sym_info.sym_info.Name,
+                line.FileName,
+                line.LineNumber,
+                sym_info.sym_info.Address);
             if (len != -1) {
                 struct aws_byte_cursor line = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
-                aws_byte_buf_append_dynamic(&symbols, buf, len + 1); /* include null terminator */
+                aws_byte_buf_append_dynamic(&symbols, buf, len + 1);                    /* include null terminator */
             } else {
                 struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
                 aws_byte_buf_append_dynamic(&symbols, &null_term);

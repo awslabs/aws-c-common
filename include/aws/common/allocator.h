@@ -111,8 +111,8 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
  */
 
 enum aws_mem_trace_level {
-    AWS_MEMTRACE_NONE = 0, /* no tracing */
-    AWS_MEMTRACE_BYTES = 1, /* just track allocation sizes and total allocated */
+    AWS_MEMTRACE_NONE = 0,   /* no tracing */
+    AWS_MEMTRACE_BYTES = 1,  /* just track allocation sizes and total allocated */
     AWS_MEMTRACE_STACKS = 2, /* capture callstacks for each allocation */
 };
 
@@ -128,7 +128,10 @@ enum aws_mem_trace_level {
  * Returns the tracer allocator, which should be used for all allocations that should be tracked.
  */
 AWS_COMMON_API
-struct aws_allocator *aws_mem_tracer_new(struct aws_allocator *allocator, enum aws_mem_trace_level level, size_t frames_per_stack);
+struct aws_allocator *aws_mem_tracer_new(
+    struct aws_allocator *allocator,
+    enum aws_mem_trace_level level,
+    size_t frames_per_stack);
 
 /*
  * Unwraps the traced allocator and cleans up the tracer.

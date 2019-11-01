@@ -35,7 +35,11 @@ struct test_logger_impl {
  * Given a pointer to a logger, initializes it as a test logger using the supplied log level.
  * max_size of 0 is unlimited
  */
-int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level, size_t max_size);
+int test_logger_init(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    enum aws_log_level level,
+    size_t max_size);
 
 /**
  * Extracts logged content from a test logger.

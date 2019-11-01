@@ -88,7 +88,11 @@ static struct aws_logger_vtable s_test_logger_vtable = {.get_log_level = s_test_
                                                         .log = s_test_logger_log,
                                                         .clean_up = s_test_logger_clean_up};
 
-int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level, size_t max_size) {
+int test_logger_init(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    enum aws_log_level level,
+    size_t max_size) {
 
     struct test_logger_impl *impl =
         (struct test_logger_impl *)aws_mem_acquire(allocator, sizeof(struct test_logger_impl));

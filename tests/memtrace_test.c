@@ -106,7 +106,7 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
 
-        void*(*allocate)(struct aws_allocator*, size_t) = NULL;
+        void *(*allocate)(struct aws_allocator *, size_t) = NULL;
         switch (idx % 4) {
             case 0:
                 allocate = s_alloc_1;
@@ -134,13 +134,13 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     struct test_logger_impl *test_logger = s_test_logger.p_impl;
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
-#   if defined(DEBUG_BUILD)
-    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_1"));
-    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_2"));
-    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_3"));
-    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_4"));
-    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, __FUNCTION__));
-#   endif
+#if defined(DEBUG_BUILD)
+    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_1"));
+    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_2"));
+    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_3"));
+    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_4"));
+    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, __FUNCTION__));
+#endif
 
     /* reset log */
     aws_byte_buf_reset(&test_logger->log_buffer, true);
@@ -206,7 +206,7 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
     void *allocs[NUM_ALLOCS] = {0};
 
     /* allocate some from the base allocator first */
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs)/4; ++idx) {
+    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs) / 4; ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -241,4 +241,3 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 AWS_TEST_CASE(test_memtrace_midstream, s_test_memtrace_midstream)
-

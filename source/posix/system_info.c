@@ -253,8 +253,8 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
     aws_byte_buf_init(&lines, aws_default_allocator(), stack_depth * 256);
 
     /* insert pointers for each stack entry */
-    memset(lines.buffer, 0, stack_depth * sizeof(void*));
-    lines.len += stack_depth * sizeof(void*);
+    memset(lines.buffer, 0, stack_depth * sizeof(void *));
+    lines.len += stack_depth * sizeof(void *);
 
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
@@ -284,15 +284,15 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
         }
         pclose(out);
 
-parse_failed:
+    parse_failed:
         /* record the pointer to where the symbol will be */
-        *((char**)&lines.buffer[frame_idx * sizeof(void*)]) = (char*)lines.buffer + lines.len;
+        *((char **)&lines.buffer[frame_idx * sizeof(void *)]) = (char *)lines.buffer + lines.len;
         struct aws_byte_cursor line_cursor = aws_byte_cursor_from_c_str(symbol);
         line_cursor.len += 1; /* strings must be null terminated, make sure we copy the null */
         aws_byte_buf_append_dynamic(&lines, &line_cursor);
     }
     free(symbols);
-    return (char**)lines.buffer; /* caller is responsible for freeing */
+    return (char **)lines.buffer; /* caller is responsible for freeing */
 }
 
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
