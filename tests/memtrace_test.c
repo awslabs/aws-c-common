@@ -98,7 +98,6 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     struct aws_allocator *tracer = aws_mem_tracer_new(allocator, AWS_MEMTRACE_STACKS, 8);
 
     void *allocs[NUM_ALLOCS] = {0};
-    size_t sizes[NUM_ALLOCS] = {0};
     size_t total = 0;
 
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
@@ -123,7 +122,6 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
         }
 
         allocs[idx] = allocate(tracer, size);
-        sizes[idx] = size;
         total += size;
     }
 
@@ -171,7 +169,6 @@ static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
     struct aws_allocator *tracer = aws_mem_tracer_new(allocator, AWS_MEMTRACE_NONE, 0);
 
     void *allocs[NUM_ALLOCS] = {0};
-    size_t sizes[NUM_ALLOCS] = {0};
     size_t total = 0;
 
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
@@ -179,7 +176,6 @@ static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
         allocs[idx] = aws_mem_acquire(tracer, size);
-        sizes[idx] = size;
         total += size;
     }
 
