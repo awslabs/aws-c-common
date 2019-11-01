@@ -81,8 +81,8 @@ static uint64_t s_stack_hash(const void *item) {
 }
 
 static bool s_stack_eq(const void *a, const void *b) {
-    uint64_t va = (uint64_t)a;
-    uint64_t vb = (uint64_t)b;
+    uint64_t va = (uint64_t)(uintptr_t)a;
+    uint64_t vb = (uint64_t)(uintptr_t)b;
     return va == vb;
 }
 
@@ -138,7 +138,8 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
             struct aws_hash_element *item = NULL;
             int was_created = 0;
             AWS_FATAL_ASSERT(
-                AWS_OP_SUCCESS == aws_hash_table_create(&tracer->stacks, (void *)stack_id, &item, &was_created));
+                AWS_OP_SUCCESS ==
+                aws_hash_table_create(&tracer->stacks, (void *)(uintptr_t)stack_id, &item, &was_created));
             /* If this is a new stack, save it to the hash */
             if (was_created) {
                 struct stacktrace_t *stack = aws_mem_calloc(
@@ -251,7 +252,8 @@ static int s_collect_stack_stats(void *context, struct aws_hash_element *item) {
     struct alloc_t *alloc = item->value;
     struct aws_hash_element *stack_item = NULL;
     int was_created = 0;
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void *)alloc->stack, &stack_item, &was_created));
+    AWS_FATAL_ASSERT(
+        AWS_OP_SUCCESS == aws_hash_table_create(stacks, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
     if (was_created) {
         struct aws_allocator *allocator = aws_default_allocator();
         stack_item->value = aws_mem_calloc(allocator, 1, sizeof(struct stack_info_t));
@@ -330,7 +332,7 @@ static void s_alloc_tracer_dump(struct alloc_tracer *tracer) {
         AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, "ALLOC %zu bytes\n", alloc->size);
         if (alloc->stack) {
             struct aws_hash_element *item = NULL;
-            AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&stacks, (void *)alloc->stack, &item));
+            AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&stacks, (void *)(uintptr_t)alloc->stack, &item));
             struct stack_info_t *stack = item->value;
             AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, "  stacktrace:\n%s\n", (const char *)aws_string_bytes(stack->trace));
         }
