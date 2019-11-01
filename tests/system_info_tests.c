@@ -44,8 +44,8 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     test_logger_init(&test_log, allocator, AWS_LL_TRACE, 0);
     aws_logger_set(&test_log);
 
-    int line = 0; /* captured on line of aws_backtrace_log call to match call site */
-    (void)line;   /* may not be used if debug info is unavailable */
+    int line = 0;                           /* captured on line of aws_backtrace_log call to match call site */
+    (void)line;                             /* may not be used if debug info is unavailable */
     aws_backtrace_log(), (line = __LINE__); /* NOLINT */
 
     struct test_logger_impl *log = test_log.p_impl;
