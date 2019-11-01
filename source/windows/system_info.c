@@ -68,12 +68,12 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #    define SymGetLineFromAddrName "SymGetLineFromAddr"
 #endif
 
-SymInitialize_fn *s_SymInitialize = NULL;
-SymFromAddr_fn *p_SymFromAddr = NULL;
-SymGetLineFromAddr_fn *p_SymGetLineFromAddr = NULL;
+static SymInitialize_fn *s_SymInitialize = NULL;
+static SymFromAddr_fn *p_SymFromAddr = NULL;
+static SymGetLineFromAddr_fn *p_SymGetLineFromAddr = NULL;
 
 bool s_init_dbghelp() {
-    if (s_SymInitialize) {
+    if (s_SymInitialize != NULL) {
         return;
     }
 
