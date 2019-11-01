@@ -15,6 +15,8 @@
 
 #include <aws/common/common.h>
 
+#include <aws/common/system_info.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -197,3 +197,18 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         fprintf(fp, "%s\n", symbol);
     }
 }
+
+void aws_backtrace_log() {
+    if (!s_init_dbghelp()) {
+        fprintf(fp, "Unable to initialize dbghelp.dll");
+        return;
+    }
+
+    void *stack[1024];
+    size_t num_frames = aws_backtrace(stack, 1024);
+    char **symbols = aws_backtrace_symbols(stack, num_frames);
+    for (size_t line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
+    }
+}

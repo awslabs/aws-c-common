@@ -18,6 +18,7 @@
 #include <aws/common/common.h>
 #include <aws/common/error.h>
 #include <aws/common/mutex.h>
+#include <aws/common/system_info.h>
 
 #include <stdarg.h>
 #include <stdio.h>

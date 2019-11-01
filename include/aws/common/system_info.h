@@ -32,6 +32,10 @@ bool aws_is_debugger_present(void);
 AWS_COMMON_API
 void aws_debug_break(void);
 
+#if defined(AWS_HAVE_EXECINFO) || defined(WIN32) || defined(__APPLE__)
+#    define AWS_BACKTRACE_STACKS_AVAILABLE
+#endif
+
 /*
  * Records a stack trace from the call site.
  * Returns the number of stack entries/stack depth captured, or 0 if the operation
@@ -58,6 +62,17 @@ char **aws_backtrace_symbols(void *const *frames, size_t stack_depth);
  * or an error occurs
  */
 char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth);
+
+/**
+ * Print a backtrace from either the current stack, or (if provided) the current exception/signal
+ *  call_site_data is siginfo_t* on POSIX, and LPEXCEPTION_POINTERS on Windows, and can be null
+ */
+AWS_COMMON_API
+void aws_backtrace_print(FILE *fp, void *call_site_data);
+
+/* Log the callstack from the current stack to the currently configured aws_logger */
+AWS_COMMON_API
+void aws_backtrace_log(void);
 
 AWS_EXTERN_C_END
 
