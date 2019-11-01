@@ -165,11 +165,16 @@ static void s_alloc_tracer_untrack(struct alloc_tracer *tracer, void *ptr) {
     aws_mutex_lock(&tracer->mutex);
     struct aws_hash_element *item;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&tracer->allocs, ptr, &item));
-    AWS_FATAL_ASSERT(item->key == ptr && item->value);
-    struct alloc_t *alloc = item->value;
-    aws_atomic_fetch_sub(&tracer->allocated, alloc->size);
-    s_destroy_alloc(item->value);
-    AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove_element(&tracer->allocs, item));
+    /* because the tracer can be installed at any time, it is possible for an allocation to not
+     * be tracked. Therefore, we make sure the find succeeds, but then check the returned
+     * value */
+    if(item) {
+        AWS_FATAL_ASSERT(item->key == ptr && item->value);
+        struct alloc_t *alloc = item->value;
+        aws_atomic_fetch_sub(&tracer->allocated, alloc->size);
+        s_destroy_alloc(item->value);
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_remove_element(&tracer->allocs, item));
+    }
     aws_mutex_unlock(&tracer->mutex);
 }
 
@@ -302,7 +307,6 @@ static void s_alloc_tracer_dump(struct alloc_tracer *tracer) {
         /* collect stack traces for active stacks */
         aws_hash_table_foreach(&stacks, s_collect_stack_trace, tracer);
     }
-
 
     /* sort allocs by time */
     struct aws_priority_queue allocs;
