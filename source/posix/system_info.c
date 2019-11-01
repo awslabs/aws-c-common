@@ -373,4 +373,5 @@ void aws_backtrace_log() {
         const char *symbol = symbols[line];
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
+    free(symbols);
 }
