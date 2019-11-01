@@ -69,12 +69,12 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #endif
 
 static SymInitialize_fn *s_SymInitialize = NULL;
-static SymFromAddr_fn *p_SymFromAddr = NULL;
-static SymGetLineFromAddr_fn *p_SymGetLineFromAddr = NULL;
+static SymFromAddr_fn *s_SymFromAddr = NULL;
+static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
-bool s_init_dbghelp() {
+static bool s_init_dbghelp() {
     if (s_SymInitialize != NULL) {
-        return;
+        return true;
     }
 
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
