@@ -18,6 +18,8 @@
 #include <aws/common/allocator.h>
 #include <aws/common/device_random.h>
 
+#include "logging/test_logger.h"
+
 #define NUM_ALLOCS 100
 static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -82,8 +84,17 @@ static void *s_alloc_4(struct aws_allocator *allocator, size_t size) {
     return aws_mem_acquire(allocator, size);
 }
 
+static struct aws_logger s_test_logger;
+
 static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+#if !defined(AWS_MEMTRACE_STACKS_AVAILABLE)
+    return 0;
+#endif
+
+    test_logger_init(&s_test_logger, allocator, AWS_LL_TRACE, 0);
+    aws_logger_set(&s_test_logger);
+
     struct aws_allocator *tracer = aws_mem_tracer_new(allocator, AWS_MEMTRACE_STACKS, 8);
 
     void *allocs[NUM_ALLOCS] = {0};
@@ -117,18 +128,18 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     }
 
     ASSERT_UINT_EQUALS(total, aws_mem_tracer_count(tracer));
+    aws_mem_trace_dump(tracer);
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
-        uint32_t roll = 0;
-        aws_device_random_u32(&roll);
-        if (roll % 3 == 0) {
-            aws_mem_release(tracer, allocs[idx]);
-            allocs[idx] = NULL;
-            total -= sizes[idx];
-        }
-    }
+    /* make sure all of the functions that allocated are found */
+    struct test_logger_impl *test_logger = s_test_logger.p_impl;
+    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_1"));
+    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_2"));
+    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_3"));
+    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, "s_alloc_4"));
+    ASSERT_TRUE(strstr((const char*)test_logger->log_buffer.buffer, __FUNCTION__));
 
-    ASSERT_UINT_EQUALS(total, aws_mem_tracer_count(tracer));
+    /* reset log */
+    aws_byte_buf_reset(&test_logger->log_buffer, true);
 
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         if (allocs[idx]) {
@@ -137,9 +148,15 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     }
 
     ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(tracer));
+    aws_mem_trace_dump(tracer);
+
+    /* Make sure no known allocs are left */
+    ASSERT_UINT_EQUALS(0, test_logger->log_buffer.len);
 
     struct aws_allocator *original = aws_mem_tracer_destroy(tracer);
     ASSERT_PTR_EQUALS(allocator, original);
+
+    aws_logger_clean_up(&s_test_logger);
 
     return 0;
 }

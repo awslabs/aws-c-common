@@ -68,10 +68,9 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #    define SymGetLineFromAddrName "SymGetLineFromAddr"
 #endif
 
-void aws_backtrace_print(FILE *fp, void *call_site_data) {
-    struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
-    if (exception_pointers) {
-        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
+bool s_init_dbghelp() {
+    if (p_SymInitialize) {
+        return;
     }
 
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
@@ -93,7 +92,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
 
     SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
-        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+            (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
     if (!p_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
@@ -101,8 +100,29 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 
     HANDLE process = GetCurrentProcess();
     p_SymInitialize(process, NULL, TRUE);
-    void *stack[1024];
-    WORD num_frames = CaptureStackBackTrace(0, 1024, stack, NULL);
+    return true;
+
+done:
+    if (dbghelp) {
+        FreeLibrary(dbghelp);
+    }
+    return false;
+}
+
+int aws_backtrace(void **frames, size_t size) {
+    return CaptureStackBackTrace(0, size, frames, NULL);
+}
+
+char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
+    if (!s_init_dbghelp()) {
+        return NULL;
+    }
+
+    struct aws_byte_buf symbols;
+    aws_byte_buf_init(&symbols, aws_default_allocator(), num_frames * 256);
+    /* pointers for each stack entry */
+    memset(symbols.buffer, 0, num_frames * sizeof(void*));
+
     DWORD64 displacement = 0;
     DWORD disp = 0;
 
@@ -115,23 +135,50 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
         p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
+        /* record a pointer to where the symbol will be */
+        *(char*)buf.buffer[num_frames * sizeof(void*)] = (char*)buf.buffer + buf.len;
+
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
         if (p_SymGetLineFromAddr(process, address, &disp, &line)) {
-            if (i != 0) {
-                fprintf(
-                    stderr,
-                    "at %s(%s:%lu): address: 0x%llX\n",
-                    sym_info.sym_info.Name,
-                    line.FileName,
-                    line.LineNumber,
-                    sym_info.sym_info.Address);
+            char buf[1024];
+            int len = snprintf(buf, AWS_ARRAY_SIZE(buf),
+                    "at %s(%s:%lu): address: 0x%llX",
+                     sym_info.sym_info.Name,
+                     line.FileName,
+                     line.LineNumber,
+                     sym_info.sym_info.Address);
+            if (len != -1) {
+                aws_byte_buf_append_dynamic(&symbols, buf, len + 1); /* include null terminator */
+            } else {
+                aws_byte_buf_append_dynamic(&symbols, "", 1);
             }
         }
     }
 
-done:
-    if (dbghelp) {
-        FreeLibrary(dbghelp);
+    return symbols.buffer; /* buffer must be freed by the caller */
+}
+
+char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
+    return aws_backtrace_symbols(frames, stack_depth);
+}
+
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
+    struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
+    if (exception_pointers) {
+        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
+    }
+
+    if (!s_init_dbghelp()) {
+        fprintf(fp, "Unable to initialize dbghelp.dll");
+        return;
+    }
+
+    void *stack[1024];
+    size_t num_frames = aws_backtrace(stack, 1024);
+    char **symbols = aws_backtrace_symbols(stack, num_frames);
+    for (int line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        fprintf(fp, "%s\n", symbol);
     }
 }

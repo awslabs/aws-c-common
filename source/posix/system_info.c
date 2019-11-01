@@ -15,6 +15,8 @@
 
 #include <aws/common/system_info.h>
 
+#include <aws/common/byte_buf.h>
+
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #    define __BSD_VISIBLE 1
 #endif
@@ -236,6 +238,67 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    endif
 
+int aws_backtrace(void **frames, size_t size) {
+    return backtrace(frames, size);
+}
+
+char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+    return backtrace_symbols(frames, stack_depth);
+}
+
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    char **symbols = aws_backtrace_symbols(stack_frames, stack_depth);
+    AWS_FATAL_ASSERT(symbols);
+    struct aws_byte_buf lines;
+    aws_byte_buf_init(&lines, aws_default_allocator(), stack_depth * 256);
+    /* pointers for each stack entry */
+    memset(lines.buffer, 0, stack_depth * sizeof(void*));
+    lines.len += stack_depth * sizeof(void*);
+    struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
+    struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+    /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
+     *                or: <exe-or-shared-lib> [0x<addr>]
+     * start at 1 to skip the current frame (this function) */
+    for (int frame_idx = 0; frame_idx < stack_depth; ++frame_idx) {
+        struct aws_stack_frame_info frame;
+        AWS_ZERO_STRUCT(frame);
+        const char *symbol = symbols[frame_idx];
+        if (s_parse_symbol(symbol, stack_frames[frame_idx], &frame)) {
+            goto parse_failed;
+        }
+
+        /* TODO: Emulate libunwind */
+        char cmd[sizeof(struct aws_stack_frame_info)] = {0};
+        s_resolve_cmd(cmd, sizeof(cmd), &frame);
+        FILE *out = popen(cmd, "r");
+        if (!out) {
+            goto parse_failed;
+        }
+        char output[1024];
+        if (fgets(output, sizeof(output), out)) {
+            /* if addr2line or atos don't know what to do with an address, they just echo it */
+            /* if there are spaces in the output, then they resolved something */
+            if (strstr(output, " ")) {
+                symbol = output;
+            }
+        }
+        pclose(out);
+
+parse_failed:
+        /* record a pointer to where the symbol will be */
+        *((char**)&lines.buffer[frame_idx * sizeof(void*)]) = (char*)lines.buffer + lines.len;
+        struct aws_byte_cursor line_cursor = aws_byte_cursor_from_c_str(symbol);
+        aws_byte_buf_append_dynamic(&lines, &line_cursor);
+        if (symbol == symbols[frame_idx]) {
+            aws_byte_buf_append_dynamic(&lines, &newline);
+        }
+
+        aws_byte_buf_append_dynamic(&lines, &null_term); /* strings must be null terminated */
+    }
+    free(symbols);
+    return (char**)lines.buffer; /* caller is responsible for freeing */
+}
+
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     siginfo_t *siginfo = call_site_data;
     if (siginfo) {
@@ -246,8 +309,8 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
 
     void *stack_frames[AWS_BACKTRACE_DEPTH];
-    int stack_depth = backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
-    char **symbols = backtrace_symbols(stack_frames, stack_depth);
+    int stack_depth = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
+    char **symbols = aws_backtrace_symbols(stack_frames, stack_depth);
     if (symbols == NULL) {
         fprintf(fp, "Unable to decode backtrace via backtrace_symbols\n");
         return;
@@ -290,5 +353,13 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 #else
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     fprintf(fp, "No call stack information available\n");
+}
+
+int aws_backtrace(void **frames, size_t size) {
+    return 0;
+}
+
+char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+    return NULL;
 }
 #endif /* AWS_HAVE_EXECINFO */

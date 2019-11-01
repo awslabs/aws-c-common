@@ -17,6 +17,8 @@
 
 #include "test_logger.h"
 
+#define TEST_LOGGER_MAX_BUFFER_SIZE 4096
+
 int do_log_test(
     struct aws_allocator *allocator,
     enum aws_log_level level,
@@ -25,7 +27,7 @@ int do_log_test(
 
     /* Create and attach a logger for testing*/
     struct aws_logger test_logger;
-    test_logger_init(&test_logger, allocator, level);
+    test_logger_init(&test_logger, allocator, level, TEST_LOGGER_MAX_BUFFER_SIZE);
     aws_logger_set(&test_logger);
 
     /* Perform logging operations */

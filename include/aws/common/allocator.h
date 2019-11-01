@@ -116,6 +116,10 @@ enum aws_mem_trace_level {
     AWS_MEMTRACE_STACKS = 2, /* capture callstacks for each allocation */
 };
 
+#if defined(AWS_HAVE_EXECINFO) || defined(WIN32) || defined(__APPLE__)
+#    define AWS_MEMTRACE_STACKS_AVAILABLE
+#endif
+
 /*
  * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
  * and there are still allocations active, they will be reported to stderr.
