@@ -60,10 +60,12 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
     fseek(tmp_file, 0L, SEEK_END);
     long file_size = ftell(tmp_file);
+    ASSERT_TRUE(file_size > 0);
+    ASSERT_TRUE(file_size < 1024*1024);
     fseek(tmp_file, 0L, SEEK_SET);
     char *buffer = aws_mem_acquire(allocator, file_size + 1);
     ASSERT_NOT_NULL(buffer);
-    ASSERT_INT_EQUALS(file_size, fread(buffer, 1, file_size, tmp_file));
+    fread(buffer, 1, file_size, tmp_file);
     fclose(tmp_file);
     buffer[file_size] = 0;
 
