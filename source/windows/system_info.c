@@ -200,7 +200,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 
 void aws_backtrace_log() {
     if (!s_init_dbghelp()) {
-        fprintf(fp, "Unable to initialize dbghelp.dll");
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Unable to initialize dbghelp.dll for backtrace");
         return;
     }
 
