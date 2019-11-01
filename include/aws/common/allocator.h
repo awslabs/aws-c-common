@@ -138,7 +138,7 @@ struct aws_allocator *aws_mem_tracer_new(
  * Returns the original allocator
  */
 AWS_COMMON_API
-struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *tracer);
+struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *trace_allocator);
 
 /*
  * If there are outstanding allocations, dumps them to log, along with any information gathered
@@ -146,13 +146,13 @@ struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *tracer);
  * Should be passed the tracer allocator returned from aws_mem_trace().
  */
 AWS_COMMON_API
-void aws_mem_trace_dump(struct aws_allocator *tracer);
+void aws_mem_trace_dump(struct aws_allocator *trace_allocator);
 
 /*
- * Returns the current number of bytes in oustanding allocations
+ * Returns the current number of bytes in outstanding allocations
  */
 AWS_COMMON_API
-size_t aws_mem_tracer_count(struct aws_allocator *tracer);
+size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);
 
 AWS_EXTERN_C_END
 

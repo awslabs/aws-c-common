@@ -30,7 +30,7 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
     size_t sizes[NUM_ALLOCS] = {0};
     size_t total = 0;
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -41,7 +41,7 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(total, aws_mem_tracer_count(tracer));
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t roll = 0;
         aws_device_random_u32(&roll);
         if (roll % 3 == 0) {
@@ -53,7 +53,7 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(total, aws_mem_tracer_count(tracer));
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         if (allocs[idx]) {
             aws_mem_release(tracer, allocs[idx]);
         }
@@ -100,7 +100,7 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     void *allocs[NUM_ALLOCS] = {0};
     size_t total = 0;
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -143,7 +143,7 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     /* reset log */
     aws_byte_buf_reset(&test_logger->log_buffer, true);
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         if (allocs[idx]) {
             aws_mem_release(tracer, allocs[idx]);
         }
@@ -171,7 +171,7 @@ static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
     void *allocs[NUM_ALLOCS] = {0};
     size_t total = 0;
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -181,7 +181,7 @@ static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(tracer));
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         if (allocs[idx]) {
             aws_mem_release(tracer, allocs[idx]);
         }
@@ -202,7 +202,7 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
     void *allocs[NUM_ALLOCS] = {0};
 
     /* allocate some from the base allocator first */
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs) / 4; ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs) / 4; ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -213,7 +213,7 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
 
     /* Now allocate from the tracer, and make sure everything still works */
     size_t total = 0;
-    for (int idx = AWS_ARRAY_SIZE(allocs) / 4 + 1; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = AWS_ARRAY_SIZE(allocs) / 4 + 1; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
@@ -223,7 +223,7 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
 
     ASSERT_UINT_EQUALS(total, aws_mem_tracer_count(tracer));
 
-    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         if (allocs[idx]) {
             aws_mem_release(tracer, allocs[idx]);
         }

@@ -209,7 +209,7 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
     struct aws_byte_buf stacktrace = aws_byte_buf_from_empty_array(buf, AWS_ARRAY_SIZE(buf));
     struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
     char **symbols = aws_backtrace_addr2line(stack_frames, num_frames);
-    for (int idx = 0; idx < num_frames; ++idx) {
+    for (size_t idx = 0; idx < num_frames; ++idx) {
         if (idx > 0) {
             aws_byte_buf_append(&stacktrace, &newline);
         }
@@ -459,8 +459,8 @@ struct aws_allocator *aws_mem_tracer_new(
     return trace_allocator;
 }
 
-struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *tracer_allocator) {
-    struct alloc_tracer *tracer = tracer_allocator->impl;
+struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *trace_allocator) {
+    struct alloc_tracer *tracer = trace_allocator->impl;
     struct aws_allocator *allocator = tracer->allocator;
 
     /* This is not necessary, as if you are destroying the allocator, what are your
@@ -473,7 +473,7 @@ struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *tracer_alloca
     aws_mutex_clean_up(&tracer->mutex);
 
     aws_mem_release(aws_default_allocator(), tracer);
-    aws_mem_release(aws_default_allocator(), tracer_allocator);
+    aws_mem_release(aws_default_allocator(), trace_allocator);
     return allocator;
 }
 
