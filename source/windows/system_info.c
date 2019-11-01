@@ -122,6 +122,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     aws_byte_buf_init(&symbols, aws_default_allocator(), num_frames * 256);
     /* pointers for each stack entry */
     memset(symbols.buffer, 0, num_frames * sizeof(void*));
+    symbols.len += num_frames * sizeof(void*);
 
     DWORD64 displacement = 0;
     DWORD disp = 0;
@@ -136,7 +137,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
         /* record a pointer to where the symbol will be */
-        *(char*)buf.buffer[num_frames * sizeof(void*)] = (char*)buf.buffer + buf.len;
+        *((char**)&buf.buffer[i * sizeof(void*)]) = (char*)buf.buffer + buf.len;
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
@@ -149,9 +150,11 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
                      line.LineNumber,
                      sym_info.sym_info.Address);
             if (len != -1) {
+                struct aws_byte_cursor line = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
                 aws_byte_buf_append_dynamic(&symbols, buf, len + 1); /* include null terminator */
             } else {
-                aws_byte_buf_append_dynamic(&symbols, "", 1);
+                struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+                aws_byte_buf_append_dynamic(&symbols, &null_term);
             }
         }
     }
