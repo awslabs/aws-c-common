@@ -68,8 +68,12 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #    define SymGetLineFromAddrName "SymGetLineFromAddr"
 #endif
 
+SymInitialize_fn *s_SymInitialize = NULL;
+SymFromAddr_fn *p_SymFromAddr = NULL;
+SymGetLineFromAddr_fn *p_SymGetLineFromAddr = NULL;
+
 bool s_init_dbghelp() {
-    if (p_SymInitialize) {
+    if (s_SymInitialize) {
         return;
     }
 
@@ -79,27 +83,26 @@ bool s_init_dbghelp() {
         goto done;
     }
 
-    SymInitialize_fn *p_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
-    if (!p_SymInitialize) {
+    s_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
+    if (!s_SymInitialize) {
         fprintf(stderr, "Failed to load SymInitialize from DbgHelp.dll.\n");
         goto done;
     }
 
-    SymFromAddr_fn *p_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
-    if (!p_SymFromAddr) {
+    s_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
+    if (!s_SymFromAddr) {
         fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
         goto done;
     }
 
-    SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
-        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
-    if (!p_SymGetLineFromAddr) {
+    s_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+    if (!s_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
     }
 
     HANDLE process = GetCurrentProcess();
-    p_SymInitialize(process, NULL, TRUE);
+    s_SymInitialize(process, NULL, TRUE);
     return true;
 
 done:
@@ -134,14 +137,14 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
+        s_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
         /* record a pointer to where the symbol will be */
         *((char **)&buf.buffer[i * sizeof(void *)]) = (char *)buf.buffer + buf.len;
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-        if (p_SymGetLineFromAddr(process, address, &disp, &line)) {
+        if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
             char buf[1024];
             int len = snprintf(
                 buf,
