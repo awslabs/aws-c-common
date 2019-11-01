@@ -104,7 +104,7 @@ static bool s_init_dbghelp() {
     }
 
     HANDLE process = GetCurrentProcess();
-    AWS_FATAL_ASSERT(process != INVALID_HANDLE_VALUE);
+    AWS_FATAL_ASSERT(process);
     s_SymInitialize(process, NULL, TRUE);
     return true;
 
@@ -135,7 +135,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
 
     struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
     HANDLE process = GetCurrentProcess();
-    AWS_FATAL_ASSERT(process != INVALID_HANDLE_VALUE);
+    AWS_FATAL_ASSERT(process);
     fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
         uintptr_t address = (uintptr_t)stack[i];
