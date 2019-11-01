@@ -52,6 +52,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     ASSERT_NOT_NULL(log);
 
     struct aws_byte_buf *buffer = &log->log_buffer;
+    (void)buffer;
 
 #if defined(AWS_BACKTRACE_STACKS_AVAILABLE) && defined(DEBUG_BUILD)
     /* ensure that this file/function is found */
