@@ -15,6 +15,8 @@
 
 #include <aws/common/system_info.h>
 
+#include <aws/common/byte_buf.h>
+
 #include <windows.h>
 
 size_t aws_system_info_processor_count(void) {
@@ -113,7 +115,7 @@ done:
 }
 
 int aws_backtrace(void **frames, size_t size) {
-    return CaptureStackBackTrace(0, size, frames, NULL);
+    return (int)CaptureStackBackTrace(0, size, frames, NULL);
 }
 
 char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
@@ -129,6 +131,8 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
 
     DWORD64 displacement = 0;
     DWORD disp = 0;
+
+    struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
 
     fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
@@ -155,10 +159,10 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
                 line.LineNumber,
                 sym_info.sym_info.Address);
             if (len != -1) {
-                struct aws_byte_cursor line = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
-                aws_byte_buf_append_dynamic(&symbols, buf, len + 1);                    /* include null terminator */
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
+                aws_byte_buf_append_dynamic(&symbols, &symbol);
             } else {
-                struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+                /* Need at least a null so the address changes between lines */
                 aws_byte_buf_append_dynamic(&symbols, &null_term);
             }
         }
