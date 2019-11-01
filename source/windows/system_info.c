@@ -192,7 +192,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     void *stack[1024];
     size_t num_frames = aws_backtrace(stack, 1024);
     char **symbols = aws_backtrace_symbols(stack, num_frames);
-    for (int line = 0; line < num_frames; ++line) {
+    for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
         fprintf(fp, "%s\n", symbol);
     }
