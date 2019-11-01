@@ -117,7 +117,7 @@ done:
 }
 
 int aws_backtrace(void **frames, size_t size) {
-    return (int)CaptureStackBackTrace(0, (DWORD)size, frames, NULL);
+    return (int)CaptureStackBackTrace(0, (ULONG)size, frames, NULL);
 }
 
 char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
