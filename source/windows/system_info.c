@@ -115,7 +115,7 @@ done:
 }
 
 int aws_backtrace(void **frames, size_t size) {
-    return (int)CaptureStackBackTrace(0, size, frames, NULL);
+    return (int)CaptureStackBackTrace(0, (DWORD)size, frames, NULL);
 }
 
 char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
@@ -133,7 +133,8 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     DWORD disp = 0;
 
     struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
-
+    HANDLE process = GetCurrentProcess();
+    AWS_FATAL_ASSERT(process != INVALID_HANDLE);
     fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
         uintptr_t address = (uintptr_t)stack[i];
@@ -144,7 +145,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         s_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
         /* record a pointer to where the symbol will be */
-        *((char **)&buf.buffer[i * sizeof(void *)]) = (char *)buf.buffer + buf.len;
+        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
@@ -161,14 +162,15 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             if (len != -1) {
                 struct aws_byte_cursor symbol = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
                 aws_byte_buf_append_dynamic(&symbols, &symbol);
-            } else {
-                /* Need at least a null so the address changes between lines */
-                aws_byte_buf_append_dynamic(&symbols, &null_term);
+                continue;
             }
         }
+
+        /* Need at least a null so the address changes between lines */
+        aws_byte_buf_append_dynamic(&symbols, &null_term);
     }
 
-    return symbols.buffer; /* buffer must be freed by the caller */
+    return (char **)symbols.buffer; /* buffer must be freed by the caller */
 }
 
 char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
