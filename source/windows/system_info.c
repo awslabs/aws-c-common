@@ -16,6 +16,7 @@
 #include <aws/common/system_info.h>
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/logging.h>
 
 #include <windows.h>
 
