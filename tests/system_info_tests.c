@@ -35,7 +35,11 @@ AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_l
 
 #if defined(_WIN32)
 #    include <io.h>
+#    define DIRSEP "\\"
+#else
+#    define DIRSEP "/"
 #endif
+
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -57,10 +61,11 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 #if defined(AWS_BACKTRACE_STACKS_AVAILABLE) && defined(DEBUG_BUILD)
     /* ensure that this file/function is found */
     char *file = __FILE__;
-    char *next = NULL;
+    char *next = strstr(file, DIRSEP);
     /* strip path info, just filename will be found */
-    while ((next = strstr(file, "/"))) {
+    while (next) {
         file = next + 1;
+        next = strstr(file, DIRSEP);
     }
 
     ASSERT_NOT_NULL(strstr((const char *)buffer->buffer, __func__));
@@ -77,6 +82,9 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     for (int lineno = line - 1; lineno <= line + 1; ++lineno) {
         snprintf(fileline, sizeof(fileline), "%s:%d", file, lineno);
         found_file_line |= strstr((const char *)buffer->buffer, fileline) != NULL;
+        if (found_file_line) {
+            break;
+        }
     }
     if (!found_file_line) {
         snprintf(fileline, sizeof(fileline), "%s:?", file);
