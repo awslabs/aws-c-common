@@ -422,9 +422,6 @@ static inline int enable_vt_mode(void) {
 
 #endif
 
-/* kept for compatibility with downstream libs, doesn't do anything */
-#define AWS_TEST_ALLOCATOR_INIT(name) static struct aws_allocator name##_allocator;
-
 #define AWS_TEST_CASE_SUPRESSION(name, fn, s)                                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
     static struct aws_test_harness name##_test = {                                                                     \
