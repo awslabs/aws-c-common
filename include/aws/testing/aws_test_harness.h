@@ -369,8 +369,8 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
             if (leaked_bytes) {
                 struct aws_logger err_logger;
                 struct aws_logger_standard_options options = {
-                        .level = AWS_LL_TRACE,
-                        .file = AWS_TESTING_REPORT_FD,
+                    .level = AWS_LL_TRACE,
+                    .file = AWS_TESTING_REPORT_FD,
                 };
                 aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
                 aws_logger_set(&err_logger);
@@ -429,7 +429,7 @@ static inline int enable_vt_mode(void) {
         NULL,                                                                                                          \
         fn,                                                                                                            \
         NULL,                                                                                                          \
-        NULL,                                                                                             \
+        NULL,                                                                                                          \
         NULL,                                                                                                          \
         #name,                                                                                                         \
         s,                                                                                                             \
@@ -447,7 +447,7 @@ static inline int enable_vt_mode(void) {
         b,                                                                                                             \
         fn,                                                                                                            \
         af,                                                                                                            \
-        NULL,                                                                                             \
+        NULL,                                                                                                          \
         c,                                                                                                             \
         #name,                                                                                                         \
         s,                                                                                                             \
