@@ -40,7 +40,6 @@ AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_l
 #    define DIRSEP "/"
 #endif
 
-
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
