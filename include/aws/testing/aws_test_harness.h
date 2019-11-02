@@ -368,10 +368,9 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
             const size_t leaked_bytes = aws_mem_tracer_count(harness->allocator);
             if (leaked_bytes) {
                 struct aws_logger err_logger;
-                struct aws_logger_standard_options options = {
-                    .level = AWS_LL_TRACE,
-                    .file = AWS_TESTING_REPORT_FD,
-                };
+                struct aws_logger_standard_options options;
+                options.file = AWS_TESTING_REPORT_FD;
+                options.level = AWS_LL_TRACE;
                 aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
                 aws_logger_set(&err_logger);
                 aws_mem_trace_dump(harness->allocator);
