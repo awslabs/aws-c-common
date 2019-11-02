@@ -125,7 +125,7 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
 
     if (tracer->level == AWS_MEMTRACE_STACKS) {
         /* capture stack frames, skip 2 for this function and the allocation vtable function */
-        AWS_VARIABLE_LENGTH_ARRAY(void *, stack_frames, FRAMES_TO_SKIP + tracer->frames_per_stack);
+        AWS_VARIABLE_LENGTH_ARRAY(void *, stack_frames, (FRAMES_TO_SKIP + tracer->frames_per_stack));
         int stack_depth = aws_backtrace(stack_frames, FRAMES_TO_SKIP + tracer->frames_per_stack);
         if (stack_depth) {
             /* hash the stack pointers */
