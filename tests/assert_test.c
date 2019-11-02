@@ -209,8 +209,6 @@ int main(int argc, char **argv) {
     g_test_filename = argv[1];
 
     // Suppress unused function warnings
-    (void)s_mem_acquire_malloc;
-    (void)s_mem_release_free;
     (void)s_aws_run_test_case;
 
     // Sanity checks for our own test macros

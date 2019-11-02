@@ -67,6 +67,8 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
         next = strstr(file, DIRSEP);
     }
 
+    struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+    aws_byte_buf_append_dynamic(buffer, &null_term);
     ASSERT_NOT_NULL(strstr((const char *)buffer->buffer, __func__));
 #    if !defined(__APPLE__) /* apple doesn't always find file info */
     /* if this is not a debug build, there may not be symbols, so the test cannot
