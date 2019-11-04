@@ -37,15 +37,15 @@ struct stacktrace_t {
 
 /* Tracking structure, used as the allocator impl */
 struct alloc_tracer {
-    struct aws_allocator *allocator; /* underlying allocator */
+    struct aws_allocator *allocator;        /* underlying allocator */
     struct aws_allocator *system_allocator; /* bookkeeping allocator */
-    enum aws_mem_trace_level level;  /* level to trace at */
-    size_t frames_per_stack;         /* how many frames to keep per stack */
-    struct aws_atomic_var allocated; /* bytes currently allocated */
-    struct aws_mutex mutex;          /* protects everything below */
-    struct aws_hash_table allocs;    /* live allocations, maps address -> alloc_t */
-    struct aws_hash_table stacks;    /* unique stack traces, maps hash -> stacktrace_t */
-    struct aws_hash_table stack_info; /* only used during dumps, maps stack hash/id -> stack_info_t */
+    enum aws_mem_trace_level level;         /* level to trace at */
+    size_t frames_per_stack;                /* how many frames to keep per stack */
+    struct aws_atomic_var allocated;        /* bytes currently allocated */
+    struct aws_mutex mutex;                 /* protects everything below */
+    struct aws_hash_table allocs;           /* live allocations, maps address -> alloc_t */
+    struct aws_hash_table stacks;           /* unique stack traces, maps hash -> stacktrace_t */
+    struct aws_hash_table stack_info;       /* only used during dumps, maps stack hash/id -> stack_info_t */
 };
 
 /* number of frames to skip in call stacks (s_alloc_tracer_track, and the vtable function) */
@@ -257,7 +257,8 @@ static int s_collect_stack_stats(void *context, struct aws_hash_element *item) {
     struct aws_hash_element *stack_item = NULL;
     int was_created = 0;
     AWS_FATAL_ASSERT(
-        AWS_OP_SUCCESS == aws_hash_table_create(&tracer->stack_info, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
+        AWS_OP_SUCCESS ==
+        aws_hash_table_create(&tracer->stack_info, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
     if (was_created) {
         stack_item->value = aws_mem_calloc(tracer->system_allocator, 1, sizeof(struct stack_info_t));
     }
@@ -311,7 +312,8 @@ static void s_alloc_tracer_dump(struct alloc_tracer *tracer) {
     if (tracer->level == AWS_MEMTRACE_STACKS) {
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
-            aws_hash_table_init(&tracer->stack_info, tracer->allocator, 64, s_stack_hash, s_stack_eq, NULL, s_stack_info_destroy));
+            aws_hash_table_init(
+                &tracer->stack_info, tracer->allocator, 64, s_stack_hash, s_stack_eq, NULL, s_stack_info_destroy));
         /* collect active stacks, tally up sizes and counts */
         aws_hash_table_foreach(&tracer->allocs, s_collect_stack_stats, tracer);
         /* collect stack traces for active stacks */
@@ -334,7 +336,8 @@ static void s_alloc_tracer_dump(struct alloc_tracer *tracer) {
         AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, "ALLOC %zu bytes\n", alloc->size);
         if (alloc->stack) {
             struct aws_hash_element *item = NULL;
-            AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(&tracer->stack_info, (void *)(uintptr_t)alloc->stack, &item));
+            AWS_FATAL_ASSERT(
+                AWS_OP_SUCCESS == aws_hash_table_find(&tracer->stack_info, (void *)(uintptr_t)alloc->stack, &item));
             struct stack_info_t *stack = item->value;
             AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, "  stacktrace:\n%s\n", (const char *)aws_string_bytes(stack->trace));
         }
@@ -455,7 +458,8 @@ struct aws_allocator *aws_mem_tracer_new(
 
     struct alloc_tracer *tracer = NULL;
     struct aws_allocator *trace_allocator = NULL;
-    aws_mem_acquire_many(system_allocator, 2, &tracer, sizeof(struct alloc_tracer), &trace_allocator, sizeof(struct aws_allocator));
+    aws_mem_acquire_many(
+        system_allocator, 2, &tracer, sizeof(struct alloc_tracer), &trace_allocator, sizeof(struct aws_allocator));
 
     AWS_FATAL_ASSERT(trace_allocator);
     AWS_FATAL_ASSERT(tracer);

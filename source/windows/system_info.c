@@ -17,6 +17,7 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
+#include <aws/common/thread.h>
 
 #include <windows.h>
 
@@ -75,11 +76,9 @@ static SymInitialize_fn *s_SymInitialize = NULL;
 static SymFromAddr_fn *s_SymFromAddr = NULL;
 static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
-static bool s_init_dbghelp() {
-    if (s_SymInitialize != NULL) {
-        return true;
-    }
-
+static struct aws_thread_once_flag s_init_once = AWS_THREAD_ONCE_STATIC_INIT;
+static void s_init_dbghelp_impl(void *user_data) {
+    (void)user_data;
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
     if (!dbghelp) {
         fprintf(stderr, "Failed to load DbgHelp.dll.\n");
@@ -114,6 +113,15 @@ done:
         FreeLibrary(dbghelp);
     }
     return false;
+}
+
+static bool s_init_dbghelp() {
+    if (AWS_LIKELY(s_SymInitialize)) {
+        return true;
+    }
+
+    aws_thread_call_once(&s_init_once, s_init_dbghelp_impl, NULL);
+    return s_SymInitialize != NULL;
 }
 
 size_t aws_backtrace(void **frames, size_t size) {
