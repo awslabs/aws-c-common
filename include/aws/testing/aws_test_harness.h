@@ -304,7 +304,6 @@ struct aws_test_harness {
     aws_test_before_fn *on_before;
     aws_test_run_fn *run;
     aws_test_after_fn *on_after;
-    struct aws_allocator *allocator;
     void *ctx;
     const char *test_name;
     int suppress_memcheck;
@@ -347,43 +346,52 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     sigaction(SIGSEGV, &sa, NULL);
 #endif
 
+    /* track allocations and report leaks in tests, unless suppressed */
+    struct aws_allocator *allocator = NULL;
     if (harness->suppress_memcheck) {
-        harness->allocator = aws_default_allocator();
+        allocator = aws_default_allocator();
     } else {
-        harness->allocator = aws_mem_tracer_new(aws_default_allocator(), NULL, AWS_MEMTRACE_STACKS, 8);
+        allocator = aws_mem_tracer_new(aws_default_allocator(), NULL, AWS_MEMTRACE_STACKS, 8);
     }
+
+    /* wire up a logger to stderr by default, may be replaced by some tests */
+    struct aws_logger err_logger;
+    struct aws_logger_standard_options options;
+    options.file = AWS_TESTING_REPORT_FD;
+    options.level = AWS_LL_TRACE;
+    aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
+    aws_logger_set(&err_logger);
 
     if (harness->on_before) {
-        harness->on_before(harness->allocator, harness->ctx);
+        harness->on_before(allocator, harness->ctx);
     }
 
-    int ret_val = harness->run(harness->allocator, harness->ctx);
+    int ret_val = harness->run(allocator, harness->ctx);
 
     if (harness->on_after) {
-        harness->on_after(harness->allocator, harness->ctx);
+        harness->on_after(allocator, harness->ctx);
     }
 
     if (!ret_val) {
         if (!harness->suppress_memcheck) {
-            const size_t leaked_bytes = aws_mem_tracer_count(harness->allocator);
+            const size_t leaked_bytes = aws_mem_tracer_count(allocator);
             if (leaked_bytes) {
-                struct aws_logger err_logger;
-                struct aws_logger_standard_options options;
-                options.file = AWS_TESTING_REPORT_FD;
-                options.level = AWS_LL_TRACE;
-                aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
-                aws_logger_set(&err_logger);
-                aws_mem_tracer_dump(harness->allocator);
-                aws_logger_clean_up(&err_logger);
+                aws_mem_tracer_dump(allocator);
             }
-            ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(harness->allocator));
+            ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(allocator));
         }
-
-        aws_mem_tracer_destroy(harness->allocator);
-        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
     }
 
-    FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    /* clean up */
+    aws_mem_tracer_destroy(allocator);
+    aws_logger_set(NULL);
+    aws_logger_clean_up(&err_logger);
+
+    if (!ret_val) {
+        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
+    } else {
+        FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    }
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */
@@ -429,7 +437,6 @@ static inline int enable_vt_mode(void) {
         fn,                                                                                                            \
         NULL,                                                                                                          \
         NULL,                                                                                                          \
-        NULL,                                                                                                          \
         #name,                                                                                                         \
         s,                                                                                                             \
     };                                                                                                                 \
@@ -446,7 +453,6 @@ static inline int enable_vt_mode(void) {
         b,                                                                                                             \
         fn,                                                                                                            \
         af,                                                                                                            \
-        NULL,                                                                                                          \
         c,                                                                                                             \
         #name,                                                                                                         \
         s,                                                                                                             \
