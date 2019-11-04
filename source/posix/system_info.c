@@ -239,7 +239,7 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    endif
 
-int aws_backtrace(void **frames, size_t size) {
+size_t aws_backtrace(void **frames, size_t size) {
     return backtrace(frames, size);
 }
 
@@ -260,7 +260,7 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      * start at 1 to skip the current frame (this function) */
-    for (int frame_idx = 0; frame_idx < stack_depth; ++frame_idx) {
+    for (size_t frame_idx = 0; frame_idx < stack_depth; ++frame_idx) {
         struct aws_stack_frame_info frame;
         AWS_ZERO_STRUCT(frame);
         const char *symbol = symbols[frame_idx];
@@ -306,7 +306,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
 
     void *stack_frames[AWS_BACKTRACE_DEPTH];
-    int stack_depth = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
+    size_t stack_depth = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
     char **symbols = aws_backtrace_symbols(stack_frames, stack_depth);
     if (symbols == NULL) {
         fprintf(fp, "Unable to decode backtrace via backtrace_symbols\n");
@@ -316,7 +316,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      * start at 1 to skip the current frame (this function) */
-    for (int frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
+    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         struct aws_stack_frame_info frame;
         AWS_ZERO_STRUCT(frame);
         const char *symbol = symbols[frame_idx];
@@ -353,7 +353,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     fprintf(fp, "No call stack information available\n");
 }
 
-int aws_backtrace(void **frames, size_t size) {
+size_t aws_backtrace(void **frames, size_t size) {
     return 0;
 }
 

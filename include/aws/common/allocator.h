@@ -123,6 +123,9 @@ enum aws_mem_trace_level {
 /*
  * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
  * and there are still allocations active, they will be reported to the aws_logger at TRACE level.
+ * allocator - The allocator to wrap
+ * system_allocator - The allocator to allocate bookkeeping data from, or NULL to use the default
+ * level - The level to track allocations at
  * frames_per_stack is how many frames to store per callstack if AWS_MEMTRACE_STACKS is in use,
  * otherwise it is ignored. 8 tends to be a pretty good number balancing storage space vs useful stacks.
  * Returns the tracer allocator, which should be used for all allocations that should be tracked.
@@ -130,6 +133,7 @@ enum aws_mem_trace_level {
 AWS_COMMON_API
 struct aws_allocator *aws_mem_tracer_new(
     struct aws_allocator *allocator,
+    struct aws_allocator *system_allocator,
     enum aws_mem_trace_level level,
     size_t frames_per_stack);
 
@@ -146,10 +150,16 @@ struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *trace_allocat
  * Should be passed the tracer allocator returned from aws_mem_trace().
  */
 AWS_COMMON_API
-void aws_mem_trace_dump(struct aws_allocator *trace_allocator);
+void aws_mem_tracer_dump(struct aws_allocator *trace_allocator);
 
 /*
  * Returns the current number of bytes in outstanding allocations
+ */
+AWS_COMMON_API
+size_t aws_mem_tracer_bytes(struct aws_allocator *trace_allocator);
+
+/*
+ * Returns the current number of outstanding allocations
  */
 AWS_COMMON_API
 size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);

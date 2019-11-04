@@ -42,11 +42,12 @@ void aws_debug_break(void);
  * is not supported on this platform
  */
 AWS_COMMON_API
-int aws_backtrace(void **frames, size_t num_frames);
+size_t aws_backtrace(void **frames, size_t num_frames);
 
 /*
  * Converts stack frame pointers to symbols, if symbols are available
  * Returns an array up to stack_depth long, that needs to be free()ed.
+ * stack_depth should be the length of frames.
  * Returns NULL if the platform does not support stack frame translation
  * or an error occurs
  */
@@ -57,7 +58,8 @@ char **aws_backtrace_symbols(void *const *frames, size_t stack_depth);
  * tools to try to produce a human readable result. This call will not be
  * quick, as it shells out to addr2line or similar tools.
  * On Windows, this is the same as aws_backtrace_symbols()
- * Returns and array up to stack_depth long that needs to be free()ed.
+ * Returns an array up to stack_depth long that needs to be free()ed. Missing
+ * frames will be NULL.
  * Returns NULL if the platform does not support stack frame translation
  * or an error occurs
  */

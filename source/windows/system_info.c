@@ -116,7 +116,7 @@ done:
     return false;
 }
 
-int aws_backtrace(void **frames, size_t size) {
+size_t aws_backtrace(void **frames, size_t size) {
     return (int)CaptureStackBackTrace(0, (ULONG)size, frames, NULL);
 }
 

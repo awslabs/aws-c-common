@@ -350,7 +350,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     if (harness->suppress_memcheck) {
         harness->allocator = aws_default_allocator();
     } else {
-        harness->allocator = aws_mem_tracer_new(aws_default_allocator(), AWS_MEMTRACE_STACKS, 8);
+        harness->allocator = aws_mem_tracer_new(aws_default_allocator(), NULL, AWS_MEMTRACE_STACKS, 8);
     }
 
     if (harness->on_before) {
@@ -373,7 +373,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
                 options.level = AWS_LL_TRACE;
                 aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
                 aws_logger_set(&err_logger);
-                aws_mem_trace_dump(harness->allocator);
+                aws_mem_tracer_dump(harness->allocator);
                 aws_logger_clean_up(&err_logger);
             }
             ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(harness->allocator));
