@@ -356,10 +356,10 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
     /* wire up a logger to stderr by default, may be replaced by some tests */
     struct aws_logger err_logger;
-    struct aws_logger_standard_options options;
-    options.file = AWS_TESTING_REPORT_FD;
-    options.level = AWS_LL_TRACE;
-    options.filename = NULL;
+    struct aws_logger_standard_options options = {
+        .file = AWS_TESTING_REPORT_FD,
+        .level = AWS_LL_TRACE,
+    };
     aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
     aws_logger_set(&err_logger);
 

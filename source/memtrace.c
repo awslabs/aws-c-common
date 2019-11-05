@@ -32,7 +32,7 @@ struct alloc_info {
 
 /* one of these is stored per unique stack */
 struct stack_trace {
-    size_t depth; /* length of frames[] */
+    size_t depth;         /* length of frames[] */
     void *const frames[]; /* rest of frames are allocated after */
 };
 
@@ -204,7 +204,6 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
     struct stack_trace *stack = stack_item->value;
     void *const *stack_frames = &stack->frames[0];
 
-
     /* convert the frame pointers to symbols, and concat into a buffer */
     char buf[4096] = {0};
     struct aws_byte_buf stacktrace = aws_byte_buf_from_empty_array(buf, AWS_ARRAY_SIZE(buf));
@@ -319,7 +318,8 @@ static void s_alloc_tracer_dump(struct alloc_tracer *tracer) {
 
     /* sort allocs by time */
     struct aws_priority_queue allocs;
-    aws_priority_queue_init_dynamic(&allocs, tracer->allocator, num_allocs, sizeof(struct alloc_info *), s_alloc_compare);
+    aws_priority_queue_init_dynamic(
+        &allocs, tracer->allocator, num_allocs, sizeof(struct alloc_info *), s_alloc_compare);
     aws_hash_table_foreach(&tracer->allocs, s_insert_allocs, &allocs);
     /* dump allocs by time */
     AWS_LOGF_TRACE(
