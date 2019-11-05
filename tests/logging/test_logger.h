@@ -21,8 +21,6 @@
 
 #include <aws/common/byte_buf.h>
 
-#define TEST_LOGGER_MAX_BUFFER_SIZE 4096
-
 /**
  * The test logger is a simple forwarding logger that just records what was passed to it.
  * We provide an extraction function for easy test validation.
@@ -30,12 +28,18 @@
 struct test_logger_impl {
     enum aws_log_level level;
     struct aws_byte_buf log_buffer;
+    size_t max_size;
 };
 
 /**
  * Given a pointer to a logger, initializes it as a test logger using the supplied log level.
+ * max_size of 0 is unlimited
  */
-int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level);
+int test_logger_init(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    enum aws_log_level level,
+    size_t max_size);
 
 /**
  * Extracts logged content from a test logger.

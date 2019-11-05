@@ -15,6 +15,10 @@
 
 #include <aws/common/system_info.h>
 
+#include <aws/common/byte_buf.h>
+#include <aws/common/logging.h>
+#include <aws/common/thread.h>
+
 #include <windows.h>
 
 size_t aws_system_info_processor_count(void) {
@@ -68,44 +72,79 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #    define SymGetLineFromAddrName "SymGetLineFromAddr"
 #endif
 
-void aws_backtrace_print(FILE *fp, void *call_site_data) {
-    struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
-    if (exception_pointers) {
-        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
-    }
+static SymInitialize_fn *s_SymInitialize = NULL;
+static SymFromAddr_fn *s_SymFromAddr = NULL;
+static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
+static aws_thread_once s_init_once = AWS_THREAD_ONCE_STATIC_INIT;
+static void s_init_dbghelp_impl(void *user_data) {
+    (void)user_data;
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
     if (!dbghelp) {
         fprintf(stderr, "Failed to load DbgHelp.dll.\n");
         goto done;
     }
 
-    SymInitialize_fn *p_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
-    if (!p_SymInitialize) {
+    s_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
+    if (!s_SymInitialize) {
         fprintf(stderr, "Failed to load SymInitialize from DbgHelp.dll.\n");
         goto done;
     }
 
-    SymFromAddr_fn *p_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
-    if (!p_SymFromAddr) {
+    s_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
+    if (!s_SymFromAddr) {
         fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
         goto done;
     }
 
-    SymGetLineFromAddr_fn *p_SymGetLineFromAddr =
-        (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
-    if (!p_SymGetLineFromAddr) {
+    s_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+    if (!s_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
     }
 
     HANDLE process = GetCurrentProcess();
-    p_SymInitialize(process, NULL, TRUE);
-    void *stack[1024];
-    WORD num_frames = CaptureStackBackTrace(0, 1024, stack, NULL);
+    AWS_FATAL_ASSERT(process);
+    s_SymInitialize(process, NULL, TRUE);
+    return;
+
+done:
+    if (dbghelp) {
+        FreeLibrary(dbghelp);
+    }
+    return;
+}
+
+static bool s_init_dbghelp() {
+    if (AWS_LIKELY(s_SymInitialize)) {
+        return true;
+    }
+
+    aws_thread_call_once(&s_init_once, s_init_dbghelp_impl, NULL);
+    return s_SymInitialize != NULL;
+}
+
+size_t aws_backtrace(void **frames, size_t size) {
+    return (int)CaptureStackBackTrace(0, (ULONG)size, frames, NULL);
+}
+
+char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
+    if (!s_init_dbghelp()) {
+        return NULL;
+    }
+
+    struct aws_byte_buf symbols;
+    aws_byte_buf_init(&symbols, aws_default_allocator(), num_frames * 256);
+    /* pointers for each stack entry */
+    memset(symbols.buffer, 0, num_frames * sizeof(void *));
+    symbols.len += num_frames * sizeof(void *);
+
     DWORD64 displacement = 0;
     DWORD disp = 0;
 
+    struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+    HANDLE process = GetCurrentProcess();
+    AWS_FATAL_ASSERT(process);
     fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
         uintptr_t address = (uintptr_t)stack[i];
@@ -113,25 +152,73 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        p_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
+        s_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
+
+        /* record a pointer to where the symbol will be */
+        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-        if (p_SymGetLineFromAddr(process, address, &disp, &line)) {
-            if (i != 0) {
-                fprintf(
-                    stderr,
-                    "at %s(%s:%lu): address: 0x%llX\n",
-                    sym_info.sym_info.Name,
-                    line.FileName,
-                    line.LineNumber,
-                    sym_info.sym_info.Address);
+        if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
+            char buf[1024];
+            int len = snprintf(
+                buf,
+                AWS_ARRAY_SIZE(buf),
+                "at %s(%s:%lu): address: 0x%llX",
+                sym_info.sym_info.Name,
+                line.FileName,
+                line.LineNumber,
+                sym_info.sym_info.Address);
+            if (len != -1) {
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
+                aws_byte_buf_append_dynamic(&symbols, &symbol);
+                continue;
             }
         }
+
+        /* Need at least a null so the address changes between lines */
+        aws_byte_buf_append_dynamic(&symbols, &null_term);
     }
 
-done:
-    if (dbghelp) {
-        FreeLibrary(dbghelp);
+    return (char **)symbols.buffer; /* buffer must be freed by the caller */
+}
+
+char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
+    return aws_backtrace_symbols(frames, stack_depth);
+}
+
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
+    struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
+    if (exception_pointers) {
+        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     }
+
+    if (!s_init_dbghelp()) {
+        fprintf(fp, "Unable to initialize dbghelp.dll");
+        return;
+    }
+
+    void *stack[1024];
+    size_t num_frames = aws_backtrace(stack, 1024);
+    char **symbols = aws_backtrace_symbols(stack, num_frames);
+    for (size_t line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        fprintf(fp, "%s\n", symbol);
+    }
+}
+
+void aws_backtrace_log() {
+    if (!s_init_dbghelp()) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Unable to initialize dbghelp.dll for backtrace");
+        return;
+    }
+
+    void *stack[1024];
+    size_t num_frames = aws_backtrace(stack, 1024);
+    char **symbols = aws_backtrace_symbols(stack, num_frames);
+    for (size_t line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
+    }
+    free(symbols);
 }

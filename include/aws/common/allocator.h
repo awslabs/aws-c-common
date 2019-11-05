@@ -110,6 +110,60 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
  * that we can leave unchanged on failure.
  */
 
+enum aws_mem_trace_level {
+    AWS_MEMTRACE_NONE = 0,   /* no tracing */
+    AWS_MEMTRACE_BYTES = 1,  /* just track allocation sizes and total allocated */
+    AWS_MEMTRACE_STACKS = 2, /* capture callstacks for each allocation */
+};
+
+#if defined(AWS_HAVE_EXECINFO) || defined(WIN32) || defined(__APPLE__)
+#    define AWS_MEMTRACE_STACKS_AVAILABLE
+#endif
+
+/*
+ * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
+ * and there are still allocations active, they will be reported to the aws_logger at TRACE level.
+ * allocator - The allocator to wrap
+ * system_allocator - The allocator to allocate bookkeeping data from, or NULL to use the default
+ * level - The level to track allocations at
+ * frames_per_stack is how many frames to store per callstack if AWS_MEMTRACE_STACKS is in use,
+ * otherwise it is ignored. 8 tends to be a pretty good number balancing storage space vs useful stacks.
+ * Returns the tracer allocator, which should be used for all allocations that should be tracked.
+ */
+AWS_COMMON_API
+struct aws_allocator *aws_mem_tracer_new(
+    struct aws_allocator *allocator,
+    struct aws_allocator *system_allocator,
+    enum aws_mem_trace_level level,
+    size_t frames_per_stack);
+
+/*
+ * Unwraps the traced allocator and cleans up the tracer.
+ * Returns the original allocator
+ */
+AWS_COMMON_API
+struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *trace_allocator);
+
+/*
+ * If there are outstanding allocations, dumps them to log, along with any information gathered
+ * based on the trace level set when aws_mem_trace() was called.
+ * Should be passed the tracer allocator returned from aws_mem_trace().
+ */
+AWS_COMMON_API
+void aws_mem_tracer_dump(struct aws_allocator *trace_allocator);
+
+/*
+ * Returns the current number of bytes in outstanding allocations
+ */
+AWS_COMMON_API
+size_t aws_mem_tracer_bytes(struct aws_allocator *trace_allocator);
+
+/*
+ * Returns the current number of outstanding allocations
+ */
+AWS_COMMON_API
+size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ALLOCATOR_H */

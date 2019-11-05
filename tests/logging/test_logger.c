@@ -23,7 +23,7 @@
 /**
  * A real logger wouldn't have such size restrictions, but these are good enough for our tests
  */
-#define TEST_LOGGER_MAX_LOG_LINE_SIZE 256
+#define TEST_LOGGER_MAX_LOG_LINE_SIZE 2048
 
 int s_test_logger_log(
     struct aws_logger *logger,
@@ -53,8 +53,15 @@ int s_test_logger_log(
 
     struct test_logger_impl *impl = (struct test_logger_impl *)logger->p_impl;
 
-    if (aws_byte_buf_write(&impl->log_buffer, (uint8_t *)buffer, written)) {
-        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    struct aws_byte_cursor line = aws_byte_cursor_from_array(buffer, written);
+    if (impl->max_size) {
+        if (aws_byte_buf_write(&impl->log_buffer, line.ptr, line.len)) {
+            return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+        }
+    } else {
+        if (aws_byte_buf_append_dynamic(&impl->log_buffer, &line)) {
+            return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+        }
     }
 
     return AWS_OP_SUCCESS;
@@ -81,7 +88,11 @@ static struct aws_logger_vtable s_test_logger_vtable = {.get_log_level = s_test_
                                                         .log = s_test_logger_log,
                                                         .clean_up = s_test_logger_clean_up};
 
-int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator, enum aws_log_level level) {
+int test_logger_init(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    enum aws_log_level level,
+    size_t max_size) {
 
     struct test_logger_impl *impl =
         (struct test_logger_impl *)aws_mem_acquire(allocator, sizeof(struct test_logger_impl));
@@ -89,12 +100,13 @@ int test_logger_init(struct aws_logger *logger, struct aws_allocator *allocator,
         return AWS_OP_ERR;
     }
 
-    if (aws_byte_buf_init(&impl->log_buffer, allocator, TEST_LOGGER_MAX_BUFFER_SIZE)) {
+    if (aws_byte_buf_init(&impl->log_buffer, allocator, max_size ? max_size : 4096)) {
         aws_mem_release(allocator, impl);
         return AWS_OP_ERR;
     }
 
     impl->level = level;
+    impl->max_size = max_size;
 
     logger->vtable = &s_test_logger_vtable;
     logger->allocator = allocator;

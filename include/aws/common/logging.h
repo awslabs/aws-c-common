@@ -84,6 +84,7 @@ struct aws_log_subject_info_list {
 enum aws_common_log_subject {
     AWS_LS_COMMON_GENERAL = 0,
     AWS_LS_COMMON_TASK_SCHEDULER,
+    AWS_LS_COMMON_MEMTRACE,
 
     AWS_LS_COMMON_LAST = (AWS_LS_COMMON_GENERAL + AWS_LOG_SUBJECT_SPACE_SIZE - 1)
 };

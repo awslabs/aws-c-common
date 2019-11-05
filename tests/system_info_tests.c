@@ -15,6 +15,7 @@
 
 #include <aws/common/system_info.h>
 
+#include "logging/test_logger.h"
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator *allocator, void *ctx) {
@@ -34,75 +35,68 @@ AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_l
 
 #if defined(_WIN32)
 #    include <io.h>
+#    define DIRSEP "\\"
+#else
+#    define DIRSEP "/"
 #endif
 
 static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    char tmp_filename[] = "backtraceXXXXXX";
-    FILE *tmp_file = NULL;
 
-#if defined(_WIN32)
-    errno_t tmp_err = _mktemp_s(tmp_filename, sizeof(tmp_filename));
-    ASSERT_INT_EQUALS(0, tmp_err);
-    errno_t open = fopen_s(&tmp_file, tmp_filename, "w+");
-    ASSERT_INT_EQUALS(0, open);
-#else
-    int tmp_fileno = mkstemp(tmp_filename);
-    ASSERT_TRUE(tmp_fileno > -1);
-    tmp_file = fdopen(tmp_fileno, "r+");
-#endif
-    ASSERT_NOT_NULL(tmp_file);
+    struct aws_logger test_log;
+    test_logger_init(&test_log, allocator, AWS_LL_TRACE, 0);
+    aws_logger_set(&test_log);
 
-    int line = 0; /* captured on line of aws_backtrace_print call to match call site */
-    (void)line;   /* may not be used if debug info is unavailable */
-    aws_backtrace_print(tmp_file, (line = __LINE__, NULL)); /* NOLINT */
-    fflush(tmp_file);
+    int line = 0;                           /* captured on line of aws_backtrace_log call to match call site */
+    (void)line;                             /* may not be used if debug info is unavailable */
+    aws_backtrace_log(), (line = __LINE__); /* NOLINT */
 
-    fseek(tmp_file, 0L, SEEK_END);
-    long file_size = ftell(tmp_file);
-    fseek(tmp_file, 0L, SEEK_SET);
-    char *buffer = aws_mem_acquire(allocator, file_size + 1);
-    ASSERT_NOT_NULL(buffer);
-    ASSERT_INT_EQUALS(file_size, fread(buffer, 1, file_size, tmp_file));
-    fclose(tmp_file);
-    buffer[file_size] = 0;
+    struct test_logger_impl *log = test_log.p_impl;
+    ASSERT_NOT_NULL(log);
 
-#if defined(AWS_HAVE_EXECINFO)
+    struct aws_byte_buf *buffer = &log->log_buffer;
+    (void)buffer;
+
+#if defined(AWS_BACKTRACE_STACKS_AVAILABLE) && defined(DEBUG_BUILD)
     /* ensure that this file/function is found */
     char *file = __FILE__;
-    char *next = NULL;
+    char *next = strstr(file, DIRSEP);
     /* strip path info, just filename will be found */
-    while ((next = strstr(file, "/"))) {
+    while (next) {
         file = next + 1;
+        next = strstr(file, DIRSEP);
     }
 
-    ASSERT_NOT_NULL(strstr(buffer, __func__));
+    struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
+    aws_byte_buf_append_dynamic(buffer, &null_term);
+    ASSERT_NOT_NULL(strstr((const char *)buffer->buffer, __func__));
 #    if !defined(__APPLE__) /* apple doesn't always find file info */
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
-#        if defined(DEBUG_BUILD)
-    ASSERT_NOT_NULL(strstr(buffer, file));
+    ASSERT_NOT_NULL(strstr((const char *)buffer->buffer, file));
     /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
      * in both directions depending on compiler, so we check a range around the call site __LINE__
      * The line number can also be ? on old compilers
      */
     char fileline[4096];
-    bool found_file_line = false;
+    uint32_t found_file_line = 0;
     for (int lineno = line - 1; lineno <= line + 1; ++lineno) {
         snprintf(fileline, sizeof(fileline), "%s:%d", file, lineno);
-        found_file_line |= strstr(buffer, fileline) != NULL;
+        found_file_line |= strstr((const char *)buffer->buffer, fileline) != NULL;
+        if (found_file_line) {
+            break;
+        }
     }
     if (!found_file_line) {
         snprintf(fileline, sizeof(fileline), "%s:?", file);
-        found_file_line = strstr(buffer, fileline) != NULL;
+        found_file_line = strstr((const char *)buffer->buffer, fileline) != NULL;
     }
 
     ASSERT_TRUE(found_file_line);
-#        endif
 #    endif /* __APPLE__ */
 #endif
 
-    aws_mem_release(allocator, buffer);
+    aws_logger_clean_up(&test_log);
     return 0;
 }
 
