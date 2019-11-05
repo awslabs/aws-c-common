@@ -30,11 +30,25 @@ struct alloc_info {
     uint64_t stack; /* hash of stack frame pointers */
 };
 
+/* Using a flexible array member is the C99 compliant way to have the frames immediately follow the header.
+ *
+ * MSVC doesn't know this for some reason so we need to use a pragma to make
+ * it happy.
+ */
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4200) /* nonstandard extension used: zero-sized array in struct/union */
+#endif
+
 /* one of these is stored per unique stack */
 struct stack_trace {
     size_t depth;         /* length of frames[] */
     void *const frames[]; /* rest of frames are allocated after */
 };
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
 
 /* Tracking structure, used as the allocator impl */
 struct alloc_tracer {
