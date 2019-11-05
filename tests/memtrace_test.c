@@ -93,9 +93,12 @@ static struct aws_logger s_test_logger;
 
 static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-#if !defined(AWS_MEMTRACE_STACKS_AVAILABLE)
-    return 0;
-#endif
+
+    /* only bother to run this test if the platform can do a backtrace */
+    void *probe_stack[1];
+    if (!aws_backtrace(probe_stack, 1)) {
+        return 0;
+    }
 
     test_logger_init(&s_test_logger, allocator, AWS_LL_TRACE, 0);
     aws_logger_set(&s_test_logger);
