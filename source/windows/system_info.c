@@ -106,13 +106,13 @@ static void s_init_dbghelp_impl(void *user_data) {
     HANDLE process = GetCurrentProcess();
     AWS_FATAL_ASSERT(process);
     s_SymInitialize(process, NULL, TRUE);
-    return true;
+    return;
 
 done:
     if (dbghelp) {
         FreeLibrary(dbghelp);
     }
-    return false;
+    return;
 }
 
 static bool s_init_dbghelp() {
