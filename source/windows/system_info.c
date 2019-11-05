@@ -76,7 +76,7 @@ static SymInitialize_fn *s_SymInitialize = NULL;
 static SymFromAddr_fn *s_SymFromAddr = NULL;
 static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
-static struct aws_thread_once_flag s_init_once = AWS_THREAD_ONCE_STATIC_INIT;
+static struct aws_thread_once s_init_once = AWS_THREAD_ONCE_STATIC_INIT;
 static void s_init_dbghelp_impl(void *user_data) {
     (void)user_data;
     HMODULE dbghelp = LoadLibraryA("DbgHelp.dll");
