@@ -27,9 +27,9 @@ include(AwsCFlags)
 
 set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker")
 
-set(HEADER_CHECKER_LIB ${CMAKE_PROJECT_NAME}-header-check)
+set(HEADER_CHECKER_LIB ${PROJECT_NAME}-header-check)
 add_executable(${HEADER_CHECKER_LIB} "${CMAKE_CURRENT_SOURCE_DIR}/stub.c")
-target_link_libraries(${HEADER_CHECKER_LIB} ${CMAKE_PROJECT_NAME})
+target_link_libraries(${HEADER_CHECKER_LIB} ${PROJECT_NAME})
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_UNSTABLE_TESTING_API=1)
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_HEADER_CHECKER=1)
 
