@@ -191,6 +191,7 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *frame) {
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
+     *                or: [0x<addr>]
      */
     (void)addr;
     const char *open_paren = strstr(symbol, "(");
@@ -198,14 +199,21 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     const char *exe_end = open_paren;
     /* there may not be a function in parens, or parens at all */
     if (open_paren == NULL || close_paren == NULL) {
-        exe_end = strstr(symbol, "[") - 1;
+        exe_end = strstr(symbol, "[");
         if (!exe_end) {
             return AWS_OP_ERR;
         }
+        /* if exe_end == symbol, there's no exe */
+        if (exe_end != symbol) {
+            exe_end -= 1;
+        }
+
     }
 
     ptrdiff_t exe_len = exe_end - symbol;
-    strncpy(frame->exe, symbol, exe_len);
+    if (exe_len > 0) {
+        strncpy(frame->exe, symbol, exe_len);
+    }
     s_whitelist_chars(frame->exe);
 
     long function_len = (open_paren && close_paren) ? close_paren - open_paren - 1 : 0;
@@ -285,7 +293,7 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
         }
         pclose(out);
 
-    parse_failed:
+        parse_failed:
         /* record the pointer to where the symbol will be */
         *((char **)&lines.buffer[frame_idx * sizeof(void *)]) = (char *)lines.buffer + lines.len;
         struct aws_byte_cursor line_cursor = aws_byte_cursor_from_c_str(symbol);
@@ -313,8 +321,20 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         return;
     }
 
+    fprintf(fp, "################################################################################");
+    fprintf(fp, "Raw stacktrace:\n");
+    fprintf(fp, "################################################################################");
+    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
+        const char *symbol = symbols[frame_idx];
+        fprintf(fp, "%s\n", symbol);
+    }
+
+    fprintf(fp, "################################################################################");
+    fprintf(fp, "Resolved stacktrace:\n");
+    fprintf(fp, "################################################################################");
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
+     *                or: [0x<addr>]
      * start at 1 to skip the current frame (this function) */
     for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         struct aws_stack_frame_info frame;
@@ -341,7 +361,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         }
         pclose(out);
 
-    parse_failed:
+        parse_failed:
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
     free(symbols);
