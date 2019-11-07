@@ -176,6 +176,8 @@ AWS_TEST_CASE(test_memtrace_stacks, s_test_memtrace_stacks)
 
 static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "THIS IS A TEST");
+    ASSERT_NOT_NULL(NULL);
     struct aws_allocator *tracer = aws_mem_tracer_new(allocator, NULL, AWS_MEMTRACE_NONE, 0);
 
     void *allocs[NUM_ALLOCS] = {0};
