@@ -320,9 +320,9 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         return;
     }
 
-    fprintf(fp, "################################################################################");
+    fprintf(fp, "################################################################################\n");
     fprintf(fp, "Resolved stacktrace:\n");
-    fprintf(fp, "################################################################################");
+    fprintf(fp, "################################################################################\n");
     /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
      *                or: <exe-or-shared-lib> [0x<addr>]
      *                or: [0x<addr>]
@@ -356,9 +356,9 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
 
-    fprintf(fp, "################################################################################");
+    fprintf(fp, "################################################################################\n");
     fprintf(fp, "Raw stacktrace:\n");
-    fprintf(fp, "################################################################################");
+    fprintf(fp, "################################################################################\n");
     for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         const char *symbol = symbols[frame_idx];
         fprintf(fp, "%s\n", symbol);
