@@ -207,7 +207,6 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
         if (exe_end != symbol) {
             exe_end -= 1;
         }
-
     }
 
     ptrdiff_t exe_len = exe_end - symbol;
@@ -293,7 +292,7 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
         }
         pclose(out);
 
-        parse_failed:
+    parse_failed:
         /* record the pointer to where the symbol will be */
         *((char **)&lines.buffer[frame_idx * sizeof(void *)]) = (char *)lines.buffer + lines.len;
         struct aws_byte_cursor line_cursor = aws_byte_cursor_from_c_str(symbol);
@@ -319,14 +318,6 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     if (symbols == NULL) {
         fprintf(fp, "Unable to decode backtrace via backtrace_symbols\n");
         return;
-    }
-
-    fprintf(fp, "################################################################################");
-    fprintf(fp, "Raw stacktrace:\n");
-    fprintf(fp, "################################################################################");
-    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
-        const char *symbol = symbols[frame_idx];
-        fprintf(fp, "%s\n", symbol);
     }
 
     fprintf(fp, "################################################################################");
@@ -361,9 +352,18 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         }
         pclose(out);
 
-        parse_failed:
+    parse_failed:
         fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
     }
+
+    fprintf(fp, "################################################################################");
+    fprintf(fp, "Raw stacktrace:\n");
+    fprintf(fp, "################################################################################");
+    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
+        const char *symbol = symbols[frame_idx];
+        fprintf(fp, "%s\n", symbol);
+    }
+
     free(symbols);
 }
 
