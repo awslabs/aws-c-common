@@ -717,6 +717,7 @@ def run_build(build_spec, build_config, is_dryrun):
             command_variables = {
                 'source_dir': project_source_dir,
                 'build_dir': project_build_dir,
+                'build_config': build_config,
                 **config,
                 **config['variables'],
             }
