@@ -224,6 +224,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
         "A c-string like buffer was passed but a null terminator was not found within the bounds of the buffer."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_STRING_MATCH_NOT_FOUND,
+      "The specified substring was not present in the input string."),
 };
 /* clang-format on */
 
