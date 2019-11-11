@@ -272,7 +272,7 @@ int aws_byte_cursor_find_exact(
     struct aws_byte_cursor working_cur = *input_str;
 
     while (working_cur.len) {
-        uint8_t *first_char_location = memchr(working_cur.ptr, (char)*working_cur.ptr, working_cur.len);
+        uint8_t *first_char_location = memchr(working_cur.ptr, (char)*to_find->ptr, working_cur.len);
 
         if (!first_char_location) {
             return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
