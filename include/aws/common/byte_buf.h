@@ -292,6 +292,18 @@ int aws_byte_cursor_split_on_char_n(
     struct aws_array_list *AWS_RESTRICT output);
 
 /**
+ * Search for an exact byte match inside a cursor. The first match will be returned. Returns AWS_OP_SUCCESS
+ * on successful match and first_find will be set to the offset in input_str, and length will be the remaining length
+ * from input_str past the returned offset. If the match was not found, AWS_OP_ERR will be returned and
+ * AWS_ERROR_STRING_MATCH_NOT_FOUND will be raised.
+ */
+AWS_COMMON_API
+int aws_byte_cursor_find_exact(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    const struct aws_byte_cursor *AWS_RESTRICT to_find,
+    struct aws_byte_cursor *first_find);
+
+/**
  *
  * Shrinks a byte cursor from the right for as long as the supplied predicate is true
  */

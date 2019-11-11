@@ -240,6 +240,10 @@ add_test_case(test_byte_buf_reset)
 add_test_case(test_byte_cursor_compare_lexical)
 add_test_case(test_byte_cursor_compare_lookup)
 
+add_test_case(test_byte_cursor_find_str)
+add_test_case(test_byte_cursor_find_str_not_found)
+add_test_case(test_byte_cursor_find_str_longer_than_input)
+
 add_test_case(byte_swap_test)
 add_test_case(alignment_test)
 

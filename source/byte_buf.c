@@ -257,6 +257,44 @@ int aws_byte_cursor_split_on_char(
     return aws_byte_cursor_split_on_char_n(input_str, split_on, 0, output);
 }
 
+int aws_byte_cursor_find_exact(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    const struct aws_byte_cursor *AWS_RESTRICT to_find,
+    struct aws_byte_cursor *first_find) {
+    if (to_find->len > input_str->len) {
+        return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+    }
+
+    if (to_find->len < 1) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
+
+    struct aws_byte_cursor working_cur = *input_str;
+
+    while (working_cur.len) {
+        uint8_t *first_char_location = memchr(working_cur.ptr, (char)*to_find->ptr, working_cur.len);
+
+        if (!first_char_location) {
+            return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+        }
+
+        aws_byte_cursor_advance(&working_cur, first_char_location - working_cur.ptr);
+
+        if (working_cur.len < to_find->len) {
+            return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+        }
+
+        if (!memcmp(working_cur.ptr, to_find->ptr, to_find->len)) {
+            *first_find = working_cur;
+            return AWS_OP_SUCCESS;
+        }
+
+        aws_byte_cursor_advance(&working_cur, 1);
+    }
+
+    return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+}
+
 int aws_byte_buf_cat(struct aws_byte_buf *dest, size_t number_of_args, ...) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(dest));
 
