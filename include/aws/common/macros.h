@@ -66,6 +66,8 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * (length))
 #    define AWS_DECLSPEC_NORETURN __declspec(noreturn)
 #    define AWS_ATTRIBUTE_NORETURN
+#    define AWS_DEPRECATED __declspec(deprecated)
+#    define AWS_DEPRECATED_MSG(msg) __declspec(deprecated(msg))
 #else
 #    if defined(__GNUC__) || defined(__clang__)
 #        define AWS_ALIGNED_TYPEDEF(from, to, alignment) typedef from to __attribute__((aligned(alignment)))
@@ -80,8 +82,10 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #        else
 #            define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type name[length];
 #        endif /* defined(__cplusplus) */
-#    endif     /*  defined(__GNUC__) || defined(__clang__) */
-#endif         /*  defined(_MSC_VER) */
+#        define AWS_DEPRECATED __attribute__((deprecated))
+#        define AWS_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#    endif /*  defined(__GNUC__) || defined(__clang__) */
+#endif     /*  defined(_MSC_VER) */
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
  * If visual C++ building in C mode, the restrict definition is __restrict.
