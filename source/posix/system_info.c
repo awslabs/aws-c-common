@@ -374,10 +374,20 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 }
 
 size_t aws_backtrace(void **frames, size_t size) {
+    (void)frames;
+    (void)size;
     return 0;
 }
 
 char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+    (void)frames;
+    (void)stack_depth;
+    return NULL;
+}
+
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    (void)stack_frames;
+    (void)stack_depth;
     return NULL;
 }
 #endif /* AWS_HAVE_EXECINFO */
