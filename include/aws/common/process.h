@@ -21,4 +21,6 @@ AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API int aws_get_pid(void);
 
+AWS_EXTERN_C_END
+
 #endif /* AWS_COMMON_PROCESS_H */
