@@ -32,7 +32,7 @@
  *     __CPROVER_assume(size <= MAX_MALLOC);
  * before calling calloc, and hence will never return an invalid pointer.
  */
-void *bounded_calloc(size_t size);
+void *bounded_calloc(size_t num, size_t size);
 
 /**
  * CBMC model of malloc always succeeds, even if the requested size is larger
