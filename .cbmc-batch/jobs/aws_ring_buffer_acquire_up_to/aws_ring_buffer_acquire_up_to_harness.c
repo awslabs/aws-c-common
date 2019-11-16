@@ -52,7 +52,7 @@ void aws_ring_buffer_acquire_up_to_harness() {
         assert(IMPLIES(is_ends_valid_state(&ring_buf_old), is_ends_valid_state(&ring_buf)));
         assert(!(is_front_valid_state(&ring_buf_old) && is_middle_valid_state(&ring_buf)));
     } else {
-        assert(ring_buf == ring_buf_old);
+        assert_ring_buffer_equivalence(&ring_buf, &ring_buf_old);
     }
     assert(aws_ring_buffer_is_valid(&ring_buf));
     assert(ring_buf.allocator == ring_buf_old.allocator);

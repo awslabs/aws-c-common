@@ -101,6 +101,20 @@ void assert_byte_cursor_equivalence(
     }
 }
 
+void assert_ring_buffer_equivalence(
+    const struct aws_ring_buffer *const lhs,
+    const struct aws_ring_buffer *const rhs)
+{
+    assert(!lhs == !rhs);
+    if (lhs && rhs) {
+        assert(lhs->allocator == rhs->allocator);
+        assert(lhs->allocation == rhs->allocation);
+        assert(lhs->head.value == rhs->head.value);
+        assert(lhs->tail.value == rhs->tail.value);
+        assert(lhs->allocation_end == rhs->allocation_end);
+    }
+}
+
 void save_byte_from_hash_table(const struct aws_hash_table *map, struct store_byte_from_buffer *storage) {
     struct hash_table_state *state = map->p_impl;
     size_t size_in_bytes;

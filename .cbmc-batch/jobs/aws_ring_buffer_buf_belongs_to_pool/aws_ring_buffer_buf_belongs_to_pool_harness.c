@@ -45,6 +45,8 @@ void aws_ring_buffer_buf_belongs_to_pool_harness() {
     assert(is_member == result);
     assert(aws_ring_buffer_is_valid(&ring_buf));
     assert(aws_byte_buf_is_valid(&buf));
-    assert(ring_buf_old == ring_buf);
-    assert(buf_old == buf);
+    assert_ring_buffer_equivalence(&ring_buf_old, &ring_buf);
+    struct store_byte_from_buffer rhs_byte;
+    save_byte_from_array(buf.buffer, buf.len, &rhs_byte);
+    assert_byte_buf_equivalence(&buf_old, &buf, &rhs_byte);
 }

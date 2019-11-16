@@ -17,6 +17,7 @@
 
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
+#include <aws/common/ring_buffer.h>
 #include <proof_helpers/nondet.h>
 #include <proof_helpers/proof_allocators.h>
 #include <stddef.h>
@@ -77,6 +78,15 @@ void assert_byte_cursor_equivalence(
     const struct aws_byte_buf *const lhs,
     const struct aws_byte_buf *const rhs,
     const struct store_byte_from_buffer *const rhs_byte);
+
+/**
+ * Asserts two aws_ring_buffer structures are equivalent. In order to be considered equivalent,
+ * all member from both structures must match (i.e., head, tail, *allocation, *allocation_end,
+ * and *allocator).
+ */
+void assert_ring_buffer_equivalence(
+    const struct aws_ring_buffer *const lhs,
+    const struct aws_ring_buffer *const rhs);
 
 /**
  * Asserts two aws_byte_cursor structures are equivalent. Prior to using this function,
