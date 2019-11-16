@@ -28,7 +28,7 @@ void aws_linked_list_rend_harness() {
     /* Note: list can never be a NULL pointer as is_valid checks for that */
 
     /* perform operation under verification */
-    struct aws_linked_list_node *rval = aws_linked_list_rend(&list);
+    struct aws_linked_list_node const *rval = aws_linked_list_rend(&list);
 
     /* assertions */
     assert(rval == &list.head);
