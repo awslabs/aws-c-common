@@ -27,9 +27,9 @@ void aws_hash_table_init_bounded_harness() {
     size_t size;
     __CPROVER_assume(size <= MAX_TABLE_SIZE);
     aws_hash_fn *hash_fn;
-    __CPROVER_assume(hash_fn);
+    __CPROVER_assume(AWS_NOT_NULL(hash_fn));
     aws_hash_callback_eq_fn *equals_fn;
-    __CPROVER_assume(equals_fn);
+    __CPROVER_assume(AWS_NOT_NULL(equals_fn));
     aws_hash_callback_destroy_fn *destroy_key_fn;
     aws_hash_callback_destroy_fn *destroy_value_fn;
     struct aws_hash_table map;

@@ -27,9 +27,9 @@ void aws_hash_table_init_unbounded_harness() {
     struct aws_allocator *allocator = can_fail_allocator();
     size_t size;
     aws_hash_fn *hash_fn;
-    __CPROVER_assume(hash_fn);
+    __CPROVER_assume(AWS_NOT_NULL(hash_fn));
     aws_hash_callback_eq_fn *equals_fn;
-    __CPROVER_assume(equals_fn);
+    __CPROVER_assume(AWS_NOT_NULL(equals_fn));
     aws_hash_callback_destroy_fn *destroy_key_fn;
     aws_hash_callback_destroy_fn *destroy_value_fn;
     struct aws_hash_table map;

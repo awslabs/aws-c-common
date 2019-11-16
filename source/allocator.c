@@ -73,8 +73,8 @@ struct aws_allocator *aws_default_allocator(void) {
 }
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_acquire != NULL);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_acquire));
     /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
     AWS_FATAL_PRECONDITION(size != 0);
 
@@ -86,8 +86,8 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 }
 
 void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_calloc || allocator->mem_acquire);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_calloc) || AWS_NOT_NULL(allocator->mem_acquire));
     /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
     AWS_FATAL_PRECONDITION(num != 0 && size != 0);
 
@@ -115,7 +115,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
         return NULL;
     }
     memset(mem, 0, required_bytes);
-    AWS_POSTCONDITION(mem != NULL);
+    AWS_POSTCONDITION(AWS_NOT_NULL(mem));
     return mem;
 }
 
@@ -173,8 +173,8 @@ cleanup:
 #undef AWS_ALIGN_ROUND_UP
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_release != NULL);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_release));
 
     if (ptr != NULL) {
         allocator->mem_release(allocator, ptr);
@@ -182,9 +182,9 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
 }
 
 int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_realloc || allocator->mem_acquire);
-    AWS_FATAL_PRECONDITION(allocator->mem_release);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_realloc) || AWS_NOT_NULL(allocator->mem_acquire));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_release));
 
     /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
     if (newsize == 0) {
@@ -256,7 +256,7 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
     (void)hint;
 
     struct aws_allocator *allocator = info;
-    AWS_ASSERT(allocator->mem_realloc);
+    AWS_ASSERT(AWS_NOT_NULL(allocator->mem_realloc));
 
     void *original_allocation = (uint8_t *)ptr - sizeof(size_t);
     size_t original_size = 0;

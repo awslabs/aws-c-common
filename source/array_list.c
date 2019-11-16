@@ -69,7 +69,7 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
 
 int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct aws_array_list *AWS_RESTRICT to) {
     AWS_FATAL_PRECONDITION(from->item_size == to->item_size);
-    AWS_FATAL_PRECONDITION(from->data);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(from->data));
     AWS_PRECONDITION(aws_array_list_is_valid(from));
     AWS_PRECONDITION(aws_array_list_is_valid(to));
 
@@ -179,8 +179,8 @@ int aws_array_list_ensure_capacity(struct aws_array_list *AWS_RESTRICT list, siz
 static void aws_array_list_mem_swap(void *AWS_RESTRICT item1, void *AWS_RESTRICT item2, size_t item_size) {
     enum { SLICE = 128 };
 
-    AWS_FATAL_PRECONDITION(item1);
-    AWS_FATAL_PRECONDITION(item2);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(item1));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(item2));
 
     /* copy SLICE sized bytes at a time */
     size_t slice_count = item_size / SLICE;

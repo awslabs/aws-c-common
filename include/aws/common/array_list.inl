@@ -31,8 +31,8 @@ int aws_array_list_init_dynamic(
     size_t initial_item_allocation,
     size_t item_size) {
 
-    AWS_FATAL_PRECONDITION(list != NULL);
-    AWS_FATAL_PRECONDITION(alloc != NULL);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(list));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(alloc));
     AWS_FATAL_PRECONDITION(item_size > 0);
 
     AWS_ZERO_STRUCT(*list);
@@ -56,7 +56,7 @@ int aws_array_list_init_dynamic(
     list->item_size = item_size;
     list->alloc = alloc;
 
-    AWS_FATAL_POSTCONDITION(list->current_size == 0 || list->data);
+    AWS_FATAL_POSTCONDITION(list->current_size == 0 || AWS_NOT_NULL(list->data));
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
 
@@ -72,8 +72,8 @@ void aws_array_list_init_static(
     size_t item_count,
     size_t item_size) {
 
-    AWS_FATAL_PRECONDITION(list != NULL);
-    AWS_FATAL_PRECONDITION(raw_array != NULL);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(list));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(raw_array));
     AWS_FATAL_PRECONDITION(item_count > 0);
     AWS_FATAL_PRECONDITION(item_size > 0);
 
@@ -129,7 +129,7 @@ AWS_STATIC_IMPL
 int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
-        val && AWS_MEM_IS_READABLE(val, list->item_size),
+        AWS_NOT_NULL(val) && AWS_MEM_IS_READABLE(val, list->item_size),
         "Input pointer [val] must point writable memory of [list->item_size] bytes.");
 
     int err_code = aws_array_list_set_at(list, val, aws_array_list_length(list));
@@ -147,7 +147,7 @@ AWS_STATIC_IMPL
 int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
-        val && AWS_MEM_IS_WRITABLE(val, list->item_size),
+        AWS_NOT_NULL(val) && AWS_MEM_IS_WRITABLE(val, list->item_size),
         "Input pointer [val] must point writable memory of [list->item_size] bytes.");
     if (aws_array_list_length(list) > 0) {
         memcpy(val, list->data, list->item_size);
@@ -230,7 +230,7 @@ AWS_STATIC_IMPL
 int aws_array_list_back(const struct aws_array_list *AWS_RESTRICT list, void *val) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
-        val && AWS_MEM_IS_WRITABLE(val, list->item_size),
+        AWS_NOT_NULL(val) && AWS_MEM_IS_WRITABLE(val, list->item_size),
         "Input pointer [val] must point writable memory of [list->item_size] bytes.");
     if (aws_array_list_length(list) > 0) {
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
@@ -249,7 +249,7 @@ int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     if (aws_array_list_length(list) > 0) {
 
-        AWS_FATAL_PRECONDITION(list->data);
+        AWS_FATAL_PRECONDITION(AWS_NOT_NULL(list->data));
 
         size_t last_item_offset = list->item_size * (aws_array_list_length(list) - 1);
 
@@ -279,7 +279,7 @@ AWS_STATIC_IMPL
 void aws_array_list_swap_contents(
     struct aws_array_list *AWS_RESTRICT list_a,
     struct aws_array_list *AWS_RESTRICT list_b) {
-    AWS_FATAL_PRECONDITION(list_a->alloc);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(list_a->alloc));
     AWS_FATAL_PRECONDITION(list_a->alloc == list_b->alloc);
     AWS_FATAL_PRECONDITION(list_a->item_size == list_b->item_size);
     AWS_FATAL_PRECONDITION(list_a != list_b);
@@ -308,7 +308,7 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * This assert teaches clang-tidy and friends that list->data cannot be null in a non-empty
      * list.
      */
-    AWS_FATAL_PRECONDITION(!list->length || list->data);
+    AWS_FATAL_PRECONDITION(!list->length || AWS_NOT_NULL(list->data));
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     size_t len = list->length;
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -319,7 +319,7 @@ AWS_STATIC_IMPL
 int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
-        val && AWS_MEM_IS_WRITABLE(val, list->item_size),
+        AWS_NOT_NULL(val) && AWS_MEM_IS_WRITABLE(val, list->item_size),
         "Input pointer [val] must point writable memory of [list->item_size] bytes.");
     if (aws_array_list_length(list) > index) {
         memcpy(val, (void *)((uint8_t *)list->data + (list->item_size * index)), list->item_size);
@@ -333,7 +333,7 @@ int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *
 AWS_STATIC_IMPL
 int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, void **val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
-    AWS_PRECONDITION(val != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(val));
     if (aws_array_list_length(list) > index) {
         *val = (void *)((uint8_t *)list->data + (list->item_size * index));
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
@@ -347,7 +347,7 @@ AWS_STATIC_IMPL
 int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *val, size_t index) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(
-        val && AWS_MEM_IS_READABLE(val, list->item_size),
+        AWS_NOT_NULL(val) && AWS_MEM_IS_READABLE(val, list->item_size),
         "Input pointer [val] must point readable memory of [list->item_size] bytes.");
 
     if (aws_array_list_ensure_capacity(list, index)) {
@@ -355,7 +355,7 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
         return AWS_OP_ERR;
     }
 
-    AWS_FATAL_PRECONDITION(list->data);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(list->data));
 
     memcpy((void *)((uint8_t *)list->data + (list->item_size * index)), val, list->item_size);
 

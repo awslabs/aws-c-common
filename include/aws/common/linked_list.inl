@@ -26,7 +26,7 @@ AWS_EXTERN_C_BEGIN
  * Set node's next and prev pointers to NULL.
  */
 AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *node) {
-    AWS_PRECONDITION(node != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(node));
     AWS_ZERO_STRUCT(*node);
     AWS_POSTCONDITION(AWS_IS_ZEROED(*node));
 }
@@ -40,7 +40,7 @@ AWS_STATIC_IMPL void aws_linked_list_node_reset(struct aws_linked_list_node *nod
  * Tests if the list is empty.
  */
 AWS_STATIC_IMPL bool aws_linked_list_empty(const struct aws_linked_list *list) {
-    AWS_PRECONDITION(list);
+    AWS_PRECONDITION(AWS_NOT_NULL(list));
     return list->head.next == &list->tail;
 }
 
@@ -116,7 +116,7 @@ AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list 
  * Initializes the list. List will be empty after this call.
  */
 AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
-    AWS_PRECONDITION(list);
+    AWS_PRECONDITION(AWS_NOT_NULL(list));
     list->head.next = &list->tail;
     list->head.prev = NULL;
     list->tail.prev = &list->head;
@@ -203,7 +203,7 @@ AWS_STATIC_IMPL void aws_linked_list_insert_after(
     struct aws_linked_list_node *after,
     struct aws_linked_list_node *to_add) {
     AWS_PRECONDITION(aws_linked_list_node_next_is_valid(after));
-    AWS_PRECONDITION(to_add != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(to_add));
     to_add->prev = after;
     to_add->next = after->next;
     after->next->prev = to_add;
@@ -252,7 +252,7 @@ AWS_STATIC_IMPL void aws_linked_list_insert_before(
     struct aws_linked_list_node *before,
     struct aws_linked_list_node *to_add) {
     AWS_PRECONDITION(aws_linked_list_node_prev_is_valid(before));
-    AWS_PRECONDITION(to_add != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(to_add));
     to_add->next = before;
     to_add->prev = before->prev;
     before->prev->next = to_add;
@@ -281,7 +281,7 @@ AWS_STATIC_IMPL void aws_linked_list_remove(struct aws_linked_list_node *node) {
  */
 AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(node != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(node));
     aws_linked_list_insert_before(&list->tail, node);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     AWS_POSTCONDITION(list->tail.prev == node, "[node] is the new last element of [list]");
@@ -318,7 +318,7 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws
  */
 AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
-    AWS_PRECONDITION(node != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(node));
     aws_linked_list_insert_before(list->head.next, node);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     AWS_POSTCONDITION(list->head.next == node, "[node] is the new first element of [list]");

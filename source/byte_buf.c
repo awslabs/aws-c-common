@@ -25,8 +25,8 @@
 #endif
 
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
-    AWS_PRECONDITION(buf);
-    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(AWS_NOT_NULL(buf));
+    AWS_PRECONDITION(AWS_NOT_NULL(allocator));
 
     buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
     if (capacity != 0 && buf->buffer == NULL) {
@@ -41,8 +41,8 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
 }
 
 int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allocator, const struct aws_byte_buf *src) {
-    AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(dest);
+    AWS_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_PRECONDITION(AWS_NOT_NULL(dest));
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(src));
 
     if (!src->buffer) {
@@ -128,7 +128,7 @@ bool aws_byte_buf_eq_ignore_case(const struct aws_byte_buf *const a, const struc
 
 bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
     bool rval = aws_array_eq_c_str(buf->buffer, buf->len, c_str);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
@@ -136,7 +136,7 @@ bool aws_byte_buf_eq_c_str(const struct aws_byte_buf *const buf, const char *con
 
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
     bool rval = aws_array_eq_c_str_ignore_case(buf->buffer, buf->len, c_str);
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
     return rval;
@@ -146,8 +146,8 @@ int aws_byte_buf_init_copy_from_cursor(
     struct aws_byte_buf *dest,
     struct aws_allocator *allocator,
     struct aws_byte_cursor src) {
-    AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(dest);
+    AWS_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_PRECONDITION(AWS_NOT_NULL(dest));
     AWS_ERROR_PRECONDITION(aws_byte_cursor_is_valid(&src));
 
     AWS_ZERO_STRUCT(*dest);
@@ -222,8 +222,8 @@ int aws_byte_cursor_split_on_char_n(
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output) {
-    AWS_ASSERT(input_str && input_str->ptr);
-    AWS_ASSERT(output);
+    AWS_ASSERT(AWS_NOT_NULL(input_str) && AWS_NOT_NULL(input_str->ptr));
+    AWS_ASSERT(AWS_NOT_NULL(output));
     AWS_ASSERT(output->item_size >= sizeof(struct aws_byte_cursor));
 
     size_t max_splits = n > 0 ? n : SIZE_MAX;
@@ -398,9 +398,9 @@ bool aws_array_eq(const void *const array_a, const size_t len_a, const void *con
 
 bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_len, const char *const c_str) {
     AWS_PRECONDITION(
-        array || (array_len == 0),
+        AWS_NOT_NULL(array) || (array_len == 0),
         "Either input pointer [array_a] mustn't be NULL or input [array_len] mustn't be zero.");
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
 
     /* Simpler implementation could have been:
      *   return aws_array_eq_ignore_case(array, array_len, c_str, strlen(c_str));
@@ -426,9 +426,9 @@ bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_
 
 bool aws_array_eq_c_str(const void *const array, const size_t array_len, const char *const c_str) {
     AWS_PRECONDITION(
-        array || (array_len == 0),
+        AWS_NOT_NULL(array) || (array_len == 0),
         "Either input pointer [array_a] mustn't be NULL or input [array_len] mustn't be zero.");
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
 
     /* Simpler implementation could have been:
      *   return aws_array_eq(array, array_len, c_str, strlen(c_str));
@@ -507,7 +507,7 @@ bool aws_byte_cursor_eq_byte_buf_ignore_case(
 
 bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
     bool rv = aws_array_eq_c_str(cursor->ptr, cursor->len, c_str);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
@@ -515,7 +515,7 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const 
 
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cursor));
-    AWS_PRECONDITION(c_str != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(c_str));
     bool rv = aws_array_eq_c_str_ignore_case(cursor->ptr, cursor->len, c_str);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
     return rv;
@@ -533,8 +533,8 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
 
     if (from->len > 0) {
         /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
-        AWS_ASSERT(from->ptr);
-        AWS_ASSERT(to->buffer);
+        AWS_ASSERT(AWS_NOT_NULL(from->ptr));
+        AWS_ASSERT(AWS_NOT_NULL(to->buffer));
         memcpy(to->buffer + to->len, from->ptr, from->len);
         to->len += from->len;
     }
@@ -575,7 +575,7 @@ int aws_byte_buf_append_with_lookup(
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
-    AWS_ERROR_PRECONDITION(to->allocator);
+    AWS_ERROR_PRECONDITION(AWS_NOT_NULL(to->allocator));
 
     if (to->capacity - to->len < from->len) {
         /*
@@ -652,8 +652,8 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
     } else {
         if (from->len > 0) {
             /* This assert teaches clang-tidy that from->ptr and to->buffer cannot be null in a non-empty buffers */
-            AWS_ASSERT(from->ptr);
-            AWS_ASSERT(to->buffer);
+            AWS_ASSERT(AWS_NOT_NULL(from->ptr));
+            AWS_ASSERT(AWS_NOT_NULL(to->buffer));
             memcpy(to->buffer + to->len, from->ptr, from->len);
         }
     }
@@ -666,7 +666,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
-    AWS_ERROR_PRECONDITION(buffer->allocator);
+    AWS_ERROR_PRECONDITION(AWS_NOT_NULL(buffer->allocator));
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
     if (requested_capacity <= buffer->capacity) {
@@ -686,7 +686,7 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
 }
 
 int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
-    AWS_ERROR_PRECONDITION(buffer->allocator);
+    AWS_ERROR_PRECONDITION(AWS_NOT_NULL(buffer->allocator));
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
     size_t requested_capacity = 0;
@@ -702,7 +702,7 @@ struct aws_byte_cursor aws_byte_cursor_right_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
-    AWS_PRECONDITION(predicate != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(predicate));
     struct aws_byte_cursor trimmed = *source;
 
     while (trimmed.len > 0 && predicate(*(trimmed.ptr + trimmed.len - 1))) {
@@ -717,7 +717,7 @@ struct aws_byte_cursor aws_byte_cursor_left_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
-    AWS_PRECONDITION(predicate != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(predicate));
     struct aws_byte_cursor trimmed = *source;
 
     while (trimmed.len > 0 && predicate(*(trimmed.ptr))) {
@@ -733,7 +733,7 @@ struct aws_byte_cursor aws_byte_cursor_trim_pred(
     const struct aws_byte_cursor *source,
     aws_byte_predicate_fn *predicate) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(source));
-    AWS_PRECONDITION(predicate != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(predicate));
     struct aws_byte_cursor left_trimmed = aws_byte_cursor_left_trim_pred(source, predicate);
     struct aws_byte_cursor dest = aws_byte_cursor_right_trim_pred(&left_trimmed, predicate);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(source));
@@ -752,8 +752,8 @@ int aws_byte_cursor_compare_lexical(const struct aws_byte_cursor *lhs, const str
     AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
     /* make sure we don't pass NULL pointers to memcmp */
-    AWS_PRECONDITION(lhs->ptr != NULL);
-    AWS_PRECONDITION(rhs->ptr != NULL);
+    AWS_PRECONDITION(AWS_NOT_NULL(lhs->ptr));
+    AWS_PRECONDITION(AWS_NOT_NULL(rhs->ptr));
     size_t comparison_length = lhs->len;
     if (comparison_length > rhs->len) {
         comparison_length = rhs->len;

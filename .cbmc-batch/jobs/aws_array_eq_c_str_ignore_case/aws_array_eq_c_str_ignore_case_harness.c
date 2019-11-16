@@ -32,8 +32,8 @@ void aws_array_eq_c_str_ignore_case_harness() {
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 
     /* pre-conditions */
-    __CPROVER_assume(array || (array_len == 0));
-    __CPROVER_assume(c_str);
+    __CPROVER_assume(AWS_NOT_NULL(array) || (array_len == 0));
+    __CPROVER_assume(AWS_NOT_NULL(c_str));
 
     /* operation under verification */
     if (aws_array_eq_c_str_ignore_case(array, array_len, c_str)) {

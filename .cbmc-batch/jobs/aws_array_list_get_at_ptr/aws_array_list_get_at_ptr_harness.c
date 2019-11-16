@@ -37,14 +37,14 @@ void aws_array_list_get_at_ptr_harness() {
 
     /* assume preconditions */
     __CPROVER_assume(aws_array_list_is_valid(&list));
-    __CPROVER_assume(val);
+    __CPROVER_assume(AWS_NOT_NULL(val));
 
     /* perform operation under verification */
     if (!aws_array_list_get_at_ptr(&list, val, index)) {
         /* In the case aws_array_list_get_at is successful, we can ensure the list isn't empty
          * and index is within bounds.
          */
-        assert(list.data);
+        assert(AWS_NOT_NULL(list.data));
         assert(list.length > index);
     }
 

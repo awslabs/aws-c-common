@@ -36,7 +36,7 @@ void aws_array_list_pop_back_harness() {
     /* perform operation under verification and assertions */
     if (!aws_array_list_pop_back(&list)) {
         assert(list.length == old.length - 1);
-        assert(list.data);
+        assert(AWS_NOT_NULL(list.data));
         assert(list.alloc == old.alloc);
         assert(list.current_size == old.current_size);
         assert(list.item_size == old.item_size);

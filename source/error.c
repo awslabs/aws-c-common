@@ -146,8 +146,8 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
      * - we'll either segfault immediately (for the first two) or for the count
      * assert, the registration will be ineffective.
      */
-    AWS_FATAL_ASSERT(error_info);
-    AWS_FATAL_ASSERT(error_info->error_list);
+    AWS_FATAL_ASSERT(AWS_NOT_NULL(error_info));
+    AWS_FATAL_ASSERT(AWS_NOT_NULL(error_info->error_list));
     AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;
@@ -180,8 +180,8 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
 }
 
 void aws_unregister_error_info(const struct aws_error_info_list *error_info) {
-    AWS_FATAL_ASSERT(error_info);
-    AWS_FATAL_ASSERT(error_info->error_list);
+    AWS_FATAL_ASSERT(AWS_NOT_NULL(error_info));
+    AWS_FATAL_ASSERT(AWS_NOT_NULL(error_info->error_list));
     AWS_FATAL_ASSERT(error_info->count);
 
     const int min_range = error_info->error_list[0].error_code;

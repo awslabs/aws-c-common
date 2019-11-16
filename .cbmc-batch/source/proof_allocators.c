@@ -207,8 +207,8 @@ cleanup:
 #undef AWS_ALIGN_ROUND_UP
 
 void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_release != NULL);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_release));
 
     if (ptr != NULL) {
         free(ptr);
@@ -216,9 +216,9 @@ void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
 }
 
 int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_realloc || allocator->mem_acquire);
-    AWS_FATAL_PRECONDITION(allocator->mem_release);
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_realloc) || AWS_NOT_NULL(allocator->mem_acquire));
+    AWS_FATAL_PRECONDITION(AWS_NOT_NULL(allocator->mem_release));
 
     /* Protect against https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations */
     if (newsize == 0) {
