@@ -246,8 +246,8 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    endif
 
-size_t aws_backtrace(void **frames, size_t size) {
-    return backtrace(frames, size);
+size_t aws_backtrace(void **frames, size_t num_frames) {
+    return backtrace(frames, num_frames);
 }
 
 char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
