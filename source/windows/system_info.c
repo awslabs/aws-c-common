@@ -154,12 +154,24 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        /* if this fails, GetLineFromAddr will fail too, so just output the address */
+        /* if this fails, GetLineFromAddr will fail too, so just output the address and GetLastError */
         if (!s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
-            char addr_buf[32];
-            int len = snprintf(addr_buf, 32, "0x%p", stack[i]);
-            if (len > 0)
-                aws_byte_buf_append_dynamic(&symbols, addr_buf, len);
+            DWORD last_error = GetLastError();
+            char buf[32];
+            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%p", stack[i]);
+            if (len > 0) {
+                struct aws_byte_cursor addr_cur = aws_byte_cursor_from_array(buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &addr_cur);
+            }
+
+            struct aws_byte_cursor error_cur = aws_byte_cursor_from_c_str("Failed to lookup symbol: error ");
+            aws_byte_buf_append_dynamic(&symbols, &error_cur);
+
+            len = snprintf(buf, AWS_ARRAY_SIZE(buf), "%u", last_error);
+            if (len > 0) {
+                struct aws_byte_cursor err_cur = aws_byte_cursor_from_array(buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &err_cur);
+            }
         }
 
         IMAGEHLP_LINE line;
