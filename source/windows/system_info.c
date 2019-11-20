@@ -167,7 +167,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         if (!s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
             DWORD last_error = GetLastError();
             char buf[32];
-            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%p", stack[i]);
+            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%llX", stack[i]);
             if (len > 0) {
                 struct aws_byte_cursor addr_cur = aws_byte_cursor_from_array(buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &addr_cur);
@@ -183,22 +183,32 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             }
         }
 
+        char sym_buf[1024];
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
         if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
-            char buf[1024];
             int len = snprintf(
-                buf,
-                AWS_ARRAY_SIZE(buf),
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
                 "at %s(%s:%lu): address: 0x%llX",
                 sym_info.sym_info.Name,
                 line.FileName,
                 line.LineNumber,
                 sym_info.sym_info.Address);
             if (len != -1) {
-                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &symbol);
-                continue;
+            }
+        } else { /* no line info, so record what we have */
+            int len = snprintf(
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
+                "at %s: address 0x%llX",
+                sym_info.sym_info.Name,
+                sym_info.sym_info.Address);
+            if (len != -1) {
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &symbol);
             }
         }
 
