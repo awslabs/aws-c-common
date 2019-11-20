@@ -145,17 +145,22 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
     HANDLE process = GetCurrentProcess();
     AWS_FATAL_ASSERT(process);
-    fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
+        /* record a pointer to where the symbol will be */
+        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
+
         uintptr_t address = (uintptr_t)stack[i];
         struct win_symbol_data sym_info;
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        s_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
-
-        /* record a pointer to where the symbol will be */
-        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
+        /* if this fails, GetLineFromAddr will fail too, so just output the address */
+        if (!s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
+            char addr_buf[32];
+            int len = snprintf(addr_buf, 32, "0x%p", stack[i]);
+            if (len > 0)
+                aws_byte_buf_append_dynamic(&symbols, addr_buf, len);
+        }
 
         IMAGEHLP_LINE line;
         line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
