@@ -3,7 +3,7 @@ name: CI
 on: [push]
 
 jobs:
-  OSX_CI:
+  OSX:
 
     runs-on: macOS-10.14
 
@@ -11,15 +11,7 @@ jobs:
     - name: Checkout Source
       uses: actions/checkout@v1
     
-    - name: Cache LLVM
-      id: cache-llvm
-      uses: actions/cache@v1
-      with:
-        key: ${{ runner.OS }}-llvm
-        path: /usr/local/opt/llvm
-    
     - name: Install Dependencies
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
         brew install llvm
         export PATH=$(brew --prefix llvm)/bin:$PATH
