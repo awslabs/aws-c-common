@@ -49,6 +49,7 @@ struct win_symbol_data {
 };
 
 typedef BOOL __stdcall SymInitialize_fn(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess);
+typedef DWORD __stdcall SymSetOptions_fn(DWORD SymOptions);
 
 typedef BOOL __stdcall SymFromAddr_fn(
     _In_ HANDLE hProcess,
@@ -73,6 +74,7 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #endif
 
 static SymInitialize_fn *s_SymInitialize = NULL;
+static SymSetOptions_fn *s_SymSetOptions = NULL;
 static SymFromAddr_fn *s_SymFromAddr = NULL;
 static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
@@ -91,6 +93,12 @@ static void s_init_dbghelp_impl(void *user_data) {
         goto done;
     }
 
+    s_SymSetOptions = (SymSetOptions_fn *)GetProcAddress(dbghelp, "SymSetOptions");
+    if (!s_SymSetOptions) {
+        fprintf(stderr, "Failed to load SymSetOptions from DbgHelp.dll\n");
+        goto done;
+    }
+
     s_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
     if (!s_SymFromAddr) {
         fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
@@ -106,6 +114,7 @@ static void s_init_dbghelp_impl(void *user_data) {
     HANDLE process = GetCurrentProcess();
     AWS_FATAL_ASSERT(process);
     s_SymInitialize(process, NULL, TRUE);
+    s_SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_ANYTHING | SYMOPT_LOAD_LINES);
     return;
 
 done:
@@ -164,7 +173,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
                 aws_byte_buf_append_dynamic(&symbols, &addr_cur);
             }
 
-            struct aws_byte_cursor error_cur = aws_byte_cursor_from_c_str("Failed to lookup symbol: error ");
+            struct aws_byte_cursor error_cur = aws_byte_cursor_from_c_str(" Failed to lookup symbol: error ");
             aws_byte_buf_append_dynamic(&symbols, &error_cur);
 
             len = snprintf(buf, AWS_ARRAY_SIZE(buf), "%u", last_error);
