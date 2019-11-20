@@ -167,7 +167,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         if (!s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
             DWORD last_error = GetLastError();
             char buf[32];
-            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%llX", stack[i]);
+            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%p", stack[i]);
             if (len > 0) {
                 struct aws_byte_cursor addr_cur = aws_byte_cursor_from_array(buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &addr_cur);
