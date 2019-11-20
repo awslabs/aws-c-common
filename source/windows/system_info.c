@@ -232,6 +232,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         const char *symbol = symbols[line];
         fprintf(fp, "%s\n", symbol);
     }
+    fflush(fp);
 }
 
 void aws_backtrace_log() {
