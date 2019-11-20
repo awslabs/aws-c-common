@@ -357,6 +357,15 @@ AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copy contents of cursor to buffer, then update cursor to reference the memory stored in the buffer.
+ * If buffer is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ *
+ * The cursor is permitted to reference memory from earlier in the buffer.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_cursor *from_and_update);
+
+/**
  * Attempts to increase the capacity of a buffer to the requested capacity
  *
  * If the the buffer's capacity is currently larger than the request capacity, the
