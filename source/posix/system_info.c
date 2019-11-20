@@ -246,8 +246,8 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    endif
 
-size_t aws_backtrace(void **frames, size_t size) {
-    return backtrace(frames, size);
+size_t aws_backtrace(void **frames, size_t num_frames) {
+    return backtrace(frames, num_frames);
 }
 
 char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
@@ -363,6 +363,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         const char *symbol = symbols[frame_idx];
         fprintf(fp, "%s\n", symbol);
     }
+    fflush(fp);
 
     free(symbols);
 }
@@ -374,10 +375,20 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 }
 
 size_t aws_backtrace(void **frames, size_t size) {
+    (void)frames;
+    (void)size;
     return 0;
 }
 
 char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+    (void)frames;
+    (void)stack_depth;
+    return NULL;
+}
+
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    (void)stack_frames;
+    (void)stack_depth;
     return NULL;
 }
 #endif /* AWS_HAVE_EXECINFO */

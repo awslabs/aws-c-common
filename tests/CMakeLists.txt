@@ -242,6 +242,10 @@ add_test_case(test_byte_cursor_compare_lookup)
 add_test_case(test_byte_buf_append_and_update_fail)
 add_test_case(test_byte_buf_append_and_update_success)
 
+add_test_case(test_byte_cursor_find_str)
+add_test_case(test_byte_cursor_find_str_not_found)
+add_test_case(test_byte_cursor_find_str_longer_than_input)
+
 add_test_case(byte_swap_test)
 add_test_case(alignment_test)
 
@@ -382,6 +386,8 @@ add_test_case(test_background_log_channel_all)
 
 add_test_case(test_pipeline_logger_unformatted_test)
 add_test_case(test_pipeline_logger_formatted_test)
+
+add_test_case(get_pid_sanity_check_test)
 
 generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
 
