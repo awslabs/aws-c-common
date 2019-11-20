@@ -15,7 +15,7 @@ jobs:
       id: cache-llvm
       uses: actions/cache@v1
       with:
-        key: ${{ runner.OS }}-build-${{ hashFiles('/usr/local/opt/llvm/bin/clang') }}
+        key: ${{ runner.OS }}-llvm
     
     - name: Install Dependencies
       if: steps.cache-llvm.outputs.cache-hit != 'true'
