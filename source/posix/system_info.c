@@ -363,6 +363,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         const char *symbol = symbols[frame_idx];
         fprintf(fp, "%s\n", symbol);
     }
+    fflush(fp);
 
     free(symbols);
 }
