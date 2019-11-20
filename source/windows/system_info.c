@@ -171,7 +171,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
                 sym_buf,
                 AWS_ARRAY_SIZE(sym_buf),
                 "at 0x%llX: %s",
-                sym_info.sym_info.Address
+                sym_info.sym_info.Address,
                 sym_info.sym_info.Name);
             if (len != -1) {
                 struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
@@ -182,7 +182,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
             if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
                 /* record file/line info */
-                int len = snprintf(
+                len = snprintf(
                     sym_buf,
                     AWS_ARRAY_SIZE(sym_buf),
                     "(%s:%lu)",
@@ -198,7 +198,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             DWORD last_error = GetLastError();
             int len = snprintf(sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
             if (len > 0) {
-                struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(buf, len);
+                struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &sym_cur);
             }
         }
