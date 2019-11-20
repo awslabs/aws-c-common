@@ -163,56 +163,47 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        /* if this fails, GetLineFromAddr will fail too, so just output the address and GetLastError */
-        if (!s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
+
+        char sym_buf[1024]; /* scratch space for extracting info */
+        if (s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
+            /* record the address and name */
+            int len = snprintf(
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
+                "at 0x%llX: %s",
+                sym_info.sym_info.Address
+                sym_info.sym_info.Name);
+            if (len != -1) {
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &symbol);
+            }
+
+            IMAGEHLP_LINE line;
+            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+            if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
+                /* record file/line info */
+                int len = snprintf(
+                    sym_buf,
+                    AWS_ARRAY_SIZE(sym_buf),
+                    "(%s:%lu)",
+                    line.FileName,
+                    line.LineNumber);
+                if (len != -1) {
+                    struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
+                    aws_byte_buf_append_dynamic(&symbols, &symbol);
+                }
+            }
+        } else {
+            /* no luck, record the address and last error */
             DWORD last_error = GetLastError();
-            char buf[32];
-            int len = snprintf(buf, AWS_ARRAY_SIZE(buf), "0x%p", stack[i]);
+            int len = snprintf(sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
             if (len > 0) {
-                struct aws_byte_cursor addr_cur = aws_byte_cursor_from_array(buf, len);
-                aws_byte_buf_append_dynamic(&symbols, &addr_cur);
-            }
-
-            struct aws_byte_cursor error_cur = aws_byte_cursor_from_c_str(" Failed to lookup symbol: error ");
-            aws_byte_buf_append_dynamic(&symbols, &error_cur);
-
-            len = snprintf(buf, AWS_ARRAY_SIZE(buf), "%u", last_error);
-            if (len > 0) {
-                struct aws_byte_cursor err_cur = aws_byte_cursor_from_array(buf, len);
-                aws_byte_buf_append_dynamic(&symbols, &err_cur);
+                struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &sym_cur);
             }
         }
 
-        char sym_buf[1024];
-        IMAGEHLP_LINE line;
-        line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-        if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
-            int len = snprintf(
-                sym_buf,
-                AWS_ARRAY_SIZE(sym_buf),
-                "at %s(%s:%lu): address: 0x%llX",
-                sym_info.sym_info.Name,
-                line.FileName,
-                line.LineNumber,
-                sym_info.sym_info.Address);
-            if (len != -1) {
-                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
-                aws_byte_buf_append_dynamic(&symbols, &symbol);
-            }
-        } else { /* no line info, so record what we have */
-            int len = snprintf(
-                sym_buf,
-                AWS_ARRAY_SIZE(sym_buf),
-                "at %s: address 0x%llX",
-                sym_info.sym_info.Name,
-                sym_info.sym_info.Address);
-            if (len != -1) {
-                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
-                aws_byte_buf_append_dynamic(&symbols, &symbol);
-            }
-        }
-
-        /* Need at least a null so the address changes between lines */
+        /* Null terminator */
         aws_byte_buf_append_dynamic(&symbols, &null_term);
     }
 
