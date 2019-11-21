@@ -172,14 +172,14 @@ cleanup:
 
 #undef AWS_ALIGN_ROUND_UP
 
-void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
-    AWS_FATAL_PRECONDITION(allocator != NULL);
-    AWS_FATAL_PRECONDITION(allocator->mem_release != NULL);
+        void aws_mem_release(struct aws_allocator *allocator, void *ptr) {
+            AWS_FATAL_PRECONDITION(allocator != NULL);
+            AWS_FATAL_PRECONDITION(allocator->mem_release != NULL);
 
-    if (ptr != NULL) {
-        allocator->mem_release(allocator, ptr);
-    }
-}
+            if (ptr != NULL) {
+                allocator->mem_release(allocator, ptr);
+            }
+        }
 
 int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize, size_t newsize) {
     AWS_FATAL_PRECONDITION(allocator != NULL);
