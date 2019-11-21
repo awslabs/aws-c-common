@@ -1,9 +1,9 @@
-name: CI
+name: Lint
 
 on: [push]
 
 jobs:
-  build:
+  clang-format:
 
     runs-on: ubuntu-latest
 
