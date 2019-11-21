@@ -1349,3 +1349,15 @@ bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x) {
     x = aws_htonf64(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 8);
 }
+
+int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_cursor *from_and_update) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(from_and_update));
+
+    if (aws_byte_buf_append(to, from_and_update)) {
+        return AWS_OP_ERR;
+    }
+
+    from_and_update->ptr = to->buffer + (to->len - from_and_update->len);
+    return AWS_OP_SUCCESS;
+}

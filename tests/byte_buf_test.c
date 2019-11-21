@@ -766,3 +766,51 @@ static int s_test_byte_cursor_compare_lookup(struct aws_allocator *allocator, vo
     return 0;
 }
 AWS_TEST_CASE(test_byte_cursor_compare_lookup, s_test_byte_cursor_compare_lookup)
+
+static int s_test_byte_buf_append_and_update_fail(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 10);
+
+    struct aws_byte_cursor test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TOOOOOOOO LONG");
+    struct aws_byte_cursor test_cursor_copy = test_cursor;
+
+    ASSERT_FAILS(aws_byte_buf_append_and_update(&buffer, &test_cursor));
+    ASSERT_TRUE((test_cursor.ptr == test_cursor_copy.ptr) && (test_cursor.len == test_cursor_copy.len));
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_and_update_fail, s_test_byte_buf_append_and_update_fail)
+
+static int s_test_byte_buf_append_and_update_success(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 12);
+
+    struct aws_byte_cursor test_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("SHORT");
+    struct aws_byte_cursor test_cursor_copy = test_cursor;
+
+    ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &test_cursor));
+    ASSERT_TRUE(test_cursor.ptr == buffer.buffer);
+    ASSERT_TRUE(aws_byte_cursor_eq(&test_cursor, &test_cursor_copy));
+
+    struct aws_byte_cursor test_cursor2 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("STOP");
+    struct aws_byte_cursor test_cursor_copy2 = test_cursor2;
+
+    ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &test_cursor2));
+    ASSERT_TRUE(test_cursor2.ptr == buffer.buffer + test_cursor.len);
+    ASSERT_TRUE(aws_byte_cursor_eq(&test_cursor2, &test_cursor_copy2));
+
+    ASSERT_TRUE(buffer.len == test_cursor.len + test_cursor2.len);
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_and_update_success, s_test_byte_buf_append_and_update_success)
