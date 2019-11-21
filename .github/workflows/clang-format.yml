@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: clang-format lint
+      uses: DoozyX/clang-format-lint-action@v0.3.1
+      with:
+        # List of extensions to check
+        extensions: c,h
