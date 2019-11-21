@@ -226,14 +226,10 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main",
                 ],
-                'apt_packages': ["clang-6.0", "clang-tidy-6.0"],
+                'apt_packages': ["clang-6.0"],
 
                 'c': "clang-6.0",
                 'cxx': "clang-6.0",
-
-                'variables': {
-                    'clang_tidy': 'clang-tidy-6.0',
-                },
 
                 'requires_privilege': True,
             },
@@ -241,14 +237,10 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main",
                 ],
-                'apt_packages': ["clang-8", "clang-tidy-8"],
+                'apt_packages': ["clang-8"],
 
                 'c': "clang-8",
                 'cxx': "clang-8",
-
-                'variables': {
-                    'clang_tidy': 'clang-tidy-8',
-                },
 
                 'requires_privilege': True,
             },
