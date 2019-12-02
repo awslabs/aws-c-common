@@ -27,6 +27,7 @@
 
 #if _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
 #endif
 
 /*
@@ -397,15 +398,15 @@ static int s_noalloc_stderr_logger_log(
     const char *format,
     ...) {
 
-    (void)logger;
-    (void)log_level;
-    (void)subject;
-    (void)format;
-
     va_list format_args;
     va_start(format_args, format);
 
     char format_buffer[MAXIMUM_NO_ALLOC_LOG_LINE_SIZE];
+
+#if _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4221) /* allow struct member to reference format_buffer  */
+#endif
 
     struct aws_logging_standard_formatting_data format_data = {
         .log_line_buffer = format_buffer,
@@ -417,6 +418,10 @@ static int s_noalloc_stderr_logger_log(
         .allocator = logger->allocator,
         .amount_written = 0,
     };
+
+#if _MSC_VER
+#    pragma warning(pop) /* disallow struct member to reference local value */
+#endif
 
     int result = aws_format_standard_log_line(&format_data, format_args);
 
@@ -476,7 +481,7 @@ int aws_logger_init_noalloc(
     if (options->file != NULL) {
         impl->file = options->file;
         impl->should_close = false;
-    } else {
+    } else { /* _MSC_VER */
         impl->file = fopen(options->filename, "w");
         impl->should_close = true;
     }

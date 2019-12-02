@@ -63,7 +63,7 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
     }
 
     if (formatting_data->total_length == 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     /*
@@ -99,10 +99,10 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
 
         int result = aws_date_time_to_utc_time_str(&current_time, formatting_data->date_format, &timestamp_buffer);
         if (result != AWS_OP_SUCCESS) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
-        current_index = s_advance_and_clamp_index(current_index, timestamp_buffer.len, fake_total_length);
+        current_index = s_advance_and_clamp_index(current_index, (int)timestamp_buffer.len, fake_total_length);
     }
 
     if (current_index < fake_total_length) {
@@ -116,7 +116,7 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
             "] [%" PRIu64 "] ",
             current_thread_id);
         if (thread_id_written < 0) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
         current_index = s_advance_and_clamp_index(current_index, thread_id_written, fake_total_length);
@@ -132,7 +132,7 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
                 formatting_data->subject_name);
 
             if (subject_written < 0) {
-                return AWS_OP_ERR;
+                return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
             }
 
             current_index = s_advance_and_clamp_index(current_index, subject_written, fake_total_length);
@@ -164,7 +164,7 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
             args);
 #endif /* WIN32 */
         if (written_count < 0) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
         current_index = s_advance_and_clamp_index(current_index, written_count, fake_total_length);
@@ -176,7 +176,7 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
     int newline_written_count =
         snprintf(formatting_data->log_line_buffer + current_index, formatting_data->total_length - current_index, "\n");
     if (newline_written_count < 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_UNKNOWN); /* we saved space, so this would be crazy */
     }
 
     formatting_data->amount_written = current_index + newline_written_count;
