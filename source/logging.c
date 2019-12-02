@@ -398,10 +398,10 @@ static int s_noalloc_stderr_logger_log(
     const char *format,
     ...) {
 
+    char format_buffer[MAXIMUM_NO_ALLOC_LOG_LINE_SIZE];
+
     va_list format_args;
     va_start(format_args, format);
-
-    char format_buffer[MAXIMUM_NO_ALLOC_LOG_LINE_SIZE];
 
 #if _MSC_VER
 #    pragma warning(push)
