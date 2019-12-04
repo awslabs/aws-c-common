@@ -16,20 +16,18 @@
 #
 # To do so, we generate a single-line C or C++ source file that includes each
 # header, and link all of these stub source files into a test executable.
-#
-# Because we pull in a CXX compiler, this is split out into a subproject,
-# so that it can be disabled when not desired.
 
 cmake_minimum_required(VERSION 3.1)
-project(header-check C CXX)
+enable_language(C)
+enable_language(CXX)
 
 include(AwsCFlags)
 
 set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker")
 
-set(HEADER_CHECKER_LIB ${CMAKE_PROJECT_NAME}-header-check)
+set(HEADER_CHECKER_LIB ${PROJECT_NAME}-header-check)
 add_executable(${HEADER_CHECKER_LIB} "${CMAKE_CURRENT_SOURCE_DIR}/stub.c")
-target_link_libraries(${HEADER_CHECKER_LIB} ${CMAKE_PROJECT_NAME})
+target_link_libraries(${HEADER_CHECKER_LIB} ${PROJECT_NAME})
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_UNSTABLE_TESTING_API=1)
 target_compile_definitions(${HEADER_CHECKER_LIB} PRIVATE AWS_HEADER_CHECKER=1)
 
