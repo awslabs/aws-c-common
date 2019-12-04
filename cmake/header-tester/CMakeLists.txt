@@ -16,12 +16,10 @@
 #
 # To do so, we generate a single-line C or C++ source file that includes each
 # header, and link all of these stub source files into a test executable.
-#
-# Because we pull in a CXX compiler, this is split out into a subproject,
-# so that it can be disabled when not desired.
 
 cmake_minimum_required(VERSION 3.1)
-project(header-check C CXX)
+enable_language(C)
+enable_language(CXX)
 
 include(AwsCFlags)
 
