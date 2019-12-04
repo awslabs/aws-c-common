@@ -226,16 +226,10 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main",
                 ],
-                'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
+                'apt_packages': ["clang-6.0", "clang-tidy-6.0"],
 
                 'c': "clang-6.0",
                 'cxx': "clang-6.0",
-                'build_env': {
-                    'CLANG_FORMAT': 'clang-format-6.0',
-                },
-                'post_build_steps': [
-                    ["./format-check.sh"],
-                ],
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-6.0',
@@ -247,7 +241,7 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main",
                 ],
-                'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
+                'apt_packages': ["clang-8", "clang-tidy-8"],
 
                 'c': "clang-8",
                 'cxx': "clang-8",
