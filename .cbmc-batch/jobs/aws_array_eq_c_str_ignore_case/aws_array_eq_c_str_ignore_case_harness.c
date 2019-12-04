@@ -27,7 +27,7 @@ void aws_array_eq_c_str_ignore_case_harness() {
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_array;
     save_byte_from_array((uint8_t *)array, array_len, &old_byte_from_array);
-    size_t str_len = (c_str) ? strlen(c_str) : NULL;
+    size_t str_len = (c_str) ? strlen(c_str) : 0;
     struct store_byte_from_buffer old_byte_from_str;
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 

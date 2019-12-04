@@ -51,17 +51,17 @@ LOG_FROM_ENTRY = $(LOGDIR)/$(notdir $(1:.goto=.log))
 # By default, use the version on your path; this can be overriden to select particular
 # versions of the tools. /usr/bin/goto-analyzer or ${HOME}/sw/goto-analyzer etc
 GOTO_ANALYZER ?= goto-analyzer
-GOTO_CC ?= goto-cc
+GOTO_CC ?= goto-cc -Wall
 GOTO_INSTRUMENT ?= goto-instrument
 VIEWER ?= cbmc-viewer
 
 ################################################################
 # Define locations and binaries
-ABSTRACTIONS ?= ""
+ABSTRACTIONS ?=
 
 ################################################################
 # Default CBMC flags
-CBMC_VERBOSITY ?= ""
+CBMC_VERBOSITY ?=
 CBMCFLAGS += --bounds-check
 CBMCFLAGS += --div-by-zero-check
 CBMCFLAGS += --float-overflow-check
@@ -154,7 +154,7 @@ setup_dependencies:
 $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
-	$(GOTO_CC) $(ENTRY).c $(DEPENDENT_GOTOS) \
+	$(GOTO_CC) $(ENTRY).c \
 	  --export-function-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
