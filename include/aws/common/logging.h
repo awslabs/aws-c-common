@@ -284,6 +284,16 @@ int aws_logger_init_from_external(
 AWS_COMMON_API
 extern struct aws_logger_vtable g_pipeline_logger_owned_vtable;
 
+/*
+ * Initializes a logger that does not perform any allocation during logging.  Log lines larger than the internal
+ * constant are truncated.  Formatting matches the standard logger.  Used for memory tracing logging.
+ */
+AWS_COMMON_API
+int aws_logger_init_noalloc(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    struct aws_logger_standard_options *options);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_LOGGING_H */

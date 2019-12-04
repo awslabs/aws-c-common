@@ -61,6 +61,18 @@ struct aws_log_formatter_standard_options {
     enum aws_date_format date_format;
 };
 
+struct aws_logging_standard_formatting_data {
+    char *log_line_buffer;
+    size_t total_length;
+    enum aws_log_level level;
+    const char *subject_name;
+    const char *format;
+    enum aws_date_format date_format;
+    struct aws_allocator *allocator; /* not used, just there to make byte_bufs valid */
+
+    size_t amount_written;
+};
+
 AWS_EXTERN_C_BEGIN
 
 /*
@@ -80,6 +92,13 @@ int aws_log_formatter_init_default(
  */
 AWS_COMMON_API
 void aws_log_formatter_clean_up(struct aws_log_formatter *formatter);
+
+/*
+ * Formats a single log line based on the input + the var args list.  Output is written to a fixed-size
+ * buffer supplied in the data struct.
+ */
+AWS_COMMON_API
+int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *formatting_data, va_list args);
 
 AWS_EXTERN_C_END
 

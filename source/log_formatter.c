@@ -43,6 +43,147 @@
 #define MAX_LOG_LINE_PREFIX_SIZE                                                                                       \
     (LOG_LEVEL_PREFIX_PADDING + THREAD_ID_PREFIX_PADDING + MISC_PADDING + AWS_DATE_TIME_STR_MAX_LEN)
 
+static size_t s_advance_and_clamp_index(size_t current_index, int amount, size_t maximum) {
+    size_t next_index = current_index + amount;
+    if (next_index > maximum) {
+        next_index = maximum;
+    }
+
+    return next_index;
+}
+int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *formatting_data, va_list args) {
+    size_t current_index = 0;
+
+    /*
+     * Begin the log line with "[<Log Level>] ["
+     */
+    const char *level_string = NULL;
+    if (aws_log_level_to_string(formatting_data->level, &level_string)) {
+        return AWS_OP_ERR;
+    }
+
+    if (formatting_data->total_length == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    /*
+     * Use this length for all but the last write, so we guarantee room for the newline even if we get truncated
+     */
+    size_t fake_total_length = formatting_data->total_length - 1;
+
+    int log_level_length = snprintf(formatting_data->log_line_buffer, fake_total_length, "[%s] [", level_string);
+    if (log_level_length < 0) {
+        return AWS_OP_ERR;
+    }
+
+    current_index = s_advance_and_clamp_index(current_index, log_level_length, fake_total_length);
+
+    if (current_index < fake_total_length) {
+        /*
+         * Add the timestamp.  To avoid copies and allocations, do some byte buffer tomfoolery.
+         *
+         * First, make a byte_buf that points to the current position in the output string
+         */
+        struct aws_byte_buf timestamp_buffer = {
+            .allocator = formatting_data->allocator,
+            .buffer = (uint8_t *)formatting_data->log_line_buffer + current_index,
+            .capacity = fake_total_length - current_index,
+            .len = 0,
+        };
+
+        /*
+         * Output the current time to the byte_buf
+         */
+        struct aws_date_time current_time;
+        aws_date_time_init_now(&current_time);
+
+        int result = aws_date_time_to_utc_time_str(&current_time, formatting_data->date_format, &timestamp_buffer);
+        if (result != AWS_OP_SUCCESS) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        current_index = s_advance_and_clamp_index(current_index, (int)timestamp_buffer.len, fake_total_length);
+    }
+
+    if (current_index < fake_total_length) {
+        /*
+         * Add thread id and user content separator (" - ")
+         */
+        uint64_t current_thread_id = aws_thread_current_thread_id();
+        int thread_id_written = snprintf(
+            formatting_data->log_line_buffer + current_index,
+            fake_total_length - current_index,
+            "] [%" PRIu64 "] ",
+            current_thread_id);
+        if (thread_id_written < 0) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        current_index = s_advance_and_clamp_index(current_index, thread_id_written, fake_total_length);
+    }
+
+    if (current_index < fake_total_length) {
+        /* output subject name */
+        if (formatting_data->subject_name) {
+            int subject_written = snprintf(
+                formatting_data->log_line_buffer + current_index,
+                fake_total_length - current_index,
+                "[%s]",
+                formatting_data->subject_name);
+
+            if (subject_written < 0) {
+                return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+            }
+
+            current_index = s_advance_and_clamp_index(current_index, subject_written, fake_total_length);
+        }
+    }
+
+    if (current_index < fake_total_length) {
+        int separator_written =
+            snprintf(formatting_data->log_line_buffer + current_index, fake_total_length - current_index, " - ");
+        current_index = s_advance_and_clamp_index(current_index, separator_written, fake_total_length);
+    }
+
+    if (current_index < fake_total_length) {
+        /*
+         * Now write the actual data requested by the user
+         */
+#ifdef WIN32
+        int written_count = vsnprintf_s(
+            formatting_data->log_line_buffer + current_index,
+            fake_total_length - current_index,
+            _TRUNCATE,
+            formatting_data->format,
+            args);
+#else
+        int written_count = vsnprintf(
+            formatting_data->log_line_buffer + current_index,
+            fake_total_length - current_index,
+            formatting_data->format,
+            args);
+#endif /* WIN32 */
+        if (written_count < 0) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        current_index = s_advance_and_clamp_index(current_index, written_count, fake_total_length);
+    }
+
+    /*
+     * End with a newline.
+     */
+    int newline_written_count =
+        snprintf(formatting_data->log_line_buffer + current_index, formatting_data->total_length - current_index, "\n");
+    if (newline_written_count < 0) {
+        return aws_raise_error(AWS_ERROR_UNKNOWN); /* we saved space, so this would be crazy */
+    }
+
+    formatting_data->amount_written = current_index + newline_written_count;
+
+    return AWS_OP_SUCCESS;
+}
+
 struct aws_default_log_formatter_impl {
     enum aws_date_format date_format;
 };
@@ -93,97 +234,23 @@ static int s_default_aws_log_formatter_format(
         goto error_clean_up;
     }
 
-    char *log_line_buffer = (char *)raw_string->bytes;
-    size_t current_index = 0;
+    struct aws_logging_standard_formatting_data format_data = {
+        .log_line_buffer = (char *)raw_string->bytes,
+        .total_length = total_length,
+        .level = level,
+        .subject_name = subject_name,
+        .format = format,
+        .date_format = impl->date_format,
+        .allocator = formatter->allocator,
+        .amount_written = 0,
+    };
 
-    /*
-     * Begin the log line with "[<Log Level>] ["
-     */
-    const char *level_string = NULL;
-    if (aws_log_level_to_string(level, &level_string)) {
-        goto error_clean_up;
-    }
-
-    int log_level_length = snprintf(log_line_buffer, total_length, "[%s] [", level_string);
-    if (log_level_length < 0) {
-        goto error_clean_up;
-    }
-
-    current_index += log_level_length;
-
-    /*
-     * Add the timestamp.  To avoid copies and allocations, do some byte buffer tomfoolery.
-     *
-     * First, make a byte_buf that points to the current position in the output string
-     */
-    struct aws_byte_buf timestamp_buffer = {.allocator = formatter->allocator,
-                                            .buffer = (uint8_t *)log_line_buffer + current_index,
-                                            .capacity = total_length - current_index,
-                                            .len = 0};
-
-    /*
-     * Output the current time to the byte_buf
-     */
-    struct aws_date_time current_time;
-    aws_date_time_init_now(&current_time);
-
-    int result = aws_date_time_to_utc_time_str(&current_time, impl->date_format, &timestamp_buffer);
-    if (result != AWS_OP_SUCCESS) {
-        goto error_clean_up;
-    }
-
-    current_index += timestamp_buffer.len;
-
-    /*
-     * Add thread id and user content separator (" - ")
-     */
-    uint64_t current_thread_id = aws_thread_current_thread_id();
-    int thread_id_written =
-        snprintf(log_line_buffer + current_index, total_length - current_index, "] [%" PRIu64 "] ", current_thread_id);
-    if (thread_id_written < 0) {
-        goto error_clean_up;
-    }
-
-    current_index += thread_id_written;
-
-    /* output subject name */
-    if (subject_name) {
-        int subject_written =
-            snprintf(log_line_buffer + current_index, total_length - current_index, "[%s]", subject_name);
-
-        if (subject_written < 0) {
-            goto error_clean_up;
-        }
-
-        current_index += subject_written;
-    }
-
-    current_index += snprintf(log_line_buffer + current_index, total_length - current_index, " - ");
-
-    /*
-     * Now write the actual data requested by the user
-     */
-#ifdef WIN32
-    int written_count =
-        vsnprintf_s(log_line_buffer + current_index, total_length - current_index, _TRUNCATE, format, args);
-#else
-    int written_count = vsnprintf(log_line_buffer + current_index, total_length - current_index, format, args);
-#endif /* WIN32 */
-    if (written_count < 0) {
-        goto error_clean_up;
-    }
-
-    /*
-     * End with a newline.
-     */
-    current_index += written_count;
-    written_count = snprintf(log_line_buffer + current_index, total_length - current_index, "\n");
-    if (written_count < 0) {
+    if (aws_format_standard_log_line(&format_data, args)) {
         goto error_clean_up;
     }
 
     *(struct aws_allocator **)(&raw_string->allocator) = formatter->allocator;
-    *(size_t *)(&raw_string->len) = current_index + written_count;
+    *(size_t *)(&raw_string->len) = format_data.amount_written;
 
     *formatted_output = raw_string;
 
