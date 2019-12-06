@@ -511,6 +511,14 @@ def _get_git_branch():
         print("Found branch:", travis_pr_branch)
         return travis_pr_branch
 
+    github_ref = os.environ.get("GITHUB_REF")
+    if github_ref:
+        origin_str = "refs/heads/"
+        if github_ref.startswith(origin_str):
+            branch = github_ref[len(origin_str):]
+            print("Found github ref:", branch)
+            return branch
+
     branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
     branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
 
