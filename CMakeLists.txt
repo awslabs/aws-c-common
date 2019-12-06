@@ -213,6 +213,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
 
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
+    "cmake/AwsCheckHeaders.cmake"
     "cmake/AwsSharedLibSetup.cmake"
     "cmake/AwsTestHarness.cmake"
     "cmake/AwsLibFuzzer.cmake"
