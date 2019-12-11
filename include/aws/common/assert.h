@@ -33,10 +33,11 @@ AWS_EXTERN_C_END
 #elif defined(_MSC_VER)
 #    define AWS_ASSUME(cond) __assume(cond)
 #    define AWS_UNREACHABLE() __assume(0)
-#elif defined(__clang__)
+#elif defined(__clang__) && __has_builtin(__builtin_assume)
 #    define AWS_ASSUME(cond)                                                                                           \
         do {                                                                                                           \
             bool _result = (cond);                                                                                     \
+            if __has_builtin
             __builtin_assume(_result);                                                                                 \
         } while (false)
 #    define AWS_UNREACHABLE() __builtin_unreachable()
