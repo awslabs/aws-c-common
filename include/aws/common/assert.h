@@ -37,7 +37,6 @@ AWS_EXTERN_C_END
 #    define AWS_ASSUME(cond)                                                                                           \
         do {                                                                                                           \
             bool _result = (cond);                                                                                     \
-            if __has_builtin
             __builtin_assume(_result);                                                                                 \
         } while (false)
 #    define AWS_UNREACHABLE() __builtin_unreachable()
