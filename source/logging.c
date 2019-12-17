@@ -291,6 +291,25 @@ int aws_log_level_to_string(enum aws_log_level log_level, const char **level_str
     return AWS_OP_SUCCESS;
 }
 
+int aws_thread_id_to_string(aws_thread_id thread_id, char *str, size_t length) {
+    AWS_ERROR_PRECONDITION(AWS_THREAD_ID_REPR_LEN == length);
+    AWS_ERROR_PRECONDITION(str && AWS_MEM_IS_WRITABLE(str, length));
+    size_t current_index = 0;
+    for (size_t i = sizeof(aws_thread_id); i != 0; --i) {
+        unsigned char c = *(((unsigned char *)&thread_id) + i - 1);
+        int written = snprintf(str + current_index, length - current_index, "%02x", c);
+        if (written < 0) {
+            return AWS_OP_ERR;
+        }
+        current_index += written;
+        if (length <= current_index) {
+            return AWS_OP_ERR;
+        }
+    }
+    str[length - 1] = '\0';
+    return AWS_OP_SUCCESS;
+}
+
 #ifndef AWS_MAX_LOG_SUBJECT_SLOTS
 #    define AWS_MAX_LOG_SUBJECT_SLOTS 16u
 #endif

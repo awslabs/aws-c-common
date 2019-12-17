@@ -17,6 +17,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/thread.h>
 
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
@@ -236,6 +237,13 @@ void aws_logger_clean_up(struct aws_logger *logger);
  */
 AWS_COMMON_API
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string);
+
+/**
+ * Converts an aws_thread_id to a c-string constant.  Intended primarily to
+ * support building log lines that include the thread id in them.
+ */
+AWS_COMMON_API
+int aws_thread_id_to_string(aws_thread_id thread_id, char *str, size_t length);
 
 /**
  * Get subject name from log subject.

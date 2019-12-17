@@ -122,14 +122,20 @@ int do_default_log_formatter_test(
 
     char *thread_id_end = strstr(thread_id_start, "]");
     ASSERT_TRUE(thread_id_end != NULL, "Could not find end of thread id in output line \"%s\"", buffer);
-    char *thread_id_end_copy = thread_id_end;
 
-    uint64_t current_thread_id = aws_thread_current_thread_id();
-    uint64_t logged_id = strtoumax(thread_id_start, &thread_id_end_copy, 10);
-    ASSERT_TRUE(
-        logged_id == current_thread_id,
-        "Expected logged thread id to be %" PRIu64 " but it was actually %" PRIu64 "",
-        current_thread_id,
+    ASSERT_TRUE((thread_id_end - thread_id_start + 1) == AWS_THREAD_ID_REPR_LEN, "Unexpected thread id length");
+    aws_thread_id current_thread_id = aws_thread_current_thread_id();
+    char repr[AWS_THREAD_ID_REPR_LEN];
+    ASSERT_SUCCESS(
+        aws_thread_id_to_string(current_thread_id, repr, AWS_THREAD_ID_REPR_LEN),
+        "Could not convert aws_thread_id to string repr");
+    char logged_id[AWS_THREAD_ID_REPR_LEN];
+    memcpy(logged_id, thread_id_start, AWS_THREAD_ID_REPR_LEN - 1);
+    logged_id[AWS_THREAD_ID_REPR_LEN - 1] = '\0';
+    ASSERT_SUCCESS(
+        strncmp(repr, logged_id, AWS_THREAD_ID_REPR_LEN),
+        "Expected logged thread id to be \"%s\" but it was actually \"%s\"",
+        repr,
         logged_id);
 
     /*

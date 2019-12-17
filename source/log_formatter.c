@@ -109,16 +109,16 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
         /*
          * Add thread id and user content separator (" - ")
          */
-        uint64_t current_thread_id = aws_thread_current_thread_id();
+        aws_thread_id current_thread_id = aws_thread_current_thread_id();
+        char repr[AWS_THREAD_ID_REPR_LEN];
+        if (aws_thread_id_to_string(current_thread_id, repr, AWS_THREAD_ID_REPR_LEN)) {
+            return AWS_OP_ERR;
+        }
         int thread_id_written = snprintf(
-            formatting_data->log_line_buffer + current_index,
-            fake_total_length - current_index,
-            "] [%" PRIu64 "] ",
-            current_thread_id);
+            formatting_data->log_line_buffer + current_index, fake_total_length - current_index, "] [%s] ", repr);
         if (thread_id_written < 0) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
-
         current_index = s_advance_and_clamp_index(current_index, thread_id_written, fake_total_length);
     }
 

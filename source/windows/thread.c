@@ -125,7 +125,7 @@ int aws_thread_launch(
     return AWS_OP_SUCCESS;
 }
 
-uint64_t aws_thread_get_id(struct aws_thread *thread) {
+aws_thread_id aws_thread_get_id(struct aws_thread *thread) {
     return thread->thread_id;
 }
 
@@ -147,8 +147,12 @@ void aws_thread_clean_up(struct aws_thread *thread) {
     thread->thread_handle = 0;
 }
 
-uint64_t aws_thread_current_thread_id(void) {
-    return (uint64_t)GetCurrentThreadId();
+aws_thread_id aws_thread_current_thread_id(void) {
+    return GetCurrentThreadId();
+}
+
+bool aws_thread_thread_id_equal(aws_thread_id t1, aws_thread_id t2) {
+    return t1 == t2;
 }
 
 void aws_thread_current_sleep(uint64_t nanos) {

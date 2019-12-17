@@ -98,7 +98,7 @@ void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
     thread->allocator = allocator;
-    thread->thread_id = 0;
+    // do not init opaque thread->thread_id
     thread->detach_state = AWS_THREAD_NOT_CREATED;
 
     return AWS_OP_SUCCESS;
@@ -176,8 +176,8 @@ cleanup:
     return AWS_OP_SUCCESS;
 }
 
-uint64_t aws_thread_get_id(struct aws_thread *thread) {
-    return (uintptr_t)thread->thread_id;
+aws_thread_id aws_thread_get_id(struct aws_thread *thread) {
+    return thread->thread_id;
 }
 
 enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thread) {
@@ -206,8 +206,12 @@ int aws_thread_join(struct aws_thread *thread) {
     return AWS_OP_SUCCESS;
 }
 
-uint64_t aws_thread_current_thread_id(void) {
-    return (uintptr_t)pthread_self();
+aws_thread_id aws_thread_current_thread_id(void) {
+    return pthread_self();
+}
+
+bool aws_thread_thread_id_equal(aws_thread_id t1, aws_thread_id t2) {
+    return pthread_equal(t1, t2) != 0;
 }
 
 void aws_thread_current_sleep(uint64_t nanos) {
