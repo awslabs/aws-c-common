@@ -189,6 +189,9 @@ TARGETS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
+        "variables": {
+            "exe": ".exe"
+        }
     },
 }
 
@@ -719,6 +722,7 @@ def run_build(build_spec, build_config, is_dryrun):
             command_variables = {
                 'source_dir': project_source_dir,
                 'build_dir': project_build_dir,
+                'install_dir': install_dir,
                 'build_config': build_config,
                 **config,
                 **config['variables'],
@@ -774,7 +778,7 @@ def run_build(build_spec, build_config, is_dryrun):
 
     # Make the build directory
     if is_dryrun:
-        build_dir = "$TEMP/build"
+        build_dir = os.path.expandvars("$TEMP/build")
     else:
         build_dir = tempfile.mkdtemp()
     _log_command(['mkdir', build_dir])
