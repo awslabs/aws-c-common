@@ -97,9 +97,7 @@ void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void
 }
 
 int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) {
-    thread->allocator = allocator;
-    // do not init opaque thread->thread_id
-    thread->detach_state = AWS_THREAD_NOT_CREATED;
+    *thread = (struct aws_thread){.allocator = allocator, .detach_state = AWS_THREAD_NOT_CREATED};
 
     return AWS_OP_SUCCESS;
 }

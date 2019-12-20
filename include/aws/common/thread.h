@@ -44,6 +44,11 @@ typedef pthread_once_t aws_thread_once;
 typedef pthread_t aws_thread_id;
 #endif
 
+/*
+ * Number of chars to represent aws_thread_id as a string (2 hex chars per byte
+ * plus '\0' terminator). Needed for portable printing because pthread_t is
+ * opaque.
+ */
 #define AWS_THREAD_ID_REPR_LEN (sizeof(aws_thread_id) * 2 + 1)
 
 struct aws_thread {

@@ -295,8 +295,9 @@ int aws_thread_id_to_string(aws_thread_id thread_id, char *str, size_t length) {
     AWS_ERROR_PRECONDITION(AWS_THREAD_ID_REPR_LEN == length);
     AWS_ERROR_PRECONDITION(str && AWS_MEM_IS_WRITABLE(str, length));
     size_t current_index = 0;
+    unsigned char *bytes = (unsigned char *)&thread_id;
     for (size_t i = sizeof(aws_thread_id); i != 0; --i) {
-        unsigned char c = *(((unsigned char *)&thread_id) + i - 1);
+        unsigned char c = bytes[i - 1];
         int written = snprintf(str + current_index, length - current_index, "%02x", c);
         if (written < 0) {
             return AWS_OP_ERR;

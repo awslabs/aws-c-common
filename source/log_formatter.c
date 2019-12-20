@@ -51,6 +51,13 @@ static size_t s_advance_and_clamp_index(size_t current_index, int amount, size_t
 
     return next_index;
 }
+
+/* Thread-local string representation of current thread id */
+AWS_THREAD_LOCAL struct {
+    bool is_valid;
+    char repr[AWS_THREAD_ID_REPR_LEN];
+} tl_logging_thread_id = {.is_valid = false};
+
 int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *formatting_data, va_list args) {
     size_t current_index = 0;
 
@@ -109,13 +116,18 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
         /*
          * Add thread id and user content separator (" - ")
          */
-        aws_thread_id current_thread_id = aws_thread_current_thread_id();
-        char repr[AWS_THREAD_ID_REPR_LEN];
-        if (aws_thread_id_to_string(current_thread_id, repr, AWS_THREAD_ID_REPR_LEN)) {
-            return AWS_OP_ERR;
+        if (!tl_logging_thread_id.is_valid) {
+            aws_thread_id current_thread_id = aws_thread_current_thread_id();
+            if (aws_thread_id_to_string(current_thread_id, tl_logging_thread_id.repr, AWS_THREAD_ID_REPR_LEN)) {
+                return AWS_OP_ERR;
+            }
+            tl_logging_thread_id.is_valid = true;
         }
         int thread_id_written = snprintf(
-            formatting_data->log_line_buffer + current_index, fake_total_length - current_index, "] [%s] ", repr);
+            formatting_data->log_line_buffer + current_index,
+            fake_total_length - current_index,
+            "] [%s] ",
+            tl_logging_thread_id.repr);
         if (thread_id_written < 0) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
