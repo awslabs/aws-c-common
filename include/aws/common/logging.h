@@ -239,14 +239,14 @@ AWS_COMMON_API
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string);
 
 /**
- * Converts an aws_thread_id to a c-string.  For portability, aws_thread_id
+ * Converts an aws_thread_id_t to a c-string.  For portability, aws_thread_id_t
  * must not be printed directly.  Intended primarily to support building log
- * lines that include the thread id in them.  The return parameter `str` must
- * point-to a char buffer of length `length == AWS_THREAD_ID_REPR_LEN`.  The
- * thread id representation is returned in `str`.
+ * lines that include the thread id in them.  The parameter `buffer` must
+ * point-to a char buffer of length `bufsz == AWS_THREAD_ID_T_REPR_BUFSZ`.  The
+ * thread id representation is returned in `buffer`.
  */
 AWS_COMMON_API
-int aws_thread_id_to_string(aws_thread_id thread_id, char *str, size_t length);
+int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bufsz);
 
 /**
  * Get subject name from log subject.

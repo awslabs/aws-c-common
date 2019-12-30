@@ -18,7 +18,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 struct thread_test_data {
-    aws_thread_id thread_id;
+    aws_thread_id_t thread_id;
 };
 
 static void s_thread_fn(void *arg) {

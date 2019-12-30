@@ -291,23 +291,22 @@ int aws_log_level_to_string(enum aws_log_level log_level, const char **level_str
     return AWS_OP_SUCCESS;
 }
 
-int aws_thread_id_to_string(aws_thread_id thread_id, char *str, size_t length) {
-    AWS_ERROR_PRECONDITION(AWS_THREAD_ID_REPR_LEN == length);
-    AWS_ERROR_PRECONDITION(str && AWS_MEM_IS_WRITABLE(str, length));
+int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bufsz) {
+    AWS_ERROR_PRECONDITION(AWS_THREAD_ID_T_REPR_BUFSZ == bufsz);
+    AWS_ERROR_PRECONDITION(buffer && AWS_MEM_IS_WRITABLE(buffer, bufsz));
     size_t current_index = 0;
     unsigned char *bytes = (unsigned char *)&thread_id;
-    for (size_t i = sizeof(aws_thread_id); i != 0; --i) {
+    for (size_t i = sizeof(aws_thread_id_t); i != 0; --i) {
         unsigned char c = bytes[i - 1];
-        int written = snprintf(str + current_index, length - current_index, "%02x", c);
+        int written = snprintf(buffer + current_index, bufsz - current_index, "%02x", c);
         if (written < 0) {
             return AWS_OP_ERR;
         }
         current_index += written;
-        if (length <= current_index) {
+        if (bufsz <= current_index) {
             return AWS_OP_ERR;
         }
     }
-    str[length - 1] = '\0';
     return AWS_OP_SUCCESS;
 }
 

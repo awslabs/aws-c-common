@@ -174,7 +174,7 @@ cleanup:
     return AWS_OP_SUCCESS;
 }
 
-aws_thread_id aws_thread_get_id(struct aws_thread *thread) {
+aws_thread_id_t aws_thread_get_id(struct aws_thread *thread) {
     return thread->thread_id;
 }
 
@@ -204,11 +204,11 @@ int aws_thread_join(struct aws_thread *thread) {
     return AWS_OP_SUCCESS;
 }
 
-aws_thread_id aws_thread_current_thread_id(void) {
+aws_thread_id_t aws_thread_current_thread_id(void) {
     return pthread_self();
 }
 
-bool aws_thread_thread_id_equal(aws_thread_id t1, aws_thread_id t2) {
+bool aws_thread_thread_id_equal(aws_thread_id_t t1, aws_thread_id_t t2) {
     return pthread_equal(t1, t2) != 0;
 }
 

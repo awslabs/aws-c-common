@@ -37,19 +37,19 @@ typedef union {
 } aws_thread_once;
 #    define AWS_THREAD_ONCE_STATIC_INIT                                                                                \
         { NULL }
-typedef unsigned long aws_thread_id;
+typedef unsigned long aws_thread_id_t;
 #else
 typedef pthread_once_t aws_thread_once;
 #    define AWS_THREAD_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
-typedef pthread_t aws_thread_id;
+typedef pthread_t aws_thread_id_t;
 #endif
 
 /*
- * Number of chars to represent aws_thread_id as a string (2 hex chars per byte
+ * Buffer size needed to represent aws_thread_id_t as a string (2 hex chars per byte
  * plus '\0' terminator). Needed for portable printing because pthread_t is
  * opaque.
  */
-#define AWS_THREAD_ID_REPR_LEN (sizeof(aws_thread_id) * 2 + 1)
+#define AWS_THREAD_ID_T_REPR_BUFSZ (sizeof(aws_thread_id_t) * 2 + 1)
 
 struct aws_thread {
     struct aws_allocator *allocator;
@@ -57,7 +57,7 @@ struct aws_thread {
 #ifdef _WIN32
     void *thread_handle;
 #endif
-    aws_thread_id thread_id;
+    aws_thread_id_t thread_id;
 };
 
 AWS_EXTERN_C_BEGIN
@@ -93,7 +93,7 @@ int aws_thread_launch(
  * Gets the id of thread
  */
 AWS_COMMON_API
-aws_thread_id aws_thread_get_id(struct aws_thread *thread);
+aws_thread_id_t aws_thread_get_id(struct aws_thread *thread);
 
 /**
  * Gets the detach state of the thread. For example, is it safe to call join on
@@ -120,13 +120,13 @@ void aws_thread_clean_up(struct aws_thread *thread);
  * Returns the thread id of the calling thread.
  */
 AWS_COMMON_API
-aws_thread_id aws_thread_current_thread_id(void);
+aws_thread_id_t aws_thread_current_thread_id(void);
 
 /**
  * Compare thread ids.
  */
 AWS_COMMON_API
-bool aws_thread_thread_id_equal(aws_thread_id t1, aws_thread_id t2);
+bool aws_thread_thread_id_equal(aws_thread_id_t t1, aws_thread_id_t t2);
 
 /**
  * Sleeps the current thread by nanos.
