@@ -62,4 +62,10 @@ int do_log_test(
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%d", (int)AWS_LL_TRACE);                                                \
     }
 
+/**
+ * Return new string with format "./aws_log_writer_test_{UUID}.log"
+ * This function cannot fail.
+ */
+struct aws_string *aws_string_new_log_writer_test_filename(struct aws_allocator *allocator);
+
 #endif /* AWS_COMMON_LOGGING_TEST_UTILITIES_H */

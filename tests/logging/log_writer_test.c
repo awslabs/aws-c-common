@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+#include "logging_test_utilities.h"
+
 #include <aws/common/log_writer.h>
 
 #include <aws/common/string.h>
@@ -31,18 +33,9 @@
 
 #define TEST_WRITER_MAX_BUFFER_SIZE 4096
 
-/*
- * We need to add some filesystem support in common.  Hard-code for now.
- */
-static const char *s_test_file_name =
-#ifdef WIN32
-    "aws_log_writer_test.log";
-#else
-    "./aws_log_writer_test.log";
-#endif
-
 int do_default_log_writer_test(
     struct aws_log_writer *writer,
+    const char *test_file_name,
     const char *expected_file_content,
     const struct aws_string *output,
     FILE *close_fp) {
@@ -60,7 +53,7 @@ int do_default_log_writer_test(
     }
 
     char buffer[TEST_WRITER_MAX_BUFFER_SIZE];
-    FILE *file = fopen(s_test_file_name, "r");
+    FILE *file = fopen(test_file_name, "r");
     int open_error = errno;
     size_t bytes_read = 0;
 
@@ -68,7 +61,7 @@ int do_default_log_writer_test(
         bytes_read = fread(buffer, 1, TEST_WRITER_MAX_BUFFER_SIZE - 1, file);
         fclose(file);
     }
-    remove(s_test_file_name);
+    remove(test_file_name);
 
     /*
      * Check that the write call was successful
@@ -79,8 +72,8 @@ int do_default_log_writer_test(
      * Check the file was read successfully
      */
     ASSERT_TRUE(
-        file != NULL, "Unable to open output file \"%s\" to verify contents. Error: %d", s_test_file_name, open_error);
-    ASSERT_TRUE(bytes_read >= 0, "Failed to read test output file \"%s\"", s_test_file_name);
+        file != NULL, "Unable to open output file \"%s\" to verify contents. Error: %d", test_file_name, open_error);
+    ASSERT_TRUE(bytes_read >= 0, "Failed to read test output file \"%s\"", test_file_name);
 
     /*
      * add end of string marker
@@ -115,14 +108,20 @@ AWS_STATIC_STRING_FROM_LITERAL(s_simple_file_content, SIMPLE_FILE_CONTENT);
 static int s_log_writer_simple_file_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    remove(s_test_file_name);
+    struct aws_string *test_file_str = aws_string_new_log_writer_test_filename(allocator);
+    const char *test_file_cstr = aws_string_c_str(test_file_str);
+    remove(test_file_cstr);
 
-    struct aws_log_writer_file_options options = {.filename = s_test_file_name};
+    struct aws_log_writer_file_options options = {.filename = test_file_cstr};
 
     struct aws_log_writer writer;
-    aws_log_writer_init_file(&writer, allocator, &options);
+    ASSERT_SUCCESS(aws_log_writer_init_file(&writer, allocator, &options));
 
-    return do_default_log_writer_test(&writer, SIMPLE_FILE_CONTENT, s_simple_file_content, NULL);
+    ASSERT_SUCCESS(
+        do_default_log_writer_test(&writer, test_file_cstr, SIMPLE_FILE_CONTENT, s_simple_file_content, NULL));
+
+    aws_string_destroy(test_file_str);
+    return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(test_log_writer_simple_file_test, s_log_writer_simple_file_test);
 
@@ -132,17 +131,23 @@ AWS_TEST_CASE(test_log_writer_simple_file_test, s_log_writer_simple_file_test);
 static int s_log_writer_existing_file_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    remove(s_test_file_name);
-    FILE *fp = fopen(s_test_file_name, "w+");
+    struct aws_string *test_file_str = aws_string_new_log_writer_test_filename(allocator);
+    const char *test_file_cstr = aws_string_c_str(test_file_str);
+    remove(test_file_cstr);
+
+    FILE *fp = fopen(test_file_cstr, "w+");
     fprintf(fp, EXISTING_TEXT);
     fclose(fp);
 
-    struct aws_log_writer_file_options options = {.filename = s_test_file_name};
+    struct aws_log_writer_file_options options = {.filename = test_file_cstr};
 
     struct aws_log_writer writer;
-    aws_log_writer_init_file(&writer, allocator, &options);
+    ASSERT_SUCCESS(aws_log_writer_init_file(&writer, allocator, &options));
 
-    return do_default_log_writer_test(&writer, s_combined_text, s_simple_file_content, NULL);
+    ASSERT_SUCCESS(do_default_log_writer_test(&writer, test_file_cstr, s_combined_text, s_simple_file_content, NULL));
+
+    aws_string_destroy(test_file_str);
+    return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(test_log_writer_existing_file_test, s_log_writer_existing_file_test);
 
