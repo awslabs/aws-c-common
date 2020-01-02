@@ -219,6 +219,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsLibFuzzer.cmake"
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
+    "cmake/AwsFindPackage.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
