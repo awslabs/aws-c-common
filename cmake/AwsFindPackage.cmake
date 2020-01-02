@@ -24,9 +24,9 @@ option(IN_SOURCE_BUILD "If the CRT libs are being built from your source tree (a
 #    name and namespace based on configuration.
 function(aws_use_package package_name)
     if (IN_SOURCE_BUILD)
-        set(DEP_CRT_LIBS ${DEP_CRT_LIBS} ${package_name} PARENT_SCOPE)
+        set(DEP_AWS_LIBS ${DEP_AWS_LIBS} ${package_name} PARENT_SCOPE)
     else()
         find_package(${package_name} REQUIRED)
-        set(DEP_CRT_LIBS ${DEP_CRT_LIBS} AWS::${package_name} PARENT_SCOPE)
+        set(DEP_AWS_LIBS ${DEP_AWS_LIBS} AWS::${package_name} PARENT_SCOPE)
     endif()
 endfunction()
