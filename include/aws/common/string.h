@@ -51,7 +51,8 @@
 struct aws_string {
     struct aws_allocator *const allocator;
     const size_t len;
-    const uint8_t bytes[];
+    /* give this a storage specifier for C++ purposes. It will likely be larger after init. */
+    const uint8_t bytes[1];
 };
 #ifdef _MSC_VER
 #    pragma warning(pop)
