@@ -232,7 +232,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
         ESCAPE_QUOTES)
 
 if (NOT CMAKE_CROSSCOMPILING)
-    if (BUILD_TESTING)
+    if (NOT DEFINED BUILD_TESTING OR BUILD_TESTING)
         include(CTest)
         add_subdirectory(tests)
     endif()
