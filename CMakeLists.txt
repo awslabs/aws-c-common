@@ -27,6 +27,7 @@ include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsSIMD)
+include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -233,7 +234,6 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
 
 if (NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
-        include(CTest)
         add_subdirectory(tests)
     endif()
 endif()
