@@ -665,6 +665,8 @@ def run_build(build_spec, build_config, is_dryrun):
             project_source_dir = os.path.join(build_dir, project)
             project_build_dir = os.path.join(project_source_dir, 'build')
 
+        print("Project {}, source_dir {}, build_dir {}".format(project,project_source_dir, project_build_dir))
+
         def _build_project_cmake():
             # If the build directory doesn't already exist, make it
             _mkdir(project_build_dir)
@@ -729,6 +731,8 @@ def run_build(build_spec, build_config, is_dryrun):
                 **config,
                 **config['variables'],
             }
+
+            print("command_variables : {}".format(command_variables))
 
             config_build = project_config.get("build", None)
             if config_build:
