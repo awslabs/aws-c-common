@@ -656,6 +656,8 @@ def run_build(build_spec, build_config, is_dryrun):
     # Helper to build
     def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
 
+        print("Project {} called with build_tests={}, run_tests={}, build_downstream={}".format(project, build_tests, run_tests, build_downstream))
+        
         if not project:
             project_source_dir = source_dir
             project_build_dir = build_dir
@@ -745,8 +747,11 @@ def run_build(build_spec, build_config, is_dryrun):
             if config_test:
                 assert isinstance(config_test, list)
                 def _test_project_config():
+                    print("Substitution variable context: {}".format(command_variables))
                     for command in config_test:
+                        print("Subbing variables into test command \"{}\"".format(command))
                         final_command = _replace_variables(command, command_variables)
+                        print("Substitution result: \"{}\"".format(final_command))
                         _run_command(final_command)
                 test_fn = _test_project_config
 
