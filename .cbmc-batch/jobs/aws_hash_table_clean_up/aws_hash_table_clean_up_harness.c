@@ -35,5 +35,5 @@ void aws_hash_table_clean_up_harness() {
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     aws_hash_table_clean_up(&map);
     assert(map.p_impl == NULL);
-    assert_all_zeroes(&state->slots[0], state->size * sizeof(state->slots[0]));
+    assert_all_zeroes((uint8_t *)&state->slots[0], state->size * sizeof(state->slots[0]));
 }

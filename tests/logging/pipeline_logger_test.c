@@ -13,7 +13,10 @@
  * permissions and limitations under the License.
  */
 
+#include "logging_test_utilities.h"
+
 #include <aws/common/logging.h>
+#include <aws/common/string.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -26,13 +29,6 @@
 
 #define TEST_PIPELINE_MAX_BUFFER_SIZE 4096
 
-static const char *s_test_file_name =
-#ifdef WIN32
-    "aws_log_writer_test.log";
-#else
-    "./aws_log_writer_test.log";
-#endif
-
 typedef void(log_test_fn)(void);
 
 int do_pipeline_logger_test(
@@ -41,9 +37,12 @@ int do_pipeline_logger_test(
     const char **expected_user_content,
     size_t user_content_count) {
 
-    remove(s_test_file_name);
+    struct aws_string *test_file_str = aws_string_new_log_writer_test_filename(allocator);
+    const char *test_file_cstr = aws_string_c_str(test_file_str);
 
-    struct aws_logger_standard_options options = {.level = AWS_LL_TRACE, .filename = s_test_file_name};
+    remove(test_file_cstr);
+
+    struct aws_logger_standard_options options = {.level = AWS_LL_TRACE, .filename = test_file_cstr};
 
     struct aws_logger logger;
     if (aws_logger_init_standard(&logger, allocator, &options)) {
@@ -59,7 +58,7 @@ int do_pipeline_logger_test(
     aws_logger_clean_up(&logger);
 
     char buffer[TEST_PIPELINE_MAX_BUFFER_SIZE];
-    FILE *file = fopen(s_test_file_name, "r");
+    FILE *file = fopen(test_file_cstr, "r");
     int open_error = errno;
     size_t bytes_read = 0;
 
@@ -68,14 +67,14 @@ int do_pipeline_logger_test(
         fclose(file);
     }
 
-    remove(s_test_file_name);
+    remove(test_file_cstr);
 
     /*
      * Check the file was read successfully
      */
     ASSERT_TRUE(
-        file != NULL, "Unable to open log file \"%s\" to verify contents. Error: %d", s_test_file_name, open_error);
-    ASSERT_TRUE(bytes_read >= 0, "Failed to read log file \"%s\"", s_test_file_name);
+        file != NULL, "Unable to open log file \"%s\" to verify contents. Error: %d", test_file_str, open_error);
+    ASSERT_TRUE(bytes_read >= 0, "Failed to read log file \"%s\"", test_file_str);
 
     /*
      * add end of string marker
@@ -96,6 +95,8 @@ int do_pipeline_logger_test(
             "Expected to find \"%s\" in log file but could not.  Content is either missing or out-of-order.",
             expected_user_content[i]);
     }
+
+    aws_string_destroy(test_file_str);
 
     return AWS_OP_SUCCESS;
 }

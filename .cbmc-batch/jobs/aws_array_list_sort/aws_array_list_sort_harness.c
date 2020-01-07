@@ -19,7 +19,8 @@
 /**
  * Standard implementation of compare function for qsort
  */
-int compare(const void *a, const void *b, size_t item_size) {
+size_t item_size;
+int compare(const void *a, const void *b) {
     __CPROVER_precondition(__CPROVER_r_ok(a, item_size), "first element readable in compare function");
     __CPROVER_precondition(__CPROVER_r_ok(b, item_size), "second element readable in compare function");
     return nondet_int();
@@ -43,6 +44,7 @@ void aws_array_list_sort_harness() {
     save_byte_from_array((uint8_t *)list.data, list.current_size, &old_byte);
 
     /* perform operation under verification */
+    item_size = list.item_size;
     aws_array_list_sort(&list, compare);
 
     /* assertions */

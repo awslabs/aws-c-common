@@ -1,0 +1,21 @@
+name: CI
+
+on: [push]
+
+jobs:
+  OSX:
+
+    runs-on: macOS-10.14
+
+    steps:
+    - name: Checkout Source
+      uses: actions/checkout@v1
+    
+    - name: Install Dependencies
+      run: |
+        brew install llvm
+        export PATH=$(brew --prefix llvm)/bin:$PATH
+    
+    - name: Build and test
+      run: |
+        python3 ./codebuild/builder.py build macos-default-default-macos-x64

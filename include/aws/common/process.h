@@ -1,5 +1,7 @@
+#ifndef AWS_COMMON_PROCESS_H
+#define AWS_COMMON_PROCESS_H
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -13,14 +15,12 @@
  * permissions and limitations under the License.
  */
 
-/*
- * This file exists just to suppress various build noise that pops up when the
- * header checker tries to build a completely empty library.
- */
+#include <aws/common/common.h>
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+AWS_EXTERN_C_BEGIN
 
-    return 0;
-}
+AWS_COMMON_API int aws_get_pid(void);
+
+AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_PROCESS_H */

@@ -36,9 +36,9 @@ function(generate_test_driver driver_exe_name)
 
     add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.c ${TESTS})
     aws_set_common_properties(${driver_exe_name} NO_WEXTRA NO_PEDANTIC)
-    aws_add_sanitizers(${driver_exe_name} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
+    aws_add_sanitizers(${driver_exe_name} ${${PROJECT_NAME}_SANITIZERS})
 
-    target_link_libraries(${driver_exe_name} PRIVATE ${CMAKE_PROJECT_NAME})
+    target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
@@ -56,7 +56,7 @@ function(generate_cpp_test_driver driver_exe_name)
     create_test_sourcelist(test_srclist test_runner.cpp ${TEST_CASES})
 
     add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.cpp ${TESTS})
-    target_link_libraries(${driver_exe_name} PRIVATE ${CMAKE_PROJECT_NAME})
+    target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)

@@ -49,6 +49,7 @@ struct win_symbol_data {
 };
 
 typedef BOOL __stdcall SymInitialize_fn(_In_ HANDLE hProcess, _In_opt_ PCSTR UserSearchPath, _In_ BOOL fInvadeProcess);
+typedef DWORD __stdcall SymSetOptions_fn(DWORD SymOptions);
 
 typedef BOOL __stdcall SymFromAddr_fn(
     _In_ HANDLE hProcess,
@@ -73,6 +74,7 @@ typedef BOOL __stdcall SymGetLineFromAddr_fn(
 #endif
 
 static SymInitialize_fn *s_SymInitialize = NULL;
+static SymSetOptions_fn *s_SymSetOptions = NULL;
 static SymFromAddr_fn *s_SymFromAddr = NULL;
 static SymGetLineFromAddr_fn *s_SymGetLineFromAddr = NULL;
 
@@ -91,6 +93,12 @@ static void s_init_dbghelp_impl(void *user_data) {
         goto done;
     }
 
+    s_SymSetOptions = (SymSetOptions_fn *)GetProcAddress(dbghelp, "SymSetOptions");
+    if (!s_SymSetOptions) {
+        fprintf(stderr, "Failed to load SymSetOptions from DbgHelp.dll\n");
+        goto done;
+    }
+
     s_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
     if (!s_SymFromAddr) {
         fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
@@ -106,6 +114,7 @@ static void s_init_dbghelp_impl(void *user_data) {
     HANDLE process = GetCurrentProcess();
     AWS_FATAL_ASSERT(process);
     s_SymInitialize(process, NULL, TRUE);
+    s_SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_ANYTHING | SYMOPT_LOAD_LINES);
     return;
 
 done:
@@ -145,38 +154,48 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     struct aws_byte_cursor null_term = aws_byte_cursor_from_array("", 1);
     HANDLE process = GetCurrentProcess();
     AWS_FATAL_ASSERT(process);
-    fprintf(stderr, "Stack Trace:\n");
     for (size_t i = 0; i < num_frames; ++i) {
+        /* record a pointer to where the symbol will be */
+        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
+
         uintptr_t address = (uintptr_t)stack[i];
         struct win_symbol_data sym_info;
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
         sym_info.sym_info.SizeOfStruct = sizeof(struct _SYMBOL_INFO);
-        s_SymFromAddr(process, address, &displacement, &sym_info.sym_info);
 
-        /* record a pointer to where the symbol will be */
-        *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
-
-        IMAGEHLP_LINE line;
-        line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-        if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
-            char buf[1024];
+        char sym_buf[1024]; /* scratch space for extracting info */
+        if (s_SymFromAddr(process, address, &displacement, &sym_info.sym_info)) {
+            /* record the address and name */
             int len = snprintf(
-                buf,
-                AWS_ARRAY_SIZE(buf),
-                "at %s(%s:%lu): address: 0x%llX",
-                sym_info.sym_info.Name,
-                line.FileName,
-                line.LineNumber,
-                sym_info.sym_info.Address);
+                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%llX: %s", sym_info.sym_info.Address, sym_info.sym_info.Name);
             if (len != -1) {
-                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(buf, len + 1); /* include null terminator */
+                struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &symbol);
-                continue;
+            }
+
+            IMAGEHLP_LINE line;
+            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+            if (s_SymGetLineFromAddr(process, address, &disp, &line)) {
+                /* record file/line info */
+                len = snprintf(sym_buf, AWS_ARRAY_SIZE(sym_buf), "(%s:%lu)", line.FileName, line.LineNumber);
+                if (len != -1) {
+                    struct aws_byte_cursor symbol = aws_byte_cursor_from_array(sym_buf, len);
+                    aws_byte_buf_append_dynamic(&symbols, &symbol);
+                }
+            }
+        } else {
+            /* no luck, record the address and last error */
+            DWORD last_error = GetLastError();
+            int len = snprintf(
+                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
+            if (len > 0) {
+                struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
+                aws_byte_buf_append_dynamic(&symbols, &sym_cur);
             }
         }
 
-        /* Need at least a null so the address changes between lines */
+        /* Null terminator */
         aws_byte_buf_append_dynamic(&symbols, &null_term);
     }
 
@@ -205,6 +224,8 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         const char *symbol = symbols[line];
         fprintf(fp, "%s\n", symbol);
     }
+    fflush(fp);
+    free(symbols);
 }
 
 void aws_backtrace_log() {

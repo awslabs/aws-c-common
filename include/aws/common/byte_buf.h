@@ -292,6 +292,18 @@ int aws_byte_cursor_split_on_char_n(
     struct aws_array_list *AWS_RESTRICT output);
 
 /**
+ * Search for an exact byte match inside a cursor. The first match will be returned. Returns AWS_OP_SUCCESS
+ * on successful match and first_find will be set to the offset in input_str, and length will be the remaining length
+ * from input_str past the returned offset. If the match was not found, AWS_OP_ERR will be returned and
+ * AWS_ERROR_STRING_MATCH_NOT_FOUND will be raised.
+ */
+AWS_COMMON_API
+int aws_byte_cursor_find_exact(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    const struct aws_byte_cursor *AWS_RESTRICT to_find,
+    struct aws_byte_cursor *first_find);
+
+/**
  *
  * Shrinks a byte cursor from the right for as long as the supplied predicate is true
  */
@@ -355,6 +367,15 @@ int aws_byte_buf_append_with_lookup(
  */
 AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Copy contents of cursor to buffer, then update cursor to reference the memory stored in the buffer.
+ * If buffer is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
+ *
+ * The cursor is permitted to reference memory from earlier in the buffer.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_cursor *from_and_update);
 
 /**
  * Attempts to increase the capacity of a buffer to the requested capacity

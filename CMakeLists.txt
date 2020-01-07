@@ -22,10 +22,12 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
+include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsSIMD)
+include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -50,7 +52,6 @@ file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
 
-option(PERFORM_HEADER_CHECK "Performs compile-time checks that each header can be included independently. Requires a C++ compiler.")
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
@@ -111,54 +112,52 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_OS_SRC}
         )
 
-if (PERFORM_HEADER_CHECK)
-    set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
-    add_subdirectory(cmake/header-tester)
-endif()
 
-add_library(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
-aws_set_common_properties(${CMAKE_PROJECT_NAME} NO_WEXTRA)
-aws_prepare_symbol_visibility_args(${CMAKE_PROJECT_NAME} "AWS_COMMON")
-target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
+add_library(${PROJECT_NAME} ${COMMON_SRC})
+aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
+aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
+target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
+
+aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
 if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
     #this only gets applied to aws-c-common (not its consumers).
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
 
-aws_add_sanitizers(${CMAKE_PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
-target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
+aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
 if (AWS_NUM_CPU_CORES)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
 endif()
 
 # Our ABI is not yet stable
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES VERSION 1.0.0)
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 # When we install, the generated header will be at the INSTALL_INTERFACE:include location,
 # but at build time we need to explicitly include this here
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
 
 # Enable SIMD encoder if the compiler supports the right features
-simd_add_definitions(${CMAKE_PROJECT_NAME})
+simd_add_definitions(${PROJECT_NAME})
 
 if (HAVE_MAY_I_USE OR HAVE_BUILTIN_CPU_SUPPORTS OR HAVE_MSVC_CPUIDEX)
     set(HAVE_SIMD_CPUID TRUE)
 endif()
 
 if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
-    simd_add_source_avx2(${CMAKE_PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
+    target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
+    simd_add_source_avx2(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
@@ -192,10 +191,10 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
             COMPONENT Development)
 endforeach()
 
-aws_prepare_shared_lib_exports(${CMAKE_PROJECT_NAME})
+aws_prepare_shared_lib_exports(${PROJECT_NAME})
 
-configure_file("cmake/${CMAKE_PROJECT_NAME}-config.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
+configure_file("cmake/${PROJECT_NAME}-config.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
   @ONLY)
 
 if (BUILD_SHARED_LIBS)
@@ -204,22 +203,24 @@ else()
    set (TARGET_DIR "static")
 endif()
 
-install(EXPORT "${CMAKE_PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake/${TARGET_DIR}"
+install(EXPORT "${PROJECT_NAME}-targets"
+    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake/${TARGET_DIR}"
     NAMESPACE AWS::
     COMPONENT Development)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-config.cmake"
-    DESTINATION "${LIBRARY_DIRECTORY}/${CMAKE_PROJECT_NAME}/cmake"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake"
     COMPONENT Development)
 
 list(APPEND EXPORT_MODULES
     "cmake/AwsCFlags.cmake"
+    "cmake/AwsCheckHeaders.cmake"
     "cmake/AwsSharedLibSetup.cmake"
     "cmake/AwsTestHarness.cmake"
     "cmake/AwsLibFuzzer.cmake"
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
+    "cmake/AwsFindPackage.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
@@ -232,7 +233,6 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
         ESCAPE_QUOTES)
 
 if (NOT CMAKE_CROSSCOMPILING)
-    include(CTest)
     if (BUILD_TESTING)
         add_subdirectory(tests)
     endif()
