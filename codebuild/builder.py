@@ -723,8 +723,7 @@ def run_build(build_spec, build_config, is_dryrun):
             upstream = project_config.get("upstream", [])
             downstream = project_config.get("downstream", [])
 
-            print("WTF is **config : {}".format(**config))
-            print("WTF is **config['variables'] : {}".format(**config['variables']))
+            print("WTF is config : {}".format(config))
 
             command_variables = {
                 'source_dir': project_source_dir,
