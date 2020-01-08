@@ -726,12 +726,12 @@ def run_build(build_spec, build_config, is_dryrun):
             print("WTF is config : {}".format(config))
 
             command_variables = {
+                **config,
+                **config['variables'],
                 'source_dir': project_source_dir,
                 'build_dir': project_build_dir,
                 'install_dir': install_dir,
                 'build_config': build_config,
-                **config,
-                **config['variables'],
             }
 
             print("command_variables : {}".format(command_variables))
