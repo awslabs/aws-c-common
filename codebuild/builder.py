@@ -42,6 +42,63 @@ class BuildSpec(object):
     def __repr__(self):
         return self.name
 
+
+# borrow the technique from the virtualmod module
+import importlib
+from importlib.abc import Loader, MetaPathFinder
+_virtual_modules = dict()
+class VirtualModuleMetaclass(type):
+    def __init__(cls, name, bases, attrs):
+        # Initialize the class
+        super(VirtualModuleMetaclass, cls).__init__(name, bases, attrs)
+
+        # Do not register VirtualModule
+        if name == 'VirtualModule':
+            return
+
+        module_name = getattr(cls, '__module_name__', cls.__name__) or name
+        module = VirtualModule.create_module(module_name)
+
+        # Copy over class attributes
+        for key, value in attrs.items():
+            if key in ('__name__', '__module_name__', '__module__', '__qualname__'):
+                continue
+            setattr(module, key, value)
+
+
+class VirtualModule(metaclass=VirtualModuleMetaclass):
+    class Finder(MetaPathFinder):
+        def find_spec(fullname, path, target=None):
+            if fullname in _virtual_modules:
+                return _virtual_modules[fullname].__spec__
+            return None
+
+    class VirtualLoader(Loader):
+        def create_module(spec):
+            if spec.name not in _virtual_modules:
+                return None
+
+            return _virtual_modules[spec.name]
+
+        def exec_module(module):
+            module_name = module.__name__
+            if hasattr(module, '__spec__'):
+                module_name = module.__spec__.name
+
+            sys.modules[module_name] = module
+
+    @staticmethod
+    def create_module(name):
+        module_cls = type(sys)
+        spec_cls = type(sys.__spec__)
+        module = module_cls(module_name)
+        setattr(module, '__spec__', spec_cls(
+            name=module_name, loader=VirtualLoader))
+        registry[module_name] = module
+        return module
+
+sys.meta_path.insert(0, VirtualModule.Finder)
+
 ########################################################################################################################
 # DATA DEFINITIONS
 ########################################################################################################################
@@ -504,6 +561,107 @@ def produce_config(build_spec, config_file, **additional_variables):
 # RUN BUILD
 ########################################################################################################################
 
+class Builder(VirtualModule):
+    class Env(object):
+        """ Encapsulates the environment in which the build is running """
+        @staticmethod
+        def get_git_branch():
+
+            travis_pr_branch = os.environ.get("TRAVIS_PULL_REQUEST_BRANCH")
+            if travis_pr_branch:
+                print("Found branch:", travis_pr_branch)
+                return travis_pr_branch
+
+            github_ref = os.environ.get("GITHUB_REF")
+            if github_ref:
+                origin_str = "refs/heads/"
+                if github_ref.startswith(origin_str):
+                    branch = github_ref[len(origin_str):]
+                    print("Found github ref:", branch)
+                    return branch
+
+            branches = subprocess.check_output(
+                ["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
+            branches = [branch.strip('*').strip()
+                        for branch in branches.split('\n') if branch]
+
+            print("Found branches:", branches)
+
+            for branch in branches:
+                if branch == "(no branch)":
+                    continue
+
+                origin_str = "remotes/origin/"
+                if branch.startswith(origin_str):
+                    branch = branch[len(origin_str):]
+
+                return branch
+
+            return None
+
+    class Shell(object):
+        """ Virtual shell that abstracts away dry run and tracks/logs state """
+        def __init__(dryrun=False):
+            # Used in dry-run builds to track simulated working directory
+            self.cwd = os.getcwd()
+            self.dryrun = dryrun
+
+        def _flatten_command(self, *command):
+            # Process out lists
+            new_command = []
+
+            def _proc_segment(command_segment):
+                e_type = type(command_segment)
+                if e_type == str:
+                    new_command.append(command_segment)
+                elif e_type == list or e_type == tuple:
+                    for segment in command_segment:
+                        _proc_segment(segment)
+            _proc_segment(command)
+            return new_command
+
+        def _log_command(self, *command):
+            print('>', subprocess.list2cmdline(
+                self._flatten_command(*command)), flush=True)
+
+        def _run_command(self, *command):
+            self._log_command(*command)
+            if not self.dryrun:
+                subprocess.check_call(self._flatten_command(
+                    *command), stdout=sys.stdout, stderr=sys.stderr)
+
+        # Helper to run chdir regardless of dry run status
+        def cd(self, directory):
+            self._log_command("cd", directory)
+            if self.dryrun:
+                if os.path.isabs(directory) or directory.startswith('$'):
+                    self.cwd = directory
+                else:
+                    self.cwd = os.path.join(self.cwd, directory)
+            else:
+                os.chdir(directory)
+        
+        # Helper to run makedirs regardless of dry run status
+        def mkdir(self, directory):
+            self._log_command("mkdir", "-p", directory)
+            if not self.dryrun:
+                os.makedirs(directory, exist_ok=True)
+
+        def cwd(self):
+            if self.dryrun:
+                return self.cwd
+            else:
+                return os.getcwd()
+
+        def exec(self, *command):
+            self._run_command(*command)
+    
+
+    class Step(object):
+        def run(self):
+            pass
+    
+
 # Used in dry-run builds to track simulated working directory
 cwd = os.getcwd()
 
@@ -957,7 +1115,7 @@ if __name__ == '__main__':
 
         run_build(build_spec, args.config, args.dry_run)
 
-    if args.command == 'codebuild':
+    elif args.command == 'codebuild':
 
         # Setup AWS connection
         import boto3
