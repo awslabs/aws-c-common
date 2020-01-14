@@ -69,7 +69,6 @@ AWS_TEST_CASE(byte_swap_test, s_byte_swap_test_fn);
 AWS_ALIGNED_TYPEDEF(uint8_t, aligned32_storage[64], 32);
 
 struct padding32_disaster {
-    aligned32_storage a;
     uint8_t dumb;
     aligned32_storage b;
 };
@@ -80,8 +79,8 @@ static int s_alignment32_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     struct padding32_disaster padded;
 
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.a) % 32);
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.b) % 32);
+    ptrdiff_t spacing = (intptr_t)&padded.b - (intptr_t)&padded.dumb;
+    ASSERT_UINT_EQUALS(0, spacing % 32);
 
     return 0;
 }
@@ -90,7 +89,6 @@ AWS_TEST_CASE(alignment32_test, s_alignment32_test_fn)
 AWS_ALIGNED_TYPEDEF(uint8_t, aligned16_storage[64], 16);
 
 struct padding16_disaster {
-    aligned16_storage a;
     uint8_t dumb;
     aligned16_storage b;
 };
@@ -101,8 +99,8 @@ static int s_alignment16_test_fn(struct aws_allocator *allocator, void *ctx) {
 
     struct padding16_disaster padded;
 
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.a) % 16);
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.b) % 16);
+    ptrdiff_t spacing = (intptr_t)&padded.b - (intptr_t)&padded.dumb;
+    ASSERT_UINT_EQUALS(0, spacing % 16);
 
     return 0;
 }
