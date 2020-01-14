@@ -77,9 +77,7 @@ static int s_alignment32_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct padding32_disaster padded;
-
-    ptrdiff_t spacing = (intptr_t)&padded.b - (intptr_t)&padded.dumb;
+    size_t spacing = offsetof(struct padding32_disaster, b) - offsetof(struct padding32_disaster, dumb);
     ASSERT_UINT_EQUALS(0, spacing % 32);
 
     return 0;
@@ -97,9 +95,7 @@ static int s_alignment16_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct padding16_disaster padded;
-
-    ptrdiff_t spacing = (intptr_t)&padded.b - (intptr_t)&padded.dumb;
+    size_t spacing = offsetof(struct padding32_disaster, b) - offsetof(struct padding32_disaster, dumb);
     ASSERT_UINT_EQUALS(0, spacing % 16);
 
     return 0;
