@@ -17,6 +17,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/thread.h>
 
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
@@ -238,6 +239,16 @@ AWS_COMMON_API
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string);
 
 /**
+ * Converts an aws_thread_id_t to a c-string.  For portability, aws_thread_id_t
+ * must not be printed directly.  Intended primarily to support building log
+ * lines that include the thread id in them.  The parameter `buffer` must
+ * point-to a char buffer of length `bufsz == AWS_THREAD_ID_T_REPR_BUFSZ`.  The
+ * thread id representation is returned in `buffer`.
+ */
+AWS_COMMON_API
+int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bufsz);
+
+/**
  * Get subject name from log subject.
  */
 AWS_COMMON_API
@@ -283,6 +294,16 @@ int aws_logger_init_from_external(
  */
 AWS_COMMON_API
 extern struct aws_logger_vtable g_pipeline_logger_owned_vtable;
+
+/*
+ * Initializes a logger that does not perform any allocation during logging.  Log lines larger than the internal
+ * constant are truncated.  Formatting matches the standard logger.  Used for memory tracing logging.
+ */
+AWS_COMMON_API
+int aws_logger_init_noalloc(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    struct aws_logger_standard_options *options);
 
 AWS_EXTERN_C_END
 

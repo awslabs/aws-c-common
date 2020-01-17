@@ -12,13 +12,13 @@ file(GLOB TEST_LOGGING_HDRS "logging/*.h")
 file(GLOB TEST_HDRS ${TEST_BASE_HDRS} ${TEST_LOGGING_HDRS})
 file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 
-set(METATEST_BINARY_NAME ${CMAKE_PROJECT_NAME}-assert-tests)
+set(METATEST_BINARY_NAME ${PROJECT_NAME}-assert-tests)
 
 if (NOT LEGACY_COMPILER_SUPPORT)
     add_executable(${METATEST_BINARY_NAME} ${META_TEST_SRC})
     aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
-    aws_add_sanitizers(${METATEST_BINARY_NAME} ${${CMAKE_PROJECT_NAME}_SANITIZERS})
-    target_link_libraries(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_PROJECT_NAME})
+    aws_add_sanitizers(${METATEST_BINARY_NAME} ${${PROJECT_NAME}_SANITIZERS})
+    target_link_libraries(${METATEST_BINARY_NAME} PRIVATE ${PROJECT_NAME})
 
     target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
@@ -240,12 +240,14 @@ add_test_case(test_byte_buf_reset)
 add_test_case(test_byte_cursor_compare_lexical)
 add_test_case(test_byte_cursor_compare_lookup)
 
-add_test_case(test_byte_cursor_find_str)
-add_test_case(test_byte_cursor_find_str_not_found)
-add_test_case(test_byte_cursor_find_str_longer_than_input)
-
 add_test_case(byte_swap_test)
-add_test_case(alignment_test)
+
+if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+    add_test_case(alignment32_test)
+else()
+    add_test_case(alignment16_test)
+endif()
+
 
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
@@ -387,11 +389,11 @@ add_test_case(test_pipeline_logger_formatted_test)
 
 add_test_case(get_pid_sanity_check_test)
 
-generate_test_driver(${CMAKE_PROJECT_NAME}-tests)
+generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
     #we have some tests here that purposely overflow
-    target_compile_options(${CMAKE_PROJECT_NAME}-tests PRIVATE -Wno-overflow)
+    target_compile_options(${PROJECT_NAME}-tests PRIVATE -Wno-overflow)
 endif()
 
 file(GLOB FUZZ_TESTS "fuzz/*.c")

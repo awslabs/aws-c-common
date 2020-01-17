@@ -75,8 +75,8 @@ void assert_array_list_equivalence(
  * (use save_byte_from_array function), so it can properly assert all bytes match.
  */
 void assert_byte_cursor_equivalence(
-    const struct aws_byte_buf *const lhs,
-    const struct aws_byte_buf *const rhs,
+    const struct aws_byte_cursor *const lhs,
+    const struct aws_byte_cursor *const rhs,
     const struct store_byte_from_buffer *const rhs_byte);
 
 /**
@@ -94,8 +94,8 @@ void assert_ring_buffer_equivalence(
  * (use save_byte_from_array function), so it can properly assert all bytes match.
  */
 void assert_byte_buf_equivalence(
-    const struct aws_byte_cursor *const lhs,
-    const struct aws_byte_cursor *const rhs,
+    const struct aws_byte_buf *const lhs,
+    const struct aws_byte_buf *const rhs,
     const struct store_byte_from_buffer *const rhs_byte);
 
 /**

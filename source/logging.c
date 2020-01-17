@@ -20,11 +20,14 @@
 #include <aws/common/log_channel.h>
 #include <aws/common/log_formatter.h>
 #include <aws/common/log_writer.h>
+#include <aws/common/mutex.h>
 
+#include <errno.h>
 #include <stdarg.h>
 
 #if _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
 #endif
 
 /*
@@ -288,6 +291,25 @@ int aws_log_level_to_string(enum aws_log_level log_level, const char **level_str
     return AWS_OP_SUCCESS;
 }
 
+int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bufsz) {
+    AWS_ERROR_PRECONDITION(AWS_THREAD_ID_T_REPR_BUFSZ == bufsz);
+    AWS_ERROR_PRECONDITION(buffer && AWS_MEM_IS_WRITABLE(buffer, bufsz));
+    size_t current_index = 0;
+    unsigned char *bytes = (unsigned char *)&thread_id;
+    for (size_t i = sizeof(aws_thread_id_t); i != 0; --i) {
+        unsigned char c = bytes[i - 1];
+        int written = snprintf(buffer + current_index, bufsz - current_index, "%02x", c);
+        if (written < 0) {
+            return AWS_OP_ERR;
+        }
+        current_index += written;
+        if (bufsz <= current_index) {
+            return AWS_OP_ERR;
+        }
+    }
+    return AWS_OP_SUCCESS;
+}
+
 #ifndef AWS_MAX_LOG_SUBJECT_SLOTS
 #    define AWS_MAX_LOG_SUBJECT_SLOTS 16u
 #endif
@@ -367,4 +389,127 @@ void aws_unregister_log_subject_info_list(struct aws_log_subject_info_list *log_
     }
 
     s_log_subject_slots[slot_index] = NULL;
+}
+
+/*
+ * no alloc implementation
+ */
+struct aws_logger_noalloc {
+    enum aws_log_level level;
+    FILE *file;
+    bool should_close;
+    struct aws_mutex lock;
+};
+
+static enum aws_log_level s_noalloc_stderr_logger_get_log_level(struct aws_logger *logger, aws_log_subject_t subject) {
+    (void)subject;
+
+    struct aws_logger_noalloc *impl = logger->p_impl;
+    return impl->level;
+}
+
+#define MAXIMUM_NO_ALLOC_LOG_LINE_SIZE 8192
+
+static int s_noalloc_stderr_logger_log(
+    struct aws_logger *logger,
+    enum aws_log_level log_level,
+    aws_log_subject_t subject,
+    const char *format,
+    ...) {
+
+    char format_buffer[MAXIMUM_NO_ALLOC_LOG_LINE_SIZE];
+
+    va_list format_args;
+    va_start(format_args, format);
+
+#if _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4221) /* allow struct member to reference format_buffer  */
+#endif
+
+    struct aws_logging_standard_formatting_data format_data = {
+        .log_line_buffer = format_buffer,
+        .total_length = MAXIMUM_NO_ALLOC_LOG_LINE_SIZE,
+        .level = log_level,
+        .subject_name = aws_log_subject_name(subject),
+        .format = format,
+        .date_format = AWS_DATE_FORMAT_ISO_8601,
+        .allocator = logger->allocator,
+        .amount_written = 0,
+    };
+
+#if _MSC_VER
+#    pragma warning(pop) /* disallow struct member to reference local value */
+#endif
+
+    int result = aws_format_standard_log_line(&format_data, format_args);
+
+    va_end(format_args);
+
+    if (result == AWS_OP_ERR) {
+        return AWS_OP_ERR;
+    }
+
+    struct aws_logger_noalloc *impl = logger->p_impl;
+
+    aws_mutex_lock(&impl->lock);
+
+    if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
+        return aws_translate_and_raise_io_error(errno);
+    }
+
+    aws_mutex_unlock(&impl->lock);
+
+    return AWS_OP_SUCCESS;
+}
+
+static void s_noalloc_stderr_logger_clean_up(struct aws_logger *logger) {
+    if (logger == NULL) {
+        return;
+    }
+
+    struct aws_logger_noalloc *impl = logger->p_impl;
+    if (impl->should_close) {
+        fclose(impl->file);
+    }
+
+    aws_mutex_clean_up(&impl->lock);
+
+    aws_mem_release(logger->allocator, impl);
+    AWS_ZERO_STRUCT(*logger);
+}
+
+static struct aws_logger_vtable s_noalloc_stderr_vtable = {
+    .get_log_level = s_noalloc_stderr_logger_get_log_level,
+    .log = s_noalloc_stderr_logger_log,
+    .clean_up = s_noalloc_stderr_logger_clean_up,
+};
+
+int aws_logger_init_noalloc(
+    struct aws_logger *logger,
+    struct aws_allocator *allocator,
+    struct aws_logger_standard_options *options) {
+
+    struct aws_logger_noalloc *impl = aws_mem_calloc(allocator, 1, sizeof(struct aws_logger_noalloc));
+
+    if (impl == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    impl->level = options->level;
+    if (options->file != NULL) {
+        impl->file = options->file;
+        impl->should_close = false;
+    } else { /* _MSC_VER */
+        impl->file = fopen(options->filename, "w");
+        impl->should_close = true;
+    }
+
+    aws_mutex_init(&impl->lock);
+
+    logger->vtable = &s_noalloc_stderr_vtable;
+    logger->allocator = allocator;
+    logger->p_impl = impl;
+
+    return AWS_OP_SUCCESS;
 }

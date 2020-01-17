@@ -19,7 +19,7 @@
 
 void aws_string_destroy_secure_harness() {
     struct aws_string *str = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
-    char *bytes = str->bytes;
+    char const *bytes = str->bytes;
     size_t len = str->len;
     /* Tell CBMC to keep the buffer live after the free */
     __CPROVER_allocated_memory(bytes, len);

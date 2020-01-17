@@ -17,6 +17,9 @@
 
 #include "test_logger.h"
 
+#include <aws/common/string.h>
+#include <aws/common/uuid.h>
+
 #define TEST_LOGGER_MAX_BUFFER_SIZE 4096
 
 int do_log_test(
@@ -45,4 +48,24 @@ int do_log_test(
     ASSERT_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
 
     return AWS_OP_SUCCESS;
+}
+
+struct aws_string *aws_string_new_log_writer_test_filename(struct aws_allocator *allocator) {
+    char filename_array[64];
+    struct aws_byte_buf filename_buf = aws_byte_buf_from_empty_array(filename_array, sizeof(filename_array));
+
+#ifndef WIN32
+    AWS_FATAL_ASSERT(aws_byte_buf_write_from_whole_cursor(&filename_buf, aws_byte_cursor_from_c_str("./")));
+#endif
+
+    AWS_FATAL_ASSERT(
+        aws_byte_buf_write_from_whole_cursor(&filename_buf, aws_byte_cursor_from_c_str("aws_log_writer_test_")));
+
+    struct aws_uuid uuid;
+    AWS_FATAL_ASSERT(aws_uuid_init(&uuid) == AWS_OP_SUCCESS);
+    AWS_FATAL_ASSERT(aws_uuid_to_str(&uuid, &filename_buf) == AWS_OP_SUCCESS);
+
+    AWS_FATAL_ASSERT(aws_byte_buf_write_from_whole_cursor(&filename_buf, aws_byte_cursor_from_c_str(".log")));
+
+    return aws_string_new_from_array(allocator, filename_buf.buffer, filename_buf.len);
 }

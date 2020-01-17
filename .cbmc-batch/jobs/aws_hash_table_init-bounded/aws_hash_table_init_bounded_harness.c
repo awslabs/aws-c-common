@@ -37,6 +37,6 @@ void aws_hash_table_init_bounded_harness() {
     if (rval == AWS_OP_SUCCESS) {
         assert(aws_hash_table_is_valid(&map));
         struct hash_table_state *impl = map.p_impl;
-        assert_all_zeroes(&impl->slots[0], impl->size * sizeof(impl->slots[0]));
+        assert_all_zeroes((uint8_t *)&impl->slots[0], impl->size * sizeof(impl->slots[0]));
     }
 }

@@ -35,6 +35,6 @@ void memset_override_0_harness() {
     __CPROVER_assume(size < MAX);
     memset_impl(d1, c, size);
     memset_override_0_impl(d2, c, size);
-    assert_bytes_match(d1, d2, size);
-    assert_all_bytes_are(d2, c, size);
+    assert_bytes_match((uint8_t *)d1, (uint8_t *)d2, size);
+    assert_all_bytes_are((uint8_t *)d2, c, size);
 }

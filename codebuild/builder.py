@@ -189,6 +189,9 @@ TARGETS = {
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
+        "variables": {
+            "exe": ".exe"
+        }
     },
 }
 
@@ -226,16 +229,10 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main",
                 ],
-                'apt_packages': ["clang-6.0", "clang-format-6.0", "clang-tidy-6.0"],
+                'apt_packages': ["clang-6.0", "clang-tidy-6.0"],
 
                 'c': "clang-6.0",
                 'cxx': "clang-6.0",
-                'build_env': {
-                    'CLANG_FORMAT': 'clang-format-6.0',
-                },
-                'post_build_steps': [
-                    ["./format-check.sh"],
-                ],
 
                 'variables': {
                     'clang_tidy': 'clang-tidy-6.0',
@@ -247,7 +244,7 @@ COMPILERS = {
                 'apt_repos': [
                     "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main",
                 ],
-                'apt_packages': ["clang-8", "clang-format-8", "clang-tidy-8"],
+                'apt_packages': ["clang-8", "clang-tidy-8"],
 
                 'c': "clang-8",
                 'cxx': "clang-8",
@@ -517,6 +514,14 @@ def _get_git_branch():
         print("Found branch:", travis_pr_branch)
         return travis_pr_branch
 
+    github_ref = os.environ.get("GITHUB_REF")
+    if github_ref:
+        origin_str = "refs/heads/"
+        if github_ref.startswith(origin_str):
+            branch = github_ref[len(origin_str):]
+            print("Found github ref:", branch)
+            return branch
+
     branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
     branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
 
@@ -715,11 +720,12 @@ def run_build(build_spec, build_config, is_dryrun):
             downstream = project_config.get("downstream", [])
 
             command_variables = {
-                'source_dir': project_source_dir,
-                'build_dir': project_build_dir,
-                'build_config': build_config,
                 **config,
                 **config['variables'],
+                'source_dir': project_source_dir,
+                'build_dir': project_build_dir,
+                'install_dir': install_dir,
+                'build_config': build_config,
             }
 
             config_build = project_config.get("build", None)
@@ -772,7 +778,7 @@ def run_build(build_spec, build_config, is_dryrun):
 
     # Make the build directory
     if is_dryrun:
-        build_dir = "$TEMP/build"
+        build_dir = os.path.expandvars("$TEMP/build")
     else:
         build_dir = tempfile.mkdtemp()
     _log_command(['mkdir', build_dir])

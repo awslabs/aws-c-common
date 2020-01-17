@@ -18,7 +18,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 struct thread_test_data {
-    uint64_t thread_id;
+    aws_thread_id_t thread_id;
 };
 
 static void s_thread_fn(void *arg) {
@@ -29,7 +29,6 @@ static void s_thread_fn(void *arg) {
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     struct thread_test_data test_data;
-    test_data.thread_id = 0;
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
@@ -38,9 +37,8 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     ASSERT_INT_EQUALS(
         AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
-    ASSERT_INT_EQUALS(
-        test_data.thread_id,
-        aws_thread_get_id(&thread),
+    ASSERT_TRUE(
+        aws_thread_thread_id_equal(test_data.thread_id, aws_thread_get_id(&thread)),
         "get_thread_id should have returned the same id as the thread calling current_thread_id");
     ASSERT_INT_EQUALS(
         AWS_THREAD_JOIN_COMPLETED,

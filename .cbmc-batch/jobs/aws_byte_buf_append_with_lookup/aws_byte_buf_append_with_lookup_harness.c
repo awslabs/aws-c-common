@@ -37,7 +37,7 @@ void aws_byte_buf_append_with_lookup_harness() {
      * The specification for the function requires that the buffer
      * be at least 256 bytes.
      */
-    uint8_t *lookup_table[256];
+    uint8_t lookup_table[256];
     if (aws_byte_buf_append_with_lookup(&to, &from, lookup_table) == AWS_OP_SUCCESS) {
         assert(to.len == to_old.len + from.len);
     } else {

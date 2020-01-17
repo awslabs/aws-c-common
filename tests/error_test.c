@@ -359,20 +359,20 @@ static int s_unknown_error_code_range_too_large_test_fn(struct aws_allocator *al
 struct error_thread_test_data {
     int thread_1_code;
     int thread_1_get_last_code;
-    uint64_t thread_1_id;
+    aws_thread_id_t thread_1_id;
     int thread_1_encountered_count;
     int thread_2_code;
     int thread_2_get_last_code;
     int thread_2_encountered_count;
-    uint64_t thread_2_id;
+    aws_thread_id_t thread_2_id;
 };
 
 static void s_error_thread_test_thread_local_cb(int err, void *ctx) {
     struct error_thread_test_data *cb_data = (struct error_thread_test_data *)ctx;
 
-    uint64_t thread_id = aws_thread_current_thread_id();
+    aws_thread_id_t thread_id = aws_thread_current_thread_id();
 
-    if (thread_id == cb_data->thread_1_id) {
+    if (aws_thread_thread_id_equal(thread_id, cb_data->thread_1_id)) {
         cb_data->thread_1_code = err;
         cb_data->thread_1_get_last_code = aws_last_error();
         cb_data->thread_1_encountered_count += 1;

@@ -66,23 +66,38 @@ static int s_byte_swap_test_fn(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(byte_swap_test, s_byte_swap_test_fn);
 
-AWS_ALIGNED_TYPEDEF(uint8_t, aligned_storage[64], 32);
+AWS_ALIGNED_TYPEDEF(uint8_t, aligned32_storage[64], 32);
 
-struct padding_disaster {
-    aligned_storage a;
+struct padding32_disaster {
     uint8_t dumb;
-    aligned_storage b;
+    aligned32_storage b;
 };
 
-static int s_alignment_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_alignment32_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct padding_disaster padded;
-
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.a) % 32);
-    ASSERT_UINT_EQUALS(0, ((intptr_t)&padded.b) % 32);
+    size_t spacing = offsetof(struct padding32_disaster, b) - offsetof(struct padding32_disaster, dumb);
+    ASSERT_UINT_EQUALS(0, spacing % 32);
 
     return 0;
 }
-AWS_TEST_CASE(alignment_test, s_alignment_test_fn)
+AWS_TEST_CASE(alignment32_test, s_alignment32_test_fn)
+
+AWS_ALIGNED_TYPEDEF(uint8_t, aligned16_storage[64], 16);
+
+struct padding16_disaster {
+    uint8_t dumb;
+    aligned16_storage b;
+};
+
+static int s_alignment16_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    size_t spacing = offsetof(struct padding32_disaster, b) - offsetof(struct padding32_disaster, dumb);
+    ASSERT_UINT_EQUALS(0, spacing % 16);
+
+    return 0;
+}
+AWS_TEST_CASE(alignment16_test, s_alignment16_test_fn)
