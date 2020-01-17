@@ -26,29 +26,32 @@ AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(struct aws_condition_vari
 #define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE) pCV
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
-
+    AWS_PRECONDITION(condition_variable);
     InitializeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
+    condition_variable->initialized = true;
     return AWS_OP_SUCCESS;
 }
 
 void aws_condition_variable_clean_up(struct aws_condition_variable *condition_variable) {
-    (void)condition_variable;
-    /* no op */
+    AWS_PRECONDITION(condition_variable);
+    AWS_ZERO_STRUCT(*condition_variable);
 }
 
 int aws_condition_variable_notify_one(struct aws_condition_variable *condition_variable) {
-
+    AWS_PRECONDITION(condition_variable && condition_variable->initialized);
     WakeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     return AWS_OP_SUCCESS;
 }
 
 int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable) {
-
+    AWS_PRECONDITION(condition_variable && condition_variable->initialized);
     WakeAllConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     return AWS_OP_SUCCESS;
 }
 
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
+    AWS_PRECONDITION(condition_variable && condition_variable->initialized);
+    AWS_PRECONDITION(mutex && mutex->initialized);
 
     if (SleepConditionVariableSRW(AWSCV_TO_WINDOWS(condition_variable), AWSMUTEX_TO_WINDOWS(mutex), INFINITE, 0)) {
         return AWS_OP_SUCCESS;
@@ -61,6 +64,9 @@ int aws_condition_variable_wait_for(
     struct aws_condition_variable *condition_variable,
     struct aws_mutex *mutex,
     int64_t time_to_wait) {
+
+    AWS_PRECONDITION(condition_variable && condition_variable->initialized);
+    AWS_PRECONDITION(mutex && mutex->initialized);
 
     DWORD time_ms = (DWORD)aws_timestamp_convert(time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
 
