@@ -20,12 +20,12 @@
 
 #include <Windows.h>
 
-/* Ensure our condition variable and Windows' condition variables are the same size */
-AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(struct aws_condition_variable));
-
-#define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE) pCV
+#define AWSCV_TO_WINDOWS(pCV) AWS_CONTAINER_OF((pCV), PCONDITION_VARIABLE, condition_handle)
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
+    /* Ensure our condition variable and Windows' condition variables are the same size */
+    AWS_STATIC_ASSERT(sizeof(CONDITION_VARIABLE) == sizeof(condition_variable->condition_handle));
+
     AWS_PRECONDITION(condition_variable);
     InitializeConditionVariable(AWSCV_TO_WINDOWS(condition_variable));
     condition_variable->initialized = true;

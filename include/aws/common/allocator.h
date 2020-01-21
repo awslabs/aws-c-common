@@ -88,6 +88,7 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...);
 
 /**
  * Releases ptr back to whatever allocated it.
+ * Nothing happens if ptr is NULL.
  */
 AWS_COMMON_API
 void aws_mem_release(struct aws_allocator *allocator, void *ptr);

@@ -17,10 +17,10 @@
 
 #include <Windows.h>
 
-/* Ensure our condition variable and Windows' condition variables are the same size */
-AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(struct aws_mutex));
-
 int aws_mutex_init(struct aws_mutex *mutex) {
+    /* Ensure our mutex and Windows' mutex are the same size */
+    AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(mutex->mutex_handle));
+
     InitializeSRWLock(AWSMUTEX_TO_WINDOWS(mutex));
     mutex->initialized = true;
     return AWS_OP_SUCCESS;
