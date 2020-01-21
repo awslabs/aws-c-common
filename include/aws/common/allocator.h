@@ -120,7 +120,7 @@ enum aws_mem_trace_level {
  * Wraps an allocator and tracks all external allocations. If aws_mem_trace_dump() is called
  * and there are still allocations active, they will be reported to the aws_logger at TRACE level.
  * allocator - The allocator to wrap
- * system_allocator - The allocator to allocate bookkeeping data from, or NULL to use the default
+ * deprecated - Deprecated arg, ignored.
  * level - The level to track allocations at
  * frames_per_stack is how many frames to store per callstack if AWS_MEMTRACE_STACKS is in use,
  * otherwise it is ignored. 8 tends to be a pretty good number balancing storage space vs useful stacks.
@@ -129,7 +129,7 @@ enum aws_mem_trace_level {
 AWS_COMMON_API
 struct aws_allocator *aws_mem_tracer_new(
     struct aws_allocator *allocator,
-    struct aws_allocator *system_allocator,
+    struct aws_allocator *deprecated,
     enum aws_mem_trace_level level,
     size_t frames_per_stack);
 

@@ -720,12 +720,12 @@ def run_build(build_spec, build_config, is_dryrun):
             downstream = project_config.get("downstream", [])
 
             command_variables = {
+                **config,
+                **config['variables'],
                 'source_dir': project_source_dir,
                 'build_dir': project_build_dir,
                 'install_dir': install_dir,
                 'build_config': build_config,
-                **config,
-                **config['variables'],
             }
 
             config_build = project_config.get("build", None)
