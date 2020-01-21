@@ -23,9 +23,9 @@
 #include <aws/common/system_info.h>
 #include <aws/common/time.h>
 
-/* describes a single live allocation */
+/* describes a single live allocation.
+ * allocated by aws_default_allocator() */
 struct alloc_info {
-    struct aws_allocator *allocator; /* Allocator of this object */
     size_t size;
     time_t time;
     uint64_t stack; /* hash of stack frame pointers */
@@ -41,21 +41,23 @@ struct alloc_info {
 #    pragma warning(disable : 4200) /* nonstandard extension used: zero-sized array in struct/union */
 #endif
 
-/* one of these is stored per unique stack */
+/* one of these is stored per unique stack
+ * allocated by aws_default_allocator() */
 struct stack_trace {
-    struct aws_allocator *allocator; /* Allocator of this object */
-    size_t depth;                    /* length of frames[] */
-    void *const frames[];            /* rest of frames are allocated after */
+    size_t depth;         /* length of frames[] */
+    void *const frames[]; /* rest of frames are allocated after */
 };
 
 #ifdef _MSC_VER
 #    pragma warning(pop)
 #endif
 
-/* Tracking structure, used as the allocator impl */
+/* Tracking structure, used as the allocator impl.
+ * This structure, and all its bookkeeping datastructures, are created with the aws_default_allocator().
+ * This is not customizeable because it's too expensive for every little allocation to store
+ * a pointer back to its original allocator. */
 struct alloc_tracer {
     struct aws_allocator *traced_allocator; /* underlying allocator */
-    struct aws_allocator *system_allocator; /* bookkeeping allocator */
     enum aws_mem_trace_level level;         /* level to trace at */
     size_t frames_per_stack;                /* how many frames to keep per stack */
     struct aws_atomic_var allocated;        /* bytes currently allocated */
@@ -82,18 +84,17 @@ static struct aws_allocator s_trace_allocator = {
 /* for the hash table, to destroy elements */
 static void s_destroy_alloc(void *data) {
     struct alloc_info *alloc = data;
-    aws_mem_release(alloc->allocator, alloc);
+    aws_mem_release(aws_default_allocator(), alloc);
 }
 
 static void s_destroy_stacktrace(void *data) {
     struct stack_trace *stack = data;
-    aws_mem_release(stack->allocator, stack);
+    aws_mem_release(aws_default_allocator(), stack);
 }
 
 static void s_alloc_tracer_init(
     struct alloc_tracer *tracer,
     struct aws_allocator *traced_allocator,
-    struct aws_allocator *system_allocator,
     enum aws_mem_trace_level level,
     size_t frames_per_stack) {
 
@@ -104,7 +105,6 @@ static void s_alloc_tracer_init(
     }
 
     tracer->traced_allocator = traced_allocator;
-    tracer->system_allocator = system_allocator;
     tracer->level = level;
 
     if (tracer->level >= AWS_MEMTRACE_BYTES) {
@@ -113,7 +113,7 @@ static void s_alloc_tracer_init(
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
             aws_hash_table_init(
-                &tracer->allocs, tracer->system_allocator, 1024, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_alloc));
+                &tracer->allocs, aws_default_allocator(), 1024, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_alloc));
     }
 
     if (tracer->level == AWS_MEMTRACE_STACKS) {
@@ -124,7 +124,7 @@ static void s_alloc_tracer_init(
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
             aws_hash_table_init(
-                &tracer->stacks, tracer->system_allocator, 1024, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_stacktrace));
+                &tracer->stacks, aws_default_allocator(), 1024, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_stacktrace));
     }
 }
 
@@ -135,9 +135,8 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
 
     aws_atomic_fetch_add(&tracer->allocated, size);
 
-    struct alloc_info *alloc = aws_mem_calloc(tracer->system_allocator, 1, sizeof(struct alloc_info));
+    struct alloc_info *alloc = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct alloc_info));
     AWS_FATAL_ASSERT(alloc);
-    alloc->allocator = tracer->system_allocator;
     alloc->size = size;
     alloc->time = time(NULL);
 
@@ -161,11 +160,10 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
             /* If this is a new stack, save it to the hash */
             if (was_created) {
                 struct stack_trace *stack = aws_mem_calloc(
-                    tracer->system_allocator,
+                    aws_default_allocator(),
                     1,
                     sizeof(struct stack_trace) + (sizeof(void *) * tracer->frames_per_stack));
                 AWS_FATAL_ASSERT(stack);
-                stack->allocator = tracer->system_allocator;
                 memcpy(
                     (void **)&stack->frames[0],
                     &stack_frames[FRAMES_TO_SKIP],
@@ -213,7 +211,6 @@ struct stack_metadata {
 static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
     struct alloc_tracer *tracer = context;
     struct aws_hash_table *all_stacks = &tracer->stacks;
-    struct aws_allocator *allocator = tracer->system_allocator;
     struct stack_metadata *stack_info = item->value;
     struct aws_hash_element *stack_item = NULL;
     AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_hash_table_find(all_stacks, item->key, &stack_item));
@@ -239,7 +236,7 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
     }
     free(symbols);
     /* record the resultant buffer as a string */
-    stack_info->trace = aws_string_new_from_array(allocator, stacktrace.buffer, stacktrace.len);
+    stack_info->trace = aws_string_new_from_array(aws_default_allocator(), stacktrace.buffer, stacktrace.len);
     AWS_FATAL_ASSERT(stack_info->trace);
     aws_byte_buf_clean_up(&stacktrace);
     return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
@@ -274,7 +271,7 @@ static int s_collect_stack_stats(void *context, struct aws_hash_element *item) {
         AWS_OP_SUCCESS ==
         aws_hash_table_create(stack_info, (void *)(uintptr_t)alloc->stack, &stack_item, &was_created));
     if (was_created) {
-        stack_item->value = aws_mem_calloc(alloc->allocator, 1, sizeof(struct stack_metadata));
+        stack_item->value = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct stack_metadata));
         AWS_FATAL_ASSERT(stack_item->value);
     }
     struct stack_metadata *stack = stack_item->value;
@@ -331,7 +328,7 @@ void aws_mem_tracer_dump(struct aws_allocator *trace_allocator) {
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
             aws_hash_table_init(
-                &stack_info, tracer->system_allocator, 64, aws_hash_ptr, aws_ptr_eq, NULL, s_stack_info_destroy));
+                &stack_info, aws_default_allocator(), 64, aws_hash_ptr, aws_ptr_eq, NULL, s_stack_info_destroy));
         /* collect active stacks, tally up sizes and counts */
         aws_hash_table_foreach(&tracer->allocs, s_collect_stack_stats, &stack_info);
         /* collect stack traces for active stacks */
@@ -343,7 +340,7 @@ void aws_mem_tracer_dump(struct aws_allocator *trace_allocator) {
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS ==
         aws_priority_queue_init_dynamic(
-            &allocs, tracer->system_allocator, num_allocs, sizeof(struct alloc_info *), s_alloc_compare));
+            &allocs, aws_default_allocator(), num_allocs, sizeof(struct alloc_info *), s_alloc_compare));
     aws_hash_table_foreach(&tracer->allocs, s_insert_allocs, &allocs);
     /* dump allocs by time */
     AWS_LOGF_TRACE(
@@ -373,7 +370,7 @@ void aws_mem_tracer_dump(struct aws_allocator *trace_allocator) {
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS == aws_priority_queue_init_dynamic(
                                   &stacks_by_size,
-                                  tracer->system_allocator,
+                                  aws_default_allocator(),
                                   num_stacks,
                                   sizeof(struct stack_metadata *),
                                   s_stack_info_compare_size));
@@ -398,7 +395,7 @@ void aws_mem_tracer_dump(struct aws_allocator *trace_allocator) {
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS == aws_priority_queue_init_dynamic(
                                   &stacks_by_count,
-                                  tracer->system_allocator,
+                                  aws_default_allocator(),
                                   num_stacks,
                                   sizeof(struct stack_metadata *),
                                   s_stack_info_compare_count));
@@ -469,18 +466,22 @@ static void *s_trace_mem_calloc(struct aws_allocator *allocator, size_t num, siz
 
 struct aws_allocator *aws_mem_tracer_new(
     struct aws_allocator *allocator,
-    struct aws_allocator *system_allocator,
+    struct aws_allocator *deprecated,
     enum aws_mem_trace_level level,
     size_t frames_per_stack) {
 
-    if (!system_allocator) {
-        system_allocator = aws_default_allocator();
-    }
+    /* deprecated customizeable bookkeeping allocator */
+    (void)deprecated;
 
     struct alloc_tracer *tracer = NULL;
     struct aws_allocator *trace_allocator = NULL;
     aws_mem_acquire_many(
-        system_allocator, 2, &tracer, sizeof(struct alloc_tracer), &trace_allocator, sizeof(struct aws_allocator));
+        aws_default_allocator(),
+        2,
+        &tracer,
+        sizeof(struct alloc_tracer),
+        &trace_allocator,
+        sizeof(struct aws_allocator));
 
     AWS_FATAL_ASSERT(trace_allocator);
     AWS_FATAL_ASSERT(tracer);
@@ -492,7 +493,7 @@ struct aws_allocator *aws_mem_tracer_new(
     *trace_allocator = s_trace_allocator;
     trace_allocator->impl = tracer;
 
-    s_alloc_tracer_init(tracer, allocator, system_allocator, level, frames_per_stack);
+    s_alloc_tracer_init(tracer, allocator, level, frames_per_stack);
     return trace_allocator;
 }
 
@@ -508,7 +509,7 @@ struct aws_allocator *aws_mem_tracer_destroy(struct aws_allocator *trace_allocat
         aws_mutex_clean_up(&tracer->mutex);
     }
 
-    aws_mem_release(tracer->system_allocator, tracer);
+    aws_mem_release(aws_default_allocator(), tracer);
     /* trace_allocator is freed as part of the block tracer was allocated in */
 
     return allocator;
