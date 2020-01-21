@@ -384,7 +384,9 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     }
 
     /* clean up */
-    aws_mem_tracer_destroy(allocator);
+    if (!harness->suppress_memcheck) {
+        aws_mem_tracer_destroy(allocator);
+    }
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 

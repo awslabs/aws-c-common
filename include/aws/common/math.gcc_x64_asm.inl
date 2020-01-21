@@ -23,6 +23,8 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
+/* clang-format off */
+
 AWS_EXTERN_C_BEGIN
 
 /**
@@ -186,5 +188,7 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 }
 
 AWS_EXTERN_C_END
+
+/* clang-format on */
 
 #endif /* AWS_COMMON_MATH_GCC_X64_ASM_INL */

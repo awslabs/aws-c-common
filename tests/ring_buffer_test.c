@@ -375,6 +375,8 @@ static int s_test_acquire_any_muti_threaded(
         &test_data.termination_signal, &test_data.mutex, s_termination_predicate, &test_data);
     aws_mutex_unlock(&test_data.mutex);
 
+    aws_thread_join(&consumer_thread);
+
     aws_ring_buffer_clean_up(&test_data.ring_buf);
     aws_thread_clean_up(&consumer_thread);
 
