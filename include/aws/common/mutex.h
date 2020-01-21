@@ -19,7 +19,7 @@
 #include <aws/common/common.h>
 #ifdef _WIN32
 /* NOTE: Do not use this macro before including Windows.h */
-#    define AWSMUTEX_TO_WINDOWS(pCV) AWS_CONTAINER_OF((pCV), PSRWLOCK, mutex_handle)
+#    define AWSMUTEX_TO_WINDOWS(pMutex) (PSRWLOCK) & (pMutex)->mutex_handle
 #else
 #    include <pthread.h>
 #endif

@@ -20,7 +20,7 @@
 
 #include <Windows.h>
 
-#define AWSCV_TO_WINDOWS(pCV) AWS_CONTAINER_OF((pCV), PCONDITION_VARIABLE, condition_handle)
+#define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE) & (pCV)->condition_handle
 
 int aws_condition_variable_init(struct aws_condition_variable *condition_variable) {
     /* Ensure our condition variable and Windows' condition variables are the same size */
