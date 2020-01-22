@@ -1,0 +1,20 @@
+name: ClangTSan
+
+on: [push]
+
+jobs:
+  clang-tsan:
+
+    runs-on: [ubuntu-latest, macOS-latest]
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+      
+    - name: Build and test
+      run: |
+        mkdir build
+        cd build
+        cmake -GNinja -DCMAKE_C_FLAGS="-g" -DENABLE_SANITIZERS=ON -DSANITIZERS=",thread" ..
+        ninja
+        ninja test
