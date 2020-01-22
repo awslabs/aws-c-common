@@ -15,6 +15,6 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_C_FLAGS="-g" -DENABLE_SANITIZERS=ON -DSANITIZERS=",thread" ..
+        cmake -DCMAKE_C_COMPILER=clang -DCMAKE_C_FLAGS="-g" -DENABLE_SANITIZERS=ON -DSANITIZERS=",thread" ..
         make
         make test
