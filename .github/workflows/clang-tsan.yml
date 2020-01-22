@@ -5,7 +5,7 @@ on: [push]
 jobs:
   clang-tsan:
 
-    runs-on: [ubuntu-latest, macOS-latest]
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Sources
