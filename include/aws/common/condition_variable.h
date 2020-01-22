@@ -33,6 +33,7 @@ struct aws_condition_variable {
 #else
     pthread_cond_t condition_handle;
 #endif
+    bool initialized;
 };
 
 /**
@@ -45,10 +46,10 @@ struct aws_condition_variable {
  */
 #ifdef _WIN32
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
-        { .condition_handle = NULL }
+        { .condition_handle = NULL, .initialized = true }
 #else
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
-        { .condition_handle = PTHREAD_COND_INITIALIZER }
+        { .condition_handle = PTHREAD_COND_INITIALIZER, .initialized = true }
 #endif
 
 AWS_EXTERN_C_BEGIN
