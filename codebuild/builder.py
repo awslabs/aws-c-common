@@ -644,15 +644,14 @@ class Builder(VirtualModule):
 
         def pushd(self, directory):
             self._log_command("pushd", directory)
+            self.dir_stack.append(self.cwd())
             self.cd(directory)
-            self.dir_stack.append(directory)
 
         def popd(self):
             if len(self.dir_stack) > 0:
-                self._log_command("popd")
-                self.dir_stack.pop()
-            if len(self.dir_stack) > 0:
+                self._log_command("popd", self.dir_stack[-1])
                 self.cd(self.dir_stack[-1])
+                self.dir_stack.pop()                
         
         # Helper to run makedirs regardless of dry run status
         def mkdir(self, directory):
@@ -715,10 +714,17 @@ def run_build(build_spec, build_config, is_dryrun):
     if git_branch:
         print("On git branch {}".format(git_branch))
 
+    # Make the build directory
+    build_dir = shell.mktemp()
+
+    # Make the install directory
+    install_dir = os.path.join(build_dir, 'install')
+    shell.mkdir(install_dir)
+
     # Build a list of projects from a config file
     def _build_dependencies(project_list, build_tests, run_tests):
 
-        shell.cd(build_dir)
+        shell.pushd(build_dir)
 
         for project in project_list:
             name = project.get("name", None)
@@ -761,6 +767,8 @@ def run_build(build_spec, build_config, is_dryrun):
 
             shell.popd()
 
+        shell.popd()
+
     # Helper to build
     def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
 
@@ -776,7 +784,7 @@ def run_build(build_spec, build_config, is_dryrun):
             shell.mkdir(project_build_dir)
 
             # CD to the build directory
-            shell.cd(project_build_dir)
+            shell.pushd(project_build_dir)
 
             # Set compiler flags
             compiler_flags = []
@@ -805,8 +813,12 @@ def run_build(build_spec, build_config, is_dryrun):
             # Do install
             shell.exec("cmake", "--build", ".", "--config", build_config, "--target", "install")
 
+            shell.popd()
+
         def _test_project_ctest():
+            shell.pushd(project_build_dir)
             shell.exec("ctest", ".", "--output-on-failure")
+            shell.popd()
 
         upstream = []
         downstream = []
@@ -883,13 +895,6 @@ def run_build(build_spec, build_config, is_dryrun):
 
         # CD back to the beginning directory
         shell.cd(pwd)
-
-    # Make the build directory
-    build_dir = shell.mktemp()
-
-    # Make the install directory
-    install_dir = os.path.join(build_dir, 'install')
-    shell.mkdir(install_dir)
 
     # Build the config object
     config_file = os.path.join(shell.cwd(), "builder.json")
