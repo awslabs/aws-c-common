@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob, subprocess
+import os, sys, glob, subprocess, tempfile
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
@@ -91,10 +91,10 @@ class VirtualModule(metaclass=VirtualModuleMetaclass):
     def create_module(name):
         module_cls = type(sys)
         spec_cls = type(sys.__spec__)
-        module = module_cls(module_name)
+        module = module_cls(name)
         setattr(module, '__spec__', spec_cls(
-            name=module_name, loader=VirtualLoader))
-        registry[module_name] = module
+            name=name, loader=VirtualModule.VirtualLoader))
+        _virtual_modules[name] = module
         return module
 
 sys.meta_path.insert(0, VirtualModule.Finder)
@@ -558,9 +558,8 @@ def produce_config(build_spec, config_file, **additional_variables):
     return new_version
 
 ########################################################################################################################
-# RUN BUILD
+# ACTIONS
 ########################################################################################################################
-
 class Builder(VirtualModule):
     class Env(object):
         """ Encapsulates the environment in which the build is running """
@@ -601,9 +600,11 @@ class Builder(VirtualModule):
 
     class Shell(object):
         """ Virtual shell that abstracts away dry run and tracks/logs state """
-        def __init__(dryrun=False):
+        def __init__(self, dryrun=False):
             # Used in dry-run builds to track simulated working directory
-            self.cwd = os.getcwd()
+            self._cwd = os.getcwd()
+            # pushd/popd stack
+            self.dir_stack = []
             self.dryrun = dryrun
 
         def _flatten_command(self, *command):
@@ -635,11 +636,23 @@ class Builder(VirtualModule):
             self._log_command("cd", directory)
             if self.dryrun:
                 if os.path.isabs(directory) or directory.startswith('$'):
-                    self.cwd = directory
+                    self._cwd = directory
                 else:
-                    self.cwd = os.path.join(self.cwd, directory)
+                    self._cwd = os.path.join(self._cwd, directory)
             else:
                 os.chdir(directory)
+
+        def pushd(self, directory):
+            self._log_command("pushd", directory)
+            self.cd(directory)
+            self.dir_stack.append(directory)
+
+        def popd(self):
+            if len(self.dir_stack) > 0:
+                self._log_command("popd", directory)
+                self.dir_stack.pop()
+            if len(self.dir_stack) > 0:
+                self.cd(self.dir_stack[-1])
         
         # Helper to run makedirs regardless of dry run status
         def mkdir(self, directory):
@@ -647,60 +660,47 @@ class Builder(VirtualModule):
             if not self.dryrun:
                 os.makedirs(directory, exist_ok=True)
 
+        def mktemp(self):
+            if self.dryrun:
+                return os.path.expandvars("$TEMP/build")
+            
+            return tempfile.mkdtemp()
+
         def cwd(self):
             if self.dryrun:
-                return self.cwd
+                return self._cwd
             else:
                 return os.getcwd()
+
+        def setenv(self, var, value):
+            self._log_command(["export", "{}={}".format(var, value)])
+            if not self.dryrun:
+                os.environ[var] = value
+
+        def rm(self, path):
+            self._log_command(["rm -rf", path])
+            if not self.dryrun:
+                try:
+                    shutil.rmtree(build_dir)
+                except Exception as e:
+                    print("Failed to delete dir {}: {}".format(build_dir, e))
 
         def exec(self, *command):
             self._run_command(*command)
     
 
-    class Step(object):
+    class Action(object):
+        __name__ = 'default'
         def run(self):
             pass
-    
 
-# Used in dry-run builds to track simulated working directory
-cwd = os.getcwd()
 
-def _get_git_branch():
-
-    travis_pr_branch = os.environ.get("TRAVIS_PULL_REQUEST_BRANCH")
-    if travis_pr_branch:
-        print("Found branch:", travis_pr_branch)
-        return travis_pr_branch
-
-    github_ref = os.environ.get("GITHUB_REF")
-    if github_ref:
-        origin_str = "refs/heads/"
-        if github_ref.startswith(origin_str):
-            branch = github_ref[len(origin_str):]
-            print("Found github ref:", branch)
-            return branch
-
-    branches = subprocess.check_output(["git", "branch", "-a", "--contains", "HEAD"]).decode("utf-8")
-    branches = [branch.strip('*').strip() for branch in branches.split('\n') if branch]
-
-    print("Found branches:", branches)
-
-    for branch in branches:
-        if branch == "(no branch)":
-            continue
-
-        origin_str = "remotes/origin/"
-        if branch.startswith(origin_str):
-            branch = branch[len(origin_str):]
-
-        return branch
-
-    return None
-
+########################################################################################################################
+# RUN BUILD
+########################################################################################################################
 def run_build(build_spec, build_config, is_dryrun):
 
-    if not is_dryrun:
-        import tempfile, shutil
+    shell = Builder.Shell(is_dryrun)
 
     #TODO These platforms don't succeed when doing a RelWithDebInfo build
     if build_spec.host in ("al2012", "manylinux"):
@@ -711,61 +711,14 @@ def run_build(build_spec, build_config, is_dryrun):
 
     built_projects = []
 
-    git_branch = _get_git_branch()
+    git_branch = Builder.Env.get_git_branch()
     if git_branch:
         print("On git branch {}".format(git_branch))
-
-    def _flatten_command(*command):
-        # Process out lists
-        new_command = []
-        def _proc_segment(command_segment):
-            e_type = type(command_segment)
-            if e_type == str:
-                new_command.append(command_segment)
-            elif e_type == list or e_type == tuple:
-                for segment in command_segment:
-                    _proc_segment(segment)
-        _proc_segment(command)
-        return new_command
-
-    def _log_command(*command):
-        print('>', subprocess.list2cmdline(_flatten_command(*command)), flush=True)
-
-    def _run_command(*command):
-        _log_command(*command)
-        if not is_dryrun:
-            subprocess.check_call(_flatten_command(*command), stdout=sys.stdout, stderr=sys.stderr)
-
-    # Helper to run makedirs regardless of dry run status
-    def _mkdir(directory):
-        _log_command("mkdir", "-p", directory)
-        if not is_dryrun:
-            os.makedirs(directory, exist_ok=True)
-
-    def _cwd():
-        if is_dryrun:
-            global cwd
-            return cwd
-        else:
-            return os.getcwd()
-
-    # Helper to run chdir regardless of dry run status
-    def _cd(directory):
-        _log_command("cd", directory)
-        if is_dryrun:
-            global cwd
-            if os.path.isabs(directory) or directory.startswith('$'):
-                cwd = directory
-            else:
-                cwd = os.path.join(cwd, directory)
-        else:
-            os.chdir(directory)
 
     # Build a list of projects from a config file
     def _build_dependencies(project_list, build_tests, run_tests):
 
-        pwd_1 = _cwd()
-        _cd(build_dir)
+        shell.cd(build_dir)
 
         for project in project_list:
             name = project.get("name", None)
@@ -790,26 +743,23 @@ def run_build(build_spec, build_config, is_dryrun):
             pin = project.get("revision", None)
 
             git = "https://github.com/{}/{}".format(account, name)
-            _run_command("git", "clone", git)
+            shell.exec("git", "clone", git)
 
-            pwd_2 = _cwd()
-            _cd(name)
+            shell.pushd(name)
 
             # Attempt to checkout a branch with the same name as the current branch
             try:
-                _run_command("git", "checkout", git_branch)
+                shell.exec("git", "checkout", git_branch)
             except:
                 print("Project {} does not have a branch {}".format(name, git_branch))
                 # Attempt to checkout the pinned revision
                 if pin:
-                    _run_command("git", "checkout", pin)
+                    shell.exec("git", "checkout", pin)
 
             # Build/install
             _build_project(name, build_tests=build_tests, run_tests=run_tests)
 
-            _cd(pwd_2)
-
-        _cd(pwd_1)
+            shell.popd()
 
     # Helper to build
     def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
@@ -823,10 +773,10 @@ def run_build(build_spec, build_config, is_dryrun):
 
         def _build_project_cmake():
             # If the build directory doesn't already exist, make it
-            _mkdir(project_build_dir)
+            shell.mkdir(project_build_dir)
 
             # CD to the build directory
-            _cd(project_build_dir)
+            shell.cd(project_build_dir)
 
             # Set compiler flags
             compiler_flags = []
@@ -847,16 +797,16 @@ def run_build(build_spec, build_config, is_dryrun):
                 "-DCMAKE_BUILD_TYPE=" + build_config,
                 "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
             ]
-            _run_command("cmake", config['cmake_args'], compiler_flags, cmake_args, project_source_dir)
+            shell.exec("cmake", config['cmake_args'], compiler_flags, cmake_args, project_source_dir)
 
             # Run the build
-            _run_command("cmake", "--build", ".", "--config", build_config)
+            shell.exec("cmake", "--build", ".", "--config", build_config)
 
             # Do install
-            _run_command("cmake", "--build", ".", "--config", build_config, "--target", "install")
+            shell.exec("cmake", "--build", ".", "--config", build_config, "--target", "install")
 
         def _test_project_ctest():
-            _run_command("ctest", ".", "--output-on-failure")
+            shell.exec("ctest", ".", "--output-on-failure")
 
         upstream = []
         downstream = []
@@ -895,7 +845,7 @@ def run_build(build_spec, build_config, is_dryrun):
                             os.environ[variable] = config[opt]
                     for command in config_build:
                         final_command = _replace_variables(command, command_variables)
-                        _run_command(final_command)
+                        shell.exec(final_command)
 
                 build_fn = _build_project_config
 
@@ -905,10 +855,10 @@ def run_build(build_spec, build_config, is_dryrun):
                 def _test_project_config():
                     for command in config_test:
                         final_command = _replace_variables(command, command_variables)
-                        _run_command(final_command)
+                        shell.exec(final_command)
                 test_fn = _test_project_config
 
-        pwd = _cwd()
+        pwd = shell.cwd()
 
         # If project not specified, and not pulled from the config file, default to file path
         if not project:
@@ -932,21 +882,18 @@ def run_build(build_spec, build_config, is_dryrun):
             _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
 
         # CD back to the beginning directory
-        _cd(pwd)
+        shell.cd(pwd)
 
     # Make the build directory
-    if is_dryrun:
-        build_dir = os.path.expandvars("$TEMP/build")
-    else:
-        build_dir = tempfile.mkdtemp()
-    _log_command(['mkdir', build_dir])
+    build_dir = shell.mktemp()
 
     # Make the install directory
     install_dir = os.path.join(build_dir, 'install')
-    _mkdir(install_dir)
+    shell.mkdir(install_dir)
 
     # Build the config object
-    config = produce_config(build_spec, os.path.join(_cwd(), "builder.json"), sources=sources, source_dir=source_dir, build_dir=build_dir)
+    config_file = os.path.join(shell.cwd(), "builder.json")
+    config = produce_config(build_spec, config_file, sources=sources, source_dir=source_dir, build_dir=build_dir)
     if not config['enabled']:
         raise Exception("The project is disabled in this configuration")
 
@@ -954,32 +901,30 @@ def run_build(build_spec, build_config, is_dryrun):
     if config['use_apt']:
         # Install keys
         for key in config['apt_keys']:
-            _run_command("sudo", "apt-key", "adv", "--fetch-keys", key)
+            shell.exec("sudo", "apt-key", "adv", "--fetch-keys", key)
 
         # Add APT repositories
         for repo in config['apt_repos']:
-            _run_command("sudo", "apt-add-repository", repo)
+            shell.exec("sudo", "apt-add-repository", repo)
 
         # Install packages
         if config['apt_packages']:
-            _run_command("sudo", "apt-get", "-qq", "update", "-y")
-            _run_command("sudo", "apt-get", "-qq", "install", "-y", "-f", config['apt_packages'])
+            shell.exec("sudo", "apt-get", "-qq", "update", "-y")
+            shell.exec("sudo", "apt-get", "-qq", "install", "-y", "-f", config['apt_packages'])
 
     if config['use_brew']:
         for package in config['brew_packages']:
-            _run_command("brew", "install", package)
+            shell.exec("brew", "install", package)
 
     # PRE BUILD
 
     # Set build environment
     for var, value in config['build_env'].items():
-        _log_command(["export", "{}={}".format(var, value)])
-        if not is_dryrun:
-            os.environ[var] = value
-
+        shell.setenv(var, value)
+        
     # Run configured pre-build steps
     for step in config['pre_build_steps']:
-        _run_command(step)
+        shell.exec(step)
 
     # BUILD
 
@@ -990,17 +935,10 @@ def run_build(build_spec, build_config, is_dryrun):
 
     # Run configured post-build steps
     for step in config['post_build_steps']:
-        _run_command(step)
+        shell.exec(step)
 
     # Delete temp dir
-    _log_command(["rm", "-rf", build_dir])
-    if not is_dryrun:
-        try:
-            shutil.rmtree(build_dir)
-        except Exception as e:
-            print("Failed to delete temp dir {}: {}".format(build_dir, e))
-
-    return commands
+    shell.rm(build_dir)
 
 ########################################################################################################################
 # CODEBUILD
@@ -1097,6 +1035,9 @@ if __name__ == '__main__':
     build.add_argument('build', type=str)
     build.add_argument('--config', type=str, default='RelWithDebInfo', help='The CMake configuration to build with')
 
+    run = commands.add_parser('run', help='Run action. Ex: do-thing')
+    run.add_argument('run', type=str)
+
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
     codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
@@ -1114,6 +1055,11 @@ if __name__ == '__main__':
         print("Running build", build_spec.name, flush=True)
 
         run_build(build_spec, args.config, args.dry_run)
+
+    elif args.command == 'run':
+        action = args.run
+        print("Running action", action, flush=True)
+        run_action(action)
 
     elif args.command == 'codebuild':
 
