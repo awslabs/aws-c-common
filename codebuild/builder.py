@@ -681,9 +681,9 @@ class Builder(VirtualModule):
             self._log_command(["rm -rf", path])
             if not self.dryrun:
                 try:
-                    shutil.rmtree(build_dir)
+                    shutil.rmtree(path)
                 except Exception as e:
-                    print("Failed to delete dir {}: {}".format(build_dir, e))
+                    print("Failed to delete dir {}: {}".format(path, e))
 
         def exec(self, *command):
             self._run_command(*command)
