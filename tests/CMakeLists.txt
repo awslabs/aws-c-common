@@ -241,7 +241,13 @@ add_test_case(test_byte_cursor_compare_lexical)
 add_test_case(test_byte_cursor_compare_lookup)
 
 add_test_case(byte_swap_test)
-add_test_case(alignment_test)
+
+if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+    add_test_case(alignment32_test)
+else()
+    add_test_case(alignment16_test)
+endif()
+
 
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
