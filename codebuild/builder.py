@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob, subprocess, tempfile
+import os, sys, glob, shutil, subprocess, tempfile
 
 # Class to refer to a specific build permutation
 class BuildSpec(object):
