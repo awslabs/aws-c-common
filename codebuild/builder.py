@@ -649,7 +649,7 @@ class Builder(VirtualModule):
 
         def popd(self):
             if len(self.dir_stack) > 0:
-                self._log_command("popd", directory)
+                self._log_command("popd")
                 self.dir_stack.pop()
             if len(self.dir_stack) > 0:
                 self.cd(self.dir_stack[-1])
