@@ -561,6 +561,35 @@ def produce_config(build_spec, config_file, **additional_variables):
 # ACTIONS
 ########################################################################################################################
 class Builder(VirtualModule):
+    def __init__(self):
+        self._load_scripts()
+
+
+    @staticmethod
+    def _load_scripts():
+        import importlib.util
+
+        if not os.path.isdir('.builder'):
+            return
+        
+        scripts = glob.glob('.builder/**/*.py')
+        for script in scripts:
+            name = os.path.split(script)[1].split('.')[0]
+            spec = importlib.util.spec_from_file_location(name, script)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+
+    @staticmethod
+    def find_actions():
+        return Builder.Action.__subclasses__()
+
+    @staticmethod
+    def find_action(name):
+        for action in Builder.find_actions():
+            if action.__name__.lower() == name.lower():
+                return action
+
     class Env(object):
         """ Encapsulates the environment in which the build is running """
         @staticmethod
@@ -597,6 +626,7 @@ class Builder(VirtualModule):
                 return branch
 
             return None
+
 
     class Shell(object):
         """ Virtual shell that abstracts away dry run and tracks/logs state """
@@ -684,6 +714,27 @@ class Builder(VirtualModule):
                 except Exception as e:
                     print("Failed to delete dir {}: {}".format(path, e))
 
+        def where(self, exe, path=None):
+            if path is None:
+                path = os.environ['PATH']
+            paths = path.split(os.pathsep)
+            extlist = ['']
+            def is_executable(path):
+                return os.path.isfile(path) and os.access(path, os.X_OK)
+            if sys.platform == 'win32':
+                pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
+                (base, ext) = os.path.splitext(executable)
+                if ext.lower() not in pathext:
+                    extlist = pathext
+            for ext in extlist:
+                exe_name = exe + ext
+                for p in paths:
+                    exe_path = os.path.join(p, execname)
+                    if is_executable(exe_path):
+                        return exe_path
+
+            return None
+
         def exec(self, *command):
             self._run_command(*command)
     
@@ -692,6 +743,14 @@ class Builder(VirtualModule):
         __name__ = 'default'
         def run(self):
             pass
+
+def run_action(action):
+    action_type = type(action)
+    if action_type is str:
+        action_cls = Builder.find_action(action)
+        action = action_cls()
+
+    action.run()
 
 
 ########################################################################################################################
@@ -1051,6 +1110,8 @@ if __name__ == '__main__':
     codebuild.add_argument('--config', type=str, help='The config file to use when generating the projects')
 
     args = parser.parse_args()
+
+    builder = Builder()
 
     if args.command == 'build':
         # If build name not passed
