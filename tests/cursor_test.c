@@ -111,8 +111,16 @@ static int s_test_byte_cursor_advance_nospec_fn(struct aws_allocator *allocator,
     return s_test_byte_cursor_advance_internal(aws_byte_cursor_advance_nospec);
 }
 
-static const uint8_t TEST_VECTOR[] = {0xaa, 0xbb, 0xaa, 0xbb, 0xcc, 0xbb, 0x42, 0x12, 0x34, 0x45, 0x67,
-                                      0x89, 0xab, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+static const uint8_t TEST_VECTOR[] = {
+    0xaa, 0xbb, 0xaa,                               /* aba */
+    0xbb, 0xcc, 0xbb,                               /* bcb */
+    0x42,                                           /* u8 */
+    0x12, 0x34,                                     /* be16 */
+    0xab, 0xcd, 0xef,                               /* be24 */
+    0x45, 0x67, 0x89, 0xab,                         /* be32 */
+    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, /* be64 */
+    0x42, 0x42, 0x42,                               /* u8_n */
+};
 
 AWS_TEST_CASE(byte_cursor_write_tests, s_byte_cursor_write_tests_fn);
 static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *ctx) {
@@ -133,8 +141,10 @@ static int s_byte_cursor_write_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&cur, bcb_buf));
     ASSERT_TRUE(aws_byte_buf_write_u8(&cur, 0x42));
     ASSERT_TRUE(aws_byte_buf_write_be16(&cur, 0x1234));
+    ASSERT_TRUE(aws_byte_buf_write_be24(&cur, 0xabcdef));
     ASSERT_TRUE(aws_byte_buf_write_be32(&cur, 0x456789ab));
     ASSERT_TRUE(aws_byte_buf_write_be64(&cur, (uint64_t)0x1122334455667788ULL));
+    ASSERT_TRUE(aws_byte_buf_write_u8_n(&cur, 0x42, 3));
 
     ASSERT_FALSE(aws_byte_buf_write_u8(&cur, 0xFF));
     ASSERT_UINT_EQUALS(0x99, buf[sizeof(buf) - 1]);
@@ -165,12 +175,18 @@ static int s_byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ct
     uint16_t u16;
     ASSERT_TRUE(aws_byte_cursor_read_be16(&cur, &u16));
     ASSERT_UINT_EQUALS(u16, 0x1234);
+    uint32_t u24;
+    ASSERT_TRUE(aws_byte_cursor_read_be24(&cur, &u24));
+    ASSERT_UINT_EQUALS(u24, 0xabcdef);
     uint32_t u32;
     ASSERT_TRUE(aws_byte_cursor_read_be32(&cur, &u32));
     ASSERT_UINT_EQUALS(u32, 0x456789ab);
     uint64_t u64;
     ASSERT_TRUE(aws_byte_cursor_read_be64(&cur, &u64));
     ASSERT_UINT_EQUALS(u64, (uint64_t)0x1122334455667788ULL);
+
+    /* advance past "u8_n" data  */
+    ASSERT_UINT_EQUALS(3, aws_byte_cursor_advance(&cur, 3).len);
 
     ASSERT_FALSE(aws_byte_cursor_read_u8(&cur, &u8));
     ASSERT_UINT_EQUALS(u8, 0x42);
@@ -211,6 +227,13 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_FALSE(aws_byte_buf_write_be32(&buffer, 0));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
+    cur.len = 2;
+    buffer.capacity = 2;
+    ASSERT_FALSE(aws_byte_cursor_read_be32(&cur, &u32));
+    ASSERT_UINT_EQUALS(0, u32);
+    ASSERT_FALSE(aws_byte_buf_write_be24(&buffer, 0));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+
     cur.len = 1;
     buffer.capacity = 1;
     ASSERT_FALSE(aws_byte_cursor_read_be16(&cur, &u16));
@@ -228,6 +251,10 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_FALSE(aws_byte_cursor_read_u8(&cur, &u8));
     ASSERT_UINT_EQUALS(0, u8);
     ASSERT_FALSE(aws_byte_buf_write_u8(&buffer, 0));
+    ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
+
+    buffer.capacity = 7;
+    ASSERT_FALSE(aws_byte_buf_write_u8_n(&buffer, 0x0, 8));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
     ASSERT_TRUE(aws_byte_cursor_read(&cur, arr, 0));
