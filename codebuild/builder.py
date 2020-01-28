@@ -874,8 +874,7 @@ class Builder(VirtualModule):
             return Builder.Project(name=name)
                 
 
-        def find_llvm_tool(self, name, version=None):
-            versions = [version] if version else list(range(10, 6, -1))
+        def _find_compiler_tool(self, name, versions):
             for version in versions:
                 for pattern in ('{name}-{version}', '{name}-{version}.0'):
                     exe = pattern.format(name=name, version=version)
@@ -883,6 +882,14 @@ class Builder(VirtualModule):
                     if path:
                         return path
             return None
+
+        def find_gcc_tool(self, name, version=None):
+            versions = [version] if version else list(range(8, 5, -1))
+            return self._find_compiler_tool(name, versions)
+
+        def find_llvm_tool(self, name, version=None):
+            versions = [version] if version else list(range(10, 6, -1))
+            return self._find_compiler_tool(name, versions)
     
 
     class Action(object):
@@ -964,6 +971,21 @@ class Builder(VirtualModule):
 
             self.name = '-'.join([self.host, self.compiler,
                                 self.compiler_version, self.target, self.arch])
+
+
+        def compiler_path(env):
+            if self.compiler == 'default':
+                env_cc = os.environ.get('CC', None)
+                if env_cc:
+                    return env.shell.where(env_cc)
+                return env.shell.where('cc')
+            elif self.compiler == 'clang':
+                return env.find_llvm_tool('clang', self.compiler_version if self.compiler_version != 'default' else None)
+            elif self.compiler == 'gcc':
+                return env.find_gcc_tool('gcc', self.compiler_version if self.compiler_version != default else None)
+            elif self.compiler == 'msvc':
+                return env.shell.where('cl.exe')
+            return None
 
         def __str__(self):
             return self.name
@@ -1054,7 +1076,7 @@ class Builder(VirtualModule):
                 if toolchain.compiler != 'default':
                     for opt in ['c', 'cxx']:
                         compiler_flags.append(
-                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler))
+                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler_path()))
 
                     config = getattr(env, 'config', None)
                     if config:
