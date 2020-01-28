@@ -1104,7 +1104,7 @@ class Builder(VirtualModule):
 def run_build(build_spec, env):
 
     Builder.run_action(
-        Script([
+        Builder.Script([
             Builder.DownloadDependencies(),
             Builder.CMakeBuild(),
             Builder.CTestRun()
