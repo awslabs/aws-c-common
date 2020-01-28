@@ -1056,7 +1056,7 @@ class Builder(VirtualModule):
                         compiler_flags.append(
                             '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler))
 
-                    config = getattr(env, config, None)
+                    config = getattr(env, 'config', None)
                     if config:
                         for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
                             if opt in config and config[opt]:
