@@ -1043,8 +1043,6 @@ class Builder(VirtualModule):
             install_dir = os.path.join(source_dir, 'install')
             sh.mkdir(install_dir)
 
-            config = env.config
-
             def build_project(project):
                 project_source_dir = sh.cwd()
                 project_build_dir = os.path.join(project_source_dir, 'build')
@@ -1058,9 +1056,11 @@ class Builder(VirtualModule):
                         compiler_flags.append(
                             '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler))
 
-                    for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
-                        if opt in config and config[opt]:
-                            os.environ[variable] = config[opt]
+                    config = getattr(env, config, None)
+                    if config:
+                        for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
+                            if opt in config and config[opt]:
+                                os.environ[variable] = config[opt]
 
                 cmake_args = [
                     "-Werror=dev",
