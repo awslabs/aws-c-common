@@ -575,6 +575,7 @@ class Builder(VirtualModule):
         
         scripts = glob.glob('.builder/**/*.py')
         for script in scripts:
+            print("Importing {}".format(os.path.abspath(script)))
             name = os.path.split(script)[1].split('.')[0]
             spec = importlib.util.spec_from_file_location(name, script)
             module = importlib.util.module_from_spec(spec)
