@@ -20,6 +20,7 @@ class ClangTidy(Builder.Action):
             'source/**/*.c') if not 'windows' in file]
 
         return [
+            Builder.DownloadDependencies(),
             Builder.CMakeBuild(),
             Builder.Script([
                 [clang_tidy, '-p', build_dir] + sources

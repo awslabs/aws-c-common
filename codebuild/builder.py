@@ -908,6 +908,8 @@ class Builder(VirtualModule):
                     sh.exec(cmd)
                 elif cmd_type == list:
                     sh.exec(*cmd)
+                elif isinstance(cmd, Builder.Action):
+                    Builder.run_action(cmd, env)
                 elif callable(cmd):
                     return cmd(env)
                 else:
@@ -922,6 +924,8 @@ class Builder(VirtualModule):
                     cmds.append(cmd)
                 elif cmd_type == list:
                     cmds.append(' '.join(cmd))
+                elif isinstance(cmd, Builder.Action):
+                    cmds.append(str(cmd))
                 elif callable(cmd):
                     cmds.append(cmd.__func__.__name__)
                 else:
@@ -1053,32 +1057,61 @@ class Builder(VirtualModule):
 
                 sh.popd()
 
-            def build_dependencies(project):
+            def build_projects(projects):
                 project_build_dir = os.path.join(source_dir, 'build')
                 sh.mkdir(project_build_dir)
                 sh.pushd(project_build_dir)
 
-                deps = project.upstream
-                for dep in deps:
-                    dep_project = env.find_project(dep)
-                    build_project(dep_project)
+                for proj in projects:
+                    project = env.find_project(proj)
+                    build_project(project)
 
                 sh.popd()
 
             sh.pushd(source_dir)
 
-            build_dependencies(env.project)
+            build_projects(env.project.upstream)
             build_project(env.project)
+
+            spec = getattr(env, 'build_spec', None)
+            if spec and spec.downstream:
+                build_projects(env.project.downstream)
 
             sh.popd()
 
+    class CTestRun(Action):
+        def run(self, env):
+            has_tests = getattr(env, 'build_tests', False)
+            if not has_tests:
+                return
+
+            sh = env.shell
+
+            project_source_dir = sh.cwd()
+            project_build_dir = os.path.join(project_source_dir, 'build')
+            sh.mkdir(project_build_dir)
+            sh.pushd(project_build_dir)
+
+            sh.exec("ctest", "--verbose", "--output-on-failure")
+
+            sh.popd()
 
 
 
 ########################################################################################################################
 # RUN BUILD
 ########################################################################################################################
-def run_build(build_spec, build_config, is_dryrun):
+def run_build(build_spec, env):
+
+    Builder.run_action(
+        Script([
+            Builder.DownloadDependencies(),
+            Builder.CMakeBuild(),
+            Builder.CTestRun()
+        ])
+    )
+
+    return
 
     shell = Builder.Shell(is_dryrun)
 
@@ -1443,11 +1476,10 @@ if __name__ == '__main__':
     if args.command == 'build':
         # If build name not passed
         build_name = args.build
-        build_spec = BuildSpec(spec=build_name)
-
+        build_spec = env.build_spec = BuildSpec(spec=build_name)
         print("Running build", build_spec.name, flush=True)
 
-        run_build(build_spec, args.config, args.dry_run)
+        run_build(build_spec, env)
 
     elif args.command == 'run':
         action = args.run
