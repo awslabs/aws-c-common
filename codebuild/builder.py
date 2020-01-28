@@ -557,6 +557,7 @@ def produce_config(build_spec, config_file, **additional_variables):
 
     return new_version
 
+
 ########################################################################################################################
 # ACTIONS
 ########################################################################################################################
@@ -564,9 +565,9 @@ class Builder(VirtualModule):
     def __init__(self):
         self._load_scripts()
 
-
     @staticmethod
     def _load_scripts():
+        """ Loads all scripts from ${cwd}/.builder/**/*.py to make their classes available """
         import importlib.util
 
         if not os.path.isdir('.builder'):
@@ -581,20 +582,174 @@ class Builder(VirtualModule):
 
 
     @staticmethod
-    def find_actions():
+    def _find_actions():
         return Builder.Action.__subclasses__()
 
     @staticmethod
     def find_action(name):
-        for action in Builder.find_actions():
+        for action in Builder._find_actions():
             if action.__name__.lower() == name.lower():
                 return action
 
+    @staticmethod
+    def run_action(action, env):
+        action_type = type(action)
+        if action_type is str:
+            action_cls = Builder.find_action(action)
+            action = action_cls()
+
+        print("Running: {}".format(action), flush=True)
+        children = action.run(env)
+        if children:
+            for child in children:
+                Builder.run_action(child, env)
+        print("Finished: {}".format(action), flush=True)
+
+    class Shell(object):
+        """ Virtual shell that abstracts away dry run and tracks/logs state """
+
+        def __init__(self, dryrun=False):
+            # Used in dry-run builds to track simulated working directory
+            self._cwd = os.getcwd()
+            # pushd/popd stack
+            self.dir_stack = []
+            self.dryrun = dryrun
+
+        def _flatten_command(self, *command):
+            # Process out lists
+            new_command = []
+
+            def _proc_segment(command_segment):
+                e_type = type(command_segment)
+                if e_type == str:
+                    new_command.append(command_segment)
+                elif e_type == list or e_type == tuple:
+                    for segment in command_segment:
+                        _proc_segment(segment)
+            _proc_segment(command)
+            return new_command
+
+        def _log_command(self, *command):
+            print('>', subprocess.list2cmdline(
+                self._flatten_command(*command)), flush=True)
+
+        def _run_command(self, *command):
+            self._log_command(*command)
+            if not self.dryrun:
+                subprocess.check_call(self._flatten_command(
+                    *command), stdout=sys.stdout, stderr=sys.stderr)
+
+        def _cd(self, directory):
+            if self.dryrun:
+                if os.path.isabs(directory) or directory.startswith('$'):
+                    self._cwd = directory
+                else:
+                    self._cwd = os.path.join(self._cwd, directory)
+            else:
+                os.chdir(directory)
+
+        # Helper to run chdir regardless of dry run status
+        def cd(self, directory):
+            self._log_command("cd", directory)
+            self._cd(directory)
+
+        def pushd(self, directory):
+            self._log_command("pushd", directory)
+            self.dir_stack.append(self.cwd())
+            self._cd(directory)
+
+        def popd(self):
+            if len(self.dir_stack) > 0:
+                self._log_command("popd", self.dir_stack[-1])
+                self._cd(self.dir_stack[-1])
+                self.dir_stack.pop()
+
+        # Helper to run makedirs regardless of dry run status
+        def mkdir(self, directory):
+            self._log_command("mkdir", "-p", directory)
+            if not self.dryrun:
+                os.makedirs(directory, exist_ok=True)
+
+        def mktemp(self):
+            if self.dryrun:
+                return os.path.expandvars("$TEMP/build")
+
+            return tempfile.mkdtemp()
+
+        def cwd(self):
+            if self.dryrun:
+                return self._cwd
+            else:
+                return os.getcwd()
+
+        def setenv(self, var, value):
+            self._log_command(["export", "{}={}".format(var, value)])
+            if not self.dryrun:
+                os.environ[var] = value
+
+        def rm(self, path):
+            self._log_command(["rm -rf", path])
+            if not self.dryrun:
+                try:
+                    shutil.rmtree(path)
+                except Exception as e:
+                    print("Failed to delete dir {}: {}".format(path, e))
+
+        def where(self, exe, path=None):
+            if path is None:
+                path = os.environ['PATH']
+            paths = path.split(os.pathsep)
+            extlist = ['']
+
+            def is_executable(path):
+                return os.path.isfile(path) and os.access(path, os.X_OK)
+            if sys.platform == 'win32':
+                pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
+                (base, ext) = os.path.splitext(executable)
+                if ext.lower() not in pathext:
+                    extlist = pathext
+            for ext in extlist:
+                exe_name = exe + ext
+                for p in paths:
+                    exe_path = os.path.join(p, exe_name)
+                    if is_executable(exe_path):
+                        return exe_path
+
+            return None
+
+        def exec(self, *command, **kwargs):
+            if kwargs.get('always', False):
+                prev_dryrun = self.dryrun
+                self.dryrun = False
+                self._run_command(*command)
+                self.dryrun = prev_dryrun
+            else:
+                self._run_command(*command)
+
+
     class Env(object):
         """ Encapsulates the environment in which the build is running """
-        @staticmethod
-        def get_git_branch():
+        def __init__(self, config={}):
+            self._projects = {}
 
+            # DEFAULTS
+            self.dryrun = False # overwritten by config
+            # default the branch to whatever the current dir+git says it is
+            self.branch = self._get_git_branch()
+            
+            # OVERRIDES: copy incoming config, overwriting defaults
+            for key, val in config.items():
+                setattr(self, key, val)
+            
+            # default the project to whatever can be found
+            if not hasattr(self, 'project'):
+                self.project = self._default_project()
+
+            if not hasattr(self, 'shell'):
+                self.shell = Builder.Shell(self.dryrun)
+
+        @staticmethod
+        def _get_git_branch():
             travis_pr_branch = os.environ.get("TRAVIS_PULL_REQUEST_BRANCH")
             if travis_pr_branch:
                 print("Found branch:", travis_pr_branch)
@@ -627,130 +782,279 @@ class Builder(VirtualModule):
 
             return None
 
+        def _cache_project(self, project):
+            self._projects[project.name] = project
+            return project
 
-    class Shell(object):
-        """ Virtual shell that abstracts away dry run and tracks/logs state """
-        def __init__(self, dryrun=False):
-            # Used in dry-run builds to track simulated working directory
-            self._cwd = os.getcwd()
-            # pushd/popd stack
-            self.dir_stack = []
-            self.dryrun = dryrun
-
-        def _flatten_command(self, *command):
-            # Process out lists
-            new_command = []
-
-            def _proc_segment(command_segment):
-                e_type = type(command_segment)
-                if e_type == str:
-                    new_command.append(command_segment)
-                elif e_type == list or e_type == tuple:
-                    for segment in command_segment:
-                        _proc_segment(segment)
-            _proc_segment(command)
-            return new_command
-
-        def _log_command(self, *command):
-            print('>', subprocess.list2cmdline(
-                self._flatten_command(*command)), flush=True)
-
-        def _run_command(self, *command):
-            self._log_command(*command)
-            if not self.dryrun:
-                subprocess.check_call(self._flatten_command(
-                    *command), stdout=sys.stdout, stderr=sys.stderr)
-
-        # Helper to run chdir regardless of dry run status
-        def cd(self, directory):
-            self._log_command("cd", directory)
-            if self.dryrun:
-                if os.path.isabs(directory) or directory.startswith('$'):
-                    self._cwd = directory
-                else:
-                    self._cwd = os.path.join(self._cwd, directory)
-            else:
-                os.chdir(directory)
-
-        def pushd(self, directory):
-            self._log_command("pushd", directory)
-            self.dir_stack.append(self.cwd())
-            self.cd(directory)
-
-        def popd(self):
-            if len(self.dir_stack) > 0:
-                self._log_command("popd", self.dir_stack[-1])
-                self.cd(self.dir_stack[-1])
-                self.dir_stack.pop()                
-        
-        # Helper to run makedirs regardless of dry run status
-        def mkdir(self, directory):
-            self._log_command("mkdir", "-p", directory)
-            if not self.dryrun:
-                os.makedirs(directory, exist_ok=True)
-
-        def mktemp(self):
-            if self.dryrun:
-                return os.path.expandvars("$TEMP/build")
+        def _default_project(self):
+            project = self._project_from_cwd()
+            if project:
+                return self._cache_project(project)
+            if not self.args.project:
+                print(
+                    "Multiple projects available and no project (-p|--project) specified")
+                print("Available projects:", ', '.join(
+                    [p.__name__ for p in Builder.Project.__subclasses__()]))
+                sys.exit(1)
             
-            return tempfile.mkdtemp()
+            project_name = self.args.project
+            projects = Builder.Project.__subclasses__()
+            for project_cls in projects:
+                if project_cls.__name__ == project_name:
+                    project = project_cls()
+                    return self._cache_project(project)
+            print("Could not find project named {}".format(project_name))
+            sys.exit(1)
 
-        def cwd(self):
-            if self.dryrun:
-                return self._cwd
-            else:
-                return os.getcwd()
 
-        def setenv(self, var, value):
-            self._log_command(["export", "{}={}".format(var, value)])
-            if not self.dryrun:
-                os.environ[var] = value
-
-        def rm(self, path):
-            self._log_command(["rm -rf", path])
-            if not self.dryrun:
-                try:
-                    shutil.rmtree(path)
-                except Exception as e:
-                    print("Failed to delete dir {}: {}".format(path, e))
-
-        def where(self, exe, path=None):
-            if path is None:
-                path = os.environ['PATH']
-            paths = path.split(os.pathsep)
-            extlist = ['']
-            def is_executable(path):
-                return os.path.isfile(path) and os.access(path, os.X_OK)
-            if sys.platform == 'win32':
-                pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
-                (base, ext) = os.path.splitext(executable)
-                if ext.lower() not in pathext:
-                    extlist = pathext
-            for ext in extlist:
-                exe_name = exe + ext
-                for p in paths:
-                    exe_path = os.path.join(p, execname)
-                    if is_executable(exe_path):
-                        return exe_path
+        def _project_from_cwd(self, name_hint=None):
+            project_config = None
+            project_config_file = os.path.abspath("builder.json")
+            if os.path.exists(project_config_file):
+                import json
+                with open(project_config_file, 'r') as config_fp:
+                    try:
+                        project_config = json.load(config_fp)
+                        return self._cache_project(Builder.Project(**project_config))
+                    except Exception as e:
+                        print("Failed to parse config file",
+                            project_config_file, e)
+                        sys.exit(1)
+        
+            # load any builder scripts and check them
+            Env._load_scripts()
+            projects = Builder.Project.__subclasses__()
+            if len(projects) == 1:
+                project_cls = projects[0]
+                project = project_cls()
+                return self._cache_project(project)
+            # if there are multiple projects, try to use the hint if there is one
+            if name_hint:
+                for project_cls in projects:
+                    if project_cls.__name__ == name_hint:
+                        project = project_cls()
+                        return self._cache_project(project)
 
             return None
 
-        def exec(self, *command):
-            self._run_command(*command)
+        def find_project(self, name):
+            if name in self._projects:
+                return self._projects[name]
+            
+            sh = self.shell
+            search_dirs = [os.cwd(), name, os.path.join(sh.cwd(), 'deps'), os.path.join(sh.cwd(), 'build', 'deps', name)]
+
+            for search_dir in search_dirs:
+                if (os.path.basename(search_dir) == name):
+                    sh.pushd(search_dir)
+                    project = self._project_from_cwd(name)
+                    sh.popd()
+                    if project:
+                        return self._cache_project(project)
+
+            # Enough of a project to get started, note that this is not cached
+            return Builder.Project(name=name)
+                
+
+        def find_llvm_tool(self, name, version=None):
+            versions = [version] if version else list(range(10, 6, -1))
+            for version in versions:
+                for pattern in ('{name}-{version}', '{name}-{version}.0'):
+                    exe = pattern.format(name=name, version=version)
+                    path = self.shell.where(exe)
+                    if path:
+                        return path
+            return None
     
 
     class Action(object):
-        __name__ = 'default'
-        def run(self):
+        """ A build step """
+        def run(self, env):
             pass
+        
+        def __str__(self):
+            return self.__class__.__name__
 
-def run_action(action):
-    action_type = type(action)
-    if action_type is str:
-        action_cls = Builder.find_action(action)
-        action = action_cls()
+    class Script(Action):
+        """ A build step that runs a series of shell commands or python functions """
 
-    action.run()
+        def __init__(self, commands):
+            self.commands = commands
+
+        def run(self, env):
+            sh = env.shell
+
+            for cmd in self.commands:
+                cmd_type = type(cmd)
+                if cmd_type == str:
+                    sh.exec(cmd)
+                elif cmd_type == list:
+                    sh.exec(*cmd)
+                elif callable(cmd):
+                    return cmd(env)
+                else:
+                    print('Unknown script sub command: {}: {}', cmd_type, cmd)
+                    sys.exit(4)
+
+        def __str__(self):
+            cmds = []
+            for cmd in self.commands:
+                cmd_type = type(cmd)
+                if cmd_type == str:
+                    cmds.append(cmd)
+                elif cmd_type == list:
+                    cmds.append(' '.join(cmd))
+                elif callable(cmd):
+                    cmds.append(cmd.__func__.__name__)
+                else:
+                    cmds.append("UNKNOWN: {}".format(cmd))
+            return '{}: (\n\t{})'.format(self.__class__.__name__, '\n\t'.join(cmds))
+    
+
+    class Project(object):
+        """ Describes a given library and its dependencies/consumers """
+        def __init__(self, **kwargs):
+            self.upstream = self.dependencies = kwargs.get('upstream', [])
+            self.downstream = self.consumers = kwargs.get('downstream', [])
+            self.account = kwargs.get('account', 'awslabs')
+            self.name = kwargs['name']
+            self.url = "https://github.com/{}/{}.git".format(self.account, self.name)
+
+        def __repr__(self):
+            return "{}: {}".format(self.name, self.url)
+
+    class Toolchain(object):
+        """ Represents a compiler toolchain """
+        def __init__(self, **kwargs):
+            if 'default' in kwargs or len(kwargs) == 0:
+                for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
+                    setattr(self, slot, 'default')
+
+            if 'spec' in kwargs:
+                # Parse the spec from a single string
+                self.host, self.compiler, self.compiler_version, self.target, self.arch, * \
+                    rest = kwargs['spec'].split('-')
+
+            # Pull out individual fields. Note this is not in an else to support overriding at construction time
+            for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
+                if slot in kwargs:
+                    setattr(self, slot, kwargs[slot])
+
+            self.name = '-'.join([self.host, self.compiler,
+                                self.compiler_version, self.target, self.arch])
+
+        def __str__(self):
+            return self.name
+
+        def __repr__(self):
+            return self.name
+
+
+    class DownloadDependencies(Action):
+        def run(self, env):
+            project = env.project
+            sh = env.shell
+            branch = env.branch
+            deps = project.upstream
+
+            if deps:
+                for dep in deps:
+                    dep_proj = env.find_project(dep)
+                    download_project(dep_proj)
+
+            def download_project(proj):
+                sh.exec("git", "clone", "project", always=True)
+                sh.pushd(project.name)
+                try:
+                    sh.exec("git", "checkout", branch, always=True)
+                except:
+                    print("Project {} does not have a branch named {}, using master".format(
+                        project.name, branch))
+                sh.popd()
+
+
+    class CMakeBuild(Action):
+        def run(self, env):
+            try:
+                toolchain = env.toolchain
+            except:
+                try:
+                    toolchain = env.toolchain = Builder.Toolchain(spec=env.args.build)
+                except:
+                    toolchain = env.toolchain = Builder.Toolchain(default=True)
+
+            sh = env.shell
+
+            #TODO These platforms don't succeed when doing a RelWithDebInfo build
+            build_config = env.args.config
+            if toolchain.host in ("al2012", "manylinux"):
+                build_config = "Debug"
+
+            source_dir = os.environ.get("CODEBUILD_SRC_DIR", sh.cwd())
+
+            # Make the install directory
+            install_dir = os.path.join(source_dir, 'install')
+            sh.mkdir(install_dir)
+
+            def build_project(project):
+                project_source_dir = sh.cwd()
+                project_build_dir = os.path.join(project_source_dir, 'build')
+                sh.mkdir(project_build_dir)
+                sh.pushd(project_build_dir)
+
+                # Set compiler flags
+                compiler_flags = []
+                if toolchain.compiler != 'default':
+                    for opt in ['c', 'cxx']:
+                        compiler_flags.append(
+                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler))
+
+                cmake_args = [
+                    "-Werror=dev",
+                    "-Werror=deprecated",
+                    "-DCMAKE_INSTALL_PREFIX=" + install_dir,
+                    "-DCMAKE_PREFIX_PATH=" + install_dir,
+                    # Each image has a custom installed openssl build, make sure CMake knows where to find it
+                    "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
+                    "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
+                    "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
+                    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                    "-DCMAKE_BUILD_TYPE=" + build_config,
+                    "-DBUILD_TESTING=" + ("ON" if getattr(env, 'build_tests', False) else "OFF"),
+                ] + compiler_flags + getattr(project, 'cmake_args', [])
+
+                # configure
+                sh.exec("cmake", cmake_args, project_source_dir)
+
+                # build
+                sh.exec("cmake", "--build", ".", "--config", build_config)
+
+                # install
+                sh.exec("cmake", "--build", ".", "--config",
+                        build_config, "--target", "install")
+
+                sh.popd()
+
+            def build_dependencies(project):
+                project_build_dir = os.path.join(source_dir, 'build')
+                sh.mkdir(project_build_dir)
+                sh.pushd(project_build_dir)
+
+                deps = project.upstream
+                for dep in deps:
+                    dep_project = env.find_project(dep)
+                    build_project(dep_project)
+
+                sh.popd()
+
+            sh.pushd(source_dir)
+
+            build_dependencies(env.project)
+            build_project(env.project)
+
+            sh.popd()
+
+
 
 
 ########################################################################################################################
@@ -1093,11 +1397,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dry-run', action='store_true', help="Don't run the build, just print the commands that would run")
+    parser.add_argument('-p', '--project', action='store', type=str, help="Project to work on")
+    parser.add_argument('--config', type=str, default='RelWithDebInfo', help='The native code configuration to build with')
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser('build', help="Run target build, formatted 'host-compiler-compilerversion-target-arch'. Ex: linux-ndk-19-android-arm64v8a")
     build.add_argument('build', type=str)
-    build.add_argument('--config', type=str, default='RelWithDebInfo', help='The CMake configuration to build with')
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
@@ -1112,6 +1417,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     builder = Builder()
+    env = Builder.Env({
+        'dryrun': args.dry_run,
+        'args': args
+    })
 
     if args.command == 'build':
         # If build name not passed
@@ -1124,8 +1433,7 @@ if __name__ == '__main__':
 
     elif args.command == 'run':
         action = args.run
-        print("Running action", action, flush=True)
-        run_action(action)
+        builder.run_action(action, env)
 
     elif args.command == 'codebuild':
 

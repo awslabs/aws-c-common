@@ -2,5 +2,5 @@
 import Builder
 
 class Test(Builder.Action):
-    def run(self):
+    def run(self, env):
         print("TEST ACTION WORKS")
