@@ -1108,7 +1108,8 @@ def run_build(build_spec, env):
             Builder.DownloadDependencies(),
             Builder.CMakeBuild(),
             Builder.CTestRun()
-        ])
+        ]),
+        env
     )
 
     return
