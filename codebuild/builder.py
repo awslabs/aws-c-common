@@ -972,6 +972,31 @@ class Builder(VirtualModule):
             return self.name
 
 
+    class InstallTools(Action):
+        def run(self, env):
+            config = env.config
+            sh = env.shell
+
+            if config['use_apt']:
+                # Install keys
+                for key in config['apt_keys']:
+                    sh.exec("sudo", "apt-key", "adv", "--fetch-keys", key)
+
+                # Add APT repositories
+                for repo in config['apt_repos']:
+                    sh.exec("sudo", "apt-add-repository", repo)
+
+                # Install packages
+                if config['apt_packages']:
+                    sh.exec("sudo", "apt-get", "-qq", "update", "-y")
+                    sh.exec("sudo", "apt-get", "-qq", "install",
+                            "-y", "-f", config['apt_packages'])
+
+            if config['use_brew']:
+                for package in config['brew_packages']:
+                    sh.exec("brew", "install", package)
+
+
     class DownloadDependencies(Action):
         def run(self, env):
             project = env.project
@@ -1103,8 +1128,15 @@ class Builder(VirtualModule):
 ########################################################################################################################
 def run_build(build_spec, env):
 
+    # Build the config object
+    config_file = os.path.join(env.shell.cwd(), "builder.json")
+    env.config = produce_config(build_spec, config_file)
+    if not env.config['enabled']:
+        raise Exception("The project is disabled in this configuration")
+
     Builder.run_action(
         Builder.Script([
+            Builder.InstallTools(),
             Builder.DownloadDependencies(),
             Builder.CMakeBuild(),
             Builder.CTestRun()
