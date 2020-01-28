@@ -7,6 +7,10 @@ class ClangTidy(Builder.Action):
         sh = env.shell
         clang_tidy = env.find_llvm_tool('clang-tidy')
         if not clang_tidy:
+            print("No clang-tidy executable could be found, installing...")
+            sh.exec("sudo", "apt", "install", "-y", "clang-tidy")
+        clang_tidy = env.find_llvm_tool('clang-tidy')
+        if not clang_tidy:
             print("No clang-tidy executable could be found")
             sys.exit(1)
 
