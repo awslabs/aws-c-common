@@ -984,8 +984,9 @@ class Builder(VirtualModule):
     class Script(Action):
         """ A build step that runs a series of shell commands or python functions """
 
-        def __init__(self, commands):
+        def __init__(self, commands, **kwargs):
             self.commands = commands
+            self.name = kwargs.get('name', self.__class__.__name__)
 
         def run(self, env):
             sh = env.shell
@@ -1005,6 +1006,8 @@ class Builder(VirtualModule):
                     sys.exit(4)
 
         def __str__(self):
+            if len(self.commands) == 0:
+                return 'Script({}): Empty'.format(self.name)
             cmds = []
             for cmd in self.commands:
                 cmd_type = type(cmd)
@@ -1018,7 +1021,7 @@ class Builder(VirtualModule):
                     cmds.append(cmd.__func__.__name__)
                 else:
                     cmds.append("UNKNOWN: {}".format(cmd))
-            return '{}: (\n\t{})'.format(self.__class__.__name__, '\n\t'.join(cmds))
+            return 'Script({}): (\n\t{}\n)'.format(self.name, '\n\t'.join(cmds))
 
     class Project(object):
         """ Describes a given library and its dependencies/consumers """
@@ -1251,19 +1254,13 @@ class Builder(VirtualModule):
             sh.pushenv()
             for var, value in config.get('build_env', {}).items():
                 sh.setenv(var, value)
-            # PRE-BUILD
-            for step in config.get('pre_build_steps', []):
-                sh.exec(step)
+            
             # BUILD
             build_project(env.project, getattr(env, 'build_tests', False))
 
             spec = getattr(env, 'build_spec', None)
             if spec and spec.downstream:
                 build_projects(env.project.downstream)
-
-            # POST_BUILD
-            for step in config.get('post_build_steps', []):
-                sh.exec(step)
 
             sh.popenv()
             sh.popd()
@@ -1295,17 +1292,33 @@ def run_build(build_spec, env):
 
     # Build the config object
     config_file = os.path.join(env.shell.cwd(), "builder.json")
-    env.config = produce_config(build_spec, config_file)
+    config = env.config = produce_config(build_spec, config_file)
     if not env.config['enabled']:
         raise Exception("The project is disabled in this configuration")
+
+    build_action = Builder.CMakeBuild()
+    test_action = Builder.CTestRun()
+
+    prebuild_action = Builder.Script(config.get('pre_build_steps', []), name='pre_build_steps')
+    postbuild_action = Builder.Script(config.get('post_build_steps', []), name='post_build_steps')
+    
+    build_steps = config.get('build', None)
+    if build_steps:
+        build_action = Builder.Script(build_steps, name='build')
+
+    test_steps = config.get('test', None)
+    if test_steps:
+        test_action = Builder.Script(test_steps, name='test')
 
     Builder.run_action(
         Builder.Script([
             Builder.InstallTools(),
             Builder.DownloadDependencies(),
-            Builder.CMakeBuild(),
-            Builder.CTestRun()
-        ]),
+            prebuild_action,
+            build_action,
+            postbuild_action,
+            test_action,
+        ], name='run_build'),
         env
     )
 
