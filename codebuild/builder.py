@@ -759,12 +759,19 @@ class Builder(VirtualModule):
             for key, val in config.items():
                 setattr(self, key, val)
             
+            # make sure the shell is initialized
+            if not hasattr(self, 'shell'):
+                self.shell = Builder.Shell(self.dryrun)
+
             # default the project to whatever can be found
             if not hasattr(self, 'project'):
                 self.project = self._default_project()
-
-            if not hasattr(self, 'shell'):
-                self.shell = Builder.Shell(self.dryrun)
+            
+            # build environment set up
+            self.source_dir = os.environ.get("CODEBUILD_SRC_DIR", self.shell.cwd())
+            self.build_dir = os.path.join(self.source_dir, 'build')
+            self.deps_dir = os.path.join(self.build_dir, 'deps')
+            self.install_dir = os.path.join(self.build_dir, 'install')
 
         @staticmethod
         def _get_git_branch():
@@ -820,6 +827,7 @@ class Builder(VirtualModule):
             for project_cls in projects:
                 if project_cls.__name__ == project_name:
                     project = project_cls()
+                    project.path = self.shell.cwd()
                     return self._cache_project(project)
             print("Could not find project named {}".format(project_name))
             sys.exit(1)
@@ -833,43 +841,47 @@ class Builder(VirtualModule):
                 with open(project_config_file, 'r') as config_fp:
                     try:
                         project_config = json.load(config_fp)
-                        return self._cache_project(Builder.Project(**project_config))
+                        return self._cache_project(Builder.Project(**project_config, path=self.shell.cwd()))
                     except Exception as e:
                         print("Failed to parse config file",
                             project_config_file, e)
                         sys.exit(1)
         
             # load any builder scripts and check them
-            Env._load_scripts()
+            Builder._load_scripts()
             projects = Builder.Project.__subclasses__()
+            project_cls = None
             if len(projects) == 1:
                 project_cls = projects[0]
+            elif name_hint: # if there are multiple projects, try to use the hint if there is one
+                for p in projects:
+                    if p.__name__ == name_hint:
+                        project_cls = p
+            
+            if project_cls:
                 project = project_cls()
+                project.path = self.shell.cwd()
                 return self._cache_project(project)
-            # if there are multiple projects, try to use the hint if there is one
-            if name_hint:
-                for project_cls in projects:
-                    if project_cls.__name__ == name_hint:
-                        project = project_cls()
-                        return self._cache_project(project)
-
+            
             return None
 
         def find_project(self, name):
             project = self._projects.get(name, None)
-            if project
+            if project:
                 return project
             
             sh = self.shell
-            search_dirs = [os.cwd(), name, os.path.join(sh.cwd(), 'deps'), os.path.join(sh.cwd(), 'build', 'deps', name)]
+            search_dirs = (self.source_dir, os.path.join(self.deps_dir, name))
 
             for search_dir in search_dirs:
-                if (os.path.basename(search_dir) == name):
+                if (os.path.basename(search_dir) == name) and os.path.isdir(search_dir):
                     sh.pushd(search_dir)
                     project = self._project_from_cwd(name)
+                    if not project: # no config file, but still exists
+                        project = self._cache_project(Builder.Project(name=name, path=search_dir))
                     sh.popd()
-                    if project:
-                        return self._cache_project(project)
+                    
+                    return project
 
             # Enough of a project to get started, note that this is not cached
             return Builder.Project(name=name)
@@ -944,11 +956,12 @@ class Builder(VirtualModule):
     class Project(object):
         """ Describes a given library and its dependencies/consumers """
         def __init__(self, **kwargs):
-            self.upstream = self.dependencies = kwargs.get('upstream', [])
-            self.downstream = self.consumers = kwargs.get('downstream', [])
+            self.upstream = self.dependencies = [p['name'] for p in kwargs.get('upstream', [])]
+            self.downstream = self.consumers = [p['name'] for p in kwargs.get('downstream', [])]
             self.account = kwargs.get('account', 'awslabs')
             self.name = kwargs['name']
             self.url = "https://github.com/{}/{}.git".format(self.account, self.name)
+            self.path = kwargs.get('path', None)
 
         def __repr__(self):
             return "{}: {}".format(self.name, self.url)
@@ -1030,19 +1043,37 @@ class Builder(VirtualModule):
             branch = env.branch
             deps = project.upstream
 
-            if deps:
-                for dep in deps:
-                    dep_proj = env.find_project(dep)
-                    download_project(dep_proj)
+            config = getattr(env, 'config', {})
+            spec = config.get('spec', None)
+            if spec and spec.downstream:
+                deps += project.downstream
 
-            def download_project(proj):
-                sh.exec("git", "clone", "project", always=True)
-                sh.pushd(project.name)
-                try:
-                    sh.exec("git", "checkout", branch, always=True)
-                except:
-                    print("Project {} does not have a branch named {}, using master".format(
-                        project.name, branch))
+            if deps:
+                sh.rm(env.deps_dir)
+                sh.mkdir(env.deps_dir)
+                sh.pushd(env.deps_dir)
+
+                while deps:
+                    dep = deps.pop()
+                    dep_proj = env.find_project(dep)
+                    if dep_proj.path:
+                        continue
+
+                    sh.exec("git", "clone", dep_proj.url, always=True)
+                    sh.pushd(dep_proj.name)
+                    try:
+                        sh.exec("git", "checkout", branch, always=True)
+                    except:
+                        print("Project {} does not have a branch named {}, using master".format(
+                            dep_proj.name, branch))
+
+                    # load project, collect transitive dependencies/consumers
+                    dep_proj = env.find_project(dep)
+                    deps += dep_proj.upstream
+                    if spec and spec.downstream:
+                        deps += dep_proj.downstream
+                    sh.popd()
+
                 sh.popd()
 
 
@@ -1063,18 +1094,26 @@ class Builder(VirtualModule):
             if toolchain.host in ("al2012", "manylinux"):
                 build_config = "Debug"
 
-            source_dir = os.environ.get("CODEBUILD_SRC_DIR", sh.cwd())
+            source_dir = env.source_dir
+            build_dir = env.build_dir
+            deps_dir = env.deps_dir
+            install_dir = env.install_dir
 
-            # Make the install directory
-            install_dir = os.path.join(source_dir, 'install')
-            sh.mkdir(install_dir)
+            for d in (build_dir, deps_dir, install_dir):
+                sh.mkdir(d)
 
             config = getattr(env, 'config', None)
             if config:
                 env.build_tests = config.get('build_tests', True)
 
             def build_project(project, build_tests=False):
-                project_source_dir = sh.cwd()
+                # build dependencies first, let cmake decide what needs doing
+                for dep in [env.find_project(p) for p in project.upstream]:
+                    sh.pushd(dep.path)
+                    build_project(dep)
+                    sh.popd()
+
+                project_source_dir = project.path
                 project_build_dir = os.path.join(project_source_dir, 'build')
                 sh.mkdir(project_build_dir)
                 sh.pushd(project_build_dir)
@@ -1111,7 +1150,7 @@ class Builder(VirtualModule):
                 sh.exec("cmake", cmake_args, project_source_dir)
 
                 # build
-                #sh.exec("cmake", "--build", ".", "--config", build_config)
+                sh.exec("cmake", "--build", ".", "--config", build_config)
 
                 # install
                 sh.exec("cmake", "--build", ".", "--config",
@@ -1120,13 +1159,13 @@ class Builder(VirtualModule):
                 sh.popd()
 
             def build_projects(projects):
-                project_build_dir = os.path.join(source_dir, 'build')
-                sh.mkdir(project_build_dir)
-                sh.pushd(project_build_dir)
+                sh.pushd(deps_dir)
 
                 for proj in projects:
                     project = env.find_project(proj)
+                    sh.pushd(project.path)
                     build_project(project)
+                    sh.popd()
 
                 sh.popd()
 
