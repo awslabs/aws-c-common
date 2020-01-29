@@ -723,7 +723,7 @@ class Builder(VirtualModule):
                 return os.path.isfile(path) and os.access(path, os.X_OK)
             if sys.platform == 'win32':
                 pathext = os.environ['PATHEXT'].lower().split(os.pathsep)
-                (base, ext) = os.path.splitext(executable)
+                (base, ext) = os.path.splitext(exe)
                 if ext.lower() not in pathext:
                     extlist = pathext
             for ext in extlist:
