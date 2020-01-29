@@ -856,8 +856,9 @@ class Builder(VirtualModule):
             return None
 
         def find_project(self, name):
-            if name in self._projects:
-                return self._projects[name]
+            project = self._projects.get(name, None)
+            if project
+                return project
             
             sh = self.shell
             search_dirs = [os.cwd(), name, os.path.join(sh.cwd(), 'deps'), os.path.join(sh.cwd(), 'build', 'deps', name)]
