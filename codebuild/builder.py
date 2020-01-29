@@ -761,7 +761,7 @@ class Builder(VirtualModule):
             self._log_command(['popenv'])
             env = self.env_stack.pop()
             # clear out values that won't be overwritten
-            for name, value in dict(os.environ):
+            for name, value in dict(os.environ).items():
                 if name not in env:
                     del os.environ[name]
             # write the old env
