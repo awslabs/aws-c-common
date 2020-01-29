@@ -161,7 +161,8 @@ static int s_byte_cursor_read_tests_fn(struct aws_allocator *allocator, void *ct
 
     struct aws_byte_cursor cur = aws_byte_cursor_from_array(TEST_VECTOR, sizeof(TEST_VECTOR));
 
-    uint8_t aba[3], bcb[3];
+    uint8_t aba[3] = {0};
+    uint8_t bcb[3] = {0};
     ASSERT_TRUE(aws_byte_cursor_read(&cur, aba, sizeof(aba)));
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(bcb, sizeof(bcb));
     ASSERT_TRUE(aws_byte_cursor_read_and_fill_buffer(&cur, &buf));

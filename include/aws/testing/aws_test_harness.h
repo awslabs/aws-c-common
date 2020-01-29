@@ -288,7 +288,7 @@ static int total_failures;
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
             if (assert_got_s <= 1024) {                                                                                \
-                for (size_t assert_i = 0; assert_i < expected_size; ++assert_i) {                                      \
+                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
                     if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
                         fprintf(                                                                                       \
                             AWS_TESTING_REPORT_FD,                                                                     \
