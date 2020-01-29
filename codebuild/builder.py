@@ -21,10 +21,9 @@ import shutil
 import subprocess
 import tempfile
 
-# Class to refer to a specific build permutation
-
 
 class BuildSpec(object):
+    """ Refers to a specific build permutation, gets converted into a toolchain """
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
@@ -281,9 +280,6 @@ COMPILERS = {
         'hosts': ['linux', 'macos'],
         'targets': ['linux', 'macos'],
 
-        'post_build_steps': [
-            ["{clang_tidy}", "-p", "{build_dir}", "{sources}"],
-        ],
         'cmake_args': ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DENABLE_FUZZ_TESTS=ON'],
 
         'apt_keys': ["http://apt.llvm.org/llvm-snapshot.gpg.key"],
@@ -307,10 +303,6 @@ COMPILERS = {
                 'c': "clang-6.0",
                 'cxx': "clang-6.0",
 
-                'variables': {
-                    'clang_tidy': 'clang-tidy-6.0',
-                },
-
                 'requires_privilege': True,
             },
             '8': {
@@ -321,10 +313,6 @@ COMPILERS = {
 
                 'c': "clang-8",
                 'cxx': "clang-8",
-
-                'variables': {
-                    'clang_tidy': 'clang-tidy-8',
-                },
 
                 'requires_privilege': True,
             },
