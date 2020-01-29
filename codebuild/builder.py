@@ -316,6 +316,17 @@ COMPILERS = {
 
                 'requires_privilege': True,
             },
+            '9': {
+                'apt_repos': [
+                    "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main",
+                ],
+                'apt_packages': ["clang-9", "clang-tidy-9"],
+
+                'c': "clang-9",
+                'cxx': "clang-9",
+
+                'requires_privilege': True,
+            },
         },
     },
     'gcc': {
