@@ -1296,6 +1296,9 @@ def run_build(build_spec, env):
     if not env.config['enabled']:
         raise Exception("The project is disabled in this configuration")
 
+    from pprint import pprint
+    pprint(config)
+
     build_action = Builder.CMakeBuild()
     test_action = Builder.CTestRun()
 
