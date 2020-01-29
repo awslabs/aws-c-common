@@ -1408,6 +1408,7 @@ if __name__ == '__main__':
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
+    run.add_argument('args', nargs=argparse.REMAINDER)
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
     codebuild.add_argument(
