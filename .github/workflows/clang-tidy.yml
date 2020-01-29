@@ -13,4 +13,4 @@ jobs:
       
     - name: clang-tidy lint
       run: |
-        python3 ./codebuild/builder.py run clangtidy
+        python3 ./codebuild/builder.py run clang-tidy
