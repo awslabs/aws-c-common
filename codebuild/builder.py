@@ -973,7 +973,7 @@ class Builder(VirtualModule):
                                 self.compiler_version, self.target, self.arch])
 
 
-        def compiler_path(env):
+        def compiler_path(self, env):
             if self.compiler == 'default':
                 env_cc = os.environ.get('CC', None)
                 if env_cc:
@@ -998,6 +998,9 @@ class Builder(VirtualModule):
         def run(self, env):
             config = env.config
             sh = env.shell
+
+            if getattr(env.args, 'skip_install', False):
+                return
 
             if config['use_apt']:
                 # Install keys
@@ -1065,7 +1068,11 @@ class Builder(VirtualModule):
             install_dir = os.path.join(source_dir, 'install')
             sh.mkdir(install_dir)
 
-            def build_project(project):
+            config = getattr(env, 'config', None)
+            if config:
+                env.build_tests = config.get('build_tests', True)
+
+            def build_project(project, build_tests=False):
                 project_source_dir = sh.cwd()
                 project_build_dir = os.path.join(project_source_dir, 'build')
                 sh.mkdir(project_build_dir)
@@ -1076,9 +1083,8 @@ class Builder(VirtualModule):
                 if toolchain.compiler != 'default':
                     for opt in ['c', 'cxx']:
                         compiler_flags.append(
-                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler_path()))
+                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler_path(env)))
 
-                    config = getattr(env, 'config', None)
                     if config:
                         for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
                             if opt in config and config[opt]:
@@ -1095,14 +1101,14 @@ class Builder(VirtualModule):
                     "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
                     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                     "-DCMAKE_BUILD_TYPE=" + build_config,
-                    "-DBUILD_TESTING=" + ("ON" if getattr(env, 'build_tests', False) else "OFF"),
-                ] + compiler_flags + getattr(project, 'cmake_args', [])
+                    "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
+                ] + compiler_flags + getattr(project, 'cmake_args', []) + getattr(config, 'cmake_args', [])
 
                 # configure
                 sh.exec("cmake", cmake_args, project_source_dir)
 
                 # build
-                sh.exec("cmake", "--build", ".", "--config", build_config)
+                #sh.exec("cmake", "--build", ".", "--config", build_config)
 
                 # install
                 sh.exec("cmake", "--build", ".", "--config",
@@ -1124,7 +1130,7 @@ class Builder(VirtualModule):
             sh.pushd(source_dir)
 
             build_projects(env.project.upstream)
-            build_project(env.project)
+            build_project(env.project, getattr(env, 'build_tests', False))
 
             spec = getattr(env, 'build_spec', None)
             if spec and spec.downstream:
@@ -1136,6 +1142,7 @@ class Builder(VirtualModule):
         def run(self, env):
             has_tests = getattr(env, 'build_tests', False)
             if not has_tests:
+                print("No tests were built, skipping test run")
                 return
 
             sh = env.shell
@@ -1514,7 +1521,8 @@ if __name__ == '__main__':
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser('build', help="Run target build, formatted 'host-compiler-compilerversion-target-arch'. Ex: linux-ndk-19-android-arm64v8a")
-    build.add_argument('build', type=str)
+    build.add_argument('build', type=str, default='default')
+    build.add_argument('--skip-install', action='store_true', help="Skip the install phase, useful when testing locally")
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
