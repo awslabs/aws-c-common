@@ -42,8 +42,11 @@ class BuildSpec(object):
     def __repr__(self):
         return self.name
 
-
-# borrow the technique from the virtualmod module
+###############################################################################
+# Virtual Module
+# borrow the technique from the virtualmod module, allows 'import Builder' in 
+# .builder/*.py local scripts
+###############################################################################
 import importlib
 from importlib.abc import Loader, MetaPathFinder
 _virtual_modules = dict()
@@ -597,6 +600,7 @@ class Builder(VirtualModule):
 
     @staticmethod
     def find_action(name):
+        """ Finds any loaded action class by name and returns it """
         name = name.replace('-', '').lower()
         all_actions = Builder._find_actions()
         for action in all_actions:
@@ -605,6 +609,7 @@ class Builder(VirtualModule):
 
     @staticmethod
     def run_action(action, env):
+        """ Runs an action, and any generated child actions recursively """
         action_type = type(action)
         if action_type is str:
             try:
@@ -631,6 +636,7 @@ class Builder(VirtualModule):
             self._cwd = os.getcwd()
             # pushd/popd stack
             self.dir_stack = []
+            self.env_stack = []
             self.dryrun = dryrun
 
         def _flatten_command(self, *command):
@@ -666,46 +672,75 @@ class Builder(VirtualModule):
             else:
                 os.chdir(directory)
 
-        # Helper to run chdir regardless of dry run status
+
         def cd(self, directory):
+            """ # Helper to run chdir regardless of dry run status """
             self._log_command("cd", directory)
             self._cd(directory)
 
         def pushd(self, directory):
+            """ Equivalent to bash/zsh pushd """
             self._log_command("pushd", directory)
             self.dir_stack.append(self.cwd())
             self._cd(directory)
 
         def popd(self):
+            """ Equivalent to bash/zsh popd """
             if len(self.dir_stack) > 0:
                 self._log_command("popd", self.dir_stack[-1])
                 self._cd(self.dir_stack[-1])
                 self.dir_stack.pop()
 
-        # Helper to run makedirs regardless of dry run status
         def mkdir(self, directory):
+            """ Equivalent to mkdir -p $dir """
             self._log_command("mkdir", "-p", directory)
             if not self.dryrun:
                 os.makedirs(directory, exist_ok=True)
 
         def mktemp(self):
+            """ Makes and returns the path to a temp directory """
             if self.dryrun:
                 return os.path.expandvars("$TEMP/build")
 
             return tempfile.mkdtemp()
 
         def cwd(self):
+            """ Returns current working directory, accounting for dry-runs """
             if self.dryrun:
                 return self._cwd
             else:
                 return os.getcwd()
 
         def setenv(self, var, value):
+            """ Set an environment variable """
             self._log_command(["export", "{}={}".format(var, value)])
             if not self.dryrun:
                 os.environ[var] = value
 
+        def getenv(self, var):
+            """ Get an environment variable """
+            return os.environ[var]
+
+        def pushenv(self):
+            """ Store the current environment on a stack, for restoration later """
+            self._log_command(['pushenv'])
+            self.env_stack.append(dict(os.environ))
+
+        def popenv(self):
+            """ Restore the environment to the state on the top of the stack """
+            self._log_command(['popenv'])
+            env = self.env_stack.pop()
+            # clear out values that won't be overwritten
+            for name, value in os.environ.items():
+                if name not in env:
+                    del os.environ[name]
+            # write the old env
+            for name, value in env.items():
+                os.environ[name] = value
+
+
         def rm(self, path):
+            """ Remove a file or directory """
             self._log_command(["rm -rf", path])
             if not self.dryrun:
                 try:
@@ -713,7 +748,9 @@ class Builder(VirtualModule):
                 except Exception as e:
                     print("Failed to delete dir {}: {}".format(path, e))
 
+    
         def where(self, exe, path=None):
+            """ Platform agnostic `where executable` command """
             if path is None:
                 path = os.environ['PATH']
             paths = path.split(os.pathsep)
@@ -736,6 +773,7 @@ class Builder(VirtualModule):
             return None
 
         def exec(self, *command, **kwargs):
+            """ Executes a shell command, or just logs it for dry runs """
             if kwargs.get('always', False):
                 prev_dryrun = self.dryrun
                 self.dryrun = False
@@ -866,6 +904,7 @@ class Builder(VirtualModule):
             return None
 
         def find_project(self, name):
+            """ Finds a project, either on disk, or makes a virtual one to allow for acquisition """
             project = self._projects.get(name, None)
             if project:
                 return project
@@ -897,10 +936,12 @@ class Builder(VirtualModule):
             return None
 
         def find_gcc_tool(self, name, version=None):
+            """ Finds gcc, gcc-ld, gcc-ranlib, etc at a specific version, or the latest one available """
             versions = [version] if version else list(range(8, 5, -1))
             return self._find_compiler_tool(name, versions)
 
         def find_llvm_tool(self, name, version=None):
+            """ Finds clang, clang-tidy, lld, etc at a specific version, or the latest one available """
             versions = [version] if version else list(range(10, 6, -1))
             return self._find_compiler_tool(name, versions)
     
@@ -1009,6 +1050,7 @@ class Builder(VirtualModule):
 
 
     class InstallTools(Action):
+        """ Installs prerequisites to building """
         def run(self, env):
             config = env.config
             sh = env.shell
@@ -1037,6 +1079,7 @@ class Builder(VirtualModule):
 
 
     class DownloadDependencies(Action):
+        """ Downloads the source for dependencies and consumers if necessary """
         def run(self, env):
             project = env.project
             sh = env.shell
@@ -1078,6 +1121,7 @@ class Builder(VirtualModule):
 
 
     class CMakeBuild(Action):
+        """ Runs cmake configure, build """
         def run(self, env):
             try:
                 toolchain = env.toolchain
@@ -1102,9 +1146,8 @@ class Builder(VirtualModule):
             for d in (build_dir, deps_dir, install_dir):
                 sh.mkdir(d)
 
-            config = getattr(env, 'config', None)
-            if config:
-                env.build_tests = config.get('build_tests', True)
+            config = getattr(env, 'config', {})
+            env.build_tests = config.get('build_tests', True)
 
             def build_project(project, build_tests=False):
                 # build dependencies first, let cmake decide what needs doing
@@ -1130,7 +1173,7 @@ class Builder(VirtualModule):
                     if config:
                         for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
                             if opt in config and config[opt]:
-                                os.environ[variable] = config[opt]
+                                sh.setenv(variable, config[opt])
 
                 cmake_args = [
                     "-Werror=dev",
@@ -1172,15 +1215,30 @@ class Builder(VirtualModule):
             sh.pushd(source_dir)
 
             build_projects(env.project.upstream)
+
+            # Set build environment
+            sh.pushenv()
+            for var, value in config.get('build_env', {}).items():
+                sh.setenv(var, value)
+            # PRE-BUILD
+            for step in config['pre_build_steps']:
+                sh.exec(step)
+            # BUILD
             build_project(env.project, getattr(env, 'build_tests', False))
 
             spec = getattr(env, 'build_spec', None)
             if spec and spec.downstream:
                 build_projects(env.project.downstream)
 
+            # POST_BUILD
+            for step in config['post_build_steps']:
+                sh.exec(step)
+
+            sh.popenv()
             sh.popd()
 
     class CTestRun(Action):
+        """ Uses ctest to run tests if tests are enabled/built via 'build_tests' """
         def run(self, env):
             has_tests = getattr(env, 'build_tests', False)
             if not has_tests:
@@ -1221,252 +1279,6 @@ def run_build(build_spec, env):
     )
 
     return
-
-    shell = Builder.Shell(is_dryrun)
-
-    #TODO These platforms don't succeed when doing a RelWithDebInfo build
-    if build_spec.host in ("al2012", "manylinux"):
-        build_config = "Debug"
-
-    source_dir = os.environ.get("CODEBUILD_SRC_DIR", os.getcwd())
-    sources = [os.path.join(source_dir, file) for file in glob.glob('**/*.c')]
-
-    built_projects = []
-
-    git_branch = Builder.Env.get_git_branch()
-    if git_branch:
-        print("On git branch {}".format(git_branch))
-
-    # Make the build directory
-    build_dir = shell.mktemp()
-
-    # Make the install directory
-    install_dir = os.path.join(build_dir, 'install')
-    shell.mkdir(install_dir)
-
-    # Build a list of projects from a config file
-    def _build_dependencies(project_list, build_tests, run_tests):
-
-        shell.pushd(build_dir)
-
-        for project in project_list:
-            name = project.get("name", None)
-            if not name:
-                raise Exception("Project definition missing name: " + project)
-
-            # Skip project if already built
-            if name in built_projects:
-                continue
-
-            hosts = project.get("hosts", None)
-            if hosts and build_spec.host not in hosts:
-                print("Skipping dependency {} as it is not enabled for this host".format(name))
-                continue
-
-            targets = project.get("targets", None)
-            if targets and build_spec.target not in targets:
-                print("Skipping dependency {} as it is not enabled for this target".format(name))
-                continue
-
-            account = project.get("account", "awslabs")
-            pin = project.get("revision", None)
-
-            git = "https://github.com/{}/{}".format(account, name)
-            shell.exec("git", "clone", git)
-
-            shell.pushd(name)
-
-            # Attempt to checkout a branch with the same name as the current branch
-            try:
-                shell.exec("git", "checkout", git_branch)
-            except:
-                print("Project {} does not have a branch {}".format(name, git_branch))
-                # Attempt to checkout the pinned revision
-                if pin:
-                    shell.exec("git", "checkout", pin)
-
-            # Build/install
-            _build_project(name, build_tests=build_tests, run_tests=run_tests)
-
-            shell.popd()
-
-        shell.popd()
-
-    # Helper to build
-    def _build_project(project=None, build_tests=False, run_tests=False, build_downstream=False):
-
-        if not project:
-            project_source_dir = source_dir
-            project_build_dir = build_dir
-        else:
-            project_source_dir = os.path.join(build_dir, project)
-            project_build_dir = os.path.join(project_source_dir, 'build')
-
-        def _build_project_cmake():
-            # If the build directory doesn't already exist, make it
-            shell.mkdir(project_build_dir)
-
-            # CD to the build directory
-            shell.pushd(project_build_dir)
-
-            # Set compiler flags
-            compiler_flags = []
-            for opt in ['c', 'cxx']:
-                if opt in config and config[opt]:
-                    compiler_flags.append('-DCMAKE_{}_COMPILER={}'.format(opt.upper(), config[opt]))
-
-            # Run CMake
-            cmake_args = [
-                "-Werror=dev",
-                "-Werror=deprecated",
-                "-DCMAKE_INSTALL_PREFIX=" + install_dir,
-                "-DCMAKE_PREFIX_PATH=" + install_dir,
-                # Each image has a custom installed openssl build, make sure CMake knows where to find it
-                "-DLibCrypto_INCLUDE_DIR=/opt/openssl/include",
-                "-DLibCrypto_SHARED_LIBRARY=/opt/openssl/lib/libcrypto.so",
-                "-DLibCrypto_STATIC_LIBRARY=/opt/openssl/lib/libcrypto.a",
-                "-DCMAKE_BUILD_TYPE=" + build_config,
-                "-DBUILD_TESTING=" + ("ON" if build_tests else "OFF"),
-            ]
-            shell.exec("cmake", config['cmake_args'], compiler_flags, cmake_args, project_source_dir)
-
-            # Run the build
-            shell.exec("cmake", "--build", ".", "--config", build_config)
-
-            # Do install
-            shell.exec("cmake", "--build", ".", "--config", build_config, "--target", "install")
-
-            shell.popd()
-
-        def _test_project_ctest():
-            shell.pushd(project_build_dir)
-            shell.exec("ctest", ".", "--output-on-failure")
-            shell.popd()
-
-        upstream = []
-        downstream = []
-        build_fn = _build_project_cmake
-        test_fn = _test_project_ctest
-
-        project_config_file = os.path.join(project_source_dir, "builder.json")
-        if os.path.exists(project_config_file):
-            import json
-            with open(project_config_file, 'r') as config_fp:
-                try:
-                    project_config = json.load(config_fp)
-                except Exception as e:
-                    print("Failed to parse config file", project_config_file, e)
-                    sys.exit(1)
-
-            project = project_config.get("name", project)
-            upstream = project_config.get("upstream", [])
-            downstream = project_config.get("downstream", [])
-
-            command_variables = {
-                **config,
-                **config['variables'],
-                'source_dir': project_source_dir,
-                'build_dir': project_build_dir,
-                'install_dir': install_dir,
-                'build_config': build_config,
-            }
-
-            config_build = project_config.get("build", None)
-            if config_build:
-                assert isinstance(config_build, list)
-                def _build_project_config():
-                    for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
-                        if opt in config and config[opt]:
-                            os.environ[variable] = config[opt]
-                    for command in config_build:
-                        final_command = _replace_variables(command, command_variables)
-                        shell.exec(final_command)
-
-                build_fn = _build_project_config
-
-            config_test = project_config.get("test", None)
-            if config_test:
-                assert isinstance(config_test, list)
-                def _test_project_config():
-                    for command in config_test:
-                        final_command = _replace_variables(command, command_variables)
-                        shell.exec(final_command)
-                test_fn = _test_project_config
-
-        pwd = shell.cwd()
-
-        # If project not specified, and not pulled from the config file, default to file path
-        if not project:
-            project = os.path.basename(source_dir)
-
-        # Build upstream dependencies (don't build or run their tests)
-        _build_dependencies(upstream, build_tests=False, run_tests=False)
-
-        build_fn()
-
-        # Run the tests
-        if run_tests:
-            test_fn()
-
-        # Mark project as built
-        if project:
-            built_projects.append(project)
-
-        # Build downstream dependencies (build and run their tests if this build is setup for that)
-        if build_downstream:
-            _build_dependencies(downstream, build_tests=build_tests, run_tests=run_tests)
-
-        # CD back to the beginning directory
-        shell.cd(pwd)
-
-    # Build the config object
-    config_file = os.path.join(shell.cwd(), "builder.json")
-    config = produce_config(build_spec, config_file, sources=sources, source_dir=source_dir, build_dir=build_dir)
-    if not config['enabled']:
-        raise Exception("The project is disabled in this configuration")
-
-    # INSTALL
-    if config['use_apt']:
-        # Install keys
-        for key in config['apt_keys']:
-            shell.exec("sudo", "apt-key", "adv", "--fetch-keys", key)
-
-        # Add APT repositories
-        for repo in config['apt_repos']:
-            shell.exec("sudo", "apt-add-repository", repo)
-
-        # Install packages
-        if config['apt_packages']:
-            shell.exec("sudo", "apt-get", "-qq", "update", "-y")
-            shell.exec("sudo", "apt-get", "-qq", "install", "-y", "-f", config['apt_packages'])
-
-    if config['use_brew']:
-        for package in config['brew_packages']:
-            shell.exec("brew", "install", package)
-
-    # PRE BUILD
-
-    # Set build environment
-    for var, value in config['build_env'].items():
-        shell.setenv(var, value)
-        
-    # Run configured pre-build steps
-    for step in config['pre_build_steps']:
-        shell.exec(step)
-
-    # BUILD
-
-    # Actually run the build (always build tests, even if we won't run them)
-    _build_project(project=None, build_tests=True, run_tests=config['run_tests'], build_downstream=build_spec.downstream)
-
-    # POST BUILD
-
-    # Run configured post-build steps
-    for step in config['post_build_steps']:
-        shell.exec(step)
-
-    # Delete temp dir
-    shell.rm(build_dir)
 
 ########################################################################################################################
 # CODEBUILD
@@ -1583,6 +1395,7 @@ if __name__ == '__main__':
         'args': args
     })
 
+    # Run a build with a specific spec/toolchain
     if args.command == 'build':
         # If build name not passed
         build_name = args.build
@@ -1591,10 +1404,12 @@ if __name__ == '__main__':
 
         run_build(build_spec, env)
 
+    # run a single action, usually local to a project
     elif args.command == 'run':
         action = args.run
         builder.run_action(action, env)
 
+    # generate/update codebuild jobs
     elif args.command == 'codebuild':
 
         # Setup AWS connection
