@@ -12,14 +12,24 @@
 # permissions and limitations under the License.
 
 from __future__ import print_function
-import os, sys, glob, shutil, subprocess, tempfile
+from importlib.abc import Loader, MetaPathFinder
+import importlib
+import os
+import sys
+import glob
+import shutil
+import subprocess
+import tempfile
 
 # Class to refer to a specific build permutation
+
+
 class BuildSpec(object):
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
-            self.host, self.compiler, self.compiler_version, self.target, self.arch, *rest = kwargs['spec'].split('-')
+            self.host, self.compiler, self.compiler_version, self.target, self.arch, * \
+                rest = kwargs['spec'].split('-')
 
             for variant in ('downstream',):
                 if variant in rest:
@@ -32,7 +42,8 @@ class BuildSpec(object):
             if slot in kwargs:
                 setattr(self, slot, kwargs[slot])
 
-        self.name = '-'.join([self.host, self.compiler, self.compiler_version, self.target, self.arch])
+        self.name = '-'.join([self.host, self.compiler,
+                              self.compiler_version, self.target, self.arch])
         if self.downstream:
             self.name += "-downstream"
 
@@ -42,14 +53,15 @@ class BuildSpec(object):
     def __repr__(self):
         return self.name
 
+
 ###############################################################################
 # Virtual Module
-# borrow the technique from the virtualmod module, allows 'import Builder' in 
+# borrow the technique from the virtualmod module, allows 'import Builder' in
 # .builder/*.py local scripts
 ###############################################################################
-import importlib
-from importlib.abc import Loader, MetaPathFinder
 _virtual_modules = dict()
+
+
 class VirtualModuleMetaclass(type):
     def __init__(cls, name, bases, attrs):
         # Initialize the class
@@ -99,6 +111,7 @@ class VirtualModule(metaclass=VirtualModuleMetaclass):
             name=name, loader=VirtualModule.VirtualLoader))
         _virtual_modules[name] = module
         return module
+
 
 sys.meta_path.insert(0, VirtualModule.Finder)
 
@@ -261,7 +274,7 @@ COMPILERS = {
         'targets': ['macos', 'linux'],
 
         'versions': {
-            'default': { }
+            'default': {}
         }
     },
     'clang': {
@@ -391,23 +404,33 @@ COMPILERS = {
 ########################################################################################################################
 
 # Ensure the combination of options specified are valid together
+
+
 def validate_build(build_spec):
 
-    assert build_spec.host in HOSTS, "Host name {} is invalid".format(build_spec.host)
-    assert build_spec.target in TARGETS, "Target {} is invalid".format(build_spec.target)
+    assert build_spec.host in HOSTS, "Host name {} is invalid".format(
+        build_spec.host)
+    assert build_spec.target in TARGETS, "Target {} is invalid".format(
+        build_spec.target)
 
-    assert build_spec.compiler in COMPILERS, "Compiler {} is invalid".format(build_spec.compiler)
+    assert build_spec.compiler in COMPILERS, "Compiler {} is invalid".format(
+        build_spec.compiler)
     compiler = COMPILERS[build_spec.compiler]
 
-    assert build_spec.compiler_version in compiler['versions'], "Compiler version {} is invalid for compiler {}".format(build_spec.compiler_version, build_spec.compiler)
+    assert build_spec.compiler_version in compiler['versions'], "Compiler version {} is invalid for compiler {}".format(
+        build_spec.compiler_version, build_spec.compiler)
 
     supported_hosts = compiler['hosts']
-    assert build_spec.host in supported_hosts, "Compiler {} does not support host {}".format(build_spec.compiler, build_spec.host)
+    assert build_spec.host in supported_hosts, "Compiler {} does not support host {}".format(
+        build_spec.compiler, build_spec.host)
 
     supported_targets = compiler['targets']
-    assert build_spec.target in supported_targets, "Compiler {} does not support target {}".format(build_spec.compiler, build_spec.target)
+    assert build_spec.target in supported_targets, "Compiler {} does not support target {}".format(
+        build_spec.compiler, build_spec.target)
 
 # Moved outside merge_dicts to avoid variable shadowing
+
+
 def _apply_value(obj, key, new_value):
 
     key_type = type(new_value)
@@ -425,6 +448,8 @@ def _apply_value(obj, key, new_value):
         obj[key] = new_value
 
 # Replace all variable strings with their values
+
+
 def _replace_variables(value, variables):
 
     key_type = type(value)
@@ -436,6 +461,7 @@ def _replace_variables(value, variables):
 
         # Custom formatter for optional variables
         from string import Formatter
+
         class VariableFormatter(Formatter):
             def get_value(self, key, args, kwds):
                 if isinstance(key, str):
@@ -460,6 +486,8 @@ def _replace_variables(value, variables):
         return value
 
 # Traverse the configurations to produce one for the specified
+
+
 def produce_config(build_spec, config_file, **additional_variables):
 
     validate_build(build_spec)
@@ -506,7 +534,8 @@ def produce_config(build_spec, config_file, **additional_variables):
 
     if config_file:
         if not os.path.exists(config_file):
-            raise Exception("Config file {} specified, but could not be found".format(config_file))
+            raise Exception(
+                "Config file {} specified, but could not be found".format(config_file))
 
         import json
         with open(config_file, 'r') as config_fp:
@@ -568,6 +597,7 @@ class Builder(VirtualModule):
     """ The interface available to scripts that define projects, builds, actions, or configuration """
     # Must cache available actions or the GC will delete them
     all_actions = set()
+
     def __init__(self):
         Builder.all_actions = set(Builder.Action.__subclasses__())
         self._load_scripts()
@@ -579,20 +609,20 @@ class Builder(VirtualModule):
 
         if not os.path.isdir('.builder'):
             return
-        
+
         scripts = glob.glob('.builder/**/*.py')
         for script in scripts:
             print("Importing {}".format(os.path.abspath(script)), flush=True)
-            
+
             name = os.path.split(script)[1].split('.')[0]
             spec = importlib.util.spec_from_file_location(name, script)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             actions = frozenset(Builder._find_actions())
             new_actions = actions.difference(Builder.all_actions)
-            print("Imported {}".format(', '.join([a.__name__ for a in new_actions])))
+            print("Imported {}".format(
+                ', '.join([a.__name__ for a in new_actions])))
             Builder.all_actions.update(new_actions)
-
 
     @staticmethod
     def _find_actions():
@@ -618,7 +648,8 @@ class Builder(VirtualModule):
             except:
                 print("Unable to find action {} to run".format(action))
                 all_actions = [a.__name__ for a in Builder._find_actions()]
-                print("Available actions: \n\t{}".format('\n\t'.join(all_actions)))
+                print("Available actions: \n\t{}".format(
+                    '\n\t'.join(all_actions)))
                 sys.exit(2)
 
         print("Running: {}".format(action), flush=True)
@@ -671,7 +702,6 @@ class Builder(VirtualModule):
                     self._cwd = os.path.join(self._cwd, directory)
             else:
                 os.chdir(directory)
-
 
         def cd(self, directory):
             """ # Helper to run chdir regardless of dry run status """
@@ -738,7 +768,6 @@ class Builder(VirtualModule):
             for name, value in env.items():
                 os.environ[name] = value
 
-
         def rm(self, path):
             """ Remove a file or directory """
             self._log_command(["rm -rf", path])
@@ -748,7 +777,6 @@ class Builder(VirtualModule):
                 except Exception as e:
                     print("Failed to delete dir {}: {}".format(path, e))
 
-    
         def where(self, exe, path=None):
             """ Platform agnostic `where executable` command """
             if path is None:
@@ -782,21 +810,21 @@ class Builder(VirtualModule):
             else:
                 self._run_command(*command)
 
-
     class Env(object):
         """ Encapsulates the environment in which the build is running """
+
         def __init__(self, config={}):
             self._projects = {}
 
             # DEFAULTS
-            self.dryrun = False # overwritten by config
+            self.dryrun = False  # overwritten by config
             # default the branch to whatever the current dir+git says it is
             self.branch = self._get_git_branch()
-            
+
             # OVERRIDES: copy incoming config, overwriting defaults
             for key, val in config.items():
                 setattr(self, key, val)
-            
+
             # make sure the shell is initialized
             if not hasattr(self, 'shell'):
                 self.shell = Builder.Shell(self.dryrun)
@@ -804,9 +832,10 @@ class Builder(VirtualModule):
             # default the project to whatever can be found
             if not hasattr(self, 'project'):
                 self.project = self._default_project()
-            
+
             # build environment set up
-            self.source_dir = os.environ.get("CODEBUILD_SRC_DIR", self.shell.cwd())
+            self.source_dir = os.environ.get(
+                "CODEBUILD_SRC_DIR", self.shell.cwd())
             self.build_dir = os.path.join(self.source_dir, 'build')
             self.deps_dir = os.path.join(self.build_dir, 'deps')
             self.install_dir = os.path.join(self.build_dir, 'install')
@@ -859,7 +888,7 @@ class Builder(VirtualModule):
                 print("Available projects:", ', '.join(
                     [p.__name__ for p in Builder.Project.__subclasses__()]))
                 sys.exit(1)
-            
+
             project_name = self.args.project
             projects = Builder.Project.__subclasses__()
             for project_cls in projects:
@@ -869,7 +898,6 @@ class Builder(VirtualModule):
                     return self._cache_project(project)
             print("Could not find project named {}".format(project_name))
             sys.exit(1)
-
 
         def _project_from_cwd(self, name_hint=None):
             project_config = None
@@ -882,25 +910,25 @@ class Builder(VirtualModule):
                         return self._cache_project(Builder.Project(**project_config, path=self.shell.cwd()))
                     except Exception as e:
                         print("Failed to parse config file",
-                            project_config_file, e)
+                              project_config_file, e)
                         sys.exit(1)
-        
+
             # load any builder scripts and check them
             Builder._load_scripts()
             projects = Builder.Project.__subclasses__()
             project_cls = None
             if len(projects) == 1:
                 project_cls = projects[0]
-            elif name_hint: # if there are multiple projects, try to use the hint if there is one
+            elif name_hint:  # if there are multiple projects, try to use the hint if there is one
                 for p in projects:
                     if p.__name__ == name_hint:
                         project_cls = p
-            
+
             if project_cls:
                 project = project_cls()
                 project.path = self.shell.cwd()
                 return self._cache_project(project)
-            
+
             return None
 
         def find_project(self, name):
@@ -908,7 +936,7 @@ class Builder(VirtualModule):
             project = self._projects.get(name, None)
             if project:
                 return project
-            
+
             sh = self.shell
             search_dirs = (self.source_dir, os.path.join(self.deps_dir, name))
 
@@ -916,15 +944,15 @@ class Builder(VirtualModule):
                 if (os.path.basename(search_dir) == name) and os.path.isdir(search_dir):
                     sh.pushd(search_dir)
                     project = self._project_from_cwd(name)
-                    if not project: # no config file, but still exists
-                        project = self._cache_project(Builder.Project(name=name, path=search_dir))
+                    if not project:  # no config file, but still exists
+                        project = self._cache_project(
+                            Builder.Project(name=name, path=search_dir))
                     sh.popd()
-                    
+
                     return project
 
             # Enough of a project to get started, note that this is not cached
             return Builder.Project(name=name)
-                
 
         def _find_compiler_tool(self, name, versions):
             for version in versions:
@@ -944,13 +972,13 @@ class Builder(VirtualModule):
             """ Finds clang, clang-tidy, lld, etc at a specific version, or the latest one available """
             versions = [version] if version else list(range(10, 6, -1))
             return self._find_compiler_tool(name, versions)
-    
 
     class Action(object):
         """ A build step """
+
         def run(self, env):
             pass
-        
+
         def __str__(self):
             return self.__class__.__name__
 
@@ -992,16 +1020,19 @@ class Builder(VirtualModule):
                 else:
                     cmds.append("UNKNOWN: {}".format(cmd))
             return '{}: (\n\t{})'.format(self.__class__.__name__, '\n\t'.join(cmds))
-    
 
     class Project(object):
         """ Describes a given library and its dependencies/consumers """
+
         def __init__(self, **kwargs):
-            self.upstream = self.dependencies = [p['name'] for p in kwargs.get('upstream', [])]
-            self.downstream = self.consumers = [p['name'] for p in kwargs.get('downstream', [])]
+            self.upstream = self.dependencies = [
+                p['name'] for p in kwargs.get('upstream', [])]
+            self.downstream = self.consumers = [
+                p['name'] for p in kwargs.get('downstream', [])]
             self.account = kwargs.get('account', 'awslabs')
             self.name = kwargs['name']
-            self.url = "https://github.com/{}/{}.git".format(self.account, self.name)
+            self.url = "https://github.com/{}/{}.git".format(
+                self.account, self.name)
             self.path = kwargs.get('path', None)
 
         def __repr__(self):
@@ -1009,6 +1040,7 @@ class Builder(VirtualModule):
 
     class Toolchain(object):
         """ Represents a compiler toolchain """
+
         def __init__(self, **kwargs):
             if 'default' in kwargs or len(kwargs) == 0:
                 for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
@@ -1025,8 +1057,7 @@ class Builder(VirtualModule):
                     setattr(self, slot, kwargs[slot])
 
             self.name = '-'.join([self.host, self.compiler,
-                                self.compiler_version, self.target, self.arch])
-
+                                  self.compiler_version, self.target, self.arch])
 
         def compiler_path(self, env):
             if self.compiler == 'default':
@@ -1048,9 +1079,9 @@ class Builder(VirtualModule):
         def __repr__(self):
             return self.name
 
-
     class InstallTools(Action):
         """ Installs prerequisites to building """
+
         def run(self, env):
             config = env.config
             sh = env.shell
@@ -1077,9 +1108,9 @@ class Builder(VirtualModule):
                 for package in config['brew_packages']:
                     sh.exec("brew", "install", package)
 
-
     class DownloadDependencies(Action):
         """ Downloads the source for dependencies and consumers if necessary """
+
         def run(self, env):
             project = env.project
             sh = env.shell
@@ -1119,21 +1150,22 @@ class Builder(VirtualModule):
 
                 sh.popd()
 
-
     class CMakeBuild(Action):
         """ Runs cmake configure, build """
+
         def run(self, env):
             try:
                 toolchain = env.toolchain
             except:
                 try:
-                    toolchain = env.toolchain = Builder.Toolchain(spec=env.args.build)
+                    toolchain = env.toolchain = Builder.Toolchain(
+                        spec=env.args.build)
                 except:
                     toolchain = env.toolchain = Builder.Toolchain(default=True)
 
             sh = env.shell
 
-            #TODO These platforms don't succeed when doing a RelWithDebInfo build
+            # TODO These platforms don't succeed when doing a RelWithDebInfo build
             build_config = env.args.config
             if toolchain.host in ("al2012", "manylinux"):
                 build_config = "Debug"
@@ -1221,7 +1253,7 @@ class Builder(VirtualModule):
             for var, value in config.get('build_env', {}).items():
                 sh.setenv(var, value)
             # PRE-BUILD
-            for step in config['pre_build_steps']:
+            for step in config.get('pre_build_steps', []):
                 sh.exec(step)
             # BUILD
             build_project(env.project, getattr(env, 'build_tests', False))
@@ -1231,7 +1263,7 @@ class Builder(VirtualModule):
                 build_projects(env.project.downstream)
 
             # POST_BUILD
-            for step in config['post_build_steps']:
+            for step in config.get('post_build_steps', []):
                 sh.exec(step)
 
             sh.popenv()
@@ -1239,6 +1271,7 @@ class Builder(VirtualModule):
 
     class CTestRun(Action):
         """ Uses ctest to run tests if tests are enabled/built via 'build_tests' """
+
         def run(self, env):
             has_tests = getattr(env, 'build_tests', False)
             if not has_tests:
@@ -1254,7 +1287,6 @@ class Builder(VirtualModule):
             sh.exec("ctest", "--output-on-failure")
 
             sh.popd()
-
 
 
 ########################################################################################################################
@@ -1284,6 +1316,7 @@ def run_build(build_spec, env):
 # CODEBUILD
 ########################################################################################################################
 
+
 CODEBUILD_OVERRIDES = {
     'linux-clang-3-linux-x64': ['linux-clang3-x64'],
     'linux-clang-6-linux-x64': ['linux-clang6-x64'],
@@ -1308,6 +1341,7 @@ CODEBUILD_OVERRIDES = {
     'windows-msvc-2015-windows-x64': ['windows-msvc-2015'],
     'windows-msvc-2017-windows-x64': ['windows-msvc-2017'],
 }
+
 
 def create_codebuild_project(config, project, github_account, inplace_script):
 
@@ -1339,10 +1373,11 @@ def create_codebuild_project(config, project, github_account, inplace_script):
                 '  build:\n' +
                 '    commands:\n' +
                 '      - "{python} --version"\n' +
-                '\n'.join(['      - "{}"'.format(command) for command in run_commands]),
+                '\n'.join(['      - "{}"'.format(command)
+                           for command in run_commands]),
             'auth': {
                 'type': 'OAUTH',
-            },
+                },
             'reportBuildStatus': True,
         },
         'artifacts': {
@@ -1364,28 +1399,39 @@ def create_codebuild_project(config, project, github_account, inplace_script):
 # MAIN
 ########################################################################################################################
 
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--dry-run', action='store_true', help="Don't run the build, just print the commands that would run")
-    parser.add_argument('-p', '--project', action='store', type=str, help="Project to work on")
-    parser.add_argument('--config', type=str, default='RelWithDebInfo', help='The native code configuration to build with')
+    parser.add_argument('-d', '--dry-run', action='store_true',
+                        help="Don't run the build, just print the commands that would run")
+    parser.add_argument('-p', '--project', action='store',
+                        type=str, help="Project to work on")
+    parser.add_argument('--config', type=str, default='RelWithDebInfo',
+                        help='The native code configuration to build with')
     commands = parser.add_subparsers(dest='command')
 
-    build = commands.add_parser('build', help="Run target build, formatted 'host-compiler-compilerversion-target-arch'. Ex: linux-ndk-19-android-arm64v8a")
+    build = commands.add_parser(
+        'build', help="Run target build, formatted 'host-compiler-compilerversion-target-arch'. Ex: linux-ndk-19-android-arm64v8a")
     build.add_argument('build', type=str, default='default')
-    build.add_argument('--skip-install', action='store_true', help="Skip the install phase, useful when testing locally")
+    build.add_argument('--skip-install', action='store_true',
+                       help="Skip the install phase, useful when testing locally")
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
 
     codebuild = commands.add_parser('codebuild', help="Create codebuild jobs")
-    codebuild.add_argument('project', type=str, help='The name of the repo to create the projects for')
-    codebuild.add_argument('--github-account', type=str, dest='github_account', default='awslabs', help='The GitHub account that owns the repo')
-    codebuild.add_argument('--profile', type=str, default='default', help='The profile in ~/.aws/credentials to use when creating the jobs')
-    codebuild.add_argument('--inplace-script', action='store_true', help='Use the python script in codebuild/builder.py instead of downloading it')
-    codebuild.add_argument('--config', type=str, help='The config file to use when generating the projects')
+    codebuild.add_argument(
+        'project', type=str, help='The name of the repo to create the projects for')
+    codebuild.add_argument('--github-account', type=str, dest='github_account',
+                           default='awslabs', help='The GitHub account that owns the repo')
+    codebuild.add_argument('--profile', type=str, default='default',
+                           help='The profile in ~/.aws/credentials to use when creating the jobs')
+    codebuild.add_argument('--inplace-script', action='store_true',
+                           help='Use the python script in codebuild/builder.py instead of downloading it')
+    codebuild.add_argument(
+        '--config', type=str, help='The config file to use when generating the projects')
 
     args = parser.parse_args()
 
@@ -1414,7 +1460,8 @@ if __name__ == '__main__':
 
         # Setup AWS connection
         import boto3
-        session = boto3.Session(profile_name=args.profile, region_name='us-east-1')
+        session = boto3.Session(
+            profile_name=args.profile, region_name='us-east-1')
         codebuild = session.client('codebuild')
 
         # Get project status
@@ -1429,16 +1476,20 @@ if __name__ == '__main__':
         # List of all potential names to search for
         all_potential_builds = list(CODEBUILD_OVERRIDES.keys())
         # Reverse mapping of codebuild name to canonical name
-        full_codebuild_to_canonical = {key.replace('.', ''): key for key in CODEBUILD_OVERRIDES.keys()}
+        full_codebuild_to_canonical = {key.replace(
+            '.', ''): key for key in CODEBUILD_OVERRIDES.keys()}
         for canonical, cb_list in CODEBUILD_OVERRIDES.items():
             all_potential_builds += cb_list
             for cb in cb_list:
                 full_codebuild_to_canonical[cb] = canonical
 
         # Search for the projects
-        full_project_names = ['{}-{}'.format(args.project, build.replace('.', '')) for build in all_potential_builds]
-        old_projects_response = codebuild.batch_get_projects(names=full_project_names)
-        existing_projects += [project['name'][project_prefix_len:] for project in old_projects_response['projects']]
+        full_project_names = [
+            '{}-{}'.format(args.project, build.replace('.', '')) for build in all_potential_builds]
+        old_projects_response = codebuild.batch_get_projects(
+            names=full_project_names)
+        existing_projects += [project['name'][project_prefix_len:]
+                              for project in old_projects_response['projects']]
 
         # Mark the found projects with their found names
         for project in existing_projects:
@@ -1461,7 +1512,8 @@ if __name__ == '__main__':
                 print("Skipping spec {}, as it's disabled".format(build_spec.name))
                 continue
 
-            cb_project = create_codebuild_project(config, args.project, args.github_account, args.inplace_script)
+            cb_project = create_codebuild_project(
+                config, args.project, args.github_account, args.inplace_script)
             cb_project['name'] = build_name.replace('.', '')
 
             if create:
