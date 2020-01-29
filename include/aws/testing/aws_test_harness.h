@@ -287,7 +287,22 @@ static int total_failures;
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
-            fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                          \
+            if (assert_got_s <= 1024) {                                                                                \
+                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
+                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
+                        fprintf(                                                                                       \
+                            AWS_TESTING_REPORT_FD,                                                                     \
+                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
+                            FAIL_PREFIX,                                                                               \
+                            assert_i,                                                                                  \
+                            assert_ex_p[assert_i],                                                                     \
+                            assert_got_p[assert_i]);                                                                   \
+                        break;                                                                                         \
+                    }                                                                                                  \
+                }                                                                                                      \
+            } else {                                                                                                   \
+                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
+            }                                                                                                          \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
                     "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);           \

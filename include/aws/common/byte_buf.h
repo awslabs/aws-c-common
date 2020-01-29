@@ -574,6 +574,17 @@ AWS_COMMON_API bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT
 AWS_COMMON_API bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var);
 
 /**
+ * Reads an unsigned 24-bit value (3 bytes) in network byte order from cur,
+ * and places it in host byte order into 32-bit var.
+ * Ex: if cur's next 3 bytes are {0xAA, 0xBB, 0xCC}, then var becomes 0x00AABBCC.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_be24(struct aws_byte_cursor *cur, uint32_t *var);
+
+/**
  * Reads a 32-bit value in network byte order from cur, and places it in host
  * byte order into var.
  *
@@ -668,54 +679,72 @@ AWS_COMMON_API bool aws_byte_buf_write_from_whole_cursor(
  *
  * On success, returns true and updates the cursor /length
  accordingly.
-
- * If there is insufficient space in the cursor, returns false, leaving the
- cursor unchanged.
+ *
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c);
 
 /**
+ * Writes one byte repeatedly to buffer (like memset)
+ *
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
+ */
+AWS_COMMON_API bool aws_byte_buf_write_u8_n(struct aws_byte_buf *buf, uint8_t c, size_t count);
+
+/**
  * Writes a 16-bit integer in network byte order (big endian) to buffer.
  *
- * On success, returns true and updates the cursor /length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t x);
 
 /**
+ * Writes low 24-bits (3 bytes) of an unsigned integer in network byte order (big endian) to buffer.
+ * Ex: If x is 0x00AABBCC then {0xAA, 0xBB, 0xCC} is written to buffer.
+ *
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, or x's value cannot fit in 3 bytes,
+ * returns false, leaving the buffer unchanged.
+ */
+AWS_COMMON_API bool aws_byte_buf_write_be24(struct aws_byte_buf *buf, uint32_t x);
+
+/**
  * Writes a 32-bit integer in network byte order (big endian) to buffer.
  *
- * On success, returns true and updates the cursor /length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_be32(struct aws_byte_buf *buf, uint32_t x);
 
 /**
  * Writes a 32-bit float in network byte order (big endian) to buffer.
  *
- * On success, returns true and updates the cursor /length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_float_be32(struct aws_byte_buf *buf, float x);
 
 /**
  * Writes a 64-bit integer in network byte order (big endian) to buffer.
  *
- * On success, returns true and updates the cursor /length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x);
 
 /**
  * Writes a 64-bit float in network byte order (big endian) to buffer.
  *
- * On success, returns true and updates the cursor /length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x);
 
