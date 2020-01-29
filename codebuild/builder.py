@@ -982,7 +982,7 @@ class Builder(VirtualModule):
             elif self.compiler == 'clang':
                 return env.find_llvm_tool('clang', self.compiler_version if self.compiler_version != 'default' else None)
             elif self.compiler == 'gcc':
-                return env.find_gcc_tool('gcc', self.compiler_version if self.compiler_version != default else None)
+                return env.find_gcc_tool('gcc', self.compiler_version if self.compiler_version != 'default' else None)
             elif self.compiler == 'msvc':
                 return env.shell.where('cl.exe')
             return None
