@@ -1081,9 +1081,11 @@ class Builder(VirtualModule):
                 # Set compiler flags
                 compiler_flags = []
                 if toolchain.compiler != 'default':
-                    for opt in ['c', 'cxx']:
-                        compiler_flags.append(
-                            '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), toolchain.compiler_path(env)))
+                    compiler_path = toolchain.compiler_path(env)
+                    if compiler_path:
+                        for opt in ['c', 'cxx']:
+                            compiler_flags.append(
+                                '-DCMAKE_{}_COMPILER={}'.format(opt.upper(), compiler_path))
 
                     if config:
                         for opt, variable in {'c': 'CC', 'cxx': 'CXX'}.items():
@@ -1149,10 +1151,9 @@ class Builder(VirtualModule):
 
             project_source_dir = sh.cwd()
             project_build_dir = os.path.join(project_source_dir, 'build')
-            sh.mkdir(project_build_dir)
             sh.pushd(project_build_dir)
 
-            sh.exec("ctest", "--verbose", "--output-on-failure")
+            sh.exec("ctest", "--output-on-failure")
 
             sh.popd()
 
