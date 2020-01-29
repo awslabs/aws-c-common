@@ -288,16 +288,18 @@ static int total_failures;
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
             if (assert_got_s <= 1024) {                                                                                \
-                size_t assert_i;                                                                                       \
-                for (assert_i = 0; assert_ex_p[assert_i] == assert_got_p[assert_i]; ++assert_i) {                      \
+                for (size_t assert_i = 0; assert_i < expected_size; ++assert_i) {                                      \
+                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
+                        fprintf(                                                                                       \
+                            AWS_TESTING_REPORT_FD,                                                                     \
+                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
+                            FAIL_PREFIX,                                                                               \
+                            assert_i,                                                                                  \
+                            assert_ex_p[assert_i],                                                                     \
+                            assert_got_p[assert_i]);                                                                   \
+                        break;                                                                                         \
+                    }                                                                                                  \
                 }                                                                                                      \
-                fprintf(                                                                                               \
-                    AWS_TESTING_REPORT_FD,                                                                             \
-                    "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                                     \
-                    FAIL_PREFIX,                                                                                       \
-                    assert_i,                                                                                          \
-                    assert_ex_p[assert_i],                                                                             \
-                    assert_got_p[assert_i]);                                                                           \
             } else {                                                                                                   \
                 fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
             }                                                                                                          \
