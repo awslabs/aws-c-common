@@ -24,6 +24,7 @@ import tempfile
 
 class BuildSpec(object):
     """ Refers to a specific build permutation, gets converted into a toolchain """
+
     def __init__(self, **kwargs):
         if 'spec' in kwargs:
             # Parse the spec from a single string
@@ -128,6 +129,8 @@ KEYS = {
     'build_env': {},
     'cmake_args': [],
     'run_tests': True,
+    'build': [],
+    'test': [],
 
     # Linux
     'use_apt': False,
@@ -158,7 +161,9 @@ HOSTS = {
             },
         },
 
-        'python': "python3",
+        'variables': {
+            'python': "python3",
+        },
 
         'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
@@ -178,7 +183,9 @@ HOSTS = {
             "-DPERFORM_HEADER_CHECK=OFF",
         ],
 
-        'python': "python3",
+        'variables': {
+            'python': "python3",
+        },
 
         'image': "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-common-runtime/al2012:x64",
         'image_type': "LINUX_CONTAINER",
@@ -194,13 +201,18 @@ HOSTS = {
             },
         },
 
-        'python': "/opt/python/cp37-cp37m/bin/python",
+        'variables': {
+            'python': "/opt/python/cp37-cp37m/bin/python",
+        },
 
         'image_type': "LINUX_CONTAINER",
         'compute_type': "BUILD_GENERAL1_SMALL",
     },
     'windows': {
-        'python': "python.exe",
+        'variables': {
+            'python': "python.exe",
+        },
+
 
         'cmake_args': [
             "-DPERFORM_HEADER_CHECK=ON",
@@ -210,7 +222,9 @@ HOSTS = {
         'compute_type': "BUILD_GENERAL1_MEDIUM",
     },
     'macos': {
-        'python': "python3",
+        'variables': {
+            'python': "python3",
+        },
 
         'use_brew': True,
     }
@@ -491,6 +505,12 @@ def produce_config(build_spec, config_file, **additional_variables):
 
     validate_build(build_spec)
 
+    defaults = {
+        'hosts': HOSTS,
+        'targets': TARGETS,
+        'compilers': COMPILERS,
+    }
+
     # Build the list of config options to poll
     configs = []
 
@@ -525,12 +545,10 @@ def produce_config(build_spec, config_file, **additional_variables):
         compiler = process_element(config, 'compilers', build_spec.compiler)
         process_element(compiler, 'versions', build_spec.compiler_version)
 
-    process_config({
-        'hosts': HOSTS,
-        'targets': TARGETS,
-        'compilers': COMPILERS,
-    })
+    # Process defaults first
+    process_config(defaults)
 
+    # then override with config file
     if config_file:
         if not os.path.exists(config_file):
             raise Exception(
@@ -541,6 +559,8 @@ def produce_config(build_spec, config_file, **additional_variables):
             try:
                 project_config = json.load(config_fp)
                 process_config(project_config)
+                if project_config not in configs:
+                    configs.append(project_config)
             except Exception as e:
                 print("Failed to parse config file", config_file, e)
                 sys.exit(1)
@@ -1254,7 +1274,7 @@ class Builder(VirtualModule):
             sh.pushenv()
             for var, value in config.get('build_env', {}).items():
                 sh.setenv(var, value)
-            
+
             # BUILD
             build_project(env.project, getattr(env, 'build_tests', False))
 
@@ -1296,15 +1316,18 @@ def run_build(build_spec, env):
     if not env.config['enabled']:
         raise Exception("The project is disabled in this configuration")
 
-    from pprint import pprint
-    pprint(config)
+    if getattr(env.args, 'dump_config', False):
+        from pprint import pprint
+        pprint(config)
 
     build_action = Builder.CMakeBuild()
     test_action = Builder.CTestRun()
 
-    prebuild_action = Builder.Script(config.get('pre_build_steps', []), name='pre_build_steps')
-    postbuild_action = Builder.Script(config.get('post_build_steps', []), name='post_build_steps')
-    
+    prebuild_action = Builder.Script(config.get(
+        'pre_build_steps', []), name='pre_build_steps')
+    postbuild_action = Builder.Script(config.get(
+        'post_build_steps', []), name='post_build_steps')
+
     build_steps = config.get('build', None)
     if build_steps:
         build_action = Builder.Script(build_steps, name='build')
@@ -1392,7 +1415,7 @@ def create_codebuild_project(config, project, github_account, inplace_script):
                            for command in run_commands]),
             'auth': {
                 'type': 'OAUTH',
-                },
+            },
             'reportBuildStatus': True,
         },
         'artifacts': {
@@ -1432,6 +1455,8 @@ if __name__ == '__main__':
     build.add_argument('build', type=str, default='default')
     build.add_argument('--skip-install', action='store_true',
                        help="Skip the install phase, useful when testing locally")
+    build.add_argument('--dump-config', action='store_true',
+                       help="Print the config in use before running a build")
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
