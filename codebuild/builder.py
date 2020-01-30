@@ -1270,11 +1270,6 @@ class Builder(VirtualModule):
 
             build_projects(env.project.upstream)
 
-            # Set build environment
-            sh.pushenv()
-            for var, value in config.get('build_env', {}).items():
-                sh.setenv(var, value)
-
             # BUILD
             build_project(env.project, getattr(env, 'build_tests', False))
 
@@ -1282,7 +1277,6 @@ class Builder(VirtualModule):
             if spec and spec.downstream:
                 build_projects(env.project.downstream)
 
-            sh.popenv()
             sh.popd()
 
     class CTestRun(Action):
@@ -1336,6 +1330,11 @@ def run_build(build_spec, env):
     if test_steps:
         test_action = Builder.Script(test_steps, name='test')
 
+    # Set build environment
+    sh.pushenv()
+    for var, value in config.get('build_env', {}).items():
+        sh.setenv(var, value)
+
     Builder.run_action(
         Builder.Script([
             Builder.InstallTools(),
@@ -1348,7 +1347,7 @@ def run_build(build_spec, env):
         env
     )
 
-    return
+    sh.popenv()
 
 ########################################################################################################################
 # CODEBUILD
