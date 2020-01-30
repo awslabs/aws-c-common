@@ -589,6 +589,7 @@ def produce_config(build_spec, config_file, **additional_variables):
         'version': build_spec.compiler_version,
         'target': build_spec.target,
         'arch': build_spec.arch,
+        'cwd': os.getcwd(),
         **additional_variables,
     }
 
@@ -1331,9 +1332,9 @@ def run_build(build_spec, env):
         test_action = Builder.Script(test_steps, name='test')
 
     # Set build environment
-    sh.pushenv()
+    env.shell.pushenv()
     for var, value in config.get('build_env', {}).items():
-        sh.setenv(var, value)
+        env.shell.setenv(var, value)
 
     Builder.run_action(
         Builder.Script([
@@ -1347,7 +1348,7 @@ def run_build(build_spec, env):
         env
     )
 
-    sh.popenv()
+    env.shell.popenv()
 
 ########################################################################################################################
 # CODEBUILD
