@@ -1521,7 +1521,8 @@ if __name__ == '__main__':
 
     # Build the config object
     config_file = os.path.join(env.shell.cwd(), "builder.json")
-    build_spec = getattr(args, 'build', default_spec(env))
+    build_name = getattr(args, 'build', str(default_spec(env)))
+    build_spec = env.build_spec = BuildSpec(spec=build_name)
     config = env.config = produce_config(build_spec, config_file)
     if not env.config['enabled']:
         raise Exception("The project is disabled in this configuration")
@@ -1532,11 +1533,7 @@ if __name__ == '__main__':
 
     # Run a build with a specific spec/toolchain
     if args.command == 'build':
-        # If build name not passed
-        build_name = args.build
-        build_spec = env.build_spec = BuildSpec(spec=build_name)
         print("Running build", build_spec.name, flush=True)
-
         run_build(build_spec, env)
 
     # run a single action, usually local to a project
