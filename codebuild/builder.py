@@ -986,7 +986,7 @@ class Builder(VirtualModule):
                     path = self.shell.where(exe)
                     if path:
                         return path, version
-            return None
+            return None, None
 
         def find_gcc_tool(self, name, version=None):
             """ Finds gcc, gcc-ld, gcc-ranlib, etc at a specific version, or the latest one available """
