@@ -49,6 +49,8 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));
     return v;
+#elif defined(__clang__) && __has_builtin(__builtin_bswap64)
+    return __builtin_bswap64(x);
 #elif defined(_MSC_VER)
     return _byteswap_uint64(x);
 #else
