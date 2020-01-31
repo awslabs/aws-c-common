@@ -14,8 +14,7 @@
 from __future__ import print_function
 from importlib.abc import Loader, MetaPathFinder
 import importlib
-import os
-import sys
+import platform, os, sys
 import glob
 import shutil
 import subprocess
@@ -26,6 +25,10 @@ class BuildSpec(object):
     """ Refers to a specific build permutation, gets converted into a toolchain """
 
     def __init__(self, **kwargs):
+        for slot in ('host', 'target', 'arch', 'compiler', 'compiler_version'):
+            setattr(self, slot, 'default')
+        self.downstream = False
+
         if 'spec' in kwargs:
             # Parse the spec from a single string
             self.host, self.compiler, self.compiler_version, self.target, self.arch, * \
@@ -675,6 +678,8 @@ class Builder(VirtualModule):
         print("Running: {}".format(action), flush=True)
         children = action.run(env)
         if children:
+            if not isinstance(children, list) and not isinstance(children, tuple):
+                children = [children]
             for child in children:
                 Builder.run_action(child, env)
         print("Finished: {}".format(action), flush=True)
@@ -980,7 +985,7 @@ class Builder(VirtualModule):
                     exe = pattern.format(name=name, version=version)
                     path = self.shell.where(exe)
                     if path:
-                        return path
+                        return path, version
             return None
 
         def find_gcc_tool(self, name, version=None):
@@ -1012,6 +1017,18 @@ class Builder(VirtualModule):
         def run(self, env):
             sh = env.shell
 
+            def _expand_vars(cmd):
+                cmd_type = type(cmd)
+                if cmd_type == str:
+                    cmd = _replace_variables(cmd, env.config['variables'])
+                elif cmd_type == list:
+                    cmd = [_replace_variables(sub, env.config['variables']) for sub in cmd]
+                return cmd
+
+            # Interpolate any variables
+            self.commands = [_expand_vars(cmd) for cmd in self.commands]
+
+            # Run each of the commands
             for cmd in self.commands:
                 cmd_type = type(cmd)
                 if cmd_type == str:
@@ -1089,9 +1106,9 @@ class Builder(VirtualModule):
                     return env.shell.where(env_cc)
                 return env.shell.where('cc')
             elif self.compiler == 'clang':
-                return env.find_llvm_tool('clang', self.compiler_version if self.compiler_version != 'default' else None)
+                return env.find_llvm_tool('clang', self.compiler_version if self.compiler_version != 'default' else None)[0]
             elif self.compiler == 'gcc':
-                return env.find_gcc_tool('gcc', self.compiler_version if self.compiler_version != 'default' else None)
+                return env.find_gcc_tool('gcc', self.compiler_version if self.compiler_version != 'default' else None)[0]
             elif self.compiler == 'msvc':
                 return env.shell.where('cl.exe')
             return None
@@ -1305,16 +1322,6 @@ class Builder(VirtualModule):
 ########################################################################################################################
 def run_build(build_spec, env):
 
-    # Build the config object
-    config_file = os.path.join(env.shell.cwd(), "builder.json")
-    config = env.config = produce_config(build_spec, config_file)
-    if not env.config['enabled']:
-        raise Exception("The project is disabled in this configuration")
-
-    if getattr(env.args, 'dump_config', False):
-        from pprint import pprint
-        pprint(config)
-
     build_action = Builder.CMakeBuild()
     test_action = Builder.CTestRun()
 
@@ -1437,6 +1444,35 @@ def create_codebuild_project(config, project, github_account, inplace_script):
 # MAIN
 ########################################################################################################################
 
+def default_spec(env):
+
+    compiler = 'gcc'
+    version = 'default'
+    target = host = 'default'
+
+    arch = ('x64' if sys.maxsize > 2**32 else 'x86')
+    if os.uname()[4][:3].startswith('arm'):
+        arch = ('armv8' if sys.maxsize > 2**32 else 'armv7')
+
+    if sys.platform in ('linux', 'linux2'):
+        target = host = 'linux'
+        clang_path, version = env.find_llvm_tool('clang')
+        gcc_path, version = env.find_gcc_tool('gcc')
+        if clang_path:
+            compiler = 'clang'
+        elif gcc_path:
+            compiler = 'gcc'
+        else:
+            raise Exception('Neither GCC or Clang could be found on this system')
+
+    elif sys.platform in ('win32'):
+        target = host = 'windows'
+        compiler = 'msvc'
+    elif sys.platform in ('darwin'):
+        target = host = 'macos'
+        compiler = 'clang'
+
+    return BuildSpec(host=host, compiler=compiler, compiler_version=str(version), target=target, arch=arch)
 
 if __name__ == '__main__':
     import argparse
@@ -1448,6 +1484,8 @@ if __name__ == '__main__':
                         type=str, help="Project to work on")
     parser.add_argument('--config', type=str, default='RelWithDebInfo',
                         help='The native code configuration to build with')
+    parser.add_argument('--dump-config', action='store_true',
+                        help="Print the config in use before running a build")
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser(
@@ -1455,8 +1493,6 @@ if __name__ == '__main__':
     build.add_argument('build', type=str, default='default')
     build.add_argument('--skip-install', action='store_true',
                        help="Skip the install phase, useful when testing locally")
-    build.add_argument('--dump-config', action='store_true',
-                       help="Print the config in use before running a build")
 
     run = commands.add_parser('run', help='Run action. Ex: do-thing')
     run.add_argument('run', type=str)
@@ -1476,11 +1512,23 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # set up builder and environment
     builder = Builder()
     env = Builder.Env({
         'dryrun': args.dry_run,
         'args': args
     })
+
+    # Build the config object
+    config_file = os.path.join(env.shell.cwd(), "builder.json")
+    build_spec = getattr(args, 'build', default_spec(env))
+    config = env.config = produce_config(build_spec, config_file)
+    if not env.config['enabled']:
+        raise Exception("The project is disabled in this configuration")
+
+    if getattr(args, 'dump_config', False):
+        from pprint import pprint
+        pprint(config)
 
     # Run a build with a specific spec/toolchain
     if args.command == 'build':
