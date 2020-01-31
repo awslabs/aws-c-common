@@ -1451,8 +1451,6 @@ def default_spec(env):
     target = host = 'default'
 
     arch = ('x64' if sys.maxsize > 2**32 else 'x86')
-    if os.uname()[4][:3].startswith('arm'):
-        arch = ('armv8' if sys.maxsize > 2**32 else 'armv7')
 
     if sys.platform in ('linux', 'linux2'):
         target = host = 'linux'
@@ -1464,6 +1462,9 @@ def default_spec(env):
             compiler = 'gcc'
         else:
             print('Neither GCC or Clang could be found on this system, perhaps not installed yet?')
+
+        if os.uname()[4][:3].startswith('arm'):
+            arch = ('armv8' if sys.maxsize > 2**32 else 'armv7')
 
     elif sys.platform in ('win32'):
         target = host = 'windows'
