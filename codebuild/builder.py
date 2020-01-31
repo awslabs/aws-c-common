@@ -1463,7 +1463,7 @@ def default_spec(env):
         elif gcc_path:
             compiler = 'gcc'
         else:
-            raise Exception('Neither GCC or Clang could be found on this system')
+            print('Neither GCC or Clang could be found on this system, perhaps not installed yet?')
 
     elif sys.platform in ('win32'):
         target = host = 'windows'
