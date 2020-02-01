@@ -1487,6 +1487,7 @@ if __name__ == '__main__':
                         help='The native code configuration to build with')
     parser.add_argument('--dump-config', action='store_true',
                         help="Print the config in use before running a build")
+    parser.add_argument('--spec', type=str, dest='build')
     commands = parser.add_subparsers(dest='command')
 
     build = commands.add_parser(
@@ -1522,8 +1523,11 @@ if __name__ == '__main__':
 
     # Build the config object
     config_file = os.path.join(env.shell.cwd(), "builder.json")
-    build_name = getattr(args, 'build', str(default_spec(env)))
-    build_spec = env.build_spec = BuildSpec(spec=build_name)
+    build_name = getattr(args, 'build', None)
+    if build_name:
+        build_spec = env.build_spec = BuildSpec(spec=build_name)
+    else:
+        build_spec = env.build_spec = default_spec(env)
     config = env.config = produce_config(build_spec, config_file)
     if not env.config['enabled']:
         raise Exception("The project is disabled in this configuration")
