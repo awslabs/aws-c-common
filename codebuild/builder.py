@@ -1473,7 +1473,7 @@ def default_spec(env):
         target = host = 'macos'
         compiler = 'clang'
 
-    return BuildSpec(host=host, compiler=compiler, compiler_version=str(version), target=target, arch=arch)
+    return BuildSpec(host=host, compiler=compiler, compiler_version='{}'.format(version), target=target, arch=arch)
 
 if __name__ == '__main__':
     import argparse
