@@ -1454,12 +1454,16 @@ def default_spec(env):
 
     if sys.platform in ('linux', 'linux2'):
         target = host = 'linux'
-        clang_path, version = env.find_llvm_tool('clang')
-        gcc_path, version = env.find_gcc_tool('gcc')
+        clang_path, clang_version = env.find_llvm_tool('clang')
+        gcc_path, gcc_version = env.find_gcc_tool('gcc')
         if clang_path:
+            print('Found clang {} as default compiler'.format(clang_version))
             compiler = 'clang'
+            version = clang_version
         elif gcc_path:
+            print('Found gcc {} as default compiler'.format(gcc_version))
             compiler = 'gcc'
+            version = gcc_version
         else:
             print('Neither GCC or Clang could be found on this system, perhaps not installed yet?')
 
