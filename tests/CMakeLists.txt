@@ -389,6 +389,8 @@ add_test_case(test_pipeline_logger_formatted_test)
 
 add_test_case(get_pid_sanity_check_test)
 
+add_test_case(test_bigint_from_uint64)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
