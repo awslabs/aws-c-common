@@ -87,9 +87,9 @@ static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *outp
         if (hex_digit <= '9' && hex_digit >= '0') {
             hex_value = hex_digit - '0';
         } else if (hex_digit <= 'f' && hex_digit >= 'a') {
-            hex_value = hex_digit - 'a';
+            hex_value = hex_digit - 'a' + 10;
         } else if (hex_digit <= 'F' && hex_digit >= 'A') {
-            hex_value = hex_digit - 'A';
+            hex_value = hex_digit - 'A' + 10;
         } else {
             return AWS_OP_ERR;
         }
@@ -113,7 +113,7 @@ int aws_bigint_init_from_hex(
         return aws_bigint_init(bigint, allocator);
     }
 
-    uint64_t digit_count = hex_digits.len / BASE_BITS;
+    uint64_t digit_count = hex_digits.len / BASE_BITS + 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
         return AWS_OP_ERR;
     }
@@ -147,7 +147,7 @@ on_error:
 }
 
 int aws_bigint_init_from_int64(struct aws_bigint *bigint, struct aws_allocator *allocator, int64_t value) {
-    if (value > 0) {
+    if (value >= 0) {
         return aws_bigint_init_from_uint64(bigint, allocator, (uint64_t)value);
     }
 
@@ -246,7 +246,7 @@ bool aws_bigint_is_negative(struct aws_bigint *bigint) {
 }
 
 bool aws_bigint_is_positive(struct aws_bigint *bigint) {
-    return bigint->sign > 0;
+    return bigint->sign > 0 && !aws_bigint_is_zero(bigint);
 }
 
 bool aws_bigint_is_zero(struct aws_bigint *bigint) {
@@ -265,12 +265,20 @@ bool aws_bigint_is_zero(struct aws_bigint *bigint) {
     return digit == 0;
 }
 
-bool aws_bigint_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+enum aws_bigint_ordering {
+    AWS_BI_LESS_THAN,
+    AWS_BI_EQUAL_TO,
+    AWS_BI_GREATER_THAN,
+};
+
+static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(struct aws_bigint *lhs, struct aws_bigint *rhs) {
     size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
     size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
 
-    if (lhs_digit_count != rhs_digit_count) {
-        return false;
+    if (lhs_digit_count < rhs_digit_count) {
+        return AWS_BI_LESS_THAN;
+    } else if (lhs_digit_count > rhs_digit_count) {
+        return AWS_BI_GREATER_THAN;
     }
 
     for (size_t i = 0; i < lhs_digit_count; ++i) {
@@ -280,12 +288,18 @@ bool aws_bigint_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
         aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
         aws_array_list_get_at(&rhs->digits, &rhs_digit, i);
 
-        if (lhs_digit != rhs_digit) {
-            return false;
+        if (lhs_digit < rhs_digit) {
+            return AWS_BI_LESS_THAN;
+        } else if (lhs_digit > rhs_digit) {
+            return AWS_BI_GREATER_THAN;
         }
     }
 
-    return true;
+    return AWS_BI_EQUAL_TO;
+}
+
+bool aws_bigint_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_EQUAL_TO;
 }
 
 bool aws_bigint_not_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
@@ -293,61 +307,35 @@ bool aws_bigint_not_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
 }
 
 bool aws_bigint_less_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
-    size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
-    size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
-
-    if (lhs_digit_count < rhs_digit_count) {
-        return true;
-    } else if (lhs_digit_count > rhs_digit_count) {
-        return false;
-    }
-
-    for (size_t i = 0; i < lhs_digit_count; ++i) {
-        size_t digit_index = lhs_digit_count - i - 1;
-        uint32_t lhs_digit = 0;
-        uint32_t rhs_digit = 0;
-
-        aws_array_list_get_at(&lhs->digits, &lhs_digit, digit_index);
-        aws_array_list_get_at(&rhs->digits, &rhs_digit, digit_index);
-
-        if (lhs_digit < rhs_digit) {
+    if (lhs->sign < 0) {
+        if (rhs->sign < 0) {
+            return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_GREATER_THAN;
+        } else {
             return true;
-        } else if (lhs_digit > rhs_digit) {
+        }
+    } else {
+        if (rhs->sign < 0) {
             return false;
+        } else {
+            return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN;
         }
     }
-
-    /* they're equal */
-    return false;
 }
 
 bool aws_bigint_greater_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
-    size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
-    size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
-
-    if (lhs_digit_count < rhs_digit_count) {
-        return false;
-    } else if (lhs_digit_count > rhs_digit_count) {
-        return true;
-    }
-
-    for (size_t i = 0; i < lhs_digit_count; ++i) {
-        size_t digit_index = lhs_digit_count - i - 1;
-        uint32_t lhs_digit = 0;
-        uint32_t rhs_digit = 0;
-
-        aws_array_list_get_at(&lhs->digits, &lhs_digit, digit_index);
-        aws_array_list_get_at(&rhs->digits, &rhs_digit, digit_index);
-
-        if (lhs_digit < rhs_digit) {
+    if (lhs->sign < 0) {
+        if (rhs->sign < 0) {
+            return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN;
+        } else {
             return false;
-        } else if (lhs_digit > rhs_digit) {
+        }
+    } else {
+        if (rhs->sign < 0) {
             return true;
+        } else {
+            return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_GREATER_THAN;
         }
     }
-
-    /* they're equal */
-    return false;
 }
 
 bool aws_bigint_less_than_or_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {

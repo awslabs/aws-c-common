@@ -390,6 +390,9 @@ add_test_case(test_pipeline_logger_formatted_test)
 add_test_case(get_pid_sanity_check_test)
 
 add_test_case(test_bigint_from_uint64)
+add_test_case(test_bigint_from_int64)
+add_test_case(test_bigint_from_hex_success)
+add_test_case(test_bigint_from_hex_failure)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
