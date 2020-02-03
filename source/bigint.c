@@ -28,7 +28,7 @@
  * Other proposals:
  *
  * (1) Functionally immutable API (no visible side-affects)
- * (2) params may be temporarily altered during computation before being restored ub irder to prevent pointless copying
+ * (2) params may be temporarily altered during computation before being restored in order to prevent pointless copying
  *   (most often around sign negation and operator switching)
  *
  * Dev ideas:
