@@ -393,6 +393,10 @@ add_test_case(test_bigint_from_uint64)
 add_test_case(test_bigint_from_int64)
 add_test_case(test_bigint_from_hex_success)
 add_test_case(test_bigint_from_hex_failure)
+add_test_case(test_bigint_equality)
+add_test_case(test_bigint_inequality)
+add_test_case(test_bigint_less_than)
+add_test_case(test_bigint_greater_than)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

@@ -299,7 +299,7 @@ static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(struct aws_b
 }
 
 bool aws_bigint_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
-    return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_EQUAL_TO;
+    return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_EQUAL_TO && lhs->sign == rhs->sign;
 }
 
 bool aws_bigint_not_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {

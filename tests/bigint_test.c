@@ -294,3 +294,315 @@ static int s_test_bigint_from_hex_failure(struct aws_allocator *allocator, void 
 }
 
 AWS_TEST_CASE(test_bigint_from_hex_failure, s_test_bigint_from_hex_failure)
+
+struct bigint_comparison_test {
+    const char *value1;
+    bool is_negative1;
+    const char *value2;
+    bool is_negative2;
+};
+
+static struct bigint_comparison_test s_equality_cases[] = {
+    {
+        .value1 = "0",
+        .value2 = "0x00000",
+    },
+    {
+        .value1 = "0FF",
+        .value2 = "0x00FF",
+    },
+    {
+        .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+    },
+    {
+        .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
+        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative2 = true,
+    },
+};
+
+static int s_test_bigint_equality(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_equality_cases); ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_comparison_test *testcase = &s_equality_cases[i];
+
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        ASSERT_TRUE(aws_bigint_equals(&value1, &value2));
+        ASSERT_TRUE(aws_bigint_equals(&value2, &value1));
+        ASSERT_FALSE(aws_bigint_not_equals(&value1, &value2));
+        ASSERT_FALSE(aws_bigint_not_equals(&value2, &value1));
+
+        if (!aws_bigint_is_zero(&value1)) {
+            aws_bigint_negate(&value1);
+
+            ASSERT_FALSE(aws_bigint_equals(&value1, &value2));
+            ASSERT_FALSE(aws_bigint_equals(&value2, &value1));
+
+            aws_bigint_negate(&value2);
+
+            ASSERT_TRUE(aws_bigint_equals(&value1, &value2));
+            ASSERT_TRUE(aws_bigint_equals(&value2, &value1));
+        }
+
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_equality, s_test_bigint_equality)
+
+static struct bigint_comparison_test s_inequality_cases[] = {
+    {
+        .value1 = "0",
+        .value2 = "0x00001",
+    },
+    {
+        .value1 = "1",
+        .value2 = "0x00001",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0FF",
+        .is_negative1 = true,
+        .value2 = "0x00FF",
+    },
+    {
+        .value1 = "0xabcdef987654321",
+        .is_negative1 = true,
+        .value2 = "accdef987654321",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+    },
+    {
+        .value1 = "FFFFFFFFFFFFFFFF",
+        .value2 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    },
+};
+
+static int s_test_bigint_inequality(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_inequality_cases); ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_comparison_test *testcase = &s_inequality_cases[i];
+
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        ASSERT_FALSE(aws_bigint_equals(&value1, &value2));
+        ASSERT_FALSE(aws_bigint_equals(&value2, &value1));
+        ASSERT_TRUE(aws_bigint_not_equals(&value1, &value2));
+        ASSERT_TRUE(aws_bigint_not_equals(&value2, &value1));
+
+        aws_bigint_negate(&value1);
+        aws_bigint_negate(&value2);
+
+        ASSERT_FALSE(aws_bigint_equals(&value1, &value2));
+        ASSERT_FALSE(aws_bigint_equals(&value2, &value1));
+        ASSERT_TRUE(aws_bigint_not_equals(&value1, &value2));
+        ASSERT_TRUE(aws_bigint_not_equals(&value2, &value1));
+
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_inequality, s_test_bigint_inequality)
+
+static struct bigint_comparison_test s_less_than_cases[] = {
+    {
+        .value1 = "0",
+        .value2 = "0x00001",
+    },
+    {
+        .value1 = "1",
+        .value2 = "0x100000000000000000000000000000000001",
+    },
+    {
+        .value1 = "0x00002",
+        .is_negative1 = true,
+        .value2 = "1",
+    },
+    {
+        .value1 = "0FF",
+        .is_negative1 = true,
+        .value2 = "0x00FF",
+    },
+    {
+        .value1 = "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .is_negative1 = true,
+        .value2 = "0x00FF",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0xabcdef987654321",
+        .value2 = "accdef987654321",
+    },
+    {
+        .value1 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .value2 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+    },
+    {
+        .value1 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
+        .value2 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "FFFFFFFFFFFFFFFF",
+        .value2 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    },
+};
+
+static int s_test_bigint_less_than(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_less_than_cases); ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_comparison_test *testcase = &s_less_than_cases[i];
+
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        /* a < b */
+        ASSERT_TRUE(aws_bigint_less_than(&value1, &value2));
+        ASSERT_FALSE(aws_bigint_greater_than_or_equals(&value1, &value2));
+
+        aws_bigint_negate(&value1);
+        aws_bigint_negate(&value2);
+
+        /* !(-a < -b) */
+        ASSERT_FALSE(aws_bigint_less_than(&value1, &value2));
+        ASSERT_TRUE(aws_bigint_greater_than_or_equals(&value1, &value2));
+
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_less_than, s_test_bigint_less_than)
+
+static struct bigint_comparison_test s_greater_than_cases[] = {
+    {
+        .value1 = "0x56",
+        .value2 = "0x00001",
+    },
+    {
+        .value1 = "0x56",
+        .value2 = "0x00001",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0x100000000000000000000000000000000001",
+        .value2 = "1",
+    },
+    {
+        .value1 = "0FF",
+        .is_negative1 = true,
+        .value2 = "0x00FFFF",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0FF",
+        .is_negative1 = true,
+        .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "accdef987654321",
+        .value2 = "0xabcdef987654321",
+    },
+    {
+        .value1 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+    },
+    {
+        .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
+        .value2 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative2 = true,
+
+    },
+    {
+        .value1 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .value2 = "FFFFFFFFFFFFFFFF",
+    },
+};
+
+static int s_test_bigint_greater_than(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_greater_than_cases); ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_comparison_test *testcase = &s_greater_than_cases[i];
+
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        /* a < b */
+        ASSERT_TRUE(aws_bigint_greater_than(&value1, &value2));
+        ASSERT_FALSE(aws_bigint_less_than_or_equals(&value1, &value2));
+
+        aws_bigint_negate(&value1);
+        aws_bigint_negate(&value2);
+
+        /* !(-a < -b) */
+        ASSERT_FALSE(aws_bigint_greater_than(&value1, &value2));
+        ASSERT_TRUE(aws_bigint_less_than_or_equals(&value1, &value2));
+
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_greater_than, s_test_bigint_greater_than)
