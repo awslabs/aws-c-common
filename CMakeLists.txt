@@ -100,6 +100,8 @@ else ()
 
 endif()
 
+list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
+
 file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
