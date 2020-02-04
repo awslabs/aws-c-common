@@ -311,9 +311,9 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
-typedef void(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
+typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
-typedef void(aws_test_after_fn)(struct aws_allocator *allocator, void *ctx);
+typedef int(aws_test_after_fn)(struct aws_allocator *allocator, void *ctx);
 
 struct aws_test_harness {
     aws_test_before_fn *on_before;
@@ -378,23 +378,27 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
     aws_logger_set(&err_logger);
 
+    int ret_val = AWS_OP_SUCCESS;
+
     if (harness->on_before) {
-        harness->on_before(allocator, harness->ctx);
-    }
-
-    int ret_val = harness->run(allocator, harness->ctx);
-
-    if (harness->on_after) {
-        harness->on_after(allocator, harness->ctx);
+        ret_val = harness->on_before(allocator, harness->ctx);
     }
 
     if (!ret_val) {
-        if (!harness->suppress_memcheck) {
-            const size_t leaked_bytes = aws_mem_tracer_count(allocator);
-            if (leaked_bytes) {
-                aws_mem_tracer_dump(allocator);
+        ret_val = harness->run(allocator, harness->ctx);
+
+        if (!ret_val && harness->on_after) {
+            ret_val = harness->on_after(allocator, harness->ctx);
+        }
+
+        if (!ret_val) {
+            if (!harness->suppress_memcheck) {
+                const size_t leaked_bytes = aws_mem_tracer_count(allocator);
+                if (leaked_bytes) {
+                    aws_mem_tracer_dump(allocator);
+                }
+                ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(allocator));
             }
-            ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(allocator));
         }
     }
 
@@ -464,9 +468,9 @@ static inline int enable_vt_mode(void) {
     }
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
-    static void b(struct aws_allocator *allocator, void *ctx);                                                         \
+    static int b(struct aws_allocator *allocator, void *ctx);                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
-    static void af(struct aws_allocator *allocator, void *ctx);                                                        \
+    static int af(struct aws_allocator *allocator, void *ctx);                                                         \
     static struct aws_test_harness name##_test = {                                                                     \
         b,                                                                                                             \
         fn,                                                                                                            \
