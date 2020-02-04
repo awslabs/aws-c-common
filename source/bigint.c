@@ -40,20 +40,18 @@ void aws_bigint_clean_up(struct aws_bigint *bigint) {
     aws_array_list_clean_up(&bigint->digits);
 }
 
-static void s_advance_cursor_to_hex_start(struct aws_byte_cursor *hex_cursor) {
+static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
     if (hex_cursor->len >= 2) {
         const char *raw_ptr = (char *)hex_cursor->ptr;
         if (raw_ptr[0] == '0' && (raw_ptr[1] == 'x' || raw_ptr[1] == 'X')) {
             aws_byte_cursor_advance(hex_cursor, 2);
         }
+    }
+}
 
-        while (hex_cursor->len > 0 && *hex_cursor->ptr == '0') {
-            aws_byte_cursor_advance(hex_cursor, 1);
-        }
-    } else if (hex_cursor->len == 1) {
-        if (*hex_cursor->ptr == '0') {
-            aws_byte_cursor_advance(hex_cursor, 1);
-        }
+static void s_advance_cursor_to_non_zero(struct aws_byte_cursor *hex_cursor) {
+    while (hex_cursor->len > 0 && *hex_cursor->ptr == '0') {
+        aws_byte_cursor_advance(hex_cursor, 1);
     }
 }
 
@@ -88,10 +86,15 @@ int aws_bigint_init_from_hex(
     struct aws_bigint *bigint,
     struct aws_allocator *allocator,
     struct aws_byte_cursor hex_digits) {
-    s_advance_cursor_to_hex_start(&hex_digits);
 
+    s_advance_cursor_past_hex_prefix(&hex_digits);
     if (hex_digits.len == 0) {
         return AWS_OP_ERR;
+    }
+
+    s_advance_cursor_to_non_zero(&hex_digits);
+    if (hex_digits.len == 0) {
+        return aws_bigint_init_from_uint64(bigint, allocator, 0);
     }
 
     uint64_t digit_count = hex_digits.len / BASE_BITS + 1;
@@ -347,6 +350,8 @@ static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
         aws_array_list_get_at(&bigint->digits, &digit, index);
         if (digit == 0) {
             aws_array_list_pop_back(&bigint->digits);
+        } else {
+            return;
         }
 
         --index;

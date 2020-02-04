@@ -668,8 +668,9 @@ static int s_do_addition_test(
         aws_bigint_clean_up(&sum);
         aws_bigint_clean_up(&value2);
         aws_bigint_clean_up(&value1);
-        aws_byte_buf_clean_up(&serialized_sum);
     }
+
+    aws_byte_buf_clean_up(&serialized_sum);
 
     return AWS_OP_SUCCESS;
 }
@@ -684,7 +685,7 @@ static struct bigint_arithmetic_test s_add_zero_test_cases[] = {
         .value1 = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         .is_negative1 = true,
         .value2 = "0",
-        .expected_result = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        .expected_result = "-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     },
     {
         .value1 = "0xabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012",
@@ -701,11 +702,43 @@ static int s_test_bigint_add_zero(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_bigint_add_zero, s_test_bigint_add_zero)
 
+static struct bigint_arithmetic_test s_add_positive_test_cases[] = {
+    {
+        .value1 = "0x01",
+        .value2 = "1",
+        .expected_result = "2",
+    },
+    {
+        .value1 = "0x76543210765432107654321076543210765432107654321076543210",
+        .value2 = "3557799b3557799b3557799b3557799b3557799b3557799b3557799b",
+        .expected_result = "abababababababababababababababababababababababababababab",
+    },
+    {
+        .value1 = "0xffffffff",
+        .value2 = "1",
+        .expected_result = "100000000",
+    },
+    {
+        .value1 = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        .value2 = "1",
+        .expected_result = "1000000000000000000000000000000000000000000000000000000000000",
+    },
+    {
+        .value1 = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        .value2 = "1FFFFFFFF",
+        .expected_result = "10000000000000000000000000000000000000000000000000001fffffffe",
+    },
+    {
+        .value1 = "0x8000000080000000800000008000000080000000",
+        .value2 = "0x8000000080000000800000008000000080000000",
+        .expected_result = "10000000100000001000000010000000100000000",
+    },
+};
+
 static int s_test_bigint_add_positive(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
-    (void)ctx;
 
-    return AWS_OP_SUCCESS;
+    return s_do_addition_test(allocator, s_add_positive_test_cases, AWS_ARRAY_SIZE(s_add_positive_test_cases));
 }
 
 AWS_TEST_CASE(test_bigint_add_positive, s_test_bigint_add_positive)
