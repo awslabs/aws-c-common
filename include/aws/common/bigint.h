@@ -22,7 +22,9 @@
 #include <aws/common/byte_buf.h>
 
 /*
- *
+ * A basic big integer implementation using 2^32 as the base.  Algorithms used are formalizations of the basic
+ * grade school operations everyone knows and loves (as formalized in AoCP Vol 2, 4.3.1).  Current use case
+ * targets do not yet involve a domain large enough that its worth exploring more complex algorithms.
  */
 struct aws_bigint {
     /*
