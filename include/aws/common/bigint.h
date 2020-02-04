@@ -44,12 +44,6 @@ AWS_COMMON_API
 void aws_bigint_clean_up(struct aws_bigint *bigint);
 
 AWS_COMMON_API
-int aws_bigint_init(struct aws_bigint *bigint, struct aws_allocator *allocator);
-
-AWS_COMMON_API
-int aws_bigint_init_reserve(struct aws_bigint *bigint, struct aws_allocator *allocator, uint64_t reserve_bits);
-
-AWS_COMMON_API
 int aws_bigint_init_from_hex(
     struct aws_bigint *bigint,
     struct aws_allocator *allocator,
@@ -93,6 +87,12 @@ bool aws_bigint_greater_than_or_equals(struct aws_bigint *lhs, struct aws_bigint
 
 AWS_COMMON_API
 void aws_bigint_negate(struct aws_bigint *bigint);
+
+AWS_COMMON_API
+int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+
+AWS_COMMON_API
+int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
 
 AWS_EXTERN_C_END
 

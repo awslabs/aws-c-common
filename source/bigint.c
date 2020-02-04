@@ -40,25 +40,6 @@ void aws_bigint_clean_up(struct aws_bigint *bigint) {
     aws_array_list_clean_up(&bigint->digits);
 }
 
-int aws_bigint_init(struct aws_bigint *bigint, struct aws_allocator *allocator) {
-    return aws_bigint_init_reserve(bigint, allocator, 0);
-}
-
-int aws_bigint_init_reserve(struct aws_bigint *bigint, struct aws_allocator *allocator, uint64_t reserve_bits) {
-    uint64_t digit_count = reserve_bits == 0 ? 1 : (reserve_bits - 1) / BASE_BITS + 1;
-
-    if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
-        return AWS_OP_ERR;
-    }
-
-    uint32_t zero = 0;
-    aws_array_list_push_back(&bigint->digits, &zero);
-
-    bigint->sign = 1;
-
-    return AWS_OP_SUCCESS;
-}
-
 static void s_advance_cursor_to_hex_start(struct aws_byte_cursor *hex_cursor) {
     if (hex_cursor->len >= 2) {
         const char *raw_ptr = (char *)hex_cursor->ptr;
@@ -110,7 +91,7 @@ int aws_bigint_init_from_hex(
     s_advance_cursor_to_hex_start(&hex_digits);
 
     if (hex_digits.len == 0) {
-        return aws_bigint_init(bigint, allocator);
+        return AWS_OP_ERR;
     }
 
     uint64_t digit_count = hex_digits.len / BASE_BITS + 1;
@@ -152,10 +133,12 @@ int aws_bigint_init_from_int64(struct aws_bigint *bigint, struct aws_allocator *
     }
 
     if (value == INT64_MIN) {
+        /* We can't just negate and cast, so just submit a constant */
         if (aws_bigint_init_from_uint64(bigint, allocator, INT64_MIN_AS_HEX)) {
             return AWS_OP_ERR;
         }
     } else {
+        /* The value is negative but can be safely negated to a positive value before casting to uint64 */
         if (aws_bigint_init_from_uint64(bigint, allocator, (uint64_t)(-value))) {
             return AWS_OP_ERR;
         }
@@ -349,5 +332,168 @@ bool aws_bigint_greater_than_or_equals(struct aws_bigint *lhs, struct aws_bigint
 void aws_bigint_negate(struct aws_bigint *bigint) {
     if (!aws_bigint_is_zero(bigint)) {
         bigint->sign *= -1;
+    }
+}
+
+static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
+    size_t length = aws_array_list_length(&bigint->digits);
+    if (length == 0) {
+        return;
+    }
+
+    size_t index = length - 1;
+    while (index > 0) {
+        uint32_t digit = 0;
+        aws_array_list_get_at(&bigint->digits, &digit, index);
+        if (digit == 0) {
+            aws_array_list_pop_back(&bigint->digits);
+        }
+
+        --index;
+    }
+}
+
+static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    size_t lhs_length = aws_array_list_length(&lhs->digits);
+    size_t rhs_length = aws_array_list_length(&rhs->digits);
+
+    size_t reserved_digits = lhs_length;
+    if (rhs_length > reserved_digits) {
+        reserved_digits = rhs_length;
+    }
+
+    /*
+     * We actually want to reserve (reserved_digits + 1) but the ensure_capacity api takes an index that needs to
+     * be valid, so there's no need to do a final increment
+     */
+    if (aws_array_list_ensure_capacity(&output->digits, reserved_digits)) {
+        return AWS_OP_ERR;
+    }
+
+    /*
+     * Nothing should fail after this point
+     */
+
+    aws_array_list_clear(&output->digits);
+
+    uint64_t carry = 0;
+    for (size_t i = 0; i < reserved_digits + 1; ++i) {
+        uint32_t lhs_digit = 0;
+        if (i < lhs_length) {
+            aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
+        }
+
+        uint32_t rhs_digit = 0;
+        if (i < rhs_length) {
+            aws_array_list_get_at(&rhs->digits, &rhs_digit, i);
+        }
+
+        uint64_t sum = carry + (uint64_t)lhs_digit + (uint64_t)rhs_digit;
+        uint32_t final_digit = (uint32_t)(sum & LOWER_32_BIT_MASK);
+        carry = (sum > LOWER_32_BIT_MASK) ? 1 : 0;
+
+        aws_array_list_push_back(&output->digits, &final_digit);
+    }
+
+    s_aws_bigint_trim_leading_zeros(output);
+
+    return AWS_OP_SUCCESS;
+}
+
+/*
+ * Subtracts the smaller magnitude from the larger magnitude
+ */
+static int s_aws_bigint_subtract_magnitudes(
+    struct aws_bigint *output,
+    struct aws_bigint *lhs,
+    struct aws_bigint *rhs,
+    enum aws_bigint_ordering ordering) {
+
+    aws_array_list_clear(&output->digits);
+
+    if (ordering == AWS_BI_EQUAL_TO) {
+        uint32_t zero = 0;
+        aws_array_list_push_back(&output->digits, &zero);
+        return AWS_OP_SUCCESS;
+    }
+
+    struct aws_bigint *larger = lhs;
+    struct aws_bigint *smaller = rhs;
+    if (ordering == AWS_BI_LESS_THAN) {
+        larger = rhs;
+        smaller = lhs;
+    }
+
+    size_t larger_length = aws_array_list_length(&larger->digits);
+    size_t smaller_length = aws_array_list_length(&smaller->digits);
+    AWS_FATAL_ASSERT(larger_length > 0);
+
+    if (aws_array_list_ensure_capacity(&output->digits, larger_length - 1)) {
+        return AWS_OP_ERR;
+    }
+
+    uint64_t borrow = 0;
+    for (size_t i = 0; i < larger_length; ++i) {
+        uint32_t larger_digit = 0;
+        if (i < larger_length) {
+            aws_array_list_get_at(&larger->digits, &larger_digit, i);
+        }
+
+        uint32_t smaller_digit = 0;
+        if (i < smaller_length) {
+            aws_array_list_get_at(&smaller->digits, &smaller_digit, i);
+        }
+
+        uint64_t difference = (uint64_t)larger_digit - (uint64_t)smaller_digit - borrow;
+        uint32_t final_digit = (uint32_t)(difference & LOWER_32_BIT_MASK);
+        borrow = (difference > LOWER_32_BIT_MASK) ? 1 : 0;
+
+        aws_array_list_push_back(&output->digits, &final_digit);
+    }
+
+    s_aws_bigint_trim_leading_zeros(output);
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    if (lhs->sign == rhs->sign) {
+        /* positive + positive or negative + negative */
+        output->sign = lhs->sign;
+        return s_aws_bigint_add_magnitudes(output, lhs, rhs);
+    } else {
+        /* mixed signs; the final sign is the sign of the operand with the larger magnitude */
+        enum aws_bigint_ordering ordering = s_aws_bigint_get_magnitude_ordering(lhs, rhs);
+        if (ordering == AWS_BI_GREATER_THAN) {
+            output->sign = lhs->sign;
+        } else if (ordering == AWS_BI_LESS_THAN) {
+            output->sign = rhs->sign;
+        } else {
+            /* a + -a = 0, which by fiat we say has a positive sign */
+            output->sign = 1;
+        }
+
+        return s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering);
+    }
+}
+
+int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    if (lhs->sign != rhs->sign) {
+        /* positive - negative or negative - positive */
+        output->sign = lhs->sign;
+        return s_aws_bigint_add_magnitudes(output, lhs, rhs);
+    } else {
+        /* same sign; the final sign is a function of the lhs's sign and whichever operand is bigger*/
+        enum aws_bigint_ordering ordering = s_aws_bigint_get_magnitude_ordering(lhs, rhs);
+        if (ordering == AWS_BI_GREATER_THAN) {
+            output->sign = lhs->sign;
+        } else if (ordering == AWS_BI_LESS_THAN) {
+            output->sign = -lhs->sign;
+        } else {
+            /* a - a = 0, positive sign by fiat */
+            output->sign = 1;
+        }
+
+        return s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering);
     }
 }

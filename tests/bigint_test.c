@@ -606,3 +606,124 @@ static int s_test_bigint_greater_than(struct aws_allocator *allocator, void *ctx
 }
 
 AWS_TEST_CASE(test_bigint_greater_than, s_test_bigint_greater_than)
+
+struct bigint_arithmetic_test {
+    const char *value1;
+    bool is_negative1;
+    const char *value2;
+    bool is_negative2;
+    const char *expected_result;
+};
+
+static int s_do_addition_test(
+    struct aws_allocator *allocator,
+    struct bigint_arithmetic_test *test_cases,
+    size_t test_case_count) {
+
+    struct aws_byte_buf serialized_sum;
+    aws_byte_buf_init(&serialized_sum, allocator, 0);
+
+    for (size_t i = 0; i < test_case_count; ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_arithmetic_test *testcase = &test_cases[i];
+
+        /* init operands */
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        /* add and test val1 + val2 */
+        struct aws_bigint sum;
+        aws_bigint_init_from_uint64(&sum, allocator, 0);
+
+        aws_bigint_add(&sum, &value1, &value2);
+
+        serialized_sum.len = 0;
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(&sum, &serialized_sum));
+
+        size_t expected_length = strlen(testcase->expected_result);
+        ASSERT_TRUE(serialized_sum.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_result, expected_length, serialized_sum.buffer, serialized_sum.len);
+
+        aws_bigint_clean_up(&sum);
+
+        /* add and test val2 + val1 */
+        aws_bigint_init_from_uint64(&sum, allocator, 0);
+
+        aws_bigint_add(&sum, &value2, &value1);
+
+        serialized_sum.len = 0;
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(&sum, &serialized_sum));
+
+        ASSERT_TRUE(serialized_sum.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_result, expected_length, serialized_sum.buffer, serialized_sum.len);
+
+        aws_bigint_clean_up(&sum);
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+        aws_byte_buf_clean_up(&serialized_sum);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+static struct bigint_arithmetic_test s_add_zero_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .value2 = "0",
+        .expected_result = "0",
+    },
+    {
+        .value1 = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        .is_negative1 = true,
+        .value2 = "0",
+        .expected_result = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    },
+    {
+        .value1 = "0xabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012",
+        .value2 = "0",
+        .expected_result = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012",
+    },
+};
+
+static int s_test_bigint_add_zero(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_addition_test(allocator, s_add_zero_test_cases, AWS_ARRAY_SIZE(s_add_zero_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_add_zero, s_test_bigint_add_zero)
+
+static int s_test_bigint_add_positive(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_add_positive, s_test_bigint_add_positive)
+
+static int s_test_bigint_add_negative(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_add_negative, s_test_bigint_add_negative)
+
+static int s_test_bigint_add_mixed_sign(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_add_mixed_sign, s_test_bigint_add_mixed_sign)
