@@ -294,8 +294,8 @@ static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(
         uint32_t lhs_digit = 0;
         uint32_t rhs_digit = 0;
 
-        aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
-        aws_array_list_get_at(&rhs->digits, &rhs_digit, i);
+        aws_array_list_get_at(&lhs->digits, &lhs_digit, lhs_digit_count - i - 1);
+        aws_array_list_get_at(&rhs->digits, &rhs_digit, rhs_digit_count - i - 1);
 
         if (lhs_digit < rhs_digit) {
             return AWS_BI_LESS_THAN;
@@ -485,6 +485,10 @@ static int s_aws_bigint_subtract_magnitudes(
 }
 
 int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    /*
+     * (1) Figure out what the sign should be
+     * (2) Call either add or subtract (magnitudes) based on sign and magnitude comparison
+     */
     if (lhs->sign == rhs->sign) {
         /* positive + positive or negative + negative */
         output->sign = lhs->sign;
@@ -506,6 +510,10 @@ int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws
 }
 
 int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    /*
+     * (1) Figure out what the sign should be
+     * (2) Call either add or subtract (magnitudes) based on sign and magnitude comparison
+     */
     if (lhs->sign != rhs->sign) {
         /* positive - negative or negative - positive */
         output->sign = lhs->sign;
