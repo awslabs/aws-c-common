@@ -87,11 +87,13 @@ int aws_bigint_init_from_hex(
     struct aws_allocator *allocator,
     struct aws_byte_cursor hex_digits) {
 
+    /* skip past the optional "0x" prefix */
     s_advance_cursor_past_hex_prefix(&hex_digits);
     if (hex_digits.len == 0) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
+    /* skip past leading zeros */
     s_advance_cursor_to_non_zero(&hex_digits);
     if (hex_digits.len == 0) {
         return aws_bigint_init_from_uint64(bigint, allocator, 0);
@@ -111,6 +113,7 @@ int aws_bigint_init_from_hex(
 
         uint32_t digit_value = 0;
         if (s_uint32_from_hex(digit_cursor, &digit_value)) {
+            aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
             goto on_error;
         }
 
@@ -172,6 +175,24 @@ int aws_bigint_init_from_uint64(struct aws_bigint *bigint, struct aws_allocator 
     return AWS_OP_SUCCESS;
 }
 
+int aws_bigint_init_from_copy(struct aws_bigint *bigint, const struct aws_bigint *source) {
+    bigint->sign = source->sign;
+
+    size_t source_length = aws_array_list_length(&source->digits);
+    if (aws_array_list_init_dynamic(&bigint->digits, source->digits.alloc, source_length, sizeof(uint32_t))) {
+        return AWS_OP_ERR;
+    }
+
+    for (size_t i = 0; i < source_length; ++i) {
+        uint32_t digit = 0;
+        aws_array_list_get_at(&source->digits, &digit, i);
+
+        aws_array_list_push_back(&bigint->digits, &digit);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
 static void s_append_uint32_as_hex(struct aws_byte_buf *buffer, uint32_t value, bool prepend_zeros) {
@@ -197,7 +218,7 @@ static void s_append_uint32_as_hex(struct aws_byte_buf *buffer, uint32_t value, 
     buffer->len = write_index;
 }
 
-int aws_bigint_bytebuf_append_as_hex(struct aws_bigint *bigint, struct aws_byte_buf *buffer) {
+int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer) {
     size_t digit_count = aws_array_list_length(&bigint->digits);
     uint64_t max_hex_digits = aws_array_list_length(&bigint->digits) * NIBBLES_PER_DIGIT;
     uint64_t total_characters = max_hex_digits + ((bigint->sign < 0) ? 1 : 0);
@@ -227,15 +248,15 @@ int aws_bigint_bytebuf_append_as_hex(struct aws_bigint *bigint, struct aws_byte_
     return AWS_OP_SUCCESS;
 }
 
-bool aws_bigint_is_negative(struct aws_bigint *bigint) {
+bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
     return bigint->sign < 0;
 }
 
-bool aws_bigint_is_positive(struct aws_bigint *bigint) {
+bool aws_bigint_is_positive(const struct aws_bigint *bigint) {
     return bigint->sign > 0 && !aws_bigint_is_zero(bigint);
 }
 
-bool aws_bigint_is_zero(struct aws_bigint *bigint) {
+bool aws_bigint_is_zero(const struct aws_bigint *bigint) {
     if (bigint->sign < 0) {
         return false;
     }
@@ -257,7 +278,9 @@ enum aws_bigint_ordering {
     AWS_BI_GREATER_THAN,
 };
 
-static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs) {
     size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
     size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
 
@@ -284,15 +307,15 @@ static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(struct aws_b
     return AWS_BI_EQUAL_TO;
 }
 
-bool aws_bigint_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_EQUAL_TO && lhs->sign == rhs->sign;
 }
 
-bool aws_bigint_not_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_not_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     return !aws_bigint_equals(lhs, rhs);
 }
 
-bool aws_bigint_less_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_less_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     if (lhs->sign < 0) {
         if (rhs->sign < 0) {
             return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_GREATER_THAN;
@@ -308,7 +331,7 @@ bool aws_bigint_less_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
     }
 }
 
-bool aws_bigint_greater_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_greater_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     if (lhs->sign < 0) {
         if (rhs->sign < 0) {
             return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN;
@@ -324,11 +347,11 @@ bool aws_bigint_greater_than(struct aws_bigint *lhs, struct aws_bigint *rhs) {
     }
 }
 
-bool aws_bigint_less_than_or_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_less_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     return !aws_bigint_greater_than(lhs, rhs);
 }
 
-bool aws_bigint_greater_than_or_equals(struct aws_bigint *lhs, struct aws_bigint *rhs) {
+bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
     return !aws_bigint_less_than(lhs, rhs);
 }
 
