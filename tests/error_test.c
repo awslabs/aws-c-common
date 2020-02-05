@@ -40,8 +40,9 @@ static int s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     return AWS_OP_SUCCESS;
 }
 
-static int s_teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_teardown_errors_test_fn(struct aws_allocator *allocator, int setup_res, void *ctx) {
     (void)allocator;
+    (void)setup_res;
     (void)ctx;
 
     aws_reset_error();
