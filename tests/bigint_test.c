@@ -73,7 +73,7 @@ static int s_test_bigint_from_uint64(struct aws_allocator *allocator, void *ctx)
         ASSERT_TRUE(aws_bigint_is_positive(&test) == (testcase->value > 0));
         ASSERT_FALSE(aws_bigint_is_negative(&test));
         ASSERT_TRUE(aws_bigint_is_zero(&test) == (testcase->value == 0));
-        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(&test, &buffer));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&test, &buffer));
         ASSERT_TRUE(buffer.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
 
@@ -168,7 +168,7 @@ static int s_test_bigint_from_int64(struct aws_allocator *allocator, void *ctx) 
         ASSERT_TRUE(aws_bigint_is_positive(&test) == (testcase->value > 0));
         ASSERT_TRUE(aws_bigint_is_negative(&test) == (testcase->value < 0));
         ASSERT_TRUE(aws_bigint_is_zero(&test) == (testcase->value == 0));
-        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(&test, &buffer));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&test, &buffer));
         ASSERT_TRUE(buffer.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
 
@@ -250,7 +250,7 @@ static int s_test_bigint_from_hex_success(struct aws_allocator *allocator, void 
         ASSERT_TRUE(aws_bigint_is_positive(&test) == !testcase->zero);
         ASSERT_FALSE(aws_bigint_is_negative(&test));
         ASSERT_TRUE(aws_bigint_is_zero(&test) == testcase->zero);
-        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(&test, &buffer));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&test, &buffer));
         ASSERT_TRUE(buffer.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
 
@@ -297,8 +297,8 @@ AWS_TEST_CASE(test_bigint_from_hex_failure, s_test_bigint_from_hex_failure)
 
 struct bigint_comparison_test {
     const char *value1;
-    bool is_negative1;
     const char *value2;
+    bool is_negative1;
     bool is_negative2;
 };
 
@@ -317,8 +317,8 @@ static struct bigint_comparison_test s_equality_cases[] = {
     },
     {
         .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
         .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
 };
@@ -379,13 +379,13 @@ static struct bigint_comparison_test s_inequality_cases[] = {
     },
     {
         .value1 = "0FF",
-        .is_negative1 = true,
         .value2 = "0x00FF",
+        .is_negative1 = true,
     },
     {
         .value1 = "0xabcdef987654321",
-        .is_negative1 = true,
         .value2 = "accdef987654321",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
     {
@@ -449,18 +449,18 @@ static struct bigint_comparison_test s_less_than_cases[] = {
     },
     {
         .value1 = "0x00002",
-        .is_negative1 = true,
         .value2 = "1",
+        .is_negative1 = true,
     },
     {
         .value1 = "0FF",
-        .is_negative1 = true,
         .value2 = "0x00FF",
+        .is_negative1 = true,
     },
     {
         .value1 = "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        .is_negative1 = true,
         .value2 = "0x00FF",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
     {
@@ -473,8 +473,8 @@ static struct bigint_comparison_test s_less_than_cases[] = {
     },
     {
         .value1 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
         .value2 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
     {
@@ -537,14 +537,14 @@ static struct bigint_comparison_test s_greater_than_cases[] = {
     },
     {
         .value1 = "0FF",
-        .is_negative1 = true,
         .value2 = "0x00FFFF",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
     {
         .value1 = "0FF",
-        .is_negative1 = true,
         .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .is_negative1 = true,
         .is_negative2 = true,
     },
     {
@@ -557,8 +557,8 @@ static struct bigint_comparison_test s_greater_than_cases[] = {
     },
     {
         .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
         .value2 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .is_negative1 = true,
         .is_negative2 = true,
 
     },
