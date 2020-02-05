@@ -27,6 +27,7 @@ include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsSIMD)
+include(CMakePackageConfigHelpers)
 include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -195,9 +196,16 @@ endforeach()
 
 aws_prepare_shared_lib_exports(${PROJECT_NAME})
 
-configure_file("cmake/${PROJECT_NAME}-config.cmake"
+set(AWS_MODULE_INSTALL_DIR "${LIBRARY_DIRECTORY}/cmake")
+
+configure_package_config_file(
+  "cmake/${PROJECT_NAME}-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  @ONLY)
+  INSTALL_DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake"
+  PATH_VARS AWS_MODULE_INSTALL_DIR
+  # Imported targets do not require the following macros
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
 if (BUILD_SHARED_LIBS)
    set (TARGET_DIR "shared")
@@ -226,7 +234,7 @@ list(APPEND EXPORT_MODULES
     )
 
 install(FILES ${EXPORT_MODULES}
-        DESTINATION "${LIBRARY_DIRECTORY}/cmake"
+        DESTINATION "${AWS_MODULE_INSTALL_DIR}"
         COMPONENT Development)
 
 # This should come last, to ensure all variables defined by cmake will be available for export
