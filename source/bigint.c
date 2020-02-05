@@ -37,7 +37,7 @@
  */
 
 void aws_bigint_clean_up(struct aws_bigint *bigint) {
-    aws_array_list_clean_up(&bigint->digits);
+    aws_array_list_clean_up_secure(&bigint->digits);
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
@@ -398,12 +398,11 @@ static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_big
         return AWS_OP_ERR;
     }
 
+    size_t output_length = aws_array_list_length(&output->digits);
+
     /*
      * Nothing should fail after this point
      */
-
-    aws_array_list_clear(&output->digits);
-
     uint64_t carry = 0;
     for (size_t i = 0; i < reserved_digits + 1; ++i) {
         uint32_t lhs_digit = 0;
@@ -420,7 +419,12 @@ static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_big
         uint32_t final_digit = (uint32_t)(sum & LOWER_32_BIT_MASK);
         carry = (sum > LOWER_32_BIT_MASK) ? 1 : 0;
 
-        aws_array_list_push_back(&output->digits, &final_digit);
+        /* this is how we support aliasing */
+        if (i >= output_length) {
+            aws_array_list_push_back(&output->digits, &final_digit);
+        } else {
+            aws_array_list_set_at(&output->digits, &final_digit, i);
+        }
     }
 
     s_aws_bigint_trim_leading_zeros(output);
@@ -437,10 +441,9 @@ static int s_aws_bigint_subtract_magnitudes(
     struct aws_bigint *rhs,
     enum aws_bigint_ordering ordering) {
 
-    aws_array_list_clear(&output->digits);
-
     if (ordering == AWS_BI_EQUAL_TO) {
         uint32_t zero = 0;
+        aws_array_list_clear(&output->digits);
         aws_array_list_push_back(&output->digits, &zero);
         return AWS_OP_SUCCESS;
     }
@@ -459,6 +462,7 @@ static int s_aws_bigint_subtract_magnitudes(
     if (aws_array_list_ensure_capacity(&output->digits, larger_length - 1)) {
         return AWS_OP_ERR;
     }
+    size_t output_length = aws_array_list_length(&output->digits);
 
     uint64_t borrow = 0;
     for (size_t i = 0; i < larger_length; ++i) {
@@ -476,7 +480,12 @@ static int s_aws_bigint_subtract_magnitudes(
         uint32_t final_digit = (uint32_t)(difference & LOWER_32_BIT_MASK);
         borrow = (difference > LOWER_32_BIT_MASK) ? 1 : 0;
 
-        aws_array_list_push_back(&output->digits, &final_digit);
+        /* this is how we support aliasing */
+        if (i >= output_length) {
+            aws_array_list_push_back(&output->digits, &final_digit);
+        } else {
+            aws_array_list_set_at(&output->digits, &final_digit, i);
+        }
     }
 
     s_aws_bigint_trim_leading_zeros(output);

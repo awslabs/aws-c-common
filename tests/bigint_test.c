@@ -677,6 +677,22 @@ static int s_do_addition_test(
         ASSERT_TRUE(serialized_sum.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_result, expected_length, serialized_sum.buffer, serialized_sum.len);
 
+        /* aliasing tests*/
+
+        /* test val1 += val2 */
+        struct aws_bigint value1_copy;
+        aws_bigint_init_from_copy(&value1_copy, &value1);
+
+        aws_bigint_add(&value1_copy, &value1_copy, &value2);
+        ASSERT_TRUE(aws_bigint_equals(&value1_copy, &sum));
+
+        /* test val2 += val1 */
+        struct aws_bigint value2_copy;
+        aws_bigint_init_from_copy(&value2_copy, &value2);
+
+        aws_bigint_add(&value2_copy, &value1, &value2_copy);
+        ASSERT_TRUE(aws_bigint_equals(&value2_copy, &sum));
+
         /* negation tests */
         struct aws_bigint negated_sum;
         ASSERT_SUCCESS(aws_bigint_init_from_copy(&negated_sum, &sum));
@@ -699,6 +715,8 @@ static int s_do_addition_test(
         aws_bigint_add(&sum_of_negations, &value2, &value1);
         ASSERT_TRUE(aws_bigint_equals(&sum_of_negations, &negated_sum));
 
+        aws_bigint_clean_up(&value1_copy);
+        aws_bigint_clean_up(&value2_copy);
         aws_bigint_clean_up(&sum_of_negations);
         aws_bigint_clean_up(&negated_sum);
         aws_bigint_clean_up(&sum);
@@ -938,6 +956,22 @@ static int s_do_subtraction_test(
 
         ASSERT_TRUE(aws_bigint_equals(&result, &negated_diff));
 
+        /* aliasing tests*/
+
+        /* test val1 -= val2 */
+        struct aws_bigint value1_copy;
+        ASSERT_SUCCESS(aws_bigint_init_from_copy(&value1_copy, &value1));
+
+        ASSERT_SUCCESS(aws_bigint_subtract(&value1_copy, &value1_copy, &value2));
+        ASSERT_TRUE(aws_bigint_equals(&value1_copy, &diff));
+
+        /* test val2 = val1 - val2 */
+        struct aws_bigint value2_copy;
+        ASSERT_SUCCESS(aws_bigint_init_from_copy(&value2_copy, &value2));
+
+        ASSERT_SUCCESS(aws_bigint_subtract(&value2_copy, &value1, &value2_copy));
+        ASSERT_TRUE(aws_bigint_equals(&value2_copy, &diff));
+
         /* negation tests */
         aws_bigint_negate(&value1);
         aws_bigint_negate(&value2);
@@ -956,6 +990,8 @@ static int s_do_subtraction_test(
         aws_bigint_subtract(&result, &value2, &value1);
         ASSERT_TRUE(aws_bigint_equals(&result, &diff));
 
+        aws_bigint_clean_up(&value1_copy);
+        aws_bigint_clean_up(&value2_copy);
         aws_bigint_clean_up(&result);
         aws_bigint_clean_up(&negated_diff);
         aws_bigint_clean_up(&diff);
