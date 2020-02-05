@@ -635,6 +635,11 @@ class Builder(VirtualModule):
 
         scripts = glob.glob('.builder/**/*.py')
         for script in scripts:
+            # Ensure that the import path includes the directory the script is in
+            # so that relative imports work
+            script_dir = os.path.dirname(script)
+            if script_dir not in sys.path:
+                sys.path.append(script_dir)
             print("Importing {}".format(os.path.abspath(script)), flush=True)
 
             name = os.path.split(script)[1].split('.')[0]
