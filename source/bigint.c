@@ -38,6 +38,7 @@
 
 void aws_bigint_clean_up(struct aws_bigint *bigint) {
     aws_array_list_clean_up(&bigint->digits);
+    AWS_ZERO_STRUCT(bigint->digits);
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
@@ -99,7 +100,7 @@ int aws_bigint_init_from_hex(
         return aws_bigint_init_from_uint64(bigint, allocator, 0);
     }
 
-    uint64_t digit_count = hex_digits.len / BASE_BITS + 1;
+    size_t digit_count = (hex_digits.len - 1) / NIBBLES_PER_DIGIT + 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
         return AWS_OP_ERR;
     }
