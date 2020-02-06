@@ -381,6 +381,9 @@ static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
     }
 }
 
+/*
+ * Either succeeds or makes no change to the output
+ */
 static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
     size_t lhs_length = aws_array_list_length(&lhs->digits);
     size_t rhs_length = aws_array_list_length(&rhs->digits);
@@ -433,7 +436,8 @@ static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_big
 }
 
 /*
- * Subtracts the smaller magnitude from the larger magnitude
+ * Subtracts the smaller magnitude from the larger magnitude.
+ * Either succeeds or makes no (visible) change to output
  */
 static int s_aws_bigint_subtract_magnitudes(
     struct aws_bigint *output,
@@ -498,24 +502,30 @@ int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws
      * (1) Figure out what the sign should be
      * (2) Call either add or subtract (magnitudes) based on sign and magnitude comparison
      */
+    int output_sign = 1;
     if (lhs->sign == rhs->sign) {
         /* positive + positive or negative + negative */
-        output->sign = lhs->sign;
-        return s_aws_bigint_add_magnitudes(output, lhs, rhs);
+        output_sign = lhs->sign;
+        if (s_aws_bigint_add_magnitudes(output, lhs, rhs)) {
+            return AWS_OP_ERR;
+        }
     } else {
         /* mixed signs; the final sign is the sign of the operand with the larger magnitude */
         enum aws_bigint_ordering ordering = s_aws_bigint_get_magnitude_ordering(lhs, rhs);
         if (ordering == AWS_BI_GREATER_THAN) {
-            output->sign = lhs->sign;
+            output_sign = lhs->sign;
         } else if (ordering == AWS_BI_LESS_THAN) {
-            output->sign = rhs->sign;
-        } else {
-            /* a + -a = 0, which by fiat we say has a positive sign */
-            output->sign = 1;
-        }
+            output_sign = rhs->sign;
+        } /* else a + -a = 0, which by fiat we say has a positive sign, so do nothing */
 
-        return s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering);
+        if (s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering)) {
+            return AWS_OP_ERR;
+        }
     }
+
+    output->sign = output_sign;
+
+    return AWS_OP_SUCCESS;
 }
 
 int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
@@ -523,22 +533,28 @@ int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struc
      * (1) Figure out what the sign should be
      * (2) Call either add or subtract (magnitudes) based on sign and magnitude comparison
      */
+    int output_sign = 1;
     if (lhs->sign != rhs->sign) {
         /* positive - negative or negative - positive */
-        output->sign = lhs->sign;
-        return s_aws_bigint_add_magnitudes(output, lhs, rhs);
+        output_sign = lhs->sign;
+        if (s_aws_bigint_add_magnitudes(output, lhs, rhs)) {
+            return AWS_OP_ERR;
+        }
     } else {
         /* same sign; the final sign is a function of the lhs's sign and whichever operand is bigger*/
         enum aws_bigint_ordering ordering = s_aws_bigint_get_magnitude_ordering(lhs, rhs);
         if (ordering == AWS_BI_GREATER_THAN) {
-            output->sign = lhs->sign;
+            output_sign = lhs->sign;
         } else if (ordering == AWS_BI_LESS_THAN) {
-            output->sign = -lhs->sign;
-        } else {
-            /* a - a = 0, positive sign by fiat */
-            output->sign = 1;
-        }
+            output_sign = -lhs->sign;
+        } /* else a - a = 0, positive sign by fiat, so do nothing */
 
-        return s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering);
+        if (s_aws_bigint_subtract_magnitudes(output, lhs, rhs, ordering)) {
+            return AWS_OP_ERR;
+        }
     }
+
+    output->sign = output_sign;
+
+    return AWS_OP_SUCCESS;
 }
