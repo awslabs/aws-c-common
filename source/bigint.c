@@ -38,6 +38,7 @@
 
 void aws_bigint_clean_up(struct aws_bigint *bigint) {
     aws_array_list_clean_up_secure(&bigint->digits);
+    AWS_ZERO_STRUCT(bigint->digits);
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
@@ -99,7 +100,7 @@ int aws_bigint_init_from_hex(
         return aws_bigint_init_from_uint64(bigint, allocator, 0);
     }
 
-    uint64_t digit_count = hex_digits.len / BASE_BITS + 1;
+    size_t digit_count = (hex_digits.len - 1) / NIBBLES_PER_DIGIT + 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
         return AWS_OP_ERR;
     }
@@ -159,7 +160,7 @@ int aws_bigint_init_from_uint64(struct aws_bigint *bigint, struct aws_allocator 
 
     uint32_t lower_digit = (uint32_t)(value & LOWER_32_BIT_MASK);
     uint32_t upper_digit = (uint32_t)((value >> 32) & LOWER_32_BIT_MASK);
-    uint64_t digit_count = upper_digit > 0 ? 2 : 1;
+    size_t digit_count = upper_digit > 0 ? 2 : 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
         return AWS_OP_ERR;
     }
@@ -220,8 +221,8 @@ static void s_append_uint32_as_hex(struct aws_byte_buf *buffer, uint32_t value, 
 
 int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer) {
     size_t digit_count = aws_array_list_length(&bigint->digits);
-    uint64_t max_hex_digits = aws_array_list_length(&bigint->digits) * NIBBLES_PER_DIGIT;
-    uint64_t total_characters = max_hex_digits + ((bigint->sign < 0) ? 1 : 0);
+    size_t max_hex_digits = aws_array_list_length(&bigint->digits) * NIBBLES_PER_DIGIT;
+    size_t total_characters = max_hex_digits + ((bigint->sign < 0) ? 1 : 0);
     if (aws_byte_buf_reserve_relative(buffer, total_characters)) {
         return AWS_OP_ERR;
     }
