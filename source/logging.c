@@ -312,7 +312,7 @@ int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bu
 
 #define AWS_LOG_SUBJECT_SPACE_MASK (AWS_LOG_SUBJECT_STRIDE - 1)
 
-static const uint32_t S_MAX_LOG_SUBJECT = AWS_LOG_SUBJECT_STRIDE_BITS * AWS_PACKAGE_SLOTS - 1;
+static const uint32_t S_MAX_LOG_SUBJECT = AWS_LOG_SUBJECT_STRIDE * AWS_PACKAGE_SLOTS - 1;
 
 static const struct aws_log_subject_info_list *volatile s_log_subject_slots[AWS_PACKAGE_SLOTS] = {0};
 
