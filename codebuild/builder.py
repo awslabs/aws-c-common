@@ -1160,7 +1160,7 @@ class Builder(VirtualModule):
             project = env.project
             sh = env.shell
             branch = env.branch
-            deps = project.upstream
+            deps = list(project.upstream)
 
             config = getattr(env, 'config', {})
             spec = config.get('spec', None)
