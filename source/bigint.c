@@ -583,7 +583,10 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
      */
 
     /*
-     * Add sufficient zeros to cover all possible digits that could be non zero in the final product
+     * Pad with sufficient zeros to cover all possible digits that could be non zero in the final product
+     * We do this so that when we add the current product digit into the accumulating product, there's already
+     * a value there (0).  We could conditionally retrieve it too, but this keeps us from having to add
+     * if-then checks around both the read and the write.
      */
     for (size_t i = 0; i < digit_count_sum; ++i) {
         uint32_t zero = 0;
@@ -617,9 +620,10 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
             aws_array_list_set_at(&temp_output.digits, &final_cumulative_digit, i + j);
         }
 
-        /* this is guaranteed to be < base, so no truncation */
+        /* this is guaranteed to be < base, so no truncation can be involved */
         uint32_t spillover = (uint32_t)(add_carry + product_carry);
         if (spillover > 0) {
+            /* we can set_at here because we know the existing value must be zero */
             aws_array_list_set_at(&temp_output.digits, &spillover, i + rhs_length);
         }
     }
