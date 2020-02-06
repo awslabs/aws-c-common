@@ -404,6 +404,8 @@ add_test_case(test_bigint_add_mixed_sign)
 add_test_case(test_bigint_subtract_zero)
 add_test_case(test_bigint_subtract_positive_result)
 add_test_case(test_bigint_subtract_negative_result)
+add_test_case(test_bigint_multiply_one_and_zero)
+add_test_case(test_bigint_multiply)
 
 
 generate_test_driver(${PROJECT_NAME}-tests)

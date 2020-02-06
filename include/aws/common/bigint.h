@@ -153,6 +153,13 @@ int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws
 AWS_COMMON_API
 int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
 
+/*
+ * Multiplies two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand.
+ */
+AWS_COMMON_API
+int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BIGINT_H */

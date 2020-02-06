@@ -559,3 +559,82 @@ int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struc
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+    struct aws_bigint temp_output;
+    AWS_ZERO_STRUCT(temp_output);
+
+    struct aws_allocator *allocator = output->digits.alloc;
+
+    size_t lhs_length = aws_array_list_length(&lhs->digits);
+    size_t rhs_length = aws_array_list_length(&rhs->digits);
+    size_t digit_count_sum = lhs_length + rhs_length;
+
+    if (aws_array_list_ensure_capacity(&output->digits, digit_count_sum)) {
+        return AWS_OP_ERR;
+    }
+
+    if (aws_array_list_init_dynamic(&temp_output.digits, allocator, digit_count_sum, sizeof(uint32_t))) {
+        return AWS_OP_ERR;
+    }
+
+    /*
+     * No way to fail beyond this point
+     */
+
+    /*
+     * Add sufficient zeros to cover all possible digits that could be non zero in the final product
+     */
+    for (size_t i = 0; i < digit_count_sum; ++i) {
+        uint32_t zero = 0;
+        aws_array_list_push_back(&temp_output.digits, &zero);
+    }
+
+    for (size_t i = 0; i < lhs_length; ++i) {
+        uint32_t lhs_digit = 0;
+        aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
+
+        /* Multiply "lhs_digit * rhs" and add into temp_output at the appropriate offset */
+        uint64_t product_carry = 0;
+        uint64_t add_carry = 0;
+        for (size_t j = 0; j < rhs_length; ++j) {
+            uint32_t rhs_digit = 0;
+            aws_array_list_get_at(&rhs->digits, &rhs_digit, j);
+
+            /* multiply individual digits and figure out the multiplicative carry */
+            uint64_t digit_product = (uint64_t)lhs_digit * (uint64_t)rhs_digit + product_carry;
+            uint64_t final_product_digit = (digit_product & LOWER_32_BIT_MASK);
+            product_carry = (digit_product >> 32);
+
+            /* add into the existing in-progress output */
+            uint32_t output_digit = 0;
+            aws_array_list_get_at(&temp_output.digits, &output_digit, i + j);
+
+            uint64_t cumulative_digit = final_product_digit + (uint64_t)output_digit + add_carry;
+            uint32_t final_cumulative_digit = cumulative_digit & LOWER_32_BIT_MASK;
+            add_carry = (cumulative_digit > LOWER_32_BIT_MASK) ? 1 : 0;
+
+            aws_array_list_set_at(&temp_output.digits, &final_cumulative_digit, i + j);
+        }
+
+        /* this is guaranteed to be < base, so no truncation */
+        uint32_t spillover = (uint32_t)(add_carry + product_carry);
+        if (spillover > 0) {
+            aws_array_list_set_at(&temp_output.digits, &spillover, i + rhs_length);
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(&temp_output);
+
+    if ((lhs->sign == rhs->sign) || aws_bigint_is_zero(&temp_output)) {
+        output->sign = 1;
+    } else {
+        output->sign = -1;
+    }
+
+    aws_array_list_swap_contents(&temp_output.digits, &output->digits);
+
+    aws_bigint_clean_up(&temp_output);
+
+    return AWS_OP_SUCCESS;
+}

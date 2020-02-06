@@ -1116,3 +1116,223 @@ static int s_test_bigint_subtract_negative_result(struct aws_allocator *allocato
 }
 
 AWS_TEST_CASE(test_bigint_subtract_negative_result, s_test_bigint_subtract_negative_result)
+
+/*
+ * Tests (val1 x val2 ) against expected result
+ * Tests (-val1 x val2), (val1 x -val2), (-val1 x -val2) against +/-(val1 x val2)
+ * Tests (val2 x val1), (-val2 x val1), (val2 x -val1), (-val2 x -val1) against +/-(val1 x val2)
+ * Tests aliased multiplication
+ */
+static int s_do_multiplication_test(
+    struct aws_allocator *allocator,
+    struct bigint_arithmetic_test *test_cases,
+    size_t test_case_count) {
+
+    struct aws_byte_buf serialized_product;
+    aws_byte_buf_init(&serialized_product, allocator, 0);
+
+    for (size_t i = 0; i < test_case_count; ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+
+        struct bigint_arithmetic_test *testcase = &test_cases[i];
+
+        /* init operands */
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        /* test val1 x val2 */
+        struct aws_bigint product;
+        aws_bigint_init_from_uint64(&product, allocator, 0);
+
+        ASSERT_SUCCESS(aws_bigint_multiply(&product, &value1, &value2));
+
+        serialized_product.len = 0;
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&product, &serialized_product));
+
+        size_t expected_length = strlen(testcase->expected_result);
+        ASSERT_TRUE(serialized_product.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(
+            testcase->expected_result, expected_length, serialized_product.buffer, serialized_product.len);
+
+        struct aws_bigint negated_product;
+        ASSERT_SUCCESS(aws_bigint_init_from_copy(&negated_product, &product));
+        aws_bigint_negate(&negated_product);
+
+        /* test val2 x val1 */
+        struct aws_bigint result;
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        ASSERT_SUCCESS(aws_bigint_multiply(&result, &value2, &value1));
+        ASSERT_TRUE(aws_bigint_equals(&result, &product));
+
+        /* aliasing tests*/
+
+        /* test val1 *= val2 */
+        struct aws_bigint value1_copy;
+        ASSERT_SUCCESS(aws_bigint_init_from_copy(&value1_copy, &value1));
+
+        ASSERT_SUCCESS(aws_bigint_multiply(&value1_copy, &value1_copy, &value2));
+        ASSERT_TRUE(aws_bigint_equals(&value1_copy, &product));
+
+        /* test val2 *= val1 */
+        struct aws_bigint value2_copy;
+        ASSERT_SUCCESS(aws_bigint_init_from_copy(&value2_copy, &value2));
+
+        ASSERT_SUCCESS(aws_bigint_multiply(&value2_copy, &value1, &value2_copy));
+        ASSERT_TRUE(aws_bigint_equals(&value2_copy, &product));
+
+        /* negation tests */
+        aws_bigint_negate(&value1);
+
+        /* test -val1 x val2 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value1, &value2);
+        ASSERT_TRUE(aws_bigint_equals(&result, &negated_product));
+
+        /* test val2 x -val1 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value2, &value1);
+        ASSERT_TRUE(aws_bigint_equals(&result, &negated_product));
+
+        aws_bigint_negate(&value2);
+
+        /* test -val1 x -val2 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value1, &value2);
+        ASSERT_TRUE(aws_bigint_equals(&result, &product));
+
+        /* test -val2 x -val1 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value2, &value1);
+        ASSERT_TRUE(aws_bigint_equals(&result, &product));
+
+        aws_bigint_negate(&value1);
+
+        /* test val1 x -val2 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value1, &value2);
+        ASSERT_TRUE(aws_bigint_equals(&result, &negated_product));
+
+        /* test -val2 x val1 */
+        aws_bigint_clean_up(&result);
+        aws_bigint_init_from_uint64(&result, allocator, 0);
+
+        aws_bigint_multiply(&result, &value2, &value1);
+        ASSERT_TRUE(aws_bigint_equals(&result, &negated_product));
+
+        aws_bigint_clean_up(&value1_copy);
+        aws_bigint_clean_up(&value2_copy);
+        aws_bigint_clean_up(&result);
+        aws_bigint_clean_up(&negated_product);
+        aws_bigint_clean_up(&product);
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&value1);
+    }
+
+    aws_byte_buf_clean_up(&serialized_product);
+
+    return AWS_OP_SUCCESS;
+}
+
+static struct bigint_arithmetic_test s_multiply_one_and_zero_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .value2 = "0",
+        .expected_result = "0",
+    },
+    {
+        .value1 = "0x00",
+        .value2 = "15",
+        .expected_result = "0",
+    },
+    {
+        .value1 = "19578923468972567982384578923547abcdeffffffffffffffffffff",
+        .value2 = "0x00",
+        .expected_result = "0",
+    },
+    {
+        .value1 = "0x01",
+        .value2 = "1",
+        .expected_result = "1",
+    },
+    {
+        .value1 = "0x0123457698badceffedbc467825354298badceffedbc4678253542",
+        .value2 = "1",
+        .expected_result = "123457698badceffedbc467825354298badceffedbc4678253542",
+    },
+    {
+        .value1 = "0x5278967893465879032467094302895678ababdf5789345795",
+        .value2 = "1",
+        .expected_result = "5278967893465879032467094302895678ababdf5789345795",
+        .is_negative1 = true,
+        .is_negative2 = true,
+    },
+};
+
+static int s_test_bigint_multiply_one_and_zero(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_multiplication_test(
+        allocator, s_multiply_one_and_zero_test_cases, AWS_ARRAY_SIZE(s_multiply_one_and_zero_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_multiply_one_and_zero, s_test_bigint_multiply_one_and_zero)
+
+static struct bigint_arithmetic_test s_multiply_test_cases[] = {
+    {
+        .value1 = "0x02",
+        .value2 = "2",
+        .expected_result = "4",
+    },
+    {
+        .value1 = "0x02",
+        .value2 = "80000000",
+        .expected_result = "100000000",
+    },
+    {
+        .value1 = "ffffffff",
+        .value2 = "ffffffff",
+        .expected_result = "fffffffe00000001",
+    },
+    {
+        .value1 = "ffffffffffffffff",
+        .value2 = "ffffffffffffffff",
+        .expected_result = "fffffffffffffffe0000000000000001",
+    },
+    {
+        .value1 = "ffffffffffffffffffffffff",
+        .value2 = "ffffffffffffffffffffffff",
+        .expected_result = "fffffffffffffffffffffffe000000000000000000000001",
+    },
+    {
+        .value1 = "789abcdef789abcdef789abcdef789abcdef789abcdef789abcdef",
+        .value2 = "1234565432100000000000000000000000000000056af563",
+        .expected_result =
+            "8938961b08098ec33d7098ec33d7098ec33d7099150a6cde2acd04b1aa16b54ba49c09c7ca49c09c7ca49c09c7ca4997c5e6d",
+    },
+};
+
+static int s_test_bigint_multiply(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_multiplication_test(allocator, s_multiply_test_cases, AWS_ARRAY_SIZE(s_multiply_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_multiply, s_test_bigint_multiply)
