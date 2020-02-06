@@ -598,33 +598,26 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
         aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
 
         /* Multiply "lhs_digit * rhs" and add into temp_output at the appropriate offset */
-        uint64_t product_carry = 0;
-        uint64_t add_carry = 0;
+        uint64_t carry = 0;
         for (size_t j = 0; j < rhs_length; ++j) {
             uint32_t rhs_digit = 0;
             aws_array_list_get_at(&rhs->digits, &rhs_digit, j);
 
-            /* multiply individual digits and figure out the multiplicative carry */
-            uint64_t digit_product = (uint64_t)lhs_digit * (uint64_t)rhs_digit + product_carry;
-            uint64_t final_product_digit = (digit_product & LOWER_32_BIT_MASK);
-            product_carry = (digit_product >> 32);
-
-            /* add into the existing in-progress output */
             uint32_t output_digit = 0;
             aws_array_list_get_at(&temp_output.digits, &output_digit, i + j);
 
-            uint64_t cumulative_digit = final_product_digit + (uint64_t)output_digit + add_carry;
-            uint32_t final_cumulative_digit = cumulative_digit & LOWER_32_BIT_MASK;
-            add_carry = (cumulative_digit > LOWER_32_BIT_MASK) ? 1 : 0;
+            /* multiply-and-add a single digit pair */
+            uint64_t product_digit = (uint64_t)lhs_digit * (uint64_t)rhs_digit + carry + (uint64_t)output_digit;
+            uint32_t final_product_digit = (uint32_t)(product_digit & LOWER_32_BIT_MASK);
+            carry = (product_digit >> 32);
 
-            aws_array_list_set_at(&temp_output.digits, &final_cumulative_digit, i + j);
+            aws_array_list_set_at(&temp_output.digits, &final_product_digit, i + j);
         }
 
-        /* this is guaranteed to be < base, so no truncation can be involved */
-        uint32_t spillover = (uint32_t)(add_carry + product_carry);
-        if (spillover > 0) {
+        if (carry > 0) {
+            uint32_t carry_digit = (uint32_t)carry; /* safe */
             /* we can set_at here because we know the existing value must be zero */
-            aws_array_list_set_at(&temp_output.digits, &spillover, i + rhs_length);
+            aws_array_list_set_at(&temp_output.digits, &carry_digit, i + rhs_length);
         }
     }
 
