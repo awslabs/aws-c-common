@@ -658,7 +658,7 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
         return;
     }
 
-    /* move whole digits remove_count places.  This could be replaced by a memmove but that seems sketchy. */
+    /* move whole digits base_shift_count places.  This could be replaced by a memmove but that seems sketchy. */
     if (base_shift_count > 0) {
         size_t copy_count = digit_count - base_shift_count;
 
@@ -668,7 +668,7 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
             aws_array_list_set_at(&bigint->digits, &source_digit, i);
         }
 
-        /* pop remove_count digits from the end */
+        /* pop base_shift_count digits from the end */
         for (size_t i = 0; i < base_shift_count; i++) {
             aws_array_list_pop_back(&bigint->digits);
         }
