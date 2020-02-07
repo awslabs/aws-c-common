@@ -635,3 +635,138 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
 
     return AWS_OP_SUCCESS;
 }
+
+/* this function can't fail */
+void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+
+    /*
+     * Break the shift into two parts:
+     *  (1) base_shift_count = whole digit shifts (shift_amount / BASE_BITS)
+     *  (2) bit_shift_count = leftover amount (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
+     */
+    size_t base_shift_count = shift_amount / BASE_BITS;
+    size_t bit_shift_count = shift_amount % BASE_BITS;
+
+    /* is it guaranteed to be zero? */
+    if (base_shift_count >= digit_count) {
+        aws_array_list_clear(&bigint->digits);
+
+        uint32_t zero_digit = 0;
+        aws_array_list_push_back(&bigint->digits, &zero_digit);
+        bigint->sign = 1;
+        return;
+    }
+
+    /* move whole digits remove_count places.  This could be replaced by a memmove but that seems sketchy. */
+    if (base_shift_count > 0) {
+        size_t copy_count = digit_count - base_shift_count;
+
+        for (size_t i = 0; i < copy_count; ++i) {
+            uint32_t source_digit = 0;
+            aws_array_list_get_at(&bigint->digits, &source_digit, i + base_shift_count);
+            aws_array_list_set_at(&bigint->digits, &source_digit, i);
+        }
+
+        /* pop remove_count digits from the end */
+        for (size_t i = 0; i < base_shift_count; i++) {
+            aws_array_list_pop_back(&bigint->digits);
+        }
+    }
+
+    /* now do a bit shift for the remaining amount */
+    if (bit_shift_count > 0) {
+
+        /* how many digits are left? */
+        digit_count = digit_count - base_shift_count;
+
+        /* shifts and masks to build the new digits */
+        uint32_t low_mask = (1U << bit_shift_count) - 1;
+        uint32_t high_shift = (BASE_BITS - bit_shift_count);
+
+        /* loop from low to high, shifting down and bringing in the appropriate bits from the next digit */
+        uint32_t current_digit = 0;
+        aws_array_list_get_at(&bigint->digits, &current_digit, 0);
+        for (size_t i = 0; i < digit_count; ++i) {
+            uint32_t next_digit = 0;
+            if (i + 1 < digit_count) {
+                aws_array_list_get_at(&bigint->digits, &next_digit, i + 1);
+            }
+
+            current_digit >>= bit_shift_count;
+            uint32_t new_current_high_bits = (next_digit & low_mask) << high_shift;
+
+            uint32_t final_digit = current_digit | new_current_high_bits;
+            aws_array_list_set_at(&bigint->digits, &final_digit, i);
+
+            current_digit = next_digit;
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(bigint);
+}
+
+int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
+
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+
+    /*
+     * Break the shift into two parts:
+     *  (1) base_shift_count = while digit copies (shift_amount / BASE_BITS)
+     *  (2) bit_shift_count = remainder (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
+     */
+    size_t base_shift_count = shift_amount / BASE_BITS;
+    size_t bit_shift_count = shift_amount % BASE_BITS;
+
+    /* I hate this API, technically we're reserving (digit_count + base_shift_count + 1) */
+    if (aws_array_list_ensure_capacity(&bigint->digits, digit_count + base_shift_count)) {
+        return AWS_OP_ERR;
+    }
+
+    /* can't fail beyond this point */
+
+    /* do the bit_shift_count part first */
+    if (bit_shift_count > 0) {
+        uint32_t high_shift = BASE_BITS - bit_shift_count;
+        uint32_t low_bits = 0;
+        for (size_t i = 0; i < digit_count; ++i) {
+            uint32_t current_digit = 0;
+            aws_array_list_get_at(&bigint->digits, &current_digit, i);
+
+            uint32_t final_digit = (current_digit << bit_shift_count) | low_bits;
+            aws_array_list_set_at(&bigint->digits, &final_digit, i);
+
+            low_bits = current_digit >> high_shift;
+        }
+
+        if (low_bits > 0) {
+            aws_array_list_push_back(&bigint->digits, &low_bits);
+        }
+    }
+
+    /* do the multiple of 32 bit shift part by copying */
+    if (base_shift_count > 0) {
+        /* first push enough placeholder zeroes on to the end */
+        for (size_t i = 0; i < base_shift_count; ++i) {
+            uint32_t zero_digit = 0;
+            aws_array_list_push_back(&bigint->digits, &zero_digit);
+        }
+
+        digit_count = aws_array_list_length(&bigint->digits);
+
+        /* high to low, copy whole digits base_shift_count places apart, writing zeros appropriately */
+        for (size_t i = 0; i < digit_count; ++i) {
+            size_t dest_index = digit_count - i - 1;
+            uint32_t source_digit = 0;
+            if (dest_index >= base_shift_count) {
+                aws_array_list_get_at(&bigint->digits, &source_digit, dest_index - base_shift_count);
+            }
+
+            aws_array_list_set_at(&bigint->digits, &source_digit, dest_index);
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(bigint);
+
+    return AWS_OP_SUCCESS;
+}
