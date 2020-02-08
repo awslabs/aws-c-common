@@ -172,6 +172,17 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount);
 AWS_COMMON_API
 int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount);
 
+/*
+ * Divides two *non-negative* big integers, computing both the quotient and the remainder.  Quotient and remainder
+ * must already be initialized.  Quotient and remainder may alias to operands but not to each other.
+ */
+AWS_COMMON_API
+int aws_bigint_divide(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BIGINT_H */

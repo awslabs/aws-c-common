@@ -83,6 +83,19 @@ static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *outp
     return AWS_OP_SUCCESS;
 }
 
+static int s_aws_bigint_init_zero(struct aws_bigint *bigint, struct aws_allocator *allocator, size_t reserved_digits) {
+    if (aws_array_list_init_dynamic(
+            &bigint->digits, allocator, reserved_digits > 0 ? reserved_digits : 1, sizeof(uint32_t))) {
+        return AWS_OP_ERR;
+    }
+
+    uint32_t zero_digit = 0;
+    aws_array_list_push_back(&bigint->digits, &zero_digit);
+    bigint->sign = 1;
+
+    return AWS_OP_SUCCESS;
+}
+
 int aws_bigint_init_from_hex(
     struct aws_bigint *bigint,
     struct aws_allocator *allocator,
@@ -769,4 +782,271 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
     s_aws_bigint_trim_leading_zeros(bigint);
 
     return AWS_OP_SUCCESS;
+}
+
+static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *bigint) {
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+    AWS_FATAL_ASSERT(digit_count > 0);
+
+    uint32_t high_digit = 0;
+    aws_array_list_get_at(&bigint->digits, &high_digit, digit_count - 1);
+    AWS_FATAL_ASSERT(high_digit > 0);
+
+    uint32_t shift_count = 0;
+    while ((high_digit & 0x80000000) == 0) {
+        high_digit <<= 1;
+        ++shift_count;
+    }
+
+    return shift_count;
+}
+
+static int s_aws_bigint_normalized_divide(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs) {
+    (void)quotient;
+    (void)remainder;
+    (void)lhs;
+    (void)rhs;
+
+    struct aws_bigint scratch;
+    AWS_ZERO_STRUCT(scratch);
+    if (aws_bigint_init_from_copy(&scratch, lhs)) {
+        return AWS_OP_ERR;
+    }
+
+    size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
+    size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
+    AWS_FATAL_ASSERT(lhs_digit_count > rhs_digit_count); /* padding by zero */
+    AWS_FATAL_ASSERT(rhs_digit_count >= 2);
+
+    uint32_t divisor_high_digit = 0;
+    aws_array_list_get_at(&rhs->digits, &divisor_high_digit, rhs_digit_count - 1);
+
+    uint32_t divisor_almost_high_digit = 0;
+    aws_array_list_get_at(&rhs->digits, &divisor_almost_high_digit, rhs_digit_count - 2);
+
+    /*
+    uint64_t base = 1ULL << BASE_BITS;
+    size_t quotient_digits = lhs_digit_count - rhs_digit_count + 1;
+
+    for (size_t i = 0; i < quotient_digits; ++i) {
+        size_t scratch_index = ??;
+        uint32_t dividend_high_digit = 0;
+        uint32_t dividend_almost_high_digit = 0;
+        aws_array_list_get_at(&scratch.digits, &dividend_high_digit, ??);
+        aws_array_list_get_at(&scratch.digits, &dividend_almost_high_digit, ?? - 1);
+
+        uint64_t q_guess = ((uint64_t) dividend_high_digit << BASE_BITS) +  (uint64_t)dividend_almost_high_digit;
+        q_guess /= (uint64_t)divisor_high_digit;
+
+        uint64_t r_guess = q_guess % (uint64_t)divisor_high_digit;
+
+        while(q_guess >= base || q_guess * divisor_almost_high_digit > base * r_guess) {
+            --q_guess;
+            r_guess += ??;
+            if (r_guess >= base) {
+                break;
+            }
+        }
+
+        ??;
+    }
+ */
+
+    aws_bigint_clean_up(&scratch);
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_aws_bigint_divide_by_single_digit(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *dividend,
+    uint32_t divisor) {
+
+    struct aws_bigint temp_quotient;
+    size_t quotient_length = aws_array_list_length(&dividend->digits);
+
+    if (s_aws_bigint_init_zero(&temp_quotient, quotient->digits.alloc, quotient_length)) {
+        return AWS_OP_ERR;
+    }
+
+    uint32_t zero_digit = 0;
+    for (size_t i = 0; i < quotient_length; ++i) {
+        aws_array_list_push_back(&temp_quotient.digits, &zero_digit);
+    }
+
+    uint64_t wide_divisor = divisor;
+    uint64_t current_remainder = 0;
+    for (size_t i = 0; i < quotient_length; ++i) {
+        uint32_t current_divisor_digit = 0;
+        aws_array_list_get_at(&dividend->digits, &current_divisor_digit, quotient_length - 1 - i);
+
+        uint64_t two_digit_dividend = (current_remainder << BASE_BITS) + current_divisor_digit;
+
+        uint32_t quotient_digit = (uint32_t)(two_digit_dividend / wide_divisor);
+        aws_array_list_set_at(&temp_quotient.digits, &quotient_digit, quotient_length - 1 - i);
+
+        current_remainder = two_digit_dividend % wide_divisor;
+    }
+
+    s_aws_bigint_trim_leading_zeros(&temp_quotient);
+
+    aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
+    quotient->sign = 1;
+
+    aws_array_list_clear(&remainder->digits);
+    aws_array_list_push_back(&remainder->digits, &zero_digit);
+    remainder->sign = 1;
+
+    aws_bigint_clean_up(&temp_quotient);
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_bigint_divide(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs) {
+    /* Step 1 - handle bad operands */
+    if (aws_bigint_is_zero(rhs)) {
+        return aws_raise_error(AWS_ERROR_DIVIDE_BY_ZERO);
+    }
+
+    /*
+     * May relax this restriction in the future, but right now this simplifies things.
+     * I believe we could do it by computing (q, r) for the abs values, and then setting
+     * q = -q - 1
+     * r = -r mod rhs
+     *
+     * but I need time to verify.
+     */
+    if (aws_bigint_is_negative(lhs) || aws_bigint_is_negative(rhs)) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    /*
+     * Step 2 - handle special cases:
+     *   (1) Single digit divisor
+     *   (2) Zero-valued quotient
+     */
+
+    /* single digit divisor */
+    if (aws_array_list_length(&rhs->digits) == 1) {
+        uint32_t digit = 0;
+        aws_array_list_get_at(&rhs->digits, &digit, 0);
+        return s_aws_bigint_divide_by_single_digit(quotient, remainder, lhs, digit);
+    }
+
+    int result = AWS_OP_ERR;
+
+    struct aws_bigint temp_quotient;
+    AWS_ZERO_STRUCT(temp_quotient);
+    struct aws_bigint temp_remainder;
+    AWS_ZERO_STRUCT(temp_remainder);
+    struct aws_bigint normalized_lhs;
+    AWS_ZERO_STRUCT(normalized_lhs);
+    struct aws_bigint normalized_rhs;
+    AWS_ZERO_STRUCT(normalized_rhs);
+
+    if (aws_bigint_init_from_copy(&normalized_lhs, lhs)) {
+        goto done;
+    }
+
+    /* handle zero-valued quotient */
+    if (s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN) {
+        /* can't fail from here on out, perform side effects */
+        aws_array_list_swap_contents(&normalized_lhs.digits, &remainder->digits);
+        remainder->sign = 1;
+
+        aws_array_list_clear(&quotient->digits);
+
+        uint32_t zero_digit = 0;
+        aws_array_list_push_back(&quotient->digits, &zero_digit);
+        quotient->sign = 1;
+
+        result = AWS_OP_SUCCESS;
+        goto done;
+    }
+
+    if (aws_bigint_init_from_copy(&normalized_rhs, rhs)) {
+        goto done;
+    }
+
+    /* Step 3 - normalize lhs, rhs */
+    /*
+     * We normalize via bit shifting rather than arbitrary multiplication.  Normalization is the process where we
+     * multiply both sides by a constant factor (here a power of 2) such that the divisor has its high bit set.  This
+     * is equivalent to the requirement in AoCP 4.3.1 that the divisor's high digit is at least half the numeric base.
+     *
+     * Normalization enables our single digit quotient estimate to always be either exactly correct or 1 or 2 too large
+     * regardless of the base used.
+     */
+    uint32_t normalization_shift = s_compute_divisor_normalization_shift(rhs);
+
+    /*
+     * normalize the divisor and add an empty zero digit as the high digit.
+     * TODO: this could be conditional on something
+     *
+     * We add an empty zero high order digit because the algorithm works by estimating q based on the two highest
+     * digits in the dividend.  But even after normalization, the two highest digits divided by the highest
+     * digit in the divisor can still be wayyyy bigger than b.
+     *
+     * Consider 99 / 5 which is already normalized.  Clearly the first quotient digit should be based on 9/5 and not
+     * 99/5.  At the same time, 22 / 5 is already normalized, and clearly the first quotient digit should be based on
+     * 22/5 and not 2/5.  At the same time, basing it on 2/5 doesn't hurt since it only ends up adding a leading zero
+     * which will be trimmed in the end.
+     */
+    size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
+    if (aws_bigint_shift_left(&normalized_lhs, normalization_shift)) {
+        goto done;
+    }
+
+    uint32_t zero_digit = 0;
+    aws_array_list_push_back(&normalized_lhs.digits, &zero_digit);
+
+    if (aws_bigint_shift_left(&normalized_rhs, normalization_shift)) {
+        goto done;
+    }
+
+    size_t normalized_lhs_digit_count = lhs_digit_count + 1;
+    size_t normalized_rhs_digit_count = aws_array_list_length(&normalized_lhs.digits);
+    AWS_FATAL_ASSERT(normalized_lhs_digit_count >= normalized_rhs_digit_count);
+
+    size_t quotient_digit_count = normalized_lhs_digit_count - normalized_rhs_digit_count + 1;
+
+    if (s_aws_bigint_init_zero(&temp_quotient, lhs->digits.alloc, quotient_digit_count) ||
+        s_aws_bigint_init_zero(&temp_remainder, lhs->digits.alloc, normalized_rhs_digit_count)) {
+        goto done;
+    }
+
+    /* Step 4 - divide */
+    if (s_aws_bigint_normalized_divide(&temp_quotient, &temp_remainder, &normalized_lhs, &normalized_rhs)) {
+        goto done;
+    }
+
+    /* Step 5 - quotient is correct, unnormalize remainder */
+    aws_bigint_shift_right(&temp_remainder, normalization_shift);
+
+    /* Step 6 - write to outputs */
+    aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
+    quotient->sign = 1;
+
+    aws_array_list_swap_contents(&temp_remainder.digits, &remainder->digits);
+    remainder->sign = 1;
+
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    aws_bigint_clean_up(&normalized_lhs);
+    aws_bigint_clean_up(&normalized_rhs);
+    aws_bigint_clean_up(&temp_quotient);
+    aws_bigint_clean_up(&temp_remainder);
+
+    return result;
 }
