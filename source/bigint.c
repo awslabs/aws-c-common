@@ -801,21 +801,27 @@ static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *b
     return shift_count;
 }
 
+/*
+ * Assumptions:
+ *   (1) lhs >= rhs
+ *   (2) lhs, rhs both positive
+ *   (3) rhs is at least two digits in length
+ *   (4) lhs, rhs have been normalized so that rhs's high order digit has the high bit set
+ *   (5) lhs is at least one digit longer than rhs
+ *
+ * Additional points:
+ *   (1) lhs may have a leading zero digit
+ *
+ * Side effects:
+ *   (1) lhs is destructively modified
+ */
 static int s_aws_bigint_normalized_divide(
     struct aws_bigint *quotient,
     struct aws_bigint *remainder,
-    const struct aws_bigint *lhs,
+    struct aws_bigint *lhs,
     const struct aws_bigint *rhs) {
     (void)quotient;
     (void)remainder;
-    (void)lhs;
-    (void)rhs;
-
-    struct aws_bigint scratch;
-    AWS_ZERO_STRUCT(scratch);
-    if (aws_bigint_init_from_copy(&scratch, lhs)) {
-        return AWS_OP_ERR;
-    }
 
     size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
     size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
@@ -828,35 +834,96 @@ static int s_aws_bigint_normalized_divide(
     uint32_t divisor_almost_high_digit = 0;
     aws_array_list_get_at(&rhs->digits, &divisor_almost_high_digit, rhs_digit_count - 2);
 
-    /*
     uint64_t base = 1ULL << BASE_BITS;
     size_t quotient_digits = lhs_digit_count - rhs_digit_count + 1;
 
     for (size_t i = 0; i < quotient_digits; ++i) {
-        size_t scratch_index = ??;
-        uint32_t dividend_high_digit = 0;
-        uint32_t dividend_almost_high_digit = 0;
-        aws_array_list_get_at(&scratch.digits, &dividend_high_digit, ??);
-        aws_array_list_get_at(&scratch.digits, &dividend_almost_high_digit, ?? - 1);
+        uint32_t zero_digit = 0;
+        aws_array_list_push_back(&quotient->digits, &zero_digit);
+    }
 
-        uint64_t q_guess = ((uint64_t) dividend_high_digit << BASE_BITS) +  (uint64_t)dividend_almost_high_digit;
+    for (size_t i = 0; i < quotient_digits; ++i) {
+        size_t lhs_index = lhs_digit_count - i - 1;
+
+        AWS_FATAL_ASSERT(lhs_index >= 2);
+
+        uint32_t highest_digit = 0;
+        uint32_t second_highest_digit = 0;
+        uint32_t third_highest_digit = 0;
+        aws_array_list_get_at(&lhs->digits, &highest_digit, lhs_index);
+        aws_array_list_get_at(&lhs->digits, &second_highest_digit, lhs_index - 1);
+        aws_array_list_get_at(&lhs->digits, &third_highest_digit, lhs_index - 2);
+
+        /* D3 - Calculate q_hat */
+        uint64_t q_guess = ((uint64_t)highest_digit << BASE_BITS) + (uint64_t)second_highest_digit;
         q_guess /= (uint64_t)divisor_high_digit;
 
         uint64_t r_guess = q_guess % (uint64_t)divisor_high_digit;
 
-        while(q_guess >= base || q_guess * divisor_almost_high_digit > base * r_guess) {
+        while (q_guess >= base || q_guess * divisor_almost_high_digit > base * r_guess + third_highest_digit) {
             --q_guess;
-            r_guess += ??;
+            r_guess += divisor_high_digit;
             if (r_guess >= base) {
                 break;
             }
         }
 
-        ??;
-    }
- */
+        /* D4 - Multiply and subtract */
+        uint64_t borrow = 0;
+        for (size_t j = 0; j < rhs_digit_count + 1; ++j) {
+            uint32_t divisor_digit = 0;
+            if (j < rhs_digit_count) {
+                aws_array_list_get_at(&rhs->digits, &divisor_digit, j);
+            }
 
-    aws_bigint_clean_up(&scratch);
+            uint32_t current_digit = 0;
+            aws_array_list_get_at(&lhs->digits, &current_digit, lhs_index - rhs_digit_count + j);
+
+            uint64_t product_digit = q_guess * divisor_digit;
+
+            uint64_t difference = (uint64_t)current_digit - product_digit - borrow;
+
+            current_digit = (uint32_t)(difference & LOWER_32_BIT_MASK);
+            borrow = (base - (difference >> BASE_BITS)) & LOWER_32_BIT_MASK;
+
+            aws_array_list_set_at(&lhs->digits, &current_digit, lhs_index - rhs_digit_count + j);
+        }
+
+        /* D5,6 - If remainder negative perform add back step */
+        if (borrow > 0) {
+            --q_guess;
+            uint64_t carry = 0;
+            for (size_t j = 0; j < rhs_digit_count + 1; ++j) {
+                uint32_t divisor_digit = 0;
+                if (j < rhs_digit_count) {
+                    aws_array_list_get_at(&rhs->digits, &divisor_digit, j);
+                }
+
+                uint32_t current_digit = 0;
+                aws_array_list_get_at(&lhs->digits, &current_digit, lhs_index - rhs_digit_count + j);
+
+                uint64_t digit_sum = divisor_digit + current_digit + carry;
+                carry = digit_sum >> BASE_BITS;
+                current_digit = (uint32_t)(digit_sum & LOWER_32_BIT_MASK);
+
+                aws_array_list_set_at(&lhs->digits, &current_digit, lhs_index - rhs_digit_count + j);
+            }
+
+            AWS_FATAL_ASSERT(carry > 0);
+        }
+
+        uint32_t final_q = (uint32_t)q_guess;
+        aws_array_list_set_at(&quotient->digits, &final_q, quotient_digits - i - 1);
+    }
+
+    /* copy the remainder which is currently in lhs */
+    aws_array_list_clear(&remainder->digits);
+    for (size_t i = 0; i < rhs_digit_count; ++i) {
+        uint32_t remainder_digit = 0;
+        aws_array_list_get_at(&lhs->digits, &remainder_digit, i);
+
+        aws_array_list_push_back(&remainder->digits, &remainder_digit);
+    }
 
     return AWS_OP_SUCCESS;
 }
