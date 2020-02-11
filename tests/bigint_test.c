@@ -1637,3 +1637,230 @@ static int s_test_bigint_left_shift(struct aws_allocator *allocator, void *ctx) 
 }
 
 AWS_TEST_CASE(test_bigint_left_shift, s_test_bigint_left_shift)
+
+struct aws_bigint_divide_test {
+    const char *value1;
+    const char *value2;
+    const char *expected_quotient;
+    const char *expected_remainder;
+    int expected_error;
+    bool is_negative1;
+    bool is_negative2;
+};
+
+static int s_do_divide_test(
+    struct aws_allocator *allocator,
+    struct aws_bigint_divide_test *test_cases,
+    size_t test_case_count) {
+
+    struct aws_byte_buf serialized_quotient;
+    aws_byte_buf_init(&serialized_quotient, allocator, 0);
+
+    struct aws_byte_buf serialized_remainder;
+    aws_byte_buf_init(&serialized_remainder, allocator, 0);
+
+    for (size_t i = 0; i < test_case_count; ++i) {
+        struct aws_bigint value1;
+        struct aws_bigint value2;
+        struct aws_bigint_divide_test *testcase = &test_cases[i];
+
+        /* init operands */
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        if (testcase->is_negative1) {
+            aws_bigint_negate(&value1);
+        }
+
+        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value2, allocator, aws_byte_cursor_from_c_str(testcase->value2)));
+        if (testcase->is_negative2) {
+            aws_bigint_negate(&value2);
+        }
+
+        struct aws_bigint quotient;
+        aws_bigint_init_from_uint64(&quotient, allocator, 0);
+
+        struct aws_bigint remainder;
+        aws_bigint_init_from_uint64(&remainder, allocator, 0);
+
+        int result = aws_bigint_divide(&quotient, &remainder, &value1, &value2);
+        if (testcase->expected_error > 0) {
+            ASSERT_FAILS(result);
+            ASSERT_TRUE(aws_last_error() == testcase->expected_error);
+        } else {
+            ASSERT_SUCCESS(result);
+
+            /* check quotient */
+            serialized_quotient.len = 0;
+            ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&quotient, &serialized_quotient));
+
+            size_t expected_length = strlen(testcase->expected_quotient);
+            ASSERT_TRUE(serialized_quotient.len == expected_length);
+            ASSERT_BIN_ARRAYS_EQUALS(
+                    testcase->expected_quotient, expected_length, serialized_quotient.buffer, serialized_quotient.len);
+
+            /* check remainder */
+            serialized_remainder.len = 0;
+            ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&remainder, &serialized_remainder));
+
+            expected_length = strlen(testcase->expected_remainder);
+            ASSERT_TRUE(serialized_remainder.len == expected_length);
+            ASSERT_BIN_ARRAYS_EQUALS(
+                    testcase->expected_remainder, expected_length, serialized_remainder.buffer, serialized_remainder.len);
+        }
+
+
+        aws_bigint_clean_up(&value1);
+        aws_bigint_clean_up(&value2);
+        aws_bigint_clean_up(&quotient);
+        aws_bigint_clean_up(&remainder);
+    }
+
+    aws_byte_buf_clean_up(&serialized_quotient);
+    aws_byte_buf_clean_up(&serialized_remainder);
+
+    return AWS_OP_SUCCESS;
+}
+
+/* verifies behavior for a variety of error cases within the divide function */
+static struct aws_bigint_divide_test s_divide_error_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .value2 = "0",
+        .expected_error = AWS_ERROR_DIVIDE_BY_ZERO,
+    },
+    {
+        .value1 = "0x01",
+        .value2 = "1",
+        .expected_error = AWS_ERROR_INVALID_ARGUMENT,
+        .is_negative1 = true,
+    },
+    {
+        .value1 = "0x0a",
+        .value2 = "ffffffffffffffffffffffffffffffffffffff",
+        .expected_error = AWS_ERROR_INVALID_ARGUMENT,
+        .is_negative2 = true,
+    },
+};
+
+static int s_test_bigint_divide_error(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_divide_test(allocator, s_divide_error_test_cases, AWS_ARRAY_SIZE(s_divide_error_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_divide_error, s_test_bigint_divide_error)
+
+/* verifies behavior for a variety of edge cases within the divide function */
+static struct aws_bigint_divide_test s_divide_edge_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .value2 = "fffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeffffffffffffffffffffffffffffffffffff",
+        .expected_quotient = "0",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0xab",
+        .value2 = "cccccccccccccccccccccccccccccccccccccccccccc",
+        .expected_quotient = "0",
+        .expected_remainder = "ab",
+    },
+    {
+        .value1 = "0xcccccccccccccccccccccccccccccccccccccccccccb",
+        .value2 = "cccccccccccccccccccccccccccccccccccccccccccc",
+        .expected_quotient = "0",
+        .expected_remainder = "cccccccccccccccccccccccccccccccccccccccccccb",
+    },
+};
+
+static int s_test_bigint_divide_edge(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_divide_test(allocator, s_divide_edge_test_cases, AWS_ARRAY_SIZE(s_divide_edge_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_divide_edge, s_test_bigint_divide_edge)
+
+/*
+ * Single-digit divisors are a special case of our divide implementation (primarily because the general
+ * algorithm requires at least a two digit divisor to work properly), so we test them separately.
+ */
+static struct aws_bigint_divide_test s_divide_single_digit_divisor_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .value2 = "1",
+        .expected_quotient = "0",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0xff",
+        .value2 = "1",
+        .expected_quotient = "ff",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0x1034780fab4289fca96da5e3bae201",
+        .value2 = "1",
+        .expected_quotient = "1034780fab4289fca96da5e3bae201",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0x10000000000000000000000000000000000000000000000000000001",
+        .value2 = "2",
+        .expected_quotient = "8000000000000000000000000000000000000000000000000000000",
+        .expected_remainder = "1",
+    },
+    {
+        .value1 = "0x1034780fab4289fca96da5e3bae20e",
+        .value2 = "10",
+        .expected_quotient = "1034780fab4289fca96da5e3bae20",
+        .expected_remainder = "e",
+    },
+    {
+        .value1 = "25c50e8de2be44d8aecf6e4b90606bbdb49",
+        .value2 = "5195e5",
+        .expected_quotient = "7683ad81ecc4b5e95f9e1557a5354",
+        .expected_remainder = "3b6d25",
+    },
+};
+
+static int s_test_bigint_divide_single_digit_divisor(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_divide_test(allocator, s_divide_single_digit_divisor_test_cases, AWS_ARRAY_SIZE(s_divide_single_digit_divisor_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_divide_single_digit_divisor, s_test_bigint_divide_single_digit_divisor)
+
+/*
+ * General divide testing - requires at least a two digit divisor
+ *
+ * TODO: Find a 2^32 base example that performs the add-back step for code coverage.  Current testing
+ * used a debugger to force a too-large quotient digit and manually checked the add-back.
+ */
+static struct aws_bigint_divide_test s_divide_general_test_cases[] = {
+    {
+        .value1 = "0x100000000",
+        .value2 = "100000000",
+        .expected_quotient = "1",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0x200000000",
+        .value2 = "100000000",
+        .expected_quotient = "2",
+        .expected_remainder = "0",
+    },
+    {
+        .value1 = "0xa00000001",
+        .value2 = "100000000",
+        .expected_quotient = "a",
+        .expected_remainder = "1",
+    },
+};
+
+static int s_test_bigint_divide_general(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_divide_test(allocator, s_divide_general_test_cases, AWS_ARRAY_SIZE(s_divide_general_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_divide_general, s_test_bigint_divide_general)
