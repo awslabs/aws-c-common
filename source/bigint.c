@@ -85,8 +85,7 @@ static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *outp
 
 static int s_aws_bigint_init_zero(struct aws_bigint *bigint, struct aws_allocator *allocator, size_t reserved_digits) {
     size_t reserved = reserved_digits > 0 ? reserved_digits : 1;
-    if (aws_array_list_init_dynamic(
-            &bigint->digits, allocator, reserved, sizeof(uint32_t))) {
+    if (aws_array_list_init_dynamic(&bigint->digits, allocator, reserved, sizeof(uint32_t))) {
         return AWS_OP_ERR;
     }
 
@@ -927,6 +926,7 @@ static int s_aws_bigint_normalized_divide(
         aws_array_list_push_back(&remainder->digits, &remainder_digit);
     }
 
+    s_aws_bigint_trim_leading_zeros(quotient);
     s_aws_bigint_trim_leading_zeros(remainder);
 
     return AWS_OP_SUCCESS;
@@ -1063,10 +1063,10 @@ int aws_bigint_divide(
      * digits in the dividend.  But even after normalization, the two highest digits divided by the highest
      * digit in the divisor can still be wayyyy bigger than b.
      *
-     * Consider 99 / 5 which is already normalized (base 10).  Clearly the first quotient digit should be based on 9/5 and not
-     * 99/5.  At the same time, 22 / 5 is already normalized, and clearly the first quotient digit should be based on
-     * 22/5 and not 2/5.  At the same time, basing it on 2/5 doesn't hurt since it only ends up adding a leading zero
-     * which will be trimmed in the end.
+     * Consider 99 / 5 which is already normalized (base 10).  Clearly the first quotient digit should be based on 9/5
+     * and not 99/5.  At the same time, 22 / 5 is already normalized, and clearly the first quotient digit should be
+     * based on 22/5 and not 2/5.  At the same time, basing it on 2/5 doesn't hurt since it only ends up adding a
+     * leading zero which will be trimmed in the end.
      *
      * So unconditionally adding a zero doesn't ever hurt, but corrects some cases.  "Incorrectly" adding a zero
      * causes us to run an extra iteration of the divide loop, yielding a leading zero on the quotient.

@@ -1695,7 +1695,7 @@ static int s_do_divide_test(
             size_t expected_length = strlen(testcase->expected_quotient);
             ASSERT_TRUE(serialized_quotient.len == expected_length);
             ASSERT_BIN_ARRAYS_EQUALS(
-                    testcase->expected_quotient, expected_length, serialized_quotient.buffer, serialized_quotient.len);
+                testcase->expected_quotient, expected_length, serialized_quotient.buffer, serialized_quotient.len);
 
             /* check remainder */
             serialized_remainder.len = 0;
@@ -1704,9 +1704,8 @@ static int s_do_divide_test(
             expected_length = strlen(testcase->expected_remainder);
             ASSERT_TRUE(serialized_remainder.len == expected_length);
             ASSERT_BIN_ARRAYS_EQUALS(
-                    testcase->expected_remainder, expected_length, serialized_remainder.buffer, serialized_remainder.len);
+                testcase->expected_remainder, expected_length, serialized_remainder.buffer, serialized_remainder.len);
         }
-
 
         aws_bigint_clean_up(&value1);
         aws_bigint_clean_up(&value2);
@@ -1825,7 +1824,8 @@ static struct aws_bigint_divide_test s_divide_single_digit_divisor_test_cases[] 
 static int s_test_bigint_divide_single_digit_divisor(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    return s_do_divide_test(allocator, s_divide_single_digit_divisor_test_cases, AWS_ARRAY_SIZE(s_divide_single_digit_divisor_test_cases));
+    return s_do_divide_test(
+        allocator, s_divide_single_digit_divisor_test_cases, AWS_ARRAY_SIZE(s_divide_single_digit_divisor_test_cases));
 }
 
 AWS_TEST_CASE(test_bigint_divide_single_digit_divisor, s_test_bigint_divide_single_digit_divisor)
