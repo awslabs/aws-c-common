@@ -663,7 +663,7 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
      *  (2) bit_shift_count = leftover amount (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
      */
     size_t base_shift_count = shift_amount / BASE_BITS;
-    size_t bit_shift_count = shift_amount % BASE_BITS;
+    uint32_t bit_shift_count = (uint32_t)(shift_amount % BASE_BITS);
 
     /* is it guaranteed to be zero? */
     if (base_shift_count >= digit_count) {
@@ -733,7 +733,7 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
      *  (2) bit_shift_count = remainder (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
      */
     size_t base_shift_count = shift_amount / BASE_BITS;
-    size_t bit_shift_count = shift_amount % BASE_BITS;
+    uint32_t bit_shift_count = (uint32_t)(shift_amount % BASE_BITS);
 
     /* I hate this API, technically we're reserving (digit_count + base_shift_count + 1) */
     if (aws_array_list_ensure_capacity(&bigint->digits, digit_count + base_shift_count)) {
