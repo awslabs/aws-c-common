@@ -18,6 +18,7 @@
 #define NIBBLES_PER_DIGIT ((BASE_BITS) / 4)
 #define LOWER_32_BIT_MASK 0xFFFFFFFF
 #define INT64_MIN_AS_HEX 0x8000000000000000
+#define DIVISION_NORMALIZATION_BIT_MASK (1U << (BASE_BITS - 1))
 
 /*
  * Working set of invariants:
@@ -787,6 +788,63 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
     return AWS_OP_SUCCESS;
 }
 
+/*
+ * Division
+ */
+
+/*
+ * The basic, general algorithm for bigint division requires a divisor to be at least two digits in order for its
+ * quotient digit calculations to be mathematically accurate.  This isn't a big deal since it turns out division by
+ * a single-digit divisor is pretty easy.  That special case is handled here.
+ */
+static int s_aws_bigint_divide_by_single_digit(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *dividend,
+    uint32_t divisor) {
+
+    struct aws_bigint temp_quotient;
+    size_t quotient_length = aws_array_list_length(&dividend->digits);
+
+    if (s_aws_bigint_init_zero(&temp_quotient, quotient->digits.alloc, quotient_length)) {
+        return AWS_OP_ERR;
+    }
+
+    uint64_t wide_divisor = divisor;
+    uint64_t current_remainder = 0;
+    for (size_t i = 0; i < quotient_length; ++i) {
+
+        /* highest order to lowest order digit */
+        uint32_t current_dividend_digit = 0;
+        aws_array_list_get_at(&dividend->digits, &current_dividend_digit, quotient_length - 1 - i);
+
+        uint64_t two_digit_dividend = (current_remainder << BASE_BITS) + current_dividend_digit;
+
+        uint32_t quotient_digit = (uint32_t)(two_digit_dividend / wide_divisor);
+        aws_array_list_set_at(&temp_quotient.digits, &quotient_digit, quotient_length - 1 - i);
+
+        current_remainder = two_digit_dividend % wide_divisor;
+    }
+
+    s_aws_bigint_trim_leading_zeros(&temp_quotient);
+
+    aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
+    quotient->sign = 1;
+
+    uint32_t final_remainder = (uint32_t)current_remainder;
+    aws_array_list_clear(&remainder->digits);
+    aws_array_list_push_back(&remainder->digits, &final_remainder);
+    remainder->sign = 1;
+
+    aws_bigint_clean_up(&temp_quotient);
+
+    return AWS_OP_SUCCESS;
+}
+
+/*
+ * The general division algorithm requires the divisor to be at least half the base.  In our implementation we shift
+ * the operands left (x 2) until the divisor's high bit is set.
+ */
 static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *bigint) {
     size_t digit_count = aws_array_list_length(&bigint->digits);
     AWS_FATAL_ASSERT(digit_count > 0);
@@ -796,7 +854,7 @@ static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *b
     AWS_FATAL_ASSERT(high_digit > 0);
 
     uint32_t shift_count = 0;
-    while ((high_digit & 0x80000000) == 0) {
+    while ((high_digit & DIVISION_NORMALIZATION_BIT_MASK) == 0) {
         high_digit <<= 1;
         ++shift_count;
     }
@@ -805,7 +863,7 @@ static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *b
 }
 
 /*
- * Assumptions:
+ * General algorithm requirements/assumptions:
  *   (1) lhs >= rhs
  *   (2) lhs, rhs both positive
  *   (3) rhs is at least two digits in length
@@ -817,6 +875,9 @@ static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *b
  *
  * Side effects:
  *   (1) lhs is destructively modified to the remainder and then swapped with the remainder
+ *
+ * Implementation based on Algorithm D, steps D2 - D7, in section 4.3.1 of AoCP Vol 2.
+ * Steps D1, D8 are performed by the caller.
  */
 static int s_aws_bigint_normalized_divide(
     struct aws_bigint *quotient,
@@ -932,48 +993,6 @@ static int s_aws_bigint_normalized_divide(
     return AWS_OP_SUCCESS;
 }
 
-static int s_aws_bigint_divide_by_single_digit(
-    struct aws_bigint *quotient,
-    struct aws_bigint *remainder,
-    const struct aws_bigint *dividend,
-    uint32_t divisor) {
-
-    struct aws_bigint temp_quotient;
-    size_t quotient_length = aws_array_list_length(&dividend->digits);
-
-    if (s_aws_bigint_init_zero(&temp_quotient, quotient->digits.alloc, quotient_length)) {
-        return AWS_OP_ERR;
-    }
-
-    uint64_t wide_divisor = divisor;
-    uint64_t current_remainder = 0;
-    for (size_t i = 0; i < quotient_length; ++i) {
-        uint32_t current_dividend_digit = 0;
-        aws_array_list_get_at(&dividend->digits, &current_dividend_digit, quotient_length - 1 - i);
-
-        uint64_t two_digit_dividend = (current_remainder << BASE_BITS) + current_dividend_digit;
-
-        uint32_t quotient_digit = (uint32_t)(two_digit_dividend / wide_divisor);
-        aws_array_list_set_at(&temp_quotient.digits, &quotient_digit, quotient_length - 1 - i);
-
-        current_remainder = two_digit_dividend % wide_divisor;
-    }
-
-    s_aws_bigint_trim_leading_zeros(&temp_quotient);
-
-    aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
-    quotient->sign = 1;
-
-    uint32_t final_remainder = (uint32_t)current_remainder;
-    aws_array_list_clear(&remainder->digits);
-    aws_array_list_push_back(&remainder->digits, &final_remainder);
-    remainder->sign = 1;
-
-    aws_bigint_clean_up(&temp_quotient);
-
-    return AWS_OP_SUCCESS;
-}
-
 int aws_bigint_divide(
     struct aws_bigint *quotient,
     struct aws_bigint *remainder,
@@ -985,12 +1004,9 @@ int aws_bigint_divide(
     }
 
     /*
-     * May relax this restriction in the future, but right now this simplifies things.
-     * I believe we could do it by computing (q, r) for the abs values, and then setting
-     * q = -q - 1
-     * r = -r mod rhs
+     * No negative numbers for now.
      *
-     * but I need time to verify.
+     * Remove this restriction in the future, but right now this simplifies things.
      */
     if (aws_bigint_is_negative(lhs) || aws_bigint_is_negative(rhs)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -1085,7 +1101,7 @@ int aws_bigint_divide(
         goto done;
     }
 
-    /* Step 5 - quotient is correct, unnormalize remainder */
+    /* Step 5 - quotient is correct, remainder is wack, so unnormalize remainder */
     aws_bigint_shift_right(&temp_remainder, normalization_shift);
 
     /* Step 6 - write to outputs */
