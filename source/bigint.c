@@ -903,7 +903,7 @@ static int s_aws_bigint_normalized_divide(
                 uint32_t current_digit = 0;
                 aws_array_list_get_at(&lhs->digits, &current_digit, lhs_index - rhs_digit_count + j);
 
-                uint64_t digit_sum = divisor_digit + current_digit + carry;
+                uint64_t digit_sum = (uint64_t)divisor_digit + (uint64_t)current_digit + carry;
                 carry = digit_sum >> BASE_BITS;
                 current_digit = (uint32_t)(digit_sum & LOWER_32_BIT_MASK);
 
@@ -1071,7 +1071,7 @@ int aws_bigint_divide(
      * So unconditionally adding a zero doesn't ever hurt, but corrects some cases.  "Incorrectly" adding a zero
      * causes us to run an extra iteration of the divide loop, yielding a leading zero on the quotient.
      *
-     * TODO: make adding a leading zero properly conditional
+     * TODO: make adding a leading zero properly conditional.
      */
     uint32_t zero_digit = 0;
     aws_array_list_push_back(&normalized_lhs.digits, &zero_digit);

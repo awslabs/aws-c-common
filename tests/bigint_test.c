@@ -1832,9 +1832,6 @@ AWS_TEST_CASE(test_bigint_divide_single_digit_divisor, s_test_bigint_divide_sing
 
 /*
  * General divide testing - requires at least a two digit divisor
- *
- * TODO: Find a 2^32 base example that performs the add-back step for code coverage.  Current testing
- * used a debugger to force a too-large quotient digit and manually checked the add-back.
  */
 static struct aws_bigint_divide_test s_divide_general_test_cases[] = {
     {
@@ -1854,6 +1851,51 @@ static struct aws_bigint_divide_test s_divide_general_test_cases[] = {
         .value2 = "100000000",
         .expected_quotient = "a",
         .expected_remainder = "1",
+    },
+    {
+        .value1 = "0xa0000000100000001",
+        .value2 = "100000000",
+        .expected_quotient = "a00000001",
+        .expected_remainder = "1",
+    },
+    {
+        .value1 = "0x555555555555555556",
+        .value2 = "111111111",
+        .expected_quotient = "5000000005",
+        .expected_remainder = "1",
+    },
+    {
+        /* This is a test case where the q_guess calculation gives an overestimate */
+        .value1 = "0x70000000eeeeeeee00000000",
+        .value2 = "80000000ffffffff",
+        .expected_quotient = "e0000000",
+        .expected_remainder = "eeeeeeee0000000",
+    },
+    {
+        /*
+         * This is a test case where the q_guess calculation ends up being off by one, leading to
+         * a borrow during the subtract step, which in turn forces us to do the add-back step.
+         *
+         * The numbers were an educated guess based on the Base 2^16 test case that be found in the
+         * solution to exercise 22 at the end of AoCP 4.3.1.
+         */
+        .value1 = "0x7fffffff800000010000000000000000",
+        .value2 = "800000008000000200000005",
+        .expected_quotient = "fffffffd",
+        .expected_remainder = "80000000800000010000000f",
+    },
+    {
+        .value1 = "4798235789a34fb324c004725beef89672538932278979abc468dd6fb4c90a",
+        .value2 = "956789fbba44de8d28bcc73985df2a8b99cd253737bda",
+        .expected_quotient = "7aacb5a90d6a42294",
+        .expected_remainder = "7b7406e383c6b7466ef3a1325759acc3820c46d63b02",
+    },
+    {
+        .value1 = "a9442278e660dac9a076cdd4163c251de2034e6f3c4ad9923cd0aa23d17170cd7412af2a6b7341124b973ec605f416ad6ef9"
+                  "d8cb75b553f2a",
+        .value2 = "124abcd719e0828465275fd0f855d46287142a1961be5dab0332785874d",
+        .expected_quotient = "940eb4747e656dd3f0c2679dca69c64baf7ea6fbf65eef46ae6cf0f",
+        .expected_remainder = "90fa7757fd0154ceb2ad96c4f315bd43fca4643d6583918561a0ed0ea7",
     },
 };
 
