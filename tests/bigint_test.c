@@ -295,6 +295,60 @@ static int s_test_bigint_from_hex_failure(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(test_bigint_from_hex_failure, s_test_bigint_from_hex_failure)
 
+struct bigint_cursor_init_test {
+    const char *input;
+    const char *expected_hex_serialization;
+};
+
+static struct bigint_cursor_init_test s_cursor_cases[] = {
+    {
+        .input = "\x0a",
+        .expected_hex_serialization = "a",
+    },
+    {
+        .input = "\x01\x02\x03\x04",
+        .expected_hex_serialization = "1020304",
+    },
+    {
+        .input = "\xab\xcd\xef\x03\x01",
+        .expected_hex_serialization = "abcdef0301",
+    },
+    {
+        .input = "\xff\xda\x1f\x20\x01\xaa\x94\x37\xfe",
+        .expected_hex_serialization = "ffda1f2001aa9437fe",
+    },
+};
+
+static int s_test_bigint_from_cursor(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_cursor_cases); ++i) {
+        struct aws_byte_buf buffer;
+        aws_byte_buf_init(&buffer, allocator, 1);
+
+        struct aws_bigint test;
+
+        struct bigint_cursor_init_test *testcase = &s_cursor_cases[i];
+
+        size_t expected_length = strlen(testcase->expected_hex_serialization);
+
+        ASSERT_SUCCESS(aws_bigint_init_from_cursor(&test, allocator, aws_byte_cursor_from_c_str(testcase->input)));
+
+        ASSERT_FALSE(aws_bigint_is_negative(&test));
+
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&test, &buffer));
+        ASSERT_TRUE(buffer.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
+
+        aws_bigint_clean_up(&test);
+        aws_byte_buf_clean_up(&buffer);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_from_cursor, s_test_bigint_from_cursor)
+
 struct bigint_comparison_test {
     const char *value1;
     const char *value2;
