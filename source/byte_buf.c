@@ -1107,6 +1107,35 @@ bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
 }
 
 /**
+ * Reads an unsigned 24-bit value (3 bytes) in network byte order from cur,
+ * and places it in host byte order into 32-bit var.
+ * Ex: if cur's next 3 bytes are {0xAA, 0xBB, 0xCC}, then var becomes 0x00AABBCC.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_be24(struct aws_byte_cursor *cur, uint32_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+
+    uint8_t *var_bytes = (void *)var;
+
+    /* read into "lower" 3 bytes */
+    bool rv = aws_byte_cursor_read(cur, &var_bytes[1], 3);
+
+    if (AWS_LIKELY(rv)) {
+        /* zero out "highest" 4th byte*/
+        var_bytes[0] = 0;
+
+        *var = aws_ntoh32(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
  * Reads a 32-bit value in network byte order from cur, and places it in host
  * byte order into var.
  *
@@ -1231,7 +1260,7 @@ bool aws_byte_buf_advance(
  */
 bool aws_byte_buf_write(struct aws_byte_buf *AWS_RESTRICT buf, const uint8_t *AWS_RESTRICT src, size_t len) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
-    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
 
     if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
@@ -1286,6 +1315,27 @@ bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c) {
 }
 
 /**
+ * Writes one byte repeatedly to buffer (like memset)
+ *
+ * If there is insufficient space in the buffer, returns false, leaving the
+ * buffer unchanged.
+ */
+bool aws_byte_buf_write_u8_n(struct aws_byte_buf *buf, uint8_t c, size_t count) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+
+    if (buf->len > (SIZE_MAX >> 1) || count > (SIZE_MAX >> 1) || buf->len + count > buf->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+        return false;
+    }
+
+    memset(buf->buffer + buf->len, c, count);
+    buf->len += count;
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+    return true;
+}
+
+/**
  * Writes a 16-bit integer in network byte order (big endian) to buffer.
  *
  * On success, returns true and updates the cursor /length accordingly.
@@ -1296,6 +1346,28 @@ bool aws_byte_buf_write_be16(struct aws_byte_buf *buf, uint16_t x) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     x = aws_hton16(x);
     return aws_byte_buf_write(buf, (uint8_t *)&x, 2);
+}
+
+/**
+ * Writes low 24-bits (3 bytes) of an unsigned integer in network byte order (big endian) to buffer.
+ * Ex: If x is 0x00AABBCC then {0xAA, 0xBB, 0xCC} is written to buffer.
+ *
+ * On success, returns true and updates the buffer /length accordingly.
+ * If there is insufficient space in the buffer, or x's value cannot fit in 3 bytes,
+ * returns false, leaving the buffer unchanged.
+ */
+bool aws_byte_buf_write_be24(struct aws_byte_buf *buf, uint32_t x) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+
+    if (x > 0x00FFFFFF) {
+        return false;
+    }
+
+    uint32_t be32 = aws_hton32(x);
+    uint8_t *be32_bytes = (uint8_t *)&be32;
+
+    /* write "lower" 3 bytes */
+    return aws_byte_buf_write(buf, &be32_bytes[1], 3);
 }
 
 /**

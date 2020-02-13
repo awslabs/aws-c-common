@@ -66,16 +66,6 @@ AWS_STATIC_IMPL float aws_ntohf32(float x);
 AWS_STATIC_IMPL double aws_ntohf64(double x);
 
 /**
- * Convert 24 bit integer from host to network byte order.
- */
-AWS_STATIC_IMPL uint32_t aws_hton24(uint32_t x);
-
-/**
- * Convert 24 bit integer from network to host byte order.
- */
-AWS_STATIC_IMPL uint32_t aws_ntoh24(uint32_t x);
-
-/**
  * Convert 16 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x);

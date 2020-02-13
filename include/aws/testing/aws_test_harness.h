@@ -287,7 +287,22 @@ static int total_failures;
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
-            fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                          \
+            if (assert_got_s <= 1024) {                                                                                \
+                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
+                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
+                        fprintf(                                                                                       \
+                            AWS_TESTING_REPORT_FD,                                                                     \
+                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
+                            FAIL_PREFIX,                                                                               \
+                            assert_i,                                                                                  \
+                            assert_ex_p[assert_i],                                                                     \
+                            assert_got_p[assert_i]);                                                                   \
+                        break;                                                                                         \
+                    }                                                                                                  \
+                }                                                                                                      \
+            } else {                                                                                                   \
+                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
+            }                                                                                                          \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
                     "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);           \
@@ -296,9 +311,9 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
-typedef void(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
+typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
-typedef void(aws_test_after_fn)(struct aws_allocator *allocator, void *ctx);
+typedef int(aws_test_after_fn)(struct aws_allocator *allocator, int setup_result, void *ctx);
 
 struct aws_test_harness {
     aws_test_before_fn *on_before;
@@ -363,17 +378,21 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
     aws_logger_set(&err_logger);
 
+    int test_res = AWS_OP_ERR;
+    int setup_res = AWS_OP_SUCCESS;
     if (harness->on_before) {
-        harness->on_before(allocator, harness->ctx);
+        setup_res = harness->on_before(allocator, harness->ctx);
     }
 
-    int ret_val = harness->run(allocator, harness->ctx);
+    if (!setup_res) {
+        test_res = harness->run(allocator, harness->ctx);
+    }
 
     if (harness->on_after) {
-        harness->on_after(allocator, harness->ctx);
+        test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (!ret_val) {
+    if (!test_res) {
         if (!harness->suppress_memcheck) {
             const size_t leaked_bytes = aws_mem_tracer_count(allocator);
             if (leaked_bytes) {
@@ -390,7 +409,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    if (!ret_val) {
+    if (!test_res) {
         RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
     } else {
         FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
@@ -449,9 +468,9 @@ static inline int enable_vt_mode(void) {
     }
 
 #define AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, s)                                                       \
-    static void b(struct aws_allocator *allocator, void *ctx);                                                         \
+    static int b(struct aws_allocator *allocator, void *ctx);                                                          \
     static int fn(struct aws_allocator *allocator, void *ctx);                                                         \
-    static void af(struct aws_allocator *allocator, void *ctx);                                                        \
+    static int af(struct aws_allocator *allocator, int setup_result, void *ctx);                                       \
     static struct aws_test_harness name##_test = {                                                                     \
         b,                                                                                                             \
         fn,                                                                                                            \
