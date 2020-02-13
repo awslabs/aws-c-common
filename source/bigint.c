@@ -1043,14 +1043,18 @@ int aws_bigint_divide(
     /* handle zero-valued quotient */
     if (s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN) {
         /* can't fail from here on out, perform side effects */
-        aws_array_list_swap_contents(&normalized_lhs.digits, &remainder->digits);
-        remainder->sign = 1;
+        if (remainder != NULL) {
+            aws_array_list_swap_contents(&normalized_lhs.digits, &remainder->digits);
+            remainder->sign = 1;
+        }
 
-        aws_array_list_clear(&quotient->digits);
+        if (quotient != NULL) {
+            aws_array_list_clear(&quotient->digits);
 
-        uint32_t zero_digit = 0;
-        aws_array_list_push_back(&quotient->digits, &zero_digit);
-        quotient->sign = 1;
+            uint32_t zero_digit = 0;
+            aws_array_list_push_back(&quotient->digits, &zero_digit);
+            quotient->sign = 1;
+        }
 
         result = AWS_OP_SUCCESS;
         goto done;
@@ -1105,11 +1109,15 @@ int aws_bigint_divide(
     aws_bigint_shift_right(&temp_remainder, normalization_shift);
 
     /* Step 6 - write to outputs */
-    aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
-    quotient->sign = 1;
+    if (quotient != NULL) {
+        aws_array_list_swap_contents(&temp_quotient.digits, &quotient->digits);
+        quotient->sign = 1;
+    }
 
-    aws_array_list_swap_contents(&temp_remainder.digits, &remainder->digits);
-    remainder->sign = 1;
+    if (remainder != NULL) {
+        aws_array_list_swap_contents(&temp_remainder.digits, &remainder->digits);
+        remainder->sign = 1;
+    }
 
     result = AWS_OP_SUCCESS;
 
