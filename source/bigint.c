@@ -15,6 +15,8 @@
 #include <aws/common/bigint.h>
 
 #define BASE_BITS 32
+#define BYTES_PER_BASE_DIGIT (BASE_BITS / 8)
+#define BITS_PER_BYTE 8
 #define NIBBLES_PER_DIGIT ((BASE_BITS) / 4)
 #define LOWER_32_BIT_MASK 0xFFFFFFFF
 #define INT64_MIN_AS_HEX 0x8000000000000000
@@ -40,6 +42,26 @@
 void aws_bigint_clean_up(struct aws_bigint *bigint) {
     aws_array_list_clean_up_secure(&bigint->digits);
     AWS_ZERO_STRUCT(bigint->digits);
+}
+
+static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
+    size_t length = aws_array_list_length(&bigint->digits);
+    if (length == 0) {
+        return;
+    }
+
+    size_t index = length - 1;
+    while (index > 0) {
+        uint32_t digit = 0;
+        aws_array_list_get_at(&bigint->digits, &digit, index);
+        if (digit == 0) {
+            aws_array_list_pop_back(&bigint->digits);
+        } else {
+            return;
+        }
+
+        --index;
+    }
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
@@ -211,6 +233,49 @@ int aws_bigint_init_from_copy(struct aws_bigint *bigint, const struct aws_bigint
     return AWS_OP_SUCCESS;
 }
 
+int aws_bigint_init_from_cursor(
+    struct aws_bigint *bigint,
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor source) {
+
+    bigint->sign = 1;
+
+    size_t digit_count = 1;
+    if (source.len > 0) {
+        digit_count = (source.len - 1) / BYTES_PER_BASE_DIGIT + 1;
+    }
+
+    if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
+        return AWS_OP_ERR;
+    }
+
+    for (size_t i = 0; i < digit_count; ++i) {
+        uint32_t zero_digit = 0;
+        aws_array_list_push_back(&bigint->digits, &zero_digit);
+    }
+
+    if (source.len == 0) {
+        return AWS_OP_SUCCESS;
+    }
+
+    for (size_t i = 0; i < source.len; ++i) {
+        size_t byte_index = source.len - 1 - i;
+        uint8_t octet = source.ptr[byte_index];
+
+        uint32_t current_digit = 0;
+        size_t digit_index = i / BYTES_PER_BASE_DIGIT;
+        aws_array_list_get_at(&bigint->digits, &current_digit, digit_index);
+
+        current_digit |= ((uint32_t)octet << BITS_PER_BYTE * (i % BYTES_PER_BASE_DIGIT));
+
+        aws_array_list_set_at(&bigint->digits, &current_digit, digit_index);
+    }
+
+    s_aws_bigint_trim_leading_zeros(bigint);
+
+    return AWS_OP_SUCCESS;
+}
+
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
 static void s_append_uint32_as_hex(struct aws_byte_buf *buffer, uint32_t value, bool prepend_zeros) {
@@ -376,26 +441,6 @@ bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struc
 void aws_bigint_negate(struct aws_bigint *bigint) {
     if (!aws_bigint_is_zero(bigint)) {
         bigint->sign *= -1;
-    }
-}
-
-static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
-    size_t length = aws_array_list_length(&bigint->digits);
-    if (length == 0) {
-        return;
-    }
-
-    size_t index = length - 1;
-    while (index > 0) {
-        uint32_t digit = 0;
-        aws_array_list_get_at(&bigint->digits, &digit, index);
-        if (digit == 0) {
-            aws_array_list_pop_back(&bigint->digits);
-        } else {
-            return;
-        }
-
-        --index;
     }
 }
 

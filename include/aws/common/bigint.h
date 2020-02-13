@@ -73,6 +73,15 @@ AWS_COMMON_API
 int aws_bigint_init_from_copy(struct aws_bigint *bigint, const struct aws_bigint *source);
 
 /**
+ * Initializes a big int from a sequence of bytes
+ */
+AWS_COMMON_API
+int aws_bigint_init_from_cursor(
+    struct aws_bigint *bigint,
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor source);
+
+/**
  * Writes a bigint to a buffer as a hexadecimal number.  Will prepend (-) in front of negative numbers for
  * easier testing.  This API is primarily intended for testing.  Actual output (to various formats/bases) is TBD.
  */
