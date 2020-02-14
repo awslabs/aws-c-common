@@ -331,6 +331,87 @@ int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_
     return AWS_OP_SUCCESS;
 }
 
+static size_t s_aws_bigint_byte_length(const struct aws_bigint *bigint) {
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+
+    uint32_t high_digit = 0;
+    aws_array_list_get_at(&bigint->digits, &high_digit, digit_count - 1);
+
+    size_t non_zero_high_digit_bytes = 4;
+    if (high_digit < (1U << BITS_PER_BYTE)) {
+        non_zero_high_digit_bytes = 1;
+    } else if (high_digit < (1U << (2 * BITS_PER_BYTE))) {
+        non_zero_high_digit_bytes = 2;
+    } else if (high_digit < (1U << (3 * BITS_PER_BYTE))) {
+        non_zero_high_digit_bytes = 3;
+    }
+
+    return (digit_count - 1) * BYTES_PER_BASE_DIGIT + non_zero_high_digit_bytes;
+}
+
+int aws_bigint_bytebuf_append_as_big_endian(
+    const struct aws_bigint *bigint,
+    struct aws_byte_buf *buffer,
+    size_t minimum_length) {
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+    size_t bigint_bytes = s_aws_bigint_byte_length(bigint);
+    size_t padding_bytes = 0;
+    if (bigint_bytes < minimum_length) {
+        padding_bytes = minimum_length - bigint_bytes;
+    }
+
+    size_t required_capacity = bigint_bytes + padding_bytes;
+    if (aws_byte_buf_reserve_relative(buffer, required_capacity)) {
+        return AWS_OP_ERR;
+    }
+
+    if (padding_bytes > 0) {
+        uint8_t padding = 0;
+        struct aws_byte_cursor padding_cursor = {
+            .ptr = &padding,
+            .len = 1,
+        };
+
+        for (size_t i = 0; i < padding_bytes; ++i) {
+            if (aws_byte_buf_append(buffer, &padding_cursor)) {
+                return AWS_OP_ERR;
+            }
+        }
+    }
+
+    uint8_t digit_byte = 0;
+    struct aws_byte_cursor digit_bytes_cursor = {
+        .ptr = &digit_byte,
+        .len = 1,
+    };
+
+    bool should_write = false;
+
+    for (size_t i = 0; i < digit_count; ++i) {
+        size_t digit_index = digit_count - i - 1;
+
+        uint32_t current_digit = 0;
+        aws_array_list_get_at(&bigint->digits, &current_digit, digit_index);
+
+        for (size_t j = 0; j < BYTES_PER_BASE_DIGIT; ++j) {
+            digit_byte = (uint8_t)(current_digit >> (3 * BITS_PER_BYTE)) & ((1U << BITS_PER_BYTE) - 1);
+            current_digit <<= BITS_PER_BYTE;
+
+            if (!should_write) {
+                should_write = digit_byte > 0 || j + 1 == BYTES_PER_BASE_DIGIT;
+            }
+
+            if (should_write) {
+                if (aws_byte_buf_append(buffer, &digit_bytes_cursor)) {
+                    return AWS_OP_ERR;
+                }
+            }
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
     return bigint->sign < 0;
 }
