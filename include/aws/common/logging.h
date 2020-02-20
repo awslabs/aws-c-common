@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_LOGGING_H
-#define AWS_COMMON_LOGGING_H
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -308,5 +306,3 @@ int aws_logger_init_noalloc(
     struct aws_logger_standard_options *options);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_LOGGING_H */

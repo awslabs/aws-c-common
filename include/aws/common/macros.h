@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_MACROS_H
-#define AWS_COMMON_MACROS_H
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -113,5 +112,3 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
  * the instance of struct aws_linked_list_node in your struct.
  */
 #define AWS_CONTAINER_OF(ptr, type, member) ((type *)((uint8_t *)(ptr)-offsetof(type, member)))
-
-#endif /* AWS_COMMON_MACROS_H */

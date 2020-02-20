@@ -1,5 +1,4 @@
-#ifndef AWS_TESTING_AWS_TEST_HARNESS_H
-#define AWS_TESTING_AWS_TEST_HARNESS_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -487,5 +486,3 @@ static inline int enable_vt_mode(void) {
 
 #define AWS_TEST_CASE(name, fn) AWS_TEST_CASE_SUPRESSION(name, fn, 0)
 #define AWS_TEST_CASE_FIXTURE(name, b, fn, af, c) AWS_TEST_CASE_FIXTURE_SUPPRESSION(name, b, fn, af, c, 0)
-
-#endif /* AWS_TESTING_AWS_TEST_HARNESS_H */

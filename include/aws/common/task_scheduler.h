@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_TASK_SCHEDULER_H
-#define AWS_COMMON_TASK_SCHEDULER_H
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -130,5 +128,3 @@ AWS_COMMON_API
 const char *aws_task_status_to_c_str(enum aws_task_status status);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_TASK_SCHEDULER_H */

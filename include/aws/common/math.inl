@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MATH_INL
-#define AWS_COMMON_MATH_INL
-
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -151,5 +149,3 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 #endif /* _MSC_VER */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_MATH_INL */

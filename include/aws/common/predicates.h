@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_PREDICATES_H
-#define AWS_COMMON_PREDICATES_H
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -33,5 +32,3 @@
 #else
 #    define AWS_BYTES_EQ(arr1, arr2, len) (1)
 #endif /* (AWS_DEEP_CHECKS == 1) */
-
-#endif /* AWS_COMMON_PREDICATES_H */

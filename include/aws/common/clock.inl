@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_CLOCK_INL
-#define AWS_COMMON_CLOCK_INL
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -53,5 +51,3 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_CLOCK_INL */

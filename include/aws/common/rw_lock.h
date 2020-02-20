@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_RW_LOCK_H
-#define AWS_COMMON_RW_LOCK_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -75,5 +73,3 @@ AWS_COMMON_API int aws_rw_lock_runlock(struct aws_rw_lock *lock);
 AWS_COMMON_API int aws_rw_lock_wunlock(struct aws_rw_lock *lock);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_RW_LOCK_H */

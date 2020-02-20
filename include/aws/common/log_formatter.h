@@ -1,7 +1,4 @@
-
-#ifndef AWS_COMMON_LOG_FORMATTER_H
-#define AWS_COMMON_LOG_FORMATTER_H
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -101,5 +98,3 @@ AWS_COMMON_API
 int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *formatting_data, va_list args);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_LOG_FORMATTER_H */

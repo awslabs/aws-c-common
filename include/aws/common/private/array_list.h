@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_PRIVATE_ARRAY_LIST_H
-#define AWS_COMMON_PRIVATE_ARRAY_LIST_H
+#pragma once
 
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -15,6 +14,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include <aws/common/macros.h>
 
 AWS_EXTERN_C_BEGIN
 
@@ -25,5 +25,3 @@ AWS_EXTERN_C_BEGIN
 int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_PRIVATE_ARRAY_LIST_H */

@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_DATE_TIME_H
-#define AWS_COMMON_DATE_TIME_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -164,5 +163,3 @@ AWS_COMMON_API bool aws_date_time_dst(const struct aws_date_time *dt, bool local
 AWS_COMMON_API time_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_DATE_TIME_H */

@@ -1,6 +1,4 @@
-/* NOLINTNEXTLINE(llvm-header-guard) */
-#ifndef AWS_COMMON_LOGGING_TEST_UTILITIES_H
-#define AWS_COMMON_LOGGING_TEST_UTILITIES_H
+#pragma once
 
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -67,5 +65,3 @@ int do_log_test(
  * This function cannot fail.
  */
 struct aws_string *aws_string_new_log_writer_test_filename(struct aws_allocator *allocator);
-
-#endif /* AWS_COMMON_LOGGING_TEST_UTILITIES_H */

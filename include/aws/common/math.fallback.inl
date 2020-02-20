@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MATH_FALLBACK_INL
-#define AWS_COMMON_MATH_FALLBACK_INL
-
+#pragma once
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -105,5 +103,3 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /*  AWS_COMMON_MATH_FALLBACK_INL */

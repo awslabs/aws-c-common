@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_STDINT_H
-#define AWS_COMMON_STDINT_H
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -106,5 +105,3 @@ typedef long aws_off_t;
 #endif     /* defined(_MSC_VER) */
 
 AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
-
-#endif /* AWS_COMMON_STDINT_H */

@@ -17,6 +17,7 @@ include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
+option(USE_AS_MODULE "This turns off features that make bindings and modules painful, such as inlining on normally externed functions." ON)
 
 # This function will set all common flags on a target
 # Options:
@@ -137,6 +138,14 @@ function(aws_set_common_properties target)
                 endif()
             endif()
         endif()
+    endif()
+
+    if(USE_AS_MODULE AND ${CMAKE_C_COMPILER_ID} MATCHES "Clang")
+        list(APPEND AWS_C_FLAGS "-fmodules")
+    endif()
+
+    if (NOT USE_AS_MODULE)
+        list(APPEND AWS_C_DEFINES_PUBLIC -DAWS_ENABLE_STATIC_IMPL)
     endif()
 
     if(BUILD_SHARED_LIBS)

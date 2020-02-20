@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_THREAD_H
-#define AWS_COMMON_THREAD_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -146,5 +144,3 @@ AWS_COMMON_API
 int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_THREAD_H */

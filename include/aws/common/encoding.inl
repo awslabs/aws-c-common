@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ENCODING_INL
-#define AWS_COMMON_ENCODING_INL
+#pragma once
 
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -110,5 +109,3 @@ AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /*  AWS_COMMON_ENCODING_INL */

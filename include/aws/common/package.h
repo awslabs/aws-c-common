@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_PACKAGE_H
-#define AWS_COMMON_PACKAGE_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -27,5 +25,3 @@
  * correct ranges for the cross-library enumerations.
  */
 #define AWS_C_COMMON_PACKAGE_ID 0
-
-#endif /* AWS_COMMON_PACKAGE_H */

@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MUTEX_H
-#define AWS_COMMON_MUTEX_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -78,5 +76,3 @@ AWS_COMMON_API
 int aws_mutex_unlock(struct aws_mutex *mutex);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_MUTEX_H */

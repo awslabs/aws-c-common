@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_ERROR_H
-#define AWS_COMMON_ERROR_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -144,9 +142,9 @@ void aws_unregister_error_info(const struct aws_error_info_list *error_info);
 AWS_COMMON_API
 int aws_translate_and_raise_io_error(int error_no);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/error.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
 
@@ -202,5 +200,3 @@ enum aws_common_error {
 
     AWS_ERROR_END_COMMON_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
-
-#endif /* AWS_COMMON_ERROR_H */

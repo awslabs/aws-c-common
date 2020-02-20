@@ -1,5 +1,4 @@
-#ifndef AWS_TESTING_AWS_TEST_ALLOCATORS_H
-#define AWS_TESTING_AWS_TEST_ALLOCATORS_H
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -99,5 +98,3 @@ static void aws_timebomb_allocator_reset_countdown(
     timebomb_impl->fail_after_n_allocations = fail_after_n_allocations;
     aws_mutex_unlock(&timebomb_impl->mutex);
 }
-
-#endif /* AWS_TESTING_AWS_TEST_ALLOCATORS_H */

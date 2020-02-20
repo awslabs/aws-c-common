@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_LINKED_LIST_INL
-#define AWS_COMMON_LINKED_LIST_INL
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -380,5 +378,3 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_LINKED_LIST_INL */

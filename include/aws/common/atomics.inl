@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ATOMICS_INL
-#define AWS_COMMON_ATOMICS_INL
+#pragma once
 
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -154,5 +153,3 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n) {
 #include <aws/common/atomics_fallback.inl>
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ATOMICS_INL */

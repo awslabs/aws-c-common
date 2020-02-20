@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ARRAY_LIST_H
-#define AWS_COMMON_ARRAY_LIST_H
+#pragma once
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -210,10 +209,8 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
 AWS_STATIC_IMPL
 void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/array_list.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ARRAY_LIST_H */

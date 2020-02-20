@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_UUID_H
-#define AWS_COMMON_UUID_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -35,5 +33,3 @@ AWS_COMMON_API int aws_uuid_to_str(const struct aws_uuid *uuid, struct aws_byte_
 AWS_COMMON_API bool aws_uuid_equals(const struct aws_uuid *a, const struct aws_uuid *b);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_UUID_H */

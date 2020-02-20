@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_COMMAND_LINE_PARSER_H
-#define AWS_COMMON_COMMAND_LINE_PARSER_H
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -64,5 +63,3 @@ AWS_COMMON_API int aws_cli_getopt_long(
     const struct aws_cli_option *longopts,
     int *longindex);
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_COMMAND_LINE_PARSER_H */

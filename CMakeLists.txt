@@ -50,7 +50,7 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
-        )
+     )
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 

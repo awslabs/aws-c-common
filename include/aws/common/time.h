@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_TIME_H
-#define AWS_COMMON_TIME_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -36,5 +35,3 @@ AWS_COMMON_API void aws_localtime(time_t time, struct tm *t);
 AWS_COMMON_API void aws_gmtime(time_t time, struct tm *t);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_TIME_H */

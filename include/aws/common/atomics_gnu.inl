@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ATOMICS_GNU_INL
-#define AWS_COMMON_ATOMICS_GNU_INL
+#pragma once
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -225,4 +224,3 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
 
 #define AWS_ATOMICS_HAVE_THREAD_FENCE
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_ATOMICS_GNU_INL */

@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MATH_MSVC_INL
-#define AWS_COMMON_MATH_MSVC_INL
-
+#pragma once
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -122,4 +120,3 @@ AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 }
 
 AWS_EXTERN_C_END
-#endif /* WS_COMMON_MATH_MSVC_INL */

@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_LINKED_LIST_H
-#define AWS_COMMON_LINKED_LIST_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -170,9 +168,8 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aw
 
 AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/linked_list.inl>
-#endif /* AWS_NO_STATIC_IMPL */
-AWS_EXTERN_C_END
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
-#endif /* AWS_COMMON_LINKED_LIST_H */
+AWS_EXTERN_C_END

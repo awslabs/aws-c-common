@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_LRU_CACHE_H
-#define AWS_COMMON_LRU_CACHE_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -106,5 +105,3 @@ AWS_COMMON_API
 size_t aws_lru_cache_get_element_count(const struct aws_lru_cache *cache);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_LRU_CACHE_H */

@@ -1,7 +1,4 @@
-#ifndef AWS_COMMON_ATOMICS_H
-#define AWS_COMMON_ATOMICS_H
-
-#include <aws/common/common.h>
+#pragma once
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -17,6 +14,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include <aws/common/common.h>
 
 /**
  * struct aws_atomic_var represents an atomic variable - a value which can hold an integer or pointer
@@ -328,10 +326,8 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n);
 AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/atomics.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif

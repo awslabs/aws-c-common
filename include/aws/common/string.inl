@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_STRING_INL
-#define AWS_COMMON_STRING_INL
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -58,4 +57,3 @@ bool aws_c_string_is_valid(const char *str) {
     return str && AWS_MEM_IS_READABLE(str, 1);
 }
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_STRING_INL */

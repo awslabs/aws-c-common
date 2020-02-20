@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MATH_H
-#define AWS_COMMON_MATH_H
-
+#pragma once
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -132,10 +130,8 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
  */
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/math.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_MATH_H */

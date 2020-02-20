@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_BYTE_BUF_H
-#define AWS_COMMON_BYTE_BUF_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -749,5 +748,3 @@ AWS_COMMON_API bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x
 AWS_COMMON_API bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_BYTE_BUF_H */

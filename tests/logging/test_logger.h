@@ -1,7 +1,4 @@
-/* NOLINTNEXTLINE(llvm-header-guard) */
-#ifndef AWS_COMMON_TEST_LOGGER_H
-#define AWS_COMMON_TEST_LOGGER_H
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -45,5 +42,3 @@ int test_logger_init(
  * Extracts logged content from a test logger.
  */
 int test_logger_get_contents(struct aws_logger *logger, char *buffer, size_t max_length);
-
-#endif /* AWS_COMMON_TEST_LOGGER_H */

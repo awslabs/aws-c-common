@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -13,11 +14,7 @@
  * permissions and limitations under the License.
  */
 
-#ifndef AWS_COMMON_POSIX_COMMON_INL
-#define AWS_COMMON_POSIX_COMMON_INL
-
 #include <aws/common/common.h>
-
 #include <errno.h>
 
 AWS_EXTERN_C_BEGIN
@@ -42,5 +39,3 @@ static inline int aws_private_convert_and_raise_error_code(int error_code) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_POSIX_COMMON_INL */

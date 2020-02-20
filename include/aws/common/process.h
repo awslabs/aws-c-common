@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_PROCESS_H
-#define AWS_COMMON_PROCESS_H
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -22,5 +21,3 @@ AWS_EXTERN_C_BEGIN
 AWS_COMMON_API int aws_get_pid(void);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_PROCESS_H */

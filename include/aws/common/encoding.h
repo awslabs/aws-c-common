@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_ENCODING_H
-#define AWS_COMMON_ENCODING_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -140,10 +138,8 @@ AWS_STATIC_IMPL void aws_write_u16(uint16_t value, uint8_t *buffer);
  */
 AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/encoding.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ENCODING_H */

@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_CONDITION_VARIABLE_H
-#define AWS_COMMON_CONDITION_VARIABLE_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -118,4 +116,3 @@ int aws_condition_variable_wait_for_pred(
     void *pred_ctx);
 
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_CONDITION_VARIABLE_H */

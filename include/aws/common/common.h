@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_COMMON_H
-#define AWS_COMMON_COMMON_H
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -51,5 +49,3 @@ AWS_COMMON_API
 void aws_common_fatal_assert_library_initialized(void);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_COMMON_H */

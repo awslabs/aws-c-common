@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_PRIVATE_BYTE_BUF_H
-#define AWS_COMMON_PRIVATE_BYTE_BUF_H
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -24,5 +23,3 @@
  * SPECTRE mitigation purposes.
  */
 AWS_COMMON_API size_t aws_nospec_mask(size_t index, size_t bound);
-
-#endif /* AWS_COMMON_PRIVATE_BYTE_BUF_H */

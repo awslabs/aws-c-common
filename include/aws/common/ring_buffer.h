@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_RING_BUFFER_H
-#define AWS_COMMON_RING_BUFFER_H
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -112,10 +111,8 @@ AWS_COMMON_API int aws_ring_buffer_allocator_init(struct aws_allocator *allocato
  */
 AWS_COMMON_API void aws_ring_buffer_allocator_clean_up(struct aws_allocator *allocator);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/ring_buffer.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_RING_BUFFER_H */

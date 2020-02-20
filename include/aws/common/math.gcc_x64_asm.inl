@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_MATH_GCC_X64_ASM_INL
-#define AWS_COMMON_MATH_GCC_X64_ASM_INL
-
+#pragma once
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -189,6 +187,4 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
 
 AWS_EXTERN_C_END
 
-/* clang-format on */
-
-#endif /* AWS_COMMON_MATH_GCC_X64_ASM_INL */
+/* clang-format on */\

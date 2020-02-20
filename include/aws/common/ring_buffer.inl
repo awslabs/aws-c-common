@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_RING_BUFFER_INL
-#define AWS_COMMON_RING_BUFFER_INL
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -51,4 +50,3 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring
            head_in_range && tail_in_range && valid_head_tail && (ring_buf->allocator != NULL);
 }
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_RING_BUFFER_INL */

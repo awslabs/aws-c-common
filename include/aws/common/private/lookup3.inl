@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_PRIVATE_LOOKUP3_INL
-#define AWS_COMMON_PRIVATE_LOOKUP3_INL
+#pragma once
+
 /* clang-format off */
 
 /*
@@ -1058,6 +1058,3 @@ int main()
 #ifdef CBMC
 #    pragma CPROVER check pop
 #endif /* CBMC */
-
-/* clang-format on */
-#endif /* AWS_COMMON_PRIVATE_LOOKUP3_INL */

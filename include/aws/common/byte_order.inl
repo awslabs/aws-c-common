@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_BYTE_ORDER_INL
-#define AWS_COMMON_BYTE_ORDER_INL
-
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -170,5 +168,3 @@ AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_BYTE_ORDER_INL */

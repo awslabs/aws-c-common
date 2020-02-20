@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_STRING_H
-#define AWS_COMMON_STRING_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -237,10 +236,8 @@ bool aws_string_is_valid(const struct aws_string *str);
 AWS_STATIC_IMPL
 bool aws_c_string_is_valid(const char *str);
 
-#ifndef AWS_NO_STATIC_IMPL
+#ifdef AWS_ENABLE_STATIC_IMPL
 #    include <aws/common/string.inl>
-#endif /* AWS_NO_STATIC_IMPL */
+#endif /* AWS_ENABLE_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_STRING_H */

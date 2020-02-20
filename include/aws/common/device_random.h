@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_DEVICE_RANDOM_H
-#define AWS_COMMON_DEVICE_RANDOM_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -46,5 +45,3 @@ AWS_COMMON_API int aws_device_random_u8(uint8_t *output);
 AWS_COMMON_API int aws_device_random_buffer(struct aws_byte_buf *output);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_DEVICE_RANDOM_H */

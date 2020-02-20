@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_ZERO_INL
-#define AWS_COMMON_ZERO_INL
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -55,5 +53,3 @@ bool aws_is_mem_zeroed(const void *buf, size_t bufsize) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ZERO_INL */

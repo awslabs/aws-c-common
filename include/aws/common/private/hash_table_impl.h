@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_PRIVATE_HASH_TABLE_IMPL_H
-#define AWS_COMMON_PRIVATE_HASH_TABLE_IMPL_H
+#pragma once
 
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -68,5 +67,3 @@ bool hash_table_state_is_valid(const struct hash_table_state *map);
  * "required_bytes".
  */
 int hash_table_state_required_bytes(size_t size, size_t *required_bytes);
-
-#endif /* AWS_COMMON_PRIVATE_HASH_TABLE_IMPL_H */

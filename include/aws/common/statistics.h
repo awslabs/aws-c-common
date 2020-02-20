@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_STATISTICS_H
-#define AWS_COMMON_STATISTICS_H
-
+#pragma once
 /*
  * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -146,5 +144,3 @@ AWS_COMMON_API
 void aws_crt_statistics_handler_destroy(struct aws_crt_statistics_handler *handler);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_STATISTICS_H */

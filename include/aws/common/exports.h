@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_EXPORTS_H
-#define AWS_COMMON_EXPORTS_H
+#pragma once
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -35,7 +34,7 @@
 
 #endif /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
 
-#ifdef AWS_NO_STATIC_IMPL
+#ifndef AWS_ENABLE_STATIC_IMPL
 #    define AWS_STATIC_IMPL AWS_COMMON_API
 #endif
 
@@ -46,5 +45,3 @@
  */
 #    define AWS_STATIC_IMPL static inline
 #endif
-
-#endif /* AWS_COMMON_EXPORTS_H */

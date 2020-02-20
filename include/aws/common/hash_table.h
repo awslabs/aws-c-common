@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_HASH_TABLE_H
-#define AWS_COMMON_HASH_TABLE_H
-
+#pragma once
 /*
  * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -431,5 +429,3 @@ AWS_COMMON_API
 bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_HASH_TABLE_H */

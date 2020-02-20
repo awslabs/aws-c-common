@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ASSERT_H
-#define AWS_COMMON_ASSERT_H
+#pragma once
 
 /*
  * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -152,5 +151,3 @@ AWS_EXTERN_C_END
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*(ptr)))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*(ptr)))
-
-#endif /* AWS_COMMON_ASSERT_H */

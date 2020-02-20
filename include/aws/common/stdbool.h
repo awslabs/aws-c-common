@@ -1,8 +1,4 @@
-/* clang-format off */
-/* clang-format gets confused by the #define bool line, and gives crazy indenting */
-#ifndef AWS_COMMON_STDBOOL_H
-#define AWS_COMMON_STDBOOL_H
-
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -18,6 +14,8 @@
  * permissions and limitations under the License.
  */
 
+/* clang-format off */
+/* clang-format gets confused by the #define bool line, and gives crazy indenting */
 #ifndef NO_STDBOOL
 #    include <stdbool.h> /* NOLINT(fuchsia-restrict-system-includes) */
 #else
@@ -36,5 +34,4 @@
 #    endif     /* __cplusplus */
 #endif         /* NO_STDBOOL */
 
-#endif /* AWS_COMMON_STDBOOL_H */
 /* clang-format on */

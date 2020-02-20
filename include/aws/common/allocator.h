@@ -1,5 +1,4 @@
-#ifndef AWS_COMMON_ALLOCATOR_H
-#define AWS_COMMON_ALLOCATOR_H
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -162,5 +161,3 @@ AWS_COMMON_API
 size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ALLOCATOR_H */

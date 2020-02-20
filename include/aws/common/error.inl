@@ -1,6 +1,4 @@
-#ifndef AWS_COMMON_ERROR_INL
-#define AWS_COMMON_ERROR_INL
-
+#pragma once
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -37,5 +35,3 @@ int aws_raise_error(int err) {
 }
 
 AWS_EXTERN_C_END
-
-#endif /* AWS_COMMON_ERROR_INL */
