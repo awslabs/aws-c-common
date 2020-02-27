@@ -234,7 +234,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
         ${GENERATED_CONFIG_HEADER}
         ESCAPE_QUOTES)
 
-if (NOT CMAKE_CROSSCOMPILING)
+if (AWS_CROSS_COMPILE_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
     endif()
