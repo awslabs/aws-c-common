@@ -52,6 +52,10 @@ bool aws_bigint_is_valid(const struct aws_bigint *bigint) {
         return false;
     }
 
+    if (bigint->allocator == NULL) {
+        return false;
+    }
+
     if (!aws_array_list_is_valid(&bigint->digits)) {
         return false;
     }
@@ -75,6 +79,8 @@ void aws_bigint_destroy(struct aws_bigint *bigint) {
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
+
     if (hex_cursor->len >= 2) {
         const char *raw_ptr = (char *)hex_cursor->ptr;
         if (raw_ptr[0] == '0' && (raw_ptr[1] == 'x' || raw_ptr[1] == 'X')) {
@@ -84,12 +90,17 @@ static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor)
 }
 
 static void s_advance_cursor_to_non_zero(struct aws_byte_cursor *hex_cursor) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
+
     while (hex_cursor->len > 0 && *hex_cursor->ptr == '0') {
         aws_byte_cursor_advance(hex_cursor, 1);
     }
 }
 
 static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *output_value) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&digit_cursor));
+    AWS_PRECONDITION(output_value);
+
     AWS_FATAL_ASSERT(digit_cursor.len <= NIBBLES_PER_DIGIT);
 
     *output_value = 0;
@@ -165,6 +176,8 @@ struct aws_bigint *aws_bigint_new_from_hex(struct aws_allocator *allocator, stru
 
     bigint->sign = 1;
 
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+
     return bigint;
 
 on_error:
@@ -196,6 +209,8 @@ struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, in
 
     bigint->sign = -1;
 
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+
     return bigint;
 }
 
@@ -223,6 +238,8 @@ struct aws_bigint *aws_bigint_new_from_uint64(struct aws_allocator *allocator, u
     }
 
     bigint->sign = 1;
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
 
     return bigint;
 
@@ -254,6 +271,8 @@ struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source) {
         aws_array_list_get_at(&source->digits, &digit, i);
         aws_array_list_push_back(&bigint->digits, &digit);
     }
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
 
     return bigint;
 
@@ -318,6 +337,9 @@ int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_
         bool prepend_zeros = i != 0;
         s_append_uint32_as_hex(buffer, digit, prepend_zeros);
     }
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
 
     return AWS_OP_SUCCESS;
 }
