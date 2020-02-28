@@ -717,8 +717,10 @@ done:
 }
 
 int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
-    struct aws_bigint temp_output;
-    AWS_ZERO_STRUCT(temp_output);
+
+    AWS_PRECONDITION(aws_bigint_is_valid(output));
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
 
     struct aws_allocator *allocator = output->digits.alloc;
 
@@ -730,7 +732,13 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
         return AWS_OP_ERR;
     }
 
-    if (aws_array_list_init_dynamic(&temp_output.digits, allocator, digit_count_sum, sizeof(uint32_t))) {
+    struct aws_bigint *temp_output = aws_bigint_new_from_uint64(allocator, 0);
+    if (temp_output == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    if (aws_array_list_ensure_capacity(&temp_output->digits, digit_count_sum)) {
+        aws_bigint_destroy(temp_output);
         return AWS_OP_ERR;
     }
 
@@ -743,10 +751,13 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
      * We do this so that when we add the current product digit into the accumulating product, there's already
      * a value there (0).  We could conditionally retrieve it too, but this keeps us from having to add
      * if-then checks around both the read and the write.
+     *
+     * Since we initialized this to zero at the top of the function, we only need to do this digit_count_sum - 1
+     * times (there's already a single zero entry in the array list).
      */
-    for (size_t i = 0; i < digit_count_sum; ++i) {
-        uint32_t zero = 0;
-        aws_array_list_push_back(&temp_output.digits, &zero);
+    uint32_t zero = 0;
+    for (size_t i = 0; i + 1 < digit_count_sum; ++i) {
+        aws_array_list_push_back(&temp_output->digits, &zero);
     }
 
     for (size_t i = 0; i < lhs_length; ++i) {
@@ -760,34 +771,34 @@ int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struc
             aws_array_list_get_at(&rhs->digits, &rhs_digit, j);
 
             uint32_t output_digit = 0;
-            aws_array_list_get_at(&temp_output.digits, &output_digit, i + j);
+            aws_array_list_get_at(&temp_output->digits, &output_digit, i + j);
 
             /* multiply-and-add a single digit pair */
             uint64_t product_digit = (uint64_t)lhs_digit * (uint64_t)rhs_digit + carry + (uint64_t)output_digit;
             uint32_t final_product_digit = (uint32_t)(product_digit & LOWER_32_BIT_MASK);
             carry = (product_digit >> 32);
 
-            aws_array_list_set_at(&temp_output.digits, &final_product_digit, i + j);
+            aws_array_list_set_at(&temp_output->digits, &final_product_digit, i + j);
         }
 
         if (carry > 0) {
             uint32_t carry_digit = (uint32_t)carry; /* safe */
             /* we can set_at here because we know the existing value must be zero */
-            aws_array_list_set_at(&temp_output.digits, &carry_digit, i + rhs_length);
+            aws_array_list_set_at(&temp_output->digits, &carry_digit, i + rhs_length);
         }
     }
 
-    s_aws_bigint_trim_leading_zeros(&temp_output);
+    s_aws_bigint_trim_leading_zeros(temp_output);
 
-    if ((lhs->sign == rhs->sign) || aws_bigint_is_zero(&temp_output)) {
+    if ((lhs->sign == rhs->sign) || aws_bigint_is_zero(temp_output)) {
         output->sign = 1;
     } else {
         output->sign = -1;
     }
 
-    aws_array_list_swap_contents(&temp_output.digits, &output->digits);
+    aws_array_list_swap_contents(&temp_output->digits, &output->digits);
 
-    aws_bigint_clean_up(&temp_output);
+    aws_bigint_destroy(temp_output);
 
     return AWS_OP_SUCCESS;
 }
