@@ -20,6 +20,25 @@
 #define INT64_MIN_AS_HEX 0x8000000000000000
 
 /*
+ * A basic big integer implementation using 2^32 as the base.  Algorithms used are formalizations of the basic
+ * grade school operations everyone knows and loves (as formalized in AoCP Vol 2, 4.3.1).  Current use case
+ * targets do not yet involve a domain large enough that its worth exploring more complex algorithms.
+ */
+struct aws_bigint {
+    struct aws_allocator *allocator;
+
+    /*
+     * A sequence of base 2^32 digits starting from the least significant
+     */
+    struct aws_array_list digits;
+
+    /*
+     * 1 = positive, -1 = negative
+     */
+    int sign;
+};
+
+/*
  * Working set of invariants:
  *
  * (1) Negative zero is illegal
@@ -36,9 +55,15 @@
  * (1) Internal arithmetic ops may use a "raw" interface to allow for subsequence operations used in multiply/divide.
  */
 
-void aws_bigint_clean_up(struct aws_bigint *bigint) {
+void aws_bigint_destroy(struct aws_bigint *bigint) {
+    if (bigint == NULL) {
+        return;
+    }
+
     aws_array_list_clean_up(&bigint->digits);
     AWS_ZERO_STRUCT(bigint->digits);
+
+    aws_mem_release(bigint->allocator, bigint);
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
@@ -83,26 +108,31 @@ static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *outp
     return AWS_OP_SUCCESS;
 }
 
-int aws_bigint_init_from_hex(
-    struct aws_bigint *bigint,
-    struct aws_allocator *allocator,
-    struct aws_byte_cursor hex_digits) {
+struct aws_bigint *aws_bigint_new_from_hex(struct aws_allocator *allocator, struct aws_byte_cursor hex_digits) {
 
     /* skip past the optional "0x" prefix */
     s_advance_cursor_past_hex_prefix(&hex_digits);
     if (hex_digits.len == 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
     }
 
     /* skip past leading zeros */
     s_advance_cursor_to_non_zero(&hex_digits);
     if (hex_digits.len == 0) {
-        return aws_bigint_init_from_uint64(bigint, allocator, 0);
+        return aws_bigint_new_from_uint64(allocator, 0);
     }
+
+    struct aws_bigint *bigint = aws_mem_calloc(allocator, 1, sizeof(struct aws_bigint));
+    if (bigint == NULL) {
+        return NULL;
+    }
+
+    bigint->allocator = allocator;
 
     size_t digit_count = (hex_digits.len - 1) / NIBBLES_PER_DIGIT + 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
-        return AWS_OP_ERR;
+        goto on_error;
     }
 
     while (hex_digits.len > 0) {
@@ -125,44 +155,52 @@ int aws_bigint_init_from_hex(
 
     bigint->sign = 1;
 
-    return AWS_OP_SUCCESS;
+    return bigint;
 
 on_error:
 
-    aws_bigint_clean_up(bigint);
+    aws_bigint_destroy(bigint);
 
-    return AWS_OP_ERR;
+    return NULL;
 }
 
-int aws_bigint_init_from_int64(struct aws_bigint *bigint, struct aws_allocator *allocator, int64_t value) {
+struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, int64_t value) {
     if (value >= 0) {
-        return aws_bigint_init_from_uint64(bigint, allocator, (uint64_t)value);
+        return aws_bigint_new_from_uint64(allocator, (uint64_t)value);
     }
 
+    struct aws_bigint *bigint = NULL;
     if (value == INT64_MIN) {
         /* We can't just negate and cast, so just submit a constant */
-        if (aws_bigint_init_from_uint64(bigint, allocator, INT64_MIN_AS_HEX)) {
-            return AWS_OP_ERR;
-        }
+        bigint = aws_bigint_new_from_uint64(allocator, INT64_MIN_AS_HEX);
     } else {
         /* The value is negative but can be safely negated to a positive value before casting to uint64 */
-        if (aws_bigint_init_from_uint64(bigint, allocator, (uint64_t)(-value))) {
-            return AWS_OP_ERR;
-        }
+        bigint = aws_bigint_new_from_uint64(allocator, (uint64_t)(-value));
+    }
+
+    if (bigint == NULL) {
+        return NULL;
     }
 
     bigint->sign = -1;
 
-    return AWS_OP_SUCCESS;
+    return bigint;
 }
 
-int aws_bigint_init_from_uint64(struct aws_bigint *bigint, struct aws_allocator *allocator, uint64_t value) {
+struct aws_bigint *aws_bigint_new_from_uint64(struct aws_allocator *allocator, uint64_t value) {
+
+    struct aws_bigint *bigint = aws_mem_calloc(allocator, 1, sizeof(struct aws_bigint));
+    if (bigint == NULL) {
+        return NULL;
+    }
+
+    bigint->allocator = allocator;
 
     uint32_t lower_digit = (uint32_t)(value & LOWER_32_BIT_MASK);
     uint32_t upper_digit = (uint32_t)((value >> 32) & LOWER_32_BIT_MASK);
     size_t digit_count = upper_digit > 0 ? 2 : 1;
     if (aws_array_list_init_dynamic(&bigint->digits, allocator, digit_count, sizeof(uint32_t))) {
-        return AWS_OP_ERR;
+        goto on_error;
     }
 
     aws_array_list_push_back(&bigint->digits, &lower_digit);
@@ -173,25 +211,42 @@ int aws_bigint_init_from_uint64(struct aws_bigint *bigint, struct aws_allocator 
 
     bigint->sign = 1;
 
-    return AWS_OP_SUCCESS;
+    return bigint;
+
+on_error:
+
+    aws_bigint_destroy(bigint);
+
+    return NULL;
 }
 
-int aws_bigint_init_from_copy(struct aws_bigint *bigint, const struct aws_bigint *source) {
+struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source) {
+    struct aws_bigint *bigint = aws_mem_calloc(source->allocator, 1, sizeof(struct aws_bigint));
+    if (bigint == NULL) {
+        return NULL;
+    }
+
+    bigint->allocator = source->allocator;
     bigint->sign = source->sign;
 
     size_t source_length = aws_array_list_length(&source->digits);
     if (aws_array_list_init_dynamic(&bigint->digits, source->digits.alloc, source_length, sizeof(uint32_t))) {
-        return AWS_OP_ERR;
+        goto on_error;
     }
 
     for (size_t i = 0; i < source_length; ++i) {
         uint32_t digit = 0;
         aws_array_list_get_at(&source->digits, &digit, i);
-
         aws_array_list_push_back(&bigint->digits, &digit);
     }
 
-    return AWS_OP_SUCCESS;
+    return bigint;
+
+on_error:
+
+    aws_bigint_destroy(bigint);
+
+    return NULL;
 }
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
