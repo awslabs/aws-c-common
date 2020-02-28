@@ -13,6 +13,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
+option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
@@ -234,7 +235,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
         ${GENERATED_CONFIG_HEADER}
         ESCAPE_QUOTES)
 
-if (NOT CMAKE_CROSSCOMPILING)
+if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
     endif()

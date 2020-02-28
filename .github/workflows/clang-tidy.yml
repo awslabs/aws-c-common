@@ -1,0 +1,16 @@
+name: Lint
+
+on: [push]
+
+jobs:
+  clang-tidy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+      
+    - name: clang-tidy lint
+      run: |
+        python3 ./codebuild/builder.py run clang-tidy
