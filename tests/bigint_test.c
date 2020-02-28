@@ -1108,3 +1108,4 @@ static int s_test_bigint_subtract_negative_result(struct aws_allocator *allocato
 }
 
 AWS_TEST_CASE(test_bigint_subtract_negative_result, s_test_bigint_subtract_negative_result)
+
