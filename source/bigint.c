@@ -48,7 +48,19 @@ struct aws_bigint {
  */
 
 bool aws_bigint_is_valid(const struct aws_bigint *bigint) {
-    return bigint && aws_array_list_is_valid(&bigint->digits);
+    if (bigint == NULL) {
+        return false;
+    }
+
+    if (!aws_array_list_is_valid(&bigint->digits)) {
+        return false;
+    }
+
+    if (bigint->sign != 1 && bigint->sign != -1) {
+        return false;
+    }
+
+    return true;
 }
 
 void aws_bigint_destroy(struct aws_bigint *bigint) {
