@@ -363,49 +363,6 @@ static void notify_race_completed(void) {
     static void race_name##_iter(int vn_participant, struct one_race *vn_race) /* NOLINT */
 
 /*
- * See http://www.cs.cmu.edu/~410-f10/doc/Intel_Reordering_318147.pdf #2.3
- */
-DEFINE_RACE(loads_reordered_with_older_stores, participant, race) {
-    struct aws_atomic_var *my_var = race->vars[participant];
-    struct aws_atomic_var *their_var = race->vars[1 - participant];
-    struct aws_atomic_var *observed = race->observations[participant];
-    /*
-     * This test may fail with any other ordering, even on the relatively relaxed x86 architecture.
-     * This failure seems relatively easy to reproduce, so this is a good way to test for seq_cst ordering.
-     */
-    enum aws_memory_order store_order = aws_memory_order_seq_cst;
-    enum aws_memory_order load_order = aws_memory_order_seq_cst;
-
-    aws_atomic_store_int_explicit(my_var, 1, store_order);
-    aws_atomic_store_int_explicit(
-        observed, aws_atomic_load_int_explicit(their_var, load_order), aws_memory_order_relaxed);
-}
-
-AWS_TEST_CASE(atomics_loads_reordered_with_older_stores, t_loads_reordered_with_older_stores)
-static int t_loads_reordered_with_older_stores(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    struct aws_atomic_var template[2];
-    size_t last_race;
-    aws_atomic_init_int(&template[0], 0);
-    aws_atomic_init_int(&template[1], 0);
-
-    setup_races(allocator, 100000, 2, 2, template, template);
-    run_races(&last_race, allocator, 2, loads_reordered_with_older_stores);
-
-    for (size_t i = 0; i < last_race; i++) {
-        size_t a = aws_atomic_load_int_explicit(races[i].observations[0], aws_memory_order_relaxed);
-        size_t b = aws_atomic_load_int_explicit(races[i].observations[1], aws_memory_order_relaxed);
-
-        ASSERT_TRUE(a || b, "Race at iteration %zu", i);
-    }
-
-    free_races(allocator);
-
-    return 0;
-}
-
-/*
  * The following race races these two threads:
  *
  * Thread 1:

@@ -28,7 +28,7 @@ static struct aws_error_info_list s_errors_list = {
     .count = AWS_ARRAY_SIZE(s_errors),
 };
 
-static void s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -36,15 +36,20 @@ static void s_setup_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
     aws_set_global_error_handler_fn(NULL, NULL);
     aws_set_thread_local_error_handler_fn(NULL, NULL);
     aws_register_error_info(&s_errors_list);
+
+    return AWS_OP_SUCCESS;
 }
 
-static void s_teardown_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_teardown_errors_test_fn(struct aws_allocator *allocator, int setup_res, void *ctx) {
     (void)allocator;
+    (void)setup_res;
     (void)ctx;
 
     aws_reset_error();
     aws_set_global_error_handler_fn(NULL, NULL);
     aws_set_thread_local_error_handler_fn(NULL, NULL);
+
+    return AWS_OP_SUCCESS;
 }
 
 static int s_raise_errors_test_fn(struct aws_allocator *allocator, void *ctx) {
