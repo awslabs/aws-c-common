@@ -1350,26 +1350,26 @@ static int s_do_right_shift_test(
     aws_byte_buf_init(&serialized_shift, allocator, 0);
 
     for (size_t i = 0; i < test_case_count; ++i) {
-        struct aws_bigint value1;
         struct aws_bigint_shift_test *testcase = &test_cases[i];
 
         /* init operands */
-        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
-            aws_bigint_negate(&value1);
+            aws_bigint_negate(value1);
         }
 
-        aws_bigint_shift_right(&value1, testcase->shift_amount);
+        aws_bigint_shift_right(value1, testcase->shift_amount);
 
         serialized_shift.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&value1, &serialized_shift));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_shift.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(
             testcase->expected_result, expected_length, serialized_shift.buffer, serialized_shift.len);
 
-        aws_bigint_clean_up(&value1);
+        aws_bigint_destroy(value1);
     }
 
     aws_byte_buf_clean_up(&serialized_shift);
@@ -1522,26 +1522,27 @@ static int s_do_left_shift_test(
     aws_byte_buf_init(&serialized_shift, allocator, 0);
 
     for (size_t i = 0; i < test_case_count; ++i) {
-        struct aws_bigint value1;
         struct aws_bigint_shift_test *testcase = &test_cases[i];
 
         /* init operands */
-        ASSERT_SUCCESS(aws_bigint_init_from_hex(&value1, allocator, aws_byte_cursor_from_c_str(testcase->value1)));
+        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        ASSERT_NOT_NULL(value1);
+
         if (testcase->is_negative1) {
-            aws_bigint_negate(&value1);
+            aws_bigint_negate(value1);
         }
 
-        aws_bigint_shift_left(&value1, testcase->shift_amount);
+        aws_bigint_shift_left(value1, testcase->shift_amount);
 
         serialized_shift.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(&value1, &serialized_shift));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_shift.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(
             testcase->expected_result, expected_length, serialized_shift.buffer, serialized_shift.len);
 
-        aws_bigint_clean_up(&value1);
+        aws_bigint_destroy(value1);
     }
 
     aws_byte_buf_clean_up(&serialized_shift);

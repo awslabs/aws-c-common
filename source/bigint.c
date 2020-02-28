@@ -816,6 +816,8 @@ done:
 
 /* this function can't fail */
 void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
     size_t digit_count = aws_array_list_length(&bigint->digits);
 
     /*
@@ -833,6 +835,8 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
         uint32_t zero_digit = 0;
         aws_array_list_push_back(&bigint->digits, &zero_digit);
         bigint->sign = 1;
+
+        AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
         return;
     }
 
@@ -882,9 +886,12 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
     }
 
     s_aws_bigint_trim_leading_zeros(bigint);
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
 }
 
 int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
 
@@ -898,6 +905,7 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     /* I hate this API, technically we're reserving (digit_count + base_shift_count + 1) */
     if (aws_array_list_ensure_capacity(&bigint->digits, digit_count + base_shift_count)) {
+        AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
         return AWS_OP_ERR;
     }
 
@@ -945,6 +953,8 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
     }
 
     s_aws_bigint_trim_leading_zeros(bigint);
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
 
     return AWS_OP_SUCCESS;
 }
