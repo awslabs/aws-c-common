@@ -43,17 +43,13 @@ struct aws_bigint {
  *
  * (1) Negative zero is illegal
  * (2) The only time leading (trailing) 0-value digits are allowed is a single instance to represent actual zero.
+ * (3) Functionally immutable API (no visible side-affects unless a successful operation with aliased parameters)
  *
- * Other proposals:
- *
- * (1) Functionally immutable API (no visible side-affects)
- * (2) params may be temporarily altered during computation before being restored in order to prevent pointless copying
- *   (most often around sign negation and operator switching)
- *
- * Dev ideas:
- *
- * (1) Internal arithmetic ops may use a "raw" interface to allow for subsequence operations used in multiply/divide.
  */
+
+bool aws_bigint_is_valid(const struct aws_bigint *bigint) {
+    return bigint && aws_array_list_is_valid(&bigint->digits);
+}
 
 void aws_bigint_destroy(struct aws_bigint *bigint) {
     if (bigint == NULL) {
@@ -109,6 +105,8 @@ static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *outp
 }
 
 struct aws_bigint *aws_bigint_new_from_hex(struct aws_allocator *allocator, struct aws_byte_cursor hex_digits) {
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&hex_digits));
 
     /* skip past the optional "0x" prefix */
     s_advance_cursor_past_hex_prefix(&hex_digits);
@@ -165,6 +163,8 @@ on_error:
 }
 
 struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, int64_t value) {
+    AWS_PRECONDITION(allocator);
+
     if (value >= 0) {
         return aws_bigint_new_from_uint64(allocator, (uint64_t)value);
     }
@@ -188,6 +188,7 @@ struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, in
 }
 
 struct aws_bigint *aws_bigint_new_from_uint64(struct aws_allocator *allocator, uint64_t value) {
+    AWS_PRECONDITION(allocator);
 
     struct aws_bigint *bigint = aws_mem_calloc(allocator, 1, sizeof(struct aws_bigint));
     if (bigint == NULL) {
@@ -221,6 +222,8 @@ on_error:
 }
 
 struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source) {
+    AWS_PRECONDITION(aws_bigint_is_valid(source));
+
     struct aws_bigint *bigint = aws_mem_calloc(source->allocator, 1, sizeof(struct aws_bigint));
     if (bigint == NULL) {
         return NULL;
@@ -275,6 +278,9 @@ static void s_append_uint32_as_hex(struct aws_byte_buf *buffer, uint32_t value, 
 }
 
 int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+
     size_t digit_count = aws_array_list_length(&bigint->digits);
     size_t max_hex_digits = aws_array_list_length(&bigint->digits) * NIBBLES_PER_DIGIT;
     size_t total_characters = max_hex_digits + ((bigint->sign < 0) ? 1 : 0);
@@ -305,14 +311,20 @@ int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_
 }
 
 bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
     return bigint->sign < 0;
 }
 
 bool aws_bigint_is_positive(const struct aws_bigint *bigint) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
     return bigint->sign > 0 && !aws_bigint_is_zero(bigint);
 }
 
 bool aws_bigint_is_zero(const struct aws_bigint *bigint) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
     if (bigint->sign < 0) {
         return false;
     }
@@ -337,6 +349,7 @@ enum aws_bigint_ordering {
 static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(
     const struct aws_bigint *lhs,
     const struct aws_bigint *rhs) {
+
     size_t lhs_digit_count = aws_array_list_length(&lhs->digits);
     size_t rhs_digit_count = aws_array_list_length(&rhs->digits);
 
@@ -364,14 +377,23 @@ static enum aws_bigint_ordering s_aws_bigint_get_magnitude_ordering(
 }
 
 bool aws_bigint_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_EQUAL_TO && lhs->sign == rhs->sign;
 }
 
 bool aws_bigint_not_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     return !aws_bigint_equals(lhs, rhs);
 }
 
 bool aws_bigint_less_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     if (lhs->sign < 0) {
         if (rhs->sign < 0) {
             return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_GREATER_THAN;
@@ -388,6 +410,9 @@ bool aws_bigint_less_than(const struct aws_bigint *lhs, const struct aws_bigint 
 }
 
 bool aws_bigint_greater_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     if (lhs->sign < 0) {
         if (rhs->sign < 0) {
             return s_aws_bigint_get_magnitude_ordering(lhs, rhs) == AWS_BI_LESS_THAN;
@@ -404,14 +429,22 @@ bool aws_bigint_greater_than(const struct aws_bigint *lhs, const struct aws_bigi
 }
 
 bool aws_bigint_less_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     return !aws_bigint_greater_than(lhs, rhs);
 }
 
 bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
     return !aws_bigint_less_than(lhs, rhs);
 }
 
 void aws_bigint_negate(struct aws_bigint *bigint) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
     if (!aws_bigint_is_zero(bigint)) {
         bigint->sign *= -1;
     }

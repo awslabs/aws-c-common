@@ -26,6 +26,9 @@ struct aws_bigint;
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
+bool aws_bigint_is_valid(const struct aws_bigint *bigint);
+
+AWS_COMMON_API
 void aws_bigint_destroy(struct aws_bigint *bigint);
 
 /**
