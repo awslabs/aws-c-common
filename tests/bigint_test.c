@@ -783,7 +783,7 @@ static struct bigint_arithmetic_test s_add_positive_test_cases[] = {
 /* clang-format on */
 
 static int s_test_bigint_add_positive(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
+    (void)ctx;
 
     return s_do_addition_test(allocator, s_add_positive_test_cases, AWS_ARRAY_SIZE(s_add_positive_test_cases));
 }
