@@ -21,65 +21,47 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 
-/*
- * A basic big integer implementation using 2^32 as the base.  Algorithms used are formalizations of the basic
- * grade school operations everyone knows and loves (as formalized in AoCP Vol 2, 4.3.1).  Current use case
- * targets do not yet involve a domain large enough that its worth exploring more complex algorithms.
- */
-struct aws_bigint {
-    /*
-     * A sequence of base 2^32 digits starting from the least significant
-     */
-    struct aws_array_list digits;
-
-    /*
-     * 1 = positive, -1 = negative
-     */
-    int sign;
-};
+struct aws_bigint;
 
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
-void aws_bigint_clean_up(struct aws_bigint *bigint);
+bool aws_bigint_is_valid(const struct aws_bigint *bigint);
+
+AWS_COMMON_API
+void aws_bigint_destroy(struct aws_bigint *bigint);
 
 /**
- * Initializes a big int from a string of hex digits.  String may start with "0x".  Leading zeros are skipped.
+ * Creates a big int from a string of hex digits.  String may start with "0x".  Leading zeros are skipped.
  * An empty string is considered an error.  A leading (-) symbol is not supported.  Use aws_bigint_negate() after
- * calling aws_bigint_init_from_hex() to generate an arbitrary negative number.
+ * calling aws_bigint_new_from_hex() to generate an arbitrary negative number.
  */
 AWS_COMMON_API
-int aws_bigint_init_from_hex(
-    struct aws_bigint *bigint,
-    struct aws_allocator *allocator,
-    struct aws_byte_cursor hex_digits);
+struct aws_bigint *aws_bigint_new_from_hex(struct aws_allocator *allocator, struct aws_byte_cursor hex_digits);
 
 /**
- * Initializes a big int from a 64 bit signed integer
+ * Creates a big int from a 64 bit signed integer
  */
 AWS_COMMON_API
-int aws_bigint_init_from_int64(struct aws_bigint *bigint, struct aws_allocator *allocator, int64_t value);
+struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, int64_t value);
 
 /**
- * Initializes a big int from a 64 bit unsigned integer
+ * Creates a big int from a 64 bit unsigned integer
  */
 AWS_COMMON_API
-int aws_bigint_init_from_uint64(struct aws_bigint *bigint, struct aws_allocator *allocator, uint64_t value);
+struct aws_bigint *aws_bigint_new_from_uint64(struct aws_allocator *allocator, uint64_t value);
 
 /**
- * Initializes a big int as a copy of another big int
+ * Creates a big int as a copy of another big int
  */
 AWS_COMMON_API
-int aws_bigint_init_from_copy(struct aws_bigint *bigint, const struct aws_bigint *source);
+struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source);
 
 /**
- * Initializes a big int from a sequence of bytes
+ * Creates a big int from a sequence of bytes
  */
 AWS_COMMON_API
-int aws_bigint_init_from_cursor(
-    struct aws_bigint *bigint,
-    struct aws_allocator *allocator,
-    struct aws_byte_cursor source);
+struct aws_bigint *aws_bigint_new_from_cursor(struct aws_allocator *allocator, struct aws_byte_cursor source);
 
 /**
  * Writes a bigint to a buffer as a hexadecimal number.  Will prepend (-) in front of negative numbers for
@@ -165,21 +147,21 @@ void aws_bigint_negate(struct aws_bigint *bigint);
  * may alias to either operand.
  */
 AWS_COMMON_API
-int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
 /*
  * Subtracts two big integers, placing the result in output.  Output must have been initialized first.  Output
  * may alias to either operand (aliasing to the second is weird but not forbidden).
  */
 AWS_COMMON_API
-int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
 /*
  * Multiplies two big integers, placing the result in output.  Output must have been initialized first.  Output
  * may alias to either operand.
  */
 AWS_COMMON_API
-int aws_bigint_multiply(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
 /*
  * Performs a right bit-shift on a big int, equivalently dividing by a power of two.
