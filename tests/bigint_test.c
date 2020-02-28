@@ -2031,17 +2031,16 @@ static int s_test_bigint_append_binary(struct aws_allocator *allocator, void *ct
         struct aws_byte_buf buffer;
         aws_byte_buf_init(&buffer, allocator, 1);
 
-        struct aws_bigint test;
-
         struct bigint_append_binary_test *testcase = &s_append_binary_cases[i];
 
-        ASSERT_SUCCESS(aws_bigint_init_from_hex(&test, allocator, aws_byte_cursor_from_c_str(testcase->input_hex)));
+        struct aws_bigint *test = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->input_hex));
+        ASSERT_NOT_NULL(test);
 
-        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(&test, &buffer, testcase->minimum_length));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(test, &buffer, testcase->minimum_length));
         ASSERT_TRUE(buffer.len == testcase->expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_binary_data, testcase->expected_length, buffer.buffer, buffer.len);
 
-        aws_bigint_clean_up(&test);
+        aws_bigint_destroy(test);
         aws_byte_buf_clean_up(&buffer);
     }
 

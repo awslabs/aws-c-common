@@ -476,6 +476,10 @@ int aws_bigint_bytebuf_append_as_big_endian(
     const struct aws_bigint *bigint,
     struct aws_byte_buf *buffer,
     size_t minimum_length) {
+
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+
     size_t digit_count = aws_array_list_length(&bigint->digits);
     size_t bigint_bytes = s_aws_bigint_byte_length(bigint);
     size_t padding_bytes = 0;
@@ -483,9 +487,11 @@ int aws_bigint_bytebuf_append_as_big_endian(
         padding_bytes = minimum_length - bigint_bytes;
     }
 
+    int result = AWS_OP_ERR;
+
     size_t required_capacity = bigint_bytes + padding_bytes;
     if (aws_byte_buf_reserve_relative(buffer, required_capacity)) {
-        return AWS_OP_ERR;
+        goto done;
     }
 
     if (padding_bytes > 0) {
@@ -497,7 +503,7 @@ int aws_bigint_bytebuf_append_as_big_endian(
 
         for (size_t i = 0; i < padding_bytes; ++i) {
             if (aws_byte_buf_append(buffer, &padding_cursor)) {
-                return AWS_OP_ERR;
+                goto done;
             }
         }
     }
@@ -526,13 +532,20 @@ int aws_bigint_bytebuf_append_as_big_endian(
 
             if (should_write) {
                 if (aws_byte_buf_append(buffer, &digit_bytes_cursor)) {
-                    return AWS_OP_ERR;
+                    goto done;
                 }
             }
         }
     }
 
-    return AWS_OP_SUCCESS;
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+
+    return result;
 }
 
 bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
