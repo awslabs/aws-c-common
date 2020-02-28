@@ -72,7 +72,7 @@ void aws_bigint_destroy(struct aws_bigint *bigint) {
         return;
     }
 
-    aws_array_list_clean_up(&bigint->digits);
+    aws_array_list_clean_up_secure(&bigint->digits);
     AWS_ZERO_STRUCT(bigint->digits);
 
     aws_mem_release(bigint->allocator, bigint);
