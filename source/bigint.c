@@ -472,6 +472,12 @@ static size_t s_aws_bigint_byte_length(const struct aws_bigint *bigint) {
     return (digit_count - 1) * BYTES_PER_BASE_DIGIT + non_zero_high_digit_bytes;
 }
 
+#if _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4221) /* allow struct member to reference format_buffer  */
+#    pragma warning(disable : 4204) /* non-constant aggregate initializer */
+#endif
+
 int aws_bigint_bytebuf_append_as_big_endian(
     const struct aws_bigint *bigint,
     struct aws_byte_buf *buffer,
@@ -547,6 +553,10 @@ done:
 
     return result;
 }
+
+#if _MSC_VER
+#    pragma warning(pop)
+#endif
 
 bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
     AWS_PRECONDITION(aws_bigint_is_valid(bigint));
