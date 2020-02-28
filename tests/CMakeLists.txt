@@ -291,11 +291,6 @@ add_test_case(atomics_semantics)
 add_test_case(atomics_semantics_implicit)
 add_test_case(atomics_static_init)
 
-# atomics aren't 'fully' supported on gcc 4.1.2
-if (NOT LEGACY_COMPILER_SUPPORT)
-    add_test_case(atomics_loads_reordered_with_older_stores)
-endif()
-
 add_test_case(atomics_acquire_to_release_one_direction)
 add_test_case(atomics_acquire_to_release_mixed)
 
