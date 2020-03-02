@@ -21,6 +21,7 @@ void aws_byte_cursor_read_u8_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
     size_t length;
+    __CPROVER_assume(length >=1);
     uint8_t *dest = bounded_malloc(length);
 
     /* assumptions */
