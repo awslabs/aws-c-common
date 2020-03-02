@@ -19,11 +19,11 @@
 #include <aws/common/byte_order.h>
 #include <aws/common/common.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #    include <stdlib.h>
 #else
 #    include <netinet/in.h>
-#endif /* _MSC_VER */
+#endif /* _WIN32 */
 
 AWS_EXTERN_C_BEGIN
 
@@ -49,7 +49,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));
     return v;
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
     return _byteswap_uint64(x);
 #else
     uint32_t low = (uint32_t)x;
@@ -69,7 +69,7 @@ AWS_STATIC_IMPL uint64_t aws_ntoh64(uint64_t x) {
  * Convert 32 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_hton32(uint32_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return htonl(x);
@@ -126,7 +126,7 @@ AWS_STATIC_IMPL double aws_htonf64(double x) {
  * Convert 32 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return ntohl(x);
@@ -151,7 +151,7 @@ AWS_STATIC_IMPL double aws_ntohf64(double x) {
  * Convert 16 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return htons(x);
@@ -162,7 +162,7 @@ AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
  * Convert 16 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return ntohs(x);

@@ -68,6 +68,10 @@ function(aws_set_common_properties target)
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
+
+        if(CMAKE_C_IMPLICIT_LINK_LIBRARIES MATCHES "mingw32")
+            list(APPEND AWS_C_FLAGS -D__USE_MINGW_ANSI_STDIO=1 -Wno-unused-local-typedefs)
+        endif()
     endif()
 
     check_include_file(stdint.h HAS_STDINT)

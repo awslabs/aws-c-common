@@ -111,7 +111,9 @@ struct aws_logger_vtable {
         aws_log_subject_t subject,
         const char *format,
         ...)
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#if defined(__MINGW32__)
+        __attribute__((format(gnu_printf, 4, 5)))
+#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
         __attribute__((format(printf, 4, 5)))
 #endif /* non-ms compilers: TODO - find out what versions format support was added in */
         ;

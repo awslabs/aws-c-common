@@ -23,12 +23,16 @@ int aws_get_environment_value(
     const struct aws_string *variable_name,
     struct aws_string **value_out) {
 
-#pragma warning(push)
-#pragma warning(disable : 4996)
+#ifndef __MINGW32__
+#    pragma warning(push)
+#    pragma warning(disable : 4996)
+#endif
 
     const char *value = getenv(aws_string_c_str(variable_name));
 
-#pragma warning(pop)
+#ifndef __MINGW32__
+#    pragma warning(pop)
+#endif
 
     if (value == NULL) {
         *value_out = NULL;

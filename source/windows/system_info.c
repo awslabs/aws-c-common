@@ -40,7 +40,9 @@ void aws_debug_break(void) {
 }
 
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
-#pragma warning(disable : 4091)
+#ifndef __MINGW32__
+#    pragma warning(disable : 4091)
+#endif
 #include <dbghelp.h>
 
 struct win_symbol_data {
@@ -124,7 +126,7 @@ done:
     return;
 }
 
-static bool s_init_dbghelp() {
+static bool s_init_dbghelp(void) {
     if (AWS_LIKELY(s_SymInitialize)) {
         return true;
     }
@@ -188,7 +190,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             /* no luck, record the address and last error */
             DWORD last_error = GetLastError();
             int len = snprintf(
-                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
+                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %lu", stack[i], last_error);
             if (len > 0) {
                 struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &sym_cur);
@@ -209,7 +211,7 @@ char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
     if (exception_pointers) {
-        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
+        fprintf(fp, "** Exception 0x%lx occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     }
 
     if (!s_init_dbghelp()) {

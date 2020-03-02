@@ -365,6 +365,9 @@ struct aws_test_harness {
 };
 
 #if defined(_WIN32)
+#    ifdef __MINGW32__
+#        include <winsock2.h>
+#    endif
 #    include <windows.h>
 static LONG WINAPI s_test_print_stack_trace(struct _EXCEPTION_POINTERS *exception_pointers) {
 #    if !defined(AWS_HEADER_CHECKER)
