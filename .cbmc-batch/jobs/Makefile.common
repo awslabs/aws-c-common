@@ -155,7 +155,7 @@ $(ENTRY_GOTO)0.goto: setup_dependencies $(ENTRY).c $(DEPENDENT_GOTOS)
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_ENTRY,$@))
 	$(GOTO_CC) $(ENTRY).c \
-	  --export-function-local-symbols $(CBMC_VERBOSITY) \
+	  --export-file-local-symbols $(CBMC_VERBOSITY) \
 	  --function $(ENTRY) $(DEPENDENT_GOTOS) $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(call LOG_FROM_ENTRY,$@) ; exit $${PIPESTATUS[0]}
 
@@ -245,7 +245,7 @@ $(ENTRY).goto: $(ENTRY_GOTO).goto
 	mkdir -p $(dir $@)
 	mkdir -p $(dir $(call LOG_FROM_GOTO,$@))
 	echo $(call C_FROM_GOTO,$@)
-	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-function-local-symbols $(CBMC_VERBOSITY) \
+	$(GOTO_CC) -c $(call C_FROM_GOTO,$@) --export-file-local-symbols $(CBMC_VERBOSITY) \
 	  $(INC) $(DEFINES) -o $@ \
 	  2>&1 | tee $(call LOG_FROM_GOTO,$@) ; exit $${PIPESTATUS[0]}
 
