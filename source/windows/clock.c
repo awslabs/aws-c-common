@@ -57,7 +57,7 @@ static VOID WINAPI s_get_system_time_func_lazy_init(LPFILETIME filetime_p) {
     }
 }
 
-int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
+int aws_high_res_clock_get_ticks_platform(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
     if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
@@ -71,7 +71,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     return aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
 }
 
-int aws_sys_clock_get_ticks(uint64_t *timestamp) {
+int aws_sys_clock_get_ticks_platform(uint64_t *timestamp) {
     FILETIME ticks;
     /*GetSystemTimePreciseAsFileTime() returns 100 nanosecond precision. Convert to nanoseconds.
      *Also, this function returns a different epoch than unix, so we add a conversion to handle that as well. */

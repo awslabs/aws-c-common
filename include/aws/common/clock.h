@@ -26,6 +26,16 @@ enum aws_timestamp_unit {
     AWS_TIMESTAMP_NANOS = 1000000000,
 };
 
+typedef int(aws_clock_fn)(uint64_t *timestamp);
+
+/*
+ * This vtable controls global time queries.
+ */
+struct aws_clock_system_vtable {
+    aws_clock_fn *system_clock;
+    aws_clock_fn *high_res_clock;
+};
+
 AWS_EXTERN_C_BEGIN
 
 /**
@@ -55,6 +65,26 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp);
  */
 AWS_COMMON_API
 int aws_sys_clock_get_ticks(uint64_t *timestamp);
+
+/**
+ * Overrides the default clock system vtable to use a custom vtable.  Primarily used for testing systems that
+ * use aws_high_res_clock_get_ticks() or aws_sys_clock_get_ticks() in their logic.
+ */
+AWS_COMMON_API
+void aws_clock_set_system_vtable(struct aws_clock_system_vtable *vtable);
+
+/**
+ * Per-platform function for the high resolution timer.  This is the default high-resolution implementation. Do not
+ * call directly.
+ */
+AWS_COMMON_API
+int aws_high_res_clock_get_ticks_platform(uint64_t *timestamp);
+
+/**
+ * Per-platform function for the system timer.  This is the default system implementation. Do not call directly.
+ */
+AWS_COMMON_API
+int aws_sys_clock_get_ticks_platform(uint64_t *timestamp);
 
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/clock.inl>

@@ -111,7 +111,7 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp) {
 #    endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101200 */
 /* Everywhere else, just link clock_gettime in directly */
 #else
-int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
+int aws_high_res_clock_get_ticks_platform(uint64_t *timestamp) {
     int ret_val = 0;
 
     struct timespec ts;
@@ -128,7 +128,7 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_sys_clock_get_ticks(uint64_t *timestamp) {
+int aws_sys_clock_get_ticks_platform(uint64_t *timestamp) {
     int ret_val = 0;
 
     struct timespec ts;

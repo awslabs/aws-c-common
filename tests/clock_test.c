@@ -169,3 +169,55 @@ AWS_TEST_CASE(test_milli_and_nanos_conversion, s_test_milli_and_nanos_conversion
 AWS_TEST_CASE(test_micro_and_nanos_conversion, s_test_micro_and_nanos_conversion)
 AWS_TEST_CASE(test_precision_loss_remainders_conversion, s_test_precision_loss_remainders_conversion)
 AWS_TEST_CASE(test_overflow_conversion, s_test_overflow_conversion)
+
+static uint64_t s_high_res_time = 0;
+int s_mock_high_res_clock_fn(uint64_t *time) {
+    *time = s_high_res_time;
+
+    return AWS_OP_SUCCESS;
+}
+
+static uint64_t s_system_time = 0;
+int s_mock_system_clock_fn(uint64_t *time) {
+    *time = s_system_time;
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_test_override_system_vtable(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    s_high_res_time = 1;
+    s_system_time = 2;
+
+    struct aws_clock_system_vtable good_table = {
+        .high_res_clock = s_mock_high_res_clock_fn,
+        .system_clock = s_mock_system_clock_fn,
+    };
+    aws_clock_set_system_vtable(&good_table);
+
+    uint64_t time = 0;
+    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&time));
+    ASSERT_TRUE(time == 2);
+    ASSERT_SUCCESS(aws_high_res_clock_get_ticks(&time));
+    ASSERT_TRUE(time == 1);
+
+    struct aws_clock_system_vtable bad_high_res_table = {
+        .high_res_clock = NULL,
+        .system_clock = s_mock_system_clock_fn,
+    };
+    aws_clock_set_system_vtable(&bad_high_res_table);
+    ASSERT_FAILS(aws_high_res_clock_get_ticks(&time));
+
+    struct aws_clock_system_vtable bad_sys_table = {
+        .high_res_clock = s_mock_high_res_clock_fn,
+        .system_clock = NULL,
+    };
+    aws_clock_set_system_vtable(&bad_sys_table);
+    ASSERT_FAILS(aws_sys_clock_get_ticks(&time));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_override_system_vtable, s_test_override_system_vtable)
