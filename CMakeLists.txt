@@ -87,7 +87,11 @@ else ()
         "source/posix/*.c"
         )
     set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
+
+    if (UNIX OR APPLE)
+        find_package(Threads REQUIRED)
+    endif ()
+
     if (APPLE)
         find_library(CORE_FOUNDATION_LIB CoreFoundation)
         if (NOT CORE_FOUNDATION_LIB)
