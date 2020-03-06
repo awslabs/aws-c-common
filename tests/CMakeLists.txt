@@ -291,11 +291,6 @@ add_test_case(atomics_semantics)
 add_test_case(atomics_semantics_implicit)
 add_test_case(atomics_static_init)
 
-# atomics aren't 'fully' supported on gcc 4.1.2
-if (NOT LEGACY_COMPILER_SUPPORT)
-    add_test_case(atomics_loads_reordered_with_older_stores)
-endif()
-
 add_test_case(atomics_acquire_to_release_one_direction)
 add_test_case(atomics_acquire_to_release_mixed)
 
@@ -388,6 +383,15 @@ add_test_case(test_pipeline_logger_unformatted_test)
 add_test_case(test_pipeline_logger_formatted_test)
 
 add_test_case(get_pid_sanity_check_test)
+
+add_test_case(test_bigint_from_uint64)
+add_test_case(test_bigint_from_int64)
+add_test_case(test_bigint_from_hex_success)
+add_test_case(test_bigint_from_hex_failure)
+add_test_case(test_bigint_equality)
+add_test_case(test_bigint_inequality)
+add_test_case(test_bigint_less_than)
+add_test_case(test_bigint_greater_than)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
