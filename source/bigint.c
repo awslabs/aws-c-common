@@ -528,12 +528,12 @@ static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_big
         return AWS_OP_ERR;
     }
 
-    size_t output_length = aws_array_list_length(&output->digits);
-
     /*
      * Nothing should fail after this point
      */
+    size_t output_length = aws_array_list_length(&output->digits);
     uint64_t carry = 0;
+
     for (size_t i = 0; i < reserved_digits + 1; ++i) {
         uint32_t lhs_digit = 0;
         if (i < lhs_length) {
