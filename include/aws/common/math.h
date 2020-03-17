@@ -95,6 +95,28 @@ AWS_COMMON_MATH_API uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b);
 AWS_COMMON_MATH_API int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
 
 /**
+ * Subtracts a - b. If the result overflows returns 0.
+ */
+AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b);
+
+/**
+ * If a - b overflows, returns AWS_OP_ERR; otherwise subtracts
+ * a - b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ */
+AWS_STATIC_IMPL int aws_sub_u64_checked(uint64_t a, uint64_t b, uint64_t *r);
+
+/**
+ * Subtracts a - b. If the result overflows returns 0.
+ */
+AWS_STATIC_IMPL uint32_t aws_sub_u32_saturating(uint32_t a, uint32_t b);
+
+/**
+ * If a - b overflows, returns AWS_OP_ERR; otherwise subtracts
+ * a - b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ */
+AWS_STATIC_IMPL int aws_sub_u32_checked(uint32_t a, uint32_t b, uint32_t *r);
+
+/**
  * Multiplies a * b. If the result overflows, returns SIZE_MAX.
  */
 AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b);
@@ -123,6 +145,17 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r);
 AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...);
 
 /**
+ * Subtracts a - b. If the result overflows returns 0.
+ */
+AWS_STATIC_IMPL size_t aws_sub_size_saturating(size_t a, size_t b);
+
+/**
+ * If a - b overflows, returns AWS_OP_ERR; otherwise subtracts
+ * a - b, returns the result in *r, and returns AWS_OP_SUCCESS.
+ */
+AWS_STATIC_IMPL int aws_sub_size_checked(size_t a, size_t b, size_t *r);
+
+/**
  * Function to check if x is power of 2
  */
 AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
@@ -131,6 +164,31 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
  * be done without overflow
  */
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result);
+
+AWS_STATIC_IMPL uint8_t aws_min_u8(uint8_t a, uint8_t b);
+AWS_STATIC_IMPL uint8_t aws_max_u8(uint8_t a, uint8_t b);
+AWS_STATIC_IMPL int8_t aws_min_i8(int8_t a, int8_t b);
+AWS_STATIC_IMPL int8_t aws_max_i8(int8_t a, int8_t b);
+AWS_STATIC_IMPL uint16_t aws_min_u16(uint16_t a, uint16_t b);
+AWS_STATIC_IMPL uint16_t aws_max_u16(uint16_t a, uint16_t b);
+AWS_STATIC_IMPL int16_t aws_min_i16(int16_t a, int16_t b);
+AWS_STATIC_IMPL int16_t aws_max_i16(int16_t a, int16_t b);
+AWS_STATIC_IMPL uint32_t aws_min_u32(uint32_t a, uint32_t b);
+AWS_STATIC_IMPL uint32_t aws_max_u32(uint32_t a, uint32_t b);
+AWS_STATIC_IMPL int32_t aws_min_i32(int32_t a, int32_t b);
+AWS_STATIC_IMPL int32_t aws_max_i32(int32_t a, int32_t b);
+AWS_STATIC_IMPL uint64_t aws_min_u64(uint64_t a, uint64_t b);
+AWS_STATIC_IMPL uint64_t aws_max_u64(uint64_t a, uint64_t b);
+AWS_STATIC_IMPL int64_t aws_min_i64(int64_t a, int64_t b);
+AWS_STATIC_IMPL int64_t aws_max_i64(int64_t a, int64_t b);
+AWS_STATIC_IMPL size_t aws_min_size(size_t a, size_t b);
+AWS_STATIC_IMPL size_t aws_max_size(size_t a, size_t b);
+AWS_STATIC_IMPL int aws_min_int(int a, int b);
+AWS_STATIC_IMPL int aws_max_int(int a, int b);
+AWS_STATIC_IMPL float aws_min_float(float a, float b);
+AWS_STATIC_IMPL float aws_max_float(float a, float b);
+AWS_STATIC_IMPL double aws_min_double(double a, double b);
+AWS_STATIC_IMPL double aws_max_double(double a, double b);
 
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/math.inl>
