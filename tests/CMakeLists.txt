@@ -183,6 +183,7 @@ add_test_case(test_add_u32_checked)
 add_test_case(test_add_u32_saturating)
 add_test_case(test_add_u64_checked)
 add_test_case(test_add_u64_saturating)
+add_test_case(test_min_max)
 
 add_test_case(nospec_index_test)
 add_test_case(test_byte_cursor_advance)
