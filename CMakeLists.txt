@@ -21,6 +21,10 @@ if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
 endif()
 
+if (POLICY CMP0077)
+    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
+endif()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(AwsCheckHeaders)
@@ -83,7 +87,11 @@ else ()
         "source/posix/*.c"
         )
     set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
+
+    if (UNIX OR APPLE)
+        find_package(Threads REQUIRED)
+    endif ()
+
     if (APPLE)
         find_library(CORE_FOUNDATION_LIB CoreFoundation)
         if (NOT CORE_FOUNDATION_LIB)
