@@ -867,7 +867,7 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
 
         /* shifts and masks to build the new digits */
         uint32_t low_mask = (1U << bit_shift_count) - 1;
-        uint32_t high_shift = (BASE_BITS - bit_shift_count);
+        uint32_t high_shift = (uint32_t)(BASE_BITS - bit_shift_count);
 
         /* loop from low to high, shifting down and bringing in the appropriate bits from the next digit */
         uint32_t current_digit = 0;
@@ -916,7 +916,7 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     /* do the bit_shift_count part first */
     if (bit_shift_count > 0) {
-        uint32_t high_shift = BASE_BITS - bit_shift_count;
+        uint32_t high_shift = (uint32_t)(BASE_BITS - bit_shift_count);
         uint32_t low_bits = 0;
         for (size_t i = 0; i < digit_count; ++i) {
             uint32_t current_digit = 0;
