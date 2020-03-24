@@ -129,14 +129,21 @@ void aws_bigint_negate(struct aws_bigint *bigint);
  * may alias to either operand.
  */
 AWS_COMMON_API
-int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
 /*
  * Subtracts two big integers, placing the result in output.  Output must have been initialized first.  Output
  * may alias to either operand (aliasing to the second is weird but not forbidden).
  */
 AWS_COMMON_API
-int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
+
+/*
+ * Multiplies two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand.
+ */
+AWS_COMMON_API
+int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
 AWS_EXTERN_C_END
 
