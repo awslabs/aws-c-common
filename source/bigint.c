@@ -633,7 +633,7 @@ static int s_aws_bigint_subtract_magnitudes(
 }
 
 int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-  
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -678,7 +678,7 @@ done:
 }
 
 int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-  
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -816,4 +816,3 @@ done:
 
     return result;
 }
-
