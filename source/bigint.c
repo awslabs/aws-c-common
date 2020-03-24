@@ -961,4 +961,3 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     return AWS_OP_SUCCESS;
 }
-
