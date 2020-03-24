@@ -393,6 +393,14 @@ add_test_case(test_bigint_equality)
 add_test_case(test_bigint_inequality)
 add_test_case(test_bigint_less_than)
 add_test_case(test_bigint_greater_than)
+add_test_case(test_bigint_add_zero)
+add_test_case(test_bigint_add_positive)
+add_test_case(test_bigint_add_negative)
+add_test_case(test_bigint_add_mixed_sign)
+add_test_case(test_bigint_subtract_zero)
+add_test_case(test_bigint_subtract_positive_result)
+add_test_case(test_bigint_subtract_negative_result)
+
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

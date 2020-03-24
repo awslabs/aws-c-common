@@ -124,6 +124,20 @@ bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struc
 AWS_COMMON_API
 void aws_bigint_negate(struct aws_bigint *bigint);
 
+/*
+ * Adds two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand.
+ */
+AWS_COMMON_API
+int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+
+/*
+ * Subtracts two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand (aliasing to the second is weird but not forbidden).
+ */
+AWS_COMMON_API
+int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BIGINT_H */

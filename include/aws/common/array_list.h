@@ -80,6 +80,12 @@ AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list);
 
 /**
+ * Erases and then deallocates any memory that was allocated for this list, and resets list for reuse or deletion.
+ */
+AWS_STATIC_IMPL
+void aws_array_list_clean_up_secure(struct aws_array_list *AWS_RESTRICT list);
+
+/**
  * Pushes the memory pointed to by val onto the end of internal list
  */
 AWS_STATIC_IMPL
