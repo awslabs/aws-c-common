@@ -1080,6 +1080,7 @@ bool aws_byte_cursor_read_and_fill_buffer(
  */
 bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT cur, uint8_t *AWS_RESTRICT var) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(var, 1));
     bool rv = aws_byte_cursor_read(cur, var, 1);
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
@@ -1261,6 +1262,11 @@ bool aws_byte_buf_advance(
 bool aws_byte_buf_write(struct aws_byte_buf *AWS_RESTRICT buf, const uint8_t *AWS_RESTRICT src, size_t len) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(src, len), "Input array [src] must be readable up to [len] bytes.");
+
+    if (len == 0) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+        return true;
+    }
 
     if (buf->len > (SIZE_MAX >> 1) || len > (SIZE_MAX >> 1) || buf->len + len > buf->capacity) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));

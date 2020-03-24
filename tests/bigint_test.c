@@ -1635,3 +1635,4 @@ static int s_test_bigint_left_shift(struct aws_allocator *allocator, void *ctx) 
 }
 
 AWS_TEST_CASE(test_bigint_left_shift, s_test_bigint_left_shift)
+

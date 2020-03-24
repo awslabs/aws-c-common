@@ -531,12 +531,12 @@ static int s_aws_bigint_add_magnitudes(
         return AWS_OP_ERR;
     }
 
-    size_t output_length = aws_array_list_length(&output->digits);
-
     /*
      * Nothing should fail after this point
      */
+    size_t output_length = aws_array_list_length(&output->digits);
     uint64_t carry = 0;
+
     for (size_t i = 0; i < reserved_digits + 1; ++i) {
         uint32_t lhs_digit = 0;
         if (i < lhs_length) {
@@ -588,6 +588,7 @@ static int s_aws_bigint_subtract_magnitudes(
 
     const struct aws_bigint *larger = lhs;
     const struct aws_bigint *smaller = rhs;
+
     if (ordering == AWS_BI_LESS_THAN) {
         larger = rhs;
         smaller = lhs;
@@ -632,6 +633,7 @@ static int s_aws_bigint_subtract_magnitudes(
 }
 
 int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -676,6 +678,7 @@ done:
 }
 
 int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -958,3 +961,4 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     return AWS_OP_SUCCESS;
 }
+
