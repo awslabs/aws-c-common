@@ -1171,7 +1171,7 @@ static int s_aws_bigint_divide_by_single_digit(
     AWS_PRECONDITION(aws_bigint_is_valid(quotient));
     AWS_PRECONDITION(aws_bigint_is_valid(remainder));
     AWS_PRECONDITION(aws_bigint_is_valid(dividend));
-  
+
     const size_t quotient_length = aws_array_list_length(&dividend->digits);
 
     struct aws_bigint *temp_quotient = s_aws_bigint_new_reserved(quotient->digits.alloc, quotient_length);
