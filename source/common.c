@@ -227,6 +227,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_STRING_MATCH_NOT_FOUND,
       "The specified substring was not present in the input string."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_DIVIDE_BY_ZERO,
+        "Attempt to divide a number by zero."),
 };
 /* clang-format on */
 
