@@ -17,7 +17,7 @@
 #include <proof_helpers/make_common_data_structures.h>
 
 /**
- * Runtime: 20s
+ * Runtime: 3m 42s
  */
 void aws_array_list_set_at_harness() {
     /* data structure */
@@ -29,8 +29,7 @@ void aws_array_list_set_at_harness() {
     __CPROVER_assume(aws_array_list_is_valid(&list));
     __CPROVER_assume(list.data != NULL);
     size_t malloc_size;
-    __CPROVER_assume(malloc_size <= list.item_size);
-    void *val = can_fail_malloc(malloc_size);
+    void *val = can_fail_malloc(list.item_size);
     size_t index;
 
     /* save current state of the data structure */
