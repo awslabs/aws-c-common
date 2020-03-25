@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 UNWINDSET += aws_byte_buf_cat.0:4
 
@@ -29,4 +29,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_cat_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

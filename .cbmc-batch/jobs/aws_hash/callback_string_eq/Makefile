@@ -18,7 +18,7 @@
 #96: 1m
 #128 2m 10s
 MAX_STRING_LEN ?= 96
-DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN) 
+DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)
 
 UNWINDSET +=memcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
@@ -37,4 +37,4 @@ ENTRY = aws_hash_callback_string_eq_harness
 
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

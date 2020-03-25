@@ -21,4 +21,4 @@ ENTRY = aws_ptr_eq_harness
 
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

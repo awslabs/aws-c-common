@@ -24,4 +24,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_table_swap_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

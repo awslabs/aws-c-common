@@ -12,14 +12,14 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 ###########
 #
 # Runtime: 1200s
 
 # This is the minimum bound to reach full coverage rate
-UNWINDSET += 
+UNWINDSET +=
 
 CBMCFLAGS +=
 
@@ -39,4 +39,4 @@ ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_p
 ENTRY = aws_priority_queue_push_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

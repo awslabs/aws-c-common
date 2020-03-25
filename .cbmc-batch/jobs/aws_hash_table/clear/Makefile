@@ -17,7 +17,7 @@
 #16: 6m30s
 MAX_TABLE_SIZE ?= 4
 
-include ../Makefile.aws_hash_table
+include ../../aws_hash_table/Makefile
 
 UNWINDSET += aws_hash_table_clear.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 UNWINDSET += memset_override_0_impl.0:$(shell echo $$((1 + $(TABLE_SIZE_IN_WORDS))))
@@ -35,4 +35,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_table_clear_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

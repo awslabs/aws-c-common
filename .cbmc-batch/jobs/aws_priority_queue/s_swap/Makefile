@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 ###########
 #
@@ -37,4 +37,4 @@ DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
 ENTRY = aws_priority_queue_s_swap_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
@@ -28,4 +28,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_reset_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

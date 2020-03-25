@@ -14,7 +14,7 @@
 ###########
 # Using the new calloc model, get full coverage in about 5s on unbounded sizes!
 MAX_TABLE_SIZE ?= SIZE_MAX
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
 DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
@@ -31,4 +31,4 @@ ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body s_can_fail_malloc_allo
 ENTRY = aws_hash_table_init_bounded_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

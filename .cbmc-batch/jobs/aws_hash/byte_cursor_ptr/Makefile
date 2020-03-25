@@ -32,4 +32,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_byte_cursor_ptr_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

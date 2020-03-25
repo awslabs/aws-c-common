@@ -22,4 +22,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_table_init_unbounded_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

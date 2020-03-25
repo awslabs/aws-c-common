@@ -27,4 +27,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_ring_buffer_buf_belongs_to_pool_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

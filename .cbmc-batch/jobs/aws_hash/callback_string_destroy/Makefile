@@ -18,7 +18,7 @@
 #128 10s
 #256 53s
 MAX_STRING_LEN ?= 128
-DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN) 
+DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)
 
 CBMCFLAGS +=
 
@@ -33,4 +33,4 @@ ENTRY = aws_hash_callback_string_destroy_harness
 
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

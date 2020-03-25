@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 ###########
 #
@@ -44,4 +44,4 @@ ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_array_list_swap_ov
 ENTRY = aws_priority_queue_s_remove_node_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

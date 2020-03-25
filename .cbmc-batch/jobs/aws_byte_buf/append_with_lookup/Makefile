@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 UNWINDSET += aws_byte_buf_append_with_lookup.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
@@ -29,4 +29,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_append_with_lookup_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

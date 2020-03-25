@@ -18,7 +18,7 @@
 #256 11s
 #1024: 2m30s
 MAX_STRING_SIZE ?= 32
-DEFINES += -DMAX_STRING_SIZE=$(MAX_STRING_SIZE) 
+DEFINES += -DMAX_STRING_SIZE=$(MAX_STRING_SIZE)
 
 UNWINDSET += strlen.0:$(shell echo $$(( $(MAX_STRING_SIZE) + 1)))
 UNWINDSET += __CPROVER_file_local_lookup3_inl_hashlittle2.0:$(shell echo $$(( $$(( $(MAX_STRING_SIZE) / 12 )) +1 )) )
@@ -38,4 +38,4 @@ DEPENDENCIES += $(SRCDIR)/source/string.c
 ENTRY = aws_hash_c_string_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

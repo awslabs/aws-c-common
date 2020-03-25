@@ -26,4 +26,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_ring_buffer_init_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

@@ -13,7 +13,7 @@
 
 ###########
 
-include ../Makefile.aws_linked_list
+include ../../aws_linked_list/Makefile
 
 # Run deep validity checks in linked_list_is_valid
 AWS_DEEP_CHECKS = 1
@@ -31,4 +31,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_linked_list_rend_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

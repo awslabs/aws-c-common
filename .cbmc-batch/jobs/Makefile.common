@@ -90,7 +90,7 @@ DEFINES += -DCBMC=1
 
 ################################################################
 # Setup directory aliases
-SRCDIR ?= $(abspath ../../..)
+SRCDIR ?= $(abspath ../../../..)
 HELPERDIR ?= $(SRCDIR)/.cbmc-batch
 PROOFDIR = $(abspath .)
 GOTODIR = $(PROOFDIR)/gotos

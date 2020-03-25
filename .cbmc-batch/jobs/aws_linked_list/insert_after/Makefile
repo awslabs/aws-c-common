@@ -13,7 +13,7 @@
 
 ###########
 
-include ../Makefile.aws_linked_list
+include ../../aws_linked_list/Makefile
 
 CBMCFLAGS +=
 
@@ -25,4 +25,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_linked_list_insert_after_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

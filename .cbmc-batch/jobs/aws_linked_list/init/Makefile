@@ -31,4 +31,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_linked_list_init_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

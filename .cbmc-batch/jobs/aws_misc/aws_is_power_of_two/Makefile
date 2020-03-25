@@ -17,4 +17,4 @@ CBMCFLAGS +=
 ENTRY = aws_is_power_of_two_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

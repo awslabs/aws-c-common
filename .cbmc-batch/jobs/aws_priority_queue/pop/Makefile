@@ -12,13 +12,13 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 ###########
 #
 # Runtime: 500s
 
-UNWINDSET += 
+UNWINDSET +=
 
 CBMCFLAGS +=
 
@@ -38,4 +38,4 @@ ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_p
 ENTRY = aws_priority_queue_pop_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

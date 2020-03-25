@@ -19,4 +19,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_round_up_to_power_of_two_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 # This bound allows us to reach 100% coverage rate
 UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
@@ -30,4 +30,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_array_list_get_at_ptr_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

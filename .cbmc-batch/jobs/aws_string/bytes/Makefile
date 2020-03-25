@@ -11,14 +11,14 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-include ../Makefile.aws_string
+include ../../aws_string/Makefile
 
 CBMCFLAGS +=
 
 DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c 
-DEPENDENCIES += $(SRCDIR)/source/string.c 
+DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
+DEPENDENCIES += $(SRCDIR)/source/string.c
 
 ENTRY = aws_string_bytes_harness
 
-include ../Makefile.common
+include ../../Makefile.common

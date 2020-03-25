@@ -11,7 +11,7 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-include ../Makefile.aws_string
+include ../../aws_string/Makefile
 
 UNWINDSET += aws_array_eq_c_str.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 UNWINDSET += memcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
@@ -27,4 +27,4 @@ DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
 
 ENTRY = aws_string_eq_c_str_harness
 
-include ../Makefile.common
+include ../../Makefile.common

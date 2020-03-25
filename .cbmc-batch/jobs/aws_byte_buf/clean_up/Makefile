@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 MAX_BUFFER_SIZE=40
 
@@ -31,4 +31,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_clean_up_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

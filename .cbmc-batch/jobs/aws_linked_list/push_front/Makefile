@@ -16,7 +16,7 @@
 # Run deep validity checks in linked_list_is_valid
 AWS_DEEP_CHECKS = 1
 
-include ../Makefile.aws_linked_list
+include ../../aws_linked_list/Makefile
 
 ## This has to take into account that a new element has been added to
 ## the list afterwards so we have to unwind one more time (instead of
@@ -34,4 +34,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_linked_list_push_front_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

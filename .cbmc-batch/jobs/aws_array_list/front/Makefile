@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 # Set deep checks to enable the AWS_BYTES_EQ
 AWS_DEEP_CHECKS = 1
@@ -32,4 +32,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_array_list_front_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

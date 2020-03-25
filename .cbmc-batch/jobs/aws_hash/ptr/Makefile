@@ -23,4 +23,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_ptr_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

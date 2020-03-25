@@ -27,4 +27,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_reserve_relative_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

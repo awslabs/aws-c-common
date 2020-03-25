@@ -17,7 +17,7 @@
 #16: 1m 36s
 #24 3m 20s
 MAX_TABLE_SIZE ?= 8
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 UNWINDSET += __CPROVER_file_local_hash_table_c_s_get_next_element.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
@@ -33,4 +33,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_iter_next_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

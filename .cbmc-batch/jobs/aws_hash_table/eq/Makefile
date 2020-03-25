@@ -14,7 +14,7 @@
 ###########
 # 8: 2m30s
 MAX_TABLE_SIZE ?= 8
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 UNWINDSET +=  aws_hash_table_eq.3:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
@@ -34,4 +34,4 @@ ADDITIONAL_REMOVE_FUNCTION_BODY +=  --remove-function-body aws_hash_table_find
 ENTRY = aws_hash_table_eq_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

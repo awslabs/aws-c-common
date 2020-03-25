@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 # This is the minimum bound to reach full coverage rate
 UNWINDSET += memset_impl.0:41
@@ -30,4 +30,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_priority_queue_size_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

@@ -30,4 +30,4 @@ ENTRY = memcpy_using_uint64_harness
 
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

@@ -16,7 +16,7 @@
 # Run deep validity checks in is_valid
 AWS_DEEP_CHECKS = 1
 
-include ../Makefile.aws_linked_list
+include ../../aws_linked_list/Makefile
 
 UNWINDSET += aws_linked_list_is_valid_deep.0:$(shell echo $$((2 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
@@ -31,4 +31,4 @@ DEPENDENCIES += $(HELPERDIR)/stubs/error.c
 ENTRY = aws_linked_list_pop_back_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

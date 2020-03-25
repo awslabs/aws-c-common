@@ -30,4 +30,4 @@ ENTRY = memset_override_0_harness
 
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

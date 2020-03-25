@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 UNWINDSET += aws_byte_cursor_left_trim_pred.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
@@ -28,4 +28,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_cursor_left_trim_pred_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

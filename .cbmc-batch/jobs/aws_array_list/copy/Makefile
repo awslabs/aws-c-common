@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_array_list
+include ../../aws_array_list/Makefile
 
 UNWINDSET +=
 
@@ -29,4 +29,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_array_list_copy_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

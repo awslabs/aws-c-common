@@ -14,7 +14,7 @@
 ###########
 #4: 4m40s (smallest size that gives full coverage)
 MAX_TABLE_SIZE ?= 4
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 UNWINDSET +=  __CPROVER_file_local_hash_table_c_s_remove_entry.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
@@ -30,4 +30,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_iter_delete_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

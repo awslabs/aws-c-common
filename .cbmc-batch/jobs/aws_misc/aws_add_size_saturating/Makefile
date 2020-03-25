@@ -24,4 +24,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_add_size_saturating_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

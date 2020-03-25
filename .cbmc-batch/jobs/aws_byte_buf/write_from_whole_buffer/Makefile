@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
@@ -29,4 +29,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_write_from_whole_buffer_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

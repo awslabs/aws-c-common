@@ -12,7 +12,7 @@
 # limitations under the License.
 
 ###########
-include ../Makefile.aws_byte_buf
+include ../../aws_byte_buf/Makefile
 
 CBMCFLAGS +=
 
@@ -26,4 +26,4 @@ DEPENDENCIES += $(SRCDIR)/source/common.c
 ENTRY = aws_byte_buf_write_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common

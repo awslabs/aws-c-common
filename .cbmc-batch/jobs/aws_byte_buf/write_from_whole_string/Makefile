@@ -11,7 +11,7 @@
 # implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-include ../Makefile.aws_string
+include ../../aws_string/Makefile
 
 CBMCFLAGS +=
 
@@ -26,4 +26,4 @@ DEPENDENCIES += $(SRCDIR)/source/string.c
 
 ENTRY = aws_byte_buf_write_from_whole_string_harness
 
-include ../Makefile.common
+include ../../Makefile.common

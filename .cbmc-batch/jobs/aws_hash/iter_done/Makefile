@@ -14,7 +14,7 @@
 ###########
 # ensure_allocated_hash_table expects some max table size
 # using SIZE_MAX leaves it maximally unconstrained.
-DEFINES += -DMAX_TABLE_SIZE=SIZE_MAX 
+DEFINES += -DMAX_TABLE_SIZE=SIZE_MAX
 
 CBMCFLAGS +=
 
@@ -28,4 +28,4 @@ DEPENDENCIES += $(SRCDIR)/source/hash_table.c
 ENTRY = aws_hash_iter_done_harness
 ###########
 
-include ../Makefile.common
+include ../../Makefile.common
