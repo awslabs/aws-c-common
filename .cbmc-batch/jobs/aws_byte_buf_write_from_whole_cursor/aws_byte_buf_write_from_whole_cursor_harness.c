@@ -28,7 +28,6 @@ void aws_byte_buf_write_from_whole_cursor_harness() {
     __CPROVER_assume(aws_byte_cursor_is_bounded(&src, MAX_BUFFER_SIZE));
     ensure_byte_cursor_has_allocated_buffer_member(&src);
     __CPROVER_assume(aws_byte_cursor_is_valid(&src));
-    __CPROVER_assume(AWS_MEM_IS_WRITABLE(src.ptr, src.len));
 
     /* save current state of the parameters */
     struct aws_byte_buf buf_old = buf;

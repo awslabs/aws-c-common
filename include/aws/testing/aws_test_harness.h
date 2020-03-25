@@ -311,6 +311,46 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
+#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+    do {                                                                                                               \
+        const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
+        size_t assert_ex_s = (cursor).len;                                                                             \
+        const uint8_t *assert_got_p = aws_string_c_str(string);                                                        \
+        size_t assert_got_s = (string)->len;                                                                           \
+        if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
+            break;                                                                                                     \
+        }                                                                                                              \
+        if (assert_ex_s != assert_got_s) {                                                                             \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+            }                                                                                                          \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+        if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
+            if (assert_got_s <= 1024) {                                                                                \
+                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
+                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
+                        fprintf(                                                                                       \
+                            AWS_TESTING_REPORT_FD,                                                                     \
+                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
+                            FAIL_PREFIX,                                                                               \
+                            assert_i,                                                                                  \
+                            assert_ex_p[assert_i],                                                                     \
+                            assert_got_p[assert_i]);                                                                   \
+                        break;                                                                                         \
+                    }                                                                                                  \
+                }                                                                                                      \
+            } else {                                                                                                   \
+                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
+            }                                                                                                          \
+            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+            }                                                                                                          \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
 typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_after_fn)(struct aws_allocator *allocator, int setup_result, void *ctx);
