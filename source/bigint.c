@@ -507,7 +507,10 @@ static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
 /*
  * Either succeeds or makes no change to the output
  */
-static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+static int s_aws_bigint_add_magnitudes(
+    struct aws_bigint *output,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs) {
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -568,8 +571,8 @@ static int s_aws_bigint_add_magnitudes(struct aws_bigint *output, struct aws_big
  */
 static int s_aws_bigint_subtract_magnitudes(
     struct aws_bigint *output,
-    struct aws_bigint *lhs,
-    struct aws_bigint *rhs,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs,
     enum aws_bigint_ordering ordering) {
 
     AWS_PRECONDITION(aws_bigint_is_valid(output));
@@ -583,8 +586,9 @@ static int s_aws_bigint_subtract_magnitudes(
         return AWS_OP_SUCCESS;
     }
 
-    struct aws_bigint *larger = lhs;
-    struct aws_bigint *smaller = rhs;
+    const struct aws_bigint *larger = lhs;
+    const struct aws_bigint *smaller = rhs;
+
     if (ordering == AWS_BI_LESS_THAN) {
         larger = rhs;
         smaller = lhs;
@@ -628,7 +632,8 @@ static int s_aws_bigint_subtract_magnitudes(
     return AWS_OP_SUCCESS;
 }
 
-int aws_bigint_add(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -672,7 +677,8 @@ done:
     return result;
 }
 
-int aws_bigint_subtract(struct aws_bigint *output, struct aws_bigint *lhs, struct aws_bigint *rhs) {
+int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+
     AWS_PRECONDITION(aws_bigint_is_valid(output));
     AWS_PRECONDITION(aws_bigint_is_valid(lhs));
     AWS_PRECONDITION(aws_bigint_is_valid(rhs));
@@ -714,4 +720,244 @@ done:
     AWS_POSTCONDITION(aws_bigint_is_valid(rhs));
 
     return result;
+}
+
+int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+
+    AWS_PRECONDITION(aws_bigint_is_valid(output));
+    AWS_PRECONDITION(aws_bigint_is_valid(lhs));
+    AWS_PRECONDITION(aws_bigint_is_valid(rhs));
+
+    struct aws_allocator *allocator = output->digits.alloc;
+
+    size_t lhs_length = aws_array_list_length(&lhs->digits);
+    size_t rhs_length = aws_array_list_length(&rhs->digits);
+    size_t digit_count_sum = lhs_length + rhs_length;
+
+    if (aws_array_list_ensure_capacity(&output->digits, digit_count_sum)) {
+        return AWS_OP_ERR;
+    }
+
+    struct aws_bigint *temp_output = aws_bigint_new_from_uint64(allocator, 0);
+    if (temp_output == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    int result = AWS_OP_ERR;
+    if (aws_array_list_ensure_capacity(&temp_output->digits, digit_count_sum)) {
+        goto done;
+    }
+
+    /*
+     * No way to fail beyond this point
+     */
+
+    /*
+     * Pad with sufficient zeros to cover all possible digits that could be non zero in the final product
+     * We do this so that when we add the current product digit into the accumulating product, there's already
+     * a value there (0).  We could conditionally retrieve it too, but this keeps us from having to add
+     * if-then checks around both the read and the write.
+     *
+     * Since we initialized this to zero at the top of the function, we only need to do this digit_count_sum - 1
+     * times (there's already a single zero entry in the array list).
+     */
+    uint32_t zero = 0;
+    for (size_t i = 0; i + 1 < digit_count_sum; ++i) {
+        aws_array_list_push_back(&temp_output->digits, &zero);
+    }
+
+    for (size_t i = 0; i < lhs_length; ++i) {
+        uint32_t lhs_digit = 0;
+        aws_array_list_get_at(&lhs->digits, &lhs_digit, i);
+
+        /* Multiply "lhs_digit * rhs" and add into temp_output at the appropriate offset */
+        uint64_t carry = 0;
+        for (size_t j = 0; j < rhs_length; ++j) {
+            uint32_t rhs_digit = 0;
+            aws_array_list_get_at(&rhs->digits, &rhs_digit, j);
+
+            uint32_t output_digit = 0;
+            aws_array_list_get_at(&temp_output->digits, &output_digit, i + j);
+
+            /* multiply-and-add a single digit pair */
+            uint64_t product_digit = (uint64_t)lhs_digit * (uint64_t)rhs_digit + carry + (uint64_t)output_digit;
+            uint32_t final_product_digit = (uint32_t)(product_digit & LOWER_32_BIT_MASK);
+            carry = (product_digit >> 32);
+
+            aws_array_list_set_at(&temp_output->digits, &final_product_digit, i + j);
+        }
+
+        if (carry > 0) {
+            uint32_t carry_digit = (uint32_t)carry; /* safe */
+            /* we can set_at here because we know the existing value must be zero */
+            aws_array_list_set_at(&temp_output->digits, &carry_digit, i + rhs_length);
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(temp_output);
+
+    if ((lhs->sign == rhs->sign) || aws_bigint_is_zero(temp_output)) {
+        output->sign = 1;
+    } else {
+        output->sign = -1;
+    }
+
+    aws_array_list_swap_contents(&temp_output->digits, &output->digits);
+
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    aws_bigint_destroy(temp_output);
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(output));
+    AWS_POSTCONDITION(aws_bigint_is_valid(lhs));
+    AWS_POSTCONDITION(aws_bigint_is_valid(rhs));
+
+    return result;
+}
+
+/* this function can't fail */
+void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+
+    /*
+     * Break the shift into two parts:
+     *  (1) base_shift_count = whole digit shifts (shift_amount / BASE_BITS)
+     *  (2) bit_shift_count = leftover amount (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
+     */
+    size_t base_shift_count = shift_amount / BASE_BITS;
+    size_t bit_shift_count = shift_amount % BASE_BITS;
+
+    /* is it guaranteed to be zero? */
+    if (base_shift_count >= digit_count) {
+        aws_array_list_clear(&bigint->digits);
+
+        uint32_t zero_digit = 0;
+        aws_array_list_push_back(&bigint->digits, &zero_digit);
+        bigint->sign = 1;
+
+        AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+        return;
+    }
+
+    /* move whole digits base_shift_count places.  This could be replaced by a memmove but that seems sketchy. */
+    if (base_shift_count > 0) {
+        size_t copy_count = digit_count - base_shift_count;
+
+        for (size_t i = 0; i < copy_count; ++i) {
+            uint32_t source_digit = 0;
+            aws_array_list_get_at(&bigint->digits, &source_digit, i + base_shift_count);
+            aws_array_list_set_at(&bigint->digits, &source_digit, i);
+        }
+
+        /* pop base_shift_count digits from the end */
+        for (size_t i = 0; i < base_shift_count; i++) {
+            aws_array_list_pop_back(&bigint->digits);
+        }
+    }
+
+    /* now do a bit shift for the remaining amount */
+    if (bit_shift_count > 0) {
+
+        /* how many digits are left? */
+        digit_count = digit_count - base_shift_count;
+
+        /* shifts and masks to build the new digits */
+        uint32_t low_mask = (1U << bit_shift_count) - 1;
+        uint32_t high_shift = (uint32_t)(BASE_BITS - bit_shift_count);
+
+        /* loop from low to high, shifting down and bringing in the appropriate bits from the next digit */
+        uint32_t current_digit = 0;
+        aws_array_list_get_at(&bigint->digits, &current_digit, 0);
+        for (size_t i = 0; i < digit_count; ++i) {
+            uint32_t next_digit = 0;
+            if (i + 1 < digit_count) {
+                aws_array_list_get_at(&bigint->digits, &next_digit, i + 1);
+            }
+
+            current_digit >>= bit_shift_count;
+            uint32_t new_current_high_bits = (next_digit & low_mask) << high_shift;
+
+            uint32_t final_digit = current_digit | new_current_high_bits;
+            aws_array_list_set_at(&bigint->digits, &final_digit, i);
+
+            current_digit = next_digit;
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(bigint);
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+}
+
+int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
+    AWS_PRECONDITION(aws_bigint_is_valid(bigint));
+
+    size_t digit_count = aws_array_list_length(&bigint->digits);
+
+    /*
+     * Break the shift into two parts:
+     *  (1) base_shift_count = while digit copies (shift_amount / BASE_BITS)
+     *  (2) bit_shift_count = remainder (shift_amount % BASE_BITS), 0 <= bit_shifts < BASE_BITS
+     */
+    size_t base_shift_count = shift_amount / BASE_BITS;
+    size_t bit_shift_count = shift_amount % BASE_BITS;
+
+    /* I hate this API, technically we're reserving (digit_count + base_shift_count + 1) */
+    if (aws_array_list_ensure_capacity(&bigint->digits, digit_count + base_shift_count)) {
+        AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+        return AWS_OP_ERR;
+    }
+
+    /* can't fail beyond this point */
+
+    /* do the bit_shift_count part first */
+    if (bit_shift_count > 0) {
+        uint32_t high_shift = (uint32_t)(BASE_BITS - bit_shift_count);
+        uint32_t low_bits = 0;
+        for (size_t i = 0; i < digit_count; ++i) {
+            uint32_t current_digit = 0;
+            aws_array_list_get_at(&bigint->digits, &current_digit, i);
+
+            uint32_t final_digit = (current_digit << bit_shift_count) | low_bits;
+            aws_array_list_set_at(&bigint->digits, &final_digit, i);
+
+            low_bits = current_digit >> high_shift;
+        }
+
+        if (low_bits > 0) {
+            aws_array_list_push_back(&bigint->digits, &low_bits);
+        }
+    }
+
+    /* do the multiple of 32 bit shift part by copying */
+    if (base_shift_count > 0) {
+        /* first push enough placeholder zeroes on to the end */
+        for (size_t i = 0; i < base_shift_count; ++i) {
+            uint32_t zero_digit = 0;
+            aws_array_list_push_back(&bigint->digits, &zero_digit);
+        }
+
+        digit_count = aws_array_list_length(&bigint->digits);
+
+        /* high to low, copy whole digits base_shift_count places apart, writing zeros appropriately */
+        for (size_t i = 0; i < digit_count; ++i) {
+            size_t dest_index = digit_count - i - 1;
+            uint32_t source_digit = 0;
+            if (dest_index >= base_shift_count) {
+                aws_array_list_get_at(&bigint->digits, &source_digit, dest_index - base_shift_count);
+            }
+
+            aws_array_list_set_at(&bigint->digits, &source_digit, dest_index);
+        }
+    }
+
+    s_aws_bigint_trim_leading_zeros(bigint);
+
+    AWS_POSTCONDITION(aws_bigint_is_valid(bigint));
+
+    return AWS_OP_SUCCESS;
 }
