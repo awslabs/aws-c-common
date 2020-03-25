@@ -409,6 +409,7 @@ add_test_case(test_bigint_divide_error)
 add_test_case(test_bigint_divide_edge)
 add_test_case(test_bigint_divide_single_digit_divisor)
 add_test_case(test_bigint_divide_general)
+add_test_case(test_bigint_append_binary)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

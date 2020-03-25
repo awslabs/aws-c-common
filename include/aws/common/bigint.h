@@ -71,6 +71,18 @@ AWS_COMMON_API
 int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer);
 
 /**
+ * Writes a bigint to a buffer as a big endian sequence of octets.
+ *
+ * If minimum_length is non-zero, then leading zero-bytes will pad the output as necessary.  Otherwise only the minimum
+ * number of bytes will be written.
+ */
+AWS_COMMON_API
+int aws_bigint_bytebuf_append_as_big_endian(
+    const struct aws_bigint *bigint,
+    struct aws_byte_buf *buffer,
+    size_t minimum_length);
+
+/**
  * Returns true if this integer is negative, false otherwise.
  */
 AWS_COMMON_API

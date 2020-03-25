@@ -1957,3 +1957,94 @@ static int s_test_bigint_divide_general(struct aws_allocator *allocator, void *c
 }
 
 AWS_TEST_CASE(test_bigint_divide_general, s_test_bigint_divide_general)
+
+struct bigint_append_binary_test {
+    const char *input_hex;
+    size_t minimum_length;
+    const char *expected_binary_data;
+    size_t expected_length;
+};
+
+static struct bigint_append_binary_test s_append_binary_cases[] = {
+    {
+        .input_hex = "0x0",
+        .minimum_length = 0,
+        .expected_binary_data = "\x00",
+        .expected_length = 1,
+    },
+    {
+        .input_hex = "0xff",
+        .minimum_length = 0,
+        .expected_binary_data = "\xFF",
+        .expected_length = 1,
+    },
+    {
+        .input_hex = "0x3aff",
+        .minimum_length = 0,
+        .expected_binary_data = "\x3a\xFF",
+        .expected_length = 2,
+    },
+    {
+        .input_hex = "0x3a78ff3483637",
+        .minimum_length = 0,
+        .expected_binary_data = "\x03\xa7\x8f\xf3\x48\x36\x37",
+        .expected_length = 7,
+    },
+    {
+        .input_hex = "fd3758b8a20010baa583fde3e7bb8532f4abd",
+        .minimum_length = 0,
+        .expected_binary_data = "\x0f\xd3\x75\x8b\x8a\x20\x01\x0b\xaa\x58\x3f\xde\x3e\x7b\xb8\x53\x2f\x4a\xbd",
+        .expected_length = 19,
+    },
+    {
+        .input_hex = "0xff",
+        .minimum_length = 5,
+        .expected_binary_data = "\x00\x00\x00\x00\xFF",
+        .expected_length = 5,
+    },
+    {
+        .input_hex = "0xffaabb88",
+        .minimum_length = 5,
+        .expected_binary_data = "\x00\xff\xaa\xbb\x88",
+        .expected_length = 5,
+    },
+    {
+        .input_hex = "940eb4747e656dd3f0c2679dca69c64baf7ea",
+        .minimum_length = 32,
+        .expected_binary_data = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x09\x40\xeb\x47\x47\xe6\x56\xdd"
+                                "\x3f\x0c\x26\x79\xdc\xa6\x9c\x64\xba\xf7\xea",
+        .expected_length = 32,
+    },
+    {
+        .input_hex = "10000000000000000000000000000000000000001",
+        .minimum_length = 32,
+        .expected_binary_data = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+        .expected_length = 32,
+    },
+};
+
+static int s_test_bigint_append_binary(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_append_binary_cases); ++i) {
+        struct aws_byte_buf buffer;
+        aws_byte_buf_init(&buffer, allocator, 1);
+
+        struct bigint_append_binary_test *testcase = &s_append_binary_cases[i];
+
+        struct aws_bigint *test = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->input_hex));
+        ASSERT_NOT_NULL(test);
+
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(test, &buffer, testcase->minimum_length));
+        ASSERT_TRUE(buffer.len == testcase->expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_binary_data, testcase->expected_length, buffer.buffer, buffer.len);
+
+        aws_bigint_destroy(test);
+        aws_byte_buf_clean_up(&buffer);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_append_binary, s_test_bigint_append_binary)
