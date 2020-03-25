@@ -315,7 +315,7 @@ static int total_failures;
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
         size_t assert_ex_s = (cursor).len;                                                                             \
-        const uint8_t *assert_got_p = aws_string_c_str(string);                                                        \
+        const uint8_t *assert_got_p = (const uint8_t *)aws_string_c_str(string);                                       \
         size_t assert_got_s = (string)->len;                                                                           \
         if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
             break;                                                                                                     \
