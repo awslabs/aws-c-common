@@ -1333,3 +1333,305 @@ static int s_test_bigint_multiply(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(test_bigint_multiply, s_test_bigint_multiply)
+
+struct aws_bigint_shift_test {
+    const char *value1;
+    const char *expected_result;
+    size_t shift_amount;
+    bool is_negative1;
+};
+
+static int s_do_right_shift_test(
+    struct aws_allocator *allocator,
+    struct aws_bigint_shift_test *test_cases,
+    size_t test_case_count) {
+
+    struct aws_byte_buf serialized_shift;
+    aws_byte_buf_init(&serialized_shift, allocator, 0);
+
+    for (size_t i = 0; i < test_case_count; ++i) {
+        struct aws_bigint_shift_test *testcase = &test_cases[i];
+
+        /* init operands */
+        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        ASSERT_NOT_NULL(value1);
+        if (testcase->is_negative1) {
+            aws_bigint_negate(value1);
+        }
+
+        aws_bigint_shift_right(value1, testcase->shift_amount);
+
+        serialized_shift.len = 0;
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
+
+        size_t expected_length = strlen(testcase->expected_result);
+        ASSERT_TRUE(serialized_shift.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(
+            testcase->expected_result, expected_length, serialized_shift.buffer, serialized_shift.len);
+
+        aws_bigint_destroy(value1);
+    }
+
+    aws_byte_buf_clean_up(&serialized_shift);
+
+    return AWS_OP_SUCCESS;
+}
+
+static struct aws_bigint_shift_test s_shift_right_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .expected_result = "0",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0xFF",
+        .expected_result = "ff",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+        .expected_result = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0x02",
+        .expected_result = "1",
+        .shift_amount = 1,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "3fbfbfbf",
+        .shift_amount = 1,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "7f7f7f7",
+        .shift_amount = 4,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "7f7f7",
+        .shift_amount = 12,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "7",
+        .shift_amount = 28,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "1",
+        .shift_amount = 30,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "0",
+        .shift_amount = 31,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "0",
+        .shift_amount = 32,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "0",
+        .shift_amount = 128,
+    },
+    {
+        .value1 = "0x7f7f7f7f",
+        .expected_result = "0",
+        .shift_amount = 65537,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "421084210842108",
+        .shift_amount = 1,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "210842108421084",
+        .shift_amount = 2,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "108421084210842",
+        .shift_amount = 3,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "10842108",
+        .shift_amount = 31,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "8421084",
+        .shift_amount = 32,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "4210842",
+        .shift_amount = 33,
+    },
+    {
+        .value1 = "0x842108421084210",
+        .expected_result = "2108421",
+        .shift_amount = 34,
+    },
+    {
+        .value1 = "0x842108421084210842108421",
+        .expected_result = "8421084210842108",
+        .shift_amount = 32,
+    },
+    {
+        .value1 = "0x842108421084210842108421",
+        .expected_result = "84210842",
+        .shift_amount = 64,
+    },
+    {
+        .value1 = "0x842108421084210842108421",
+        .expected_result = "42108421",
+        .shift_amount = 65,
+    },
+    {
+        .value1 = "0x842108421084210842108421",
+        .expected_result = "21084210",
+        .shift_amount = 66,
+    },
+    {
+        .value1 = "0x842108421084210842108421",
+        .expected_result = "10842108",
+        .shift_amount = 67,
+    },
+};
+
+static int s_test_bigint_right_shift(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_right_shift_test(allocator, s_shift_right_test_cases, AWS_ARRAY_SIZE(s_shift_right_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_right_shift, s_test_bigint_right_shift)
+
+static int s_do_left_shift_test(
+    struct aws_allocator *allocator,
+    struct aws_bigint_shift_test *test_cases,
+    size_t test_case_count) {
+
+    struct aws_byte_buf serialized_shift;
+    aws_byte_buf_init(&serialized_shift, allocator, 0);
+
+    for (size_t i = 0; i < test_case_count; ++i) {
+        struct aws_bigint_shift_test *testcase = &test_cases[i];
+
+        /* init operands */
+        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        ASSERT_NOT_NULL(value1);
+
+        if (testcase->is_negative1) {
+            aws_bigint_negate(value1);
+        }
+
+        aws_bigint_shift_left(value1, testcase->shift_amount);
+
+        serialized_shift.len = 0;
+        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
+
+        size_t expected_length = strlen(testcase->expected_result);
+        ASSERT_TRUE(serialized_shift.len == expected_length);
+        ASSERT_BIN_ARRAYS_EQUALS(
+            testcase->expected_result, expected_length, serialized_shift.buffer, serialized_shift.len);
+
+        aws_bigint_destroy(value1);
+    }
+
+    aws_byte_buf_clean_up(&serialized_shift);
+
+    return AWS_OP_SUCCESS;
+}
+
+static struct aws_bigint_shift_test s_shift_left_test_cases[] = {
+    {
+        .value1 = "0x00",
+        .expected_result = "0",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0x1F",
+        .expected_result = "1f",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+        .expected_result = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+        .shift_amount = 0,
+    },
+    {
+        .value1 = "0x01",
+        .expected_result = "2",
+        .shift_amount = 1,
+    },
+    {
+        .value1 = "0x01",
+        .expected_result = "80000000",
+        .shift_amount = 31,
+    },
+    {
+        .value1 = "0x01",
+        .expected_result = "10000000000000000",
+        .shift_amount = 64,
+    },
+    {
+        .value1 = "0x01",
+        .expected_result = "20000000000000000",
+        .shift_amount = 65,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "108421084210842108420",
+        .shift_amount = 1,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "210842108421084210840",
+        .shift_amount = 2,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "4210842108421084210800000000",
+        .shift_amount = 31,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "8421084210842108421000000000",
+        .shift_amount = 32,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "842108421084210842100000000000000000",
+        .shift_amount = 64,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "84210842108421084210000000000000000000000000",
+        .shift_amount = 96,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "108421084210842108420000000000000000000000000",
+        .shift_amount = 97,
+    },
+    {
+        .value1 = "0x84210842108421084210",
+        .expected_result = "4210842108421084210800000000000000000000000000000000",
+        .shift_amount = 127,
+    },
+};
+
+static int s_test_bigint_left_shift(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    return s_do_left_shift_test(allocator, s_shift_left_test_cases, AWS_ARRAY_SIZE(s_shift_left_test_cases));
+}
+
+AWS_TEST_CASE(test_bigint_left_shift, s_test_bigint_left_shift)

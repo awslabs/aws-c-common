@@ -145,6 +145,18 @@ int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs,
 AWS_COMMON_API
 int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
 
+/*
+ * Performs a right bit-shift on a big int, equivalently dividing by a power of two.
+ */
+AWS_COMMON_API
+void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount);
+
+/*
+ * Performs a left bit-shift on a big int, equivalently multiplying by a power of two.
+ */
+AWS_COMMON_API
+int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BIGINT_H */

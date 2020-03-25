@@ -402,7 +402,8 @@ add_test_case(test_bigint_subtract_positive_result)
 add_test_case(test_bigint_subtract_negative_result)
 add_test_case(test_bigint_multiply_one_and_zero)
 add_test_case(test_bigint_multiply)
-
+add_test_case(test_bigint_right_shift)
+add_test_case(test_bigint_left_shift)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
