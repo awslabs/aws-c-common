@@ -411,6 +411,12 @@ add_test_case(test_bigint_divide_single_digit_divisor)
 add_test_case(test_bigint_divide_general)
 add_test_case(test_bigint_append_binary)
 
+add_test_case(parse_resource_name_test)
+add_test_case(parse_resource_name_failures_test)
+add_test_case(resource_name_tostring_test)
+add_test_case(resource_name_tostring_failure_test)
+add_test_case(resource_name_length_test)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
