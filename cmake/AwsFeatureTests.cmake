@@ -45,7 +45,7 @@ int main() {
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
 }" AWS_HAVE_GCC_INLINE_ASM)
 
-string(REGEX MATCH "^(aarch64|arm)" ARM_CPU ${CMAKE_SYSTEM_PROCESSOR})
+string(REGEX MATCH "^(aarch64|arm)" ARM_CPU "${CMAKE_SYSTEM_PROCESSOR}")
 if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
     check_c_source_compiles("
     #include <execinfo.h>
