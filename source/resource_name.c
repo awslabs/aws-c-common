@@ -27,6 +27,12 @@ int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct 
     if (aws_byte_cursor_split_on_char_n(input, ARN_DELIMETER_CHAR, split_count, &arn_part_list)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
+
+    struct aws_byte_cursor *arn_prefix;
+    if (aws_array_list_get_at_ptr(&arn_part_list, (void **)&arn_prefix, 0) ||
+        !aws_byte_cursor_eq_c_str(arn_prefix, "arn")) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
     if (aws_array_list_get_at(&arn_part_list, &arn->partition, 1)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
