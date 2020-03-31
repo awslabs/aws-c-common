@@ -15,8 +15,8 @@
 
 #include <aws/common/resource_name.h>
 
-const char ARN_DELIMETER[] = ":";
-const char ARN_DELIMETER_CHAR = ':';
+static const char ARN_DELIMETER[] = ":";
+static const char ARN_DELIMETER_CHAR = ':';
 
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
