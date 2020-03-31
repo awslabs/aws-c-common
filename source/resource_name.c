@@ -21,6 +21,8 @@
 static const char ARN_DELIMETER[] = ":";
 static const char ARN_DELIMETER_CHAR = ':';
 
+static const size_t DELIMETER_LEN = strlen("arn:::::");
+
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
     struct aws_byte_cursor arn_parts[ARN_PARTS_COUNT];
@@ -44,7 +46,7 @@ int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct 
     if (aws_array_list_get_at(&arn_part_list, &arn->region, 3)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
-    if (aws_array_list_get_at(&arn_part_list, &arn->account_id, 4)) {
+    if (aws_array_list_get_at(&arn_part_list, &arn->account_id, 4) || aws_byte_cursor_eq_c_str(&arn->account_id, "")) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
     if (aws_array_list_get_at(&arn_part_list, &arn->resource_id, 5)) {
@@ -61,7 +63,8 @@ int aws_resource_name_length(const struct aws_resource_name *arn, size_t *size) 
     AWS_PRECONDITION(aws_byte_cursor_is_valid(&arn->account_id));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(&arn->resource_id));
 
-    *size = arn->partition.len + arn->region.len + arn->service.len + arn->account_id.len + arn->resource_id.len + 8;
+    *size = arn->partition.len + arn->region.len + arn->service.len + arn->account_id.len + arn->resource_id.len +
+            DELIMETER_LEN;
 
     return AWS_OP_SUCCESS;
 }

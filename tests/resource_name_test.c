@@ -89,6 +89,13 @@ static int s_test_parse_resource_name_failures(struct aws_allocator *allocator, 
     /* arn prefix isn't present/correct */
     ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_resource_name_init_from_cur(&arn_06, &arn_string_06));
 
+    struct aws_byte_cursor arn_string_07 =
+        AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("arn:aws:cloudformation:us-east-1::stack/FooBar");
+    struct aws_resource_name arn_07;
+    AWS_ZERO_STRUCT(arn_07);
+    /* account ID is an empty string */
+    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_resource_name_init_from_cur(&arn_07, &arn_string_07));
+
     return AWS_OP_SUCCESS;
 }
 
