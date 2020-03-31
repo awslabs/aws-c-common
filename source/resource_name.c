@@ -21,7 +21,7 @@
 static const char ARN_DELIMETER[] = ":";
 static const char ARN_DELIMETER_CHAR = ':';
 
-static const size_t DELIMETER_LEN = strlen("arn:::::");
+static const size_t DELIMETER_LEN = 8; /* strlen("arn:::::") */
 
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
