@@ -23,7 +23,7 @@ static int s_test_parse_resource_name(struct aws_allocator *allocator, void *ctx
     (void)ctx;
 
     struct aws_byte_cursor arn_string_01 =
-        AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("arn:aws-us-gov:iam::123456789012:user/*");
+        AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("arn:aws-us-gov:iam::123456789012:user:ooo");
     struct aws_resource_name arn_01;
     AWS_ZERO_STRUCT(arn_01);
     ASSERT_SUCCESS(aws_resource_name_init_from_cur(&arn_01, &arn_string_01));
@@ -31,7 +31,8 @@ static int s_test_parse_resource_name(struct aws_allocator *allocator, void *ctx
     ASSERT_BIN_ARRAYS_EQUALS("iam", strlen("iam"), arn_01.service.ptr, arn_01.service.len);
     ASSERT_BIN_ARRAYS_EQUALS("", strlen(""), arn_01.region.ptr, arn_01.region.len);
     ASSERT_BIN_ARRAYS_EQUALS("123456789012", strlen("123456789012"), arn_01.account_id.ptr, arn_01.account_id.len);
-    ASSERT_BIN_ARRAYS_EQUALS("user/*", strlen("user/*"), arn_01.resource_id.ptr, arn_01.resource_id.len);
+    printf("ResourceID: [" PRInSTR "]\n", AWS_BYTE_CURSOR_PRI(arn_01.resource_id));
+    ASSERT_BIN_ARRAYS_EQUALS("user:ooo", strlen("user:ooo"), arn_01.resource_id.ptr, arn_01.resource_id.len);
 
     struct aws_byte_cursor arn_string_02 =
         AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("arn:aws:cloudformation:us-east-1:1234567890:stack/FooBar");

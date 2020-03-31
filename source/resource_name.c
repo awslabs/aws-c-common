@@ -33,6 +33,34 @@ static int s_parse_resource_name_part(
 
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
+    const size_t part_count = 6;
+    struct aws_byte_cursor arn_parts[6];
+    struct aws_array_list arn_part_list;
+    aws_array_list_init_static(&arn_part_list, arn_parts, part_count, sizeof(struct aws_byte_cursor));
+    if (aws_byte_cursor_split_on_char_n(input, ':', part_count, &arn_part_list)) {
+        return aws_raise_error(aws_last_error());
+    }
+    printf("List size: %ld\n", aws_array_list_length(&arn_part_list));
+    if (aws_array_list_get_at(&arn_part_list, &arn->partition, 1)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+    if (aws_array_list_get_at(&arn_part_list, &arn->service, 2)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+    if (aws_array_list_get_at(&arn_part_list, &arn->region, 3)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+    if (aws_array_list_get_at(&arn_part_list, &arn->account_id, 4)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+    if (aws_array_list_get_at(&arn_part_list, &arn->resource_id, 5)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+AWS_COMMON_API
+int aws_resource_name_init_from_cur_1(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(input));
     AWS_PRECONDITION(input->ptr);
     AWS_PRECONDITION(arn);
