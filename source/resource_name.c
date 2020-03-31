@@ -21,9 +21,9 @@ const char ARN_DELIMETER_CHAR = ':';
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
     const size_t split_count = 5;
-    struct aws_byte_cursor arn_parts[split_count+1];
+    struct aws_byte_cursor arn_parts[split_count + 1];
     struct aws_array_list arn_part_list;
-    aws_array_list_init_static(&arn_part_list, arn_parts, split_count+1, sizeof(struct aws_byte_cursor));
+    aws_array_list_init_static(&arn_part_list, arn_parts, split_count + 1, sizeof(struct aws_byte_cursor));
     if (aws_byte_cursor_split_on_char_n(input, ARN_DELIMETER_CHAR, split_count, &arn_part_list)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
