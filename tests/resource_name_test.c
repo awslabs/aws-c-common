@@ -31,7 +31,6 @@ static int s_test_parse_resource_name(struct aws_allocator *allocator, void *ctx
     ASSERT_BIN_ARRAYS_EQUALS("iam", strlen("iam"), arn_01.service.ptr, arn_01.service.len);
     ASSERT_BIN_ARRAYS_EQUALS("", strlen(""), arn_01.region.ptr, arn_01.region.len);
     ASSERT_BIN_ARRAYS_EQUALS("123456789012", strlen("123456789012"), arn_01.account_id.ptr, arn_01.account_id.len);
-    printf("ResourceID: [" PRInSTR "]\n", AWS_BYTE_CURSOR_PRI(arn_01.resource_id));
     ASSERT_BIN_ARRAYS_EQUALS("user:ooo", strlen("user:ooo"), arn_01.resource_id.ptr, arn_01.resource_id.len);
 
     struct aws_byte_cursor arn_string_02 =
