@@ -159,6 +159,15 @@ static int s_test_resource_name_tostring_failure(struct aws_allocator *allocator
     ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_resource_name(&too_small_buffer, &arn_01));
     aws_byte_buf_clean_up(&too_small_buffer);
 
+    uint8_t static_space[16];
+    struct aws_byte_buf static_buffer = {.len = 0, .buffer = static_space, .capacity = 16, .allocator = NULL};
+    struct aws_resource_name arn_02 = {.partition = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("aws"),
+                                       .service = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("s3"),
+                                       .region = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(""),
+                                       .account_id = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("123456789"),
+                                       .resource_id = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("bucket/key")};
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_resource_name(&static_buffer, &arn_02));
+
     return AWS_OP_SUCCESS;
 }
 
