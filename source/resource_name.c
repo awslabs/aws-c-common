@@ -15,32 +15,18 @@
 
 #include <aws/common/resource_name.h>
 
-#define ARN_DELIMETER ":"
-
-static int s_parse_resource_name_part(
-    struct aws_byte_cursor *token_cursor,
-    const struct aws_byte_cursor *cursor_split_on,
-    struct aws_byte_cursor *prev_token_cursor) {
-    *prev_token_cursor = *token_cursor;
-    aws_byte_cursor_advance(prev_token_cursor, 1);
-
-    if (aws_byte_cursor_find_exact(prev_token_cursor, cursor_split_on, token_cursor)) {
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
-    }
-    prev_token_cursor->len = token_cursor->ptr - prev_token_cursor->ptr;
-    return AWS_OP_SUCCESS;
-}
+const char ARN_DELIMETER[] = ":";
+const char ARN_DELIMETER_CHAR = ':';
 
 AWS_COMMON_API
 int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
-    const size_t part_count = 6;
-    struct aws_byte_cursor arn_parts[6];
+    const size_t split_count = 5;
+    struct aws_byte_cursor arn_parts[split_count+1];
     struct aws_array_list arn_part_list;
-    aws_array_list_init_static(&arn_part_list, arn_parts, part_count, sizeof(struct aws_byte_cursor));
-    if (aws_byte_cursor_split_on_char_n(input, ':', part_count, &arn_part_list)) {
-        return aws_raise_error(aws_last_error());
+    aws_array_list_init_static(&arn_part_list, arn_parts, split_count+1, sizeof(struct aws_byte_cursor));
+    if (aws_byte_cursor_split_on_char_n(input, ARN_DELIMETER_CHAR, split_count, &arn_part_list)) {
+        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
-    printf("List size: %ld\n", aws_array_list_length(&arn_part_list));
     if (aws_array_list_get_at(&arn_part_list, &arn->partition, 1)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
@@ -56,49 +42,6 @@ int aws_resource_name_init_from_cur(struct aws_resource_name *arn, const struct 
     if (aws_array_list_get_at(&arn_part_list, &arn->resource_id, 5)) {
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
-    return AWS_OP_SUCCESS;
-}
-
-AWS_COMMON_API
-int aws_resource_name_init_from_cur_1(struct aws_resource_name *arn, const struct aws_byte_cursor *input) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(input));
-    AWS_PRECONDITION(input->ptr);
-    AWS_PRECONDITION(arn);
-
-    const struct aws_byte_cursor cursor_split_on = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(ARN_DELIMETER);
-    struct aws_byte_cursor cursor;
-
-    if (input->len < 4) {
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
-    }
-    cursor.ptr = input->ptr;
-    cursor.len = 4;
-    if (!aws_byte_cursor_eq_c_str(&cursor, "arn:")) {
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
-    }
-    cursor.len = input->len;
-    aws_byte_cursor_advance(&cursor, 3);
-
-    if (s_parse_resource_name_part(&cursor, &cursor_split_on, &arn->partition)) {
-        return aws_raise_error(aws_last_error());
-    }
-
-    if (s_parse_resource_name_part(&cursor, &cursor_split_on, &arn->service)) {
-        return aws_raise_error(aws_last_error());
-    }
-
-    if (s_parse_resource_name_part(&cursor, &cursor_split_on, &arn->region)) {
-        return aws_raise_error(aws_last_error());
-    }
-
-    if (s_parse_resource_name_part(&cursor, &cursor_split_on, &arn->account_id)) {
-        return aws_raise_error(aws_last_error());
-    }
-
-    arn->resource_id.ptr = cursor.ptr + 1;
-    arn->resource_id.len =
-        input->len - 8 - (arn->partition.len + arn->service.len + arn->region.len + arn->account_id.len);
-
     return AWS_OP_SUCCESS;
 }
 
