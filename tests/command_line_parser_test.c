@@ -16,7 +16,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 /* If this is tested from a dynamic library, the static state needs to be reset */
-static void s_reset_static_state() {
+static void s_reset_static_state(void) {
     aws_cli_optind = 1;
 }
 
