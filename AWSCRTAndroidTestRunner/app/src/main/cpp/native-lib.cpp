@@ -4,6 +4,8 @@
 
 #include <dlfcn.h>
 
+#include <android/log.h>
+
 static bool s_tests_finished = false;
 static size_t s_total_tests = 400;
 static size_t s_test_idx = 0;
@@ -48,10 +50,18 @@ Java_software_amazon_awssdk_crt_awscrtandroidtestrunner_NativeTestFixture_runTes
         jobject /* this */,
         jstring jni_name) {
     const char *test_name = env->GetStringUTFChars(jni_name, nullptr);
-    printf("RUNNING %s\n", test_name);
+    __android_log_print(ANDROID_LOG_INFO, "native-test", "RUNNING %s", test_name);
 
     test_fn_t *test_fn = (test_fn_t*)dlsym(RTLD_DEFAULT, test_name);
-    assert(test_fn);
+    if (!test_fn) {
+        __android_log_print(ANDROID_LOG_WARN, "native-test", "%s NOT FOUND", test_name);
+        return 0;
+    }
 
-    return test_fn(0, nullptr);
+    int result = test_fn(0, nullptr);
+    __android_log_print(
+            result ? ANDROID_LOG_FATAL : ANDROID_LOG_INFO,
+            "native-test",
+            "%s %s", test_name, result ? "FAILED" : "OK");
+    return result;
 }
