@@ -167,6 +167,7 @@ add_test_case(test_hash_table_eq)
 add_test_case(test_hash_churn)
 add_test_case(test_hash_table_cleanup_idempotent)
 add_test_case(test_hash_table_byte_cursor_create_find)
+add_test_case(test_hash_combine)
 
 add_test_case(test_is_power_of_two)
 add_test_case(test_round_up_to_power_of_two)

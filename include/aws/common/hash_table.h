@@ -394,6 +394,9 @@ uint64_t aws_hash_byte_cursor_ptr(const void *item);
 AWS_COMMON_API
 uint64_t aws_hash_ptr(const void *item);
 
+AWS_COMMON_API
+uint64_t aws_hash_combine(uint64_t item1, uint64_t item2);
+
 /**
  * Convenience eq callback for NULL-terminated C-strings
  */
