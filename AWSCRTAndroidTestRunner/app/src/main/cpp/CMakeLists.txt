@@ -63,7 +63,9 @@ function(import_tests test_cmakelists)
 endfunction()
 
 file(GLOB test_src "${path_to_common}/tests/*.c")
-file(GLOB test_logging_src "${path_to_common}/tests/logging/*.c")
+file(GLOB test_logging_src
+        "${path_to_common}/tests/logging/logging_test_utilities.c"
+        "${path_to_common}/tests/logging/test_logger.c")
 set(test_src ${test_src} ${test_logging_src})
 import_tests(${path_to_common}/tests/CMakeLists.txt)
 
