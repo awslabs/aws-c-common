@@ -1261,14 +1261,15 @@ static int s_test_hash_table_byte_cursor_create_find_fn(struct aws_allocator *al
 
 AWS_TEST_CASE(test_hash_combine, s_test_hash_combine_fn)
 static int s_test_hash_combine_fn(struct aws_allocator *allocator, void *ctx) {
-    uint64_t a, b, c;
+    (void)allocator;
+    (void)ctx;
 
-    /* We're assuming that the underlying hashing function works,
-     * just making sure we hooked it up right for 2 64bit values */
+    /* We're assuming that the underlying hashing function works well.
+     * This test just makes sure we hooked it up right for 2 64bit values */
 
-    a = 0x123456789abcdef;
-    b = 0xfedcba987654321;
-    c = aws_hash_combine(a, b);
+    uint64_t a = 0x123456789abcdef;
+    uint64_t b = 0xfedcba987654321;
+    uint64_t c = aws_hash_combine(a, b);
 
     /* Sanity check */
     ASSERT_TRUE(c != a);
@@ -1277,19 +1278,13 @@ static int s_test_hash_combine_fn(struct aws_allocator *allocator, void *ctx) {
     /* Same inputs gets same results, right? */
     ASSERT_UINT_EQUALS(c, aws_hash_combine(a, b));
 
-    /* Using all bytes, right? */
+    /* Result spread across all bytes, right? */
     uint8_t *c_bytes = (uint8_t *)&c;
     for (size_t i = 0; i < sizeof(c); ++i) {
         ASSERT_TRUE(c_bytes[i] != 0);
     }
 
-    /* Check even low-entropy numbers result in something with high entropy */
-    c = aws_hash_combine(0, 1);
-    for (size_t i = 0; i < sizeof(c); ++i) {
-        ASSERT_TRUE(c_bytes[i] != 0);
-    }
-
-    /* Hash should NOT be cummutative */
+    /* Hash should NOT be commutative */
     ASSERT_TRUE(aws_hash_combine(a, b) != aws_hash_combine(b, a));
 
     return 0;
