@@ -25,22 +25,30 @@ set(BUILD_TESTING OFF)
 add_subdirectory(${path_to_common} ${CMAKE_CURRENT_BINARY_DIR}/aws-c-common)
 aws_use_package(aws-c-common)
 
-function(import_tests src_files)
-    # Find all test cases in test source files
-    # TODO: Add support for fixtures
-    foreach (src_file IN LISTS test_src)
-        file(STRINGS ${src_file} test_case_lines REGEX "AWS_TEST_CASE\\(.+\\)")
+function(import_tests test_cmakelists)
+    # Find all test cases in tests/CMakeLists.txt
+
+    file(STRINGS ${test_cmakelists} test_case_lines REGEX "add_test_case.+")
+    #message(STATUS "TEST_CASE_LINES=${test_case_lines}")
+    foreach (line IN LISTS test_case_lines)
+        string(STRIP "${line}" line)
+        message(STATUS "LINE=${line}")
+        string(REGEX REPLACE "add_test_case\\(([A-Za-z0-9_]+)\\)" "\\1" test_case "${line}")
+        message(STATUS "TEST_CASE=${test_case}")
+        list(APPEND TEST_CASES ${test_case})
+    endforeach()
+
+    if (ENABLE_NET_TESTS)
+        file(STRINGS ${test_cmakelists} test_case_lines REGEX "add_net_test_case.+")
         #message(STATUS "TEST_CASE_LINES=${test_case_lines}")
         foreach (line IN LISTS test_case_lines)
-            #message(STATUS "LINE=${line}")
-            string(REGEX REPLACE "AWS_TEST_CASE\\((.+),.+\\)" "\\1" test_case "${line}")
-            string(REGEX MATCH "#" token_pasting ${test_case})
-            if (NOT token_pasting)
-                #message(STATUS "TEST_CASE=${test_case}")
-                list(APPEND TEST_CASES ${test_case})
-            endif()
+            string(STRIP "${line}" line)
+            message(STATUS "LINE=${line}")
+            string(REGEX REPLACE "add_net_test_case\\(([A-Za-z0-9_]+)\\)" "\\1" test_case "${line}")
+            message(STATUS "TEST_CASE=${test_case}")
+            list(APPEND TEST_CASES ${test_case})
         endforeach()
-    endforeach()
+    endif()
 
     # Generate Kotlin test classes
     get_filename_component(testrunner_path "../../androidTest/java/software/amazon/awssdk/crt/awscrtandroidtestrunner" ABSOLUTE)
@@ -52,17 +60,15 @@ function(import_tests src_files)
             "${testrunner_path}/tests/NativeTest_${name}.kt"
         )
     endforeach()
-    set(TEST_SRCS ${test_src} PARENT_SCOPE)
 endfunction()
 
 file(GLOB test_src "${path_to_common}/tests/*.c")
 file(GLOB test_logging_src "${path_to_common}/tests/logging/*.c")
 set(test_src ${test_src} ${test_logging_src})
-import_tests(${test_src})
+import_tests(${path_to_common}/tests/CMakeLists.txt)
 
 # JNI Lib
-message(STATUS "TEST_SRCS=${TEST_SRCS}")
-add_library(native-lib SHARED native-lib.cpp ${TEST_SRCS})
+add_library(native-lib SHARED native-lib.cpp ${test_src})
 find_library(log-lib log)
 target_include_directories(native-lib PUBLIC
         "${path_to_common}/include"
