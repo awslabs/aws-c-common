@@ -5,6 +5,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
+    ndkVersion "21.0.6113669"
 
     defaultConfig {
         applicationId "software.amazon.awssdk.crt.awscrtandroidtestrunner"
