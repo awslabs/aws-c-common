@@ -25,11 +25,7 @@ set(BUILD_TESTING OFF)
 add_subdirectory(${path_to_common} ${CMAKE_CURRENT_BINARY_DIR}/aws-c-common)
 aws_use_package(aws-c-common)
 
-function(generate_test_library library_name)
-    file(GLOB test_src "${path_to_common}/tests/*.c")
-    file(GLOB test_logging_src "${path_to_common}/tests/logging/*.c")
-    set(test_src ${test_src} ${test_logging_src})
-
+function(import_tests src_files)
     # Find all test cases in test source files
     # TODO: Add support for fixtures
     foreach (src_file IN LISTS test_src)
@@ -46,32 +42,31 @@ function(generate_test_library library_name)
         endforeach()
     endforeach()
 
-    # Create a shared library that contains all of the tests
-    add_library(${library_name} SHARED ${test_src})
-    target_link_libraries(${library_name} aws-c-common)
-    target_include_directories(${library_name} PUBLIC
-            "${path_to_common}/include"
-            "${path_to_common}/tests"
-            "${CMAKE_CURRENT_BINARY_DIR}/aws-c-common/generated/include")
-    aws_set_common_properties(${library_name} NO_WEXTRA NO_PEDANTIC)
-    set_target_properties(${library_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-    target_compile_definitions(${library_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
-
     # Generate Kotlin test classes
     get_filename_component(testrunner_path "../../androidTest/java/software/amazon/awssdk/crt/awscrtandroidtestrunner" ABSOLUTE)
     foreach(name IN LISTS TEST_CASES)
         set(TEST_NAME "${name}")
-        message(STATUS "TEST_NAME=${TEST_NAME}")
+        #message(STATUS "TEST_NAME=${TEST_NAME}")
         configure_file(
             "${testrunner_path}/NativeTest.kt.in"
             "${testrunner_path}/tests/NativeTest_${name}.kt"
         )
     endforeach()
+    set(TEST_SRCS ${test_src} PARENT_SCOPE)
 endfunction()
 
-generate_test_library(aws-c-common-tests)
+file(GLOB test_src "${path_to_common}/tests/*.c")
+file(GLOB test_logging_src "${path_to_common}/tests/logging/*.c")
+set(test_src ${test_src} ${test_logging_src})
+import_tests(${test_src})
 
 # JNI Lib
-add_library(native-lib SHARED native-lib.cpp)
+message(STATUS "TEST_SRCS=${TEST_SRCS}")
+add_library(native-lib SHARED native-lib.cpp ${TEST_SRCS})
 find_library(log-lib log)
-target_link_libraries(native-lib  ${log-lib} ${DEP_AWS_LIBS} aws-c-common-tests)
+target_include_directories(native-lib PUBLIC
+        "${path_to_common}/include"
+        "${path_to_common}/tests"
+        "${CMAKE_CURRENT_BINARY_DIR}/aws-c-common/generated/include")
+target_compile_definitions(native-lib PRIVATE AWS_UNSTABLE_TESTING_API=1)
+target_link_libraries(native-lib  ${log-lib} ${DEP_AWS_LIBS})

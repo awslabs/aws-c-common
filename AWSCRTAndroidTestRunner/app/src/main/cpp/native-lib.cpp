@@ -2,6 +2,8 @@
 #include <string>
 #include <sstream>
 
+#include <dlfcn.h>
+
 static bool s_tests_finished = false;
 static size_t s_total_tests = 400;
 static size_t s_test_idx = 0;
@@ -38,6 +40,8 @@ Java_software_amazon_awssdk_crt_awscrtandroidtestrunner_MainActivity_testsExitCo
     return 0;
 }
 
+typedef int(test_fn_t)(int, char**);
+
 extern "C" JNIEXPORT jint JNICALL
 Java_software_amazon_awssdk_crt_awscrtandroidtestrunner_NativeTestFixture_runTest(
         JNIEnv *env,
@@ -45,5 +49,9 @@ Java_software_amazon_awssdk_crt_awscrtandroidtestrunner_NativeTestFixture_runTes
         jstring jni_name) {
     const char *test_name = env->GetStringUTFChars(jni_name, nullptr);
     printf("RUNNING %s\n", test_name);
-    return 0;
+
+    test_fn_t *test_fn = (test_fn_t*)dlsym(RTLD_DEFAULT, test_name);
+    assert(test_fn);
+
+    return test_fn(0, nullptr);
 }
