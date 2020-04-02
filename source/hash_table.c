@@ -992,8 +992,8 @@ uint64_t aws_hash_ptr(const void *item) {
 }
 
 uint64_t aws_hash_combine(uint64_t item1, uint64_t item2) {
-    uint32_t b = (uint32_t)item2;
-    uint32_t c = (uint32_t)(item2 >> 32);
+    uint32_t b = item2 & 0xFFFFFFFF; /* LSB */
+    uint32_t c = item2 >> 32;        /* MSB */
 
     hashlittle2(&item1, sizeof(item1), &c, &b);
     return ((uint64_t)b << 32) | c;
