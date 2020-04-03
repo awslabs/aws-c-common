@@ -19,7 +19,7 @@ Java_software_amazon_awssdk_crt_awscrtandroidtestrunner_NativeTestFixture_runTes
     test_fn_t *test_fn = (test_fn_t*)dlsym(RTLD_DEFAULT, test_name);
     if (!test_fn) {
         __android_log_print(ANDROID_LOG_WARN, "native-test", "%s NOT FOUND", test_name);
-        return 0;
+        return -1;
     }
 
     int result = test_fn(0, nullptr);
