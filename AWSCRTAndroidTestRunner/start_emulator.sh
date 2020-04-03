@@ -17,7 +17,7 @@ fi
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
 
 # Install emulator and system image required
-sudo sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
+sudo -E sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
 
 echo no | avdmanager create avd --force -n test -k "system-images;android-${ANDROID_API};${ANDROID_ABI}"
 $ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu off &
