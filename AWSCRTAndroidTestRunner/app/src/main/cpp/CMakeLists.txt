@@ -21,40 +21,18 @@ set(IN_SOURCE_BUILD ON)
 set(BUILD_SHARED_LIBS ON)
 
 # We will generate our own tests, the tests that are there depend on CTest
-set(BUILD_TESTING OFF)
+set(ALLOW_CROSS_COMPILED_TESTS ON)
+set(BUILD_TESTING ON)
 add_subdirectory(${path_to_common} ${CMAKE_CURRENT_BINARY_DIR}/aws-c-common)
 aws_use_package(aws-c-common)
 
 function(import_tests test_cmakelists)
-    # Find all test cases in tests/CMakeLists.txt
-
-    file(STRINGS ${test_cmakelists} test_case_lines REGEX "add_test_case.+")
-    #message(STATUS "TEST_CASE_LINES=${test_case_lines}")
-    foreach (line IN LISTS test_case_lines)
-        string(STRIP "${line}" line)
-        message(STATUS "LINE=${line}")
-        string(REGEX REPLACE "add_test_case\\(([A-Za-z0-9_]+)\\)" "\\1" test_case "${line}")
-        message(STATUS "TEST_CASE=${test_case}")
-        list(APPEND TEST_CASES ${test_case})
-    endforeach()
-
-    if (ENABLE_NET_TESTS)
-        file(STRINGS ${test_cmakelists} test_case_lines REGEX "add_net_test_case.+")
-        #message(STATUS "TEST_CASE_LINES=${test_case_lines}")
-        foreach (line IN LISTS test_case_lines)
-            string(STRIP "${line}" line)
-            message(STATUS "LINE=${line}")
-            string(REGEX REPLACE "add_net_test_case\\(([A-Za-z0-9_]+)\\)" "\\1" test_case "${line}")
-            message(STATUS "TEST_CASE=${test_case}")
-            list(APPEND TEST_CASES ${test_case})
-        endforeach()
-    endif()
+    get_property(TEST_CASES GLOBAL PROPERTY AWS_TEST_CASES)
 
     # Generate Kotlin test classes
     get_filename_component(testrunner_path "../../androidTest/java/software/amazon/awssdk/crt/awscrtandroidtestrunner" ABSOLUTE)
     foreach(name IN LISTS TEST_CASES)
         set(TEST_NAME "${name}")
-        #message(STATUS "TEST_NAME=${TEST_NAME}")
         configure_file(
             "${testrunner_path}/NativeTest.kt.in"
             "${testrunner_path}/tests/NativeTest_${name}.kt"
