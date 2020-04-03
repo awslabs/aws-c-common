@@ -19,15 +19,13 @@ if [ -z "$ANDRDOID_NDK_VERSION" ]; then
 fi
 
 CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
-# if [[ $ANDROID_ABI == 'armeabi-v7a' ]]; then
-    # Intentionally use old tools so that ARM emulation works
-#    CLI_TOOLS_URL=https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-# fi
 
-# Install sdkmanager and update path
-curl -sSL -o /tmp/android-sdk-tools.zip $CLI_TOOLS_URL
-yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+if ! [ -x "$(command -v sdkmanager)" ]; then
+    # Install sdkmanager and update path
+    curl -sSL -o /tmp/android-sdk-tools.zip $CLI_TOOLS_URL
+    yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
+fi
 
 mkdir -p ~/.android
 touch ~/.android/repositories.cfg
