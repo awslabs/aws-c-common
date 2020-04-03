@@ -2,9 +2,7 @@
 
 set -ex
 
-if [ -z "$ANDROID_HOME" ]; then
-    ANDROID_HOME=$HOME/android
-fi
+export ANDROID_HOME=$HOME/android
 
 if [ -z "$ANDROID_API" ]; then
     ANDROID_API=24
@@ -15,10 +13,9 @@ if [ -z "$ANDROID_ABI" ]; then
 fi
 
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
-sdk_mgr_path=$(which sdkmanager)
 
 # Install emulator and system image required
-sudo $sdk_mgr_path "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
+sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
 
 echo no | avdmanager create avd --force -n test -k "system-images;android-${ANDROID_API};${ANDROID_ABI}"
 $ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu off &

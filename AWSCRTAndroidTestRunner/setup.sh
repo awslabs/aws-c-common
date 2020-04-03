@@ -2,9 +2,7 @@
 
 set -ex
 
-if [ -z "$ANDROID_HOME" ]; then
-    ANDROID_HOME=$HOME/android
-fi
+export ANDROID_HOME=$HOME/android
 
 if [ -z "$ANDROID_API" ]; then
     export ANDROID_API=24
@@ -27,12 +25,11 @@ if ! [ -x "$(command -v sdkmanager)" ]; then
     yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
 fi
 
-#mkdir -p ~/.android
-#touch ~/.android/repositories.cfg
+mkdir -p ~/.android
+touch ~/.android/repositories.cfg
 
 # Accept all licenses
-#yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME >/dev/null 2>&1
+yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME >/dev/null 2>&1
 # Install required SDK/NDK/tools
-sdk_mgr_path=$(which sdkmanager)
-sudo $sdk_mgr_path "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
-sudo $sdk_mgr_path "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
+sdkmanager "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
+sdkmanager "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
