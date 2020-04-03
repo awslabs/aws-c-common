@@ -26,8 +26,8 @@ CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-62
 
 # Install sdkmanager and update path
 curl -sSL -o /tmp/android-sdk-tools.zip $CLI_TOOLS_URL
-yes | sudo unzip /tmp/android-sdk-tools.zip -d $ANDROID_HOME
-PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
+export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
 
 mkdir -p ~/.android
 touch ~/.android/repositories.cfg

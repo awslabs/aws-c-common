@@ -14,7 +14,7 @@ if [ -z "$ANDROID_ABI" ]; then
     ANDROID_ABI='default;x86'
 fi
 
-PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
 
 # Install emulator and system image required
 sudo sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
