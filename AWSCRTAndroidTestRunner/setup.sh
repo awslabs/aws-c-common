@@ -27,8 +27,8 @@ if ! [ -x "$(command -v sdkmanager)" ]; then
     yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
 fi
 
-mkdir -p ~/.android
-touch ~/.android/repositories.cfg
+#mkdir -p ~/.android
+#touch ~/.android/repositories.cfg
 
 # Accept all licenses
 yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME >/dev/null 2>&1
