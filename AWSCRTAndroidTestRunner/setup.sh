@@ -18,15 +18,15 @@ if [ -z "$ANDRDOID_NDK_VERSION" ]; then
     export ANDROID_NDK_VERSION=21.0.6113669
 fi
 
-# CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
+CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip
 # if [[ $ANDROID_ABI == 'armeabi-v7a' ]]; then
     # Intentionally use old tools so that ARM emulation works
-    CLI_TOOLS_URL=https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+#    CLI_TOOLS_URL=https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
 # fi
 
 # Install sdkmanager and update path
 curl -sSL -o /tmp/android-sdk-tools.zip $CLI_TOOLS_URL
-echo N | unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
+echo A | unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
 PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
 
 mkdir -p ~/.android
