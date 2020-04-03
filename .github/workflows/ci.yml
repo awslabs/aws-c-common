@@ -109,6 +109,9 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Source
+      uses: actions/checkout@v1
+      
     - name: Gradle Build
       run: |
         cd AWSCRTAndroidTestRunner
