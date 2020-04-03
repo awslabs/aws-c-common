@@ -31,7 +31,7 @@ mkdir -p ~/.android
 touch ~/.android/repositories.cfg
 
 # Accept all licenses
-yes | sudo sdkmanager --licenses --sdk_root=$ANDROID_HOME
+yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME
 # Install required SDK/NDK/tools
-sudo sdkmanager "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
-sudo sdkmanager "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
+sdkmanager "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
+sdkmanager "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
