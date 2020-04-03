@@ -33,5 +33,6 @@ fi
 # Accept all licenses
 #yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME >/dev/null 2>&1
 # Install required SDK/NDK/tools
-sudo -E sdkmanager "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
-sudo -E sdkmanager "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
+sdk_mgr_path=$(which sdkmanager)
+sudo $sdk_mgr_path "emulator" "tools" "platform-tools" "ndk;${ANDROID_NDK_VERSION}" --sdk_root=$ANDROID_HOME
+sudo $sdk_mgr_path "build-tools;25.0.2" "platforms;android-${ANDROID_API}" --sdk_root=$ANDROID_HOME
