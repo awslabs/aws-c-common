@@ -22,7 +22,7 @@ export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/plat
 if ! [ -x "$(command -v sdkmanager)" ]; then
     # Install sdkmanager and update path
     curl -sSL -o /tmp/android-sdk-tools.zip $CLI_TOOLS_URL
-    yes | sudo unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
+    unzip -q /tmp/android-sdk-tools.zip -d $ANDROID_HOME
 fi
 
 mkdir -p ~/.android
