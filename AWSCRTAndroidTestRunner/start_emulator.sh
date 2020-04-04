@@ -29,3 +29,4 @@ while [ -z "$booted" || -z "$anim_done" ]; do
     booted=$(adb -e shell getprop sys.boot_completed | grep '1')
     anim_done=$(adb -e shell getprop init.svc.bootanim | grep 'stopped')
 done
+adb shell input keyevent 82
