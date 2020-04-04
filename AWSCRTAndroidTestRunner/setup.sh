@@ -9,7 +9,7 @@ if [ -z "$ANDROID_API" ]; then
 fi
 
 if [ -z "$ANDROID_ABI" ]; then
-    export ANDROID_ABI='default;x86'
+    export ANDROID_ABI='default;armeabi-v7a'
 fi
 
 if [ -z "$ANDRDOID_NDK_VERSION" ]; then

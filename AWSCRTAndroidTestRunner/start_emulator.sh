@@ -9,7 +9,7 @@ if [ -z "$ANDROID_API" ]; then
 fi
 
 if [ -z "$ANDROID_ABI" ]; then
-    ANDROID_ABI='default;x86'
+    ANDROID_ABI='default;armeabi-v7a'
 fi
 
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
@@ -18,15 +18,15 @@ export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/plat
 sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
 
 echo no | avdmanager create avd --force -n test -k "system-images;android-${ANDROID_API};${ANDROID_ABI}"
-$ANDROID_HOME/emulator/emulator -avd test -no-audio -no-window -gpu off &
+$ANDROID_HOME/emulator/emulator64-arm -avd test -no-boot-anim -no-audio -no-window -gpu off -verbose &
 
 # Wait for emulator to boot
-adb -e wait-for-device
-booted=$(adb -e shell getprop sys.boot_completed | grep '1')
 anim_done=$(adb -e shell getprop init.svc.bootanim | grep 'stopped')
 while [ -z "$booted" || -z "$anim_done" ]; do
     sleep 1
-    booted=$(adb -e shell getprop sys.boot_completed | grep '1')
     anim_done=$(adb -e shell getprop init.svc.bootanim | grep 'stopped')
 done
+
+# unlock emulator screen
 adb shell input keyevent 82
+adb shell input keyevent 4
