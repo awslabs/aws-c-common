@@ -18,7 +18,7 @@ export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/plat
 sdkmanager "emulator" "system-images;android-${ANDROID_API};${ANDROID_ABI}" --sdk_root=$ANDROID_HOME
 
 echo no | avdmanager create avd --force -n test -k "system-images;android-${ANDROID_API};${ANDROID_ABI}"
-$ANDROID_HOME/emulator/emulator64-arm -avd test -no-boot-anim -no-audio -no-window -gpu off -verbose &
+$ANDROID_HOME/emulator/emulator -avd test -no-boot-anim -no-audio -no-window -gpu off -verbose &
 
 # Wait for emulator to boot
 anim_done=$(adb -e shell getprop init.svc.bootanim | grep 'stopped')
