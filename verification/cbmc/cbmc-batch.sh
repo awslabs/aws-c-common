@@ -7,7 +7,12 @@ opt="$1"; shift
 result="results.txt"
 
 COMMANDS_IN_PATH=true
-for i in cbmc-batch cbmc-status aws cbmc-kill cbmc; do
+if [ "$opt" = "--lsjobs" ]; then
+    PREREQ_COMMANDS=""
+else
+    PREREQ_COMMANDS="cbmc-batch cbmc-status aws cbmc-kill"
+fi
+for i in $PREREQ_COMMANDS ; do
     command -v "$i" >/dev/null 2>&1 || {
         echo >&2 "Command $i required in \$PATH";
         COMMANDS_IN_PATH=false;
