@@ -31,6 +31,7 @@ struct aws_cli_option {
     int val;
 };
 
+AWS_EXTERN_C_BEGIN
 /**
  * Initialized to 1 (for where the first argument would be). As arguments are parsed, this number is the index
  * of the next argument to parse. Reset this to 1 to parse another set of arguments, or to rerun the parser.
@@ -42,7 +43,6 @@ AWS_COMMON_API extern int aws_cli_optind;
  */
 AWS_COMMON_API extern const char *aws_cli_optarg;
 
-AWS_EXTERN_C_BEGIN
 /**
  * A mostly compliant implementation of posix getopt_long(). Parses command-line arguments. argc is the number of
  * command line arguments passed in argv. optstring contains the legitimate option characters. The option characters
