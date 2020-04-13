@@ -94,19 +94,18 @@ int aws_cli_getopt_long(
     aws_cli_optind++;
     if (option) {
         bool has_arg = false;
-        if (option) {
-            char *opt_value = memchr(optstring, option->val, strlen(optstring));
-            if (!opt_value) {
-                return '?';
-            }
 
-            if (opt_value[1] == ':') {
-                has_arg = true;
-            }
+        char *opt_value = memchr(optstring, option->val, strlen(optstring));
+        if (!opt_value) {
+            return '?';
+        }
+
+        if (opt_value[1] == ':') {
+            has_arg = true;
         }
 
         if (has_arg) {
-            if (aws_cli_optind >= argc - 1) {
+            if (aws_cli_optind >= argc) {
                 return '?';
             }
 
