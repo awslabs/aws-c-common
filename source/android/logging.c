@@ -129,6 +129,8 @@ static int s_logcat_log(
     aws_log_subject_t subject,
     const char *format,
     ...) {
+    (void)logger;
+
     va_list format_args;
     va_start(format_args, format);
 
@@ -149,7 +151,7 @@ static int s_logcat_log(
     }
 
     /* ANDROID_LOG_VERBOSE = 2, ANDROID_LOG_FATAL = 7 */
-    const int prio = 8 - log_level;
+    const int prio = 0x8 - log_level;
     __android_log_write(prio, "AWSCRT", buffer);
 
     return AWS_OP_SUCCESS;
