@@ -20,7 +20,7 @@
 
 #include <stdarg.h>
 
-#define LOGCAT_MAX_BUFFER_SIZE (4*1024)
+#define LOGCAT_MAX_BUFFER_SIZE (4 * 1024)
 
 struct logcat_format_data {
     char *buffer;
