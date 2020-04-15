@@ -20,14 +20,13 @@
 
 #include <stdarg.h>
 
-#define LOGCAT_MAX_BUFFER_SIZE 1024
+#define LOGCAT_MAX_BUFFER_SIZE (4 * 1024)
 
 struct logcat_format_data {
     char *buffer;
     size_t bytes_written;
     size_t total_length;
     const char *format;
-    const char *subject;
 };
 
 static size_t s_advance_and_clamp_index(size_t current_index, int amount, size_t maximum) {
@@ -67,23 +66,6 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         current_index = s_advance_and_clamp_index(current_index, thread_id_written, fake_total_length);
-    }
-
-    if (current_index < fake_total_length) {
-        /* output subject name */
-        if (formatting_data->subject) {
-            int subject_written = snprintf(
-                formatting_data->buffer + current_index,
-                fake_total_length - current_index,
-                "[%s]",
-                formatting_data->subject);
-
-            if (subject_written < 0) {
-                return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-            }
-
-            current_index = s_advance_and_clamp_index(current_index, subject_written, fake_total_length);
-        }
     }
 
     if (current_index < fake_total_length) {
@@ -139,7 +121,6 @@ static int s_logcat_log(
         .buffer = buffer,
         .total_length = AWS_ARRAY_SIZE(buffer),
         .format = format,
-        .subject = aws_log_subject_name(subject),
     };
 
     int result = s_logcat_format(&fmt, format_args);
@@ -152,7 +133,7 @@ static int s_logcat_log(
 
     /* ANDROID_LOG_VERBOSE = 2, ANDROID_LOG_FATAL = 7 */
     const int prio = 0x8 - log_level;
-    __android_log_write(prio, "AWSCRT", buffer);
+    __android_log_write(prio, aws_log_subject_name(subject), buffer);
 
     return AWS_OP_SUCCESS;
 }
