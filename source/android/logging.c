@@ -57,7 +57,7 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
          * Add thread id and user content separator (" - ")
          */
         aws_thread_id_t current_thread_id = aws_thread_current_thread_id();
-        char thread_id[32];
+        char thread_id[AWS_THREAD_ID_T_REPR_BUFSZ];
         if (aws_thread_id_t_to_string(current_thread_id, thread_id, AWS_THREAD_ID_T_REPR_BUFSZ)) {
             return AWS_OP_ERR;
         }
