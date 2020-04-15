@@ -61,11 +61,8 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
         if (aws_thread_id_t_to_string(current_thread_id, thread_id, AWS_THREAD_ID_T_REPR_BUFSZ)) {
             return AWS_OP_ERR;
         }
-        int thread_id_written = snprintf(
-            formatting_data->buffer + current_index,
-            fake_total_length - current_index,
-            "] [%s] ",
-            thread_id);
+        int thread_id_written =
+            snprintf(formatting_data->buffer + current_index, fake_total_length - current_index, "] [%s] ", thread_id);
         if (thread_id_written < 0) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
@@ -101,10 +98,7 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
          */
 
         int written_count = vsnprintf(
-            formatting_data->buffer + current_index,
-            fake_total_length - current_index,
-            formatting_data->format,
-            args);
+            formatting_data->buffer + current_index, fake_total_length - current_index, formatting_data->format, args);
 
         if (written_count < 0) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);

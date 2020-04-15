@@ -146,7 +146,8 @@ int aws_logger_init_standard(
 
 #ifdef ANDROID
     (void)options;
-    extern int aws_logger_init_logcat(struct aws_logger *, struct aws_allocator *, struct aws_logger_standard_options*);
+    extern int aws_logger_init_logcat(
+        struct aws_logger *, struct aws_allocator *, struct aws_logger_standard_options *);
     return aws_logger_init_logcat(logger, allocator, options);
 #endif
 
