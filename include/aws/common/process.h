@@ -21,6 +21,47 @@ AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API int aws_get_pid(void);
 
+struct aws_run_command_result {
+    struct aws_allocator *allocator;
+
+    /* return code from running the command. */
+    int ret_code;
+
+    /**
+     * captured stdout message from running the command,
+     * caller is responsible for releasing the memory.
+     */
+    struct aws_string *std_out;
+
+    /**
+     * captured stderr message from running the command,
+     * caller is responsible for releasing the memory.
+     * It's currently not implemented and the value will be set to NULL.
+     */
+    struct aws_string *std_err;
+};
+
+struct aws_run_command_options {
+    struct aws_allocator *allocator;
+
+    /* command path and commandline options of running that command. */
+    const char *command;
+};
+
+AWS_COMMON_API struct aws_run_command_result *aws_run_command_result_new(struct aws_allocator *allocator);
+
+AWS_COMMON_API void aws_run_command_result_destroy(struct aws_run_command_result *result);
+
+/**
+ * Currently this API is implemented using popen on Posix system and
+ * _popen on Windows to capture output from running a command. Note
+ * that popen only captures stdout, and doesn't provide an option to
+ * capture stderr. We will add more options, such as acquire stderr
+ * in the future so probably will alter the underlying implementation
+ * as well.
+ */
+AWS_COMMON_API struct aws_run_command_result *aws_run_command(struct aws_run_command_options options);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_PROCESS_H */

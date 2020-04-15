@@ -14,8 +14,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 #include <aws/common/string.h>
+#include <ctype.h>
 
 AWS_EXTERN_C_BEGIN
 /**
@@ -57,5 +57,14 @@ bool aws_c_string_is_valid(const char *str) {
      */
     return str && AWS_MEM_IS_READABLE(str, 1);
 }
+
+/**
+ * Evaluates if a char is a white character.
+ */
+AWS_STATIC_IMPL
+bool aws_char_is_space(uint8_t c) {
+    return isspace((int)c) != 0;
+}
+
 AWS_EXTERN_C_END
 #endif /* AWS_COMMON_STRING_INL */
