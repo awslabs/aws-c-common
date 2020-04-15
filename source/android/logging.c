@@ -61,7 +61,7 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
             return AWS_OP_ERR;
         }
         int thread_id_written =
-            snprintf(formatting_data->buffer + current_index, fake_total_length - current_index, "] [%s] ", thread_id);
+            snprintf(formatting_data->buffer + current_index, fake_total_length - current_index, "[%s] ", thread_id);
         if (thread_id_written < 0) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
