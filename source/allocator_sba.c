@@ -80,9 +80,13 @@ static void *s_page_bind(void *addr, struct free_bin *bin) {
 static void *s_aligned_alloc(size_t size, size_t align) {
 #ifdef WIN32
     return _aligned_malloc(size, align);
-#elif __linux__ || __APPLE__
+#else
     void *mem = NULL;
-    posix_memalign(&mem, align, size);
+    int return_code = posix_memalign(&mem, align, size);
+    if (return_code) {
+        aws_raise_error(AWS_ERROR_OOM);
+        return NULL;
+    }
     return mem;
 #endif
 }
@@ -90,7 +94,7 @@ static void *s_aligned_alloc(size_t size, size_t align) {
 static void s_aligned_free(void *addr) {
 #ifdef WIN32
     _aligned_free(addr);
-#elif __linux__ || __APPLE__
+#else
     free(addr);
 #endif
 }
@@ -259,6 +263,7 @@ static struct free_bin *s_sba_find_bin(struct small_block_allocator *sba, size_t
     }
     /* should never get here */
     AWS_POSTCONDITION(false);
+    return NULL;
 }
 
 static void *s_sba_alloc(struct small_block_allocator *sba, size_t size) {
