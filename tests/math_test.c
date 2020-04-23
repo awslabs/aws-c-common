@@ -17,6 +17,7 @@
 
 #include <aws/testing/aws_test_harness.h>
 
+#include <float.h>
 #include <stdio.h>
 
 #define CHECK_SAT(fn, a, b, result)                                                                                    \
@@ -370,6 +371,38 @@ static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx
     return 0;
 }
 
+AWS_TEST_CASE(test_sub_size_checked, s_test_sub_size_checked_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_size_checked_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const size_t HALF_MAX = SIZE_MAX / 2;
+    const size_t ACTUAL_MAX = SIZE_MAX;
+
+    /* No overflow expected */
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, 1, 0, 1);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, 9, 4, 5);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, 5555, 1234, 4321);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_NO_OVF(aws_sub_size_checked, size_t, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    /* Overflow expected */
+    CHECK_OVF(aws_sub_size_checked, size_t, 0, 1);
+    CHECK_OVF(aws_sub_size_checked, size_t, 0, 100);
+    CHECK_OVF(aws_sub_size_checked, size_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_size_checked, size_t, 0, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_size_checked, size_t, HALF_MAX, HALF_MAX + 1);
+    CHECK_OVF(aws_sub_size_checked, size_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_size_checked, size_t, 99, 100);
+    CHECK_OVF(aws_sub_size_checked, size_t, 1, 100);
+    return 0;
+}
+
 #define CHECK_OVF_VARARGS(fn, type, num, ...)                                                                          \
     do {                                                                                                               \
         type result_val;                                                                                               \
@@ -564,6 +597,38 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
     return 0;
 }
 
+AWS_TEST_CASE(test_sub_size_saturating, s_test_sub_size_saturating_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_size_saturating_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const size_t HALF_MAX = SIZE_MAX / 2;
+    const size_t ACTUAL_MAX = SIZE_MAX;
+
+    /* No overflow expected */
+    CHECK_SAT(aws_sub_size_saturating, 0, 0, 0);
+    CHECK_SAT(aws_sub_size_saturating, 1, 0, 1);
+    CHECK_SAT(aws_sub_size_saturating, 9, 4, 5);
+    CHECK_SAT(aws_sub_size_saturating, 5555, 1234, 4321);
+    CHECK_SAT(aws_sub_size_saturating, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_SAT(aws_sub_size_saturating, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_SAT(aws_sub_size_saturating, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_SAT(aws_sub_size_saturating, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_SAT(aws_sub_size_saturating, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    /* Overflow expected */
+    CHECK_SAT(aws_sub_size_saturating, 0, 1, 0);
+    CHECK_SAT(aws_sub_size_saturating, 0, 100, 0);
+    CHECK_SAT(aws_sub_size_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_size_saturating, 0, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_size_saturating, HALF_MAX, HALF_MAX + 1, 0);
+    CHECK_SAT(aws_sub_size_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_size_saturating, 99, 100, 0);
+    CHECK_SAT(aws_sub_size_saturating, 1, 100, 0);
+    return 0;
+}
+
 AWS_TEST_CASE(test_add_u32_checked, s_test_add_u32_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
@@ -627,6 +692,70 @@ static int s_test_add_u32_saturating_fn(struct aws_allocator *allocator, void *c
     return 0;
 }
 
+AWS_TEST_CASE(test_sub_u32_checked, s_test_sub_u32_checked_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_u32_checked_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const uint32_t HALF_MAX = UINT32_MAX / 2;
+    const uint32_t ACTUAL_MAX = UINT32_MAX;
+
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, 1, 0, 1);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, 9, 4, 5);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, 5555, 1234, 4321);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_NO_OVF(aws_sub_u32_checked, uint32_t, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, 0, 1);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, 0, 100);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, 0, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, HALF_MAX, HALF_MAX + 1);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, 99, 100);
+    CHECK_OVF(aws_sub_u32_checked, uint32_t, 1, 100);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_sub_u32_saturating, s_test_sub_u32_saturating_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_u32_saturating_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const uint32_t HALF_MAX = UINT32_MAX / 2;
+    const uint32_t ACTUAL_MAX = UINT32_MAX;
+
+    /* No overflow expected */
+    CHECK_SAT(aws_sub_u32_saturating, 0, 0, 0);
+    CHECK_SAT(aws_sub_u32_saturating, 1, 0, 1);
+    CHECK_SAT(aws_sub_u32_saturating, 9, 4, 5);
+    CHECK_SAT(aws_sub_u32_saturating, 5555, 1234, 4321);
+    CHECK_SAT(aws_sub_u32_saturating, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_SAT(aws_sub_u32_saturating, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_SAT(aws_sub_u32_saturating, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_SAT(aws_sub_u32_saturating, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_SAT(aws_sub_u32_saturating, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    /* Overflow expected */
+    CHECK_SAT(aws_sub_u32_saturating, 0, 1, 0);
+    CHECK_SAT(aws_sub_u32_saturating, 0, 100, 0);
+    CHECK_SAT(aws_sub_u32_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u32_saturating, 0, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u32_saturating, HALF_MAX, HALF_MAX + 1, 0);
+    CHECK_SAT(aws_sub_u32_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u32_saturating, 99, 100, 0);
+    CHECK_SAT(aws_sub_u32_saturating, 1, 100, 0);
+
+    return 0;
+}
+
 AWS_TEST_CASE(test_add_u64_checked, s_test_add_u64_checked_fn)
 /* NOLINTNEXTLINE(readability-function-size) */
 static int s_test_add_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
@@ -687,5 +816,134 @@ static int s_test_add_u64_saturating_fn(struct aws_allocator *allocator, void *c
     CHECK_SAT(aws_add_u64_saturating, HALF_MAX, ACTUAL_MAX, ACTUAL_MAX);
     CHECK_SAT(aws_add_u64_saturating, 100, ACTUAL_MAX - 99, ACTUAL_MAX);
     CHECK_SAT(aws_add_u64_saturating, 100, ACTUAL_MAX - 1, ACTUAL_MAX);
+    return 0;
+}
+
+AWS_TEST_CASE(test_sub_u64_checked, s_test_sub_u64_checked_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_u64_checked_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const uint64_t HALF_MAX = UINT64_MAX / 2;
+    const uint64_t ACTUAL_MAX = UINT64_MAX;
+
+    /* No overflow expected */
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, 1, 0, 1);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, 9, 4, 5);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, 5555, 1234, 4321);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_NO_OVF(aws_sub_u64_checked, uint64_t, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    /* Overflow expected */
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, 0, 1);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, 0, 100);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, 0, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, HALF_MAX, HALF_MAX + 1);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, HALF_MAX, ACTUAL_MAX);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, 99, 100);
+    CHECK_OVF(aws_sub_u64_checked, uint64_t, 1, 100);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_sub_u64_saturating, s_test_sub_u64_saturating_fn)
+/* NOLINTNEXTLINE(readability-function-size) */
+static int s_test_sub_u64_saturating_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const uint64_t HALF_MAX = UINT64_MAX / 2;
+    const uint64_t ACTUAL_MAX = UINT64_MAX;
+
+    /* No overflow expected */
+    CHECK_SAT(aws_sub_u64_saturating, 0, 0, 0);
+    CHECK_SAT(aws_sub_u64_saturating, 1, 0, 1);
+    CHECK_SAT(aws_sub_u64_saturating, 9, 4, 5);
+    CHECK_SAT(aws_sub_u64_saturating, 5555, 1234, 4321);
+    CHECK_SAT(aws_sub_u64_saturating, ACTUAL_MAX, 0, ACTUAL_MAX);
+    CHECK_SAT(aws_sub_u64_saturating, ACTUAL_MAX - 1, HALF_MAX, HALF_MAX);
+    CHECK_SAT(aws_sub_u64_saturating, ACTUAL_MAX, HALF_MAX + 1, HALF_MAX);
+    CHECK_SAT(aws_sub_u64_saturating, ACTUAL_MAX - 2, 100, ACTUAL_MAX - 102);
+    CHECK_SAT(aws_sub_u64_saturating, ACTUAL_MAX, 100, ACTUAL_MAX - 100);
+
+    /* Overflow expected */
+    CHECK_SAT(aws_sub_u64_saturating, 0, 1, 0);
+    CHECK_SAT(aws_sub_u64_saturating, 0, 100, 0);
+    CHECK_SAT(aws_sub_u64_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u64_saturating, 0, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u64_saturating, HALF_MAX, HALF_MAX + 1, 0);
+    CHECK_SAT(aws_sub_u64_saturating, HALF_MAX, ACTUAL_MAX, 0);
+    CHECK_SAT(aws_sub_u64_saturating, 99, 100, 0);
+    CHECK_SAT(aws_sub_u64_saturating, 1, 100, 0);
+    return 0;
+}
+
+AWS_TEST_CASE(test_min_max, s_test_min_max)
+static int s_test_min_max(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(0, aws_min_u8(0, UINT8_MAX));
+    ASSERT_UINT_EQUALS(0, aws_min_u8(UINT8_MAX, 0));
+    ASSERT_UINT_EQUALS(UINT8_MAX, aws_max_u8(0, UINT8_MAX));
+    ASSERT_UINT_EQUALS(UINT8_MAX, aws_max_u8(UINT8_MAX, 0));
+    ASSERT_INT_EQUALS(INT8_MIN, aws_min_i8(INT8_MIN, INT8_MAX));
+    ASSERT_INT_EQUALS(INT8_MIN, aws_min_i8(INT8_MAX, INT8_MIN));
+    ASSERT_INT_EQUALS(INT8_MAX, aws_max_i8(INT8_MIN, INT8_MAX));
+    ASSERT_INT_EQUALS(INT8_MAX, aws_max_i8(INT8_MAX, INT8_MIN));
+
+    ASSERT_UINT_EQUALS(0, aws_min_u16(0, UINT16_MAX));
+    ASSERT_UINT_EQUALS(0, aws_min_u16(UINT16_MAX, 0));
+    ASSERT_UINT_EQUALS(UINT16_MAX, aws_max_u16(0, UINT16_MAX));
+    ASSERT_UINT_EQUALS(UINT16_MAX, aws_max_u16(UINT16_MAX, 0));
+    ASSERT_INT_EQUALS(INT16_MIN, aws_min_i16(INT16_MIN, INT16_MAX));
+    ASSERT_INT_EQUALS(INT16_MIN, aws_min_i16(INT16_MAX, INT16_MIN));
+    ASSERT_INT_EQUALS(INT16_MAX, aws_max_i16(INT16_MIN, INT16_MAX));
+    ASSERT_INT_EQUALS(INT16_MAX, aws_max_i16(INT16_MAX, INT16_MIN));
+
+    ASSERT_UINT_EQUALS(0, aws_min_u32(0, UINT32_MAX));
+    ASSERT_UINT_EQUALS(0, aws_min_u32(UINT32_MAX, 0));
+    ASSERT_UINT_EQUALS(UINT32_MAX, aws_max_u32(0, UINT32_MAX));
+    ASSERT_UINT_EQUALS(UINT32_MAX, aws_max_u32(UINT32_MAX, 0));
+    ASSERT_INT_EQUALS(INT32_MIN, aws_min_i32(INT32_MIN, INT32_MAX));
+    ASSERT_INT_EQUALS(INT32_MIN, aws_min_i32(INT32_MAX, INT32_MIN));
+    ASSERT_INT_EQUALS(INT32_MAX, aws_max_i32(INT32_MIN, INT32_MAX));
+    ASSERT_INT_EQUALS(INT32_MAX, aws_max_i32(INT32_MAX, INT32_MIN));
+
+    ASSERT_UINT_EQUALS(0, aws_min_u64(0, UINT64_MAX));
+    ASSERT_UINT_EQUALS(0, aws_min_u64(UINT64_MAX, 0));
+    ASSERT_UINT_EQUALS(UINT64_MAX, aws_max_u64(0, UINT64_MAX));
+    ASSERT_UINT_EQUALS(UINT64_MAX, aws_max_u64(UINT64_MAX, 0));
+    ASSERT_INT_EQUALS(INT64_MIN, aws_min_i64(INT64_MIN, INT64_MAX));
+    ASSERT_INT_EQUALS(INT64_MIN, aws_min_i64(INT64_MAX, INT64_MIN));
+    ASSERT_INT_EQUALS(INT64_MAX, aws_max_i64(INT64_MIN, INT64_MAX));
+    ASSERT_INT_EQUALS(INT64_MAX, aws_max_i64(INT64_MAX, INT64_MIN));
+
+    ASSERT_UINT_EQUALS(0, aws_min_size(0, SIZE_MAX));
+    ASSERT_UINT_EQUALS(0, aws_min_size(SIZE_MAX, 0));
+    ASSERT_UINT_EQUALS(SIZE_MAX, aws_max_size(0, SIZE_MAX));
+    ASSERT_UINT_EQUALS(SIZE_MAX, aws_max_size(SIZE_MAX, 0));
+
+    ASSERT_INT_EQUALS(INT_MIN, aws_min_int(INT_MIN, INT_MAX));
+    ASSERT_INT_EQUALS(INT_MIN, aws_min_int(INT_MAX, INT_MIN));
+    ASSERT_INT_EQUALS(INT_MAX, aws_max_int(INT_MIN, INT_MAX));
+    ASSERT_INT_EQUALS(INT_MAX, aws_max_int(INT_MAX, INT_MIN));
+
+    ASSERT_TRUE(FLT_MIN == aws_min_float(FLT_MIN, FLT_MAX));
+    ASSERT_TRUE(FLT_MIN == aws_min_float(FLT_MAX, FLT_MIN));
+    ASSERT_TRUE(FLT_MAX == aws_max_float(FLT_MIN, FLT_MAX));
+    ASSERT_TRUE(FLT_MAX == aws_max_float(FLT_MAX, FLT_MIN));
+
+    ASSERT_TRUE(DBL_MIN == aws_min_double(DBL_MIN, DBL_MAX));
+    ASSERT_TRUE(DBL_MIN == aws_min_double(DBL_MAX, DBL_MIN));
+    ASSERT_TRUE(DBL_MAX == aws_max_double(DBL_MIN, DBL_MAX));
+    ASSERT_TRUE(DBL_MAX == aws_max_double(DBL_MAX, DBL_MIN));
+
     return 0;
 }

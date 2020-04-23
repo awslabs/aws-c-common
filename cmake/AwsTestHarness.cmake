@@ -16,15 +16,23 @@ include(AwsSanitizers)
 
 option(ENABLE_NET_TESTS "Run tests requiring an internet connection." ON)
 
+# Maintain a global list of AWS_TEST_CASES
+define_property(GLOBAL PROPERTY AWS_TEST_CASES BRIEF_DOCS "Test Cases" FULL_DOCS "Test Cases")
+set(AWS_TEST_CASES "" CACHE INTERNAL "Test cases valid for this configuration")
+
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)
 macro(add_test_case name)
     list(APPEND TEST_CASES "${name}")
+    list(APPEND AWS_TEST_CASES "${name}")
+    set_property(GLOBAL PROPERTY AWS_TEST_CASES ${AWS_TEST_CASES})
 endmacro()
 
 # Like add_test_case, but for tests that require a working internet connection.
 macro(add_net_test_case name)
     if (ENABLE_NET_TESTS)
         list(APPEND TEST_CASES "${name}")
+        list(APPEND AWS_TEST_CASES "${name}")
+        set_property(GLOBAL PROPERTY AWS_TEST_CASES ${AWS_TEST_CASES})
     endif()
 endmacro()
 

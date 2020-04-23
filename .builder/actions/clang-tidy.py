@@ -17,7 +17,7 @@ class ClangTidy(Builder.Action):
         source_dir = sh.cwd()
         build_dir = os.path.join(source_dir, 'build')
         sources = [os.path.join(source_dir, file) for file in glob.glob(
-            'source/**/*.c') if not 'windows' in file]
+            'source/**/*.c') if not ('windows' in file or 'android' in file)]
 
         return [
             Builder.DownloadDependencies(),

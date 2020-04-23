@@ -991,6 +991,14 @@ uint64_t aws_hash_ptr(const void *item) {
     return ((uint64_t)b << 32) | c;
 }
 
+uint64_t aws_hash_combine(uint64_t item1, uint64_t item2) {
+    uint32_t b = item2 & 0xFFFFFFFF; /* LSB */
+    uint32_t c = item2 >> 32;        /* MSB */
+
+    hashlittle2(&item1, sizeof(item1), &c, &b);
+    return ((uint64_t)b << 32) | c;
+}
+
 bool aws_hash_callback_c_str_eq(const void *a, const void *b) {
     AWS_PRECONDITION(aws_c_string_is_valid(a));
     AWS_PRECONDITION(aws_c_string_is_valid(b));

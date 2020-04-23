@@ -58,11 +58,29 @@ AWS_COMMON_API
 struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source);
 
 /**
+ * Creates a big int from a sequence of bytes
+ */
+AWS_COMMON_API
+struct aws_bigint *aws_bigint_new_from_cursor(struct aws_allocator *allocator, struct aws_byte_cursor source);
+
+/**
  * Writes a bigint to a buffer as a hexadecimal number.  Will prepend (-) in front of negative numbers for
  * easier testing.  This API is primarily intended for testing.  Actual output (to various formats/bases) is TBD.
  */
 AWS_COMMON_API
 int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer);
+
+/**
+ * Writes a bigint to a buffer as a big endian sequence of octets.
+ *
+ * If minimum_length is non-zero, then leading zero-bytes will pad the output as necessary.  Otherwise only the minimum
+ * number of bytes will be written.
+ */
+AWS_COMMON_API
+int aws_bigint_bytebuf_append_as_big_endian(
+    const struct aws_bigint *bigint,
+    struct aws_byte_buf *buffer,
+    size_t minimum_length);
 
 /**
  * Returns true if this integer is negative, false otherwise.
@@ -123,6 +141,50 @@ bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struc
  */
 AWS_COMMON_API
 void aws_bigint_negate(struct aws_bigint *bigint);
+
+/*
+ * Adds two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand.
+ */
+AWS_COMMON_API
+int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
+
+/*
+ * Subtracts two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand (aliasing to the second is weird but not forbidden).
+ */
+AWS_COMMON_API
+int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
+
+/*
+ * Multiplies two big integers, placing the result in output.  Output must have been initialized first.  Output
+ * may alias to either operand.
+ */
+AWS_COMMON_API
+int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
+
+/*
+ * Performs a right bit-shift on a big int, equivalently dividing by a power of two.
+ */
+AWS_COMMON_API
+void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount);
+
+/*
+ * Performs a left bit-shift on a big int, equivalently multiplying by a power of two.
+ */
+AWS_COMMON_API
+int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount);
+
+/*
+ * Divides two *non-negative* big integers, computing both the quotient and the remainder.  Quotient and remainder
+ * must already be initialized.  Quotient and remainder may alias to operands but not to each other.
+ */
+AWS_COMMON_API
+int aws_bigint_divide(
+    struct aws_bigint *quotient,
+    struct aws_bigint *remainder,
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs);
 
 AWS_EXTERN_C_END
 
