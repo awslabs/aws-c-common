@@ -71,9 +71,9 @@ struct aws_run_command_result *aws_run_command(struct aws_run_command_options op
             }
         }
 #ifdef _WIN32
-        _pclose(output_stream);
+        result->ret_code = _pclose(output_stream);
 #else
-        pclose(output_stream);
+        result->ret_code = pclose(output_stream);
 #endif
     }
 
