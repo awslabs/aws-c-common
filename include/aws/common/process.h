@@ -22,8 +22,6 @@ AWS_EXTERN_C_BEGIN
 AWS_COMMON_API int aws_get_pid(void);
 
 struct aws_run_command_result {
-    struct aws_allocator *allocator;
-
     /* return code from running the command. */
     int ret_code;
 
@@ -42,15 +40,13 @@ struct aws_run_command_result {
 };
 
 struct aws_run_command_options {
-    struct aws_allocator *allocator;
-
     /* command path and commandline options of running that command. */
     const char *command;
 };
 
-AWS_COMMON_API struct aws_run_command_result *aws_run_command_result_new(struct aws_allocator *allocator);
+AWS_COMMON_API int aws_run_command_result_init(struct aws_allocator *allocator, struct aws_run_command_result *result);
 
-AWS_COMMON_API void aws_run_command_result_destroy(struct aws_run_command_result *result);
+AWS_COMMON_API void aws_run_command_result_cleanup(struct aws_run_command_result *result);
 
 /**
  * Currently this API is implemented using popen on Posix system and
@@ -60,7 +56,10 @@ AWS_COMMON_API void aws_run_command_result_destroy(struct aws_run_command_result
  * in the future so probably will alter the underlying implementation
  * as well.
  */
-AWS_COMMON_API struct aws_run_command_result *aws_run_command(struct aws_run_command_options options);
+AWS_COMMON_API int aws_run_command(
+    struct aws_allocator *allocator,
+    struct aws_run_command_options *options,
+    struct aws_run_command_result *result);
 
 AWS_EXTERN_C_END
 

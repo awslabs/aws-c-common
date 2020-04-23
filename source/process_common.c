@@ -20,46 +20,45 @@
 #include <sys/types.h>
 
 #define MAX_BUFFER_SIZE (2048)
-struct aws_run_command_result *aws_run_command_result_new(struct aws_allocator *allocator) {
-    if (!allocator) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return NULL;
+
+int aws_run_command_result_init(struct aws_allocator *allocator, struct aws_run_command_result *result) {
+    if (!allocator || !result) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
-    struct aws_run_command_result *result = aws_mem_calloc(allocator, 1, sizeof(struct aws_run_command_result));
-    if (!result) {
-        return NULL;
-    }
-    result->allocator = allocator;
-    return result;
+    AWS_ZERO_STRUCT(*result);
+    return AWS_OP_SUCCESS;
 }
 
-void aws_run_command_result_destroy(struct aws_run_command_result *result) {
+void aws_run_command_result_cleanup(struct aws_run_command_result *result) {
     if (!result) {
         return;
     }
     aws_string_destroy_secure(result->std_out);
     aws_string_destroy_secure(result->std_err);
-    aws_mem_release(result->allocator, result);
 }
 
-struct aws_run_command_result *aws_run_command(struct aws_run_command_options options) {
+int aws_run_command(
+    struct aws_allocator *allocator,
+    struct aws_run_command_options *options,
+    struct aws_run_command_result *result) {
+
+    AWS_FATAL_ASSERT(allocator);
+    AWS_FATAL_ASSERT(options);
+    AWS_FATAL_ASSERT(result);
+
     FILE *output_stream;
     char output_buffer[MAX_BUFFER_SIZE];
-    struct aws_run_command_result *result = aws_run_command_result_new(options.allocator);
-    if (!result) {
-        return NULL;
+    struct aws_byte_buf result_buffer;
+    bool success = false;
+    if (aws_byte_buf_init(&result_buffer, allocator, MAX_BUFFER_SIZE)) {
+        goto on_finish;
     }
 
 #ifdef _WIN32
-    output_stream = _popen(options.command, "r");
+    output_stream = _popen(options->command, "r");
 #else
-    output_stream = popen(options.command, "r");
+    output_stream = popen(options->command, "r");
 #endif
-
-    struct aws_byte_buf result_buffer;
-    if (aws_byte_buf_init(&result_buffer, result->allocator, MAX_BUFFER_SIZE)) {
-        goto on_finish;
-    }
 
     if (output_stream) {
         while (!feof(output_stream)) {
@@ -79,9 +78,18 @@ struct aws_run_command_result *aws_run_command(struct aws_run_command_options op
 
     struct aws_byte_cursor trim_cursor = aws_byte_cursor_from_buf(&result_buffer);
     struct aws_byte_cursor trimmed_cursor = aws_byte_cursor_trim_pred(&trim_cursor, aws_char_is_space);
-    result->std_out = aws_string_new_from_array(result->allocator, trimmed_cursor.ptr, trimmed_cursor.len);
+    if (trimmed_cursor.len) {
+        result->std_out = aws_string_new_from_array(allocator, trimmed_cursor.ptr, trimmed_cursor.len);
+        if (!result->std_out) {
+            goto on_finish;
+        }
+    }
+    success = true;
 
 on_finish:
     aws_byte_buf_clean_up_secure(&result_buffer);
-    return result;
+    if (success) {
+        return AWS_OP_SUCCESS;
+    }
+    return AWS_OP_ERR;
 }
