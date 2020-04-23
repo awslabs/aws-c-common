@@ -16,6 +16,24 @@
 #include <aws/common/allocator.h>
 #include <aws/common/array_list.h>
 #include <aws/common/assert.h>
+#include <aws/common/mutex.h>
+
+/*
+ * Small Block Allocator
+ * This is a fairly standard approach, the idea is to always allocate aligned pages of memory so that for
+ * any address you can round to the nearest page boundary to find the bookkeeping data. The idea is to reduce
+ * overhead per alloc and greatly improve runtime speed by doing as little actual allocation work as possible,
+ * preferring instead to re-use (hopefully still cached) chunks in FIFO order, or chunking up a page if there's
+ * no free chunks. When all chunks in a page are freed, the page is returned to the OS.
+ *
+ * The allocator itself is simply an array of bins, each representing a power of 2 size from 32 - N (512 tends to be
+ * a good upper bound). Thread safety is guaranteed by a mutex per bin, and locks are only necessary around the
+ * lowest level alloc and free operations.
+ *
+ * Note: this allocator gets its internal memory for data structures from the parent allocator, but does not
+ * use the parent to allocate pages. Pages are allocated directly from the OS-specific aligned malloc implementation,
+ * which allows the OS to do address re-mapping for us instead of over-allocating to fulfill alignment.
+ */
 
 #ifdef WIN32
 #    include <malloc.h>
@@ -41,6 +59,7 @@ static const size_t s_max_bin_size = 512;
 
 struct free_bin {
     size_t size;                  /* size of allocs in this bin */
+    struct aws_mutex mutex;       /* lock protecting this bin */
     uint8_t *page_cursor;         /* pointer to working page, currently being chunked from */
     struct aws_array_list pages;  /* all pages in use by this bin, could be optimized at scale by being a set */
     struct aws_array_list chunks; /* free chunks available in this bin */
@@ -59,7 +78,6 @@ struct page_header {
 struct small_block_allocator {
     struct aws_allocator *allocator; /* parent allocator, for large allocs */
     struct free_bin bins[AWS_SBA_BIN_COUNT];
-    size_t used; /* memory in use */
 };
 
 static void *s_page_base(const void *addr) {
@@ -77,6 +95,7 @@ static void *s_page_bind(void *addr, struct free_bin *bin) {
     return (uint8_t *)addr + sizeof(struct page_header);
 }
 
+/* Wraps OS-specific aligned malloc implementation */
 static void *s_aligned_alloc(size_t size, size_t align) {
 #ifdef WIN32
     return _aligned_malloc(size, align);
@@ -91,6 +110,7 @@ static void *s_aligned_alloc(size_t size, size_t align) {
 #endif
 }
 
+/* wraps OS-specific aligned free implementation */
 static void s_aligned_free(void *addr) {
 #ifdef WIN32
     _aligned_free(addr);
@@ -99,6 +119,7 @@ static void s_aligned_free(void *addr) {
 #endif
 }
 
+/* aws_allocator vtable template */
 static void *s_sba_mem_acquire(struct aws_allocator *allocator, size_t size);
 static void s_sba_mem_release(struct aws_allocator *allocator, void *ptr);
 static void *s_sba_mem_realloc(struct aws_allocator *allocator, void *old_ptr, size_t old_size, size_t new_size);
@@ -116,6 +137,9 @@ static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *a
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct free_bin *bin = &sba->bins[idx];
         bin->size = s_bin_sizes[idx];
+        if (aws_mutex_init(&bin->mutex)) {
+            return AWS_OP_ERR;
+        }
         if (aws_array_list_init_dynamic(&bin->pages, sba->allocator, 16, sizeof(void *))) {
             return AWS_OP_ERR;
         }
@@ -145,6 +169,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
 
         aws_array_list_clean_up(&bin->pages);
         aws_array_list_clean_up(&bin->chunks);
+        aws_mutex_clean_up(&bin->mutex);
     }
 }
 
@@ -179,6 +204,7 @@ void aws_allocator_sba_destroy(struct aws_allocator *sba_allocator) {
     aws_mem_release(allocator, sba);
 }
 
+/* NOTE: Expects the mutex to be held by the caller */
 static void *s_sba_alloc_from_bin(struct free_bin *bin) {
     /* check the free list, hand chunks out in FIFO order */
     if (aws_array_list_length(&bin->chunks) > 0) {
@@ -217,6 +243,7 @@ static void *s_sba_alloc_from_bin(struct free_bin *bin) {
     return s_sba_alloc_from_bin(bin);
 }
 
+/* NOTE: Expects the mutex to be held by the caller */
 static void s_sba_free_to_bin(struct free_bin *bin, void *addr) {
     AWS_FATAL_ASSERT(addr);
     struct page_header *page = s_page_base(addr);
@@ -253,6 +280,7 @@ static void s_sba_free_to_bin(struct free_bin *bin, void *addr) {
     aws_array_list_push_back(&bin->chunks, addr);
 }
 
+/* No lock required for this function, it's all read-only access to constant data */
 static struct free_bin *s_sba_find_bin(struct small_block_allocator *sba, size_t size) {
     AWS_PRECONDITION(size < s_max_bin_size);
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
@@ -270,8 +298,12 @@ static void *s_sba_alloc(struct small_block_allocator *sba, size_t size) {
     if (size <= s_max_bin_size) {
         struct free_bin *bin = s_sba_find_bin(sba, size);
         AWS_FATAL_ASSERT(bin);
-        sba->used += bin->size;
-        return s_sba_alloc_from_bin(bin);
+        /* BEGIN CRITICAL SECTION */
+        aws_mutex_lock(&bin->mutex);
+        void *mem = s_sba_alloc_from_bin(bin);
+        aws_mutex_unlock(&bin->mutex);
+        /* END CRITICAL SECTION */
+        return mem;
     }
     return aws_mem_acquire(sba->allocator, size);
 }
@@ -283,7 +315,11 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
 
     struct page_header *page = (struct page_header *)s_page_base(addr);
     if (page->tag == AWS_SBA_TAG_VALUE) {
+        /* BEGIN CRITICAL SECTION */
+        aws_mutex_lock(&page->bin->mutex);
         s_sba_free_to_bin(page->bin, addr);
+        aws_mutex_unlock(&page->bin->mutex);
+        /* END CRITICAL SECTION */
         return;
     }
     /* large alloc, give back to underlying allocator */
