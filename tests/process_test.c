@@ -38,10 +38,7 @@ AWS_STATIC_STRING_FROM_LITERAL(s_expected_output, "{\"Version\": 1, \"AccessKeyI
 
 static int s_run_command_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_run_command_options options = {
-        .allocator = allocator,
-        .command = aws_string_c_str(s_test_command)
-    };
+    struct aws_run_command_options options = {.allocator = allocator, .command = aws_string_c_str(s_test_command)};
 
     struct aws_run_command_result *result = aws_run_command(options);
     ASSERT_NOT_NULL(result);
