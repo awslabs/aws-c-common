@@ -166,14 +166,14 @@ size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);
  * and handle small allocs, and will forward anything larger to the parent allocator.
  */
 AWS_COMMON_API
-struct aws_allocator *aws_sba_allocator_new(struct aws_allocator *allocator);
+struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *allocator);
 
 /*
  * Destroys a Small Block Allocator instance and frees its memory to the parent allocator. The parent
  * allocator will otherwise be unaffected.
  */
 AWS_COMMON_API
-void aws_sba_allocator_destroy(struct aws_allocator *allocator);
+void aws_small_block_allocator_destroy(struct aws_allocator *allocator);
 
 AWS_EXTERN_C_END
 
