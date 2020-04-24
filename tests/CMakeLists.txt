@@ -387,6 +387,8 @@ if (NOT ANDROID)
 endif() # ANDROID
 
 add_test_case(get_pid_sanity_check_test)
+add_test_case(run_command_test_success)
+add_test_case(run_command_test_bad_command)
 
 add_test_case(test_bigint_from_uint64)
 add_test_case(test_bigint_from_int64)

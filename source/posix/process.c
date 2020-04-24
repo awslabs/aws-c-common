@@ -14,8 +14,6 @@
  */
 
 #include <aws/common/process.h>
-
-#include <sys/types.h>
 #include <unistd.h>
 
 int aws_get_pid(void) {
