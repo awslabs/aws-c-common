@@ -15,10 +15,10 @@
 
 #include <aws/common/common.h>
 
-#include <aws/common/assert.h>
-#include <aws/testing/aws_test_harness.h>
 #include <aws/common/array_list.h>
+#include <aws/common/assert.h>
 #include <aws/common/thread.h>
+#include <aws/testing/aws_test_harness.h>
 
 #ifdef __MACH__
 #    include <CoreFoundation/CoreFoundation.h>
@@ -153,7 +153,7 @@ static void s_sba_threaded_alloc_worker(void *user_data) {
     }
 }
 
-static void s_sba_thread_test(struct aws_allocator *allocator, void(*thread_fn)(void*), void *user_data) {
+static void s_sba_thread_test(struct aws_allocator *allocator, void (*thread_fn)(void *), void *user_data) {
     const struct aws_thread_options *thread_options = aws_default_thread_options();
     struct aws_thread threads[NUM_TEST_THREADS];
     for (size_t thread_idx = 0; thread_idx < AWS_ARRAY_SIZE(threads); ++thread_idx) {
@@ -213,7 +213,7 @@ static int s_sba_churn(struct aws_allocator *allocator, void *ctx) {
     srand(9000);
 
     struct aws_array_list allocs;
-    aws_array_list_init_dynamic(&allocs, allocator, NUM_TEST_ALLOCS, sizeof(void*));
+    aws_array_list_init_dynamic(&allocs, allocator, NUM_TEST_ALLOCS, sizeof(void *));
 
     struct aws_allocator *sba = aws_sba_allocator_new(allocator);
 
