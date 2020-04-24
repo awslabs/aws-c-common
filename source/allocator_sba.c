@@ -173,7 +173,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
     }
 }
 
-struct aws_allocator *aws_allocator_sba_new(struct aws_allocator *allocator) {
+struct aws_allocator *aws_sba_allocator_new(struct aws_allocator *allocator) {
     struct small_block_allocator *sba = NULL;
     struct aws_allocator *sba_allocator = NULL;
     aws_mem_acquire_many(
@@ -197,7 +197,7 @@ struct aws_allocator *aws_allocator_sba_new(struct aws_allocator *allocator) {
     return sba_allocator;
 }
 
-void aws_allocator_sba_destroy(struct aws_allocator *sba_allocator) {
+void aws_sba_allocator_destroy(struct aws_allocator *sba_allocator) {
     struct small_block_allocator *sba = sba_allocator->impl;
     struct aws_allocator *allocator = sba->allocator;
     s_sba_clean_up(sba);
@@ -207,7 +207,7 @@ void aws_allocator_sba_destroy(struct aws_allocator *sba_allocator) {
 /* NOTE: Expects the mutex to be held by the caller */
 static void *s_sba_alloc_from_bin(struct free_bin *bin) {
     /* check the free list, hand chunks out in FIFO order */
-    if (aws_array_list_length(&bin->chunks) > 0) {
+    if (bin->chunks.length > 0) {
         void *chunk = NULL;
         if (aws_array_list_back(&bin->chunks, &chunk)) {
             return NULL;
@@ -229,7 +229,7 @@ static void *s_sba_alloc_from_bin(struct free_bin *bin) {
             bin->page_cursor += bin->size;
             space_left -= bin->size;
             if (space_left < bin->size) {
-                aws_array_list_push_back(&bin->pages, page);
+                aws_array_list_push_back(&bin->pages, &page);
                 bin->page_cursor = NULL;
             }
             return chunk;
@@ -277,12 +277,12 @@ static void s_sba_free_to_bin(struct free_bin *bin, void *addr) {
         return;
     }
 
-    aws_array_list_push_back(&bin->chunks, addr);
+    aws_array_list_push_back(&bin->chunks, &addr);
 }
 
 /* No lock required for this function, it's all read-only access to constant data */
 static struct free_bin *s_sba_find_bin(struct small_block_allocator *sba, size_t size) {
-    AWS_PRECONDITION(size < s_max_bin_size);
+    AWS_PRECONDITION(size <= s_max_bin_size);
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct free_bin *bin = &sba->bins[idx];
         if (bin->size >= size) {
@@ -315,10 +315,11 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
 
     struct page_header *page = (struct page_header *)s_page_base(addr);
     if (page->tag == AWS_SBA_TAG_VALUE) {
+        struct free_bin *bin = page->bin;
         /* BEGIN CRITICAL SECTION */
-        aws_mutex_lock(&page->bin->mutex);
-        s_sba_free_to_bin(page->bin, addr);
-        aws_mutex_unlock(&page->bin->mutex);
+        aws_mutex_lock(&bin->mutex);
+        s_sba_free_to_bin(bin, addr);
+        aws_mutex_unlock(&bin->mutex);
         /* END CRITICAL SECTION */
         return;
     }
@@ -344,6 +345,7 @@ static void *s_sba_mem_realloc(struct aws_allocator *allocator, void *old_ptr, s
         if (aws_mem_realloc(sba->allocator, &new_mem, old_size, new_size)) {
             return NULL;
         }
+        return new_mem;
     }
 
     /* Either both small allocs, or one small, one large */
