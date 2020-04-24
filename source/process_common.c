@@ -49,7 +49,7 @@ int aws_run_command(
     FILE *output_stream;
     char output_buffer[MAX_BUFFER_SIZE];
     struct aws_byte_buf result_buffer;
-    bool success = false;
+    int ret = AWS_OP_ERR;
     if (aws_byte_buf_init(&result_buffer, allocator, MAX_BUFFER_SIZE)) {
         goto on_finish;
     }
@@ -84,12 +84,9 @@ int aws_run_command(
             goto on_finish;
         }
     }
-    success = true;
+    ret = AWS_OP_SUCCESS;
 
 on_finish:
     aws_byte_buf_clean_up_secure(&result_buffer);
-    if (success) {
-        return AWS_OP_SUCCESS;
-    }
-    return AWS_OP_ERR;
+    return ret;
 }
