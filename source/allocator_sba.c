@@ -235,8 +235,11 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
 }
 
 void aws_small_block_allocator_destroy(struct aws_allocator *sba_allocator) {
+    if (!sba_allocator) {
+        return;
+    }
     struct small_block_allocator *sba = sba_allocator->impl;
-    if (!sba || !sba->allocator) {
+    if (!sba) {
         return;
     }
 
