@@ -345,7 +345,6 @@ static void s_sba_mem_release(struct aws_allocator *allocator, void *ptr) {
     s_sba_free(sba, ptr);
 }
 
-__attribute__((no_sanitize("thread")))
 static void *s_sba_mem_realloc(struct aws_allocator *allocator, void *old_ptr, size_t old_size, size_t new_size) {
     struct small_block_allocator *sba = allocator->impl;
     /* If both allocations come from the parent, let the parent do it */
