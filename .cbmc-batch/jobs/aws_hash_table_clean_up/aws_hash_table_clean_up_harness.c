@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not use
  * this file except in compliance with the License. A copy of the License is
@@ -30,10 +30,19 @@ void aws_hash_table_clean_up_harness() {
     struct hash_table_state *state = map.p_impl;
     size_t empty_slot_idx;
     size_t size_in_bytes = sizeof(struct hash_table_state) + sizeof(struct hash_table_entry) * state->size;
-    __CPROVER_allocated_memory(state, size_in_bytes); // tell CBMC to keep the buffer live after the free
 
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));
     aws_hash_table_clean_up(&map);
     assert(map.p_impl == NULL);
-    assert_all_zeroes((uint8_t *)&state->slots[0], state->size * sizeof(state->slots[0]));
+
+    // Check that the bytes were zeroed.
+    // This would normally raise a warning since the memory was deallocated, so use the pragma.
+#pragma CPROVER check push
+#pragma CPROVER check disable "pointer"
+    size_t i;
+    size_t len = state->size * sizeof(state->slots[0]);
+    __CPROVER_assume(i < len);
+    uint8_t *bytes = (uint8_t *)&state->slots[0];
+    assert(bytes[i] == 0);
+#pragma CPROVER check pop
 }
