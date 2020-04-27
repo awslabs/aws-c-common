@@ -142,7 +142,7 @@ struct sba_thread_test_data {
 };
 
 static void s_sba_threaded_alloc_worker(void *user_data) {
-    struct aws_allocator *sba = ((struct sba_thread_test_data*)user_data)->sba;
+    struct aws_allocator *sba = ((struct sba_thread_test_data *)user_data)->sba;
 
     void *allocs[NUM_TEST_ALLOCS];
     for (size_t count = 0; count < NUM_TEST_ALLOCS / NUM_TEST_THREADS; ++count) {

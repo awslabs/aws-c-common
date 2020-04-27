@@ -42,11 +42,11 @@
 #endif
 
 #if !defined(AWS_SBA_PAGE_SIZE)
-#   if defined(PAGE_SIZE)
-#       define AWS_SBA_PAGE_SIZE ((uintptr_t)(PAGE_SIZE))
-#   else
-#       define AWS_SBA_PAGE_SIZE ((uintptr_t)(4096))
-#   endif
+#    if defined(PAGE_SIZE)
+#        define AWS_SBA_PAGE_SIZE ((uintptr_t)(PAGE_SIZE))
+#    else
+#        define AWS_SBA_PAGE_SIZE ((uintptr_t)(4096))
+#    endif
 #endif
 
 #define AWS_SBA_PAGE_MASK ((uintptr_t) ~(AWS_SBA_PAGE_SIZE - 1))
@@ -58,11 +58,11 @@ static const size_t s_bin_sizes[AWS_SBA_BIN_COUNT] = {32, 64, 128, 256, 512};
 static const size_t s_max_bin_size = 512;
 
 struct sba_bin {
-    size_t size;                  /* size of allocs in this bin */
-    struct aws_mutex mutex;       /* lock protecting this bin */
-    uint8_t *page_cursor;         /* pointer to working page, currently being chunked from */
-    struct aws_array_list active_pages;  /* all pages in use by this bin, could be optimized at scale by being a set */
-    struct aws_array_list free_chunks; /* free chunks available in this bin */
+    size_t size;                        /* size of allocs in this bin */
+    struct aws_mutex mutex;             /* lock protecting this bin */
+    uint8_t *page_cursor;               /* pointer to working page, currently being chunked from */
+    struct aws_array_list active_pages; /* all pages in use by this bin, could be optimized at scale by being a set */
+    struct aws_array_list free_chunks;  /* free chunks available in this bin */
 };
 
 /* Header stored at the base of each page.
@@ -70,7 +70,7 @@ struct sba_bin {
  * Above that, there's potentially more waste per page */
 struct page_header {
     uint64_t tag;         /* marker to identify/validate pages */
-    struct sba_bin *bin; /* bin this page belongs to */
+    struct sba_bin *bin;  /* bin this page belongs to */
     uint32_t alloc_count; /* number of outstanding allocs from this page */
     uint64_t tag2;
 };
