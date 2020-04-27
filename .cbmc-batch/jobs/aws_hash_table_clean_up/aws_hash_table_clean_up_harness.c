@@ -35,15 +35,14 @@ void aws_hash_table_clean_up_harness() {
     aws_hash_table_clean_up(&map);
     assert(map.p_impl == NULL);
 
-    //Check that the bytes were zeroed.
-    //This would normally raise a warning since the memory was deallocated, so use the pragma.
+    // Check that the bytes were zeroed.
+    // This would normally raise a warning since the memory was deallocated, so use the pragma.
 #pragma CPROVER check push
 #pragma CPROVER check disable "pointer"
     size_t i;
     size_t len = state->size * sizeof(state->slots[0]);
     __CPROVER_assume(i < len);
-    uint8_t* bytes = (uint8_t *)&state->slots[0];
+    uint8_t *bytes = (uint8_t *)&state->slots[0];
     assert(bytes[i] == 0);
 #pragma CPROVER check pop
-
 }

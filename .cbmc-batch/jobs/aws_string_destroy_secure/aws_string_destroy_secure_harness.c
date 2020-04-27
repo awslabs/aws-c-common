@@ -24,16 +24,16 @@ void aws_string_destroy_secure_harness() {
     bool nondet_parameter;
     aws_string_destroy_secure(nondet_parameter ? str : NULL);
 
-    //Check that all bytes are 0.  Since the memory is freed, this will trigger a use-after-free check
-    //Disabiling the check only for this bit of the harness.
+    // Check that all bytes are 0.  Since the memory is freed, this will trigger a use-after-free check
+    // Disabiling the check only for this bit of the harness.
 #pragma CPROVER check push
 #pragma CPROVER check disable "pointer"
     if (nondet_parameter) {
-    	if (len > 0) {
-    	    size_t i;
-    	    __CPROVER_assume(i < len);
-    	    assert(bytes[i] == 0);
-    	}
+        if (len > 0) {
+            size_t i;
+            __CPROVER_assume(i < len);
+            assert(bytes[i] == 0);
+        }
     }
 #pragma CPROVER check pop
 }
