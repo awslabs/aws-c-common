@@ -121,5 +121,23 @@ AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     return res;
 }
 
+/**
+ * Search from the MSB to LSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_leading_zeroes(int32_t n) {
+    unsigned long idx = 0;
+    _BitScanReverse(&idx, n);
+    return idx;
+}
+
+/**
+ * Search from the LSB to MSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_trailing_zeroes(size_t n) {
+    unsigned long idx = 0;
+    _BitScanForward(&idx, n);
+    return idx;
+}
+
 AWS_EXTERN_C_END
 #endif /* WS_COMMON_MATH_MSVC_INL */

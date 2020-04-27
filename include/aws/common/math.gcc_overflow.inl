@@ -120,6 +120,20 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     return res;
 }
 
+/**
+ * Search from the MSB to LSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_leading_zeroes(int32_t n) {
+    return __builtin_clz(n);
+}
+
+/**
+ * Search from the LSB to MSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_trailing_zeroes(int32_t n) {
+    return __builtin_ctz(n);
+}
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_MATH_GCC_OVERFLOW_INL */

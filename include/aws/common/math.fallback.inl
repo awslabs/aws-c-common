@@ -104,6 +104,42 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     return AWS_OP_SUCCESS;
 }
 
+/**
+ * Search from the MSB to LSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_leading_zeroes(int32_t n) {
+    size_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    /* sign bit is the first bit */
+    if (n < 0) {
+        return 0;
+    }
+    while (n >= 0) {
+        ++idx;
+        n <<= 1;
+    }
+    return idx;
+}
+
+/**
+ * Search from the LSB to BSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_count_trailing_zeroes(int32_t n) {
+    size_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    while (idx < (SIZE_BITS / sizeof(uint8_t))) {
+        if (n & (1 << idx)) {
+            break;
+        }
+        ++idx;
+    }
+    return idx;
+}
+
 AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_MATH_FALLBACK_INL */

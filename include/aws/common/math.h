@@ -165,6 +165,16 @@ AWS_STATIC_IMPL bool aws_is_power_of_two(const size_t x);
  */
 AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result);
 
+/**
+ * Counts the number of leading 0 bits in an integer
+ */
+AWS_STATIC_IMPL size_t aws_count_leading_zeroes(int32_t n);
+
+/**
+ * Counts the number of trailing 0 bits in an integer
+ */
+AWS_STATIC_IMPL size_t aws_count_trailing_zeroes(int32_t n);
+
 AWS_STATIC_IMPL uint8_t aws_min_u8(uint8_t a, uint8_t b);
 AWS_STATIC_IMPL uint8_t aws_max_u8(uint8_t a, uint8_t b);
 AWS_STATIC_IMPL int8_t aws_min_i8(int8_t a, int8_t b);

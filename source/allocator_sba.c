@@ -135,23 +135,33 @@ static struct aws_allocator s_sba_allocator = {
 
 static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *allocator) {
     sba->allocator = allocator;
+    AWS_ZERO_ARRAY(sba->bins);
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct sba_bin *bin = &sba->bins[idx];
         bin->size = s_bin_sizes[idx];
         if (aws_mutex_init(&bin->mutex)) {
-            return AWS_OP_ERR;
+            goto cleanup;
         }
         if (aws_array_list_init_dynamic(&bin->active_pages, sba->allocator, 16, sizeof(void *))) {
-            return AWS_OP_ERR;
+            goto cleanup;
         }
         /* start with enough chunks for 1 page */
         if (aws_array_list_init_dynamic(
                 &bin->free_chunks, sba->allocator, aws_max_size(AWS_SBA_PAGE_SIZE / bin->size, 16), sizeof(void *))) {
-            return AWS_OP_ERR;
+            goto cleanup;
         }
     }
 
     return AWS_OP_SUCCESS;
+
+cleanup:
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+        struct sba_bin *bin = &sba->bins[idx];
+        aws_mutex_clean_up(&bin->mutex);
+        aws_array_list_clean_up(&bin->active_pages);
+        aws_array_list_clean_up(&bin->free_chunks);
+    }
+    return AWS_OP_ERR;
 }
 
 static void s_sba_clean_up(struct small_block_allocator *sba) {
@@ -180,8 +190,9 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
     aws_mem_acquire_many(
         allocator, 2, &sba, sizeof(struct small_block_allocator), &sba_allocator, sizeof(struct aws_allocator));
 
-    AWS_FATAL_ASSERT(sba_allocator);
-    AWS_FATAL_ASSERT(sba);
+    if (!sba || !sba_allocator) {
+        return NULL;
+    }
 
     AWS_ZERO_STRUCT(*sba);
     AWS_ZERO_STRUCT(*sba_allocator);
@@ -200,6 +211,10 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
 
 void aws_small_block_allocator_destroy(struct aws_allocator *sba_allocator) {
     struct small_block_allocator *sba = sba_allocator->impl;
+    if (!sba || !sba->allocator) {
+        return;
+    }
+
     struct aws_allocator *allocator = sba->allocator;
     s_sba_clean_up(sba);
     aws_mem_release(allocator, sba);
@@ -217,7 +232,7 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
             return NULL;
         }
 
-        AWS_FATAL_ASSERT(chunk);
+        AWS_ASSERT(chunk);
         struct page_header *page = s_page_base(chunk);
         page->alloc_count++;
         return chunk;
@@ -226,7 +241,7 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
     /* If there is a working page to chunk from, use it */
     if (bin->page_cursor) {
         struct page_header *page = s_page_base(bin->page_cursor);
-        AWS_FATAL_ASSERT(page);
+        AWS_ASSERT(page);
         size_t space_left = AWS_SBA_PAGE_SIZE - (bin->page_cursor - (uint8_t *)page);
         if (space_left >= bin->size) {
             void *chunk = bin->page_cursor;
@@ -250,9 +265,9 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
 
 /* NOTE: Expects the mutex to be held by the caller */
 static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
-    AWS_FATAL_ASSERT(addr);
+    AWS_PRECONDITION(addr);
     struct page_header *page = s_page_base(addr);
-    AWS_FATAL_ASSERT(page->bin == bin);
+    AWS_ASSERT(page->bin == bin);
     page->alloc_count--;
     if (page->alloc_count == 0 && page != s_page_base(bin->page_cursor)) { /* empty page, free it */
         uint8_t *page_start = (uint8_t *)page + sizeof(struct page_header);
@@ -290,15 +305,16 @@ static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
 /* No lock required for this function, it's all read-only access to constant data */
 static struct sba_bin *s_sba_find_bin(struct small_block_allocator *sba, size_t size) {
     AWS_PRECONDITION(size <= s_max_bin_size);
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
-        struct sba_bin *bin = &sba->bins[idx];
-        if (bin->size >= size) {
-            return bin;
-        }
-    }
-    /* should never get here */
-    AWS_POSTCONDITION(false);
-    return NULL;
+
+    /* map bits 5(32) to 9(512) to indices 0-4 */
+    size_t next_pow2 = 0;
+    aws_round_up_to_power_of_two(size, &next_pow2);
+    size_t lz = aws_count_leading_zeroes((int32_t)next_pow2);
+    size_t idx = aws_sub_size_saturating(31 - lz, 5);
+    AWS_ASSERT(idx <= 4);
+    struct sba_bin *bin = &sba->bins[idx];
+    AWS_ASSERT(bin->size >= size);
+    return bin;
 }
 
 static void *s_sba_alloc(struct small_block_allocator *sba, size_t size) {
@@ -322,6 +338,10 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
 
     struct page_header *page = (struct page_header *)s_page_base(addr);
     /* Check to see if this page is tagged by the sba */
+    /* this check causes a read of (possibly) memory we didn't allocate, but it will always be
+     * heap memory, so should not cause any issues. TSan will see this as a data race, but it
+     * is not, that's a false positive
+     */
     if (page->tag == AWS_SBA_TAG_VALUE && page->tag2 == AWS_SBA_TAG_VALUE) {
         struct sba_bin *bin = page->bin;
         /* BEGIN CRITICAL SECTION */
