@@ -334,7 +334,7 @@ static struct sba_bin *s_sba_find_bin(struct small_block_allocator *sba, size_t 
     /* map bits 5(32) to 9(512) to indices 0-4 */
     size_t next_pow2 = 0;
     aws_round_up_to_power_of_two(size, &next_pow2);
-    size_t lz = aws_count_leading_zeroes((int32_t)next_pow2);
+    size_t lz = aws_clz_i32((int32_t)next_pow2);
     size_t idx = aws_sub_size_saturating(31 - lz, 5);
     AWS_ASSERT(idx <= 4);
     struct sba_bin *bin = &sba->bins[idx];
