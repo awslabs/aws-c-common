@@ -186,7 +186,7 @@ AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
         return sizeof(n) * 8;
     }
     while (idx < (SIZE_BITS / sizeof(uint8_t))) {
-        if (n & (1 << idx)) {
+        if (n & (1ULL << idx)) {
             break;
         }
         ++idx;
