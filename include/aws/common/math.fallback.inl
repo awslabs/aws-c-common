@@ -163,7 +163,7 @@ AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
-    size_t idx = 0;
+    uint32_t idx = 0;
     if (n == 0) {
         return sizeof(n) * 8;
     }
@@ -173,7 +173,7 @@ AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
         }
         ++idx;
     }
-    return idx;
+    return (size_t)idx;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
@@ -181,7 +181,7 @@ AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
-    size_t idx = 0;
+    uint64_t idx = 0;
     if (n == 0) {
         return sizeof(n) * 8;
     }
@@ -191,7 +191,7 @@ AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
         }
         ++idx;
     }
-    return idx;
+    return (size_t)idx;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_size(size_t n) {
