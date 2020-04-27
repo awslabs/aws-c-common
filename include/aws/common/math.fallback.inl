@@ -163,7 +163,7 @@ AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
-    uint32_t idx = 0;
+    int32_t idx = 0;
     if (n == 0) {
         return sizeof(n) * 8;
     }
@@ -181,7 +181,7 @@ AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
-    uint64_t idx = 0;
+    int64_t idx = 0;
     if (n == 0) {
         return sizeof(n) * 8;
     }
