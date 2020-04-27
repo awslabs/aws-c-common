@@ -169,7 +169,7 @@ static void s_sba_thread_test(struct aws_allocator *allocator, void (*thread_fn)
         aws_thread_init(thread, allocator);
         struct sba_thread_test_data *data = &thread_data[thread_idx];
         data->sba = sba;
-        data->thread_idx = thread_idx;
+        data->thread_idx = (uint32_t)thread_idx;
         aws_thread_launch(thread, thread_fn, data, thread_options);
     }
 
