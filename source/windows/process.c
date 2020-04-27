@@ -13,7 +13,6 @@
  * permissions and limitations under the License.
  */
 #include <aws/common/process.h>
-
 #include <process.h>
 
 int aws_get_pid(void) {

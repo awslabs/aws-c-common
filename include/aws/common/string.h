@@ -237,6 +237,12 @@ bool aws_string_is_valid(const struct aws_string *str);
 AWS_STATIC_IMPL
 bool aws_c_string_is_valid(const char *str);
 
+/**
+ * Evaluates if a char is a white character.
+ */
+AWS_STATIC_IMPL
+bool aws_char_is_space(uint8_t c);
+
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/string.inl>
 #endif /* AWS_NO_STATIC_IMPL */
