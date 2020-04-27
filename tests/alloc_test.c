@@ -136,8 +136,13 @@ static int s_sba_random_reallocs(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(sba_random_reallocs, s_sba_random_reallocs)
 
+struct sba_thread_test_data {
+    struct aws_allocator *sba;
+    uint32_t thread_idx;
+};
+
 static void s_sba_threaded_alloc_worker(void *user_data) {
-    struct aws_allocator *sba = user_data;
+    struct aws_allocator *sba = ((struct sba_thread_test_data*)user_data)->sba;
 
     void *allocs[NUM_TEST_ALLOCS];
     for (size_t count = 0; count < NUM_TEST_ALLOCS / NUM_TEST_THREADS; ++count) {
@@ -153,13 +158,19 @@ static void s_sba_threaded_alloc_worker(void *user_data) {
     }
 }
 
-static void s_sba_thread_test(struct aws_allocator *allocator, void (*thread_fn)(void *), void *user_data) {
+static void s_sba_thread_test(struct aws_allocator *allocator, void (*thread_fn)(void *), struct aws_allocator *sba) {
     const struct aws_thread_options *thread_options = aws_default_thread_options();
     struct aws_thread threads[NUM_TEST_THREADS];
+    struct sba_thread_test_data thread_data[NUM_TEST_THREADS];
+    AWS_ZERO_ARRAY(threads);
+    AWS_ZERO_ARRAY(thread_data);
     for (size_t thread_idx = 0; thread_idx < AWS_ARRAY_SIZE(threads); ++thread_idx) {
         struct aws_thread *thread = &threads[thread_idx];
         aws_thread_init(thread, allocator);
-        aws_thread_launch(thread, thread_fn, user_data, thread_options);
+        struct sba_thread_test_data *data = &thread_data[thread_idx];
+        data->sba = sba;
+        data->thread_idx = thread_idx;
+        aws_thread_launch(thread, thread_fn, data, thread_options);
     }
 
     for (size_t thread_idx = 0; thread_idx < AWS_ARRAY_SIZE(threads); ++thread_idx) {
@@ -183,13 +194,24 @@ static int s_sba_threaded_allocs_and_frees(struct aws_allocator *allocator, void
 AWS_TEST_CASE(sba_threaded_allocs_and_frees, s_sba_threaded_allocs_and_frees)
 
 static void s_sba_threaded_realloc_worker(void *user_data) {
-    struct aws_allocator *sba = user_data;
+    struct sba_thread_test_data *thread_data = user_data;
+    struct aws_allocator *sba = thread_data->sba;
     void *alloc = NULL;
     size_t size = 0;
     for (size_t count = 0; count < NUM_TEST_ALLOCS / NUM_TEST_THREADS; ++count) {
         size_t old_size = size;
-        size = rand() % 4096;
+        size = rand() % 1024;
+        if (old_size) {
+            AWS_FATAL_ASSERT(0 == memcmp(alloc, &thread_data->thread_idx, 1));
+        }
         AWS_FATAL_ASSERT(0 == aws_mem_realloc(sba, &alloc, old_size, size));
+        /* If there was a value, make sure it's still there */
+        if (old_size && size) {
+            AWS_FATAL_ASSERT(0 == memcmp(alloc, &thread_data->thread_idx, 1));
+        }
+        if (size) {
+            memset(alloc, (int)thread_data->thread_idx, size);
+        }
     }
     AWS_FATAL_ASSERT(0 == aws_mem_realloc(sba, &alloc, size, 0));
 }

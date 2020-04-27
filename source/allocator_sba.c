@@ -72,6 +72,7 @@ struct page_header {
     uint64_t tag;         /* marker to identify/validate pages */
     struct sba_bin *bin; /* bin this page belongs to */
     uint32_t alloc_count; /* number of outstanding allocs from this page */
+    uint64_t tag2;
 };
 
 /* This is the impl for the aws_allocator */
@@ -89,7 +90,7 @@ static void *s_page_base(const void *addr) {
 static void *s_page_bind(void *addr, struct sba_bin *bin) {
     /* insert the header at the base of the page and advance past it */
     struct page_header *page = (struct page_header *)addr;
-    page->tag = AWS_SBA_TAG_VALUE;
+    page->tag = page->tag2 = AWS_SBA_TAG_VALUE;
     page->bin = bin;
     page->alloc_count = 0;
     return (uint8_t *)addr + sizeof(struct page_header);
@@ -212,6 +213,10 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
         if (aws_array_list_back(&bin->free_chunks, &chunk)) {
             return NULL;
         }
+        if (aws_array_list_pop_back(&bin->free_chunks)) {
+            return NULL;
+        }
+
         AWS_FATAL_ASSERT(chunk);
         struct page_header *page = s_page_base(chunk);
         page->alloc_count++;
@@ -273,6 +278,8 @@ static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
                 break;
             }
         }
+        /* ensure that the page tag is erased, in case nearby memory is re-used */
+        page->tag = page->tag2 = 0;
         s_aligned_free(page);
         return;
     }
@@ -314,7 +321,8 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
     }
 
     struct page_header *page = (struct page_header *)s_page_base(addr);
-    if (page->tag == AWS_SBA_TAG_VALUE) {
+    /* Check to see if this page is tagged by the sba */
+    if (page->tag == AWS_SBA_TAG_VALUE && page->tag2 == AWS_SBA_TAG_VALUE) {
         struct sba_bin *bin = page->bin;
         /* BEGIN CRITICAL SECTION */
         aws_mutex_lock(&bin->mutex);
@@ -337,21 +345,33 @@ static void s_sba_mem_release(struct aws_allocator *allocator, void *ptr) {
     s_sba_free(sba, ptr);
 }
 
+__attribute__((no_sanitize("thread")))
 static void *s_sba_mem_realloc(struct aws_allocator *allocator, void *old_ptr, size_t old_size, size_t new_size) {
     struct small_block_allocator *sba = allocator->impl;
     /* If both allocations come from the parent, let the parent do it */
     if (old_size > s_max_bin_size && new_size > s_max_bin_size) {
-        void *new_mem = old_ptr;
-        if (aws_mem_realloc(sba->allocator, &new_mem, old_size, new_size)) {
+        void *ptr = old_ptr;
+        if (aws_mem_realloc(sba->allocator, &ptr, old_size, new_size)) {
             return NULL;
         }
-        return new_mem;
+        return ptr;
     }
 
-    /* Either both small allocs, or one small, one large */
+    if (new_size == 0) {
+        s_sba_free(sba, old_ptr);
+        return NULL;
+    }
+
+    if (old_size > new_size) {
+        return old_ptr;
+    }
+
     void *new_mem = s_sba_alloc(sba, new_size);
-    memcpy(new_mem, old_ptr, aws_min_size(old_size, new_size));
-    s_sba_free(sba, old_ptr);
+    if (old_ptr && old_size) {
+        memcpy(new_mem, old_ptr, old_size);
+        s_sba_free(sba, old_ptr);
+    }
+
     return new_mem;
 }
 
