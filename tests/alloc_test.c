@@ -76,7 +76,7 @@ static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
 static int s_sba_alloc_free_once(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
     void *mem = aws_mem_acquire(sba, 42);
     ASSERT_NOT_NULL(mem);
     const size_t allocated = aws_mem_tracer_bytes(allocator);
@@ -93,7 +93,7 @@ AWS_TEST_CASE(sba_alloc_free_once, s_sba_alloc_free_once)
 static int s_sba_random_allocs_and_frees(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
     srand(42);
 
     void *allocs[NUM_TEST_ALLOCS];
@@ -118,7 +118,7 @@ AWS_TEST_CASE(sba_random_allocs_and_frees, s_sba_random_allocs_and_frees)
 static int s_sba_random_reallocs(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
     srand(128);
 
     void *alloc = NULL;
@@ -183,7 +183,7 @@ static int s_sba_threaded_allocs_and_frees(struct aws_allocator *allocator, void
     (void)ctx;
     srand(96);
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, true);
 
     s_sba_thread_test(allocator, s_sba_threaded_alloc_worker, sba);
 
@@ -220,7 +220,7 @@ static int s_sba_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     srand(12);
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, true);
 
     s_sba_thread_test(allocator, s_sba_threaded_realloc_worker, sba);
 
@@ -237,7 +237,7 @@ static int s_sba_churn(struct aws_allocator *allocator, void *ctx) {
     struct aws_array_list allocs;
     aws_array_list_init_dynamic(&allocs, allocator, NUM_TEST_ALLOCS, sizeof(void *));
 
-    struct aws_allocator *sba = aws_small_block_allocator_new(allocator);
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
 
     size_t alloc_count = 0;
     while (alloc_count++ < NUM_TEST_ALLOCS * 10) {

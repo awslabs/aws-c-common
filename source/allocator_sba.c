@@ -79,7 +79,29 @@ struct page_header {
 struct small_block_allocator {
     struct aws_allocator *allocator; /* parent allocator, for large allocs */
     struct sba_bin bins[AWS_SBA_BIN_COUNT];
+    int (*lock)(struct aws_mutex *);
+    int (*unlock)(struct aws_mutex *);
 };
+
+static int s_null_lock(struct aws_mutex *mutex) {
+    (void)mutex;
+    /* NO OP */
+    return 0;
+}
+
+static int s_null_unlock(struct aws_mutex *mutex) {
+    (void)mutex;
+    /* NO OP */
+    return 0;
+}
+
+static int s_mutex_lock(struct aws_mutex *mutex) {
+    return aws_mutex_lock(mutex);
+}
+
+static int s_mutex_unlock(struct aws_mutex *mutex) {
+    return aws_mutex_unlock(mutex);
+}
 
 static void *s_page_base(const void *addr) {
     /* mask off the address to round it to page alignment */
@@ -133,13 +155,16 @@ static struct aws_allocator s_sba_allocator = {
     .mem_calloc = s_sba_mem_calloc,
 };
 
-static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *allocator) {
+static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *allocator, bool multi_threaded) {
     sba->allocator = allocator;
     AWS_ZERO_ARRAY(sba->bins);
+    sba->lock = multi_threaded ? s_mutex_lock : s_null_lock;
+    sba->unlock = multi_threaded ? s_mutex_unlock : s_null_unlock;
+
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct sba_bin *bin = &sba->bins[idx];
         bin->size = s_bin_sizes[idx];
-        if (aws_mutex_init(&bin->mutex)) {
+        if (multi_threaded && aws_mutex_init(&bin->mutex)) {
             goto cleanup;
         }
         if (aws_array_list_init_dynamic(&bin->active_pages, sba->allocator, 16, sizeof(void *))) {
@@ -184,7 +209,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
     }
 }
 
-struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *allocator) {
+struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *allocator, bool multi_threaded) {
     struct small_block_allocator *sba = NULL;
     struct aws_allocator *sba_allocator = NULL;
     aws_mem_acquire_many(
@@ -201,7 +226,7 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
     *sba_allocator = s_sba_allocator;
     sba_allocator->impl = sba;
 
-    if (s_sba_init(sba, allocator)) {
+    if (s_sba_init(sba, allocator, multi_threaded)) {
         s_sba_clean_up(sba);
         aws_mem_release(allocator, sba);
         return NULL;
@@ -322,9 +347,9 @@ static void *s_sba_alloc(struct small_block_allocator *sba, size_t size) {
         struct sba_bin *bin = s_sba_find_bin(sba, size);
         AWS_FATAL_ASSERT(bin);
         /* BEGIN CRITICAL SECTION */
-        aws_mutex_lock(&bin->mutex);
+        sba->lock(&bin->mutex);
         void *mem = s_sba_alloc_from_bin(bin);
-        aws_mutex_unlock(&bin->mutex);
+        sba->unlock(&bin->mutex);
         /* END CRITICAL SECTION */
         return mem;
     }
@@ -345,9 +370,9 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
     if (page->tag == AWS_SBA_TAG_VALUE && page->tag2 == AWS_SBA_TAG_VALUE) {
         struct sba_bin *bin = page->bin;
         /* BEGIN CRITICAL SECTION */
-        aws_mutex_lock(&bin->mutex);
+        sba->lock(&bin->mutex);
         s_sba_free_to_bin(bin, addr);
-        aws_mutex_unlock(&bin->mutex);
+        sba->unlock(&bin->mutex);
         /* END CRITICAL SECTION */
         return;
     }
