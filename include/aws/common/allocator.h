@@ -161,6 +161,21 @@ size_t aws_mem_tracer_bytes(struct aws_allocator *trace_allocator);
 AWS_COMMON_API
 size_t aws_mem_tracer_count(struct aws_allocator *trace_allocator);
 
+/*
+ * Creates a new Small Block Allocator which fronts the supplied parent allocator. The SBA will intercept
+ * and handle small allocs, and will forward anything larger to the parent allocator.
+ * If multi_threaded is true, the internal allocator will protect its internal data structures with a mutex
+ */
+AWS_COMMON_API
+struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *allocator, bool multi_threaded);
+
+/*
+ * Destroys a Small Block Allocator instance and frees its memory to the parent allocator. The parent
+ * allocator will otherwise be unaffected.
+ */
+AWS_COMMON_API
+void aws_small_block_allocator_destroy(struct aws_allocator *allocator);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ALLOCATOR_H */

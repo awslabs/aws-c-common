@@ -104,6 +104,104 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     return AWS_OP_SUCCESS;
 }
 
+/**
+ * Search from the MSB to LSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_clz_u32(uint32_t n) {
+    return aws_clz_i32((int32_t)n);
+}
+
+AWS_STATIC_IMPL size_t aws_clz_i32(int32_t n) {
+    size_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    /* sign bit is the first bit */
+    if (n < 0) {
+        return 0;
+    }
+    while (n >= 0) {
+        ++idx;
+        n <<= 1;
+    }
+    return idx;
+}
+
+AWS_STATIC_IMPL size_t aws_clz_u64(uint64_t n) {
+    return aws_clz_i64((int64_t)n);
+}
+
+AWS_STATIC_IMPL size_t aws_clz_i64(int64_t n) {
+    size_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    /* sign bit is the first bit */
+    if (n < 0) {
+        return 0;
+    }
+    while (n >= 0) {
+        ++idx;
+        n <<= 1;
+    }
+    return idx;
+}
+
+AWS_STATIC_IMPL size_t aws_clz_size(size_t n) {
+#if SIZE_BITS == 64
+    return aws_clz_u64(n);
+#else
+    return aws_clz_u32(n);
+#endif
+}
+
+/**
+ * Search from the LSB to MSB, looking for a 1
+ */
+AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
+    return aws_ctz_i32((int32_t)n);
+}
+
+AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
+    int32_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    while (idx < (SIZE_BITS / sizeof(uint8_t))) {
+        if (n & (1 << idx)) {
+            break;
+        }
+        ++idx;
+    }
+    return (size_t)idx;
+}
+
+AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
+    return aws_ctz_i64((int64_t)n);
+}
+
+AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
+    int64_t idx = 0;
+    if (n == 0) {
+        return sizeof(n) * 8;
+    }
+    while (idx < (SIZE_BITS / sizeof(uint8_t))) {
+        if (n & (1ULL << idx)) {
+            break;
+        }
+        ++idx;
+    }
+    return (size_t)idx;
+}
+
+AWS_STATIC_IMPL size_t aws_ctz_size(size_t n) {
+#if SIZE_BITS == 64
+    return aws_ctz_u64(n);
+#else
+    return aws_ctz_u32(n);
+#endif
+}
+
 AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_MATH_FALLBACK_INL */
