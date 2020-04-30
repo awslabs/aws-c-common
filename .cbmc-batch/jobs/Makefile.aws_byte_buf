@@ -15,6 +15,6 @@
 
 # Sufficently long to get full coverage on the aws_byte_buf and aws_byte_cursor APIs
 # short enough that all proofs complete in less than a minute
-MAX_BUFFER_SIZE ?= 10
+MAX_BUFFER_SIZE ?= 10 #was 10
 
 DEFINES += -DMAX_BUFFER_SIZE=$(MAX_BUFFER_SIZE)

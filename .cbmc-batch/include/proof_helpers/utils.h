@@ -29,6 +29,8 @@ struct store_byte_from_buffer {
     uint8_t byte;
 };
 
+
+
 /**
  * Asserts whether all bytes from two arrays of same length match.
  */

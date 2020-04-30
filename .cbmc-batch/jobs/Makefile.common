@@ -71,8 +71,8 @@ CBMCFLAGS += --pointer-overflow-check
 CBMCFLAGS += --signed-overflow-check
 CBMCFLAGS += --undefined-shift-check
 CBMCFLAGS += --unsigned-overflow-check
-CBMCFLAGS += --unwind 1
-CBMCFLAGS += --unwinding-assertions
+CBMCFLAGS += --unwind 10
+CBMCFLAGS += --no-unwinding-assertions
 
 ################################################################
 # Preprocess the unwindset

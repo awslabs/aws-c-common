@@ -82,7 +82,7 @@ int aws_array_list_copy(const struct aws_array_list *AWS_RESTRICT from, struct a
 
     if (to->current_size >= copy_size) {
         if (copy_size > 0) {
-            memcpy(to->data, from->data, copy_size);
+           memcpy(to->data, from->data, copy_size);
         }
         to->length = from->length;
         AWS_POSTCONDITION(aws_array_list_is_valid(from));

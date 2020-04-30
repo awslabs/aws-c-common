@@ -396,6 +396,7 @@ bool aws_array_eq(const void *const array_a, const size_t len_a, const void *con
     return !memcmp(array_a, array_b, len_a);
 }
 
+
 bool aws_array_eq_c_str_ignore_case(const void *const array, const size_t array_len, const char *const c_str) {
     AWS_PRECONDITION(
         array || (array_len == 0),
