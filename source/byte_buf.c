@@ -1439,3 +1439,8 @@ int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_curs
     from_and_update->ptr = to->buffer + (to->len - from_and_update->len);
     return AWS_OP_SUCCESS;
 }
+
+static struct aws_byte_cursor s_null_terminator_cursor = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\0");
+int aws_byte_buf_append_null_terminator(struct aws_byte_buf *buf) {
+    return aws_byte_buf_append_dynamic(buf, &s_null_terminator_cursor);
+}
