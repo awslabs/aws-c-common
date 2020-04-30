@@ -378,6 +378,12 @@ AWS_COMMON_API
 int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_cursor *from_and_update);
 
 /**
+ * Appends '\0' at the end of the buffer.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_null_terminator(struct aws_byte_buf *buf);
+
+/**
  * Attempts to increase the capacity of a buffer to the requested capacity
  *
  * If the the buffer's capacity is currently larger than the request capacity, the
