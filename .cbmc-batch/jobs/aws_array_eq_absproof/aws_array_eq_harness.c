@@ -43,6 +43,7 @@ size_t two_abs(size_t index, size_t a1, size_t a2) {
 }
 
 size_t three_abs(size_t index, size_t a1, size_t a2, size_t a3) {
+
     if (index < a1) return 0;
     else if (index == a1) return 1;
     else if (index > a1 && index < a2) return 2;
@@ -53,15 +54,18 @@ size_t three_abs(size_t index, size_t a1, size_t a2, size_t a3) {
 }
 
 size_t four_abs(size_t index, size_t a1, size_t a2, size_t a3, size_t a4) {
-    if (index < a1) return 0;
-    else if (index == a1) return 1;
-    else if (index > a1 && index < a2) return 2;
-    else if (index == a2) return 3;
-    else if (index > a2 && index < a3) return 4;
-    else if (index == a3) return 5;
-    else if (index > a3 && index < a4) return 6;
-    else if (index == a4) return 7;
-    else return 8;
+    if (a2 == a3) return three_abs(index, a1, a2, a4);
+    else {
+        if (index < a1) return 0;
+        else if (index == a1) return 1;
+        else if (index > a1 && index < a2) return 2;
+        else if (index == a2) return 3;
+        else if (index > a2 && index < a3) return 4;
+        else if (index == a3) return 5;
+        else if (index > a3 && index < a4) return 6;
+        else if (index == a4) return 7;
+        else return 8;
+    }
 }
 
 // Function to abstract a given index wrt to concrete indices c1, c2. 
@@ -107,8 +111,14 @@ size_t get_abs_index(size_t index, const struct ainfo abs_info) {
     }
 
     if (a1 == a2 && a3 == a4) return two_abs(index, a1, a3);
-    else if (a1 == a2) return three_abs(index, a1, a3, a4);
-    else if (a3 == a4) return three_abs(index, a1, a2, a3);
+    else if (a1 == a2) {
+        if (a2 == a3) return two_abs(index, a1, a4);
+        else return three_abs(index, a1, a3, a4);
+    }
+    else if (a3 == a4) {
+        if (a2 == a3) return two_abs(index, a1, a4);
+        else return three_abs(index, a1, a2, a3); 
+    }
     else return four_abs(index, a1, a2, a3, a4);    
 }
 
@@ -122,9 +132,8 @@ void save_byte_from_array_abs(const uint8_t *const array, const size_t size, str
     size_t abs_index;
     if (size > 0 && array && storage) {
         storage->index = nondet_size_t();
-        __CPROVER_assume(storage->index < size);
-
         abs_index = get_abs_index(storage->index, abs_info);
+         __CPROVER_assume(abs_index < size);
         if (is_abstract(abs_index, abs_info)) storage->byte = nondet_uint8_t();
         else storage->byte = array[abs_index];
     }
@@ -135,9 +144,9 @@ void assert_bytes_match_abs(const uint8_t *const a, const uint8_t *const b, cons
     if (len > 0 && a != NULL && b != NULL) {
         size_t i;
         size_t abs_i;
-        __CPROVER_assume(i < len && len < MAX_MALLOC); /* prevent spurious pointer overflows */
 
         abs_i = get_abs_index(i, abs_info);
+        __CPROVER_assume(abs_i < len && len < MAX_MALLOC); /* prevent spurious pointer overflows */
         if (is_abstract(abs_i, abs_info)) assert(true);
         else assert(a[abs_i] == b[abs_i]);
     }
@@ -173,8 +182,7 @@ int memcmp_abs(const void *s1, const void *s2, size_t n, const struct ainfo abs_
             res = *(sc1 + n-1) - *(sc2 + n-1);
             if (res !=0 )
                 return res;
-            else n--;
-                
+            else n--; 
         }
         else {
          nondet_res = nondet_bool();
@@ -222,41 +230,45 @@ void aws_array_eq_harness() {
 
    __CPROVER_assume(lhs_len <= MAX_BUFFER_SIZE);
     __CPROVER_assume(rhs_len <= MAX_BUFFER_SIZE);
+    
   
-   //Abstraction related
-    size_t lhs_cncrt = nondet_size_t();
-    __CPROVER_assume(lhs_cncrt < lhs_len);
-    size_t rhs_cncrt = nondet_size_t();
-    __CPROVER_assume(rhs_cncrt < rhs_len);
-   // __CPROVER_assume(rhs_cncrt == lhs_cncrt);
 
-   struct ainfo abs_info;
+    size_t choice = nondet_bool();
+
+   
+    void *abs_rhs; 
+    if (choice) { /* rhs could be equal to lhs */
+        rhs_len = lhs_len;
+    } 
+
+    //Abstraction related
+    size_t lhs_cncrt = nondet_size_t();
+    __CPROVER_assume(lhs_cncrt < lhs_len || lhs_cncrt < rhs_len);
+    //size_t rhs_cncrt = nondet_size_t();
+    //__CPROVER_assume(rhs_cncrt < rhs_len);
+    //__CPROVER_assume(rhs_cncrt == lhs_cncrt);
+
+    size_t rhs_cncrt = lhs_cncrt;
+
+    struct ainfo abs_info;
     abs_info.l_c = lhs_cncrt;
     abs_info.l_len = lhs_len;
     abs_info.r_c = rhs_cncrt;
     abs_info.r_len = rhs_len;
 
+    abs_lhs_len = get_abs_index(lhs_len, abs_info);
+    abs_rhs_len = get_abs_index(rhs_len, abs_info);    
 
  
-   abs_lhs_len = get_abs_index(lhs_len, abs_info);
- 
     void *abs_lhs = can_fail_malloc(abs_lhs_len);
-    void *abs_rhs; 
-    if (nondet_bool()) { /* rhs could be equal to lhs */
-        rhs_len = lhs_len;
-        abs_rhs_len = abs_lhs_len;
-        abs_rhs = abs_lhs;
-    } else {
-      
-        abs_rhs_len = get_abs_index(rhs_len, abs_info);    
-        abs_rhs = can_fail_malloc(abs_rhs_len);
-    }
+    if(choice) abs_rhs = abs_lhs;
+    else abs_rhs = can_fail_malloc(abs_rhs_len);
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_lhs;
-    save_byte_from_array_abs((uint8_t *)abs_lhs, lhs_len, &old_byte_from_lhs, abs_info);
+    save_byte_from_array_abs((uint8_t *)abs_lhs, abs_lhs_len, &old_byte_from_lhs, abs_info);
     struct store_byte_from_buffer old_byte_from_rhs;
-    save_byte_from_array_abs((uint8_t *)abs_rhs, rhs_len, &old_byte_from_rhs, abs_info);
+    save_byte_from_array_abs((uint8_t *)abs_rhs, abs_rhs_len, &old_byte_from_rhs, abs_info);
 
     /* pre-conditions */
     __CPROVER_assume((abs_lhs_len == 0) || AWS_MEM_IS_READABLE(abs_lhs, abs_lhs_len));
@@ -267,7 +279,7 @@ void aws_array_eq_harness() {
         /* asserts equivalence */
         assert(abs_lhs_len == abs_rhs_len);
         if (abs_lhs_len > 0 && abs_lhs) {
-            assert_bytes_match_abs((uint8_t *)abs_lhs, (uint8_t *)abs_rhs, lhs_len, abs_info);
+            assert_bytes_match_abs((uint8_t *)abs_lhs, (uint8_t *)abs_rhs, abs_lhs_len, abs_info);
         }
     }
 
