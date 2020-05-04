@@ -68,58 +68,17 @@ size_t four_abs(size_t index, size_t a1, size_t a2, size_t a3, size_t a4) {
     }
 }
 
-// Function to abstract a given index wrt to concrete indices c1, c2. 
+// Function to abstract a given index wrt to concrete indices c1, c2.
+// assume r_c =l_c < rhs_len < lhs_len. Not the real ones but the info entered here. 
+// So we can use 3-abs straight away.
 size_t get_abs_index(size_t index, const struct ainfo abs_info) {
     size_t l_c = abs_info.l_c;
     size_t r_c = abs_info.r_c;
     size_t l_len = abs_info.l_len;
     size_t r_len = abs_info.r_len;
 
-    // these hold the above numbers in sorted order.  
-    size_t a1, a2, a3, a4;
-
-    if( r_len <=  l_c) {
-        a1 = r_c;
-        a2 = r_len;
-        a3 = l_c;
-        a4 = l_len;
-    } else if (l_len <= r_c) {
-        a1 = l_c;
-        a2 = l_len;
-        a3 = r_c;
-        a4 = r_len;
-    } else if (r_c <= l_c) {
-        a1 = r_c;
-        a2 = l_c;
-        if (l_len <= r_len) {
-            a3 = l_len; 
-            a4 = r_len;
-        } else {
-            a3 = r_len; 
-            a4 = l_len;
-        }
-    } else {
-        a1 = l_c;
-        a2 = r_c;
-        if (l_len <= r_len) {
-            a3 = l_len; 
-            a4 = r_len;
-        } else {
-            a3 = r_len; 
-            a4 = l_len;
-        }
-    }
-
-    if (a1 == a2 && a3 == a4) return two_abs(index, a1, a3);
-    else if (a1 == a2) {
-        if (a2 == a3) return two_abs(index, a1, a4);
-        else return three_abs(index, a1, a3, a4);
-    }
-    else if (a3 == a4) {
-        if (a2 == a3) return two_abs(index, a1, a4);
-        else return three_abs(index, a1, a2, a3); 
-    }
-    else return four_abs(index, a1, a2, a3, a4);    
+    if (l_c == r_len || r_len == l_len) return two_abs(index, l_c, l_len);
+    return three_abs(index, l_c, r_len, l_len);    
 }
 
 bool is_abstract(size_t index, const struct ainfo abs_info) {
@@ -243,7 +202,8 @@ void aws_array_eq_harness() {
 
     //Abstraction related
     size_t lhs_cncrt = nondet_size_t();
-    __CPROVER_assume(lhs_cncrt < lhs_len || lhs_cncrt < rhs_len);
+    __CPROVER_assume(lhs_cncrt < lhs_len);
+    __CPROVER_assume(rhs_len <= lhs_len);
     //size_t rhs_cncrt = nondet_size_t();
     //__CPROVER_assume(rhs_cncrt < rhs_len);
     //__CPROVER_assume(rhs_cncrt == lhs_cncrt);
@@ -251,10 +211,10 @@ void aws_array_eq_harness() {
     size_t rhs_cncrt = lhs_cncrt;
 
     struct ainfo abs_info;
-    abs_info.l_c = lhs_cncrt;
+    abs_info.l_c = lhs_cncrt < rhs_len? lhs_cncrt:rhs_len;
     abs_info.l_len = lhs_len;
     abs_info.r_c = rhs_cncrt;
-    abs_info.r_len = rhs_len;
+    abs_info.r_len = lhs_cncrt < rhs_len?rhs_len: lhs_cncrt;
 
     abs_lhs_len = get_abs_index(lhs_len, abs_info);
     abs_rhs_len = get_abs_index(rhs_len, abs_info);    
