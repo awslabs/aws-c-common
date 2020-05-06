@@ -39,11 +39,11 @@ int s_test_logger_log(
 
     static char buffer[TEST_LOGGER_MAX_LOG_LINE_SIZE];
 
-#ifdef WIN32
+#ifdef _WIN32
     int written = vsnprintf_s(buffer, TEST_LOGGER_MAX_LOG_LINE_SIZE, _TRUNCATE, format, format_args);
 #else
     int written = vsnprintf(buffer, TEST_LOGGER_MAX_LOG_LINE_SIZE, format, format_args);
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
     va_end(format_args);
 

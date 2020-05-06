@@ -32,7 +32,7 @@ bool aws_is_debugger_present(void);
 AWS_COMMON_API
 void aws_debug_break(void);
 
-#if defined(AWS_HAVE_EXECINFO) || defined(WIN32) || defined(__APPLE__)
+#if defined(AWS_HAVE_EXECINFO) || defined(_WIN32) || defined(__APPLE__)
 #    define AWS_BACKTRACE_STACKS_AVAILABLE
 #endif
 

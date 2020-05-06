@@ -14,7 +14,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#if defined(AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined(WIN32)
+#if defined(AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined(_WIN32)
 #    ifdef AWS_COMMON_USE_IMPORT_EXPORT
 #        ifdef AWS_COMMON_EXPORTS
 #            define AWS_COMMON_API __declspec(dllexport)
@@ -25,7 +25,7 @@
 #        define AWS_COMMON_API
 #    endif /* AWS_COMMON_USE_IMPORT_EXPORT */
 
-#else /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
+#else /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (_WIN32) */
 
 #    if ((__GNUC__ >= 4) || defined(__clang__)) && defined(AWS_COMMON_USE_IMPORT_EXPORT) && defined(AWS_COMMON_EXPORTS)
 #        define AWS_COMMON_API __attribute__((visibility("default")))
@@ -33,7 +33,7 @@
 #        define AWS_COMMON_API
 #    endif /* __GNUC__ >= 4 || defined(__clang__) */
 
-#endif /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (WIN32) */
+#endif /* defined (AWS_C_RT_USE_WINDOWS_DLL_SEMANTICS) || defined (_WIN32) */
 
 #ifdef AWS_NO_STATIC_IMPL
 #    define AWS_STATIC_IMPL AWS_COMMON_API

@@ -54,7 +54,7 @@ struct aws_string *aws_string_new_log_writer_test_filename(struct aws_allocator 
     char filename_array[64];
     struct aws_byte_buf filename_buf = aws_byte_buf_from_empty_array(filename_array, sizeof(filename_array));
 
-#ifndef WIN32
+#ifndef _WIN32
     AWS_FATAL_ASSERT(aws_byte_buf_write_from_whole_cursor(&filename_buf, aws_byte_cursor_from_c_str("./")));
 #endif
 
