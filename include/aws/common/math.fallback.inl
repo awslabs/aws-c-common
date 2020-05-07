@@ -164,10 +164,11 @@ AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
 
 AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
     int32_t idx = 0;
+    const int32_t max_bits = (int32_t)(SIZE_BITS / sizeof(uint8_t));
     if (n == 0) {
         return sizeof(n) * 8;
     }
-    while (idx < (SIZE_BITS / sizeof(uint8_t))) {
+    while (idx < max_bits) {
         if (n & (1 << idx)) {
             break;
         }
@@ -182,10 +183,11 @@ AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
 
 AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
     int64_t idx = 0;
+    const int64_t max_bits = (int64_t)(SIZE_BITS / sizeof(uint8_t));
     if (n == 0) {
         return sizeof(n) * 8;
     }
-    while (idx < (SIZE_BITS / sizeof(uint8_t))) {
+    while (idx < max_bits) {
         if (n & (1ULL << idx)) {
             break;
         }

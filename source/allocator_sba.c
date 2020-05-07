@@ -35,7 +35,7 @@
  * which allows the OS to do address re-mapping for us instead of over-allocating to fulfill alignment.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #    include <malloc.h>
 #elif __linux__ || __APPLE__
 #    include <stdlib.h>
@@ -120,7 +120,7 @@ static void *s_page_bind(void *addr, struct sba_bin *bin) {
 
 /* Wraps OS-specific aligned malloc implementation */
 static void *s_aligned_alloc(size_t size, size_t align) {
-#ifdef WIN32
+#ifdef _WIN32
     return _aligned_malloc(size, align);
 #else
     void *mem = NULL;
@@ -135,7 +135,7 @@ static void *s_aligned_alloc(size_t size, size_t align) {
 
 /* wraps OS-specific aligned free implementation */
 static void s_aligned_free(void *addr) {
-#ifdef WIN32
+#ifdef _WIN32
     _aligned_free(addr);
 #else
     free(addr);

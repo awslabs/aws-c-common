@@ -23,9 +23,9 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #    include <sys/file.h>
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 #ifdef _MSC_VER
 #    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
@@ -165,11 +165,11 @@ static int s_log_writer_bad_file_test(struct aws_allocator *allocator, void *ctx
 
     ASSERT_TRUE(result == AWS_OP_ERR, "Log file open succeeded despite an invalid file name");
 
-#ifdef WIN32
+#ifdef _WIN32
     ASSERT_TRUE(aws_error == AWS_ERROR_NO_PERMISSION, "File open error was not no permission as expected");
 #else
     ASSERT_TRUE(aws_error == AWS_ERROR_FILE_INVALID_PATH, "File open error was not invalid path as expected");
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
     return AWS_OP_SUCCESS;
 }
