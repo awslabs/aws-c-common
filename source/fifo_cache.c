@@ -14,8 +14,22 @@
  */
 #include <aws/common/fifo_cache.h>
 
-int aws_fifo_cache_init(
-    struct aws_fifo_cache *cache,
+static int s_fifo_cache_put(struct aws_cache *cache, const void *key, void *p_value);
+static void s_fifo_cache_clean_up(struct aws_cache *cache);
+
+static struct aws_cache_vtable s_fifo_cache_vtable = {
+    .clean_up = s_fifo_cache_clean_up,
+    .find = aws_cache_base_find,
+    .put = s_fifo_cache_put,
+    .remove = aws_cache_base_remove,
+    .clear = aws_cache_base_clear,
+    .get_element_count = aws_cache_base_get_element_count,
+
+    .use_lru_element = NULL,
+    .get_mru_element = NULL,
+};
+
+struct aws_cache *aws_cache_new_fifo(
     struct aws_allocator *allocator,
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
@@ -25,27 +39,31 @@ int aws_fifo_cache_init(
     AWS_ASSERT(allocator);
     AWS_ASSERT(max_items);
 
-    cache->max_items = max_items;
-
-    return aws_linked_hash_table_init(
-        &cache->table, allocator, hash_fn, equals_fn, destroy_key_fn, destroy_value_fn, max_items);
+    struct aws_fifo_cache *fifo_cache = aws_mem_calloc(allocator, 1, sizeof(struct aws_fifo_cache));
+    if (!fifo_cache) {
+        return NULL;
+    }
+    fifo_cache->base.allocator = allocator;
+    fifo_cache->base.max_items = max_items;
+    fifo_cache->base.vtable = &s_fifo_cache_vtable;
+    if (aws_linked_hash_table_init(
+            &fifo_cache->base.table, allocator, hash_fn, equals_fn, destroy_key_fn, destroy_value_fn, max_items)) {
+        return NULL;
+    }
+    return &fifo_cache->base;
 }
 
-void aws_fifo_cache_clean_up(struct aws_fifo_cache *cache) {
+static void s_fifo_cache_clean_up(struct aws_cache *cache) {
+    struct aws_fifo_cache *fifo_cache = AWS_CONTAINER_OF(cache, struct aws_fifo_cache, base);
     /* clearing the table will remove all elements. That will also deallocate
      * any cache entries we currently have. */
     aws_linked_hash_table_clean_up(&cache->table);
-    AWS_ZERO_STRUCT(*cache);
+    aws_mem_release(cache->allocator, fifo_cache);
 }
 
-int aws_fifo_cache_find(struct aws_fifo_cache *cache, const void *key, void **p_value) {
-
-    return(aws_linked_hash_table_find(&cache->table, key, p_value));
-}
-
-int aws_fifo_cache_put(struct aws_fifo_cache *cache, const void *key, void *p_value) {
-
-    if(aws_linked_hash_table_put(&cache->table, key, p_value)) {
+/* fifo cache put implementation */
+static int s_fifo_cache_put(struct aws_cache *cache, const void *key, void *p_value) {
+    if (aws_linked_hash_table_put(&cache->table, key, p_value)) {
         return AWS_OP_ERR;
     }
 
@@ -60,20 +78,4 @@ int aws_fifo_cache_put(struct aws_fifo_cache *cache, const void *key, void *p_va
     }
 
     return AWS_OP_SUCCESS;
-}
-
-int aws_fifo_cache_remove(struct aws_fifo_cache *cache, const void *key) {
-    /* allocated cache memory and the linked list entry will be removed in the
-     * callback. */
-    return aws_linked_hash_table_remove(&cache->table, key);
-}
-
-void aws_fifo_cache_clear(struct aws_fifo_cache *cache) {
-    /* clearing the table will remove all elements. That will also deallocate
-     * any cache entries we currently have. */
-    aws_linked_hash_table_clear(&cache->table);
-}
-
-size_t aws_fifo_cache_get_element_count(const struct aws_fifo_cache *cache) {
-    return aws_linked_hash_table_get_element_count(&cache->table);
 }
