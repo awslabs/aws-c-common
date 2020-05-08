@@ -13,9 +13,9 @@
  *  permissions and limitations under the License.
  */
 
-#include <aws/common/lru_cache.h>
 #include <aws/common/fifo_cache.h>
 #include <aws/common/lifo_cache.h>
+#include <aws/common/lru_cache.h>
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_lru_cache_overflow_static_members_fn(struct aws_allocator *allocator, void *ctx) {
