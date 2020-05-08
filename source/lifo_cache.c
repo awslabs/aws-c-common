@@ -25,7 +25,6 @@ int aws_lifo_cache_init(
     AWS_ASSERT(allocator);
     AWS_ASSERT(max_items);
 
-    cache->allocator = allocator;
     cache->max_items = max_items;
 
     return aws_linked_hash_table_init(
@@ -45,11 +44,6 @@ int aws_lifo_cache_find(struct aws_lifo_cache *cache, const void *key, void **p_
 }
 
 int aws_lifo_cache_put(struct aws_lifo_cache *cache, const void *key, void *p_value) {
-
-    if (!cache->max_items) {
-        /* Just for efficiency */
-        return AWS_OP_SUCCESS;
-    }
 
     if (aws_linked_hash_table_put(&cache->table, key, p_value)) {
         return AWS_OP_ERR;
