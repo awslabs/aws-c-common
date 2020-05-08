@@ -171,6 +171,13 @@ add_test_case(test_hash_combine)
 
 add_test_case(test_linked_hash_table_preserves_insertion_order)
 add_test_case(test_linked_hash_table_entries_cleanup)
+add_test_case(test_linked_hash_table_entries_overwrite)
+
+add_test_case(test_lru_cache_overflow_static_members)
+add_test_case(test_lru_cache_lru_ness_static_members)
+add_test_case(test_lru_cache_element_access_members)
+add_test_case(test_fifo_cache_overflow_static_members)
+add_test_case(test_lifo_cache_overflow_static_members)
 
 add_test_case(test_is_power_of_two)
 add_test_case(test_round_up_to_power_of_two)
@@ -283,12 +290,6 @@ add_test_case(test_calloc_from_default_allocator)
 add_test_case(test_calloc_from_given_allocator)
 
 add_test_case(timebomb_allocator)
-
-add_test_case(test_lru_cache_overflow_static_members)
-add_test_case(test_lru_cache_lru_ness_static_members)
-add_test_case(test_lru_cache_entries_cleanup)
-add_test_case(test_lru_cache_overwrite)
-add_test_case(test_lru_cache_element_access_members)
 
 add_test_case(rw_lock_aquire_release_test)
 add_test_case(rw_lock_is_actually_rw_lock_test)

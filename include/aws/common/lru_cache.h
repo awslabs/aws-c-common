@@ -15,8 +15,7 @@
  * permissions and limitations under the License.
  */
 
-#include <aws/common/hash_table.h>
-#include <aws/common/linked_list.h>
+#include <aws/common/linked_hash_table.h>
 
 /**
  * Simple Least-recently-used cache using the standard lazy linked hash table
@@ -25,9 +24,7 @@
  */
 struct aws_lru_cache {
     struct aws_allocator *allocator;
-    struct aws_linked_list list;
-    struct aws_hash_table table;
-    aws_hash_callback_destroy_fn *user_on_value_destroy;
+    struct aws_linked_hash_table table;
     size_t max_items;
 };
 
