@@ -76,10 +76,10 @@ int aws_linked_hash_table_find(struct aws_linked_hash_table *table, const void *
 
 /**
  * Finds element in the table by key. If found, AWS_OP_SUCCESS will be
- * returned. And move it to the back of the list. 
+ * returned. And move it to the back of the list.
  * If not found, AWS_OP_SUCCESS will be returned and *p_value will be
  * NULL.
- * 
+ *
  * Note: it will break the order!!
  */
 AWS_COMMON_API
@@ -110,8 +110,8 @@ AWS_COMMON_API
 size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_table *table);
 
 /**
- * Move the aws_linked_hash_table_node to the end of the list. 
- * 
+ * Move the aws_linked_hash_table_node to the end of the list.
+ *
  * Note: it will break the order!!
  */
 AWS_COMMON_API
