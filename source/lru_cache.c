@@ -53,7 +53,7 @@ struct aws_cache *aws_cache_new_lru(
     return lru_cache;
 }
 
-/* fifo cache put implementation */
+/* implementation for lru cache put */
 static int s_lru_cache_put(struct aws_cache *cache, const void *key, void *p_value) {
 
     if (aws_linked_hash_table_put(&cache->table, key, p_value)) {
@@ -72,9 +72,8 @@ static int s_lru_cache_put(struct aws_cache *cache, const void *key, void *p_val
 
     return AWS_OP_SUCCESS;
 }
-
+/* implementation for lru cache find */
 static int s_lru_cache_find(struct aws_cache *cache, const void *key, void **p_value) {
-
     return (aws_linked_hash_table_find_and_move_to_back(&cache->table, key, p_value));
 }
 

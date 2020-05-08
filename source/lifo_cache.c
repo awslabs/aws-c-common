@@ -50,7 +50,7 @@ struct aws_cache *aws_cache_new_lifo(
     return lifo_cache;
 }
 
-/* fifo cache put implementation */
+/* lifo cache put implementation */
 static int s_lifo_cache_put(struct aws_cache *cache, const void *key, void *p_value) {
     if (aws_linked_hash_table_put(&cache->table, key, p_value)) {
         return AWS_OP_ERR;
