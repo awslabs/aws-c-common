@@ -17,17 +17,10 @@
 
 #include <aws/common/cache.h>
 
-/**
- * Simple last-in-first-out cache using the linked hash table implementation.
- */
-struct aws_lifo_cache {
-    struct aws_cache base;
-};
-
 AWS_EXTERN_C_BEGIN
 
 /**
- * Initializes the cache. Sets up the underlying linked hash table.
+ * Initializes the last-in-first-out cache. Sets up the underlying linked hash table.
  * Once `max_items` elements have been added, the latest(last-in) item will
  * be removed. For the other parameters, see aws/common/hash_table.h. Hash table
  * semantics of these arguments are preserved.

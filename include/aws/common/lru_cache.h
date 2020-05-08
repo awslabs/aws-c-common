@@ -17,22 +17,13 @@
 
 #include <aws/common/cache.h>
 
-/**
- * Simple Least-recently-used cache using the standard lazy linked hash table
- * implementation. (Yes the one that was the answer to that interview question
- * that one time).
- */
-struct aws_lru_cache {
-    struct aws_cache base;
-};
-
 AWS_EXTERN_C_BEGIN
 
 /**
- * Initializes the cache. Sets up the underlying hash table and linked list.
- * Once `max_items` elements have been added, the least recently used item will
- * be removed. For the other parameters, see aws/common/hash_table.h. Hash table
- * semantics of these arguments are preserved.
+ * Initializes the Least-recently-used cache. Sets up the underlying linked hash table.
+ * Once `max_items` elements have been added, the least recently used item will be removed. For the other parameters,
+ * see aws/common/hash_table.h. Hash table semantics of these arguments are preserved.(Yes the one that was the answer
+ * to that interview question that one time).
  */
 AWS_COMMON_API
 struct aws_cache *aws_cache_new_lru(
