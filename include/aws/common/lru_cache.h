@@ -23,7 +23,6 @@
  * that one time).
  */
 struct aws_lru_cache {
-    struct aws_allocator *allocator;
     struct aws_linked_hash_table table;
     size_t max_items;
 };
