@@ -69,6 +69,23 @@ int aws_linked_hash_table_find(struct aws_linked_hash_table *table, const void *
     return AWS_OP_SUCCESS;
 }
 
+int aws_linked_hash_table_find_and_move_to_back(struct aws_linked_hash_table *table, const void *key, void **p_value) {
+
+    struct aws_hash_element *element = NULL;
+    int err_val = aws_hash_table_find(&table->table, key, &element);
+
+    if (err_val || !element) {
+        *p_value = NULL;
+        return err_val;
+    }
+
+    struct aws_linked_hash_table_node *linked_node = element->value;
+    *p_value = linked_node->value;
+    /* on access, remove from current place in list and move it to the back. */
+    aws_linked_hash_table_move_node_to_end_of_list(table, linked_node);
+    return AWS_OP_SUCCESS;
+}
+
 int aws_linked_hash_table_put(struct aws_linked_hash_table *table, const void *key, void *p_value) {
 
     struct aws_linked_hash_table_node *node =
@@ -117,6 +134,14 @@ size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_tabl
     return aws_hash_table_get_entry_count(&table->table);
 }
 
-const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table) {
+void aws_linked_hash_table_move_node_to_end_of_list(
+    struct aws_linked_hash_table *table,
+    struct aws_linked_hash_table_node *node) {
+
+    aws_linked_list_remove(&node->node);
+    aws_linked_list_push_back(&table->list, &node->node);
+}
+
+const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(const struct aws_linked_hash_table *table) {
     return &table->list;
 }
