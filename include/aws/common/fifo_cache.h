@@ -21,7 +21,6 @@
  * Simple first-in-first-out cache using the linked hash table implementation.
  */
 struct aws_fifo_cache {
-    struct aws_allocator *allocator;
     struct aws_linked_hash_table table;
     size_t max_items;
 };
