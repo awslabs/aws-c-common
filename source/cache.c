@@ -16,7 +16,8 @@
 
 void aws_cache_clean_up(struct aws_cache *cache) {
     AWS_ASSERT(cache);
-    cache->vtable->clean_up(cache);
+    aws_linked_hash_table_clean_up(&cache->table);
+    aws_mem_release(cache->allocator, cache);
 }
 
 int aws_cache_find(struct aws_cache *cache, const void *key, void **p_value) {
@@ -44,22 +45,22 @@ size_t aws_cache_get_element_count(const struct aws_cache *cache) {
     return cache->vtable->get_element_count(cache);
 }
 
-int aws_cache_base_find(struct aws_cache *cache, const void *key, void **p_value) {
+int aws_cache_base_default_find(struct aws_cache *cache, const void *key, void **p_value) {
     return (aws_linked_hash_table_find(&cache->table, key, p_value));
 }
 
-int aws_cache_base_remove(struct aws_cache *cache, const void *key) {
+int aws_cache_base_default_remove(struct aws_cache *cache, const void *key) {
     /* allocated cache memory and the linked list entry will be removed in the
      * callback. */
     return aws_linked_hash_table_remove(&cache->table, key);
 }
 
-void aws_cache_base_clear(struct aws_cache *cache) {
+void aws_cache_base_default_clear(struct aws_cache *cache) {
     /* clearing the table will remove all elements. That will also deallocate
      * any cache entries we currently have. */
     aws_linked_hash_table_clear(&cache->table);
 }
 
-size_t aws_cache_base_get_element_count(const struct aws_cache *cache) {
+size_t aws_cache_base_default_get_element_count(const struct aws_cache *cache) {
     return aws_linked_hash_table_get_element_count(&cache->table);
 }

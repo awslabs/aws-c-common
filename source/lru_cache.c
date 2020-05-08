@@ -15,17 +15,15 @@
 #include <aws/common/lru_cache.h>
 static int s_lru_cache_put(struct aws_cache *cache, const void *key, void *p_value);
 static int s_lru_cache_find(struct aws_cache *cache, const void *key, void **p_value);
-static void s_lru_cache_clean_up(struct aws_cache *cache);
 static void *s_lru_cache_use_lru_element(struct aws_cache *cache);
 static void *s_lru_cache_get_mru_element(const struct aws_cache *cache);
 
 static struct aws_cache_vtable s_lru_cache_vtable = {
-    .clean_up = s_lru_cache_clean_up,
     .find = s_lru_cache_find,
     .put = s_lru_cache_put,
-    .remove = aws_cache_base_remove,
-    .clear = aws_cache_base_clear,
-    .get_element_count = aws_cache_base_get_element_count,
+    .remove = aws_cache_base_default_remove,
+    .clear = aws_cache_base_default_clear,
+    .get_element_count = aws_cache_base_default_get_element_count,
 
     .use_lru_element = s_lru_cache_use_lru_element,
     .get_mru_element = s_lru_cache_get_mru_element,
@@ -41,26 +39,18 @@ struct aws_cache *aws_cache_new_lru(
     AWS_ASSERT(allocator);
     AWS_ASSERT(max_items);
 
-    struct aws_lru_cache *lru_cache = aws_mem_calloc(allocator, 1, sizeof(struct aws_lru_cache));
+    struct aws_cache *lru_cache = aws_mem_calloc(allocator, 1, sizeof(struct aws_cache));
     if (!lru_cache) {
         return NULL;
     }
-    lru_cache->base.allocator = allocator;
-    lru_cache->base.max_items = max_items;
-    lru_cache->base.vtable = &s_lru_cache_vtable;
+    lru_cache->allocator = allocator;
+    lru_cache->max_items = max_items;
+    lru_cache->vtable = &s_lru_cache_vtable;
     if (aws_linked_hash_table_init(
-            &lru_cache->base.table, allocator, hash_fn, equals_fn, destroy_key_fn, destroy_value_fn, max_items)) {
+            &lru_cache->table, allocator, hash_fn, equals_fn, destroy_key_fn, destroy_value_fn, max_items)) {
         return NULL;
     }
-    return &lru_cache->base;
-}
-
-static void s_lru_cache_clean_up(struct aws_cache *cache) {
-    struct aws_lru_cache *lru_cache = AWS_CONTAINER_OF(cache, struct aws_lru_cache, base);
-    /* clearing the table will remove all elements. That will also deallocate
-     * any cache entries we currently have. */
-    aws_linked_hash_table_clean_up(&cache->table);
-    aws_mem_release(cache->allocator, lru_cache);
+    return lru_cache;
 }
 
 /* fifo cache put implementation */

@@ -20,7 +20,6 @@
 struct aws_cache;
 
 struct aws_cache_vtable {
-    void (*clean_up)(struct aws_cache *cache);
     int (*find)(struct aws_cache *cache, const void *key, void **p_value);
     int (*put)(struct aws_cache *cache, const void *key, void *p_value);
     int (*remove)(struct aws_cache *cache, const void *key);
@@ -33,7 +32,7 @@ struct aws_cache_vtable {
 };
 
 /**
- * Base stucture for caches using the linked hash table implementation.
+ * Base stucture for caches, used the linked hash table implementation.
  */
 struct aws_cache {
     struct aws_allocator *allocator;
@@ -42,10 +41,11 @@ struct aws_cache {
     size_t max_items;
 };
 
-int aws_cache_base_find(struct aws_cache *cache, const void *key, void **p_value);
-int aws_cache_base_remove(struct aws_cache *cache, const void *key);
-void aws_cache_base_clear(struct aws_cache *cache);
-size_t aws_cache_base_get_element_count(const struct aws_cache *cache);
+/* Default implementations */
+int aws_cache_base_default_find(struct aws_cache *cache, const void *key, void **p_value);
+int aws_cache_base_default_remove(struct aws_cache *cache, const void *key);
+void aws_cache_base_default_clear(struct aws_cache *cache);
+size_t aws_cache_base_default_get_element_count(const struct aws_cache *cache);
 
 AWS_EXTERN_C_BEGIN
 /**
@@ -66,7 +66,7 @@ int aws_cache_find(struct aws_cache *cache, const void *key, void **p_value);
 
 /**
  * Puts `p_value` at `key`. If an element is already stored at `key` it will be replaced. If the cache is already full,
- * based on the implementation, item will be removed.
+ * item will be removed based on the implementation.
  */
 AWS_COMMON_API
 int aws_cache_put(struct aws_cache *cache, const void *key, void *p_value);
