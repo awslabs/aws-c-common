@@ -28,6 +28,8 @@
  * when it is time to clean any state up.
  * Listeners are owned by the subscriber, and are no longer referenced by the bus
  * once unsubscribed.
+ * Message delivery happens in a separate thread from sending, so listeners are
+ * responsible for their own thread safety
  */
 struct aws_message_bus;
 
