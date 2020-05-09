@@ -106,19 +106,15 @@ static void *s_lru_cache_get_mru_element(const struct aws_cache *cache) {
 }
 
 void *aws_lru_cache_use_lru_element(struct aws_cache *cache) {
-    AWS_ASSERT(cache);
-    if (cache->impl) {
-        struct lru_cache_impl_vtable *impl_vtable = cache->impl;
-        return impl_vtable->use_lru_element(cache);
-    }
-    return NULL;
+    AWS_PRECONDITION(cache);
+    AWS_PRECONDITION(cache->impl);
+    struct lru_cache_impl_vtable *impl_vtable = cache->impl;
+    return impl_vtable->use_lru_element(cache);
 }
 
 void *aws_lru_cache_get_mru_element(const struct aws_cache *cache) {
-    AWS_ASSERT(cache);
-    if (cache->impl) {
-        struct lru_cache_impl_vtable *impl_vtable = cache->impl;
-        return impl_vtable->get_mru_element(cache);
-    }
-    return NULL;
+    AWS_PRECONDITION(cache);
+    AWS_PRECONDITION(cache->impl);
+    struct lru_cache_impl_vtable *impl_vtable = cache->impl;
+    return impl_vtable->get_mru_element(cache);
 }
