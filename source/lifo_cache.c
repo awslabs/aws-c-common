@@ -21,9 +21,6 @@ static struct aws_cache_vtable s_lifo_cache_vtable = {
     .remove = aws_cache_base_default_remove,
     .clear = aws_cache_base_default_clear,
     .get_element_count = aws_cache_base_default_get_element_count,
-
-    .use_lru_element = NULL,
-    .get_mru_element = NULL,
 };
 
 struct aws_cache *aws_cache_new_lifo(
