@@ -42,16 +42,16 @@ struct aws_message_bus_listener {
 struct aws_message_bus *aws_message_bus_new(struct aws_allocator *allocator, size_t slots);
 
 /* Subscribes a listener to a message type */
-int aws_message_bus_subscribe(int msg_type, aws_message_bus_listener *listener);
+int aws_message_bus_subscribe(int msg_type, struct aws_message_bus_listener *listener);
 
 /* Subscribes a listener to all incoming messages */
-int aws_message_bus_subscribe_all(aws_message_bus_listener *listener);
+int aws_message_bus_subscribe_all(struct aws_message_bus_listener *listener);
 
 /* Unsubscribes a listener from a specific message */
-int aws_message_bus_unsubscribe(int msg_type, aws_message_bus_listener *listener);
+int aws_message_bus_unsubscribe(int msg_type, struct aws_message_bus_listener *listener);
 
 /* Unsubscribes a listener from all incoming messages */
-int aws_message_bus_unsubscribe_all(aws_message_bus_listener *listener);
+int aws_message_bus_unsubscribe_all(struct aws_message_bus_listener *listener);
 
 /*
  * Allocates a new message to be sent. The message bus owns this memory, and is responsible
