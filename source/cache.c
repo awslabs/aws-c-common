@@ -15,33 +15,33 @@
 #include <aws/common/cache.h>
 
 void aws_cache_clean_up(struct aws_cache *cache) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     aws_linked_hash_table_clean_up(&cache->table);
     aws_mem_release(cache->allocator, cache);
 }
 
 int aws_cache_find(struct aws_cache *cache, const void *key, void **p_value) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     return cache->vtable->find(cache, key, p_value);
 }
 
 int aws_cache_put(struct aws_cache *cache, const void *key, void *p_value) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     return cache->vtable->put(cache, key, p_value);
 }
 
 int aws_cache_remove(struct aws_cache *cache, const void *key) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     return cache->vtable->remove(cache, key);
 }
 
 void aws_cache_clear(struct aws_cache *cache) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     cache->vtable->clear(cache);
 }
 
 size_t aws_cache_get_element_count(const struct aws_cache *cache) {
-    AWS_ASSERT(cache);
+    AWS_PRECONDITION(cache);
     return cache->vtable->get_element_count(cache);
 }
 
