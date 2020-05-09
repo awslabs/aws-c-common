@@ -18,7 +18,7 @@ static int s_lru_cache_find(struct aws_cache *cache, const void *key, void **p_v
 static void *s_lru_cache_use_lru_element(struct aws_cache *cache);
 static void *s_lru_cache_get_mru_element(const struct aws_cache *cache);
 
-struct lru_cache_impl_vatable {
+struct lru_cache_impl_vtable {
     void *(*use_lru_element)(struct aws_cache *cache);
     void *(*get_mru_element)(const struct aws_cache *cache);
 };
@@ -41,10 +41,10 @@ struct aws_cache *aws_cache_new_lru(
     AWS_ASSERT(allocator);
     AWS_ASSERT(max_items);
     struct aws_cache *lru_cache = NULL;
-    struct lru_cache_impl_vatable *impl = NULL;
+    struct lru_cache_impl_vtable *impl = NULL;
 
     if (!aws_mem_acquire_many(
-            allocator, 2, &lru_cache, sizeof(struct aws_cache), &impl, sizeof(struct lru_cache_impl_vatable))) {
+            allocator, 2, &lru_cache, sizeof(struct aws_cache), &impl, sizeof(struct lru_cache_impl_vtable))) {
         return NULL;
     }
     impl->use_lru_element = s_lru_cache_use_lru_element;
@@ -108,7 +108,7 @@ static void *s_lru_cache_get_mru_element(const struct aws_cache *cache) {
 void *aws_lru_cache_use_lru_element(struct aws_cache *cache) {
     AWS_ASSERT(cache);
     if (cache->impl) {
-        struct lru_cache_impl_vatable *impl_vtable = cache->impl;
+        struct lru_cache_impl_vtable *impl_vtable = cache->impl;
         return impl_vtable->use_lru_element(cache);
     }
     return NULL;
@@ -117,7 +117,7 @@ void *aws_lru_cache_use_lru_element(struct aws_cache *cache) {
 void *aws_lru_cache_get_mru_element(const struct aws_cache *cache) {
     AWS_ASSERT(cache);
     if (cache->impl) {
-        struct lru_cache_impl_vatable *impl_vtable = cache->impl;
+        struct lru_cache_impl_vtable *impl_vtable = cache->impl;
         return impl_vtable->get_mru_element(cache);
     }
     return NULL;
