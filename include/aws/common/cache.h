@@ -25,10 +25,6 @@ struct aws_cache_vtable {
     int (*remove)(struct aws_cache *cache, const void *key);
     void (*clear)(struct aws_cache *cache);
     size_t (*get_element_count)(const struct aws_cache *cache);
-
-    /* LRU-only functions */
-    void *(*use_lru_element)(struct aws_cache *cache);
-    void *(*get_mru_element)(const struct aws_cache *cache);
 };
 
 /**
@@ -39,6 +35,8 @@ struct aws_cache {
     const struct aws_cache_vtable *vtable;
     struct aws_linked_hash_table table;
     size_t max_items;
+
+    void *impl;
 };
 
 /* Default implementations */
@@ -66,7 +64,7 @@ int aws_cache_find(struct aws_cache *cache, const void *key, void **p_value);
 
 /**
  * Puts `p_value` at `key`. If an element is already stored at `key` it will be replaced. If the cache is already full,
- * item will be removed based on the implementation.
+ * an item will be removed based on the cache policy.
  */
 AWS_COMMON_API
 int aws_cache_put(struct aws_cache *cache, const void *key, void *p_value);
