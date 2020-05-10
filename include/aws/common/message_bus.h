@@ -36,18 +36,25 @@ struct aws_message_bus;
 /* Signature for listener callbacks */
 typedef void(aws_message_bus_listener_fn)(uintptr_t msg_type, void *msg_data, void *user_data);
 
+enum aws_message_bus_policy {
+    /* Message delivery is queued */
+    AWS_BUS_ASYNC,
+    /* Message delivery is immediate */
+    AWS_BUS_SYNC,
+};
+
 /* Creates and returns a new message bus */
 struct aws_message_bus *aws_message_bus_new(
-    struct aws_allocator *allocator, size_t buffer_size);
+    struct aws_allocator *allocator, size_t buffer_size, enum aws_message_bus_policy policy);
 
 /* Cleans up a message bus by notifying all listeners and releasing the bus memory */
 void aws_message_bus_destroy(struct aws_message_bus *bus);
 
 /* Subscribes a listener to a message type */
-int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data);
+int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t address, aws_message_bus_listener_fn *listener, void *user_data);
 
 /* Unsubscribes a listener from a specific message */
-int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data);
+int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t address, aws_message_bus_listener_fn *listener, void *user_data);
 
 /*
  * Allocates a new message to be sent. The message bus owns this memory, and is responsible
@@ -66,6 +73,6 @@ void aws_message_bus_destroy_message(struct aws_message_bus *bus, struct aws_byt
  * Sends a message to any listeners. msg_data should have been allocated by aws_message_bus_new_message
  * and will be cleaned up after the message is delivered
  */
-int aws_message_bus_send(struct aws_message_bus *bus, uintptr_t msg_type, struct aws_byte_buf *msg);
+int aws_message_bus_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *msg);
 
 #endif /* AWS_COMMON_MESSAGE_BUS_H */
