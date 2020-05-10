@@ -23,6 +23,7 @@
 #include <aws/common/ring_buffer.h>
 
 struct bus_vtable {
+    int(*init)(struct aws_message_bus *bus);
     int(*send)(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload);
     void(*destroy)(struct aws_message_bus *bus);
 };
@@ -160,6 +161,11 @@ void s_bus_sync_destroy(struct aws_message_bus *bus) {
     aws_mem_release(bus->allocator, sync_impl);
 }
 
+int s_bus_sync_init(struct aws_message_bus *bus) {
+    (void)bus;
+    return AWS_OP_SUCCESS;
+}
+
 int s_bus_sync_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {
     struct aws_hash_element *elem = NULL;
     if (aws_hash_table_find(&bus->slots.table, (void*)address, &elem)) {
@@ -184,6 +190,7 @@ int s_bus_sync_send(struct aws_message_bus *bus, uintptr_t address, struct aws_b
 }
 
 static struct bus_vtable s_sync_vtable = {
+    .init = s_bus_sync_init,
     .destroy = s_bus_sync_destroy,
     .send = s_bus_sync_send,
 };
@@ -199,8 +206,14 @@ static void *s_bus_sync_new(struct aws_message_bus *bus) {
 
 void s_bus_async_destroy(struct aws_message_bus *bus) {
     struct bus_async_impl *async_impl = bus->impl;
+    /* TODO: Tear down delivery thread */
     aws_mutex_clean_up(&async_impl->msg_queue.mutex);
     aws_mem_release(bus->allocator, async_impl);
+}
+
+int s_bus_async_init(struct aws_message_bus *bus) {
+    /* TODO: Spin up delivery thread */
+    return AWS_OP_SUCCESS;
 }
 
 int s_bus_async_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {
@@ -224,6 +237,7 @@ int s_bus_async_send(struct aws_message_bus *bus, uintptr_t address, struct aws_
 }
 
 static struct bus_vtable s_async_vtable = {
+    .init = s_bus_async_init,
     .destroy = s_bus_async_destroy,
     .send = s_bus_async_send,
 };
@@ -268,9 +282,17 @@ struct aws_message_bus *aws_message_bus_new(struct aws_allocator *allocator, siz
         goto error;
     }
 
+    struct bus_vtable *vtable = bus->impl;
+    if (vtable->init(bus)) {
+        goto error;
+    }
+
     return bus;
 
 error:
+    if (bus->impl) {
+        ((struct bus_vtable*)bus->impl)->destroy(bus);
+    }
     aws_ring_buffer_clean_up(&bus->msg_buffer);
     aws_hash_table_clean_up(&bus->slots.table);
     aws_mutex_clean_up(&bus->slots.mutex);
