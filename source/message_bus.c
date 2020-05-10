@@ -102,14 +102,61 @@ void aws_message_bus_destroy_message(struct aws_message_bus *bus, struct aws_byt
     aws_ring_buffer_release(&bus->buffer, msg);
 }
 
-int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data) {
+int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *callback, void *user_data) {
+    aws_mutex_lock(&bus->slots.mutex);
+    /* BEGIN CRITICAL SECTION */
+    struct aws_hash_element *elem = NULL;
+    if (aws_hash_table_find(&bus->slots.table, (void*)msg_type, &elem)) {
+        aws_mutex_unlock(&bus->slots.mutex);
+        return AWS_OP_ERR;
+    }
+    struct listener_list *list = NULL;
+    if (elem) {
+        list = elem->value;
+    } else {
+        list = aws_mem_calloc(bus->allocator, 1, sizeof(struct listener_list));
+        list->bus = bus;
+        aws_linked_list_init(&list->listeners);
+    }
+    struct bus_listener *listener = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_listener));
+    listener->deliver = callback;
+    listener->user_data = user_data;
+    aws_linked_list_push_back(&list->listeners, &listener->list_node);
+    /* END CRITICAL SECTION */
+    aws_mutex_lock(&bus->slots.mutex);
     return AWS_OP_SUCCESS;
 }
 
-int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data) {
+int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *callback, void *user_data) {
+    aws_mutex_lock(&bus->slots.mutex);
+    /* BEGIN CRITICAL SECTION */
+    struct aws_hash_element *elem = NULL;
+    if (aws_hash_table_find(&bus->slots.table, (void*)msg_type, &elem)) {
+        aws_mutex_unlock(&bus->slots.mutex);
+        return AWS_OP_ERR;
+    }
+    struct listener_list *list = elem->value;
+    if (!list) {
+        return AWS_OP_SUCCESS;
+    }
+
+    struct aws_linked_list_node *node;
+    for (node = aws_linked_list_begin(&list->listeners);
+         node != aws_linked_list_end(&list->listeners);
+         node = aws_linked_list_next(node)) {
+
+        struct bus_listener *listener = AWS_CONTAINER_OF(node, struct bus_listener, list_node);
+        if (listener->deliver == callback && listener->user_data == user_data) {
+            aws_linked_list_remove(node);
+            break;
+        }
+    }
+    /* END CRITICAL SECTION */
+    aws_mutex_lock(&bus->slots.mutex);
     return AWS_OP_SUCCESS;
 }
 
 int aws_message_bus_send(struct aws_message_bus *bus, uintptr_t msg_type, struct aws_byte_buf *msg) {
+    
     return AWS_OP_SUCCESS;
 }
