@@ -34,49 +34,38 @@
 struct aws_message_bus;
 
 /* Signature for listener callbacks */
-typedef void(aws_message_bus_listener_fn)(int msg_type, void *msg_data, void *user_data);
-
-struct aws_message_bus_listener {
-    struct aws_linked_list_node list_node;
-    void *user_data;
-    aws_message_bus_listener_fn *deliver;
-};
+typedef void(aws_message_bus_listener_fn)(uintptr_t msg_type, void *msg_data, void *user_data);
 
 /* Creates and returns a new message bus */
-struct aws_message_bus *aws_message_bus_new(struct aws_allocator *allocator, size_t slots);
+struct aws_message_bus *aws_message_bus_new(
+    struct aws_allocator *allocator, size_t buffer_size);
 
 /* Cleans up a message bus by notifying all listeners and releasing the bus memory */
 void aws_message_bus_destroy(struct aws_message_bus *bus);
 
 /* Subscribes a listener to a message type */
-int aws_message_bus_subscribe(struct aws_message_bus *bus, int msg_type, struct aws_message_bus_listener *listener);
-
-/* Subscribes a listener to all incoming messages */
-int aws_message_bus_subscribe_all(struct aws_message_bus *bus, struct aws_message_bus_listener *listener);
+int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data);
 
 /* Unsubscribes a listener from a specific message */
-int aws_message_bus_unsubscribe(struct aws_message_bus *bus, int msg_type, struct aws_message_bus_listener *listener);
-
-/* Unsubscribes a listener from all incoming messages */
-int aws_message_bus_unsubscribe_all(struct aws_message_bus *bus, struct aws_message_bus_listener *listener);
+int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t msg_type, aws_message_bus_listener_fn *listener, void *user_data);
 
 /*
  * Allocates a new message to be sent. The message bus owns this memory, and is responsible
  * for freeing it when message delivery is complete. If an error occurs before the message
  * is sent, it may be freed with aws_message_bus_destroy_message()
  */
-int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, void **msg);
+int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, struct aws_byte_buf **msg);
 
 /*
  * Frees a message buffer allocated by aws_message_bus_new_message. Only necessary if the
  * message is never sent
  */
-void aws_message_bus_destroy_message(struct aws_message_bus *bus, void *msg);
+void aws_message_bus_destroy_message(struct aws_message_bus *bus, struct aws_byte_buf *msg);
 
 /*
  * Sends a message to any listeners. msg_data should have been allocated by aws_message_bus_new_message
  * and will be cleaned up after the message is delivered
  */
-int aws_message_bus_send(struct aws_message_bus *bus, int msg_type, void *msg_data);
+int aws_message_bus_send(struct aws_message_bus *bus, uintptr_t msg_type, struct aws_byte_buf *msg);
 
 #endif /* AWS_COMMON_MESSAGE_BUS_H */
