@@ -14,10 +14,9 @@
  */
 #include <aws/common/cache.h>
 
-void aws_cache_clean_up(struct aws_cache *cache) {
+void aws_cache_destroy(struct aws_cache *cache) {
     AWS_PRECONDITION(cache);
-    aws_linked_hash_table_clean_up(&cache->table);
-    aws_mem_release(cache->allocator, cache);
+    cache->vtable->destroy(cache);
 }
 
 int aws_cache_find(struct aws_cache *cache, const void *key, void **p_value) {
@@ -43,6 +42,11 @@ void aws_cache_clear(struct aws_cache *cache) {
 size_t aws_cache_get_element_count(const struct aws_cache *cache) {
     AWS_PRECONDITION(cache);
     return cache->vtable->get_element_count(cache);
+}
+
+void aws_cache_base_default_destroy(struct aws_cache *cache) {
+    aws_linked_hash_table_clean_up(&cache->table);
+    aws_mem_release(cache->allocator, cache);
 }
 
 int aws_cache_base_default_find(struct aws_cache *cache, const void *key, void **p_value) {

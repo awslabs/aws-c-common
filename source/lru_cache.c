@@ -24,6 +24,7 @@ struct lru_cache_impl_vtable {
 };
 
 static struct aws_cache_vtable s_lru_cache_vtable = {
+    .destroy = aws_cache_base_default_destroy,
     .find = s_lru_cache_find,
     .put = s_lru_cache_put,
     .remove = aws_cache_base_default_remove,

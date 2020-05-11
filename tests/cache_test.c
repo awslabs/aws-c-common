@@ -72,7 +72,7 @@ static int s_test_lru_cache_overflow_static_members_fn(struct aws_allocator *all
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(fourth, *value);
 
-    aws_cache_clean_up(lru_cache);
+    aws_cache_destroy(lru_cache);
     return 0;
 }
 
@@ -128,7 +128,7 @@ static int s_test_lru_cache_lru_ness_static_members_fn(struct aws_allocator *all
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(fourth, *value);
 
-    aws_cache_clean_up(lru_cache);
+    aws_cache_destroy(lru_cache);
     return 0;
 }
 
@@ -169,7 +169,7 @@ static int s_test_lru_cache_element_access_members_fn(struct aws_allocator *allo
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(first, *value);
 
-    aws_cache_clean_up(lru_cache);
+    aws_cache_destroy(lru_cache);
     return 0;
 }
 
@@ -229,7 +229,7 @@ static int s_test_fifo_cache_overflow_static_members_fn(struct aws_allocator *al
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(fourth, *value);
 
-    aws_cache_clean_up(fifo_cache);
+    aws_cache_destroy(fifo_cache);
     return 0;
 }
 
@@ -289,7 +289,7 @@ static int s_test_lifo_cache_overflow_static_members_fn(struct aws_allocator *al
     ASSERT_NOT_NULL(value);
     ASSERT_INT_EQUALS(fourth, *value);
 
-    aws_cache_clean_up(lifo_cache);
+    aws_cache_destroy(lifo_cache);
     return 0;
 }
 
@@ -332,7 +332,7 @@ static int s_test_cache_entries_cleanup_fn(struct aws_allocator *allocator, void
 
     ASSERT_TRUE(first.value_removed);
 
-    aws_cache_clean_up(cache);
+    aws_cache_destroy(cache);
     return 0;
 }
 
@@ -362,7 +362,7 @@ static int s_test_cache_entries_overwrite_fn(struct aws_allocator *allocator, vo
     ASSERT_NOT_NULL(value);
     ASSERT_PTR_EQUALS(&second, value);
 
-    aws_cache_clean_up(cache);
+    aws_cache_destroy(cache);
     return 0;
 }
 
