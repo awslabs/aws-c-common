@@ -139,3 +139,40 @@ static int s_test_linked_hash_table_entries_cleanup_fn(struct aws_allocator *all
 }
 
 AWS_TEST_CASE(test_linked_hash_table_entries_cleanup, s_test_linked_hash_table_entries_cleanup_fn)
+
+static int s_test_linked_hash_table_entries_overwrite_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_linked_hash_table table;
+
+    ASSERT_SUCCESS(aws_linked_hash_table_init(
+        &table,
+        allocator,
+        aws_hash_c_string,
+        aws_hash_callback_c_str_eq,
+        NULL,
+        s_linked_hash_table_element_value_destroy,
+        2));
+
+    const char *first_key = "first";
+
+    struct linked_hash_table_test_value_element first = {.value_removed = false};
+    struct linked_hash_table_test_value_element second = {.value_removed = false};
+
+    ASSERT_SUCCESS(aws_linked_hash_table_put(&table, first_key, &first));
+    ASSERT_SUCCESS(aws_linked_hash_table_put(&table, first_key, &second));
+    ASSERT_INT_EQUALS(1, aws_linked_hash_table_get_element_count(&table));
+
+    ASSERT_TRUE(first.value_removed);
+    ASSERT_FALSE(second.value_removed);
+
+    struct linked_hash_table_test_value_element *value = NULL;
+    ASSERT_SUCCESS(aws_linked_hash_table_find(&table, first_key, (void **)&value));
+    ASSERT_NOT_NULL(value);
+    ASSERT_PTR_EQUALS(&second, value);
+
+    aws_linked_hash_table_clean_up(&table);
+    return 0;
+}
+
+AWS_TEST_CASE(test_linked_hash_table_entries_overwrite, s_test_linked_hash_table_entries_overwrite_fn)

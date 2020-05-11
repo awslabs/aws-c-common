@@ -75,6 +75,16 @@ AWS_COMMON_API
 int aws_linked_hash_table_find(struct aws_linked_hash_table *table, const void *key, void **p_value);
 
 /**
+ * Finds element in the table by key. If found, AWS_OP_SUCCESS will be returned and the item will be moved to the back
+ * of the list.
+ * If not found, AWS_OP_SUCCESS will be returned and *p_value will be NULL.
+ *
+ * Note: this will change the order of elements
+ */
+AWS_COMMON_API
+int aws_linked_hash_table_find_and_move_to_back(struct aws_linked_hash_table *table, const void *key, void **p_value);
+
+/**
  * Puts `p_value` at `key`. If an element is already stored at `key` it will be replaced.
  */
 AWS_COMMON_API
@@ -99,12 +109,22 @@ AWS_COMMON_API
 size_t aws_linked_hash_table_get_element_count(const struct aws_linked_hash_table *table);
 
 /**
+ * Move the aws_linked_hash_table_node to the end of the list.
+ *
+ * Note: this will change the order of elements
+ */
+AWS_COMMON_API
+void aws_linked_hash_table_move_node_to_end_of_list(
+    struct aws_linked_hash_table *table,
+    struct aws_linked_hash_table_node *node);
+
+/**
  * returns the underlying linked list for iteration.
  *
  * The returned list has nodes of the type: aws_linked_hash_table_node. Use AWS_CONTAINER_OF for access to the element.
  */
 AWS_COMMON_API
-const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(struct aws_linked_hash_table *table);
+const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(const struct aws_linked_hash_table *table);
 
 AWS_EXTERN_C_END
 
