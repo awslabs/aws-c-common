@@ -20,6 +20,7 @@
 struct aws_cache;
 
 struct aws_cache_vtable {
+    void (*destroy)(struct aws_cache *cache);
     int (*find)(struct aws_cache *cache, const void *key, void **p_value);
     int (*put)(struct aws_cache *cache, const void *key, void *p_value);
     int (*remove)(struct aws_cache *cache, const void *key);
@@ -40,6 +41,7 @@ struct aws_cache {
 };
 
 /* Default implementations */
+void aws_cache_base_default_destroy(struct aws_cache *cache);
 int aws_cache_base_default_find(struct aws_cache *cache, const void *key, void **p_value);
 int aws_cache_base_default_remove(struct aws_cache *cache, const void *key);
 void aws_cache_base_default_clear(struct aws_cache *cache);
@@ -51,7 +53,7 @@ AWS_EXTERN_C_BEGIN
  * callbacks will be invoked.
  */
 AWS_COMMON_API
-void aws_cache_clean_up(struct aws_cache *cache);
+void aws_cache_destroy(struct aws_cache *cache);
 
 /**
  * Finds element in the cache by key. If found, *p_value will hold the stored value, and AWS_OP_SUCCESS will be
