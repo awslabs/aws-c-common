@@ -399,6 +399,7 @@ if (NOT ANDROID)
 endif() # ANDROID
 
 add_test_case(get_pid_sanity_check_test)
+add_test_case(max_io_handles_sanity_check_test)
 add_test_case(run_command_test_success)
 add_test_case(run_command_test_bad_command)
 
