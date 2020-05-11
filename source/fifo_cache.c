@@ -17,6 +17,7 @@
 static int s_fifo_cache_put(struct aws_cache *cache, const void *key, void *p_value);
 
 static struct aws_cache_vtable s_fifo_cache_vtable = {
+    .destroy = aws_cache_base_default_destroy,
     .find = aws_cache_base_default_find,
     .put = s_fifo_cache_put,
     .remove = aws_cache_base_default_remove,
