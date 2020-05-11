@@ -45,7 +45,6 @@ size_t aws_cache_get_element_count(const struct aws_cache *cache) {
 }
 
 void aws_cache_base_default_destroy(struct aws_cache *cache) {
-    /* just free the table and pointer of cache, if *impl was allocated somewhere else, please release it separately */
     aws_linked_hash_table_clean_up(&cache->table);
     aws_mem_release(cache->allocator, cache);
 }
