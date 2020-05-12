@@ -17,7 +17,8 @@
 
 /**
  * this is just the value it's hard coded to in windows NT and later
- * https://docs.microsoft.com/en-us/windows/win32/sysinfo/kernel-objects
+ * see https://docs.microsoft.com/en-us/windows/win32/sysinfo/kernel-objects
+ * for more information.
  */
 static const size_t s_max_handles = 1 << 24;
 
