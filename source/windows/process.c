@@ -19,7 +19,7 @@
  * this is just the value it's hard coded to in windows NT and later
  * https://docs.microsoft.com/en-us/windows/win32/sysinfo/kernel-objects
  */
-static const size_t s_max_handles = 2 << 24;
+static const size_t s_max_handles = 1 << 24;
 
 int aws_get_pid(void) {
     return _getpid();
