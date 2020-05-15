@@ -14,13 +14,14 @@
  */
 
 #include <aws/common/allocator.h>
-#include <aws/common/atomics.h>
+#include <aws/common/condition_variable.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/message_bus.h>
 #include <aws/common/mutex.h>
 #include <aws/common/ring_buffer.h>
+#include <aws/common/thread.h>
 
 struct bus_vtable {
     int(*init)(struct aws_message_bus *bus);
@@ -35,6 +36,13 @@ struct bus_async_impl {
         struct aws_linked_list msgs;
         struct aws_mutex mutex;
     } msg_queue;
+
+    /* consumer thread */
+    struct {
+        struct aws_thread thread;
+        struct aws_condition_variable notify;
+        bool running;
+    } consumer;
 };
 
 struct bus_sync_impl {
@@ -73,9 +81,9 @@ struct bus_message {
     struct aws_byte_buf payload;
 };
 
-int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, struct aws_byte_buf **msg) {
+int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, struct aws_byte_buf *msg) {
     AWS_PRECONDITION(msg);
-    return aws_ring_buffer_acquire(&bus->msg_buffer, size, *msg);
+    return aws_ring_buffer_acquire(&bus->msg_buffer, size, msg);
 }
 
 void aws_message_bus_destroy_message(struct aws_message_bus *bus, struct aws_byte_buf *msg) {
@@ -137,6 +145,15 @@ int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t address, 
     return AWS_OP_SUCCESS;
 }
 
+int aws_message_bus_send_copy(struct aws_message_bus *bus, uintptr_t address, void *msg, size_t msg_len) {
+    struct aws_byte_buf msg_buf;
+    AWS_ZERO_STRUCT(msg_buf);
+    if (aws_message_bus_new_message(bus, msg_len, &msg_buf)) {
+        return AWS_OP_ERR;
+    }
+    return aws_message_bus_send(bus, address, &msg_buf);
+}
+
 int aws_message_bus_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *msg) {
     struct bus_vtable *vtable = bus->impl;
     return vtable->send(bus, address, msg);
@@ -156,17 +173,17 @@ void s_destroy_listener_list(void *data) {
     aws_mem_release(list->bus->allocator, list);
 }
 
-void s_bus_sync_destroy(struct aws_message_bus *bus) {
+static void s_bus_sync_destroy(struct aws_message_bus *bus) {
     struct bus_sync_impl *sync_impl = bus->impl;
     aws_mem_release(bus->allocator, sync_impl);
 }
 
-int s_bus_sync_init(struct aws_message_bus *bus) {
+static int s_bus_sync_init(struct aws_message_bus *bus) {
     (void)bus;
     return AWS_OP_SUCCESS;
 }
 
-int s_bus_sync_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {
+static int s_bus_deliver_msg(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {
     struct aws_hash_element *elem = NULL;
     if (aws_hash_table_find(&bus->slots.table, (void*)address, &elem)) {
         return AWS_OP_ERR;
@@ -189,6 +206,12 @@ int s_bus_sync_send(struct aws_message_bus *bus, uintptr_t address, struct aws_b
     return AWS_OP_SUCCESS;
 }
 
+static int s_bus_sync_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {
+    int result = s_bus_deliver_msg(bus, address, payload);
+    aws_message_bus_destroy_message(bus, payload);
+    return result;
+}
+
 static struct bus_vtable s_sync_vtable = {
     .init = s_bus_sync_init,
     .destroy = s_bus_sync_destroy,
@@ -204,16 +227,76 @@ static void *s_bus_sync_new(struct aws_message_bus *bus) {
     return sync_impl;
 }
 
-void s_bus_async_destroy(struct aws_message_bus *bus) {
+static void s_bus_async_destroy(struct aws_message_bus *bus) {
     struct bus_async_impl *async_impl = bus->impl;
     /* TODO: Tear down delivery thread */
     aws_mutex_clean_up(&async_impl->msg_queue.mutex);
     aws_mem_release(bus->allocator, async_impl);
 }
 
+static bool s_bus_async_has_data(void *user_data) {
+    struct bus_async_impl *impl = user_data;
+    if (!impl->consumer.running) {
+        return true;
+    }
+    return !aws_linked_list_empty(&impl->msg_queue.msgs);
+}
+
+static void s_bus_async_deliver(void *user_data) {
+    struct aws_message_bus *bus = user_data;
+    struct bus_async_impl *impl = bus->impl;
+
+    while (impl->consumer.running) {
+        if (aws_condition_variable_wait_for_pred(&impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_has_data, impl)) {
+            return;
+        }
+
+        /* Copy out the messages and dispatch them */
+        struct aws_linked_list msg_list;
+        aws_mutex_lock(&impl->msg_queue.mutex);
+        /* BEGIN CRITICAL SECTION */
+        aws_linked_list_swap_contents(&msg_list, &impl->msg_queue.msgs);
+        /* END CRITICAL SECTION */
+        aws_mutex_unlock(&impl->msg_queue.mutex);
+
+        /* TODO: synchronize subscribers */
+        while (!aws_linked_list_empty(&msg_list)) {
+            struct aws_linked_list_node *node = aws_linked_list_front(&msg_list);
+            aws_linked_list_pop_front(&msg_list);
+
+            struct bus_message *msg = AWS_CONTAINER_OF(node, struct bus_message, list_node);
+            s_bus_deliver_msg(bus, msg->address, &msg->payload);
+
+            /* Release payload, then message queue entry */
+            aws_message_bus_destroy_message(bus, &msg->payload);
+            struct aws_byte_buf entry_buf = aws_byte_buf_from_array(msg, sizeof(*msg));
+            aws_ring_buffer_release(&bus->msg_buffer, &entry_buf);
+        }
+    }
+}
+
 int s_bus_async_init(struct aws_message_bus *bus) {
-    /* TODO: Spin up delivery thread */
+    struct bus_async_impl *impl = bus->impl;
+    impl->consumer.running = true;
+
+    if (aws_condition_variable_init(&impl->consumer.notify)) {
+        goto error;
+    }
+
+    if (aws_thread_init(&impl->consumer.thread, bus->allocator)) {
+        goto error;
+    }
+
+    if (aws_thread_launch(&impl->consumer.thread, s_bus_async_deliver, bus, aws_default_thread_options())) {
+        goto error;
+    }
+
     return AWS_OP_SUCCESS;
+
+error:
+    aws_thread_clean_up(&impl->consumer.thread);
+    aws_condition_variable_clean_up(&impl->consumer.notify);
+    return AWS_OP_ERR;
 }
 
 int s_bus_async_send(struct aws_message_bus *bus, uintptr_t address, struct aws_byte_buf *payload) {

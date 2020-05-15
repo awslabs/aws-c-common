@@ -53,21 +53,29 @@ void aws_message_bus_destroy(struct aws_message_bus *bus);
 /* Subscribes a listener to a message type */
 int aws_message_bus_subscribe(struct aws_message_bus *bus, uintptr_t address, aws_message_bus_listener_fn *listener, void *user_data);
 
-/* Unsubscribes a listener from a specific message */
+/* Unsubscribe a listener from a specific message */
 int aws_message_bus_unsubscribe(struct aws_message_bus *bus, uintptr_t address, aws_message_bus_listener_fn *listener, void *user_data);
 
 /*
  * Allocates a new message to be sent. The message bus owns this memory, and is responsible
  * for freeing it when message delivery is complete. If an error occurs before the message
  * is sent, it may be freed with aws_message_bus_destroy_message()
+ *
+ * Use this if you need to do more complicated serialization into the buffer than `memcpy()`
  */
-int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, struct aws_byte_buf **msg);
+int aws_message_bus_new_message(struct aws_message_bus *bus, size_t size, struct aws_byte_buf *msg);
 
 /*
  * Frees a message buffer allocated by aws_message_bus_new_message. Only necessary if the
- * message is never sent
+ * message is never sent.
  */
 void aws_message_bus_destroy_message(struct aws_message_bus *bus, struct aws_byte_buf *msg);
+
+/*
+ * Sends a message to any listeners. msg will be copied into a buffer, and does not need to live
+ * past this call. For simple linear buffers and structs, this is the fastest/easiest dispatch.
+ */
+int aws_message_bus_send_copy(struct aws_message_bus *bus, uintptr_t address, void *msg, size_t msg_len);
 
 /*
  * Sends a message to any listeners. msg_data should have been allocated by aws_message_bus_new_message
