@@ -24,6 +24,11 @@
 #include <aws/common/ring_buffer.h>
 #include <aws/common/thread.h>
 
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(4204 : disable) /* nonstandard extension used: non-constant aggregate initializer */
+#endif
+
 /* MUST be the first member of any impl to allow blind casting */
 struct bus_vtable {
     void (*clean_up)(struct aws_bus *bus);
@@ -80,6 +85,7 @@ static struct listener_list *s_find_or_create_listeners(
 
 /* common delivery logic */
 static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+    (void)bus;
     struct listener_list *list = s_find_listeners(slots, address);
     if (!list) {
         return AWS_OP_SUCCESS;
@@ -122,6 +128,8 @@ static int s_bus_unsubscribe(
     struct aws_hash_table *slots,
     aws_bus_listener_fn *callback,
     void *user_data) {
+    (void)bus;
+
     struct listener_list *list = s_find_listeners(slots, address);
     if (!list) {
         return AWS_OP_SUCCESS;
@@ -358,7 +366,9 @@ int s_bus_async_send(struct aws_bus *bus, uint64_t address, struct aws_byte_buf 
     }
 
     struct bus_message *msg = (struct bus_message *)entry_buf.buffer;
+    msg->address = address;
     msg->payload = payload;
+    msg->destructor = destructor;
 
     aws_mutex_lock(&impl->msg_queue.mutex);
     /* BEGIN CRITICAL SECTION */
@@ -496,3 +506,7 @@ int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*de
     };
     return vtable->send(bus, address, payload_buf, destructor);
 }
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif

@@ -72,6 +72,8 @@ static int s_bus_sync_test_send_pod(struct aws_allocator *allocator, void *ctx) 
     struct aws_bus bus;
     ASSERT_SUCCESS(aws_bus_init(&bus, &options));
 
+    aws_bus_clean_up(&bus);
+
     return 0;
 }
 AWS_TEST_CASE(bus_sync_test_send_pod, s_bus_sync_test_send_pod)
