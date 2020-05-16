@@ -26,7 +26,7 @@
 
 #ifdef _MSC_VER
 #    pragma warning(push)
-#    pragma warning(4204 : disable) /* nonstandard extension used: non-constant aggregate initializer */
+#    pragma warning(disable : 4204) /* nonstandard extension used: non-constant aggregate initializer */
 #endif
 
 /* MUST be the first member of any impl to allow blind casting */
