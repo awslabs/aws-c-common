@@ -51,7 +51,7 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_SUCCESS(aws_bus_subscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test));
 
-    ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void*)&s_test_payload[0], s_test_payload_dtor));
+    ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor));
 
     aws_bus_unsubscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test);
 
@@ -87,4 +87,3 @@ static int s_bus_async_test_send_pod(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 AWS_TEST_CASE(bus_async_test_send_pod, s_bus_async_test_send_pod)
-

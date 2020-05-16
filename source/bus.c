@@ -49,7 +49,7 @@ struct listener_list {
 /* find a listener list (or NULL) by address */
 static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint64_t address) {
     struct aws_hash_element *elem = NULL;
-    if (aws_hash_table_find(slots, (void*)(uintptr_t)address, &elem)) {
+    if (aws_hash_table_find(slots, (void *)(uintptr_t)address, &elem)) {
         return NULL;
     }
 
@@ -62,7 +62,10 @@ static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint
 }
 
 /* find a listener list by address, or create/insert/return a new one */
-static struct listener_list *s_find_or_create_listeners(struct aws_allocator *allocator, struct aws_hash_table *slots, uint64_t address) {
+static struct listener_list *s_find_or_create_listeners(
+    struct aws_allocator *allocator,
+    struct aws_hash_table *slots,
+    uint64_t address) {
     struct listener_list *list = s_find_listeners(slots, address);
     if (list) {
         return list;
@@ -71,7 +74,7 @@ static struct listener_list *s_find_or_create_listeners(struct aws_allocator *al
     list = aws_mem_calloc(allocator, 1, sizeof(struct listener_list));
     list->allocator = allocator;
     aws_linked_list_init(&list->listeners);
-    aws_hash_table_put(slots, (void*)(uintptr_t)address, list, NULL);
+    aws_hash_table_put(slots, (void *)(uintptr_t)address, list, NULL);
     return list;
 }
 
@@ -185,7 +188,11 @@ static int s_bus_sync_alloc(struct aws_bus *bus, size_t size, struct aws_byte_bu
     return AWS_OP_SUCCESS;
 }
 
-static int s_bus_sync_send(struct aws_bus *bus, uint64_t address, struct aws_byte_buf payload, void (*destructor)(void *)) {
+static int s_bus_sync_send(
+    struct aws_bus *bus,
+    uint64_t address,
+    struct aws_byte_buf payload,
+    void (*destructor)(void *)) {
     struct bus_sync_impl *impl = bus->impl;
     int result = s_bus_deliver_msg(bus, address, &impl->slots.table, payload.buffer);
     if (destructor) {
@@ -232,13 +239,7 @@ static void *s_bus_sync_new(struct aws_bus *bus, struct aws_bus_options *options
     }
 
     if (aws_hash_table_init(
-        &impl->slots.table,
-        bus->allocator,
-        8,
-        aws_hash_ptr,
-        aws_ptr_eq,
-        NULL,
-        s_destroy_listener_list)) {
+            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_listener_list)) {
         goto error;
     }
 
@@ -410,13 +411,7 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
     if (aws_hash_table_init(
-        &impl->slots.table,
-        bus->allocator,
-        8,
-        aws_hash_ptr,
-        aws_ptr_eq,
-        NULL,
-        s_destroy_listener_list)) {
+            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_listener_list)) {
         goto error;
     }
 

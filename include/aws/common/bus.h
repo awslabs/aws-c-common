@@ -78,6 +78,6 @@ int aws_bus_send_pod(struct aws_bus *bus, uint64_t address, struct aws_byte_curs
  * Sends a message to any listeners. payload will live until delivered, and then the destructor (if
  * provided) will be called). Note that anything payload references must also live at least until it is destroyed.
  */
-int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void(*destructor)(void*));
+int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *));
 
 #endif /* AWS_COMMON_BUS_H */
