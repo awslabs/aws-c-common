@@ -26,7 +26,6 @@
 
 /* MUST be the first member of any impl to allow blind casting */
 struct bus_vtable {
-    int (*init)(struct aws_bus *bus, struct aws_bus_options *options);
     void (*clean_up)(struct aws_bus *bus);
     int (*alloc)(struct aws_bus *bus, size_t size, struct aws_byte_buf *buf);
     int (*send)(struct aws_bus *bus, uint64_t address, struct aws_byte_buf payload, void (*destructor)(void *));
@@ -43,22 +42,43 @@ struct bus_listener {
 
 /* value type stored in each slot in the slots table in a bus */
 struct listener_list {
-    struct aws_bus *bus;
+    struct aws_allocator *allocator;
     struct aws_linked_list listeners;
 };
 
-/* Common delivery logic */
-static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint64_t address) {
     struct aws_hash_element *elem = NULL;
-    if (aws_hash_table_find(slots, (void *)address, &elem)) {
-        return AWS_OP_ERR;
+    if (aws_hash_table_find(slots, (void*)(uintptr_t)address, &elem)) {
+        return NULL;
     }
 
     if (!elem) {
-        return AWS_OP_SUCCESS;
+        return NULL;
     }
 
     struct listener_list *list = elem->value;
+    return list;
+}
+
+static struct listener_list *s_find_or_create_listeners(struct aws_allocator *allocator, struct aws_hash_table *slots, uint64_t address) {
+    struct listener_list *list = s_find_listeners(slots, address);
+    if (list) {
+        return list;
+    }
+
+    list = aws_mem_calloc(allocator, 1, sizeof(struct listener_list));
+    list->allocator = allocator;
+    aws_linked_list_init(&list->listeners);
+    aws_hash_table_put(slots, (void*)(uintptr_t)address, list, NULL);
+    return list;
+}
+
+/* Common delivery logic */
+static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+    struct listener_list *list = s_find_listeners(slots, address);
+    if (!list) {
+        return AWS_OP_SUCCESS;
+    }
     struct aws_linked_list_node *node;
     for (node = aws_linked_list_begin(&list->listeners); node != aws_linked_list_end(&list->listeners);
          node = aws_linked_list_next(node)) {
@@ -77,18 +97,11 @@ static int s_bus_subscribe(
     struct aws_hash_table *slots,
     aws_bus_listener_fn *callback,
     void *user_data) {
-    struct aws_hash_element *elem = NULL;
-    if (aws_hash_table_find(slots, (void *)address, &elem)) {
+    struct listener_list *list = s_find_or_create_listeners(bus->allocator, slots, address);
+    if (!list) {
         return AWS_OP_ERR;
     }
-    struct listener_list *list = NULL;
-    if (elem) {
-        list = elem->value;
-    } else {
-        list = aws_mem_calloc(bus->allocator, 1, sizeof(struct listener_list));
-        list->bus = bus;
-        aws_linked_list_init(&list->listeners);
-    }
+
     struct bus_listener *listener = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_listener));
     listener->deliver = callback;
     listener->user_data = user_data;
@@ -104,11 +117,7 @@ static int s_bus_unsubscribe(
     struct aws_hash_table *slots,
     aws_bus_listener_fn *callback,
     void *user_data) {
-    struct aws_hash_element *elem = NULL;
-    if (aws_hash_table_find(slots, (void *)address, &elem)) {
-        return AWS_OP_ERR;
-    }
-    struct listener_list *list = elem->value;
+    struct listener_list *list = s_find_listeners(slots, address);
     if (!list) {
         return AWS_OP_SUCCESS;
     }
@@ -120,6 +129,7 @@ static int s_bus_unsubscribe(
         struct bus_listener *listener = AWS_CONTAINER_OF(node, struct bus_listener, list_node);
         if (listener->deliver == callback && listener->user_data == user_data) {
             aws_linked_list_remove(node);
+            aws_mem_release(list->allocator, listener);
             break;
         }
     }
@@ -130,16 +140,16 @@ static int s_bus_unsubscribe(
 /* destructor for listener lists in the slots tables */
 void s_destroy_listener_list(void *data) {
     struct listener_list *list = data;
-    AWS_PRECONDITION(list->bus);
+    AWS_PRECONDITION(list->allocator);
     /* call all listeners with a 0 message type to clean up */
     while (!aws_linked_list_empty(&list->listeners)) {
         struct aws_linked_list_node *back = aws_linked_list_back(&list->listeners);
         struct bus_listener *listener = AWS_CONTAINER_OF(back, struct bus_listener, list_node);
         listener->deliver(0, NULL, NULL);
         aws_linked_list_pop_back(&list->listeners);
-        aws_mem_release(list->bus->allocator, listener);
+        aws_mem_release(list->allocator, listener);
     }
-    aws_mem_release(list->bus->allocator, list);
+    aws_mem_release(list->allocator, list);
 }
 
 /*
@@ -155,17 +165,10 @@ struct bus_sync_impl {
 };
 
 static void s_bus_sync_clean_up(struct aws_bus *bus) {
-    struct bus_sync_impl *sync_impl = bus->impl;
-    aws_mem_release(bus->allocator, sync_impl);
-}
-
-static int s_bus_sync_init(struct aws_bus *bus, struct aws_bus_options *options) {
-    (void)options;
     struct bus_sync_impl *impl = bus->impl;
-    if (aws_byte_buf_init(&impl->msg_buffer, bus->allocator, 256)) {
-        return AWS_OP_ERR;
-    }
-    return AWS_OP_SUCCESS;
+    aws_hash_table_clean_up(&impl->slots.table);
+    aws_byte_buf_clean_up(&impl->msg_buffer);
+    aws_mem_release(bus->allocator, impl);
 }
 
 static int s_bus_sync_alloc(struct aws_bus *bus, size_t size, struct aws_byte_buf *buf) {
@@ -206,7 +209,6 @@ static int s_bus_sync_unsubscribe(
 }
 
 static struct bus_vtable s_sync_vtable = {
-    .init = s_bus_sync_init,
     .clean_up = s_bus_sync_clean_up,
     .alloc = s_bus_sync_alloc,
     .send = s_bus_sync_send,
@@ -217,12 +219,32 @@ static struct bus_vtable s_sync_vtable = {
 static void *s_bus_sync_new(struct aws_bus *bus, struct aws_bus_options *options) {
     (void)options;
 
-    struct bus_sync_impl *sync_impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
-    if (!sync_impl) {
+    struct bus_sync_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
+    if (!impl) {
         return NULL;
     }
-    sync_impl->vtable = s_sync_vtable;
-    return sync_impl;
+    impl->vtable = s_sync_vtable;
+
+    if (aws_byte_buf_init(&impl->msg_buffer, bus->allocator, 256)) {
+        goto error;
+    }
+
+    if (aws_hash_table_init(
+        &impl->slots.table,
+        bus->allocator,
+        8,
+        aws_hash_ptr,
+        aws_ptr_eq,
+        NULL,
+        s_destroy_listener_list)) {
+        goto error;
+    }
+
+    return impl;
+
+error:
+    aws_mem_release(bus->allocator, impl);
+    return NULL;
 }
 
 /*
@@ -259,10 +281,15 @@ struct bus_message {
 };
 
 static void s_bus_async_clean_up(struct aws_bus *bus) {
-    struct bus_async_impl *async_impl = bus->impl;
+    struct bus_async_impl *impl = bus->impl;
+
     /* TODO: Tear down delivery thread */
-    aws_mutex_clean_up(&async_impl->msg_queue.mutex);
-    aws_mem_release(bus->allocator, async_impl);
+
+    aws_hash_table_clean_up(&impl->slots.table);
+    aws_mutex_clean_up(&impl->slots.mutex);
+    aws_ring_buffer_clean_up(&impl->msg_queue.buffer);
+    aws_mutex_clean_up(&impl->msg_queue.mutex);
+    aws_mem_release(bus->allocator, impl);
 }
 
 static bool s_bus_async_has_data(void *user_data) {
@@ -384,8 +411,8 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         &impl->slots.table,
         bus->allocator,
         8,
-        aws_hash_byte_cursor_ptr,
-        (bool (*)(const void *, const void *))aws_byte_cursor_eq,
+        aws_hash_ptr,
+        aws_ptr_eq,
         NULL,
         s_destroy_listener_list)) {
         goto error;

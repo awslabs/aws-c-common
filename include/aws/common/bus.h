@@ -70,8 +70,7 @@ void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener
 
 /*
  * Sends a message to any listeners. Memory referenced by msg will be copied into a buffer,
- * and does not need to live past this call. For simple linear buffers and structs, this
- * is the fastest/easiest dispatch.
+ * and does not need to live past this call.
  */
 int aws_bus_send_pod(struct aws_bus *bus, uint64_t address, struct aws_byte_cursor payload);
 

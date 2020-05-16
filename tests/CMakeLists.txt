@@ -137,6 +137,11 @@ add_test_case(uint16_buffer_non_aligned_test)
 add_test_case(uint16_buffer_signed_positive_test)
 add_test_case(uint16_buffer_signed_negative_test)
 
+add_test_case(bus_sync_test_send)
+add_test_case(bus_sync_test_send_pod)
+add_test_case(bus_async_test_send)
+add_test_case(bus_async_test_send_pod)
+
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
 add_test_case(scheduler_pops_task_late_test)
