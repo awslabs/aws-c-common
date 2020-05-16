@@ -46,6 +46,7 @@ struct listener_list {
     struct aws_linked_list listeners;
 };
 
+/* find a listener list (or NULL) by address */
 static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint64_t address) {
     struct aws_hash_element *elem = NULL;
     if (aws_hash_table_find(slots, (void*)(uintptr_t)address, &elem)) {
@@ -60,6 +61,7 @@ static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint
     return list;
 }
 
+/* find a listener list by address, or create/insert/return a new one */
 static struct listener_list *s_find_or_create_listeners(struct aws_allocator *allocator, struct aws_hash_table *slots, uint64_t address) {
     struct listener_list *list = s_find_listeners(slots, address);
     if (list) {
@@ -73,7 +75,7 @@ static struct listener_list *s_find_or_create_listeners(struct aws_allocator *al
     return list;
 }
 
-/* Common delivery logic */
+/* common delivery logic */
 static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
     struct listener_list *list = s_find_listeners(slots, address);
     if (!list) {
@@ -90,7 +92,7 @@ static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_h
     return AWS_OP_SUCCESS;
 }
 
-/* Common subscribe logic */
+/* common subscribe logic */
 static int s_bus_subscribe(
     struct aws_bus *bus,
     uint64_t address,
@@ -145,7 +147,7 @@ void s_destroy_listener_list(void *data) {
     while (!aws_linked_list_empty(&list->listeners)) {
         struct aws_linked_list_node *back = aws_linked_list_back(&list->listeners);
         struct bus_listener *listener = AWS_CONTAINER_OF(back, struct bus_listener, list_node);
-        listener->deliver(0, NULL, NULL);
+        listener->deliver(0, NULL, listener->user_data);
         aws_linked_list_pop_back(&list->listeners);
         aws_mem_release(list->allocator, listener);
     }

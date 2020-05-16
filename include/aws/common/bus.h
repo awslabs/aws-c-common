@@ -23,12 +23,10 @@
  * A listener can listen to a single message, or to all messages on a bus
  * Message types must be consecutive integers, starting at 1. 0 is reserved
  * for broadcast to all handlers.
- * Handlers will be sent a message of type 0, with a NULL msg_data/user_data
- * when it is time to clean any state up.
- * Listeners are owned by the subscriber, and are no longer referenced by the bus
- * once unsubscribed.
- * Message delivery happens in a separate thread from sending, so listeners are
- * responsible for their own thread safety
+ * Handlers will be sent a message of type 0, with a NULL payload when it is time to clean any state up.
+ * Listeners are owned by the subscriber, and are no longer referenced by the bus once unsubscribed.
+ * Under the AWS_BUS_ASYNC policy, message delivery happens in a separate thread from sending, so listeners are
+ * responsible for their own thread safety.
  */
 struct aws_bus {
     struct aws_allocator *allocator;
@@ -43,6 +41,8 @@ enum aws_bus_policy {
     /* Message delivery is immediate */
     AWS_BUS_SYNC,
 };
+
+#define AWS_BUS_ADDRESS_ALL 0
 
 struct aws_bus_options {
     enum aws_bus_policy policy;
