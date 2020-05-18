@@ -29,6 +29,28 @@ static int s_get_pid_sanity_check_test_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(get_pid_sanity_check_test, s_get_pid_sanity_check_test_fn)
 
+static int s_max_io_handles_sanity_check_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    size_t soft_max_handles = aws_get_soft_limit_io_handles();
+    ASSERT_TRUE(soft_max_handles > 0);
+    size_t hard_max_handles = aws_get_hard_limit_io_handles();
+    ASSERT_TRUE(hard_max_handles >= soft_max_handles);
+
+    int error = aws_set_soft_limit_io_handles(soft_max_handles - 1);
+    if (error) {
+        /* this operation does nothing on some platforms such as windows, let's make sure that's why this failed. */
+        ASSERT_UINT_EQUALS(AWS_ERROR_UNIMPLEMENTED, aws_last_error());
+    } else {
+        ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_set_soft_limit_io_handles(hard_max_handles + 1));
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(max_io_handles_sanity_check_test, s_max_io_handles_sanity_check_test_fn)
+
 #ifdef _WIN32
 AWS_STATIC_STRING_FROM_LITERAL(s_test_command, "echo {\"Version\": 1, \"AccessKeyId\": \"AccessKey123\"}");
 #else
