@@ -91,4 +91,3 @@ static int s_run_command_test_bad_command_fn(struct aws_allocator *allocator, vo
     return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(run_command_test_bad_command, s_run_command_test_bad_command_fn)
-
