@@ -1444,3 +1444,38 @@ static struct aws_byte_cursor s_null_terminator_cursor = AWS_BYTE_CUR_INIT_FROM_
 int aws_byte_buf_append_null_terminator(struct aws_byte_buf *buf) {
     return aws_byte_buf_append_dynamic(buf, &s_null_terminator_cursor);
 }
+
+bool aws_isalnum(uint8_t ch) {
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+}
+
+bool aws_isalpha(uint8_t ch) {
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+bool aws_isdigit(uint8_t ch) {
+    return (ch >= '0' && ch <= '9');
+}
+
+bool aws_isxdigit(uint8_t ch) {
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+}
+
+bool aws_isspace(uint8_t ch) {
+    switch (ch) {
+        case 0x20: /* ' ' - space */
+            return true;
+        case 0x09: /* '\t' - horizontal tab */
+            return true;
+        case 0x0A: /* '\n' - line feed */
+            return true;
+        case 0x0B: /* '\v' - vertical tab */
+            return true;
+        case 0x0C: /* '\f' - form feed */
+            return true;
+        case 0x0D: /* '\r' - carriage return */
+            return true;
+        default:
+            return false;
+    }
+}

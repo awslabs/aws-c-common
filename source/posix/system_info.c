@@ -73,8 +73,8 @@ bool aws_is_debugger_present(void) {
 
     /* If it's not 0, then there's a debugger */
     for (const char *cur = tracer_pid + sizeof(tracerPidString) - 1; cur <= buf + num_read; ++cur) {
-        if (!isspace(*cur)) {
-            return isdigit(*cur) != 0 && *cur != '0';
+        if (!aws_isspace(*cur)) {
+            return aws_isdigit(*cur) && *cur != '0';
         }
     }
 
@@ -118,8 +118,8 @@ struct aws_stack_frame_info {
 char *s_whitelist_chars(char *path) {
     char *cur = path;
     while (*cur) {
-        bool whitelisted =
-            isalnum(*cur) || isspace(*cur) || *cur == '/' || *cur == '_' || *cur == '.' || (cur > path && *cur == '-');
+        bool whitelisted = aws_isalnum(*cur) || aws_isspace(*cur) || *cur == '/' || *cur == '_' || *cur == '.' ||
+                           (cur > path && *cur == '-');
         if (!whitelisted) {
             *cur = '_';
         }
@@ -150,7 +150,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     const char *current_exe = s_get_executable_path();
     /* parse exe/shared lib */
     const char *exe_start = strstr(symbol, " ");
-    while (isspace(*exe_start)) {
+    while (aws_isspace(*exe_start)) {
         ++exe_start;
     }
     const char *exe_end = strstr(exe_start, " ");

@@ -63,7 +63,7 @@ bool aws_c_string_is_valid(const char *str) {
  */
 AWS_STATIC_IMPL
 bool aws_char_is_space(uint8_t c) {
-    return isspace((int)c) != 0;
+    return aws_isspace(c);
 }
 
 AWS_EXTERN_C_END
