@@ -278,17 +278,13 @@ static const char *s_right_whitespace = TEST_STRING " \r \t \n";
 static const char *s_both_whitespace = "  \t \r\n " TEST_STRING " \r \t \n";
 static const char *expected_non_empty_result = TEST_STRING;
 
-static bool s_is_whitespace(uint8_t value) {
-    return isspace(value);
-}
-
 static int s_test_byte_cursor_right_trim_empty(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_empty);
 
-    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, aws_isspace);
 
     ASSERT_TRUE(result.len == 0);
 
@@ -302,7 +298,7 @@ static int s_test_byte_cursor_right_trim_all_whitespace(struct aws_allocator *al
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_all_whitespace);
 
-    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, aws_isspace);
 
     ASSERT_TRUE(result.len == 0);
 
@@ -316,7 +312,7 @@ static int s_test_byte_cursor_right_trim_basic(struct aws_allocator *allocator, 
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_right_whitespace);
 
-    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, aws_isspace);
 
     size_t expected_length = strlen(expected_non_empty_result);
     ASSERT_TRUE(strncmp((const char *)result.ptr, expected_non_empty_result, expected_length) == 0);
@@ -332,7 +328,7 @@ static int s_test_byte_cursor_left_trim_empty(struct aws_allocator *allocator, v
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_empty);
 
-    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, aws_isspace);
 
     ASSERT_TRUE(result.len == 0);
 
@@ -346,7 +342,7 @@ static int s_test_byte_cursor_left_trim_all_whitespace(struct aws_allocator *all
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_all_whitespace);
 
-    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_right_trim_pred(&test_cursor, aws_isspace);
 
     ASSERT_TRUE(result.len == 0);
 
@@ -360,7 +356,7 @@ static int s_test_byte_cursor_left_trim_basic(struct aws_allocator *allocator, v
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_left_whitespace);
 
-    struct aws_byte_cursor result = aws_byte_cursor_left_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_left_trim_pred(&test_cursor, aws_isspace);
 
     ASSERT_TRUE(strcmp((const char *)result.ptr, expected_non_empty_result) == 0);
 
@@ -374,7 +370,7 @@ static int s_test_byte_cursor_trim_basic(struct aws_allocator *allocator, void *
 
     struct aws_byte_cursor test_cursor = aws_byte_cursor_from_c_str(s_both_whitespace);
 
-    struct aws_byte_cursor result = aws_byte_cursor_trim_pred(&test_cursor, s_is_whitespace);
+    struct aws_byte_cursor result = aws_byte_cursor_trim_pred(&test_cursor, aws_isspace);
 
     size_t expected_length = strlen(expected_non_empty_result);
     ASSERT_TRUE(strncmp((const char *)result.ptr, expected_non_empty_result, expected_length) == 0);
