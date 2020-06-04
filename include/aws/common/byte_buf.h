@@ -788,9 +788,9 @@ AWS_COMMON_API bool aws_isdigit(uint8_t ch);
 AWS_COMMON_API bool aws_isxdigit(uint8_t ch);
 
 /**
+ * Like isspace(), but ignores C locale.
  * Return true if ch has the value of ASCII/UTF-8: space (0x20), form feed (0x0C),
  * line feed (0x0A), carriage return (0x0D), horizontal tab (0x09), or vertical tab (0x0B).
- * Ignores the C locale.
  */
 AWS_COMMON_API bool aws_isspace(uint8_t ch);
 
