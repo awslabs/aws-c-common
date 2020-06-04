@@ -755,20 +755,20 @@ AWS_COMMON_API bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x
 AWS_COMMON_API bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x);
 
 /**
+ * Like isalnum(), but ignores C locale.
  * Returns true if ch has the value of ASCII/UTF-8: 'a'-'z', 'A'-'Z', or '0'-'9'.
- * Ignores the C locale.
  */
 AWS_COMMON_API bool aws_isalnum(uint8_t ch);
 
 /**
- * Return true if ch has the value of ASCII/UTF-8: 'a'-'z' or 'A'-'Z'.
- * Ignores the C locale.
+ * Like isalpha(), but ignores C locale.
+ * Returns true if ch has the value of ASCII/UTF-8: 'a'-'z' or 'A'-'Z'.
  */
 AWS_COMMON_API bool aws_isalpha(uint8_t ch);
 
 /**
- * Return true if ch has the value of ASCII/UTF-8: '0'-'9'.
- * Ignores the C locale.
+ * Like isdigit().
+ * Returns true if ch has the value of ASCII/UTF-8: '0'-'9'.
  *
  * Note: C's built-in isdigit() is also supposed to ignore the C locale,
  * but cppreference.com claims "some implementations (e.g. Microsoft in 1252 codepage)
@@ -777,8 +777,8 @@ AWS_COMMON_API bool aws_isalpha(uint8_t ch);
 AWS_COMMON_API bool aws_isdigit(uint8_t ch);
 
 /**
- * Return true if ch has the value of ASCII/UTF-8: '0'-'9', 'a'-'f', or 'A'-'F'.
- * Ignores the C locale.
+ * Like isxdigit().
+ * Returns true if ch has the value of ASCII/UTF-8: '0'-'9', 'a'-'f', or 'A'-'F'.
  *
  * Note: C's built-in isxdigit() is also supposed to ignore the C locale,
  * but cppreference.com claims "some implementations (e.g. Microsoft in 1252 codepage)
