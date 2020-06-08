@@ -52,6 +52,10 @@ AWS_EXTERN_C_BEGIN
 #    endif /*  AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS */
 #endif     /*  defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) */
 
+#if defined(__clang__) || defined(__GNUC__)
+#    include <aws/common/math.gcc_builtin.inl>
+#endif
+
 #if _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
