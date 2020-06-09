@@ -16,64 +16,25 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-struct bigint_uint64_init_test {
-    uint64_t value;
-    const char *expected_hex_serialization;
-};
-
-static struct bigint_uint64_init_test s_uint64_init_cases[] = {
-    {
-        .value = 0,
-        .expected_hex_serialization = "0",
-    },
-    {
-        .value = 1,
-        .expected_hex_serialization = "1",
-    },
-    {
-        .value = 128,
-        .expected_hex_serialization = "80",
-    },
-    {
-        .value = 255,
-        .expected_hex_serialization = "ff",
-    },
-    {
-        .value = UINT32_MAX,
-        .expected_hex_serialization = "ffffffff",
-    },
-    {
-        .value = (uint64_t)(UINT32_MAX) + 1,
-        .expected_hex_serialization = "100000000",
-    },
-    {
-        .value = UINT64_MAX,
-        .expected_hex_serialization = "ffffffffffffffff",
-    },
-    {
-        .value = 18364758544493064720ULL,
-        .expected_hex_serialization = "fedcba9876543210",
-    },
-};
-
-static int s_test_bigint_from_uint64(struct aws_allocator *allocator, void *ctx) {
+static int s_test_bigint_new_zero(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_uint64_init_cases); ++i) {
+    size_t bit_widths[] = {0, 32, 64, 256, 384, 512, 1, 31, 33};
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(bit_widths); ++i) {
         struct aws_byte_buf buffer;
         aws_byte_buf_init(&buffer, allocator, 1);
 
-        struct bigint_uint64_init_test *testcase = &s_uint64_init_cases[i];
-        size_t expected_length = strlen(testcase->expected_hex_serialization);
+        size_t bit_width = bit_widths[i];
 
-        struct aws_bigint *test = aws_bigint_new_from_uint64(allocator, testcase->value);
+        struct aws_bigint *test = aws_bigint_new_zero(allocator, bit_width);
         ASSERT_NOT_NULL(test);
-        ASSERT_TRUE(aws_bigint_is_positive(test) == (testcase->value > 0));
+        ASSERT_FALSE(aws_bigint_is_positive(test));
         ASSERT_FALSE(aws_bigint_is_negative(test));
-        ASSERT_TRUE(aws_bigint_is_zero(test) == (testcase->value == 0));
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(test, &buffer));
-        ASSERT_TRUE(buffer.len == expected_length);
-        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
+        ASSERT_TRUE(aws_bigint_is_zero(test));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(test, &buffer));
+        ASSERT_TRUE(buffer.len == 1);
+        ASSERT_TRUE(buffer.buffer[0] == '0');
 
         aws_bigint_destroy(test);
         aws_byte_buf_clean_up(&buffer);
@@ -82,172 +43,140 @@ static int s_test_bigint_from_uint64(struct aws_allocator *allocator, void *ctx)
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_bigint_from_uint64, s_test_bigint_from_uint64)
+AWS_TEST_CASE(test_bigint_new_zero, s_test_bigint_new_zero)
 
-struct bigint_int64_init_test {
-    int64_t value;
-    const char *expected_hex_serialization;
+static int s_test_bigint_new_one(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    size_t bit_widths[] = {0, 32, 64, 256, 384, 512, 1, 31, 33, 1024, 1025};
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(bit_widths); ++i) {
+        struct aws_byte_buf buffer;
+        aws_byte_buf_init(&buffer, allocator, 1);
+
+        size_t bit_width = bit_widths[i];
+
+        struct aws_bigint *test = aws_bigint_new_one(allocator, bit_width);
+        ASSERT_NOT_NULL(test);
+        ASSERT_TRUE(aws_bigint_is_positive(test));
+        ASSERT_FALSE(aws_bigint_is_negative(test));
+        ASSERT_FALSE(aws_bigint_is_zero(test));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(test, &buffer));
+        ASSERT_TRUE(buffer.len == 1);
+        ASSERT_TRUE(buffer.buffer[0] == '1');
+
+        aws_bigint_destroy(test);
+        aws_byte_buf_clean_up(&buffer);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_new_one, s_test_bigint_new_one)
+
+struct new_from_cursor_success_test_case {
+    const char *input_value;
+    size_t desired_bit_width;
+    const char *expected_serialization;
+    bool expected_zero;
 };
 
-static struct bigint_int64_init_test s_int64_init_cases[] = {
+static struct new_from_cursor_success_test_case s_new_from_hex_cursor_success_cases[] = {
     {
-        .value = 0,
-        .expected_hex_serialization = "0",
+        .input_value = "0",
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = 1,
-        .expected_hex_serialization = "1",
+        .input_value = "0",
+        .desired_bit_width = 256,
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = -1,
-        .expected_hex_serialization = "-1",
+        .input_value = "0000000",
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = 128,
-        .expected_hex_serialization = "80",
+        .input_value = "0000000",
+        .desired_bit_width = 1,
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = -128,
-        .expected_hex_serialization = "-80",
+        .input_value = "0x0000000",
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = 255,
-        .expected_hex_serialization = "ff",
+        .input_value = "0x0000000",
+        .desired_bit_width = 1023,
+        .expected_serialization = "0",
+        .expected_zero = true,
     },
     {
-        .value = -255,
-        .expected_hex_serialization = "-ff",
+        .input_value = "0x00000001",
+        .expected_serialization = "1",
     },
     {
-        .value = UINT32_MAX,
-        .expected_hex_serialization = "ffffffff",
+        .input_value = "0x00000001",
+        .desired_bit_width = 65,
+        .expected_serialization = "1",
     },
     {
-        .value = INT32_MAX,
-        .expected_hex_serialization = "7fffffff",
+        .input_value = "0x00000000000000000000000000000000000000000000000000000000000000001",
+        .expected_serialization = "1",
     },
     {
-        .value = INT32_MIN,
-        .expected_hex_serialization = "-80000000",
+        .input_value = "0x01000000000000000000000000000000000000000000000000000000000000001",
+        .expected_serialization = "1000000000000000000000000000000000000000000000000000000000000001",
     },
     {
-        .value = (uint64_t)(UINT32_MAX) + 1,
-        .expected_hex_serialization = "100000000",
+        .input_value = "0x07fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+        .expected_serialization = "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
     },
     {
-        .value = INT64_MAX,
-        .expected_hex_serialization = "7fffffffffffffff",
+        .input_value = "0x0abcdefABCDefabcdefabcdefabcdefabcdefabcdefabcdEFabcdefabcdefabcdefabcdEFAbcdef"
+                       "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+        .expected_serialization = "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"
+                                  "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
     },
     {
-        .value = INT64_MIN,
-        .expected_hex_serialization = "-8000000000000000",
+        .input_value = "0x0abcdefABCDefabcdefabcdefabcdefabcdefabcdefabcdEFabcdefabcdefabcdefabcdEFAbcdef"
+                       "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+        .desired_bit_width = 1024,
+        .expected_serialization = "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"
+                                  "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
     },
     {
-        .value = 81985529216486895,
-        .expected_hex_serialization = "123456789abcdef",
+        .input_value = "1234567890123456789012345678901234567890123456789012345678901234567890AbCFFDe",
+        .desired_bit_width = 2048,
+        .expected_serialization = "1234567890123456789012345678901234567890123456789012345678901234567890abcffde",
     },
 };
 
-static int s_test_bigint_from_int64(struct aws_allocator *allocator, void *ctx) {
+static int s_test_bigint_new_from_hex_success(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_int64_init_cases); ++i) {
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_new_from_hex_cursor_success_cases); ++i) {
         struct aws_byte_buf buffer;
         aws_byte_buf_init(&buffer, allocator, 1);
 
-        struct bigint_int64_init_test *testcase = &s_int64_init_cases[i];
-        size_t expected_length = strlen(testcase->expected_hex_serialization);
+        struct new_from_cursor_success_test_case *testcase = &s_new_from_hex_cursor_success_cases[i];
+        size_t expected_length = strlen(testcase->expected_serialization);
 
-        struct aws_bigint *test = aws_bigint_new_from_int64(allocator, testcase->value);
-        ASSERT_NOT_NULL(test);
-        ASSERT_TRUE(aws_bigint_is_positive(test) == (testcase->value > 0));
-        ASSERT_TRUE(aws_bigint_is_negative(test) == (testcase->value < 0));
-        ASSERT_TRUE(aws_bigint_is_zero(test) == (testcase->value == 0));
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(test, &buffer));
-        ASSERT_TRUE(buffer.len == expected_length);
-        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
-
-        aws_bigint_destroy(test);
-        aws_byte_buf_clean_up(&buffer);
-    }
-
-    return AWS_OP_SUCCESS;
-}
-
-AWS_TEST_CASE(test_bigint_from_int64, s_test_bigint_from_int64)
-
-struct bigint_string_init_success_test {
-    const char *input_hex_value;
-    const char *expected_hex_serialization;
-    bool zero;
-};
-
-static struct bigint_string_init_success_test s_string_init_success_cases[] = {
-    {
-        .input_hex_value = "0",
-        .expected_hex_serialization = "0",
-        .zero = true,
-    },
-    {
-        .input_hex_value = "0000000",
-        .expected_hex_serialization = "0",
-        .zero = true,
-    },
-    {
-        .input_hex_value = "0x0000000",
-        .expected_hex_serialization = "0",
-        .zero = true,
-    },
-    {
-        .input_hex_value = "0x00000001",
-        .expected_hex_serialization = "1",
-    },
-    {
-        .input_hex_value = "0x00000000000000000000000000000000000000000000000000000000000000001",
-        .expected_hex_serialization = "1",
-    },
-    {
-        .input_hex_value = "0x01000000000000000000000000000000000000000000000000000000000000001",
-        .expected_hex_serialization = "1000000000000000000000000000000000000000000000000000000000000001",
-    },
-    {
-        .input_hex_value = "0x07fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
-        .expected_hex_serialization = "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
-    },
-    {
-        .input_hex_value = "0x0abcdefABCDefabcdefabcdefabcdefabcdefabcdefabcdEFabcdefabcdefabcdefabcdEFAbcdef"
-                           "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-        .expected_hex_serialization = "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"
-                                      "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-    },
-    {
-        .input_hex_value = "1234567890123456789012345678901234567890123456789012345678901234567890AbCFFDe",
-        .expected_hex_serialization = "1234567890123456789012345678901234567890123456789012345678901234567890abcffde",
-    },
-};
-
-static int s_test_bigint_from_hex_success(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
-
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_string_init_success_cases); ++i) {
-        struct aws_byte_buf buffer;
-        aws_byte_buf_init(&buffer, allocator, 1);
-
-        struct bigint_string_init_success_test *testcase = &s_string_init_success_cases[i];
-        size_t expected_length = strlen(testcase->expected_hex_serialization);
-
-        struct aws_bigint *test =
-            aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->input_hex_value));
+        struct aws_bigint *test = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->input_value), testcase->desired_bit_width);
 
         ASSERT_NOT_NULL(test);
-        ASSERT_TRUE(aws_bigint_is_positive(test) == !testcase->zero);
+        ASSERT_TRUE(aws_bigint_is_positive(test) == !testcase->expected_zero);
         ASSERT_FALSE(aws_bigint_is_negative(test));
-        ASSERT_TRUE(aws_bigint_is_zero(test) == testcase->zero);
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(test, &buffer));
+        ASSERT_TRUE(aws_bigint_is_zero(test) == testcase->expected_zero);
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(test, &buffer));
         ASSERT_TRUE(buffer.len == expected_length);
-        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_serialization, expected_length, buffer.buffer, buffer.len);
 
         aws_bigint_destroy(test);
         aws_byte_buf_clean_up(&buffer);
@@ -256,9 +185,9 @@ static int s_test_bigint_from_hex_success(struct aws_allocator *allocator, void 
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_bigint_from_hex_success, s_test_bigint_from_hex_success)
+AWS_TEST_CASE(test_bigint_new_from_hex_success, s_test_bigint_new_from_hex_success)
 
-static const char *s_string_init_failure_cases[] = {
+static const char *s_new_from_hex_parse_failure_cases[] = {
     "000000AFG",
     "xcde",
     "120xff",
@@ -268,70 +197,130 @@ static const char *s_string_init_failure_cases[] = {
     "0000x00000",
 };
 
-static int s_test_bigint_from_hex_failure(struct aws_allocator *allocator, void *ctx) {
+static int s_test_bigint_new_from_hex_parse_failure(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_string_init_failure_cases); ++i) {
-        struct aws_byte_buf buffer;
-        aws_byte_buf_init(&buffer, allocator, 1);
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_new_from_hex_parse_failure_cases); ++i) {
+        const char *testcase = s_new_from_hex_parse_failure_cases[i];
 
-        const char *testcase = s_string_init_failure_cases[i];
-
-        struct aws_bigint *test = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase));
+        struct aws_bigint *test = aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase), 0);
         ASSERT_NULL(test);
-
-        aws_byte_buf_clean_up(&buffer);
     }
 
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_bigint_from_hex_failure, s_test_bigint_from_hex_failure)
+AWS_TEST_CASE(test_bigint_new_from_hex_parse_failure, s_test_bigint_new_from_hex_parse_failure)
 
-struct bigint_cursor_init_test {
-    const char *input;
-    const char *expected_hex_serialization;
+struct new_from_cursor_size_failure_test_case {
+    const char *input_value;
+    size_t desired_bit_width;
 };
 
-static struct bigint_cursor_init_test s_cursor_cases[] = {
+static struct new_from_cursor_size_failure_test_case s_new_from_hex_cursor_size_failure_cases[] = {
     {
-        .input = "\x0a",
-        .expected_hex_serialization = "a",
+        .input_value = "0x1FFFFFFFF",
+        .desired_bit_width = 1,
     },
     {
-        .input = "\x01\x02\x03\x04",
-        .expected_hex_serialization = "1020304",
+        .input_value = "0x1FFFFFFFF",
+        .desired_bit_width = 32,
     },
     {
-        .input = "\xab\xcd\xef\x03\x01",
-        .expected_hex_serialization = "abcdef0301",
+        .input_value = "0x110000000FFFFFFFF",
+        .desired_bit_width = 63,
     },
     {
-        .input = "\xff\xda\x1f\x20\x01\xaa\x94\x37\xfe",
-        .expected_hex_serialization = "ffda1f2001aa9437fe",
+        .input_value = "0x110000000FFFFFFFF",
+        .desired_bit_width = 64,
+    },
+    {
+        .input_value = "0xAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBF",
+        .desired_bit_width = 256,
+    },
+    {
+        .input_value = "0xAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBAAAAAAAABBBBBBBBFFFFFFFFFFFFFFFFFFFFFFFF",
+        .desired_bit_width = 256,
     },
 };
 
-static int s_test_bigint_from_cursor(struct aws_allocator *allocator, void *ctx) {
+static int s_test_bigint_new_from_hex_size_failure(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_cursor_cases); ++i) {
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_new_from_hex_cursor_size_failure_cases); ++i) {
+        struct new_from_cursor_size_failure_test_case *testcase = &s_new_from_hex_cursor_size_failure_cases[i];
+
+        struct aws_bigint *test = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->input_value), testcase->desired_bit_width);
+        ASSERT_NULL(test);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_new_from_hex_size_failure, s_test_bigint_new_from_hex_size_failure)
+
+static struct new_from_cursor_success_test_case s_new_from_binary_cursor_success_test_cases[] = {
+    {
+        .input_value = "\x0a",
+        .expected_serialization = "a",
+    },
+    {
+        .input_value = "\x0a",
+        .desired_bit_width = 64,
+        .expected_serialization = "a",
+    },
+    {
+        .input_value = "\x01\x02\x03\x04",
+        .expected_serialization = "1020304",
+    },
+    {
+        .input_value = "\x01\x02\x03\x04",
+        .desired_bit_width = 95,
+        .expected_serialization = "1020304",
+    },
+    {
+        .input_value = "\xab\xcd\xef\x03\x01",
+        .expected_serialization = "abcdef0301",
+    },
+    {
+        .input_value = "\xab\xcd\xef\x03\x01",
+        .desired_bit_width = 100,
+        .expected_serialization = "abcdef0301",
+    },
+    {
+        .input_value = "\xff\xda\x1f\x20\x01\xaa\x94\x37\xfe",
+        .expected_serialization = "ffda1f2001aa9437fe",
+    },
+    {
+        .input_value = "\xff\xda\x1f\x20\x01\xaa\x94\x37\xfe",
+        .desired_bit_width = 256,
+        .expected_serialization = "ffda1f2001aa9437fe",
+    },
+};
+
+static int s_test_bigint_new_from_binary_cursor_success(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_new_from_binary_cursor_success_test_cases); ++i) {
         struct aws_byte_buf buffer;
         aws_byte_buf_init(&buffer, allocator, 1);
 
-        struct bigint_cursor_init_test *testcase = &s_cursor_cases[i];
+        struct new_from_cursor_success_test_case *testcase = &s_new_from_binary_cursor_success_test_cases[i];
 
-        size_t expected_length = strlen(testcase->expected_hex_serialization);
+        size_t expected_length = strlen(testcase->expected_serialization);
 
-        struct aws_bigint *test = aws_bigint_new_from_cursor(allocator, aws_byte_cursor_from_c_str(testcase->input));
+        struct aws_bigint *test = aws_bigint_new_from_binary_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->input_value), testcase->desired_bit_width);
         ASSERT_NOT_NULL(test);
 
         ASSERT_FALSE(aws_bigint_is_negative(test));
 
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(test, &buffer));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(test, &buffer));
         ASSERT_TRUE(buffer.len == expected_length);
-        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_hex_serialization, expected_length, buffer.buffer, buffer.len);
+        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_serialization, expected_length, buffer.buffer, buffer.len);
 
         aws_bigint_destroy(test);
         aws_byte_buf_clean_up(&buffer);
@@ -340,23 +329,91 @@ static int s_test_bigint_from_cursor(struct aws_allocator *allocator, void *ctx)
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_bigint_from_cursor, s_test_bigint_from_cursor)
+AWS_TEST_CASE(test_bigint_new_from_binary_cursor_success, s_test_bigint_new_from_binary_cursor_success)
 
-struct bigint_comparison_test {
+static struct new_from_cursor_size_failure_test_case s_new_from_binary_cursor_size_failure_cases[] = {
+    {
+        .input_value = "\x01\xff\xff\xff\xff",
+        .desired_bit_width = 1,
+    },
+    {
+        .input_value = "\x01\xff\xff\xff\xff",
+        .desired_bit_width = 32,
+    },
+    {
+        .input_value = "\x01\x01\x01\x01\x01\xff\xff\xff\xff",
+        .desired_bit_width = 63,
+    },
+    {
+        .input_value = "\x01\x01\x01\x01\x01\xff\xff\xff\xff",
+        .desired_bit_width = 64,
+    },
+    {
+        .input_value = "\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xaa\xaa\xaa\xaa\xbb"
+                       "\xbb\xbb\xbb\xbb\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xff",
+        .desired_bit_width = 256,
+    },
+};
+
+static int s_test_bigint_new_from_binary_cursor_size_failure(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_new_from_binary_cursor_size_failure_cases); ++i) {
+        struct new_from_cursor_size_failure_test_case *testcase = &s_new_from_binary_cursor_size_failure_cases[i];
+
+        struct aws_bigint *test = aws_bigint_new_from_binary_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->input_value), testcase->desired_bit_width);
+        ASSERT_NULL(test);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_new_from_binary_cursor_size_failure, s_test_bigint_new_from_binary_cursor_size_failure)
+
+struct bigint_comparison_test_case {
     const char *value1;
-    const char *value2;
+    size_t bit_width1;
     bool is_negative1;
+    const char *value2;
+    size_t bit_width2;
     bool is_negative2;
 };
 
-static struct bigint_comparison_test s_equality_cases[] = {
+static struct bigint_comparison_test_case s_equality_test_cases[] = {
     {
-        .value1 = "0",
-        .value2 = "0x00000",
+        .value1 = "0x00",
+        .value2 = "0x000000",
     },
     {
-        .value1 = "0FF",
-        .value2 = "0x00FF",
+        .value1 = "0x00",
+        .bit_width1 = 128,
+        .value2 = "0x000000",
+    },
+    {
+        .value1 = "0x00",
+        .bit_width1 = 128,
+        .value2 = "0x000000",
+        .bit_width2 = 256,
+    },
+    {
+        .value1 = "0x05",
+        .value2 = "0x000005",
+    },
+    {
+        .value1 = "0x05",
+        .bit_width1 = 64,
+        .value2 = "0x000005",
+    },
+    {
+        .value1 = "0xFFFFFFFF",
+        .value2 = "0xFFFFFFFF",
+    },
+    {
+        .value1 = "0xFFFFFFFF",
+        .value2 = "0xFFFFFFFF",
+        .bit_width2 = 256,
     },
     {
         .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
@@ -364,46 +421,38 @@ static struct bigint_comparison_test s_equality_cases[] = {
     },
     {
         .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .bit_width1 = 512,
         .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
-        .is_negative2 = true,
+        .bit_width2 = 2048,
     },
 };
 
 static int s_test_bigint_equality(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_equality_cases); ++i) {
-        struct bigint_comparison_test *testcase = &s_equality_cases[i];
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_equality_test_cases); ++i) {
+        struct bigint_comparison_test_case *testcase = &s_equality_test_cases[i];
 
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value1), testcase->bit_width1);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value2), testcase->bit_width2);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
-        ASSERT_TRUE(aws_bigint_equals(value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(value2, value1));
-        ASSERT_FALSE(aws_bigint_not_equals(value1, value2));
-        ASSERT_FALSE(aws_bigint_not_equals(value2, value1));
+        ASSERT_INT_EQUALS(AWS_ORDERING_EQ, aws_bigint_compare(value1, value2));
 
-        if (!aws_bigint_is_zero(value1)) {
-            aws_bigint_negate(value1);
+        aws_bigint_negate(value1);
+        aws_bigint_negate(value2);
 
-            ASSERT_FALSE(aws_bigint_equals(value1, value2));
-            ASSERT_FALSE(aws_bigint_equals(value2, value1));
-
-            aws_bigint_negate(value2);
-
-            ASSERT_TRUE(aws_bigint_equals(value1, value2));
-            ASSERT_TRUE(aws_bigint_equals(value2, value1));
-        }
+        ASSERT_INT_EQUALS(AWS_ORDERING_EQ, aws_bigint_compare(value1, value2));
 
         aws_bigint_destroy(value2);
         aws_bigint_destroy(value1);
@@ -414,244 +463,75 @@ static int s_test_bigint_equality(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(test_bigint_equality, s_test_bigint_equality)
 
-static struct bigint_comparison_test s_inequality_cases[] = {
+static struct bigint_comparison_test_case s_inequality_same_sign_test_cases[] = {
     {
-        .value1 = "0",
-        .value2 = "0x00001",
+        .value1 = "0x00",
+        .value2 = "0x000001",
     },
     {
-        .value1 = "1",
-        .value2 = "0x00001",
+        .value1 = "0x00",
+        .bit_width1 = 256,
+        .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    },
+    {
+        .value1 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .bit_width1 = 256,
+        .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    },
+    {
+        .value1 = "0x02",
+        .bit_width1 = 256,
+        .is_negative1 = true,
+        .value2 = "0x01",
         .is_negative2 = true,
-    },
-    {
-        .value1 = "0FF",
-        .value2 = "0x00FF",
-        .is_negative1 = true,
-    },
-    {
-        .value1 = "0xabcdef987654321",
-        .value2 = "accdef987654321",
-        .is_negative1 = true,
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-    },
-    {
-        .value1 = "FFFFFFFFFFFFFFFF",
-        .value2 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-    },
-};
-
-static int s_test_bigint_inequality(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_inequality_cases); ++i) {
-        struct bigint_comparison_test *testcase = &s_inequality_cases[i];
-
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
-        ASSERT_NOT_NULL(value1);
-        if (testcase->is_negative1) {
-            aws_bigint_negate(value1);
-        }
-
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
-        ASSERT_NOT_NULL(value2);
-        if (testcase->is_negative2) {
-            aws_bigint_negate(value2);
-        }
-
-        ASSERT_FALSE(aws_bigint_equals(value1, value2));
-        ASSERT_FALSE(aws_bigint_equals(value2, value1));
-        ASSERT_TRUE(aws_bigint_not_equals(value1, value2));
-        ASSERT_TRUE(aws_bigint_not_equals(value2, value1));
-
-        aws_bigint_negate(value1);
-        aws_bigint_negate(value2);
-
-        ASSERT_FALSE(aws_bigint_equals(value1, value2));
-        ASSERT_FALSE(aws_bigint_equals(value2, value1));
-        ASSERT_TRUE(aws_bigint_not_equals(value1, value2));
-        ASSERT_TRUE(aws_bigint_not_equals(value2, value1));
-
-        aws_bigint_destroy(value2);
-        aws_bigint_destroy(value1);
-    }
-
-    return AWS_OP_SUCCESS;
-}
-
-AWS_TEST_CASE(test_bigint_inequality, s_test_bigint_inequality)
-
-static struct bigint_comparison_test s_less_than_cases[] = {
-    {
-        .value1 = "0",
-        .value2 = "0x00001",
-    },
-    {
-        .value1 = "1",
-        .value2 = "0x100000000000000000000000000000000001",
-    },
-    {
-        .value1 = "0x00002",
-        .value2 = "1",
-        .is_negative1 = true,
-    },
-    {
-        .value1 = "0FF",
-        .value2 = "0x00FF",
-        .is_negative1 = true,
-    },
-    {
-        .value1 = "0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        .value2 = "0x00FF",
-        .is_negative1 = true,
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "0xabcdef987654321",
-        .value2 = "accdef987654321",
-    },
-    {
-        .value1 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .value2 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-    },
-    {
-        .value1 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .value2 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "FFFFFFFFFFFFFFFF",
-        .value2 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-    },
-    {
-        .value1 = "00000001FFFFFFFF",
-        .value2 = "FFFFFFFF00000001",
-    },
-};
-
-static int s_test_bigint_less_than(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_less_than_cases); ++i) {
-        struct bigint_comparison_test *testcase = &s_less_than_cases[i];
-
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
-        ASSERT_NOT_NULL(value1);
-        if (testcase->is_negative1) {
-            aws_bigint_negate(value1);
-        }
-
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
-        ASSERT_NOT_NULL(value2);
-        if (testcase->is_negative2) {
-            aws_bigint_negate(value2);
-        }
-
-        /* a < b */
-        ASSERT_TRUE(aws_bigint_less_than(value1, value2));
-        ASSERT_FALSE(aws_bigint_greater_than_or_equals(value1, value2));
-
-        aws_bigint_negate(value1);
-        aws_bigint_negate(value2);
-
-        /* !(-a < -b) */
-        ASSERT_FALSE(aws_bigint_less_than(value1, value2));
-        ASSERT_TRUE(aws_bigint_greater_than_or_equals(value1, value2));
-
-        aws_bigint_destroy(value2);
-        aws_bigint_destroy(value1);
-    }
-
-    return AWS_OP_SUCCESS;
-}
-
-AWS_TEST_CASE(test_bigint_less_than, s_test_bigint_less_than)
-
-static struct bigint_comparison_test s_greater_than_cases[] = {
-    {
-        .value1 = "0x56",
-        .value2 = "0x00001",
-    },
-    {
-        .value1 = "0x56",
-        .value2 = "0x00001",
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "0x100000000000000000000000000000000001",
-        .value2 = "1",
-    },
-    {
-        .value1 = "0FF",
-        .value2 = "0x00FFFF",
-        .is_negative1 = true,
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "0FF",
-        .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        .is_negative1 = true,
-        .is_negative2 = true,
-    },
-    {
-        .value1 = "accdef987654321",
-        .value2 = "0xabcdef987654321",
-    },
-    {
-        .value1 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .value2 = "000000000000A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
     },
     {
         .value1 = "A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .value2 = "000000000000B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
-        .is_negative1 = true,
-        .is_negative2 = true,
-
+        .value2 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
     },
     {
-        .value1 = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        .value2 = "FFFFFFFFFFFFFFFF",
+        .value1 = "B9B8C7D6E4F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+        .value2 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
     },
     {
-        .value1 = "ABCDEF9800000002",
-        .value2 = "1000000212345678",
+        .value1 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F3",
+        .value2 = "B9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4A9B8C7D6E5F4",
+    },
+    {
+        .value1 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF",
+        .bit_width1 = 256,
+        .value2 = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
     },
 };
 
-static int s_test_bigint_greater_than(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
+static int s_test_bigint_inequality_same_sign(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_greater_than_cases); ++i) {
-        struct bigint_comparison_test *testcase = &s_greater_than_cases[i];
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_inequality_same_sign_test_cases); ++i) {
+        struct bigint_comparison_test_case *testcase = &s_inequality_same_sign_test_cases[i];
 
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value1), testcase->bit_width1);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value2), testcase->bit_width2);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
-        /* a < b */
-        ASSERT_TRUE(aws_bigint_greater_than(value1, value2));
-        ASSERT_FALSE(aws_bigint_less_than_or_equals(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_LT, aws_bigint_compare(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_GT, aws_bigint_compare(value2, value1));
 
         aws_bigint_negate(value1);
         aws_bigint_negate(value2);
 
-        /* !(-a < -b) */
-        ASSERT_FALSE(aws_bigint_greater_than(value1, value2));
-        ASSERT_TRUE(aws_bigint_less_than_or_equals(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_GT, aws_bigint_compare(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_LT, aws_bigint_compare(value2, value1));
 
         aws_bigint_destroy(value2);
         aws_bigint_destroy(value1);
@@ -660,7 +540,107 @@ static int s_test_bigint_greater_than(struct aws_allocator *allocator, void *ctx
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(test_bigint_greater_than, s_test_bigint_greater_than)
+AWS_TEST_CASE(test_bigint_inequality_same_sign, s_test_bigint_inequality_same_sign)
+
+static struct bigint_comparison_test_case s_less_than_different_sign_test_cases[] = {
+    {
+        .value1 = "0x01",
+        .is_negative1 = true,
+        .value2 = "0x000001",
+    },
+    {
+        .value1 = "0x0FFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        .is_negative1 = true,
+        .value2 = "0xFFFFFFFFFFDDDDD",
+    },
+    {
+        .value1 = "0x0FFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        .is_negative1 = true,
+        .value2 = "0x00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    },
+};
+
+static int s_test_bigint_less_than_different_sign(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_less_than_different_sign_test_cases); ++i) {
+        struct bigint_comparison_test_case *testcase = &s_less_than_different_sign_test_cases[i];
+
+        struct aws_bigint *value1 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value1), testcase->bit_width1);
+        ASSERT_NOT_NULL(value1);
+        if (testcase->is_negative1) {
+            aws_bigint_negate(value1);
+        }
+
+        struct aws_bigint *value2 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value2), testcase->bit_width2);
+        ASSERT_NOT_NULL(value2);
+        if (testcase->is_negative2) {
+            aws_bigint_negate(value2);
+        }
+
+        ASSERT_INT_EQUALS(AWS_ORDERING_LT, aws_bigint_compare(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_GT, aws_bigint_compare(value2, value1));
+
+        aws_bigint_destroy(value2);
+        aws_bigint_destroy(value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_less_than_different_sign, s_test_bigint_less_than_different_sign)
+
+static struct bigint_comparison_test_case s_greater_than_different_sign_test_cases[] = {
+    {
+        .value1 = "0x01",
+        .value2 = "0x000001",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0x0FFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        .value2 = "0xFFFFFFFFFFDDDDD",
+        .is_negative2 = true,
+    },
+    {
+        .value1 = "0x0FFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        .value2 = "0x00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        .is_negative2 = true,
+    },
+};
+
+static int s_test_bigint_greater_than_different_sign(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_greater_than_different_sign_test_cases); ++i) {
+        struct bigint_comparison_test_case *testcase = &s_greater_than_different_sign_test_cases[i];
+
+        struct aws_bigint *value1 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value1), testcase->bit_width1);
+        ASSERT_NOT_NULL(value1);
+        if (testcase->is_negative1) {
+            aws_bigint_negate(value1);
+        }
+
+        struct aws_bigint *value2 = aws_bigint_new_from_hex_cursor(
+            allocator, aws_byte_cursor_from_c_str(testcase->value2), testcase->bit_width2);
+        ASSERT_NOT_NULL(value2);
+        if (testcase->is_negative2) {
+            aws_bigint_negate(value2);
+        }
+
+        ASSERT_INT_EQUALS(AWS_ORDERING_GT, aws_bigint_compare(value1, value2));
+        ASSERT_INT_EQUALS(AWS_ORDERING_LT, aws_bigint_compare(value2, value1));
+
+        aws_bigint_destroy(value2);
+        aws_bigint_destroy(value1);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_bigint_greater_than_different_sign, s_test_bigint_greater_than_different_sign)
 
 struct bigint_arithmetic_test {
     const char *value1;
@@ -686,25 +666,27 @@ static int s_do_addition_test(
         struct bigint_arithmetic_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value2), 0);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
         /* add and test val1 + val2 */
-        struct aws_bigint *sum = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *sum = aws_bigint_new_zero(allocator, 0);
 
         ASSERT_SUCCESS(aws_bigint_add(sum, value1, value2));
 
         serialized_sum.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(sum, &serialized_sum));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(sum, &serialized_sum));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_sum.len == expected_length);
@@ -713,12 +695,12 @@ static int s_do_addition_test(
         aws_bigint_destroy(sum);
 
         /* add and test val2 + val1 */
-        sum = aws_bigint_new_from_uint64(allocator, 0);
+        sum = aws_bigint_new_zero(allocator, 0);
 
         ASSERT_SUCCESS(aws_bigint_add(sum, value2, value1));
 
         serialized_sum.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(sum, &serialized_sum));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(sum, &serialized_sum));
 
         ASSERT_TRUE(serialized_sum.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_result, expected_length, serialized_sum.buffer, serialized_sum.len);
@@ -726,36 +708,36 @@ static int s_do_addition_test(
         /* aliasing tests*/
 
         /* test val1 += val2 */
-        struct aws_bigint *value1_copy = aws_bigint_new_from_copy(value1);
+        struct aws_bigint *value1_copy = aws_bigint_new_clone(allocator, value1);
 
         ASSERT_SUCCESS(aws_bigint_add(value1_copy, value1_copy, value2));
-        ASSERT_TRUE(aws_bigint_equals(value1_copy, sum));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value1_copy, sum), AWS_ORDERING_EQ);
 
         /* test val2 += val1 */
-        struct aws_bigint *value2_copy = aws_bigint_new_from_copy(value2);
+        struct aws_bigint *value2_copy = aws_bigint_new_clone(allocator, value2);
 
         ASSERT_SUCCESS(aws_bigint_add(value2_copy, value1, value2_copy));
-        ASSERT_TRUE(aws_bigint_equals(value2_copy, sum));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value2_copy, sum), AWS_ORDERING_EQ);
 
         /* negation tests */
-        struct aws_bigint *negated_sum = aws_bigint_new_from_copy(sum);
+        struct aws_bigint *negated_sum = aws_bigint_new_clone(allocator, sum);
         aws_bigint_negate(negated_sum);
 
         aws_bigint_negate(value1);
         aws_bigint_negate(value2);
 
         /* add and test -val1 + -val2 */
-        struct aws_bigint *sum_of_negations = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *sum_of_negations = aws_bigint_new_zero(allocator, 0);
 
         ASSERT_SUCCESS(aws_bigint_add(sum_of_negations, value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(sum_of_negations, negated_sum));
+        ASSERT_INT_EQUALS(aws_bigint_compare(sum_of_negations, negated_sum), AWS_ORDERING_EQ);
 
         /* add and test -val2 + -val1 */
         aws_bigint_destroy(sum_of_negations);
-        sum_of_negations = aws_bigint_new_from_uint64(allocator, 0);
+        sum_of_negations = aws_bigint_new_zero(allocator, 0);
 
         ASSERT_SUCCESS(aws_bigint_add(sum_of_negations, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(sum_of_negations, negated_sum));
+        ASSERT_INT_EQUALS(aws_bigint_compare(sum_of_negations, negated_sum), AWS_ORDERING_EQ);
 
         aws_bigint_destroy(value1_copy);
         aws_bigint_destroy(value2_copy);
@@ -960,60 +942,62 @@ static int s_do_subtraction_test(
         struct bigint_arithmetic_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value2), 0);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
         /* test val1 - val2 */
-        struct aws_bigint *diff = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *diff = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(diff);
 
         ASSERT_SUCCESS(aws_bigint_subtract(diff, value1, value2));
 
         serialized_diff.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(diff, &serialized_diff));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(diff, &serialized_diff));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_diff.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(
             testcase->expected_result, expected_length, serialized_diff.buffer, serialized_diff.len);
 
-        struct aws_bigint *negated_diff = aws_bigint_new_from_copy(diff);
+        struct aws_bigint *negated_diff = aws_bigint_new_clone(allocator, diff);
         ASSERT_NOT_NULL(negated_diff);
 
         aws_bigint_negate(negated_diff);
 
         /* test val2 - val1 */
-        struct aws_bigint *result = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_subtract(result, value2, value1));
 
-        ASSERT_TRUE(aws_bigint_equals(result, negated_diff));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_diff), AWS_ORDERING_EQ);
 
         /* aliasing tests*/
 
         /* test val1 -= val2 */
-        struct aws_bigint *value1_copy = aws_bigint_new_from_copy(value1);
+        struct aws_bigint *value1_copy = aws_bigint_new_clone(allocator, value1);
         ASSERT_NOT_NULL(value1_copy);
 
         ASSERT_SUCCESS(aws_bigint_subtract(value1_copy, value1_copy, value2));
-        ASSERT_TRUE(aws_bigint_equals(value1_copy, diff));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value1_copy, diff), AWS_ORDERING_EQ);
 
         /* test val2 = val1 - val2 */
-        struct aws_bigint *value2_copy = aws_bigint_new_from_copy(value2);
+        struct aws_bigint *value2_copy = aws_bigint_new_clone(allocator, value2);
         ASSERT_NOT_NULL(value2_copy);
 
         ASSERT_SUCCESS(aws_bigint_subtract(value2_copy, value1, value2_copy));
-        ASSERT_TRUE(aws_bigint_equals(value2_copy, diff));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value2_copy, diff), AWS_ORDERING_EQ);
 
         /* negation tests */
         aws_bigint_negate(value1);
@@ -1021,19 +1005,19 @@ static int s_do_subtraction_test(
 
         /* test -val1 - -val2 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_subtract(result, value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(result, negated_diff));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_diff), AWS_ORDERING_EQ);
 
         /* test -val2 - -val1 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_subtract(result, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(result, diff));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, diff), AWS_ORDERING_EQ);
 
         aws_bigint_destroy(value1_copy);
         aws_bigint_destroy(value2_copy);
@@ -1180,112 +1164,114 @@ static int s_do_multiplication_test(
         struct bigint_arithmetic_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value2), 0);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
         /* test val1 x val2 */
-        struct aws_bigint *product = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *product = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(product);
 
         ASSERT_SUCCESS(aws_bigint_multiply(product, value1, value2));
 
         serialized_product.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(product, &serialized_product));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(product, &serialized_product));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_product.len == expected_length);
         ASSERT_BIN_ARRAYS_EQUALS(
             testcase->expected_result, expected_length, serialized_product.buffer, serialized_product.len);
 
-        struct aws_bigint *negated_product = aws_bigint_new_from_copy(product);
+        struct aws_bigint *negated_product = aws_bigint_new_clone(allocator, product);
         aws_bigint_negate(negated_product);
 
         /* test val2 x val1 */
-        struct aws_bigint *result = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(result, product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, product), AWS_ORDERING_EQ);
 
         /* aliasing tests*/
 
         /* test val1 *= val2 */
-        struct aws_bigint *value1_copy = aws_bigint_new_from_copy(value1);
+        struct aws_bigint *value1_copy = aws_bigint_new_clone(allocator, value1);
         ASSERT_NOT_NULL(value1_copy);
 
         ASSERT_SUCCESS(aws_bigint_multiply(value1_copy, value1_copy, value2));
-        ASSERT_TRUE(aws_bigint_equals(value1_copy, product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value1_copy, product), AWS_ORDERING_EQ);
 
         /* test val2 *= val1 */
-        struct aws_bigint *value2_copy = aws_bigint_new_from_copy(value2);
+        struct aws_bigint *value2_copy = aws_bigint_new_clone(allocator, value2);
         ASSERT_NOT_NULL(value2_copy);
 
         ASSERT_SUCCESS(aws_bigint_multiply(value2_copy, value1, value2_copy));
-        ASSERT_TRUE(aws_bigint_equals(value2_copy, product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(value2_copy, product), AWS_ORDERING_EQ);
 
         /* negation tests */
         aws_bigint_negate(value1);
 
         /* test -val1 x val2 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(result, negated_product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_product), AWS_ORDERING_EQ);
 
         /* test val2 x -val1 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(result, negated_product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_product), AWS_ORDERING_EQ);
 
         aws_bigint_negate(value2);
 
         /* test -val1 x -val2 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(result, product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, product), AWS_ORDERING_EQ);
 
         /* test -val2 x -val1 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(result, product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, product), AWS_ORDERING_EQ);
 
         aws_bigint_negate(value1);
 
         /* test val1 x -val2 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value1, value2));
-        ASSERT_TRUE(aws_bigint_equals(result, negated_product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_product), AWS_ORDERING_EQ);
 
         /* test -val2 x val1 */
         aws_bigint_destroy(result);
-        result = aws_bigint_new_from_uint64(allocator, 0);
+        result = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(result);
 
         ASSERT_SUCCESS(aws_bigint_multiply(result, value2, value1));
-        ASSERT_TRUE(aws_bigint_equals(result, negated_product));
+        ASSERT_INT_EQUALS(aws_bigint_compare(result, negated_product), AWS_ORDERING_EQ);
 
         aws_bigint_destroy(value1_copy);
         aws_bigint_destroy(value2_copy);
@@ -1406,7 +1392,8 @@ static int s_do_right_shift_test(
         struct aws_bigint_shift_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
@@ -1415,7 +1402,7 @@ static int s_do_right_shift_test(
         aws_bigint_shift_right(value1, testcase->shift_amount);
 
         serialized_shift.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(value1, &serialized_shift));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_shift.len == expected_length);
@@ -1578,7 +1565,8 @@ static int s_do_left_shift_test(
         struct aws_bigint_shift_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
 
         if (testcase->is_negative1) {
@@ -1588,7 +1576,7 @@ static int s_do_left_shift_test(
         aws_bigint_shift_left(value1, testcase->shift_amount);
 
         serialized_shift.len = 0;
-        ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(value1, &serialized_shift));
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(value1, &serialized_shift));
 
         size_t expected_length = strlen(testcase->expected_result);
         ASSERT_TRUE(serialized_shift.len == expected_length);
@@ -1714,22 +1702,24 @@ static int s_do_divide_test(
         struct aws_bigint_divide_test *testcase = &test_cases[i];
 
         /* init operands */
-        struct aws_bigint *value1 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value1));
+        struct aws_bigint *value1 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value1), 0);
         ASSERT_NOT_NULL(value1);
         if (testcase->is_negative1) {
             aws_bigint_negate(value1);
         }
 
-        struct aws_bigint *value2 = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->value2));
+        struct aws_bigint *value2 =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->value2), 0);
         ASSERT_NOT_NULL(value2);
         if (testcase->is_negative2) {
             aws_bigint_negate(value2);
         }
 
-        struct aws_bigint *quotient = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *quotient = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(quotient);
 
-        struct aws_bigint *remainder = aws_bigint_new_from_uint64(allocator, 0);
+        struct aws_bigint *remainder = aws_bigint_new_zero(allocator, 0);
         ASSERT_NOT_NULL(remainder);
 
         int result = aws_bigint_divide(quotient, remainder, value1, value2);
@@ -1741,7 +1731,7 @@ static int s_do_divide_test(
 
             /* check quotient */
             serialized_quotient.len = 0;
-            ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(quotient, &serialized_quotient));
+            ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(quotient, &serialized_quotient));
 
             size_t expected_length = strlen(testcase->expected_quotient);
             ASSERT_TRUE(serialized_quotient.len == expected_length);
@@ -1750,7 +1740,7 @@ static int s_do_divide_test(
 
             /* check remainder */
             serialized_remainder.len = 0;
-            ASSERT_SUCCESS(aws_bigint_bytebuf_debug_output(remainder, &serialized_remainder));
+            ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_hex(remainder, &serialized_remainder));
 
             expected_length = strlen(testcase->expected_remainder);
             ASSERT_TRUE(serialized_remainder.len == expected_length);
@@ -2033,7 +2023,8 @@ static int s_test_bigint_append_binary(struct aws_allocator *allocator, void *ct
 
         struct bigint_append_binary_test *testcase = &s_append_binary_cases[i];
 
-        struct aws_bigint *test = aws_bigint_new_from_hex(allocator, aws_byte_cursor_from_c_str(testcase->input_hex));
+        struct aws_bigint *test =
+            aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->input_hex), 0);
         ASSERT_NOT_NULL(test);
 
         ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(test, &buffer, testcase->minimum_length));
