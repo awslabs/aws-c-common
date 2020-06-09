@@ -261,7 +261,7 @@ add_test_case(test_isspace)
 
 add_test_case(byte_swap_test)
 
-if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+if (HAVE_AVX2_INTRINSICS)
     add_test_case(alignment32_test)
 else()
     add_test_case(alignment16_test)
