@@ -18,5 +18,5 @@
 #include <intrin.h>
 
 void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd) {
-    __cpuidex(abcd, eax, ecx);
+    __cpuidex((int32_t *)abcd, eax, ecx);
 }
