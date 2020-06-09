@@ -1,3 +1,5 @@
+#ifndef AWS_COMMON_CPUID_H
+#define AWS_COMMON_CPUID_H
 /*
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
@@ -31,3 +33,5 @@ AWS_EXTERN_C_BEGIN
 AWS_COMMON_API bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name);
 
 AWS_EXTERN_C_END
+
+#endif /* AWS_COMMON_CPUID_H */
