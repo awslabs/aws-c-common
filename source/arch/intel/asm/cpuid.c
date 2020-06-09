@@ -16,7 +16,9 @@
 #include <aws/common/cpuid.h>
 
 void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd) {
-    uint32_t ebx, edx;
+    uint32_t ebx = 0;
+    uint32_t edx = 0;
+
 #if defined(__i386__) && defined(__PIC__)
     /* in case of PIC under 32-bit EBX cannot be clobbered */
     __asm__ __volatile__("movl %%ebx, %%edi \n\t "
