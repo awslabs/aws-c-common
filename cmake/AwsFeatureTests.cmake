@@ -40,6 +40,15 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 
 check_c_source_compiles("
+    int main() {
+#if !(defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86))
+#    error \"not intel\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_INTEL)
+
+check_c_source_compiles("
 int main() {
     int foo = 42, bar = 24;
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
