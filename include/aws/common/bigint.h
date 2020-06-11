@@ -24,10 +24,9 @@
 /*
  * Arbitrary-size integer type.
  *
- * Implemented using ones-complement and 32 bit digits.  Some, but not all
- * operations are intended to be constant time.  In particular, comparison, most constructors, and addition of
- * same-sign operands should all be constant time.  The constant time requirement forces us to do some things
- * we might not otherwise do.  In particular, we don't trim leading zeros from the internal representation.
+ * The first version had no constant-time implementations.  Since then, some operations have been moved to
+ * constant-time -- in particular, comparison and most constructors.  Addition is not quite constant-time and a
+ * potential implementation is in progress.
  */
 struct aws_bigint;
 

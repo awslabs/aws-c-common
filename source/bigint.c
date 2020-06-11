@@ -20,13 +20,15 @@
 #define NIBBLES_PER_DIGIT ((BASE_BITS) / 4)
 #define LOWER_32_BIT_MASK 0xFFFFFFFF
 #define MAX_DIGITS 0x7FFFFFFFFFFFFFFF
-//#define INT64_MIN_AS_HEX 0x8000000000000000
 #define DIVISION_NORMALIZATION_BIT_MASK (1U << (BASE_BITS - 1))
 
 /*
- * A basic big integer implementation using 2^32 as the base.  Algorithms used are formalizations of the basic
+ * A basic big integer implementation using a 32 bit base.  Algorithms used are formalizations of the basic
  * grade school operations everyone knows and loves (as formalized in AoCP Vol 2, 4.3.1).  Current use case
  * targets do not yet involve a domain large enough that its worth exploring more complex algorithms.
+ *
+ * Implementation may move to 15/31 bits.  Implementation is currently being migrated towards
+ * constant-time based on user needs.
  */
 struct aws_bigint {
     struct aws_allocator *allocator;
@@ -87,7 +89,7 @@ void aws_bigint_destroy(struct aws_bigint *bigint) {
 }
 
 /*
- * only allowed in operations that haven't converted to constant time yet (multiply, divide, shift)
+ * only allowed in operations that haven't converted to constant time yet
  */
 static void s_aws_bigint_trim_leading_zeros(struct aws_bigint *bigint) {
     size_t length = aws_array_list_length(&bigint->digits);
@@ -465,7 +467,7 @@ int aws_bigint_bytebuf_append_as_big_endian(
     struct aws_byte_buf *buffer,
     size_t desired_bit_width) {
 
-    AWS_FATAL_PRECONDITION((desired_bit_width & 0x07) == 0);
+    AWS_FATAL_PRECONDITION((desired_bit_width % BITS_PER_BYTE) == 0);
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
     AWS_FATAL_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
