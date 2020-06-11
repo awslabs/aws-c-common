@@ -68,7 +68,7 @@ static bool s_aws_bigint_is_valid(const struct aws_bigint *bigint) {
     }
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
-    if (digit_count == 0 || digit_count > MAX_DIGITS) {
+    if (digit_count == 0 || (uint64_t)digit_count > MAX_DIGITS) {
         return false;
     }
 
