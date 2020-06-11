@@ -118,7 +118,7 @@ static size_t s_convert_bit_width_to_digit_count(size_t bit_width) {
 }
 
 static struct aws_bigint *s_aws_bigint_new_reserved(struct aws_allocator *allocator, size_t reserved_digits) {
-    AWS_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(allocator);
 
     struct aws_bigint *bigint = aws_mem_calloc(allocator, 1, sizeof(struct aws_bigint));
     if (bigint == NULL) {
@@ -139,7 +139,7 @@ static struct aws_bigint *s_aws_bigint_new_reserved(struct aws_allocator *alloca
 
     bigint->sign = 1;
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return bigint;
 
@@ -151,7 +151,7 @@ on_error:
 }
 
 struct aws_bigint *aws_bigint_new_zero(struct aws_allocator *allocator, size_t desired_bit_width) {
-    AWS_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(allocator);
 
     size_t digit_count = s_convert_bit_width_to_digit_count(desired_bit_width);
     AWS_FATAL_ASSERT(digit_count > 0);
@@ -161,13 +161,13 @@ struct aws_bigint *aws_bigint_new_zero(struct aws_allocator *allocator, size_t d
         return NULL;
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(zero));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(zero));
 
     return zero;
 }
 
 struct aws_bigint *aws_bigint_new_one(struct aws_allocator *allocator, size_t desired_bit_width) {
-    AWS_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(allocator);
 
     size_t digit_count = s_convert_bit_width_to_digit_count(desired_bit_width);
     AWS_FATAL_ASSERT(digit_count > 0);
@@ -180,13 +180,13 @@ struct aws_bigint *aws_bigint_new_one(struct aws_allocator *allocator, size_t de
     uint32_t one_digit = 1;
     aws_array_list_set_at(&one->digits, &one_digit, 0);
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(one));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(one));
 
     return one;
 }
 
 static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
+    AWS_FATAL_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
 
     if (hex_cursor->len >= 2) {
         const char *raw_ptr = (char *)hex_cursor->ptr;
@@ -197,7 +197,7 @@ static void s_advance_cursor_past_hex_prefix(struct aws_byte_cursor *hex_cursor)
 }
 
 static void s_advance_cursor_to_non_zero(struct aws_byte_cursor *hex_cursor) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
+    AWS_FATAL_PRECONDITION(aws_byte_cursor_is_valid(hex_cursor));
 
     while (hex_cursor->len > 0 && *hex_cursor->ptr == '0') {
         aws_byte_cursor_advance(hex_cursor, 1);
@@ -205,8 +205,8 @@ static void s_advance_cursor_to_non_zero(struct aws_byte_cursor *hex_cursor) {
 }
 
 static int s_uint32_from_hex(struct aws_byte_cursor digit_cursor, uint32_t *output_value) {
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(&digit_cursor));
-    AWS_PRECONDITION(output_value);
+    AWS_FATAL_PRECONDITION(aws_byte_cursor_is_valid(&digit_cursor));
+    AWS_FATAL_PRECONDITION(output_value);
 
     AWS_FATAL_ASSERT(digit_cursor.len <= NIBBLES_PER_DIGIT);
 
@@ -238,8 +238,8 @@ struct aws_bigint *aws_bigint_new_from_hex_cursor(
     struct aws_allocator *allocator,
     struct aws_byte_cursor hex_digits,
     size_t desired_bit_width) {
-    AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(&hex_digits));
+    AWS_FATAL_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(aws_byte_cursor_is_valid(&hex_digits));
 
     /* skip past the optional "0x" prefix */
     s_advance_cursor_past_hex_prefix(&hex_digits);
@@ -290,7 +290,7 @@ struct aws_bigint *aws_bigint_new_from_hex_cursor(
         ++digit_index;
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return bigint;
 
@@ -305,8 +305,8 @@ struct aws_bigint *aws_bigint_new_from_binary_cursor(
     struct aws_allocator *allocator,
     struct aws_byte_cursor source,
     size_t desired_bit_width) {
-    AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(aws_byte_cursor_is_valid(&source));
+    AWS_FATAL_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(aws_byte_cursor_is_valid(&source));
 
     if (source.len == 0) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -345,14 +345,14 @@ struct aws_bigint *aws_bigint_new_from_binary_cursor(
         aws_array_list_set_at(&bigint->digits, &current_digit, digit_index);
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return bigint;
 }
 
 struct aws_bigint *aws_bigint_new_clone(struct aws_allocator *allocator, const struct aws_bigint *source) {
-    AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(s_aws_bigint_is_valid(source));
+    AWS_FATAL_PRECONDITION(allocator);
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(source));
 
     struct aws_bigint *bigint = aws_mem_calloc(allocator, 1, sizeof(struct aws_bigint));
     if (bigint == NULL) {
@@ -373,7 +373,7 @@ struct aws_bigint *aws_bigint_new_clone(struct aws_allocator *allocator, const s
         aws_array_list_push_back(&bigint->digits, &digit);
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return bigint;
 
@@ -425,8 +425,8 @@ static size_t s_get_significant_digit_count(const struct aws_bigint *bigint) {
 }
 
 int aws_bigint_bytebuf_append_as_hex(const struct aws_bigint *bigint, struct aws_byte_buf *buffer) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
     size_t significant_digit_count = s_get_significant_digit_count(bigint);
     size_t max_hex_digits = significant_digit_count * NIBBLES_PER_DIGIT;
@@ -454,8 +454,8 @@ int aws_bigint_bytebuf_append_as_hex(const struct aws_bigint *bigint, struct aws
         s_append_uint32_as_hex(buffer, digit, prepend_zeros);
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(aws_byte_buf_is_valid(buffer));
 
     return AWS_OP_SUCCESS;
 }
@@ -489,8 +489,8 @@ int aws_bigint_bytebuf_append_as_big_endian(
     struct aws_byte_buf *buffer,
     size_t minimum_length) {
 
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
-    AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
     size_t bigint_bytes = s_aws_bigint_byte_length(bigint);
@@ -554,8 +554,8 @@ int aws_bigint_bytebuf_append_as_big_endian(
 
 done:
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
-    AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(aws_byte_buf_is_valid(buffer));
 
     return result;
 }
@@ -565,13 +565,13 @@ done:
 #endif
 
 bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     return bigint->sign < 0;
 }
 
 static int8_t s_aws_bigint_is_zero(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     volatile int8_t is_zero = 1;
     size_t digit_count = aws_array_list_length(&bigint->digits);
@@ -586,7 +586,7 @@ static int8_t s_aws_bigint_is_zero(const struct aws_bigint *bigint) {
 }
 
 bool aws_bigint_is_positive(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     volatile uint8_t sign_one = 1 - ((bigint->sign >> 1) & 0x01);
 
@@ -594,13 +594,13 @@ bool aws_bigint_is_positive(const struct aws_bigint *bigint) {
 }
 
 bool aws_bigint_is_zero(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     return s_aws_bigint_is_zero(bigint);
 }
 
 void aws_bigint_negate(struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     volatile int8_t is_zero = s_aws_bigint_is_zero(bigint);
 
@@ -608,12 +608,12 @@ void aws_bigint_negate(struct aws_bigint *bigint) {
     volatile int8_t negation_factor = is_zero + is_zero - 1;
     bigint->sign *= negation_factor; /* is multiplication kosher? */
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 }
 
 /* constant time helper to get the index of the most significant digit */
 static size_t s_get_most_significant_digit_index(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
     uint32_t *raw_digits = bigint->digits.data;
@@ -635,6 +635,7 @@ static size_t s_get_most_significant_digit_index(const struct aws_bigint *bigint
         /* All 1s if both conditions are true, All 0s otherwise */
         volatile int64_t mask_combined = mask_is_msd_zero & mask_is_digit_nonzero;
 
+        /* does an assignment iff both conditions are true */
         most_significant_digit_index ^= (mask_combined & index);
     }
 
@@ -642,79 +643,58 @@ static size_t s_get_most_significant_digit_index(const struct aws_bigint *bigint
 }
 
 /*
- * Constant-time comparison function
+ * In the following functions gt and eq are updated in little "blocks".  After each block update, the variables will be
+ * in one of the following states:
+ *
+ *  (1) gt is 0, eq is 1, and from an ordering perspective, lhs == rhs, as checked "so far"
+ *  (2) gt is 1, eq is 0, (lhs > rhs)
+ *  (3) gt is 0, eq is 0, (lhs < rhs)
+ *
+ *  States (2) and (3) are terminal states that cannot be exited since eq is 0 and is the and-wise mask of all
+ *  subsequent gt updates.  Similarly, once eq is zero it cannot ever become non-zero.
+ *
+ *  Intuitively these ideas match the standard way of comparing magnitude equality by considering digit count and
+ *  digits from most significant to least significant.
+ *
+ *  Let l and r be the the two "components" (a digit, the number of significant digits) that we are
+ *  comparing between lhs and rhs.  Assume l and r are both non-negative (or +/- 1) and can each be represented
+ *  by an int64:
+ *
+ *  gt is maintained by the following bit trick:
+ *
+ *      l > r <=>
+ *      (r - l) < 0 <=>
+ *      (r - l) as an int64 has the high bit set <=>
+ *      ((r - l) >> 63) & 0x01 == 1
+ *
+ *  eq is maintained by the following bit trick:
+ *
+ *      l == r <=>
+ *      l ^ r == 0 <=>
+ *      (l ^ r) - 1 == -1 <=>
+ *      (((l ^ r) - 1) >> 63) & 0x01 == 1   // only true if l and r are < (1U << 63)
+ *
+ *      I found this last step confusing and a little uncomfortable.  Everywhere else we naturally think of l and
+ *      r as arbitrary, but here there's a bound as to under what conditions that last equivalence holds.  Having
+ *      a bigint with 1U << 63 or more digits is going to be an OOM error, but the failure of the equivalence
+ *      under that condition was a real sticking point to my initial understanding.
+ *
  */
-enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
-    uint32_t *lhs_raw_digits = lhs->digits.data;
-    uint32_t *rhs_raw_digits = rhs->digits.data;
-
-    /*
-     * gt and eq are updated in little "blocks".  After each block update, the variables will be in one of the following
-     * states:
-     *
-     *  (1) gt is 0, eq is 1, and from an ordering perspective, lhs == rhs, as checked "so far"
-     *  (2) gt is 1, eq is 0, (lhs > rhs)
-     *  (3) gt is 0, eq is 0, (lhs < rhs)
-     *
-     *  States (2) and (3) are terminal states that cannot be exited since eq is 0 and is the and-wise mask of all
-     *  subsequent gt updates.  Similarly, once eq is zero it cannot ever become non-zero.
-     *
-     *  Intuitively these ideas match the standard way of comparing magnitude equality by considering digit count and
-     *  digits from most significant to least significant.
-     *
-     *  Let l and r be the the two "components" (a digit, the number of significant digits) that we are
-     *  comparing between lhs and rhs.  Assume l and r are both non-negative (or +/- 1) and can each be represented
-     *  by an int64:
-     *
-     *  gt is maintained by the following bit trick:
-     *
-     *      l > r <=>
-     *      (r - l) < 0 <=>
-     *      (r - l) as an int64 has the high bit set <=>
-     *      ((r - l) >> 63) & 0x01 == 1
-     *
-     *  eq is maintained by the following bit trick:
-     *
-     *      l == r <=>
-     *      l ^ r == 0 <=>
-     *      (l ^ r) - 1 == -1 <=>
-     *      (((l ^ r) - 1) >> 63) & 0x01 == 1   // only true if l and r are < (1U << 63)
-     *
-     *      I found this last step confusing and a little uncomfortable.  Everywhere else we naturally think of l and
-     *      r as arbitrary, but here there's a bound as to under what conditions that last equivalence holds.  Having
-     *      a bigint with 1U << 63 or more digits is going to be an OOM error, but the failure of the equivalence
-     *      under that condition was a real sticking point to my initial understanding.
-     *
-     */
-
-    /*
-     * The first thing to check is for mismatched signs: a non-negative number is always greater than a negative
-     * number.
-     */
-
-    /* 1 if lhs->sign == 1 && rhs->sigh == -1; 0 otherwise */
-    volatile uint8_t gt = ((rhs->sign - lhs->sign) >> 31) & 0x01;
-
-    /*
-     * 1 if lhs->sign == rhs->sign; 0 otherwise
-     * different from the standard equality check due to negative numbers
-     *
-     * In particular we xor the second least significant bit of each sign, if the result is zero then the signs
-     * are the same, if the result is one then the signs are different.  Turn it into an equality bit by subtracting
-     * from one.
-     */
-    volatile uint8_t eq = 1 - (((lhs->sign >> 1) ^ (rhs->sign >> 1)) & 0x01);
+static void s_aws_bigint_compare_magnitudes_helper(
+    const struct aws_bigint *lhs,
+    const struct aws_bigint *rhs,
+    volatile uint8_t *gt_flag,
+    volatile uint8_t *eq_flag) {
+    volatile uint8_t gt = *gt_flag;
+    volatile uint8_t eq = *eq_flag;
 
     /* most significant digit queries */
     volatile int64_t lhs_msd = (int64_t)s_get_most_significant_digit_index(lhs);
     volatile int64_t rhs_msd = (int64_t)s_get_most_significant_digit_index(rhs);
 
     /*
-     * If one number has more significant digits than the other, consider it "greater"
-     * We fix up a pair of negative numbers (where the opposite is true) at the end.
+     * If one magnitude has more significant digits than the other it must be greater
      */
     gt |= ((rhs_msd - lhs_msd) >> 63) & eq;
     eq &= (((lhs_msd ^ rhs_msd) - 1) >> 63) & 0x01;
@@ -732,6 +712,8 @@ enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct 
     /*
      * Magnitude check loop
      */
+    uint32_t *lhs_raw_digits = lhs->digits.data;
+    uint32_t *rhs_raw_digits = rhs->digits.data;
     for (int64_t i = 0; i <= min_msd; ++i) {
         int64_t digit_index = min_msd - i;
 
@@ -741,6 +723,52 @@ enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct 
         gt |= ((rhs_digit - lhs_digit) >> 63) & eq;
         eq &= (((lhs_digit ^ rhs_digit) - 1) >> 63) & 0x01;
     }
+
+    *gt_flag = gt;
+    *eq_flag = eq;
+}
+
+/*
+ * Helper function that returns an ordering based solely on magnitude.  Used by a lot of other operations.
+ */
+static enum aws_ordering s_aws_bigint_compare_magnitudes(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
+
+    volatile uint8_t gt = 0;
+    volatile uint8_t eq = 1;
+
+    s_aws_bigint_compare_magnitudes_helper(lhs, rhs, &gt, &eq);
+
+    return (enum aws_ordering)(gt + gt + eq - 1);
+}
+
+/*
+ * Top-level constant-time comparison function that honors sign as well
+ */
+enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
+
+    /*
+     * The first thing to check is for mismatched signs: a non-negative number is always greater than a negative
+     * number.
+     */
+
+    /* 1 if lhs->sign == 1 && rhs->sigh == -1; 0 otherwise */
+    volatile uint8_t gt = ((rhs->sign - lhs->sign) >> 31) & 0x01;
+
+    /*
+     * 1 if lhs->sign == rhs->sign; 0 otherwise
+     * different from the standard equality check due to negative numbers
+     *
+     * In particular we xor the second least significant bit of each sign, if the result is zero then the signs
+     * are the same, if the result is one then the signs are different.  Turn it into an equality flag by subtracting
+     * from one.  Obviously this relies on sign always being 1 or -1.
+     */
+    volatile uint8_t eq = 1 - (((lhs->sign >> 1) ^ (rhs->sign >> 1)) & 0x01);
+
+    s_aws_bigint_compare_magnitudes_helper(lhs, rhs, &gt, &eq);
 
     /*
      * Finally, if both numbers are negative then we need to actually flip gt and lt as a result.
@@ -766,9 +794,9 @@ static int s_aws_bigint_add_magnitudes(
     struct aws_bigint *output,
     const struct aws_bigint *lhs,
     const struct aws_bigint *rhs) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(output));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     size_t lhs_length = aws_array_list_length(&lhs->digits);
     size_t rhs_length = aws_array_list_length(&rhs->digits);
@@ -805,7 +833,7 @@ static int s_aws_bigint_add_magnitudes(
 
         uint64_t sum = carry + (uint64_t)lhs_digit + (uint64_t)rhs_digit;
         uint32_t final_digit = (uint32_t)(sum & LOWER_32_BIT_MASK);
-        carry = (sum > LOWER_32_BIT_MASK) ? 1 : 0;
+        carry = sum >> BASE_BITS;
 
         /* this is how we support aliasing */
         if (i >= output_length) {
@@ -828,9 +856,9 @@ static int s_aws_bigint_subtract_magnitudes(
     const struct aws_bigint *rhs,
     enum aws_ordering ordering) {
 
-    AWS_PRECONDITION(s_aws_bigint_is_valid(output));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     if (ordering == AWS_ORDERING_EQ) {
         uint32_t zero = 0;
@@ -882,33 +910,10 @@ static int s_aws_bigint_subtract_magnitudes(
     return AWS_OP_SUCCESS;
 }
 
-/*
- * Since moving to constant-time comparison, we no longer have a magnitude comparator, so we cheat a little
- * and temporarily modify lhs and rhs to have a positive sign and do a comparison.  This gives a proper
- * magnitude comparison.  And it's constant time too, yay?
- */
-static enum aws_ordering s_aws_bigint_compare_magnitude(const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-    int lhs_sign = lhs->sign;
-    int rhs_sign = rhs->sign;
-
-    struct aws_bigint *mutable_lhs = (struct aws_bigint *)lhs;
-    struct aws_bigint *mutable_rhs = (struct aws_bigint *)rhs;
-
-    mutable_lhs->sign = 1;
-    mutable_rhs->sign = 1;
-
-    enum aws_ordering ordering = aws_bigint_compare(lhs, rhs);
-
-    mutable_lhs->sign = lhs_sign;
-    mutable_rhs->sign = rhs_sign;
-
-    return ordering;
-}
-
 int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(output));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     int result = AWS_OP_ERR;
 
@@ -925,7 +930,7 @@ int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, cons
         }
     } else {
         /*  mixed signs; the final sign is the sign of the operand with the larger magnitude */
-        enum aws_ordering ordering = s_aws_bigint_compare_magnitude(lhs, rhs);
+        enum aws_ordering ordering = s_aws_bigint_compare_magnitudes(lhs, rhs);
         if (ordering == AWS_ORDERING_GT) {
             output_sign = lhs->sign;
         } else if (ordering == AWS_ORDERING_LT) {
@@ -942,17 +947,17 @@ int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, cons
 
 done:
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(output));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(rhs));
 
     return result;
 }
 
 int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(output));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     int result = AWS_OP_ERR;
 
@@ -969,7 +974,7 @@ int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs,
         }
     } else {
         /* same sign; the final sign is a function of the lhs's sign and whichever operand is bigger*/
-        enum aws_ordering ordering = s_aws_bigint_compare_magnitude(lhs, rhs);
+        enum aws_ordering ordering = s_aws_bigint_compare_magnitudes(lhs, rhs);
         if (ordering == AWS_ORDERING_GT) {
             output_sign = lhs->sign;
         } else if (ordering == AWS_ORDERING_LT) {
@@ -986,18 +991,18 @@ int aws_bigint_subtract(struct aws_bigint *output, const struct aws_bigint *lhs,
 
 done:
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(output));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(rhs));
 
     return result;
 }
 
 int aws_bigint_multiply(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs) {
 
-    AWS_PRECONDITION(s_aws_bigint_is_valid(output));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     struct aws_allocator *allocator = output->digits.alloc;
 
@@ -1081,16 +1086,16 @@ done:
 
     aws_bigint_destroy(temp_output);
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(output));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(output));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(rhs));
 
     return result;
 }
 
 /* this function can't fail */
 void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
 
@@ -1110,7 +1115,7 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
         aws_array_list_push_back(&bigint->digits, &zero_digit);
         bigint->sign = 1;
 
-        AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+        AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
         return;
     }
 
@@ -1161,11 +1166,11 @@ void aws_bigint_shift_right(struct aws_bigint *bigint, size_t shift_amount) {
 
     s_aws_bigint_trim_leading_zeros(bigint);
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 }
 
 int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     size_t digit_count = aws_array_list_length(&bigint->digits);
 
@@ -1179,7 +1184,7 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     /* I hate this API, technically we're reserving (digit_count + base_shift_count + 1) */
     if (aws_array_list_ensure_capacity(&bigint->digits, digit_count + base_shift_count)) {
-        AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+        AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
         return AWS_OP_ERR;
     }
 
@@ -1228,7 +1233,7 @@ int aws_bigint_shift_left(struct aws_bigint *bigint, size_t shift_amount) {
 
     s_aws_bigint_trim_leading_zeros(bigint);
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return AWS_OP_SUCCESS;
 }
@@ -1248,9 +1253,9 @@ static int s_aws_bigint_divide_by_single_digit(
     const struct aws_bigint *dividend,
     uint32_t divisor) {
 
-    AWS_PRECONDITION(s_aws_bigint_is_valid(quotient));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(remainder));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(dividend));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(quotient));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(remainder));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(dividend));
 
     const size_t quotient_length = aws_array_list_length(&dividend->digits);
 
@@ -1288,9 +1293,9 @@ static int s_aws_bigint_divide_by_single_digit(
 
     aws_bigint_destroy(temp_quotient);
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(quotient));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(remainder));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(dividend));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(quotient));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(remainder));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(dividend));
 
     return AWS_OP_SUCCESS;
 }
@@ -1300,7 +1305,7 @@ static int s_aws_bigint_divide_by_single_digit(
  * the operands left (x 2) until the divisor's high bit is set.
  */
 static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *bigint) {
-    AWS_PRECONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
     const size_t digit_count = aws_array_list_length(&bigint->digits);
     AWS_FATAL_ASSERT(digit_count > 0);
@@ -1315,7 +1320,7 @@ static uint32_t s_compute_divisor_normalization_shift(const struct aws_bigint *b
         ++shift_count;
     }
 
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(bigint));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 
     return shift_count;
 }
@@ -1343,15 +1348,15 @@ static int s_aws_bigint_normalized_divide(
     struct aws_bigint *lhs,
     const struct aws_bigint *rhs) {
 
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     /*
      * Requirements referenced above
      */
 
     /* Requirement (1) */
-    AWS_FATAL_ASSERT(s_aws_bigint_compare_magnitude(lhs, rhs) != AWS_ORDERING_LT);
+    AWS_FATAL_ASSERT(s_aws_bigint_compare_magnitudes(lhs, rhs) != AWS_ORDERING_LT);
 
     /* Requirement (2) */
     AWS_FATAL_ASSERT(aws_bigint_is_positive(lhs));
@@ -1476,10 +1481,10 @@ int aws_bigint_divide(
     const struct aws_bigint *lhs,
     const struct aws_bigint *rhs) {
 
-    AWS_PRECONDITION(quotient == NULL || s_aws_bigint_is_valid(quotient));
-    AWS_PRECONDITION(remainder == NULL || s_aws_bigint_is_valid(remainder));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_PRECONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_PRECONDITION(quotient == NULL || s_aws_bigint_is_valid(quotient));
+    AWS_FATAL_PRECONDITION(remainder == NULL || s_aws_bigint_is_valid(remainder));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
     /* Step 1 - handle bad operands */
     if (aws_bigint_is_zero(rhs)) {
@@ -1519,7 +1524,7 @@ int aws_bigint_divide(
     int result = AWS_OP_ERR;
 
     /* handle zero-valued quotient */
-    if (s_aws_bigint_compare_magnitude(lhs, rhs) == AWS_ORDERING_LT) {
+    if (s_aws_bigint_compare_magnitudes(lhs, rhs) == AWS_ORDERING_LT) {
         /* can't fail from here on out, perform side effects */
         if (remainder != NULL) {
             aws_array_list_swap_contents(&normalized_lhs->digits, &remainder->digits);
@@ -1608,10 +1613,10 @@ done:
     aws_bigint_destroy(temp_quotient);
     aws_bigint_destroy(temp_remainder);
 
-    AWS_POSTCONDITION(quotient == NULL || s_aws_bigint_is_valid(quotient));
-    AWS_POSTCONDITION(remainder == NULL || s_aws_bigint_is_valid(remainder));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(lhs));
-    AWS_POSTCONDITION(s_aws_bigint_is_valid(rhs));
+    AWS_FATAL_POSTCONDITION(quotient == NULL || s_aws_bigint_is_valid(quotient));
+    AWS_FATAL_POSTCONDITION(remainder == NULL || s_aws_bigint_is_valid(remainder));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(lhs));
+    AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(rhs));
 
     return result;
 }
