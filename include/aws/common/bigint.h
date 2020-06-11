@@ -106,15 +106,16 @@ int aws_bigint_bytebuf_append_as_hex(const struct aws_bigint *bigint, struct aws
 /**
  * Writes a bigint to a buffer as a big endian sequence of octets.
  *
- * If minimum_bit_width is non-zero, then leading zero-bytes will pad the output as necessary.  If minimum_bit_width
- * is insufficient to hold the big-endian binary representation, an error is returned.
- * If minimum_bit_width is zero only the minimum number of bytes will be written.
+ * If desired_bit_width is non-zero, then leading zero-bytes will pad the output as necessary.  If desired_bit_width
+ * is insufficient to hold the big-endian binary representation, only the lower desired_bit_width bits will be
+ * written.
+ * If desired_bit_width is zero only the minimum number of bytes will be written.
  */
 AWS_COMMON_API
 int aws_bigint_bytebuf_append_as_big_endian(
     const struct aws_bigint *bigint,
     struct aws_byte_buf *buffer,
-    size_t minimum_bit_width);
+    size_t desired_bit_width);
 
 /**
  * Returns true if this integer is negative, false otherwise.

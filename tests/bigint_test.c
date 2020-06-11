@@ -1950,67 +1950,105 @@ AWS_TEST_CASE(test_bigint_divide_general, s_test_bigint_divide_general)
 
 struct bigint_append_binary_test {
     const char *input_hex;
-    size_t minimum_length;
+    size_t desired_bit_width;
     const char *expected_binary_data;
-    size_t expected_length;
+    size_t expected_byte_length;
 };
 
 static struct bigint_append_binary_test s_append_binary_cases[] = {
     {
         .input_hex = "0x0",
-        .minimum_length = 0,
+        .desired_bit_width = 8,
         .expected_binary_data = "\x00",
-        .expected_length = 1,
+        .expected_byte_length = 1,
+    },
+    {
+        .input_hex = "0x0",
+        .desired_bit_width = 32,
+        .expected_binary_data = "\x00\x00\x00\x00",
+        .expected_byte_length = 4,
     },
     {
         .input_hex = "0xff",
-        .minimum_length = 0,
+        .desired_bit_width = 8,
         .expected_binary_data = "\xFF",
-        .expected_length = 1,
+        .expected_byte_length = 1,
+    },
+    {
+        .input_hex = "0xff",
+        .desired_bit_width = 0,
+        .expected_binary_data = "\x00\x00\x00\xFF",
+        .expected_byte_length = 4,
     },
     {
         .input_hex = "0x3aff",
-        .minimum_length = 0,
+        .desired_bit_width = 16,
         .expected_binary_data = "\x3a\xFF",
-        .expected_length = 2,
+        .expected_byte_length = 2,
+    },
+    {
+        .input_hex = "0x3aff",
+        .desired_bit_width = 0,
+        .expected_binary_data = "\x00\x00\x3a\xFF",
+        .expected_byte_length = 4,
     },
     {
         .input_hex = "0x3a78ff3483637",
-        .minimum_length = 0,
+        .desired_bit_width = 56,
         .expected_binary_data = "\x03\xa7\x8f\xf3\x48\x36\x37",
-        .expected_length = 7,
+        .expected_byte_length = 7,
     },
     {
         .input_hex = "fd3758b8a20010baa583fde3e7bb8532f4abd",
-        .minimum_length = 0,
+        .desired_bit_width = 152,
         .expected_binary_data = "\x0f\xd3\x75\x8b\x8a\x20\x01\x0b\xaa\x58\x3f\xde\x3e\x7b\xb8\x53\x2f\x4a\xbd",
-        .expected_length = 19,
+        .expected_byte_length = 19,
+    },
+    {
+        .input_hex = "fd3758b8a20010baa583fde3e7bb8532f4abd",
+        .desired_bit_width = 0,
+        .expected_binary_data = "\x00\x0f\xd3\x75\x8b\x8a\x20\x01\x0b\xaa\x58\x3f\xde\x3e\x7b\xb8\x53\x2f\x4a\xbd",
+        .expected_byte_length = 20,
+    },
+    {
+        .input_hex = "fd3758b8a20010baa583fde3e7bb8532f4abd",
+        .desired_bit_width = 56,
+        .expected_binary_data = "\x3e\x7b\xb8\x53\x2f\x4a\xbd",
+        .expected_byte_length = 7,
     },
     {
         .input_hex = "0xff",
-        .minimum_length = 5,
+        .desired_bit_width = 40,
         .expected_binary_data = "\x00\x00\x00\x00\xFF",
-        .expected_length = 5,
+        .expected_byte_length = 5,
     },
     {
         .input_hex = "0xffaabb88",
-        .minimum_length = 5,
+        .desired_bit_width = 40,
         .expected_binary_data = "\x00\xff\xaa\xbb\x88",
-        .expected_length = 5,
+        .expected_byte_length = 5,
     },
     {
         .input_hex = "940eb4747e656dd3f0c2679dca69c64baf7ea",
-        .minimum_length = 32,
+        .desired_bit_width = 256,
         .expected_binary_data = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x09\x40\xeb\x47\x47\xe6\x56\xdd"
                                 "\x3f\x0c\x26\x79\xdc\xa6\x9c\x64\xba\xf7\xea",
-        .expected_length = 32,
+        .expected_byte_length = 32,
     },
     {
         .input_hex = "10000000000000000000000000000000000000001",
-        .minimum_length = 32,
+        .desired_bit_width = 256,
         .expected_binary_data = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
-        .expected_length = 32,
+        .expected_byte_length = 32,
+    },
+    {
+        .input_hex = "10000000000000000000000000000000000000001",
+        .desired_bit_width = 384,
+        .expected_binary_data = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+        .expected_byte_length = 48,
     },
 };
 
@@ -2027,9 +2065,10 @@ static int s_test_bigint_append_binary(struct aws_allocator *allocator, void *ct
             aws_bigint_new_from_hex_cursor(allocator, aws_byte_cursor_from_c_str(testcase->input_hex), 0);
         ASSERT_NOT_NULL(test);
 
-        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(test, &buffer, testcase->minimum_length));
-        ASSERT_TRUE(buffer.len == testcase->expected_length);
-        ASSERT_BIN_ARRAYS_EQUALS(testcase->expected_binary_data, testcase->expected_length, buffer.buffer, buffer.len);
+        ASSERT_SUCCESS(aws_bigint_bytebuf_append_as_big_endian(test, &buffer, testcase->desired_bit_width));
+        ASSERT_TRUE(buffer.len == testcase->expected_byte_length);
+        ASSERT_BIN_ARRAYS_EQUALS(
+            testcase->expected_binary_data, testcase->expected_byte_length, buffer.buffer, buffer.len);
 
         aws_bigint_destroy(test);
         aws_byte_buf_clean_up(&buffer);
