@@ -136,6 +136,10 @@ add_test_case(uint16_buffer_test)
 add_test_case(uint16_buffer_non_aligned_test)
 add_test_case(uint16_buffer_signed_positive_test)
 add_test_case(uint16_buffer_signed_negative_test)
+add_test_case(text_encoding_utf8)
+add_test_case(text_encoding_utf16)
+add_test_case(text_encoding_ascii)
+add_test_case(text_encoding_is_utf8)
 
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
@@ -449,3 +453,8 @@ endif()
 
 file(GLOB FUZZ_TESTS    "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
+
+# Resources to use for testing.
+add_custom_command(TARGET ${PROJECT_NAME}-tests PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR})

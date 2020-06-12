@@ -109,6 +109,44 @@ AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer) {
     return aws_ntoh16(value);
 }
 
+/* Reference: https://unicodebook.readthedocs.io/guess_encoding.html */
+AWS_STATIC_IMPL enum aws_text_encoding aws_text_detect_encoding(const uint8_t *bytes, size_t size) {
+    static const char *UTF_8_BOM = "\xEF\xBB\xBF";
+    static const char *UTF_16_BE_BOM = "\xFE\xFF";
+    static const char *UTF_16_LE_BOM = "\xFF\xFE";
+    static const char *UTF_32_BE_BOM = "\x00\x00\xFE\xFF";
+    static const char *UTF_32_LE_BOM = "\xFF\xFE\x00\x00";
+
+    if (size >= 3) {
+        if (memcmp(bytes, UTF_8_BOM, 3) == 0)
+            return AWS_TEXT_UTF8;
+    }
+    if (size >= 4) {
+        if (memcmp(bytes, UTF_32_LE_BOM, 4) == 0)
+            return AWS_TEXT_UTF32;
+        if (memcmp(bytes, UTF_32_BE_BOM, 4) == 0)
+            return AWS_TEXT_UTF32;
+    }
+    if (size >= 2) {
+        if (memcmp(bytes, UTF_16_LE_BOM, 2) == 0)
+            return AWS_TEXT_UTF16;
+        if (memcmp(bytes, UTF_16_BE_BOM, 2) == 0)
+            return AWS_TEXT_UTF16;
+    }
+    size_t idx = 0;
+    for (; idx < size; ++idx) {
+        if (bytes[idx] & 0x80) {
+            return AWS_TEXT_UNKNOWN;
+        }
+    }
+    return AWS_TEXT_ASCII;
+}
+
+AWS_STATIC_IMPL bool aws_text_is_utf8(const uint8_t *bytes, size_t size) {
+    enum aws_text_encoding encoding = aws_text_detect_encoding(bytes, size);
+    return encoding == AWS_TEXT_UTF8 || encoding == AWS_TEXT_ASCII;
+}
+
 AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_ENCODING_INL */
