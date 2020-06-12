@@ -25,8 +25,7 @@
  * Arbitrary-size integer type.
  *
  * The first version had no constant-time implementations.  Since then, some operations have been moved to
- * constant-time -- in particular, comparison and most constructors.  Addition is not quite constant-time and a
- * potential implementation is in progress.
+ * constant-time -- in particular, comparison and most constructors.
  */
 struct aws_bigint;
 

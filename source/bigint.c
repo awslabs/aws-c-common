@@ -15,16 +15,36 @@
 #include <aws/common/bigint.h>
 
 #define BASE_BITS 32
-#define BYTES_PER_BASE_DIGIT (BASE_BITS / 8)
 #define BITS_PER_BYTE 8
-#define NIBBLES_PER_DIGIT ((BASE_BITS) / 4)
+#define BITS_PER_NIBBLE 4
+#define BYTES_PER_BASE_DIGIT (BASE_BITS / BITS_PER_BYTE)
+#define NIBBLES_PER_DIGIT ((BASE_BITS) / BITS_PER_NIBBLE)
 #define LOWER_32_BIT_MASK 0xFFFFFFFF
-#define MAX_DIGITS 0x7FFFFFFFFFFFFFFF
+#define MAX_DIGITS 0x7FFFFFFFFFFFFFFF /* some constant-time tricks require this constraint */
 #define DIVISION_NORMALIZATION_BIT_MASK (1U << (BASE_BITS - 1))
 
 /*
+ * While the only 100% reliable way to keep a compiler from injecting optimizations that ruin constant time
+ * calculations is to remove the compiler entirely, asm isn't really a realistic alternative for us at this point.
+ *
+ * So this is an attempt to prevent compilers from performing early-out optimizations on constant-time calculations.
+ * In particular, many calculations involve "going through the motions" of a calculation with variables whose
+ * value may make it so that calculation has no effect for significant amounts of execution.  For example, if
+ * constant-time comparison "detects" that lhs is non-negative and rhs is negative then the flags that determine
+ * the final comparison value are set into a terminal state that never changes for the rest of the computation.  A
+ * compiler that reasons like a human could easily add an early out check, defeating the whole point of the
+ * constant-time calculation.
+ *
+ * By tagging many of the intermediate values of a constant-time calculation with volatile, the hope is that this
+ * will prevent the compiler from performing early outs and bitwise short circuiting.  In particular, it is based
+ * on the semantic interpretation of volatile as "this value could change underneath you at any time so you *MUST*
+ * re-read it every time it is referenced in a calculation"
+ */
+#define AWS_NO_OPTIMIZE volatile
+
+/*
  * A basic big integer implementation using a 32 bit base.  Algorithms used are formalizations of the basic
- * grade school operations everyone knows and loves (as formalized in AoCP Vol 2, 4.3.1).  Current use case
+ * grade school operations everyone knows and loves (from AoCP Vol 2, 4.3.1).  Current use case
  * targets do not yet involve a domain large enough that its worth exploring more complex algorithms.
  *
  * Implementation may move to 15/31 bits.  Implementation is currently being migrated towards
@@ -342,6 +362,7 @@ struct aws_bigint *aws_bigint_new_from_binary_cursor(
         size_t digit_index = i / BYTES_PER_BASE_DIGIT;
         aws_array_list_get_at(&bigint->digits, &current_digit, digit_index);
 
+        /* shift and OR the octet into the proper position within the digit */
         current_digit |= ((uint32_t)octet << BITS_PER_BYTE * (i % BYTES_PER_BASE_DIGIT));
 
         aws_array_list_set_at(&bigint->digits, &current_digit, digit_index);
@@ -498,9 +519,9 @@ int aws_bigint_bytebuf_append_as_big_endian(
     uint32_t *raw_digits = bigint->digits.data;
     for (size_t i = 0; i < bytes_to_write; ++i) {
         size_t digit_index = i / BYTES_PER_BASE_DIGIT;
-        uint32_t digit = raw_digits[digit_index];
+        AWS_NO_OPTIMIZE uint32_t digit = raw_digits[digit_index];
         uint32_t digit_byte_index = i % BYTES_PER_BASE_DIGIT;
-        uint8_t digit_byte = (digit >> (BITS_PER_BYTE * digit_byte_index)) & 0xFF;
+        AWS_NO_OPTIMIZE uint8_t digit_byte = (digit >> (BITS_PER_BYTE * digit_byte_index)) & 0xFF;
         size_t buffer_index = bytes_to_write - i - 1 + buffer_offset;
 
         raw_buffer[buffer_index] = digit_byte;
@@ -525,7 +546,7 @@ bool aws_bigint_is_negative(const struct aws_bigint *bigint) {
 static int8_t s_aws_bigint_is_zero(const struct aws_bigint *bigint) {
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
-    volatile int8_t is_zero = 1;
+    AWS_NO_OPTIMIZE int8_t is_zero = 1;
     size_t digit_count = aws_array_list_length(&bigint->digits);
     uint32_t *raw_digits = bigint->digits.data;
 
@@ -540,9 +561,9 @@ static int8_t s_aws_bigint_is_zero(const struct aws_bigint *bigint) {
 bool aws_bigint_is_positive(const struct aws_bigint *bigint) {
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
-    volatile uint8_t sign_one = 1 - ((bigint->sign >> 1) & 0x01);
-
-    return sign_one & (1 - s_aws_bigint_is_zero(bigint));
+    AWS_NO_OPTIMIZE uint8_t sign_one = 1 - ((bigint->sign >> 1) & 0x01);
+    AWS_NO_OPTIMIZE uint8_t is_zero = (uint8_t)s_aws_bigint_is_zero(bigint);
+    return sign_one & (1 - is_zero);
 }
 
 bool aws_bigint_is_zero(const struct aws_bigint *bigint) {
@@ -554,11 +575,11 @@ bool aws_bigint_is_zero(const struct aws_bigint *bigint) {
 void aws_bigint_negate(struct aws_bigint *bigint) {
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(bigint));
 
-    volatile int8_t is_zero = s_aws_bigint_is_zero(bigint);
+    int8_t is_zero = s_aws_bigint_is_zero(bigint);
 
     /* 1 if the the number is 0; -1 if the number is non-zero */
-    volatile int8_t negation_factor = is_zero + is_zero - 1;
-    bigint->sign *= negation_factor; /* is multiplication kosher? */
+    int8_t negation_factor = is_zero + is_zero - 1;
+    bigint->sign *= negation_factor;
 
     AWS_FATAL_POSTCONDITION(s_aws_bigint_is_valid(bigint));
 }
@@ -573,19 +594,19 @@ static size_t s_get_most_significant_digit_index(const struct aws_bigint *bigint
      * Volatile is used throughout the function out of paranoia that an optimizing compiler might logically
      * recognize how a zero-valued-mask causes nothing to happen and add an early out or a continue within the loop
      */
-    volatile size_t most_significant_digit_index = 0;
+    AWS_NO_OPTIMIZE size_t most_significant_digit_index = 0;
 
     for (size_t index = digit_count - 1; index > 0; --index) {
         uint32_t digit = raw_digits[index];
 
         /* All 1s if most_significant_digit is 0, All 0s otherwise */
-        volatile int64_t mask_is_msd_zero = -((((int64_t)most_significant_digit_index - 1) >> 63) & 0x01);
+        AWS_NO_OPTIMIZE int64_t mask_is_msd_zero = -((((int64_t)most_significant_digit_index - 1) >> 63) & 0x01);
 
         /* All 1s if digit is nonzero, All 0s otherwise */
-        volatile int64_t mask_is_digit_nonzero = ((((int64_t)digit - 1) >> 63) & 0x01) - 1;
+        AWS_NO_OPTIMIZE int64_t mask_is_digit_nonzero = ((((int64_t)digit - 1) >> 63) & 0x01) - 1;
 
         /* All 1s if both conditions are true, All 0s otherwise */
-        volatile int64_t mask_combined = mask_is_msd_zero & mask_is_digit_nonzero;
+        AWS_NO_OPTIMIZE int64_t mask_combined = mask_is_msd_zero & mask_is_digit_nonzero;
 
         /* does an assignment iff both conditions are true */
         most_significant_digit_index ^= (mask_combined & index);
@@ -636,14 +657,14 @@ static size_t s_get_most_significant_digit_index(const struct aws_bigint *bigint
 static void s_aws_bigint_compare_magnitudes_helper(
     const struct aws_bigint *lhs,
     const struct aws_bigint *rhs,
-    volatile uint8_t *gt_flag,
-    volatile uint8_t *eq_flag) {
-    volatile uint8_t gt = *gt_flag;
-    volatile uint8_t eq = *eq_flag;
+    AWS_NO_OPTIMIZE uint8_t *gt_flag,
+    AWS_NO_OPTIMIZE uint8_t *eq_flag) {
+    AWS_NO_OPTIMIZE uint8_t gt = *gt_flag;
+    AWS_NO_OPTIMIZE uint8_t eq = *eq_flag;
 
     /* most significant digit queries */
-    volatile int64_t lhs_msd = (int64_t)s_get_most_significant_digit_index(lhs);
-    volatile int64_t rhs_msd = (int64_t)s_get_most_significant_digit_index(rhs);
+    AWS_NO_OPTIMIZE int64_t lhs_msd = (int64_t)s_get_most_significant_digit_index(lhs);
+    AWS_NO_OPTIMIZE int64_t rhs_msd = (int64_t)s_get_most_significant_digit_index(rhs);
 
     /*
      * If one magnitude has more significant digits than the other it must be greater
@@ -656,10 +677,10 @@ static void s_aws_bigint_compare_magnitudes_helper(
      * we've already committed to < or > at this point.
      */
     /* All 0s if rhs_msd >= lhs_msd, All 1s otherwise */
-    volatile int64_t min_mask = -(((rhs_msd - lhs_msd) >> 63) & 0x01);
+    AWS_NO_OPTIMIZE int64_t min_mask = -(((rhs_msd - lhs_msd) >> 63) & 0x01);
 
     /* Reduces to lhs_msd if min_mask is all 0s, rhs_msd if min_mask is all 1s */
-    volatile int64_t min_msd = lhs_msd ^ ((lhs_msd ^ rhs_msd) & min_mask);
+    AWS_NO_OPTIMIZE int64_t min_msd = lhs_msd ^ ((lhs_msd ^ rhs_msd) & min_mask);
 
     /*
      * Magnitude check loop
@@ -669,9 +690,14 @@ static void s_aws_bigint_compare_magnitudes_helper(
     for (int64_t i = 0; i <= min_msd; ++i) {
         int64_t digit_index = min_msd - i;
 
-        volatile int64_t lhs_digit = (int64_t)lhs_raw_digits[digit_index];
-        volatile int64_t rhs_digit = (int64_t)rhs_raw_digits[digit_index];
+        AWS_NO_OPTIMIZE int64_t lhs_digit = (int64_t)lhs_raw_digits[digit_index];
+        AWS_NO_OPTIMIZE int64_t rhs_digit = (int64_t)rhs_raw_digits[digit_index];
 
+        /*
+         * For each digit, check for a state (1) => (2) ie lhs > rhs, or (1) => (3) ie lhs < rhs transition
+         * based on comparing the two digits in constant time using the ideas explained in the giant comment
+         * block above this function.
+         */
         gt |= ((rhs_digit - lhs_digit) >> 63) & eq;
         eq &= (((lhs_digit ^ rhs_digit) - 1) >> 63) & 0x01;
     }
@@ -687,8 +713,8 @@ static enum aws_ordering s_aws_bigint_compare_magnitudes(const struct aws_bigint
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(lhs));
     AWS_FATAL_PRECONDITION(s_aws_bigint_is_valid(rhs));
 
-    volatile uint8_t gt = 0;
-    volatile uint8_t eq = 1;
+    AWS_NO_OPTIMIZE uint8_t gt = 0;
+    AWS_NO_OPTIMIZE uint8_t eq = 1;
 
     s_aws_bigint_compare_magnitudes_helper(lhs, rhs, &gt, &eq);
 
@@ -708,7 +734,7 @@ enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct 
      */
 
     /* 1 if lhs->sign == 1 && rhs->sigh == -1; 0 otherwise */
-    volatile uint8_t gt = ((rhs->sign - lhs->sign) >> 31) & 0x01;
+    AWS_NO_OPTIMIZE uint8_t gt = ((rhs->sign - lhs->sign) >> 31) & 0x01;
 
     /*
      * 1 if lhs->sign == rhs->sign; 0 otherwise
@@ -718,7 +744,7 @@ enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct 
      * are the same, if the result is one then the signs are different.  Turn it into an equality flag by subtracting
      * from one.  Obviously this relies on sign always being 1 or -1.
      */
-    volatile uint8_t eq = 1 - (((lhs->sign >> 1) ^ (rhs->sign >> 1)) & 0x01);
+    AWS_NO_OPTIMIZE uint8_t eq = 1 - (((lhs->sign >> 1) ^ (rhs->sign >> 1)) & 0x01);
 
     s_aws_bigint_compare_magnitudes_helper(lhs, rhs, &gt, &eq);
 
@@ -730,7 +756,7 @@ enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct 
      *
      * We only want to do this if the eq bit is not set.
      */
-    volatile uint8_t both_signs_negative = ((lhs->sign >> 1) & (rhs->sign >> 1)) & 0x01;
+    AWS_NO_OPTIMIZE uint8_t both_signs_negative = ((lhs->sign >> 1) & (rhs->sign >> 1)) & 0x01;
     gt ^= (both_signs_negative & (~eq));
 
     /*
