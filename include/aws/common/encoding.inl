@@ -141,6 +141,11 @@ AWS_STATIC_IMPL enum aws_text_encoding aws_text_detect_encoding(const uint8_t *b
     return AWS_TEXT_ASCII;
 }
 
+AWS_STATIC_IMPL bool aws_text_is_utf8(const uint8_t *bytes, size_t size) {
+    enum aws_text_encoding encoding = aws_text_detect_encoding(bytes, size);
+    return encoding == AWS_TEXT_UTF8 || encoding == AWS_TEXT_ASCII;
+}
+
 AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_ENCODING_INL */

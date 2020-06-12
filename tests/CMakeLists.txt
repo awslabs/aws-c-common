@@ -139,6 +139,7 @@ add_test_case(uint16_buffer_signed_negative_test)
 add_test_case(text_encoding_utf8)
 add_test_case(text_encoding_utf16)
 add_test_case(text_encoding_ascii)
+add_test_case(text_encoding_is_utf8)
 
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
