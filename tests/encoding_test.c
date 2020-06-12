@@ -1029,7 +1029,6 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
         size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
         fclose(fp);
         if (read < out_buf->len) {
-            aws_secure_zero(out_buf->buffer, out_buf->len);
             aws_byte_buf_clean_up(out_buf);
             return AWS_OP_ERR;
         }
