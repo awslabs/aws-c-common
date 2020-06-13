@@ -21,130 +21,145 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 
+/*
+ * Arbitrary-size integer type.
+ *
+ * The first version had no constant-time implementations.  Since then, some operations have been moved to
+ * constant-time -- in particular, comparison and most constructors.
+ */
 struct aws_bigint;
 
-AWS_EXTERN_C_BEGIN
+enum aws_ordering {
+    AWS_ORDERING_LT = -1,
+    AWS_ORDERING_EQ = 0,
+    AWS_ORDERING_GT = 1,
+};
 
-AWS_COMMON_API
-bool aws_bigint_is_valid(const struct aws_bigint *bigint);
+AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
 void aws_bigint_destroy(struct aws_bigint *bigint);
 
 /**
+ * Creates a zero-valued bigint
+ * If desired_bit_width is zero, then the internal representation uses the minimum number of digits necessary
+ *
+ * Constant time as a function of desired_bit_width
+ */
+AWS_COMMON_API
+struct aws_bigint *aws_bigint_new_zero(struct aws_allocator *allocator, size_t desired_bit_width);
+
+/**
+ * Creates a one-valued bigint
+ * If desired_bit_width is zero, then the internal representation uses the minimum number of digits necessary
+ *
+ * Constant time as a function of desired_bit_width
+ */
+AWS_COMMON_API
+struct aws_bigint *aws_bigint_new_one(struct aws_allocator *allocator, size_t desired_bit_width);
+
+/**
  * Creates a big int from a string of hex digits.  String may start with "0x".  Leading zeros are skipped.
  * An empty string is considered an error.  A leading (-) symbol is not supported.  Use aws_bigint_negate() after
- * calling aws_bigint_new_from_hex() to generate an arbitrary negative number.
+ * calling aws_bigint_new_from_hex_cursor() to generate an arbitrary negative number.
+ *
+ * If desired_bit_width is zero, then the internal representation uses the minimum number of digits necessary.
+ * If desired_bit_width is positive and (when rounding up based on the internal digit representation) is insufficient
+ * to hold the resulting number, NULL is returned.
  */
 AWS_COMMON_API
-struct aws_bigint *aws_bigint_new_from_hex(struct aws_allocator *allocator, struct aws_byte_cursor hex_digits);
+struct aws_bigint *aws_bigint_new_from_hex_cursor(
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor hex_digits,
+    size_t desired_bit_width);
 
 /**
- * Creates a big int from a 64 bit signed integer
+ * Creates a big int from a sequence of bytes
+ *
+ * If desired_bit_width is zero, then the internal representation uses the minimum number of digits.
+ * If desired_bit_width is positive and (when rounding up based on the internal digit representation) is insufficient
+ * to hold the resulting number, NULL is returned.
+ *
+ * Constant time as a function of desired_bit_width and source cursor length
  */
 AWS_COMMON_API
-struct aws_bigint *aws_bigint_new_from_int64(struct aws_allocator *allocator, int64_t value);
-
-/**
- * Creates a big int from a 64 bit unsigned integer
- */
-AWS_COMMON_API
-struct aws_bigint *aws_bigint_new_from_uint64(struct aws_allocator *allocator, uint64_t value);
+struct aws_bigint *aws_bigint_new_from_binary_cursor(
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor source,
+    size_t desired_bit_width);
 
 /**
  * Creates a big int as a copy of another big int
  */
 AWS_COMMON_API
-struct aws_bigint *aws_bigint_new_from_copy(const struct aws_bigint *source);
-
-/**
- * Creates a big int from a sequence of bytes
- */
-AWS_COMMON_API
-struct aws_bigint *aws_bigint_new_from_cursor(struct aws_allocator *allocator, struct aws_byte_cursor source);
+struct aws_bigint *aws_bigint_new_clone(struct aws_allocator *allocator, const struct aws_bigint *source);
 
 /**
  * Writes a bigint to a buffer as a hexadecimal number.  Will prepend (-) in front of negative numbers for
  * easier testing.  This API is primarily intended for testing.  Actual output (to various formats/bases) is TBD.
  */
 AWS_COMMON_API
-int aws_bigint_bytebuf_debug_output(const struct aws_bigint *bigint, struct aws_byte_buf *buffer);
+int aws_bigint_bytebuf_append_as_hex(const struct aws_bigint *bigint, struct aws_byte_buf *buffer);
 
 /**
  * Writes a bigint to a buffer as a big endian sequence of octets.
  *
- * If minimum_length is non-zero, then leading zero-bytes will pad the output as necessary.  Otherwise only the minimum
- * number of bytes will be written.
+ * If desired_bit_width is non-zero, then leading zero-bytes will pad the output as necessary.  If desired_bit_width
+ * is insufficient to hold the big-endian binary representation, only the lower desired_bit_width bits will be
+ * written.
+ * If desired_bit_width is zero only the minimum number of bytes will be written.
  */
 AWS_COMMON_API
 int aws_bigint_bytebuf_append_as_big_endian(
     const struct aws_bigint *bigint,
     struct aws_byte_buf *buffer,
-    size_t minimum_length);
+    size_t desired_bit_width);
 
 /**
  * Returns true if this integer is negative, false otherwise.
+ *
+ * Constant time
  */
 AWS_COMMON_API
 bool aws_bigint_is_negative(const struct aws_bigint *bigint);
 
 /**
  * Returns true if this integer is positive, false otherwise.
+ *
+ * Constant time
  */
 AWS_COMMON_API
 bool aws_bigint_is_positive(const struct aws_bigint *bigint);
 
 /**
  * Returns true if this integer is zero, false otherwise.
+ *
+ * Constant time
  */
 AWS_COMMON_API
 bool aws_bigint_is_zero(const struct aws_bigint *bigint);
 
 /**
- * Returns true if the two big ints are equal in value, false otherwise
- */
-AWS_COMMON_API
-bool aws_bigint_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
- * Returns true if the two big ints are not equal in value, false otherwise
- */
-AWS_COMMON_API
-bool aws_bigint_not_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
- * Returns true if the first operand is less than the second operand
- */
-AWS_COMMON_API
-bool aws_bigint_less_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
- * Returns true if the first operand is less than or equal to the second operand
- */
-AWS_COMMON_API
-bool aws_bigint_less_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
- * Returns true if the first operand is greater than the second operand
- */
-AWS_COMMON_API
-bool aws_bigint_greater_than(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
- * Returns true if the first operand is greater than or equal to the second operand
- */
-AWS_COMMON_API
-bool aws_bigint_greater_than_or_equals(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
-
-/**
  * Negates the supplied bigint.  Has no effect on a zero-valued integer.
+ *
+ * Constant time
  */
 AWS_COMMON_API
 void aws_bigint_negate(struct aws_bigint *bigint);
 
+/**
+ * Compares two bigints and returns their relative ordering.
+ *
+ * Constant time as a function of the lengths of lhs and rhs
+ */
+AWS_COMMON_API
+enum aws_ordering aws_bigint_compare(const struct aws_bigint *lhs, const struct aws_bigint *rhs);
+
 /*
  * Adds two big integers, placing the result in output.  Output must have been initialized first.  Output
  * may alias to either operand.
+ *
+ * Constant time as a function of the lengths if the signs match.
  */
 AWS_COMMON_API
 int aws_bigint_add(struct aws_bigint *output, const struct aws_bigint *lhs, const struct aws_bigint *rhs);
