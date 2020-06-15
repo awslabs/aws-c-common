@@ -120,60 +120,6 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     return res;
 }
 
-/**
- * Search from the MSB to LSB, looking for a 1
- */
-AWS_STATIC_IMPL size_t aws_clz_u32(uint32_t n) {
-    return __builtin_clzl(n);
-}
-
-AWS_STATIC_IMPL size_t aws_clz_i32(int32_t n) {
-    return __builtin_clz(n);
-}
-
-AWS_STATIC_IMPL size_t aws_clz_u64(uint64_t n) {
-    return __builtin_clzll(n);
-}
-
-AWS_STATIC_IMPL size_t aws_clz_i64(int64_t n) {
-    return __builtin_clzll(n);
-}
-
-AWS_STATIC_IMPL size_t aws_clz_size(size_t n) {
-#if SIZE_BITS == 64
-    return aws_clz_u64(n);
-#else
-    return aws_clz_u32(n);
-#endif
-}
-
-/**
- * Search from the LSB to MSB, looking for a 1
- */
-AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
-    return __builtin_ctzl(n);
-}
-
-AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
-    return __builtin_ctz(n);
-}
-
-AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
-    return __builtin_ctzll(n);
-}
-
-AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
-    return __builtin_ctzll(n);
-}
-
-AWS_STATIC_IMPL size_t aws_ctz_size(size_t n) {
-#if SIZE_BITS == 64
-    return aws_ctz_u64(n);
-#else
-    return aws_ctz_u32(n);
-#endif
-}
-
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_MATH_GCC_OVERFLOW_INL */

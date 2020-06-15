@@ -18,6 +18,8 @@
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
+#include <locale.h>
+
 AWS_TEST_CASE(test_buffer_cat, s_test_buffer_cat_fn)
 static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -814,3 +816,136 @@ static int s_test_byte_buf_append_and_update_success(struct aws_allocator *alloc
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_append_and_update_success, s_test_byte_buf_append_and_update_success)
+
+static int s_test_isalnum(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isalnum('0'));
+    ASSERT_TRUE(aws_isalnum('a'));
+    ASSERT_TRUE(aws_isalnum('A'));
+
+    ASSERT_FALSE(aws_isalnum(' '));
+    ASSERT_FALSE(aws_isalnum('\0'));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isalnum((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(62, count);
+
+    /* should not be affected by C locale */
+    setlocale(LC_CTYPE, "de_DE.iso88591");
+    ASSERT_FALSE(aws_isalnum('\xdf')); /* German letter ß in ISO-8859-1 */
+
+    return 0;
+}
+AWS_TEST_CASE(test_isalnum, s_test_isalnum)
+
+static int s_test_isalpha(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isalpha('a'));
+    ASSERT_TRUE(aws_isalpha('A'));
+
+    ASSERT_FALSE(aws_isalpha('0'));
+    ASSERT_FALSE(aws_isalpha('\0'));
+    ASSERT_FALSE(aws_isalpha(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isalpha((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(52, count);
+
+    /* should not be affected by C locale */
+    setlocale(LC_CTYPE, "de_DE.iso88591");
+    ASSERT_FALSE(aws_isalpha('\xdf')); /* German letter ß in ISO-8859-1 */
+
+    return 0;
+}
+AWS_TEST_CASE(test_isalpha, s_test_isalpha)
+
+static int s_test_isdigit(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isdigit('0'));
+    ASSERT_TRUE(aws_isdigit('9'));
+
+    ASSERT_FALSE(aws_isdigit('a'));
+    ASSERT_FALSE(aws_isdigit('A'));
+    ASSERT_FALSE(aws_isdigit('\0'));
+    ASSERT_FALSE(aws_isdigit(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isdigit((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(10, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isdigit, s_test_isdigit)
+
+static int s_test_isxdigit(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isxdigit('0'));
+    ASSERT_TRUE(aws_isxdigit('9'));
+    ASSERT_TRUE(aws_isxdigit('a'));
+    ASSERT_TRUE(aws_isxdigit('A'));
+    ASSERT_TRUE(aws_isxdigit('f'));
+    ASSERT_TRUE(aws_isxdigit('F'));
+
+    ASSERT_FALSE(aws_isxdigit('g'));
+    ASSERT_FALSE(aws_isxdigit('G'));
+    ASSERT_FALSE(aws_isxdigit('\0'));
+    ASSERT_FALSE(aws_isxdigit(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isxdigit((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(22, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isxdigit, s_test_isxdigit)
+
+static int s_test_isspace(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isspace(' '));
+    ASSERT_TRUE(aws_isspace('\t'));
+    ASSERT_TRUE(aws_isspace('\n'));
+    ASSERT_TRUE(aws_isspace('\v'));
+    ASSERT_TRUE(aws_isspace('\f'));
+    ASSERT_TRUE(aws_isspace('\r'));
+
+    ASSERT_FALSE(aws_isspace('\0'));
+    ASSERT_FALSE(aws_isspace('a'));
+    ASSERT_FALSE(aws_isspace(0xA0)); /* NBSP in some code-pages */
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isspace((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(6, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isspace, s_test_isspace)

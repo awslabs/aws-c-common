@@ -140,6 +140,24 @@ AWS_STATIC_IMPL void aws_write_u16(uint16_t value, uint8_t *buffer);
  */
 AWS_STATIC_IMPL uint16_t aws_read_u16(const uint8_t *buffer);
 
+enum aws_text_encoding {
+    AWS_TEXT_UNKNOWN,
+    AWS_TEXT_UTF8,
+    AWS_TEXT_UTF16,
+    AWS_TEXT_UTF32,
+    AWS_TEXT_ASCII,
+};
+
+/* Checks the BOM in the buffer to see if encoding can be determined. If there is no BOM or
+ * it is unrecognizable, then AWS_TEXT_UNKNOWN will be returned.
+ */
+AWS_STATIC_IMPL enum aws_text_encoding aws_text_detect_encoding(const uint8_t *bytes, size_t size);
+
+/*
+ * Returns true if the supplied bytes are encoded as UTF8 or ASCII.
+ */
+AWS_STATIC_IMPL bool aws_text_is_utf8(const uint8_t *bytes, size_t size);
+
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/encoding.inl>
 #endif /* AWS_NO_STATIC_IMPL */

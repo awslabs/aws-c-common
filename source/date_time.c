@@ -225,7 +225,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
         size_t sub_index = index - state_start_index;
         switch (state) {
             case ON_YEAR:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_year = parsed_time->tm_year * 10 + (c - '0');
                     if (sub_index == 3) {
                         state = ON_MONTH;
@@ -238,7 +238,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
                 break;
 
             case ON_MONTH:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_mon = parsed_time->tm_mon * 10 + (c - '0');
                     if (sub_index == 1) {
                         state = ON_MONTH_DAY;
@@ -254,7 +254,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
                 if (c == 'T' && sub_index == 2) {
                     state = ON_HOUR;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_mday = parsed_time->tm_mday * 10 + (c - '0');
                 } else {
                     error = true;
@@ -262,7 +262,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
                 break;
 
             case ON_HOUR:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_hour = parsed_time->tm_hour * 10 + (c - '0');
                     if (sub_index == 1) {
                         state = ON_MINUTE;
@@ -274,7 +274,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
                 break;
 
             case ON_MINUTE:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_min = parsed_time->tm_min * 10 + (c - '0');
                     if (sub_index == 1) {
                         state = ON_SECOND;
@@ -286,7 +286,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
                 break;
 
             case ON_SECOND:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_sec = parsed_time->tm_sec * 10 + (c - '0');
                     if (sub_index == 1) {
                         state = ON_TZ;
@@ -300,7 +300,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
             case ON_TZ:
                 if (c == 'Z' && (sub_index == 0 || sub_index == 3)) {
                     state = FINISHED;
-                } else if (!isdigit(c) || sub_index > 3) {
+                } else if (!aws_isdigit(c) || sub_index > 3) {
                     error = true;
                 }
                 break;
@@ -334,7 +334,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                     state = ON_MONTH;
                     state_start_index = index + 1;
                     parsed_time->tm_year -= 1900;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_year = parsed_time->tm_year * 10 + (c - '0');
                 } else {
                     error = true;
@@ -345,7 +345,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                     state = ON_MONTH_DAY;
                     state_start_index = index + 1;
                     parsed_time->tm_mon -= 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_mon = parsed_time->tm_mon * 10 + (c - '0');
                 } else {
                     error = true;
@@ -356,7 +356,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                 if (c == 'T' && index - state_start_index == 2) {
                     state = ON_HOUR;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_mday = parsed_time->tm_mday * 10 + (c - '0');
                 } else {
                     error = true;
@@ -368,13 +368,13 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                 if (index - state_start_index == 2) {
                     state = ON_MINUTE;
                     state_start_index = index + 1;
-                    if (isdigit(c)) {
+                    if (aws_isdigit(c)) {
                         state_start_index = index;
                         advance = false;
                     } else if (c != ':') {
                         error = true;
                     }
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_hour = parsed_time->tm_hour * 10 + (c - '0');
                 } else {
                     error = true;
@@ -386,13 +386,13 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                 if (index - state_start_index == 2) {
                     state = ON_SECOND;
                     state_start_index = index + 1;
-                    if (isdigit(c)) {
+                    if (aws_isdigit(c)) {
                         state_start_index = index;
                         advance = false;
                     } else if (c != ':') {
                         error = true;
                     }
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_min = parsed_time->tm_min * 10 + (c - '0');
                 } else {
                     error = true;
@@ -406,7 +406,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                 } else if (c == '.' && index - state_start_index == 2) {
                     state = ON_TZ;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_sec = parsed_time->tm_sec * 10 + (c - '0');
                 } else {
                     error = true;
@@ -417,7 +417,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
                 if (c == 'Z') {
                     state = FINISHED;
                     state_start_index = index + 1;
-                } else if (!isdigit(c)) {
+                } else if (!aws_isdigit(c)) {
                     error = true;
                 }
                 break;
@@ -459,14 +459,14 @@ static int s_parse_rfc_822(
                 if (c == ',') {
                     state = ON_SPACE_DELIM;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     state = ON_MONTH_DAY;
-                } else if (!isalpha(c)) {
+                } else if (!aws_isalpha(c)) {
                     error = true;
                 }
                 break;
             case ON_SPACE_DELIM:
-                if (isspace(c)) {
+                if (aws_isspace(c)) {
                     state = ON_MONTH_DAY;
                     state_start_index = index + 1;
                 } else {
@@ -474,9 +474,9 @@ static int s_parse_rfc_822(
                 }
                 break;
             case ON_MONTH_DAY:
-                if (isdigit(c)) {
+                if (aws_isdigit(c)) {
                     parsed_time->tm_mday = parsed_time->tm_mday * 10 + (c - '0');
-                } else if (isspace(c)) {
+                } else if (aws_isspace(c)) {
                     state = ON_MONTH;
                     state_start_index = index + 1;
                 } else {
@@ -484,7 +484,7 @@ static int s_parse_rfc_822(
                 }
                 break;
             case ON_MONTH:
-                if (isspace(c)) {
+                if (aws_isspace(c)) {
                     int monthNumber =
                         get_month_number_from_str((const char *)date_str_cursor->ptr, state_start_index, index + 1);
 
@@ -495,21 +495,21 @@ static int s_parse_rfc_822(
                     } else {
                         error = true;
                     }
-                } else if (!isalpha(c)) {
+                } else if (!aws_isalpha(c)) {
                     error = true;
                 }
                 break;
             /* year can be 4 or 2 digits. */
             case ON_YEAR:
-                if (isspace(c) && index - state_start_index == 4) {
+                if (aws_isspace(c) && index - state_start_index == 4) {
                     state = ON_HOUR;
                     state_start_index = index + 1;
                     parsed_time->tm_year -= 1900;
-                } else if (isspace(c) && index - state_start_index == 2) {
+                } else if (aws_isspace(c) && index - state_start_index == 2) {
                     state = 5;
                     state_start_index = index + 1;
                     parsed_time->tm_year += 2000 - 1900;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_year = parsed_time->tm_year * 10 + (c - '0');
                 } else {
                     error = true;
@@ -519,7 +519,7 @@ static int s_parse_rfc_822(
                 if (c == ':' && index - state_start_index == 2) {
                     state = ON_MINUTE;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_hour = parsed_time->tm_hour * 10 + (c - '0');
                 } else {
                     error = true;
@@ -529,24 +529,24 @@ static int s_parse_rfc_822(
                 if (c == ':' && index - state_start_index == 2) {
                     state = ON_SECOND;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_min = parsed_time->tm_min * 10 + (c - '0');
                 } else {
                     error = true;
                 }
                 break;
             case ON_SECOND:
-                if (isspace(c) && index - state_start_index == 2) {
+                if (aws_isspace(c) && index - state_start_index == 2) {
                     state = ON_TZ;
                     state_start_index = index + 1;
-                } else if (isdigit(c)) {
+                } else if (aws_isdigit(c)) {
                     parsed_time->tm_sec = parsed_time->tm_sec * 10 + (c - '0');
                 } else {
                     error = true;
                 }
                 break;
             case ON_TZ:
-                if ((isalnum(c) || c == '-' || c == '+') && (index - state_start_index) < 5) {
+                if ((aws_isalnum(c) || c == '-' || c == '+') && (index - state_start_index) < 5) {
                     dt->tz[index - state_start_index] = c;
                 } else {
                     error = true;
