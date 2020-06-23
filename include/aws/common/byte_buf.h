@@ -483,6 +483,21 @@ AWS_COMMON_API
 const uint8_t *aws_lookup_table_to_lower_get(void);
 
 /**
+ * Returns lookup table to go from ASCII/UTF-8 hex character to a number (0-15).
+ * Non-hex characters map to 255.
+ * Valid examples:
+ * '0' -> 0
+ * 'F' -> 15
+ * 'f' -> 15
+ * Invalid examples:
+ * ' ' -> 255
+ * 'Z' -> 255
+ * '\0' -> 255
+ */
+AWS_COMMON_API
+const uint8_t *aws_lookup_table_hex_to_num_get(void);
+
+/**
  * Lexical (byte value) comparison of two byte cursors
  */
 AWS_COMMON_API
@@ -601,6 +616,16 @@ AWS_COMMON_API bool aws_byte_cursor_read_be24(struct aws_byte_cursor *cur, uint3
 AWS_COMMON_API bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var);
 
 /**
+ * Reads a 64-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var);
+
+/**
  * Reads a 32-bit value in network byte order from cur, and places it in host
  * byte order into var.
  *
@@ -621,14 +646,15 @@ AWS_COMMON_API bool aws_byte_cursor_read_float_be32(struct aws_byte_cursor *cur,
 AWS_COMMON_API bool aws_byte_cursor_read_float_be64(struct aws_byte_cursor *cur, double *var);
 
 /**
- * Reads a 64-bit value in network byte order from cur, and places it in host
- * byte order into var.
+ * Reads 2 hex characters from ASCII/UTF-8 text to produce an 8-bit number.
+ * Accepts both lowercase 'a'-'f' and uppercase 'A'-'F'.
+ * For example: "0F" produces 15.
  *
- * On success, returns true and updates the cursor pointer/length accordingly.
- * If there is insufficient space in the cursor, returns false, leaving the
- * cursor unchanged.
+ * On success, returns true and advances the cursor by 2.
+ * If there is insufficient space in the cursor or an invalid character
+ * is encountered, returns false, leaving the cursor unchanged.
  */
-AWS_COMMON_API bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var);
+AWS_COMMON_API bool aws_byte_cursor_read_hex_u8(struct aws_byte_cursor *cur, uint8_t *var);
 
 /**
  * Appends a sub-buffer to the specified buffer.

@@ -30,6 +30,7 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
 
     buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
     if (capacity != 0 && buf->buffer == NULL) {
+        AWS_ZERO_STRUCT(*buf);
         return AWS_OP_ERR;
     }
 
@@ -336,7 +337,7 @@ bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struc
 }
 
 /* Every possible uint8_t value, lowercased */
-static const uint8_t s_tolower_table[256] = {
+static const uint8_t s_tolower_table[] = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,
     22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,
     44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  'a',
@@ -349,6 +350,7 @@ static const uint8_t s_tolower_table[256] = {
     198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219,
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
+AWS_STATIC_ASSERT(AWS_ARRAY_SIZE(s_tolower_table) == 256);
 
 const uint8_t *aws_lookup_table_to_lower_get(void) {
     return s_tolower_table;
@@ -1218,6 +1220,59 @@ bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
 
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
+}
+
+/* Lookup from '0' -> 0, 'f' -> 0xf, 'F' -> 0xF, etc
+ * invalid characters have value 255 */
+/* clang-format off */
+static const uint8_t s_hex_to_num_table[] = {
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255,
+    /* 0 - 9 */
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    255, 255, 255, 255, 255, 255, 255,
+    /* A - F */
+    0xA, 0xB, 0xC, 0xD, 0xE, 0xF,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255,
+    /* a - f */
+    0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+};
+AWS_STATIC_ASSERT(AWS_ARRAY_SIZE(s_hex_to_num_table) == 256);
+/* clang-format on */
+
+const uint8_t *aws_lookup_table_hex_to_num_get(void) {
+    return s_hex_to_num_table;
+}
+
+bool aws_byte_cursor_read_hex_u8(struct aws_byte_cursor *cur, uint8_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+
+    bool success = false;
+    if (AWS_LIKELY(cur->len >= 2)) {
+        const uint8_t hi = s_hex_to_num_table[cur->ptr[0]];
+        const uint8_t lo = s_hex_to_num_table[cur->ptr[1]];
+
+        /* table maps invalid characters to 255 */
+        if (AWS_LIKELY(hi != 255 && lo != 255)) {
+            *var = (hi << 4) | lo;
+            cur->ptr += 2;
+            cur->len -= 2;
+            success = true;
+        }
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return success;
 }
 
 /**
