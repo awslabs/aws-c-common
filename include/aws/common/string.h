@@ -110,14 +110,30 @@ bool aws_string_eq_c_str_ignore_case(const struct aws_string *str, const char *c
  */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
+
+/**
+ * Allocate a new string with the same contents as array.
+ */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
- * Allocate a new string with the same contents as the old.
+ * Allocate a new string with the same contents as another string.
  */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str);
+
+/**
+ * Allocate a new string with the same contents as cursor.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_new_from_cursor(struct aws_allocator *allocator, const struct aws_byte_cursor *cursor);
+
+/**
+ * Allocate a new string with the same contents as buf.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_new_from_buf(struct aws_allocator *allocator, const struct aws_byte_buf *buf);
 
 /**
  * Deallocate string.
