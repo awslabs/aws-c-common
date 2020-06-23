@@ -223,11 +223,12 @@ bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, con
  * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.
  *
  * Edge case rules are as follows:
+ * If the input is an empty string, an empty cursor will be the one entry returned.
  * If the input begins with split_on, an empty cursor will be the first entry returned.
  * If the input has two adjacent split_on tokens, an empty cursor will be returned.
  * If the input ends with split_on, an empty cursor will be returned last.
  *
- * It is the user's responsibility to properly zero-initialize substr.
+ * It is the user's responsibility zero-initialize substr before the first call.
  *
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.

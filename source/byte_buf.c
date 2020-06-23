@@ -173,41 +173,36 @@ bool aws_byte_cursor_next_split(
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr) {
 
-    bool first_run = false;
-    if (!substr->ptr) {
-        first_run = true;
-        substr->ptr = input_str->ptr;
-        substr->len = 0;
-    }
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(input_str));
 
-    if (substr->ptr > input_str->ptr + input_str->len) {
-        /* This will hit if the last substring returned was an empty string after terminating split_on. */
-        AWS_ZERO_STRUCT(*substr);
-        return false;
-    }
-
-    /* Calculate first byte to search. */
-    substr->ptr += substr->len;
-    /* Remaining bytes is the number we started with minus the number of bytes already read. */
-    substr->len = input_str->len - (substr->ptr - input_str->ptr);
-
-    if (!first_run && substr->len == 0) {
-        /* This will hit if the string doesn't end with split_on but we're done. */
-        AWS_ZERO_STRUCT(*substr);
-        return false;
-    }
-
-    if (!first_run && *substr->ptr == split_on) {
-        /* If not first rodeo and the character after substr is split_on, skip. */
-        ++substr->ptr;
-        --substr->len;
-
-        if (substr->len == 0) {
-            /* If split character was last in the string, return empty substr. */
-            return true;
+    /* If substr is zeroed-out, then this is the first run. */
+    const bool first_run = substr->ptr == NULL;
+    if (first_run) {
+        if (input_str->ptr) {
+            *substr = *input_str;
+        } else {
+            /* NOTE: It's also legal for input_str to be zeroed out.
+             * In that case, set substr->ptr to something else so the next split() call doesn't look like first run. */
+            substr->ptr = (void *)"";
+            substr->len = 0;
         }
+
+    } else {
+        /* This is not the first run.
+         * Advance substr past the previous split. */
+        const uint8_t *input_end = input_str->ptr + input_str->len;
+        substr->ptr += substr->len + 1;
+        if (substr->ptr > input_end || substr->ptr < input_str->ptr) { /* 2nd check is overflow check */
+            /* done */
+            AWS_ZERO_STRUCT(*substr);
+            return false;
+        }
+
+        /* update len to be remainder of the string */
+        substr->len = input_str->len - (substr->ptr - input_str->ptr);
     }
 
+    /* substr is now remainder of string, search for next split */
     uint8_t *new_location = memchr(substr->ptr, split_on, substr->len);
     if (new_location) {
 
@@ -215,6 +210,7 @@ bool aws_byte_cursor_next_split(
         substr->len = new_location - substr->ptr;
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(substr));
     return true;
 }
 
@@ -223,7 +219,7 @@ int aws_byte_cursor_split_on_char_n(
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output) {
-    AWS_ASSERT(input_str && input_str->ptr);
+    AWS_ASSERT(aws_byte_cursor_is_valid(input_str));
     AWS_ASSERT(output);
     AWS_ASSERT(output->item_size >= sizeof(struct aws_byte_cursor));
 
