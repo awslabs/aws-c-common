@@ -71,7 +71,9 @@ has_feature_fn *s_check_cpu_feature[AWS_CPU_FEATURE_COUNT] = {
 };
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
-    return s_check_cpu_feature[feature_name]();
+    if (s_check_cpu_feature[feature_name])
+        return s_check_cpu_feature[feature_name]();
+    return false;
 }
 
 #define CPUID_AVAILABLE 0

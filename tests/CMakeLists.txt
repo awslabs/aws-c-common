@@ -419,6 +419,8 @@ add_test_case(resource_name_tostring_test)
 add_test_case(resource_name_tostring_failure_test)
 add_test_case(resource_name_length_test)
 
+add_test_case(cpuid_test)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
