@@ -369,6 +369,19 @@ AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copies from to to. If to is too small, the buffer will be grown appropriately and
+ * the old contents copied to, before the new contents are appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * If the buffer is grown, the old buffer will be securely cleared before getting freed.
+ *
+ * from and to may be the same buffer, permitting copying a buffer into itself.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
  * Copy contents of cursor to buffer, then update cursor to reference the memory stored in the buffer.
  * If buffer is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
  *

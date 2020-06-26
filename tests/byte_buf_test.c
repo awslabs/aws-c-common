@@ -503,7 +503,8 @@ static int s_do_append_dynamic_test(
     struct aws_allocator *allocator,
     size_t starting_size,
     size_t append_size,
-    size_t iterations) {
+    size_t iterations,
+    int (*append_dynamic)(struct aws_byte_buf *, const struct aws_byte_cursor *)) {
     struct aws_byte_buf accum_buf;
     aws_byte_buf_init(&accum_buf, allocator, starting_size);
     memset(accum_buf.buffer, 0, starting_size);
@@ -524,7 +525,7 @@ static int s_do_append_dynamic_test(
         memset(accum_buf.buffer, 0, accum_buf.capacity);
 
         size_t before_size = accum_buf.len;
-        ASSERT_TRUE(aws_byte_buf_append_dynamic(&accum_buf, &append_cursor) == AWS_OP_SUCCESS);
+        ASSERT_TRUE(append_dynamic(&accum_buf, &append_cursor) == AWS_OP_SUCCESS);
         size_t after_size = accum_buf.len;
 
         size_t expected_len = starting_size + (i + 1) * append_size;
@@ -556,12 +557,25 @@ static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void 
     (void)ctx;
 
     /*
-     * Throw a small sample of different growth request profiles at the function
+     * Throw a small sample of different growth request profiles at the functions
      */
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 100, 10, 100) == AWS_OP_SUCCESS);
+
+    /*
+     * regular append
+     */
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 100, 10, 100, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+
+    /*
+     * secure append - note we don't attempt to check if the memory was actually zeroed
+     */
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(
+        s_do_append_dynamic_test(allocator, 100, 10, 100, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
 
     return 0;
 }

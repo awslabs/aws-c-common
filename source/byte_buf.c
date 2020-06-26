@@ -572,7 +572,10 @@ int aws_byte_buf_append_with_lookup(
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+static int s_aws_byte_buf_append_dynamic(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    bool clear_released_memory) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
     AWS_ERROR_PRECONDITION(to->allocator);
@@ -639,6 +642,11 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
         if (from->len > 0) {
             memcpy(new_buffer + to->len, from->ptr, from->len);
         }
+
+        if (clear_released_memory) {
+            aws_secure_zero(to->buffer, to->capacity);
+        }
+
         /*
          * Get rid of the old buffer
          */
@@ -663,6 +671,14 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
     AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    return s_aws_byte_buf_append_dynamic(to, from, false);
+}
+
+int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    return s_aws_byte_buf_append_dynamic(to, from, true);
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
