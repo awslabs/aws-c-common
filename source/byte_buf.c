@@ -681,6 +681,30 @@ int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws
     return s_aws_byte_buf_append_dynamic(to, from, true);
 }
 
+static int s_aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value, bool clear_released_memory) {
+#if defined(_MSC_VER)
+#    pragma warning(push)
+#    pragma warning(disable : 4221)
+#endif /* _MSC_VER */
+
+    /* msvc isn't a fan of this pointer-to-local assignment */
+    struct aws_byte_cursor eq_cursor = {.len = 1, .ptr = &value};
+
+#if defined(_MSC_VER)
+#    pragma warning(pop)
+#endif /* _MSC_VER */
+
+    return s_aws_byte_buf_append_dynamic(buffer, &eq_cursor, clear_released_memory);
+}
+
+int aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value) {
+    return s_aws_byte_buf_append_byte_dynamic(buffer, value, false);
+}
+
+int aws_byte_buf_append_byte_dynamic_secure(struct aws_byte_buf *buffer, uint8_t value) {
+    return s_aws_byte_buf_append_byte_dynamic(buffer, value, true);
+}
+
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
     AWS_ERROR_PRECONDITION(buffer->allocator);
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(buffer));

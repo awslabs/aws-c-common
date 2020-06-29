@@ -581,6 +581,25 @@ static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void 
 }
 AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
 
+static uint8_t s_append_byte_array[] = {0xFF, 0xFE, 0xAB, 0x00, 0x55, 0x62};
+
+static int s_test_byte_buf_append_byte(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 1);
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_append_byte_array); ++i) {
+        ASSERT_SUCCESS(aws_byte_buf_append_byte_dynamic(&buffer, s_append_byte_array[i]));
+        ASSERT_BIN_ARRAYS_EQUALS(s_append_byte_array, i + 1, buffer.buffer, buffer.len);
+    }
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_byte, s_test_byte_buf_append_byte)
+
 AWS_STATIC_STRING_FROM_LITERAL(s_to_lower_test, "UPPerANdLowercASE");
 
 static int s_test_byte_buf_append_lookup_success(struct aws_allocator *allocator, void *ctx) {
