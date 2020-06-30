@@ -5,13 +5,17 @@
 #NOTE: If we don't use the unwindset, leave it empty
 #CBMC_UNWINDSET =
 
+HARNESS_ENTRY = aws_add_size_checked_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
+
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_STUB)/error.c
 
-ENTRY = aws_add_size_checked_harness
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+
 ###########
 
 include ../Makefile.common

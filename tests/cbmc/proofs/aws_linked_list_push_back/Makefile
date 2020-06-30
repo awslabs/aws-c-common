@@ -16,12 +16,16 @@ UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
+HARNESS_ENTRY = aws_linked_list_push_back_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_linked_list_push_back_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+
 ###########
 
 include ../Makefile.common

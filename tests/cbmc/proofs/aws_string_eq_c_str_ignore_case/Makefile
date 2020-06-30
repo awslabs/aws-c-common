@@ -9,12 +9,15 @@ UNWINDSET += strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(SRCDIR)/source/string.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
+HARNESS_ENTRY = aws_string_eq_c_str_ignore_case_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_string_eq_c_str_ignore_case_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/string.c
+PROJECT_SOURCES += $(SRCDIR)/source/byte_buf.c
 
 include ../Makefile.common

@@ -15,23 +15,27 @@ UNWINDSET += memcpy_using_uint64_impl.0:2
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_using_uint64.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_no_op.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/priority_queue.c
+HARNESS_ENTRY = aws_priority_queue_s_remove_node_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ABSTRACTIONS +=  $(HELPERDIR)/stubs/s_sift_either_override.c
-ABSTRACTIONS +=  $(HELPERDIR)/stubs/aws_array_list_swap_override.c
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body __CPROVER_file_local_priority_queue_c_s_sift_either
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_array_list_swap_override
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+PROOF_SOURCES += $(PROOF_STUB)/memcpy_using_uint64.c
+PROOF_SOURCES += $(PROOF_STUB)/memset_override_no_op.c
+PROOF_SOURCES += $(PROOF_STUB)/s_sift_either_override.c
+PROOF_SOURCES += $(PROOF_STUB)/aws_array_list_swap_override.c
 
-ENTRY = aws_priority_queue_s_remove_node_harness
+PROJECT_SOURCES += $(SRCDIR)/source/array_list.c
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+PROJECT_SOURCES += $(SRCDIR)/source/priority_queue.c
+
+REMOVE_FUNCTION_BODY +=  __CPROVER_file_local_priority_queue_c_s_sift_either
+REMOVE_FUNCTION_BODY +=  aws_array_list_swap_override
+
 ###########
 
 include ../Makefile.common

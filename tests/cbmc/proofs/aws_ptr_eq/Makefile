@@ -5,9 +5,12 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+HARNESS_ENTRY = aws_ptr_eq_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_ptr_eq_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+
+PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
 
 ###########
 
