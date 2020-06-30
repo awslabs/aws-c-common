@@ -11,11 +11,14 @@ UNWINDSET += memset_using_uint64_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_using_uint64.c
+HARNESS_ENTRY = memset_using_uint64_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = memset_using_uint64_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/memset_override.c
+PROOF_SOURCES += $(PROOF_STUB)/memset_using_uint64.c
 
 ###########
 

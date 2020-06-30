@@ -6,26 +6,31 @@
 #16: 10s
 #32: 1m10s
 MAX_TABLE_SIZE ?= 16
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 UNWINDSET +=  aws_hash_table_foreach.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+HARNESS_ENTRY = aws_hash_table_foreach_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ABSTRACTIONS += $(HELPERDIR)/stubs/aws_hash_iter_overrides.c
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_hash_iter_begin
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_hash_iter_delete
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_hash_iter_done
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body aws_hash_iter_next
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 
-ENTRY = aws_hash_table_foreach_harness
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+PROOF_SOURCES += $(PROOF_STUB)/aws_hash_iter_overrides.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
+
+REMOVE_FUNCTION_BODY +=  aws_hash_iter_begin
+REMOVE_FUNCTION_BODY +=  aws_hash_iter_delete
+REMOVE_FUNCTION_BODY +=  aws_hash_iter_done
+REMOVE_FUNCTION_BODY +=  aws_hash_iter_next
+
 ###########
 
 include ../Makefile.common

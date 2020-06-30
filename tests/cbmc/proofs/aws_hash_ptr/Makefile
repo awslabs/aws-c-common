@@ -5,12 +5,17 @@
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+HARNESS_ENTRY = aws_hash_ptr_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_hash_ptr_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
+
 ###########
 
 include ../Makefile.common

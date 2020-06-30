@@ -4,21 +4,26 @@
 ###########
 # Using the new calloc model, get full coverage in about 5s on unbounded sizes!
 MAX_TABLE_SIZE ?= SIZE_MAX
-DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE) 
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+HARNESS_ENTRY = aws_hash_table_init_bounded_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body bounded_malloc
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body can_fail_malloc
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body nondet_compare
-ADDITIONAL_REMOVE_FUNCTION_BODY += --remove-function-body s_can_fail_malloc_allocator
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 
-ENTRY = aws_hash_table_init_bounded_harness
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
+
+REMOVE_FUNCTION_BODY +=  bounded_malloc
+REMOVE_FUNCTION_BODY +=  can_fail_malloc
+REMOVE_FUNCTION_BODY +=  nondet_compare
+REMOVE_FUNCTION_BODY +=  s_can_fail_malloc_allocator
+
 ###########
 
 include ../Makefile.common

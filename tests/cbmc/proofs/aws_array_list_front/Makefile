@@ -12,14 +12,19 @@ UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(SRCDIR)/source/array_list.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
+HARNESS_ENTRY = aws_array_list_front_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_array_list_front_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/array_list.c
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+
 ###########
 
 include ../Makefile.common

@@ -12,15 +12,20 @@ UNWINDSET += memset_impl.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override.c
-DEPENDENCIES += $(SRCDIR)/source/byte_buf.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
+HARNESS_ENTRY = aws_byte_buf_advance_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_byte_buf_advance_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+PROOF_SOURCES += $(PROOF_STUB)/memset_override.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/byte_buf.c
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+
 ###########
 
 include ../Makefile.common

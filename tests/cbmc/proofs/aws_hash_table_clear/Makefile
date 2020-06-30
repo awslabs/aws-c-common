@@ -14,15 +14,20 @@ UNWINDSET += memset_override_0_impl.0:$(shell echo $$((1 + $(TABLE_SIZE_IN_WORDS
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/error.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memset_override_0.c
-DEPENDENCIES += $(SRCDIR)/source/common.c
-DEPENDENCIES += $(SRCDIR)/source/hash_table.c
+HARNESS_ENTRY = aws_hash_table_clear_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_hash_table_clear_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/error.c
+PROOF_SOURCES += $(PROOF_STUB)/memset_override_0.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/common.c
+PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
+
 ###########
 
 include ../Makefile.common

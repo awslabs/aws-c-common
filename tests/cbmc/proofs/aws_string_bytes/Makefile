@@ -5,10 +5,13 @@ include ../Makefile.aws_string
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/make_common_data_structures.c
-DEPENDENCIES += $(HELPERDIR)/source/proof_allocators.c 
-DEPENDENCIES += $(SRCDIR)/source/string.c 
+HARNESS_ENTRY = aws_string_bytes_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = aws_string_bytes_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
+PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+
+PROJECT_SOURCES += $(SRCDIR)/source/string.c
 
 include ../Makefile.common

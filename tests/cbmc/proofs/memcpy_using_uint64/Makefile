@@ -12,11 +12,14 @@ UNWINDSET += memcpy_using_uint64_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1
 
 CBMCFLAGS +=
 
-DEPENDENCIES += $(HELPERDIR)/source/utils.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_override.c
-DEPENDENCIES += $(HELPERDIR)/stubs/memcpy_using_uint64.c
+HARNESS_ENTRY = memcpy_using_uint64_harness
+HARNESS_FILE = $(HARNESS_ENTRY).c
 
-ENTRY = memcpy_using_uint64_harness
+PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
+
+PROOF_SOURCES += $(PROOF_STUB)/memcpy_override.c
+PROOF_SOURCES += $(PROOF_STUB)/memcpy_using_uint64.c
 
 ###########
 
