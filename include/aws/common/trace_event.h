@@ -1,9 +1,15 @@
 #ifndef AWS_COMMON_TRACE_EVENT_H
 #define AWS_COMMON_TRACE_EVENT_H
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 
 #include <aws/common/bus.h>
 #include <aws/common/cJSON.h>
 #include <aws/common/common.h>
+#include <aws/common/thread.h>
+#include <aws/common/process.h>
 AWS_EXTERN_C_BEGIN
 
 /* Must use INIT before calling any other macros*/

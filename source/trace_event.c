@@ -1,9 +1,10 @@
-#include <aws/common/bus.h>
-#include <aws/common/cJSON.h>
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 #include <aws/common/clock.h>
-#include <aws/common/common.h>
 #include <aws/common/logging.h>
-#include <aws/common/process.h>
 #include <aws/common/trace_event.h>
 
 struct aws_trace_event *trace_event;

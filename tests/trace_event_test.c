@@ -1,12 +1,12 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 #include <aws/testing/aws_test_harness.h>
 
 #include <aws/common/trace_event.h>
 
-#include <aws/common/thread.h>
-
-#include <aws/common/cJSON.h>
-
-#include <aws/common/process.h>
 
 static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
