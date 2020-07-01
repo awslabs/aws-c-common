@@ -39,10 +39,38 @@ check_c_source_compiles("
 " AWS_ARCH_INTEL)
 
 check_c_source_compiles("
+    int main() {
+#if !(defined(__aarch64__) || defined(_M_ARM64))
+#    error \"not arm64\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_ARM64)
+
+check_c_source_compiles("
+    int main() {
+#if !(defined(__arm__) || defined(_M_ARM))
+#    error \"not arm\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_ARM32)
+
+check_c_source_compiles("
 int main() {
     int foo = 42, bar = 24;
     __asm__ __volatile__(\"\":\"=r\"(foo):\"r\"(bar):\"memory\");
 }" AWS_HAVE_GCC_INLINE_ASM)
+
+check_c_source_compiles("
+#include <sys/auxv.h>
+int main() {
+#ifdef __linux__
+    getauxval(AT_HWCAP);
+    getauxval(AT_HWCAP2);
+#endif
+    return 0;
+}" AWS_HAVE_AUXV)
 
 string(REGEX MATCH "^(aarch64|arm)" ARM_CPU "${CMAKE_SYSTEM_PROCESSOR}")
 if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)

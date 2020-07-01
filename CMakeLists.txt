@@ -123,6 +123,16 @@ elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM)
         )
 endif()
 
+if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/msvc/*.c"
+        )
+elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/asm/*.c"
+        )
+endif()
+
 list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
 
 file(GLOB COMMON_HEADERS
@@ -242,6 +252,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
+    "cmake/AwsFeatureTests.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
