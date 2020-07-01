@@ -15,6 +15,7 @@
  */
 
 #include <aws/common/array_list.h>
+#include <proof_helpers/nondet.h>
 
 void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, size_t b) {
     assert(a < list->length);
@@ -32,11 +33,11 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
         size_t item_sz = list->item_size;
         size_t offset_a;
         __CPROVER_assume(offset_a < item_sz);
-        ((uint8_t *)list->data)[a * item_sz + offset_a] = nondet_uint8_t();
+        ((uint8_t *)list->data)[(a * item_sz) + offset_a] = nondet_uint8_t();
 
         size_t offset_b;
         __CPROVER_assume(offset_b < item_sz);
-        ((uint8_t *)list->data)[b * item_sz + offset_b] = nondet_uint8_t();
+        ((uint8_t *)list->data)[(b * item_sz) + offset_b] = nondet_uint8_t();
     }
 
     return;
