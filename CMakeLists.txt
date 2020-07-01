@@ -116,7 +116,7 @@ if (MSVC AND AWS_ARCH_INTEL)
         )
 
     source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
-elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM)
+elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM AND NOT LEGACY_COMPILER_SUPPORT)
     file(GLOB AWS_COMMON_ARCH_SRC
         "source/arch/intel/*.c"
          "source/arch/intel/asm/*.c"
