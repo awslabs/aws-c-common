@@ -2,8 +2,8 @@
 #define AWS_COMMON_TRACE_EVENT_H
 
 #include <aws/common/bus.h>
-#include <aws/common/common.h>
 #include <aws/common/cJSON.h>
+#include <aws/common/common.h>
 AWS_EXTERN_C_BEGIN
 
 /* Must use INIT before calling any other macros*/
@@ -31,18 +31,17 @@ AWS_EXTERN_C_BEGIN
 #define EVENT_PHASE_BEGIN ('B')
 #define EVENT_PHASE_END ('E')
 
-
 struct aws_trace_event_metadata {
     /* should be B/E for same scope or S/F for outside of scope */
-    char phase; 
+    char phase;
     /* name of the event */
-    char *name; 
+    char *name;
     /* category of the event */
-    char *category; 
+    char *category;
     /* timestamp in milliseconds */
-    unsigned long long timestamp; 
-    unsigned long int thread_id;  
-    int process_id;               
+    unsigned long long timestamp;
+    unsigned long int thread_id;
+    int process_id;
     /* args for more metadata to be added later */
 };
 
@@ -50,7 +49,6 @@ struct aws_trace_event {
     struct cJSON *root, *event_array;
     struct aws_bus bus;
     struct aws_allocator *allocator;
-    
 };
 
 //! this function can go solely in the .c file
@@ -58,8 +56,8 @@ struct aws_trace_event {
  * Subscirbes to the aws_message_bus and writes trace event data
  * to a JSON object when it is thread safe to do so.
  */
-//AWS_COMMON_API
-//void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data);
+// AWS_COMMON_API
+// void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data);
 
 /*
  * Starts the aws_message_bus in a background thread and subscribes the listener to it.
@@ -81,8 +79,8 @@ int aws_trace_event_clean_up(int code, char *filename);
 
 //! this function can go solely in the .c file
 // free trace event memory
-//AWS_COMMON_API
-//void aws_trace_event_destroy(void *payload);
+// AWS_COMMON_API
+// void aws_trace_event_destroy(void *payload);
 
 /*
  * Sends event trace data to the aws_message_bus to be added to
@@ -95,9 +93,9 @@ int aws_trace_event_new(char *category, char *name, char phase);
 
 /*
  * Used for debugging
- * 
+ *
  * AWS_COMMON_API
- */ 
+ */
 struct cJSON *aws_trace_event_get_root(void);
 
 AWS_EXTERN_C_END

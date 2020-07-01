@@ -1,20 +1,18 @@
 #include <aws/common/bus.h>
+#include <aws/common/cJSON.h>
 #include <aws/common/clock.h>
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
 #include <aws/common/process.h>
 #include <aws/common/trace_event.h>
-#include <aws/common/cJSON.h>
 
-
- 
 struct aws_trace_event *trace_event;
 uint64_t listener_id;
 uint64_t start_time;
 
-/* 
+/*
  * Private API
- */ 
+ */
 
 /* Add trace event meta data to JSON object when the message bus allows it */
 void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data) {
@@ -28,7 +26,7 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     /* add more options later on */
     cJSON_AddStringToObject(event, "cat", trace_event_data->category);
     cJSON_AddStringToObject(event, "name", trace_event_data->name);
-    cJSON_AddStringToObject(event, "ph", &(trace_event_data->phase)); 
+    cJSON_AddStringToObject(event, "ph", &(trace_event_data->phase));
     cJSON_AddNumberToObject(event, "pid", trace_event_data->process_id);
     cJSON_AddNumberToObject(event, "tid", trace_event_data->thread_id);
     cJSON_AddNumberToObject(event, "ts", trace_event_data->timestamp);
@@ -56,7 +54,6 @@ int aws_trace_event_init(uint64_t address, struct aws_allocator *allocator) {
 
     aws_high_res_clock_get_ticks(&start_time);
     listener_id = address;
-    
 
     if (allocator == NULL || trace_event->root == NULL || trace_event->event_array == NULL) {
         return AWS_OP_ERR;
@@ -73,7 +70,6 @@ int aws_trace_event_init(uint64_t address, struct aws_allocator *allocator) {
 
     return AWS_OP_SUCCESS;
 }
-
 
 int aws_trace_event_clean_up(int code, char *filename) {
     aws_bus_unsubscribe(&(trace_event->bus), listener_id, aws_trace_event_listener, NULL);
@@ -97,10 +93,8 @@ int aws_trace_event_clean_up(int code, char *filename) {
     return AWS_OP_SUCCESS;
 }
 
-
-
 int aws_trace_event_new(char *category, char *name, char phase) {
-    /* set timestamp in milliseconds */ 
+    /* set timestamp in milliseconds */
     uint64_t timestamp;
     aws_high_res_clock_get_ticks(&timestamp);
     timestamp -= start_time;
@@ -109,7 +103,7 @@ int aws_trace_event_new(char *category, char *name, char phase) {
     /* get calling thread and process ids */
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
     int process_id = aws_get_pid();
-   
+
     struct aws_trace_event_metadata trace_event_data = {
         .phase = phase,
         .timestamp = timestamp,
@@ -129,4 +123,3 @@ int aws_trace_event_new(char *category, char *name, char phase) {
 struct cJSON *aws_trace_event_get_root() {
     return trace_event->root;
 }
-
