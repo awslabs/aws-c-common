@@ -20,6 +20,11 @@ PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 PROOF_SOURCES += $(PROOF_STUB)/memset_override.c
 PROOF_SOURCES += $(PROOF_STUB)/memset_override_0.c
 
+# The actual implementation that we're proving comes from .inl files
+# that the stubs pull in. Link against an empty file, since we're not
+# using any other files in the project.
+PROJECT_SOURCES += $(PROOF_STUB)/empty-source-file.c
+
 ###########
 
 include ../Makefile.common

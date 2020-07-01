@@ -21,6 +21,11 @@ PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 PROOF_SOURCES += $(PROOF_STUB)/memcpy_override.c
 PROOF_SOURCES += $(PROOF_STUB)/memcpy_using_uint64.c
 
+# The actual implementation that we're proving comes from .inl files
+# that the stubs pull in. Link against an empty file, since we're not
+# using any other files from c-common.
+PROJECT_SOURCES += $(PROOF_STUB)/empty-source-file.c
+
 ###########
 
 include ../Makefile.common
