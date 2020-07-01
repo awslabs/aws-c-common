@@ -26,7 +26,10 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     /* add more options later on */
     cJSON_AddStringToObject(event, "cat", trace_event_data->category);
     cJSON_AddStringToObject(event, "name", trace_event_data->name);
-    cJSON_AddStringToObject(event, "ph", &(trace_event_data->phase));
+    /* Fix for buffer overflow issue using char phase reference */
+    char ph[2];
+    strncat(ph, &(trace_event_data->phase), 1);
+    cJSON_AddStringToObject(event, "ph", ph);
     cJSON_AddNumberToObject(event, "pid", trace_event_data->process_id);
     cJSON_AddNumberToObject(event, "tid", trace_event_data->thread_id);
     cJSON_AddNumberToObject(event, "ts", trace_event_data->timestamp);

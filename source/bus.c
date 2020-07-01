@@ -460,18 +460,18 @@ error:
 int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
     bus->allocator = options->allocator;
     if (options->policy == AWS_BUS_ASYNC) {
- 
+
         bus->impl = s_bus_async_new(bus, options);
     } else if (options->policy == AWS_BUS_SYNC) {
-     
+
         bus->impl = s_bus_sync_new(bus, options);
     }
 
     if (!bus->impl) {
-      
+
         return AWS_OP_ERR;
     }
- 
+
     return AWS_OP_SUCCESS;
 }
 
