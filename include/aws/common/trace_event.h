@@ -8,8 +8,8 @@
 #include <aws/common/bus.h>
 #include <aws/common/cJSON.h>
 #include <aws/common/common.h>
-#include <aws/common/thread.h>
 #include <aws/common/process.h>
+#include <aws/common/thread.h>
 AWS_EXTERN_C_BEGIN
 
 /* Must use INIT before calling any other macros*/

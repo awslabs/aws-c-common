@@ -7,7 +7,6 @@
 
 #include <aws/common/trace_event.h>
 
-
 static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
