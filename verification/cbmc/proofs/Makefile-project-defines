@@ -26,8 +26,8 @@
 # You will want to decide what order that comes in relative to the other
 # include directories in your project.
 #
-INCLUDES = -I$(CBMC_ROOT)/include
-INCLUDES = -I$(SRCDIR)/include
+INCLUDES += -I$(CBMC_ROOT)/include
+INCLUDES += -I$(SRCDIR)/include
 
 
 # Preprocessor definitions -D...
