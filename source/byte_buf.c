@@ -1336,6 +1336,20 @@ bool aws_byte_buf_write_from_whole_cursor(struct aws_byte_buf *AWS_RESTRICT buf,
     return aws_byte_buf_write(buf, src.ptr, src.len);
 }
 
+struct aws_byte_cursor aws_byte_buf_write_to_capacity(
+    struct aws_byte_buf *buf,
+    struct aws_byte_cursor *advancing_cursor) {
+
+    AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(advancing_cursor));
+
+    size_t available = buf->capacity - buf->len;
+    size_t write_size = aws_min_size(available, advancing_cursor->len);
+    struct aws_byte_cursor write_cursor = aws_byte_cursor_advance(advancing_cursor, write_size);
+    aws_byte_buf_write_from_whole_cursor(buf, write_cursor);
+    return write_cursor;
+}
+
 /**
  * Copies one byte to buffer.
  *
