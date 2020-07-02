@@ -1030,6 +1030,7 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
 }
 
 static int s_text_encoding_utf8(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     struct aws_byte_buf contents;
     ASSERT_SUCCESS(read_file_contents(&contents, allocator, "./utf8.txt"));
     ASSERT_INT_EQUALS(AWS_TEXT_UTF8, aws_text_detect_encoding(contents.buffer, contents.len));
@@ -1040,6 +1041,7 @@ static int s_text_encoding_utf8(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(text_encoding_utf8, s_text_encoding_utf8)
 
 static int s_text_encoding_utf16(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     struct aws_byte_buf contents;
 
     ASSERT_SUCCESS(read_file_contents(&contents, allocator, "./utf16le.txt"));
@@ -1056,6 +1058,7 @@ static int s_text_encoding_utf16(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(text_encoding_utf16, s_text_encoding_utf16)
 
 static int s_text_encoding_ascii(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     char all_ascii_chars[128];
     for (char c = 0; c < AWS_ARRAY_SIZE(all_ascii_chars); ++c) {
         all_ascii_chars[(int)c] = (c + 1) % 128;
@@ -1075,6 +1078,7 @@ static int s_text_encoding_ascii(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(text_encoding_ascii, s_text_encoding_ascii)
 
 static int s_text_encoding_is_utf8(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     {
         struct aws_byte_buf contents;
         ASSERT_SUCCESS(read_file_contents(&contents, allocator, "./utf8.txt"));
