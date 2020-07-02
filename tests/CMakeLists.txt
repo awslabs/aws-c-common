@@ -428,6 +428,10 @@ if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -Wno-overflow)
 endif()
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME}-tests PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 file(GLOB FUZZ_TESTS    "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
 
