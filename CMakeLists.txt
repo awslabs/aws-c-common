@@ -1,15 +1,5 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
@@ -133,6 +123,16 @@ elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM)
         )
 endif()
 
+if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/msvc/*.c"
+        )
+elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/asm/*.c"
+        )
+endif()
+
 list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
 
 file(GLOB COMMON_HEADERS
@@ -252,6 +252,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
+    "cmake/AwsFeatureTests.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

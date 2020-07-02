@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_BYTE_BUF_H
 #define AWS_COMMON_BYTE_BUF_H
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/array_list.h>
@@ -368,6 +358,39 @@ int aws_byte_buf_append_with_lookup(
  */
 AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Copies `from` to `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the new contents are appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * If the buffer is grown, the old buffer will be securely cleared before getting freed.
+ *
+ * `from` and `to` may be the same buffer, permitting copying a buffer into itself.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Copies a single byte into `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the byte is appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value);
+
+/**
+ * Copies a single byte into `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the byte is appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * If the buffer is grown, the old buffer will be securely cleared before getting freed.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_byte_dynamic_secure(struct aws_byte_buf *buffer, uint8_t value);
 
 /**
  * Copy contents of cursor to buffer, then update cursor to reference the memory stored in the buffer.

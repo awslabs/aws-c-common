@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/byte_buf.h>
@@ -570,7 +560,10 @@ int aws_byte_buf_append_with_lookup(
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+static int s_aws_byte_buf_append_dynamic(
+    struct aws_byte_buf *to,
+    const struct aws_byte_cursor *from,
+    bool clear_released_memory) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
     AWS_ERROR_PRECONDITION(to->allocator);
@@ -637,6 +630,11 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
         if (from->len > 0) {
             memcpy(new_buffer + to->len, from->ptr, from->len);
         }
+
+        if (clear_released_memory) {
+            aws_secure_zero(to->buffer, to->capacity);
+        }
+
         /*
          * Get rid of the old buffer
          */
@@ -661,6 +659,38 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
     AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(from));
     return AWS_OP_SUCCESS;
+}
+
+int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    return s_aws_byte_buf_append_dynamic(to, from, false);
+}
+
+int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+    return s_aws_byte_buf_append_dynamic(to, from, true);
+}
+
+static int s_aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value, bool clear_released_memory) {
+#if defined(_MSC_VER)
+#    pragma warning(push)
+#    pragma warning(disable : 4221)
+#endif /* _MSC_VER */
+
+    /* msvc isn't a fan of this pointer-to-local assignment */
+    struct aws_byte_cursor eq_cursor = {.len = 1, .ptr = &value};
+
+#if defined(_MSC_VER)
+#    pragma warning(pop)
+#endif /* _MSC_VER */
+
+    return s_aws_byte_buf_append_dynamic(buffer, &eq_cursor, clear_released_memory);
+}
+
+int aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value) {
+    return s_aws_byte_buf_append_byte_dynamic(buffer, value, false);
+}
+
+int aws_byte_buf_append_byte_dynamic_secure(struct aws_byte_buf *buffer, uint8_t value) {
+    return s_aws_byte_buf_append_byte_dynamic(buffer, value, true);
 }
 
 int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
