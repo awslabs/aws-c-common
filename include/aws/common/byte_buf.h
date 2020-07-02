@@ -710,8 +710,8 @@ AWS_COMMON_API bool aws_byte_buf_write_from_whole_cursor(
  * advancing_cursor is advanced so it contains the remaining unwritten parts.
  * Returns the section of advancing_cursor which was written.
  *
- * This function cannot fail. If the buf has no capacity or advancing_len has
- * 0 length, then buf and advancing_cursor are not altered and a cursor with 0 length is returned.
+ * This function cannot fail. If buf is full (len == capacity) or advancing_len has 0 length,
+ * then buf and advancing_cursor are not altered and a cursor with 0 length is returned.
  *
  * Example: Given a buf with 2 bytes of space available and advancing_cursor with contents "abc".
  * "ab" will be written to buf and buf->len will increase 2 and become equal to buf->capacity.
