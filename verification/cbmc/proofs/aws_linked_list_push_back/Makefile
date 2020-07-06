@@ -11,7 +11,7 @@ include ../Makefile.aws_linked_list
 ## This has to take into account that a new element has been added to
 ## the list afterwards so we have to unwind one more time (instead of
 ## the standard 2 + MAX_LINKED_LIST_ITEM_ALLOCATION)
-UNWINDSET += aws_linked_list_is_valid_deep.0:$(shell echo $$((3 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
+UNWINDSET += __CPROVER_file_local_linked_list_inl_aws_linked_list_is_valid_deep.0:$(shell echo $$((3 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED_LIST_ITEM_ALLOCATION))))
 
 CBMCFLAGS +=
