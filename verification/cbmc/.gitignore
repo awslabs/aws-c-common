@@ -1,4 +1,8 @@
-html
-property.xml
-coverage.xml
-cbmc.txt
+# Emitted when running CBMC proofs
+proofs/**/logs
+proofs/**/gotos
+proofs/**/report
+proofs/**/html
+
+# Emitted by CBMC Viewer
+TAGS-*
