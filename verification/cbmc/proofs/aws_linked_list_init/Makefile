@@ -9,7 +9,7 @@ AWS_DEEP_CHECKS = 1
 # The loops have to be unwinded as many times as the elements of the
 # list + 2. In this case, aws_linked_list_init returns an empty list
 # so it is just 2.
-UNWINDSET += aws_linked_list_is_valid_deep.0:2
+UNWINDSET += __CPROVER_file_local_linked_list_inl_aws_linked_list_is_valid_deep.0:2
 
 CBMCFLAGS +=
 
