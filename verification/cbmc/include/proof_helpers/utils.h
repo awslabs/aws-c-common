@@ -12,6 +12,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// The magical name __CPROVER_uninterpreted_* causes CBMC to give us an
+// uninterpreted function
+uint64_t __CPROVER_uninterpreted_hasher(void *);
+
 #define IMPLIES(a, b) (!(a) || (b))
 
 struct store_byte_from_buffer {
