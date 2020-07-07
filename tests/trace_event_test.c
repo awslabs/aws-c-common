@@ -16,7 +16,7 @@ static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_SUCCESS(AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST"));
 
-    struct cJSON *root = aws_trace_event_get_root();
+    struct cJSON *root = (struct cJSON *) aws_trace_event_get_root();
     ASSERT_TRUE(cJSON_HasObjectItem(root, "traceEvents"));
     struct cJSON *event_array = cJSON_GetObjectItem(root, "traceEvents");
     struct cJSON *event;
