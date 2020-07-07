@@ -158,21 +158,27 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct 
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list);
 
-AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b);
+AWS_STATIC_IMPL void aws_linked_list_swap_contents(
+    struct aws_linked_list *AWS_RESTRICT a,
+    struct aws_linked_list *AWS_RESTRICT b);
 
 /**
  * Remove all nodes from one list, and add them to the back of another.
  *
  * Example: if dst={1,2} and src={3,4}, they become dst={1,2,3,4} and src={}
  */
-AWS_STATIC_IMPL void aws_linked_list_move_all_back(struct aws_linked_list *dst, struct aws_linked_list *src);
+AWS_STATIC_IMPL void aws_linked_list_move_all_back(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src);
 
 /**
  * Remove all nodes from one list, and add them to the front of another.
  *
  * Example: if dst={2,1} and src={4,3}, they become dst={4,3,2,1} and src={}
  */
-AWS_STATIC_IMPL void aws_linked_list_move_all_front(struct aws_linked_list *dst, struct aws_linked_list *src);
+AWS_STATIC_IMPL void aws_linked_list_move_all_front(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src);
 
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/linked_list.inl>
