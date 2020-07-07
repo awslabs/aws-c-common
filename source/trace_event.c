@@ -13,7 +13,7 @@
 struct aws_trace_event *trace_event;
 // uint64_t listener_id = 1;
 uint64_t start_time;
-
+enum aws_timestamp_unit time_unit_convert;
 /*
  * Private API
  */
@@ -72,23 +72,25 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
 }
 
 /* Destructor of trace event metadata sent through the bus */
-void aws_trace_event_destroy(void *payload) {
-    // struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *) payload;
-    // aws_mem_release(trace_event->allocator, trace_event_data->name);
-    // aws_mem_release(trace_event->allocator, trace_event_data->category);
-}
+void aws_trace_event_destroy(void *payload) {}
 
 void aws_trace_system_write(const char *filename) {
+    if (time_unit_convert == AWS_TIMESTAMP_NANOS) {
+        if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL) {
+            aws_raise_error(AWS_ERROR_OOM);
+        }
+    }
     char *out = cJSON_Print((trace_event->root));
     if (out == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     FILE *fp;
     char fn[strlen(filename) + 6];
-    strncpy(fn, filename, strlen(filename) + 1);
+
+    strcpy(fn, filename);
     strncat(fn, ".json", 6);
 
-    fp = fopen(filename, "w");
+    fp = fopen(fn, "w");
     if (fp == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
@@ -102,7 +104,7 @@ void aws_trace_system_write(const char *filename) {
  */
 
 /* starts the message bus and initializes the JSON root, and the event array for storing metadata */
-int aws_trace_system_init(struct aws_allocator *allocator) {
+int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocator *allocator) {
     if (allocator == NULL) {
         return AWS_OP_ERR;
     }
@@ -120,9 +122,11 @@ int aws_trace_system_init(struct aws_allocator *allocator) {
     }
     cJSON_AddItemToObject(trace_event->root, "traceEvents", trace_event->event_array);
 
-    if (!aws_high_res_clock_get_ticks(&start_time)) {
+    if (aws_high_res_clock_get_ticks(&start_time)) {
         return AWS_OP_ERR;
     }
+
+    time_unit_convert = time_unit;
 
     /* start the message bus */
     /* Add option to select sync vs async? */
@@ -131,11 +135,11 @@ int aws_trace_system_init(struct aws_allocator *allocator) {
         .policy = AWS_BUS_SYNC,
     };
 
-    if (!aws_bus_init(&(trace_event->bus), &options)) {
+    if (aws_bus_init(&(trace_event->bus), &options)) {
         return AWS_OP_ERR;
     }
 
-    if (!aws_bus_subscribe(&(trace_event->bus), 0, aws_trace_event_listener, NULL)) {
+    if (aws_bus_subscribe(&(trace_event->bus), 0, aws_trace_event_listener, NULL)) {
         return AWS_OP_ERR;
     }
 
@@ -156,11 +160,15 @@ void aws_trace_system_clean_up(int code, const char *filename) {
 int aws_trace_event_new(const char *category, const char *name, char phase) {
     /* set timestamp in milliseconds */
     uint64_t timestamp;
-    if (!aws_high_res_clock_get_ticks(&timestamp)) {
+    if (aws_high_res_clock_get_ticks(&timestamp)) {
+        // printf("new clock error \n");
         return AWS_OP_ERR;
     }
+
     timestamp -= start_time;
-    timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, 0);
+    if (time_unit_convert != AWS_TIMESTAMP_MILLIS) {
+        timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, time_unit_convert, 0);
+    }
 
     /* get calling thread and process ids */
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
@@ -172,11 +180,12 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
         .thread_id = thread_id,
         .process_id = process_id,
     };
-    strcpy(trace_event_data.name, name);
-    strcpy(trace_event_data.category, category);
+
+    strncpy(trace_event_data.name, name, 14);
+    strncpy(trace_event_data.category, category, 14);
 
     /* send to the bus */
-    if (!aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
+    if (aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
         return AWS_OP_ERR;
     }
     return AWS_OP_SUCCESS;

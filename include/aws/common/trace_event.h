@@ -10,6 +10,7 @@
 #    pragma warning(disable : C4996)
 #endif
 
+#include <aws/common/clock.h>
 #include <aws/common/common.h>
 
 AWS_EXTERN_C_BEGIN
@@ -18,18 +19,20 @@ AWS_EXTERN_C_BEGIN
 
 #define AWS_TRACE_EVENT_END(category, name) aws_trace_event_new(category, name, EVENT_PHASE_END)
 
+#define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event_new(category, name, EVENT_PHASE_INSTANT)
 // Phase macros
 //! add more phase types later as the app progresses
 #define EVENT_PHASE_BEGIN ('B')
 #define EVENT_PHASE_END ('E')
+#define EVENT_PHASE_INSTANT ('I')
 
 struct aws_trace_event_metadata {
     /* should be B/E for same scope or S/F for outside of scope */
     char phase;
     /* name of the event */
-    char *name;
+    char name[15];
     /* category of the event */
-    char *category;
+    char category[15];
     /* timestamp in milliseconds */
     uint64_t timestamp;
     uint64_t thread_id;
@@ -42,10 +45,10 @@ struct aws_trace_event_metadata {
  * Starts the aws_message_bus in a background thread and subscribes the listener to it.
  * Initializes a JSON object to store trace event data
  * Must be called before using event_trace_add or close_event_trace
- * Listener_id is the assigned id integer of the listener function
+ * time_unit is the time measurement used. See clock.h for options
  */
 AWS_COMMON_API
-int aws_trace_system_init(struct aws_allocator *allocator);
+int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocator *allocator);
 
 /*
  * MUST CALL TO AVOID MEMORY LEAKS
