@@ -2,10 +2,9 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/auth/auth.h>
-#include <aws/auth/external/cJSON.h>
 #include <aws/common/bus.h>
 #include <aws/common/clock.h>
+#include <aws/common/external/cJSON.h>
 #include <aws/common/logging.h>
 #include <aws/common/process.h>
 #include <aws/common/thread.h>
@@ -61,7 +60,7 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     if (cJSON_AddStringToObject(event, "ph", ph) == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
-    if (cJSON_AddNumberToObject(event, "pid", trace_event_data->process_id == NULL)) {
+    if (cJSON_AddNumberToObject(event, "pid", trace_event_data->process_id) == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     if (cJSON_AddNumberToObject(event, "tid", trace_event_data->thread_id)) {
@@ -85,7 +84,9 @@ void aws_trace_system_write(const char *filename) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     FILE *fp;
-    strcat(filename, ".json");
+    char fn[strlen(filename) + 6];
+    strncpy(fn, filename, strlen(filename) + 1);
+    strncat(fn, ".json", 6);
 
     fp = fopen(filename, "w");
     if (fp == NULL) {
@@ -101,7 +102,7 @@ void aws_trace_system_write(const char *filename) {
  */
 
 /* starts the message bus and initializes the JSON root, and the event array for storing metadata */
-int aws_trace_system_init(uint64_t address, struct aws_allocator *allocator) {
+int aws_trace_system_init(struct aws_allocator *allocator) {
     if (allocator == NULL) {
         return AWS_OP_ERR;
     }

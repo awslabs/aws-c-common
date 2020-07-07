@@ -56,7 +56,7 @@ int aws_trace_system_init(struct aws_allocator *allocator);
  * Code 0 to not write out file and Code 1 to write out to file
  */
 AWS_COMMON_API
-void aws_trace_system_clean_up(int code, char *filename);
+void aws_trace_system_clean_up(int code, const char *filename);
 
 /*
  * Sends event trace data to the aws_message_bus to be added to
@@ -65,7 +65,7 @@ void aws_trace_system_clean_up(int code, char *filename);
  * S/F for events in different scopes
  */
 AWS_COMMON_API
-int aws_trace_event_new(char *category, char *name, char phase);
+int aws_trace_event_new(const char *category, const char *name, char phase);
 
 /*
  * Used for debugging

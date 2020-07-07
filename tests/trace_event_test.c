@@ -7,11 +7,18 @@
 
 #include <aws/common/trace_event.h>
 
+#include <aws/common/thread.h>
+
+#include <aws/common/external/cJSON.h>
+
+#include <aws/common/process.h>
+
 static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-
+    // hello world
+    int follower = 1;
     int b_e = 0;
-    ASSERT_SUCCESS(AWS_TRACE_EVENT_INIT_(42, allocator));
+    ASSERT_SUCCESS(aws_trace_system_init(allocator));
     ASSERT_SUCCESS(AWS_TRACE_EVENT_BEGIN("TEST_CATEGORY", "TEST"));
 
     ASSERT_SUCCESS(AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST"));
@@ -31,6 +38,7 @@ static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
         if (!b_e) {
             ASSERT_INT_EQUALS(strcmp(ph->valuestring, "B"), 0);
             b_e += 1;
+            follower += 1;
         } else {
             ASSERT_INT_EQUALS(strcmp(ph->valuestring, "E"), 0);
         }
@@ -43,7 +51,7 @@ static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
         ASSERT_UINT_EQUALS((uint64_t)tid->valuedouble, (uint64_t)aws_thread_current_thread_id());
     }
 
-    AWS_TRACE_EVENT_CLEAN_UP();
+    aws_trace_system_clean_up(0, NULL);
     return 0;
 }
 AWS_TEST_CASE(trace_event_test, s_test_trace_event)
