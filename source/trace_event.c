@@ -2,31 +2,29 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#include <aws/auth/auth.h>
+#include <aws/auth/external/cJSON.h>
 #include <aws/common/bus.h>
 #include <aws/common/clock.h>
 #include <aws/common/logging.h>
 #include <aws/common/process.h>
 #include <aws/common/thread.h>
 #include <aws/common/trace_event.h>
-#include <aws/auth/auth.h>
-#include <aws/auth/external/cJSON.h>
-
 
 struct aws_trace_event *trace_event;
-//uint64_t listener_id = 1;
+// uint64_t listener_id = 1;
 uint64_t start_time;
 
 /*
  * Private API
  */
 
-#define ERROR_CHECK(result) \
-do{ \
-  if (!result){ \
-      AWS_FATAL_ASSERT(0 && "trace failure") \
-  } \
-}while(0)
-
+#define ERROR_CHECK(result)                                                                                            \
+    do {                                                                                                               \
+        if (!result) {                                                                                                 \
+            AWS_FATAL_ASSERT(0 && "trace failure")                                                                     \
+        }                                                                                                              \
+    } while (0)
 
 struct aws_trace_event {
     struct cJSON *root, *event_array;
@@ -36,12 +34,12 @@ struct aws_trace_event {
 
 /* Add trace event meta data to JSON object when the message bus allows it */
 void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data) {
-    struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *) msg;
-    if(trace_event_data == NULL){
+    struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *)msg;
+    if (trace_event_data == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     cJSON *event = cJSON_CreateObject();
-    if (event == NULL){
+    if (event == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
 
@@ -76,21 +74,21 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
 
 /* Destructor of trace event metadata sent through the bus */
 void aws_trace_event_destroy(void *payload) {
-    //struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *) payload;
-    //aws_mem_release(trace_event->allocator, trace_event_data->name);
-    //aws_mem_release(trace_event->allocator, trace_event_data->category);
+    // struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *) payload;
+    // aws_mem_release(trace_event->allocator, trace_event_data->name);
+    // aws_mem_release(trace_event->allocator, trace_event_data->category);
 }
 
-void aws_trace_system_write(const char *filename){
+void aws_trace_system_write(const char *filename) {
     char *out = cJSON_Print((trace_event->root));
-    if (out == NULL){
+    if (out == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     FILE *fp;
     strcat(filename, ".json");
 
     fp = fopen(filename, "w");
-    if (fp == NULL){
+    if (fp == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     fprintf(fp, "%s", out);
@@ -116,12 +114,12 @@ int aws_trace_system_init(uint64_t address, struct aws_allocator *allocator) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     trace_event->event_array = cJSON_CreateArray();
-    if (trace_event->event_array == NULL){
+    if (trace_event->event_array == NULL) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     cJSON_AddItemToObject(trace_event->root, "traceEvents", trace_event->event_array);
 
-    if (!aws_high_res_clock_get_ticks(&start_time)){
+    if (!aws_high_res_clock_get_ticks(&start_time)) {
         return AWS_OP_ERR;
     }
 
@@ -131,11 +129,11 @@ int aws_trace_system_init(uint64_t address, struct aws_allocator *allocator) {
         .allocator = allocator,
         .policy = AWS_BUS_SYNC,
     };
-   
+
     if (!aws_bus_init(&(trace_event->bus), &options)) {
         return AWS_OP_ERR;
     }
-    
+
     if (!aws_bus_subscribe(&(trace_event->bus), 0, aws_trace_event_listener, NULL)) {
         return AWS_OP_ERR;
     }
@@ -148,17 +146,16 @@ void aws_trace_system_clean_up(int code, const char *filename) {
     aws_bus_clean_up(&(trace_event->bus));
 
     if (code && filename != NULL) {
-       aws_trace_system_write(filename);
+        aws_trace_system_write(filename);
     }
     cJSON_Delete(trace_event->root);
     aws_mem_release(trace_event->allocator, trace_event);
 }
 
-
 int aws_trace_event_new(const char *category, const char *name, char phase) {
     /* set timestamp in milliseconds */
     uint64_t timestamp;
-    if (!aws_high_res_clock_get_ticks(&timestamp)){
+    if (!aws_high_res_clock_get_ticks(&timestamp)) {
         return AWS_OP_ERR;
     }
     timestamp -= start_time;
@@ -178,7 +175,7 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
     strcpy(trace_event_data.category, category);
 
     /* send to the bus */
-    if (!aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)){
+    if (!aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
         return AWS_OP_ERR;
     }
     return AWS_OP_SUCCESS;

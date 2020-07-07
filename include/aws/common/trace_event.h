@@ -7,7 +7,7 @@
 
 /* Disable warnings with windows build */
 #ifdef _MSC_VER
-#    pragma warning(disable : C4996) 
+#    pragma warning(disable : C4996)
 #endif
 
 #include <aws/common/common.h>
@@ -16,9 +16,7 @@ AWS_EXTERN_C_BEGIN
 
 #define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event_new(category, name, EVENT_PHASE_BEGIN)
 
-
 #define AWS_TRACE_EVENT_END(category, name) aws_trace_event_new(category, name, EVENT_PHASE_END)
-
 
 // Phase macros
 //! add more phase types later as the app progresses
