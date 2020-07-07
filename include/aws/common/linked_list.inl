@@ -343,6 +343,7 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aw
 AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
     AWS_PRECONDITION(aws_linked_list_is_valid(a));
     AWS_PRECONDITION(aws_linked_list_is_valid(b));
+    AWS_PRECONDITION(a != b);
     struct aws_linked_list_node *a_first = a->head.next;
     struct aws_linked_list_node *a_last = a->tail.prev;
 
@@ -372,6 +373,7 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
 AWS_STATIC_IMPL void aws_linked_list_move_all_back(struct aws_linked_list *dst, struct aws_linked_list *src) {
     AWS_PRECONDITION(aws_linked_list_is_valid(src));
     AWS_PRECONDITION(aws_linked_list_is_valid(dst));
+    AWS_PRECONDITION(dst != src);
 
     if (!aws_linked_list_empty(src)) {
         /* splice src nodes into dst, between the back and tail nodes */
@@ -397,6 +399,7 @@ AWS_STATIC_IMPL void aws_linked_list_move_all_back(struct aws_linked_list *dst, 
 AWS_STATIC_IMPL void aws_linked_list_move_all_front(struct aws_linked_list *dst, struct aws_linked_list *src) {
     AWS_PRECONDITION(aws_linked_list_is_valid(src));
     AWS_PRECONDITION(aws_linked_list_is_valid(dst));
+    AWS_PRECONDITION(dst != src);
 
     if (!aws_linked_list_empty(src)) {
         /* splice src nodes into dst, between the head and front nodes */
