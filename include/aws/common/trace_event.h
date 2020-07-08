@@ -12,7 +12,6 @@
 
 #include <aws/common/common.h>
 
-
 AWS_EXTERN_C_BEGIN
 
 #define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event_new(category, name, EVENT_PHASE_BEGIN)
@@ -20,6 +19,7 @@ AWS_EXTERN_C_BEGIN
 #define AWS_TRACE_EVENT_END(category, name) aws_trace_event_new(category, name, EVENT_PHASE_END)
 
 #define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event_new(category, name, EVENT_PHASE_INSTANT)
+
 // Phase macros
 //! add more phase types later as the app progresses
 #define EVENT_PHASE_BEGIN ('B')
@@ -48,7 +48,7 @@ struct aws_trace_event_metadata {
  * Starts the aws_message_bus in a background thread and subscribes the listener to it.
  * Initializes a JSON object to store trace event data
  * Must be called before using event_trace_add or close_event_trace
- * 
+ *
  */
 AWS_COMMON_API
 int aws_trace_system_init(struct aws_allocator *allocator);

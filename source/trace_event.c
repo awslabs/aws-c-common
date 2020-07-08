@@ -13,7 +13,7 @@
 struct aws_trace_event *trace_event;
 // uint64_t listener_id = 1;
 uint64_t start_time;
-enum aws_timestamp_unit time_unit_convert;
+
 /*
  * Private API
  */
@@ -66,20 +66,19 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     if (cJSON_AddNumberToObject(event, "tid", trace_event_data->thread_id)) {
         aws_raise_error(AWS_ERROR_OOM);
     }
-    if (cJSON_AddNumberToObject(event, "ts", (double) trace_event_data->timestamp)) {
+    if (cJSON_AddNumberToObject(event, "ts", (double)trace_event_data->timestamp)) {
         aws_raise_error(AWS_ERROR_OOM);
     }
 }
 
 /* Destructor of trace event metadata sent through the bus */
-void aws_trace_event_destroy(void *payload) {
-}
+void aws_trace_event_destroy(void *payload) {}
 
 void aws_trace_system_write(int time_unit, const char *filename) {
     if (time_unit) {
-       if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL){
-           aws_raise_error(AWS_ERROR_OOM);
- }
+        if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL) {
+            aws_raise_error(AWS_ERROR_OOM);
+        }
     }
     char *out = cJSON_Print((trace_event->root));
     if (out == NULL) {
@@ -87,7 +86,7 @@ void aws_trace_system_write(int time_unit, const char *filename) {
     }
     FILE *fp;
     char fn[strlen(filename) + 6];
-    
+
     strcpy(fn, filename);
     strncat(fn, ".json", 6);
 
@@ -96,7 +95,7 @@ void aws_trace_system_write(int time_unit, const char *filename) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     fprintf(fp, "%s", out);
-    fclose(fp);                                                                         
+    fclose(fp);
     aws_mem_release(trace_event->allocator, out);
 }
 
@@ -150,7 +149,7 @@ void aws_trace_system_clean_up(int code, int time_unit, const char *filename) {
     aws_bus_clean_up(&(trace_event->bus));
 
     if (code && filename != NULL) {
-        aws_trace_system_write(filename);
+        aws_trace_system_write(time_unit, filename);
     }
     cJSON_Delete(trace_event->root);
     aws_mem_release(trace_event->allocator, trace_event);
@@ -163,11 +162,8 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
         return AWS_OP_ERR;
     }
     timestamp -= start_time;
-    //double time_nano = (double) timestamp;
-    if (time_unit_convert == AWS_TIMESTAMP_MICROS){
 
-        timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, time_unit_convert, 0);
-    }
+    timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
 
     /* get calling thread and process ids */
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
@@ -179,10 +175,9 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
         .thread_id = thread_id,
         .process_id = process_id,
     };
-    
+
     strncpy(trace_event_data.name, name, 14);
     strncpy(trace_event_data.category, category, 14);
-    
 
     /* send to the bus */
     if (aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
