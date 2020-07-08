@@ -10,8 +10,8 @@
 #    pragma warning(disable : C4996)
 #endif
 
-#include <aws/common/clock.h>
 #include <aws/common/common.h>
+
 
 AWS_EXTERN_C_BEGIN
 
@@ -25,6 +25,9 @@ AWS_EXTERN_C_BEGIN
 #define EVENT_PHASE_BEGIN ('B')
 #define EVENT_PHASE_END ('E')
 #define EVENT_PHASE_INSTANT ('I')
+
+#define AWS_TRACE_EVENT_TIME_DISPLAY_MICRO 0
+#define AWS_TRACE_EVENT_TIME_DISPLAY_NANO 1
 
 struct aws_trace_event_metadata {
     /* should be B/E for same scope or S/F for outside of scope */
@@ -45,10 +48,10 @@ struct aws_trace_event_metadata {
  * Starts the aws_message_bus in a background thread and subscribes the listener to it.
  * Initializes a JSON object to store trace event data
  * Must be called before using event_trace_add or close_event_trace
- * time_unit is the time measurement used. See clock.h for options
+ * 
  */
 AWS_COMMON_API
-int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocator *allocator);
+int aws_trace_system_init(struct aws_allocator *allocator);
 
 /*
  * MUST CALL TO AVOID MEMORY LEAKS
@@ -57,9 +60,10 @@ int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocato
  * as a .JSON file.
  * Closes the JSON object and frees all allocated memory.
  * Code 0 to not write out file and Code 1 to write out to file
+ * time_unit how seconds are displayed on chrome://tracing
  */
 AWS_COMMON_API
-void aws_trace_system_clean_up(int code, const char *filename);
+void aws_trace_system_clean_up(int code, int time_unit, const char *filename);
 
 /*
  * Sends event trace data to the aws_message_bus to be added to

@@ -66,19 +66,20 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     if (cJSON_AddNumberToObject(event, "tid", trace_event_data->thread_id)) {
         aws_raise_error(AWS_ERROR_OOM);
     }
-    if (cJSON_AddNumberToObject(event, "ts", trace_event_data->timestamp)) {
+    if (cJSON_AddNumberToObject(event, "ts", (double) trace_event_data->timestamp)) {
         aws_raise_error(AWS_ERROR_OOM);
     }
 }
 
 /* Destructor of trace event metadata sent through the bus */
-void aws_trace_event_destroy(void *payload) {}
+void aws_trace_event_destroy(void *payload) {
+}
 
-void aws_trace_system_write(const char *filename) {
-    if (time_unit_convert == AWS_TIMESTAMP_NANOS) {
-        if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL) {
-            aws_raise_error(AWS_ERROR_OOM);
-        }
+void aws_trace_system_write(int time_unit, const char *filename) {
+    if (time_unit) {
+       if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL){
+           aws_raise_error(AWS_ERROR_OOM);
+ }
     }
     char *out = cJSON_Print((trace_event->root));
     if (out == NULL) {
@@ -86,7 +87,7 @@ void aws_trace_system_write(const char *filename) {
     }
     FILE *fp;
     char fn[strlen(filename) + 6];
-
+    
     strcpy(fn, filename);
     strncat(fn, ".json", 6);
 
@@ -95,7 +96,7 @@ void aws_trace_system_write(const char *filename) {
         aws_raise_error(AWS_ERROR_OOM);
     }
     fprintf(fp, "%s", out);
-    fclose(fp);
+    fclose(fp);                                                                         
     aws_mem_release(trace_event->allocator, out);
 }
 
@@ -104,7 +105,7 @@ void aws_trace_system_write(const char *filename) {
  */
 
 /* starts the message bus and initializes the JSON root, and the event array for storing metadata */
-int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocator *allocator) {
+int aws_trace_system_init(struct aws_allocator *allocator) {
     if (allocator == NULL) {
         return AWS_OP_ERR;
     }
@@ -126,8 +127,6 @@ int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocato
         return AWS_OP_ERR;
     }
 
-    time_unit_convert = time_unit;
-
     /* start the message bus */
     /* Add option to select sync vs async? */
     struct aws_bus_options options = {
@@ -146,7 +145,7 @@ int aws_trace_system_init(enum aws_timestamp_unit time_unit, struct aws_allocato
     return AWS_OP_SUCCESS;
 }
 
-void aws_trace_system_clean_up(int code, const char *filename) {
+void aws_trace_system_clean_up(int code, int time_unit, const char *filename) {
     aws_bus_unsubscribe(&(trace_event->bus), 0, aws_trace_event_listener, NULL);
     aws_bus_clean_up(&(trace_event->bus));
 
@@ -161,12 +160,12 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
     /* set timestamp in milliseconds */
     uint64_t timestamp;
     if (aws_high_res_clock_get_ticks(&timestamp)) {
-        // printf("new clock error \n");
         return AWS_OP_ERR;
     }
-
     timestamp -= start_time;
-    if (time_unit_convert != AWS_TIMESTAMP_MILLIS) {
+    //double time_nano = (double) timestamp;
+    if (time_unit_convert == AWS_TIMESTAMP_MICROS){
+
         timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, time_unit_convert, 0);
     }
 
@@ -180,9 +179,10 @@ int aws_trace_event_new(const char *category, const char *name, char phase) {
         .thread_id = thread_id,
         .process_id = process_id,
     };
-
+    
     strncpy(trace_event_data.name, name, 14);
     strncpy(trace_event_data.category, category, 14);
+    
 
     /* send to the bus */
     if (aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
