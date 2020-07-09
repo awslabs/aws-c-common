@@ -32,6 +32,7 @@ function(aws_set_common_properties target)
 
         if (AWS_SUPPORT_WIN7)
             # Use only APIs available in Win7 and later
+            message(STATUS "Windows 7 support requested, forcing WINVER and _WIN32_WINNT to 0x0601")
             list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
             list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
         endif()
