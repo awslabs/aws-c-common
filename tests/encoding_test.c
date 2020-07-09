@@ -1004,7 +1004,7 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
         /* Tell the user that we allocate here and if success they're responsible for the free. */
         if (aws_byte_buf_init(out_buf, alloc, allocation_size)) {
             fclose(fp);
-            ASSERT_FALSE(true, "Failed to init buffer")
+            ASSERT_FALSE(true, "Failed to init buffer");
             return AWS_OP_ERR;
         }
 
