@@ -991,6 +991,7 @@ AWS_TEST_CASE(hex_encoding_append_dynamic_test_case_empty, s_hex_encoding_append
 static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename) {
     AWS_ZERO_STRUCT(*out_buf);
     FILE *fp = fopen(filename, "r");
+    ASSERT_NOT_NULL(fp);
 
     if (fp) {
         if (fseek(fp, 0L, SEEK_END)) {
