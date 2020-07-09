@@ -544,6 +544,7 @@ static int s_do_append_dynamic_test(
 }
 
 static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
     (void)ctx;
 
     uint8_t buf_storage[5];
