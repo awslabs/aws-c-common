@@ -53,9 +53,13 @@ uint64_t start_time;
 char *filename_out;
 const int time_unit = AWS_TIMESTAMP_MICROS;
 
-struct aws_trace_event_metadata_counter {
+struct aws_trace_event_metadata_args_1 {
     int value;
     char value_name[15];
+};
+struct aws_trace_event_metadata_args_2 {
+    int value[2];
+    char value_name[2][15];
 };
 
 struct aws_trace_event_metadata {
@@ -69,17 +73,22 @@ struct aws_trace_event_metadata {
     uint64_t timestamp;
     uint64_t thread_id;
     int process_id;
-    /* Pointer to counter data if provided */
-    struct aws_trace_event_metadata_counter *counter_data;
+    /* if args are enabled either args_1 or args_2 must be allocated */
+    bool args_enabled;
+
+    struct aws_trace_event_metadata_args_1 *args_1;
+
+    struct aws_trace_event_metadata_args_2 *args_2;
 };
 
 /*
  * Private API
  */
 
+/* function declaration to prevent compiler errors */
 void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data);
 
-void aws_trace_system_write() {
+void aws_trace_system_write(void) {
     if (time_unit == AWS_TIMESTAMP_NANOS) {
         if (cJSON_AddStringToObject(trace_event->root, "displayTimeUnit", "ns") == NULL) {
             aws_raise_error(AWS_ERROR_OOM);
@@ -110,7 +119,7 @@ release_out:
     aws_mem_release(trace_event->allocator, out);
 }
 
-void s_trace_event_system_clean_up() {
+void s_trace_event_system_clean_up(void) {
     if (!trace_event) {
         return;
     }
@@ -132,11 +141,14 @@ release_trace_event:
     aws_mem_release(trace_event->allocator, trace_event);
 }
 
-/* Free memory allocated if counter is used */
+/* Free memory allocated if args are used */
 void aws_trace_event_destroy(void *payload) {
     struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *)payload;
-    if (trace_event_data->phase == EVENT_PHASE_COUNTER) {
-        aws_mem_release(trace_event->allocator, trace_event_data->counter_data);
+    if (!AWS_IS_ZEROED(trace_event_data->args_1)) {
+        aws_mem_release(trace_event->allocator, trace_event_data->args_1);
+    }
+    if (!AWS_IS_ZEROED(trace_event_data->args_2)) {
+        aws_mem_release(trace_event->allocator, trace_event_data->args_2);
     }
 }
 
@@ -175,18 +187,26 @@ void aws_trace_event_listener(uint64_t address, const void *msg, void *user_data
     ERROR_CHECK(cJSON_AddNumberToObject(event, "ts", (double)trace_event_data->timestamp), AWS_ERROR_OOM);
 
     // add counter data if provided
-    if (trace_event_data->phase == EVENT_PHASE_COUNTER) {
-        if (trace_event_data->counter_data != NULL) {
+    if (trace_event_data->args_enabled) {
 
-            cJSON *args = cJSON_CreateObject();
+        cJSON *args = cJSON_CreateObject();
 
-            ERROR_CHECK(args, AWS_ERROR_OOM);
+        ERROR_CHECK(args, AWS_ERROR_OOM);
 
-            cJSON_AddItemToObject(event, "args", args);
-
+        cJSON_AddItemToObject(event, "args", args);
+        if (trace_event_data->args_1) {
+            ERROR_CHECK(
+                cJSON_AddNumberToObject(args, trace_event_data->args_1->value_name, trace_event_data->args_1->value),
+                AWS_ERROR_OOM);
+        }
+        if (trace_event_data->args_2) {
             ERROR_CHECK(
                 cJSON_AddNumberToObject(
-                    args, trace_event_data->counter_data->value_name, trace_event_data->counter_data->value),
+                    args, trace_event_data->args_2->value_name[0], trace_event_data->args_2->value[0]),
+                AWS_ERROR_OOM);
+            ERROR_CHECK(
+                cJSON_AddNumberToObject(
+                    args, trace_event_data->args_2->value_name[1], trace_event_data->args_2->value[1]),
                 AWS_ERROR_OOM);
         }
     }
@@ -238,13 +258,13 @@ int aws_trace_system_init(const char *filename, struct aws_allocator *allocator)
 
     cJSON_AddItemToObject(trace_event->root, "traceEvents", trace_event->event_array);
 
-    /* maybe kill program entirely when this happens */
     /* Set starting time for program */
     if (aws_high_res_clock_get_ticks(&start_time)) {
         aws_raise_error(AWS_ERROR_CLOCK_FAILURE);
         goto error;
     }
 
+    /* allocate memory and enable writing out if filename is not null */
     if (filename != NULL) {
         filename_out = aws_mem_acquire(trace_event->allocator, strlen(filename) + 1);
         strcpy(filename_out, filename);
@@ -257,7 +277,15 @@ error:
     return AWS_OP_ERR;
 }
 
-int aws_trace_event(const char *category, const char *name, char phase, int value, const char *value_name) {
+int aws_trace_event(
+    const char *category,
+    const char *name,
+    char phase,
+    int value_1,
+    const char *value_name_1,
+    int value_2,
+    const char *value_name_2) {
+
     /* set timestamps are in nanoseconds */
     uint64_t timestamp;
 
@@ -284,18 +312,36 @@ int aws_trace_event(const char *category, const char *name, char phase, int valu
     strncpy(trace_event_data.name, name, 14);
     strncpy(trace_event_data.category, category, 14);
 
-    /* addding counter metadata */
-    if (phase == EVENT_PHASE_COUNTER) {
-        trace_event_data.counter_data =
-            aws_mem_calloc(trace_event->allocator, 1, sizeof(struct aws_trace_event_metadata_counter));
-        trace_event_data.counter_data->value = value;
-        strncpy(trace_event_data.counter_data->value_name, value_name, 14);
+    /* addding args metadata */
+    if (value_name_1 != NULL) {
+
+        trace_event_data.args_enabled = true;
+
+        /* initialize args_2 pointer if 2 values are given */
+        if (value_name_2 != NULL) {
+            trace_event_data.args_2 =
+                aws_mem_calloc(trace_event->allocator, 1, sizeof(struct aws_trace_event_metadata_args_2));
+            trace_event_data.args_2->value[0] = value_1;
+            strncpy(trace_event_data.args_2->value_name[0], value_name_1, 14);
+
+            trace_event_data.args_2->value[1] = value_2;
+            strncpy(trace_event_data.args_2->value_name[1], value_name_2, 14);
+
+        } else {
+            trace_event_data.args_1 =
+                aws_mem_calloc(trace_event->allocator, 1, sizeof(struct aws_trace_event_metadata_args_1));
+            trace_event_data.args_1->value = value_1;
+            strncpy(trace_event_data.args_1->value_name, value_name_1, 14);
+        }
     }
 
     /* send to the bus */
     if (aws_bus_send(&(trace_event->bus), 0, &trace_event_data, aws_trace_event_destroy)) {
-        if (!AWS_IS_ZEROED(trace_event_data.counter_data)) {
-            aws_mem_release(trace_event->allocator, trace_event_data.counter_data);
+        if (!AWS_IS_ZEROED(trace_event_data.args_1)) {
+            aws_mem_release(trace_event->allocator, trace_event_data.args_1);
+        }
+        if (!AWS_IS_ZEROED(trace_event_data.args_2)) {
+            aws_mem_release(trace_event->allocator, trace_event_data.args_2);
         }
         return AWS_OP_ERR;
     }

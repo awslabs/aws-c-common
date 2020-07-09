@@ -8,15 +8,33 @@
 #include <aws/common/common.h>
 
 AWS_EXTERN_C_BEGIN
+/* duration events */
+#define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event(category, name, EVENT_PHASE_BEGIN, 0, NULL, 0, NULL)
+#define AWS_TRACE_EVENT_END(category, name) aws_trace_event(category, name, EVENT_PHASE_END, 0, NULL, 0, NULL)
+/* duration events with args */
+/* Duplicate args in matching duration events will be overwritten by args in ENDx */
+#define AWS_TRACE_EVENT_BEGIN1(category, name, value)                                                                  \
+    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value, #value, 0 NULL)
+#define AWS_TRACE_EVENT_BEGIN2(category, name, value1, value2)                                                         \
+    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value1, #value1, value2, #value2)
+#define AWS_TRACE_EVENT_END1(category, name, value)                                                                    \
+    aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0 NULL)
+#define AWS_TRACE_EVENT_END2(category, name, value1, value2)                                                           \
+    aws_trace_event(category, name, EVENT_PHASE_END, value1, #value1, value2, #value2)
 
-#define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event(category, name, EVENT_PHASE_BEGIN, 0, NULL)
+/* instant events */
+#define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event(category, name, EVENT_PHASE_INSTANT, 0, NULL, 0, NULL)
+/* instant events with args */
+#define AWS_TRACE_EVENT_INSTANT1(category, name, value)                                                                \
+    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0 NULL)
+#define AWS_TRACE_EVENT_INSTANT2(category, name, value1, value2)                                                       \
+    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
 
-#define AWS_TRACE_EVENT_END(category, name) aws_trace_event(category, name, EVENT_PHASE_END, 0, NULL)
-
-#define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event(category, name, EVENT_PHASE_INSTANT, 0, NULL)
-
-#define AWS_TRACE_EVENT_COUNTER(category, name, value)                                                                 \
-    aws_trace_event(category, name, EVENT_PHASE_COUNTER, value, #value)
+/* counter events */
+#define AWS_TRACE_EVENT_COUNTER1(category, name, value)                                                                \
+    aws_trace_event(category, name, EVENT_PHASE_COUNTER, value, #value, 0, NULL)
+#define AWS_TRACE_EVENT_COUNTER2(category, name, value1, value2)                                                       \
+    aws_trace_event(category, name, EVENT_PHASE_COUNTER, value1, #value1, value2, #value2)
 
 // Phase macros
 //! add more phase types later as the app progresses
@@ -51,11 +69,17 @@ int aws_trace_system_init(const char *filename, struct aws_allocator *allocator)
  * Sends event trace data to the aws_message_bus to be added to
  * a JSON object.
  * Category and name and value name must be string literals
- * phase can be B/E for event starts and stops added in the same scope and
- * S/F for events in different scopes
+ * phase can be B/E for duration, I for instant, and C for counter events
  */
 AWS_COMMON_API
-int aws_trace_event(const char *category, const char *name, char phase, int value, const char *value_name);
+int aws_trace_event(
+    const char *category,
+    const char *name,
+    char phase,
+    int value_1,
+    const char *value_name_1,
+    int value_2,
+    const char *value_name_2);
 
 /*
  *

@@ -435,12 +435,12 @@ add_test_case(resource_name_tostring_test)
 add_test_case(resource_name_tostring_failure_test)
 add_test_case(resource_name_length_test)
 
-add_test_case(trace_event_test)
-
 add_test_case(bus_sync_test_send)
 add_test_case(bus_sync_test_send_pod)
 
-
+add_test_case(trace_event_duration_test)
+add_test_case(trace_event_instant_test)
+add_test_case(trace_event_counter_test)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

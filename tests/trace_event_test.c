@@ -13,10 +13,10 @@
 
 #include <aws/common/process.h>
 
-static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
+static int s_test_trace_event_duration(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     int b_e = 0;
-    ASSERT_SUCCESS(aws_trace_system_init(allocator));
+    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
     ASSERT_SUCCESS(AWS_TRACE_EVENT_BEGIN("TEST_CATEGORY", "TEST"));
 
     ASSERT_SUCCESS(AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST"));
@@ -48,11 +48,100 @@ static int s_test_trace_event(struct aws_allocator *allocator, void *ctx) {
         ASSERT_UINT_EQUALS((uint64_t)tid->valuedouble, (uint64_t)aws_thread_current_thread_id());
     }
 
-    aws_trace_system_clean_up(0, AWS_TRACE_EVENT_TIME_DISPLAY_MICRO, NULL);
+    aws_trace_system_clean_up();
     return 0;
 }
-AWS_TEST_CASE(trace_event_test, s_test_trace_event)
 
+static int s_test_trace_event_instant(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
+    ASSERT_SUCCESS(AWS_TRACE_EVENT_INSTANT("TEST_INSTANT", "TEST1"));
+
+    ASSERT_SUCCESS(AWS_TRACE_EVENT_INSTANT("TEST_INSTANT", "TEST2"));
+
+    struct cJSON *root = (struct cJSON *)aws_trace_event_get_root();
+    ASSERT_TRUE(cJSON_HasObjectItem(root, "traceEvents"));
+    struct cJSON *event_array = cJSON_GetObjectItem(root, "traceEvents");
+    struct cJSON *event;
+    int event_num = 0;
+    cJSON_ArrayForEach(event, event_array) {
+        struct cJSON *cat = cJSON_GetObjectItem(event, "cat");
+        ASSERT_INT_EQUALS(strcmp(cat->valuestring, "TEST_INSTANT"), 0);
+
+        struct cJSON *name = cJSON_GetObjectItem(event, "name");
+
+        struct cJSON *ph = cJSON_GetObjectItem(event, "ph");
+        ASSERT_INT_EQUALS(strcmp(ph->valuestring, "I"), 0);
+
+        if (!event_num) {
+            ASSERT_INT_EQUALS(strcmp(name->valuestring, "TEST1"), 0);
+            event_num += 1;
+        } else {
+            ASSERT_INT_EQUALS(strcmp(name->valuestring, "TEST2"), 0);
+        }
+
+        struct cJSON *pid = cJSON_GetObjectItem(event, "pid");
+        ASSERT_INT_EQUALS(pid->valueint, aws_get_pid());
+
+        /* This test has weird casting */
+        struct cJSON *tid = cJSON_GetObjectItem(event, "tid");
+        ASSERT_UINT_EQUALS((uint64_t)tid->valuedouble, (uint64_t)aws_thread_current_thread_id());
+    }
+
+    aws_trace_system_clean_up();
+    return 0;
+}
+
+static int s_test_trace_event_counter(struct aws_allocator *allocator, void *ctx) {
+
+    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
+    int counter = 1;
+    ASSERT_SUCCESS(AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST1", counter));
+    counter = 1111;
+    ASSERT_SUCCESS(AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST2", counter));
+    struct cJSON *root = (struct cJSON *)aws_trace_event_get_root();
+    struct cJSON *event_array = cJSON_GetObjectItem(root, "traceEvents");
+    struct cJSON *event;
+    int event_num = 0;
+    cJSON_ArrayForEach(event, event_array) {
+        struct cJSON *cat = cJSON_GetObjectItem(event, "cat");
+        ASSERT_INT_EQUALS(strcmp(cat->valuestring, "TEST_COUNTER"), 0);
+
+        struct cJSON *name = cJSON_GetObjectItem(event, "name");
+
+        struct cJSON *ph = cJSON_GetObjectItem(event, "ph");
+        ASSERT_INT_EQUALS(strcmp(ph->valuestring, "C"), 0);
+        struct cJSON *args = cJSON_GetObjectItem(event, "args");
+        struct cJSON *event_counter = cJSON_GetObjectItem(args, "counter");
+        if (!event_num) {
+
+            ASSERT_INT_EQUALS(strcmp(name->valuestring, "TEST1"), 0);
+
+            ASSERT_INT_EQUALS(event_counter->valueint, 1);
+            event_num += 1;
+        } else {
+            ASSERT_INT_EQUALS(strcmp(name->valuestring, "TEST2"), 0);
+            ASSERT_INT_EQUALS(event_counter->valueint, 1111);
+        }
+
+        struct cJSON *pid = cJSON_GetObjectItem(event, "pid");
+        ASSERT_INT_EQUALS(pid->valueint, aws_get_pid());
+
+        /* This test has weird casting */
+        struct cJSON *tid = cJSON_GetObjectItem(event, "tid");
+        ASSERT_UINT_EQUALS((uint64_t)tid->valuedouble, (uint64_t)aws_thread_current_thread_id());
+    }
+
+    aws_trace_system_clean_up();
+    return 0;
+}
+
+AWS_TEST_CASE(trace_event_duration_test, s_test_trace_event_duration)
+
+AWS_TEST_CASE(trace_event_instant_test, s_test_trace_event_instant)
+
+AWS_TEST_CASE(trace_event_counter_test, s_test_trace_event_counter)
 /*
  * figuring out unit testing
  * Should I use valgrind to check
