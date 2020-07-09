@@ -312,9 +312,209 @@ static int s_test_linked_list_swap_contents(struct aws_allocator *allocator, voi
     return AWS_OP_SUCCESS;
 }
 
+static int s_test_linked_list_move_all_back(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list a, b;
+    struct aws_linked_list_node a1, a2, b1, b2;
+
+    /* Setup lists like:
+     * a = {a1, a2}
+     * b = {b1, b2}
+     *
+     * After move should be like:
+     * a = {a1, a2, b1, b2}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_back(&a, &a1);
+    aws_linked_list_push_back(&a, &a2);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_back(&b, &b1);
+    aws_linked_list_push_back(&b, &b2);
+
+    aws_linked_list_move_all_back(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_a1a2b1b2[] = {&a1, &a2, &b1, &b2};
+    struct aws_linked_list_node *it = aws_linked_list_begin(&a);
+    size_t i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_a1a2b1b2[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_a1a2b1b2), i);
+
+    /* Setup lists like:
+     * a = {}
+     * b = {b1, b2}
+     *
+     * After move should be like:
+     * a = {b1, b2}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_back(&b, &b1);
+    aws_linked_list_push_back(&b, &b2);
+
+    aws_linked_list_move_all_back(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_b1b2[] = {&b1, &b2};
+    it = aws_linked_list_begin(&a);
+    i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_b1b2[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_b1b2), i);
+
+    /* Setup lists like:
+     * a = {a1}
+     * b = {b1}
+     *
+     * After move should be like:
+     * a = {a1, b1}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_back(&a, &a1);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_back(&b, &b1);
+
+    aws_linked_list_move_all_back(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_a1b1[] = {&a1, &b1};
+    it = aws_linked_list_begin(&a);
+    i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_a1b1[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_a1b1), i);
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_test_linked_list_move_all_front(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list a, b;
+    struct aws_linked_list_node a1, a2, b1, b2;
+
+    /* Setup lists like:
+     * a = {a2, a1}
+     * b = {b2, b1}
+     *
+     * After move should be like:
+     * a = {b2, b1, a2, a1}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_front(&a, &a1);
+    aws_linked_list_push_front(&a, &a2);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_front(&b, &b1);
+    aws_linked_list_push_front(&b, &b2);
+
+    aws_linked_list_move_all_front(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_b2b1a2a1[] = {&b2, &b1, &a2, &a1};
+    struct aws_linked_list_node *it = aws_linked_list_begin(&a);
+    size_t i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_b2b1a2a1[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_b2b1a2a1), i);
+
+    /* Setup lists like:
+     * a = {}
+     * b = {b2, b1}
+     *
+     * After move should be like:
+     * a = {b2, b1}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_front(&b, &b1);
+    aws_linked_list_push_front(&b, &b2);
+
+    aws_linked_list_move_all_front(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_b2b1[] = {&b2, &b1};
+    it = aws_linked_list_begin(&a);
+    i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_b2b1[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_b2b1), i);
+
+    /* Setup lists like:
+     * a = {a1}
+     * b = {b1}
+     *
+     * After move should be like:
+     * a = {b1, a1}
+     * b = {}
+     */
+    aws_linked_list_init(&a);
+    aws_linked_list_push_front(&a, &a1);
+
+    aws_linked_list_init(&b);
+    aws_linked_list_push_front(&b, &b1);
+
+    aws_linked_list_move_all_front(&a, &b);
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&a));
+    ASSERT_TRUE(aws_linked_list_is_valid_deep(&b));
+    ASSERT_TRUE(aws_linked_list_empty(&b));
+
+    struct aws_linked_list_node *expected_b1a1[] = {&b1, &a1};
+    it = aws_linked_list_begin(&a);
+    i = 0;
+    while (it != aws_linked_list_end(&a)) {
+        ASSERT_PTR_EQUALS(expected_b1a1[i], it);
+        it = aws_linked_list_next(it);
+        i++;
+    };
+    ASSERT_UINT_EQUALS(AWS_ARRAY_SIZE(expected_b1a1), i);
+
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
 AWS_TEST_CASE(linked_list_swap_nodes, s_test_linked_list_swap_nodes)
 AWS_TEST_CASE(linked_list_iteration, s_test_linked_list_iteration)
 AWS_TEST_CASE(linked_list_reverse_iteration, s_test_linked_list_reverse_iteration)
 AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)
+AWS_TEST_CASE(linked_list_move_all_back, s_test_linked_list_move_all_back)
+AWS_TEST_CASE(linked_list_move_all_front, s_test_linked_list_move_all_front)

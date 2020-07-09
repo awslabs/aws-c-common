@@ -704,6 +704,25 @@ AWS_COMMON_API bool aws_byte_buf_write_from_whole_cursor(
     struct aws_byte_cursor src);
 
 /**
+ * Without increasing buf's capacity, write as much as possible from advancing_cursor into buf.
+ *
+ * buf's len is updated accordingly.
+ * advancing_cursor is advanced so it contains the remaining unwritten parts.
+ * Returns the section of advancing_cursor which was written.
+ *
+ * This function cannot fail. If buf is full (len == capacity) or advancing_len has 0 length,
+ * then buf and advancing_cursor are not altered and a cursor with 0 length is returned.
+ *
+ * Example: Given a buf with 2 bytes of space available and advancing_cursor with contents "abc".
+ * "ab" will be written to buf and buf->len will increase 2 and become equal to buf->capacity.
+ * advancing_cursor will advance so its contents become the unwritten "c".
+ * The returned cursor's contents will be the "ab" from the original advancing_cursor.
+ */
+AWS_COMMON_API struct aws_byte_cursor aws_byte_buf_write_to_capacity(
+    struct aws_byte_buf *buf,
+    struct aws_byte_cursor *advancing_cursor);
+
+/**
  * Copies one byte to buffer.
  *
  * On success, returns true and updates the cursor /length
