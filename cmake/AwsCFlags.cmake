@@ -29,6 +29,10 @@ function(aws_set_common_properties target)
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
 
+        # Use only APIs available in Win7 and later
+        list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
+        list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
+
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
             string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")

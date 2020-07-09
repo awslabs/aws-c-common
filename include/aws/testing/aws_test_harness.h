@@ -380,6 +380,15 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
 #if defined(_WIN32)
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
+    /* Set working directory to path to this exe */
+    char cwd[512];
+    DWORD len = GetModuleFileNameA(NULL, cwd, sizeof(cwd));
+    DWORD idx = len - 1;
+    while (idx && cwd[idx] != '\\') {
+        idx--;
+    }
+    cwd[idx] = 0;
+    SetCurrentDirectory(cwd);
 #elif defined(AWS_HAVE_EXECINFO)
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));

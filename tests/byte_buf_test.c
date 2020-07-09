@@ -544,6 +544,7 @@ static int s_do_append_dynamic_test(
 }
 
 static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
     (void)ctx;
 
     uint8_t buf_storage[5];
@@ -919,7 +920,7 @@ static int s_test_isalnum(struct aws_allocator *allocator, void *ctx) {
 
     /* should not be affected by C locale */
     setlocale(LC_CTYPE, "de_DE.iso88591");
-    ASSERT_FALSE(aws_isalnum('\xdf')); /* German letter ß in ISO-8859-1 */
+    ASSERT_FALSE(aws_isalnum((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
 
     return 0;
 }
@@ -946,7 +947,7 @@ static int s_test_isalpha(struct aws_allocator *allocator, void *ctx) {
 
     /* should not be affected by C locale */
     setlocale(LC_CTYPE, "de_DE.iso88591");
-    ASSERT_FALSE(aws_isalpha('\xdf')); /* German letter ß in ISO-8859-1 */
+    ASSERT_FALSE(aws_isalpha((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
 
     return 0;
 }
