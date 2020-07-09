@@ -1016,7 +1016,7 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
         if (fseek(fp, 0L, SEEK_SET)) {
             aws_byte_buf_clean_up(out_buf);
             fclose(fp);
-            ASSERT_FALSE(true, "Failed to seek to start")
+            ASSERT_FALSE(true, "Failed to seek to start");
             return AWS_OP_ERR;
         }
 
