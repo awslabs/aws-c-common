@@ -1028,6 +1028,8 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
             return AWS_OP_ERR;
         }
 
+        out_buf->len = read;
+
         return AWS_OP_SUCCESS;
     }
 
