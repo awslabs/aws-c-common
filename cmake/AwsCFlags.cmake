@@ -7,6 +7,7 @@ include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
+option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 
 # This function will set all common flags on a target
 # Options:
@@ -29,9 +30,13 @@ function(aws_set_common_properties target)
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
 
-        # Use only APIs available in Win7 and later
-        list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
-        list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
+        if (AWS_SUPPORT_WIN7)
+            # Use only APIs available in Win7 and later
+            message(STATUS "Windows 7 support requested, forcing WINVER and _WIN32_WINNT to 0x0601")
+            list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
+            list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
+            list(APPEND AWS_C_FLAGS /DAWS_SUPPORT_WIN7=1)
+        endif()
 
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
