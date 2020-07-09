@@ -996,6 +996,7 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
     if (fp) {
         if (fseek(fp, 0L, SEEK_END)) {
             fclose(fp);
+            ASSERT_FALSE(true, "Failed to seek to end");
             return AWS_OP_ERR;
         }
 
@@ -1003,6 +1004,7 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
         /* Tell the user that we allocate here and if success they're responsible for the free. */
         if (aws_byte_buf_init(out_buf, alloc, allocation_size)) {
             fclose(fp);
+            ASSERT_FALSE(true, "Failed to init buffer")
             return AWS_OP_ERR;
         }
 
@@ -1014,12 +1016,14 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
         if (fseek(fp, 0L, SEEK_SET)) {
             aws_byte_buf_clean_up(out_buf);
             fclose(fp);
+            ASSERT_FALSE(true, "Failed to seek to start")
             return AWS_OP_ERR;
         }
 
         size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
         fclose(fp);
         if (read < out_buf->len) {
+            ASSERT_INT_EQUALS(read, out_buf->len);
             aws_byte_buf_clean_up(out_buf);
             return AWS_OP_ERR;
         }
