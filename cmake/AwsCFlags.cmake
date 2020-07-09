@@ -35,6 +35,7 @@ function(aws_set_common_properties target)
             message(STATUS "Windows 7 support requested, forcing WINVER and _WIN32_WINNT to 0x0601")
             list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
             list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
+            list(APPEND AWS_C_FLAGS /DAWS_SUPPORT_WIN7=1)
         endif()
 
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
