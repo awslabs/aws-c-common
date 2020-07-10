@@ -25,6 +25,8 @@ AWS_EXTERN_C_BEGIN
 #    include <aws/common/math.gcc_overflow.inl>
 #elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_x64_asm.inl>
+#elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
+#    include <aws/common/math.gcc_arm64_asm.inl>
 #elif defined(AWS_HAVE_MSVC_MULX)
 #    include <aws/common/math.msvc.inl>
 #elif defined(CBMC)
