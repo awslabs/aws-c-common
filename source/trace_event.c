@@ -54,16 +54,6 @@ struct aws_trace_event_metadata {
     const char *value_name[2];
 };
 
-/*
- * Place holder to be added in later
-
-    struct aws_trace_system_options{
-        bool write_to_file;
-        int time_units;
-    };
- *
- */
-
 static struct trace_system *s_trace;
 
 /*
@@ -80,7 +70,6 @@ static void s_trace_system_write(void) {
     char *out = cJSON_Print((s_trace->root));
     AWS_FATAL_ASSERT(out);
 
-    /* do not write out if strlen fails */
     char fn[s_trace->filename->len + 6];
     char *file_extension = ".json";
     strcpy(fn, aws_string_c_str(s_trace->filename));
@@ -114,7 +103,7 @@ static void s_trace_event_system_clean_up(void) {
 
     if (s_trace->filename != NULL) {
         s_trace_system_write();
-        aws_mem_release(s_trace->allocator, s_trace->filename);
+        aws_string_destroy(s_trace->filename);
     }
     cJSON_Delete(s_trace->root);
 
@@ -154,7 +143,7 @@ static void s_trace_event_listener(uint64_t address, const void *msg, void *user
     AWS_FATAL_ASSERT(cJSON_AddNumberToObject(event, "ts", (double)trace_event_data->timestamp));
 
     // add args data if provided
-    if (trace_event_data->num_args) { // if num args is greater than 0
+    if (trace_event_data->num_args) {
 
         cJSON *args = cJSON_CreateObject();
 
@@ -190,7 +179,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
     s_trace->allocator = allocator;
 
     /* start the message bus */
-    /* Add option to select sync vs async? */
+    /* TODO: Add option to select sync vs async */
     struct aws_bus_options options = {
         .allocator = s_trace->allocator,
         .policy = AWS_BUS_SYNC,
@@ -217,7 +206,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
         goto error;
     }
 
-    /* allocate memory and enable writing out if filename is not null */
+    /* put filename on the heap if given */
     if (filename != NULL) {
         s_trace->filename = aws_string_new_from_c_str(s_trace->allocator, filename);
         if (s_trace->filename == NULL) {
@@ -249,6 +238,7 @@ int aws_trace_event(
     }
 
     timestamp -= s_trace->start_time;
+
     /* convert timestamps to tracing format of microseconds */
     timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
 
@@ -265,7 +255,7 @@ int aws_trace_event(
 
     trace_event_data.name = name;
     trace_event_data.category = category;
-    /* Make thread id the event id for counter events */
+
     if (phase == EVENT_PHASE_COUNTER) {
         trace_event_data.id = thread_id;
     }
@@ -273,11 +263,9 @@ int aws_trace_event(
     /* addding args metadata */
     if (value_name_1 != NULL) {
         trace_event_data.num_args += 1;
-        //! CHECK HOW TO FIX THIS
         trace_event_data.value[0] = value_1;
         trace_event_data.value_name[0] = value_name_1;
 
-        /* initialize args_2 pointer if 2 values are given */
         if (value_name_2 != NULL) {
             trace_event_data.num_args += 1;
             trace_event_data.value[1] = value_2;
