@@ -16,7 +16,7 @@
 static int s_test_trace_event_duration(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     int b_e = 0;
-    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
+    ASSERT_SUCCESS(aws_trace_system_init(allocator, NULL));
     ASSERT_SUCCESS(AWS_TRACE_EVENT_BEGIN("TEST_CATEGORY", "TEST"));
 
     ASSERT_SUCCESS(AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST"));
@@ -55,7 +55,7 @@ static int s_test_trace_event_duration(struct aws_allocator *allocator, void *ct
 static int s_test_trace_event_instant(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
+    ASSERT_SUCCESS(aws_trace_system_init(allocator, NULL));
     ASSERT_SUCCESS(AWS_TRACE_EVENT_INSTANT("TEST_INSTANT", "TEST1"));
 
     ASSERT_SUCCESS(AWS_TRACE_EVENT_INSTANT("TEST_INSTANT", "TEST2"));
@@ -95,7 +95,7 @@ static int s_test_trace_event_instant(struct aws_allocator *allocator, void *ctx
 
 static int s_test_trace_event_counter(struct aws_allocator *allocator, void *ctx) {
 
-    ASSERT_SUCCESS(aws_trace_system_init(NULL, allocator));
+    ASSERT_SUCCESS(aws_trace_system_init(allocator, NULL));
     int counter = 1;
     ASSERT_SUCCESS(AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST1", counter));
     counter = 1111;

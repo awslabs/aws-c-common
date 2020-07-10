@@ -22,10 +22,12 @@ static struct {
     bool payload_deleted;
 } s_sync_test;
 
+static int s_address = 42;
+
 static const char s_test_payload[] = "TEST ME SENPAI";
 
 static void s_bus_sync_test_recv(uint64_t address, const void *msg, void *user_data) {
-    AWS_ASSERT(42 == address);
+    AWS_ASSERT(s_address == address);
     AWS_ASSERT(0 == strcmp(msg, s_test_payload));
     AWS_ASSERT(&s_sync_test == user_data);
     ++s_sync_test.count;
@@ -51,7 +53,7 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_SUCCESS(aws_bus_subscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test));
 
-    ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor));
+    ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void *)s_test_payload, s_test_payload_dtor));
 
     aws_bus_unsubscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test);
 

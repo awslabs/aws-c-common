@@ -14,11 +14,11 @@ AWS_EXTERN_C_BEGIN
 /* duration events with args */
 /* Duplicate args in matching duration events will be overwritten by args in ENDx */
 #define AWS_TRACE_EVENT_BEGIN1(category, name, value)                                                                  \
-    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value, #value, 0 NULL)
+    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value, #value, 0, NULL)
 #define AWS_TRACE_EVENT_BEGIN2(category, name, value1, value2)                                                         \
     aws_trace_event(category, name, EVENT_PHASE_BEGIN, value1, #value1, value2, #value2)
 #define AWS_TRACE_EVENT_END1(category, name, value)                                                                    \
-    aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0 NULL)
+    aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0, NULL)
 #define AWS_TRACE_EVENT_END2(category, name, value1, value2)                                                           \
     aws_trace_event(category, name, EVENT_PHASE_END, value1, #value1, value2, #value2)
 
@@ -26,7 +26,7 @@ AWS_EXTERN_C_BEGIN
 #define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event(category, name, EVENT_PHASE_INSTANT, 0, NULL, 0, NULL)
 /* instant events with args */
 #define AWS_TRACE_EVENT_INSTANT1(category, name, value)                                                                \
-    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0 NULL)
+    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0, NULL)
 #define AWS_TRACE_EVENT_INSTANT2(category, name, value1, value2)                                                       \
     aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
 
@@ -63,7 +63,7 @@ void aws_trace_system_clean_up(void);
  * Filename must be a string literal to write out to json file
  */
 AWS_COMMON_API
-int aws_trace_system_init(const char *filename, struct aws_allocator *allocator);
+int aws_trace_system_init(struct aws_allocator *allocator, const char *filename);
 
 /*
  * Sends event trace data to the aws_message_bus to be added to
