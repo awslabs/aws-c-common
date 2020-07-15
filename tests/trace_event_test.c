@@ -16,7 +16,7 @@ static int s_test_trace_event_duration(struct aws_allocator *allocator, void *ct
     ASSERT_SUCCESS(aws_trace_system_init(allocator, NULL));
     AWS_TRACE_EVENT_BEGIN("TEST_CATEGORY", "TEST");
 
-    AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST");   
+    AWS_TRACE_EVENT_END("TEST_CATEGORY", "TEST");
     aws_trace_system_clean_up();
     return 0;
 }
@@ -40,7 +40,7 @@ static int s_test_trace_event_counter(struct aws_allocator *allocator, void *ctx
     AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST1", counter);
     counter = 1111;
     AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST2", counter);
-    
+
     aws_trace_system_clean_up();
     return 0;
 }

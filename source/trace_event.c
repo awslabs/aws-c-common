@@ -8,7 +8,7 @@
 #include <aws/common/process.h>
 #include <aws/common/thread.h>
 #include <aws/common/trace_event.h>
-
+#include <inttypes.h>
 #include <errno.h>
 /* Disable warnings with windows build */
 #ifdef _MSC_VER
@@ -22,7 +22,7 @@
  */
 
 struct trace_system {
-   // struct cJSON *root, *event_array;
+    // struct cJSON *root, *event_array;
     struct aws_bus bus;
     struct aws_allocator *allocator;
     uint64_t start_time;
@@ -59,28 +59,53 @@ static struct trace_system *s_trace;
  * Private API
  */
 
-
-
 /* A listener that writes to the JSON file */
 
-static void s_trace_event_write(uint64_t address, const void *msg, void *user_data){
-    struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *) msg;
-    if(s_trace == NULL){
+static void s_trace_event_write(uint64_t address, const void *msg, void *user_data) {
+    struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *)msg;
+    if (s_trace == NULL) {
         return;
     }
-    /* fprintf's are thread safe as one statement but not broken up */ 
+    /* fprintf's are thread safe as one statement but not broken up */
     if (!trace_event_data->num_args) {
-        fprintf(s_trace->fp, "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu},\n", trace_event_data->category, trace_event_data->name, trace_event_data->phase, trace_event_data->process_id,
-        trace_event_data->thread_id, trace_event_data->timestamp);
+        fprintf(
+            s_trace->fp,
+            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu},\n",
+            trace_event_data->category,
+            trace_event_data->name,
+            trace_event_data->phase,
+            trace_event_data->process_id,
+            (unsigned long long) trace_event_data->thread_id,
+            (unsigned long long) trace_event_data->timestamp);
     } else if (trace_event_data->num_args == 1) { /* 1 arg value given */
-        fprintf(s_trace->fp, "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i}},\n", trace_event_data->category, trace_event_data->name, trace_event_data->phase, trace_event_data->process_id,
-        trace_event_data->thread_id, trace_event_data->timestamp, trace_event_data->value_name[0], trace_event_data->value[0]);
+        fprintf(
+            s_trace->fp,
+            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i}},"
+            "\n",
+            trace_event_data->category,
+            trace_event_data->name,
+            trace_event_data->phase,
+            trace_event_data->process_id,
+            (unsigned long long) trace_event_data->thread_id,
+            (unsigned long long) trace_event_data->timestamp,
+            trace_event_data->value_name[0],
+            trace_event_data->value[0]);
     } else { /* 2 arg values given */
-        fprintf(s_trace->fp, "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i,\"%s\":%i}},\n", trace_event_data->category, trace_event_data->name, trace_event_data->phase, trace_event_data->process_id,
-        trace_event_data->thread_id, trace_event_data->timestamp, trace_event_data->value_name[0], trace_event_data->value[0], trace_event_data->value_name[1], trace_event_data->value[1]);
+        fprintf(
+            s_trace->fp,
+            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i,\"%"
+            "s\":%i}},\n",
+            trace_event_data->category,
+            trace_event_data->name,
+            trace_event_data->phase,
+            trace_event_data->process_id,
+            (unsigned long long) trace_event_data->thread_id,
+            (unsigned long long) trace_event_data->timestamp,
+            trace_event_data->value_name[0],
+            trace_event_data->value[0],
+            trace_event_data->value_name[1],
+            trace_event_data->value[1]);
     }
-    
-
 }
 
 static void s_trace_event_system_clean_up(void) {
@@ -97,12 +122,20 @@ static void s_trace_event_system_clean_up(void) {
 
     if (s_trace->fp != NULL) {
         /* Add number of events recorded */
-        fprintf(s_trace->fp, "{\"cat\":\"TraceData\", \"name\":\"NumTraceEvent\",\"ph\":\"C\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"NumberOfTraces\":%i}}]\n", 0, 0, 0, 0);
-        if (s_trace->time_unit == AWS_TIMESTAMP_NANOS){
+        fprintf(
+            s_trace->fp,
+            "{\"cat\":\"TraceData\", "
+            "\"name\":\"NumTraceEvent\",\"ph\":\"C\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"NumberOfTraces\":%i}}]"
+            "\n",
+            0,
+            0,
+            0,
+            0);
+        if (s_trace->time_unit == AWS_TIMESTAMP_NANOS) {
             fprintf(s_trace->fp, ",\"displayTimeUnit\": \"ns\"");
         }
         fprintf(s_trace->fp, "}");
-        
+
         fclose(s_trace->fp);
     }
 
@@ -115,7 +148,7 @@ release_trace_event:
  */
 
 void aws_trace_system_clean_up(void) {
-    
+
     s_trace_event_system_clean_up();
 }
 
@@ -127,7 +160,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
     }
 
     s_trace = aws_mem_calloc(allocator, 1, sizeof(struct trace_system));
- 
+
     if (!s_trace) {
         return AWS_OP_ERR;
     }
@@ -139,7 +172,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
         .policy = AWS_BUS_SYNC,
     };
     if (aws_bus_init(&(s_trace->bus), &options)) {
-      goto error;
+        goto error;
     }
     if (aws_bus_subscribe(&(s_trace->bus), 0, s_trace_event_write, NULL)) {
         goto error;
@@ -152,13 +185,9 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
 
     /* Open filename.json to write data out */
     if (filename != NULL) {
-        char fn[strlen(filename) + 6];
-        const char *file_extension = ".json";
-        strncpy(fn, filename, strlen(filename));
-        strncat(fn, file_extension, strlen(file_extension));
-        s_trace->fp = fopen(fn, "w");
+        s_trace->fp = fopen(filename, "w");
         if (s_trace->fp) {
-        fprintf(s_trace->fp, "{\"traceEvents\":[\n");
+            fprintf(s_trace->fp, "{\"traceEvents\":[\n");
         }
     }
 
@@ -176,10 +205,10 @@ void aws_trace_event(
     const char *value_name_1,
     int value_2,
     const char *value_name_2) {
-    
+
     /* do nothing if trace system is not initialized */
     if (!s_trace) {
-      return;
+        return;
     }
 
     /* set timestamps are in nanoseconds */
@@ -226,5 +255,3 @@ void aws_trace_event(
     /* send to the bus */
     AWS_FATAL_ASSERT(!aws_bus_send(&(s_trace->bus), 0, &trace_event_data, NULL));
 }
-
-

@@ -1,50 +1,51 @@
 #ifndef AWS_COMMON_TRACE_EVENT_H
-#define AWS_COMMON_TRACE_EVENT_H
+#    define AWS_COMMON_TRACE_EVENT_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/common.h>
+#    include <aws/common/common.h>
 
 AWS_EXTERN_C_BEGIN
 /* duration events */
-#define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event(category, name, EVENT_PHASE_BEGIN, 0, NULL, 0, NULL)
-#define AWS_TRACE_EVENT_END(category, name) aws_trace_event(category, name, EVENT_PHASE_END, 0, NULL, 0, NULL)
+#    define AWS_TRACE_EVENT_BEGIN(category, name) aws_trace_event(category, name, EVENT_PHASE_BEGIN, 0, NULL, 0, NULL)
+#    define AWS_TRACE_EVENT_END(category, name) aws_trace_event(category, name, EVENT_PHASE_END, 0, NULL, 0, NULL)
 /* duration events with args */
 /* Duplicate args in matching duration events will be overwritten by args in ENDx */
-#define AWS_TRACE_EVENT_BEGIN1(category, name, value)                                                                  \
-    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value, #value, 0, NULL)
-#define AWS_TRACE_EVENT_BEGIN2(category, name, value1, value2)                                                         \
-    aws_trace_event(category, name, EVENT_PHASE_BEGIN, value1, #value1, value2, #value2)
-#define AWS_TRACE_EVENT_END1(category, name, value)                                                                    \
-    aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0, NULL)
-#define AWS_TRACE_EVENT_END2(category, name, value1, value2)                                                           \
-    aws_trace_event(category, name, EVENT_PHASE_END, value1, #value1, value2, #value2)
+#    define AWS_TRACE_EVENT_BEGIN1(category, name, value)                                                              \
+        aws_trace_event(category, name, EVENT_PHASE_BEGIN, value, #value, 0, NULL)
+#    define AWS_TRACE_EVENT_BEGIN2(category, name, value1, value2)                                                     \
+        aws_trace_event(category, name, EVENT_PHASE_BEGIN, value1, #value1, value2, #value2)
+#    define AWS_TRACE_EVENT_END1(category, name, value)                                                                \
+        aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0, NULL)
+#    define AWS_TRACE_EVENT_END2(category, name, value1, value2)                                                       \
+        aws_trace_event(category, name, EVENT_PHASE_END, value1, #value1, value2, #value2)
 
 /* instant events */
-#define AWS_TRACE_EVENT_INSTANT(category, name) aws_trace_event(category, name, EVENT_PHASE_INSTANT, 0, NULL, 0, NULL)
+#    define AWS_TRACE_EVENT_INSTANT(category, name)                                                                    \
+        aws_trace_event(category, name, EVENT_PHASE_INSTANT, 0, NULL, 0, NULL)
 /* instant events with args */
-#define AWS_TRACE_EVENT_INSTANT1(category, name, value)                                                                \
-    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0, NULL)
-#define AWS_TRACE_EVENT_INSTANT2(category, name, value1, value2)                                                       \
-    aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
+#    define AWS_TRACE_EVENT_INSTANT1(category, name, value)                                                            \
+        aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0, NULL)
+#    define AWS_TRACE_EVENT_INSTANT2(category, name, value1, value2)                                                   \
+        aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
 
 /* counter events */
-#define AWS_TRACE_EVENT_COUNTER1(category, name, value)                                                                \
-    aws_trace_event(category, name, EVENT_PHASE_COUNTER, value, #value, 0, NULL)
-#define AWS_TRACE_EVENT_COUNTER2(category, name, value1, value2)                                                       \
-    aws_trace_event(category, name, EVENT_PHASE_COUNTER, value1, #value1, value2, #value2)
+#    define AWS_TRACE_EVENT_COUNTER1(category, name, value)                                                            \
+        aws_trace_event(category, name, EVENT_PHASE_COUNTER, value, #value, 0, NULL)
+#    define AWS_TRACE_EVENT_COUNTER2(category, name, value1, value2)                                                   \
+        aws_trace_event(category, name, EVENT_PHASE_COUNTER, value1, #value1, value2, #value2)
 
 // Phase macros
 //! add more phase types later as the app progresses
-#define EVENT_PHASE_BEGIN ('B')
-#define EVENT_PHASE_END ('E')
-#define EVENT_PHASE_INSTANT ('I')
-#define EVENT_PHASE_COUNTER ('C')
+#    define EVENT_PHASE_BEGIN ('B')
+#    define EVENT_PHASE_END ('E')
+#    define EVENT_PHASE_INSTANT ('I')
+#    define EVENT_PHASE_COUNTER ('C')
 
-#define AWS_TRACE_EVENT_TIME_DISPLAY_MICRO 0
-#define AWS_TRACE_EVENT_TIME_DISPLAY_NANO 1
+#    define AWS_TRACE_EVENT_TIME_DISPLAY_MICRO 0
+#    define AWS_TRACE_EVENT_TIME_DISPLAY_NANO 1
 
 /*
  * MUST CALL TO AVOID MEMORY LEAKS
@@ -84,6 +85,5 @@ void aws_trace_event(
 AWS_EXTERN_C_END
 #endif /* AWS_COMMON_TRACE_EVENT_H */
 
-
-//notes
-//allow init to gracefulkly clean up and have functions not do anything if init does not work
+// notes
+// allow init to gracefulkly clean up and have functions not do anything if init does not work
