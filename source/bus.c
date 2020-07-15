@@ -463,7 +463,6 @@ int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
 
         bus->impl = s_bus_async_new(bus, options);
     } else if (options->policy == AWS_BUS_SYNC) {
-
         bus->impl = s_bus_sync_new(bus, options);
     }
 
@@ -471,7 +470,7 @@ int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
 
         return AWS_OP_ERR;
     }
-
+  
     return AWS_OP_SUCCESS;
 }
 

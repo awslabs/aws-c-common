@@ -72,7 +72,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
  * phase can be B/E for duration, I for instant, and C for counter events
  */
 AWS_COMMON_API
-int aws_trace_event(
+void aws_trace_event(
     const char *category,
     const char *name,
     char phase,
@@ -81,17 +81,9 @@ int aws_trace_event(
     int value_2,
     const char *value_name_2);
 
-/*
- *
- */
-// AWS_COMMON_API
-// int aws_trace_event_new_counter(const char *category, const char *name, int value, const char* value_name);
-
-/*
- * Used for debugging
- */
-AWS_COMMON_API
-void *aws_trace_event_get_root(void);
-
 AWS_EXTERN_C_END
 #endif /* AWS_COMMON_TRACE_EVENT_H */
+
+
+//notes
+//allow init to gracefulkly clean up and have functions not do anything if init does not work

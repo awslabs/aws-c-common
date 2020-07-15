@@ -53,16 +53,8 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
         "include/aws/common/private/*.c"
         )
 
-file(GLOB AWS_COMMON_EXTERNAL_HEADERS
-        "include/aws/common/external/*.h"
-        )
-
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
-        )
-
-file(GLOB AWS_COMMON_EXTERNAL_SRC
-        "source/external/*.c"
         )
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
@@ -127,7 +119,6 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
-        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         
         )
@@ -135,7 +126,6 @@ file(GLOB COMMON_HEADERS
 file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
-        ${AWS_COMMON_EXTERNAL_SRC}
         )
 
 
@@ -165,8 +155,6 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
 
-# To hide external dependencies
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
