@@ -8,8 +8,8 @@
 #include <aws/common/process.h>
 #include <aws/common/thread.h>
 #include <aws/common/trace_event.h>
-#include <inttypes.h>
 #include <errno.h>
+#include <inttypes.h>
 /* Disable warnings with windows build */
 #ifdef _MSC_VER
 #    pragma warning(disable : C4996)
@@ -66,6 +66,9 @@ static void s_trace_event_write(uint64_t address, const void *msg, void *user_da
     if (s_trace == NULL) {
         return;
     }
+    if (s_trace->fp == NULL) {
+        return;
+    }
     /* fprintf's are thread safe as one statement but not broken up */
     if (!trace_event_data->num_args) {
         fprintf(
@@ -75,8 +78,8 @@ static void s_trace_event_write(uint64_t address, const void *msg, void *user_da
             trace_event_data->name,
             trace_event_data->phase,
             trace_event_data->process_id,
-            (unsigned long long) trace_event_data->thread_id,
-            (unsigned long long) trace_event_data->timestamp);
+            (unsigned long long)trace_event_data->thread_id,
+            (unsigned long long)trace_event_data->timestamp);
     } else if (trace_event_data->num_args == 1) { /* 1 arg value given */
         fprintf(
             s_trace->fp,
@@ -86,8 +89,8 @@ static void s_trace_event_write(uint64_t address, const void *msg, void *user_da
             trace_event_data->name,
             trace_event_data->phase,
             trace_event_data->process_id,
-            (unsigned long long) trace_event_data->thread_id,
-            (unsigned long long) trace_event_data->timestamp,
+            (unsigned long long)trace_event_data->thread_id,
+            (unsigned long long)trace_event_data->timestamp,
             trace_event_data->value_name[0],
             trace_event_data->value[0]);
     } else { /* 2 arg values given */
@@ -99,8 +102,8 @@ static void s_trace_event_write(uint64_t address, const void *msg, void *user_da
             trace_event_data->name,
             trace_event_data->phase,
             trace_event_data->process_id,
-            (unsigned long long) trace_event_data->thread_id,
-            (unsigned long long) trace_event_data->timestamp,
+            (unsigned long long)trace_event_data->thread_id,
+            (unsigned long long)trace_event_data->timestamp,
             trace_event_data->value_name[0],
             trace_event_data->value[0],
             trace_event_data->value_name[1],
