@@ -231,3 +231,23 @@ explicitly mandates a character set).
 * If you are adding/using a compiler specific keyword, macro, or intrinsic, hide it behind a platform independent macro
 definition. This mainly applies to header files. Obviously, if you are writing a file that will only be built on a certain
 platform, you have more liberty on this.
+* When checking more than one error condition, check and log each condition separately with a unique message.
+
+Example:
+
+    if (options->callback == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - callback is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    
+    if (options->allocator == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - allocator is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+Not:
+
+    if (options->callback == NULL || options->allocator == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - something is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
