@@ -167,21 +167,35 @@ bool aws_byte_cursor_next_split(
 
     /* If substr is zeroed-out, then this is the first run. */
     const bool first_run = substr->ptr == NULL;
-    if (first_run) {
-        if (input_str->ptr) {
-            *substr = *input_str;
-        } else {
-            /* NOTE: It's also legal for input_str to be zeroed out.
-             * In that case, set substr->ptr to something else so the next split() call doesn't look like first run. */
+
+    /* It's legal for input_str to be zeroed out: {.ptr=NULL, .len=0}
+     * Deal with this case separately */
+    if (AWS_UNLIKELY(input_str->ptr == NULL)) {
+        if (first_run) {
+            /* Set substr->ptr to something non-NULL so that next split() call doesn't look like the first run */
             substr->ptr = (void *)"";
             substr->len = 0;
+            return true;
         }
 
+        /* done */
+        AWS_ZERO_STRUCT(*substr);
+        return false;
+    }
+
+    /* Rest of function deals with non-NULL input_str->ptr */
+
+    if (first_run) {
+        *substr = *input_str;
     } else {
         /* This is not the first run.
          * Advance substr past the previous split. */
         const uint8_t *input_end = input_str->ptr + input_str->len;
         substr->ptr += substr->len + 1;
+
+        /* Note that it's ok if substr->ptr == input_end, this happens in the
+         * final valid split of an input_str that ends with the split_on character:
+         * Ex: "AB&" split on '&' produces "AB" and "" */
         if (substr->ptr > input_end || substr->ptr < input_str->ptr) { /* 2nd check is overflow check */
             /* done */
             AWS_ZERO_STRUCT(*substr);
