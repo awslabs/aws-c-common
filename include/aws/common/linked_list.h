@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_LINKED_LIST_H
 #define AWS_COMMON_LINKED_LIST_H
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -168,7 +158,27 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct 
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list);
 
-AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b);
+AWS_STATIC_IMPL void aws_linked_list_swap_contents(
+    struct aws_linked_list *AWS_RESTRICT a,
+    struct aws_linked_list *AWS_RESTRICT b);
+
+/**
+ * Remove all nodes from one list, and add them to the back of another.
+ *
+ * Example: if dst={1,2} and src={3,4}, they become dst={1,2,3,4} and src={}
+ */
+AWS_STATIC_IMPL void aws_linked_list_move_all_back(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src);
+
+/**
+ * Remove all nodes from one list, and add them to the front of another.
+ *
+ * Example: if dst={2,1} and src={4,3}, they become dst={4,3,2,1} and src={}
+ */
+AWS_STATIC_IMPL void aws_linked_list_move_all_front(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src);
 
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/linked_list.inl>

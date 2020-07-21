@@ -1,15 +1,5 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
@@ -63,11 +53,12 @@ if (WIN32)
     set(WINDOWS_KERNEL_LIB "Kernel32" CACHE STRING "The name of the kernel library to link against (default: Kernel32)")
 
     file(GLOB AWS_COMMON_OS_HEADERS
-            "include/aws/common/windows/*"
-            )
+        "include/aws/common/windows/*"
+        )
+
     file(GLOB AWS_COMMON_OS_SRC
-            "source/windows/*.c"
-            )
+        "source/windows/*.c"
+        )
 
     if (MSVC)
         source_group("Header Files\\aws\\common" FILES ${AWS_COMMON_HEADERS})
@@ -86,6 +77,7 @@ else ()
     file(GLOB AWS_COMMON_OS_SRC
         "source/posix/*.c"
         )
+
     set(THREADS_PREFER_PTHREAD_FLAG ON)
 
     if (UNIX OR APPLE)
@@ -113,6 +105,34 @@ else ()
 
 endif()
 
+file(GLOB AWS_COMMON_ARCH_SRC
+     "source/arch/generic/*.c"
+     )
+
+if (MSVC AND AWS_ARCH_INTEL)
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/intel/*.c"
+        "source/arch/intel/msvc/*.c"
+        )
+
+    source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
+elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM AND NOT LEGACY_COMPILER_SUPPORT)
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/intel/*.c"
+         "source/arch/intel/asm/*.c"
+        )
+endif()
+
+if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/msvc/*.c"
+        )
+elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/asm/*.c"
+        )
+endif()
+
 list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
 
 file(GLOB COMMON_HEADERS
@@ -126,6 +146,7 @@ file(GLOB COMMON_HEADERS
 file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
+        ${AWS_COMMON_ARCH_SRC}
         )
 
 
@@ -167,14 +188,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${PROJECT_NAME})
 
-if (HAVE_MAY_I_USE OR HAVE_BUILTIN_CPU_SUPPORTS OR HAVE_MSVC_CPUIDEX)
-    set(HAVE_SIMD_CPUID TRUE)
-endif()
-
-if (HAVE_AVX2_INTRINSICS AND HAVE_SIMD_CPUID)
+if (HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/cpuid.c")
-    simd_add_source_avx2(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/source/arch/encoding_avx2.c")
+    simd_add_source_avx2(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
@@ -238,6 +254,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
+    "cmake/AwsFeatureTests.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

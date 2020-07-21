@@ -1,15 +1,5 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 include(AwsCFlags)
 include(AwsSanitizers)
@@ -49,6 +39,13 @@ function(generate_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+    if (MSVC)
+        if(STATIC_CRT)
+            target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
+        else()
+            target_compile_options(${driver_exe_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
+        endif()
+    endif()
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
@@ -67,6 +64,13 @@ function(generate_cpp_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
+    if (MSVC)
+        if(STATIC_CRT)
+            target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
+        else()
+            target_compile_options(${driver_exe_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
+        endif()
+    endif()
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 

@@ -1,22 +1,14 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/byte_buf.h>
 
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
+
+#include <locale.h>
 
 AWS_TEST_CASE(test_buffer_cat, s_test_buffer_cat_fn)
 static int s_test_buffer_cat_fn(struct aws_allocator *allocator, void *ctx) {
@@ -501,7 +493,8 @@ static int s_do_append_dynamic_test(
     struct aws_allocator *allocator,
     size_t starting_size,
     size_t append_size,
-    size_t iterations) {
+    size_t iterations,
+    int (*append_dynamic)(struct aws_byte_buf *, const struct aws_byte_cursor *)) {
     struct aws_byte_buf accum_buf;
     aws_byte_buf_init(&accum_buf, allocator, starting_size);
     memset(accum_buf.buffer, 0, starting_size);
@@ -522,7 +515,7 @@ static int s_do_append_dynamic_test(
         memset(accum_buf.buffer, 0, accum_buf.capacity);
 
         size_t before_size = accum_buf.len;
-        ASSERT_TRUE(aws_byte_buf_append_dynamic(&accum_buf, &append_cursor) == AWS_OP_SUCCESS);
+        ASSERT_TRUE(append_dynamic(&accum_buf, &append_cursor) == AWS_OP_SUCCESS);
         size_t after_size = accum_buf.len;
 
         size_t expected_len = starting_size + (i + 1) * append_size;
@@ -550,20 +543,111 @@ static int s_do_append_dynamic_test(
     return AWS_OP_SUCCESS;
 }
 
+static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint8_t buf_storage[5];
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(buf_storage, sizeof(buf_storage));
+
+    /* Test a write to a fresh buffer with plenty of space */
+    struct aws_byte_cursor original_abc = aws_byte_cursor_from_c_str("abc");
+    struct aws_byte_cursor advancing_abc = original_abc;
+    struct aws_byte_cursor written = aws_byte_buf_write_to_capacity(&buf, &advancing_abc);
+    ASSERT_BIN_ARRAYS_EQUALS("abc", 3, buf.buffer, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_abc.len);
+    ASSERT_BIN_ARRAYS_EQUALS("abc", 3, written.ptr, written.len);
+    ASSERT_PTR_EQUALS(original_abc.ptr, written.ptr);
+
+    /* Test writing again to same buffer, but we can't fit it all */
+    struct aws_byte_cursor advancing_def = aws_byte_cursor_from_c_str("def");
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_def);
+    ASSERT_UINT_EQUALS(buf.len, buf.capacity);
+    ASSERT_BIN_ARRAYS_EQUALS("abcde", 5, buf.buffer, buf.len);
+    ASSERT_BIN_ARRAYS_EQUALS("f", 1, advancing_def.ptr, advancing_def.len);
+    ASSERT_BIN_ARRAYS_EQUALS("de", 2, written.ptr, written.len);
+
+    /* Test writing a cursor that exactly matches capacity. */
+    aws_byte_buf_reset(&buf, false);
+    struct aws_byte_cursor advancing_filler = aws_byte_cursor_from_c_str("12345");
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_filler);
+    ASSERT_BIN_ARRAYS_EQUALS("12345", 5, buf.buffer, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_filler.len);
+    ASSERT_BIN_ARRAYS_EQUALS("12345", 5, written.ptr, written.len);
+
+    /* Test passing an empty cursor. Nothing should happen. */
+    aws_byte_buf_reset(&buf, false);
+    struct aws_byte_cursor advancing_zeroed;
+    AWS_ZERO_STRUCT(advancing_zeroed);
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_zeroed);
+    ASSERT_UINT_EQUALS(0, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_zeroed.len);
+    ASSERT_NULL(advancing_zeroed.ptr);
+    ASSERT_UINT_EQUALS(0, written.len);
+    ASSERT_NULL(written.ptr);
+
+    /* Test writing to a full buffer. Nothing should happen.  */
+    buf.len = buf.capacity;
+    struct aws_byte_cursor original_nope = aws_byte_cursor_from_c_str("nope");
+    struct aws_byte_cursor advancing_nope = original_nope;
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_nope);
+    ASSERT_UINT_EQUALS(buf.capacity, buf.len);
+    ASSERT_UINT_EQUALS(original_nope.len, advancing_nope.len);
+    ASSERT_PTR_EQUALS(original_nope.ptr, advancing_nope.ptr);
+    ASSERT_PTR_EQUALS(original_nope.ptr, written.ptr);
+    ASSERT_UINT_EQUALS(0, written.len);
+
+    aws_byte_buf_clean_up(&buf);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_write_to_capacity, s_test_byte_buf_write_to_capacity);
+
 static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     /*
-     * Throw a small sample of different growth request profiles at the function
+     * Throw a small sample of different growth request profiles at the functions
      */
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2) == AWS_OP_SUCCESS);
-    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 100, 10, 100) == AWS_OP_SUCCESS);
+
+    /*
+     * regular append
+     */
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 100, 10, 100, aws_byte_buf_append_dynamic) == AWS_OP_SUCCESS);
+
+    /*
+     * secure append - note we don't attempt to check if the memory was actually zeroed
+     */
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 10000, 1, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 1, 1, 1000, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(s_do_append_dynamic_test(allocator, 10000, 1, 2, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(
+        s_do_append_dynamic_test(allocator, 100, 10, 100, aws_byte_buf_append_dynamic_secure) == AWS_OP_SUCCESS);
 
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
+
+static uint8_t s_append_byte_array[] = {0xFF, 0xFE, 0xAB, 0x00, 0x55, 0x62};
+
+static int s_test_byte_buf_append_byte(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 1);
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_append_byte_array); ++i) {
+        ASSERT_SUCCESS(aws_byte_buf_append_byte_dynamic(&buffer, s_append_byte_array[i]));
+        ASSERT_BIN_ARRAYS_EQUALS(s_append_byte_array, i + 1, buffer.buffer, buffer.len);
+    }
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_byte, s_test_byte_buf_append_byte)
 
 AWS_STATIC_STRING_FROM_LITERAL(s_to_lower_test, "UPPerANdLowercASE");
 
@@ -814,3 +898,136 @@ static int s_test_byte_buf_append_and_update_success(struct aws_allocator *alloc
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_append_and_update_success, s_test_byte_buf_append_and_update_success)
+
+static int s_test_isalnum(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isalnum('0'));
+    ASSERT_TRUE(aws_isalnum('a'));
+    ASSERT_TRUE(aws_isalnum('A'));
+
+    ASSERT_FALSE(aws_isalnum(' '));
+    ASSERT_FALSE(aws_isalnum('\0'));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isalnum((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(62, count);
+
+    /* should not be affected by C locale */
+    setlocale(LC_CTYPE, "de_DE.iso88591");
+    ASSERT_FALSE(aws_isalnum((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
+
+    return 0;
+}
+AWS_TEST_CASE(test_isalnum, s_test_isalnum)
+
+static int s_test_isalpha(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isalpha('a'));
+    ASSERT_TRUE(aws_isalpha('A'));
+
+    ASSERT_FALSE(aws_isalpha('0'));
+    ASSERT_FALSE(aws_isalpha('\0'));
+    ASSERT_FALSE(aws_isalpha(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isalpha((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(52, count);
+
+    /* should not be affected by C locale */
+    setlocale(LC_CTYPE, "de_DE.iso88591");
+    ASSERT_FALSE(aws_isalpha((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
+
+    return 0;
+}
+AWS_TEST_CASE(test_isalpha, s_test_isalpha)
+
+static int s_test_isdigit(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isdigit('0'));
+    ASSERT_TRUE(aws_isdigit('9'));
+
+    ASSERT_FALSE(aws_isdigit('a'));
+    ASSERT_FALSE(aws_isdigit('A'));
+    ASSERT_FALSE(aws_isdigit('\0'));
+    ASSERT_FALSE(aws_isdigit(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isdigit((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(10, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isdigit, s_test_isdigit)
+
+static int s_test_isxdigit(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isxdigit('0'));
+    ASSERT_TRUE(aws_isxdigit('9'));
+    ASSERT_TRUE(aws_isxdigit('a'));
+    ASSERT_TRUE(aws_isxdigit('A'));
+    ASSERT_TRUE(aws_isxdigit('f'));
+    ASSERT_TRUE(aws_isxdigit('F'));
+
+    ASSERT_FALSE(aws_isxdigit('g'));
+    ASSERT_FALSE(aws_isxdigit('G'));
+    ASSERT_FALSE(aws_isxdigit('\0'));
+    ASSERT_FALSE(aws_isxdigit(' '));
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isxdigit((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(22, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isxdigit, s_test_isxdigit)
+
+static int s_test_isspace(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_TRUE(aws_isspace(' '));
+    ASSERT_TRUE(aws_isspace('\t'));
+    ASSERT_TRUE(aws_isspace('\n'));
+    ASSERT_TRUE(aws_isspace('\v'));
+    ASSERT_TRUE(aws_isspace('\f'));
+    ASSERT_TRUE(aws_isspace('\r'));
+
+    ASSERT_FALSE(aws_isspace('\0'));
+    ASSERT_FALSE(aws_isspace('a'));
+    ASSERT_FALSE(aws_isspace(0xA0)); /* NBSP in some code-pages */
+
+    size_t count = 0;
+    for (size_t i = 0; i <= UINT8_MAX; ++i) {
+        if (aws_isspace((uint8_t)i)) {
+            count++;
+        }
+    }
+    ASSERT_UINT_EQUALS(6, count);
+
+    return 0;
+}
+AWS_TEST_CASE(test_isspace, s_test_isspace)
