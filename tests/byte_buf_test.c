@@ -543,6 +543,65 @@ static int s_do_append_dynamic_test(
     return AWS_OP_SUCCESS;
 }
 
+static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint8_t buf_storage[5];
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(buf_storage, sizeof(buf_storage));
+
+    /* Test a write to a fresh buffer with plenty of space */
+    struct aws_byte_cursor original_abc = aws_byte_cursor_from_c_str("abc");
+    struct aws_byte_cursor advancing_abc = original_abc;
+    struct aws_byte_cursor written = aws_byte_buf_write_to_capacity(&buf, &advancing_abc);
+    ASSERT_BIN_ARRAYS_EQUALS("abc", 3, buf.buffer, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_abc.len);
+    ASSERT_BIN_ARRAYS_EQUALS("abc", 3, written.ptr, written.len);
+    ASSERT_PTR_EQUALS(original_abc.ptr, written.ptr);
+
+    /* Test writing again to same buffer, but we can't fit it all */
+    struct aws_byte_cursor advancing_def = aws_byte_cursor_from_c_str("def");
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_def);
+    ASSERT_UINT_EQUALS(buf.len, buf.capacity);
+    ASSERT_BIN_ARRAYS_EQUALS("abcde", 5, buf.buffer, buf.len);
+    ASSERT_BIN_ARRAYS_EQUALS("f", 1, advancing_def.ptr, advancing_def.len);
+    ASSERT_BIN_ARRAYS_EQUALS("de", 2, written.ptr, written.len);
+
+    /* Test writing a cursor that exactly matches capacity. */
+    aws_byte_buf_reset(&buf, false);
+    struct aws_byte_cursor advancing_filler = aws_byte_cursor_from_c_str("12345");
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_filler);
+    ASSERT_BIN_ARRAYS_EQUALS("12345", 5, buf.buffer, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_filler.len);
+    ASSERT_BIN_ARRAYS_EQUALS("12345", 5, written.ptr, written.len);
+
+    /* Test passing an empty cursor. Nothing should happen. */
+    aws_byte_buf_reset(&buf, false);
+    struct aws_byte_cursor advancing_zeroed;
+    AWS_ZERO_STRUCT(advancing_zeroed);
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_zeroed);
+    ASSERT_UINT_EQUALS(0, buf.len);
+    ASSERT_UINT_EQUALS(0, advancing_zeroed.len);
+    ASSERT_NULL(advancing_zeroed.ptr);
+    ASSERT_UINT_EQUALS(0, written.len);
+    ASSERT_NULL(written.ptr);
+
+    /* Test writing to a full buffer. Nothing should happen.  */
+    buf.len = buf.capacity;
+    struct aws_byte_cursor original_nope = aws_byte_cursor_from_c_str("nope");
+    struct aws_byte_cursor advancing_nope = original_nope;
+    written = aws_byte_buf_write_to_capacity(&buf, &advancing_nope);
+    ASSERT_UINT_EQUALS(buf.capacity, buf.len);
+    ASSERT_UINT_EQUALS(original_nope.len, advancing_nope.len);
+    ASSERT_PTR_EQUALS(original_nope.ptr, advancing_nope.ptr);
+    ASSERT_PTR_EQUALS(original_nope.ptr, written.ptr);
+    ASSERT_UINT_EQUALS(0, written.len);
+
+    aws_byte_buf_clean_up(&buf);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_write_to_capacity, s_test_byte_buf_write_to_capacity);
+
 static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -861,7 +920,7 @@ static int s_test_isalnum(struct aws_allocator *allocator, void *ctx) {
 
     /* should not be affected by C locale */
     setlocale(LC_CTYPE, "de_DE.iso88591");
-    ASSERT_FALSE(aws_isalnum('\xdf')); /* German letter ß in ISO-8859-1 */
+    ASSERT_FALSE(aws_isalnum((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
 
     return 0;
 }
@@ -888,7 +947,7 @@ static int s_test_isalpha(struct aws_allocator *allocator, void *ctx) {
 
     /* should not be affected by C locale */
     setlocale(LC_CTYPE, "de_DE.iso88591");
-    ASSERT_FALSE(aws_isalpha('\xdf')); /* German letter ß in ISO-8859-1 */
+    ASSERT_FALSE(aws_isalpha((uint8_t)'\xdf')); /* German letter ß in ISO-8859-1 */
 
     return 0;
 }

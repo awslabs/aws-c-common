@@ -94,6 +94,8 @@ add_test_case(linked_list_swap_nodes)
 add_test_case(linked_list_iteration)
 add_test_case(linked_list_reverse_iteration)
 add_test_case(linked_list_swap_contents)
+add_test_case(linked_list_move_all_back)
+add_test_case(linked_list_move_all_front)
 
 add_test_case(hex_encoding_test_case_empty_test)
 add_test_case(hex_encoding_test_case_f_test)
@@ -249,6 +251,7 @@ add_test_case(test_array_eq_ignore_case)
 add_test_case(test_array_eq_c_str)
 add_test_case(test_array_eq_c_str_ignore_case)
 add_test_case(test_array_hash_ignore_case)
+add_test_case(test_byte_buf_write_to_capacity)
 add_test_case(test_byte_buf_append_dynamic)
 add_test_case(test_byte_buf_append_byte)
 add_test_case(test_byte_buf_append_lookup_success)
@@ -419,11 +422,17 @@ add_test_case(resource_name_tostring_test)
 add_test_case(resource_name_tostring_failure_test)
 add_test_case(resource_name_length_test)
 
+add_test_case(cpuid_test)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
     #we have some tests here that purposely overflow
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -Wno-overflow)
+endif()
+
+if (MSVC)
+    target_compile_options(${PROJECT_NAME}-tests PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 file(GLOB FUZZ_TESTS    "fuzz/*.c")
