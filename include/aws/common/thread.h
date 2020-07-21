@@ -16,6 +16,7 @@
  * permissions and limitations under the License.
  */
 #include <aws/common/common.h>
+#include <aws/common/string.h>
 
 #ifndef _WIN32
 #    include <pthread.h>
@@ -29,6 +30,7 @@ enum aws_thread_detach_state {
 
 struct aws_thread_options {
     size_t stack_size;
+    const char *name;
 };
 
 #ifdef _WIN32
@@ -58,6 +60,7 @@ struct aws_thread {
     void *thread_handle;
 #endif
     aws_thread_id_t thread_id;
+    struct aws_string *name;
 };
 
 AWS_EXTERN_C_BEGIN
@@ -144,6 +147,12 @@ typedef void(aws_thread_atexit_fn)(void *user_data);
  */
 AWS_COMMON_API
 int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
+
+/**
+ * Returns name of thread as a string literal
+ */ 
+AWS_COMMON_API
+const char *aws_thread_name(const struct aws_thread *thread);
 
 AWS_EXTERN_C_END
 

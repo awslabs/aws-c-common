@@ -21,6 +21,7 @@
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
+    .name = NULL,
 };
 
 struct thread_atexit_callback {
@@ -104,8 +105,16 @@ int aws_thread_launch(
 
     SIZE_T stack_size = 0;
 
-    if (options && options->stack_size > 0) {
-        stack_size = (SIZE_T)options->stack_size;
+    if (options && ) {
+        if (options->stack_size > 0) {
+            stack_size = (SIZE_T)options->stack_size;
+        }
+        if (options->name) {
+            //TODO: see if this works
+            char thread_name[50] = "WIN_OS_";
+            thread->name = aws_string_new_from_c_str(thread->allocator, strncat(thread_name, options->name, 50 - (strlen(thread_name) + strlen(options->name))));
+        }
+       
     }
 
     struct thread_wrapper *thread_wrapper =
@@ -143,6 +152,9 @@ int aws_thread_join(struct aws_thread *thread) {
 }
 
 void aws_thread_clean_up(struct aws_thread *thread) {
+    if (thread->name) {
+        aws_string_destory(thread->name);
+    }
     CloseHandle(thread->thread_handle);
     thread->thread_handle = 0;
 }
@@ -177,4 +189,9 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     cb->next = tl_wrapper->atexit;
     tl_wrapper->atexit = cb;
     return AWS_OP_SUCCESS;
+}
+
+
+const char * aws_thread_name(const struct aws_thread *thread){
+    return aws_string_c_str(thread->name);
 }

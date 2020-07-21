@@ -32,10 +32,20 @@ AWS_EXTERN_C_BEGIN
         aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
 
 /* counter events */
+/* Counter events are process local */ 
 #    define AWS_TRACE_EVENT_COUNTER1(category, name, value)                                                            \
         aws_trace_event(category, name, EVENT_PHASE_COUNTER, value, #value, 0, NULL)
 #    define AWS_TRACE_EVENT_COUNTER2(category, name, value1, value2)                                                   \
         aws_trace_event(category, name, EVENT_PHASE_COUNTER, value1, #value1, value2, #value2)
+
+/* Metadata event for naming threads/processes */
+/* Category and name can be arbitrary */
+//TODO: maybe remove category and name if they aren't needed since tid is the id for the event
+//TODO: could make them just 'thread_process_name'
+# define AWS_TRACE_EVENT_NAME_THREAD(thread_name) \
+        aws_trace_event_str("__metadata", "thread_name", EVENT_PHASE_METADATA, thread_name, NULL, NULL, NULL)
+# define AWS_TRACE_EVENT_NAME_PROCESS(category, name, process_name) \
+        aws_trace_event_str(category, name, EVENT_PHASE_METADATA, NULL, NULL, process_name, NULL)
 
 // Phase macros
 //! add more phase types later as the app progresses
@@ -43,6 +53,7 @@ AWS_EXTERN_C_BEGIN
 #    define EVENT_PHASE_END ('E')
 #    define EVENT_PHASE_INSTANT ('I')
 #    define EVENT_PHASE_COUNTER ('C')
+#    define EVENT_PHASE_METADATA ('M')
 
 #    define AWS_TRACE_EVENT_TIME_DISPLAY_MICRO 0
 #    define AWS_TRACE_EVENT_TIME_DISPLAY_NANO 1
@@ -70,6 +81,7 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
  * Sends event trace data to the aws_message_bus to be added to
  * a JSON object.
  * Category and name and value name must be string literals
+ * Value_1 and Value_2 can be provided for counter events or for args in duration and instant events
  * phase can be B/E for duration, I for instant, and C for counter events
  */
 AWS_COMMON_API
@@ -80,6 +92,17 @@ void aws_trace_event(
     int value_1,
     const char *value_name_1,
     int value_2,
+    const char *value_name_2);
+
+//! keep value_name in case the user wants to track strings overtime? 
+AWS_COMMON_API
+void aws_trace_event_str(
+    const char *category,
+    const char *name,
+    char phase,
+    const char *value_1,
+    const char *value_name_1,
+    const char *value_2,
     const char *value_name_2);
 
 AWS_EXTERN_C_END
