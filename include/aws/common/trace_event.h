@@ -21,6 +21,15 @@ AWS_EXTERN_C_BEGIN
         aws_trace_event(category, name, EVENT_PHASE_END, value, #value, 0, NULL)
 #    define AWS_TRACE_EVENT_END2(category, name, value1, value2)                                                       \
         aws_trace_event(category, name, EVENT_PHASE_END, value1, #value1, value2, #value2)
+/* duration events with string literal arguments */
+#define AWS_TRACE_EVENT_BEGIN_STR1(category, name, string) \
+        aws_trace_event_str(category, name, EVENT_PHASE_BEGIN, string, #string, NULL, NULL)
+#define AWS_TRACE_EVENT_BEGIN_STR2(category, name, string_1, string_2) \
+        aws_trace_event_str(category, name, EVENT_PHASE_BEGIN, string_1, #string_1, string_2, #string_2)
+#define AWS_TRACE_EVENT_END_STR1(category, name, string) \
+        aws_trace_event_str(category, name, EVENT_PHASE_END, string, #string, NULL, NULL)
+#define AWS_TRACE_EVENT_END_STR2(category, name, string_1, string_2) \
+        aws_trace_event_str(category, name, EVENT_PHASE_END, string_1, #string_1, string_2, #string_2)
 
 /* instant events */
 #    define AWS_TRACE_EVENT_INSTANT(category, name)                                                                    \
@@ -30,7 +39,10 @@ AWS_EXTERN_C_BEGIN
         aws_trace_event(category, name, EVENT_PHASE_INSTANT, value, #value, 0, NULL)
 #    define AWS_TRACE_EVENT_INSTANT2(category, name, value1, value2)                                                   \
         aws_trace_event(category, name, EVENT_PHASE_INSTANT, value1, #value1, value2, #value2)
-
+#define AWS_TRACE_EVENT_INSTANT_STR1(category, name, string) \
+        aws_trace_event_str(category, name, EVENT_PHASE_INSTANT, string, #string, NULL, NULL)
+#define AWS_TRACE_EVENT_INSTANT_STR2(category, name, string_1, string_2) \
+        aws_trace_event_str(category, name, EVENT_PHASE_INSTANT, string_1, #string_1, string_2, #string_2)
 /* counter events */
 /* Counter events are process local */ 
 #    define AWS_TRACE_EVENT_COUNTER1(category, name, value)                                                            \
