@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_LINKED_LIST_INL
 #define AWS_COMMON_LINKED_LIST_INL
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -350,9 +340,13 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aw
     return front;
 }
 
-AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, struct aws_linked_list *b) {
+AWS_STATIC_IMPL void aws_linked_list_swap_contents(
+    struct aws_linked_list *AWS_RESTRICT a,
+    struct aws_linked_list *AWS_RESTRICT b) {
+
     AWS_PRECONDITION(aws_linked_list_is_valid(a));
     AWS_PRECONDITION(aws_linked_list_is_valid(b));
+    AWS_PRECONDITION(a != b);
     struct aws_linked_list_node *a_first = a->head.next;
     struct aws_linked_list_node *a_last = a->tail.prev;
 
@@ -377,6 +371,64 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(struct aws_linked_list *a, st
     }
     AWS_POSTCONDITION(aws_linked_list_is_valid(a));
     AWS_POSTCONDITION(aws_linked_list_is_valid(b));
+}
+
+AWS_STATIC_IMPL void aws_linked_list_move_all_back(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src) {
+
+    AWS_PRECONDITION(aws_linked_list_is_valid(src));
+    AWS_PRECONDITION(aws_linked_list_is_valid(dst));
+    AWS_PRECONDITION(dst != src);
+
+    if (!aws_linked_list_empty(src)) {
+        /* splice src nodes into dst, between the back and tail nodes */
+        struct aws_linked_list_node *dst_back = dst->tail.prev;
+        struct aws_linked_list_node *src_front = src->head.next;
+        struct aws_linked_list_node *src_back = src->tail.prev;
+
+        dst_back->next = src_front;
+        src_front->prev = dst_back;
+
+        dst->tail.prev = src_back;
+        src_back->next = &dst->tail;
+
+        /* reset src */
+        src->head.next = &src->tail;
+        src->tail.prev = &src->head;
+    }
+
+    AWS_POSTCONDITION(aws_linked_list_is_valid(src));
+    AWS_POSTCONDITION(aws_linked_list_is_valid(dst));
+}
+
+AWS_STATIC_IMPL void aws_linked_list_move_all_front(
+    struct aws_linked_list *AWS_RESTRICT dst,
+    struct aws_linked_list *AWS_RESTRICT src) {
+
+    AWS_PRECONDITION(aws_linked_list_is_valid(src));
+    AWS_PRECONDITION(aws_linked_list_is_valid(dst));
+    AWS_PRECONDITION(dst != src);
+
+    if (!aws_linked_list_empty(src)) {
+        /* splice src nodes into dst, between the head and front nodes */
+        struct aws_linked_list_node *dst_front = dst->head.next;
+        struct aws_linked_list_node *src_front = src->head.next;
+        struct aws_linked_list_node *src_back = src->tail.prev;
+
+        dst->head.next = src_front;
+        src_front->prev = &dst->head;
+
+        src_back->next = dst_front;
+        dst_front->prev = src_back;
+
+        /* reset src */
+        src->head.next = &src->tail;
+        src->tail.prev = &src->head;
+    }
+
+    AWS_POSTCONDITION(aws_linked_list_is_valid(src));
+    AWS_POSTCONDITION(aws_linked_list_is_valid(dst));
 }
 
 AWS_EXTERN_C_END

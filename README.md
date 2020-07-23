@@ -44,6 +44,7 @@ Or on windows,
 * -DENABLE_SANITIZERS=ON - Enables gcc/clang sanitizers, by default this adds -fsanitizer=address,undefined to the compile flags for projects that call aws_add_sanitizers.
 * -DENABLE_FUZZ_TESTS=ON - Includes fuzz tests in the unit test suite. Off by default, because fuzz tests can take a long time. Set -DFUZZ_TESTS_MAX_TIME=N to determine how long to run each fuzz test (default 60s).
 * -DCMAKE_INSTALL_PREFIX=/path/to/install - Standard way of installing to a user defined path. If specified when configuring aws-c-common, ensure the same prefix is specified when configuring other aws-c-* SDKs.
+* -DSTATIC_CRT=ON - On MSVC, use /MT(d) to link MSVCRT
 
 ### API style and conventions
 Every API has a specific set of styles and conventions. We'll outline them here. These conventions are followed in every
@@ -60,16 +61,16 @@ and `aws_set_thread_local_error_handler_fn()` functions.
 All error functions are in the `include/aws/common/error.h` header file.
 
 #### Naming
-Any function that allocates and initializes an object will be suffixed with `new`. Similarly, these objects will always
+Any function that allocates and initializes an object will be suffixed with `new` (e.g. `aws_myobj_new()`). Similarly, these objects will always
 have a corresponding function with a `destroy` suffix. The `new` functions will return the allocated object
 on success and `NULL` on failure. To respond to the error, call `aws_last_error()`. If several `new` or `destroy`
-functions are available, the variants should be named like `new_x` or `destroy_x` (e.g. `new_copy` or `destroy_secure`).
+functions are available, the variants should be named like `new_x` or `destroy_x` (e.g. `aws_myobj_new_copy()` or `aws_myobj_destroy_secure()`).
 
-Any function that initializes an existing object will be suffixed with `init`. These objects will have a corresponding
+Any function that initializes an existing object will be suffixed with `init` (e.g. `aws_myobj_init()`. These objects will have a corresponding
 `clean_up` function if necessary. In these cases, you are responsible for making the decisions for how your object is
 allocated. The `init` functions return `AWS_OP_SUCCESS` ( 0 ) or `AWS_OP_ERR` (-1) on failure. If several `init` or
-`clean_up` functions are available, they should be named like `init_x` or `clean_up_x` (e.g. `init_static` or
-`clean_up_secure`).
+`clean_up` functions are available, they should be named like `init_x` or `clean_up_x` (e.g. `aws_myobj_init_static()` or
+`aws_myobj_clean_up_secure()`).
 
 ## Contributing
 
@@ -138,7 +139,7 @@ memory leaks, as well as some `ASSERT` macros. To write a test:
 * Implement one or more tests with the signature `int test_case_name(struct aws_allocator *, void *ctx)`
 * Use the `AWS_TEST_CASE` macro to declare the test.
 * Include your test in the `tests/main.c` file.
-* Include yur test in the `tests/CMakeLists.txt` file.
+* Include your test in the `tests/CMakeLists.txt` file.
 
 ### Coding Style
 * No Tabs.
@@ -230,6 +231,23 @@ explicitly mandates a character set).
 * If you are adding/using a compiler specific keyword, macro, or intrinsic, hide it behind a platform independent macro
 definition. This mainly applies to header files. Obviously, if you are writing a file that will only be built on a certain
 platform, you have more liberty on this.
+* When checking more than one error condition, check and log each condition separately with a unique message.
 
+Example:
 
+    if (options->callback == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - callback is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    
+    if (options->allocator == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - allocator is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
 
+Not:
+
+    if (options->callback == NULL || options->allocator == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - something is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }

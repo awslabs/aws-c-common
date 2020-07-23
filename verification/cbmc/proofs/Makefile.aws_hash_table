@@ -1,0 +1,10 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
+
+##########
+MAX_TABLE_SIZE ?= 4
+
+DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
+
+#A table has 10 words for the struct, plus 3 words for each entry
+TABLE_SIZE_IN_WORDS=$(shell echo $$(($$((3 * $(MAX_TABLE_SIZE))) + 10)))

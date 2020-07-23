@@ -1,0 +1,9 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
+
+##########
+
+# Arbitrary limit
+MAX_LINKED_LIST_ITEM_ALLOCATION ?= 20
+
+DEFINES += -DMAX_LINKED_LIST_ITEM_ALLOCATION=$(MAX_LINKED_LIST_ITEM_ALLOCATION)

@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_BYTE_BUF_H
 #define AWS_COMMON_BYTE_BUF_H
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/array_list.h>
@@ -369,6 +359,39 @@ AWS_COMMON_API
 int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
+ * Copies `from` to `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the new contents are appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * If the buffer is grown, the old buffer will be securely cleared before getting freed.
+ *
+ * `from` and `to` may be the same buffer, permitting copying a buffer into itself.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_dynamic_secure(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+
+/**
+ * Copies a single byte into `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the byte is appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_byte_dynamic(struct aws_byte_buf *buffer, uint8_t value);
+
+/**
+ * Copies a single byte into `to`. If `to` is too small, the buffer will be grown appropriately and
+ * the old contents copied over, before the byte is appended.
+ *
+ * If the grow fails (overflow or OOM), then an error will be returned.
+ *
+ * If the buffer is grown, the old buffer will be securely cleared before getting freed.
+ */
+AWS_COMMON_API
+int aws_byte_buf_append_byte_dynamic_secure(struct aws_byte_buf *buffer, uint8_t value);
+
+/**
  * Copy contents of cursor to buffer, then update cursor to reference the memory stored in the buffer.
  * If buffer is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be returned.
  *
@@ -681,6 +704,25 @@ AWS_COMMON_API bool aws_byte_buf_write_from_whole_cursor(
     struct aws_byte_cursor src);
 
 /**
+ * Without increasing buf's capacity, write as much as possible from advancing_cursor into buf.
+ *
+ * buf's len is updated accordingly.
+ * advancing_cursor is advanced so it contains the remaining unwritten parts.
+ * Returns the section of advancing_cursor which was written.
+ *
+ * This function cannot fail. If buf is full (len == capacity) or advancing_len has 0 length,
+ * then buf and advancing_cursor are not altered and a cursor with 0 length is returned.
+ *
+ * Example: Given a buf with 2 bytes of space available and advancing_cursor with contents "abc".
+ * "ab" will be written to buf and buf->len will increase 2 and become equal to buf->capacity.
+ * advancing_cursor will advance so its contents become the unwritten "c".
+ * The returned cursor's contents will be the "ab" from the original advancing_cursor.
+ */
+AWS_COMMON_API struct aws_byte_cursor aws_byte_buf_write_to_capacity(
+    struct aws_byte_buf *buf,
+    struct aws_byte_cursor *advancing_cursor);
+
+/**
  * Copies one byte to buffer.
  *
  * On success, returns true and updates the cursor /length
@@ -753,6 +795,46 @@ AWS_COMMON_API bool aws_byte_buf_write_be64(struct aws_byte_buf *buf, uint64_t x
  * buffer unchanged.
  */
 AWS_COMMON_API bool aws_byte_buf_write_float_be64(struct aws_byte_buf *buf, double x);
+
+/**
+ * Like isalnum(), but ignores C locale.
+ * Returns true if ch has the value of ASCII/UTF-8: 'a'-'z', 'A'-'Z', or '0'-'9'.
+ */
+AWS_COMMON_API bool aws_isalnum(uint8_t ch);
+
+/**
+ * Like isalpha(), but ignores C locale.
+ * Returns true if ch has the value of ASCII/UTF-8: 'a'-'z' or 'A'-'Z'.
+ */
+AWS_COMMON_API bool aws_isalpha(uint8_t ch);
+
+/**
+ * Like isdigit().
+ * Returns true if ch has the value of ASCII/UTF-8: '0'-'9'.
+ *
+ * Note: C's built-in isdigit() is also supposed to ignore the C locale,
+ * but cppreference.com claims "some implementations (e.g. Microsoft in 1252 codepage)
+ * may classify additional single-byte characters as digits"
+ */
+AWS_COMMON_API bool aws_isdigit(uint8_t ch);
+
+/**
+ * Like isxdigit().
+ * Returns true if ch has the value of ASCII/UTF-8: '0'-'9', 'a'-'f', or 'A'-'F'.
+ *
+ * Note: C's built-in isxdigit() is also supposed to ignore the C locale,
+ * but cppreference.com claims "some implementations (e.g. Microsoft in 1252 codepage)
+ * may classify additional single-byte characters as digits"
+ */
+
+AWS_COMMON_API bool aws_isxdigit(uint8_t ch);
+
+/**
+ * Like isspace(), but ignores C locale.
+ * Return true if ch has the value of ASCII/UTF-8: space (0x20), form feed (0x0C),
+ * line feed (0x0A), carriage return (0x0D), horizontal tab (0x09), or vertical tab (0x0B).
+ */
+AWS_COMMON_API bool aws_isspace(uint8_t ch);
 
 AWS_EXTERN_C_END
 

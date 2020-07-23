@@ -1,0 +1,66 @@
+# -*- mode: makefile -*-
+# The first line sets the emacs major mode to Makefile
+
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################
+# Use this file to give project-specific definitions of the command
+# line arguments to pass to CBMC tools like goto-cc to build the goto
+# binaries and cbmc to do the property and coverage checking.
+#
+# Use this file to override most default definitions of variables in
+# Makefile.common.
+################################################################
+
+# Flags to pass to goto-cc for compilation (typically those passed to gcc -c)
+# COMPILE_FLAGS =
+
+# Flags to pass to goto-cc for linking (typically those passed to gcc)
+# LINK_FLAGS =
+
+
+# Preprocessor include paths -I...
+# Consider adding
+#     INCLUDES += -I$(CBMC_ROOT)/include
+# You will want to decide what order that comes in relative to the other
+# include directories in your project.
+#
+INCLUDES += -I$(CBMC_ROOT)/include
+INCLUDES += -I$(SRCDIR)/include
+
+
+# Preprocessor definitions -D...
+
+# Enables costly checks (e.g. ones that contain loops).
+# Don't execute deep checks by default.
+AWS_DEEP_CHECKS ?= 0
+DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
+
+
+# Extra CBMC flags not enabled by Makefile.common
+CHECKFLAGS += --enum-range-check
+CHECKFLAGS += --pointer-primitive-check
+CHECKFLAGS += --pointer-primitive-check
+
+
+# We always override allocator functions with our own allocator
+# Removing the function from the goto program helps CBMC's
+# function pointer analysis.
+REMOVE_FUNCTION_BODY += aws_default_allocator
+REMOVE_FUNCTION_BODY += s_cf_allocator_allocate
+REMOVE_FUNCTION_BODY += s_cf_allocator_copy_description
+REMOVE_FUNCTION_BODY += s_cf_allocator_deallocate
+REMOVE_FUNCTION_BODY += s_cf_allocator_preferred_size
+REMOVE_FUNCTION_BODY += s_cf_allocator_reallocate
+REMOVE_FUNCTION_BODY += s_default_calloc
+REMOVE_FUNCTION_BODY += s_default_free
+REMOVE_FUNCTION_BODY += s_default_malloc
+REMOVE_FUNCTION_BODY += s_default_realloc
+
+
+# We override abort() to be assert(0), as it is not caught by
+# CBMC as a violation
+PROOF_SOURCES += $(PROOF_STUB)/abort_override_assert_false.c
+REMOVE_FUNCTION_BODY += abort
+
