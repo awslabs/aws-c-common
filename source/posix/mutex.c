@@ -5,7 +5,7 @@
 
 #include <aws/common/mutex.h>
 #include <aws/common/posix/common.inl>
-
+#include <aws/common/trace_event.h>
 #include <errno.h>
 
 void aws_mutex_clean_up(struct aws_mutex *mutex) {
