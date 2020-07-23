@@ -39,15 +39,30 @@ int aws_mutex_init(struct aws_mutex *mutex) {
 
 int aws_mutex_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
-    return aws_private_convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_BEGIN("aws-common", "mutux_lock");
+
+    int err = aws_private_convert_and_raise_error_code(pthread_mutex_lock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_END("aws-common", "mutux_lock");
+
+    return err;
 }
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
-    return aws_private_convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_BEGIN("aws-common", "mutux_try_lock");
+
+    int err = aws_private_convert_and_raise_error_code(pthread_mutex_trylock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_END("aws-common", "mutux_try_lock");
+
+    return err;
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
-    return aws_private_convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_BEGIN("aws-common", "mutux_unlock");
+
+    int err = aws_private_convert_and_raise_error_code(pthread_mutex_unlock(&mutex->mutex_handle));
+    AWS_TRACE_EVENT_END("aws-common", "mutux_unlock");
+
+    return err;
 }
