@@ -67,6 +67,13 @@ function(aws_set_common_properties target)
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
+
+       # -moutline-atomics generates code for both older load/store exclusive atomics and also
+       # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
+        check_c_compiler_flag(-moutline-atomics HAS_MOUTLINE_ATOMICS)
+        if (HAS_MOUTLINE_ATOMICS)
+            list(APPEND AWS_C_FLAGS -moutline-atomics)
+        endif()
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
