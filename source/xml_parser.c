@@ -21,17 +21,16 @@ struct cb_stack_data {
     void *user_data;
 };
 
-struct aws_xml_parser* aws_xml_parser_new(
+struct aws_xml_parser *aws_xml_parser_new(
     struct aws_allocator *allocator,
-    const struct aws_xml_parser_options* options) {
-    
+    const struct aws_xml_parser_options *options) {
+
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(options);
 
-    struct aws_xml_parser* parser = aws_mem_calloc(allocator, 1, sizeof(struct aws_xml_parser));
+    struct aws_xml_parser *parser = aws_mem_calloc(allocator, 1, sizeof(struct aws_xml_parser));
 
-    if(parser == NULL)
-    {
+    if (parser == NULL) {
         return NULL;
     }
 
@@ -46,7 +45,7 @@ struct aws_xml_parser* aws_xml_parser_new(
     }
 
     if (aws_array_list_init_dynamic(&parser->callback_stack, allocator, 4, sizeof(struct cb_stack_data))) {
-        aws_mem_release(allocator,parser);
+        aws_mem_release(allocator, parser);
         return NULL;
     }
 
@@ -337,29 +336,25 @@ int aws_xml_node_traverse(
     return parser->error;
 }
 
-int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *name)
-{
+int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *name) {
     AWS_PRECONDITION(attribute);
     *name = attribute->name;
     return AWS_OP_SUCCESS;
 }
 
-int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *value)
-{
+int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *value) {
     AWS_PRECONDITION(attribute);
     *value = attribute->value;
     return AWS_OP_SUCCESS;
 }
 
-int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *name)
-{
+int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *name) {
     AWS_PRECONDITION(node);
     *name = node->name;
     return AWS_OP_SUCCESS;
 }
 
-int aws_xml_node_get_attributes(const struct aws_xml_node *node, const struct aws_array_list **attributes)
-{
+int aws_xml_node_get_attributes(const struct aws_xml_node *node, const struct aws_array_list **attributes) {
     AWS_PRECONDITION(node);
     *attributes = &node->attributes;
     return AWS_OP_SUCCESS;
