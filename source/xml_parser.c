@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/xml_parser.h>
+#include <aws/common/private/xml_parser_impl.h>
 
 #include <aws/common/array_list.h>
 
@@ -21,34 +21,45 @@ struct cb_stack_data {
     void *user_data;
 };
 
-int aws_xml_parser_init(
-    struct aws_xml_parser *parser,
+struct aws_xml_parser* aws_xml_parser_new(
     struct aws_allocator *allocator,
-    struct aws_byte_cursor *doc,
-    size_t max_depth) {
-    AWS_ZERO_STRUCT(*parser);
+    const struct aws_xml_parser_options* options) {
+    
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(options);
+
+    struct aws_xml_parser* parser = aws_mem_calloc(allocator, 1, sizeof(struct aws_xml_parser));
+
+    if(parser == NULL)
+    {
+        return NULL;
+    }
+
     parser->allocator = allocator;
-    parser->doc = *doc;
+    parser->doc = options->doc;
 
     parser->max_depth = s_max_document_depth;
     parser->error = AWS_OP_SUCCESS;
 
-    if (max_depth) {
-        parser->max_depth = max_depth;
+    if (options->max_depth) {
+        parser->max_depth = options->max_depth;
     }
 
     if (aws_array_list_init_dynamic(&parser->callback_stack, allocator, 4, sizeof(struct cb_stack_data))) {
-        return AWS_OP_ERR;
+        aws_mem_release(allocator,parser);
+        return NULL;
     }
 
-    return AWS_OP_SUCCESS;
+    return parser;
 }
 
-void aws_xml_parser_clean_up(struct aws_xml_parser *parser) {
-    if (parser->allocator) {
-        aws_array_list_clean_up(&parser->callback_stack);
-        AWS_ZERO_STRUCT(*parser);
-    }
+void aws_xml_parser_destroy(struct aws_xml_parser *parser) {
+    AWS_PRECONDITION(parser);
+    AWS_PRECONDITION(parser->allocator);
+
+    aws_array_list_clean_up(&parser->callback_stack);
+
+    aws_mem_release(parser->allocator, parser);
 }
 
 int s_node_next_sibling(struct aws_xml_parser *parser);
@@ -324,6 +335,34 @@ int aws_xml_node_traverse(
 
     aws_array_list_pop_back(&parser->callback_stack);
     return parser->error;
+}
+
+int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *name)
+{
+    AWS_PRECONDITION(attribute);
+    *name = attribute->name;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *value)
+{
+    AWS_PRECONDITION(attribute);
+    *value = attribute->value;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *name)
+{
+    AWS_PRECONDITION(node);
+    *name = node->name;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_xml_node_get_attributes(const struct aws_xml_node *node, const struct aws_array_list **attributes)
+{
+    AWS_PRECONDITION(node);
+    *attributes = &node->attributes;
+    return AWS_OP_SUCCESS;
 }
 
 /* advance the parser to the next sibling node.*/
