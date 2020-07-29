@@ -1,4 +1,4 @@
-cbmcflags: "--bounds-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;strlen.0:33,__CPROVER_file_local_lookup3_inl_hashlittle2.0:3,__CPROVER_file_local_lookup3_inl_hashlittle2.1:3,__CPROVER_file_local_lookup3_inl_hashlittle2.2:3;--object-bits;8"
+cbmcflags: "--bounds-check;--conversion-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--pointer-primitive-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwind;1;--unwinding-assertions;--unwindset;strlen.0:33,__CPROVER_file_local_lookup3_inl_hashlittle2.0:3,__CPROVER_file_local_lookup3_inl_hashlittle2.1:3,__CPROVER_file_local_lookup3_inl_hashlittle2.2:3;--object-bits;8"
 expected: "SUCCESSFUL"
 goto: aws_hash_c_string_harness.goto
 jobos: ubuntu16
