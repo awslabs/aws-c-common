@@ -1,6 +1,11 @@
 #ifndef AWS_COMMON_XML_PARSER_IMPL_H
 #define AWS_COMMON_XML_PARSER_IMPL_H
 
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 #include <aws/common/xml_parser.h>
 
 struct aws_xml_node {

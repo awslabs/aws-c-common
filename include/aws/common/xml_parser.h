@@ -83,19 +83,19 @@ int aws_xml_node_traverse(
     void *user_data);
 
 /*
- * Get the name of a node.
+ * Get the name of an xml node.
  */
 AWS_COMMON_API
 int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *out_name);
 
 /*
- * Get the number of attributes for a ndoe.
+ * Get the number of attributes for an xml node.
  */
 AWS_COMMON_API
 size_t aws_xml_node_get_num_attributes(const struct aws_xml_node *node);
 
 /*
- * Get an attribute for a node by index
+ * Get an attribute for an xml node by its index.
  */
 AWS_COMMON_API
 int aws_xml_node_get_attribute(
