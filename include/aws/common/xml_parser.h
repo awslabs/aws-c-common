@@ -32,7 +32,7 @@ typedef bool(
     aws_xml_parser_on_node_encountered_fn)(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data);
 
 struct aws_xml_parser_options {
-    /* XML document to parse. */
+    /* xml document to parse. */
     struct aws_byte_cursor doc;
 
     /* Max node depth used for parsing document. */
@@ -42,7 +42,7 @@ struct aws_xml_parser_options {
 AWS_EXTERN_C_BEGIN
 
 /**
- * Allocates an XML parser.
+ * Allocates an xml parser.
  */
 AWS_COMMON_API
 struct aws_xml_parser *aws_xml_parser_new(
@@ -50,7 +50,7 @@ struct aws_xml_parser *aws_xml_parser_new(
     const struct aws_xml_parser_options *options);
 
 /*
- * De-allocates an XML parser.
+ * De-allocates an xml parser.
  */
 AWS_COMMON_API
 void aws_xml_parser_destroy(struct aws_xml_parser *parser);
