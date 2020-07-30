@@ -12,8 +12,12 @@
 #include <aws/common/exports.h>
 
 struct aws_xml_parser;
-struct aws_xml_attribute;
 struct aws_xml_node;
+
+struct aws_xml_attribute {
+    struct aws_byte_cursor name;
+    struct aws_byte_cursor value;
+};
 
 /**
  * Callback for when an xml node is encountered in the document. As a user you have a few options:
@@ -79,18 +83,6 @@ int aws_xml_node_traverse(
     void *user_data);
 
 /*
- * Get the name of an attribute.
- */
-AWS_COMMON_API
-int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_name);
-
-/*
- * Get the value of an attribute.
- */
-AWS_COMMON_API
-int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_value);
-
-/*
  * Get the name of a node.
  */
 AWS_COMMON_API
@@ -109,7 +101,7 @@ AWS_COMMON_API
 int aws_xml_node_get_attribute(
     const struct aws_xml_node *node,
     size_t attribute_index,
-    struct aws_xml_attribute **out_attribute);
+    struct aws_xml_attribute *out_attribute);
 
 AWS_EXTERN_C_END
 

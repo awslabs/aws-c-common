@@ -336,18 +336,6 @@ int aws_xml_node_traverse(
     return parser->error;
 }
 
-int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_name) {
-    AWS_PRECONDITION(attribute);
-    *out_name = attribute->name;
-    return AWS_OP_SUCCESS;
-}
-
-int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_value) {
-    AWS_PRECONDITION(attribute);
-    *out_value = attribute->value;
-    return AWS_OP_SUCCESS;
-}
-
 int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *out_name) {
     AWS_PRECONDITION(node);
     *out_name = node->name;
@@ -362,8 +350,8 @@ size_t aws_xml_node_get_num_attributes(const struct aws_xml_node *node) {
 int aws_xml_node_get_attribute(
     const struct aws_xml_node *node,
     size_t attribute_index,
-    struct aws_xml_attribute **out_attribute) {
-    return aws_array_list_get_at(&node->attributes, &out_attribute, attribute_index);
+    struct aws_xml_attribute *out_attribute) {
+    return aws_array_list_get_at(&node->attributes, out_attribute, attribute_index);
 }
 
 /* advance the parser to the next sibling node.*/
