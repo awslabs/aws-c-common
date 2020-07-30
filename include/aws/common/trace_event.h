@@ -59,6 +59,19 @@ AWS_EXTERN_C_BEGIN
 # define AWS_TRACE_EVENT_NAME_PROCESS(category, name, process_name) \
         aws_trace_event_str(category, name, EVENT_PHASE_METADATA, NULL, NULL, process_name, NULL)
 
+//TODO: test this out
+/* Duration Event Macros */
+/* Creates local variable for End scope for easier markups of duration events */
+/* Only one pair can exist per scope */
+#define AWS_TRACE_EVENT_BEGIN_SCOPE(category, name) \
+        const char * complete_category = category; \
+        const char * complete_name = name; \
+        aws_trace_event(complete_category, complete_name, EVENT_PHASE_BEGIN, 0. NULL, 0, NULL)
+#define AWS_TRACE_EVENT_END_SCOPE() \
+        aws_trace_event(complete_category, complete_name, EVENT_PHASE_BEGIN, 0. NULL, 0, NULL)
+
+
+
 // Phase macros
 //! add more phase types later as the app progresses
 #    define EVENT_PHASE_BEGIN ('B')

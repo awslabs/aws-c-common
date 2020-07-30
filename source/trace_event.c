@@ -168,8 +168,8 @@ static void s_trace_event_system_clean_up(void) {
     aws_bus_unsubscribe(&(s_trace->bus), 0, s_trace_event_write, NULL);
     aws_bus_clean_up(&(s_trace->bus));
     
-    char pos[50] = "POSIX_";
-    printf("%s\n", strcat(pos, "OPERATING"));
+    //char pos[50] = "POSIX_";
+    //printf("%s\n", strcat(pos, "OPERATING"));
     if (s_trace->fp != NULL) {
         /* Add number of events recorded */
         fprintf(
@@ -184,7 +184,7 @@ static void s_trace_event_system_clean_up(void) {
         if (s_trace->time_unit == AWS_TIMESTAMP_NANOS) {
             fprintf(s_trace->fp, ",\"displayTimeUnit\": \"ns\"");
         }
-        fprintf(s_trace->fp, "}");
+        fprintf(s_trace->fp, "}\n");
 
         fclose(s_trace->fp);
     }
@@ -204,6 +204,7 @@ void aws_trace_system_clean_up(void) {
 
 /* starts the message bus and initializes the JSON root, and the event array for storing metadata */
 int aws_trace_system_init(struct aws_allocator *allocator, const char *filename) {
+    printf("hello init\n");
     if (allocator == NULL) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return AWS_OP_ERR;
