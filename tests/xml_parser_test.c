@@ -17,7 +17,8 @@ struct root_with_text_capture {
 bool s_root_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct root_with_text_capture *capture = user_data;
     capture->error = aws_xml_node_as_body(parser, node, &capture->capture);
-    capture->node_name = node->name;
+
+    ASSERT_SUCCESS(aws_xml_node_get_name(node, &capture->node_name));
 
     return true;
 }
@@ -63,7 +64,7 @@ struct child_text_capture {
 bool s_child_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct child_text_capture *capture = user_data;
     capture->error |= aws_xml_node_as_body(parser, node, &capture->capture);
-    capture->node_name = node->name;
+    ASSERT_SUCCESS(aws_xml_node_get_name(node, &capture->node_name));
 
     return true;
 }
@@ -119,11 +120,15 @@ bool s_sibling_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
-    if (aws_byte_cursor_eq_ignore_case(&node->name, &child1_name)) {
-        capture->node_name1 = node->name;
+    struct aws_byte_cursor node_name;
+
+    ASSERT_SUCCESS(aws_xml_node_get_name(node, &node_name));
+
+    if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
+        capture->node_name1 = node_name;
         capture->error |= aws_xml_node_as_body(parser, node, &capture->capture1);
-    } else if (aws_byte_cursor_eq_ignore_case(&node->name, &child2_name)) {
-        capture->node_name2 = node->name;
+    } else if (aws_byte_cursor_eq_ignore_case(&node_name, &child2_name)) {
+        capture->node_name2 = node_name;
         capture->error |= aws_xml_node_as_body(parser, node, &capture->capture2);
     }
 
@@ -184,11 +189,11 @@ const char *preamble_and_attributes =
 struct preamble_and_attributes_capture {
     struct aws_byte_cursor capture1;
     struct aws_byte_cursor capture2;
-    struct aws_xml_attribute capture2_attr;
+    struct aws_xml_attribute *capture2_attr;
     struct aws_byte_cursor node_name1;
     struct aws_byte_cursor node_name2;
-    struct aws_xml_attribute root_attr1;
-    struct aws_xml_attribute root_attr2;
+    struct aws_xml_attribute *root_attr1;
+    struct aws_xml_attribute *root_attr2;
     int error;
 };
 
@@ -198,13 +203,16 @@ bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct 
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
-    if (aws_byte_cursor_eq_ignore_case(&node->name, &child1_name)) {
-        capture->node_name1 = node->name;
+    struct aws_byte_cursor node_name;
+    ASSERT_SUCCESS(aws_xml_node_get_name(node, &node_name));
+
+    if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
+        capture->node_name1 = node_name;
         capture->error |= aws_xml_node_as_body(parser, node, &capture->capture1);
-    } else if (aws_byte_cursor_eq_ignore_case(&node->name, &child2_name)) {
-        capture->node_name2 = node->name;
+    } else if (aws_byte_cursor_eq_ignore_case(&node_name, &child2_name)) {
+        capture->node_name2 = node_name;
         capture->error |= aws_xml_node_as_body(parser, node, &capture->capture2);
-        aws_array_list_get_at(&node->attributes, &capture->capture2_attr, 0);
+        aws_xml_node_get_attribute(node, 0, &capture->capture2_attr);
     }
 
     return true;
@@ -213,8 +221,9 @@ bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct 
 bool s_preamble_and_attributes(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
-    aws_array_list_get_at(&node->attributes, &capture->root_attr1, 0);
-    aws_array_list_get_at(&node->attributes, &capture->root_attr2, 1);
+    aws_xml_node_get_attribute(node, 0, &capture->root_attr1);
+    aws_xml_node_get_attribute(node, 1, &capture->root_attr2);
+
     capture->error |= aws_xml_node_traverse(parser, node, s_preamble_and_attributes_child_node, user_data);
     return true;
 }
@@ -237,24 +246,28 @@ static int s_xml_parser_preamble_and_attributes_test(struct aws_allocator *alloc
     const char expected_attr1_name[] = "attribute1";
     const char expected_attr1_value1[] = "abc";
 
+    struct aws_byte_cursor root_attr1_name;
+    struct aws_byte_cursor root_attr1_value;
+    struct aws_byte_cursor root_attr2_name;
+    struct aws_byte_cursor root_attr2_value;
+
+    ASSERT_SUCCESS(aws_xml_attribute_get_name(capture.root_attr1, &root_attr1_name));
+    ASSERT_SUCCESS(aws_xml_attribute_get_value(capture.root_attr1, &root_attr1_value));
+    ASSERT_SUCCESS(aws_xml_attribute_get_name(capture.root_attr2, &root_attr2_name));
+    ASSERT_SUCCESS(aws_xml_attribute_get_value(capture.root_attr2, &root_attr2_value));
+
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr1_name, sizeof(expected_attr1_name) - 1, capture.root_attr1.name.ptr, capture.root_attr1.name.len);
+        expected_attr1_name, sizeof(expected_attr1_name) - 1, root_attr1_name.ptr, root_attr1_name.len);
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr1_value1,
-        sizeof(expected_attr1_value1) - 1,
-        capture.root_attr1.value.ptr,
-        capture.root_attr1.value.len);
+        expected_attr1_value1, sizeof(expected_attr1_value1) - 1, root_attr1_value.ptr, root_attr1_value.len);
 
     const char expected_attr2_name[] = "attribute2";
     const char expected_attr2_value1[] = "def";
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr2_name, sizeof(expected_attr2_name) - 1, capture.root_attr2.name.ptr, capture.root_attr2.name.len);
+        expected_attr2_name, sizeof(expected_attr2_name) - 1, root_attr2_name.ptr, root_attr2_name.len);
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr2_value1,
-        sizeof(expected_attr2_value1) - 1,
-        capture.root_attr2.value.ptr,
-        capture.root_attr2.value.len);
+        expected_attr2_value1, sizeof(expected_attr2_value1) - 1, root_attr2_value.ptr, root_attr2_value.len);
 
     const char expected_name1[] = "child1";
     const char expected_value1[] = "TestBody";
@@ -274,16 +287,16 @@ static int s_xml_parser_preamble_and_attributes_test(struct aws_allocator *alloc
     const char expected_attr3_name[] = "attribute3";
     const char expected_attr3_value1[] = "childAttr";
 
+    struct aws_byte_cursor capture2_attr_name;
+    struct aws_byte_cursor capture2_attr_value;
+
+    ASSERT_SUCCESS(aws_xml_attribute_get_name(capture.capture2_attr, &capture2_attr_name));
+    ASSERT_SUCCESS(aws_xml_attribute_get_value(capture.capture2_attr, &capture2_attr_value));
+
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr3_name,
-        sizeof(expected_attr2_name) - 1,
-        capture.capture2_attr.name.ptr,
-        capture.capture2_attr.name.len);
+        expected_attr3_name, sizeof(expected_attr2_name) - 1, capture2_attr_name.ptr, capture2_attr_name.len);
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected_attr3_value1,
-        sizeof(expected_attr3_value1) - 1,
-        capture.capture2_attr.value.ptr,
-        capture.capture2_attr.value.len);
+        expected_attr3_value1, sizeof(expected_attr3_value1) - 1, capture2_attr_value.ptr, capture2_attr_value.len);
 
     aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;

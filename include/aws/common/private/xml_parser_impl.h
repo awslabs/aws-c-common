@@ -3,6 +3,18 @@
 
 #include <aws/common/xml_parser.h>
 
+struct aws_xml_attribute {
+    struct aws_byte_cursor name;
+    struct aws_byte_cursor value;
+};
+
+struct aws_xml_node {
+    struct aws_byte_cursor name;
+    struct aws_array_list attributes;
+    struct aws_byte_cursor doc_at_body;
+    bool processed;
+};
+
 struct aws_xml_parser {
     struct aws_allocator *allocator;
     struct aws_byte_cursor doc;

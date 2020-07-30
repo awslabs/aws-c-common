@@ -12,18 +12,8 @@
 #include <aws/common/exports.h>
 
 struct aws_xml_parser;
-
-struct aws_xml_attribute {
-    struct aws_byte_cursor name;
-    struct aws_byte_cursor value;
-};
-
-struct aws_xml_node {
-    struct aws_byte_cursor name;
-    struct aws_array_list attributes;
-    struct aws_byte_cursor doc_at_body;
-    bool processed;
-};
+struct aws_xml_attribute;
+struct aws_xml_node;
 
 /**
  * Callback for when an xml node is encountered in the document. As a user you have a few options:
@@ -87,6 +77,39 @@ int aws_xml_node_traverse(
     struct aws_xml_node *node,
     aws_xml_parser_on_node_encountered_fn *on_node_encountered,
     void *user_data);
+
+/*
+ * Get the name of an attribute.
+ */
+AWS_COMMON_API
+int aws_xml_attribute_get_name(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_name);
+
+/*
+ * Get the value of an attribute.
+ */
+AWS_COMMON_API
+int aws_xml_attribute_get_value(const struct aws_xml_attribute *attribute, struct aws_byte_cursor *out_value);
+
+/*
+ * Get the name of a node.
+ */
+AWS_COMMON_API
+int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *out_name);
+
+/*
+ * Get the number of attributes for a ndoe.
+ */
+AWS_COMMON_API
+size_t aws_xml_node_get_num_attributes(const struct aws_xml_node *node);
+
+/*
+ * Get an attribute for a node by index
+ */
+AWS_COMMON_API
+int aws_xml_node_get_attribute(
+    const struct aws_xml_node *node,
+    size_t attribute_index,
+    struct aws_xml_attribute **out_attribute);
 
 AWS_EXTERN_C_END
 
