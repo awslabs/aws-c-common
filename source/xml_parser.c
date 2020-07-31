@@ -54,7 +54,6 @@ struct aws_xml_parser *aws_xml_parser_new(
 
 void aws_xml_parser_destroy(struct aws_xml_parser *parser) {
     AWS_PRECONDITION(parser);
-    AWS_PRECONDITION(parser->allocator);
 
     aws_array_list_clean_up(&parser->callback_stack);
 
@@ -76,6 +75,10 @@ static int s_load_node_decl(
     struct aws_xml_parser *parser,
     struct aws_byte_cursor *decl_body,
     struct aws_xml_node *node) {
+    AWS_PRECONDITION(parser);
+    AWS_PRECONDITION(decl_body);
+    AWS_PRECONDITION(node);
+
     struct aws_array_list splits;
     AWS_ZERO_STRUCT(splits);
 
@@ -134,6 +137,7 @@ int aws_xml_parser_parse(
     aws_xml_parser_on_node_encountered_fn *on_node_encountered,
     void *user_data) {
 
+    AWS_PRECONDITION(parser);
     AWS_ASSUME(on_node_encountered);
     aws_array_list_clear(&parser->callback_stack);
 
@@ -176,6 +180,9 @@ int s_advance_to_closing_tag(
     struct aws_xml_parser *parser,
     struct aws_xml_node *node,
     struct aws_byte_cursor *out_body) {
+    AWS_PRECONDITION(parser);
+    AWS_PRECONDITION(node);
+
     /* currently the max node name is 256 characters. This is arbitrary, but should be enough
      * for our uses. If we ever generalize this, we'll have to come back and rethink this. */
     uint8_t name_close[MAX_NAME_LEN + NODE_CLOSE_OVERHEAD] = {0};
@@ -248,6 +255,9 @@ int s_advance_to_closing_tag(
 }
 
 int aws_xml_node_as_body(struct aws_xml_parser *parser, struct aws_xml_node *node, struct aws_byte_cursor *out_body) {
+    AWS_PRECONDITION(parser);
+    AWS_PRECONDITION(node);
+
     node->processed = true;
     return s_advance_to_closing_tag(parser, node, out_body);
 }
@@ -257,6 +267,8 @@ int aws_xml_node_traverse(
     struct aws_xml_node *node,
     aws_xml_parser_on_node_encountered_fn *on_node_encountered,
     void *user_data) {
+    AWS_PRECONDITION(parser);
+    AWS_PRECONDITION(node);
     AWS_ASSUME(on_node_encountered);
     node->processed = true;
     struct cb_stack_data stack_data = {
@@ -338,6 +350,7 @@ int aws_xml_node_traverse(
 
 int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *out_name) {
     AWS_PRECONDITION(node);
+    AWS_PRECONDITION(out_name);
     *out_name = node->name;
     return AWS_OP_SUCCESS;
 }
@@ -351,11 +364,15 @@ int aws_xml_node_get_attribute(
     const struct aws_xml_node *node,
     size_t attribute_index,
     struct aws_xml_attribute *out_attribute) {
+    AWS_PRECONDITION(node);
+    AWS_PRECONDITION(out_attribute);
     return aws_array_list_get_at(&node->attributes, out_attribute, attribute_index);
 }
 
 /* advance the parser to the next sibling node.*/
 int s_node_next_sibling(struct aws_xml_parser *parser) {
+    AWS_PRECONDITION(parser);
+
     uint8_t *next_location = memchr(parser->doc.ptr, '<', parser->doc.len);
 
     if (!next_location) {
