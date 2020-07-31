@@ -17,8 +17,7 @@ struct root_with_text_capture {
 bool s_root_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct root_with_text_capture *capture = user_data;
     capture->error = aws_xml_node_as_body(parser, node, &capture->capture);
-
-    ASSERT_SUCCESS(aws_xml_node_get_name(node, &capture->node_name));
+    capture->error |= aws_xml_node_get_name(node, &capture->node_name);
 
     return true;
 }
@@ -64,7 +63,7 @@ struct child_text_capture {
 bool s_child_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct child_text_capture *capture = user_data;
     capture->error |= aws_xml_node_as_body(parser, node, &capture->capture);
-    ASSERT_SUCCESS(aws_xml_node_get_name(node, &capture->node_name));
+    capture->error |= aws_xml_node_get_name(node, &capture->node_name);
 
     return true;
 }
@@ -121,8 +120,8 @@ bool s_sibling_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
     struct aws_byte_cursor node_name;
-
-    ASSERT_SUCCESS(aws_xml_node_get_name(node, &node_name));
+    AWS_ZERO_STRUCT(node_name);
+    capture->error |= aws_xml_node_get_name(node, &node_name);
 
     if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
         capture->node_name1 = node_name;
@@ -204,7 +203,8 @@ bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct 
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
     struct aws_byte_cursor node_name;
-    ASSERT_SUCCESS(aws_xml_node_get_name(node, &node_name));
+    AWS_ZERO_STRUCT(node_name);
+    capture->error |= aws_xml_node_get_name(node, &node_name);
 
     if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
         capture->node_name1 = node_name;
@@ -212,7 +212,10 @@ bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct 
     } else if (aws_byte_cursor_eq_ignore_case(&node_name, &child2_name)) {
         capture->node_name2 = node_name;
         capture->error |= aws_xml_node_as_body(parser, node, &capture->capture2);
-        aws_xml_node_get_attribute(node, 0, &capture->capture2_attr);
+
+        ASSERT_TRUE(aws_xml_node_get_num_attributes(node) == 1);
+
+        capture->error |= aws_xml_node_get_attribute(node, 0, &capture->capture2_attr);
     }
 
     return true;
@@ -221,9 +224,10 @@ bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct 
 bool s_preamble_and_attributes(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
-    aws_xml_node_get_attribute(node, 0, &capture->root_attr1);
-    aws_xml_node_get_attribute(node, 1, &capture->root_attr2);
+    ASSERT_TRUE(aws_xml_node_get_num_attributes(node) == 2);
 
+    capture->error |= aws_xml_node_get_attribute(node, 0, &capture->root_attr1);
+    capture->error |= aws_xml_node_get_attribute(node, 1, &capture->root_attr2);
     capture->error |= aws_xml_node_traverse(parser, node, s_preamble_and_attributes_child_node, user_data);
     return true;
 }
