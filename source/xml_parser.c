@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/private/xml_parser_impl.h>
-
 #include <aws/common/array_list.h>
+#include <aws/common/logging.h>
+#include <aws/common/private/xml_parser_impl.h>
 
 #ifdef _MSC_VER
 /* allow non-constant declared initializers. */
@@ -89,12 +89,14 @@ static int s_load_node_decl(
     /* split by space, first split will be the node name, everything after will be attribute=value pairs. For now
      * we limit to 10 attributes, if this is exceeded we consider it invalid document. */
     if (aws_byte_cursor_split_on_char(decl_body, ' ', &splits)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
 
     size_t splits_count = aws_array_list_length(&splits);
 
     if (splits_count < 1) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
 
@@ -138,19 +140,27 @@ int aws_xml_parser_parse(
     void *user_data) {
 
     AWS_PRECONDITION(parser);
-    AWS_ASSUME(on_node_encountered);
+
+    if (on_node_encountered == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "'on_node_encountered' argument for aws_xml_parser_parse is invalid.");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return AWS_OP_ERR;
+    }
+
     aws_array_list_clear(&parser->callback_stack);
 
     /* burn everything that precedes the actual xml nodes. */
     while (parser->doc.len) {
         uint8_t *start = memchr(parser->doc.ptr, '<', parser->doc.len);
         if (!start) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         }
 
         uint8_t *location = memchr(parser->doc.ptr, '>', parser->doc.len);
 
         if (!location) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         }
 
@@ -194,11 +204,13 @@ int s_advance_to_closing_tag(
     size_t closing_name_len = node->name.len + NODE_CLOSE_OVERHEAD;
 
     if (closing_name_len > node->doc_at_body.len) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         return AWS_OP_ERR;
     }
 
     if (sizeof(name_close) < closing_name_len) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         return AWS_OP_ERR;
     }
@@ -222,6 +234,7 @@ int s_advance_to_closing_tag(
     AWS_ZERO_STRUCT(close_find_result);
     do {
         if (aws_byte_cursor_find_exact(&parser->doc, &to_find_close, &close_find_result)) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         }
 
@@ -269,7 +282,14 @@ int aws_xml_node_traverse(
     void *user_data) {
     AWS_PRECONDITION(parser);
     AWS_PRECONDITION(node);
-    AWS_ASSUME(on_node_encountered);
+
+    if (on_node_encountered == NULL) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_XML_PARSER, "Callback 'on_node_encountered' for aws_xml_node_traverse is invalid.");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return AWS_OP_ERR;
+    }
+
     node->processed = true;
     struct cb_stack_data stack_data = {
         .cb = on_node_encountered,
@@ -278,11 +298,13 @@ int aws_xml_node_traverse(
 
     size_t doc_depth = aws_array_list_length(&parser->callback_stack);
     if (doc_depth >= parser->max_depth) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         return AWS_OP_ERR;
     }
 
     if (aws_array_list_push_back(&parser->callback_stack, &stack_data)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         return AWS_OP_ERR;
     }
@@ -293,12 +315,14 @@ int aws_xml_node_traverse(
         uint8_t *next_location = memchr(parser->doc.ptr, '<', parser->doc.len);
 
         if (!next_location) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         }
 
         uint8_t *end_location = memchr(parser->doc.ptr, '>', parser->doc.len);
 
         if (!end_location) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
         }
 
@@ -350,7 +374,13 @@ int aws_xml_node_traverse(
 
 int aws_xml_node_get_name(const struct aws_xml_node *node, struct aws_byte_cursor *out_name) {
     AWS_PRECONDITION(node);
-    AWS_PRECONDITION(out_name);
+
+    if (out_name == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "'out_name' argument for aws_xml_node_get_name is invalid.");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return AWS_OP_ERR;
+    }
+
     *out_name = node->name;
     return AWS_OP_SUCCESS;
 }
@@ -365,7 +395,13 @@ int aws_xml_node_get_attribute(
     size_t attribute_index,
     struct aws_xml_attribute *out_attribute) {
     AWS_PRECONDITION(node);
-    AWS_PRECONDITION(out_attribute);
+
+    if (out_attribute == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "'out_attribute' argument for aws_xml_node_get_attribute is invalid.");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return AWS_OP_ERR;
+    }
+
     return aws_array_list_get_at(&node->attributes, out_attribute, attribute_index);
 }
 
@@ -383,6 +419,7 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
     uint8_t *end_location = memchr(parser->doc.ptr, '>', parser->doc.len);
 
     if (!end_location) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
     }
 
