@@ -159,6 +159,27 @@ static int s_test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx
     return 0;
 }
 
+AWS_TEST_CASE(test_char_split_zeroed, s_test_char_split_zeroed_fn)
+static int s_test_char_split_zeroed_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_cursor to_split;
+    AWS_ZERO_STRUCT(to_split);
+
+    struct aws_array_list output;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
+    ASSERT_SUCCESS(aws_byte_cursor_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
+
+    struct aws_byte_cursor value = {0};
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    ASSERT_INT_EQUALS(0, value.len);
+
+    aws_array_list_clean_up(&output);
+
+    return 0;
+}
+
 AWS_TEST_CASE(test_char_split_adj_tokens, s_test_char_split_adj_tokens_fn)
 static int s_test_char_split_adj_tokens_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
