@@ -426,6 +426,15 @@ add_test_case(resource_name_length_test)
 
 add_test_case(cpuid_test)
 
+add_test_case(xml_parser_root_with_text)
+add_test_case(xml_parser_child_with_text)
+add_test_case(xml_parser_siblings_with_text)
+add_test_case(xml_parser_preamble_and_attributes)
+add_test_case(xml_parser_nested_node_same_name_test)
+add_test_case(xml_parser_nested_node_deep_recursion_test)
+add_test_case(xml_parser_too_many_attributes_test)
+add_test_case(xml_parser_name_too_long_test)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
