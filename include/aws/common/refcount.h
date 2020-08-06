@@ -10,7 +10,7 @@
 /*
  * Common macro that implements a null-safe release function for all ref-counted types.
  */
-#define AWS_REF_COUNT_RELEASE_IMPL(object, refcount_member_name, destroy_fn)                                           \
+#define AWS_REF_COUNT_RELEASE_IMPL(object, refcount_member_name, on_zero_fn)                                           \
     {                                                                                                                  \
         if (object == NULL) {                                                                                          \
             return;                                                                                                    \
@@ -18,7 +18,7 @@
                                                                                                                        \
         size_t old_value = aws_atomic_fetch_sub(&object->refcount_member_name, 1);                                     \
         if (old_value == 1) {                                                                                          \
-            destroy_fn(object);                                                                                        \
+            on_zero_fn(object);                                                                                        \
         }                                                                                                              \
     }
 
