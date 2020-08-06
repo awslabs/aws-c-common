@@ -12,7 +12,7 @@
 typedef void(aws_on_zero_ref_count_callback)(void *);
 
 /*
- * An type for making ref-counted types, reminiscent of std::shared_ptr in C++
+ * A utility type for making ref-counted types, reminiscent of std::shared_ptr in C++
  */
 struct aws_ref_count {
     struct aws_atomic_var ref_count;
@@ -23,7 +23,7 @@ struct aws_ref_count {
 AWS_EXTERN_C_BEGIN
 
 /**
- * Initializes a ref-count tracking structure.
+ * Initializes a ref-counter structure.
  *
  * @param ref_count ref-counter to initialize
  * @param object object being ref counted
@@ -35,7 +35,7 @@ AWS_COMMON_API void aws_ref_count_init(
     aws_on_zero_ref_count_callback *on_zero_fn);
 
 /**
- * Increments a ref count tracker's ref count
+ * Increments a ref-counter's ref count
  *
  * @param ref_count ref-counter to increment the count for
  * @return the object being ref-counted
@@ -43,7 +43,7 @@ AWS_COMMON_API void aws_ref_count_init(
 AWS_COMMON_API void *aws_ref_count_acquire(struct aws_ref_count *ref_count);
 
 /**
- * Decrements a ref count tracker's ref count.  Invokes the on_zero callback if the ref count drops to zero
+ * Decrements a ref-counter's ref count.  Invokes the on_zero callback if the ref count drops to zero
  * @param ref_count ref-counter to decrement the count for
  * @return the value of the decremented ref count
  */
