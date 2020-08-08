@@ -158,6 +158,40 @@ int aws_byte_buf_init_copy_from_cursor(
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_init_copy_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...) {
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(dest);
+
+    AWS_ZERO_STRUCT(*dest);
+
+    size_t total_len = 0;
+    va_list args;
+    va_start(args, allocator);
+
+    /* Loop until final NULL arg is encountered */
+    struct aws_byte_cursor *cursor_i;
+    while ((cursor_i = va_arg(args, struct aws_byte_cursor *)) != NULL) {
+        AWS_ASSERT(aws_byte_cursor_is_valid(cursor_i));
+        if (aws_add_size_checked(total_len, cursor_i->len, &total_len)) {
+            return AWS_OP_ERR;
+        }
+    }
+    va_end(args);
+
+    if (aws_byte_buf_init(dest, allocator, total_len)) {
+        return AWS_OP_ERR;
+    }
+
+    va_start(args, allocator);
+    while ((cursor_i = va_arg(args, struct aws_byte_cursor *)) != NULL) {
+        /* Impossible for this call to fail, we pre-allocated sufficient space */
+        aws_byte_buf_append_and_update(dest, cursor_i);
+    }
+    va_end(args);
+
+    return AWS_OP_SUCCESS;
+}
+
 bool aws_byte_cursor_next_split(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,

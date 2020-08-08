@@ -851,6 +851,80 @@ static int s_test_byte_cursor_compare_lookup(struct aws_allocator *allocator, vo
 }
 AWS_TEST_CASE(test_byte_cursor_compare_lookup, s_test_byte_cursor_compare_lookup)
 
+static int s_test_byte_buf_init_copy_and_update_cursors(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    { /* store one cursor */
+        struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str("asdf");
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(&buf, allocator, &cursor, NULL));
+        ASSERT_BIN_ARRAYS_EQUALS("asdf", 4, cursor.ptr, cursor.len);
+        ASSERT_TRUE(cursor.ptr >= buf.buffer && cursor.ptr < buf.buffer + buf.len);
+        ASSERT_BIN_ARRAYS_EQUALS("asdf", 4, buf.buffer, buf.len);
+        ASSERT_UINT_EQUALS(buf.len, buf.capacity);
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    { /* store no cursors */
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(&buf, allocator, NULL));
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    { /* store multiple cursors */
+        struct aws_byte_cursor cursor1 = aws_byte_cursor_from_c_str("one");
+        struct aws_byte_cursor cursor2 = aws_byte_cursor_from_c_str("two");
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(&buf, allocator, &cursor1, &cursor2, NULL));
+        ASSERT_BIN_ARRAYS_EQUALS("one", 3, cursor1.ptr, cursor1.len);
+        ASSERT_TRUE(cursor1.ptr >= buf.buffer && cursor1.ptr < buf.buffer + buf.len);
+        ASSERT_BIN_ARRAYS_EQUALS("two", 3, cursor2.ptr, cursor2.len);
+        ASSERT_TRUE(cursor2.ptr >= buf.buffer && cursor2.ptr < buf.buffer + buf.len);
+        ASSERT_BIN_ARRAYS_EQUALS("onetwo", 6, buf.buffer, buf.len);
+        ASSERT_UINT_EQUALS(buf.len, buf.capacity);
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    { /* store empty string cursor */
+        struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str("");
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(&buf, allocator, &cursor, NULL));
+        ASSERT_UINT_EQUALS(0, cursor.len);
+        ASSERT_UINT_EQUALS(0, buf.len);
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    { /* store zeroed out cursor */
+        struct aws_byte_cursor cursor;
+        AWS_ZERO_STRUCT(cursor);
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(&buf, allocator, &cursor, NULL));
+        ASSERT_UINT_EQUALS(0, cursor.len);
+        ASSERT_UINT_EQUALS(0, buf.len);
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    { /* store something valid after some empty cursors */
+        struct aws_byte_cursor cursor_empty = aws_byte_cursor_from_c_str("");
+        struct aws_byte_cursor cursor_zeroed;
+        AWS_ZERO_STRUCT(cursor_zeroed);
+        struct aws_byte_cursor cursor_normal = aws_byte_cursor_from_c_str("normal");
+        struct aws_byte_buf buf;
+        ASSERT_SUCCESS(aws_byte_buf_init_copy_and_update_cursors(
+            &buf, allocator, &cursor_empty, &cursor_zeroed, &cursor_normal, NULL));
+        ASSERT_UINT_EQUALS(0, cursor_empty.len);
+        ASSERT_UINT_EQUALS(0, cursor_zeroed.len);
+        ASSERT_BIN_ARRAYS_EQUALS("normal", 6, cursor_normal.ptr, cursor_normal.len);
+        ASSERT_TRUE(cursor_normal.ptr >= buf.buffer && cursor_normal.ptr < buf.buffer + buf.len);
+        ASSERT_BIN_ARRAYS_EQUALS("normal", 6, buf.buffer, buf.len);
+        ASSERT_UINT_EQUALS(buf.len, buf.capacity);
+        aws_byte_buf_clean_up(&buf);
+    }
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_init_copy_and_update_cursors, s_test_byte_buf_init_copy_and_update_cursors)
+
 static int s_test_byte_buf_append_and_update_fail(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
