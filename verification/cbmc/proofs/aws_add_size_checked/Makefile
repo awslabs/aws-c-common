@@ -10,7 +10,7 @@ HARNESS_FILE = $(HARNESS_ENTRY).c
 
 CBMCFLAGS +=
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 PROOF_SOURCES += $(PROOF_STUB)/error.c
 

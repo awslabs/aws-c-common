@@ -9,7 +9,7 @@ DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 HARNESS_ENTRY = aws_hash_table_init_bounded_harness
 HARNESS_FILE = $(HARNESS_ENTRY).c
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c

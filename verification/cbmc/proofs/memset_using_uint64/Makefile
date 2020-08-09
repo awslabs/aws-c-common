@@ -14,7 +14,7 @@ CBMCFLAGS +=
 HARNESS_ENTRY = memset_using_uint64_harness
 HARNESS_FILE = $(HARNESS_ENTRY).c
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 
 PROOF_SOURCES += $(PROOF_STUB)/memset_override.c

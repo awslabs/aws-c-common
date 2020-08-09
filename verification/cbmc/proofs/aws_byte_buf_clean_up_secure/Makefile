@@ -14,7 +14,7 @@ CBMCFLAGS +=
 HARNESS_ENTRY = aws_byte_buf_clean_up_secure_harness
 HARNESS_FILE = $(HARNESS_ENTRY).c
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
 

@@ -11,7 +11,7 @@ CBMCFLAGS +=
 HARNESS_ENTRY = aws_byte_cursor_read_be64_harness
 HARNESS_FILE = $(HARNESS_ENTRY).c
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c

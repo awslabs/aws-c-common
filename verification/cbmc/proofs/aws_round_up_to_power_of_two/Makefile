@@ -7,7 +7,7 @@ CBMCFLAGS +=
 HARNESS_ENTRY = aws_round_up_to_power_of_two_harness
 HARNESS_FILE = $(HARNESS_ENTRY).c
 
-PROOF_SOURCES += $(HARNESS_FILE)
+PROOF_SOURCES += $(abspath .)/$(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_STUB)/error.c
 
 # The actual implementation that we're proving comes from .inl files
