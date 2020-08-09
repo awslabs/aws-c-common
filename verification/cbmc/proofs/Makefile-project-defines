@@ -19,6 +19,8 @@
 # Flags to pass to goto-cc for linking (typically those passed to gcc)
 # LINK_FLAGS =
 
+PROJECT_NAME = C-Common
+LITANI = $(CBMC_ROOT)/litani/litani
 
 # Preprocessor include paths -I...
 # Consider adding

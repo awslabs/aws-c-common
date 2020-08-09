@@ -6,3 +6,6 @@ proofs/**/html
 
 # Emitted by CBMC Viewer
 TAGS-*
+
+# Emitted by litani
+.litani_cache_dir
