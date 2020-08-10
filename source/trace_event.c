@@ -22,17 +22,24 @@
  */
 
 struct trace_system {
-    // struct cJSON *root, *event_array;
     struct aws_bus bus;
     struct aws_allocator *allocator;
     uint64_t start_time;
-    int time_unit;
+    enum aws_trace_system_time_display_unit time_unit;
     FILE *fp;
     int num_traces;
 };
 
-struct aws_trace_event_metadata {
-    /* should be B/E for same scope or S/F for outside of scope */
+enum trace_event_args {
+    NO_ARG,       // 0
+    INT_ARG_1,    // 1
+    INT_ARG_2,    // 2
+    STRING_ARG_1, // 3
+    STRING_ARG_2  // 4
+};
+
+struct aws_trace_event_data {
+    /* should be B/E for duration, I for instant, C for counter, and M for metadata */
     char phase;
     /* name of the event */
     const char *name;
@@ -46,9 +53,7 @@ struct aws_trace_event_metadata {
 
     int id;
 
-    /* if args are enabled either args_1 or args_2 must be allocated */
-    /* negative num_args values mean that value_str is used and positve means value is used */
-    int num_args;
+    enum trace_event_args args;
 
     int value[2];
 
@@ -64,9 +69,8 @@ static struct trace_system *s_trace;
  */
 
 /* A listener that writes to the JSON file */
-
 static void s_trace_event_write(uint64_t address, const void *msg, void *user_data) {
-    struct aws_trace_event_metadata *trace_event_data = (struct aws_trace_event_metadata *)msg;
+    struct aws_trace_event_data *trace_event_data = (struct aws_trace_event_data *)msg;
     if (s_trace == NULL) {
         return;
     }
@@ -74,85 +78,83 @@ static void s_trace_event_write(uint64_t address, const void *msg, void *user_da
         return;
     }
     s_trace->num_traces += 1;
-    if (trace_event_data->phase == EVENT_PHASE_METADATA) {
-         fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"name\":\"%s\"}},\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp,
-            trace_event_data->value_str[0]);
+
+    switch (trace_event_data->args) {
+        case NO_ARG:
+            fprintf(
+                s_trace->fp,
+                "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu},\n",
+                trace_event_data->category,
+                trace_event_data->name,
+                trace_event_data->phase,
+                trace_event_data->process_id,
+                (unsigned long long)trace_event_data->thread_id,
+                (unsigned long long)trace_event_data->timestamp);
+            break;
+        case INT_ARG_1:
+            fprintf(
+                s_trace->fp,
+                "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i}"
+                "},"
+                "\n",
+                trace_event_data->category,
+                trace_event_data->name,
+                trace_event_data->phase,
+                trace_event_data->process_id,
+                (unsigned long long)trace_event_data->thread_id,
+                (unsigned long long)trace_event_data->timestamp,
+                trace_event_data->value_name[0],
+                trace_event_data->value[0]);
+            break;
+        case INT_ARG_2:
+            fprintf(
+                s_trace->fp,
+                "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i,"
+                "\"%s\":%i}},\n",
+                trace_event_data->category,
+                trace_event_data->name,
+                trace_event_data->phase,
+                trace_event_data->process_id,
+                (unsigned long long)trace_event_data->thread_id,
+                (unsigned long long)trace_event_data->timestamp,
+                trace_event_data->value_name[0],
+                trace_event_data->value[0],
+                trace_event_data->value_name[1],
+                trace_event_data->value[1]);
+            break;
+        case STRING_ARG_1:
+            fprintf(
+                s_trace->fp,
+                "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":\"%"
+                "s\"}},\n",
+                trace_event_data->category,
+                trace_event_data->name,
+                trace_event_data->phase,
+                trace_event_data->process_id,
+                (unsigned long long)trace_event_data->thread_id,
+                (unsigned long long)trace_event_data->timestamp,
+                trace_event_data->value_name[0],
+                trace_event_data->value_str[0]);
+            break;
+        case STRING_ARG_2:
+            fprintf(
+                s_trace->fp,
+                "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":\"%"
+                "s\",\"%s\":\"%s\"}},\n",
+                trace_event_data->category,
+                trace_event_data->name,
+                trace_event_data->phase,
+                trace_event_data->process_id,
+                (unsigned long long)trace_event_data->thread_id,
+                (unsigned long long)trace_event_data->timestamp,
+                trace_event_data->value_name[0],
+                trace_event_data->value_str[0],
+                trace_event_data->value_name[1],
+                trace_event_data->value_str[1]);
+            break;
+        /* write nothing if incorrect num_args is given */
+        default:
             return;
-    }
-    //TODO: Maybe switch the else if statements to a switch case setup?
-    /* fprintf's are thread safe as one statement but not broken up */
-    if (trace_event_data->num_args == 0) {
-        fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu},\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp);
-    } else if (trace_event_data->num_args == 1) { /* 1 arg int value given */
-        fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i}},"
-            "\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp,
-            trace_event_data->value_name[0],
-            trace_event_data->value[0]);
-    } else if (trace_event_data->num_args == 2) { /* 2 arg int values given */
-        fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":%i,\"%"
-            "s\":%i}},\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp,
-            trace_event_data->value_name[0],
-            trace_event_data->value[0],
-            trace_event_data->value_name[1],
-            trace_event_data->value[1]);
-    } else if (trace_event_data->num_args == -1) {
-        fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":\"%s\"}},\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp,
-            trace_event_data->value_name[0],
-            trace_event_data->value_str[0]);
-    } else if (trace_event_data->num_args == -2) {
-         fprintf(
-            s_trace->fp,
-            "{\"cat\":\"%s\",\"name\":\"%s\",\"ph\":\"%c\",\"pid\":%i,\"tid\":%llu,\"ts\":%llu,\"args\":{\"%s\":\"%s\",\"%s\":\"%s\"}},\n",
-            trace_event_data->category,
-            trace_event_data->name,
-            trace_event_data->phase,
-            trace_event_data->process_id,
-            (unsigned long long)trace_event_data->thread_id,
-            (unsigned long long)trace_event_data->timestamp,
-            trace_event_data->value_name[0],
-            trace_event_data->value_str[0], 
-            trace_event_data->value_name[1], 
-            trace_event_data->value_str[1]);
     }
 }
 
@@ -160,16 +162,14 @@ static void s_trace_event_system_clean_up(void) {
     if (!s_trace) {
         return;
     }
-    /* if bus was not initiated */
+    /* if bus was not initiated clean up trace_system only */
     if (!s_trace->bus.impl) {
         goto release_trace_event;
     }
 
     aws_bus_unsubscribe(&(s_trace->bus), 0, s_trace_event_write, NULL);
     aws_bus_clean_up(&(s_trace->bus));
-    
-    //char pos[50] = "POSIX_";
-    //printf("%s\n", strcat(pos, "OPERATING"));
+
     if (s_trace->fp != NULL) {
         /* Add number of events recorded */
         fprintf(
@@ -181,7 +181,8 @@ static void s_trace_event_system_clean_up(void) {
             0,
             0,
             s_trace->num_traces);
-        if (s_trace->time_unit == AWS_TIMESTAMP_NANOS) {
+        /* Set time display units */
+        if (s_trace->time_unit == AWS_TRACE_SYSTEM_DISPLAY_NANO) {
             fprintf(s_trace->fp, ",\"displayTimeUnit\": \"ns\"");
         }
         fprintf(s_trace->fp, "}\n");
@@ -198,13 +199,11 @@ release_trace_event:
  */
 
 void aws_trace_system_clean_up(void) {
-
     s_trace_event_system_clean_up();
 }
 
-/* starts the message bus and initializes the JSON root, and the event array for storing metadata */
+/* starts the message bus and trace system */
 int aws_trace_system_init(struct aws_allocator *allocator, const char *filename) {
-    printf("hello init\n");
     if (allocator == NULL) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return AWS_OP_ERR;
@@ -257,7 +256,7 @@ void aws_trace_event(
     int value_2,
     const char *value_name_2) {
 
-    /* do nothing if trace system is not initialized */
+    /* Do nothing if trace system is not initialized */
     if (!s_trace) {
         return;
     }
@@ -276,7 +275,7 @@ void aws_trace_event(
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
     int process_id = aws_get_pid();
 
-    struct aws_trace_event_metadata trace_event_data = {
+    struct aws_trace_event_data trace_event_data = {
         .phase = phase,
         .timestamp = timestamp,
         .thread_id = thread_id,
@@ -289,15 +288,15 @@ void aws_trace_event(
     if (phase == EVENT_PHASE_COUNTER) {
         trace_event_data.id = thread_id;
     }
-
-    /* addding args metadata */
+    trace_event_data.args = NO_ARG;
+    /* addding args data to trace event */
     if (value_name_1 != NULL) {
-        trace_event_data.num_args += 1;
+        trace_event_data.args = INT_ARG_1;
         trace_event_data.value[0] = value_1;
         trace_event_data.value_name[0] = value_name_1;
 
         if (value_name_2 != NULL) {
-            trace_event_data.num_args += 1;
+            trace_event_data.args = INT_ARG_2;
             trace_event_data.value[1] = value_2;
             trace_event_data.value_name[1] = value_name_2;
         }
@@ -315,52 +314,51 @@ void aws_trace_event_str(
     const char *value_name_1,
     const char *value_2,
     const char *value_name_2) {
-        if (!s_trace) {
-            return;
-        }
-        /* set timestamps are in nanoseconds */
-        uint64_t timestamp;
 
-        AWS_FATAL_ASSERT(!aws_high_res_clock_get_ticks(&timestamp));
-        timestamp -= s_trace->start_time;
-        /* convert timestamps to tracing format of microseconds */
-        timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
+    /* Do nothing if trace system is not initialized */
+    if (!s_trace) {
+        return;
+    }
+    /* set timestamps are in nanoseconds */
+    uint64_t timestamp;
 
-        uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
-        int process_id = aws_get_pid();
-    
-        struct aws_trace_event_metadata trace_event_data = {
-            .phase = phase,
-            .timestamp = 0,
-            .thread_id = thread_id,
-            .process_id = process_id,
-        };
-        
-        trace_event_data.name = name;
-        trace_event_data.category = category;
+    AWS_FATAL_ASSERT(!aws_high_res_clock_get_ticks(&timestamp));
+    timestamp -= s_trace->start_time;
+    /* convert timestamps to tracing format of microseconds */
+    timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
 
-        /* Only add non NULL strings to the data */
-        if (value_1 != NULL) {
-            trace_event_data.value_str[0] = value_1;
-        }
+    uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
+    int process_id = aws_get_pid();
 
-        if (value_name_1 != NULL) {
-            trace_event_data.value_name[0] = value_name_1;
-            trace_event_data.num_args = -1;
-        }
+    struct aws_trace_event_data trace_event_data = {
+        .phase = phase,
+        .timestamp = 0,
+        .thread_id = thread_id,
+        .process_id = process_id,
+    };
 
-        if (value_2 != NULL) {
-            trace_event_data.value_str[1] = value_2;
-        }
+    trace_event_data.name = name;
+    trace_event_data.category = category;
 
-        if (value_name_2 != NULL) {
-            trace_event_data.value_name[1] = value_name_2;
-            trace_event_data.num_args = -2;
-        }
-
-        /* send to the bus */
-        AWS_FATAL_ASSERT(!aws_bus_send(&(s_trace->bus), 0, &trace_event_data, NULL));
-
+    /* Only add non NULL strings to the trace event data */
+    if (value_1 != NULL) {
+        trace_event_data.value_str[0] = value_1;
     }
 
+    if (value_name_1 != NULL) {
+        trace_event_data.value_name[0] = value_name_1;
+        trace_event_data.args = STRING_ARG_1;
+    }
 
+    if (value_2 != NULL) {
+        trace_event_data.value_str[1] = value_2;
+    }
+
+    if (value_name_2 != NULL) {
+        trace_event_data.value_name[1] = value_name_2;
+        trace_event_data.args = STRING_ARG_2;
+    }
+
+    /* send to the bus */
+    AWS_FATAL_ASSERT(!aws_bus_send(&(s_trace->bus), 0, &trace_event_data, NULL));
+}
