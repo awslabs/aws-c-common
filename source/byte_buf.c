@@ -158,7 +158,7 @@ int aws_byte_buf_init_copy_from_cursor(
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_init_copy_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...) {
+int aws_byte_buf_init_cache_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...) {
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(dest);
 

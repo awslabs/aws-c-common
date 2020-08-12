@@ -155,11 +155,12 @@ int aws_byte_buf_init_copy_from_cursor(
 /**
  * Init buffer with contents of multiple cursors, and update cursors to reference the memory stored in the buffer.
  * Each cursor arg must be an `struct aws_byte_cursor *`. NULL must be passed as the final arg.
+ * NOTE: Do not append/grow/resize buffers initialized this way, or the cursors will end up referencing invalid memory.
  * Returns AWS_OP_SUCCESS in case of success.
  * AWS_OP_ERR is returned if memory can't be allocated or the total cursor length exceeds SIZE_MAX.
  */
 AWS_COMMON_API
-int aws_byte_buf_init_copy_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...);
+int aws_byte_buf_init_cache_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...);
 
 AWS_COMMON_API
 void aws_byte_buf_clean_up(struct aws_byte_buf *buf);
