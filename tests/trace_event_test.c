@@ -37,9 +37,9 @@ static int s_test_trace_event_counter(struct aws_allocator *allocator, void *ctx
 
     ASSERT_SUCCESS(aws_trace_system_init(allocator, NULL));
     int counter = 1;
-    AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST1", counter);
+    //AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST1", counter);
     counter = 1111;
-    AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST2", counter);
+    //AWS_TRACE_EVENT_COUNTER1("TEST_COUNTER", "TEST2", counter);
 
     aws_trace_system_clean_up();
     return 0;

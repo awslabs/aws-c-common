@@ -339,6 +339,7 @@ void aws_trace_event_str(
 
     trace_event_data.name = name;
     trace_event_data.category = category;
+    trace_event_data.args = NO_ARG;
 
     /* Only add non NULL strings to the trace event data */
     if (value_1 != NULL) {
