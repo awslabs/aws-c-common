@@ -13,9 +13,9 @@ void aws_ring_buffer_release_harness() {
     /* parameters */
     struct aws_byte_buf buf;
     struct aws_ring_buffer ring_buf;
-    
+
     size_t ring_buf_size;
-    
+
     /* assumptions */
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
     __CPROVER_assume(!aws_ring_buffer_is_empty(&ring_buf));
