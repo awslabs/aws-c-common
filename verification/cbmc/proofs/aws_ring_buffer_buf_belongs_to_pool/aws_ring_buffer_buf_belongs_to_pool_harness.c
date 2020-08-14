@@ -16,7 +16,6 @@ void aws_ring_buffer_buf_belongs_to_pool_harness() {
     size_t ring_buf_size;
 
     /* assumptions */
-    __CPROVER_assume(0 < ring_buf_size);
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
     bool is_member = nondet_bool(); /* nondet assignment required to force true/false */
     if (is_member) {

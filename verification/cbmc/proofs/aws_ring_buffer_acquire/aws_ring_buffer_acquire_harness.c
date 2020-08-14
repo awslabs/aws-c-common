@@ -18,9 +18,7 @@ void aws_ring_buffer_acquire_harness() {
     size_t ring_buf_size;
 
     /* assumptions */
-    __CPROVER_assume(0 < ring_buf_size);
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
-    __CPROVER_assume(!aws_ring_buffer_is_empty(&ring_buf));
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
