@@ -17,8 +17,8 @@ void aws_hash_iter_done_harness() {
 
     struct aws_hash_iter iter;
     iter.map = &map;
-    __CPROVER_assume(iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     __CPROVER_assume(aws_hash_iter_is_valid(&iter));
+    __CPROVER_assume(iter.status == AWS_HASH_ITER_STATUS_DONE || iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     enum aws_hash_iter_status old_status = iter.status;
     struct store_byte_from_buffer old_byte;
     save_byte_from_hash_table(&map, &old_byte);
