@@ -1,8 +1,4 @@
-build_memory: 32000
-cbmcflags: "--unwind;1;--unwindset;memcpy_impl.0:11;--object-bits;8;--pointer-primitive-check;--bounds-check;--conversion-check;--div-by-zero-check;--float-overflow-check;--nan-check;--pointer-check;--pointer-overflow-check;--signed-overflow-check;--undefined-shift-check;--unsigned-overflow-check;--unwinding-assertions"
-coverage_memory: 32000
-expected: SUCCESSFUL
-goto: /Users/saspadhi/Repos/aws-c-common/verification/cbmc/proofs/aws_byte_buf_write_be64/gotos/aws_byte_buf_write_be64_harness.c.goto
-jobos: ubuntu16
-property_memory: 32000
-report_memory: 32000
+:
+  This file marks this directory as containing a CBMC proof. This file
+  is automatically clobbered in CI and replaced with parameters for
+  running the proof.
