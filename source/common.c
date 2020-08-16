@@ -6,6 +6,7 @@
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
 #include <aws/common/math.h>
+#include <aws/common/private/global_ref_count.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -255,12 +256,14 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         s_common_library_initialized = true;
         aws_register_error_info(&s_list);
         aws_register_log_subject_info_list(&s_common_log_subject_list);
+        aws_global_thread_tracker_init();
     }
 }
 
 void aws_common_library_clean_up(void) {
     if (s_common_library_initialized) {
         s_common_library_initialized = false;
+        aws_global_thread_tracker_clean_up();
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
     }
