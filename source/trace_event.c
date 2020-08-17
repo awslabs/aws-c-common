@@ -175,12 +175,20 @@ static void s_trace_event_system_clean_up(void) {
         fprintf(
             s_trace->fp,
             "{\"cat\":\"TraceData\", "
-            "\"name\":\"NumTraceEvent\",\"ph\":\"C\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"NumberOfTraces\":%i}}]"
+            "\"name\":\"NumTraceEvent\",\"ph\":\"C\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"NumberOfTraces\":%i}},"
             "\n",
             0,
             0,
             0,
             s_trace->num_traces);
+            fprintf(
+            s_trace->fp,
+            "{\"cat\":\"__metadata\", "
+            "\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"name\":\"Trace Counter\"}}]"
+            "\n",
+            0,
+            0,
+            0);
         /* Set time display units */
         if (s_trace->time_unit == AWS_TRACE_SYSTEM_DISPLAY_NANO) {
             fprintf(s_trace->fp, ",\"displayTimeUnit\": \"ns\"");
@@ -332,7 +340,7 @@ void aws_trace_event_str(
 
     struct aws_trace_event_data trace_event_data = {
         .phase = phase,
-        .timestamp = 0,
+        .timestamp = timestamp,
         .thread_id = thread_id,
         .process_id = process_id,
     };
