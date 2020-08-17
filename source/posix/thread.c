@@ -64,7 +64,7 @@ const struct aws_thread_options *aws_default_thread_options(void) {
 
 void aws_thread_clean_up(struct aws_thread *thread) {
     if (thread->name) {
-        //TODO: see if this works
+        // TODO: see if this works
         aws_string_destroy(thread->name);
     }
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
@@ -124,15 +124,16 @@ int aws_thread_launch(
                 goto cleanup;
             }
         }
-         //TODO: Check that this is the right place to init name of thread
+        // TODO: Check that this is the right place to init name of thread
         if (options->name) {
-            //TODO: see if this works
+            // TODO: see if this works
             char thread_name[50] = "POSIX_";
-            thread->name = aws_string_new_from_c_str(thread->allocator, strncat(thread_name, options->name, 50 - (strlen(thread_name) + strlen(options->name))));
+            thread->name = aws_string_new_from_c_str(
+                thread->allocator,
+                strncat(thread_name, options->name, 50 - (strlen(thread_name) + strlen(options->name))));
         }
-
     }
-   
+
     struct thread_wrapper *wrapper =
         (struct thread_wrapper *)aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
 
@@ -243,6 +244,6 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     return AWS_OP_SUCCESS;
 }
 
-const char * aws_thread_name(const struct aws_thread *thread){
+const char *aws_thread_name(const struct aws_thread *thread) {
     return aws_string_c_str(thread->name);
 }

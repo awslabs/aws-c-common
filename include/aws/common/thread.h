@@ -140,7 +140,7 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
 
 /**
  * Returns name of thread as a string literal
- */ 
+ */
 AWS_COMMON_API
 const char *aws_thread_name(const struct aws_thread *thread);
 

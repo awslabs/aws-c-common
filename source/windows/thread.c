@@ -95,16 +95,17 @@ int aws_thread_launch(
 
     SIZE_T stack_size = 0;
 
-    if (options && ) {
+    if (options &&) {
         if (options->stack_size > 0) {
             stack_size = (SIZE_T)options->stack_size;
         }
         if (options->name) {
-            //TODO: see if this works
+            // TODO: see if this works
             char thread_name[50] = "WIN_OS_";
-            thread->name = aws_string_new_from_c_str(thread->allocator, strncat(thread_name, options->name, 50 - (strlen(thread_name) + strlen(options->name))));
+            thread->name = aws_string_new_from_c_str(
+                thread->allocator,
+                strncat(thread_name, options->name, 50 - (strlen(thread_name) + strlen(options->name))));
         }
-       
     }
 
     struct thread_wrapper *thread_wrapper =
@@ -181,7 +182,6 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     return AWS_OP_SUCCESS;
 }
 
-
-const char * aws_thread_name(const struct aws_thread *thread){
+const char *aws_thread_name(const struct aws_thread *thread) {
     return aws_string_c_str(thread->name);
 }

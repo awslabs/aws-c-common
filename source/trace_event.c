@@ -181,10 +181,11 @@ static void s_trace_event_system_clean_up(void) {
             0,
             0,
             s_trace->num_traces);
-            fprintf(
+        fprintf(
             s_trace->fp,
             "{\"cat\":\"__metadata\", "
-            "\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"name\":\"Trace Counter\"}}]"
+            "\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":%i,\"tid\":%i,\"ts\":%i,\"args\":{\"name\":\"Trace "
+            "Counter\"}}]"
             "\n",
             0,
             0,

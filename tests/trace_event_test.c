@@ -11,19 +11,19 @@
 
 static int s_test_trace_event_duration(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    (void) allocator;
+    (void)allocator;
     return 0;
 }
 
 static int s_test_trace_event_instant(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    (void) allocator;
+    (void)allocator;
     return 0;
 }
 
 static int s_test_trace_event_counter(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    (void) allocator;
+    (void)allocator;
     return 0;
 }
 

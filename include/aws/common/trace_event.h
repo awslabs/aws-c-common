@@ -12,37 +12,35 @@ AWS_EXTERN_C_BEGIN
 
 /* INTERNAL USAGE MACROS, DO NOT CALL THESE OUTSIDE OF THIS HEADER FILE */
 /* AWS_TRACE_EVENT MACRO OVERLOADS */
-#define AWS_TRACE_EVENT5(phase, category, name, value1, value2) \
-do{ \
-    if (value1 == INT_MIN) { \
-        aws_trace_event (category, name, phase, 0, NULL, 0, NULL); \
-    } \
-    else if (value2 == INT_MIN) { \
-        aws_trace_event (category, name, phase, value1, #value1, 0, NULL); \
-    } else { \
-        aws_trace_event (category, name, phase, value1, #value1, value2, #value2); \
-    } \
-} while(0) 
+#define AWS_TRACE_EVENT5(phase, category, name, value1, value2)                                                        \
+    do {                                                                                                               \
+        if ((value1) == INT_MIN) {                                                                                     \
+            aws_trace_event(category, name, phase, 0, NULL, 0, NULL);                                                  \
+        } else if ((value2) == INT_MIN) {                                                                              \
+            aws_trace_event(category, name, phase, value1, #value1, 0, NULL);                                          \
+        } else {                                                                                                       \
+            aws_trace_event(category, name, phase, value1, #value1, value2, #value2);                                  \
+        }                                                                                                              \
+    } while (0)
 #define AWS_TRACE_EVENT4(category, name, phase, value1) AWS_TRACE_EVENT5(category, name, phase, value1, INT_MIN)
 #define AWS_TRACE_EVENT3(phase, category, name) AWS_TRACE_EVENT4(phase, category, name, INT_MIN)
-#define AWS_TRACE_EVENT2(phase, category) AWS_TRACE_EVENT3(phase, category, NULL) 
+#define AWS_TRACE_EVENT2(phase, category) AWS_TRACE_EVENT3(phase, category, NULL)
 #define AWS_TRACE_EVENT1(phase) AWS_TRACE_EVENT2(category, NULL)
 
 /* AWS_TRACE_EVENT_STR MACRO OVERLOADS */
-#define AWS_TRACE_EVENT_STR5(phase, category, name, value1, value2) \
-do{ \
-    if (value1 == NULL) { \
-        aws_trace_event_str (category, name, phase, NULL, NULL, NULL, NULL); \
-    } \
-    else if (value2 == NULL) { \
-        aws_trace_event_str (category, name, phase, value1, #value1, NULL, NULL); \
-    } else { \
-        aws_trace_event_str (category, name, phase, value1, #value1, value2, #value2); \
-    } \
-} while(0) 
+#define AWS_TRACE_EVENT_STR5(phase, category, name, value1, value2)                                                    \
+    do {                                                                                                               \
+        if ((value1) == NULL) {                                                                                        \
+            aws_trace_event_str(category, name, phase, NULL, NULL, NULL, NULL);                                        \
+        } else if ((value2) == NULL) {                                                                                 \
+            aws_trace_event_str(category, name, phase, value1, #value1, NULL, NULL);                                   \
+        } else {                                                                                                       \
+            aws_trace_event_str(category, name, phase, value1, #value1, value2, #value2);                              \
+        }                                                                                                              \
+    } while (0)
 #define AWS_TRACE_EVENT_STR4(phase, category, name, value1) AWS_TRACE_EVENT_STR5(phase, category, name, value1, NULL)
 #define AWS_TRACE_EVENT_STR3(phase, category, name) AWS_TRACE_EVENT_STR4(phase, category, name, NULL)
-#define AWS_TRACE_EVENT_STR2(phase, category) AWS_TRACE_EVENT_STR3(phase, category, NULL) 
+#define AWS_TRACE_EVENT_STR2(phase, category) AWS_TRACE_EVENT_STR3(phase, category, NULL)
 #define AWS_TRACE_EVENT_STR1(phase) AWS_TRACE_EVENT_STR2(phase, NULL)
 
 #define AWS_TRACE_EVENT_OVERLOAD(phase, ...) CALL_OVERLOAD(AWS_TRACE_EVENT, phase, __VA_ARGS__)
@@ -60,11 +58,10 @@ do{ \
 /* Creates local variable for End scope for easier markups of duration events */
 /* Only one pair of begin and end can exist per function scope */
 #define AWS_TRACE_EVENT_BEGIN_SCOPE(category, name)                                                                    \
-    const char *scoped_category = category;                                                                          \
-    const char *scoped_name = name;                                                                                  \
+    const char *scoped_category = category;                                                                            \
+    const char *scoped_name = name;                                                                                    \
     aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_BEGIN, 0, NULL, 0, NULL)
-#define AWS_TRACE_EVENT_END_SCOPE()                                                                                    \
-    aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_END, 0, NULL, 0, NULL)
+#define AWS_TRACE_EVENT_END_SCOPE() aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_END, 0, NULL, 0, NULL)
 
 /* Marks start of a duration event */
 #define AWS_TRACE_EVENT_BEGIN(...) AWS_TRACE_EVENT_OVERLOAD(EVENT_PHASE_BEGIN, __VA_ARGS__)
@@ -89,10 +86,8 @@ do{ \
 /* Metadata event for naming threads/processes */
 #define AWS_TRACE_EVENT_NAME_THREAD(thread_name)                                                                       \
     aws_trace_event_str("__metadata", "thread_name", EVENT_PHASE_METADATA, thread_name, "name", NULL, NULL)
-#define AWS_TRACE_EVENT_NAME_PROCESS(process_name)                                                     \
+#define AWS_TRACE_EVENT_NAME_PROCESS(process_name)                                                                     \
     aws_trace_event_str("__metadata", "process_name", EVENT_PHASE_METADATA, process_name, "name", NULL, NULL)
-
-
 
 /* Phase macros */
 #define EVENT_PHASE_NULL ('.')

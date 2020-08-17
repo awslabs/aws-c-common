@@ -470,7 +470,7 @@ int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
 
         return AWS_OP_ERR;
     }
-  
+
     return AWS_OP_SUCCESS;
 }
 
