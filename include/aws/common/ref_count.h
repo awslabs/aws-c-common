@@ -25,11 +25,6 @@ struct aws_shutdown_callback_options {
     void *shutdown_callback_user_data;
 };
 
-struct aws_shutdown_callback_options_heap {
-    struct aws_allocator *allocator;
-    struct aws_shutdown_callback_options callback_options;
-};
-
 AWS_EXTERN_C_BEGIN
 
 /**

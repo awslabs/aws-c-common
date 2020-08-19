@@ -44,12 +44,16 @@ void aws_global_thread_tracker_clean_up(void) {
 }
 
 void aws_global_thread_tracker_increment(void) {
+    aws_common_fatal_assert_library_initialized();
+
     aws_mutex_lock(&s_global_thread_lock);
     ++s_global_thread_count;
     aws_mutex_unlock(&s_global_thread_lock);
 }
 
 void aws_global_thread_tracker_decrement(void) {
+    aws_common_fatal_assert_library_initialized();
+
     bool signal = false;
     aws_mutex_lock(&s_global_thread_lock);
     --s_global_thread_count;
@@ -70,6 +74,8 @@ static bool s_thread_count_zero_pred(void *user_data) {
 }
 
 void aws_global_thread_shutdown_wait(void) {
+    aws_common_fatal_assert_library_initialized();
+
     aws_mutex_lock(&s_global_thread_lock);
     aws_condition_variable_wait_pred(&s_global_thread_signal, &s_global_thread_lock, s_thread_count_zero_pred, NULL);
     aws_mutex_unlock(&s_global_thread_lock);
