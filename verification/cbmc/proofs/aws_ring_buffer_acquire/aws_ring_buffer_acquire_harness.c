@@ -11,10 +11,11 @@
 
 void aws_ring_buffer_acquire_harness() {
     /* parameters */
-    struct aws_ring_buffer ring_buf;
-    size_t ring_buf_size;
-    size_t requested_size;
     struct aws_byte_buf buf;
+    struct aws_ring_buffer ring_buf;
+
+    size_t requested_size;
+    size_t ring_buf_size;
 
     /* assumptions */
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);

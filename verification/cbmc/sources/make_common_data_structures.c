@@ -25,11 +25,13 @@ void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf)
 
 void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, const size_t size) {
     ring_buf->allocator = can_fail_allocator();
+    /* The `aws_ring_buffer_init` function requires size > 0. */
+    __CPROVER_assume(0 < size);
     ring_buf->allocation = bounded_malloc(sizeof(*(ring_buf->allocation)) * size);
     size_t position_head;
     size_t position_tail;
-    __CPROVER_assume(position_head <= size);
-    __CPROVER_assume(position_tail <= size);
+    __CPROVER_assume(position_head < size);
+    __CPROVER_assume(position_tail < size);
     aws_atomic_store_ptr(&ring_buf->head, (ring_buf->allocation + position_head));
     aws_atomic_store_ptr(&ring_buf->tail, (ring_buf->allocation + position_tail));
     ring_buf->allocation_end = ring_buf->allocation + size;
