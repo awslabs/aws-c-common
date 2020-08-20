@@ -55,7 +55,7 @@ AWS_COMMON_API void *aws_ref_count_acquire(struct aws_ref_count *ref_count);
 AWS_COMMON_API size_t aws_ref_count_release(struct aws_ref_count *ref_count);
 
 /**
- * Utility function that returns when all auxiliary threads created created by crt types (event loop groups and
+ * Utility function that returns when all auxiliary threads created by crt types (event loop groups and
  * host resolvers) have completed and those types have completely cleaned themselves up.  The actual cleanup
  * process may be invoked as a part of a spawned thread, but the wait will not get signalled until that cleanup
  * thread is in its at_exit callback processing loop with no outstanding memory allocations.
