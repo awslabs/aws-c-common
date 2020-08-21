@@ -50,36 +50,41 @@ AWS_EXTERN_C_BEGIN
 
 /* ALL TRACE_EVENT MACROS REQUIRE CATEGORY AND NAME AS STRING LITERAL ARGUMENTS  */
 /* ALL TRACE_EVENT MACROS THAT ARE NOT SUFFIXED WITH _STR ACCEPT UP TO 2 INTEGER ARGUMENTS AFTER CATEGORY AND NAME */
-/* ALL TRACE_EVENT MACROS THAT ARE SUFFIXED WITH _STR ACCEPT UP TO 2 STRING LITERAL ARUGMENTS AFTER CATEGORY AND NAME */
+/* ALL TRACE_EVENT MACROS THAT ARE SUFFIXED WITH _STR ACCEPT UP TO 2 STRING LITERAL ARGUMENTS AFTER CATEGORY AND NAME */
 /* NAME_THREAD, NAME_PROCESS, AND _SCOPED ARE EXCLUDED FROM THESE RULES */
 
 /* DURATION EVENTS */
 /* Scoped Duration Events */
-/* Creates local variable for End scope for easier markups of duration events */
-/* Only one pair of begin and end can exist per function scope */
-#define AWS_TRACE_EVENT_BEGIN_SCOPE(category, name)                                                                    \
+/* Creates local variable for END_SCOPE for easier markups of duration events */
+/* Only one BEGIN can exist per function scope, with multiple END's for each exit point in the scope */
+#define AWS_TRACE_EVENT_BEGIN_SCOPED(category, name)                                                                   \
     const char *scoped_category = category;                                                                            \
     const char *scoped_name = name;                                                                                    \
     aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_BEGIN, 0, NULL, 0, NULL)
-#define AWS_TRACE_EVENT_END_SCOPE() aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_END, 0, NULL, 0, NULL)
+#define AWS_TRACE_EVENT_END_SCOPED() aws_trace_event(scoped_category, scoped_name, EVENT_PHASE_END, 0, NULL, 0, NULL)
 
 /* Marks start of a duration event */
+/* Parameter Order: category, name, optional_arg1, optional_arg2 */
 #define AWS_TRACE_EVENT_BEGIN(...) AWS_TRACE_EVENT_OVERLOAD(EVENT_PHASE_BEGIN, __VA_ARGS__)
 #define AWS_TRACE_EVENT_BEGIN_STR(...) AWS_TRACE_EVENT_STR_OVERLOAD(EVENT_PHASE_BEGIN, __VA_ARGS__)
 
 /* Marks the end of a duration event */
+/* Parameter Order: category, name, optional_arg1, optional_arg2 */
 #define AWS_TRACE_EVENT_END(...) AWS_TRACE_EVENT_OVERLOAD(EVENT_PHASE_END, __VA_ARGS__)
 #define AWS_TRACE_EVENT_END_STR(...) AWS_TRACE_EVENT_STR_OVERLOAD(EVENT_PHASE_END, __VA_ARGS__)
 
 /* INSTANT EVENTS */
 /* Marks an instant event */
 /* Records a snapshot of data at that point */
+/* Parameter Order: category, name, optional_arg1, optional_arg2 */
 #define AWS_TRACE_EVENT_INSTANT(...) AWS_TRACE_EVENT_OVERLOAD(EVENT_PHASE_INSTANT, __VA_ARGS__)
 #define AWS_TRACE_EVENT_INSTANT_STR(...) AWS_TRACE_EVENT_STR_OVERLOAD(EVENT_PHASE_INSTANT, __VA_ARGS__)
 
 /* COUNTER EVENTS */
 /* Marks a variable for a counter event */
 /* Records the variable's value throughout the duration of the program */
+/* Requires at least 1 integer argument can have up to 2 */
+/* Parameter Order: category, name, arg1, optional_arg2 */
 #define AWS_TRACE_EVENT_COUNTER(...) AWS_TRACE_EVENT_OVERLOAD(EVENT_PHASE_COUNTER, __VA_ARGS__)
 
 /* METADATA EVENTS */
@@ -102,6 +107,8 @@ enum aws_trace_system_time_display_unit {
     AWS_TRACE_SYSTEM_DISPLAY_MICRO,
     AWS_TRACE_SYSTEM_DISPLAY_NANO,
 };
+/* Options for trace system, used at intialization */
+
 /*
 struct trace_system_options{
         const char * filename;
@@ -114,7 +121,7 @@ struct trace_system_options{
  * MUST CALL TO AVOID MEMORY LEAKS
  * Cleans up trace system
  * Cleans up the aws_message_bus and unsubscribes the listener.
- * Closes the JSON object and frees all allocated memory.
+ * Call at the end of your program's lifetime
  */
 AWS_COMMON_API
 void aws_trace_system_clean_up(void);

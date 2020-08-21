@@ -47,18 +47,16 @@ struct aws_trace_event_data {
     const char *category;
     /* timestamp in milliseconds */
     uint64_t timestamp;
+    /* calling thread/process id */
     uint64_t thread_id;
-
     int process_id;
-
+    /* used to id the event */
     int id;
-
+    /* keeps track of arg type and number */
     enum trace_event_args args;
-
+    /* stores optional args and optional args' name */
     int value[2];
-
     const char *value_name[2];
-
     const char *value_str[2];
 };
 
@@ -241,6 +239,8 @@ int aws_trace_system_init(struct aws_allocator *allocator, const char *filename)
     if (aws_high_res_clock_get_ticks(&(s_trace->start_time))) {
         goto error;
     }
+    /* time unit is initially set to micro unless changed in options */
+    s_trace->time_unit = AWS_TRACE_SYSTEM_DISPLAY_MICRO;
 
     /* Open filename.json to write data out */
     if (filename != NULL) {
@@ -278,7 +278,9 @@ void aws_trace_event(
     timestamp -= s_trace->start_time;
 
     /* convert timestamps to tracing format of microseconds */
-    timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
+    if (s_trace->time_unit == AWS_TRACE_SYSTEM_DISPLAY_MICRO) {
+        timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
+    }
 
     /* get calling thread and process ids */
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
@@ -334,8 +336,9 @@ void aws_trace_event_str(
     AWS_FATAL_ASSERT(!aws_high_res_clock_get_ticks(&timestamp));
     timestamp -= s_trace->start_time;
     /* convert timestamps to tracing format of microseconds */
-    timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
-
+    if (s_trace->time_unit == AWS_TRACE_SYSTEM_DISPLAY_MICRO) {
+        timestamp = aws_timestamp_convert(timestamp, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MICROS, 0);
+    }
     uint64_t thread_id = (uint64_t)aws_thread_current_thread_id();
     int process_id = aws_get_pid();
 

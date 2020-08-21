@@ -70,9 +70,9 @@ int aws_condition_variable_notify_all(struct aws_condition_variable *condition_v
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex) {
     AWS_PRECONDITION(condition_variable && condition_variable->initialized);
     AWS_PRECONDITION(mutex && mutex->initialized);
-    AWS_TRACE_EVENT_BEGIN_SCOPE("aws-common", "cond_var_wait");
+    AWS_TRACE_EVENT_BEGIN_SCOPED("aws-common", "cond_var_wait");
     int err_code = pthread_cond_wait(&condition_variable->condition_handle, &mutex->mutex_handle);
-    AWS_TRACE_EVENT_END_SCOPE();
+    AWS_TRACE_EVENT_END_SCOPED();
 
     if (err_code) {
         return process_error_code(err_code);
@@ -102,10 +102,10 @@ int aws_condition_variable_wait_for(
         (time_t)aws_timestamp_convert((uint64_t)time_to_wait, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &remainder);
     ts.tv_nsec = (long)remainder;
 
-    AWS_TRACE_EVENT_BEGIN_SCOPE("aws-common", "cond_var_wait_for");
+    AWS_TRACE_EVENT_BEGIN_SCOPED("aws-common", "cond_var_wait_for");
 
     int err_code = pthread_cond_timedwait(&condition_variable->condition_handle, &mutex->mutex_handle, &ts);
-    AWS_TRACE_EVENT_END_SCOPE();
+    AWS_TRACE_EVENT_END_SCOPED();
 
     if (err_code) {
         return process_error_code(err_code);
