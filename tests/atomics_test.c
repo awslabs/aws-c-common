@@ -18,7 +18,7 @@
 #    endif
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 #    include <stdlib.h>
-#elif
+#else
 #    include <alloca.h>
 #endif
 
