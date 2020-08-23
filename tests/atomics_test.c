@@ -11,12 +11,14 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#ifdef _WIN32
+#if defined (_WIN32)
 #    include <malloc.h>
-#    define alloca _alloca
+#    if !defined(__GNUC__) 
+#        define alloca _alloca
+#    endif
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 #    include <stdlib.h>
-#else
+#elif
 #    include <alloca.h>
 #endif
 

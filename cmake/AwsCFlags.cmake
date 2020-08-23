@@ -50,6 +50,15 @@ function(aws_set_common_properties target)
     else()
         list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes)
 
+        if (WIN32 AND (MSYS OR MINGW))
+            add_definitions(-DWINVER=0x0601)
+            add_definitions(-D_WIN32_WINNT=0x0601)
+            list(APPEND AWS_C_FLAGS -Wno-unused-local-typedef -Wno-unknown-pragmas)
+        else()
+            # Always enable position independent code, since this code will always end up in a shared lib
+            list(APPEND AWS_C_FLAGS -fPIC)
+        endif()
+
         if(NOT SET_PROPERTIES_NO_WEXTRA)
             list(APPEND AWS_C_FLAGS -Wextra)
         endif()
@@ -60,9 +69,6 @@ function(aws_set_common_properties target)
 
         # Warning disables always go last to avoid future flags re-enabling them
         list(APPEND AWS_C_FLAGS -Wno-long-long)
-
-        # Always enable position independent code, since this code will always end up in a shared lib
-        list(APPEND AWS_C_FLAGS -fPIC)
 
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
