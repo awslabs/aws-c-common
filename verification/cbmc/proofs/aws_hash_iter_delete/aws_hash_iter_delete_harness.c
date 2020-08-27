@@ -22,10 +22,10 @@ void aws_hash_iter_delete_harness() {
 
     struct aws_hash_iter iter;
     iter.map = &map;
-    __CPROVER_assume(iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
     __CPROVER_assume(aws_hash_iter_is_valid(&iter));
+    __CPROVER_assume(iter.status == AWS_HASH_ITER_STATUS_READY_FOR_USE);
 
     aws_hash_iter_delete(&iter, nondet_bool());
-    assert(iter.status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
     assert(aws_hash_iter_is_valid(&iter));
+    assert(iter.status == AWS_HASH_ITER_STATUS_DELETE_CALLED);
 }
