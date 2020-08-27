@@ -11,14 +11,12 @@
 #ifdef _WIN32
 #    define AWS_OS_WINDOWS
 #elif __APPLE__
+#    define AWS_OS_APPLE
 #    include "TargetConditionals.h"
-#    if defined(TARGET_OS_IPHONE) && defined(TARGET_IPHONE_SIMULATOR)
-#        define AWS_OS_IOS
-#    elif defined(TARGET_OS_IPHONE)
+#    if defined(TARGET_OS_IPHONE)
 #        define AWS_OS_IOS
 #    else
 #        define AWS_OS_MACOS
-#        define AWS_OS_POSIX
 #    endif
 #elif __linux__
 #    define AWS_OS_LINUX
