@@ -69,16 +69,18 @@ AWS_COMMON_API void aws_global_thread_shutdown_wait(void);
 /**
  * Increments the global thread tracking count.  Currently invoked on event loop group and host resolver creation.
  *
- * Tracks the number of outstanding event loop group and host resolvers; does not track the total number of threads
- * they are involved in.
+ * Tracks the number of outstanding thread-generating objects (not the total number of threads generated).
+ * Currently this is the number of aws_host_resolver and aws_event_loop_group objects that have not yet been
+ * fully cleaned up.
  */
 AWS_COMMON_API void aws_global_thread_tracker_increment(void);
 
 /**
  * Decrements the global thread tracking count.  Currently invoked on event loop group and host resolver destruction.
  *
- * Tracks the number of outstanding event loop group and host resolvers; does not track the total number of threads
- * they are involved in.
+ * Tracks the number of outstanding thread-generating objects (not the total number of threads generated).
+ * Currently this is the number of aws_host_resolver and aws_event_loop_group objects that have not yet been
+ * fully cleaned up.
  */
 AWS_COMMON_API void aws_global_thread_tracker_decrement(void);
 
