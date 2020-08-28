@@ -13,7 +13,7 @@
 #elif __APPLE__
 #    define AWS_OS_APPLE
 #    include "TargetConditionals.h"
-#    if defined(TARGET_OS_IPHONE)
+#    if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 #        define AWS_OS_IOS
 #    else
 #        define AWS_OS_MACOS
