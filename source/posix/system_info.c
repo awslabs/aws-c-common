@@ -237,11 +237,11 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 #    endif
 
 size_t aws_backtrace(void **frames, size_t num_frames) {
-    return backtrace(frames, (int)aws_max_size(num_frames, INT_MAX));
+    return backtrace(frames, (int)aws_min_size(num_frames, INT_MAX));
 }
 
 char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
-    return backtrace_symbols(frames, (int)aws_max_size(stack_depth, INT_MAX));
+    return backtrace_symbols(frames, (int)aws_min_size(stack_depth, INT_MAX));
 }
 
 char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
