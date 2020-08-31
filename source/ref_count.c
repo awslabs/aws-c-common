@@ -4,6 +4,7 @@
  */
 #include <aws/common/ref_count.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/mutex.h>
 
@@ -21,6 +22,7 @@ void *aws_ref_count_acquire(struct aws_ref_count *ref_count) {
 
 size_t aws_ref_count_release(struct aws_ref_count *ref_count) {
     size_t old_value = aws_atomic_fetch_sub(&ref_count->ref_count, 1);
+    AWS_ASSERT(old_value > 0 && "refcount has gone negative");
     if (old_value == 1) {
         ref_count->on_zero_fn(ref_count->object);
     }
@@ -28,34 +30,20 @@ size_t aws_ref_count_release(struct aws_ref_count *ref_count) {
     return old_value - 1;
 }
 
-static struct aws_condition_variable s_global_thread_signal;
-static struct aws_mutex s_global_thread_lock;
-static uint32_t s_global_thread_count;
+static struct aws_condition_variable s_global_thread_signal = AWS_CONDITION_VARIABLE_INIT;
+static struct aws_mutex s_global_thread_lock = AWS_MUTEX_INIT;
+static uint32_t s_global_thread_count = 0;
 
-void aws_global_thread_tracker_init(void) {
-    aws_mutex_init(&s_global_thread_lock);
-    aws_condition_variable_init(&s_global_thread_signal);
-    s_global_thread_count = 0;
-}
-
-void aws_global_thread_tracker_clean_up(void) {
-    aws_mutex_clean_up(&s_global_thread_lock);
-    aws_condition_variable_clean_up(&s_global_thread_signal);
-}
-
-void aws_global_thread_tracker_increment(void) {
-    aws_common_fatal_assert_library_initialized();
-
+void aws_global_thread_creator_increment(void) {
     aws_mutex_lock(&s_global_thread_lock);
     ++s_global_thread_count;
     aws_mutex_unlock(&s_global_thread_lock);
 }
 
-void aws_global_thread_tracker_decrement(void) {
-    aws_common_fatal_assert_library_initialized();
-
+void aws_global_thread_creator_decrement(void) {
     bool signal = false;
     aws_mutex_lock(&s_global_thread_lock);
+    AWS_ASSERT(s_global_thread_count != 0 && "global tracker has gone negative");
     --s_global_thread_count;
     if (s_global_thread_count == 0) {
         signal = true;
@@ -63,7 +51,7 @@ void aws_global_thread_tracker_decrement(void) {
     aws_mutex_unlock(&s_global_thread_lock);
 
     if (signal) {
-        aws_condition_variable_notify_one(&s_global_thread_signal);
+        aws_condition_variable_notify_all(&s_global_thread_signal);
     }
 }
 
@@ -73,10 +61,18 @@ static bool s_thread_count_zero_pred(void *user_data) {
     return s_global_thread_count == 0;
 }
 
-void aws_global_thread_shutdown_wait(void) {
-    aws_common_fatal_assert_library_initialized();
-
+void aws_global_thread_creator_shutdown_wait(void) {
     aws_mutex_lock(&s_global_thread_lock);
     aws_condition_variable_wait_pred(&s_global_thread_signal, &s_global_thread_lock, s_thread_count_zero_pred, NULL);
+    aws_mutex_unlock(&s_global_thread_lock);
+}
+
+void aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds) {
+    int64_t wait_time_in_nanos =
+        aws_timestamp_convert(wait_timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL);
+
+    aws_mutex_lock(&s_global_thread_lock);
+    aws_condition_variable_wait_for_pred(
+        &s_global_thread_signal, &s_global_thread_lock, wait_time_in_nanos, s_thread_count_zero_pred, NULL);
     aws_mutex_unlock(&s_global_thread_lock);
 }
