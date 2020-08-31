@@ -3,117 +3,112 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <math.h>
-#include <stdint.h>
-
+/**
+ * A basic negative assertion should fail
+ * if CBMC was run at all.
+ */
 void assert_check() {
     assert(1 == 0);
 }
 
+/**
+ * A negative test for --bounds-check flag
+ */
 void bounds_check() {
     char test[10];
     test[12] = 'x';
 }
 
+/**
+ * A negative test for --conversion-check flag
+ */
 void conversion_check() {
-    unsigned test = __UINTMAX_MAX__;
+    unsigned long src;
+    unsigned dst = src;
 }
 
+/**
+ * A negative test for --div-by-zero-check flag
+ */
 void div_by_zero_check() {
     int test = 1 / 0;
 }
 
+/**
+ * A negative test for --float-overflow-check flag
+ */
 void float_overflow_check() {
-    assert(1 == 0);
+    float test;
+    test = test + 1.0;
 }
 
+/**
+ * A negative test for --nan-check flag
+ */
 void nan_check() {
-    assert(1 == 0);
+    float test = 0.0 / 0.0;
 }
 
+/**
+ * A negative test for --pointer-check flag
+ */
 void pointer_check() {
-    assert(1 == 0);
+    int *src;
+    int test = *src;
 }
 
+/**
+ * A negative test for --pointer-overflow-check flag
+ */
 void pointer_overflow_check() {
-    assert(1 == 0);
+    int offset;
+    char *test;
+    test = test + offset;
 }
 
+/**
+ * A negative test for --pointer-primitive-check flag
+ */
 void pointer_primitive_check() {
-    assert(1 == 0);
+    char *test;
+    assert(__CPROVER_r_ok(test, 10));
 }
 
+/**
+ * A negative test for --signed-overflow-check flag
+ */
 void signed_overflow_check() {
-    int test = __INT_MAX__ + __INT_MAX__;
+    int test;
+    test = test + 1;
 }
 
+/**
+ * A negative test for --undefined-shift-check flag
+ */
 void undefined_shift_check() {
-    assert(1 == 0);
+    int dist;
+    int test = 1 << dist;
 }
 
+/**
+ * A negative test for --unsigned-overflow-check flag
+ */
 void unsigned_overflow_check() {
-    unsigned test = __UINT32_MAX__ + __UINT32_MAX__;
+    unsigned test;
+    test = test + 1;
 }
 
 void cbmc_negative_tests_harness() {
-    /**
-     * A basic negative assertion should fail
-     * if CBMC was run at all.
-     */
     assert_check();
-
-    /**
-     * A negative test for --bounds-check flag
-     */
     bounds_check();
-
-    /**
-     * A negative test for --conversion-check flag
-     */
     conversion_check();
-
-    /**
-     * A negative test for --div-by-zero-check flag
-     */
     div_by_zero_check();
-
-    /**
-     * A negative test for --float-overflow-check flag
-     */
     float_overflow_check();
-
-    /**
-     * A negative test for --nan-check flag
-     */
     nan_check();
-
-    /**
-     * A negative test for --pointer-check flag
-     */
     pointer_check();
-
-    /**
-     * A negative test for --pointer-overflow-check flag
-     */
     pointer_overflow_check();
-
-    /**
-     * A negative test for --pointer-primitive-check flag
-     */
     pointer_primitive_check();
-
-    /**
-     * A negative test for --signed-overflow-check flag
-     */
     signed_overflow_check();
-
-    /**
-     * A negative test for --undefined-shift-check flag
-     */
     undefined_shift_check();
-
-    /**
-     * A negative test for --unsigned-overflow-check flag
-     */
     unsigned_overflow_check();
 }
