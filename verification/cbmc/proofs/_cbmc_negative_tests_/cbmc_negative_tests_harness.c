@@ -3,16 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-void bounds_check() {
+#include <math.h>
+#include <stdint.h>
+
+void assert_check() {
     assert(1 == 0);
+}
+
+void bounds_check() {
+    char test[10];
+    test[12] = 'x';
 }
 
 void conversion_check() {
-    assert(1 == 0);
+    unsigned test = __UINTMAX_MAX__;
 }
 
 void div_by_zero_check() {
-    assert(1 == 0);
+    int test = 1 / 0;
 }
 
 void float_overflow_check() {
@@ -36,7 +44,7 @@ void pointer_primitive_check() {
 }
 
 void signed_overflow_check() {
-    assert(1 == 0);
+    int test = __INT_MAX__ + __INT_MAX__;
 }
 
 void undefined_shift_check() {
@@ -44,7 +52,7 @@ void undefined_shift_check() {
 }
 
 void unsigned_overflow_check() {
-    assert(1 == 0);
+    unsigned test = __UINT32_MAX__ + __UINT32_MAX__;
 }
 
 void cbmc_negative_tests_harness() {
@@ -65,7 +73,7 @@ void cbmc_negative_tests_harness() {
     conversion_check();
 
     /**
-     * A negative test for --div_by_zero-check flag
+     * A negative test for --div-by-zero-check flag
      */
     div_by_zero_check();
 
