@@ -20,6 +20,7 @@ int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator,
 
     buf->buffer = (capacity == 0) ? NULL : aws_mem_acquire(allocator, capacity);
     if (capacity != 0 && buf->buffer == NULL) {
+        AWS_ZERO_STRUCT(*buf);
         return AWS_OP_ERR;
     }
 
@@ -157,46 +158,89 @@ int aws_byte_buf_init_copy_from_cursor(
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_init_cache_and_update_cursors(struct aws_byte_buf *dest, struct aws_allocator *allocator, ...) {
+    AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(dest);
+
+    AWS_ZERO_STRUCT(*dest);
+
+    size_t total_len = 0;
+    va_list args;
+    va_start(args, allocator);
+
+    /* Loop until final NULL arg is encountered */
+    struct aws_byte_cursor *cursor_i;
+    while ((cursor_i = va_arg(args, struct aws_byte_cursor *)) != NULL) {
+        AWS_ASSERT(aws_byte_cursor_is_valid(cursor_i));
+        if (aws_add_size_checked(total_len, cursor_i->len, &total_len)) {
+            return AWS_OP_ERR;
+        }
+    }
+    va_end(args);
+
+    if (aws_byte_buf_init(dest, allocator, total_len)) {
+        return AWS_OP_ERR;
+    }
+
+    va_start(args, allocator);
+    while ((cursor_i = va_arg(args, struct aws_byte_cursor *)) != NULL) {
+        /* Impossible for this call to fail, we pre-allocated sufficient space */
+        aws_byte_buf_append_and_update(dest, cursor_i);
+    }
+    va_end(args);
+
+    return AWS_OP_SUCCESS;
+}
+
 bool aws_byte_cursor_next_split(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr) {
 
-    bool first_run = false;
-    if (!substr->ptr) {
-        first_run = true;
-        substr->ptr = input_str->ptr;
-        substr->len = 0;
-    }
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(input_str));
 
-    if (substr->ptr > input_str->ptr + input_str->len) {
-        /* This will hit if the last substring returned was an empty string after terminating split_on. */
-        AWS_ZERO_STRUCT(*substr);
-        return false;
-    }
+    /* If substr is zeroed-out, then this is the first run. */
+    const bool first_run = substr->ptr == NULL;
 
-    /* Calculate first byte to search. */
-    substr->ptr += substr->len;
-    /* Remaining bytes is the number we started with minus the number of bytes already read. */
-    substr->len = input_str->len - (substr->ptr - input_str->ptr);
-
-    if (!first_run && substr->len == 0) {
-        /* This will hit if the string doesn't end with split_on but we're done. */
-        AWS_ZERO_STRUCT(*substr);
-        return false;
-    }
-
-    if (!first_run && *substr->ptr == split_on) {
-        /* If not first rodeo and the character after substr is split_on, skip. */
-        ++substr->ptr;
-        --substr->len;
-
-        if (substr->len == 0) {
-            /* If split character was last in the string, return empty substr. */
+    /* It's legal for input_str to be zeroed out: {.ptr=NULL, .len=0}
+     * Deal with this case separately */
+    if (AWS_UNLIKELY(input_str->ptr == NULL)) {
+        if (first_run) {
+            /* Set substr->ptr to something non-NULL so that next split() call doesn't look like the first run */
+            substr->ptr = (void *)"";
+            substr->len = 0;
             return true;
         }
+
+        /* done */
+        AWS_ZERO_STRUCT(*substr);
+        return false;
     }
 
+    /* Rest of function deals with non-NULL input_str->ptr */
+
+    if (first_run) {
+        *substr = *input_str;
+    } else {
+        /* This is not the first run.
+         * Advance substr past the previous split. */
+        const uint8_t *input_end = input_str->ptr + input_str->len;
+        substr->ptr += substr->len + 1;
+
+        /* Note that it's ok if substr->ptr == input_end, this happens in the
+         * final valid split of an input_str that ends with the split_on character:
+         * Ex: "AB&" split on '&' produces "AB" and "" */
+        if (substr->ptr > input_end || substr->ptr < input_str->ptr) { /* 2nd check is overflow check */
+            /* done */
+            AWS_ZERO_STRUCT(*substr);
+            return false;
+        }
+
+        /* update len to be remainder of the string */
+        substr->len = input_str->len - (substr->ptr - input_str->ptr);
+    }
+
+    /* substr is now remainder of string, search for next split */
     uint8_t *new_location = memchr(substr->ptr, split_on, substr->len);
     if (new_location) {
 
@@ -204,6 +248,7 @@ bool aws_byte_cursor_next_split(
         substr->len = new_location - substr->ptr;
     }
 
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(substr));
     return true;
 }
 
@@ -212,7 +257,7 @@ int aws_byte_cursor_split_on_char_n(
     char split_on,
     size_t n,
     struct aws_array_list *AWS_RESTRICT output) {
-    AWS_ASSERT(input_str && input_str->ptr);
+    AWS_ASSERT(aws_byte_cursor_is_valid(input_str));
     AWS_ASSERT(output);
     AWS_ASSERT(output->item_size >= sizeof(struct aws_byte_cursor));
 
@@ -326,7 +371,7 @@ bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struc
 }
 
 /* Every possible uint8_t value, lowercased */
-static const uint8_t s_tolower_table[256] = {
+static const uint8_t s_tolower_table[] = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,
     22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,
     44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  'a',
@@ -339,6 +384,7 @@ static const uint8_t s_tolower_table[256] = {
     198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219,
     220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
+AWS_STATIC_ASSERT(AWS_ARRAY_SIZE(s_tolower_table) == 256);
 
 const uint8_t *aws_lookup_table_to_lower_get(void) {
     return s_tolower_table;
@@ -1248,6 +1294,59 @@ bool aws_byte_cursor_read_be64(struct aws_byte_cursor *cur, uint64_t *var) {
 
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
     return rv;
+}
+
+/* Lookup from '0' -> 0, 'f' -> 0xf, 'F' -> 0xF, etc
+ * invalid characters have value 255 */
+/* clang-format off */
+static const uint8_t s_hex_to_num_table[] = {
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255,
+    /* 0 - 9 */
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    255, 255, 255, 255, 255, 255, 255,
+    /* A - F */
+    0xA, 0xB, 0xC, 0xD, 0xE, 0xF,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255,
+    /* a - f */
+    0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+};
+AWS_STATIC_ASSERT(AWS_ARRAY_SIZE(s_hex_to_num_table) == 256);
+/* clang-format on */
+
+const uint8_t *aws_lookup_table_hex_to_num_get(void) {
+    return s_hex_to_num_table;
+}
+
+bool aws_byte_cursor_read_hex_u8(struct aws_byte_cursor *cur, uint8_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+
+    bool success = false;
+    if (AWS_LIKELY(cur->len >= 2)) {
+        const uint8_t hi = s_hex_to_num_table[cur->ptr[0]];
+        const uint8_t lo = s_hex_to_num_table[cur->ptr[1]];
+
+        /* table maps invalid characters to 255 */
+        if (AWS_LIKELY(hi != 255 && lo != 255)) {
+            *var = (hi << 4) | lo;
+            cur->ptr += 2;
+            cur->len -= 2;
+            success = true;
+        }
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return success;
 }
 
 /**

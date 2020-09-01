@@ -42,7 +42,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
 #elif defined(_MSC_VER)
     return _byteswap_uint64(x);
 #else
-    uint32_t low = (uint32_t)x;
+    uint32_t low = x & UINT32_MAX;
     uint32_t high = (uint32_t)(x >> 32);
     return ((uint64_t)htonl(low)) << 32 | htonl(high);
 #endif

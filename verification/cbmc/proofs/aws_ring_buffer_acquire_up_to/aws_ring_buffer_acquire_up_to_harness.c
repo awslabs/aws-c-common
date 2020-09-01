@@ -11,18 +11,19 @@
 
 void aws_ring_buffer_acquire_up_to_harness() {
     /* parameters */
-    struct aws_ring_buffer ring_buf;
-    size_t ring_buf_size;
-    size_t requested_size;
-    size_t minimum_size;
     struct aws_byte_buf buf;
+    struct aws_ring_buffer ring_buf;
+
+    size_t minimum_size;
+    size_t requested_size;
+    size_t ring_buf_size;
 
     /* assumptions */
+    __CPROVER_assume(requested_size >= minimum_size);
     ensure_ring_buffer_has_allocated_members(&ring_buf, ring_buf_size);
     __CPROVER_assume(aws_ring_buffer_is_valid(&ring_buf));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
-    __CPROVER_assume(requested_size >= minimum_size);
 
     /* copy of state before call */
     struct aws_ring_buffer ring_buf_old = ring_buf;
