@@ -15,13 +15,13 @@ void *memset_using_uint64_impl(void *dst, int c, size_t n);
  */
 void memset_using_uint64_harness() {
 
-    short d1[MAX];
-    short d2[MAX];
-    int c;
-    unsigned size;
+    uint8_t d1[MAX];
+    uint8_t d2[MAX];
+    uint8_t c;
+    size_t size;
     __CPROVER_assume(size < MAX);
     memset_impl(d1, c, size);
     memset_using_uint64_impl(d2, c, size);
-    assert_bytes_match((uint8_t *)d1, (uint8_t *)d2, size);
-    assert_all_bytes_are((uint8_t *)d2, c, size);
+    assert_bytes_match(d1, d2, size);
+    assert_all_bytes_are(d2, c, size);
 }

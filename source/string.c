@@ -34,6 +34,16 @@ struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, c
     return aws_string_new_from_array(allocator, str->bytes, str->len);
 }
 
+struct aws_string *aws_string_new_from_cursor(struct aws_allocator *allocator, const struct aws_byte_cursor *cursor) {
+    AWS_PRECONDITION(allocator && aws_byte_cursor_is_valid(cursor));
+    return aws_string_new_from_array(allocator, cursor->ptr, cursor->len);
+}
+
+struct aws_string *aws_string_new_from_buf(struct aws_allocator *allocator, const struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(allocator && aws_byte_buf_is_valid(buf));
+    return aws_string_new_from_array(allocator, buf->buffer, buf->len);
+}
+
 void aws_string_destroy(struct aws_string *str) {
     AWS_PRECONDITION(!str || aws_string_is_valid(str));
     if (str && str->allocator) {

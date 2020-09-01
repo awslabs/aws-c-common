@@ -69,7 +69,7 @@ size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, e
 }
 
 /**
- * Reads an atomic var as an pointer, using the specified ordering, and returns the result.
+ * Reads an atomic var as a pointer, using the specified ordering, and returns the result.
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {
