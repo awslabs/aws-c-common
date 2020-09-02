@@ -48,6 +48,7 @@ static int s_string_to_log_level_failure_test(struct aws_allocator *allocator, v
     ASSERT_FAILS(aws_string_to_log_level("Not a log level", &level));
     ASSERT_FAILS(aws_string_to_log_level(NULL, &level));
     ASSERT_FAILS(aws_string_to_log_level(NULL, NULL));
+    ASSERT_FAILS(aws_string_to_log_level("FATAL", NULL));
 
     return 0;
 }
