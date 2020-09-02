@@ -67,12 +67,14 @@ void aws_global_thread_creator_shutdown_wait(void) {
     aws_mutex_unlock(&s_global_thread_lock);
 }
 
-void aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds) {
+int aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds) {
     int64_t wait_time_in_nanos =
         aws_timestamp_convert(wait_timeout_in_seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL);
 
     aws_mutex_lock(&s_global_thread_lock);
-    aws_condition_variable_wait_for_pred(
+    int result = aws_condition_variable_wait_for_pred(
         &s_global_thread_signal, &s_global_thread_lock, wait_time_in_nanos, s_thread_count_zero_pred, NULL);
     aws_mutex_unlock(&s_global_thread_lock);
+
+    return result;
 }

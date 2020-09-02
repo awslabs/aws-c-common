@@ -74,7 +74,7 @@ AWS_COMMON_API void aws_global_thread_creator_shutdown_wait(void);
  *
  * Crashes via fatal assert if the wait timeout is reached.
  */
-AWS_COMMON_API void aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds);
+AWS_COMMON_API int aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds);
 
 /**
  * Increments the global thread creator count.  Currently invoked on event loop group and host resolver creation.
