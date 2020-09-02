@@ -276,7 +276,7 @@ void aws_logger_clean_up(struct aws_logger *logger) {
     logger->vtable->clean_up(logger);
 }
 
-static const char *s_log_level_strings[AWS_LL_COUNT] = {"NONE ", "FATAL", "ERROR", "WARN ", "INFO ", "DEBUG", "TRACE"};
+static const char *s_log_level_strings[AWS_LL_COUNT] = {"NONE", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string) {
     AWS_ERROR_PRECONDITION(log_level < AWS_LL_COUNT);
@@ -286,6 +286,21 @@ int aws_log_level_to_string(enum aws_log_level log_level, const char **level_str
     }
 
     return AWS_OP_SUCCESS;
+}
+
+int aws_string_to_log_level(const char *level_string, enum aws_log_level *log_level) {
+    if (level_string != NULL && log_level != NULL) {
+        size_t level_length = strlen(level_string);
+        for (int i = 0; i < AWS_LL_COUNT; ++i) {
+            if (aws_array_eq_c_str_ignore_case(level_string, level_length, s_log_level_strings[i])) {
+                *log_level = i;
+                return AWS_OP_SUCCESS;
+            }
+        }
+    }
+
+    aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    return AWS_OP_ERR;
 }
 
 int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bufsz) {
