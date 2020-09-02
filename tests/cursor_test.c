@@ -244,7 +244,7 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_FALSE(aws_byte_buf_write_u8(&buffer, 0));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
-    buffer.capacity = 7;
+    aws_byte_buf_reserve(&buffer, 7);
     ASSERT_FALSE(aws_byte_buf_write_u8_n(&buffer, 0x0, 8));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
