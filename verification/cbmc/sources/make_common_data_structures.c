@@ -20,7 +20,7 @@ bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf) {
 
 void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf) {
     buf->allocator = (nondet_bool()) ? NULL : can_fail_allocator();
-    buf->buffer = bounded_malloc(sizeof(*(buf->buffer)) * buf->capacity);
+    buf->buffer = can_fail_malloc(sizeof(*(buf->buffer)) * buf->capacity);
 }
 
 void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, const size_t size) {
