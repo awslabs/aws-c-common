@@ -72,7 +72,7 @@ AWS_COMMON_API void aws_global_thread_creator_shutdown_wait(void);
  *
  * Primarily used by tests to guarantee that everything is cleaned up before performing a memory check.
  *
- * Crashes via fatal assert if the wait timeout is reached.
+ * Returns AWS_OP_SUCCESS if the conditional wait terminated properly, AWS_OP_ERR otherwise (timeout, etc..)
  */
 AWS_COMMON_API int aws_global_thread_creator_shutdown_wait_for(uint32_t wait_timeout_in_seconds);
 
