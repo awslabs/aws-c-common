@@ -232,6 +232,14 @@ AWS_COMMON_API
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string);
 
 /**
+ * Converts a c-string constant to a log level value.  Uses case-insensitive comparison
+ * and simply iterates all possibilities until a match or nothing remains.  If no match
+ * is found, AWS_OP_ERR is returned.
+ */
+AWS_COMMON_API
+int aws_string_to_log_level(const char *level_string, enum aws_log_level *log_level);
+
+/**
  * Converts an aws_thread_id_t to a c-string.  For portability, aws_thread_id_t
  * must not be printed directly.  Intended primarily to support building log
  * lines that include the thread id in them.  The parameter `buffer` must

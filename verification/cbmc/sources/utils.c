@@ -7,7 +7,7 @@
 #include <proof_helpers/utils.h>
 
 void assert_bytes_match(const uint8_t *const a, const uint8_t *const b, const size_t len) {
-    assert(!a == !b);
+    assert(len == 0 || !a == !b);
     if (len > 0 && a != NULL && b != NULL) {
         size_t i;
         __CPROVER_assume(i < len && len < MAX_MALLOC); /* prevent spurious pointer overflows */

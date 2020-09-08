@@ -56,12 +56,13 @@ int aws_byte_buf_init_copy(struct aws_byte_buf *dest, struct aws_allocator *allo
 }
 
 bool aws_byte_buf_is_valid(const struct aws_byte_buf *const buf) {
-    return buf && ((buf->capacity == 0 && buf->len == 0 && buf->buffer == NULL) ||
-                   (buf->capacity > 0 && buf->len <= buf->capacity && AWS_MEM_IS_WRITABLE(buf->buffer, buf->len)));
+    return buf != NULL &&
+           ((buf->capacity == 0 && buf->len == 0 && buf->buffer == NULL) ||
+            (buf->capacity > 0 && buf->len <= buf->capacity && AWS_MEM_IS_WRITABLE(buf->buffer, buf->capacity)));
 }
 
 bool aws_byte_cursor_is_valid(const struct aws_byte_cursor *cursor) {
-    return cursor &&
+    return cursor != NULL &&
            ((cursor->len == 0) || (cursor->len > 0 && cursor->ptr && AWS_MEM_IS_READABLE(cursor->ptr, cursor->len)));
 }
 
@@ -1112,6 +1113,9 @@ struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *co
 bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, const size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(dest, len));
+    if (len == 0)
+        return true;
+
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
     if (slice.ptr) {
