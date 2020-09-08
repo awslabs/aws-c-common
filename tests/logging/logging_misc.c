@@ -9,6 +9,7 @@
 
 static int s_string_to_log_level_success_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    (void)allocator;
 
     enum aws_log_level level = AWS_LL_NONE;
 
@@ -39,6 +40,7 @@ AWS_TEST_CASE(string_to_log_level_success_test, s_string_to_log_level_success_te
 
 static int s_string_to_log_level_failure_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    (void)allocator;
 
     enum aws_log_level level = AWS_LL_NONE;
 
