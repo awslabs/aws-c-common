@@ -89,15 +89,22 @@ AWS_STATIC_IMPL bool aws_linked_list_is_valid_deep(const struct aws_linked_list 
     /* By satisfying the above and that edges are bidirectional, we
      * also guarantee that tail reaches head by following prev
      * pointers */
-    while (temp) {
-        if (temp == &list->tail) {
-            head_reaches_tail = true;
-            break;
-        } else if (!aws_linked_list_node_next_is_valid(temp)) {
-            /* Next and prev pointers should connect the same nodes */
-            return false;
-        }
+    if (temp) {
         temp = temp->next;
+        size_t remaining_length = list->length;
+        while (temp) {
+            if (remaining_length == 0) {
+                if (temp == &list->tail) {
+                    head_reaches_tail = true;
+                }
+                break;
+            } else if (!aws_linked_list_node_next_is_valid(temp)) {
+                /* Next and prev pointers should connect the same nodes */
+                return false;
+            }
+            temp = temp->next;
+            remaining_length -= 1;
+        }
     }
     return head_reaches_tail;
 }
@@ -111,6 +118,7 @@ AWS_STATIC_IMPL void aws_linked_list_init(struct aws_linked_list *list) {
     list->head.prev = NULL;
     list->tail.prev = &list->head;
     list->tail.next = NULL;
+    list->length = 0;
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     AWS_POSTCONDITION(aws_linked_list_empty(list));
 }
@@ -272,9 +280,11 @@ AWS_STATIC_IMPL void aws_linked_list_remove(struct aws_linked_list_node *node) {
 AWS_STATIC_IMPL void aws_linked_list_push_back(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     AWS_PRECONDITION(node != NULL);
-    aws_linked_list_insert_before(&list->tail, node);
-    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(list->tail.prev == node, "[node] is the new last element of [list]");
+    if (aws_add_size_checked(list->length, 1, &list->length) == AWS_OP_SUCCESS) {
+        aws_linked_list_insert_before(&list->tail, node);
+        AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+        AWS_POSTCONDITION(list->tail.prev == node, "[node] is the new last element of [list]");
+    }
 }
 
 /**
@@ -295,9 +305,11 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_back(const struct a
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws_linked_list *list) {
     AWS_PRECONDITION(!aws_linked_list_empty(list));
+    AWS_PRECONDITION(list->length > 0);
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *back = aws_linked_list_back(list);
     aws_linked_list_remove(back);
+    list->length -= 1;
     AWS_POSTCONDITION(back->next == NULL && back->prev == NULL);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     return back;
@@ -309,9 +321,11 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_back(struct aws
 AWS_STATIC_IMPL void aws_linked_list_push_front(struct aws_linked_list *list, struct aws_linked_list_node *node) {
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     AWS_PRECONDITION(node != NULL);
-    aws_linked_list_insert_before(list->head.next, node);
-    AWS_POSTCONDITION(aws_linked_list_is_valid(list));
-    AWS_POSTCONDITION(list->head.next == node, "[node] is the new first element of [list]");
+    if (aws_add_size_checked(list->length, 1, &list->length) == AWS_OP_SUCCESS) {
+        aws_linked_list_insert_before(list->head.next, node);
+        AWS_POSTCONDITION(aws_linked_list_is_valid(list));
+        AWS_POSTCONDITION(list->head.next == node, "[node] is the new first element of [list]");
+    }
 }
 
 /**
@@ -332,9 +346,11 @@ AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_front(const struct 
  */
 AWS_STATIC_IMPL struct aws_linked_list_node *aws_linked_list_pop_front(struct aws_linked_list *list) {
     AWS_PRECONDITION(!aws_linked_list_empty(list));
+    AWS_PRECONDITION(list->length > 0);
     AWS_PRECONDITION(aws_linked_list_is_valid(list));
     struct aws_linked_list_node *front = aws_linked_list_front(list);
     aws_linked_list_remove(front);
+    list->length -= 1;
     AWS_POSTCONDITION(front->next == NULL && front->prev == NULL);
     AWS_POSTCONDITION(aws_linked_list_is_valid(list));
     return front;
@@ -349,6 +365,8 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(
     AWS_PRECONDITION(a != b);
     struct aws_linked_list_node *a_first = a->head.next;
     struct aws_linked_list_node *a_last = a->tail.prev;
+    size_t old_a_length = a->length;
+    size_t old_b_length = b->length;
 
     /* Move B's contents into A */
     if (aws_linked_list_empty(b)) {
@@ -369,6 +387,10 @@ AWS_STATIC_IMPL void aws_linked_list_swap_contents(
         b->tail.prev = a_last;
         b->tail.prev->next = &b->tail;
     }
+
+    a->length = old_b_length;
+    b->length = old_a_length;
+
     AWS_POSTCONDITION(aws_linked_list_is_valid(a));
     AWS_POSTCONDITION(aws_linked_list_is_valid(b));
 }
@@ -392,13 +414,16 @@ AWS_STATIC_IMPL void aws_linked_list_move_all_back(
 
         dst->tail.prev = src_back;
         src_back->next = &dst->tail;
+        aws_add_size_checked(dst->length, src->length, &dst->length);
 
         /* reset src */
         src->head.next = &src->tail;
         src->tail.prev = &src->head;
+        src->length = 0;
     }
 
     AWS_POSTCONDITION(aws_linked_list_is_valid(src));
+    AWS_POSTCONDITION(aws_linked_list_empty(src));
     AWS_POSTCONDITION(aws_linked_list_is_valid(dst));
 }
 
@@ -421,13 +446,16 @@ AWS_STATIC_IMPL void aws_linked_list_move_all_front(
 
         src_back->next = dst_front;
         dst_front->prev = src_back;
+        aws_add_size_checked(dst->length, src->length, &dst->length);
 
         /* reset src */
         src->head.next = &src->tail;
         src->tail.prev = &src->head;
+        src->length = 0;
     }
 
     AWS_POSTCONDITION(aws_linked_list_is_valid(src));
+    AWS_POSTCONDITION(aws_linked_list_empty(src));
     AWS_POSTCONDITION(aws_linked_list_is_valid(dst));
 }
 

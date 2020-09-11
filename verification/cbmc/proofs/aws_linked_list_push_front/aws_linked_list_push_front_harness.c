@@ -14,6 +14,7 @@ void aws_linked_list_push_front_harness() {
     ensure_linked_list_is_allocated(&list, MAX_LINKED_LIST_ITEM_ALLOCATION);
 
     struct aws_linked_list_node *old_first = list.head.next;
+    size_t old_list_length = list.length;
     /* perform operation under verification */
     aws_linked_list_push_front(&list, &to_add);
 
@@ -23,4 +24,5 @@ void aws_linked_list_push_front_harness() {
     assert(aws_linked_list_node_next_is_valid(&to_add));
     assert(list.head.next == &to_add);
     assert(to_add.next == old_first);
+    assert(list.length == old_list_length + 1);
 }

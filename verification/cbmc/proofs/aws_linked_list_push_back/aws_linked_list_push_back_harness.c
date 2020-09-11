@@ -15,6 +15,7 @@ void aws_linked_list_push_back_harness() {
 
     /* Keep the old last node of the linked list */
     struct aws_linked_list_node *old_last = list.tail.prev;
+    size_t old_list_length = list.length;
 
     /* perform operation under verification */
     aws_linked_list_push_back(&list, &to_add);
@@ -25,4 +26,5 @@ void aws_linked_list_push_back_harness() {
     assert(aws_linked_list_node_next_is_valid(&to_add));
     assert(list.tail.prev == &to_add);
     assert(to_add.prev == old_last);
+    assert(list.length == old_list_length + 1);
 }

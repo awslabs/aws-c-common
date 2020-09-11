@@ -17,6 +17,7 @@ void aws_linked_list_pop_back_harness() {
 
     /* Keep the old last node of the linked list */
     struct aws_linked_list_node *old_prev_last = (list.tail.prev)->prev;
+    size_t old_list_length = list.length;
 
     /* perform operation under verification */
     struct aws_linked_list_node *ret = aws_linked_list_pop_back(&list);
@@ -25,4 +26,5 @@ void aws_linked_list_pop_back_harness() {
     assert(aws_linked_list_is_valid(&list));
     assert(ret->next == NULL && ret->prev == NULL);
     assert(list.tail.prev == old_prev_last);
+    assert(old_list_length == list.length + 1);
 }

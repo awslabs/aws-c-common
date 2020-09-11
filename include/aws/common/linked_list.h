@@ -7,6 +7,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/math.h>
 
 #include <stddef.h>
 
@@ -18,6 +19,7 @@ struct aws_linked_list_node {
 struct aws_linked_list {
     struct aws_linked_list_node head;
     struct aws_linked_list_node tail;
+    size_t length;
 };
 
 AWS_EXTERN_C_BEGIN

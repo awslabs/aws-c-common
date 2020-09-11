@@ -120,6 +120,7 @@ void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t 
 
     curr->next = &list->tail;
     list->tail.prev = curr;
+    list->length = length;
 }
 
 bool aws_priority_queue_is_bounded(
