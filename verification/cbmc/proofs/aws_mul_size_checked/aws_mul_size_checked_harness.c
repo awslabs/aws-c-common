@@ -24,7 +24,7 @@ void aws_mul_size_checked_harness() {
         if (!aws_mul_u64_checked(a, b, &r)) {
             assert(r == a * b);
         } else {
-            assert(__CPROVER_overflow_mult(a, b));
+            assert(a > 0 && b > 0 && a > (UINT64_MAX / b));
         }
     } else {
         /*
@@ -37,7 +37,7 @@ void aws_mul_size_checked_harness() {
         if (!aws_mul_u32_checked(a, b, &r)) {
             assert(r == a * b);
         } else {
-            assert(__CPROVER_overflow_mult(a, b));
+            assert(a > 0 && b > 0 && a > (UINT32_MAX / b));
         }
     }
 }
