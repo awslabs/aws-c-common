@@ -78,7 +78,7 @@ bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, cons
 }
 
 void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *const cursor) {
-    cursor->ptr = (nondet_bool()) ? NULL : bounded_malloc(cursor->len);
+    cursor->ptr = can_fail_malloc(cursor->len);
 }
 
 bool aws_array_list_is_bounded(
@@ -91,13 +91,8 @@ bool aws_array_list_is_bounded(
 }
 
 void ensure_array_list_has_allocated_data_member(struct aws_array_list *const list) {
-    if (list->current_size == 0 && list->length == 0) {
-        __CPROVER_assume(list->data == NULL);
-        list->alloc = can_fail_allocator();
-    } else {
-        list->data = bounded_malloc(list->current_size);
-        list->alloc = nondet_bool() ? NULL : can_fail_allocator();
-    }
+    list->data = can_fail_malloc(list->current_size);
+    list->alloc = nondet_bool() ? NULL : can_fail_allocator();
 }
 
 void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t max_length) {
