@@ -112,6 +112,7 @@ AWS_EXTERN_C_END
 
 /**
  * If and only if (iff) is a biconditional logical connective between statements a and b.
+ * We need double negations (!!) here to work correctly for non-Boolean a and b values.
  * Equivalent to (AWS_IMPLIES(a, b) && AWS_IMPLIES(b, a)).
  */
 #define AWS_IFF(a, b) (!!(a) == !!(b))
