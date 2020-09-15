@@ -107,6 +107,15 @@ AWS_EXTERN_C_END
 #define __CPROVER_r_ok(base, len) (AWS_MEM_IS_READABLE(base, len))
 #define __CPROVER_w_ok(base, len) (AWS_MEM_IS_WRITEABLE(base, len))
 
+/* Logical consequence. */
+#define AWS_IMPLIES(a, b) (!(a) || (b))
+
+/**
+ * If and only if (iff) is a biconditional logical connective between statements a and b.
+ * Equivalent to (AWS_IMPLIES(a, b) && AWS_IMPLIES(b, a)).
+ */
+#define AWS_IFF(a, b) (!!(a) == !!(b))
+
 #define AWS_RETURN_ERROR_IF_IMPL(type, cond, err, explanation)                                                         \
     do {                                                                                                               \
         if (!(cond)) {                                                                                                 \
