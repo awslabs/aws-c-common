@@ -73,6 +73,7 @@ function(aws_check_headers_internal target lang std)
     set_target_properties(${HEADER_CHECKER_LIB} PROPERTIES
         LINKER_LANGUAGE ${lang}
         "${lang}_STANDARD" ${std}
+        "${lang}_STANDARD_REQUIRED" OFF
     )
 
     foreach(header IN LISTS ARGN)
