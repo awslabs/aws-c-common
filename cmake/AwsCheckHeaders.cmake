@@ -13,6 +13,39 @@ if (PERFORM_HEADER_CHECK)
     enable_language(CXX)
 endif()
 
+# Check headers with each supported C_STANDARD and CXX_STANDARD
+# Call as: aws_check_headers(${target} HEADERS TO CHECK LIST)
+function(aws_check_headers target)
+    if (PERFORM_HEADER_CHECK)
+        aws_check_headers_c(${target} ${ARGN})
+        aws_check_headers_cxx(${target} ${ARGN})
+    endif ()
+endfunction()
+
+# Check headers with each supported C_STANDARD:
+# https://cmake.org/cmake/help/latest/prop_tgt/C_STANDARD.html
+# Note that while aws-c-*** libs are built with c99, their headers should be includable in anything c90 and up.
+# Call as: aws_check_headers_c(${target} HEADERS TO CHECK LIST)
+function(aws_check_headers_c target)
+    if (PERFORM_HEADER_CHECK)
+        aws_check_headers_internal(${target} C 90 ${ARGN})
+        aws_check_headers_internal(${target} C 99 ${ARGN})
+        aws_check_headers_internal(${target} C 11 ${ARGN})
+    endif ()
+endfunction()
+
+# Check headers with each supported CXX_STANDARD:
+# https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
+# Call as: aws_check_headers_cxx(${target} HEADERS TO CHECK LIST)
+function(aws_check_headers_cxx target)
+    if (PERFORM_HEADER_CHECK)
+        aws_check_headers_internal(${target} CXX 11 ${ARGN})
+        aws_check_headers_internal(${target} CXX 14 ${ARGN})
+        aws_check_headers_internal(${target} CXX 17 ${ARGN})
+        aws_check_headers_internal(${target} CXX 20 ${ARGN})
+    endif ()
+endfunction()
+
 function(aws_check_headers_internal target lang std)
     if (${lang} STREQUAL CXX)
         set (FILE_EXT cpp)
@@ -53,37 +86,4 @@ function(aws_check_headers_internal target lang std)
             target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.${FILE_EXT}")
         endif()
     endforeach(header)
-endfunction()
-
-# Check headers with each supported C_STANDARD:
-# https://cmake.org/cmake/help/latest/prop_tgt/C_STANDARD.html
-# Note that while aws-c-*** libs are built with c99, their headers should be includable in anything c90 and up.
-# Call as: aws_check_headers_c(${target} HEADERS TO CHECK LIST)
-function(aws_check_headers_c target)
-    if (PERFORM_HEADER_CHECK)
-        aws_check_headers_internal(${target} C 90 ${ARGN})
-        aws_check_headers_internal(${target} C 99 ${ARGN})
-        aws_check_headers_internal(${target} C 11 ${ARGN})
-    endif ()
-endfunction()
-
-# Check headers with each supported CXX_STANDARD:
-# https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html
-# Call as: aws_check_headers_cxx(${target} HEADERS TO CHECK LIST)
-function(aws_check_headers_cxx target)
-    if (PERFORM_HEADER_CHECK)
-        aws_check_headers_internal(${target} CXX 11 ${ARGN})
-        aws_check_headers_internal(${target} CXX 14 ${ARGN})
-        aws_check_headers_internal(${target} CXX 17 ${ARGN})
-        aws_check_headers_internal(${target} CXX 20 ${ARGN})
-    endif ()
-endfunction()
-
-# Check headers with each supported C_STANDARD and CXX_STANDARD
-# Call as: aws_check_headers(${target} HEADERS TO CHECK LIST)
-function(aws_check_headers target)
-    if (PERFORM_HEADER_CHECK)
-        aws_check_headers_c(${target} ${ARGN})
-        aws_check_headers_cxx(${target} ${ARGN})
-    endif ()
 endfunction()
