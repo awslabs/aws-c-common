@@ -28,7 +28,8 @@ endfunction()
 # Call as: aws_check_headers_c(${target} HEADERS TO CHECK LIST)
 function(aws_check_headers_c target)
     if (PERFORM_HEADER_CHECK)
-        if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.1")
+        # C_STANDARD introduced in cmake 3.1
+        if ((CMAKE_VERSION VERSION_GREATER "3.1") OR (CMAKE_VERSION VERSION_EQUAL "3.1"))
             aws_check_headers_internal(${target} C 90 ${ARGN})
             aws_check_headers_internal(${target} C 99 ${ARGN})
             aws_check_headers_internal(${target} C 11 ${ARGN})
@@ -41,13 +42,15 @@ endfunction()
 # Call as: aws_check_headers_cxx(${target} HEADERS TO CHECK LIST)
 function(aws_check_headers_cxx target)
     if (PERFORM_HEADER_CHECK)
-        if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.1")
+        # CXX_STANDARD introduced in cmake 3.1, but doesn't get c++14 or c++20 till later versions
+        if ((CMAKE_VERSION VERSION_GREATER "3.1") OR (CMAKE_VERSION VERSION_EQUAL "3.1"))
             aws_check_headers_internal(${target} CXX 11 ${ARGN})
             aws_check_headers_internal(${target} CXX 14 ${ARGN})
 
-            if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.8")
+            if ((CMAKE_VERSION VERSION_GREATER "3.8") OR (CMAKE_VERSION VERSION_EQUAL "3.8"))
                 aws_check_headers_internal(${target} CXX 17 ${ARGN})
 
+                # VERSION_GREATER_EQUAL introduced in cmake 3.7
                 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
                     aws_check_headers_internal(${target} CXX 20 ${ARGN})
                 endif ()
