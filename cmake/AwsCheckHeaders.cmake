@@ -49,8 +49,9 @@ function(aws_check_headers target)
                 file(RELATIVE_PATH include_path "${CMAKE_HOME_DIRECTORY}/include" ${header})
                 set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
                 file(MAKE_DIRECTORY "${stub_dir}")
-                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n")
-                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n")
+                # include header twice to check for include-guards
+                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n#include <${include_path}>\n")
+                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n#include <${include_path}>\n")
 
                 target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c" "${stub_dir}/checkcpp.cpp")
             endif()
