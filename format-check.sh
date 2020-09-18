@@ -10,7 +10,7 @@ if NOT type $CLANG_FORMAT 2> /dev/null ; then
 fi
 
 FAIL=0
-SOURCE_FILES=`find source include tests .cbmc-batch -type f \( -name '*.h' -o -name '*.c' -o -name '*.inl' \)`
+SOURCE_FILES=`find source include tests verification -type f \( -name '*.h' -o -name '*.c' -o -name '*.inl' \)`
 for i in $SOURCE_FILES
 do
     $CLANG_FORMAT -output-replacements-xml $i | grep -c "<replacement " > /dev/null
