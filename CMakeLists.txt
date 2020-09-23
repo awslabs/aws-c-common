@@ -90,7 +90,9 @@ else ()
             message(FATAL_ERROR "Core Foundation not found")
         endif ()
 
-        list(APPEND PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
+        list(APPEND PLATFORM_LIBS Threads::Threads)
+        # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
+        list(APPEND PLATFORM_LINK_FLAGS -framework CoreFoundation)
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
@@ -153,6 +155,7 @@ add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
+target_link_options(${PROJECT_NAME} PUBLIC ${PLATFORM_LINK_FLAGS})
 
 aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
 
