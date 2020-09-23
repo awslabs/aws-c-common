@@ -7,6 +7,8 @@ option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile,
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
+message(STATUS "CMake ${CMAKE_VERSION}")
+
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
 endif()
