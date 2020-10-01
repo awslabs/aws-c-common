@@ -9,6 +9,7 @@
 
 void aws_string_bytes_harness() {
     struct aws_string *str = ensure_string_is_allocated_nondet_length();
+    __CPROVER_assume(aws_string_is_valid(str));
     assert(aws_string_bytes(str) == str->bytes);
     assert(aws_string_is_valid(str));
 }

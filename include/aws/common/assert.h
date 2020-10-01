@@ -86,6 +86,8 @@ AWS_EXTERN_C_END
 #    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
 #    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
 #    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
+#    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #else
 #    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
@@ -95,17 +97,12 @@ AWS_EXTERN_C_END
 #    define AWS_POSTCONDITION1(cond) AWS_ASSERT(cond)
 #    define AWS_FATAL_POSTCONDITION2(cond, expl) AWS_FATAL_ASSERT(cond)
 #    define AWS_FATAL_POSTCONDITION1(cond) AWS_FATAL_ASSERT(cond)
+/**
+ * The C runtime does not give a way to check these properties,
+ * but we can at least check that the pointer is valid. */
+#    define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
+#    define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
-
-/* the C runtime does not give a way to check these properties,
- * but we can at least check that the pointer is valid.
- * these macros are intended to be used with CBMC proofs, but will not use CBMC
- * intrinsics until https://github.com/diffblue/cbmc/issues/5194 is fixed.*/
-#define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
-#define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
-
-#define __CPROVER_r_ok(base, len) (AWS_MEM_IS_READABLE(base, len))
-#define __CPROVER_w_ok(base, len) (AWS_MEM_IS_WRITEABLE(base, len))
 
 /* Logical consequence. */
 #define AWS_IMPLIES(a, b) (!(a) || (b))

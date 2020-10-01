@@ -11,6 +11,8 @@
 
 void aws_hash_c_string_harness() {
     const char *str = ensure_c_str_is_allocated(MAX_STRING_SIZE);
-    /* This function has no pre or post conditions */
+
+    __CPROVER_assume(aws_c_string_is_valid(str));
+
     uint64_t rval = aws_hash_c_string(str);
 }

@@ -55,11 +55,13 @@ void *bounded_calloc(size_t num, size_t size) {
     size_t required_bytes;
     __CPROVER_assume(aws_mul_size_checked(num, size, &required_bytes) == AWS_OP_SUCCESS);
     __CPROVER_assume(required_bytes <= MAX_MALLOC);
+    __CPROVER_assume(size != 0);
     return calloc(num, size);
 }
 
 void *bounded_malloc(size_t size) {
     __CPROVER_assume(size <= MAX_MALLOC);
+    __CPROVER_assume(size != 0);
     return malloc(size);
 }
 
@@ -95,7 +97,7 @@ void *can_fail_realloc(void *ptr, size_t newsize) {
         }
         return nondet_voidp();
     }
-    return nondet_bool() ? NULL : realloc(ptr, newsize);
+    return realloc(ptr, newsize);
 }
 
 /************************************************************************************************************
@@ -218,6 +220,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
     }
 
     void *newptr = can_fail_realloc(*ptr, newsize);
+
     if (!newptr) {
         return aws_raise_error(AWS_ERROR_OOM);
     }

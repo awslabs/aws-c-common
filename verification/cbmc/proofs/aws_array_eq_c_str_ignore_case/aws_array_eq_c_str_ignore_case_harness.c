@@ -12,12 +12,12 @@ void aws_array_eq_c_str_ignore_case_harness() {
     size_t array_len;
     __CPROVER_assume(array_len <= MAX_BUFFER_SIZE);
     void *array = can_fail_malloc(array_len);
-    const char *c_str = nondet_bool() ? NULL : ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
+    const char *c_str = ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* save current state of the parameters */
     struct store_byte_from_buffer old_byte_from_array;
     save_byte_from_array((uint8_t *)array, array_len, &old_byte_from_array);
-    size_t str_len = (c_str) ? strlen(c_str) : 0;
+    size_t str_len = (c_str != NULL) ? strlen(c_str) : 0;
     struct store_byte_from_buffer old_byte_from_str;
     save_byte_from_array((uint8_t *)c_str, str_len, &old_byte_from_str);
 

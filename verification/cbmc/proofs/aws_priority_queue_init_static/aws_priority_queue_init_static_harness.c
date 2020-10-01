@@ -18,6 +18,7 @@ void aws_priority_queue_init_static_harness() {
     size_t item_size;
     size_t initial_item_allocation;
     size_t len;
+    uint8_t *raw_array;
 
     /* assumptions */
     __CPROVER_assume(initial_item_allocation > 0 && initial_item_allocation <= MAX_INITIAL_ITEM_ALLOCATION);
@@ -25,7 +26,7 @@ void aws_priority_queue_init_static_harness() {
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
-    uint8_t *raw_array = bounded_malloc(len);
+    ASSUME_VALID_MEMORY_COUNT(raw_array, len);
     aws_priority_queue_init_static(&queue, raw_array, initial_item_allocation, item_size, nondet_compare);
 
     /* assertions */

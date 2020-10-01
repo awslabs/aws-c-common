@@ -11,7 +11,11 @@
 void aws_string_new_from_c_str_harness() {
     /* parameters */
     const char *c_str = ensure_c_str_is_allocated(MAX_STRING_LEN);
-    struct aws_allocator *allocator = can_fail_allocator();
+    struct aws_allocator *allocator;
+
+    /* assumptions */
+    __CPROVER_assume(c_str != NULL);
+    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_c_str(allocator, c_str);

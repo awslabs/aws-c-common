@@ -19,8 +19,15 @@
 
 #include <stdlib.h>
 
-#define ASSUME_VALID_MEMORY(ptr) ptr = bounded_malloc(sizeof(*(ptr)))
-#define ASSUME_VALID_MEMORY_COUNT(ptr, count) ptr = bounded_malloc(sizeof(*(ptr)) * (count))
+/* Assume valid memory for ptr, if count > 0 and count < MAX_MALLOC_SIZE. */
+#define ASSUME_VALID_MEMORY_COUNT(ptr, count)                                                                          \
+    do {                                                                                                               \
+        ptr = bounded_malloc(sizeof(*(ptr)) * (count));                                                                \
+        __CPROVER_assume(ptr != NULL);                                                                                 \
+    } while (0)
+
+#define ASSUME_VALID_MEMORY(ptr) ASSUME_VALID_MEMORY_COUNT(ptr, sizeof(*(ptr)))
+
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
 #define ASSUME_CAN_FAIL_ALLOCATOR(allocator) allocator = can_fail_allocator()
 
@@ -127,7 +134,7 @@ struct aws_string *ensure_string_is_allocated_nondet_length();
 /**
  * Ensures a valid string is allocated, with as much nondet as possible, but len < max
  */
-struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size);
+struct aws_string *nondet_allocate_string_bounded_length(size_t max_size);
 
 /**
  * Ensures a valid string is allocated, with as much nondet as possible, but fixed defined len
