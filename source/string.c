@@ -24,7 +24,9 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     /* Fields are declared const, so we need to copy them in like this */
     *(struct aws_allocator **)(&str->allocator) = allocator;
     *(size_t *)(&str->len) = len;
-    memcpy((void *)str->bytes, bytes, len);
+    if (len > 0) {
+        memcpy((void *)str->bytes, bytes, len);
+    }
     *(uint8_t *)&str->bytes[len] = '\0';
     AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
 }
