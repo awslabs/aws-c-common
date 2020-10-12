@@ -8,7 +8,6 @@ MAX_TABLE_SIZE ?= 4
 DEFINES += -DMAX_TABLE_SIZE=$(MAX_TABLE_SIZE)
 
 UNWINDSET +=__CPROVER_file_local_hash_table_c_s_find_entry1.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
-UNWINDSET +=__CPROVER_file_local_hash_table_c_s_remove_entry.0:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
 CBMCFLAGS +=
 
@@ -24,14 +23,14 @@ PROOF_SOURCES += $(PROOF_STUB)/error.c
 PROOF_SOURCES += $(PROOF_STUB)/memset_override_no_op.c
 PROOF_SOURCES += $(PROOF_STUB)/s_emplace_item_override.c
 PROOF_SOURCES += $(PROOF_STUB)/s_expand_table_override.c
+PROOF_SOURCES += $(PROOF_STUB)/s_remove_entry_override.c
 
 PROJECT_SOURCES += $(SRCDIR)/source/common.c
 PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
 
 REMOVE_FUNCTION_BODY +=  __CPROVER_file_local_hash_table_c_s_emplace_item
 REMOVE_FUNCTION_BODY +=  __CPROVER_file_local_hash_table_c_s_expand_table
+REMOVE_FUNCTION_BODY += __CPROVER_file_local_hash_table_c_s_remove_entry
 REMOVE_FUNCTION_BODY +=  nondet-compare
-
-###########
 
 include ../Makefile.common

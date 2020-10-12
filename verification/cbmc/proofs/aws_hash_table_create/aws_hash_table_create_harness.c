@@ -8,7 +8,6 @@
 #include <proof_helpers/make_common_data_structures.h>
 #include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
-// Currently takes 4m40s
 
 void aws_hash_table_create_harness() {
     struct aws_hash_table map;

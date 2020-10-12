@@ -25,6 +25,7 @@ void aws_array_list_init_static_harness() {
 
     /* perform operation under verification */
     uint8_t *raw_array = bounded_malloc(len);
+    __CPROVER_assume(raw_array != NULL);
     struct store_byte_from_buffer old_byte;
     save_byte_from_array(raw_array, len, &old_byte);
 

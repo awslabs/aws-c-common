@@ -18,6 +18,6 @@ void aws_byte_buf_reserve_relative_harness() {
     if (rval == AWS_OP_SUCCESS) {
         assert(buf.capacity >= (old.len + requested_capacity));
         assert(aws_byte_buf_has_allocator(&buf));
+        assert(aws_byte_buf_is_valid(&buf));
     }
-    assert(aws_byte_buf_is_valid(&buf));
 }

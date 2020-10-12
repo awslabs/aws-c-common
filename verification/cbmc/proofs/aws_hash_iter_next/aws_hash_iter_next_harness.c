@@ -10,7 +10,6 @@
 #include <proof_helpers/utils.h>
 
 void aws_hash_iter_next_harness() {
-
     struct aws_hash_table map;
     ensure_allocated_hash_table(&map, MAX_TABLE_SIZE);
     __CPROVER_assume(aws_hash_table_is_valid(&map));

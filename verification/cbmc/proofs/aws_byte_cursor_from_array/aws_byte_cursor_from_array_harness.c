@@ -9,7 +9,10 @@
 void aws_byte_cursor_from_array_harness() {
     /* parameters */
     size_t length;
-    uint8_t *array = bounded_malloc(length);
+    uint8_t *array;
+
+    /* assumption */
+    ASSUME_VALID_MEMORY_COUNT(array, length);
 
     /* operation under verification */
     struct aws_byte_cursor cur = aws_byte_cursor_from_array(array, length);

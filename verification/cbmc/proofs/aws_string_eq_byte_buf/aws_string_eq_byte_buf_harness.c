@@ -10,9 +10,10 @@
 #include <stddef.h>
 
 void aws_string_eq_byte_buf_harness() {
-    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
+    struct aws_string *str = nondet_allocate_string_bounded_length(MAX_STRING_LEN);
     struct aws_byte_buf buf;
 
+    __CPROVER_assume(IMPLIES(str != NULL, aws_string_is_valid(str)));
     __CPROVER_assume(aws_byte_buf_is_bounded(&buf, MAX_STRING_LEN));
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));

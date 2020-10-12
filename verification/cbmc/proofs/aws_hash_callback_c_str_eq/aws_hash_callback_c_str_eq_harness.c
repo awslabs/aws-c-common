@@ -12,6 +12,10 @@
 void aws_hash_callback_c_str_eq_harness() {
     const char *str1 = ensure_c_str_is_allocated(MAX_STRING_LEN);
     const char *str2 = nondet_bool() ? str1 : ensure_c_str_is_allocated(MAX_STRING_LEN);
+
+    __CPROVER_assume(aws_c_string_is_valid(str1));
+    __CPROVER_assume(aws_c_string_is_valid(str2));
+
     bool rval = aws_hash_callback_c_str_eq(str1, str2);
     if (rval) {
         size_t len = strlen(str1);
