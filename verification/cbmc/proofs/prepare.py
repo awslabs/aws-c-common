@@ -1,1 +1,1 @@
-../aws-templates-for-cbmc-proofs/template-for-repository/proofs/prepare.py
+../templates/template-for-repository/proofs/prepare.py

@@ -11,11 +11,13 @@
 void aws_string_new_from_array_harness() {
     /* parameters */
     size_t alloc_size;
-    uint8_t *array = bounded_malloc(alloc_size);
-    struct aws_allocator *allocator = can_fail_allocator();
+    uint8_t *array;
+    struct aws_allocator *allocator;
     size_t reported_size;
 
     /* precondition */
+    ASSUME_VALID_MEMORY_COUNT(array, alloc_size);
+    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
     __CPROVER_assume(reported_size <= alloc_size);
 
     /* operation under verification */

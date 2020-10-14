@@ -11,6 +11,7 @@
 void aws_string_new_from_string_harness() {
     /* parameters */
     struct aws_string *source = ensure_string_is_allocated_nondet_length();
+    __CPROVER_assume(aws_string_is_valid(source));
     struct aws_allocator *allocator = (source->allocator) ? source->allocator : can_fail_allocator();
 
     /* operation under verification */

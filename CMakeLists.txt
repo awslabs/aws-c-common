@@ -7,6 +7,8 @@ option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile,
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
+message(STATUS "CMake ${CMAKE_VERSION}")
+
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
 endif()
@@ -174,8 +176,8 @@ if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
 endif()
 
-# Our ABI is not yet stable
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

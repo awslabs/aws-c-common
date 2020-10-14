@@ -10,9 +10,10 @@ void aws_byte_buf_write_harness() {
     /* parameters */
     struct aws_byte_buf buf;
     size_t len;
-    uint8_t *array = bounded_malloc(len);
+    uint8_t *array;
 
     /* assumptions */
+    ASSUME_VALID_MEMORY_COUNT(array, len);
     ensure_byte_buf_has_allocated_buffer_member(&buf);
     __CPROVER_assume(aws_byte_buf_is_valid(&buf));
 

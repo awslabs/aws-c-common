@@ -752,7 +752,6 @@ int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity)
     }
 
     if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
-        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_ERR;
     }
 

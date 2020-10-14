@@ -96,18 +96,16 @@ void ensure_array_list_has_allocated_data_member(struct aws_array_list *const li
 }
 
 void ensure_linked_list_is_allocated(struct aws_linked_list *const list, size_t max_length) {
-    size_t length;
-    __CPROVER_assume(length <= max_length);
-
     list->head.prev = NULL;
     list->tail.next = NULL;
 
     struct aws_linked_list_node *curr = &list->head;
 
-    for (size_t i = 0; i < length; i++) {
-        /* This malloc should never fail as it wouldn't be valid to
-         * have NULL nodes in the middle of the linked list. */
+    for (size_t i = 0; i < max_length; i++) {
         struct aws_linked_list_node *node = malloc(sizeof(struct aws_linked_list_node));
+        if (!node)
+            break;
+
         curr->next = node;
         node->prev = curr;
         curr = node;
@@ -146,8 +144,12 @@ void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_en
     size_t required_bytes;
     __CPROVER_assume(!hash_table_state_required_bytes(num_entries, &required_bytes));
     struct hash_table_state *impl = bounded_malloc(required_bytes);
-    impl->size = num_entries;
-    map->p_impl = impl;
+    if (impl) {
+        impl->size = num_entries;
+        map->p_impl = impl;
+    } else {
+        map->p_impl = NULL;
+    }
 }
 
 void ensure_hash_table_has_valid_destroy_functions(struct aws_hash_table *map) {
@@ -177,10 +179,10 @@ void hash_proof_destroy_noop(void *p) {}
 
 struct aws_string *ensure_string_is_allocated_nondet_length() {
     /* Considers any size up to the maximum possible size for the array [bytes] in aws_string */
-    return ensure_string_is_allocated_bounded_length(SIZE_MAX - 1 - sizeof(struct aws_string));
+    return nondet_allocate_string_bounded_length(SIZE_MAX - 1 - sizeof(struct aws_string));
 }
 
-struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size) {
+struct aws_string *nondet_allocate_string_bounded_length(size_t max_size) {
     size_t len;
     __CPROVER_assume(len < max_size);
     return ensure_string_is_allocated(len);
@@ -188,11 +190,16 @@ struct aws_string *ensure_string_is_allocated_bounded_length(size_t max_size) {
 
 struct aws_string *ensure_string_is_allocated(size_t len) {
     struct aws_string *str = bounded_malloc(sizeof(struct aws_string) + len + 1);
+    if (str == NULL) {
+        return NULL;
+    }
 
     /* Fields are declared const, so we need to copy them in like this */
-    *(struct aws_allocator **)(&str->allocator) = nondet_bool() ? can_fail_allocator() : NULL;
-    *(size_t *)(&str->len) = len;
-    *(uint8_t *)&str->bytes[len] = '\0';
+    if (str != NULL) {
+        *(struct aws_allocator **)(&str->allocator) = nondet_bool() ? can_fail_allocator() : NULL;
+        *(size_t *)(&str->len) = len;
+        *(uint8_t *)&str->bytes[len] = '\0';
+    }
     return str;
 }
 
@@ -203,6 +210,6 @@ const char *ensure_c_str_is_allocated(size_t max_size) {
     /* Ensure that its a valid c string. Since all bytes are nondeterminstic, the actual
      * string length is 0..str_cap
      */
-    __CPROVER_assume(str[cap - 1] == 0);
+    __CPROVER_assume(IMPLIES(str != NULL, str[cap - 1] == '\0'));
     return str;
 }

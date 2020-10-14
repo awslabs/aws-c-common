@@ -9,9 +9,10 @@
 #include <proof_helpers/utils.h>
 
 void aws_string_eq_byte_cursor_harness() {
-    struct aws_string *str = nondet_bool() ? ensure_string_is_allocated_bounded_length(MAX_STRING_LEN) : NULL;
+    struct aws_string *str = nondet_allocate_string_bounded_length(MAX_STRING_LEN);
     struct aws_byte_cursor cursor;
 
+    __CPROVER_assume(IMPLIES(str != NULL, aws_string_is_valid(str)));
     ensure_byte_cursor_has_allocated_buffer_member(&cursor);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cursor));
 

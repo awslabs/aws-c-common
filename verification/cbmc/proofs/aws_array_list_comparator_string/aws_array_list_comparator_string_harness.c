@@ -10,8 +10,11 @@
 #include <stddef.h>
 
 void aws_array_list_comparator_string_harness() {
-    struct aws_string *str_a = ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
-    struct aws_string *str_b = nondet_bool() ? str_a : ensure_string_is_allocated_bounded_length(MAX_STRING_LEN);
+    struct aws_string *str_a = nondet_allocate_string_bounded_length(MAX_STRING_LEN);
+    struct aws_string *str_b = nondet_bool() ? str_a : nondet_allocate_string_bounded_length(MAX_STRING_LEN);
+    __CPROVER_assume(aws_string_is_valid(str_a));
+    __CPROVER_assume(aws_string_is_valid(str_b));
+
     bool nondet_parameter_a;
     bool nondet_parameter_b;
     if (aws_array_list_comparator_string(nondet_parameter_a ? &str_a : NULL, nondet_parameter_b ? &str_b : NULL) == 0) {
