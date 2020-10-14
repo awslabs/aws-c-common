@@ -20,7 +20,9 @@ void hash_iterator_string_string_generator(struct aws_hash_iter *new_iter, const
     (void)old_iter;
     if (new_iter->status == AWS_HASH_ITER_STATUS_READY_FOR_USE) {
         new_iter->element.key = ensure_string_is_allocated_nondet_length();
+        __CPROVER_assume(new_iter->element.key != NULL);
         new_iter->element.value = ensure_string_is_allocated_nondet_length();
+        __CPROVER_assume(new_iter->element.value != NULL);
     }
 }
 
@@ -32,8 +34,12 @@ void hash_find_string_string_generator(
     const struct aws_hash_table *map,
     const void *key,
     struct aws_hash_element *p_elem) {
-    p_elem->key = ensure_string_is_allocated_nondet_length();
-    p_elem->value = ensure_string_is_allocated_nondet_length();
+    if (p_elem) {
+        p_elem->key = ensure_string_is_allocated_nondet_length();
+        __CPROVER_assume(p_elem->key != NULL);
+        p_elem->value = ensure_string_is_allocated_nondet_length();
+        __CPROVER_assume(p_elem->value != NULL);
+    }
 }
 
 /**
