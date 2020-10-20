@@ -16,13 +16,13 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
 
-    if (nondet_bool()) {
-        return NULL;
-    }
-
     size_t malloc_size = sizeof(struct aws_string) + 1 + len;
 
     struct aws_string *str = bounded_malloc(malloc_size);
+
+    if (str == NULL) {
+        return NULL;
+    }
 
     __CPROVER_assume(str->allocator == allocator);
     __CPROVER_assume(str->len == len);
