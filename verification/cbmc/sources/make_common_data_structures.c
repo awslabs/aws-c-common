@@ -137,6 +137,9 @@ void ensure_priority_queue_has_allocated_members(struct aws_priority_queue *cons
 }
 
 void ensure_allocated_hash_table(struct aws_hash_table *map, size_t max_table_entries) {
+    if (map == NULL) {
+        return;
+    }
     size_t num_entries;
     __CPROVER_assume(num_entries <= max_table_entries);
     __CPROVER_assume(aws_is_power_of_two(num_entries));
