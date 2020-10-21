@@ -120,9 +120,11 @@ have pre-slotted log subjects & error codes for each library. The currently allo
 | [0x2800, 0x2C00) | aws-crt-python |
 | [0x2C00, 0x3000) | aws-crt-nodejs |
 | [0x3000, 0x3400) | aws-crt-dotnet |
-| [0x3400, 0x3800) | (reserved for future project) |
+| [0x3400, 0x3800) | aws-c-iot |
 | [0x3800, 0x3C00) | (reserved for future project) |
 | [0x3C00, 0x4000) | (reserved for future project) |
+| [0x4000, 0x4400) | (reserved for future project) |
+| [0x4400, 0x4800) | (reserved for future project) |
 
 Each library should begin its error and log subject values at the beginning of its range and follow in sequence (don't skip codes). Upon
 adding an AWS maintained library, a new enum range must be approved and added to the above table.
