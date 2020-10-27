@@ -58,19 +58,18 @@ bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
 }
 
 /**
- * The allocator for the hash_table
+ * Allocate a hash_table_state with no memory for the slots.
+ * Since CBMC runs with memory safety assertions on,
+ * CBMC will detect any attempt to use the slots.
+ * This ensures that no code will ever accidentally use the values
+ * in the slots, ensuring maximal nondeterminism.
  */
 void make_hash_table_with_no_backing_store(struct aws_hash_table *map, size_t max_table_entries) {
-    /* Allocate a hash_table_state with no memory for the slots.  Since CBMC runs with memory safety assertions on,
-     * CBMC will detect any attempt to use the slots.  This ensures that no code will ever accidentally use the values
-     * in the slots, ensuring maximal nondeterminism.
-     */
-    if (map == NULL) {
-        return;
+    if (map != NULL) {
+        map->p_impl = bounded_malloc(sizeof(struct hash_table_state));
+        __CPROVER_assume(map->p_impl != NULL);
+        __CPROVER_assume(map->p_impl->entry_count <= max_table_entries);
     }
-    map->p_impl = bounded_malloc(sizeof(struct hash_table_state));
-    __CPROVER_assume(map->impl);
-    __CPROVER_assume(map->p_impl->entry_count <= max_table_entries);
 }
 /**
  * Nondet clear.  Since the only externally visible property of this
