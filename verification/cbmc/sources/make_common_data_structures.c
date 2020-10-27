@@ -80,7 +80,9 @@ bool aws_byte_cursor_is_bounded(const struct aws_byte_cursor *const cursor, cons
 }
 
 void ensure_byte_cursor_has_allocated_buffer_member(struct aws_byte_cursor *const cursor) {
-    cursor->ptr = can_fail_malloc(cursor->len);
+    if (cursor != NULL) {
+        cursor->ptr = bounded_malloc(cursor->len);
+    }
 }
 
 bool aws_array_list_is_bounded(
