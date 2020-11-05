@@ -396,3 +396,13 @@ void aws_backtrace_log() {
     }
     free(symbols);
 }
+
+#if defined(__APPLE__)
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_OS_MAC;
+}
+#else
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_OS_UNIX;
+}
+#endif /* __APPLE__ */
