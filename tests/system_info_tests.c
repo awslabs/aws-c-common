@@ -98,12 +98,12 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 
     enum aws_platform_os build_os = aws_get_platform_build_os();
 
-#if defined(__APPLE__)
-    ASSERT_INT_EQUALS(build_os, AWS_OS_MAC);
+#if defined(AWS_OS_APPLE)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_MAC);
 #elif defined(_WIN32)
-    ASSERT_INT_EQUALS(build_os, AWS_OS_WINDOWS);
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WINDOWS);
 #else
-    ASSERT_INT_EQUALS(build_os, AWS_OS_UNIX);
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_UNIX);
 #endif
 
     return 0;

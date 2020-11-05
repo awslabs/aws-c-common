@@ -12,7 +12,7 @@
 #include <windows.h>
 
 enum aws_platform_os aws_get_platform_build_os(void) {
-    return AWS_OS_WINDOWS;
+    return AWS_PLATFORM_OS_WINDOWS;
 }
 
 size_t aws_system_info_processor_count(void) {

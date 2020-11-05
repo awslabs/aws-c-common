@@ -9,9 +9,9 @@
 #include <aws/common/common.h>
 
 enum aws_platform_os {
-    AWS_OS_WINDOWS,
-    AWS_OS_MAC,
-    AWS_OS_UNIX,
+    AWS_PLATFORM_OS_WINDOWS,
+    AWS_PLATFORM_OS_MAC,
+    AWS_PLATFORM_OS_UNIX,
 };
 
 AWS_EXTERN_C_BEGIN
