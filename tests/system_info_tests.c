@@ -91,3 +91,22 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 }
 
 AWS_TEST_CASE(test_stack_trace_decoding, s_test_stack_trace_decoding);
+
+static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    enum aws_platform_os build_os = aws_get_platform_build_os();
+
+#if defined(AWS_OS_APPLE)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_MAC);
+#elif defined(_WIN32)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WINDOWS);
+#else
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_UNIX);
+#endif
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_platform_build_os, s_test_platform_build_os_fn)

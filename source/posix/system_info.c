@@ -7,6 +7,7 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
+#include <aws/common/platform.h>
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #    define __BSD_VISIBLE 1
@@ -396,3 +397,13 @@ void aws_backtrace_log() {
     }
     free(symbols);
 }
+
+#if defined(AWS_OS_APPLE)
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_PLATFORM_OS_MAC;
+}
+#else
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_PLATFORM_OS_UNIX;
+}
+#endif /* AWS_OS_APPLE */

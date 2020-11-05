@@ -8,7 +8,17 @@
 
 #include <aws/common/common.h>
 
+enum aws_platform_os {
+    AWS_PLATFORM_OS_WINDOWS,
+    AWS_PLATFORM_OS_MAC,
+    AWS_PLATFORM_OS_UNIX,
+};
+
 AWS_EXTERN_C_BEGIN
+
+/* Returns the OS this was built under */
+AWS_COMMON_API
+enum aws_platform_os aws_get_platform_build_os(void);
 
 /* Returns the number of online processors available for usage. */
 AWS_COMMON_API
