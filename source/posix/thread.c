@@ -2,23 +2,51 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#define _GNU_SOURCE
+
+#if !defined(__MACH__)
+#    define _GNU_SOURCE
+#endif
 
 #include <aws/common/thread.h>
 
 #include <aws/common/clock.h>
 
+#include <dlfcn.h>
 #include <errno.h>
 #include <limits.h>
 #include <sched.h>
 #include <time.h>
 #include <unistd.h>
-#include <numaif.h>
+
+#if defined(__FreeBSD__) || defined(__NETBSD__)
+#    include <pthread_np.h>
+#endif
+
+#define MPOL_PREFERRED 1
+
+/*
+ * definition is here: https://linux.die.net/man/2/set_mempolicy
+ */
+static long (*set_mempolicy_ptr)(int, const unsigned long *, unsigned long);
+static aws_thread_once s_thread_once_flag = AWS_THREAD_ONCE_STATIC_INIT;
+static void *libnuma_handle = NULL;
+
+/* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
+ * try and load it if we can. */
+static void s_do_numa_loads(void *user_data) {
+    (void)user_data;
+    libnuma_handle = dlopen("libnuma.so", RTLD_LAZY);
+
+    if (libnuma_handle) {
+        set_mempolicy_ptr = (long (*)(int, const unsigned long *, unsigned long))dlsym(libnuma_handle, "set_mempolicy");
+        dlclose(libnuma_handle);
+    }
+}
 
 static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
     .stack_size = 0,
-    .cpu_id = 0,
+    .cpu_id = -1,
 };
 
 struct thread_atexit_callback {
@@ -47,7 +75,9 @@ static void *thread_fn(void *arg) {
         /* if a user set a cpu id in their thread options, we're going to make sure the numa policy honors that
          * and makes sure the numa node of the cpu we launched this thread on is where memory gets allocated. However,
          * we don't want to fail the application if this fails, so make the call, and ignore the result. */
-        set_mempolicy(MPOL_PREFERRED, NULL, 0);
+        if (set_mempolicy_ptr) {
+            set_mempolicy_ptr(MPOL_PREFERRED, NULL, 0);
+        }
     }
     wrapper.func(wrapper.arg);
 
@@ -110,6 +140,12 @@ int aws_thread_launch(
     void (*func)(void *arg),
     void *arg,
     const struct aws_thread_options *options) {
+#if !defined(__MACH__)
+    aws_thread_call_once(&s_thread_once_flag, s_do_numa_loads, NULL);
+#else
+    (void)s_thread_once_flag;
+    (void)s_do_numa_loads;
+#endif
 
     pthread_attr_t attributes;
     pthread_attr_t *attributes_ptr = NULL;
@@ -133,16 +169,21 @@ int aws_thread_launch(
             }
         }
 
-        if (options->cpu_id) {
+/* AFAIK you can't set thread affinity on apple platforms, and it doesn't really matter since all memory
+ * NUMA or not is setup in interleave mode. */
+#if !defined(__MACH__)
+        if (options->cpu_id >= 0) {
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
-            CPU_SET(options->cpu_id, &cpuset);
+            CPU_SET((uint32_t)options->cpu_id, &cpuset);
+
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
             if (attr_return) {
                 goto cleanup;
             }
         }
+#endif /* !defined(__APPLE__) */
     }
 
     struct thread_wrapper *wrapper =

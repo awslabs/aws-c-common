@@ -94,7 +94,7 @@ else ()
 
         list(APPEND PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-        list(APPEND PLATFORM_LIBS m numa Threads::Threads rt)
+        list(APPEND PLATFORM_LIBS m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")

@@ -34,9 +34,12 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     aws_thread_init(&thread, allocator);
 
     struct aws_thread_options thread_options = *aws_default_thread_options();
-    thread_options.cpu_id = 2;
+    /* there should be at least 1 cpu on any machine running this test. Just bind that to make sure that code
+     * path is exercised. */
+    thread_options.cpu_id = 0;
 
-    ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
+    ASSERT_SUCCESS(
+        aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
     ASSERT_INT_EQUALS(
         AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
