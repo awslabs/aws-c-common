@@ -10,5 +10,13 @@
         { "name": "aws-c-mqtt" },
         { "name": "aws-c-http" },
         { "name": "aws-c-auth" }
-    ]
+    ],
+    "targets": {
+        "windows": {
+            "+build_steps": [
+                "build",
+                ["dir", "/s", "/b"]
+            ]
+        }
+    }
 }
