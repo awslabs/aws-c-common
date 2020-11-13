@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_XML_PARSER
-#define AWS_COMMON_XML_PARSER
+#ifndef AWS_COMMON_XML_PARSER_H
+#define AWS_COMMON_XML_PARSER_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -105,4 +105,4 @@ int aws_xml_node_get_attribute(
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_XML_PARSER */
+#endif /* AWS_COMMON_XML_PARSER_H */
