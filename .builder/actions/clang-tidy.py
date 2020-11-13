@@ -9,7 +9,9 @@ import sys
 def run_clang_tidy(env):
     sh = env.shell
     toolchain = env.toolchain
-    clang_tidy = toolchain.find_llvm_tool('clang-tidy')[0]
+    clang_tidy = Builder.Util.where('clang-tidy')
+    if not clang_tidy:
+        clang_tidy = toolchain.find_llvm_tool('clang-tidy')[0]
     if not clang_tidy:
         print("No clang-tidy executable could be found")
         sys.exit(1)
