@@ -287,10 +287,11 @@ void aws_common_library_clean_up(void) {
         s_common_library_initialized = false;
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
-
+#if !defined(_WIN32) && !defined(WIN32)
         if (g_libnuma_handle) {
             dlclose(g_libnuma_handle);
         }
+#endif
     }
 }
 

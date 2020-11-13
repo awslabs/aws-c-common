@@ -86,6 +86,29 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
+/* windows is wierd, because apparently no one ever considered computers having more than 64 processors. Instead they
+   have processor groups per process. We need to find the mask in the correct group. */
+static void s_get_group_and_cpu_id(uint32_t desired_cpu, int *group, uint8_t *proc_num) {
+    unsigned group_count = GetActiveProcessorGroupCount();
+
+    unsigned total_processors_detected = 0;
+    uint8_t group_with_desired_processor = 0;
+    uint8_t group_mask_for_desired_processor = 0;
+
+    for (uint8_t i = 0; i < group_count; ++group_count) {
+        DWORD processor_count_in_group = GetActiveProcessorCount((WORD)i);
+        if (total_processors_detected + processor_count_in_group > desired_cpu) {
+            group_with_desired_processor = i;
+            group_mask_for_desired_processor = (uint8_t)(desired_cpu - total_processors_detected);
+            break;
+        }
+        total_processors_detected += processor_count_in_group;
+    }
+
+    *proc_num = group_mask_for_desired_processor;
+    *group = group_with_desired_processor;
+}
+
 int aws_thread_launch(
     struct aws_thread *thread,
     void (*func)(void *arg),
@@ -109,6 +132,28 @@ int aws_thread_launch(
 
     if (!thread->thread_handle) {
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
+    }
+
+    if (options->cpu_id >= 0) {
+        int group = 0;
+        uint8_t proc_num = 0;
+        s_get_group_and_cpu_id(options->cpu_id, &group, &proc_num);
+        GROUP_AFFINITY group_afinity;
+        AWS_ZERO_STRUCT(group_afinity);
+        group_afinity.Group = (WORD)group;
+        group_afinity.Mask = (KAFFINITY)((uint64_t)1 << proc_num);
+
+        BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
+        (void)set_group_val;
+
+        PROCESSOR_NUMBER processor_number;
+        AWS_ZERO_STRUCT(processor_number);
+        processor_number.Group = (WORD)group;
+        processor_number.Number = proc_num;
+
+        BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+        (void)set_processor_val;
+        /* TODO: figure out how to membind the allocator for this thread. It's not as simple as linux land. */
     }
 
     thread->detach_state = AWS_THREAD_JOINABLE;
