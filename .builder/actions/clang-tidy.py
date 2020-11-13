@@ -1,8 +1,8 @@
 
-from builder.actions.install import InstallPackages
-from builder.actions.git import DownloadDependencies
-from builder.actions.cmake import CMakeBuild
-from builder.actions.script import Script
+from Builder.actions.install import InstallPackages
+from Builder.actions.git import DownloadDependencies
+from Builder.actions.cmake import CMakeBuild
+from Builder.actions.script import Script
 import Builder
 import glob
 import os
