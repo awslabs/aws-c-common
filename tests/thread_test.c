@@ -28,6 +28,7 @@ static void s_thread_fn(void *arg) {
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    aws_common_library_init(allocator);
     struct thread_test_data test_data;
 
     struct aws_thread thread;
@@ -52,6 +53,7 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         "thread state should have returned JOIN_COMPLETED");
 
     aws_thread_clean_up(&thread);
+    aws_common_library_clean_up();
 
     return 0;
 }

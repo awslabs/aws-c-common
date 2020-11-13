@@ -7,9 +7,9 @@
 #    define _GNU_SOURCE
 #endif
 
-#include <aws/common/thread.h>
-
 #include <aws/common/clock.h>
+#include <aws/common/private/dlloads.h>
+#include <aws/common/thread.h>
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -21,26 +21,6 @@
 #if defined(__FreeBSD__) || defined(__NETBSD__)
 #    include <pthread_np.h>
 #endif
-
-#define MPOL_PREFERRED 1
-
-/*
- * definition is here: https://linux.die.net/man/2/set_mempolicy
- */
-static long (*set_mempolicy_ptr)(int, const unsigned long *, unsigned long);
-static aws_thread_once s_thread_once_flag = AWS_THREAD_ONCE_STATIC_INIT;
-static void *libnuma_handle = NULL;
-
-/* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
- * try and load it if we can. */
-static void s_do_numa_loads(void *user_data) {
-    (void)user_data;
-    libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
-
-    if (libnuma_handle) {
-        *(void **)(&set_mempolicy_ptr) = dlsym(libnuma_handle, "set_mempolicy");
-    }
-}
 
 static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
@@ -70,14 +50,12 @@ static void *thread_fn(void *arg) {
     struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
-    if (wrapper.membind) {
+    if (wrapper.membind && g_set_mempolicy_ptr) {
         /* if a user set a cpu id in their thread options, we're going to make sure the numa policy honors that
          * and makes sure the numa node of the cpu we launched this thread on is where memory gets allocated. However,
          * we don't want to fail the application if this fails, so make the call, and ignore the result. */
-        if (set_mempolicy_ptr) {
-            long resp = set_mempolicy_ptr(MPOL_PREFERRED, NULL, 0);
-            (void)resp;
-        }
+        long resp = g_set_mempolicy_ptr(AWS_MPOL_PREFERRED_ALIAS, NULL, 0);
+        (void)resp;
     }
     wrapper.func(wrapper.arg);
 
@@ -140,12 +118,6 @@ int aws_thread_launch(
     void (*func)(void *arg),
     void *arg,
     const struct aws_thread_options *options) {
-#if !defined(__MACH__)
-    aws_thread_call_once(&s_thread_once_flag, s_do_numa_loads, NULL);
-#else
-    (void)s_thread_once_flag;
-    (void)s_do_numa_loads;
-#endif
 
     pthread_attr_t attributes;
     pthread_attr_t *attributes_ptr = NULL;
