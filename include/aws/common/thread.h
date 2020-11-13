@@ -19,9 +19,10 @@ enum aws_thread_detach_state {
 
 struct aws_thread_options {
     size_t stack_size;
-    /* default is -1. If you set this to anything >= 0, and the platform supports it, the thread will be bound to
+    /* default is -1. If you set this to anything >= 0, and the platform supports it, the thread will be pinned to
      * that cpu. Also, we assume you're doing this for memory throughput purposes. If libnuma.so is available, upon the
-     * thread launching, the memory policy for that thread will be set to allocate on the numa node that core is on. */
+     * thread launching, the memory policy for that thread will be set to allocate on the numa node that cpu-core is on.
+     */
     int32_t cpu_id;
 };
 
