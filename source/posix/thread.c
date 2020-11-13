@@ -35,11 +35,10 @@ static void *libnuma_handle = NULL;
  * try and load it if we can. */
 static void s_do_numa_loads(void *user_data) {
     (void)user_data;
-    libnuma_handle = dlopen("libnuma.so", RTLD_LAZY);
+    libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
 
     if (libnuma_handle) {
-        set_mempolicy_ptr = (long (*)(int, const unsigned long *, unsigned long))dlsym(libnuma_handle, "set_mempolicy");
-        dlclose(libnuma_handle);
+        *(void **)(&set_mempolicy_ptr) = dlsym(libnuma_handle, "set_mempolicy");
     }
 }
 
@@ -76,7 +75,8 @@ static void *thread_fn(void *arg) {
          * and makes sure the numa node of the cpu we launched this thread on is where memory gets allocated. However,
          * we don't want to fail the application if this fails, so make the call, and ignore the result. */
         if (set_mempolicy_ptr) {
-            set_mempolicy_ptr(MPOL_PREFERRED, NULL, 0);
+            long resp = set_mempolicy_ptr(MPOL_PREFERRED, NULL, 0);
+            (void)resp;
         }
     }
     wrapper.func(wrapper.arg);
@@ -194,7 +194,7 @@ int aws_thread_launch(
         goto cleanup;
     }
 
-    if (options && options->cpu_id) {
+    if (options && options->cpu_id >= 0) {
         wrapper->membind = true;
     }
 
