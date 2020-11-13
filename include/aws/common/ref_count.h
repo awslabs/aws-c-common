@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_REFCOUNT_H
-#define AWS_COMMON_REFCOUNT_H
+#ifndef AWS_COMMON_REF_COUNT_H
+#define AWS_COMMON_REF_COUNT_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -96,4 +96,4 @@ AWS_COMMON_API void aws_global_thread_creator_decrement(void);
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_REFCOUNT_H */
+#endif /* AWS_COMMON_REF_COUNT_H */

@@ -81,4 +81,4 @@ size_t aws_cache_get_element_count(const struct aws_cache *cache);
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_FIFO_CACHE_H */
+#endif /* AWS_COMMON_CACHE_H */

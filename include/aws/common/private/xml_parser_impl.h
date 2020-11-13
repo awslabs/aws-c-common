@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_XML_PARSER_IMPL_H
-#define AWS_COMMON_XML_PARSER_IMPL_H
+#ifndef AWS_COMMON_PRIVATE_XML_PARSER_IMPL_H
+#define AWS_COMMON_PRIVATE_XML_PARSER_IMPL_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -28,4 +28,4 @@ struct aws_xml_parser {
     bool stop_parsing;
 };
 
-#endif /* AWS_COMMON_XML_PARSER_IMPL_H */
+#endif /* AWS_COMMON_PRIVATE_XML_PARSER_IMPL_H */

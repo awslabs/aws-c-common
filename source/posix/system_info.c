@@ -241,7 +241,7 @@ size_t aws_backtrace(void **frames, size_t num_frames) {
     return backtrace(frames, (int)aws_min_size(num_frames, INT_MAX));
 }
 
-char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
     return backtrace_symbols(frames, (int)aws_min_size(stack_depth, INT_MAX));
 }
 
@@ -371,7 +371,7 @@ size_t aws_backtrace(void **frames, size_t size) {
     return 0;
 }
 
-char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
     (void)frames;
     (void)stack_depth;
     return NULL;

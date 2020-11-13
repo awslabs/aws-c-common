@@ -196,7 +196,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     return (char **)symbols.buffer; /* buffer must be freed by the caller */
 }
 
-char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
     return aws_backtrace_symbols(frames, stack_depth);
 }
 
