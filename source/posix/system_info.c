@@ -365,14 +365,14 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     fprintf(fp, "No call stack information available\n");
 }
 
-size_t aws_backtrace(void **frames, size_t size) {
-    (void)frames;
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    (void)stack_frames;
     (void)size;
     return 0;
 }
 
 char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
-    (void)frames;
+    (void)stack_frames;
     (void)stack_depth;
     return NULL;
 }
@@ -385,12 +385,12 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
 #endif /* AWS_HAVE_EXECINFO */
 
 void aws_backtrace_log() {
-    void *stack[1024];
-    size_t num_frames = aws_backtrace(stack, 1024);
+    void *stack_frames[1024];
+    size_t num_frames = aws_backtrace(stack_frames, 1024);
     if (!num_frames) {
         return;
     }
-    char **symbols = aws_backtrace_addr2line(stack, num_frames);
+    char **symbols = aws_backtrace_addr2line(stack_frames, num_frames);
     for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
