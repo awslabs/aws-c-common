@@ -42,7 +42,7 @@ void aws_debug_break(void);
  * is not supported on this platform
  */
 AWS_COMMON_API
-size_t aws_backtrace(void **frames, size_t num_frames);
+size_t aws_backtrace(void **stack_frames, size_t num_frames);
 
 /*
  * Converts stack frame pointers to symbols, if symbols are available
