@@ -182,7 +182,11 @@ char **aws_backtrace_symbols(void *const *stack_frames, size_t num_frames) {
             /* no luck, record the address and last error */
             DWORD last_error = GetLastError();
             int len = snprintf(
-                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack_frames[i], last_error);
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
+                "at 0x%p: Failed to lookup symbol: error %u",
+                stack_frames[i],
+                last_error);
             if (len > 0) {
                 struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &sym_cur);
