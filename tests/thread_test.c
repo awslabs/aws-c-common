@@ -33,7 +33,10 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
 
-    ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, 0), "thread creation failed");
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    thread_options.cpu_id = 2;
+
+    ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
     ASSERT_INT_EQUALS(
         AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
     ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");

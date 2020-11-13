@@ -19,6 +19,7 @@ enum aws_thread_detach_state {
 
 struct aws_thread_options {
     size_t stack_size;
+    uint32_t cpu_id;
 };
 
 #ifdef _WIN32

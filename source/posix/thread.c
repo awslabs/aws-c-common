@@ -2,6 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#define _GNU_SOURCE
 
 #include <aws/common/thread.h>
 
@@ -9,11 +10,16 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <sched.h>
 #include <time.h>
+#include <unistd.h>
+#include <numaif.h>
 
 static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
-    .stack_size = 0};
+    .stack_size = 0,
+    .cpu_id = 0,
+};
 
 struct thread_atexit_callback {
     aws_thread_atexit_fn *callback;
@@ -28,6 +34,7 @@ struct thread_wrapper {
     struct thread_atexit_callback *atexit;
     void (*call_once)(void *);
     void *once_arg;
+    bool membind;
 };
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
@@ -36,6 +43,12 @@ static void *thread_fn(void *arg) {
     struct thread_wrapper wrapper = *(struct thread_wrapper *)arg;
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
+    if (wrapper.membind) {
+        /* if a user set a cpu id in their thread options, we're going to make sure the numa policy honors that
+         * and makes sure the numa node of the cpu we launched this thread on is where memory gets allocated. However,
+         * we don't want to fail the application if this fails, so make the call, and ignore the result. */
+        set_mempolicy(MPOL_PREFERRED, NULL, 0);
+    }
     wrapper.func(wrapper.arg);
 
     struct thread_atexit_callback *exit_callback_data = wrapper.atexit;
@@ -119,6 +132,17 @@ int aws_thread_launch(
                 goto cleanup;
             }
         }
+
+        if (options->cpu_id) {
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(options->cpu_id, &cpuset);
+            attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
+
+            if (attr_return) {
+                goto cleanup;
+            }
+        }
     }
 
     struct thread_wrapper *wrapper =
@@ -127,6 +151,10 @@ int aws_thread_launch(
     if (!wrapper) {
         allocation_failed = 1;
         goto cleanup;
+    }
+
+    if (options && options->cpu_id) {
+        wrapper->membind = true;
     }
 
     wrapper->allocator = thread->allocator;
