@@ -127,11 +127,11 @@ static bool s_init_dbghelp() {
     return s_SymInitialize != NULL;
 }
 
-size_t aws_backtrace(void **frames, size_t size) {
-    return (int)CaptureStackBackTrace(0, (ULONG)size, frames, NULL);
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    return (int)CaptureStackBackTrace(0, (ULONG)size, stack_frames, NULL);
 }
 
-char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
+char **aws_backtrace_symbols(void *const *stack_frames, size_t num_frames) {
     if (!s_init_dbghelp()) {
         return NULL;
     }
@@ -152,7 +152,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         /* record a pointer to where the symbol will be */
         *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
 
-        uintptr_t address = (uintptr_t)stack[i];
+        uintptr_t address = (uintptr_t)stack_frames[i];
         struct win_symbol_data sym_info;
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
@@ -182,7 +182,11 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             /* no luck, record the address and last error */
             DWORD last_error = GetLastError();
             int len = snprintf(
-                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
+                "at 0x%p: Failed to lookup symbol: error %u",
+                stack_frames[i],
+                last_error);
             if (len > 0) {
                 struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &sym_cur);
@@ -196,8 +200,8 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     return (char **)symbols.buffer; /* buffer must be freed by the caller */
 }
 
-char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
-    return aws_backtrace_symbols(frames, stack_depth);
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    return aws_backtrace_symbols(stack_frames, stack_depth);
 }
 
 void aws_backtrace_print(FILE *fp, void *call_site_data) {

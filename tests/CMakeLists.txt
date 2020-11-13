@@ -458,4 +458,4 @@ aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
 # Resources to use for testing.
 add_custom_command(TARGET ${PROJECT_NAME}-tests PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR})
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)

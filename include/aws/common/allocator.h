@@ -164,7 +164,7 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
  * allocator will otherwise be unaffected.
  */
 AWS_COMMON_API
-void aws_small_block_allocator_destroy(struct aws_allocator *allocator);
+void aws_small_block_allocator_destroy(struct aws_allocator *sba_allocator);
 
 AWS_EXTERN_C_END
 

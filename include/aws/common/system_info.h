@@ -42,7 +42,7 @@ void aws_debug_break(void);
  * is not supported on this platform
  */
 AWS_COMMON_API
-size_t aws_backtrace(void **frames, size_t num_frames);
+size_t aws_backtrace(void **stack_frames, size_t num_frames);
 
 /*
  * Converts stack frame pointers to symbols, if symbols are available
@@ -51,7 +51,7 @@ size_t aws_backtrace(void **frames, size_t num_frames);
  * Returns NULL if the platform does not support stack frame translation
  * or an error occurs
  */
-char **aws_backtrace_symbols(void *const *frames, size_t stack_depth);
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth);
 
 /*
  * Converts stack frame pointers to symbols, using all available system
@@ -63,7 +63,7 @@ char **aws_backtrace_symbols(void *const *frames, size_t stack_depth);
  * Returns NULL if the platform does not support stack frame translation
  * or an error occurs
  */
-char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth);
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth);
 
 /**
  * Print a backtrace from either the current stack, or (if provided) the current exception/signal

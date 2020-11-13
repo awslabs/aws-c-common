@@ -1112,8 +1112,9 @@ struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *co
 bool aws_byte_cursor_read(struct aws_byte_cursor *AWS_RESTRICT cur, void *AWS_RESTRICT dest, const size_t len) {
     AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
     AWS_PRECONDITION(AWS_MEM_IS_WRITABLE(dest, len));
-    if (len == 0)
+    if (len == 0) {
         return true;
+    }
 
     struct aws_byte_cursor slice = aws_byte_cursor_advance_nospec(cur, len);
 
