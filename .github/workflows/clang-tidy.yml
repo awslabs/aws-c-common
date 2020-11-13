@@ -15,4 +15,4 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder clang-tidy
+        ./builder clang-tidy --project=aws-c-common
