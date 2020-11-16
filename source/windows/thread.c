@@ -138,7 +138,7 @@ int aws_thread_launch(
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
-    if (options->cpu_id >= 0) {
+    if (options && options->cpu_id >= 0) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
             "id=%p: cpu affinity of cpu_id " PRIi32 " was specified, attempting to honor the value.",
