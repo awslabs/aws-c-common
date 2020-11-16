@@ -8,11 +8,13 @@
 #endif
 
 #include <aws/common/clock.h>
+#include <aws/common/logging.h>
 #include <aws/common/private/dlloads.h>
 #include <aws/common/thread.h>
 
 #include <dlfcn.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <sched.h>
 #include <time.h>
@@ -41,6 +43,7 @@ struct thread_wrapper {
     struct thread_atexit_callback *atexit;
     void (*call_once)(void *);
     void *once_arg;
+    struct aws_thread *thread;
     bool membind;
 };
 
@@ -51,11 +54,22 @@ static void *thread_fn(void *arg) {
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
     if (wrapper.membind && g_set_mempolicy_ptr) {
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: a cpu affinity was specified when launching this thread and set_mempolicy() is available on this "
+            "system. Setting the memory policy to MPOL_PREFERRED",
+            (void *)tl_wrapper->thread);
         /* if a user set a cpu id in their thread options, we're going to make sure the numa policy honors that
          * and makes sure the numa node of the cpu we launched this thread on is where memory gets allocated. However,
          * we don't want to fail the application if this fails, so make the call, and ignore the result. */
         long resp = g_set_mempolicy_ptr(AWS_MPOL_PREFERRED_ALIAS, NULL, 0);
-        (void)resp;
+        if (resp) {
+            AWS_LOGF_WARN(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: call to set_mempolicy() failed with errno %d",
+                (void *)wrapper.thread,
+                errno);
+        }
     }
     wrapper.func(wrapper.arg);
 
@@ -145,6 +159,12 @@ int aws_thread_launch(
  * NUMA or not is setup in interleave mode. */
 #if !defined(__MACH__)
         if (options->cpu_id >= 0) {
+            AWS_LOGF_INFO(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
+                (void *)thread,
+                options->cpu_id);
+
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET((uint32_t)options->cpu_id, &cpuset);
@@ -152,6 +172,11 @@ int aws_thread_launch(
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
             if (attr_return) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_COMMON_THREAD,
+                    "id=%p: pthread_attr_setaffinity_np() failed with %d.",
+                    (void *)thread,
+                    errno);
                 goto cleanup;
             }
         }
@@ -170,6 +195,7 @@ int aws_thread_launch(
         wrapper->membind = true;
     }
 
+    wrapper->thread = thread;
     wrapper->allocator = thread->allocator;
     wrapper->func = func;
     wrapper->arg = arg;

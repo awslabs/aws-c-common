@@ -5,8 +5,11 @@
 #include <aws/common/thread.h>
 
 #include <aws/common/clock.h>
+#include <aws/common/logging.h>
 
 #include <Windows.h>
+
+#include <inttypes.h>
 
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
@@ -86,15 +89,16 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
-/* windows is wierd, because apparently no one ever considered computers having more than 64 processors. Instead they
+/* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
    have processor groups per process. We need to find the mask in the correct group. */
-static void s_get_group_and_cpu_id(uint32_t desired_cpu, int *group, uint8_t *proc_num) {
+static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
     unsigned group_count = GetActiveProcessorGroupCount();
 
     unsigned total_processors_detected = 0;
     uint8_t group_with_desired_processor = 0;
     uint8_t group_mask_for_desired_processor = 0;
 
+    /* for each group, keep counting til we find the group and the processor mask */
     for (uint8_t i = 0; i < group_count; ++group_count) {
         DWORD processor_count_in_group = GetActiveProcessorCount((WORD)i);
         if (total_processors_detected + processor_count_in_group > desired_cpu) {
@@ -135,25 +139,59 @@ int aws_thread_launch(
     }
 
     if (options->cpu_id >= 0) {
-        int group = 0;
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: cpu affinity of cpu_id " PRIi32 " was specified, attempting to honor the value.",
+            (void *)thread,
+            options->cpu_id);
+
+        uint16_t group = 0;
         uint8_t proc_num = 0;
         s_get_group_and_cpu_id(options->cpu_id, &group, &proc_num);
         GROUP_AFFINITY group_afinity;
         AWS_ZERO_STRUCT(group_afinity);
         group_afinity.Group = (WORD)group;
         group_afinity.Mask = (KAFFINITY)((uint64_t)1 << proc_num);
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: computed mask " PRIx64 " on group " PRIu16 ".",
+            (void *)thread,
+            (uint64_t)group_afinity.Mask,
+            (uint16_t)group_afinity.Group);
 
         BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
-        (void)set_group_val;
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: SetThreadGroupAffinity() result " PRIi8 ".",
+            (void *)thread,
+            (int8_t)set_group_val);
 
-        PROCESSOR_NUMBER processor_number;
-        AWS_ZERO_STRUCT(processor_number);
-        processor_number.Group = (WORD)group;
-        processor_number.Number = proc_num;
+        if (set_group_val) {
+            PROCESSOR_NUMBER processor_number;
+            AWS_ZERO_STRUCT(processor_number);
+            processor_number.Group = (WORD)group;
+            processor_number.Number = proc_num;
 
-        BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
-        (void)set_processor_val;
-        /* TODO: figure out how to membind the allocator for this thread. It's not as simple as linux land. */
+            BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: SetThreadIdealProcessorEx() result " PRIi8 ".",
+                (void *)thread,
+                (int8_t)set_processor_val);
+            if (!set_processor_val) {
+                AWS_LOGF_WARN(
+                    AWS_LS_COMMON_THREAD,
+                    "id=%p: SetThreadIdealProcessorEx() failed with " PRIx32 ".",
+                    (void *)thread,
+                    (uint32_t)GetLastError());
+            }
+        } else {
+            AWS_LOGF_WARN(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: SetThreadGroupAffinity() failed with " PRIx32 ".",
+                (void *)thread,
+                (uint32_t)GetLastError());
+        }
     }
 
     thread->detach_state = AWS_THREAD_JOINABLE;
