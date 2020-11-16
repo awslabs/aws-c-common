@@ -6,12 +6,15 @@
 #include <aws/common/common.h>
 #include <aws/common/logging.h>
 #include <aws/common/math.h>
+#include <aws/common/private/dlloads.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
 
 #ifdef _WIN32
 #    include <Windows.h>
+#else
+#    include <dlfcn.h>
 #endif
 
 #ifdef __MACH__
@@ -23,6 +26,9 @@
 #    pragma warning(push)
 #    pragma warning(disable : 4100)
 #endif
+
+long (*g_set_mempolicy_ptr)(int, const unsigned long *, unsigned long) = NULL;
+void *g_libnuma_handle = NULL;
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
 #if defined(_WIN32)
@@ -237,6 +243,7 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
         AWS_LS_COMMON_TASK_SCHEDULER,
         "task-scheduler",
         "Subject for task scheduler or task specific logging."),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_THREAD, "thread", "Subject for logging thread related functions."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_MEMTRACE, "memtrace", "Output from the aws_mem_trace_dump function"),
 };
@@ -255,6 +262,24 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         s_common_library_initialized = true;
         aws_register_error_info(&s_list);
         aws_register_log_subject_info_list(&s_common_log_subject_list);
+
+/* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
+ * try and load it if we can. */
+#if !defined(_WIN32) && !defined(WIN32)
+        g_libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
+
+        if (g_libnuma_handle) {
+            AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so loaded");
+            *(void **)(&g_set_mempolicy_ptr) = dlsym(g_libnuma_handle, "set_mempolicy");
+            if (g_set_mempolicy_ptr) {
+                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: set_mempolicy() loaded");
+            } else {
+                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: set_mempolicy() failed to load");
+            }
+        } else {
+            AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so failed to load");
+        }
+#endif
     }
 }
 
@@ -263,6 +288,11 @@ void aws_common_library_clean_up(void) {
         s_common_library_initialized = false;
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
+#if !defined(_WIN32) && !defined(WIN32)
+        if (g_libnuma_handle) {
+            dlclose(g_libnuma_handle);
+        }
+#endif
     }
 }
 
