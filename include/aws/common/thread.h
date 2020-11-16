@@ -20,8 +20,14 @@ enum aws_thread_detach_state {
 struct aws_thread_options {
     size_t stack_size;
     /* default is -1. If you set this to anything >= 0, and the platform supports it, the thread will be pinned to
-     * that cpu. Also, we assume you're doing this for memory throughput purposes. If libnuma.so is available, upon the
-     * thread launching, the memory policy for that thread will be set to allocate on the numa node that cpu-core is on.
+     * that cpu. Also, we assume you're doing this for memory throughput purposes. On unix systems,
+     * If libnuma.so is available, upon the thread launching, the memory policy for that thread will be set to
+     * allocate on the numa node that cpu-core is on.
+     *
+     * On windows, this will cause the thread affinity to be set, but currently we don't do anything to tell the OS
+     * how to allocate memory on a node.
+     *
+     * On Apple and Android platforms, this setting doesn't do anything at all.
      */
     int32_t cpu_id;
 };
