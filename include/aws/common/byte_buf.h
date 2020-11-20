@@ -345,8 +345,8 @@ AWS_COMMON_API
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
- * Writes 'count' copies of a character to 'to'. If to is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
- * returned. dest->len will contain the amount of data actually copied to dest.
+ * Writes 'count' copies of a character to 'to'. If 'to' is too small, AWS_ERROR_DEST_COPY_TOO_SMALL will be
+ * returned. to->len will be updated with the amount of data actually copied to 'to'.
  */
 AWS_COMMON_API
 int aws_byte_buf_append_n(struct aws_byte_buf *to, uint8_t value, size_t count);
