@@ -1105,3 +1105,51 @@ static int s_test_isspace(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(test_isspace, s_test_isspace)
+
+static int s_test_buffer_append_n_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf destination;
+    ASSERT_SUCCESS(aws_byte_buf_init(&destination, allocator, 10));
+    ASSERT_SUCCESS(aws_byte_buf_append_n(&destination, 'a', 5));
+    ASSERT_SUCCESS(aws_byte_buf_append_n(&destination, 'b', 4));
+    ASSERT_SUCCESS(aws_byte_buf_append_n(&destination, 'c', 1));
+
+    ASSERT_INT_EQUALS(destination.len, 10);
+
+    char expected[] = "aaaaabbbbc";
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected, strlen(expected), destination.buffer, destination.len);
+
+    aws_byte_buf_clean_up(&destination);
+
+    return 0;
+}
+AWS_TEST_CASE(test_buffer_append_n, s_test_buffer_append_n_fn)
+
+static int s_test_buffer_append_n_dest_too_small_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_buf destination;
+    ASSERT_SUCCESS(aws_byte_buf_init(&destination, allocator, 10));
+
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_n(&destination, 'a', 20));
+    ASSERT_INT_EQUALS(0, destination.len);
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_n(&destination, 'a', 12));
+    ASSERT_INT_EQUALS(0, destination.len);
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_n(&destination, 'a', 11));
+    ASSERT_INT_EQUALS(0, destination.len);
+    ASSERT_SUCCESS(aws_byte_buf_append_n(&destination, 'c', 9));
+    ASSERT_INT_EQUALS(9, destination.len);
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_n(&destination, 'a', 2));
+    ASSERT_INT_EQUALS(9, destination.len);
+    ASSERT_SUCCESS(aws_byte_buf_append_n(&destination, 'c', 1));
+    ASSERT_INT_EQUALS(10, destination.len);
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_n(&destination, 'a', 1));
+    ASSERT_INT_EQUALS(10, destination.len);
+
+    aws_byte_buf_clean_up(&destination);
+
+    return 0;
+}
+AWS_TEST_CASE(test_buffer_append_n_dest_too_small, s_test_buffer_append_n_dest_too_small_fn)
