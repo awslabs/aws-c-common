@@ -581,6 +581,23 @@ int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *f
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_append_n(struct aws_byte_buf *to, uint8_t value, size_t count) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(to));
+
+    if (to->capacity - to->len < count) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+        return aws_raise_error(AWS_ERROR_DEST_COPY_TOO_SMALL);
+    }
+
+    if (count > 0) {
+        memset(to->buffer + to->len, value, count);
+        to->len += count;
+    }
+
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(to));
+    return AWS_OP_SUCCESS;
+}
+
 int aws_byte_buf_append_with_lookup(
     struct aws_byte_buf *AWS_RESTRICT to,
     const struct aws_byte_cursor *AWS_RESTRICT from,
