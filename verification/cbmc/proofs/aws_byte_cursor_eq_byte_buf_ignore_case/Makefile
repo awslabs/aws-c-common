@@ -9,8 +9,9 @@ UNWINDSET += memcmp.0:$(shell echo $$(($(MAX_BUFFER_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_byte_cursor_eq_byte_buf_ignore_case_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_byte_cursor_eq_byte_buf_ignore_case
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

@@ -12,8 +12,9 @@ DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_callback_string_destroy_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_callback_string_destroy
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

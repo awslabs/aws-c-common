@@ -14,8 +14,9 @@ UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_priority_queue_s_swap_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_priority_queue_s_swap
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

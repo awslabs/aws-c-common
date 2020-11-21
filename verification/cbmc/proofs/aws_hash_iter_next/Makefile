@@ -13,8 +13,9 @@ UNWINDSET += __CPROVER_file_local_hash_table_c_s_get_next_element.0:$(shell echo
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_iter_next_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_iter_next
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

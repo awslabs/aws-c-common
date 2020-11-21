@@ -15,8 +15,9 @@ UNWINDSET += memcpy_using_uint64_impl.0:2
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_priority_queue_s_remove_node_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_priority_queue_s_remove_node
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

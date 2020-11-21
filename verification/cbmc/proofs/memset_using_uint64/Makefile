@@ -11,8 +11,9 @@ UNWINDSET += memset_using_uint64_impl.0:$(shell echo $$(( $$(( $(MAX) / 8 )) + 1
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = memset_using_uint64_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = memset_using_uint64
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c

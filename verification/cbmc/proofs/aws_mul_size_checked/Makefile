@@ -7,8 +7,9 @@
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_mul_size_checked_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_mul_size_checked
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

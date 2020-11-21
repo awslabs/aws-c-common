@@ -8,8 +8,9 @@ UNWINDSET +=
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_array_list_swap_contents_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_array_list_swap_contents
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c

@@ -8,8 +8,9 @@ UNWINDSET +=
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_byte_cursor_read_and_fill_buffer_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_byte_cursor_read_and_fill_buffer
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
