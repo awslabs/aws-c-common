@@ -32,7 +32,6 @@ function(aws_prepare_shared_lib_exports target)
                 DESTINATION ${RUNTIME_DIRECTORY}
                 COMPONENT Runtime)
         install(TARGETS ${target}
-                EXPORT ${target}-targets
                 LIBRARY
                 DESTINATION ${LIBRARY_DIRECTORY}
                 NAMELINK_ONLY
