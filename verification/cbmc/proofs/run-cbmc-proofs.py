@@ -28,7 +28,7 @@ The tool is roughly equivalent to doing this:
 
         litani init --project "my-cool-project";
 
-        find . -name cbmc-proof.txt | while read -r proof; do
+        find . -name cbmc-batch.yaml | while read -r proof; do
             pushd $(dirname ${proof});
 
             # The `make _report` rule adds a single proof to litani
