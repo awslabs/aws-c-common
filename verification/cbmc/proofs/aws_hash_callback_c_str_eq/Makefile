@@ -14,8 +14,9 @@ UNWINDSET +=strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_callback_c_str_eq_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_callback_c_str_eq
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

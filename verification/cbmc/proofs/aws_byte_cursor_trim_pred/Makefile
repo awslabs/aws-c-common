@@ -9,8 +9,9 @@ UNWINDSET += aws_byte_cursor_right_trim_pred.0:$(shell echo $$(($(MAX_BUFFER_SIZ
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_byte_cursor_trim_pred_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_byte_cursor_trim_pred
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

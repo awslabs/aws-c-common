@@ -12,8 +12,9 @@ UNWINDSET += memcpy_impl.0:$(shell echo $$(($(MAX_ITEM_SIZE) + 1)))
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_array_list_front_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_array_list_front
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c

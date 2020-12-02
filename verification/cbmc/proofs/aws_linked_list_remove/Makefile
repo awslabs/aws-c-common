@@ -7,8 +7,9 @@ include ../Makefile.aws_linked_list
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_linked_list_remove_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_linked_list_remove
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

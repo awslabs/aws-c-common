@@ -10,8 +10,9 @@ UNWINDSET +=  aws_hash_table_eq.3:$(shell echo $$((1 + $(MAX_TABLE_SIZE))))
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_table_eq_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_table_eq
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

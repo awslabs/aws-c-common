@@ -6,3 +6,7 @@ proofs/**/html
 
 # Emitted by CBMC Viewer
 TAGS-*
+
+# Written by litani on each proof run
+.litani_cache_dir
+.ninja_log

@@ -8,8 +8,9 @@ UNWINDSET += aws_byte_buf_append_with_lookup.0:$(shell echo $$(($(MAX_BUFFER_SIZ
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_byte_buf_append_with_lookup_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_byte_buf_append_with_lookup
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

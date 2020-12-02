@@ -14,8 +14,9 @@ UNWINDSET += memset_override_0_impl.0:$(shell echo $$((1 + $(TABLE_SIZE_IN_WORDS
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_table_clear_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_table_clear
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
