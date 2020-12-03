@@ -63,19 +63,29 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(test_memtrace_count, s_test_memtrace_count)
 
-static void *s_alloc_1(struct aws_allocator *allocator, size_t size) {
+#if defined(__GNUC__) || defined(__clang__)
+#    define AWS_PREVENT_OPTIMIZATION __asm__ __volatile__("" ::: "memory")
+#else
+#    define AWS_PREVENT_OPTIMIZATION
+#endif
+
+AWS_NO_INLINE void *s_alloc_1(struct aws_allocator *allocator, size_t size) {
+    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
-static void *s_alloc_2(struct aws_allocator *allocator, size_t size) {
+AWS_NO_INLINE void *s_alloc_2(struct aws_allocator *allocator, size_t size) {
+    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
-static void *s_alloc_3(struct aws_allocator *allocator, size_t size) {
+AWS_NO_INLINE void *s_alloc_3(struct aws_allocator *allocator, size_t size) {
+    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
-static void *s_alloc_4(struct aws_allocator *allocator, size_t size) {
+AWS_NO_INLINE void *s_alloc_4(struct aws_allocator *allocator, size_t size) {
+    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
@@ -132,11 +142,20 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
 #if defined(DEBUG_BUILD)
-    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_1"));
-    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_2"));
-    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_3"));
-    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, "s_alloc_4"));
-    ASSERT_TRUE(strstr((const char *)test_logger->log_buffer.buffer, __FUNCTION__));
+    /* fprintf(stderr, "%s\n", test_logger->log_buffer.buffer); */
+    char s_alloc_1_addr[32];
+    char s_alloc_2_addr[32];
+    char s_alloc_3_addr[32];
+    char s_alloc_4_addr[32];
+    snprintf(s_alloc_1_addr, AWS_ARRAY_SIZE(s_alloc_1_addr), "0x%lx", (uintptr_t)(void *)s_alloc_1);
+    snprintf(s_alloc_2_addr, AWS_ARRAY_SIZE(s_alloc_2_addr), "0x%lx", (uintptr_t)(void *)s_alloc_2);
+    snprintf(s_alloc_3_addr, AWS_ARRAY_SIZE(s_alloc_3_addr), "0x%lx", (uintptr_t)(void *)s_alloc_3);
+    snprintf(s_alloc_4_addr, AWS_ARRAY_SIZE(s_alloc_4_addr), "0x%lx", (uintptr_t)(void *)s_alloc_4);
+    const char *log_buffer = (const char *)test_logger->log_buffer.buffer;
+    ASSERT_TRUE(strstr(log_buffer, "s_alloc_1") || strstr(log_buffer, s_alloc_1_addr));
+    ASSERT_TRUE(strstr(log_buffer, "s_alloc_2") || strstr(log_buffer, s_alloc_2_addr));
+    ASSERT_TRUE(strstr(log_buffer, "s_alloc_3") || strstr(log_buffer, s_alloc_3_addr));
+    ASSERT_TRUE(strstr(log_buffer, "s_alloc_4") || strstr(log_buffer, s_alloc_4_addr));
 #endif
 
     /* reset log */
