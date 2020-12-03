@@ -147,10 +147,10 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     char s_alloc_2_addr[32];
     char s_alloc_3_addr[32];
     char s_alloc_4_addr[32];
-    snprintf(s_alloc_1_addr, AWS_ARRAY_SIZE(s_alloc_1_addr), "0x%lx", (uintptr_t)(void *)s_alloc_1);
-    snprintf(s_alloc_2_addr, AWS_ARRAY_SIZE(s_alloc_2_addr), "0x%lx", (uintptr_t)(void *)s_alloc_2);
-    snprintf(s_alloc_3_addr, AWS_ARRAY_SIZE(s_alloc_3_addr), "0x%lx", (uintptr_t)(void *)s_alloc_3);
-    snprintf(s_alloc_4_addr, AWS_ARRAY_SIZE(s_alloc_4_addr), "0x%lx", (uintptr_t)(void *)s_alloc_4);
+    snprintf(s_alloc_1_addr, AWS_ARRAY_SIZE(s_alloc_1_addr), "0x%lx", (uint64_t)(void *)s_alloc_1);
+    snprintf(s_alloc_2_addr, AWS_ARRAY_SIZE(s_alloc_2_addr), "0x%lx", (uint64_t)(void *)s_alloc_2);
+    snprintf(s_alloc_3_addr, AWS_ARRAY_SIZE(s_alloc_3_addr), "0x%lx", (uint64_t)(void *)s_alloc_3);
+    snprintf(s_alloc_4_addr, AWS_ARRAY_SIZE(s_alloc_4_addr), "0x%lx", (uint64_t)(void *)s_alloc_4);
     const char *log_buffer = (const char *)test_logger->log_buffer.buffer;
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_1") || strstr(log_buffer, s_alloc_1_addr));
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_2") || strstr(log_buffer, s_alloc_2_addr));
