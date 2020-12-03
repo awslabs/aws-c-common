@@ -53,6 +53,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    define AWS_LIKELY(x) x
 #    define AWS_UNLIKELY(x) x
 #    define AWS_FORCE_INLINE __forceinline
+#    define AWS_NO_INLINE __declspec(noinline)
 #    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * (length))
 #    define AWS_DECLSPEC_NORETURN __declspec(noreturn)
 #    define AWS_ATTRIBUTE_NORETURN
@@ -63,6 +64,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #        define AWS_FORCE_INLINE __attribute__((always_inline))
+#        define AWS_NO_INLINE __attribute__((noinline))
 #        define AWS_DECLSPEC_NORETURN
 #        define AWS_ATTRIBUTE_NORETURN __attribute__((noreturn))
 #        if defined(__cplusplus)
