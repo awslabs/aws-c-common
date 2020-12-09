@@ -22,6 +22,7 @@
 
 #if defined(__FreeBSD__) || defined(__NETBSD__)
 #    include <pthread_np.h>
+typedef cpuset_t cpu_set_t;
 #endif
 
 static struct aws_thread_options s_default_options = {
