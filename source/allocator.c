@@ -39,7 +39,9 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
 #if !defined(_WIN32)
     if (size > PAGE_SIZE) {
         void *result = NULL;
-        posix_memalign(&result, sizeof(void *) * 8, size);
+        if (posix_memalign(&result, sizeof(void *) * 8, size)) {
+            return NULL;
+        }
         return result;
     }
     return malloc(size);
