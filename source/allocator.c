@@ -61,7 +61,19 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     (void)oldsize;
     const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 1);
 #if !defined(_WIN32)
-    return realloc(ptr, newsize);
+    if (newsize == 0) {
+        free(ptr);
+        return NULL;
+    }
+
+    if (newsize <= oldsize) {
+        return ptr;
+    }
+
+    /* newsize is > oldsize, need more memory */
+    void *new_mem = s_default_malloc(allocator, newsize);
+    memcpy(new_mem, ptr, oldsize);
+    s_default_free(allocator, ptr);
 #else
     return _aligned_realloc(ptr, newsize, alignment);
 #endif
