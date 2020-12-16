@@ -38,12 +38,12 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
     /* larger allocations should be aligned so that AVX and friends can run
      * the aligned versions of memcpy and memset and friends on big buffers */
-    size_t alignment = sizeof(void*) * (size > PAGE_SIZE ? 8 : 1)
+    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 1);
 #if !defined(_WIN32)
     void *result = NULL;
-    return (posix_memalign(&result, sizeof(void *) * 8, size)) ? NULL : result;
+    return (posix_memalign(&result, alignment)) ? NULL : result;
 #else
-    return _aligned_malloc(size, sizeof(void *) * (size > PAGE_SIZE ? 8 : 1));
+    return _aligned_malloc(size, alignment));
 #endif
 }
 
@@ -59,10 +59,11 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
+    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 1);
 #if !defined(_WIN32)
     return realloc(ptr, newsize);
 #else
-    return _aligned_realloc(ptr, newsize, sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 1));
+    return _aligned_realloc(ptr, newsize, alignment);
 #endif
 }
 
