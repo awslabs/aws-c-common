@@ -41,7 +41,7 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 1);
 #if !defined(_WIN32)
     void *result = NULL;
-    return (posix_memalign(&result, alignment)) ? NULL : result;
+    return (posix_memalign(&result, alignment, size)) ? NULL : result;
 #else
     return _aligned_malloc(size, alignment));
 #endif
