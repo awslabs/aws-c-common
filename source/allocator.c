@@ -25,6 +25,10 @@
 #    pragma warning(disable : 4100)
 #endif
 
+#ifndef PAGE_SIZE
+#    define PAGE_SIZE (4 * 1024)
+#endif
+
 bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
     /* An allocator must define mem_acquire and mem_release.  All other fields are optional */
     return alloc && AWS_OBJECT_PTR_IS_READABLE(alloc) && alloc->mem_acquire && alloc->mem_release;
@@ -32,23 +36,41 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
+#if !defined(_WIN32)
+    if (size > PAGE_SIZE) {
+        void *result = NULL;
+        posix_memalign(&result, sizeof(void *) * 8, size);
+        return result;
+    }
     return malloc(size);
+#else
+    return _aligned_malloc(size, sizeof(void *) * (size > PAGE_SIZE ? 8 : 1));
+#endif
 }
 
 static void s_default_free(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
+#if !defined(_WIN32)
     free(ptr);
+#else
+    _aligned_free(ptr)
+#endif
 }
 
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
+#if !defined(_WIN32)
     return realloc(ptr, newsize);
+#else
+    return _aligned_realloc(ptr, newsize, sizeof(void *) * (size > PAGE_SIZE ? 8 : 1));
+#endif
 }
 
 static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    (void)allocator;
-    return calloc(num, size);
+    void *mem = s_default_malloc(allocator, num * size);
+    memset(mem, 0, num * size);
+    return mem;
 }
 
 static struct aws_allocator default_allocator = {
