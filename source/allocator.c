@@ -65,7 +65,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 #if !defined(_WIN32)
     return realloc(ptr, newsize);
 #else
-    return _aligned_realloc(ptr, newsize, sizeof(void *) * (size > PAGE_SIZE ? 8 : 1));
+    return _aligned_realloc(ptr, newsize, sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 1));
 #endif
 }
 
