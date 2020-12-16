@@ -59,7 +59,6 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 1);
 #if !defined(_WIN32)
     if (newsize == 0) {
         free(ptr);
@@ -75,6 +74,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     memcpy(new_mem, ptr, oldsize);
     s_default_free(allocator, ptr);
 #else
+    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 1);
     return _aligned_realloc(ptr, newsize, alignment);
 #endif
 }
