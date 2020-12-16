@@ -43,7 +43,7 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     void *result = NULL;
     return (posix_memalign(&result, alignment, size)) ? NULL : result;
 #else
-    return _aligned_malloc(size, alignment));
+    return _aligned_malloc(size, alignment);
 #endif
 }
 
