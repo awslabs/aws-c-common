@@ -36,15 +36,12 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
+    /* larger allocations should be aligned so that AVX and friends can run
+     * the aligned versions of memcpy and memset and friends on big buffers */
+    size_t alignment = sizeof(void*) * (size > PAGE_SIZE ? 8 : 1)
 #if !defined(_WIN32)
-    if (size > PAGE_SIZE) {
-        void *result = NULL;
-        if (posix_memalign(&result, sizeof(void *) * 8, size)) {
-            return NULL;
-        }
-        return result;
-    }
-    return malloc(size);
+    void *result = NULL;
+    return (posix_memalign(&result, sizeof(void *) * 8, size)) ? NULL : result;
 #else
     return _aligned_malloc(size, sizeof(void *) * (size > PAGE_SIZE ? 8 : 1));
 #endif
