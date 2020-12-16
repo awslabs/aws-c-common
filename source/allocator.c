@@ -55,7 +55,7 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 #if !defined(_WIN32)
     free(ptr);
 #else
-    _aligned_free(ptr)
+    _aligned_free(ptr);
 #endif
 }
 
