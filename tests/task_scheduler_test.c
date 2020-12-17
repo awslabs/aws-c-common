@@ -561,10 +561,10 @@ static int s_test_scheduler_task_delete_on_run(struct aws_allocator *allocator, 
     uint64_t task_time = 10;
 
     /* Check when a task is scheduled for the future */
-    struct aws_task *suicidal_task = aws_mem_calloc(allocator, 1, sizeof(struct aws_task));
-    aws_task_init(suicidal_task, s_delete_myself_fn, allocator, "self_destructive_task");
+    struct aws_task *self_deleting_task = aws_mem_calloc(allocator, 1, sizeof(struct aws_task));
+    aws_task_init(self_deleting_task, s_delete_myself_fn, allocator, "self_deleting_task");
 
-    aws_task_scheduler_schedule_future(&scheduler, suicidal_task, task_time);
+    aws_task_scheduler_schedule_future(&scheduler, self_deleting_task, task_time);
     ASSERT_TRUE(aws_task_scheduler_has_tasks(&scheduler, &task_time));
 
     aws_task_scheduler_run_all(&scheduler, task_time);
