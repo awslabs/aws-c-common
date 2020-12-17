@@ -547,6 +547,8 @@ static int s_test_scheduler_oom_during_init(struct aws_allocator *allocator, voi
 }
 
 static void s_delete_myself_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+    (void)status;
+
     struct aws_allocator *allocator = arg;
     aws_mem_release(allocator, task);
 }
