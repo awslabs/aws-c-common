@@ -99,7 +99,7 @@ static void s_thread_fn(void *arg) {
         uint64_t next_scheduled_task = 0;
         aws_task_scheduler_has_tasks(&scheduler->scheduler, &next_scheduled_task);
 
-        int64_t timeout = (int64_t)next_scheduled_task;
+        int64_t timeout = 0;
         if (next_scheduled_task == UINT64_MAX) {
             timeout = INT64_MAX;
         } else {
