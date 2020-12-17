@@ -223,7 +223,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         fprintf(fp, "%s\n", symbol);
     }
     fflush(fp);
-    free(symbols);
+    aws_mem_release(aws_default_allocator(), symbols);
 }
 
 void aws_backtrace_log() {
@@ -239,5 +239,5 @@ void aws_backtrace_log() {
         const char *symbol = symbols[line];
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
-    free(symbols);
+    aws_mem_release(aws_default_allocator(), symbols);
 }
