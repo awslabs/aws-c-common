@@ -40,8 +40,8 @@ void aws_task_run(struct aws_task *task, enum aws_task_status status) {
         task->type_tag,
         aws_task_status_to_c_str(status));
 
-    task->fn(task, task->arg, status);
     task->abi_extension.scheduled = false;
+    task->fn(task, task->arg, status);
 }
 
 static int s_compare_timestamps(const void *a, const void *b) {
