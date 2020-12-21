@@ -277,6 +277,15 @@ void aws_common_library_init(struct aws_allocator *allocator) {
 #if !defined(_WIN32) && !defined(WIN32)
         g_libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
 
+        /* turns out so versioning is really inconsistent these days */
+        if (!g_libnuma_handle) {
+            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_NOW);
+        }
+
+        if (!g_libnuma_handle) {
+            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_NOW);
+        }
+
         if (g_libnuma_handle) {
             AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so loaded");
             *(void **)(&g_set_mempolicy_ptr) = dlsym(g_libnuma_handle, "set_mempolicy");

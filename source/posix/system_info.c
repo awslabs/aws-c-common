@@ -49,7 +49,7 @@ size_t aws_get_cpu_group_count(void) {
 }
 
 size_t aws_get_cpu_count_for_group(size_t group_idx) {
-    if (g_numa_allocate_cpumask_ptr && g_numa_free_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_weight) {
+    if (g_numa_allocate_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_weight) {
         struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
 
         if (!bitmask) {
@@ -58,7 +58,10 @@ size_t aws_get_cpu_count_for_group(size_t group_idx) {
 
         g_numa_node_to_cpus_ptr((int)group_idx, bitmask);
         size_t weight = g_numa_bitmask_weight(bitmask);
-        g_numa_free_cpumask_ptr(bitmask);
+
+        if (g_numa_free_cpumask_ptr) {
+            g_numa_free_cpumask_ptr(bitmask);
+        }
         return weight;
     }
 
@@ -71,7 +74,7 @@ void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t c
 
     memset(cpu_ids_array, -1, cpu_ids_array_length);
 
-    if (g_numa_allocate_cpumask_ptr && g_numa_free_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_isbitset) {
+    if (g_numa_allocate_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_isbitset) {
         struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
 
         if (!bitmask) {
@@ -88,7 +91,9 @@ void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t c
             }
         }
 
-        g_numa_free_cpumask_ptr(bitmask);
+        if (g_numa_free_cpumask_ptr) {
+            g_numa_free_cpumask_ptr(bitmask);
+        }
     }
 
 fallback:
