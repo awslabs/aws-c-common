@@ -42,13 +42,13 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
      *
      * 64 byte alignment for > page allocations on 64 bit systems
      * 32 byte alignment for > page allocations on 32 bit systems
-     * 8 byte alignment for <= page allocations on 64 bit systems
-     * 4 byte alignment for <= page allocations on 32 bit systems
+     * 16 byte alignment for <= page allocations on 64 bit systems
+     * 8 byte alignment for <= page allocations on 32 bit systems
      *
      * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
      * this size or greater that are not data buffers
      */
-    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 1);
+    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
 #if !defined(_WIN32)
     void *result = NULL;
     return (posix_memalign(&result, alignment, size)) ? NULL : result;
@@ -85,7 +85,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     s_default_free(allocator, ptr);
     return new_mem;
 #else
-    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 1);
+    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
     return _aligned_realloc(ptr, newsize, alignment);
 #endif
 }
