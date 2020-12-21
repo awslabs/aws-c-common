@@ -53,6 +53,7 @@ size_t aws_get_cpu_count_for_group(size_t group_idx) {
         struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
 
         if (!bitmask) {
+            AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "static: failed to allocate bitmask");
             goto fallback;
         }
 
@@ -78,6 +79,7 @@ void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t c
         struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
 
         if (!bitmask) {
+            AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "static: failed to allocate bitmask");
             goto fallback;
         }
 
