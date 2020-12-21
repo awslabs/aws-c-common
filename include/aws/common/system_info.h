@@ -24,6 +24,15 @@ enum aws_platform_os aws_get_platform_build_os(void);
 AWS_COMMON_API
 size_t aws_system_info_processor_count(void);
 
+AWS_COMMON_API
+size_t aws_get_cpu_group_count(void);
+
+AWS_COMMON_API
+size_t aws_get_cpu_count_for_group(size_t group_idx);
+
+AWS_COMMON_API
+void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length);
+
 /* Returns true if a debugger is currently attached to the process. */
 AWS_COMMON_API
 bool aws_is_debugger_present(void);

@@ -8,6 +8,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
 #include <aws/common/platform.h>
+#include <aws/common/private/dlloads.h>
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #    define __BSD_VISIBLE 1
@@ -38,6 +39,63 @@ size_t aws_system_info_processor_count(void) {
 
 #include <ctype.h>
 #include <fcntl.h>
+
+size_t aws_get_cpu_group_count(void) {
+    if (g_numa_num_configured_nodes_ptr) {
+        return (size_t)g_numa_num_configured_nodes_ptr();
+    }
+
+    return 1u;
+}
+
+size_t aws_get_cpu_count_for_group(size_t group_idx) {
+    if (g_numa_allocate_cpumask_ptr && g_numa_free_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_weight) {
+        struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
+
+        if (!bitmask) {
+            goto fallback;
+        }
+
+        g_numa_node_to_cpus_ptr((int)group_idx, bitmask);
+        size_t weight = g_numa_bitmask_weight(bitmask);
+        g_numa_free_cpumask_ptr(bitmask);
+        return weight;
+    }
+
+fallback:
+    return aws_system_info_processor_count();
+}
+
+void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length) {
+    AWS_PRECONDITION(cpu_ids_array);
+
+    memset(cpu_ids_array, -1, cpu_ids_array_length);
+
+    if (g_numa_allocate_cpumask_ptr && g_numa_free_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_isbitset) {
+        struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
+
+        if (!bitmask) {
+            goto fallback;
+        }
+
+        g_numa_node_to_cpus_ptr((int)group_idx, bitmask);
+        size_t cpu_count = aws_system_info_processor_count();
+
+        size_t cpu_array_index = 0;
+        for (size_t i = 0; i < cpu_count && cpu_array_index < cpu_ids_array_length; ++i) {
+            if (g_numa_bitmask_isbitset(bitmask, (unsigned int)i)) {
+                cpu_ids_array[cpu_array_index++] = i;
+            }
+        }
+
+        g_numa_free_cpumask_ptr(bitmask);
+    }
+
+fallback:
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i] = i;
+    }
+}
 
 bool aws_is_debugger_present(void) {
     /* Open the status file */
