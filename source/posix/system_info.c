@@ -49,24 +49,18 @@ size_t aws_get_cpu_group_count(void) {
 }
 
 size_t aws_get_cpu_count_for_group(size_t group_idx) {
-    if (g_numa_allocate_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_weight) {
-        struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
+    if (g_numa_node_of_cpu_ptr) {
+        size_t total_cpus = aws_system_info_processor_count();
 
-        if (!bitmask) {
-            AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "static: failed to allocate bitmask");
-            goto fallback;
+        size_t cpu_count = 0;
+        for (size_t i = 0; i < total_cpus; ++i) {
+            if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
+                cpu_count++;
+            }
         }
-
-        g_numa_node_to_cpus_ptr((int)group_idx, bitmask);
-        size_t weight = g_numa_bitmask_weight(bitmask);
-
-        if (g_numa_free_cpumask_ptr) {
-            g_numa_free_cpumask_ptr(bitmask);
-        }
-        return weight;
+        return cpu_count;
     }
 
-fallback:
     return aws_system_info_processor_count();
 }
 
@@ -75,30 +69,19 @@ void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t c
 
     memset(cpu_ids_array, -1, cpu_ids_array_length);
 
-    if (g_numa_allocate_cpumask_ptr && g_numa_node_to_cpus_ptr && g_numa_bitmask_isbitset) {
-        struct bitmask *bitmask = g_numa_allocate_cpumask_ptr();
+    if (g_numa_node_of_cpu_ptr) {
+        size_t total_cpus = aws_system_info_processor_count();
 
-        if (!bitmask) {
-            AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "static: failed to allocate bitmask");
-            goto fallback;
-        }
-
-        g_numa_node_to_cpus_ptr((int)group_idx, bitmask);
-        size_t cpu_count = aws_system_info_processor_count();
-
-        size_t cpu_array_index = 0;
-        for (size_t i = 0; i < cpu_count && cpu_array_index < cpu_ids_array_length; ++i) {
-            if (g_numa_bitmask_isbitset(bitmask, (unsigned int)i)) {
-                cpu_ids_array[cpu_array_index++] = i;
+        size_t current_array_idex = 0;
+        for (size_t i = 0; i < total_cpus && current_array_idex < cpu_ids_array_length; ++i) {
+            if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
+                cpu_ids_array[current_array_idex++] = i;
             }
         }
 
-        if (g_numa_free_cpumask_ptr) {
-            g_numa_free_cpumask_ptr(bitmask);
-        }
+        return;
     }
 
-fallback:
     for (size_t i = 0; i < cpu_ids_array_length; ++i) {
         cpu_ids_array[i] = i;
     }

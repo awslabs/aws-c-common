@@ -31,11 +31,7 @@ long (*g_set_mempolicy_ptr)(int, const unsigned long *, unsigned long) = NULL;
 int (*g_numa_available_ptr)(void) = NULL;
 int (*g_numa_num_configured_nodes_ptr)(void) = NULL;
 int (*g_numa_num_possible_cpus_ptr)(void) = NULL;
-unsigned int (*g_numa_bitmask_weight)(const struct bitmask *bmp) = NULL;
-int (*g_numa_bitmask_isbitset)(const struct bitmask *bmp, unsigned int n) = NULL;
-int (*g_numa_node_to_cpus_ptr)(int node, struct bitmask *mask) = NULL;
-struct bitmask *(*g_numa_allocate_cpumask_ptr)(void) = NULL;
-void (*g_numa_free_cpumask_ptr)(struct bitmask *mask) = NULL;
+int (*g_numa_node_of_cpu_ptr)(int cpu) = NULL;
 
 void *g_libnuma_handle = NULL;
 
@@ -316,32 +312,11 @@ void aws_common_library_init(struct aws_allocator *allocator) {
                 AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() failed to load");
             }
 
-            *(void **)(&g_numa_bitmask_isbitset) = dlsym(g_libnuma_handle, "numa_bitmask_isbitset");
-            if (g_numa_bitmask_isbitset) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_bitmask_isbitset() loaded");
+            *(void **)(&g_numa_node_of_cpu_ptr) = dlsym(g_libnuma_handle, "numa_node_of_cpu");
+            if (g_numa_node_of_cpu_ptr) {
+                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() loaded");
             } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_bitmask_isbitset() failed to load");
-            }
-
-            *(void **)(&g_numa_node_to_cpus_ptr) = dlsym(g_libnuma_handle, "numa_node_to_cpus");
-            if (g_numa_node_to_cpus_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_to_cpus() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_to_cpus() failed to load");
-            }
-
-            *(void **)(&g_numa_allocate_cpumask_ptr) = dlsym(g_libnuma_handle, "numa_allocate_cpumask");
-            if (g_numa_allocate_cpumask_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_allocate_cpumask() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_allocate_cpumask() failed to load");
-            }
-
-            *(void **)(&g_numa_free_cpumask_ptr) = dlsym(g_libnuma_handle, "numa_free_cpumask");
-            if (g_numa_free_cpumask_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_free_cpumask() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_free_cpumask() failed to load");
+                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() failed to load");
             }
 
         } else {
