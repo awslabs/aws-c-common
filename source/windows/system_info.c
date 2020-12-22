@@ -21,6 +21,22 @@ size_t aws_system_info_processor_count(void) {
     return info.dwNumberOfProcessors;
 }
 
+/* the next three functions need actual implementations before we can have proper numa alignment on windows.
+ * For now leave them stubbed out. */
+size_t aws_get_cpu_group_count(void) {
+    return 1u;
+}
+
+size_t aws_get_cpu_count_for_group(size_t group_idx) {
+    return aws_system_info_processor_count();
+}
+
+void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length) {
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i] = i;
+    }
+}
+
 bool aws_is_debugger_present(void) {
     return IsDebuggerPresent();
 }
