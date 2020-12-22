@@ -71,6 +71,12 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         return;
     }
 
+    /* go ahead and initialize everything. */
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i].cpu_id = -1;
+        cpu_ids_array[i].suspected_hyper_thread = false;
+    }
+
     /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
     size_t hyper_thread_hint = cpu_ids_array_length / 2 - 1;
 
@@ -79,9 +85,6 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         size_t last_seen_cpuid = 0;
         size_t current_array_idx = 0;
         for (size_t i = 0; i < total_cpus && current_array_idx < cpu_ids_array_length; ++i) {
-            cpu_ids_array[i].cpu_id = -1;
-            cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint ? true : false;
-
             if ((int)group_idx == g_numa_node_of_cpu_ptr((int)i)) {
                 cpu_ids_array[current_array_idx].cpu_id = (int32_t)i;
 
