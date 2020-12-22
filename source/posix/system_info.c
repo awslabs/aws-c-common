@@ -79,22 +79,19 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
 
     if (g_numa_node_of_cpu_ptr) {
         size_t total_cpus = aws_system_info_processor_count();
-        size_t index_jump = 0;
         size_t current_array_idx = 0;
         for (size_t i = 0; i < total_cpus && current_array_idx < cpu_ids_array_length; ++i) {
             if ((int)group_idx == g_numa_node_of_cpu_ptr((int)i)) {
                 cpu_ids_array[current_array_idx].cpu_id = (int32_t)i;
 
-                /* looking for an index jump is a more reliable way to find these. If they're in the group, then
-                 * the index jumps, say from 17 to 36, we're in hyper-thread land. */
-                if (index_jump + 1 < i) {
+                /* looking for an index jump is a more reliable way to find these. If they're in the group and then
+                 * the index jumps, say from 17 to 36, we're most-likely in hyper-thread land. Also, inside a node,
+                 * once we find the first hyper-thread, the remaining cores are also likely hyper threads. */
+                if (current_array_idx > 0 && (cpu_ids_array[current_array_idx - 1].suspected_hyper_thread ||
+                                              cpu_ids_array[current_array_idx - 1].cpu_id < ((int)i - 1))) {
                     cpu_ids_array[current_array_idx].suspected_hyper_thread = true;
-                } else {
-                    index_jump = i;
                 }
                 current_array_idx += 1;
-            } else {
-                index_jump = i;
             }
         }
 
