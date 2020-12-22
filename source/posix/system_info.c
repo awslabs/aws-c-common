@@ -67,7 +67,11 @@ size_t aws_get_cpu_count_for_group(size_t group_idx) {
 void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length) {
     AWS_PRECONDITION(cpu_ids_array);
 
-    memset(cpu_ids_array, 0xFF, cpu_ids_array_length);
+    if (!cpu_ids_array_length) {
+        return;
+    }
+
+    memset(cpu_ids_array, 0xFF, cpu_ids_array_length * sizeof(size_t));
 
     if (g_numa_node_of_cpu_ptr) {
         size_t total_cpus = aws_system_info_processor_count();
