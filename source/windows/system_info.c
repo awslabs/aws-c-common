@@ -23,19 +23,24 @@ size_t aws_system_info_processor_count(void) {
 
 /* the next three functions need actual implementations before we can have proper numa alignment on windows.
  * For now leave them stubbed out. */
-size_t aws_get_cpu_group_count(void) {
+uint16_t aws_get_cpu_group_count(void) {
     return 1u;
 }
 
-size_t aws_get_cpu_count_for_group(size_t group_idx) {
+size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     (void)group_idx;
     return aws_system_info_processor_count();
 }
 
-void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length) {
+void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
     (void)group_idx;
+
+    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
+    size_t hyper_threads_hint = cpu_ids_array_length / 2 - 1;
+
     for (size_t i = 0; i < cpu_ids_array_length; ++i) {
-        cpu_ids_array[i] = i;
+        cpu_ids_array[i].cpu_id = (int32_t)i;
+        cpu_ids_array[i].suspected_hyper_thread = i > hyper_threads_hint ? true : false;
     }
 }
 

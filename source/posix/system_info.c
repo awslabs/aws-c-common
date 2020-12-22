@@ -40,19 +40,19 @@ size_t aws_system_info_processor_count(void) {
 #include <ctype.h>
 #include <fcntl.h>
 
-size_t aws_get_cpu_group_count(void) {
+uint16_t aws_get_cpu_group_count(void) {
     if (g_numa_num_configured_nodes_ptr) {
-        return (size_t)g_numa_num_configured_nodes_ptr();
+        return (uint16_t)g_numa_num_configured_nodes_ptr();
     }
 
     return 1u;
 }
 
-size_t aws_get_cpu_count_for_group(size_t group_idx) {
+size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     if (g_numa_node_of_cpu_ptr) {
         size_t total_cpus = aws_system_info_processor_count();
 
-        size_t cpu_count = 0;
+        uint16_t cpu_count = 0;
         for (size_t i = 0; i < total_cpus; ++i) {
             if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
                 cpu_count++;
@@ -64,22 +64,32 @@ size_t aws_get_cpu_count_for_group(size_t group_idx) {
     return aws_system_info_processor_count();
 }
 
-void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length) {
+void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
     AWS_PRECONDITION(cpu_ids_array);
 
     if (!cpu_ids_array_length) {
         return;
     }
 
-    memset(cpu_ids_array, 0xFF, cpu_ids_array_length * sizeof(size_t));
+    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
+    size_t hyper_thread_hint = cpu_ids_array_length / 2 - 1;
 
     if (g_numa_node_of_cpu_ptr) {
         size_t total_cpus = aws_system_info_processor_count();
+        size_t last_seen_cpuid = 0;
+        size_t current_array_idx = 0;
+        for (size_t i = 0; i < total_cpus && current_array_idx < cpu_ids_array_length; ++i) {
+            cpu_ids_array[i].cpu_id = -1;
+            cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint ? true : false;
 
-        size_t current_array_idex = 0;
-        for (size_t i = 0; i < total_cpus && current_array_idex < cpu_ids_array_length; ++i) {
-            if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
-                cpu_ids_array[current_array_idex++] = i;
+            if ((int)group_idx == g_numa_node_of_cpu_ptr((int)i)) {
+                cpu_ids_array[current_array_idx].cpu_id = (int32_t)i;
+
+                if (last_seen_cpuid + 1 < i) {
+                    cpu_ids_array[current_array_idx].suspected_hyper_thread = true;
+                }
+                current_array_idx += 1;
+                last_seen_cpuid = i;
             }
         }
 
@@ -87,7 +97,8 @@ void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t c
     }
 
     for (size_t i = 0; i < cpu_ids_array_length; ++i) {
-        cpu_ids_array[i] = i;
+        cpu_ids_array[i].cpu_id = (int32_t)i;
+        cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint ? true : false;
     }
 }
 

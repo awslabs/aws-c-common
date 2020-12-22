@@ -133,7 +133,7 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
         ASSERT_TRUE(cpus_per_group > 0);
         total_cpus_found_via_numa += cpus_per_group;
 
-        size_t *cpus_for_group = aws_mem_calloc(allocator, cpus_per_group, sizeof(size_t));
+        struct aws_cpu_info *cpus_for_group = aws_mem_calloc(allocator, cpus_per_group, sizeof(struct aws_cpu_info));
         ASSERT_NOT_NULL(cpus_per_group);
         aws_get_cpu_ids_for_group(i, cpus_for_group, cpus_per_group);
 
@@ -142,10 +142,11 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
         for (size_t cpu_idx = 0; cpu_idx < cpus_per_group; ++cpu_idx) {
             AWS_LOGF_INFO(
                 AWS_LS_COMMON_GENERAL,
-                "found cpu_id %d, which lives on group node %d",
-                (int)cpus_for_group[cpu_idx],
-                (int)i);
-            if (cpus_for_group[cpu_idx] < SIZE_MAX) {
+                "found cpu_id %d, which lives on group node %d. Is it likely a hyper-thread ? %s",
+                (int)cpus_for_group[cpu_idx].cpu_id,
+                (int)i,
+                cpus_for_group[cpu_idx].suspected_hyper_thread ? "Yes" : "No");
+            if (cpus_for_group[cpu_idx].cpu_id >= 0) {
                 at_least_one = true;
             }
         }
