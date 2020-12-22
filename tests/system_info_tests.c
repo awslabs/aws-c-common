@@ -118,14 +118,14 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
     size_t processor_count = aws_system_info_processor_count();
     ASSERT_TRUE(processor_count > 0);
 
-    size_t group_count = aws_get_cpu_group_count();
+    uint16_t group_count = aws_get_cpu_group_count();
     ASSERT_TRUE(group_count > 0);
 
     /* log for the test output since it's the only way I can verify on certain platforms this looks correct. */
     AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "found %d cpu groups", (int)group_count);
 
     size_t total_cpus_found_via_numa = 0;
-    for (size_t i = 0; i < group_count; ++i) {
+    for (uint16_t i = 0; i < group_count; ++i) {
         size_t cpus_per_group = aws_get_cpu_count_for_group(i);
         AWS_LOGF_INFO(
             AWS_LS_COMMON_GENERAL, "found cpu count %d, which lives on group node %d", (int)cpus_per_group, (int)i);

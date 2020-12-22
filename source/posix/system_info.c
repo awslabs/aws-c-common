@@ -98,7 +98,8 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         return;
     }
 
-    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
+    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. The assumption if you
+     * hit here is that this is just listing all cpus on the system. */
     size_t hyper_thread_hint = cpu_ids_array_length / 2 - 1;
 
     for (size_t i = 0; i < cpu_ids_array_length; ++i) {
