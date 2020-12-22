@@ -24,12 +24,22 @@ enum aws_platform_os aws_get_platform_build_os(void);
 AWS_COMMON_API
 size_t aws_system_info_processor_count(void);
 
+/**
+ * Returns the logical processor groupings on the system (such as multiple numa nodes).
+ */
 AWS_COMMON_API
 size_t aws_get_cpu_group_count(void);
 
+/**
+ * For a group, returns the number of CPUs it contains.
+ */
 AWS_COMMON_API
 size_t aws_get_cpu_count_for_group(size_t group_idx);
 
+/**
+ * Fills in cpu_ids_array with the cpu_id's for the group. To obtain the size to allocate for cpu_ids_array
+ * and the value for argument for cpu_ids_array_length, call aws_get_cpu_count_for_group().
+ */
 AWS_COMMON_API
 void aws_get_cpu_ids_for_group(size_t group_idx, size_t *cpu_ids_array, size_t cpu_ids_array_length);
 

@@ -145,7 +145,7 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
                 "found cpu_id %d, which lives on group node %d",
                 (int)cpus_for_group[cpu_idx],
                 (int)i);
-            if (cpus_for_group[cpu_idx] >= 0) {
+            if (cpus_for_group[cpu_idx] < SIZE_MAX) {
                 at_least_one = true;
             }
         }
