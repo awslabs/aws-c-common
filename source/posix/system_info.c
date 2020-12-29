@@ -104,7 +104,7 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
 
     for (size_t i = 0; i < cpu_ids_array_length; ++i) {
         cpu_ids_array[i].cpu_id = (int32_t)i;
-        cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint ? true : false;
+        cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint;
     }
 }
 
