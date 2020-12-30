@@ -38,10 +38,10 @@ int aws_mutex_try_lock(struct aws_mutex *mutex) {
     BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
 
     if (!res) {
-        return AWS_OP_SUCCESS;
+        return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
     }
 
-    return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
+    return AWS_OP_SUCCESS;
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {
