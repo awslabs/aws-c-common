@@ -546,6 +546,36 @@ static int s_test_scheduler_oom_during_init(struct aws_allocator *allocator, voi
     return 0;
 }
 
+static void s_delete_myself_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+    (void)status;
+
+    struct aws_allocator *allocator = arg;
+    aws_mem_release(allocator, task);
+}
+
+static int s_test_scheduler_task_delete_on_run(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_task_scheduler scheduler;
+    aws_task_scheduler_init(&scheduler, allocator);
+
+    /* Check when no tasks scheduled */
+    uint64_t task_time = 10;
+
+    /* Check when a task is scheduled for the future */
+    struct aws_task *self_deleting_task = aws_mem_calloc(allocator, 1, sizeof(struct aws_task));
+    aws_task_init(self_deleting_task, s_delete_myself_fn, allocator, "self_deleting_task");
+
+    aws_task_scheduler_schedule_future(&scheduler, self_deleting_task, task_time);
+    ASSERT_TRUE(aws_task_scheduler_has_tasks(&scheduler, &task_time));
+
+    aws_task_scheduler_run_all(&scheduler, task_time);
+
+    aws_task_scheduler_clean_up(&scheduler);
+
+    return 0;
+}
+
 AWS_TEST_CASE(scheduler_pops_task_late_test, s_test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, s_test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_has_tasks_test, s_test_scheduler_has_tasks);
@@ -556,3 +586,4 @@ AWS_TEST_CASE(scheduler_oom_still_works, s_test_scheduler_oom_still_works);
 AWS_TEST_CASE(scheduler_schedule_cancellation, s_test_scheduler_schedule_cancellation);
 AWS_TEST_CASE(scheduler_cleanup_idempotent, s_test_scheduler_cleanup_idempotent);
 AWS_TEST_CASE(scheduler_oom_during_init, s_test_scheduler_oom_during_init);
+AWS_TEST_CASE(scheduler_task_delete_on_run, s_test_scheduler_task_delete_on_run);
