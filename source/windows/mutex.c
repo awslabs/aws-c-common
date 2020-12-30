@@ -37,6 +37,9 @@ int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
     BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
 
+    /*
+     * Per Windows documentation, a return value of zero indicates a failure to acquire the lock.
+     */
     if (!res) {
         return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
     }
