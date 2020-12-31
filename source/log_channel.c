@@ -108,6 +108,15 @@ static void s_background_channel_clean_up(struct aws_log_channel *channel) {
 
     aws_thread_clean_up(&impl->background_thread);
     aws_condition_variable_clean_up(&impl->pending_line_signal);
+
+    size_t pending_log_line_count = aws_array_list_length(&impl->pending_log_lines);
+    for (size_t i = 0; i < pending_log_line_count; ++i) {
+        struct aws_string *log_line = NULL;
+        aws_array_list_get_at(&impl->pending_log_lines, &log_line, i);
+
+        aws_string_destroy(log_line);
+    }
+
     aws_array_list_clean_up(&impl->pending_log_lines);
     aws_mutex_clean_up(&impl->sync);
     aws_mem_release(channel->allocator, impl);
