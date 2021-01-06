@@ -101,8 +101,8 @@ static void s_thread_fn(void *arg) {
 
         int64_t timeout = 0;
         if (next_scheduled_task == UINT64_MAX) {
-            /* at least wake up once per second. */
-            timeout = AWS_TIMESTAMP_NANOS;
+            /* at least wake up once per 30 seconds. */
+            timeout = 30 * AWS_TIMESTAMP_NANOS;
         } else {
             timeout = (int64_t)(next_scheduled_task - current_time);
         }
