@@ -24,7 +24,9 @@ static size_t s_executed_tasks_n;
 
 /* Updates tl_executed_tasks and tl_executed_task_n when function is executed */
 static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Invoking task");
     aws_mutex_lock(&s_test_mutex);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Mutex Acquired");
     if (s_executed_tasks_n > AWS_ARRAY_SIZE(s_executed_tasks)) {
         AWS_ASSERT(0);
     }
@@ -34,6 +36,8 @@ static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status s
     data->arg = arg;
     data->status = status;
     aws_mutex_unlock(&s_test_mutex);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Mutex Released, notifying");
+
     aws_condition_variable_notify_one(&s_test_c_var);
 }
 
@@ -45,6 +49,8 @@ static bool s_scheduled_tasks_ran_predicate(void *arg) {
 
 static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+
+    aws_common_library_init(allocator);
     s_executed_tasks_n = 0;
 
     struct aws_thread_scheduler *thread_scheduler = aws_thread_scheduler_new(allocator, NULL);
@@ -104,6 +110,7 @@ static int s_test_scheduler_ordering(struct aws_allocator *allocator, void *ctx)
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task_data->status);
 
     aws_thread_scheduler_release(thread_scheduler);
+    aws_common_library_clean_up();
     return 0;
 }
 
@@ -111,6 +118,7 @@ AWS_TEST_CASE(test_thread_scheduler_ordering, s_test_scheduler_ordering)
 
 static int s_test_scheduler_happy_path_cancellation(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    aws_common_library_init(allocator);
     s_executed_tasks_n = 0;
 
     struct aws_thread_scheduler *thread_scheduler = aws_thread_scheduler_new(allocator, NULL);
@@ -171,6 +179,7 @@ static int s_test_scheduler_happy_path_cancellation(struct aws_allocator *alloca
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
 
     aws_thread_scheduler_release(thread_scheduler);
+    aws_common_library_clean_up();
     return 0;
 }
 
@@ -187,10 +196,11 @@ static void s_schedule_and_cancel_task(struct aws_task *task, void *arg, enum aw
     s_task_n_fn(task, arg, status);
 }
 
-/* schedule a task. Inside that task schedule and then immediaetly cancel it. This will exercise the pending to be
+/* schedule a task. Inside that task schedule and then immediately cancel it. This will exercise the pending to be
  * scheduled code path. */
 static int s_test_scheduler_cancellation_for_pending_scheduled_task(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    aws_common_library_init(allocator);
     s_executed_tasks_n = 0;
 
     struct aws_thread_scheduler *thread_scheduler = aws_thread_scheduler_new(allocator, NULL);
@@ -205,6 +215,8 @@ static int s_test_scheduler_cancellation_for_pending_scheduled_task(struct aws_a
     ASSERT_SUCCESS(aws_condition_variable_wait_pred(
         &s_test_c_var, &s_test_mutex, s_scheduled_tasks_ran_predicate, &expected_runs));
 
+    ASSERT_SUCCESS(aws_mutex_unlock(&s_test_mutex));
+
     ASSERT_UINT_EQUALS(2, s_executed_tasks_n);
 
     struct executed_task_data *task_data = &s_executed_tasks[0];
@@ -217,6 +229,7 @@ static int s_test_scheduler_cancellation_for_pending_scheduled_task(struct aws_a
     ASSERT_INT_EQUALS(AWS_TASK_STATUS_CANCELED, task_data->status);
 
     aws_thread_scheduler_release(thread_scheduler);
+    aws_common_library_clean_up();
     return 0;
 }
 

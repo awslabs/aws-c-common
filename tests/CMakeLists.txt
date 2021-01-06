@@ -446,8 +446,7 @@ add_test_case(xml_parser_name_too_long_test)
 
 add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)
-# TODO: reenable and occasional hangs in CI
-#add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
+add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
