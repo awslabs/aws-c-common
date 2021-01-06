@@ -203,6 +203,8 @@ void aws_thread_scheduler_cancel_task(struct aws_thread_scheduler *scheduler, st
 
         if (aws_linked_list_node_next_is_valid(node)) {
             node = aws_linked_list_next(node);
+        } else {
+            node = NULL;
         }
     }
 
