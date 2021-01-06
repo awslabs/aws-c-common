@@ -24,7 +24,9 @@ static size_t s_executed_tasks_n;
 
 /* Updates tl_executed_tasks and tl_executed_task_n when function is executed */
 static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status status) {
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Invoking task");
     aws_mutex_lock(&s_test_mutex);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Mutex Acquired");
     if (s_executed_tasks_n > AWS_ARRAY_SIZE(s_executed_tasks)) {
         AWS_ASSERT(0);
     }
@@ -34,6 +36,8 @@ static void s_task_n_fn(struct aws_task *task, void *arg, enum aws_task_status s
     data->arg = arg;
     data->status = status;
     aws_mutex_unlock(&s_test_mutex);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "Mutex Released, notifying");
+
     aws_condition_variable_notify_one(&s_test_c_var);
 }
 
