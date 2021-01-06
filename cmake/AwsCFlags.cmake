@@ -32,8 +32,8 @@ function(aws_set_common_properties target)
 
         # disable non-constant initializer warning, it's not non-standard, just for Microsoft
         list(APPEND AWS_C_FLAGS /wd4204)
-		# disable passing the address of a local warning. Again, not non-standard, just for Microsoft
-		list(APPEND AWS_C_FLAGS /wd4221)
+        # disable passing the address of a local warning. Again, not non-standard, just for Microsoft
+        list(APPEND AWS_C_FLAGS /wd4221)
 
         if (AWS_SUPPORT_WIN7)
             # Use only APIs available in Win7 and later
