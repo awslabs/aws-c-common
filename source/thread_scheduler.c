@@ -107,11 +107,13 @@ static void s_thread_fn(void *arg) {
             timeout = (int64_t)(next_scheduled_task - current_time);
         }
 
-        AWS_FATAL_ASSERT(!aws_mutex_lock(&scheduler->thread_data.mutex) && "mutex lock failed!");
+        if (timeout > 0) {
+            AWS_FATAL_ASSERT(!aws_mutex_lock(&scheduler->thread_data.mutex) && "mutex lock failed!");
 
-        aws_condition_variable_wait_for_pred(
-            &scheduler->thread_data.c_var, &scheduler->thread_data.mutex, timeout, s_thread_should_wake, scheduler);
-        AWS_FATAL_ASSERT(!aws_mutex_unlock(&scheduler->thread_data.mutex) && "mutex unlock failed!");
+            aws_condition_variable_wait_for_pred(
+                &scheduler->thread_data.c_var, &scheduler->thread_data.mutex, timeout, s_thread_should_wake, scheduler);
+            AWS_FATAL_ASSERT(!aws_mutex_unlock(&scheduler->thread_data.mutex) && "mutex unlock failed!");
+        }
     }
 }
 
