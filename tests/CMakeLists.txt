@@ -43,6 +43,7 @@ add_test_case(thread_atexit_test)
 
 add_test_case(mutex_aquire_release_test)
 add_test_case(mutex_is_actually_mutex_test)
+add_test_case(mutex_try_lock_is_correct_test)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)
@@ -285,6 +286,7 @@ endif()
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
 add_test_case(test_platform_build_os)
+add_test_case(test_sanity_check_numa_discovery)
 
 add_test_case(test_realloc_fallback)
 add_test_case(test_realloc_fallback_oom)

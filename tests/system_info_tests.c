@@ -110,3 +110,55 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 }
 
 AWS_TEST_CASE(test_platform_build_os, s_test_platform_build_os_fn)
+
+static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    aws_common_library_init(allocator);
+    size_t processor_count = aws_system_info_processor_count();
+    ASSERT_TRUE(processor_count > 0);
+
+    uint16_t group_count = aws_get_cpu_group_count();
+    ASSERT_TRUE(group_count > 0);
+
+    /* log for the test output since it's the only way I can verify on certain platforms this looks correct. */
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "found %d cpu groups", (int)group_count);
+
+    size_t total_cpus_found_via_numa = 0;
+    for (uint16_t i = 0; i < group_count; ++i) {
+        size_t cpus_per_group = aws_get_cpu_count_for_group(i);
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_GENERAL, "found cpu count %d, which lives on group node %d", (int)cpus_per_group, (int)i);
+
+        ASSERT_TRUE(cpus_per_group > 0);
+        total_cpus_found_via_numa += cpus_per_group;
+
+        struct aws_cpu_info *cpus_for_group = aws_mem_calloc(allocator, cpus_per_group, sizeof(struct aws_cpu_info));
+        ASSERT_NOT_NULL(cpus_per_group);
+        aws_get_cpu_ids_for_group(i, cpus_for_group, cpus_per_group);
+
+        /* make sure at least one is set */
+        bool at_least_one = false;
+        for (size_t cpu_idx = 0; cpu_idx < cpus_per_group; ++cpu_idx) {
+            AWS_LOGF_INFO(
+                AWS_LS_COMMON_GENERAL,
+                "found cpu_id %d, which lives on group node %d. Is it likely a hyper-thread ? %s",
+                (int)cpus_for_group[cpu_idx].cpu_id,
+                (int)i,
+                cpus_for_group[cpu_idx].suspected_hyper_thread ? "Yes" : "No");
+            if (cpus_for_group[cpu_idx].cpu_id >= 0) {
+                at_least_one = true;
+            }
+        }
+
+        ASSERT_TRUE(at_least_one);
+        aws_mem_release(allocator, cpus_for_group);
+    }
+
+    ASSERT_TRUE(total_cpus_found_via_numa <= processor_count);
+
+    aws_common_library_clean_up();
+    return 0;
+}
+
+AWS_TEST_CASE(test_sanity_check_numa_discovery, s_test_sanity_check_numa_discovery)

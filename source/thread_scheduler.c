@@ -101,16 +101,19 @@ static void s_thread_fn(void *arg) {
 
         int64_t timeout = 0;
         if (next_scheduled_task == UINT64_MAX) {
-            timeout = INT64_MAX;
+            /* at least wake up once per 30 seconds. */
+            timeout = (int64_t)30 * (int64_t)AWS_TIMESTAMP_NANOS;
         } else {
             timeout = (int64_t)(next_scheduled_task - current_time);
         }
 
-        AWS_FATAL_ASSERT(!aws_mutex_lock(&scheduler->thread_data.mutex) && "mutex lock failed!");
+        if (timeout > 0) {
+            AWS_FATAL_ASSERT(!aws_mutex_lock(&scheduler->thread_data.mutex) && "mutex lock failed!");
 
-        aws_condition_variable_wait_for_pred(
-            &scheduler->thread_data.c_var, &scheduler->thread_data.mutex, timeout, s_thread_should_wake, scheduler);
-        AWS_FATAL_ASSERT(!aws_mutex_unlock(&scheduler->thread_data.mutex) && "mutex unlock failed!");
+            aws_condition_variable_wait_for_pred(
+                &scheduler->thread_data.c_var, &scheduler->thread_data.mutex, timeout, s_thread_should_wake, scheduler);
+            AWS_FATAL_ASSERT(!aws_mutex_unlock(&scheduler->thread_data.mutex) && "mutex unlock failed!");
+        }
     }
 }
 
@@ -203,6 +206,8 @@ void aws_thread_scheduler_cancel_task(struct aws_thread_scheduler *scheduler, st
 
         if (aws_linked_list_node_next_is_valid(node)) {
             node = aws_linked_list_next(node);
+        } else {
+            node = NULL;
         }
     }
 
