@@ -33,6 +33,8 @@ bool s_one_or_fewer_managed_threads_unjoined(void *context) {
 }
 
 void aws_thread_join_all_managed(void) {
+    struct aws_linked_list join_list;
+
     bool done = false;
     while (!done) {
         aws_mutex_lock(&s_managed_thread_lock);
@@ -41,7 +43,6 @@ void aws_thread_join_all_managed(void) {
 
         done = s_unjoined_thread_count == 0;
 
-        struct aws_linked_list join_list;
         aws_linked_list_init(&join_list);
 
         aws_linked_list_swap_contents(&join_list, &s_pending_join_managed_threads);
