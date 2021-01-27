@@ -49,17 +49,31 @@ struct thread_wrapper {
     struct thread_atexit_callback *atexit;
     void (*call_once)(void *);
     void *once_arg;
+
+    /*
+     * The managed thread system does lazy joins on threads once finished via their wrapper.  For that to work
+     * we need something to join against, so we keep a by-value copy of the original thread here.  The tricky part
+     * is how to set the threadid/handle of this copy since the copy must be injected into the thread function before
+     * the threadid/handle is known.  We get around that by just querying it at the top of the wrapper thread function.
+     */
     struct aws_thread thread_copy;
     bool membind;
 };
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
+/*
+ * thread_wrapper is platform-dependent so this function ends up being duplicated in each thread implementation
+ */
 void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
     struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
     while (iter != aws_linked_list_end(wrapper_list)) {
 
         struct thread_wrapper *join_thread_wrapper = AWS_CONTAINER_OF(iter, struct thread_wrapper, node);
+
+        /*
+         * Can't do a for-loop since we need to advance to the next wrapper before we free the wrapper
+         */
         iter = aws_linked_list_next(iter);
 
         join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
@@ -72,6 +86,10 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
 
 static void *thread_fn(void *arg) {
     struct thread_wrapper *wrapper_ptr = arg;
+
+    /*
+     * Make sure the aws_thread copy has the right thread id stored in it.
+     */
     wrapper_ptr->thread_copy.thread_id = aws_thread_current_thread_id();
 
     struct thread_wrapper wrapper = *wrapper_ptr;
@@ -93,6 +111,10 @@ static void *thread_fn(void *arg) {
     }
     wrapper.func(wrapper.arg);
 
+    /*
+     * Managed threads don't free the wrapper yet.  The thread management system does it later after the thread
+     * is joined.
+     */
     bool is_managed_thread = wrapper.thread_copy.detach_state == AWS_THREAD_MANAGED;
     if (!is_managed_thread) {
         aws_mem_release(allocator, arg);
@@ -111,6 +133,9 @@ static void *thread_fn(void *arg) {
     }
     tl_wrapper = NULL;
 
+    /*
+     * Release this thread to the managed thread system for lazy join.
+     */
     if (is_managed_thread) {
         aws_thread_pending_join_add(&wrapper_ptr->node);
     }
@@ -233,6 +258,9 @@ int aws_thread_launch(
     wrapper->func = func;
     wrapper->arg = arg;
 
+    /*
+     * Increment the count prior to spawning the thread.  Decrement back if the create failed.
+     */
     if (is_managed_thread) {
         aws_thread_increment_unjoined_count();
     }
@@ -246,6 +274,10 @@ int aws_thread_launch(
         goto cleanup;
     }
 
+    /*
+     * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
+     * completion.
+     */
     if (!is_managed_thread) {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }

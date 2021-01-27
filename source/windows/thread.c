@@ -31,11 +31,21 @@ struct thread_wrapper {
     void (*func)(void *arg);
     void *arg;
     struct thread_atexit_callback *atexit;
+
+    /*
+     * The managed thread system does lazy joins on threads once finished via their wrapper.  For that to work
+     * we need something to join against, so we keep a by-value copy of the original thread here.  The tricky part
+     * is how to set the threadid/handle of this copy since the copy must be injected into the thread function before
+     * the threadid/handle is known.  We get around that by just querying it at the top of the wrapper thread function.
+     */
     struct aws_thread thread_copy;
 };
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
+/*
+ * thread_wrapper is platform-dependent so this function ends up being duplicated in each thread implementation
+ */
 void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
     struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
     while (iter != aws_linked_list_end(wrapper_list)) {
@@ -53,6 +63,11 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     struct thread_wrapper *wrapper_ptr = arg;
 
+    /*
+     * Make sure the aws_thread copy has the right handle stored in it.
+     * We can't just call GetCurrentThread since that returns a fake handle that always maps to the local thread which
+     * isn't what we want.
+     */
     DWORD current_thread_id = GetCurrentThreadId();
     wrapper_ptr->thread_copy.thread_handle = OpenThread(THREAD_ALL_ACCESS, FALSE, current_thread_id);
 
@@ -61,12 +76,16 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     tl_wrapper = &thread_wrapper;
     thread_wrapper.func(thread_wrapper.arg);
 
-    struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
+    /*
+     * Managed threads don't free the wrapper yet.  The thread management system does it later after the thread
+     * is joined.
+     */
     bool is_managed_thread = wrapper_ptr->thread_copy.detach_state == AWS_THREAD_MANAGED;
     if (!is_managed_thread) {
         aws_mem_release(allocator, arg);
     }
 
+    struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
     while (exit_callback_data) {
         aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
         void *exit_callback_user_data = exit_callback_data->user_data;
@@ -79,6 +98,9 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     }
     tl_wrapper = NULL;
 
+    /*
+     * Release this thread to the managed thread system for lazy join.
+     */
     if (is_managed_thread) {
         aws_thread_pending_join_add(&wrapper_ptr->node);
     }
@@ -167,6 +189,9 @@ int aws_thread_launch(
     thread_wrapper->func = func;
     thread_wrapper->thread_copy = *thread;
 
+    /*
+     * Increment the count prior to spawning the thread.  Decrement back if the create failed.
+     */
     if (is_managed_thread) {
         aws_thread_increment_unjoined_count();
     }
@@ -235,6 +260,10 @@ int aws_thread_launch(
         }
     }
 
+    /*
+     * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
+     * completion.
+     */
     if (!is_managed_thread) {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }
