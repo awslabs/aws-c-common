@@ -58,7 +58,7 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     thread_wrapper.func(thread_wrapper.arg);
 
     struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
-    bool is_managed_thread = wrapper.thread_copy.detach_state == AWS_THREAD_MANAGED;
+    bool is_managed_thread = wrapper_ptr->thread_copy.detach_state == AWS_THREAD_MANAGED;
     if (!is_managed_thread) {
         aws_mem_release(allocator, arg);
     }
