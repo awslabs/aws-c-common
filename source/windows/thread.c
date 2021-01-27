@@ -52,6 +52,10 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
 
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
     struct thread_wrapper *wrapper_ptr = arg;
+
+    DWORD current_thread_id = GetCurrentThreadId();
+    wrapper_ptr->thread_copy.thread_handle = OpenThread(THREAD_ALL_ACCESS, FALSE, current_thread_id);
+
     struct thread_wrapper thread_wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = thread_wrapper.allocator;
     tl_wrapper = &thread_wrapper;

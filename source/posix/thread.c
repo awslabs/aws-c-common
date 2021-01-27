@@ -56,11 +56,12 @@ struct thread_wrapper {
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
 void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
-    for (struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
-         iter != aws_linked_list_end(wrapper_list);
-         iter = aws_linked_list_next(iter)) {
+    struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
+    while (iter != aws_linked_list_end(wrapper_list)) {
 
         struct thread_wrapper *join_thread_wrapper = AWS_CONTAINER_OF(iter, struct thread_wrapper, node);
+        iter = aws_linked_list_next(iter);
+
         join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
         aws_thread_join(&join_thread_wrapper->thread_copy);
         aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
@@ -71,6 +72,8 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
 
 static void *thread_fn(void *arg) {
     struct thread_wrapper *wrapper_ptr = arg;
+    wrapper_ptr->thread_copy.thread_id = aws_thread_current_thread_id();
+
     struct thread_wrapper wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
