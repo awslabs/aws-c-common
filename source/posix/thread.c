@@ -11,8 +11,8 @@
 #include <aws/common/condition_variable.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
-#include <aws/common/mutex.h>
 #include <aws/common/private/dlloads.h>
+#include <aws/common/private/thread_shared.h>
 #include <aws/common/thread.h>
 
 #include <dlfcn.h>
@@ -55,25 +55,7 @@ struct thread_wrapper {
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
-static struct aws_mutex s_managed_thread_lock = AWS_MUTEX_INIT;
-static struct aws_condition_variable s_managed_thread_signal = AWS_CONDITION_VARIABLE_INIT;
-static uint32_t s_unjoined_thread_count = 0;
-static struct aws_linked_list s_pending_join_managed_threads;
-
-static void s_increment_unjoined_thread_count(void) {
-    aws_mutex_lock(&s_managed_thread_lock);
-    ++s_unjoined_thread_count;
-    aws_mutex_unlock(&s_managed_thread_lock);
-}
-
-static void s_decrement_unjoined_thread_count(void) {
-    aws_mutex_lock(&s_managed_thread_lock);
-    --s_unjoined_thread_count;
-    aws_mutex_unlock(&s_managed_thread_lock);
-    aws_condition_variable_notify_one(&s_managed_thread_signal);
-}
-
-static void s_join_and_free_thread_wrapper_list(struct aws_linked_list *wrapper_list) {
+void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
     for (struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
          iter != aws_linked_list_end(wrapper_list);
          iter = aws_linked_list_next(iter)) {
@@ -83,7 +65,7 @@ static void s_join_and_free_thread_wrapper_list(struct aws_linked_list *wrapper_
         aws_thread_join(&join_thread_wrapper->thread_copy);
         aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
 
-        s_decrement_unjoined_thread_count();
+        aws_thread_decrement_unjoined_count();
     }
 }
 
@@ -92,7 +74,6 @@ static void *thread_fn(void *arg) {
     struct thread_wrapper wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
-    bool is_managed_thread = wrapper_ptr->thread_copy.detach_state == AWS_THREAD_MANAGED;
 
     if (wrapper.membind && g_set_mempolicy_ptr) {
         AWS_LOGF_INFO(
@@ -109,11 +90,12 @@ static void *thread_fn(void *arg) {
     }
     wrapper.func(wrapper.arg);
 
-    struct thread_atexit_callback *exit_callback_data = wrapper.atexit;
+    bool is_managed_thread = wrapper.thread_copy.detach_state == AWS_THREAD_MANAGED;
     if (!is_managed_thread) {
         aws_mem_release(allocator, arg);
     }
 
+    struct thread_atexit_callback *exit_callback_data = wrapper.atexit;
     while (exit_callback_data) {
         aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
         void *exit_callback_user_data = exit_callback_data->user_data;
@@ -127,42 +109,10 @@ static void *thread_fn(void *arg) {
     tl_wrapper = NULL;
 
     if (is_managed_thread) {
-        struct aws_linked_list join_list;
-        AWS_ZERO_STRUCT(join_list);
-
-        aws_mutex_lock(&s_managed_thread_lock);
-        aws_linked_list_swap_contents(&join_list, &s_pending_join_managed_threads);
-        aws_linked_list_push_back(&s_pending_join_managed_threads, &wrapper_ptr->node);
-        aws_mutex_unlock(&s_managed_thread_lock);
-
-        s_join_and_free_thread_wrapper_list(&join_list);
+        aws_thread_pending_join_add(&wrapper_ptr->node);
     }
 
     return NULL;
-}
-
-bool s_one_or_fewer_managed_threads_unjoined(void *context) {
-    (void)context;
-    return s_unjoined_thread_count <= 1;
-}
-
-void aws_thread_join_all_managed(void) {
-    bool done = false;
-    while (!done) {
-        aws_mutex_lock(&s_managed_thread_lock);
-        aws_condition_variable_wait_pred(
-            &s_managed_thread_signal, &s_managed_thread_lock, s_one_or_fewer_managed_threads_unjoined, NULL);
-
-        done = s_unjoined_thread_count == 0;
-
-        struct aws_linked_list join_list;
-        AWS_ZERO_STRUCT(join_list);
-        aws_linked_list_swap_contents(&join_list, &s_pending_join_managed_threads);
-
-        aws_mutex_unlock(&s_managed_thread_lock);
-
-        s_join_and_free_thread_wrapper_list(&join_list);
-    }
 }
 
 const struct aws_thread_options *aws_default_thread_options(void) {
@@ -211,7 +161,7 @@ int aws_thread_launch(
     pthread_attr_t *attributes_ptr = NULL;
     int attr_return = 0;
     int allocation_failed = 0;
-    bool is_managed_thread = options->join_strategy == AWS_TJS_MANAGED;
+    bool is_managed_thread = options != NULL && options->join_strategy == AWS_TJS_MANAGED;
     if (is_managed_thread) {
         thread->detach_state = AWS_THREAD_MANAGED;
     }
@@ -281,19 +231,19 @@ int aws_thread_launch(
     wrapper->arg = arg;
 
     if (is_managed_thread) {
-        s_increment_unjoined_thread_count();
+        aws_thread_increment_unjoined_count();
     }
 
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
     if (attr_return) {
         if (is_managed_thread) {
-            s_decrement_unjoined_thread_count();
+            aws_thread_decrement_unjoined_count();
         }
         goto cleanup;
     }
 
-    if (options->join_strategy != AWS_TJS_MANAGED) {
+    if (!is_managed_thread) {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }
 

@@ -5,7 +5,9 @@
 #include <aws/common/thread.h>
 
 #include <aws/common/clock.h>
+#include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
+#include <aws/common/private/thread_shared.h>
 
 #include <Windows.h>
 
@@ -14,6 +16,7 @@
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
+    .join_strategy = AWS_TJS_MANUAL,
 };
 
 struct thread_atexit_callback {
@@ -24,21 +27,41 @@ struct thread_atexit_callback {
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
+    struct aws_linked_list_node node;
     void (*func)(void *arg);
     void *arg;
     struct thread_atexit_callback *atexit;
+    struct aws_thread thread_copy;
 };
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
+void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
+    for (struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
+         iter != aws_linked_list_end(wrapper_list);
+         iter = aws_linked_list_next(iter)) {
+
+        struct thread_wrapper *join_thread_wrapper = AWS_CONTAINER_OF(iter, struct thread_wrapper, node);
+        join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
+        aws_thread_join(&join_thread_wrapper->thread_copy);
+        aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
+
+        aws_thread_decrement_unjoined_count();
+    }
+}
+
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
-    struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
+    struct thread_wrapper *wrapper_ptr = arg;
+    struct thread_wrapper thread_wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = thread_wrapper.allocator;
     tl_wrapper = &thread_wrapper;
     thread_wrapper.func(thread_wrapper.arg);
 
     struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
-    aws_mem_release(allocator, arg);
+    bool is_managed_thread = wrapper.thread_copy.detach_state == AWS_THREAD_MANAGED;
+    if (!is_managed_thread) {
+        aws_mem_release(allocator, arg);
+    }
 
     while (exit_callback_data) {
         aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
@@ -51,6 +74,10 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
         exit_callback_data = next_exit_callback_data;
     }
     tl_wrapper = NULL;
+
+    if (is_managed_thread) {
+        aws_thread_pending_join_add(&wrapper_ptr->node);
+    }
 
     return 0;
 }
@@ -120,9 +147,13 @@ int aws_thread_launch(
     const struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
-
     if (options && options->stack_size > 0) {
         stack_size = (SIZE_T)options->stack_size;
+    }
+
+    bool is_managed_thread = options != NULL && options->join_strategy == AWS_TJS_MANAGED;
+    if (is_managed_thread) {
+        thread->detach_state = AWS_THREAD_MANAGED;
     }
 
     struct thread_wrapper *thread_wrapper =
@@ -130,11 +161,17 @@ int aws_thread_launch(
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
+    thread_wrapper->thread_copy = *thread;
+
+    if (is_managed_thread) {
+        aws_thread_increment_unjoined_count();
+    }
 
     thread->thread_handle =
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
+        aws_thread_decrement_unjoined_count();
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
@@ -194,7 +231,10 @@ int aws_thread_launch(
         }
     }
 
-    thread->detach_state = AWS_THREAD_JOINABLE;
+    if (!is_managed_thread) {
+        thread->detach_state = AWS_THREAD_JOINABLE;
+    }
+
     return AWS_OP_SUCCESS;
 }
 
