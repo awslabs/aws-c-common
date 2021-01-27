@@ -272,7 +272,6 @@ void aws_common_library_init(struct aws_allocator *allocator) {
 
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
-#ifdef NEVER
 #if !defined(_WIN32) && !defined(WIN32)
         g_libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
 
@@ -325,7 +324,6 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         } else {
             AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so failed to load");
         }
-#endif
 #endif
     }
 }
