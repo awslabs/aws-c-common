@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/clock.h>
 #include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
@@ -85,3 +86,61 @@ static int s_test_thread_atexit(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(thread_atexit_test, s_test_thread_atexit)
+
+struct managed_thread_test_data {
+    uint64_t sleep_time_in_ns;
+};
+
+static void s_managed_thread_fn(void *arg) {
+    struct thread_test_data *test_data = (struct thread_test_data *)arg;
+    test_data->thread_id = aws_thread_current_thread_id();
+}
+
+#define MAX_MANAGED_THREAD_TEST_QUANTITY 16
+
+static int s_do_managed_thread_join_test(struct aws_allocator *allocator, size_t thread_count) {
+
+    struct aws_thread threads[MAX_MANAGED_THREAD_TEST_QUANTITY];
+    struct managed_thread_test_data thread_data[MAX_MANAGED_THREAD_TEST_QUANTITY];
+
+    AWS_FATAL_ASSERT(thread_count <= MAX_MANAGED_THREAD_TEST_QUANTITY);
+
+    for (size_t i = 0; i < thread_count; ++i) {
+        thread_data[i].sleep_time_in_ns =
+            aws_timestamp_convert(100 * (i / 2), AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL);
+        aws_thread_init(&threads[i], allocator);
+    }
+
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    thread_options.join_strategy = AWS_TJS_MANAGED;
+
+    for (size_t i = 0; i < thread_count; ++i) {
+        ASSERT_SUCCESS(
+            aws_thread_launch(&threads[i], s_managed_thread_fn, (void *)&thread_data[i], &thread_options),
+            "thread creation failed");
+
+        aws_thread_clean_up(&threads[i]);
+
+        ASSERT_INT_EQUALS(
+            AWS_THREAD_MANAGED, aws_thread_get_detach_state(&threads[i]), "thread state should have returned JOINABLE");
+    }
+
+    aws_thread_join_all_managed();
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_test_managed_thread_join(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    for (size_t i = 1; i <= MAX_MANAGED_THREAD_TEST_QUANTITY; ++i) {
+        ASSERT_SUCCESS(s_do_managed_thread_join_test(allocator, i));
+    }
+
+    aws_common_library_clean_up();
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_managed_thread_join, s_test_managed_thread_join)
