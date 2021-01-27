@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_THREAD_SHARED_H
-#define AWS_COMMON_THREAD_SHARED_H
+#ifndef AWS_COMMON_PRIVATE_THREAD_SHARED_H
+#define AWS_COMMON_PRIVATE_THREAD_SHARED_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
@@ -15,4 +15,4 @@ AWS_COMMON_API void aws_thread_pending_join_add(struct aws_linked_list_node *nod
 AWS_COMMON_API void aws_thread_pending_join_list_swap(struct aws_linked_list *swap_list);
 AWS_COMMON_API void aws_thread_initialize_thread_management(void);
 
-#endif /* AWS_COMMON_THREAD_SHARED_H */
+#endif /* AWS_COMMON_PRIVATE_THREAD_SHARED_H */
