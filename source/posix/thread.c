@@ -8,7 +8,6 @@
 #endif
 
 #include <aws/common/clock.h>
-#include <aws/common/condition_variable.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
 #include <aws/common/private/dlloads.h>
