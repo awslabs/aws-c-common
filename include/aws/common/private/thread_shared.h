@@ -10,9 +10,25 @@
 struct aws_linked_list;
 struct aws_linked_list_node;
 
+/**
+ * Iterates a list of thread wrappers, joining against each corresponding thread, and freeing the wrapper once
+ * the join has completed.  Do not hold the managed thread lock when invoking this function, instead swap the
+ * pending join list into a local and call this on the local.
+ *
+ * @param wrapper_list list of thread wrappers to join and free
+ */
 AWS_COMMON_API void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list);
+
+/**
+ * Adds a thread (wrapper embedded a linked list node) to the global list of threads that have run to completion
+ * and need a join in order to know that the OS has truly finished with the thread.
+ * @param node linked list node embedded in the thread wrapper
+ */
 AWS_COMMON_API void aws_thread_pending_join_add(struct aws_linked_list_node *node);
-AWS_COMMON_API void aws_thread_pending_join_list_swap(struct aws_linked_list *swap_list);
+
+/**
+ * Initializes the managed thread system.  Called during library init.
+ */
 AWS_COMMON_API void aws_thread_initialize_thread_management(void);
 
 #endif /* AWS_COMMON_PRIVATE_THREAD_SHARED_H */

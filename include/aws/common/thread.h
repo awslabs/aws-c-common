@@ -24,18 +24,21 @@ enum aws_thread_detach_state {
  * threads at the cost of laziness (the user cannot control when joins happen).
  *
  * Manual - thread does not particpate in the managed thread system; any joins must be done by the user.  This
- * is the default.  If clean_up is called on the thread before join has been called, a detach will be done.
+ * is the default.
  *
  * Managed - the managed thread system will automatically perform a join some time after the thread's run function
- * has completed.  It is an error to call aws_thread_join on a thread configured with the managed join strategy. If
- * clean_up is called on a managed thread, nothing will happen.
+ * has completed.  It is an error to call aws_thread_join on a thread configured with the managed join strategy.
  *
  * Additionally, an API exists, aws_thread_join_all_managed(), which blocks and returns when all outstanding threads
  * with the managed strategy have fully joined.  This API is useful for tests (rather than waiting for many individual
  * signals) and program shutdown or DLL unload.  If this API is not called, the last-running managed thread will not
  * have join invoked on it.
  *
- * Currently, only event loop group and host resolver threads participate in the managed thread system.
+ * Currently, only event loop group async cleanup and host resolver threads participate in the managed thread system.
+ * Additionally, event loop threads will increment and decrement the pending join count (they are manually joined
+ * internally) in order to have an accurate view of internal thread usage and also to prevent failure to release
+ * an event loop group fully from allowing aws_thread_join_all_managed() from running to completion when its
+ * intent is such that it should block instead.
  */
 enum aws_thread_join_strategy {
     AWS_TJS_MANUAL = 0,
@@ -138,7 +141,8 @@ AWS_COMMON_API
 int aws_thread_join(struct aws_thread *thread);
 
 /**
- * Blocking call that waits for all managed threads to complete their join call.
+ * Blocking call that waits for all managed threads to complete their join call.  This can only be called
+ * from the main thread or a non-managed thread.
  */
 AWS_COMMON_API
 void aws_thread_join_all_managed(void);
@@ -179,7 +183,22 @@ typedef void(aws_thread_atexit_fn)(void *user_data);
 AWS_COMMON_API
 int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
 
+/**
+ * Increments the count of unjoined threads in the managed thread system.  Used by managed threads and
+ * event loop threads.  Additional usage requires the user to join corresponding threads themselves and
+ * correctly increment/decrement even in the face of launch/join errors.
+ *
+ * aws_thread_join_all_managed() will not return until this count has gone to zero.
+ */
 AWS_COMMON_API void aws_thread_increment_unjoined_count(void);
+
+/**
+ * Decrements the count of unjoined threads in the managed thread system.  Used by managed threads and
+ * event loop threads.  Additional usage requires the user to join corresponding threads themselves and
+ * correctly increment/decrement even in the face of launch/join errors.
+ *
+ * aws_thread_join_all_managed() will not return until this count has gone to zero.
+ */
 AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
 
 AWS_EXTERN_C_END
