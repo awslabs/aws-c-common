@@ -160,7 +160,7 @@ int aws_thread_launch(
  * NUMA or not is setup in interleave mode.
  * Thread afinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
  * configuration, you've got bigger problems. */
-#if !defined(__MACH__) && !defined(__ANDROID__)
+#if defined(USE_PTHREAD_ATTR_SETAFFINITY) || defined(USE_PTHREAD_SETAFFINITY)
         if (options->cpu_id >= 0) {
             AWS_LOGF_INFO(
                 AWS_LS_COMMON_THREAD,
@@ -172,6 +172,7 @@ int aws_thread_launch(
             CPU_ZERO(&cpuset);
             CPU_SET((uint32_t)options->cpu_id, &cpuset);
 
+#if defined(USE_PTHREAD_ATTR_SETAFFINITY)
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
             if (attr_return) {
@@ -182,8 +183,9 @@ int aws_thread_launch(
                     errno);
                 goto cleanup;
             }
+#endif /* defined(USE_PTHREAD_ATTR_SETAFFINITY) */
         }
-#endif /* !defined(__MACH__) && !defined(__ANDROID__) */
+#endif /* defined(USE_PTHREAD_ATTR_SETAFFINITY) || defined(USE_PTHREAD_SETAFFINITY) */
     }
 
     struct thread_wrapper *wrapper =
@@ -207,6 +209,23 @@ int aws_thread_launch(
     if (attr_return) {
         goto cleanup;
     }
+
+#if defined(USE_PTHREAD_SETAFFINITY)
+    /* If we don't have pthread_attr_setaffinity_np, we may
+     * still be able to set the thread affinity after creation. */
+    if (options && options->cpu_id >= 0) {
+        attr_return = pthread_setaffinity_np(
+                &thread->thread_id, sizeof(cpuset), &cpuset);
+        if (attr_return) {
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: pthread_setaffinity_np() failed with %d.",
+                (void *)thread,
+                errno);
+            goto cleanup;
+        }
+    }
+#endif /* defined(USE_PTHREAD_SETAFFINITY) */
 
     thread->detach_state = AWS_THREAD_JOINABLE;
 
