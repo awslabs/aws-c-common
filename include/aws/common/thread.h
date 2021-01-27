@@ -34,6 +34,11 @@ enum aws_thread_detach_state {
  * signals) and program shutdown or DLL unload.  If this API is not called, the last-running managed thread will not
  * have join invoked on it.
  *
+ * Lazy thread joining is done only when threads finish their run function or when the user calls
+ * aws_thread_join_all_managed().  This means it may be a long time between thread function completion and the join
+ * being applied, but the queue of unjoined threads is always one or fewer so there is no critical resource
+ * backlog.
+ *
  * Currently, only event loop group async cleanup and host resolver threads participate in the managed thread system.
  * Additionally, event loop threads will increment and decrement the pending join count (they are manually joined
  * internally) in order to have an accurate view of internal thread usage and also to prevent failure to release
