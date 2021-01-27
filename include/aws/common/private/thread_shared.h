@@ -20,7 +20,7 @@ struct aws_linked_list_node;
 AWS_COMMON_API void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list);
 
 /**
- * Adds a thread (wrapper embedded a linked list node) to the global list of threads that have run to completion
+ * Adds a thread (wrapper embedding a linked list node) to the global list of threads that have run to completion
  * and need a join in order to know that the OS has truly finished with the thread.
  * @param node linked list node embedded in the thread wrapper
  */
