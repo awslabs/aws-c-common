@@ -25,6 +25,22 @@
 typedef cpuset_t cpu_set_t;
 #endif
 
+#if !defined(AWS_AFFINITY_METHOD)
+#error "Must provide a method for setting thread affinity"
+#endif
+
+// Possible methods for setting thread affinity
+#define AWS_AFFINITY_METHOD_NONE         0
+#define AWS_AFFINITY_METHOD_PTHREAD_ATTR 1
+#define AWS_AFFINITY_METHOD_PTHREAD      2
+
+// Ensure provided affinity method matches one of the supported values
+#if AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_NONE \
+ && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD_ATTR \
+ && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD
+#error "Invalid thread affinity method"
+#endif
+
 static struct aws_thread_options s_default_options = {
     /* this will make sure platform default stack size is used. */
     .stack_size = 0,
@@ -160,7 +176,7 @@ int aws_thread_launch(
  * NUMA or not is setup in interleave mode.
  * Thread afinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
  * configuration, you've got bigger problems. */
-#if defined(USE_PTHREAD_ATTR_SETAFFINITY) || defined(USE_PTHREAD_SETAFFINITY)
+#if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
         if (options->cpu_id >= 0) {
             AWS_LOGF_INFO(
                 AWS_LS_COMMON_THREAD,
@@ -172,7 +188,6 @@ int aws_thread_launch(
             CPU_ZERO(&cpuset);
             CPU_SET((uint32_t)options->cpu_id, &cpuset);
 
-#if defined(USE_PTHREAD_ATTR_SETAFFINITY)
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
             if (attr_return) {
@@ -183,9 +198,8 @@ int aws_thread_launch(
                     errno);
                 goto cleanup;
             }
-#endif /* defined(USE_PTHREAD_ATTR_SETAFFINITY) */
         }
-#endif /* defined(USE_PTHREAD_ATTR_SETAFFINITY) || defined(USE_PTHREAD_SETAFFINITY) */
+#endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
     }
 
     struct thread_wrapper *wrapper =
@@ -210,12 +224,22 @@ int aws_thread_launch(
         goto cleanup;
     }
 
-#if defined(USE_PTHREAD_SETAFFINITY)
+#if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD
     /* If we don't have pthread_attr_setaffinity_np, we may
      * still be able to set the thread affinity after creation. */
     if (options && options->cpu_id >= 0) {
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
+            (void *)thread,
+            options->cpu_id);
+
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET((uint32_t)options->cpu_id, &cpuset);
+
         attr_return = pthread_setaffinity_np(
-                &thread->thread_id, sizeof(cpuset), &cpuset);
+                thread->thread_id, sizeof(cpuset), &cpuset);
         if (attr_return) {
             AWS_LOGF_ERROR(
                 AWS_LS_COMMON_THREAD,
@@ -225,7 +249,7 @@ int aws_thread_launch(
             goto cleanup;
         }
     }
-#endif /* defined(USE_PTHREAD_SETAFFINITY) */
+#endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD */
 
     thread->detach_state = AWS_THREAD_JOINABLE;
 

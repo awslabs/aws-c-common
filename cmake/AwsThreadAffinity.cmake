@@ -23,18 +23,22 @@ function(aws_set_thread_affinity_method target)
     # Using pthread attrs is the preferred method, but is glibc-specific.
     check_symbol_exists(pthread_attr_setaffinity_np "${headers}" USE_PTHREAD_ATTR_SETAFFINITY)
     if (USE_PTHREAD_ATTR_SETAFFINITY)
-        target_compile_definitions(${target} PRIVATE -DUSE_PTHREAD_ATTR_SETAFFINITY)
+        target_compile_definitions(${target} PRIVATE
+            -DAWS_AFFINITY_METHOD=AWS_AFFINITY_METHOD_PTHREAD_ATTR)
         return()
     endif()
 
     # This method is still nonportable, but is supported by musl and BSDs.
     check_symbol_exists(pthread_setaffinity_np "${headers}" USE_PTHREAD_SETAFFINITY)
-    if (USE_PTHREAD_ATTR_SETAFFINITY)
-        target_compile_definitions(${target} PRIVATE -DUSE_PTHREAD_ATTR_SETAFFINITY)
+    if (USE_PTHREAD_SETAFFINITY)
+        target_compile_definitions(${target} PRIVATE
+            -DAWS_AFFINITY_METHOD=AWS_AFFINITY_METHOD_PTHREAD)
         return()
     endif()
 
     # If we got here, we expected thread affinity support but didn't find it.
     # We still build with degraded NUMA performance, but show a warning.
     message(WARNING "No supported method for setting thread affinity")
+    target_compile_definitions(${target} PRIVATE
+        -DAWS_AFFINITY_METHOD=AWS_AFFINITY_METHOD_NONE)
 endfunction()
