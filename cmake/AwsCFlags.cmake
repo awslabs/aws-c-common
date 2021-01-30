@@ -30,6 +30,11 @@ function(aws_set_common_properties target)
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
 
+        # disable non-constant initializer warning, it's not non-standard, just for Microsoft
+        list(APPEND AWS_C_FLAGS /wd4204)
+        # disable passing the address of a local warning. Again, not non-standard, just for Microsoft
+        list(APPEND AWS_C_FLAGS /wd4221)
+
         if (AWS_SUPPORT_WIN7)
             # Use only APIs available in Win7 and later
             message(STATUS "Windows 7 support requested, forcing WINVER and _WIN32_WINNT to 0x0601")
@@ -48,7 +53,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes)
+        list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes -fno-omit-frame-pointer)
 
         if(NOT SET_PROPERTIES_NO_WEXTRA)
             list(APPEND AWS_C_FLAGS -Wextra)

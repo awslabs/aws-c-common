@@ -16,8 +16,9 @@ UNWINDSET += ensure_linked_list_is_allocated.0:$(shell echo $$((1 + $(MAX_LINKED
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_linked_list_push_back_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_linked_list_push_back
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

@@ -11,8 +11,9 @@ UNWINDSET +=__CPROVER_file_local_hash_table_c_s_find_entry1.0:$(shell echo $$((1
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_hash_table_remove_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_hash_table_remove
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

@@ -21,8 +21,9 @@ UNWINDSET += aws_priority_queue_backpointers_valid_deep.0:$(shell echo $$((1 + $
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_priority_queue_s_sift_down_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_priority_queue_s_sift_down
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

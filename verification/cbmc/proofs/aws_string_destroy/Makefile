@@ -5,8 +5,9 @@ include ../Makefile.aws_string
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_string_destroy_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_string_destroy
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

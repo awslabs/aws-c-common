@@ -43,6 +43,7 @@ add_test_case(thread_atexit_test)
 
 add_test_case(mutex_aquire_release_test)
 add_test_case(mutex_is_actually_mutex_test)
+add_test_case(mutex_try_lock_is_correct_test)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)
@@ -153,6 +154,7 @@ add_test_case(scheduler_oom_still_works)
 add_test_case(scheduler_schedule_cancellation)
 add_test_case(scheduler_cleanup_idempotent)
 add_test_case(scheduler_oom_during_init)
+add_test_case(scheduler_task_delete_on_run)
 
 add_test_case(test_hash_table_create_find)
 add_test_case(test_hash_table_string_create_find)
@@ -271,8 +273,6 @@ add_test_case(test_isalpha)
 add_test_case(test_isdigit)
 add_test_case(test_isxdigit)
 add_test_case(test_isspace)
-add_test_case(test_buffer_append_n)
-add_test_case(test_buffer_append_n_dest_too_small)
 
 add_test_case(byte_swap_test)
 
@@ -286,6 +286,7 @@ endif()
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
 add_test_case(test_platform_build_os)
+add_test_case(test_sanity_check_numa_discovery)
 
 add_test_case(test_realloc_fallback)
 add_test_case(test_realloc_fallback_oom)
@@ -442,6 +443,10 @@ add_test_case(xml_parser_nested_node_same_name_test)
 add_test_case(xml_parser_nested_node_deep_recursion_test)
 add_test_case(xml_parser_too_many_attributes_test)
 add_test_case(xml_parser_name_too_long_test)
+
+add_test_case(test_thread_scheduler_ordering)
+add_test_case(test_thread_scheduler_happy_path_cancellation)
+add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

@@ -13,8 +13,9 @@ UNWINDSET +=
 
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_priority_queue_push_ref_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_priority_queue_push_ref
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c

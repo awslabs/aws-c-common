@@ -4,8 +4,9 @@
 ###########
 CBMCFLAGS +=
 
-HARNESS_ENTRY = aws_round_up_to_power_of_two_harness
-HARNESS_FILE = $(HARNESS_ENTRY).c
+PROOF_UID = aws_round_up_to_power_of_two
+HARNESS_ENTRY = $(PROOF_UID)_harness
+HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_STUB)/error.c
