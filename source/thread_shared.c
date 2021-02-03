@@ -40,7 +40,7 @@ void aws_thread_decrement_unjoined_count(void) {
     aws_condition_variable_notify_one(&s_managed_thread_signal);
 }
 
-bool s_one_or_fewer_managed_threads_unjoined(void *context) {
+static bool s_one_or_fewer_managed_threads_unjoined(void *context) {
     (void)context;
     return s_unjoined_thread_count <= 1;
 }
