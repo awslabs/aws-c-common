@@ -3,12 +3,39 @@ name: Lint
 on: [push]
 
 jobs:
-  clang-tidy:
+  clang-tidy-ubuntu-16-04:
 
-    runs-on:
-    - ubuntu-16.04
+    runs-on: ubuntu-16.04
     - ubuntu-18.04
     - ubuntu-20.04
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+
+    - name: clang-tidy lint
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder clang-tidy --project=aws-c-common
+
+  clang-tidy-ubuntu-18-04:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Checkout Sources
+      uses: actions/checkout@v1
+
+    - name: clang-tidy lint
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder clang-tidy --project=aws-c-common
+
+  clang-tidy-ubuntu-20-04:
+
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout Sources
