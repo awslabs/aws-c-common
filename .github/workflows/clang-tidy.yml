@@ -3,7 +3,7 @@ name: Lint
 on: [push]
 
 jobs:
-  clang-tidy-ubuntu-16-04:
+  clang-tidy-ubuntu-16.04:
 
     runs-on: ubuntu-16.04
 
@@ -17,7 +17,7 @@ jobs:
         chmod a+x builder
         ./builder clang-tidy --project=aws-c-common
 
-  clang-tidy-ubuntu-18-04:
+  clang-tidy-ubuntu-18.04:
 
     runs-on: ubuntu-18.04
 
@@ -31,7 +31,7 @@ jobs:
         chmod a+x builder
         ./builder clang-tidy --project=aws-c-common
 
-  clang-tidy-ubuntu-20-04:
+  clang-tidy-ubuntu-20.04:
 
     runs-on: ubuntu-20.04
 
