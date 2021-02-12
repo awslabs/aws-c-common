@@ -331,6 +331,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
 void aws_common_library_clean_up(void) {
     if (s_common_library_initialized) {
         s_common_library_initialized = false;
+        aws_thread_join_all_managed();
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
 #if !defined(_WIN32) && !defined(WIN32)

@@ -148,6 +148,8 @@ int aws_thread_join(struct aws_thread *thread);
 /**
  * Blocking call that waits for all managed threads to complete their join call.  This can only be called
  * from the main thread or a non-managed thread.
+ *
+ * This gets called automatically from library cleanup.
  */
 AWS_COMMON_API
 void aws_thread_join_all_managed(void);

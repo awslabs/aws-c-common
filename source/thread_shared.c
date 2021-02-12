@@ -24,6 +24,8 @@ static uint32_t s_unjoined_thread_count = 0;
 /*
  * A list of thread_wrapper structs for threads whose thread function has finished but join has not been called
  * yet for the thread.
+ *
+ * This list is only ever at most length one.
  */
 static struct aws_linked_list s_pending_join_managed_threads;
 
@@ -76,6 +78,8 @@ void aws_thread_join_all_managed(void) {
          * Join against any finished threads.  These threads are guaranteed to:
          *   (1) Not be the current thread
          *   (2) Have already ran to user thread_function completion
+         *
+         * The number of finished threads on any iteration is at most one.
          */
         aws_thread_join_and_free_wrapper_list(&join_list);
     }
