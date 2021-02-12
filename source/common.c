@@ -273,15 +273,19 @@ void aws_common_library_init(struct aws_allocator *allocator) {
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
 #if !defined(_WIN32) && !defined(WIN32)
-        g_libnuma_handle = dlopen("libnuma.so", RTLD_NOW);
+        /* libnuma defines set_mempolicy() as a WEAK symbol. Loading into the global symbol table overwrites symbols and
+           assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
+           like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
+           Also, please don't do numa configurations if memory is your economic bottlneck. */
+        g_libnuma_handle = dlopen("libnuma.so", RTLD_LOCAL);
 
         /* turns out so versioning is really inconsistent these days */
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_NOW);
+            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LOCAL);
         }
 
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_NOW);
+            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LOCAL);
         }
 
         if (g_libnuma_handle) {
