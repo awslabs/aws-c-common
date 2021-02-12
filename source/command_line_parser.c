@@ -85,7 +85,7 @@ int aws_cli_getopt_long(
     if (option) {
         bool has_arg = false;
 
-        char *opt_value = memchr(optstring, option->val, strlen(optstring));
+        char *opt_value = memchr(optstring, option->val, strlen(optstring) + 1);
         if (!opt_value) {
             return '?';
         }
