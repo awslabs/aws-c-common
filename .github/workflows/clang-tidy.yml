@@ -5,7 +5,11 @@ on: [push]
 jobs:
   clang-tidy:
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [ubuntu-20.04]
+
+    runs-on: ${{ matrix.host }}
 
     steps:
     - name: Checkout Sources
