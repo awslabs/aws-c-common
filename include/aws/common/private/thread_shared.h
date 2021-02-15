@@ -31,4 +31,9 @@ AWS_COMMON_API void aws_thread_pending_join_add(struct aws_linked_list_node *nod
  */
 AWS_COMMON_API void aws_thread_initialize_thread_management(void);
 
+/**
+ * Gets the current managed thread count
+ */
+AWS_COMMON_API size_t aws_thread_get_managed_thread_count(void);
+
 #endif /* AWS_COMMON_PRIVATE_THREAD_SHARED_H */

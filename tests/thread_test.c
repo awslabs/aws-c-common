@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/clock.h>
+#include <aws/common/private/thread_shared.h>
 #include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
@@ -92,8 +93,9 @@ struct managed_thread_test_data {
 };
 
 static void s_managed_thread_fn(void *arg) {
-    struct thread_test_data *test_data = (struct thread_test_data *)arg;
-    test_data->thread_id = aws_thread_current_thread_id();
+    struct managed_thread_test_data *test_data = (struct managed_thread_test_data *)arg;
+
+    aws_thread_current_sleep(test_data->sleep_time_in_ns);
 }
 
 #define MAX_MANAGED_THREAD_TEST_QUANTITY 16
@@ -144,3 +146,62 @@ static int s_test_managed_thread_join(struct aws_allocator *allocator, void *ctx
 }
 
 AWS_TEST_CASE(test_managed_thread_join, s_test_managed_thread_join)
+
+/*
+ * Because this is unmocked time, this is technically not a purely deterministic test, but we set the time values
+ * to extreme enough values that it should absurdly unlikely that an internal OS/CPU hiccup causes this test to fail.
+ */
+static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    /*
+     * Add a short timeout to managed thread join
+     */
+    aws_thread_set_managed_join_timeout_ns(aws_timestamp_convert(1, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+
+    /*
+     * Spawn a managed thread that sleeps for significantly longer.
+     */
+    struct managed_thread_test_data thread_data;
+    AWS_ZERO_STRUCT(thread_data);
+    thread_data.sleep_time_in_ns = aws_timestamp_convert(3, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL);
+
+    struct aws_thread thread;
+    AWS_ZERO_STRUCT(thread);
+    aws_thread_init(&thread, allocator);
+
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    thread_options.join_strategy = AWS_TJS_MANAGED;
+
+    ASSERT_SUCCESS(
+        aws_thread_launch(&thread, s_managed_thread_fn, (void *)&thread_data, &thread_options),
+        "thread creation failed");
+
+    aws_thread_clean_up(&thread);
+
+    ASSERT_TRUE(aws_thread_get_managed_thread_count() == 1);
+
+    /*
+     * Do a managed thread join, it should timeout
+     */
+    aws_thread_join_all_managed();
+
+    /*
+     * Check that the managed thread is still running
+     */
+    ASSERT_TRUE(aws_thread_get_managed_thread_count() == 1);
+
+    /*
+     * Increase the timeout and shut down
+     */
+    aws_thread_set_managed_join_timeout_ns(aws_timestamp_convert(5, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+
+    aws_common_library_clean_up();
+
+    ASSERT_TRUE(aws_thread_get_managed_thread_count() == 0);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_managed_thread_join_timeout, s_test_managed_thread_join_timeout)

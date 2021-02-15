@@ -155,6 +155,13 @@ AWS_COMMON_API
 void aws_thread_join_all_managed(void);
 
 /**
+ * Overrides how long, in nanoseconds, that aws_thread_join_all_managed will wait for threads to complete.
+ * A value of zero will result in an unbounded wait.
+ */
+AWS_COMMON_API
+void aws_thread_set_managed_join_timeout_ns(uint64_t timeout_in_ns);
+
+/**
  * Cleans up the thread handle. Either detach or join must be called
  * before calling this function.
  */
