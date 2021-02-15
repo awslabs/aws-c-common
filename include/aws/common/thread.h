@@ -31,8 +31,8 @@ enum aws_thread_detach_state {
  *
  * Additionally, an API exists, aws_thread_join_all_managed(), which blocks and returns when all outstanding threads
  * with the managed strategy have fully joined.  This API is useful for tests (rather than waiting for many individual
- * signals) and program shutdown or DLL unload.  If this API is not called, the last-running managed thread will not
- * have join invoked on it.
+ * signals) and program shutdown or DLL unload.  This API is automatically invoked by the common library clean up
+ * function.  If the common library clean up is called from a managed thread, this will cause deadlock.
  *
  * Lazy thread joining is done only when threads finish their run function or when the user calls
  * aws_thread_join_all_managed().  This means it may be a long time between thread function completion and the join
@@ -150,6 +150,8 @@ int aws_thread_join(struct aws_thread *thread);
  * from the main thread or a non-managed thread.
  *
  * This gets called automatically from library cleanup.
+ *
+ * By default the wait is unbounded, but that default can be overridden via aws_thread_set_managed_join_timeout_ns()
  */
 AWS_COMMON_API
 void aws_thread_join_all_managed(void);
