@@ -82,8 +82,8 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_OOM,
         "Out of memory."),
     AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_OOS,
-        "Out of space in disk."),
+        AWS_ERROR_NO_SPACE,
+        "Out of space on disk."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_UNKNOWN,
         "Unknown error."),
