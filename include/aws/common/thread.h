@@ -15,6 +15,39 @@ enum aws_thread_detach_state {
     AWS_THREAD_NOT_CREATED = 1,
     AWS_THREAD_JOINABLE,
     AWS_THREAD_JOIN_COMPLETED,
+    AWS_THREAD_MANAGED,
+};
+
+/**
+ * Specifies the join strategy used on an aws_thread, which in turn controls whether or not a thread participates
+ * in the managed thread system.  The managed thread system provides logic to guarantee a join on all participating
+ * threads at the cost of laziness (the user cannot control when joins happen).
+ *
+ * Manual - thread does not particpate in the managed thread system; any joins must be done by the user.  This
+ * is the default.
+ *
+ * Managed - the managed thread system will automatically perform a join some time after the thread's run function
+ * has completed.  It is an error to call aws_thread_join on a thread configured with the managed join strategy.
+ *
+ * Additionally, an API exists, aws_thread_join_all_managed(), which blocks and returns when all outstanding threads
+ * with the managed strategy have fully joined.  This API is useful for tests (rather than waiting for many individual
+ * signals) and program shutdown or DLL unload.  This API is automatically invoked by the common library clean up
+ * function.  If the common library clean up is called from a managed thread, this will cause deadlock.
+ *
+ * Lazy thread joining is done only when threads finish their run function or when the user calls
+ * aws_thread_join_all_managed().  This means it may be a long time between thread function completion and the join
+ * being applied, but the queue of unjoined threads is always one or fewer so there is no critical resource
+ * backlog.
+ *
+ * Currently, only event loop group async cleanup and host resolver threads participate in the managed thread system.
+ * Additionally, event loop threads will increment and decrement the pending join count (they are manually joined
+ * internally) in order to have an accurate view of internal thread usage and also to prevent failure to release
+ * an event loop group fully from allowing aws_thread_join_all_managed() from running to completion when its
+ * intent is such that it should block instead.
+ */
+enum aws_thread_join_strategy {
+    AWS_TJS_MANUAL = 0,
+    AWS_TJS_MANAGED,
 };
 
 struct aws_thread_options {
@@ -30,6 +63,8 @@ struct aws_thread_options {
      * On Apple and Android platforms, this setting doesn't do anything at all.
      */
     int32_t cpu_id;
+
+    enum aws_thread_join_strategy join_strategy;
 };
 
 #ifdef _WIN32
@@ -111,6 +146,24 @@ AWS_COMMON_API
 int aws_thread_join(struct aws_thread *thread);
 
 /**
+ * Blocking call that waits for all managed threads to complete their join call.  This can only be called
+ * from the main thread or a non-managed thread.
+ *
+ * This gets called automatically from library cleanup.
+ *
+ * By default the wait is unbounded, but that default can be overridden via aws_thread_set_managed_join_timeout_ns()
+ */
+AWS_COMMON_API
+void aws_thread_join_all_managed(void);
+
+/**
+ * Overrides how long, in nanoseconds, that aws_thread_join_all_managed will wait for threads to complete.
+ * A value of zero will result in an unbounded wait.
+ */
+AWS_COMMON_API
+void aws_thread_set_managed_join_timeout_ns(uint64_t timeout_in_ns);
+
+/**
  * Cleans up the thread handle. Either detach or join must be called
  * before calling this function.
  */
@@ -145,6 +198,24 @@ typedef void(aws_thread_atexit_fn)(void *user_data);
  */
 AWS_COMMON_API
 int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data);
+
+/**
+ * Increments the count of unjoined threads in the managed thread system.  Used by managed threads and
+ * event loop threads.  Additional usage requires the user to join corresponding threads themselves and
+ * correctly increment/decrement even in the face of launch/join errors.
+ *
+ * aws_thread_join_all_managed() will not return until this count has gone to zero.
+ */
+AWS_COMMON_API void aws_thread_increment_unjoined_count(void);
+
+/**
+ * Decrements the count of unjoined threads in the managed thread system.  Used by managed threads and
+ * event loop threads.  Additional usage requires the user to join corresponding threads themselves and
+ * correctly increment/decrement even in the face of launch/join errors.
+ *
+ * aws_thread_join_all_managed() will not return until this count has gone to zero.
+ */
+AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
 
 AWS_EXTERN_C_END
 
