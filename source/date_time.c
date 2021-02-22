@@ -22,8 +22,8 @@ static const char *ISO_8601_LONG_BASIC_DATE_FORMAT_STR = "%Y%m%dT%H%M%SZ";
 static const char *ISO_8601_SHORT_BASIC_DATE_FORMAT_STR = "%Y%m%d";
 
 #define STR_TRIPLET_TO_INDEX(str)                                                                                      \
-    (((uint32_t)(uint8_t)tolower((str)[0]) << 0) | ((uint32_t)(uint8_t)tolower((str)[1]) << 8) |                       \
-     ((uint32_t)(uint8_t)tolower((str)[2]) << 16))
+    (((uint32_t)tolower((uint8_t)((str)[0])) << 0) | ((uint32_t)tolower((uint8_t)((str)[1])) << 8) |                   \
+     ((uint32_t)tolower((uint8_t)((str)[2])) << 16))
 
 static uint32_t s_jan = 0;
 static uint32_t s_feb = 0;
@@ -140,7 +140,7 @@ static bool is_utc_time_zone(const char *str) {
         }
 
         if (len == 2) {
-            return tolower(str[0]) == 'u' && tolower(str[1]) == 't';
+            return tolower((uint8_t)str[0]) == 'u' && tolower((uint8_t)str[1]) == 't';
         }
 
         if (len < 3) {

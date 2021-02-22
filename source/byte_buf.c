@@ -1611,15 +1611,10 @@ bool aws_isxdigit(uint8_t ch) {
 bool aws_isspace(uint8_t ch) {
     switch (ch) {
         case 0x20: /* ' ' - space */
-            return true;
         case 0x09: /* '\t' - horizontal tab */
-            return true;
         case 0x0A: /* '\n' - line feed */
-            return true;
         case 0x0B: /* '\v' - vertical tab */
-            return true;
         case 0x0C: /* '\f' - form feed */
-            return true;
         case 0x0D: /* '\r' - carriage return */
             return true;
         default:
