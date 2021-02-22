@@ -9,7 +9,9 @@
         { "name": "aws-c-cal" },
         { "name": "aws-c-mqtt" },
         { "name": "aws-c-http" },
-        { "name": "aws-c-auth" }
+        { "name": "aws-c-auth" },
+        { "name": "aws-c-s3" },
+        { "name": "aws-c-iot" }
     ],
     "targets": {
         "windows": {
