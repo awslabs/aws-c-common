@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/common.h>
+#include <aws/common/thread.h>
 
 struct aws_linked_list;
 struct aws_linked_list_node;
