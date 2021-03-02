@@ -9,6 +9,8 @@ function(aws_set_thread_affinity_method target)
 
     # Non-POSIX, Android, and Apple platforms do not support thread affinity.
     if (NOT UNIX OR ANDROID OR APPLE)
+        target_compile_definitions(${target} PRIVATE
+            -DAWS_AFFINITY_METHOD=AWS_AFFINITY_METHOD_NONE)
         return()
     endif()
 
