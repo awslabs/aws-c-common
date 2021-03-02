@@ -37,9 +37,11 @@ typedef cpuset_t cpu_set_t;
 #define AWS_AFFINITY_METHOD_PTHREAD      2
 
 // Ensure provided affinity method matches one of the supported values
+// clang-format off
 #if AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_NONE \
  && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD_ATTR \
  && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD
+// clang-format on
 #error "Invalid thread affinity method"
 #endif
 
