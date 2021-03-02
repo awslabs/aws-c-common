@@ -28,13 +28,13 @@ typedef cpuset_t cpu_set_t;
 #endif
 
 #if !defined(AWS_AFFINITY_METHOD)
-#error "Must provide a method for setting thread affinity"
+#    error "Must provide a method for setting thread affinity"
 #endif
 
 // Possible methods for setting thread affinity
-#define AWS_AFFINITY_METHOD_NONE         0
+#define AWS_AFFINITY_METHOD_NONE 0
 #define AWS_AFFINITY_METHOD_PTHREAD_ATTR 1
-#define AWS_AFFINITY_METHOD_PTHREAD      2
+#define AWS_AFFINITY_METHOD_PTHREAD 2
 
 // Ensure provided affinity method matches one of the supported values
 // clang-format off
@@ -42,7 +42,7 @@ typedef cpuset_t cpu_set_t;
  && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD_ATTR \
  && AWS_AFFINITY_METHOD != AWS_AFFINITY_METHOD_PTHREAD
 // clang-format on
-#error "Invalid thread affinity method"
+#    error "Invalid thread affinity method"
 #endif
 
 static struct aws_thread_options s_default_options = {
@@ -305,14 +305,10 @@ int aws_thread_launch(
         CPU_ZERO(&cpuset);
         CPU_SET((uint32_t)options->cpu_id, &cpuset);
 
-        attr_return = pthread_setaffinity_np(
-                thread->thread_id, sizeof(cpuset), &cpuset);
+        attr_return = pthread_setaffinity_np(thread->thread_id, sizeof(cpuset), &cpuset);
         if (attr_return) {
             AWS_LOGF_ERROR(
-                AWS_LS_COMMON_THREAD,
-                "id=%p: pthread_setaffinity_np() failed with %d.",
-                (void *)thread,
-                errno);
+                AWS_LS_COMMON_THREAD, "id=%p: pthread_setaffinity_np() failed with %d.", (void *)thread, errno);
             goto cleanup;
         }
     }
