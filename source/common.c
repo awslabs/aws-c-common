@@ -7,6 +7,7 @@
 #include <aws/common/logging.h>
 #include <aws/common/math.h>
 #include <aws/common/private/dlloads.h>
+#include <aws/common/private/thread_shared.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -81,6 +82,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OOM,
         "Out of memory."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_NO_SPACE,
+        "Out of space on disk."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_UNKNOWN,
         "Unknown error."),
@@ -267,6 +271,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         s_common_library_initialized = true;
         aws_register_error_info(&s_list);
         aws_register_log_subject_info_list(&s_common_log_subject_list);
+        aws_thread_initialize_thread_management();
 
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
@@ -333,6 +338,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
 void aws_common_library_clean_up(void) {
     if (s_common_library_initialized) {
         s_common_library_initialized = false;
+        aws_thread_join_all_managed();
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
 #if !defined(_WIN32) && !defined(WIN32)

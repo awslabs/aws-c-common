@@ -22,8 +22,8 @@ static const char *ISO_8601_LONG_BASIC_DATE_FORMAT_STR = "%Y%m%dT%H%M%SZ";
 static const char *ISO_8601_SHORT_BASIC_DATE_FORMAT_STR = "%Y%m%d";
 
 #define STR_TRIPLET_TO_INDEX(str)                                                                                      \
-    (((uint32_t)(uint8_t)tolower((uint8_t)((str)[0]) << 0)) | ((uint32_t)(uint8_t)tolower((uint8_t)((str)[1]) << 8)) | \
-     ((uint32_t)(uint8_t)tolower((uint8_t)((str)[2]) << 16)))
+    (((uint32_t)tolower((uint8_t)((str)[0])) << 0) | ((uint32_t)tolower((uint8_t)((str)[1])) << 8) |                   \
+     ((uint32_t)tolower((uint8_t)((str)[2])) << 16))
 
 static uint32_t s_jan = 0;
 static uint32_t s_feb = 0;
