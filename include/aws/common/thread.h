@@ -154,7 +154,7 @@ int aws_thread_join(struct aws_thread *thread);
  * By default the wait is unbounded, but that default can be overridden via aws_thread_set_managed_join_timeout_ns()
  */
 AWS_COMMON_API
-void aws_thread_join_all_managed(void);
+int aws_thread_join_all_managed(void);
 
 /**
  * Overrides how long, in nanoseconds, that aws_thread_join_all_managed will wait for threads to complete.
