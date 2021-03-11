@@ -193,7 +193,7 @@ char *s_whitelist_chars(char *path) {
 #        include <dlfcn.h>
 #        include <mach-o/dyld.h>
 static char s_exe_path[PATH_MAX];
-const char *s_get_executable_path() {
+static const char *s_get_executable_path() {
     static const char *s_exe = NULL;
     if (AWS_LIKELY(s_exe)) {
         return s_exe;
