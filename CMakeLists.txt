@@ -88,12 +88,8 @@ else ()
     endif ()
 
     if (APPLE)
-        find_library(CORE_FOUNDATION_LIB CoreFoundation)
-        if (NOT CORE_FOUNDATION_LIB)
-            message(FATAL_ERROR "Core Foundation not found")
-        endif ()
-
-        list(APPEND PLATFORM_LIBS dl Threads::Threads ${CORE_FOUNDATION_LIB})
+        # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
+        list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
