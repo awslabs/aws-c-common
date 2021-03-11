@@ -14,14 +14,14 @@ int aws_get_environment_value(
     struct aws_string **value_out) {
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
+#    pragma warning(push)
+#    pragma warning(disable : 4996)
 #endif
 
     const char *value = getenv(aws_string_c_str(variable_name));
 
 #ifdef _MSC_VER
-#pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
     if (value == NULL) {
