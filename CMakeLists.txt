@@ -23,6 +23,7 @@ include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
+include(AwsThreadAffinity)
 include(AwsSIMD)
 include(CTest)
 
@@ -160,6 +161,8 @@ if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
+
+aws_set_thread_affinity_method(${PROJECT_NAME})
 
 aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})

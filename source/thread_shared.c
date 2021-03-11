@@ -64,7 +64,7 @@ void aws_thread_set_managed_join_timeout_ns(uint64_t timeout_in_ns) {
     aws_mutex_unlock(&s_managed_thread_lock);
 }
 
-void aws_thread_join_all_managed(void) {
+int aws_thread_join_all_managed(void) {
     struct aws_linked_list join_list;
 
     aws_mutex_lock(&s_managed_thread_lock);
@@ -78,6 +78,7 @@ void aws_thread_join_all_managed(void) {
         timeout_timestamp_ns = now_in_ns + timeout_in_ns;
     }
 
+    bool successful = true;
     bool done = false;
     while (!done) {
         aws_mutex_lock(&s_managed_thread_lock);
@@ -118,6 +119,7 @@ void aws_thread_join_all_managed(void) {
         aws_sys_clock_get_ticks(&now_in_ns);
         if (timeout_timestamp_ns != 0 && now_in_ns >= timeout_timestamp_ns) {
             done = true;
+            successful = false;
         }
 
         aws_linked_list_init(&join_list);
@@ -135,6 +137,8 @@ void aws_thread_join_all_managed(void) {
          */
         aws_thread_join_and_free_wrapper_list(&join_list);
     }
+
+    return successful ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }
 
 void aws_thread_pending_join_add(struct aws_linked_list_node *node) {

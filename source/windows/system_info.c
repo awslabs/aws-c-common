@@ -61,7 +61,9 @@ void aws_debug_break(void) {
 }
 
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
-#pragma warning(disable : 4091)
+#ifdef _MSC_VER
+#    pragma warning(disable : 4091)
+#endif
 #include <dbghelp.h>
 
 struct win_symbol_data {

@@ -13,7 +13,9 @@
 
 #ifdef _WIN32
 #    include <malloc.h>
-#    define alloca _alloca
+#    ifndef alloca
+#        define alloca _alloca
+#    endif
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
 #    include <stdlib.h>
 #else
