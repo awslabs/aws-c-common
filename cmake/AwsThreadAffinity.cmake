@@ -23,9 +23,6 @@ function(aws_set_thread_affinity_method target)
         set(headers "${headers};pthread_np.h")
     endif()
 
-    # Reset variable so that check_symbol_exists doesn't early out.
-    unset(USE_PTHREAD_ATTR_SETAFFINITY CACHE)
-
     # Using pthread attrs is the preferred method, but is glibc-specific.
     check_symbol_exists(pthread_attr_setaffinity_np "${headers}" USE_PTHREAD_ATTR_SETAFFINITY)
     if (USE_PTHREAD_ATTR_SETAFFINITY)
@@ -33,9 +30,6 @@ function(aws_set_thread_affinity_method target)
             -DAWS_AFFINITY_METHOD=AWS_AFFINITY_METHOD_PTHREAD_ATTR)
         return()
     endif()
-
-    # Reset variable so that check_symbol_exists doesn't early out.
-    unset(USE_PTHREAD_SETAFFINITY CACHE)
 
     # This method is still nonportable, but is supported by musl and BSDs.
     check_symbol_exists(pthread_setaffinity_np "${headers}" USE_PTHREAD_SETAFFINITY)
