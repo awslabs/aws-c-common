@@ -34,7 +34,7 @@ function(aws_set_thread_affinity_method target)
         return()
     endif()
 
-    # Reset varaible so that check_symbol_exists doesn't early out.
+    # Reset variable so that check_symbol_exists doesn't early out.
     unset(USE_PTHREAD_SETAFFINITY CACHE)
 
     # This method is still nonportable, but is supported by musl and BSDs.
