@@ -28,9 +28,9 @@ void aws_priority_queue_s_swap_harness() {
          * being NULL or by allocating their objects with their correct
          * values. */
         ((struct aws_priority_queue_node **)queue.backpointers.data)[a] =
-            can_fail_malloc(sizeof(struct aws_priority_queue_node));
+            malloc(sizeof(struct aws_priority_queue_node));
         ((struct aws_priority_queue_node **)queue.backpointers.data)[b] =
-            can_fail_malloc(sizeof(struct aws_priority_queue_node));
+            malloc(sizeof(struct aws_priority_queue_node));
     }
 
     /* save current state of the data structure */

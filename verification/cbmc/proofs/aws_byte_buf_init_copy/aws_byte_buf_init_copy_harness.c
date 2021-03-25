@@ -5,7 +5,6 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_buf_init_copy_harness() {
     /* data structure */
@@ -20,7 +19,7 @@ void aws_byte_buf_init_copy_harness() {
     ensure_byte_buf_has_allocated_buffer_member(&src);
     __CPROVER_assume(aws_byte_buf_is_valid(&src));
     ASSUME_VALID_MEMORY(dest);
-    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
+    ASSUME_aws_default_allocator(allocator);
 
     /* save current state of the data structure */
     struct aws_byte_buf old = src;

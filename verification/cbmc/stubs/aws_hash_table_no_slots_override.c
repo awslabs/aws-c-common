@@ -5,7 +5,6 @@
 
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/nondet.h>
-#include <proof_helpers/proof_allocators.h>
 
 /********************************************************************************
  * This module represents a hash-table that is not backed by any actual memory
@@ -66,7 +65,7 @@ bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter) {
  */
 void make_hash_table_with_no_backing_store(struct aws_hash_table *map, size_t max_table_entries) {
     if (map != NULL) {
-        map->p_impl = bounded_malloc(sizeof(struct hash_table_state));
+        map->p_impl = malloc(sizeof(struct hash_table_state));
         __CPROVER_assume(map->p_impl != NULL);
         __CPROVER_assume(map->p_impl->entry_count <= max_table_entries);
     }

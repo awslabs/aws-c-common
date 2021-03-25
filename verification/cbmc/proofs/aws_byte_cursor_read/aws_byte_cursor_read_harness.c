@@ -5,13 +5,12 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_cursor_read_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
     size_t length;
-    void *dest = bounded_malloc(length);
+    void *dest = malloc(length);
 
     /* assumptions */
     ensure_byte_cursor_has_allocated_buffer_member(&cur);

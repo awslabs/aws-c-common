@@ -13,7 +13,7 @@ void aws_array_list_back_harness() {
 
     /* data structure */
     struct aws_array_list list;
-    void *val = can_fail_malloc(list.item_size);
+    void *val = malloc(list.item_size);
 
     /* assumptions */
     __CPROVER_assume(aws_array_list_is_bounded(&list, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));

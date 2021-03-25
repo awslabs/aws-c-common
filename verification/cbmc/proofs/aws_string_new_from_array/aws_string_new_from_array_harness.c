@@ -5,7 +5,6 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 void aws_string_new_from_array_harness() {
@@ -17,7 +16,7 @@ void aws_string_new_from_array_harness() {
 
     /* precondition */
     ASSUME_VALID_MEMORY_COUNT(array, alloc_size);
-    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
+    ASSUME_aws_default_allocator(allocator);
     __CPROVER_assume(reported_size <= alloc_size);
 
     /* operation under verification */

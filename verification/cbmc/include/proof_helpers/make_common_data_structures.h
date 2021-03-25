@@ -14,22 +14,21 @@
 #include <aws/common/ring_buffer.h>
 #include <aws/common/string.h>
 #include <proof_helpers/nondet.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 #include <stdlib.h>
 
-/* Assume valid memory for ptr, if count > 0 and count < MAX_MALLOC_SIZE. */
+/* Assume valid memory for ptr, if count > 0 and count < MAX_MALLOC. */
 #define ASSUME_VALID_MEMORY_COUNT(ptr, count)                                                                          \
     do {                                                                                                               \
-        ptr = bounded_malloc(sizeof(*(ptr)) * (count));                                                                \
+        ptr = malloc(sizeof(*(ptr)) * (count));                                                                        \
         __CPROVER_assume(ptr != NULL);                                                                                 \
     } while (0)
 
 #define ASSUME_VALID_MEMORY(ptr) ASSUME_VALID_MEMORY_COUNT(ptr, sizeof(*(ptr)))
 
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
-#define ASSUME_CAN_FAIL_ALLOCATOR(allocator) allocator = can_fail_allocator()
+#define ASSUME_aws_default_allocator(allocator) allocator = aws_default_allocator()
 
 /*
  * Checks whether aws_byte_buf is bounded by max_size

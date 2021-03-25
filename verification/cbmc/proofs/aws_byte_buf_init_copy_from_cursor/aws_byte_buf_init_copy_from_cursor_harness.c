@@ -5,7 +5,6 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_buf_init_copy_from_cursor_harness() {
     /* data structure */
@@ -20,7 +19,7 @@ void aws_byte_buf_init_copy_from_cursor_harness() {
     ensure_byte_cursor_has_allocated_buffer_member(&cursor);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cursor));
 
-    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
+    ASSUME_aws_default_allocator(allocator);
 
     if (aws_byte_buf_init_copy_from_cursor(&buf, allocator, cursor) == AWS_OP_SUCCESS) {
         /* assertions */

@@ -5,7 +5,6 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 void aws_string_new_from_c_str_harness() {
@@ -15,7 +14,7 @@ void aws_string_new_from_c_str_harness() {
 
     /* assumptions */
     __CPROVER_assume(c_str != NULL);
-    ASSUME_CAN_FAIL_ALLOCATOR(allocator);
+    ASSUME_aws_default_allocator(allocator);
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_c_str(allocator, c_str);

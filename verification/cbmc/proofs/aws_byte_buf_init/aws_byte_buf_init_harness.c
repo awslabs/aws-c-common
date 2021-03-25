@@ -5,14 +5,13 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_buf_init_harness() {
     /* data structure */
     struct aws_byte_buf buf; /* Precondition: buf is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
+    struct aws_allocator *allocator = aws_default_allocator(); /* Precondition: allocator is non-null */
     size_t capacity;
 
     if (aws_byte_buf_init(&buf, allocator, capacity) == AWS_OP_SUCCESS) {

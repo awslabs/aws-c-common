@@ -16,8 +16,8 @@ void aws_priority_queue_remove_harness() {
 
     /* Assume the function preconditions */
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
-    void *item = can_fail_malloc(queue.container.item_size);
-    struct aws_priority_queue_node *backpointer = can_fail_malloc(sizeof(struct aws_priority_queue_node));
+    void *item = malloc(queue.container.item_size);
+    struct aws_priority_queue_node *backpointer = malloc(sizeof(struct aws_priority_queue_node));
 
     if (queue.backpointers.data && backpointer) {
         /* Assume that the two backpointers index, len-1 are valid,
@@ -27,10 +27,10 @@ void aws_priority_queue_remove_harness() {
         size_t len = queue.backpointers.length;
         if (index < len) {
             ((struct aws_priority_queue_node **)queue.backpointers.data)[index] =
-                can_fail_malloc(sizeof(struct aws_priority_queue_node));
+                malloc(sizeof(struct aws_priority_queue_node));
             if (index != len - 1) {
                 ((struct aws_priority_queue_node **)queue.backpointers.data)[len - 1] =
-                    can_fail_malloc(sizeof(struct aws_priority_queue_node));
+                    malloc(sizeof(struct aws_priority_queue_node));
             }
         }
     }

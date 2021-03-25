@@ -10,7 +10,7 @@ void aws_hash_array_ignore_case_harness() {
     /* parameters */
     size_t length;
     __CPROVER_assume(length < MAX_BUFFER_SIZE);
-    uint8_t *array = can_fail_malloc(length);
+    uint8_t *array = malloc(length);
     __CPROVER_assume(AWS_MEM_IS_READABLE(array, length));
 
     /* operation under verification */
