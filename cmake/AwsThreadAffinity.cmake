@@ -14,7 +14,8 @@ function(aws_set_thread_affinity_method target)
         return()
     endif()
 
-    set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+    list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+    list(APPEND CMAKE_REQUIRED_LIBRARIES pthread)
 
     set(headers "pthread.h")
     # BSDs put nonportable pthread declarations in a separate header.
