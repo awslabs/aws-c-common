@@ -82,7 +82,7 @@ if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
 endif()
 
 if (NOT MSVC)
-    set(CMAKE_REQUIRED_FLAGS "-Wno-error=stringop-overflow")
+    set(CMAKE_REQUIRED_FLAGS "-Werror -Wno-error=stringop-overflow")
     check_c_source_compiles("
     int main() {
         return 0;
