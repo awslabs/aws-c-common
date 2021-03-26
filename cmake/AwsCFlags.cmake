@@ -15,7 +15,7 @@ option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will hav
 #  NO_WEXTRA: Disable -Wextra
 #  NO_PEDANTIC: Disable -pedantic
 function(aws_set_common_properties target)
-    set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
+    set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO NO_STRINGOP_OVERFLOW)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
     if(MSVC)
@@ -71,6 +71,10 @@ function(aws_set_common_properties target)
 
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
+        endif()
+
+        if (SET_PROPERTIES_NO_STRINGOP_OVERFLOW)
+            list(APPEND AWS_C_FLAGS -Wno-error=stringop-overflow)
         endif()
 
        # -moutline-atomics generates code for both older load/store exclusive atomics and also

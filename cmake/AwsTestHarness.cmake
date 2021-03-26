@@ -33,7 +33,8 @@ function(generate_test_driver driver_exe_name)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/.clang-tidy" "Checks: '-*,misc-static-assert'")
 
     add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.c ${TESTS})
-    aws_set_common_properties(${driver_exe_name} NO_WEXTRA NO_PEDANTIC)
+    aws_set_common_properties(${driver_exe_name} NO_WEXTRA NO_PEDANTIC NO_STRINGOP_OVERFLOW)
+
     aws_add_sanitizers(${driver_exe_name} ${${PROJECT_NAME}_SANITIZERS})
 
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
