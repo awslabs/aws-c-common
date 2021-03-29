@@ -422,6 +422,8 @@ if (NOT ANDROID)
 
     add_test_case(test_pipeline_logger_unformatted_test)
     add_test_case(test_pipeline_logger_formatted_test)
+
+    add_test_case(dynamic_log_level_change_test)
 endif() # ANDROID
 
 add_test_case(get_pid_sanity_check_test)
