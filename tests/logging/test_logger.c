@@ -74,9 +74,20 @@ void s_test_logger_clean_up(struct aws_logger *logger) {
     aws_mem_release(allocator, impl);
 }
 
-static struct aws_logger_vtable s_test_logger_vtable = {.get_log_level = s_test_logger_get_log_level,
-                                                        .log = s_test_logger_log,
-                                                        .clean_up = s_test_logger_clean_up};
+int s_test_logger_set_log_level(struct aws_logger *logger, enum aws_log_level level) {
+    struct test_logger_impl *impl = (struct test_logger_impl *)logger->p_impl;
+
+    impl->level = level;
+
+    return AWS_OP_SUCCESS;
+}
+
+static struct aws_logger_vtable s_test_logger_vtable = {
+    .get_log_level = s_test_logger_get_log_level,
+    .log = s_test_logger_log,
+    .clean_up = s_test_logger_clean_up,
+    .set_log_level = s_test_logger_set_log_level,
+};
 
 int test_logger_init(
     struct aws_logger *logger,
