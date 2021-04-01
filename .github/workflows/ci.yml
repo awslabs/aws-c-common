@@ -85,7 +85,7 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u awslabs --password-stdin
           export DOCKER_IMAGE=docker.pkg.github.com/awslabs/aws-crt-builder/aws-crt-${{ env.LINUX_BASE_IMAGE }}:${{ env.BUILDER_VERSION }}
           docker pull $DOCKER_IMAGE
-          docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --compiler=clang-${{ matrix.version }} --cmake-extra="-DENABLE_SANITIZERS=ON" --cmake-extra="-DSANITIZERS=\",address,undefined\""
+          docker run --env GITHUB_REF $DOCKER_IMAGE build -p ${{ env.PACKAGE_NAME }} --compiler=clang-${{ matrix.version }} --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS=",address,undefined"
 
   gcc-compat:
     runs-on: ubuntu-latest
