@@ -7,7 +7,7 @@ on:
       - '!main'
 
 env:
-  BUILDER_VERSION: v0.8.9
+  BUILDER_VERSION: v0.8.13
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -25,6 +25,8 @@ jobs:
           - manylinux1-x86
           - manylinux2014-x64
           - manylinux2014-x86
+          - debian-stretch-arm32v5
+          - debian-stretch-arm32v7
     steps:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
