@@ -13,7 +13,11 @@
 static const size_t s_max_handles = 1 << 24;
 
 int aws_get_pid(void) {
+#if defined(AWS_OS_WINDOWS_DESKTOP)
     return _getpid();
+#else
+    return -1;
+#endif
 }
 
 size_t aws_get_soft_limit_io_handles(void) {
