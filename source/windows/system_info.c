@@ -273,6 +273,11 @@ void aws_backtrace_log() {
     aws_mem_release(aws_default_allocator(), symbols);
 }
 #else /* !AWS_OS_WINDOWS_DESKTOP */
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    (void)stack_frames;
+    (void)size;
+    return 0;
+}
 char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
     (void)stack_frames;
     (void)stack_depth;
