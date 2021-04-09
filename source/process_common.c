@@ -56,11 +56,11 @@ int aws_run_command(
         goto on_finish;
     }
 
-#if defined(AWS_OS_WINDOWS)
+#    if defined(AWS_OS_WINDOWS)
     output_stream = _popen(options->command, "r");
-#else
+#    else
     output_stream = popen(options->command, "r");
-#endif
+#    endif
 
     if (output_stream) {
         while (!feof(output_stream)) {
@@ -71,11 +71,11 @@ int aws_run_command(
                 }
             }
         }
-#if defined(AWS_OS_WINDOWS)
+#    if defined(AWS_OS_WINDOWS)
         result->ret_code = _pclose(output_stream);
-#else
+#    else
         result->ret_code = pclose(output_stream);
-#endif
+#    endif
     }
 
     struct aws_byte_cursor trim_cursor = aws_byte_cursor_from_buf(&result_buffer);
