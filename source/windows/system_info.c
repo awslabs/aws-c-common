@@ -60,6 +60,8 @@ void aws_debug_break(void) {
 #endif
 }
 
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
 #ifdef _MSC_VER
 #    pragma warning(disable : 4091)
@@ -270,3 +272,24 @@ void aws_backtrace_log() {
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
+#else /* !AWS_OS_WINDOWS_DESKTOP */
+char **aws_backtrace_symbols(void *const stack_frames, size_t stack_depth) {
+    (void)stack_frames;
+    (void)stack_depth;
+    return NULL;
+}
+
+char **aws_backtrace_addr2line(void *const stack_frames, size_t stack_depth) {
+    return aws_backtrace_symbols(stack_frames, stack_depth);
+}
+
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
+    (void)fp;
+    (void)call_site_data;
+    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL "aws_backtrace_print: backtrace requested, but logging is unsupported on this platform");
+}
+
+void aws_backtrace_log() {
+    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
+}
+#endif /* AWS_OS_WINDOWS_DESKTOP */

@@ -145,6 +145,7 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
 /* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
    have processor groups per process. We need to find the mask in the correct group. */
 static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
+#if defined(AWS_OS_WINDOWS_DESKTOP)
     unsigned group_count = GetActiveProcessorGroupCount();
 
     unsigned total_processors_detected = 0;
@@ -164,6 +165,11 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
 
     *proc_num = group_mask_for_desired_processor;
     *group = group_with_desired_processor;
+#else /* non-desktop has no processor groups */
+    (void)desired_cpu;
+    *group = 0;
+    *proc_num = 0;
+#endif
 }
 
 int aws_thread_launch(
