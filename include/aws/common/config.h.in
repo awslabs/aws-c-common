@@ -16,6 +16,6 @@
 #cmakedefine AWS_HAVE_GCC_INLINE_ASM
 #cmakedefine AWS_HAVE_MSVC_MULX
 #cmakedefine AWS_HAVE_EXECINFO
-#cmakedefine AWS_OS_WINDOWS_DESKTOP
+#cmakedefine AWS_HAVE_WINAPI_DESKTOP
 
 #endif
