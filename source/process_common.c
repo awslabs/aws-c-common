@@ -32,7 +32,7 @@ int aws_run_command(
     struct aws_allocator *allocator,
     struct aws_run_command_options *options,
     struct aws_run_command_result *result) {
-    return aws_raise_error(AWS_ERR_NOT_IMPLEMENTED);
+    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
 }
 #else
 
