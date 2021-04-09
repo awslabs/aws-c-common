@@ -11,7 +11,7 @@
 #ifdef _WIN32
 #    define AWS_OS_WINDOWS
 /* indicate whether this is for Windows desktop, or UWP or Windows S, or other Windows-like devices */
-#    if (defined(WINAPI_FAMILY_PARTITION) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP))
+#    if defined(AWS_HAVE_WINAPI_DESKTOP)
 #        define AWS_OS_WINDOWS_DESKTOP
 #    endif
 
