@@ -27,7 +27,9 @@ if(NOT CMAKE_CROSSCOMPILING)
     return foo != 2;
     }" AWS_HAVE_MSVC_MULX)
 
-    check_c_source_runs("
+endif()
+
+check_c_source_compiles("
     #include <Windows.h>
     #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     int main() {
@@ -36,9 +38,7 @@ if(NOT CMAKE_CROSSCOMPILING)
     #else
     it's not windows desktop
     #endif
-    " AWS_HAVE_WINAPI_DESKTOP)
-
-endif()
+" AWS_HAVE_WINAPI_DESKTOP)
 
 check_c_source_compiles("
     int main() {
