@@ -14,7 +14,7 @@ if (POLICY CMP0069)
 endif()
 
 if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
+    cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
