@@ -381,6 +381,17 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
     const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_STRIDE_BITS;
 
+#if DEBUG_BUILD
+    for (uint32_t i = 0; i < log_subject_list->count; ++i) {
+        const struct aws_log_subject_info *info = &log_subject_list->subject_list[i];
+        uint32_t expected_id = min_range + i;
+        if (expected_id != info->subject_id) {
+            fprintf(stderr, "\"%s\" is at wrong index in aws_log_subject_info[]\n", info->subject_name);
+            AWS_FATAL_ASSERT(0);
+        }
+    }
+#endif /* DEBUG_BUILD */
+
     if (slot_index >= AWS_PACKAGE_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
