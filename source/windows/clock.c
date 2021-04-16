@@ -58,7 +58,8 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
         uint64_t ticks_remainder = u64_ticks - seconds * u64_frequency;
 
         *timestamp = aws_timestamp_convert(seconds, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL);
-        *timestamp += aws_timestamp_convert(ticks_remainder, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL) / u64_frequency;
+        *timestamp +=
+            aws_timestamp_convert(ticks_remainder, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL) / u64_frequency;
 
         return AWS_OP_SUCCESS;
     }
