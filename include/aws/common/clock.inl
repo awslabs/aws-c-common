@@ -19,18 +19,18 @@ AWS_EXTERN_C_BEGIN
  * to 0 first if you care about that kind of thing. If conversion would lead to integer overflow, the timestamp
  * returned will be the highest possible time that is representable, i.e. UINT64_MAX.
  */
-AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
+AWS_STATIC_IMPL uint64_t aws_timestamp_convert_u64(
     uint64_t timestamp,
-    enum aws_timestamp_unit convert_from,
-    enum aws_timestamp_unit convert_to,
+    uint64_t convert_from_frequency,
+    uint64_t convert_to_frequency,
     uint64_t *remainder) {
     uint64_t diff = 0;
 
-    if (convert_to > convert_from) {
-        diff = convert_to / convert_from;
+    if (convert_to_frequency > convert_from_frequency) {
+        diff = convert_to_frequency / convert_from_frequency;
         return aws_mul_u64_saturating(timestamp, diff);
-    } else if (convert_to < convert_from) {
-        diff = convert_from / convert_to;
+    } else if (convert_to_frequency < convert_from_frequency) {
+        diff = convert_from_frequency / convert_to_frequency;
 
         if (remainder) {
             *remainder = timestamp % diff;
@@ -40,6 +40,15 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     } else {
         return timestamp;
     }
+}
+
+AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
+    uint64_t timestamp,
+    enum aws_timestamp_unit convert_from,
+    enum aws_timestamp_unit convert_to,
+    uint64_t *remainder) {
+
+    return aws_timestamp_convert_u64(timestamp, convert_from, convert_to, remainder);
 }
 
 AWS_EXTERN_C_END
