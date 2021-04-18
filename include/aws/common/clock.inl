@@ -51,6 +51,22 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     return aws_timestamp_convert_u64(timestamp, convert_from, convert_to, remainder);
 }
 
+AWS_STATIC_IMPL uint64_t aws_timestamp_convert_ticks(
+    uint64_t ticks,
+    uint64_t old_frequency, 
+    uint64_t new_frequency) {
+
+    AWS_FATAL_ASSERT(old_frequency > 0 && new_frequency > 0);
+
+    uint64_t old_seconds_elapsed = ticks / old_frequency;
+    uint64_t old_remainder = ticks - old_seconds_elapsed * old_frequency;
+    
+    uint64_t new_ticks_whole = aws_mul_u64_saturating(old_seconds_elapsed, new_frequency);
+    uint64_t new_ticks_remainder = aws_mul_u64_saturating(old_remainder, new_frequency) / old_frequency;
+
+    return aws_add_u64_saturating(new_ticks_whole, new_ticks_remainder);
+}
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_CLOCK_INL */
