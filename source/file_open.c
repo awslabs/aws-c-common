@@ -20,6 +20,7 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, w_mode, (int)(strlen(mode) + 1));
     FILE *file;
     if (_wfopen_s(&file, w_file_path, w_mode)) {
+        /* errno will be set */
         return NULL;
     }
     return file;

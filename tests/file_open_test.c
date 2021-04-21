@@ -37,7 +37,7 @@ static int s_aws_fopen_non_ascii_test_fn(struct aws_allocator *allocator, void *
 
     (void)allocator;
     (void)ctx;
-    char file_path[] = "ÅÉxample.txt";
+    char file_path[] = "Å Éxample.txt";
     char content[] = "samples";
     ASSERT_SUCCESS(s_aws_fopen_test_helper(file_path, content));
     return AWS_OP_SUCCESS;
