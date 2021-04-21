@@ -4,13 +4,22 @@
  */
 
 #include <aws/common/file_open.h>
+#include <stdio.h>
+#include <windows.h>
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
 
 #ifdef _WIN32
-    wchar_t * w_file_path = new wchar_t[strlen(file_path)+1];
-    mbstowcs_s(NULL,w_file_path,strlen(file_path)+1,file_path,strlen(file_path));
-    return _wfopen(w_file_path, mode);
+    wchar_t w_file_path[1000];
+
+    MultiByteToWideChar(0, 0, file_path, -1, w_file_path, (int)(strlen(file_path) + 1));
+    wchar_t w_mode[10];
+    MultiByteToWideChar(0, 0, mode, -1, w_mode, (int)(strlen(mode) + 1));
+    FILE *file;
+    if (_wfopen_s(&file, w_file_path, w_mode)) {
+        return NULL;
+    }
+    return file;
 #else
     return fopen(file_path, mode);
 #endif
