@@ -6,7 +6,7 @@
 #include <aws/common/file_open.h>
 #include <stdio.h>
 #ifdef _WIN32
-    #include <windows.h>
+#    include <windows.h>
 #endif
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
