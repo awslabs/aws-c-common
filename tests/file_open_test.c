@@ -9,6 +9,7 @@
 
 static int s_aws_fopen_test_helper(char *file_path, char *content) {
     char read_result[100];
+    AWS_ZERO_ARRAY(read_result);
     FILE *file = aws_fopen(file_path, "w+");
     ASSERT_NOT_NULL(file);
     fprintf(file, "%s", content);
