@@ -20,7 +20,16 @@ static int s_aws_fopen_test_helper(char *file_path, char *content) {
     ASSERT_UINT_EQUALS(strlen(content), read_len);
     fclose(readfile);
     ASSERT_SUCCESS(strcmp(content, read_result));
+
+#ifdef _WIN32
+    wchar_t w_file_path[1000];
+    /* plus one for the EOS */
+    size_t file_path_len = strlen(file_path) + 1;
+    MultiByteToWideChar(CP_UTF8, 0, file_path, -1, w_file_path, (int)file_path_len);
+    ASSERT_SUCCESS(_wremove(w_file_path));
+#else
     ASSERT_SUCCESS(remove(file_path));
+#endif
     return AWS_OP_SUCCESS;
 }
 
@@ -28,7 +37,7 @@ static int s_aws_fopen_non_ascii_test_fn(struct aws_allocator *allocator, void *
 
     (void)allocator;
     (void)ctx;
-    char file_path[] = "Åsample.txt";
+    char file_path[] = "ÅÉxample.txt";
     char content[] = "samples";
     ASSERT_SUCCESS(s_aws_fopen_test_helper(file_path, content));
     return AWS_OP_SUCCESS;
