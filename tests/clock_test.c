@@ -159,3 +159,81 @@ AWS_TEST_CASE(test_milli_and_nanos_conversion, s_test_milli_and_nanos_conversion
 AWS_TEST_CASE(test_micro_and_nanos_conversion, s_test_micro_and_nanos_conversion)
 AWS_TEST_CASE(test_precision_loss_remainders_conversion, s_test_precision_loss_remainders_conversion)
 AWS_TEST_CASE(test_overflow_conversion, s_test_overflow_conversion)
+
+#define ONE_MHZ 1000000ULL
+#define THREE_MHZ 3000000ULL
+#define TEN_MHZ 10000000ULL
+#define SIXTEEN_MHZ 16000000ULL
+#define ONE_GHZ 1000000000ULL
+#define TWO_GHZ 2000000000ULL
+#define THIRTY_DAYS_IN_SECONDS (30ULL * 24 * 3600)
+#define SIXTY_DAYS_IN_SECONDS (60ULL * 24 * 3600)
+#define FIVE_YEARS_IN_SECONDS (5ULL * 365 * 24 * 3600)
+
+/*
+ * A test for a variety of edge cases that would unnecessarily overflow the old conversion logic.
+ */
+static int s_test_old_overflow_cases(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint64_t timestamp = 0;
+
+    /*
+     * https://github.com/awslabs/aws-c-common/issues/790
+     */
+    timestamp = aws_timestamp_convert_u64(18446744073710ULL, ONE_MHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 18446744073710000ULL);
+
+    /*
+     * 30 days of ticks at 3Mhz to nanos: https://github.com/awslabs/aws-c-common/pull/791#issuecomment-821784745
+     */
+    timestamp = aws_timestamp_convert_u64(THIRTY_DAYS_IN_SECONDS * THREE_MHZ, THREE_MHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 2592000000000000ULL);
+
+    /*
+     * Same duration, but at 16Mhz
+     */
+    timestamp = aws_timestamp_convert_u64(THIRTY_DAYS_IN_SECONDS * SIXTEEN_MHZ, SIXTEEN_MHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 2592000000000000ULL);
+
+    /*
+     * 60 days at 1ghz (could be shortcutted internally since frequencies are equal)
+     */
+    timestamp = aws_timestamp_convert_u64(SIXTY_DAYS_IN_SECONDS * ONE_GHZ, ONE_GHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 5184000000000000ULL);
+
+    /*
+     * 60 days at 2ghz
+     */
+    timestamp = aws_timestamp_convert_u64(SIXTY_DAYS_IN_SECONDS * TWO_GHZ, TWO_GHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 5184000000000000ULL);
+
+    /*
+     * 60 days at 2ghz with a little bit more for some remainder
+     */
+    timestamp = aws_timestamp_convert_u64(SIXTY_DAYS_IN_SECONDS * TWO_GHZ + 123, TWO_GHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 5184000000000061ULL);
+
+    /*
+     * Five years at 10mhz + remainder
+     */
+    timestamp = aws_timestamp_convert_u64(FIVE_YEARS_IN_SECONDS * TEN_MHZ + 5, TEN_MHZ, AWS_TIMESTAMP_NANOS, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 157680000000000500ULL);
+
+    /*
+     * large ns -> 1mhz
+     */
+    timestamp = aws_timestamp_convert_u64(THIRTY_DAYS_IN_SECONDS * ONE_GHZ + 123456789, ONE_GHZ, ONE_MHZ, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 2592000000000ULL + 123456);
+
+    /*
+     * large ns -> 3mhz
+     */
+    timestamp = aws_timestamp_convert_u64(FIVE_YEARS_IN_SECONDS * ONE_GHZ + 1001, ONE_GHZ, THREE_MHZ, NULL);
+    ASSERT_UINT_EQUALS(timestamp, 473040000000000ULL + 3);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_old_overflow_cases, s_test_old_overflow_cases)
