@@ -6,14 +6,13 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 /**
  * Assume an bounded size to enable using an accurate stub for memset.
  */
 void aws_hash_table_init_bounded_harness() {
-    struct aws_allocator *allocator = can_fail_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
     size_t size;
     __CPROVER_assume(size <= MAX_TABLE_SIZE);
     aws_hash_fn *hash_fn;

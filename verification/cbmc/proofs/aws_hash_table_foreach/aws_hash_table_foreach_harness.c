@@ -6,7 +6,6 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 int hash_table_foreach_proof_callback(void *context, struct aws_hash_element *pElement) {

@@ -5,7 +5,6 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_cursor_eq_byte_buf_harness() {
     /* parameters */

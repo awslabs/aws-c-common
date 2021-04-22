@@ -5,7 +5,6 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_string_destroy_secure_harness() {
     /* Non-deterministic parameters. */

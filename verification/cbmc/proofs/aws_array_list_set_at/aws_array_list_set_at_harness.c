@@ -19,7 +19,7 @@ void aws_array_list_set_at_harness() {
     __CPROVER_assume(aws_array_list_is_valid(&list));
     __CPROVER_assume(list.data != NULL);
     size_t malloc_size;
-    void *val = can_fail_malloc(list.item_size);
+    void *val = malloc(list.item_size);
     size_t index;
 
     /* save current state of the data structure */

@@ -5,14 +5,13 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_array_eq_c_str_harness() {
     /* assumptions */
     void *array;
     size_t array_len;
     __CPROVER_assume(array_len <= MAX_BUFFER_SIZE);
-    array = can_fail_malloc(array_len);
+    array = malloc(array_len);
     const char *c_str = ensure_c_str_is_allocated(MAX_BUFFER_SIZE);
 
     /* save current state of the parameters */

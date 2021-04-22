@@ -31,7 +31,7 @@ void aws_priority_queue_s_sift_either_harness() {
         size_t i;
         for (i = 0; i < queue.container.length; i++) {
             ((struct aws_priority_queue_node **)queue.backpointers.data)[i] =
-                can_fail_malloc(sizeof(struct aws_priority_queue_node));
+                malloc(sizeof(struct aws_priority_queue_node));
         }
     }
 

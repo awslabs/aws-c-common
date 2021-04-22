@@ -14,7 +14,7 @@ void aws_priority_queue_push_harness() {
     __CPROVER_assume(aws_priority_queue_is_bounded(&queue, MAX_INITIAL_ITEM_ALLOCATION, MAX_ITEM_SIZE));
     ensure_priority_queue_has_allocated_members(&queue);
     __CPROVER_assume(aws_priority_queue_is_valid(&queue));
-    void *item = can_fail_malloc(queue.container.item_size);
+    void *item = malloc(queue.container.item_size);
 
     /* Assume the function preconditions */
     __CPROVER_assume(item && AWS_MEM_IS_READABLE(item, queue.container.item_size));
