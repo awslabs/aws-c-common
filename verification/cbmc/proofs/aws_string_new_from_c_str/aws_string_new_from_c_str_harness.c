@@ -14,7 +14,7 @@ void aws_string_new_from_c_str_harness() {
 
     /* assumptions */
     __CPROVER_assume(c_str != NULL);
-    ASSUME_aws_default_allocator(allocator);
+    ASSUME_DEFAULT_ALLOCATOR(allocator);
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_c_str(allocator, c_str);

@@ -16,7 +16,7 @@ void aws_string_new_from_array_harness() {
 
     /* precondition */
     ASSUME_VALID_MEMORY_COUNT(array, alloc_size);
-    ASSUME_aws_default_allocator(allocator);
+    ASSUME_DEFAULT_ALLOCATOR(allocator);
     __CPROVER_assume(reported_size <= alloc_size);
 
     /* operation under verification */

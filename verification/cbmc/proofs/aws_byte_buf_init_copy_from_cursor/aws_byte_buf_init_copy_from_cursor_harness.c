@@ -19,7 +19,7 @@ void aws_byte_buf_init_copy_from_cursor_harness() {
     ensure_byte_cursor_has_allocated_buffer_member(&cursor);
     __CPROVER_assume(aws_byte_cursor_is_valid(&cursor));
 
-    ASSUME_aws_default_allocator(allocator);
+    ASSUME_DEFAULT_ALLOCATOR(allocator);
 
     if (aws_byte_buf_init_copy_from_cursor(&buf, allocator, cursor) == AWS_OP_SUCCESS) {
         /* assertions */

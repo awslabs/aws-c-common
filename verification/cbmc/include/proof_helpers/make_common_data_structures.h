@@ -28,7 +28,6 @@
 #define ASSUME_VALID_MEMORY(ptr) ASSUME_VALID_MEMORY_COUNT(ptr, sizeof(*(ptr)))
 
 #define ASSUME_DEFAULT_ALLOCATOR(allocator) allocator = aws_default_allocator()
-#define ASSUME_aws_default_allocator(allocator) allocator = aws_default_allocator()
 
 /*
  * Checks whether aws_byte_buf is bounded by max_size
