@@ -6,7 +6,6 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 void aws_hash_table_create_harness() {
@@ -15,7 +14,7 @@ void aws_hash_table_create_harness() {
     __CPROVER_assume(aws_hash_table_is_valid(&map));
     map.p_impl->equals_fn = uninterpreted_equals_assert_inputs_nonnull;
     map.p_impl->hash_fn = uninterpreted_hasher;
-    map.p_impl->alloc = can_fail_allocator();
+    map.p_impl->alloc = aws_default_allocator();
 
     size_t empty_slot_idx;
     __CPROVER_assume(aws_hash_table_has_an_empty_slot(&map, &empty_slot_idx));

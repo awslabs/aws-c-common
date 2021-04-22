@@ -14,7 +14,7 @@ void aws_array_list_init_dynamic_harness() {
     struct aws_array_list list; /* Precondition: list is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
+    struct aws_allocator *allocator = aws_default_allocator(); /* Precondition: allocator is non-null */
     size_t item_size;
     size_t initial_item_allocation;
 

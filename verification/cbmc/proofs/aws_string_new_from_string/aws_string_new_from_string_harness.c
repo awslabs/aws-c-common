@@ -5,14 +5,13 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 void aws_string_new_from_string_harness() {
     /* parameters */
     struct aws_string *source = ensure_string_is_allocated_nondet_length();
     __CPROVER_assume(aws_string_is_valid(source));
-    struct aws_allocator *allocator = (source->allocator) ? source->allocator : can_fail_allocator();
+    struct aws_allocator *allocator = (source->allocator) ? source->allocator : aws_default_allocator();
 
     /* operation under verification */
     struct aws_string *str = aws_string_new_from_string(allocator, source);

@@ -13,7 +13,7 @@ HARNESS_ENTRY = $(PROOF_UID)_harness
 HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
-PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROJECT_SOURCES += $(SRCDIR)/source/allocator.c
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 
 PROOF_SOURCES += $(PROOF_STUB)/error.c

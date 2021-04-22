@@ -5,14 +5,13 @@
 
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_byte_cursor_read_u8_harness() {
     /* parameters */
     struct aws_byte_cursor cur;
     size_t length;
     __CPROVER_assume(length >= 1);
-    uint8_t *dest = bounded_malloc(length);
+    uint8_t *dest = malloc(length);
 
     /* assumptions */
     ensure_byte_cursor_has_allocated_buffer_member(&cur);
