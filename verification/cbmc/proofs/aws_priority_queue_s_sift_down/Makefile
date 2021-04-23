@@ -1,15 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-###########
 include ../Makefile.aws_array_list
-include ../Makefile.aws_priority_queue_sift
 
-###########
-#
 # Runtime:
 # - 300s for MAX_PRIORITY_QUEUE_ITEMS=3 items
 # - 300s for MAX_PRIORITY_QUEUE_ITEMS=4 items
+
+MAX_PRIORITY_QUEUE_ITEMS ?= 3
+# This should be the ceil(1 + log2(MAX_PRIORITY_QUEUE_ITEMS))
+MAX_HEAP_HEIGHT ?= 3
+DEFINES += -DMAX_PRIORITY_QUEUE_ITEMS=$(MAX_PRIORITY_QUEUE_ITEMS)
 
 # Note:
 # In order to reach full coverage we need to unwind the harness loop
@@ -27,18 +28,15 @@ HARNESS_FILE = $(PROOFDIR)/$(HARNESS_ENTRY).c
 
 PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
-PROOF_SOURCES += $(PROOF_SOURCE)/proof_allocators.c
+PROJECT_SOURCES += $(SRCDIR)/source/allocator.c
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
 
-PROOF_SOURCES += $(PROOF_STUB)/error.c
 PROOF_SOURCES += $(PROOF_STUB)/memcpy_override_havoc.c
 PROOF_SOURCES += $(PROOF_STUB)/memcpy_override_havoc.c
+PROOF_SOURCES += $(PROOF_STUB)/s_swap_override_no_op.c
 
 PROJECT_SOURCES += $(SRCDIR)/source/array_list.c
 PROJECT_SOURCES += $(SRCDIR)/source/common.c
 PROJECT_SOURCES += $(SRCDIR)/source/priority_queue.c
 
-###########
-
 include ../Makefile.common
-

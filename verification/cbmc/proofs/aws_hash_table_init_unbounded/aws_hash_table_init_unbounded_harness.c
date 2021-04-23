@@ -6,7 +6,6 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 /**
@@ -14,7 +13,7 @@
  * We make this performant by using a stub for memset
  */
 void aws_hash_table_init_unbounded_harness() {
-    struct aws_allocator *allocator = can_fail_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
     size_t size;
     aws_hash_fn *hash_fn;
     __CPROVER_assume(hash_fn);

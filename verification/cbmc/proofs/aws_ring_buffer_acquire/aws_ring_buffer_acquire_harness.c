@@ -6,7 +6,6 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/ring_buffer.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/ring_buffer_abstract_states.h>
 
 void aws_ring_buffer_acquire_harness() {

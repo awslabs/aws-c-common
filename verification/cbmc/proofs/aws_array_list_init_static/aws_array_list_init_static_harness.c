@@ -24,7 +24,7 @@ void aws_array_list_init_static_harness() {
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
-    uint8_t *raw_array = bounded_malloc(len);
+    uint8_t *raw_array = malloc(len);
     __CPROVER_assume(raw_array != NULL);
     struct store_byte_from_buffer old_byte;
     save_byte_from_array(raw_array, len, &old_byte);

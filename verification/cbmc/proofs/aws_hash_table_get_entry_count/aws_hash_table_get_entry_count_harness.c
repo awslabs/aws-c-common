@@ -7,7 +7,6 @@
 #include <aws/common/math.h>
 #include <aws/common/private/hash_table_impl.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 #include <proof_helpers/utils.h>
 
 void aws_hash_table_get_entry_count_harness() {

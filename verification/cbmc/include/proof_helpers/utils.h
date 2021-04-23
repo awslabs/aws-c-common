@@ -8,9 +8,15 @@
 #include <aws/common/array_list.h>
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/nondet.h>
-#include <proof_helpers/proof_allocators.h>
 #include <stddef.h>
 #include <stdint.h>
+
+/**
+ * CBMC has an internal representation in which each object has an index and a (signed) offset
+ * A buffer cannot be larger than the max size of the offset
+ * The Makefile is expected to set CBMC_OBJECT_BITS to the value of --object-bits
+ */
+#define MAX_MALLOC (SIZE_MAX >> (CBMC_OBJECT_BITS + 1))
 
 // The magical name __CPROVER_uninterpreted_* causes CBMC to give us an
 // uninterpreted function

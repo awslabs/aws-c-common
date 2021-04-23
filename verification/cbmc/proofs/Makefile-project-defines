@@ -43,23 +43,7 @@ DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
 CHECKFLAGS += --pointer-primitive-check
 
 
-# We always override allocator functions with our own allocator
-# Removing the function from the goto program helps CBMC's
-# function pointer analysis.
-REMOVE_FUNCTION_BODY += aws_default_allocator
-REMOVE_FUNCTION_BODY += s_cf_allocator_allocate
-REMOVE_FUNCTION_BODY += s_cf_allocator_copy_description
-REMOVE_FUNCTION_BODY += s_cf_allocator_deallocate
-REMOVE_FUNCTION_BODY += s_cf_allocator_preferred_size
-REMOVE_FUNCTION_BODY += s_cf_allocator_reallocate
-REMOVE_FUNCTION_BODY += s_default_calloc
-REMOVE_FUNCTION_BODY += s_default_free
-REMOVE_FUNCTION_BODY += s_default_malloc
-REMOVE_FUNCTION_BODY += s_default_realloc
-
-
 # We override abort() to be assert(0), as it is not caught by
 # CBMC as a violation
 PROOF_SOURCES += $(PROOF_STUB)/abort_override_assert_false.c
 REMOVE_FUNCTION_BODY += abort
-

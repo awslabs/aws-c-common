@@ -15,7 +15,7 @@ void aws_priority_queue_init_dynamic_harness() {
     struct aws_priority_queue queue; /* Precondition: queue is non-null */
 
     /* parameters */
-    struct aws_allocator *allocator = can_fail_allocator(); /* Precondition: allocator is non-null */
+    struct aws_allocator *allocator = aws_default_allocator(); /* Precondition: allocator is non-null */
     size_t item_size;
     size_t initial_item_allocation;
     size_t len;
@@ -26,7 +26,7 @@ void aws_priority_queue_init_dynamic_harness() {
     __CPROVER_assume(!aws_mul_size_checked(initial_item_allocation, item_size, &len));
 
     /* perform operation under verification */
-    uint8_t *raw_array = bounded_malloc(len);
+    uint8_t *raw_array = malloc(len);
 
     if (aws_priority_queue_init_dynamic(&queue, allocator, initial_item_allocation, item_size, nondet_compare) ==
         AWS_OP_SUCCESS) {

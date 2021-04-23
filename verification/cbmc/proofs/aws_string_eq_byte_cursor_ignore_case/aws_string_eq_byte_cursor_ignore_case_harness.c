@@ -5,7 +5,6 @@
 
 #include <aws/common/string.h>
 #include <proof_helpers/make_common_data_structures.h>
-#include <proof_helpers/proof_allocators.h>
 
 void aws_string_eq_byte_cursor_ignore_case_harness() {
     struct aws_string *str = nondet_allocate_string_bounded_length(MAX_STRING_LEN);

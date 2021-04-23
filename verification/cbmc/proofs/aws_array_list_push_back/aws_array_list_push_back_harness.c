@@ -18,7 +18,7 @@ void aws_array_list_push_back_harness() {
     ensure_array_list_has_allocated_data_member(&list);
     __CPROVER_assume(aws_array_list_is_valid(&list));
     __CPROVER_assume(list.data != NULL);
-    void *val = can_fail_malloc(list.item_size);
+    void *val = malloc(list.item_size);
 
     /* save current state of the data structure */
     struct aws_array_list old = list;
