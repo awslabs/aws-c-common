@@ -10,7 +10,7 @@
 #endif
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
-    (void)mode;
+
 #ifdef _WIN32
     // wchar_t w_file_path[1000];
 
@@ -19,7 +19,7 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
     // wchar_t w_mode[10];
     // MultiByteToWideChar(CP_UTF8, 0, mode, -1, w_mode, (int)(strlen(mode) + 1));
     FILE *file;
-    if (fopen_s(&file, file_path, "r,ccs=UTF-8")) {
+    if (fopen_s(&file, file_path, mode)) {
         return NULL;
     }
     // if (_wfopen_s(&file, w_file_path, w_mode)) {
