@@ -54,7 +54,8 @@ static void s_mock_log_writer_clean_up(struct aws_log_writer *writer) {
 
 static struct aws_log_writer_vtable s_mock_writer_vtable = {
     .write = s_mock_log_writer_write,
-    .clean_up = s_mock_log_writer_clean_up};
+    .clean_up = s_mock_log_writer_clean_up,
+};
 
 static int s_aws_mock_log_writer_init(struct aws_log_writer *writer, struct aws_allocator *allocator) {
     struct mock_log_writer_impl *impl =
