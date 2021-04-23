@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_FILE_OPEN_H
-#define AWS_COMMON_FILE_OPEN_H
+#ifndef AWS_COMMON_FILE_H
+#define AWS_COMMON_FILE_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
@@ -19,4 +19,4 @@ FILE *aws_fopen(const char *file_path, const char *mode);
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_FILE_OPEN_H */
+#endif /* AWS_COMMON_FILE_H */

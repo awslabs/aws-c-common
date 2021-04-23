@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include "fcntl.h"
-#include <aws/common/file_open.h>
+#include <aws/common/file.h>
 
 #include <aws/testing/aws_test_harness.h>
 

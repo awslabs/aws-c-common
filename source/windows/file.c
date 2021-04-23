@@ -3,15 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/file_open.h>
+#include <aws/common/file.h>
 #include <stdio.h>
-#ifdef _WIN32
-#    include <windows.h>
-#endif
+#include <windows.h>
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
 
-#ifdef _WIN32
     wchar_t w_file_path[1000];
 
     /* the default encoding is utf-8 or ascii */
@@ -24,7 +21,4 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
         return NULL;
     }
     return file;
-#else
-    return fopen(file_path, mode);
-#endif
 }
