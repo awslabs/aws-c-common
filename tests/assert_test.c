@@ -6,14 +6,13 @@
 
 FILE *g_test_filedes;
 
+#include <aws/common/file.h>
 #include <aws/testing/aws_test_harness.h>
 
 #define NO_MORE_TESTS 12345
 #define BAILED_OUT 98765
 
 #ifdef _MSC_VER
-/* disable warning about fopen() this is just a test */
-#    pragma warning(disable : 4996)
 /* disable warning about unreferenced formal parameter */
 #    pragma warning(disable : 4100)
 #endif
@@ -171,7 +170,7 @@ void reset(void) {
         fclose(g_test_filedes);
     }
 
-    g_test_filedes = fopen(g_test_filename, "w");
+    g_test_filedes = aws_fopen(g_test_filename, "w");
     if (!g_test_filedes) {
         perror("***INTERNAL ERROR*** Failed to open temporary file");
         abort();
@@ -184,7 +183,7 @@ int check_failure_output(const char *expected) {
     fclose(g_test_filedes);
     g_test_filedes = NULL;
 
-    FILE *readfd = fopen(g_test_filename, "r");
+    FILE *readfd = aws_fopen(g_test_filename, "r");
 
     static char tmpbuf[256];
     char *rv = fgets(tmpbuf, sizeof(tmpbuf), readfd);
