@@ -19,7 +19,7 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
         return NULL;
     }
     wchar_t w_mode[10];
-    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, w_mode, AWS_ARRAY_SIZE(w_file_path))) {
+    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, w_mode, AWS_ARRAY_SIZE(w_mode))) {
         errno = EINVAL;
         return NULL;
     }
