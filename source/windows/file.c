@@ -12,9 +12,15 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
     wchar_t w_file_path[1000];
 
     /* the default encoding is utf-8 or ascii */
-    MultiByteToWideChar(CP_UTF8, 0, file_path, -1, w_file_path, (int)(strlen(file_path) + 1));
+    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, file_path, -1, w_file_path, AWS_ARRAY_SIZE(w_file_path))) {
+        /* When error happens, we need to set errno to invalid argument, since the function will set the Windows
+         * specific error that we don't handle */
+        errno = EINVAL;
+    }
     wchar_t w_mode[10];
-    MultiByteToWideChar(CP_UTF8, 0, mode, -1, w_mode, (int)(strlen(mode) + 1));
+    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, w_mode, AWS_ARRAY_SIZE(w_file_path))) {
+        errno = EINVAL;
+    }
     FILE *file;
     if (_wfopen_s(&file, w_file_path, w_mode)) {
         /* errno will be set */
