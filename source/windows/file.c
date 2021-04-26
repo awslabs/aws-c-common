@@ -16,10 +16,12 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
         /* When error happens, we need to set errno to invalid argument, since the function will set the Windows
          * specific error that we don't handle */
         errno = EINVAL;
+        return NULL;
     }
     wchar_t w_mode[10];
     if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, w_mode, AWS_ARRAY_SIZE(w_file_path))) {
         errno = EINVAL;
+        return NULL;
     }
     FILE *file;
     if (_wfopen_s(&file, w_file_path, w_mode)) {
