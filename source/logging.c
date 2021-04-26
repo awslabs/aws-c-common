@@ -5,6 +5,7 @@
 
 #include <aws/common/logging.h>
 
+#include <aws/common/file.h>
 #include <aws/common/log_channel.h>
 #include <aws/common/log_formatter.h>
 #include <aws/common/log_writer.h>
@@ -16,7 +17,6 @@
 
 #if _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
 #endif
 
 /*
@@ -545,7 +545,7 @@ int aws_logger_init_noalloc(
         impl->file = options->file;
         impl->should_close = false;
     } else { /* _MSC_VER */
-        impl->file = fopen(options->filename, "w");
+        impl->file = aws_fopen(options->filename, "w");
         impl->should_close = true;
     }
 

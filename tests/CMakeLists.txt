@@ -453,6 +453,10 @@ add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)
 add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
 
+add_test_case(aws_fopen_non_ascii_read_existing_file_test)
+add_test_case(aws_fopen_non_ascii_test)
+add_test_case(aws_fopen_ascii_test)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
