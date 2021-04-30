@@ -257,7 +257,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     aws_mem_release(aws_default_allocator(), symbols);
 }
 
-void aws_backtrace_log() {
+void aws_backtrace_log(int log_level) {
     if (!s_init_dbghelp()) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Unable to initialize dbghelp.dll for backtrace");
         return;
@@ -268,7 +268,7 @@ void aws_backtrace_log() {
     char **symbols = aws_backtrace_symbols(stack, num_frames);
     for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
