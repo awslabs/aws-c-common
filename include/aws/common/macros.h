@@ -78,7 +78,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #if defined(__has_feature) && __has_feature(address_sanitizer)
 #    define AWS_SUPPRESS_ASAN __attribute__((no_sanitize("address")))
 #else
-#define AWS_SUPPRESS_ASAN
+#    define AWS_SUPPRESS_ASAN
 #endif
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.

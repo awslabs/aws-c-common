@@ -37,8 +37,8 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     test_logger_init(&test_log, allocator, AWS_LL_TRACE, 0);
     aws_logger_set(&test_log);
 
-    int line = 0;                           /* captured on line of aws_backtrace_log call to match call site */
-    (void)line;                             /* may not be used if debug info is unavailable */
+    int line = 0; /* captured on line of aws_backtrace_log call to match call site */
+    (void)line;   /* may not be used if debug info is unavailable */
     aws_backtrace_log(AWS_LL_TRACE), (line = __LINE__); /* NOLINT */
 
     struct test_logger_impl *log = test_log.p_impl;
@@ -70,9 +70,9 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
      * verify if a best effort was made */
     if (strstr((const char *)buffer->buffer, file)) {
         /* check for the call site of aws_backtrace_print. Note that line numbers are off by one
-        * in both directions depending on compiler, so we check a range around the call site __LINE__
-        * The line number can also be ? on old compilers
-        */
+         * in both directions depending on compiler, so we check a range around the call site __LINE__
+         * The line number can also be ? on old compilers
+         */
         char fileline[4096];
         uint32_t found_file_line = 0;
         for (int lineno = line - 1; lineno <= line + 1; ++lineno) {
