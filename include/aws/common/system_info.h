@@ -98,7 +98,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 
 /* Log the callstack from the current stack to the currently configured aws_logger */
 AWS_COMMON_API
-void aws_backtrace_log(void);
+void aws_backtrace_log(int log_level);
 
 AWS_EXTERN_C_END
 
