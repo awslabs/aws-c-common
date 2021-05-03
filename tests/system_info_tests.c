@@ -61,11 +61,10 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
     aws_byte_buf_append_dynamic(buffer, &null_term);
     fprintf(stderr, "%s", (const char *)buffer->buffer);
     const char *func = __func__;
-    if (func[0] == 's') {
+    if (func[0] == 's' && func[1] == '_') {
         func += 2; /* skip over s_ */
     }
     ASSERT_NOT_NULL(strstr((const char *)buffer->buffer, func));
-#    if !defined(__APPLE__) /* apple doesn't always find file info */
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
     if (strstr((const char *)buffer->buffer, file)) {
@@ -77,7 +76,7 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
         uint32_t found_file_line = 0;
         for (int lineno = line - 1; lineno <= line + 1; ++lineno) {
             snprintf(fileline, sizeof(fileline), "%s:%d", file, lineno);
-            found_file_line |= strstr((const char *)buffer->buffer, fileline) != NULL;
+            found_file_line = strstr((const char *)buffer->buffer, fileline) != NULL;
             if (found_file_line) {
                 break;
             }
@@ -89,7 +88,6 @@ static int s_test_stack_trace_decoding(struct aws_allocator *allocator, void *ct
 
         ASSERT_TRUE(found_file_line);
     }
-#    endif /* __APPLE__ */
 #endif
 
     aws_logger_clean_up(&test_log);
