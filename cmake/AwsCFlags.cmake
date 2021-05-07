@@ -29,7 +29,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS /W4 /MP)
 
         if(WARNINGS_ARE_ERRORS)
-	    list(APPEND AWS_C_FLAGS /WX)
+            list(APPEND AWS_C_FLAGS /WX)
         endif()
 
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
@@ -62,7 +62,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes -fno-omit-frame-pointer)
 
         if(WARNINGS_ARE_ERRORS)
-	    list(APPEND AWS_C_FLAGS -Werror)
+            list(APPEND AWS_C_FLAGS -Werror)
         endif()
 
         if(NOT SET_PROPERTIES_NO_WEXTRA)
