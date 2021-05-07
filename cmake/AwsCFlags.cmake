@@ -26,7 +26,12 @@ function(aws_set_common_properties target)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
         endif()
 
-        list(APPEND AWS_C_FLAGS /W4 /WX /MP)
+        list(APPEND AWS_C_FLAGS /W4 /MP)
+
+        if(WARNINGS_ARE_ERRORS)
+	    list(APPEND AWS_C_FLAGS /WX)
+        endif()
+
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
