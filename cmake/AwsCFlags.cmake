@@ -8,6 +8,7 @@ include(CMakeParseArguments) # needed for CMake v3.4 and lower
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
+option(WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or unpopular compiler" ON)
 
 # This function will set all common flags on a target
 # Options:
@@ -25,7 +26,12 @@ function(aws_set_common_properties target)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
         endif()
 
-        list(APPEND AWS_C_FLAGS /W4 /WX /MP)
+        list(APPEND AWS_C_FLAGS /W4 /MP)
+
+        if(WARNINGS_ARE_ERRORS)
+            list(APPEND AWS_C_FLAGS /WX)
+        endif()
+
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
@@ -53,7 +59,11 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes -fno-omit-frame-pointer)
+        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes -fno-omit-frame-pointer)
+
+        if(WARNINGS_ARE_ERRORS)
+            list(APPEND AWS_C_FLAGS -Werror)
+        endif()
 
         if(NOT SET_PROPERTIES_NO_WEXTRA)
             list(APPEND AWS_C_FLAGS -Wextra)
