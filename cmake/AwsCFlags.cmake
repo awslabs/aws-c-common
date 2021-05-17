@@ -19,10 +19,6 @@ function(aws_set_common_properties target)
     set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
-        set(AWS_WARNINGS_ARE_ERRORS "Debug build setting all compiler warnings as error" ON)
-    endif()
-
     if(MSVC)
         # Remove other /W flags
         if(CMAKE_C_FLAGS MATCHES "/W[0-4]")
