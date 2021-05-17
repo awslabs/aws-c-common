@@ -8,7 +8,7 @@ include(CMakeParseArguments) # needed for CMake v3.4 and lower
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
-option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" ON)
+option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
 
 # This function will set all common flags on a target
 # Options:
@@ -18,6 +18,10 @@ option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try tur
 function(aws_set_common_properties target)
     set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
+
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        set(AWS_WARNINGS_ARE_ERRORS "Debug build setting all compiler warnings as error" ON)
+    endif()
 
     if(MSVC)
         # Remove other /W flags
