@@ -8,24 +8,13 @@
 #include <aws/common/ring_buffer.h>
 
 AWS_EXTERN_C_BEGIN
-
-static bool s_check_null_ring_buffer(const struct aws_ring_buffer *ring_buf) {
-    return !ring_buf->allocation && !ring_buf->allocation_end;
-}
-
 /*
  * Checks whether atomic_ptr correctly points to a memory location within the bounds of the aws_ring_buffer
  */
 AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(
     const struct aws_ring_buffer *ring_buf,
     const uint8_t *atomic_ptr) {
-    if (!atomic_ptr) {
-        return s_check_null_ring_buffer(ring_buf);
-    }
-    if (ring_buf->allocation && ring_buf->allocation_end) {
-        return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
-    }
-    return false;
+    return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
 }
 
 /**
@@ -48,11 +37,8 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring
     bool tail_in_range = aws_ring_buffer_check_atomic_ptr(ring_buf, tail);
     /* if head points-to the first element of the buffer then tail must too */
     bool valid_head_tail = (head != ring_buf->allocation) || (tail == ring_buf->allocation);
-    bool valid_mem = s_check_null_ring_buffer(ring_buf);
-    if (ring_buf->allocation && ring_buf->allocation_end) {
-        valid_mem = AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation);
-    }
-    return ring_buf && valid_mem && head_in_range && tail_in_range && valid_head_tail && (ring_buf->allocator != NULL);
+    return ring_buf && (ring_buf->allocation != NULL) && head_in_range && tail_in_range && valid_head_tail &&
+           (ring_buf->allocator != NULL);
 }
 AWS_EXTERN_C_END
 #endif /* AWS_COMMON_RING_BUFFER_INL */
