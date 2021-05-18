@@ -33,9 +33,15 @@ void ensure_ring_buffer_has_allocated_members(struct aws_ring_buffer *ring_buf, 
     size_t position_tail;
     __CPROVER_assume(position_head < size);
     __CPROVER_assume(position_tail < size);
-    aws_atomic_store_ptr(&ring_buf->head, (ring_buf->allocation + position_head));
-    aws_atomic_store_ptr(&ring_buf->tail, (ring_buf->allocation + position_tail));
-    ring_buf->allocation_end = ring_buf->allocation + size;
+    if (ring_buf->allocation) {
+        aws_atomic_store_ptr(&ring_buf->head, (ring_buf->allocation + position_head));
+        aws_atomic_store_ptr(&ring_buf->tail, (ring_buf->allocation + position_tail));
+        ring_buf->allocation_end = ring_buf->allocation + size;
+    } else {
+        aws_atomic_store_ptr(&ring_buf->head, NULL);
+        aws_atomic_store_ptr(&ring_buf->tail, NULL);
+        ring_buf->allocation_end = NULL;
+    }
 }
 
 /**

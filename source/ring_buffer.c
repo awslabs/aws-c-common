@@ -73,7 +73,8 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
-        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t ring_space =
+            (!ring_buf->allocation || !ring_buf->allocation_end) ? 0 : ring_buf->allocation_end - ring_buf->allocation;
 
         if (requested_size > ring_space) {
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
@@ -147,7 +148,8 @@ int aws_ring_buffer_acquire_up_to(
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
-        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t ring_space =
+            (!ring_buf->allocation || !ring_buf->allocation_end) ? 0 : ring_buf->allocation_end - ring_buf->allocation;
 
         size_t allocation_size = ring_space > requested_size ? requested_size : ring_space;
 
@@ -232,7 +234,7 @@ static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buff
 #ifdef CBMC
     /* only continue if buf points-into ring_buffer because comparison of pointers to different objects is undefined
      * (C11 6.5.8) */
-    if (!__CPROVER_same_object(buf->buffer, ring_buffer->allocation) ||
+    if (!__CPROVER_same_object(buf->buffer, ring_buffer->allocation) || !ring_buffer->allocation_end ||
         !__CPROVER_same_object(buf->buffer, ring_buffer->allocation_end - 1)) {
         return false;
     }
