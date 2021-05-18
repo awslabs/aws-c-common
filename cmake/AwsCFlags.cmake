@@ -77,7 +77,10 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS -Wno-long-long)
 
         # Always enable position independent code, since this code will always end up in a shared lib
-        list(APPEND AWS_C_FLAGS -fPIC)
+        check_c_compiler_flag(-fPIC HAS_FPIC_FLAG)
+        if (HAS_FPIC_FLAG)
+            list(APPEND AWS_C_FLAGS -fPIC)
+        endif()
 
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
