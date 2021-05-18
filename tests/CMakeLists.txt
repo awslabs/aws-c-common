@@ -62,6 +62,7 @@ add_test_case(test_milli_and_nanos_conversion)
 add_test_case(test_micro_and_nanos_conversion)
 add_test_case(test_precision_loss_remainders_conversion)
 add_test_case(test_overflow_conversion)
+add_test_case(test_old_overflow_cases)
 
 add_test_case(array_list_order_push_back_pop_front_test)
 add_test_case(array_list_order_push_back_pop_back_test)
@@ -451,6 +452,10 @@ add_test_case(xml_parser_name_too_long_test)
 add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)
 add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
+
+add_test_case(aws_fopen_non_ascii_read_existing_file_test)
+add_test_case(aws_fopen_non_ascii_test)
+add_test_case(aws_fopen_ascii_test)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

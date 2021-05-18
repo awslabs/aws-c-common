@@ -60,11 +60,13 @@ void aws_debug_break(void) {
 #endif
 }
 
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
-#ifdef _MSC_VER
-#    pragma warning(disable : 4091)
-#endif
-#include <dbghelp.h>
+#    ifdef _MSC_VER
+#        pragma warning(disable : 4091)
+#    endif
+#    include <dbghelp.h>
 
 struct win_symbol_data {
     struct _SYMBOL_INFO sym_info;
@@ -80,21 +82,21 @@ typedef BOOL __stdcall SymFromAddr_fn(
     _Out_opt_ PDWORD64 Displacement,
     _Inout_ PSYMBOL_INFO Symbol);
 
-#if defined(_WIN64)
+#    if defined(_WIN64)
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD64 qwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE64 Line64);
-#    define SymGetLineFromAddrName "SymGetLineFromAddr64"
-#else
+#        define SymGetLineFromAddrName "SymGetLineFromAddr64"
+#    else
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD dwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE Line);
-#    define SymGetLineFromAddrName "SymGetLineFromAddr"
-#endif
+#        define SymGetLineFromAddrName "SymGetLineFromAddr"
+#    endif
 
 static SymInitialize_fn *s_SymInitialize = NULL;
 static SymSetOptions_fn *s_SymSetOptions = NULL;
@@ -255,7 +257,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     aws_mem_release(aws_default_allocator(), symbols);
 }
 
-void aws_backtrace_log() {
+void aws_backtrace_log(int log_level) {
     if (!s_init_dbghelp()) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Unable to initialize dbghelp.dll for backtrace");
         return;
@@ -266,7 +268,35 @@ void aws_backtrace_log() {
     char **symbols = aws_backtrace_symbols(stack, num_frames);
     for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
+#else  /* !AWS_OS_WINDOWS_DESKTOP */
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    (void)stack_frames;
+    (void)size;
+    return 0;
+}
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
+    (void)stack_frames;
+    (void)stack_depth;
+    return NULL;
+}
+
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    return aws_backtrace_symbols(stack_frames, stack_depth);
+}
+
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
+    (void)fp;
+    (void)call_site_data;
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_GENERAL, "aws_backtrace_print: backtrace requested, but logging is unsupported on this platform");
+}
+
+void aws_backtrace_log() {
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
+}
+#endif /* AWS_OS_WINDOWS_DESKTOP */

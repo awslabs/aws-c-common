@@ -5,6 +5,7 @@
 
 #include <aws/common/logging.h>
 
+#include <aws/common/file.h>
 #include <aws/common/log_channel.h>
 #include <aws/common/log_formatter.h>
 #include <aws/common/log_writer.h>
@@ -16,7 +17,6 @@
 
 #if _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
 #endif
 
 /*
@@ -381,6 +381,17 @@ void aws_register_log_subject_info_list(struct aws_log_subject_info_list *log_su
     const uint32_t min_range = log_subject_list->subject_list[0].subject_id;
     const uint32_t slot_index = min_range >> AWS_LOG_SUBJECT_STRIDE_BITS;
 
+#if DEBUG_BUILD
+    for (uint32_t i = 0; i < log_subject_list->count; ++i) {
+        const struct aws_log_subject_info *info = &log_subject_list->subject_list[i];
+        uint32_t expected_id = min_range + i;
+        if (expected_id != info->subject_id) {
+            fprintf(stderr, "\"%s\" is at wrong index in aws_log_subject_info[]\n", info->subject_name);
+            AWS_FATAL_ASSERT(0);
+        }
+    }
+#endif /* DEBUG_BUILD */
+
     if (slot_index >= AWS_PACKAGE_SLOTS) {
         /* This is an NDEBUG build apparently. Kill the process rather than
          * corrupting heap. */
@@ -534,7 +545,7 @@ int aws_logger_init_noalloc(
         impl->file = options->file;
         impl->should_close = false;
     } else { /* _MSC_VER */
-        impl->file = fopen(options->filename, "w");
+        impl->file = aws_fopen(options->filename, "w");
         impl->should_close = true;
     }
 

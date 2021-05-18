@@ -5,6 +5,7 @@
 
 #include "logging_test_utilities.h"
 
+#include <aws/common/file.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 
@@ -12,10 +13,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-
-#ifdef _MSC_VER
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
-#endif                              /* _MSC_VER */
 
 #define TEST_PIPELINE_MAX_BUFFER_SIZE 4096
 
@@ -48,7 +45,7 @@ int do_pipeline_logger_test(
     aws_logger_clean_up(&logger);
 
     char buffer[TEST_PIPELINE_MAX_BUFFER_SIZE];
-    FILE *file = fopen(test_file_cstr, "r");
+    FILE *file = aws_fopen(test_file_cstr, "r");
     int open_error = errno;
     size_t bytes_read = 0;
 

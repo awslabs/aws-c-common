@@ -30,6 +30,17 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 
 check_c_source_compiles("
+    #include <Windows.h>
+    #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+    int main() {
+        return 0;
+    }
+    #else
+    it's not windows desktop
+    #endif
+" AWS_HAVE_WINAPI_DESKTOP)
+
+check_c_source_compiles("
     int main() {
 #if !(defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86))
 #    error \"not intel\"

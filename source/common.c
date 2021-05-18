@@ -253,8 +253,8 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
         "task-scheduler",
         "Subject for task scheduler or task specific logging."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_THREAD, "thread", "Subject for logging thread related functions."),
-    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_MEMTRACE, "memtrace", "Output from the aws_mem_trace_dump function"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
 };
 
 static struct aws_log_subject_info_list s_common_log_subject_list = {

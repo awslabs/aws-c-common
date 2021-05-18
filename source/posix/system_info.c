@@ -193,7 +193,7 @@ char *s_whitelist_chars(char *path) {
 #        include <dlfcn.h>
 #        include <mach-o/dyld.h>
 static char s_exe_path[PATH_MAX];
-static const char *s_get_executable_path() {
+static const char *s_get_executable_path(void) {
     static const char *s_exe = NULL;
     if (AWS_LIKELY(s_exe)) {
         return s_exe;
@@ -381,43 +381,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
 
     fprintf(fp, "################################################################################\n");
-    fprintf(fp, "Resolved stacktrace:\n");
-    fprintf(fp, "################################################################################\n");
-    /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
-     *                or: <exe-or-shared-lib> [0x<addr>]
-     *                or: [0x<addr>]
-     * start at 1 to skip the current frame (this function) */
-    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
-        struct aws_stack_frame_info frame;
-        AWS_ZERO_STRUCT(frame);
-        const char *symbol = symbols[frame_idx];
-        if (s_parse_symbol(symbol, stack_frames[frame_idx], &frame)) {
-            goto parse_failed;
-        }
-
-        /* TODO: Emulate libunwind */
-        char cmd[sizeof(struct aws_stack_frame_info)] = {0};
-        s_resolve_cmd(cmd, sizeof(cmd), &frame);
-        FILE *out = popen(cmd, "r");
-        if (!out) {
-            goto parse_failed;
-        }
-        char output[1024];
-        if (fgets(output, sizeof(output), out)) {
-            /* if addr2line or atos don't know what to do with an address, they just echo it */
-            /* if there are spaces in the output, then they resolved something */
-            if (strstr(output, " ")) {
-                symbol = output;
-            }
-        }
-        pclose(out);
-
-    parse_failed:
-        fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
-    }
-
-    fprintf(fp, "################################################################################\n");
-    fprintf(fp, "Raw stacktrace:\n");
+    fprintf(fp, "Stack trace:\n");
     fprintf(fp, "################################################################################\n");
     for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         const char *symbol = symbols[frame_idx];
@@ -425,6 +389,21 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
     fflush(fp);
 
+    free(symbols);
+}
+
+void aws_backtrace_log(int log_level) {
+    void *stack_frames[AWS_BACKTRACE_DEPTH];
+    size_t num_frames = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
+    if (!num_frames) {
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "Unable to capture backtrace");
+        return;
+    }
+    char **symbols = aws_backtrace_symbols(stack_frames, num_frames);
+    for (size_t line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
+    }
     free(symbols);
 }
 
@@ -451,21 +430,11 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
     (void)stack_depth;
     return NULL;
 }
-#endif /* AWS_HAVE_EXECINFO */
 
-void aws_backtrace_log() {
-    void *stack_frames[1024];
-    size_t num_frames = aws_backtrace(stack_frames, 1024);
-    if (!num_frames) {
-        return;
-    }
-    char **symbols = aws_backtrace_addr2line(stack_frames, num_frames);
-    for (size_t line = 0; line < num_frames; ++line) {
-        const char *symbol = symbols[line];
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
-    }
-    free(symbols);
+void aws_backtrace_log(int log_level) {
+    AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "aws_backtrace_log: no execinfo compatible backtrace API available");
 }
+#endif /* AWS_HAVE_EXECINFO */
 
 #if defined(AWS_OS_APPLE)
 enum aws_platform_os aws_get_platform_build_os(void) {

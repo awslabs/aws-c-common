@@ -29,7 +29,7 @@ void aws_priority_queue_top_harness() {
     save_byte_from_array((uint8_t *)old_backpointers.data, old_backpointers.current_size, &old_byte_backpointers);
 
     /* perform operation under verification */
-    void *top_val_ptr = bounded_malloc(queue.container.item_size);
+    void *top_val_ptr = malloc(queue.container.item_size);
     aws_priority_queue_top(&queue, &top_val_ptr);
 
     /* assertions */

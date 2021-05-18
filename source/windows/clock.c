@@ -51,10 +51,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
     if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
-        *timestamp = aws_timestamp_convert((uint64_t)ticks.QuadPart, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MICROS, NULL) /
-                     (uint64_t)frequency.QuadPart;
+        *timestamp = aws_timestamp_convert_u64(
+            (uint64_t)ticks.QuadPart, (uint64_t)frequency.QuadPart, AWS_TIMESTAMP_NANOS, NULL);
 
-        *timestamp = aws_timestamp_convert(*timestamp, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL);
         return AWS_OP_SUCCESS;
     }
 
