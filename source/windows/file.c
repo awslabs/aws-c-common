@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/file.h>
+#include <errno.h>
 #include <stdio.h>
 #include <windows.h>
 
