@@ -39,9 +39,7 @@ void aws_byte_cursor_read_harness() {
             assert_byte_from_buffer_matches(cur.ptr, &old_byte_from_cur);
         }
     } else {
-        if (old_cur.ptr) {
-            assert(cur.ptr == old_cur.ptr + length);
-        }
+        assert(AWS_IMPLIES(old.ptr != NULL, cursor.ptr == old.ptr + len));
         assert(cur.len == old_cur.len - length);
     }
 }
