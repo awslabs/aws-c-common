@@ -14,7 +14,7 @@ AWS_EXTERN_C_BEGIN
 AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(
     const struct aws_ring_buffer *ring_buf,
     const uint8_t *atomic_ptr) {
-    return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
+    return ((atomic_ptr != NULL) && (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end));
 }
 
 /**
