@@ -44,9 +44,9 @@ void aws_byte_cursor_read_and_fill_buffer_harness() {
         }
     } else {
         if (old_cur.ptr != NULL) {
-            assert(cursor.ptr == old_cur.ptr + len);
+            assert(cur.ptr == old_cur.ptr + len);
         } else {
-            assert(cursor.ptr == NULL);
+            assert(cur.ptr == NULL);
         }
         assert(cur.len == old_cur.len - old_buf.capacity);
     }
