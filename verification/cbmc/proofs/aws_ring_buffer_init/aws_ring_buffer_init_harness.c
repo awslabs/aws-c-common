@@ -15,7 +15,7 @@ void aws_ring_buffer_init_harness() {
     /* Preconditions. */
     __CPROVER_assume(ring_buf != NULL);
     __CPROVER_assume(allocator != NULL);
-    __CPROVER_assume(size > 0 && size < MAX_MALLOC); 
+    __CPROVER_assume(size > 0 && size < MAX_MALLOC);
 
     /* Operation under verification. */
     if (aws_ring_buffer_init(ring_buf, allocator, size) == AWS_OP_SUCCESS) {
