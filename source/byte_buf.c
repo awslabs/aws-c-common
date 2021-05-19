@@ -857,13 +857,12 @@ int aws_byte_cursor_compare_lookup(
     AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
-    if (lhs->len == 0 || rhs->len == 0) {
-        if (lhs->len < rhs->len) {
-            return -1;
-        } else if (lhs->len > rhs->len) {
-            return 1;
-        }
+    if (lhs->len == 0 && rhs->len == 0) {
         return 0;
+    } else if (lhs->len == 0) {
+        return -1;
+    } else if (rhs->len == 0) {
+        return 1;
     }
     const uint8_t *lhs_curr = lhs->ptr;
     const uint8_t *lhs_end = lhs_curr + lhs->len;

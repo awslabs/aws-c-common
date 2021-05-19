@@ -234,10 +234,11 @@ static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buff
 #ifdef CBMC
     /* only continue if buf points-into ring_buffer because comparison of pointers to different objects is undefined
      * (C11 6.5.8) */
-    if (!__CPROVER_same_object(buf->buffer, ring_buffer->allocation) || !ring_buffer->allocation_end ||
-        !__CPROVER_same_object(buf->buffer, ring_buffer->allocation_end - 1)) {
-        return false;
-    }
+    return (
+        __CPROVER_same_object(buf->buffer, ring_buffer->allocation) &&
+        AWS_IMPLIES(
+            ring_buffer->allocation_end != NULL, __CPROVER_same_object(buf->buffer, ring_buffer->allocation_end - 1)));
+
 #endif
     return buf->buffer && ring_buffer->allocation && ring_buffer->allocation_end &&
            buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;
