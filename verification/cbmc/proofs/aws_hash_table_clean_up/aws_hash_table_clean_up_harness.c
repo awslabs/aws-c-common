@@ -27,6 +27,7 @@ void aws_hash_table_clean_up_harness() {
     // This would normally raise a warning since the memory was deallocated, so use the pragma.
 #pragma CPROVER check push
 #pragma CPROVER check disable "pointer"
+#pragma CPROVER check disable "pointer-overflow"
     size_t i;
     size_t len = state->size * sizeof(state->slots[0]);
     __CPROVER_assume(i < len);
