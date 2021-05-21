@@ -36,7 +36,11 @@ void aws_byte_cursor_advance_harness() {
     } else {
         assert(rv.ptr == old.ptr);
         assert(rv.len == len);
-        assert(cursor.ptr == old.ptr + len);
+        if (old.ptr != NULL) {
+            assert(cursor.ptr == old.ptr + len);
+        } else {
+            assert(cursor.ptr == NULL);
+        }
         assert(cursor.len == old.len - len);
     }
 }
