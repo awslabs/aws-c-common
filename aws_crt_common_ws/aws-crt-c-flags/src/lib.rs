@@ -85,7 +85,7 @@ impl CRTModuleBuildInfo {
             }
         }
 
-        panic!("Module: ".to_owned() + dependency + " does not appear to be a part of your dependency chain. Alternatively, the dependencies build script does not call CRTModuleBuildInfo::run_build() correctly");
+        panic!("Module: `{}` does not appear to be a part of your dependency chain. Alternatively, the dependencies build script does not call CRTModuleBuildInfo::run_build() correctly", dependency);
     }
 
     /// Adds a c-flag to your build, and guarantees that when another module calls add_module_dependency()
