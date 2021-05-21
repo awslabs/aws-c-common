@@ -67,3 +67,7 @@ cmake-build*
 # CBMC files
 *.goto
 *.log
+
+# Rust and Cargo
+*.lock
+aws_crt_common_ws/target

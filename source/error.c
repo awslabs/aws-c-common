@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef AWS_NO_STATIC_IMPL
+#    include <aws/common/error.inl>
+#endif
+
 static AWS_THREAD_LOCAL int tl_last_error = 0;
 
 static aws_error_handler_fn *s_global_handler = NULL;

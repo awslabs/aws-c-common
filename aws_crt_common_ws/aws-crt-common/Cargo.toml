@@ -1,0 +1,18 @@
+[package]
+name = "aws-crt-common"
+version = "0.1.0"
+authors = ["AWS Common Runtime Team (aws-sdk-common-runtime-team@amazon.com)"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+
+[dependencies]
+aws-crt-common-sys = { path = "../aws-crt-common-sys" }
+futures = "0.3"
+
+[dev-dependencies]
+serial_test = "0.4.0"
+
+
