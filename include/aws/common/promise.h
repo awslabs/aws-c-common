@@ -76,4 +76,4 @@ void *aws_promise_value(struct aws_promise *promise);
  */
 void *aws_promise_take_value(struct aws_promise *promise);
 
-#endif //AWS_COMMON_PROMISE_H
+#endif // AWS_COMMON_PROMISE_H
