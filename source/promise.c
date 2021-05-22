@@ -5,6 +5,7 @@
 
 #include <aws/common/condition_variable.h>
 #include <aws/common/mutex.h>
+#include <aws/common/promise.h>
 #include <aws/common/ref_count.h>
 
 struct aws_promise {
@@ -15,6 +16,7 @@ struct aws_promise {
     bool complete;
     int error_code;
     void *value;
+
     /* destructor for value, will be invoked if the value is not taken */
     void (*dtor)(void *);
 };
