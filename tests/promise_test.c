@@ -85,11 +85,9 @@ static int s_promise_test_wait_for_a_bit(struct aws_allocator *allocator, void *
         .work_time = 3 * 1000 * 1000,
     };
     struct aws_thread worker_thread = s_promise_test_launch_worker(&work);
-    bool complete = false;
-    while (!aws_promise_is_complete(promise)) {
-        complete = aws_promise_wait_for(promise, 500);
-    }
-    ASSERT_TRUE(complete);
+    /* wait until the worker finishes, in 500ms intervals */
+    while (!aws_promise_wait_for(promise, 500));
+
     ASSERT_TRUE(aws_promise_error_code(promise) == 0);
     ASSERT_NULL(aws_promise_value(promise));
 
