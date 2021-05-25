@@ -86,7 +86,7 @@ AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif /* NO_STDINT */
 
 /**
- * @deprecated Use int64_t instead.
+ * @deprecated Use int64_t instead for offsets in public APIs.
  */
 typedef int64_t aws_off_t;
 
