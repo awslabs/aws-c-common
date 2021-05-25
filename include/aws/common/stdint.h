@@ -85,16 +85,4 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif /* NO_STDINT */
 
-#if defined(_MSC_VER)
-typedef int64_t aws_off_t;
-#else
-#    if _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L
-typedef off_t aws_off_t;
-#    else
-typedef long aws_off_t;
-#    endif /*  _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L */
-#endif     /* defined(_MSC_VER) */
-
-AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
-
 #endif /* AWS_COMMON_STDINT_H */
