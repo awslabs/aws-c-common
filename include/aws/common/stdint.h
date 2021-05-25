@@ -85,4 +85,9 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif /* NO_STDINT */
 
+/**
+ * @deprecated Use int64_t instead.
+ */
+typedef int64_t aws_off_t;
+
 #endif /* AWS_COMMON_STDINT_H */
