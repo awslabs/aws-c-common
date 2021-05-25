@@ -116,19 +116,19 @@ function(aws_set_common_properties target)
         # Check for Posix Large File Support (LFS).
         # Doing this check here, instead of AwsFeatureTests.cmake,
         # because we might need to modify AWS_C_FLAGS to enable it.
-        set(HAS_POSIX_LFS FALSE)
-        aws_check_posix_lfs("" HAS_POSIX_LFS_BY_DEFAULT)
-        if (HAS_POSIX_LFS_BY_DEFAULT)
-            set(HAS_POSIX_LFS TRUE)
+        set(HAS_LFS FALSE)
+        aws_check_posix_lfs("" HAS_POSIX_LARGE_FILE_SUPPORT_BY_DEFAULT)
+        if (HAS_POSIX_LARGE_FILE_SUPPORT_BY_DEFAULT)
+            set(HAS_LFS TRUE)
         else()
-            aws_check_posix_lfs("-D_FILE_OFFSET_BITS=64" HAS_POSIX_LFS_VIA_DEFINES)
-            if (HAS_POSIX_LFS_VIA_DEFINES)
+            aws_check_posix_lfs("-D_FILE_OFFSET_BITS=64" HAS_POSIX_LARGE_FILE_SUPPORT_VIA_DEFINES)
+            if (HAS_POSIX_LARGE_FILE_SUPPORT_VIA_DEFINES)
                 list(APPEND AWS_C_FLAGS "-D_FILE_OFFSET_BITS=64")
-                set(HAS_POSIX_LFS TRUE)
+                set(HAS_LFS TRUE)
             endif()
         endif()
         # This becomes a define in config.h
-        set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_POSIX_LFS} CACHE BOOL "Posix Large File Support")
+        set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
 
     endif()
 
