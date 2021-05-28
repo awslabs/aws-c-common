@@ -40,8 +40,9 @@ struct aws_promise *aws_promise_new(struct aws_allocator *allocator) {
     return promise;
 }
 
-void aws_promise_acquire(struct aws_promise *promise) {
+struct aws_promise *aws_promise_acquire(struct aws_promise *promise) {
     aws_ref_count_acquire(&promise->rc);
+    return promise;
 }
 
 void aws_promise_release(struct aws_promise *promise) {
@@ -59,10 +60,10 @@ void aws_promise_wait(struct aws_promise *promise) {
     aws_mutex_unlock(&promise->mutex);
 }
 
-bool aws_promise_wait_for(struct aws_promise *promise, size_t milliseconds) {
+bool aws_promise_wait_for(struct aws_promise *promise, size_t nanoseconds) {
     aws_mutex_lock(&promise->mutex);
     aws_condition_variable_wait_for_pred(
-        &promise->cv, &promise->mutex, (int64_t)milliseconds, s_promise_completed, promise);
+        &promise->cv, &promise->mutex, (int64_t)nanoseconds, s_promise_completed, promise);
     const bool complete = promise->complete;
     aws_mutex_unlock(&promise->mutex);
     return complete;
@@ -82,13 +83,13 @@ void aws_promise_complete(struct aws_promise *promise, void *value, void (*dtor)
     promise->dtor = dtor;
     promise->complete = true;
     aws_mutex_unlock(&promise->mutex);
-    aws_condition_variable_notify_one(&promise->cv);
+    aws_condition_variable_notify_all(&promise->cv);
 }
 
 void aws_promise_fail(struct aws_promise *promise, int error_code) {
     AWS_FATAL_ASSERT(error_code != 0 && "aws_promise_fail: cannot fail a promise with a 0 error_code");
     aws_mutex_lock(&promise->mutex);
-    AWS_FATAL_ASSERT(!promise->complete && "aws_promise_fail: cannot fail a promise more than once");
+    AWS_FATAL_ASSERT(!promise->complete && "aws_promise_fail: cannot complete a promise more than once");
     promise->error_code = error_code;
     promise->complete = true;
     aws_mutex_unlock(&promise->mutex);
