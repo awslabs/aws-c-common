@@ -1,4 +1,4 @@
-use aws_crt_c_flags::CRTModuleBuildInfo;
+use aws_crt_c_flags::{CRTModuleBuildInfo, HeaderType};
 use std::borrow::{Borrow, BorrowMut};
 use std::path::Path;
 
@@ -19,20 +19,18 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
  */\n"
         .to_string();
 
-    build_config.add_public_define("AWS_NO_STATIC_IMPL", "1");
+    build_config.public_define("AWS_NO_STATIC_IMPL", "1");
     config_file_str = format!("{}#define AWS_NO_STATIC_IMPL 1\n", config_file_str);
 
     #[target_feature(enable = "avx2")]
     {
-        build_config.add_private_define("HAVE_AVX2_INTRINSICS", "1");
-        build_config.add_private_define("HAVE_MM256_EXTRACT_EPI64", "1");
+        build_config.private_define("HAVE_AVX2_INTRINSICS", "1");
+        build_config.private_define("HAVE_MM256_EXTRACT_EPI64", "1");
 
-        if build_config.get_toolchain().get_compiler().is_like_msvc() {
-            build_config.add_public_cflag("/arch:AVX2");
+        if build_config.follows_msvc_semantics() {
+            build_config.public_cflag("/arch:AVX2");
         } else {
-            build_config
-                .add_public_cflag("-mavx")
-                .add_public_cflag("-mavx2");
+            build_config.public_cflag("-mavx").public_cflag("-mavx2");
         }
     }
 
@@ -54,7 +52,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_private_define("AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS", "1");
+        build_config.private_define("AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS", "1");
         config_file_str = format!(
             "{}#define AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS 1\n",
             config_file_str
@@ -71,7 +69,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_public_define("AWS_HAVE_MSVC_MULX", "1");
+        build_config.public_define("AWS_HAVE_MSVC_MULX", "1");
     }
 
     if build_config
@@ -87,25 +85,25 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_public_define("AWS_HAVE_WINAPI_DESKTOP", "1");
+        build_config.public_define("AWS_HAVE_WINAPI_DESKTOP", "1");
         config_file_str = format!("{}#define AWS_HAVE_WINAPI_DESKTOP 1\n", config_file_str);
     }
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
-        build_config.add_public_define("AWS_ARCH_INTEL", "1");
+        build_config.public_define("AWS_ARCH_INTEL", "1");
         config_file_str = format!("{}#define AWS_ARCH_INTEL 1\n", config_file_str);
     }
 
     #[cfg(target_arch = "aarch64")]
     {
-        build_config.add_public_define("AWS_ARCH_ARM64", "1");
+        build_config.public_define("AWS_ARCH_ARM64", "1");
         config_file_str = format!("{}#define AWS_ARCH_ARM64 1\n", config_file_str);
     }
 
     #[cfg(target_arch = "arm")]
     {
-        build_config.add_public_define("AWS_ARCH_ARM32", "1");
+        build_config.public_define("AWS_ARCH_ARM32", "1");
         config_file_str = format!("{}#define AWS_ARCH_ARM32 1\n", config_file_str);
     }
 
@@ -119,7 +117,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_private_define("AWS_HAVE_GCC_INLINE_ASM", "1");
+        build_config.private_define("AWS_HAVE_GCC_INLINE_ASM", "1");
         config_file_str = format!("{}#define AWS_HAVE_GCC_INLINE_ASM 1\n", config_file_str);
     }
 
@@ -136,7 +134,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_private_define("AWS_HAVE_AUXV", "1");
+        build_config.private_define("AWS_HAVE_AUXV", "1");
         config_file_str = format!("{}#define AWS_HAVE_AUXV 1\n", config_file_str);
     }
 
@@ -149,7 +147,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_private_define("AWS_HAVE_EXECINFO", "1");
+        build_config.private_define("AWS_HAVE_EXECINFO", "1");
         config_file_str = format!("{}#define AWS_HAVE_EXECINFO 1\n", config_file_str);
     }
 
@@ -163,128 +161,127 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
         )
         .is_ok()
     {
-        build_config.add_private_define("HAVE_SYSCONF", "1");
+        build_config.private_define("HAVE_SYSCONF", "1");
         config_file_str = format!("{}#define HAVE_SYSCONF 1\n", config_file_str);
     }
     config_file_str = format!("{}#endif\n", config_file_str);
     let output_path = Path::new("include/aws/common/config.h");
-    build_config
-        .write_generated_file_to_output_path(config_file_str.to_string().borrow(), output_path);
+    build_config.write_generated_file_to_output_path(config_file_str.borrow(), output_path);
 }
 fn main() {
-    let mut build_info = CRTModuleBuildInfo::new("aws-c-common");
+    let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     load_compiler_configuration(build_info.borrow_mut());
     let include_path = Path::new("../../include/aws");
-    build_info.add_include_dir_and_copy_to_build_tree(include_path);
+    build_info.include_dir(include_path, HeaderType::Public);
 
     build_info
-        .add_file_to_build(Path::new("../../source/allocator.c"))
-        .add_file_to_build(Path::new("../../source/allocator_sba.c"))
-        .add_file_to_build(Path::new("../../source/array_list.c"))
-        .add_file_to_build(Path::new("../../source/assert.c"))
-        .add_file_to_build(Path::new("../../source/atomics.c"))
-        .add_file_to_build(Path::new("../../source/byte_buf.c"))
-        .add_file_to_build(Path::new("../../source/cache.c"))
-        .add_file_to_build(Path::new("../../source/clock.c"))
-        .add_file_to_build(Path::new("../../source/command_line_parser.c"))
-        .add_file_to_build(Path::new("../../source/common.c"))
-        .add_file_to_build(Path::new("../../source/condition_variable.c"))
-        .add_file_to_build(Path::new("../../source/date_time.c"))
-        .add_file_to_build(Path::new("../../source/device_random.c"))
-        .add_file_to_build(Path::new("../../source/encoding.c"))
-        .add_file_to_build(Path::new("../../source/error.c"))
-        .add_file_to_build(Path::new("../../source/fifo_cache.c"))
-        .add_file_to_build(Path::new("../../source/hash_table.c"))
-        .add_file_to_build(Path::new("../../source/lifo_cache.c"))
-        .add_file_to_build(Path::new("../../source/linked_list.c"))
-        .add_file_to_build(Path::new("../../source/linked_hash_table.c"))
-        .add_file_to_build(Path::new("../../source/log_channel.c"))
-        .add_file_to_build(Path::new("../../source/log_formatter.c"))
-        .add_file_to_build(Path::new("../../source/log_writer.c"))
-        .add_file_to_build(Path::new("../../source/logging.c"))
-        .add_file_to_build(Path::new("../../source/lru_cache.c"))
-        .add_file_to_build(Path::new("../../source/math.c"))
-        .add_file_to_build(Path::new("../../source/memtrace.c"))
-        .add_file_to_build(Path::new("../../source/priority_queue.c"))
-        .add_file_to_build(Path::new("../../source/process_common.c"))
-        .add_file_to_build(Path::new("../../source/ref_count.c"))
-        .add_file_to_build(Path::new("../../source/resource_name.c"))
-        .add_file_to_build(Path::new("../../source/ring_buffer.c"))
-        .add_file_to_build(Path::new("../../source/statistics.c"))
-        .add_file_to_build(Path::new("../../source/string.c"))
-        .add_file_to_build(Path::new("../../source/task_scheduler.c"))
-        .add_file_to_build(Path::new("../../source/thread_scheduler.c"))
-        .add_file_to_build(Path::new("../../source/thread_shared.c"))
-        .add_file_to_build(Path::new("../../source/uuid.c"))
-        .add_file_to_build(Path::new("../../source/xml_parser.c"));
+        .file(Path::new("../../source/allocator.c"))
+        .file(Path::new("../../source/allocator_sba.c"))
+        .file(Path::new("../../source/array_list.c"))
+        .file(Path::new("../../source/assert.c"))
+        .file(Path::new("../../source/atomics.c"))
+        .file(Path::new("../../source/byte_buf.c"))
+        .file(Path::new("../../source/cache.c"))
+        .file(Path::new("../../source/clock.c"))
+        .file(Path::new("../../source/command_line_parser.c"))
+        .file(Path::new("../../source/common.c"))
+        .file(Path::new("../../source/condition_variable.c"))
+        .file(Path::new("../../source/date_time.c"))
+        .file(Path::new("../../source/device_random.c"))
+        .file(Path::new("../../source/encoding.c"))
+        .file(Path::new("../../source/error.c"))
+        .file(Path::new("../../source/fifo_cache.c"))
+        .file(Path::new("../../source/hash_table.c"))
+        .file(Path::new("../../source/lifo_cache.c"))
+        .file(Path::new("../../source/linked_list.c"))
+        .file(Path::new("../../source/linked_hash_table.c"))
+        .file(Path::new("../../source/log_channel.c"))
+        .file(Path::new("../../source/log_formatter.c"))
+        .file(Path::new("../../source/log_writer.c"))
+        .file(Path::new("../../source/logging.c"))
+        .file(Path::new("../../source/lru_cache.c"))
+        .file(Path::new("../../source/math.c"))
+        .file(Path::new("../../source/memtrace.c"))
+        .file(Path::new("../../source/priority_queue.c"))
+        .file(Path::new("../../source/process_common.c"))
+        .file(Path::new("../../source/ref_count.c"))
+        .file(Path::new("../../source/resource_name.c"))
+        .file(Path::new("../../source/ring_buffer.c"))
+        .file(Path::new("../../source/statistics.c"))
+        .file(Path::new("../../source/string.c"))
+        .file(Path::new("../../source/task_scheduler.c"))
+        .file(Path::new("../../source/thread_scheduler.c"))
+        .file(Path::new("../../source/thread_shared.c"))
+        .file(Path::new("../../source/uuid.c"))
+        .file(Path::new("../../source/xml_parser.c"));
 
     #[cfg(windows)]
     {
         build_info
-            .add_file_to_build(Path::new("../../source/windows/clock.c"))
-            .add_file_to_build(Path::new("../../source/windows/condition_variable.c"))
-            .add_file_to_build(Path::new("../../source/windows/device_random.c"))
-            .add_file_to_build(Path::new("../../source/windows/environment.c"))
-            .add_file_to_build(Path::new("../../source/windows/file.c"))
-            .add_file_to_build(Path::new("../../source/windows/mutex.c"))
-            .add_file_to_build(Path::new("../../source/windows/process.c"))
-            .add_file_to_build(Path::new("../../source/windows/rw_lock.c"))
-            .add_file_to_build(Path::new("../../source/windows/system_info.c"))
-            .add_file_to_build(Path::new("../../source/windows/thread.c"))
-            .add_file_to_build(Path::new("../../source/windows/time.c"));
+            .file(Path::new("../../source/windows/clock.c"))
+            .file(Path::new("../../source/windows/condition_variable.c"))
+            .file(Path::new("../../source/windows/device_random.c"))
+            .file(Path::new("../../source/windows/environment.c"))
+            .file(Path::new("../../source/windows/file.c"))
+            .file(Path::new("../../source/windows/mutex.c"))
+            .file(Path::new("../../source/windows/process.c"))
+            .file(Path::new("../../source/windows/rw_lock.c"))
+            .file(Path::new("../../source/windows/system_info.c"))
+            .file(Path::new("../../source/windows/thread.c"))
+            .file(Path::new("../../source/windows/time.c"));
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
             if build_info.get_toolchain().get_compiler().is_like_msvc() {
-                build_info.add_file_to_build(Path::new("../../source/arch/intel/msvc/cpuid.c"));
+                build_info.file(Path::new("../../source/arch/intel/msvc/cpuid.c"));
             }
         }
 
         build_info
-            .add_link_target("Kernel32")
-            .add_link_target("BCrypt")
-            .add_link_target("Ws2_32");
+            .link_target("Kernel32")
+            .link_target("BCrypt")
+            .link_target("Ws2_32");
     }
 
-    #[cfg(not(Windows))]
+    #[cfg(not(windows))]
     {
         build_info
-            .add_file_to_build(Path::new("../../source/posix/clock.c"))
-            .add_file_to_build(Path::new("../../source/posix/condition_variable.c"))
-            .add_file_to_build(Path::new("../../source/posix/device_random.c"))
-            .add_file_to_build(Path::new("../../source/posix/environment.c"))
-            .add_file_to_build(Path::new("../../source/posix/file.c"))
-            .add_file_to_build(Path::new("../../source/posix/mutex.c"))
-            .add_file_to_build(Path::new("../../source/posix/process.c"))
-            .add_file_to_build(Path::new("../../source/posix/rw_lock.c"))
-            .add_file_to_build(Path::new("../../source/posix/system_info.c"))
-            .add_file_to_build(Path::new("../../source/posix/thread.c"))
-            .add_file_to_build(Path::new("../../source/posix/time.c"));
+            .file(Path::new("../../source/posix/clock.c"))
+            .file(Path::new("../../source/posix/condition_variable.c"))
+            .file(Path::new("../../source/posix/device_random.c"))
+            .file(Path::new("../../source/posix/environment.c"))
+            .file(Path::new("../../source/posix/file.c"))
+            .file(Path::new("../../source/posix/mutex.c"))
+            .file(Path::new("../../source/posix/process.c"))
+            .file(Path::new("../../source/posix/rw_lock.c"))
+            .file(Path::new("../../source/posix/system_info.c"))
+            .file(Path::new("../../source/posix/thread.c"))
+            .file(Path::new("../../source/posix/time.c"));
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
-            build_info.add_file_to_build(Path::new("../../source/arch/intel/asm/cpuid.c"));
+            build_info.file(Path::new("../../source/arch/intel/asm/cpuid.c"));
         }
 
-        build_info.add_link_target("dl").add_link_target("pthread");
+        build_info.link_target("dl").link_target("pthread");
 
         #[cfg(target_os = "macos")]
         {
-            build_info.add_link_target("framework=CoreFoundation");
-            build_info.add_private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_NONE");
+            build_info.link_target("framework=CoreFoundation");
+            build_info.private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_NONE");
         }
 
         #[cfg(target_os = "linux")]
         {
-            build_info.add_link_target("rt");
+            build_info.link_target("rt");
         }
 
         #[cfg(any(target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))]
         {
             build_info
-                .add_link_target("m")
-                .add_link_target("thr")
-                .add_link_target("execinfo");
+                .link_target("m")
+                .link_target("thr")
+                .link_target("execinfo");
         }
 
         #[cfg(any(
@@ -294,7 +291,7 @@ fn main() {
             target_env = "musl"
         ))]
         {
-            build_info.add_private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_PTHREAD")
+            build_info.private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_PTHREAD")
         }
 
         #[cfg(not(any(
@@ -305,22 +302,22 @@ fn main() {
             target_os = "macos"
         )))]
         {
-            build_info.add_private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_PTHREAD_ATTR")
+            build_info.private_define("AWS_AFFINITY_METHOD", "AWS_AFFINITY_METHOD_PTHREAD_ATTR")
         }
 
-        build_info.add_private_define("_GNU_SOURCE", "1");
+        build_info.private_define("_GNU_SOURCE", "1");
     }
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
         build_info
-            .add_file_to_build(Path::new("../../source/arch/intel/cpuid.c"))
-            .add_file_to_build(Path::new("../../source/arch/intel/encoding_avx2.c"));
+            .file(Path::new("../../source/arch/intel/cpuid.c"))
+            .file(Path::new("../../source/arch/intel/encoding_avx2.c"));
     }
 
     #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
     {
-        build_info.add_file_to_build(Path::new("../../source/arch/arm/cpuid.c"))
+        build_info.file(Path::new("../../source/arch/arm/cpuid.c"))
     }
 
     #[cfg(not(any(
@@ -330,8 +327,8 @@ fn main() {
         target_arch = "arm"
     )))]
     {
-        build_info.add_file_to_build(Path::new("../../source/arch/generic/cpuid.c"));
+        build_info.file(Path::new("../../source/arch/generic/cpuid.c"));
     }
 
-    build_info.run_build();
+    build_info.build();
 }

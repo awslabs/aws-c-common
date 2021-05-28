@@ -13,17 +13,26 @@ use std::path::PathBuf;
 pub struct CRTModuleBuildInfo {
     crt_module_name: String,
     crt_module_deps: Vec<CRTModuleBuildInfo>,
+    #[serde(skip_serializing, skip_deserializing)]
     private_cflags: Vec<String>,
     public_cflags: Vec<String>,
+    #[serde(skip_serializing, skip_deserializing)]
     private_defines: Vec<(String, String)>,
     public_defines: Vec<(String, String)>,
     link_targets: Vec<String>,
     shared_lib: bool,
     lib_name: String,
     linker_path: Option<PathBuf>,
-    include_dirs: Vec<PathBuf>,
+    #[serde(skip_serializing, skip_deserializing)]
+    private_include_dirs: Vec<PathBuf>,
+    public_include_dirs: Vec<PathBuf>,
     #[serde(skip_serializing, skip_deserializing)]
     build_toolchain: Build,
+}
+
+pub enum HeaderType {
+    Private,
+    Public,
 }
 
 impl CRTModuleBuildInfo {
@@ -52,7 +61,8 @@ impl CRTModuleBuildInfo {
             shared_lib: false,
             lib_name: module_name.parse().unwrap(),
             linker_path: Option::from(PathBuf::from(env::var_os("OUT_DIR").unwrap())),
-            include_dirs: vec![],
+            private_include_dirs: vec![],
+            public_include_dirs: vec![],
             build_toolchain: Build::new(),
         }
     }
@@ -70,17 +80,18 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_checksums_sys");
-    /// build_info.add_module_dependency("aws_crt_common_sys");
+    /// build_info.module_dependency("aws_crt_common_sys");
     /// ```
-    pub fn add_module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
-        let crt_module_env_var_res = env::var("CRT_MODULE_".to_owned() + dependency + "BUILD_CFG");
+    pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
+        let crt_module_env_var_res =
+            env::var(format!("{}{}{}", "CRT_MODULE_", dependency, "_BUILD_CFG"));
 
         if crt_module_env_var_res.is_ok() {
             let parse_res: Result<CRTModuleBuildInfo> =
                 serde_json::from_str(crt_module_env_var_res.unwrap().as_str());
 
-            if parse_res.is_ok() {
-                self.crt_module_deps.push(parse_res.unwrap());
+            if let Ok(parse_res) = parse_res {
+                self.crt_module_deps.push(parse_res);
                 return self;
             }
         }
@@ -99,9 +110,9 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_public_cflag("-fPIC");
+    /// build_info.public_cflag("-fPIC");
     /// ```
-    pub fn add_public_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
+    pub fn public_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
         self.public_cflags.push(c_flag.parse().unwrap());
         self
     }
@@ -117,9 +128,9 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_private_cflag("-Wall");
+    /// build_info.private_cflag("-Wall");
     /// ```
-    pub fn add_private_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
+    pub fn private_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
         self.private_cflags.push(c_flag.parse().unwrap());
         self
     }
@@ -138,9 +149,9 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_private_define("MY_DEFINE", "MY_DEFINE_VALUE");
+    /// build_info.private_define("MY_DEFINE", "MY_DEFINE_VALUE");
     /// ```
-    pub fn add_private_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
+    pub fn private_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
         self.private_defines
             .push((key.parse().unwrap(), val.parse().unwrap()));
         self
@@ -160,9 +171,9 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_public_define("MY_DEFINE", "MY_DEFINE_VALUE");
+    /// build_info.public_define("MY_DEFINE", "MY_DEFINE_VALUE");
     /// ```
-    pub fn add_public_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
+    pub fn public_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
         self.public_defines
             .push((key.parse().unwrap(), val.parse().unwrap()));
         self
@@ -179,10 +190,10 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_link_target("crypto")
-    ///     .add_link_target("framework=Security");
+    /// build_info.link_target("crypto")
+    ///     .link_target("framework=Security");
     /// ```
-    pub fn add_link_target(&mut self, l_flag: &str) -> &mut CRTModuleBuildInfo {
+    pub fn link_target(&mut self, l_flag: &str) -> &mut CRTModuleBuildInfo {
         self.link_targets.push(l_flag.parse().unwrap());
         self
     }
@@ -206,10 +217,10 @@ impl CRTModuleBuildInfo {
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// use std::path::Path;
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.set_linker_search_path(Path::new("/opt/where/i/installed/my/manually/built/libcrypto/lib"))
-    ///     .add_link_target("crypto");
+    /// build_info.linker_search_path(Path::new("/opt/where/i/installed/my/manually/built/libcrypto/lib"))
+    ///     .link_target("crypto");
     /// ```
-    pub fn set_linker_search_path(&mut self, path: &Path) -> &mut CRTModuleBuildInfo {
+    pub fn linker_search_path(&mut self, path: &Path) -> &mut CRTModuleBuildInfo {
         self.linker_path = Some(path.to_path_buf());
         self
     }
@@ -217,22 +228,8 @@ impl CRTModuleBuildInfo {
     /// adds an additional include directory to your module build. This is mainly useful only
     /// if you're using a 3rd party library, not built by this library, and you need the compiler
     /// to fine the header files.
-    ///
-    /// # Arguments
-    ///
-    /// * `dir` - File system path to where to find the header files you need.
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// use std::path::Path;
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_third_party_include_dir(Path::new("/opt/where/i/installed/my/manually/built/libcrypto/include"))
-    ///     .set_linker_search_path(Path::new("/opt/where/i/installed/my/manually/built/libcrypto/lib"))
-    ///     .add_link_target("crypto");
-    /// ```
-    pub fn add_third_party_include_dir(&mut self, dir: &Path) -> &mut CRTModuleBuildInfo {
-        self.include_dirs.push(dir.to_path_buf());
+    fn include_dir_private(&mut self, dir: &Path) -> &mut CRTModuleBuildInfo {
+        self.private_include_dirs.push(dir.to_path_buf());
         self
     }
 
@@ -244,17 +241,7 @@ impl CRTModuleBuildInfo {
     /// * `dir` - File system path to the files you want copied to your build output and added to your
     ///           build for inclusion.
     ///
-    /// # Examples
-    /// ```should_panic
-    /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// use std::path::Path;
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
-    /// build_info.add_include_dir_and_copy_to_build_tree(Path::new("my_c_project/include"));
-    /// ```
-    pub fn add_include_dir_and_copy_to_build_tree(
-        &mut self,
-        dir: &Path,
-    ) -> &mut CRTModuleBuildInfo {
+    fn include_dir_and_copy_to_build_tree(&mut self, dir: &Path) -> &mut CRTModuleBuildInfo {
         let out_dir = format!(
             "{}/include",
             env::var_os("OUT_DIR").unwrap().to_str().unwrap()
@@ -274,9 +261,39 @@ impl CRTModuleBuildInfo {
             &copy_options,
         )
         .expect("Copy failed, check the directory exists");
-        self.include_dirs.push(target_include_path.to_path_buf());
+        self.public_include_dirs
+            .push(target_include_path.to_path_buf());
 
         self
+    }
+
+    /// Adds include directory to your module build.
+    ///
+    /// # Arguments
+    ///
+    /// * `dir` - File system path to where to find the header files you need.
+    /// * `header_type` - Private means the header will be used for this and only this
+    ///                   module build. The headers will not be copied to the build directory.
+    ///                   Public means the header will be used for this and all downstream
+    ///                   dependencies. The files at dir will be copied to the output directory for subsequent
+    ///                   module builds and added to its include path.
+    /// # Examples
+    /// ```should_panic
+    /// use aws_crt_c_flags::{CRTModuleBuildInfo, HeaderType};
+    /// use std::path::Path;
+    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// build_info.include_dir(Path::new("/opt/include/wherever/you/installed/libcrypto/include"), HeaderType::Private);
+    /// build_info.include_dir(Path::new("../source/myproject/include"), HeaderType::Public);
+    /// ```
+    pub fn include_dir(&mut self, dir: &Path, header_type: HeaderType) -> &mut CRTModuleBuildInfo {
+        match header_type {
+            HeaderType::Private => {
+                return self.include_dir_private(dir);
+            }
+            HeaderType::Public => {
+                return self.include_dir_and_copy_to_build_tree(dir);
+            }
+        }
     }
 
     /// Writes generated content to your build directory, for use with things like autoconf output.
@@ -296,7 +313,7 @@ impl CRTModuleBuildInfo {
     ///```
     pub fn write_generated_file_to_output_path(
         &mut self,
-        generated_content: &String,
+        generated_content: &str,
         to: &Path,
     ) -> &mut CRTModuleBuildInfo {
         let target_location: String = format!(
@@ -318,7 +335,7 @@ impl CRTModuleBuildInfo {
     }
 
     /// Adds the file at path to the build tree
-    pub fn add_file_to_build(&mut self, path: &Path) -> &mut CRTModuleBuildInfo {
+    pub fn file(&mut self, path: &Path) -> &mut CRTModuleBuildInfo {
         self.build_toolchain.file(path);
         self
     }
@@ -336,7 +353,7 @@ impl CRTModuleBuildInfo {
     /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
     /// build_info.try_compile("int main() { return 0; }").expect("This should have compiled");
     /// ```
-    pub fn try_compile(&self, to_compile: &str) -> core::result::Result<(), cc::Error> {
+    pub fn try_compile(&self, to_compile: &str) -> std::result::Result<(), cc::Error> {
         // try_compile prints linker stuff. We don't want that since this is just for testing the
         // compiler capabilities. Suppress it for this scope.
         let _suppress_stdout_cause_the_build_prints_linker_nonsense = Gag::stdout().unwrap();
@@ -358,33 +375,38 @@ impl CRTModuleBuildInfo {
         res
     }
 
+    /// Returns true if the underlying c compiler uses msvc semantics (e.g. it's not gcc, clang, or intel).
+    pub fn follows_msvc_semantics(&self) -> bool {
+        self.build_toolchain.get_compiler().is_like_msvc()
+    }
+
     fn load_to_build(&mut self) {
         // add default warning stuff.
         if self.build_toolchain.get_compiler().is_like_msvc() {
-            self.add_private_cflag("/W4")
-                .add_private_cflag("/WX")
-                .add_private_cflag("/MP");
+            self.private_cflag("/W4")
+                .private_cflag("/WX")
+                .private_cflag("/MP");
             // relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
-            self.add_private_cflag("/volatile:iso");
+            self.private_cflag("/volatile:iso");
             // disable non-constant initializer warning, it's not non-standard, just for Microsoft
-            self.add_private_cflag("/wd4204");
+            self.private_cflag("/wd4204");
             // disable passing the address of a local warning. Again, not non-standard, just for Microsoft
-            self.add_private_cflag("/wd4221");
+            self.private_cflag("/wd4221");
         } else {
-            self.add_private_cflag("-Wall")
-                .add_private_cflag("-Werror")
-                .add_private_cflag("-Wstrict-prototypes")
-                .add_private_cflag("-fno-omit-frame-pointer")
-                .add_private_cflag("-Wextra")
-                .add_private_cflag("-pedantic")
-                .add_private_cflag("-Wno-long-long")
-                .add_private_cflag("-fPIC");
+            self.private_cflag("-Wall")
+                .private_cflag("-Werror")
+                .private_cflag("-Wstrict-prototypes")
+                .private_cflag("-fno-omit-frame-pointer")
+                .private_cflag("-Wextra")
+                .private_cflag("-pedantic")
+                .private_cflag("-Wno-long-long")
+                .private_cflag("-fPIC");
         }
 
         if self.build_toolchain.is_flag_supported("-Wgnu").is_ok() {
             // -Wgnu-zero-variadic-macro-arguments results in a lot of false positives
-            self.add_private_cflag("-Wgnu")
-                .add_private_cflag("-Wno-gnu-zero-variadic-macro-arguments");
+            self.private_cflag("-Wgnu")
+                .private_cflag("-Wno-gnu-zero-variadic-macro-arguments");
 
             if self
                 .try_compile(
@@ -397,7 +419,7 @@ impl CRTModuleBuildInfo {
                 )
                 .is_err()
             {
-                self.add_private_cflag("-Wno-gnu-statement-expression");
+                self.private_cflag("-Wno-gnu-statement-expression");
             }
         }
 
@@ -419,7 +441,11 @@ impl CRTModuleBuildInfo {
                 .define(priv_define.0.as_str(), priv_define.1.as_str());
         }
 
-        for include in &self.include_dirs {
+        for include in &self.private_include_dirs {
+            self.build_toolchain.include(include);
+        }
+
+        for include in &self.public_include_dirs {
             self.build_toolchain.include(include);
         }
 
@@ -433,7 +459,7 @@ impl CRTModuleBuildInfo {
                     .define(pub_define.0.as_str(), pub_define.1.as_str());
             }
 
-            for include in &self.include_dirs {
+            for include in &self.public_include_dirs {
                 self.build_toolchain.include(include);
             }
         }
@@ -444,7 +470,7 @@ impl CRTModuleBuildInfo {
     }
 
     /// Executes the build and if successful stores this object in the environment for the next crate to use.
-    pub fn run_build(&mut self) {
+    pub fn build(&mut self) {
         self.load_to_build();
         print!("{}", serde_json::to_string(self).unwrap().as_str());
         self.build_toolchain.compile(self.lib_name.as_str());

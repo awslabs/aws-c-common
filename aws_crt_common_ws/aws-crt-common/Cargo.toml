@@ -10,7 +10,6 @@ edition = "2018"
 
 [dependencies]
 aws-crt-common-sys = { path = "../aws-crt-common-sys" }
-futures = "0.3"
 
 [dev-dependencies]
 serial_test = "0.4.0"

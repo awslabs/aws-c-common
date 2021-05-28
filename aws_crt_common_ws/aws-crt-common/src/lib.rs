@@ -20,7 +20,6 @@ use aws_crt_common_sys::{
     aws_string_destroy, aws_string_new_from_array, aws_unregister_error_info, CAllocator, CString,
     TraceLevel,
 };
-use futures::task::Waker;
 use std::ffi::CStr;
 use std::future::Future;
 use std::os::raw::{c_char, c_void};
@@ -28,7 +27,7 @@ use std::pin::Pin;
 use std::ptr::null_mut;
 use std::str::Utf8Error;
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::task::{Context, Poll};
+use std::task::{Context, Poll, Waker};
 
 /// Trait for deep copying (cloning) an object. The operation can fail so it returns
 /// a result with an error code upon failure.
@@ -152,6 +151,7 @@ where
 ///
 /// The literal may be produced by nested macros, but must eventually be a literal.
 /// This is enforced by `concat!`
+#[macro_export]
 macro_rules! static_c_str {
     ($inp: expr) => {
         concat!($inp, "\0").as_ptr() as *const ::std::os::raw::c_char
@@ -207,6 +207,7 @@ pub fn error_str(error_code: i32) -> Result<&'static str, Utf8Error> {
 /// The produced struct and members have a `'static` lifetime, safe to use
 /// for the duration of the program. See `DEFINE_ERROR_INFO_COMMON` for
 /// the parallel c-preprocessor macro.
+#[macro_export]
 macro_rules! error_info {
     ($error_code:ident, $error_str: literal) => {
         CErrorInfo {
@@ -378,7 +379,7 @@ impl AwsString {
     }
 
     /// Returns a pointer to an array of utf8 characters for the underlying String
-    pub fn bytes(&self) -> *const u8 {
+    pub fn as_ptr(&self) -> *const u8 {
         // This is sound if you have an instance of this class.
         unsafe {
             return aws_string_bytes(self.c_str);
@@ -397,7 +398,7 @@ impl AwsString {
     /// let allocator = todo!();
     /// let ptr = AwsString::new_from_str(allocator, "Hello")
     ///                       .expect("Creation of c string failed!")
-    ///                       .c_str();
+    ///                       .as_c_str();
     /// unsafe {
     ///     *ptr;
     /// }
@@ -410,12 +411,12 @@ impl AwsString {
     /// let allocator = todo!();
     /// let aws_str = AwsString::new_from_str(allocator, "Hello")
     ///                       .expect("Creation of c string failed!");
-    /// let ptr = aws_str.c_str();
+    /// let ptr = aws_str.as_c_str();
     /// unsafe {
     ///     *ptr;
     /// }
     /// ```
-    pub fn c_str(&self) -> *const c_char {
+    pub fn as_c_str(&self) -> *const c_char {
         // This is sound if you have an instance of this class.
         unsafe {
             return aws_string_bytes(self.c_str) as *const c_char;
@@ -427,7 +428,7 @@ impl ToString for AwsString {
     fn to_string(&self) -> String {
         // this is sound if you have an instance of this class and the original AwsString is valid utf-8
         unsafe {
-            let slice = std::slice::from_raw_parts(self.bytes(), self.length());
+            let slice = std::slice::from_raw_parts(self.as_ptr(), self.length());
             return String::from_utf8_unchecked(Vec::from(slice));
         }
     }
@@ -476,121 +477,4 @@ pub mod error_codes {
         error_list: RUST_ERRORS.as_ptr(),
         count: RUST_ERRORS.len() as u16,
     };
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        clean_up, error_codes, error_debug_str, error_str, init, AwsString, NativeResource,
-        TracingAllocator,
-    };
-    use aws_crt_common_sys::{CErrorInfo, TraceLevel};
-    use serial_test::serial;
-    use std::ffi::CStr;
-    use std::ptr::null;
-
-    #[test]
-    #[serial]
-    fn test_allocator_safety() {
-        let allocator = TracingAllocator::new(TraceLevel::Stacks, 16);
-        init(&allocator);
-        assert_ne!(null(), allocator.get_native_resource());
-        clean_up();
-    }
-
-    #[test]
-    #[serial]
-    fn test_string() {
-        let bytes = "Hello World";
-        let allocator = TracingAllocator::new(TraceLevel::Stacks, 16);
-        init(&allocator);
-
-        {
-            let str = AwsString::new_from_array(&allocator, bytes.as_bytes())
-                .expect("String init failed!");
-            assert_eq!(bytes.len(), str.length());
-
-            let rs_str_conv = AwsString::to_string(&str);
-            assert_eq!(bytes, rs_str_conv);
-        }
-
-        clean_up();
-        assert_eq!(0, allocator.allocated_bytes());
-    }
-
-    #[test]
-    #[serial]
-    fn test_error_str() {
-        let allocator = TracingAllocator::new(TraceLevel::Stacks, 16);
-        init(&allocator);
-        assert_eq!("Success.", error_str(0).expect("String conversion failed!"));
-        clean_up();
-    }
-
-    #[test]
-    #[serial]
-    fn test_error_debug_str() {
-        let allocator = TracingAllocator::new(TraceLevel::Stacks, 16);
-        init(&allocator);
-        assert_eq!(
-            "aws-c-common: AWS_ERROR_SUCCESS, Success.",
-            error_debug_str(0).expect("String conversion failed!")
-        );
-        clean_up();
-    }
-
-    #[test]
-    fn test_static_cstr() {
-        let static_c_str = static_c_str!("INVALID_UTF8");
-        unsafe { assert_eq!(CStr::from_ptr(static_c_str).to_str(), Ok("INVALID_UTF8")) }
-    }
-
-    #[test]
-    fn test_error_info() {
-        const INVALID_UTF8: i32 = 0x3400;
-        let error_info: CErrorInfo = error_info!(INVALID_UTF8, "String was not valid UTF-8");
-        assert_eq!(error_info.error_code, 0x3400);
-        unsafe {
-            assert_eq!(
-                CStr::from_ptr(error_info.literal_name).to_str(),
-                Ok("INVALID_UTF8")
-            );
-            assert_eq!(
-                CStr::from_ptr(error_info.error_str).to_str(),
-                Ok("String was not valid UTF-8")
-            );
-            assert_eq!(
-                CStr::from_ptr(error_info.lib_name).to_str(),
-                Ok("aws-crt-rs")
-            );
-            assert_eq!(
-                CStr::from_ptr(error_info.formatted_name).to_str(),
-                Ok("aws-crt-rs: INVALID_UTF8, String was not valid UTF-8")
-            );
-        }
-    }
-
-    #[test]
-    #[serial]
-    fn test_error_str_custom() {
-        let allocator = TracingAllocator::new(TraceLevel::Stacks, 16);
-        init(&allocator);
-        assert_eq!(
-            error_debug_str(error_codes::INVALID_UTF8).expect("String conversion failed"),
-            "aws-crt-rs: INVALID_UTF8, String was not valid UTF-8"
-        );
-
-        assert_eq!(
-            error_str(error_codes::INVALID_UTF8).expect("String conversion failed"),
-            "String was not valid UTF-8"
-        );
-
-        assert_eq!(allocator.allocated_bytes(), 0);
-        clean_up();
-
-        assert_eq!(
-            error_str(error_codes::INVALID_UTF8).expect("String conversion failed"),
-            "Unknown Error Code"
-        );
-    }
 }

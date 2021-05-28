@@ -69,5 +69,5 @@ cmake-build*
 *.log
 
 # Rust and Cargo
-*.lock
-aws_crt_common_ws/target
+Cargo.lock
+target/
