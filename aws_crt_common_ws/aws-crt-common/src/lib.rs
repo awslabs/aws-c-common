@@ -49,10 +49,7 @@ pub trait NativeResource<T> {
     fn get_native_resource(&self) -> *const T;
 }
 
-pub struct FutureSharedState<T>
-where
-    T: Clone,
-{
+pub struct FutureSharedState<T> {
     data: Option<T>,
     waker: Option<Waker>,
 }
@@ -68,17 +65,11 @@ where
 /// Rust futures.
 ///
 #[derive(Clone)]
-pub struct CallbackFuture<T>
-where
-    T: Clone,
-{
+pub struct CallbackFuture<T> {
     data: Arc<Mutex<FutureSharedState<T>>>,
 }
 
-impl<T> FutureSharedState<T>
-where
-    T: Clone,
-{
+impl<T> FutureSharedState<T> {
     ///
     /// Completes the future for callback_data with result as the future's output.
     ///
