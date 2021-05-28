@@ -6,3 +6,5 @@
 #if AWS_NO_STATIC_IMPL
 #    include <aws/common/clock.inl>
 #endif
+
+typedef int clock_make_iso_compilers_happy;

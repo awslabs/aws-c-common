@@ -6,3 +6,5 @@
 #ifdef AWS_NO_STATIC_IMPL
 #    include <aws/common/zero.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+typedef int zero_make_iso_compilers_happy;

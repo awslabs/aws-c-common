@@ -6,3 +6,5 @@
 #if AWS_NO_STATIC_IMPL
 #    include <aws/common/atomics.inl>
 #endif
+
+typedef int atomics_make_iso_compilers_happy;

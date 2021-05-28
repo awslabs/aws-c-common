@@ -6,3 +6,5 @@
 #ifdef AWS_NO_STATIC_IMPL
 #    include <aws/common/linked_list.inl>
 #endif
+
+typedef int linked_list_make_iso_compilers_happy;

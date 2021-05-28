@@ -6,3 +6,5 @@
 #ifdef AWS_NO_STATIC_IMPL
 #    include <aws/common/byte_order.inl>
 #endif /* AWS_NO_STATIC_IMPL */
+
+typedef int byte_order_make_iso_compilers_happy;
