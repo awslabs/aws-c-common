@@ -407,8 +407,15 @@ impl CRTModuleBuildInfo {
 
         if self.build_toolchain.is_flag_supported("-Wgnu").is_ok() {
             // -Wgnu-zero-variadic-macro-arguments results in a lot of false positives
-            self.private_cflag("-Wgnu")
-                .private_cflag("-Wno-gnu-zero-variadic-macro-arguments");
+            self.private_cflag("-Wgnu");
+
+            if self
+                .build_toolchain
+                .is_flag_supported("-Wno-gnu-zero-variadic-macro-arguments")
+                .is_ok()
+            {
+                self.private_cflag("-Wno-gnu-zero-variadic-macro-arguments");
+            }
 
             if self
                 .try_compile(
