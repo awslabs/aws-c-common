@@ -181,6 +181,7 @@ fn main() {
         .file(Path::new("../../source/assert.c"))
         .file(Path::new("../../source/atomics.c"))
         .file(Path::new("../../source/byte_buf.c"))
+        .file(Path::new("../../source/byte_order.c"))
         .file(Path::new("../../source/cache.c"))
         .file(Path::new("../../source/clock.c"))
         .file(Path::new("../../source/command_line_parser.c"))
