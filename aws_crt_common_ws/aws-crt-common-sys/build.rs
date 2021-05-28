@@ -213,7 +213,8 @@ fn main() {
         .file(Path::new("../../source/thread_scheduler.c"))
         .file(Path::new("../../source/thread_shared.c"))
         .file(Path::new("../../source/uuid.c"))
-        .file(Path::new("../../source/xml_parser.c"));
+        .file(Path::new("../../source/xml_parser.c"))
+        .file(Path::new("../../source/zero.c"));
 
     #[cfg(windows)]
     {
