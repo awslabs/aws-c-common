@@ -310,9 +310,12 @@ fn main() {
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
-        build_info
-            .file(Path::new("../../source/arch/intel/cpuid.c"))
-            .file(Path::new("../../source/arch/intel/encoding_avx2.c"));
+        build_info.file(Path::new("../../source/arch/intel/cpuid.c"));
+
+        #[cfg(target_feature = "avx2")]
+        {
+            build_info.file(Path::new("../../source/arch/intel/encoding_avx2.c"));
+        }
     }
 
     #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]

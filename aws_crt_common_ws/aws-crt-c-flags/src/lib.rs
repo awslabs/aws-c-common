@@ -400,7 +400,8 @@ impl CRTModuleBuildInfo {
                 .private_cflag("-Wextra")
                 .private_cflag("-pedantic")
                 .private_cflag("-Wno-long-long")
-                .private_cflag("-fPIC");
+                .private_cflag("-fPIC")
+                .private_cflag("-Wno-implicit-fallthrough");
         }
 
         if self.build_toolchain.is_flag_supported("-Wgnu").is_ok() {
@@ -472,7 +473,6 @@ impl CRTModuleBuildInfo {
     /// Executes the build and if successful stores this object in the environment for the next crate to use.
     pub fn build(&mut self) {
         self.load_to_build();
-        print!("{}", serde_json::to_string(self).unwrap().as_str());
         self.build_toolchain.compile(self.lib_name.as_str());
 
         if self.linker_path.is_some() {
