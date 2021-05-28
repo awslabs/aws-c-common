@@ -2,18 +2,6 @@ use aws_crt_c_flags::{CRTModuleBuildInfo, HeaderType};
 use std::borrow::{Borrow, BorrowMut};
 use std::path::Path;
 
-#[target_feature(enable = "avx2")]
-fn add_simd_instructions(build_config: &mut CRTModuleBuildInfo) {
-    build_config.private_define("HAVE_AVX2_INTRINSICS", "1");
-    build_config.private_define("HAVE_MM256_EXTRACT_EPI64", "1");
-
-    if build_config.follows_msvc_semantics() {
-        build_config.public_cflag("/arch:AVX2");
-    } else {
-        build_config.public_cflag("-mavx").public_cflag("-mavx2");
-    }
-}
-
 fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
     let mut config_file_str: String = "#ifndef AWS_COMMON_CONFIG_H
 #define AWS_COMMON_CONFIG_H
@@ -34,7 +22,17 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
     build_config.public_define("AWS_NO_STATIC_IMPL", "1");
     config_file_str = format!("{}#define AWS_NO_STATIC_IMPL 1\n", config_file_str);
 
-    add_simd_instructions(build_config);
+    #[cfg(target_feature = "avx2")]
+    {
+        build_config.private_define("HAVE_AVX2_INTRINSICS", "1");
+        build_config.private_define("HAVE_MM256_EXTRACT_EPI64", "1");
+
+        if build_config.follows_msvc_semantics() {
+            build_config.public_cflag("/arch:AVX2");
+        } else {
+            build_config.public_cflag("-mavx").public_cflag("-mavx2");
+        }
+    }
 
     if build_config
         .try_compile(
