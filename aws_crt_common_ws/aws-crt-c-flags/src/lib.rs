@@ -401,7 +401,8 @@ impl CRTModuleBuildInfo {
                 .private_cflag("-pedantic")
                 .private_cflag("-Wno-long-long")
                 .private_cflag("-fPIC")
-                .private_cflag("-Wno-implicit-fallthrough");
+                .private_cflag("-Wno-implicit-fallthrough")
+                .private_cflag("-Wno-old-style-declaration");
         }
 
         if self.build_toolchain.is_flag_supported("-Wgnu").is_ok() {
