@@ -16,3 +16,4 @@ jobs:
       with:
         # List of extensions to check
         extensions: c,h
+        source: 'source include'

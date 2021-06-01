@@ -457,6 +457,12 @@ add_test_case(aws_fopen_non_ascii_read_existing_file_test)
 add_test_case(aws_fopen_non_ascii_test)
 add_test_case(aws_fopen_ascii_test)
 
+add_test_case(promise_test_wait_forever)
+add_test_case(promise_test_wait_for_a_bit)
+add_test_case(promise_test_finish_immediately)
+add_test_case(promise_test_finish_before_wait)
+add_test_case(promise_test_multiple_waiters)
+
 generate_test_driver(${PROJECT_NAME}-tests)
 
 if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
