@@ -360,7 +360,7 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
     }
 
     if (aws_common_private_has_avx2()) {
-        size_t result = aws_common_private_base64_decode_sse41(to_decode->ptr, output->buffer, to_decode->len);
+        ssize_t result = aws_common_private_base64_decode_sse41(to_decode->ptr, output->buffer, to_decode->len);
         if (result == -1) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }

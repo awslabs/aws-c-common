@@ -41,7 +41,7 @@ static int s_fallback_device_random_buffer(struct aws_byte_buf *output) {
 
     size_t diff = output->capacity - output->len;
 
-    ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, diff);
+    size_t amount_read = read(s_rand_fd, output->buffer + output->len, diff);
 
     if (amount_read != diff) {
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
