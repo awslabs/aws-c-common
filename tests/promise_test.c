@@ -141,7 +141,7 @@ AWS_TEST_CASE(promise_test_finish_before_wait, s_promise_test_finish_before_wait
 void s_promise_test_waiter(void *data) {
     struct promise_test_work *work = data;
     aws_promise_acquire(work->promise);
-    /* sleep 2 seconds */
+    /* sleep 0.2 seconds */
     aws_thread_current_sleep(1000 * 1000 * 2);
     aws_promise_wait(work->promise);
     AWS_FATAL_ASSERT(aws_promise_error_code(work->promise) == 0);
@@ -166,6 +166,7 @@ static int s_promise_test_multiple_waiters(struct aws_allocator *allocator, void
         aws_thread_launch(&threads[idx], s_promise_test_waiter, &work, worker_options);
     }
 
+    aws_thread_current_sleep(1000 * 1000 * 4);
     aws_promise_complete(promise, promise, NULL);
     aws_promise_release(promise);
 
