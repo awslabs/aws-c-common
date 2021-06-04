@@ -10,6 +10,29 @@ option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such 
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
 
+# Check for Posix Large Files Support (LFS).
+# On most 64bit systems, LFS is enabled by default.
+# On some 32bit systems, LFS must be enabled by via defines before headers are included.
+# For more info, see docs:
+# https://www.gnu.org/software/libc/manual/html_node/File-Position-Primitive.html
+# https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+function(aws_check_posix_lfs extra_flags variable)
+    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${extra_flags}")
+    check_c_source_compiles("
+    #include <stdio.h>
+
+    /* fails to compile if off_t smaller than 64bits */
+    typedef char array[sizeof(off_t) >= 8 ? 1 : -1];
+
+    int main() {
+        FILE *f = fopen(\"realbig.txt\", \"r\");
+        fseeko(f, 0, 0);
+        return 0;
+    }"  ${variable})
+    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+endfunction()
+
 # This function will set all common flags on a target
 # Options:
 #  NO_WGNU: Disable -Wgnu
@@ -89,6 +112,24 @@ function(aws_set_common_properties target)
         if (HAS_MOUTLINE_ATOMICS)
             list(APPEND AWS_C_FLAGS -moutline-atomics)
         endif()
+
+        # Check for Posix Large File Support (LFS).
+        # Doing this check here, instead of AwsFeatureTests.cmake,
+        # because we might need to modify AWS_C_FLAGS to enable it.
+        set(HAS_LFS FALSE)
+        aws_check_posix_lfs("" HAS_POSIX_LARGE_FILE_SUPPORT_BY_DEFAULT)
+        if (HAS_POSIX_LARGE_FILE_SUPPORT_BY_DEFAULT)
+            set(HAS_LFS TRUE)
+        else()
+            aws_check_posix_lfs("-D_FILE_OFFSET_BITS=64" HAS_POSIX_LARGE_FILE_SUPPORT_VIA_DEFINES)
+            if (HAS_POSIX_LARGE_FILE_SUPPORT_VIA_DEFINES)
+                list(APPEND AWS_C_FLAGS "-D_FILE_OFFSET_BITS=64")
+                set(HAS_LFS TRUE)
+            endif()
+        endif()
+        # This becomes a define in config.h
+        set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
