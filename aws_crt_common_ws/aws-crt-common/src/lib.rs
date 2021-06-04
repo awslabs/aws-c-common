@@ -88,10 +88,7 @@ impl<T> FutureSharedState<T> {
     }
 }
 
-impl<T> Future for CallbackFuture<T>
-where
-    T: Clone,
-{
+impl<T> Future for CallbackFuture<T> {
     type Output = T;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -101,14 +98,11 @@ where
             return Poll::Pending;
         }
 
-        return Poll::Ready(option_val.data.as_ref().expect("We're in a ready state implying the future has completed but the underlying value hasn't been set!").clone());
+        return Poll::Ready(option_val.data.take().expect("We're in a ready state implying the future has completed but the underlying value hasn't been set!"));
     }
 }
 
-impl<T> CallbackFuture<T>
-where
-    T: Clone,
-{
+impl<T> CallbackFuture<T> {
     /// Returns an instance of CallbackFuture to wrap a c-style async function, where T
     /// is the result of future.await. When ready to complete the future, invoke:
     ///
