@@ -3,6 +3,7 @@
 
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
+include(CheckSymbolExists)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
