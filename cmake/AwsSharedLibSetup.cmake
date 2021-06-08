@@ -1,13 +1,21 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-set(LIBRARY_DIRECTORY lib)
-set(RUNTIME_DIRECTORY bin)
+if(DEFINED CMAKE_INSTALL_LIBDIR)
+    set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
+else()
+    set(LIBRARY_DIRECTORY lib)
+endif()
+
+if(DEFINED CMAKE_INSTALL_BINDIR)
+    set(RUNTIME_DIRECTORY ${CMAKE_INSTALL_BINDIR})
+else()
+    set(RUNTIME_DIRECTORY bin)
+endif()
+
 # Set the default lib installation path on GNU systems with GNUInstallDirs
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
-    set(LIBRARY_DIRECTORY ${CMAKE_INSTALL_LIBDIR})
-    set(RUNTIME_DIRECTORY ${CMAKE_INSTALL_BINDIR})
     
     # this is the absolute dumbest thing in the world, but find_package won't work without it
     # also I verified this is correctly NOT "lib64" when CMAKE_C_FLAGS includes "-m32"
