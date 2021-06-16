@@ -70,7 +70,7 @@ impl CRTModuleBuildInfo {
         }
     }
 
-    fn get_configuration_file(module_name: &str) -> File {
+    fn get_configuration_file(module_name: &str) -> String {
         let target_dir = env::var("OUT_DIR");
         let file_name = format!(
             "{}/CRT_MODULE_{}_BUILD_CFG",
@@ -78,12 +78,7 @@ impl CRTModuleBuildInfo {
             module_name
         );
 
-        if let Ok(file_open_res) = File::open(Path::new(file_name.as_str())) {
-            return file_open_res;
-        } else {
-            return File::create(Path::new(file_name.as_str()))
-                .expect("crt module metadata file creation failed!");
-        }
+        file_name
     }
 
     /// Declares other aws crt modules to have your sys package depend on. This is used for transitively
@@ -102,19 +97,23 @@ impl CRTModuleBuildInfo {
     /// build_info.module_dependency("aws_crt_common_sys");
     /// ```
     pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
-        let mut crt_module_file_res = CRTModuleBuildInfo::get_configuration_file(dependency);
-        let mut crt_module_read_res = String::new();
-        crt_module_file_res
-            .read_to_string(crt_module_read_res.borrow_mut())
-            .expect("configuration file read failed!");
+        let crt_module_file_path = CRTModuleBuildInfo::get_configuration_file(dependency);
 
-        let parse_res: Result<CRTModuleBuildInfo> =
-            serde_json::from_str(crt_module_read_res.as_str());
+        if let Ok(mut file_open_res) = File::open(Path::new(crt_module_file_path.as_str())) {
+            let mut crt_module_read_res = String::new();
+            file_open_res
+                .read_to_string(crt_module_read_res.borrow_mut())
+                .expect("configuration file read failed!");
 
-        if let Ok(parse_res) = parse_res {
-            self.crt_module_deps.push(parse_res);
-            return self;
+            let parse_res: Result<CRTModuleBuildInfo> =
+                serde_json::from_str(crt_module_read_res.as_str());
+
+            if let Ok(parse_res) = parse_res {
+                self.crt_module_deps.push(parse_res);
+                return self;
+            }
         }
+
         panic!("Module: `{}` does not appear to be a part of your dependency chain. Alternatively, the dependencies build script does not call CRTModuleBuildInfo::run_build() correctly", dependency);
     }
 
@@ -514,8 +513,12 @@ impl CRTModuleBuildInfo {
             println!("cargo:rustc-link-lib={}", link_flag)
         }
 
-        let mut output_module_file =
+        let output_module_file_name =
             CRTModuleBuildInfo::get_configuration_file(self.crt_module_name.as_str());
+
+        let mut output_module_file = File::create(Path::new(output_module_file_name.as_str()))
+            .expect("crt module metadata file creation failed!");
+
         output_module_file
             .write_all(serde_json::to_string(self).unwrap().as_bytes())
             .expect("Writing to the module configuration file failed!");
