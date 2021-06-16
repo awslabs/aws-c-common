@@ -4,8 +4,11 @@ use fs_extra::dir::CopyOptions;
 use gag::Gag;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
+use std::borrow::BorrowMut;
 use std::env;
 use std::fs;
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -67,6 +70,22 @@ impl CRTModuleBuildInfo {
         }
     }
 
+    fn get_configuration_file(module_name: &str) -> File {
+        let target_dir = env::var("OUT_DIR");
+        let file_name = format!(
+            "{}/CRT_MODULE_{}_BUILD_CFG",
+            target_dir.expect("cargo env variable OUT_DIR isn't set"),
+            module_name
+        );
+
+        if let Ok(file_open_res) = File::open(Path::new(file_name.as_str())) {
+            return file_open_res;
+        } else {
+            return File::create(Path::new(file_name.as_str()))
+                .expect("crt module metadata file creation failed!");
+        }
+    }
+
     /// Declares other aws crt modules to have your sys package depend on. This is used for transitively
     /// passing linker arguments and c-flags between different crates' builds of their sys modules.
     ///
@@ -83,19 +102,19 @@ impl CRTModuleBuildInfo {
     /// build_info.module_dependency("aws_crt_common_sys");
     /// ```
     pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
-        let crt_module_env_var_res =
-            env::var(format!("{}{}{}", "CRT_MODULE_", dependency, "_BUILD_CFG"));
+        let mut crt_module_file_res = CRTModuleBuildInfo::get_configuration_file(dependency);
+        let mut crt_module_read_res = String::new();
+        crt_module_file_res
+            .read_to_string(crt_module_read_res.borrow_mut())
+            .expect("configuration file read failed!");
 
-        if crt_module_env_var_res.is_ok() {
-            let parse_res: Result<CRTModuleBuildInfo> =
-                serde_json::from_str(crt_module_env_var_res.unwrap().as_str());
+        let parse_res: Result<CRTModuleBuildInfo> =
+            serde_json::from_str(crt_module_read_res.as_str());
 
-            if let Ok(parse_res) = parse_res {
-                self.crt_module_deps.push(parse_res);
-                return self;
-            }
+        if let Ok(parse_res) = parse_res {
+            self.crt_module_deps.push(parse_res);
+            return self;
         }
-
         panic!("Module: `{}` does not appear to be a part of your dependency chain. Alternatively, the dependencies build script does not call CRTModuleBuildInfo::run_build() correctly", dependency);
     }
 
@@ -495,10 +514,10 @@ impl CRTModuleBuildInfo {
             println!("cargo:rustc-link-lib={}", link_flag)
         }
 
-        let module_name_cpy = self.crt_module_name.clone();
-        env::set_var(
-            "CRT_MODULE_".to_owned() + module_name_cpy.as_str() + "BUILD_CFG",
-            serde_json::to_string(self).unwrap(),
-        );
+        let mut output_module_file =
+            CRTModuleBuildInfo::get_configuration_file(self.crt_module_name.as_str());
+        output_module_file
+            .write_all(serde_json::to_string(self).unwrap().as_bytes())
+            .expect("Writing to the module configuration file failed!");
     }
 }
