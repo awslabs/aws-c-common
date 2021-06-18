@@ -4,8 +4,8 @@
  */
 
 #include <aws/common/clock.h>
-#include <aws/common/thread.h>
 #include <aws/common/promise.h>
+#include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -15,7 +15,7 @@ struct promise_test_work {
     uint64_t work_time;
     int error_code;
     void *value;
-    void (*dtor)(void*);
+    void (*dtor)(void *);
 };
 
 static void s_promise_test_worker(void *data) {
@@ -86,7 +86,8 @@ static int s_promise_test_wait_for_a_bit(struct aws_allocator *allocator, void *
     };
     struct aws_thread worker_thread = s_promise_test_launch_worker(&work);
     /* wait until the worker finishes, in 500ms intervals */
-    while (!aws_promise_wait_for(promise, 500));
+    while (!aws_promise_wait_for(promise, 500))
+        ;
 
     ASSERT_TRUE(aws_promise_error_code(promise) == 0);
     ASSERT_NULL(aws_promise_value(promise));
