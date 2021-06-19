@@ -325,7 +325,9 @@ int aws_thread_launch(
      * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
      * completion.
      */
-    if (!is_managed_thread) {
+    if (is_managed_thread) {
+        aws_thread_clean_up(thread);
+    } else {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }
 
