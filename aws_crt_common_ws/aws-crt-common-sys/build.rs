@@ -262,7 +262,12 @@ fn main() {
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
-            build_info.file(Path::new("../../source/arch/intel/asm/cpuid.c"));
+            if build_info.follows_msvc_semantics() {
+                build_info.file(Path::new("../../source/arch/intel/msvc/cpuid.c"));
+            } else {
+                build_info.file(Path::new("../../source/arch/intel/asm/cpuid.c"));
+            }
+            build_info.file(Path::new("../../source/arch/intel/cpuid.c"));
         }
 
         build_info.link_target("dl").link_target("pthread");
