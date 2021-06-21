@@ -68,6 +68,10 @@ impl CRTModuleBuildInfo {
     }
 
     fn get_module_configuration(module_name: &str) -> String {
+        for (key, value) in env::vars() {
+            println!("{}: {}", key, value);
+        }
+
         let env_var_name = format!("DEP_{}_BUILD_CFG", module_name);
         String::from(
             env::var_os(env_var_name)
