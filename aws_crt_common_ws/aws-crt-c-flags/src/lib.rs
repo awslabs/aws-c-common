@@ -486,6 +486,10 @@ impl CRTModuleBuildInfo {
             for include in &module.public_include_dirs {
                 self.build_toolchain.include(include);
             }
+
+            for lib in &module.link_targets {
+                self.link_targets.push(lib.clone());
+            }
         }
 
         if self.shared_lib {
