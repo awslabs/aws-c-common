@@ -3,6 +3,7 @@ name = "aws-crt-common-sys"
 version = "0.1.0"
 authors = ["AWS Common Runtime Team (aws-sdk-common-runtime-team@amazon.com)"]
 edition = "2018"
+links = "aws-c-common"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
