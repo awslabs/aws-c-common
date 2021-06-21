@@ -4,7 +4,6 @@ use fs_extra::dir::CopyOptions;
 use gag::Gag;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
-use std::borrow::Borrow;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -91,14 +90,14 @@ impl CRTModuleBuildInfo {
     /// # Arguments
     ///
     /// * `dependency` - name of the crt sys crate you want to link your sys crate against. So for example,
-    ///                  if you're building aws-checksums, your sys crate would be aws_crt_checksums_sys, and you
-    ///                  would declare a dependency here on aws_crt_common_sys.
+    ///                  if you're building the aws-checksums-sys, your sys crate would be aws_crt_checksums_sys, and you
+    ///                  would declare a dependency here on aws-c-common which is linked from the aws_crt_common_sys crate.
     ///
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-checksums-sys");
-    /// build_info.module_dependency("aws-crt-common-sys");
+    /// build_info.module_dependency("aws-c-common");
     /// ```
     pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
         let crt_module_config = CRTModuleBuildInfo::get_module_configuration(dependency);
@@ -473,21 +472,17 @@ impl CRTModuleBuildInfo {
             self.build_toolchain.include(include);
         }
 
-        println!("do we have some deps");
-
         for module in &self.crt_module_deps {
-            println!("okay we have some deps");
             for pub_flag in &module.public_cflags {
                 self.build_toolchain.flag(pub_flag.as_str());
             }
 
-            for pub_define in &self.public_defines {
+            for pub_define in &module.public_defines {
                 self.build_toolchain
                     .define(pub_define.0.as_str(), pub_define.1.as_str());
             }
 
-            for include in &self.public_include_dirs {
-                println!("{}", include.to_str().unwrap());
+            for include in &module.public_include_dirs {
                 self.build_toolchain.include(include);
             }
         }
