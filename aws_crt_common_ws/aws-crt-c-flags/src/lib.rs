@@ -4,6 +4,7 @@ use fs_extra::dir::CopyOptions;
 use gag::Gag;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
+use std::borrow::Borrow;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -68,10 +69,6 @@ impl CRTModuleBuildInfo {
     }
 
     fn get_module_configuration(module_name: &str) -> String {
-        for (key, value) in env::vars() {
-            println!("{}: {}", key, value);
-        }
-
         let env_var_name = format!(
             "DEP_{}_BUILD_CFG",
             module_name.to_uppercase().replace("-", "_")
@@ -476,7 +473,10 @@ impl CRTModuleBuildInfo {
             self.build_toolchain.include(include);
         }
 
+        println!("do we have some deps");
+
         for module in &self.crt_module_deps {
+            println!("okay we have some deps");
             for pub_flag in &module.public_cflags {
                 self.build_toolchain.flag(pub_flag.as_str());
             }
@@ -487,6 +487,7 @@ impl CRTModuleBuildInfo {
             }
 
             for include in &self.public_include_dirs {
+                println!("{}", include.to_str().unwrap());
                 self.build_toolchain.include(include);
             }
         }
