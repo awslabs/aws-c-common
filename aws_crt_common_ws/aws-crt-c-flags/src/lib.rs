@@ -77,8 +77,8 @@ impl CRTModuleBuildInfo {
         )
     }
 
-    fn put_module_configuration(module_name: &str, value: String) {
-        println!("cargo:{}_BUILD_CFG={}", module_name, value);
+    fn put_module_configuration(value: String) {
+        println!("cargo:BUILD_CFG={}", value);
     }
 
     /// Declares other aws crt modules to have your sys package depend on. This is used for transitively
@@ -505,9 +505,6 @@ impl CRTModuleBuildInfo {
             println!("cargo:rustc-link-lib={}", link_flag)
         }
 
-        CRTModuleBuildInfo::put_module_configuration(
-            self.crt_module_name.as_str(),
-            serde_json::to_string(self).unwrap(),
-        )
+        CRTModuleBuildInfo::put_module_configuration(serde_json::to_string(self).unwrap())
     }
 }
