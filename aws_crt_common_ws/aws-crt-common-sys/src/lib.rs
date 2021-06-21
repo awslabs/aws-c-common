@@ -37,6 +37,17 @@ pub enum TraceLevel {
 }
 
 #[repr(C)]
+#[derive(Clone, PartialEq, Debug)]
+#[non_exhaustive]
+pub enum CpuFeatureName {
+    CLMUL = 0,
+    Sse41 = 1,
+    See42 = 2,
+    Avx2 = 3,
+    ArmCrc = 4,
+}
+
+#[repr(C)]
 #[non_exhaustive]
 pub struct CArrayList {
     pub allocator: *const CAllocator,
@@ -140,4 +151,6 @@ extern "C" {
 
     pub fn aws_register_error_info(error_info: *const CErrorInfoList);
     pub fn aws_unregister_error_info(error_info: *const CErrorInfoList);
+
+    pub fn aws_cpu_has_feature(feature: CpuFeatureName) -> bool;
 }
