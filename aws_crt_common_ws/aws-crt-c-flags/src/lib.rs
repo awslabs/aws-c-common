@@ -72,7 +72,7 @@ impl CRTModuleBuildInfo {
             println!("{}: {}", key, value);
         }
 
-        let env_var_name = format!("DEP_{}_BUILD_CFG", module_name);
+        let env_var_name = format!("DEP_{}_BUILD_CFG", module_name.to_uppercase());
         String::from(
             env::var_os(env_var_name)
                 .expect(format!("{} config not found.", module_name).as_str())
