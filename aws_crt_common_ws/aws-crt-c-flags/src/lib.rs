@@ -4,11 +4,8 @@ use fs_extra::dir::CopyOptions;
 use gag::Gag;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
-use std::borrow::BorrowMut;
 use std::env;
 use std::fs;
-use std::fs::File;
-use std::io::{Read, Write};
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -50,7 +47,7 @@ impl CRTModuleBuildInfo {
     ///
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// ```
     pub fn new(module_name: &str) -> CRTModuleBuildInfo {
         CRTModuleBuildInfo {
@@ -70,15 +67,18 @@ impl CRTModuleBuildInfo {
         }
     }
 
-    fn get_configuration_file(module_name: &str) -> String {
-        let target_dir = env::var("OUT_DIR");
-        let file_name = format!(
-            "{}/CRT_MODULE_{}_BUILD_CFG",
-            target_dir.expect("cargo env variable OUT_DIR isn't set"),
-            module_name
-        );
+    fn get_module_configuration(module_name: &str) -> String {
+        let env_var_name = format!("DEP_{}_BUILD_CFG", module_name);
+        String::from(
+            env::var_os(env_var_name)
+                .expect(format!("{} config not found.", module_name).as_str())
+                .to_str()
+                .unwrap(),
+        )
+    }
 
-        file_name
+    fn put_module_configuration(module_name: &str, value: String) {
+        println!("cargo:{}_BUILD_CFG={}", module_name, value);
     }
 
     /// Declares other aws crt modules to have your sys package depend on. This is used for transitively
@@ -93,25 +93,17 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_checksums_sys");
-    /// build_info.module_dependency("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-checksums-sys");
+    /// build_info.module_dependency("aws-crt-common-sys");
     /// ```
     pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
-        let crt_module_file_path = CRTModuleBuildInfo::get_configuration_file(dependency);
+        let crt_module_config = CRTModuleBuildInfo::get_module_configuration(dependency);
+        let parse_res: Result<CRTModuleBuildInfo> =
+            serde_json::from_str(crt_module_config.as_str());
 
-        if let Ok(mut file_open_res) = File::open(Path::new(crt_module_file_path.as_str())) {
-            let mut crt_module_read_res = String::new();
-            file_open_res
-                .read_to_string(crt_module_read_res.borrow_mut())
-                .expect("configuration file read failed!");
-
-            let parse_res: Result<CRTModuleBuildInfo> =
-                serde_json::from_str(crt_module_read_res.as_str());
-
-            if let Ok(parse_res) = parse_res {
-                self.crt_module_deps.push(parse_res);
-                return self;
-            }
+        if let Ok(build_info) = parse_res {
+            self.crt_module_deps.push(build_info);
+            return self;
         }
 
         panic!("Module: `{}` does not appear to be a part of your dependency chain. Alternatively, the dependencies build script does not call CRTModuleBuildInfo::run_build() correctly", dependency);
@@ -513,14 +505,9 @@ impl CRTModuleBuildInfo {
             println!("cargo:rustc-link-lib={}", link_flag)
         }
 
-        let output_module_file_name =
-            CRTModuleBuildInfo::get_configuration_file(self.crt_module_name.as_str());
-
-        let mut output_module_file = File::create(Path::new(output_module_file_name.as_str()))
-            .expect("crt module metadata file creation failed!");
-
-        output_module_file
-            .write_all(serde_json::to_string(self).unwrap().as_bytes())
-            .expect("Writing to the module configuration file failed!");
+        CRTModuleBuildInfo::put_module_configuration(
+            self.crt_module_name.as_str(),
+            serde_json::to_string(self).unwrap(),
+        )
     }
 }
