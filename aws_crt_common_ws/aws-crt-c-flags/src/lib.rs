@@ -92,14 +92,15 @@ impl CRTModuleBuildInfo {
     /// * `dependency` - name of the crt sys crate you want to link your sys crate against. So for example,
     ///                  if you're building the aws-checksums-sys, your sys crate would be aws_crt_checksums_sys, and you
     ///                  would declare a dependency here on aws-c-common which is linked from the aws_crt_common_sys crate.
+    ///                  Keep in mind: this should be the 'links' value in the sys module you're wanting to use.
     ///
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-checksums-sys");
-    /// build_info.module_dependency("aws-c-common");
+    /// build_info.module_links_dependency("aws-c-common");
     /// ```
-    pub fn module_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
+    pub fn module_links_dependency(&mut self, dependency: &str) -> &mut CRTModuleBuildInfo {
         let crt_module_config = CRTModuleBuildInfo::get_module_configuration(dependency);
         let parse_res: Result<CRTModuleBuildInfo> =
             serde_json::from_str(crt_module_config.as_str());
@@ -122,7 +123,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.public_cflag("-fPIC");
     /// ```
     pub fn public_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
@@ -140,7 +141,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.private_cflag("-Wall");
     /// ```
     pub fn private_cflag(&mut self, c_flag: &str) -> &mut CRTModuleBuildInfo {
@@ -161,7 +162,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.private_define("MY_DEFINE", "MY_DEFINE_VALUE");
     /// ```
     pub fn private_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
@@ -183,7 +184,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.public_define("MY_DEFINE", "MY_DEFINE_VALUE");
     /// ```
     pub fn public_define(&mut self, key: &str, val: &str) -> &mut CRTModuleBuildInfo {
@@ -202,7 +203,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.link_target("crypto")
     ///     .link_target("framework=Security");
     /// ```
@@ -229,7 +230,7 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// use std::path::Path;
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.linker_search_path(Path::new("/opt/where/i/installed/my/manually/built/libcrypto/lib"))
     ///     .link_target("crypto");
     /// ```
@@ -294,7 +295,7 @@ impl CRTModuleBuildInfo {
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo, HeaderType};
     /// use std::path::Path;
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.include_dir(Path::new("/opt/include/wherever/you/installed/libcrypto/include"), HeaderType::Private);
     /// build_info.include_dir(Path::new("../source/myproject/include"), HeaderType::Public);
     /// ```
@@ -320,7 +321,7 @@ impl CRTModuleBuildInfo {
     ///```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
     /// use std::path::Path;
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// let content = "test content".to_string();
     /// build_info.write_generated_file_to_output_path(&content, Path::new("include/aws/common/config.h"));
     ///```
@@ -363,7 +364,7 @@ impl CRTModuleBuildInfo {
     /// # Examples
     /// ```should_panic
     /// use aws_crt_c_flags::{CRTModuleBuildInfo};
-    /// let mut build_info = CRTModuleBuildInfo::new("aws_crt_common_sys");
+    /// let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
     /// build_info.try_compile("int main() { return 0; }").expect("This should have compiled");
     /// ```
     pub fn try_compile(&self, to_compile: &str) -> std::result::Result<(), cc::Error> {
