@@ -107,6 +107,7 @@ impl CRTModuleBuildInfo {
 
         if let Ok(build_info) = parse_res {
             self.crt_module_deps.push(build_info);
+            self.link_targets.push(dependency.to_string());
             return self;
         }
 
