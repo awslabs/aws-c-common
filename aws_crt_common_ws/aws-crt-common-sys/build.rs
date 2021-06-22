@@ -169,7 +169,7 @@ fn load_compiler_configuration(build_config: &mut CRTModuleBuildInfo) {
     build_config.write_generated_file_to_output_path(config_file_str.borrow(), output_path);
 }
 fn main() {
-    let mut build_info = CRTModuleBuildInfo::new("aws-crt-common-sys");
+    let mut build_info = CRTModuleBuildInfo::new("aws-c-common");
     load_compiler_configuration(build_info.borrow_mut());
     let include_path = Path::new("../../include/aws");
     build_info.include_dir(include_path, HeaderType::Public);
@@ -267,7 +267,6 @@ fn main() {
             } else {
                 build_info.file(Path::new("../../source/arch/intel/asm/cpuid.c"));
             }
-            build_info.file(Path::new("../../source/arch/intel/cpuid.c"));
         }
 
         build_info.link_target("dl").link_target("pthread");
