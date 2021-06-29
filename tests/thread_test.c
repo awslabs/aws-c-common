@@ -121,8 +121,6 @@ static int s_do_managed_thread_join_test(struct aws_allocator *allocator, size_t
             aws_thread_launch(&threads[i], s_managed_thread_fn, (void *)&thread_data[i], &thread_options),
             "thread creation failed");
 
-        aws_thread_clean_up(&threads[i]);
-
         ASSERT_INT_EQUALS(
             AWS_THREAD_MANAGED, aws_thread_get_detach_state(&threads[i]), "thread state should have returned JOINABLE");
     }
@@ -177,8 +175,6 @@ static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, v
     ASSERT_SUCCESS(
         aws_thread_launch(&thread, s_managed_thread_fn, (void *)&thread_data, &thread_options),
         "thread creation failed");
-
-    aws_thread_clean_up(&thread);
 
     ASSERT_TRUE(aws_thread_get_managed_thread_count() == 1);
 

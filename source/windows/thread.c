@@ -54,6 +54,7 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
         iter = aws_linked_list_next(iter);
         join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
         aws_thread_join(&join_thread_wrapper->thread_copy);
+        aws_thread_clean_up(&join_thread_wrapper->thread_copy);
         aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
 
         aws_thread_decrement_unjoined_count();
@@ -270,7 +271,9 @@ int aws_thread_launch(
      * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
      * completion.
      */
-    if (!is_managed_thread) {
+    if (is_managed_thread) {
+        aws_thread_clean_up(thread);
+    } else {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }
 
