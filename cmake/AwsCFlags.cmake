@@ -89,7 +89,11 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes -fno-omit-frame-pointer)
+        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
+
+        if (NOT CMAKE_BUILD_TYPE STREQUAL Release)
+            list(APPEND AWS_C_FLAGS -fno-omit-frame-pointer)
+        endif()
 
         if(AWS_WARNINGS_ARE_ERRORS)
             list(APPEND AWS_C_FLAGS -Werror)
