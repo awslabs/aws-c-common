@@ -91,12 +91,3 @@ if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
         return 0;
     }" AWS_HAVE_EXECINFO)
 endif()
-
-if (NOT MSVC)
-    set(CMAKE_REQUIRED_FLAGS "-Werror -Wno-error=stringop-overflow")
-    check_c_source_compiles("
-    int main() {
-        return 0;
-    }" AWS_SHOULD_DISABLE_STRINGOP_OVERFLOW)
-    unset(CMAKE_REQUIRED_FLAGS)
-endif()
