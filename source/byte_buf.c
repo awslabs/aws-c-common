@@ -496,7 +496,7 @@ uint64_t aws_hash_array_ignore_case(const void *array, const size_t len) {
     const uint64_t fnv_prime = 0x100000001b3ULL;
 
     const uint8_t *i = array;
-    const uint8_t *end = i + len;
+    const uint8_t *end = (i == NULL) ? NULL : (i + len);
 
     uint64_t hash = fnv_offset_basis;
     while (i != end) {
@@ -857,6 +857,13 @@ int aws_byte_cursor_compare_lookup(
     AWS_PRECONDITION(aws_byte_cursor_is_valid(lhs));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(rhs));
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(lookup_table, 256));
+    if (lhs->len == 0 && rhs->len == 0) {
+        return 0;
+    } else if (lhs->len == 0) {
+        return -1;
+    } else if (rhs->len == 0) {
+        return 1;
+    }
     const uint8_t *lhs_curr = lhs->ptr;
     const uint8_t *lhs_end = lhs_curr + lhs->len;
 
@@ -1047,8 +1054,7 @@ struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cur
     } else {
         rv.ptr = cursor->ptr;
         rv.len = len;
-
-        cursor->ptr += len;
+        cursor->ptr = (cursor->ptr == NULL) ? NULL : cursor->ptr + len;
         cursor->len -= len;
     }
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(cursor));
@@ -1089,7 +1095,7 @@ struct aws_byte_cursor aws_byte_cursor_advance_nospec(struct aws_byte_cursor *co
         /* Make sure anything acting upon the returned cursor _also_ doesn't advance past NULL */
         rv.len = len & mask;
 
-        cursor->ptr += len;
+        cursor->ptr = (cursor->ptr == NULL) ? NULL : cursor->ptr + len;
         cursor->len -= len;
     } else {
         rv.ptr = NULL;
@@ -1371,7 +1377,7 @@ bool aws_byte_buf_advance(
     AWS_PRECONDITION(aws_byte_buf_is_valid(buffer));
     AWS_PRECONDITION(aws_byte_buf_is_valid(output));
     if (buffer->capacity - buffer->len >= len) {
-        *output = aws_byte_buf_from_array(buffer->buffer + buffer->len, len);
+        *output = aws_byte_buf_from_array((buffer->buffer == NULL) ? NULL : buffer->buffer + buffer->len, len);
         buffer->len += len;
         output->len = 0;
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));

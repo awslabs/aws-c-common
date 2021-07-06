@@ -3,12 +3,42 @@
 
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
+include(CheckSymbolExists)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
+
+# Check for Posix Large Files Support (LFS).
+# On most 64bit systems, LFS is enabled by default.
+# On some 32bit systems, LFS must be enabled by via defines before headers are included.
+# For more info, see docs:
+# https://www.gnu.org/software/libc/manual/html_node/File-Position-Primitive.html
+# https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+function(aws_check_posix_lfs extra_flags variable)
+    list(APPEND CMAKE_REQUIRED_FLAGS ${extra_flags})
+    check_c_source_compiles("
+        #include <stdio.h>
+
+        /* fails to compile if off_t smaller than 64bits */
+        typedef char array[sizeof(off_t) >= 8 ? 1 : -1];
+
+        int main() {
+            return 0;
+        }"
+        HAS_64BIT_FILE_OFFSET_${variable})
+
+    if (HAS_64BIT_FILE_OFFSET_${variable})
+        # sometimes off_t is 64bit, but fseeko() is missing (ex: Android API < 24)
+        check_symbol_exists(fseeko "stdio.h" HAS_FSEEKO_${variable})
+
+        if (HAS_FSEEKO_${variable})
+            set(${variable} 1 PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
 
 # This function will set all common flags on a target
 # Options:
@@ -59,7 +89,11 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes -fno-omit-frame-pointer)
+        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
+
+        if (NOT CMAKE_BUILD_TYPE STREQUAL Release)
+            list(APPEND AWS_C_FLAGS -fno-omit-frame-pointer)
+        endif()
 
         if(AWS_WARNINGS_ARE_ERRORS)
             list(APPEND AWS_C_FLAGS -Werror)
@@ -92,6 +126,24 @@ function(aws_set_common_properties target)
         if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
             list(APPEND AWS_C_FLAGS -moutline-atomics)
         endif()
+
+        # Check for Posix Large File Support (LFS).
+        # Doing this check here, instead of AwsFeatureTests.cmake,
+        # because we might need to modify AWS_C_FLAGS to enable it.
+        set(HAS_LFS FALSE)
+        aws_check_posix_lfs("" BY_DEFAULT)
+        if (BY_DEFAULT)
+            set(HAS_LFS TRUE)
+        else()
+            aws_check_posix_lfs("-D_FILE_OFFSET_BITS=64" VIA_DEFINES)
+            if (VIA_DEFINES)
+                list(APPEND AWS_C_FLAGS "-D_FILE_OFFSET_BITS=64")
+                set(HAS_LFS TRUE)
+            endif()
+        endif()
+        # This becomes a define in config.h
+        set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
