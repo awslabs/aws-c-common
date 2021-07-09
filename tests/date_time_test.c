@@ -579,6 +579,7 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
 
     struct aws_date_time date_time;
 
+    /* Test milliseconds are zeroed out. */
     aws_date_time_init_epoch_secs(&date_time, 1033545909.0);
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
     ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
@@ -587,6 +588,18 @@ static int s_test_unix_epoch_parsing_fn(struct aws_allocator *allocator, void *c
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
+    ASSERT_UINT_EQUALS(0U, date_time.milliseconds);
+
+    /* Test milliseconds of `date_time` match the milliseconds from decimal portion of the input, double timestamp. */
+    aws_date_time_init_epoch_secs(&date_time, 1033545909.50542123);
+    ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
+    ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
+    ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
+    ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
+    ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
+    ASSERT_UINT_EQUALS(505U, date_time.milliseconds);
 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
@@ -609,6 +622,7 @@ static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) 
 
     struct aws_date_time date_time;
 
+    /* Test milliseconds are zeroed. */
     aws_date_time_init_epoch_millis(&date_time, 1033545909000);
     ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
     ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
@@ -617,6 +631,18 @@ static int s_test_millis_parsing_fn(struct aws_allocator *allocator, void *ctx) 
     ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
     ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
     ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
+    ASSERT_UINT_EQUALS(0U, date_time.milliseconds);
+
+    /* Test milliseconds of `date_time` match the milliseconds from the 64-bit timestamp parameter. */
+    aws_date_time_init_epoch_millis(&date_time, 1033545909619);
+    ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
+    ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
+    ASSERT_UINT_EQUALS(8, aws_date_time_hour(&date_time, false));
+    ASSERT_UINT_EQUALS(5, aws_date_time_minute(&date_time, false));
+    ASSERT_UINT_EQUALS(9, aws_date_time_second(&date_time, false));
+    ASSERT_UINT_EQUALS(619U, date_time.milliseconds);
 
     uint8_t date_output[AWS_DATE_TIME_STR_MAX_LEN];
     AWS_ZERO_ARRAY(date_output);
