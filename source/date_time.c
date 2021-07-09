@@ -170,21 +170,25 @@ struct tm s_get_time_struct(struct aws_date_time *dt, bool local_time) {
 }
 
 void aws_date_time_init_now(struct aws_date_time *dt) {
-    uint64_t current_time = 0;
-    aws_sys_clock_get_ticks(&current_time);
-    dt->timestamp = (time_t)aws_timestamp_convert(current_time, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, NULL);
+    uint64_t current_time_ns = 0, current_time_ms = 0;
+    aws_sys_clock_get_ticks(&current_time_ns);
+    current_time_ms = aws_timestamp_convert(current_time_ns, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_MILLIS, NULL);
+    dt->timestamp = (time_t)(current_time_ms / AWS_TIMESTAMP_MILLIS);
+    dt->milliseconds = (uint16_t)(current_time_ms % AWS_TIMESTAMP_MILLIS);
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 }
 
 void aws_date_time_init_epoch_millis(struct aws_date_time *dt, uint64_t ms_since_epoch) {
     dt->timestamp = (time_t)(ms_since_epoch / AWS_TIMESTAMP_MILLIS);
+    dt->milliseconds = (uint16_t)(ms_since_epoch % AWS_TIMESTAMP_MILLIS);
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 }
 
 void aws_date_time_init_epoch_secs(struct aws_date_time *dt, double sec_ms) {
-    dt->timestamp = (time_t)sec_ms;
+    dt->timestamp = (time_t)(sec_ms * AWS_TIMESTAMP_MILLIS);
+    dt->milliseconds = 0U;
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 }
@@ -629,6 +633,7 @@ int aws_date_time_init_from_str_cursor(
      * timestamp. */
     dt->timestamp -= seconds_offset;
 
+    dt->milliseconds = 0U;
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 
@@ -747,11 +752,12 @@ double aws_date_time_as_epoch_secs(const struct aws_date_time *dt) {
 }
 
 uint64_t aws_date_time_as_nanos(const struct aws_date_time *dt) {
-    return (uint64_t)dt->timestamp * AWS_TIMESTAMP_NANOS;
+    return ((uint64_t)dt->timestamp * AWS_TIMESTAMP_NANOS) +
+           (uint64_t)(dt->milliseconds * (AWS_TIMESTAMP_NANOS / AWS_TIMESTAMP_MILLIS));
 }
 
 uint64_t aws_date_time_as_millis(const struct aws_date_time *dt) {
-    return (uint64_t)dt->timestamp * AWS_TIMESTAMP_MILLIS;
+    return ((uint64_t)dt->timestamp * AWS_TIMESTAMP_MILLIS) + (uint64_t)(dt->milliseconds);
 }
 
 uint16_t aws_date_time_year(const struct aws_date_time *dt, bool local_time) {
