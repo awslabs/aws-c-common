@@ -12,6 +12,7 @@
 #include <aws/common/time.h>
 
 #include <ctype.h>
+#include <math.h>
 
 static const char *RFC822_DATE_FORMAT_STR_MINUS_Z = "%a, %d %b %Y %H:%M:%S GMT";
 static const char *RFC822_DATE_FORMAT_STR_WITH_Z = "%a, %d %b %Y %H:%M:%S %Z";
@@ -187,8 +188,9 @@ void aws_date_time_init_epoch_millis(struct aws_date_time *dt, uint64_t ms_since
 }
 
 void aws_date_time_init_epoch_secs(struct aws_date_time *dt, double sec_ms) {
-    dt->timestamp = (time_t)(sec_ms * AWS_TIMESTAMP_MILLIS);
-    dt->milliseconds = 0U;
+    double integral = 0;
+    dt->milliseconds = (uint16_t)(round(modf(sec_ms, &integral) * AWS_TIMESTAMP_MILLIS));
+    dt->timestamp = (time_t)integral;
     dt->gmt_time = s_get_time_struct(dt, false);
     dt->local_time = s_get_time_struct(dt, true);
 }
