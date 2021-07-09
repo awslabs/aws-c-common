@@ -749,7 +749,7 @@ int aws_date_time_to_utc_time_short_str(
 }
 
 double aws_date_time_as_epoch_secs(const struct aws_date_time *dt) {
-    return (double)dt->timestamp;
+    return (double)dt->timestamp + (double)(dt->milliseconds / 1000.0);
 }
 
 uint64_t aws_date_time_as_nanos(const struct aws_date_time *dt) {
