@@ -59,7 +59,7 @@ void aws_priority_queue_s_swap_harness() {
 
     /* All the elements in the container except for a and b should stay unchanged */
     size_t ob_i = old_byte.index;
-    if (ob_i < a * item_sz && ob_i >= (a + 1) * item_sz && ob_i < b * item_sz && ob_i >= (b + 1) * item_sz) {
+    if ((ob_i < a * item_sz || ob_i >= (a + 1) * item_sz) && (ob_i < b * item_sz || ob_i >= (b + 1) * item_sz)) {
         assert_array_list_equivalence(&queue.container, &old, &old_byte);
     }
     /* The new element at index a must be equal to the old element in index b and vice versa */

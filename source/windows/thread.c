@@ -54,6 +54,7 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
         iter = aws_linked_list_next(iter);
         join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
         aws_thread_join(&join_thread_wrapper->thread_copy);
+        aws_thread_clean_up(&join_thread_wrapper->thread_copy);
         aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
 
         aws_thread_decrement_unjoined_count();
@@ -213,7 +214,7 @@ int aws_thread_launch(
     if (options && options->cpu_id >= 0) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
-            "id=%p: cpu affinity of cpu_id " PRIi32 " was specified, attempting to honor the value.",
+            "id=%p: cpu affinity of cpu_id %" PRIi32 " was specified, attempting to honor the value.",
             (void *)thread,
             options->cpu_id);
 
@@ -226,7 +227,7 @@ int aws_thread_launch(
         group_afinity.Mask = (KAFFINITY)((uint64_t)1 << proc_num);
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
-            "id=%p: computed mask " PRIx64 " on group " PRIu16 ".",
+            "id=%p: computed mask %" PRIx64 " on group %" PRIu16 ".",
             (void *)thread,
             (uint64_t)group_afinity.Mask,
             (uint16_t)group_afinity.Group);
@@ -234,7 +235,7 @@ int aws_thread_launch(
         BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
-            "id=%p: SetThreadGroupAffinity() result " PRIi8 ".",
+            "id=%p: SetThreadGroupAffinity() result %" PRIi8 ".",
             (void *)thread,
             (int8_t)set_group_val);
 
@@ -247,20 +248,20 @@ int aws_thread_launch(
             BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
             AWS_LOGF_DEBUG(
                 AWS_LS_COMMON_THREAD,
-                "id=%p: SetThreadIdealProcessorEx() result " PRIi8 ".",
+                "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
                 (void *)thread,
                 (int8_t)set_processor_val);
             if (!set_processor_val) {
                 AWS_LOGF_WARN(
                     AWS_LS_COMMON_THREAD,
-                    "id=%p: SetThreadIdealProcessorEx() failed with " PRIx32 ".",
+                    "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
                     (void *)thread,
                     (uint32_t)GetLastError());
             }
         } else {
             AWS_LOGF_WARN(
                 AWS_LS_COMMON_THREAD,
-                "id=%p: SetThreadGroupAffinity() failed with " PRIx32 ".",
+                "id=%p: SetThreadGroupAffinity() failed with %" PRIx32 ".",
                 (void *)thread,
                 (uint32_t)GetLastError());
         }
@@ -270,7 +271,9 @@ int aws_thread_launch(
      * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
      * completion.
      */
-    if (!is_managed_thread) {
+    if (is_managed_thread) {
+        aws_thread_clean_up(thread);
+    } else {
         thread->detach_state = AWS_THREAD_JOINABLE;
     }
 

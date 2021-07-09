@@ -24,10 +24,12 @@ enum aws_thread_detach_state {
  * threads at the cost of laziness (the user cannot control when joins happen).
  *
  * Manual - thread does not particpate in the managed thread system; any joins must be done by the user.  This
- * is the default.
+ * is the default.  The user must call aws_thread_clean_up(), but only after any desired join operation has completed.
+ * Not doing so will cause the windows handle to leak.
  *
  * Managed - the managed thread system will automatically perform a join some time after the thread's run function
- * has completed.  It is an error to call aws_thread_join on a thread configured with the managed join strategy.
+ * has completed.  It is an error to call aws_thread_join on a thread configured with the managed join strategy.  The
+ * managed thread system will call aws_thread_clean_up() on the thread after the background join has completed.
  *
  * Additionally, an API exists, aws_thread_join_all_managed(), which blocks and returns when all outstanding threads
  * with the managed strategy have fully joined.  This API is useful for tests (rather than waiting for many individual
@@ -116,7 +118,11 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator);
 /**
  * Creates an OS level thread and associates it with func. context will be passed to func when it is executed.
  * options will be applied to the thread if they are applicable for the platform.
- * You must either call join or detach after creating the thread and before calling clean_up.
+ *
+ * After launch, you may join on the thread.  A successfully launched thread must have clean_up called on it in order
+ * to avoid a handle leak.  If you do not join before calling clean_up, the thread will become detached.
+ *
+ * Managed threads must not have join or clean_up called on them by external code.
  */
 AWS_COMMON_API
 int aws_thread_launch(
@@ -140,7 +146,7 @@ enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thre
 
 /**
  * Joins the calling thread to a thread instance. Returns when thread is
- * finished.
+ * finished.  Calling this from the associated OS thread will cause a deadlock.
  */
 AWS_COMMON_API
 int aws_thread_join(struct aws_thread *thread);
@@ -164,7 +170,7 @@ AWS_COMMON_API
 void aws_thread_set_managed_join_timeout_ns(uint64_t timeout_in_ns);
 
 /**
- * Cleans up the thread handle. Either detach or join must be called
+ * Cleans up the thread handle. Don't call this on a managed thread.  If you wish to join the thread, you must join
  * before calling this function.
  */
 AWS_COMMON_API
