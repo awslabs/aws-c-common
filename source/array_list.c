@@ -205,3 +205,7 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
     aws_array_list_mem_swap(item1, item2, list->item_size);
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
+
+#ifdef AWS_NO_STATIC_IMPL
+#    include <aws/common/array_list.inl>
+#endif /* AWS_NO_STATIC_IMPL */

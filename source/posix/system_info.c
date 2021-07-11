@@ -396,13 +396,13 @@ void aws_backtrace_log(int log_level) {
     void *stack_frames[AWS_BACKTRACE_DEPTH];
     size_t num_frames = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
     if (!num_frames) {
-        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "Unable to capture backtrace");
+        AWS_LOGF((enum aws_log_level)log_level, AWS_LS_COMMON_GENERAL, "Unable to capture backtrace");
         return;
     }
     char **symbols = aws_backtrace_symbols(stack_frames, num_frames);
     for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
-        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
+        AWS_LOGF((enum aws_log_level)log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
     free(symbols);
 }

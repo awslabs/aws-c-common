@@ -276,3 +276,7 @@ int aws_secure_strlen(const char *str, size_t max_read_len, size_t *str_len) {
 
     return aws_raise_error(AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED);
 }
+
+#if AWS_NO_STATIC_IMPL
+#    include <aws/common/string.inl>
+#endif
