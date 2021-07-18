@@ -12,8 +12,8 @@ void aws_hash_callback_string_eq_harness() {
     const struct aws_string *str1 = nondet_allocate_string_bounded_length(MAX_STRING_LEN);
     const struct aws_string *str2 = nondet_bool() ? str1 : nondet_allocate_string_bounded_length(MAX_STRING_LEN);
 
-    __CPROVER_assume(aws_c_string_is_valid(str1));
-    __CPROVER_assume(aws_c_string_is_valid(str2));
+    __CPROVER_assume(aws_string_is_valid(str1));
+    __CPROVER_assume(aws_string_is_valid(str2));
 
     bool rval = aws_hash_callback_string_eq(str1, str2);
     if (rval) {

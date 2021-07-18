@@ -11,7 +11,7 @@
 void aws_hash_callback_string_destroy_harness() {
     struct aws_string *str = nondet_allocate_string_bounded_length(MAX_STRING_LEN);
 
-    __CPROVER_assume(aws_c_string_is_valid(str));
+    __CPROVER_assume(aws_string_is_valid(str));
 
     aws_hash_callback_string_destroy(str);
 }
