@@ -47,6 +47,7 @@
  */
 struct hash_table_state; /* Opaque pointer */
 struct aws_hash_table {
+    struct aws_allocator *allocator;
     struct hash_table_state *p_impl;
 };
 
