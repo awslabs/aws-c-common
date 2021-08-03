@@ -222,7 +222,6 @@ int aws_hash_table_init(
     AWS_PRECONDITION(alloc != NULL);
     AWS_PRECONDITION(hash_fn != NULL);
     AWS_PRECONDITION(equals_fn != NULL);
-    map->allocator = alloc;
     struct hash_table_state template;
     template.hash_fn = hash_fn;
     template.equals_fn = equals_fn;
