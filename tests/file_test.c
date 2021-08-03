@@ -2,10 +2,13 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include "fcntl.h"
 #include <aws/common/file.h>
+#include <aws/common/string.h>
 
 #include <aws/testing/aws_test_harness.h>
+
+#include <fcntl.h>
+
 
 static int s_aws_fopen_test_helper(char *file_path, char *content) {
     char read_result[100];
@@ -75,3 +78,48 @@ static int s_aws_fopen_ascii_test_fn(struct aws_allocator *allocator, void *ctx)
 }
 
 AWS_TEST_CASE(aws_fopen_ascii_test, s_aws_fopen_ascii_test_fn)
+
+static int s_directory_traversal_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_byte_cursor path = aws_byte_cursor_from_c_str("dir_traversal_test");
+
+    struct aws_directory_entry *root = aws_directory_entry_open(allocator, path, path);
+    ASSERT_NOT_NULL(root);
+    ASSERT_INT_EQUALS(AWS_FILE_TYPE_DIRECTORY, root->file_type);
+
+    struct aws_directory_entry *first_child = aws_directory_entry_descend(root);
+    ASSERT_NOT_NULL(first_child);
+
+    struct aws_directory_entry *child_txt = NULL;
+    /* this stuff isn't deterministic order wise so we gotta handle both orders. */
+    if (first_child->file_type == AWS_FILE_TYPE_FILE) {
+        ASSERT_SUCCESS(s_aws_fopen_test_helper(
+            (char *)aws_string_c_str(first_child->relative_path), "dir_traversal_test->root_child.txt"));
+
+        struct aws_directory_entry *next_child = aws_directory_entry_get_next_sibling(first_child);
+        ASSERT_NOT_NULL(next_child);
+        ASSERT_INT_EQUALS(AWS_FILE_TYPE_DIRECTORY, next_child->file_type);
+
+        child_txt = aws_directory_entry_descend(next_child);
+    } else {
+        child_txt = aws_directory_entry_descend(first_child);
+
+        struct aws_directory_entry *next_child = aws_directory_entry_get_next_sibling(first_child);
+        ASSERT_NOT_NULL(next_child);
+        ASSERT_INT_EQUALS(AWS_FILE_TYPE_FILE, next_child->file_type);
+        ASSERT_SUCCESS(s_aws_fopen_test_helper(
+            (char *)aws_string_c_str(next_child->relative_path), "dir_traversal_test->root_child.txt"));
+    }
+
+    ASSERT_NOT_NULL(child_txt);
+    ASSERT_INT_EQUALS(AWS_FILE_TYPE_FILE, child_txt->file_type);
+    ASSERT_SUCCESS(s_aws_fopen_test_helper((char *)aws_string_c_str(child_txt->relative_path),
+                                           "dir_traversal_test->first_child_dir->child.txt"));
+
+
+    aws_directory_entry_release(root);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(directory_traversal_test, s_directory_traversal_test_fn)

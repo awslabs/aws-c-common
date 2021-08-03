@@ -119,7 +119,9 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 
     void *mem = allocator->mem_acquire(allocator, size);
     if (!mem) {
-        aws_raise_error(AWS_ERROR_OOM);
+        AWS_FATAL_ASSERT(
+            mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
+                   "allocator implementation");
     }
     return mem;
 }
@@ -135,14 +137,16 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
      */
     size_t required_bytes;
     if (aws_mul_size_checked(num, size, &required_bytes)) {
-        return NULL;
+        AWS_FATAL_ASSERT("illegal size for calloc()");
     }
 
     /* If there is a defined calloc, use it */
     if (allocator->mem_calloc) {
         void *mem = allocator->mem_calloc(allocator, num, size);
         if (!mem) {
-            aws_raise_error(AWS_ERROR_OOM);
+            AWS_FATAL_ASSERT(
+                mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
+                       "allocator implementation");
         }
         return mem;
     }
@@ -150,8 +154,9 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     /* Otherwise, emulate calloc */
     void *mem = allocator->mem_acquire(allocator, required_bytes);
     if (!mem) {
-        aws_raise_error(AWS_ERROR_OOM);
-        return NULL;
+        AWS_FATAL_ASSERT(
+            mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
+                   "allocator implementation");
     }
     memset(mem, 0, required_bytes);
     AWS_POSTCONDITION(mem != NULL);
@@ -186,8 +191,9 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
 
         allocation = aws_mem_acquire(allocator, total_size);
         if (!allocation) {
-            aws_raise_error(AWS_ERROR_OOM);
-            goto cleanup;
+            AWS_FATAL_ASSERT(
+                allocation && "memory allocation failed. If you don't want to exit when this happens, handle OOM in "
+                              "your allocator implementation");
         }
 
         uint8_t *current_ptr = allocation;
@@ -204,7 +210,6 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
         }
     }
 
-cleanup:
     va_end(args_allocs);
     return allocation;
 }
@@ -235,7 +240,9 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
     if (allocator->mem_realloc) {
         void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
         if (!newptr) {
-            return aws_raise_error(AWS_ERROR_OOM);
+            AWS_FATAL_ASSERT(
+                newptr && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
+                          "allocator implementation");
         }
         *ptr = newptr;
         return AWS_OP_SUCCESS;
@@ -248,7 +255,9 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     void *newptr = allocator->mem_acquire(allocator, newsize);
     if (!newptr) {
-        return aws_raise_error(AWS_ERROR_OOM);
+        AWS_FATAL_ASSERT(
+            newptr && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
+                      "allocator implementation");
     }
 
     memcpy(newptr, *ptr, oldsize);
@@ -274,10 +283,6 @@ static void *s_cf_allocator_allocate(CFIndex alloc_size, CFOptionFlags hint, voi
 
     void *mem = aws_mem_acquire(allocator, (size_t)alloc_size + sizeof(size_t));
 
-    if (!mem) {
-        return NULL;
-    }
-
     size_t allocation_size = (size_t)alloc_size + sizeof(size_t);
     memcpy(mem, &allocation_size, sizeof(size_t));
     return (void *)((uint8_t *)mem + sizeof(size_t));
@@ -301,9 +306,7 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
     size_t original_size = 0;
     memcpy(&original_size, original_allocation, sizeof(size_t));
 
-    if (aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size)) {
-        return NULL;
-    }
+    aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size);
 
     size_t new_allocation_size = (size_t)new_size;
     memcpy(original_allocation, &new_allocation_size, sizeof(size_t));
@@ -347,9 +350,7 @@ CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
 
     cf_allocator = CFAllocatorCreate(NULL, &context);
 
-    if (!cf_allocator) {
-        aws_raise_error(AWS_ERROR_OOM);
-    }
+    AWS_FATAL_ASSERT(cf_allocator && "creation of cf allocator failed!");
 
     return cf_allocator;
 }
