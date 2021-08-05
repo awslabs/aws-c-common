@@ -322,9 +322,9 @@ int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_el
  *     element (if not set, iteration stops)
  * # AWS_COMMON_HASH_TABLE_ITER_DELETE   - Deletes the current value and
  *     continues iteration.  destroy_fn will NOT be invoked.
- * # AWS_COMMON_HASH_TABLE_ITER_ERROR   - Error out and stop iteration not
- *     delete the current value regardless of the other values are set or not.
- *     No rolling back. What deleted before error will NOT be back.
+ * # AWS_COMMON_HASH_TABLE_ITER_ERROR   - Stop iteration with error.
+ *     No action will be taken for the current value and the value before this.
+ *     No rolling back. The deleted value before will NOT be back.
  *     aws_hash_table_foreach returns AWS_OP_ERR after stropping the iteration.
  *
  * Invoking any method which may change the contents of the hashtable
