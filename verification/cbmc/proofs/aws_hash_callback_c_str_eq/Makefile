@@ -9,8 +9,8 @@
 MAX_STRING_LEN ?= 64
 DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)
 
-UNWINDSET +=strcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
-UNWINDSET +=strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
+UNWINDSET += strcmp.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
+UNWINDSET += strlen.0:$(shell echo $$(($(MAX_STRING_LEN) + 1)))
 
 CBMCFLAGS +=
 
@@ -22,8 +22,6 @@ PROOF_SOURCES += $(HARNESS_FILE)
 PROOF_SOURCES += $(PROOF_SOURCE)/make_common_data_structures.c
 PROJECT_SOURCES += $(SRCDIR)/source/allocator.c
 PROOF_SOURCES += $(PROOF_SOURCE)/utils.c
-
-PROOF_SOURCES += $(PROOF_STUB)/memcmp_override.c
 
 PROJECT_SOURCES += $(SRCDIR)/source/byte_buf.c
 PROJECT_SOURCES += $(SRCDIR)/source/hash_table.c
