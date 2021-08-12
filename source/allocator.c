@@ -119,9 +119,7 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
 
     void *mem = allocator->mem_acquire(allocator, size);
     if (!mem) {
-        AWS_FATAL_ASSERT(
-            mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
-                   "allocator implementation");
+        AWS_FATAL_ASSERT(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
     }
     return mem;
 }
@@ -137,16 +135,14 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
      */
     size_t required_bytes;
     if (aws_mul_size_checked(num, size, &required_bytes)) {
-        AWS_FATAL_ASSERT("illegal size for calloc()");
+        AWS_FATAL_ASSERT("calloc computed size > SIZE_MAX");
     }
 
     /* If there is a defined calloc, use it */
     if (allocator->mem_calloc) {
         void *mem = allocator->mem_calloc(allocator, num, size);
         if (!mem) {
-            AWS_FATAL_ASSERT(
-                mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
-                       "allocator implementation");
+            AWS_FATAL_ASSERT(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
         }
         return mem;
     }
@@ -154,9 +150,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     /* Otherwise, emulate calloc */
     void *mem = allocator->mem_acquire(allocator, required_bytes);
     if (!mem) {
-        AWS_FATAL_ASSERT(
-            mem && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
-                   "allocator implementation");
+        AWS_FATAL_ASSERT(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
     }
     memset(mem, 0, required_bytes);
     AWS_POSTCONDITION(mem != NULL);
@@ -191,9 +185,7 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
 
         allocation = aws_mem_acquire(allocator, total_size);
         if (!allocation) {
-            AWS_FATAL_ASSERT(
-                allocation && "memory allocation failed. If you don't want to exit when this happens, handle OOM in "
-                              "your allocator implementation");
+            AWS_FATAL_ASSERT(allocation && "Unhandled OOM encountered in aws_mem_acquire with allocator");
         }
 
         uint8_t *current_ptr = allocation;
@@ -240,9 +232,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
     if (allocator->mem_realloc) {
         void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
         if (!newptr) {
-            AWS_FATAL_ASSERT(
-                newptr && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
-                          "allocator implementation");
+            AWS_FATAL_ASSERT(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
         }
         *ptr = newptr;
         return AWS_OP_SUCCESS;
@@ -255,9 +245,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     void *newptr = allocator->mem_acquire(allocator, newsize);
     if (!newptr) {
-        AWS_FATAL_ASSERT(
-            newptr && "memory allocation failed. If you don't want to exit when this happens, handle OOM in your "
-                      "allocator implementation");
+        AWS_FATAL_ASSERT(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
     }
 
     memcpy(newptr, *ptr, oldsize);
