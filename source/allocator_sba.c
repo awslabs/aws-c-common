@@ -186,10 +186,14 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
         for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
+            struct page_header *page = s_page_base(page_addr);
+            AWS_ASSERT(page->alloc_count == 0 && "Memory still allocated in aws_sba_allocator (bin)");
             s_aligned_free(page_addr);
         }
         if (bin->page_cursor) {
             void *page_addr = s_page_base(bin->page_cursor);
+            struct page_header *page = page_addr;
+            AWS_ASSERT(page->alloc_count == 0 && "Memory still allocated in aws_sba_allocator (page)");
             s_aligned_free(page_addr);
         }
 
