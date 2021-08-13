@@ -128,7 +128,9 @@ int aws_directory_traverse(
 
     errno = 0;
     while ((dirent = readdir(dir)) != NULL) {
-        struct aws_byte_cursor name_component = aws_byte_cursor_from_array(dirent->d_name, dirent->d_namlen);
+        /* note: dirent->name_len is only defined on the BSDs, but not linux. It's not in the
+         * required posix spec. So we use dirent->d_name as a c string here. */
+        struct aws_byte_cursor name_component = aws_byte_cursor_from_c_str(dirent->d_name);
 
         if (aws_byte_cursor_eq_c_str(&name_component, "..") || aws_byte_cursor_eq_c_str(&name_component, ".")) {
             continue;
