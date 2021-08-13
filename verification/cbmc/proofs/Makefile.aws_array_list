@@ -3,7 +3,7 @@
 
 ##########
 
-# Sufficently long to get full coverage on the aws_array_list APIs
+# Sufficiently long to get full coverage on the aws_array_list APIs
 # short enough that all proofs complete quickly
 MAX_ITEM_SIZE ?= 2
 

@@ -663,6 +663,13 @@ static int s_foreach_cb_tomask(void *context, struct aws_hash_element *p_element
     return AWS_COMMON_HASH_TABLE_ITER_CONTINUE;
 }
 
+static int s_foreach_cb_error_and_delete(void *context, struct aws_hash_element *p_element) {
+    (void)context;
+    (void)p_element;
+
+    return AWS_COMMON_HASH_TABLE_ITER_ERROR | AWS_COMMON_HASH_TABLE_ITER_DELETE;
+}
+
 static int s_iter_count = 0;
 static int s_foreach_cb_deltarget(void *context, struct aws_hash_element *p_element) {
     void **pTarget = context;
@@ -709,7 +716,9 @@ static int s_test_hash_table_foreach_fn(struct aws_allocator *allocator, void *c
         ASSERT_SUCCESS(aws_hash_table_create(&hash_table, (void *)(intptr_t)i, &pElem, NULL), "insert element");
         pElem->value = NULL;
     }
-
+    // delete will not work as long as the error has set
+    ASSERT_FAILS(
+        aws_hash_table_foreach(&hash_table, s_foreach_cb_error_and_delete, NULL), "foreach error from callback");
     // We should find all eight elements
     int mask = 0;
     ASSERT_SUCCESS(aws_hash_table_foreach(&hash_table, s_foreach_cb_tomask, &mask), "foreach invocation");
