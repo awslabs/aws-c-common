@@ -166,6 +166,25 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
 AWS_COMMON_API
 void aws_small_block_allocator_destroy(struct aws_allocator *sba_allocator);
 
+/*
+ * Returns the number of bytes currently active in the SBA
+ */
+AWS_COMMON_API
+size_t aws_small_block_allocator_bytes_active(struct aws_allocator *sba_allocator);
+
+/*
+ * Returns the number of bytes reserved in pages/bins inside the SBA, e.g. the
+ * current system memory used by the SBA
+ */
+AWS_COMMON_API
+size_t aws_small_block_allocator_bytes_reserved(struct aws_allocator *sba_allocator);
+
+/*
+ * Returns the page size that the SBA is using
+ */
+AWS_COMMON_API
+size_t aws_small_block_allocator_page_size(struct aws_allocator *sba_allocator);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_ALLOCATOR_H */

@@ -304,6 +304,7 @@ add_test_case(sba_random_reallocs)
 add_test_case(sba_threaded_allocs_and_frees)
 add_test_case(sba_threaded_reallocs)
 add_test_case(sba_churn)
+add_test_case(sba_metrics)
 
 add_test_case(test_memtrace_none)
 add_test_case(test_memtrace_count)
