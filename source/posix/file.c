@@ -127,7 +127,7 @@ int aws_directory_traverse(
     int ret_val = AWS_ERROR_SUCCESS;
 
     errno = 0;
-    while ((dirent = readdir(dir)) != NULL) {
+    while (!ret_val && (dirent = readdir(dir)) != NULL) {
         /* note: dirent->name_len is only defined on the BSDs, but not linux. It's not in the
          * required posix spec. So we use dirent->d_name as a c string here. */
         struct aws_byte_cursor name_component = aws_byte_cursor_from_c_str(dirent->d_name);
@@ -176,17 +176,27 @@ int aws_directory_traverse(
                 aws_string_destroy(rel_path_str);
             }
 
-            if (!on_entry(&entry, user_data)) {
-                aws_byte_buf_clean_up(&relative_path);
-                ret_val = aws_raise_error(AWS_ERROR_OPERATION_INTERUPTED);
-                break;
+            /* post order traversal, if a node below us ended the traversal, don't call the visitor again. */
+            if (ret_val && aws_last_error() == AWS_ERROR_OPERATION_INTERUPTED) {
+                goto cleanup;
             }
 
-            aws_byte_buf_clean_up(&relative_path);
+            if (!on_entry(&entry, user_data)) {
+                ret_val = aws_raise_error(AWS_ERROR_OPERATION_INTERUPTED);
+                goto cleanup;
+            }
 
             if (ret_val) {
-                break;
+                goto cleanup;
             }
+
+        cleanup:
+            /* per https://man7.org/linux/man-pages/man3/realpath.3.html, realpath must be freed, if NULL was passed
+             * to the second argument. */
+            if (full_path) {
+                free((void *)full_path);
+            }
+            aws_byte_buf_clean_up(&relative_path);
         }
     }
 
