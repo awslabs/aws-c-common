@@ -258,3 +258,37 @@ static int s_sba_churn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(sba_churn, s_sba_churn)
+
+static int s_sba_metrics_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
+
+    size_t expected_active_size = 0;
+    void *allocs[10] = {0};
+    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        size_t size = aws_max_size(rand() % 512, 1);
+        size_t bin_size = 0;
+        ASSERT_SUCCESS(aws_round_up_to_power_of_two(size, &bin_size));
+        expected_active_size += bin_size;
+        allocs[idx] = aws_mem_acquire(sba, size);
+
+        ASSERT_TRUE(aws_small_block_allocator_bytes_reserved(sba) > aws_small_block_allocator_bytes_active(sba));
+        ASSERT_INT_EQUALS(expected_active_size, aws_small_block_allocator_bytes_active(sba));
+    }
+
+    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        aws_mem_release(sba, allocs[idx]);
+    }
+
+    ASSERT_INT_EQUALS(0, aws_small_block_allocator_bytes_active(sba));
+    /*
+     * There are only 5 bin sizes, so the reserve better be less than that, we have not allocated enough to
+     * push beyond that. Max possible allocation is alloc count * 512
+     */
+    ASSERT_TRUE(5 * aws_small_block_allocator_page_size(sba) > aws_small_block_allocator_bytes_reserved(sba));
+
+    aws_small_block_allocator_destroy(sba);
+    return 0;
+}
+AWS_TEST_CASE(sba_metrics, s_sba_metrics_test)
