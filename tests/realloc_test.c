@@ -68,20 +68,6 @@ static void *s_test_realloc(struct aws_allocator *allocator, void *ptr, size_t o
     return buf + 16;
 }
 
-static void *s_test_malloc_failing(struct aws_allocator *allocator, size_t size) {
-    (void)allocator;
-    (void)size;
-    return NULL;
-}
-
-static void *s_test_realloc_failing(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
-    (void)allocator;
-    (void)ptr;
-    (void)oldsize;
-    (void)newsize;
-    return NULL;
-}
-
 static const uint8_t TEST_PATTERN[32] = {0xa5, 0x41, 0xcb, 0xe7, 0x00, 0x19, 0xd9, 0xf3, 0x60, 0x4a, 0x2b,
                                          0x68, 0x55, 0x46, 0xb7, 0xe0, 0x74, 0x91, 0x2a, 0xbe, 0x5e, 0x41,
                                          0x06, 0x39, 0x02, 0x02, 0xf6, 0x79, 0x1c, 0x4a, 0x08, 0xa9};
@@ -109,57 +95,6 @@ static int s_test_realloc_fallback_fn(struct aws_allocator *allocator, void *ctx
     ASSERT_INT_EQUALS(s_alloc_total_size, 64);
     ASSERT_INT_EQUALS(memcmp(buf, TEST_PATTERN, 32), 0);
     ASSERT_FALSE(buf == oldbuf);
-
-    aws_mem_release(&test_allocator, buf);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_realloc_fallback_oom, s_test_realloc_fallback_oom_fn)
-static int s_test_realloc_fallback_oom_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
-
-    struct aws_allocator test_allocator = {
-        .mem_acquire = s_test_alloc_acquire,
-        .mem_release = s_test_alloc_release,
-        .mem_realloc = NULL,
-    };
-
-    s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
-    void *buf = aws_mem_acquire(&test_allocator, 32);
-    void *oldbuf = buf;
-
-    test_allocator.mem_acquire = s_test_malloc_failing;
-
-    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&test_allocator, &buf, 32, 64));
-    ASSERT_INT_EQUALS(s_call_ct_free, 0);
-    ASSERT_PTR_EQUALS(buf, oldbuf);
-
-    aws_mem_release(&test_allocator, buf);
-
-    return 0;
-}
-
-AWS_TEST_CASE(test_realloc_passthrough_oom, s_test_realloc_passthrough_oom_fn)
-static int s_test_realloc_passthrough_oom_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)allocator;
-    (void)ctx;
-
-    struct aws_allocator test_allocator = {
-        .mem_acquire = s_test_alloc_acquire,
-        .mem_release = s_test_alloc_release,
-        .mem_realloc = s_test_realloc_failing,
-    };
-
-    s_call_ct_malloc = s_call_ct_free = s_call_ct_realloc = 0;
-
-    void *buf = aws_mem_acquire(&test_allocator, 32);
-    void *oldbuf = buf;
-    memcpy(buf, TEST_PATTERN, 32);
-
-    ASSERT_ERROR(AWS_ERROR_OOM, aws_mem_realloc(&test_allocator, &buf, 32, 64));
-    ASSERT_PTR_EQUALS(buf, oldbuf);
 
     aws_mem_release(&test_allocator, buf);
 

@@ -68,7 +68,7 @@ static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, 
     int ret_val = AWS_OP_SUCCESS;
 
     if (entry->file_type & AWS_FILE_TYPE_FILE) {
-         ret_val = aws_file_delete(path_str);
+        ret_val = aws_file_delete(path_str);
     }
 
     if (entry->file_type & AWS_FILE_TYPE_DIRECTORY) {
@@ -111,8 +111,7 @@ int aws_directory_traverse(
     struct aws_string *path,
     bool recursive,
     aws_on_directory_entry *on_entry,
-    void *user_data
-) {
+    void *user_data) {
     DIR *dir = opendir(aws_string_c_str(path));
 
     if (!dir) {
@@ -149,14 +148,16 @@ int aws_directory_traverse(
         if (!lstat((const char *)relative_path.buffer, &dir_info)) {
             if (S_ISDIR(dir_info.st_mode)) {
                 entry.file_type |= AWS_FILE_TYPE_DIRECTORY;
-            } if (S_ISLNK(dir_info.st_mode)) {
+            }
+            if (S_ISLNK(dir_info.st_mode)) {
                 entry.file_type |= AWS_FILE_TYPE_SYM_LINK;
-            } if (S_ISREG(dir_info.st_mode)) {
+            }
+            if (S_ISREG(dir_info.st_mode)) {
                 entry.file_type |= AWS_FILE_TYPE_FILE;
                 entry.file_size = dir_info.st_size;
             }
 
-            if (!entry.file_type){
+            if (!entry.file_type) {
                 AWS_ASSERT("Unknown file type encountered");
             }
 
@@ -167,7 +168,7 @@ int aws_directory_traverse(
                 entry.path = aws_byte_cursor_from_c_str(full_path);
             }
 
-            if (recursive && entry.file_type & AWS_FILE_TYPE_DIRECTORY) {                                                                                 \
+            if (recursive && entry.file_type & AWS_FILE_TYPE_DIRECTORY) {
                 struct aws_string *rel_path_str = aws_string_new_from_cursor(allocator, &entry.relative_path);
                 ret_val = aws_directory_traverse(allocator, rel_path_str, recursive, on_entry, user_data);
                 aws_string_destroy(rel_path_str);

@@ -255,11 +255,12 @@ static int s_directory_non_empty_deletion_recursively_succeeds_test_fn(struct aw
     struct aws_string *path = aws_string_new_from_c_str(allocator, "non_empty_dir_del_test_dir_1");
     ASSERT_SUCCESS(aws_directory_create(path));
 
-    const char *nested_dir = "test_dir_1" AWS_PATH_DELIM_STR "test_dir_2";
+    const char *nested_dir = "non_empty_dir_del_test_dir_1" AWS_PATH_DELIM_STR "test_dir_2";
     struct aws_string *nested_dir_path = aws_string_new_from_c_str(allocator, nested_dir);
     ASSERT_SUCCESS(aws_directory_create(nested_dir_path));
 
-    const char *nested_file = "test_dir_1" AWS_PATH_DELIM_STR "test_dir_2" AWS_PATH_DELIM_STR "nested_file.txt";
+    const char *nested_file =
+        "non_empty_dir_del_test_dir_1" AWS_PATH_DELIM_STR "test_dir_2" AWS_PATH_DELIM_STR "nested_file.txt";
 
     FILE *nested_file_ptr = aws_fopen(nested_file, "w");
     ASSERT_NOT_NULL(nested_file_ptr);
