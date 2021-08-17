@@ -41,8 +41,8 @@ static int s_parse_and_raise_error(int errno_cpy) {
     return aws_raise_error(AWS_ERROR_UNKNOWN);
 }
 
-int aws_directory_create(struct aws_string *path) {
-    int mkdir_ret = mkdir(aws_string_c_str(path), S_IRWXU | S_IRWXG | S_IRWXO);
+int aws_directory_create(const struct aws_string *dir_path) {
+    int mkdir_ret = mkdir(aws_string_c_str(dir_path), S_IRWXU | S_IRWXG | S_IRWXO);
 
     /** nobody cares if it already existed. */
     if (mkdir_ret != 0 && errno != EEXIST) {
@@ -52,7 +52,7 @@ int aws_directory_create(struct aws_string *path) {
     return AWS_OP_SUCCESS;
 }
 
-bool aws_directory_exists(struct aws_string *dir_path) {
+bool aws_directory_exists(const struct aws_string *dir_path) {
     struct stat dir_info;
     if (lstat(aws_string_c_str(dir_path), &dir_info) == 0 && S_ISDIR(dir_info.st_mode)) {
         return true;
@@ -81,7 +81,7 @@ static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, 
     return ret_val == AWS_OP_SUCCESS;
 }
 
-int aws_directory_delete(struct aws_string *dir_path, bool recursive) {
+int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     if (!aws_directory_exists(dir_path)) {
         return AWS_OP_SUCCESS;
     }
@@ -106,13 +106,13 @@ int aws_directory_delete(struct aws_string *dir_path, bool recursive) {
     return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
 }
 
-int aws_directory_or_file_move(struct aws_string *from, struct aws_string *to) {
+int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
     int error_code = rename(aws_string_c_str(from), aws_string_c_str(to));
 
     return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
 }
 
-int aws_file_delete(struct aws_string *file_path) {
+int aws_file_delete(const struct aws_string *file_path) {
     int error_code = unlink(aws_string_c_str(file_path));
 
     if (!error_code || errno == ENOENT) {
@@ -124,7 +124,7 @@ int aws_file_delete(struct aws_string *file_path) {
 
 int aws_directory_traverse(
     struct aws_allocator *allocator,
-    struct aws_string *path,
+    const struct aws_string *path,
     bool recursive,
     aws_on_directory_entry *on_entry,
     void *user_data) {

@@ -71,11 +71,11 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
  *
  * Returns AWS_OP_SUCCESS on success. Otherwise, check aws_last_error().
  */
-AWS_COMMON_API int aws_directory_create(struct aws_string *dir_path);
+AWS_COMMON_API int aws_directory_create(const struct aws_string *dir_path);
 /**
  * Returns true if the directory currently exists. Otherwise, it returns false.
  */
-AWS_COMMON_API bool aws_directory_exists(struct aws_string *dir_path);
+AWS_COMMON_API bool aws_directory_exists(const struct aws_string *dir_path);
 /**
  * Deletes a directory. If the directory is not empty, this will fail unless the recursive parameter is set to true.
  * If recursive is true then the entire directory and all of its contents will be deleted. If it is set to false,
@@ -83,19 +83,19 @@ AWS_COMMON_API bool aws_directory_exists(struct aws_string *dir_path);
  * aws_last_error() will contain the error that occurred. If the directory doesn't exist, AWS_OP_SUCCESS is still
  * returned.
  */
-AWS_COMMON_API int aws_directory_delete(struct aws_string *dir_path, bool recursive);
+AWS_COMMON_API int aws_directory_delete(const struct aws_string *dir_path, bool recursive);
 /**
  * Deletes a file. Returns AWS_OP_SUCCESS if the operation was successful. Otherwise,
  * aws_last_error() will contain the error that occurred. If the file doesn't exist, AWS_OP_SUCCESS is still returned.
  */
-AWS_COMMON_API int aws_file_delete(struct aws_string *file_path);
+AWS_COMMON_API int aws_file_delete(const struct aws_string *file_path);
 
 /**
  * Moves directory at from to to.
  * Returns AWS_OP_SUCCESS if the operation was successful. Otherwise,
  * aws_last_error() will contain the error that occurred.
  */
-AWS_COMMON_API int aws_directory_or_file_move(struct aws_string *from, struct aws_string *to);
+AWS_COMMON_API int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to);
 
 /**
  * Traverse a directory starting at path.
@@ -110,7 +110,7 @@ AWS_COMMON_API int aws_directory_or_file_move(struct aws_string *from, struct aw
  */
 AWS_COMMON_API int aws_directory_traverse(
     struct aws_allocator *allocator,
-    struct aws_string *path,
+    const struct aws_string *path,
     bool recursive,
     aws_on_directory_entry *on_entry,
     void *user_data);
