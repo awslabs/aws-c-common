@@ -13,8 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-FILE *aws_fopen(const char *file_path, const char *mode) {
-    return fopen(file_path, mode);
+FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
+    return fopen(aws_string_c_str(file_path), aws_string_c_str(mode));
 }
 
 static int s_parse_and_raise_error(int errno_cpy) {

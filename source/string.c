@@ -4,6 +4,69 @@
  */
 #include <aws/common/string.h>
 
+#ifdef _WIN32
+#    include <windows.h>
+
+struct aws_string *aws_string_convert_to_wchar_str(
+    struct aws_allocator *allocator,
+    const struct aws_string *to_convert) {
+    /* if a length is passed for the to_convert string, converted size does not include the null terminator,
+     * which is a good thing. */
+    int converted_size = MultiByteToWideChar(CP_UTF8, 0, aws_string_c_str(to_convert), to_convert->len, NULL, 0);
+
+    if (!converted_size) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    size_t str_len_size;
+    size_t malloc_size;
+
+    /* double the size because the return value above is # of characters, not bytes size. */
+    if (aws_mul_size_checked(sizeof(wchar_t), converted_size, &str_len_size)) {
+        return NULL;
+    }
+
+    /* UTF-16, the NULL terminator is two bytes. */
+    if (aws_add_size_checked(sizeof(struct aws_string) + 2, str_len_size, &malloc_size)) {
+        return NULL;
+    }
+
+    struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
+    if (!str) {
+        return NULL;
+    }
+
+    /* Fields are declared const, so we need to copy them in like this */
+    *(struct aws_allocator **)(&str->allocator) = allocator;
+    *(size_t *)(&str->len) = str_len_size;
+
+    int converted_res = MultiByteToWideChar(
+        CP_UTF8, 0, aws_string_c_str(to_convert), to_convert->len, (wchar_t *)str->bytes, converted_size);
+    /* windows had its chance to do its thing, no take backsies. */
+    AWS_FATAL_ASSERT(converted_res > 0);
+
+    /* remember.... NULL term is TWO bytes for UTF-16. */
+    *(uint8_t *)&str->bytes[str_len_size] = 0;
+    *(uint8_t *)&str->bytes[str_len_size + 1] = 0;
+    return str;
+}
+
+const wchar_t *aws_string_wchar_c_str(const struct aws_string *str) {
+    return (wchar_t *)str->bytes;
+}
+
+size_t aws_string_wchar_num_chars(const struct aws_string *str) {
+    if (str->len == 0) {
+        return 0;
+    }
+
+    AWS_FATAL_ASSERT(str->len % 2 == 0);
+    return str->len / sizeof(whchar_t);
+}
+
+#endif /* _WIN32 */
+
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str) {
     AWS_PRECONDITION(allocator && c_str);
     return aws_string_new_from_array(allocator, (const uint8_t *)c_str, strlen(c_str));
