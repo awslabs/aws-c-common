@@ -62,7 +62,9 @@ bool aws_directory_exists(struct aws_string *dir_path) {
 }
 
 static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, void *user_data) {
-    struct aws_allocator *allocator = user_data;
+    (void)user_data;
+
+    struct aws_allocator *allocator = aws_default_allocator();
 
     struct aws_string *path_str = aws_string_new_from_cursor(allocator, &entry->relative_path);
     int ret_val = AWS_OP_SUCCESS;
@@ -72,18 +74,27 @@ static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, 
     }
 
     if (entry->file_type & AWS_FILE_TYPE_DIRECTORY) {
-        ret_val = aws_directory_delete(path_str, allocator, false);
+        ret_val = aws_directory_delete(path_str, false);
     }
 
     aws_string_destroy(path_str);
     return ret_val == AWS_OP_SUCCESS;
 }
 
-int aws_directory_delete(struct aws_string *dir_path, struct aws_allocator *allocator, bool recursive) {
+int aws_directory_delete(struct aws_string *dir_path, bool recursive) {
+    if (!aws_directory_exists(dir_path)) {
+        return AWS_OP_SUCCESS;
+    }
+
     int ret_val = AWS_OP_SUCCESS;
 
     if (recursive) {
-        ret_val = aws_directory_traverse(allocator, dir_path, true, s_delete_file_or_directory, allocator);
+        ret_val = aws_directory_traverse(aws_default_allocator(), dir_path, true, s_delete_file_or_directory, NULL);
+    }
+
+    if (ret_val && aws_last_error() == AWS_ERROR_FILE_INVALID_PATH) {
+        aws_reset_error();
+        return AWS_OP_SUCCESS;
     }
 
     if (ret_val) {
@@ -103,7 +114,12 @@ int aws_directory_or_file_move(struct aws_string *from, struct aws_string *to) {
 
 int aws_file_delete(struct aws_string *file_path) {
     int error_code = unlink(aws_string_c_str(file_path));
-    return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
+
+    if (!error_code || errno == ENOENT) {
+        return AWS_OP_SUCCESS;
+    }
+
+    return s_parse_and_raise_error(errno);
 }
 
 int aws_directory_traverse(

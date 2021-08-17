@@ -72,12 +72,13 @@ AWS_COMMON_API bool aws_directory_exists(struct aws_string *dir_path);
  * Deletes a directory. If the directory is not empty, this will fail unless the recursive parameter is set to true.
  * If recursive is true then the entire directory and all of its contents will be deleted. If it is set to false,
  * the directory will be deleted only if it is empty. Returns AWS_OP_SUCCESS if the operation was successful. Otherwise,
- * aws_last_error() will contain the error that occurred.
+ * aws_last_error() will contain the error that occurred. If the directory doesn't exist, AWS_OP_SUCCESS is still
+ * returned.
  */
-AWS_COMMON_API int aws_directory_delete(struct aws_string *dir_path, struct aws_allocator *allocator, bool recursive);
+AWS_COMMON_API int aws_directory_delete(struct aws_string *dir_path, bool recursive);
 /**
  * Deletes a file. Returns AWS_OP_SUCCESS if the operation was successful. Otherwise,
- * aws_last_error() will contain the error that occurred.
+ * aws_last_error() will contain the error that occurred. If the file doesn't exist, AWS_OP_SUCCESS is still returned.
  */
 AWS_COMMON_API int aws_file_delete(struct aws_string *file_path);
 

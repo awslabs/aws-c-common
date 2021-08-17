@@ -227,7 +227,7 @@ static int s_directory_creation_deletion_test_fn(struct aws_allocator *allocator
     ASSERT_SUCCESS(aws_directory_create(path));
 
     ASSERT_TRUE(aws_directory_exists(path));
-    ASSERT_SUCCESS(aws_directory_delete(path, allocator, false));
+    ASSERT_SUCCESS(aws_directory_delete(path, false));
     ASSERT_FALSE(aws_directory_exists(path));
 
     aws_string_destroy(path);
@@ -241,7 +241,7 @@ static int s_directory_non_empty_deletion_fails_test_fn(struct aws_allocator *al
     (void)ctx;
     struct aws_string *path = aws_string_new_from_c_str(allocator, "dir_traversal_test");
     ASSERT_TRUE(aws_directory_exists(path));
-    ASSERT_ERROR(AWS_ERROR_DIRECTORY_NOT_EMPTY, aws_directory_delete(path, allocator, false));
+    ASSERT_ERROR(AWS_ERROR_DIRECTORY_NOT_EMPTY, aws_directory_delete(path, false));
     ASSERT_TRUE(aws_directory_exists(path));
 
     aws_string_destroy(path);
@@ -266,7 +266,7 @@ static int s_directory_non_empty_deletion_recursively_succeeds_test_fn(struct aw
     ASSERT_NOT_NULL(nested_file_ptr);
     fclose(nested_file_ptr);
 
-    ASSERT_SUCCESS(aws_directory_delete(path, allocator, true));
+    ASSERT_SUCCESS(aws_directory_delete(path, true));
     ASSERT_FALSE(aws_directory_exists(path));
 
     aws_string_destroy(nested_dir_path);
