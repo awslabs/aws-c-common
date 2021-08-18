@@ -10,9 +10,16 @@
 struct aws_string *aws_string_convert_to_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert) {
+    struct aws_byte_cursor convert_cur = aws_byte_cursor_from_string(to_convert);
+    return aws_string_convert_to_wchar_from_byte_cursor(allocator, &convert_cur);
+}
+
+struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor *to_convert) {
     /* if a length is passed for the to_convert string, converted size does not include the null terminator,
      * which is a good thing. */
-    int converted_size = MultiByteToWideChar(CP_UTF8, 0, aws_string_c_str(to_convert), to_convert->len, NULL, 0);
+    int converted_size = MultiByteToWideChar(CP_UTF8, 0, (const char *)to_convert->ptr, (int)to_convert->len, NULL, 0);
 
     if (!converted_size) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -42,7 +49,7 @@ struct aws_string *aws_string_convert_to_wchar_str(
     *(size_t *)(&str->len) = str_len_size;
 
     int converted_res = MultiByteToWideChar(
-        CP_UTF8, 0, aws_string_c_str(to_convert), to_convert->len, (wchar_t *)str->bytes, converted_size);
+        CP_UTF8, 0, (const char *)to_convert->ptr, (int)to_convert->len, (wchar_t *)str->bytes, converted_size);
     /* windows had its chance to do its thing, no take backsies. */
     AWS_FATAL_ASSERT(converted_res > 0);
 
@@ -50,6 +57,51 @@ struct aws_string *aws_string_convert_to_wchar_str(
     *(uint8_t *)&str->bytes[str_len_size] = 0;
     *(uint8_t *)&str->bytes[str_len_size + 1] = 0;
     return str;
+}
+
+static struct aws_string *s_convert_from_wchar(
+    struct aws_allocator *allocator,
+    const wchar_t *to_convert,
+    int len_chars) {
+
+    int bytes_size = WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, NULL, 0, NULL, NULL);
+
+    if (!bytes_size) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    size_t malloc_size;
+
+    if (aws_add_size_checked(sizeof(struct aws_string) + 1, bytes_size, &malloc_size)) {
+        return NULL;
+    }
+
+    struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
+    if (!str) {
+        return NULL;
+    }
+
+    /* Fields are declared const, so we need to copy them in like this */
+    *(struct aws_allocator **)(&str->allocator) = allocator;
+    *(size_t *)(&str->len) = bytes_size;
+
+    int converted_res = WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, str->bytes, (int)str->len, NULL, NULL);
+    /* windows had its chance to do its thing, no take backsies. */
+    AWS_FATAL_ASSERT(converted_res > 0);
+
+    *(uint8_t *)&str->bytes[str->len] = 0;
+    return str;
+}
+
+struct aws_string *aws_string_convert_from_wchar_str(
+    struct aws_allocator *allocator,
+    const struct aws_string *to_convert) {
+    return s_convert_from_wchar(
+        allocator, aws_string_wchar_c_str(to_convert), (int)aws_string_wchar_num_chars(to_convert));
+}
+struct aws_string *aws_string_convert_from_wchar_c_str(struct aws_allocator *allocator, const wchar_t *to_convert) {
+    return s_convert_from_wchar(allocator, to_convert, -1);
 }
 
 const wchar_t *aws_string_wchar_c_str(const struct aws_string *str) {

@@ -64,6 +64,22 @@ AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert);
 
+AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor *to_convert);
+
+AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_str(
+    struct aws_allocator *allocator,
+    const struct aws_string *to_convert);
+
+AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_byte_cursor(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor *to_convert);
+
+AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_c_str(
+    struct aws_allocator *allocator,
+    const wchar_t *to_convert);
+
 /**
  * Returns a wchar_t * pointer for use with windows OS interop.
  */
