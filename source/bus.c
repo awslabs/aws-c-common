@@ -265,7 +265,8 @@ struct bus_async_impl {
     struct {
         struct aws_thread thread;
         struct aws_condition_variable notify;
-        bool running;
+        struct aws_atomic_var running;
+        struct aws_atomic_var exited;
     } consumer;
 };
 
@@ -280,7 +281,12 @@ struct bus_message {
 static void s_bus_async_clean_up(struct aws_bus *bus) {
     struct bus_async_impl *impl = bus->impl;
 
-    /* TODO: Tear down delivery thread */
+    /* shut down delivery thread */
+    aws_atomic_exchange_int(&impl->consumer.running, 0);
+    while (!aws_atomic_load_int(&impl->consumer.exited)) {
+        aws_thread_current_sleep(1000 * 1000);
+    }
+    aws_thread_join(&impl->consumer.thread);
 
     aws_hash_table_clean_up(&impl->slots.table);
     aws_mutex_clean_up(&impl->slots.mutex);
@@ -289,12 +295,9 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, impl);
 }
 
-static bool s_bus_async_has_data(void *user_data) {
+static bool s_bus_async_should_wake_up(void *user_data) {
     struct bus_async_impl *impl = user_data;
-    if (!impl->consumer.running) {
-        return true;
-    }
-    return !aws_linked_list_empty(&impl->msg_queue.msgs);
+    return !aws_atomic_load_int(&impl->consumer.running) || !aws_linked_list_empty(&impl->msg_queue.msgs);
 }
 
 /* Async bus delivery thread loop */
@@ -302,10 +305,12 @@ static void s_bus_async_deliver(void *user_data) {
     struct aws_bus *bus = user_data;
     struct bus_async_impl *impl = bus->impl;
 
-    while (impl->consumer.running) {
+    aws_atomic_exchange_int(&impl->consumer.running, 1);
+
+    while (aws_atomic_load_int(&impl->consumer.running)) {
         if (aws_condition_variable_wait_for_pred(
-                &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_has_data, impl)) {
-            return;
+                &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl)) {
+            break;
         }
 
         /* Copy out the messages and dispatch them */
@@ -333,6 +338,8 @@ static void s_bus_async_deliver(void *user_data) {
             aws_ring_buffer_release(&impl->msg_queue.buffer, &entry_buf);
         }
     }
+
+    aws_atomic_exchange_int(&impl->consumer.exited, 1);
 }
 
 int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
@@ -390,7 +397,8 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
     aws_linked_list_init(&impl->msg_queue.msgs);
-    if (aws_ring_buffer_init(&impl->msg_queue.buffer, bus->allocator, options->buffer_size)) {
+    const size_t ring_buffer_size = options->buffer_size ? options->buffer_size : (4 * 1024);
+    if (aws_ring_buffer_init(&impl->msg_queue.buffer, bus->allocator, ring_buffer_size)) {
         goto error;
     }
 
@@ -412,9 +420,7 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
 
-    impl->consumer.running = true;
     if (aws_thread_launch(&impl->consumer.thread, s_bus_async_deliver, bus, aws_default_thread_options())) {
-        impl->consumer.running = false;
         goto error;
     }
 

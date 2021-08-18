@@ -48,6 +48,7 @@ struct aws_bus_options {
     enum aws_bus_policy policy;
     struct aws_allocator *allocator;
     size_t buffer_size;
+    /* Not supported yet, but event loop group for delivery */
     struct aws_event_loop_group *event_loop_group;
 };
 

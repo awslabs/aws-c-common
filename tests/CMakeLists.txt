@@ -148,9 +148,9 @@ add_test_case(text_encoding_ascii)
 add_test_case(text_encoding_is_utf8)
 
 add_test_case(bus_sync_test_send)
-add_test_case(bus_sync_test_send_pod)
-add_test_case(bus_async_test_send)
-add_test_case(bus_async_test_send_pod)
+add_test_case(bus_async_test_lifetime)
+add_test_case(bus_async_test_send_single_threaded)
+add_test_case(bus_async_test_send_multi_threaded)
 
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
