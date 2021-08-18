@@ -183,11 +183,7 @@ static void s_bus_sync_clean_up(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, impl);
 }
 
-static int s_bus_sync_send(
-    struct aws_bus *bus,
-    uint64_t address,
-    void *payload,
-    void (*destructor)(void *)) {
+static int s_bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_sync_impl *impl = bus->impl;
     int result = s_bus_deliver_msg(bus, address, &impl->slots.table, payload);
     if (destructor) {
