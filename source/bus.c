@@ -315,6 +315,7 @@ static void s_bus_async_deliver(void *user_data) {
 
         /* Copy out the messages and dispatch them */
         struct aws_linked_list msg_list;
+        aws_linked_list_init(&msg_list);
         aws_mutex_lock(&impl->msg_queue.mutex);
         /* BEGIN CRITICAL SECTION */
         aws_linked_list_swap_contents(&msg_list, &impl->msg_queue.msgs);
@@ -462,14 +463,14 @@ void aws_bus_clean_up(struct aws_bus *bus) {
     vtable->clean_up(bus);
 }
 
-int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_vtable *vtable = bus->impl;
-    return vtable->subscribe(bus, address, callback, user_data);
+    return vtable->subscribe(bus, address, listener, user_data);
 }
 
-void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_vtable *vtable = bus->impl;
-    vtable->unsubscribe(bus, address, callback, user_data);
+    vtable->unsubscribe(bus, address, listener, user_data);
 }
 
 int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
