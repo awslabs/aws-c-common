@@ -46,15 +46,15 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     struct aws_bus bus;
     ASSERT_SUCCESS(aws_bus_init(&bus, &options));
-
     AWS_ZERO_STRUCT(s_sync_test);
 
     ASSERT_SUCCESS(aws_bus_subscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test));
-
     ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor));
 
-    aws_bus_unsubscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test);
+    ASSERT_INT_EQUALS(1, s_sync_test.count);
+    ASSERT_TRUE(s_sync_test.payload_deleted);
 
+    aws_bus_unsubscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test);
     aws_bus_clean_up(&bus);
 
     return 0;

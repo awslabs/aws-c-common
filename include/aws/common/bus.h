@@ -57,27 +57,26 @@ struct aws_byte_cursor;
 typedef void(aws_bus_listener_fn)(uint64_t address, const void *payload, void *user_data);
 
 /* Creates and returns a new message bus */
+AWS_COMMON_API
 int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options);
 
 /* Cleans up a message bus by notifying all listeners and releasing the bus memory */
+AWS_COMMON_API
 void aws_bus_clean_up(struct aws_bus *bus);
 
 /* Subscribes a listener to a message type */
+AWS_COMMON_API
 int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
 
 /* Unsubscribe a listener from a specific message */
+AWS_COMMON_API
 void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
-
-/*
- * Sends a message to any listeners. Memory referenced by msg will be copied into a buffer,
- * and does not need to live past this call.
- */
-int aws_bus_send_pod(struct aws_bus *bus, uint64_t address, struct aws_byte_cursor payload);
 
 /*
  * Sends a message to any listeners. payload will live until delivered, and then the destructor (if
  * provided) will be called). Note that anything payload references must also live at least until it is destroyed.
  */
+AWS_COMMON_API
 int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *));
 
 #endif /* AWS_COMMON_BUS_H */

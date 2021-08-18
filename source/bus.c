@@ -32,8 +32,7 @@
 /* MUST be the first member of any impl to allow blind casting */
 struct bus_vtable {
     void (*clean_up)(struct aws_bus *bus);
-    int (*alloc)(struct aws_bus *bus, size_t size, struct aws_byte_buf *buf);
-    int (*send)(struct aws_bus *bus, uint64_t address, struct aws_byte_buf payload, void (*destructor)(void *));
+    int (*send)(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *));
     int (*subscribe)(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data);
     int (*unsubscribe)(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data);
 };
@@ -184,27 +183,15 @@ static void s_bus_sync_clean_up(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, impl);
 }
 
-static int s_bus_sync_alloc(struct aws_bus *bus, size_t size, struct aws_byte_buf *buf) {
-    struct bus_sync_impl *impl = bus->impl;
-    if (size > impl->msg_buffer.capacity) {
-        if (aws_byte_buf_reserve(buf, size)) {
-            return AWS_OP_ERR;
-        }
-    }
-
-    *buf = impl->msg_buffer;
-    return AWS_OP_SUCCESS;
-}
-
 static int s_bus_sync_send(
     struct aws_bus *bus,
     uint64_t address,
-    struct aws_byte_buf payload,
+    void *payload,
     void (*destructor)(void *)) {
     struct bus_sync_impl *impl = bus->impl;
-    int result = s_bus_deliver_msg(bus, address, &impl->slots.table, payload.buffer);
+    int result = s_bus_deliver_msg(bus, address, &impl->slots.table, payload);
     if (destructor) {
-        destructor(payload.buffer);
+        destructor(payload);
     } else {
         aws_byte_buf_reset(&impl->msg_buffer, false);
     }
@@ -227,7 +214,6 @@ static int s_bus_sync_unsubscribe(
 
 static struct bus_vtable s_sync_vtable = {
     .clean_up = s_bus_sync_clean_up,
-    .alloc = s_bus_sync_alloc,
     .send = s_bus_sync_send,
     .subscribe = s_bus_sync_subscribe,
     .unsubscribe = s_bus_sync_unsubscribe,
@@ -287,7 +273,7 @@ struct bus_async_impl {
 struct bus_message {
     struct aws_linked_list_node list_node;
     uint64_t address;
-    struct aws_byte_buf payload;
+    void *payload;
     void (*destructor)(void *);
 };
 
@@ -336,13 +322,11 @@ static void s_bus_async_deliver(void *user_data) {
             aws_linked_list_pop_front(&msg_list);
 
             struct bus_message *msg = AWS_CONTAINER_OF(node, struct bus_message, list_node);
-            s_bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload.buffer);
+            s_bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
 
             /* Release payload, then message queue entry */
             if (msg->destructor) {
-                msg->destructor(msg->payload.buffer);
-            } else {
-                aws_ring_buffer_release(&impl->msg_queue.buffer, &msg->payload);
+                msg->destructor(msg->payload);
             }
 
             struct aws_byte_buf entry_buf = aws_byte_buf_from_array(msg, sizeof(*msg));
@@ -351,12 +335,7 @@ static void s_bus_async_deliver(void *user_data) {
     }
 }
 
-int s_bus_async_alloc(struct aws_bus *bus, size_t size, struct aws_byte_buf *buf) {
-    struct bus_async_impl *impl = bus->impl;
-    return aws_ring_buffer_acquire(&impl->msg_queue.buffer, size, buf);
-}
-
-int s_bus_async_send(struct aws_bus *bus, uint64_t address, struct aws_byte_buf payload, void (*destructor)(void *)) {
+int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_async_impl *impl = bus->impl;
 
     struct aws_byte_buf entry_buf;
@@ -397,7 +376,6 @@ int s_bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_liste
 
 static struct bus_vtable s_async_vtable = {
     .clean_up = s_bus_async_clean_up,
-    .alloc = s_bus_async_alloc,
     .send = s_bus_async_send,
     .subscribe = s_bus_async_subscribe,
     .unsubscribe = s_bus_async_unsubscribe,
@@ -440,7 +418,7 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
 
-    return AWS_OP_SUCCESS;
+    return impl;
 
 error:
     aws_thread_clean_up(&impl->consumer.thread);
@@ -488,23 +466,9 @@ void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener
     vtable->unsubscribe(bus, address, callback, user_data);
 }
 
-int aws_bus_send_pod(struct aws_bus *bus, uint64_t address, struct aws_byte_cursor payload) {
-    struct bus_vtable *vtable = bus->impl;
-    struct aws_byte_buf payload_buf;
-    AWS_ZERO_STRUCT(payload_buf);
-    if (vtable->alloc(bus, payload.len, &payload_buf)) {
-        return AWS_OP_ERR;
-    }
-    aws_byte_buf_write_from_whole_cursor(&payload_buf, payload);
-    return vtable->send(bus, address, payload_buf, NULL);
-}
-
 int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_vtable *vtable = bus->impl;
-    struct aws_byte_buf payload_buf = {
-        .buffer = payload,
-    };
-    return vtable->send(bus, address, payload_buf, destructor);
+    return vtable->send(bus, address, payload, destructor);
 }
 
 #ifdef _MSC_VER
