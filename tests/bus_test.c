@@ -73,9 +73,6 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 AWS_TEST_CASE(bus_sync_test_send, s_bus_sync_test_send)
 
 
-/* This needs to be global or TSan gets mad that stack memory is seen by multiple threads */
-static struct aws_bus async_bus;
-
 static int s_bus_async_test_lifetime(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -84,9 +81,12 @@ static int s_bus_async_test_lifetime(struct aws_allocator *allocator, void *ctx)
         .policy = AWS_BUS_ASYNC,
     };
 
-    AWS_ZERO_STRUCT(async_bus);
-    ASSERT_SUCCESS(aws_bus_init(&async_bus, &options));
-    aws_bus_clean_up(&async_bus);
+    struct aws_bus *async_bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    ASSERT_NOT_NULL(async_bus);
+    AWS_ZERO_STRUCT(*async_bus);
+    ASSERT_SUCCESS(aws_bus_init(async_bus, &options));
+    aws_bus_clean_up(async_bus);
+    aws_mem_release(allocator, async_bus);
 
     /* If the background thread didn't exit cleanly, there will be hangs/leaks */
 
@@ -143,15 +143,17 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
         .policy = AWS_BUS_ASYNC,
     };
 
-    AWS_ZERO_STRUCT(async_bus);
-    ASSERT_SUCCESS(aws_bus_init(&async_bus, &options));
+    struct aws_bus *async_bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    ASSERT_NOT_NULL(async_bus);
+    AWS_ZERO_STRUCT(*async_bus);
+    ASSERT_SUCCESS(aws_bus_init(async_bus, &options));
 
     /* test sending to all, sending to a bunch of addresses, then close */
-    aws_bus_subscribe(&async_bus, AWS_BUS_ADDRESS_ALL, s_bus_async_handle_all, NULL);
+    aws_bus_subscribe(async_bus, AWS_BUS_ADDRESS_ALL, s_bus_async_handle_all, NULL);
     for (int address = 1; address < 1024; ++address) {
-        aws_bus_subscribe(&async_bus, address, s_bus_async_handle_msg, &s_bus_async);
+        aws_bus_subscribe(async_bus, address, s_bus_async_handle_msg, &s_bus_async);
     }
-    aws_bus_subscribe(&async_bus, 1024, s_bus_async_handle_close, &s_bus_async);
+    aws_bus_subscribe(async_bus, 1024, s_bus_async_handle_close, &s_bus_async);
 
     for (int send = 0; send < 1024; ++send) {
         uint64_t address = rand() / 1024;
@@ -159,15 +161,16 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
         msg->allocator = allocator;
         msg->destination = address;
         s_bus_async.expected_sum += address;
-        aws_bus_send(&async_bus, address, msg, s_bus_async_msg_dtor);
+        aws_bus_send(async_bus, address, msg, s_bus_async_msg_dtor);
     }
-    aws_bus_send(&async_bus, 1024, NULL, NULL);
+    aws_bus_send(async_bus, 1024, NULL, NULL);
 
     while (!aws_atomic_load_int(&s_bus_async.closed)) {
         aws_thread_current_sleep(1000 * 1000);
     }
 
-    aws_bus_clean_up(&async_bus);
+    aws_bus_clean_up(async_bus);
+    aws_mem_release(allocator, async_bus);
 
     return 0;
 }
