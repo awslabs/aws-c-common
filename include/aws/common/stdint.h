@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_STDINT_H
 #define AWS_COMMON_STDINT_H
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/assert.h>
@@ -95,16 +85,9 @@ AWS_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
 AWS_STATIC_ASSERT(sizeof(char) == 1);
 #endif /* NO_STDINT */
 
-#if defined(_MSC_VER)
+/**
+ * @deprecated Use int64_t instead for offsets in public APIs.
+ */
 typedef int64_t aws_off_t;
-#else
-#    if _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L
-typedef off_t aws_off_t;
-#    else
-typedef long aws_off_t;
-#    endif /*  _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L */
-#endif     /* defined(_MSC_VER) */
-
-AWS_STATIC_ASSERT(sizeof(int64_t) >= sizeof(aws_off_t));
 
 #endif /* AWS_COMMON_STDINT_H */

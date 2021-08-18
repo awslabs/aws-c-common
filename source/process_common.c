@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/process.h>
@@ -37,6 +27,18 @@ void aws_run_command_result_cleanup(struct aws_run_command_result *result) {
     aws_string_destroy_secure(result->std_err);
 }
 
+#if defined(AWS_OS_WINDOWS) && !defined(AWS_OS_WINDOWS_DESKTOP)
+int aws_run_command(
+    struct aws_allocator *allocator,
+    struct aws_run_command_options *options,
+    struct aws_run_command_result *result) {
+    (void)allocator;
+    (void)options;
+    (void)result;
+    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+}
+#else
+
 int aws_run_command(
     struct aws_allocator *allocator,
     struct aws_run_command_options *options,
@@ -54,11 +56,11 @@ int aws_run_command(
         goto on_finish;
     }
 
-#ifdef _WIN32
+#    if defined(AWS_OS_WINDOWS)
     output_stream = _popen(options->command, "r");
-#else
+#    else
     output_stream = popen(options->command, "r");
-#endif
+#    endif
 
     if (output_stream) {
         while (!feof(output_stream)) {
@@ -69,11 +71,11 @@ int aws_run_command(
                 }
             }
         }
-#ifdef _WIN32
+#    if defined(AWS_OS_WINDOWS)
         result->ret_code = _pclose(output_stream);
-#else
+#    else
         result->ret_code = pclose(output_stream);
-#endif
+#    endif
     }
 
     struct aws_byte_cursor trim_cursor = aws_byte_cursor_from_buf(&result_buffer);
@@ -90,3 +92,4 @@ on_finish:
     aws_byte_buf_clean_up_secure(&result_buffer);
     return ret;
 }
+#endif /* !AWS_OS_WINDOWS */

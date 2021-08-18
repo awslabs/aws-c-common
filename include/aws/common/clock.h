@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_CLOCK_H
 #define AWS_COMMON_CLOCK_H
 
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -40,6 +30,12 @@ AWS_STATIC_IMPL uint64_t aws_timestamp_convert(
     enum aws_timestamp_unit convert_from,
     enum aws_timestamp_unit convert_to,
     uint64_t *remainder);
+
+/**
+ * More general form of aws_timestamp_convert that takes arbitrary frequencies rather than the timestamp enum.
+ */
+AWS_STATIC_IMPL uint64_t
+    aws_timestamp_convert_u64(uint64_t ticks, uint64_t old_frequency, uint64_t new_frequency, uint64_t *remainder);
 
 /**
  * Get ticks in nanoseconds (usually 100 nanosecond precision) on the high resolution clock (most-likely TSC). This

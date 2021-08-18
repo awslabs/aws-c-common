@@ -1,15 +1,5 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 # This cmake logic verifies that each of our headers is complete, in that it
 # #includes any necessary dependencies, and that it builds under C++ as well.
@@ -59,8 +49,9 @@ function(aws_check_headers target)
                 file(RELATIVE_PATH include_path "${CMAKE_HOME_DIRECTORY}/include" ${header})
                 set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
                 file(MAKE_DIRECTORY "${stub_dir}")
-                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n")
-                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n")
+                # include header twice to check for include-guards
+                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n#include <${include_path}>\n")
+                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n#include <${include_path}>\n")
 
                 target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c" "${stub_dir}/checkcpp.cpp")
             endif()

@@ -1,0 +1,14 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
+
+##########
+
+# Sufficiently long to get full coverage on the aws_array_list APIs
+# short enough that all proofs complete quickly
+MAX_ITEM_SIZE ?= 2
+
+# Necessary to get full coverage when using functions from math.h
+MAX_INITIAL_ITEM_ALLOCATION ?= 9223372036854775808ULL
+
+DEFINES += -DMAX_ITEM_SIZE=$(MAX_ITEM_SIZE)
+DEFINES += -DMAX_INITIAL_ITEM_ALLOCATION=$(MAX_INITIAL_ITEM_ALLOCATION)

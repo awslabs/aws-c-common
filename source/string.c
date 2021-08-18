@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/string.h>
 
@@ -34,7 +24,9 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     /* Fields are declared const, so we need to copy them in like this */
     *(struct aws_allocator **)(&str->allocator) = allocator;
     *(size_t *)(&str->len) = len;
-    memcpy((void *)str->bytes, bytes, len);
+    if (len > 0) {
+        memcpy((void *)str->bytes, bytes, len);
+    }
     *(uint8_t *)&str->bytes[len] = '\0';
     AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
 }
@@ -42,6 +34,16 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str) {
     AWS_PRECONDITION(allocator && aws_string_is_valid(str));
     return aws_string_new_from_array(allocator, str->bytes, str->len);
+}
+
+struct aws_string *aws_string_new_from_cursor(struct aws_allocator *allocator, const struct aws_byte_cursor *cursor) {
+    AWS_PRECONDITION(allocator && aws_byte_cursor_is_valid(cursor));
+    return aws_string_new_from_array(allocator, cursor->ptr, cursor->len);
+}
+
+struct aws_string *aws_string_new_from_buf(struct aws_allocator *allocator, const struct aws_byte_buf *buf) {
+    AWS_PRECONDITION(allocator && aws_byte_buf_is_valid(buf));
+    return aws_string_new_from_array(allocator, buf->buffer, buf->len);
 }
 
 void aws_string_destroy(struct aws_string *str) {

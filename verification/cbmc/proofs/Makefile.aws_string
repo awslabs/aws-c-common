@@ -1,0 +1,9 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
+
+##########
+# Sufficently long to get 100% coverage on the string APIs
+# short enough that all proofs complete quickly
+MAX_STRING_LEN ?= 16
+
+DEFINES += -DMAX_STRING_LEN=$(MAX_STRING_LEN)

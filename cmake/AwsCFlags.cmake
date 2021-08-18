@@ -1,22 +1,44 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
+include(CheckSymbolExists)
 include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
+option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
+option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
+
+# Check for Posix Large Files Support (LFS).
+# On most 64bit systems, LFS is enabled by default.
+# On some 32bit systems, LFS must be enabled by via defines before headers are included.
+# For more info, see docs:
+# https://www.gnu.org/software/libc/manual/html_node/File-Position-Primitive.html
+# https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+function(aws_check_posix_lfs extra_flags variable)
+    list(APPEND CMAKE_REQUIRED_FLAGS ${extra_flags})
+    check_c_source_compiles("
+        #include <stdio.h>
+
+        /* fails to compile if off_t smaller than 64bits */
+        typedef char array[sizeof(off_t) >= 8 ? 1 : -1];
+
+        int main() {
+            return 0;
+        }"
+        HAS_64BIT_FILE_OFFSET_${variable})
+
+    if (HAS_64BIT_FILE_OFFSET_${variable})
+        # sometimes off_t is 64bit, but fseeko() is missing (ex: Android API < 24)
+        check_symbol_exists(fseeko "stdio.h" HAS_FSEEKO_${variable})
+
+        if (HAS_FSEEKO_${variable})
+            set(${variable} 1 PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
 
 # This function will set all common flags on a target
 # Options:
@@ -34,10 +56,28 @@ function(aws_set_common_properties target)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
         endif()
 
-        list(APPEND AWS_C_FLAGS /W4 /WX /MP)
+        list(APPEND AWS_C_FLAGS /W4 /MP)
+
+        if(AWS_WARNINGS_ARE_ERRORS)
+            list(APPEND AWS_C_FLAGS /WX)
+        endif()
+
         # /volatile:iso relaxes some implicit memory barriers that MSVC normally applies for volatile accesses
         # Since we want to be compatible with user builds using /volatile:iso, use it for the tests.
         list(APPEND AWS_C_FLAGS /volatile:iso)
+
+        # disable non-constant initializer warning, it's not non-standard, just for Microsoft
+        list(APPEND AWS_C_FLAGS /wd4204)
+        # disable passing the address of a local warning. Again, not non-standard, just for Microsoft
+        list(APPEND AWS_C_FLAGS /wd4221)
+
+        if (AWS_SUPPORT_WIN7)
+            # Use only APIs available in Win7 and later
+            message(STATUS "Windows 7 support requested, forcing WINVER and _WIN32_WINNT to 0x0601")
+            list(APPEND AWS_C_FLAGS /DWINVER=0x0601)
+            list(APPEND AWS_C_FLAGS /D_WIN32_WINNT=0x0601)
+            list(APPEND AWS_C_FLAGS /DAWS_SUPPORT_WIN7=1)
+        endif()
 
         string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
         if(STATIC_CRT)
@@ -49,7 +89,15 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
-        list(APPEND AWS_C_FLAGS -Wall -Werror -Wstrict-prototypes)
+        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
+
+        if (NOT CMAKE_BUILD_TYPE STREQUAL Release)
+            list(APPEND AWS_C_FLAGS -fno-omit-frame-pointer)
+        endif()
+
+        if(AWS_WARNINGS_ARE_ERRORS)
+            list(APPEND AWS_C_FLAGS -Werror)
+        endif()
 
         if(NOT SET_PROPERTIES_NO_WEXTRA)
             list(APPEND AWS_C_FLAGS -Wextra)
@@ -63,11 +111,39 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS -Wno-long-long)
 
         # Always enable position independent code, since this code will always end up in a shared lib
-        list(APPEND AWS_C_FLAGS -fPIC)
+        check_c_compiler_flag(-fPIC HAS_FPIC_FLAG)
+        if (HAS_FPIC_FLAG)
+            list(APPEND AWS_C_FLAGS -fPIC)
+        endif()
 
         if (LEGACY_COMPILER_SUPPORT)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
+
+       # -moutline-atomics generates code for both older load/store exclusive atomics and also
+       # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
+        check_c_compiler_flag(-moutline-atomics HAS_MOUTLINE_ATOMICS)
+        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
+            list(APPEND AWS_C_FLAGS -moutline-atomics)
+        endif()
+
+        # Check for Posix Large File Support (LFS).
+        # Doing this check here, instead of AwsFeatureTests.cmake,
+        # because we might need to modify AWS_C_FLAGS to enable it.
+        set(HAS_LFS FALSE)
+        aws_check_posix_lfs("" BY_DEFAULT)
+        if (BY_DEFAULT)
+            set(HAS_LFS TRUE)
+        else()
+            aws_check_posix_lfs("-D_FILE_OFFSET_BITS=64" VIA_DEFINES)
+            if (VIA_DEFINES)
+                list(APPEND AWS_C_FLAGS "-D_FILE_OFFSET_BITS=64")
+                set(HAS_LFS TRUE)
+            endif()
+        endif()
+        # This becomes a define in config.h
+        set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)

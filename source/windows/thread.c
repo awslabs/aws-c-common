@@ -1,26 +1,22 @@
-/*
- * Copyright 2010 - 2018 Amazon.com, Inc. or its affiliates.All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file.This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied.See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/thread.h>
 
 #include <aws/common/clock.h>
+#include <aws/common/linked_list.h>
+#include <aws/common/logging.h>
+#include <aws/common/private/thread_shared.h>
 
 #include <Windows.h>
+
+#include <inttypes.h>
 
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
+    .join_strategy = AWS_TJS_MANUAL,
 };
 
 struct thread_atexit_callback {
@@ -31,22 +27,66 @@ struct thread_atexit_callback {
 
 struct thread_wrapper {
     struct aws_allocator *allocator;
+    struct aws_linked_list_node node;
     void (*func)(void *arg);
     void *arg;
     struct thread_atexit_callback *atexit;
+
+    /*
+     * The managed thread system does lazy joins on threads once finished via their wrapper.  For that to work
+     * we need something to join against, so we keep a by-value copy of the original thread here.  The tricky part
+     * is how to set the threadid/handle of this copy since the copy must be injected into the thread function before
+     * the threadid/handle is known.  We get around that by just querying it at the top of the wrapper thread function.
+     */
+    struct aws_thread thread_copy;
 };
 
 static AWS_THREAD_LOCAL struct thread_wrapper *tl_wrapper = NULL;
 
+/*
+ * thread_wrapper is platform-dependent so this function ends up being duplicated in each thread implementation
+ */
+void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list) {
+    struct aws_linked_list_node *iter = aws_linked_list_begin(wrapper_list);
+    while (iter != aws_linked_list_end(wrapper_list)) {
+
+        struct thread_wrapper *join_thread_wrapper = AWS_CONTAINER_OF(iter, struct thread_wrapper, node);
+        iter = aws_linked_list_next(iter);
+        join_thread_wrapper->thread_copy.detach_state = AWS_THREAD_JOINABLE;
+        aws_thread_join(&join_thread_wrapper->thread_copy);
+        aws_thread_clean_up(&join_thread_wrapper->thread_copy);
+        aws_mem_release(join_thread_wrapper->allocator, join_thread_wrapper);
+
+        aws_thread_decrement_unjoined_count();
+    }
+}
+
 static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
-    struct thread_wrapper thread_wrapper = *(struct thread_wrapper *)arg;
+    struct thread_wrapper *wrapper_ptr = arg;
+
+    /*
+     * Make sure the aws_thread copy has the right handle stored in it.
+     * We can't just call GetCurrentThread since that returns a fake handle that always maps to the local thread which
+     * isn't what we want.
+     */
+    DWORD current_thread_id = GetCurrentThreadId();
+    wrapper_ptr->thread_copy.thread_handle = OpenThread(THREAD_ALL_ACCESS, FALSE, current_thread_id);
+
+    struct thread_wrapper thread_wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = thread_wrapper.allocator;
     tl_wrapper = &thread_wrapper;
     thread_wrapper.func(thread_wrapper.arg);
 
-    struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
-    aws_mem_release(allocator, arg);
+    /*
+     * Managed threads don't free the wrapper yet.  The thread management system does it later after the thread
+     * is joined.
+     */
+    bool is_managed_thread = wrapper_ptr->thread_copy.detach_state == AWS_THREAD_MANAGED;
+    if (!is_managed_thread) {
+        aws_mem_release(allocator, arg);
+    }
 
+    struct thread_atexit_callback *exit_callback_data = thread_wrapper.atexit;
     while (exit_callback_data) {
         aws_thread_atexit_fn *exit_callback = exit_callback_data->callback;
         void *exit_callback_user_data = exit_callback_data->user_data;
@@ -58,6 +98,13 @@ static DWORD WINAPI thread_wrapper_fn(LPVOID arg) {
         exit_callback_data = next_exit_callback_data;
     }
     tl_wrapper = NULL;
+
+    /*
+     * Release this thread to the managed thread system for lazy join.
+     */
+    if (is_managed_thread) {
+        aws_thread_pending_join_add(&wrapper_ptr->node);
+    }
 
     return 0;
 }
@@ -96,6 +143,36 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
+/* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
+   have processor groups per process. We need to find the mask in the correct group. */
+static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+    unsigned group_count = GetActiveProcessorGroupCount();
+
+    unsigned total_processors_detected = 0;
+    uint8_t group_with_desired_processor = 0;
+    uint8_t group_mask_for_desired_processor = 0;
+
+    /* for each group, keep counting til we find the group and the processor mask */
+    for (uint8_t i = 0; i < group_count; ++group_count) {
+        DWORD processor_count_in_group = GetActiveProcessorCount((WORD)i);
+        if (total_processors_detected + processor_count_in_group > desired_cpu) {
+            group_with_desired_processor = i;
+            group_mask_for_desired_processor = (uint8_t)(desired_cpu - total_processors_detected);
+            break;
+        }
+        total_processors_detected += processor_count_in_group;
+    }
+
+    *proc_num = group_mask_for_desired_processor;
+    *group = group_with_desired_processor;
+#else /* non-desktop has no processor groups */
+    (void)desired_cpu;
+    *group = 0;
+    *proc_num = 0;
+#endif
+}
+
 int aws_thread_launch(
     struct aws_thread *thread,
     void (*func)(void *arg),
@@ -103,9 +180,13 @@ int aws_thread_launch(
     const struct aws_thread_options *options) {
 
     SIZE_T stack_size = 0;
-
     if (options && options->stack_size > 0) {
         stack_size = (SIZE_T)options->stack_size;
+    }
+
+    bool is_managed_thread = options != NULL && options->join_strategy == AWS_TJS_MANAGED;
+    if (is_managed_thread) {
+        thread->detach_state = AWS_THREAD_MANAGED;
     }
 
     struct thread_wrapper *thread_wrapper =
@@ -113,15 +194,89 @@ int aws_thread_launch(
     thread_wrapper->allocator = thread->allocator;
     thread_wrapper->arg = arg;
     thread_wrapper->func = func;
+    thread_wrapper->thread_copy = *thread;
+
+    /*
+     * Increment the count prior to spawning the thread.  Decrement back if the create failed.
+     */
+    if (is_managed_thread) {
+        aws_thread_increment_unjoined_count();
+    }
 
     thread->thread_handle =
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
+        aws_thread_decrement_unjoined_count();
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
-    thread->detach_state = AWS_THREAD_JOINABLE;
+    if (options && options->cpu_id >= 0) {
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: cpu affinity of cpu_id %" PRIi32 " was specified, attempting to honor the value.",
+            (void *)thread,
+            options->cpu_id);
+
+        uint16_t group = 0;
+        uint8_t proc_num = 0;
+        s_get_group_and_cpu_id(options->cpu_id, &group, &proc_num);
+        GROUP_AFFINITY group_afinity;
+        AWS_ZERO_STRUCT(group_afinity);
+        group_afinity.Group = (WORD)group;
+        group_afinity.Mask = (KAFFINITY)((uint64_t)1 << proc_num);
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: computed mask %" PRIx64 " on group %" PRIu16 ".",
+            (void *)thread,
+            (uint64_t)group_afinity.Mask,
+            (uint16_t)group_afinity.Group);
+
+        BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: SetThreadGroupAffinity() result %" PRIi8 ".",
+            (void *)thread,
+            (int8_t)set_group_val);
+
+        if (set_group_val) {
+            PROCESSOR_NUMBER processor_number;
+            AWS_ZERO_STRUCT(processor_number);
+            processor_number.Group = (WORD)group;
+            processor_number.Number = proc_num;
+
+            BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
+                (void *)thread,
+                (int8_t)set_processor_val);
+            if (!set_processor_val) {
+                AWS_LOGF_WARN(
+                    AWS_LS_COMMON_THREAD,
+                    "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
+                    (void *)thread,
+                    (uint32_t)GetLastError());
+            }
+        } else {
+            AWS_LOGF_WARN(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: SetThreadGroupAffinity() failed with %" PRIx32 ".",
+                (void *)thread,
+                (uint32_t)GetLastError());
+        }
+    }
+
+    /*
+     * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
+     * completion.
+     */
+    if (is_managed_thread) {
+        aws_thread_clean_up(thread);
+    } else {
+        thread->detach_state = AWS_THREAD_JOINABLE;
+    }
+
     return AWS_OP_SUCCESS;
 }
 

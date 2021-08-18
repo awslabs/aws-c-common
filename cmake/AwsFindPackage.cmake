@@ -1,15 +1,5 @@
-# Copyright 2010-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 option(IN_SOURCE_BUILD "If the CRT libs are being built from your source tree (add_subdirectory), set this to ON" OFF)
 
@@ -19,7 +9,7 @@ option(IN_SOURCE_BUILD "If the CRT libs are being built from your source tree (a
 # together. Only use this on CRT libraries (including S2N), libcrypto will stay as an assumed external dependency.
 #
 # package_name: is the name of the package to find
-# DEP_CRT_LIBS: output variable will be appended after each call to this function. You don't have to use it,
+# DEP_AWS_LIBS: output variable will be appended after each call to this function. You don't have to use it,
 #    but it can be passed directly target_link_libraries and it will be the properly qualified library
 #    name and namespace based on configuration.
 function(aws_use_package package_name)

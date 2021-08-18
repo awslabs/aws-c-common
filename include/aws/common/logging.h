@@ -1,21 +1,12 @@
 #ifndef AWS_COMMON_LOGGING_H
 #define AWS_COMMON_LOGGING_H
 
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
 
@@ -87,7 +78,9 @@ struct aws_log_subject_info_list {
 enum aws_common_log_subject {
     AWS_LS_COMMON_GENERAL = AWS_LOG_SUBJECT_BEGIN_RANGE(AWS_C_COMMON_PACKAGE_ID),
     AWS_LS_COMMON_TASK_SCHEDULER,
+    AWS_LS_COMMON_THREAD,
     AWS_LS_COMMON_MEMTRACE,
+    AWS_LS_COMMON_XML_PARSER,
 
     AWS_LS_COMMON_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
@@ -117,6 +110,7 @@ struct aws_logger_vtable {
         ;
     enum aws_log_level (*const get_log_level)(struct aws_logger *logger, aws_log_subject_t subject);
     void (*const clean_up)(struct aws_logger *logger);
+    int (*set_log_level)(struct aws_logger *logger, enum aws_log_level);
 };
 
 struct aws_logger {
@@ -197,7 +191,7 @@ struct aws_logger_pipeline {
     struct aws_log_channel *channel;
     struct aws_log_writer *writer;
     struct aws_allocator *allocator;
-    enum aws_log_level level;
+    struct aws_atomic_var level;
 };
 
 /**
@@ -232,6 +226,15 @@ AWS_COMMON_API
 void aws_logger_clean_up(struct aws_logger *logger);
 
 /**
+ * Sets the current logging level for the logger.  Loggers are not require to support this.
+ * @param logger logger to set the log level for
+ * @param level new log level for the logger
+ * @return AWS_OP_SUCCESS if the level was successfully set, AWS_OP_ERR otherwise
+ */
+AWS_COMMON_API
+int aws_logger_set_log_level(struct aws_logger *logger, enum aws_log_level level);
+
+/**
  * Converts a log level to a c-string constant.  Intended primarily to support building log lines that
  * include the level in them, i.e.
  *
@@ -239,6 +242,14 @@ void aws_logger_clean_up(struct aws_logger *logger);
  */
 AWS_COMMON_API
 int aws_log_level_to_string(enum aws_log_level log_level, const char **level_string);
+
+/**
+ * Converts a c-string constant to a log level value.  Uses case-insensitive comparison
+ * and simply iterates all possibilities until a match or nothing remains.  If no match
+ * is found, AWS_OP_ERR is returned.
+ */
+AWS_COMMON_API
+int aws_string_to_log_level(const char *level_string, enum aws_log_level *log_level);
 
 /**
  * Converts an aws_thread_id_t to a c-string.  For portability, aws_thread_id_t

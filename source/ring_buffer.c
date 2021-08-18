@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/ring_buffer.h>
@@ -20,7 +10,7 @@
 #ifdef CBMC
 #    define AWS_ATOMIC_LOAD_PTR(ring_buf, dest_ptr, atomic_ptr, memory_order)                                          \
         dest_ptr = aws_atomic_load_ptr_explicit(atomic_ptr, memory_order);                                             \
-        assert(__CPROVER_POINTER_OBJECT(dest_ptr) == __CPROVER_POINTER_OBJECT(ring_buf->allocation));                  \
+        assert(__CPROVER_same_object(dest_ptr, ring_buf->allocation));                                                 \
         assert(aws_ring_buffer_check_atomic_ptr(ring_buf, dest_ptr));
 #    define AWS_ATOMIC_STORE_PTR(ring_buf, atomic_ptr, src_ptr, memory_order)                                          \
         assert(aws_ring_buffer_check_atomic_ptr(ring_buf, src_ptr));                                                   \
@@ -83,7 +73,7 @@ int aws_ring_buffer_acquire(struct aws_ring_buffer *ring_buf, size_t requested_s
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
-        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t ring_space = ring_buf->allocation_end == NULL ? 0 : ring_buf->allocation_end - ring_buf->allocation;
 
         if (requested_size > ring_space) {
             AWS_POSTCONDITION(aws_ring_buffer_is_valid(ring_buf));
@@ -157,7 +147,7 @@ int aws_ring_buffer_acquire_up_to(
 
     /* this branch is, we don't have any vended buffers. */
     if (head_cpy == tail_cpy) {
-        size_t ring_space = ring_buf->allocation_end - ring_buf->allocation;
+        size_t ring_space = ring_buf->allocation_end == NULL ? 0 : ring_buf->allocation_end - ring_buf->allocation;
 
         size_t allocation_size = ring_space > requested_size ? requested_size : ring_space;
 
@@ -242,10 +232,11 @@ static inline bool s_buf_belongs_to_pool(const struct aws_ring_buffer *ring_buff
 #ifdef CBMC
     /* only continue if buf points-into ring_buffer because comparison of pointers to different objects is undefined
      * (C11 6.5.8) */
-    if ((__CPROVER_POINTER_OBJECT(buf->buffer) != __CPROVER_POINTER_OBJECT(ring_buffer->allocation)) ||
-        (__CPROVER_POINTER_OBJECT(buf->buffer) != __CPROVER_POINTER_OBJECT(ring_buffer->allocation_end))) {
-        return false;
-    }
+    return (
+        __CPROVER_same_object(buf->buffer, ring_buffer->allocation) &&
+        AWS_IMPLIES(
+            ring_buffer->allocation_end != NULL, __CPROVER_same_object(buf->buffer, ring_buffer->allocation_end - 1)));
+
 #endif
     return buf->buffer && ring_buffer->allocation && ring_buffer->allocation_end &&
            buf->buffer >= ring_buffer->allocation && buf->buffer + buf->capacity <= ring_buffer->allocation_end;

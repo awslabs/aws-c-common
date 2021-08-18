@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_ASSERT_H
 #define AWS_COMMON_ASSERT_H
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/exports.h>
@@ -96,6 +86,8 @@ AWS_EXTERN_C_END
 #    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
 #    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
 #    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_MEM_IS_READABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
+#    define AWS_MEM_IS_WRITABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #else
 #    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
@@ -105,17 +97,32 @@ AWS_EXTERN_C_END
 #    define AWS_POSTCONDITION1(cond) AWS_ASSERT(cond)
 #    define AWS_FATAL_POSTCONDITION2(cond, expl) AWS_FATAL_ASSERT(cond)
 #    define AWS_FATAL_POSTCONDITION1(cond) AWS_FATAL_ASSERT(cond)
+/**
+ * These macros should not be used in is_valid functions.
+ * All validate functions are also used in assumptions for CBMC proofs,
+ * which should not contain __CPROVER_*_ok primitives. The use of these primitives
+ * in assumptions may lead to spurious results.
+ * The C runtime does not give a way to check these properties,
+ * but we can at least check that the pointer is valid. */
+#    define AWS_MEM_IS_READABLE_CHECK(base, len) (((len) == 0) || (base))
+#    define AWS_MEM_IS_WRITABLE_CHECK(base, len) (((len) == 0) || (base))
 #endif /* CBMC */
 
-/* the C runtime does not give a way to check these properties,
- * but we can at least check that the pointer is valid.
- * these macros are intended to be used with CBMC proofs, but will not use CBMC
- * intrinsics until https://github.com/diffblue/cbmc/issues/5194 is fixed.*/
+/**
+ * These macros can safely be used in validate functions.
+ */
 #define AWS_MEM_IS_READABLE(base, len) (((len) == 0) || (base))
 #define AWS_MEM_IS_WRITABLE(base, len) (((len) == 0) || (base))
 
-#define __CPROVER_r_ok(base, len) (AWS_MEM_IS_READABLE(base, len))
-#define __CPROVER_w_ok(base, len) (AWS_MEM_IS_WRITEABLE(base, len))
+/* Logical consequence. */
+#define AWS_IMPLIES(a, b) (!(a) || (b))
+
+/**
+ * If and only if (iff) is a biconditional logical connective between statements a and b.
+ * We need double negations (!!) here to work correctly for non-Boolean a and b values.
+ * Equivalent to (AWS_IMPLIES(a, b) && AWS_IMPLIES(b, a)).
+ */
+#define AWS_IFF(a, b) (!!(a) == !!(b))
 
 #define AWS_RETURN_ERROR_IF_IMPL(type, cond, err, explanation)                                                         \
     do {                                                                                                               \

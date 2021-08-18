@@ -1,28 +1,15 @@
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/file.h>
 #include <aws/common/log_writer.h>
 
 #include <aws/common/string.h>
 
 #include <errno.h>
 #include <stdio.h>
-
-#ifdef _MSC_VER
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
-#endif                              /* _MSC_VER */
 
 /*
  * Basic log writer implementations - stdout, stderr, arbitrary file
@@ -86,7 +73,7 @@ static int s_aws_file_writer_init_internal(
 
     /* Open file if name passed in */
     if (file_name_to_open != NULL) {
-        impl->log_file = fopen(file_name_to_open, "a+");
+        impl->log_file = aws_fopen(file_name_to_open, "a+");
         if (impl->log_file == NULL) {
             aws_mem_release(allocator, impl);
             return aws_translate_and_raise_io_error(errno);

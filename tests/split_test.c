@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/byte_buf.h>
@@ -154,6 +144,27 @@ static int s_test_char_split_empty_fn(struct aws_allocator *allocator, void *ctx
     const char str_to_split[] = "";
 
     struct aws_byte_cursor to_split = aws_byte_cursor_from_c_str(str_to_split);
+
+    struct aws_array_list output;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));
+    ASSERT_SUCCESS(aws_byte_cursor_split_on_char(&to_split, ';', &output));
+    ASSERT_INT_EQUALS(1, aws_array_list_length(&output));
+
+    struct aws_byte_cursor value = {0};
+    ASSERT_SUCCESS(aws_array_list_get_at(&output, &value, 0));
+    ASSERT_INT_EQUALS(0, value.len);
+
+    aws_array_list_clean_up(&output);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_char_split_zeroed, s_test_char_split_zeroed_fn)
+static int s_test_char_split_zeroed_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_byte_cursor to_split;
+    AWS_ZERO_STRUCT(to_split);
 
     struct aws_array_list output;
     ASSERT_SUCCESS(aws_array_list_init_dynamic(&output, allocator, 4, sizeof(struct aws_byte_cursor)));

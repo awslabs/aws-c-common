@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/mutex.h>
@@ -47,11 +37,14 @@ int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
     BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
 
+    /*
+     * Per Windows documentation, a return value of zero indicates a failure to acquire the lock.
+     */
     if (!res) {
-        return AWS_OP_SUCCESS;
+        return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
     }
 
-    return aws_raise_error(AWS_ERROR_MUTEX_TIMEOUT);
+    return AWS_OP_SUCCESS;
 }
 
 int aws_mutex_unlock(struct aws_mutex *mutex) {

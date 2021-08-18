@@ -1,22 +1,14 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/system_info.h>
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
+#include <aws/common/platform.h>
+#include <aws/common/private/dlloads.h>
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #    define __BSD_VISIBLE 1
@@ -47,6 +39,74 @@ size_t aws_system_info_processor_count(void) {
 
 #include <ctype.h>
 #include <fcntl.h>
+
+uint16_t aws_get_cpu_group_count(void) {
+    if (g_numa_num_configured_nodes_ptr) {
+        return (uint16_t)g_numa_num_configured_nodes_ptr();
+    }
+
+    return 1u;
+}
+
+size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
+    if (g_numa_node_of_cpu_ptr) {
+        size_t total_cpus = aws_system_info_processor_count();
+
+        uint16_t cpu_count = 0;
+        for (size_t i = 0; i < total_cpus; ++i) {
+            if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
+                cpu_count++;
+            }
+        }
+        return cpu_count;
+    }
+
+    return aws_system_info_processor_count();
+}
+
+void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
+    AWS_PRECONDITION(cpu_ids_array);
+
+    if (!cpu_ids_array_length) {
+        return;
+    }
+
+    /* go ahead and initialize everything. */
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i].cpu_id = -1;
+        cpu_ids_array[i].suspected_hyper_thread = false;
+    }
+
+    if (g_numa_node_of_cpu_ptr) {
+        size_t total_cpus = aws_system_info_processor_count();
+        size_t current_array_idx = 0;
+        for (size_t i = 0; i < total_cpus && current_array_idx < cpu_ids_array_length; ++i) {
+            if ((int)group_idx == g_numa_node_of_cpu_ptr((int)i)) {
+                cpu_ids_array[current_array_idx].cpu_id = (int32_t)i;
+
+                /* looking for an index jump is a more reliable way to find these. If they're in the group and then
+                 * the index jumps, say from 17 to 36, we're most-likely in hyper-thread land. Also, inside a node,
+                 * once we find the first hyper-thread, the remaining cores are also likely hyper threads. */
+                if (current_array_idx > 0 && (cpu_ids_array[current_array_idx - 1].suspected_hyper_thread ||
+                                              cpu_ids_array[current_array_idx - 1].cpu_id < ((int)i - 1))) {
+                    cpu_ids_array[current_array_idx].suspected_hyper_thread = true;
+                }
+                current_array_idx += 1;
+            }
+        }
+
+        return;
+    }
+
+    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. The assumption if you
+     * hit here is that this is just listing all cpus on the system. */
+    size_t hyper_thread_hint = cpu_ids_array_length / 2 - 1;
+
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i].cpu_id = (int32_t)i;
+        cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint;
+    }
+}
 
 bool aws_is_debugger_present(void) {
     /* Open the status file */
@@ -133,7 +193,7 @@ char *s_whitelist_chars(char *path) {
 #        include <dlfcn.h>
 #        include <mach-o/dyld.h>
 static char s_exe_path[PATH_MAX];
-const char *s_get_executable_path() {
+static const char *s_get_executable_path(void) {
     static const char *s_exe = NULL;
     if (AWS_LIKELY(s_exe)) {
         return s_exe;
@@ -246,12 +306,12 @@ void s_resolve_cmd(char *cmd, size_t len, struct aws_stack_frame_info *frame) {
 }
 #    endif
 
-size_t aws_backtrace(void **frames, size_t num_frames) {
-    return backtrace(frames, num_frames);
+size_t aws_backtrace(void **stack_frames, size_t num_frames) {
+    return backtrace(stack_frames, (int)aws_min_size(num_frames, INT_MAX));
 }
 
-char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
-    return backtrace_symbols(frames, stack_depth);
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
+    return backtrace_symbols(stack_frames, (int)aws_min_size(stack_depth, INT_MAX));
 }
 
 char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
@@ -321,43 +381,7 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     }
 
     fprintf(fp, "################################################################################\n");
-    fprintf(fp, "Resolved stacktrace:\n");
-    fprintf(fp, "################################################################################\n");
-    /* symbols look like: <exe-or-shared-lib>(<function>+<addr>) [0x<addr>]
-     *                or: <exe-or-shared-lib> [0x<addr>]
-     *                or: [0x<addr>]
-     * start at 1 to skip the current frame (this function) */
-    for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
-        struct aws_stack_frame_info frame;
-        AWS_ZERO_STRUCT(frame);
-        const char *symbol = symbols[frame_idx];
-        if (s_parse_symbol(symbol, stack_frames[frame_idx], &frame)) {
-            goto parse_failed;
-        }
-
-        /* TODO: Emulate libunwind */
-        char cmd[sizeof(struct aws_stack_frame_info)] = {0};
-        s_resolve_cmd(cmd, sizeof(cmd), &frame);
-        FILE *out = popen(cmd, "r");
-        if (!out) {
-            goto parse_failed;
-        }
-        char output[1024];
-        if (fgets(output, sizeof(output), out)) {
-            /* if addr2line or atos don't know what to do with an address, they just echo it */
-            /* if there are spaces in the output, then they resolved something */
-            if (strstr(output, " ")) {
-                symbol = output;
-            }
-        }
-        pclose(out);
-
-    parse_failed:
-        fprintf(fp, "%s%s", symbol, (symbol == symbols[frame_idx]) ? "\n" : "");
-    }
-
-    fprintf(fp, "################################################################################\n");
-    fprintf(fp, "Raw stacktrace:\n");
+    fprintf(fp, "Stack trace:\n");
     fprintf(fp, "################################################################################\n");
     for (size_t frame_idx = 1; frame_idx < stack_depth; ++frame_idx) {
         const char *symbol = symbols[frame_idx];
@@ -368,20 +392,35 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     free(symbols);
 }
 
+void aws_backtrace_log(int log_level) {
+    void *stack_frames[AWS_BACKTRACE_DEPTH];
+    size_t num_frames = aws_backtrace(stack_frames, AWS_BACKTRACE_DEPTH);
+    if (!num_frames) {
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "Unable to capture backtrace");
+        return;
+    }
+    char **symbols = aws_backtrace_symbols(stack_frames, num_frames);
+    for (size_t line = 0; line < num_frames; ++line) {
+        const char *symbol = symbols[line];
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
+    }
+    free(symbols);
+}
+
 #else
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     (void)call_site_data;
     fprintf(fp, "No call stack information available\n");
 }
 
-size_t aws_backtrace(void **frames, size_t size) {
-    (void)frames;
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    (void)stack_frames;
     (void)size;
     return 0;
 }
 
-char **aws_backtrace_symbols(void *const *frames, size_t stack_depth) {
-    (void)frames;
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
+    (void)stack_frames;
     (void)stack_depth;
     return NULL;
 }
@@ -391,18 +430,18 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
     (void)stack_depth;
     return NULL;
 }
+
+void aws_backtrace_log(int log_level) {
+    AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "aws_backtrace_log: no execinfo compatible backtrace API available");
+}
 #endif /* AWS_HAVE_EXECINFO */
 
-void aws_backtrace_log() {
-    void *stack[1024];
-    size_t num_frames = aws_backtrace(stack, 1024);
-    if (!num_frames) {
-        return;
-    }
-    char **symbols = aws_backtrace_addr2line(stack, num_frames);
-    for (size_t line = 0; line < num_frames; ++line) {
-        const char *symbol = symbols[line];
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
-    }
-    free(symbols);
+#if defined(AWS_OS_APPLE)
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_PLATFORM_OS_MAC;
 }
+#else
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_PLATFORM_OS_UNIX;
+}
+#endif /* AWS_OS_APPLE */

@@ -1,16 +1,6 @@
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -268,3 +258,37 @@ static int s_sba_churn(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(sba_churn, s_sba_churn)
+
+static int s_sba_metrics_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
+
+    size_t expected_active_size = 0;
+    void *allocs[10] = {0};
+    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        size_t size = aws_max_size(rand() % 512, 1);
+        size_t bin_size = 0;
+        ASSERT_SUCCESS(aws_round_up_to_power_of_two(size, &bin_size));
+        expected_active_size += bin_size;
+        allocs[idx] = aws_mem_acquire(sba, size);
+
+        ASSERT_TRUE(aws_small_block_allocator_bytes_reserved(sba) > aws_small_block_allocator_bytes_active(sba));
+        ASSERT_INT_EQUALS(expected_active_size, aws_small_block_allocator_bytes_active(sba));
+    }
+
+    for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        aws_mem_release(sba, allocs[idx]);
+    }
+
+    ASSERT_INT_EQUALS(0, aws_small_block_allocator_bytes_active(sba));
+    /*
+     * There are only 5 bin sizes, so the reserve better be less than that, we have not allocated enough to
+     * push beyond that. Max possible allocation is alloc count * 512
+     */
+    ASSERT_TRUE(5 * aws_small_block_allocator_page_size(sba) > aws_small_block_allocator_bytes_reserved(sba));
+
+    aws_small_block_allocator_destroy(sba);
+    return 0;
+}
+AWS_TEST_CASE(sba_metrics, s_sba_metrics_test)

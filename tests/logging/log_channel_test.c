@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/log_channel.h>
@@ -23,10 +13,6 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <inttypes.h>
-
-#ifdef _MSC_VER
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
-#endif                              /* _MSC_VER */
 
 /*
  * Mock writer to capture what gets passed through
@@ -66,8 +52,10 @@ static void s_mock_log_writer_clean_up(struct aws_log_writer *writer) {
     aws_mem_release(writer->allocator, impl);
 }
 
-static struct aws_log_writer_vtable s_mock_writer_vtable = {.write = s_mock_log_writer_write,
-                                                            .clean_up = s_mock_log_writer_clean_up};
+static struct aws_log_writer_vtable s_mock_writer_vtable = {
+    .write = s_mock_log_writer_write,
+    .clean_up = s_mock_log_writer_clean_up,
+};
 
 static int s_aws_mock_log_writer_init(struct aws_log_writer *writer, struct aws_allocator *allocator) {
     struct mock_log_writer_impl *impl =

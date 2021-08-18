@@ -1,16 +1,6 @@
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/atomics.h>
@@ -222,7 +212,7 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
     char buf[4096] = {0};
     struct aws_byte_buf stacktrace = aws_byte_buf_from_empty_array(buf, AWS_ARRAY_SIZE(buf));
     struct aws_byte_cursor newline = aws_byte_cursor_from_c_str("\n");
-    char **symbols = aws_backtrace_addr2line(stack_frames, stack->depth);
+    char **symbols = aws_backtrace_symbols(stack_frames, stack->depth);
     for (size_t idx = 0; idx < stack->depth; ++idx) {
         if (idx > 0) {
             aws_byte_buf_append(&stacktrace, &newline);
@@ -234,7 +224,7 @@ static int s_collect_stack_trace(void *context, struct aws_hash_element *item) {
         struct aws_byte_cursor cursor = aws_byte_cursor_from_c_str(caller);
         aws_byte_buf_append(&stacktrace, &cursor);
     }
-    free(symbols);
+    aws_mem_release(aws_default_allocator(), symbols);
     /* record the resultant buffer as a string */
     stack_info->trace = aws_string_new_from_array(aws_default_allocator(), stacktrace.buffer, stacktrace.len);
     AWS_FATAL_ASSERT(stack_info->trace);

@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_TASK_SCHEDULER_H
 #define AWS_COMMON_TASK_SCHEDULER_H
 
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -43,7 +33,12 @@ struct aws_task {
     struct aws_linked_list_node node;
     struct aws_priority_queue_node priority_queue_node;
     const char *type_tag;
-    size_t reserved;
+
+    /* honor the ABI compat */
+    union {
+        bool scheduled;
+        size_t reserved;
+    } abi_extension;
 };
 
 struct aws_task_scheduler {

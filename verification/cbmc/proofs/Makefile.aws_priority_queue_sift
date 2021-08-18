@@ -1,0 +1,8 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
+#################################
+
+MAX_PRIORITY_QUEUE_ITEMS ?= 5
+# This should be the ceil(1 + log2(MAX_PRIORITY_QUEUE_ITEMS))
+MAX_HEAP_HEIGHT ?= 3
+DEFINES += -DMAX_PRIORITY_QUEUE_ITEMS=$(MAX_PRIORITY_QUEUE_ITEMS)

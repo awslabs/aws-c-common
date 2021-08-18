@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/system_info.h>
@@ -21,10 +11,41 @@
 
 #include <windows.h>
 
+enum aws_platform_os aws_get_platform_build_os(void) {
+    return AWS_PLATFORM_OS_WINDOWS;
+}
+
 size_t aws_system_info_processor_count(void) {
     SYSTEM_INFO info;
     GetSystemInfo(&info);
     return info.dwNumberOfProcessors;
+}
+
+/* the next three functions need actual implementations before we can have proper numa alignment on windows.
+ * For now leave them stubbed out. */
+uint16_t aws_get_cpu_group_count(void) {
+    return 1u;
+}
+
+size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
+    (void)group_idx;
+    return aws_system_info_processor_count();
+}
+
+void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
+    (void)group_idx;
+
+    if (!cpu_ids_array_length) {
+        return;
+    }
+
+    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
+    size_t hyper_threads_hint = cpu_ids_array_length / 2 - 1;
+
+    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
+        cpu_ids_array[i].cpu_id = (int32_t)i;
+        cpu_ids_array[i].suspected_hyper_thread = i > hyper_threads_hint;
+    }
 }
 
 bool aws_is_debugger_present(void) {
@@ -39,9 +60,13 @@ void aws_debug_break(void) {
 #endif
 }
 
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+
 /* If I meet the engineer that wrote the dbghelp.h file for the windows 8.1 SDK we're gonna have words! */
-#pragma warning(disable : 4091)
-#include <dbghelp.h>
+#    ifdef _MSC_VER
+#        pragma warning(disable : 4091)
+#    endif
+#    include <dbghelp.h>
 
 struct win_symbol_data {
     struct _SYMBOL_INFO sym_info;
@@ -57,21 +82,21 @@ typedef BOOL __stdcall SymFromAddr_fn(
     _Out_opt_ PDWORD64 Displacement,
     _Inout_ PSYMBOL_INFO Symbol);
 
-#if defined(_WIN64)
+#    if defined(_WIN64)
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD64 qwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE64 Line64);
-#    define SymGetLineFromAddrName "SymGetLineFromAddr64"
-#else
+#        define SymGetLineFromAddrName "SymGetLineFromAddr64"
+#    else
 typedef BOOL __stdcall SymGetLineFromAddr_fn(
     _In_ HANDLE hProcess,
     _In_ DWORD dwAddr,
     _Out_ PDWORD pdwDisplacement,
     _Out_ PIMAGEHLP_LINE Line);
-#    define SymGetLineFromAddrName "SymGetLineFromAddr"
-#endif
+#        define SymGetLineFromAddrName "SymGetLineFromAddr"
+#    endif
 
 static SymInitialize_fn *s_SymInitialize = NULL;
 static SymSetOptions_fn *s_SymSetOptions = NULL;
@@ -133,11 +158,11 @@ static bool s_init_dbghelp() {
     return s_SymInitialize != NULL;
 }
 
-size_t aws_backtrace(void **frames, size_t size) {
-    return (int)CaptureStackBackTrace(0, (ULONG)size, frames, NULL);
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    return (int)CaptureStackBackTrace(0, (ULONG)size, stack_frames, NULL);
 }
 
-char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
+char **aws_backtrace_symbols(void *const *stack_frames, size_t num_frames) {
     if (!s_init_dbghelp()) {
         return NULL;
     }
@@ -158,7 +183,7 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
         /* record a pointer to where the symbol will be */
         *((char **)&symbols.buffer[i * sizeof(void *)]) = (char *)symbols.buffer + symbols.len;
 
-        uintptr_t address = (uintptr_t)stack[i];
+        uintptr_t address = (uintptr_t)stack_frames[i];
         struct win_symbol_data sym_info;
         AWS_ZERO_STRUCT(sym_info);
         sym_info.sym_info.MaxNameLen = sizeof(sym_info.symbol_name);
@@ -188,7 +213,11 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
             /* no luck, record the address and last error */
             DWORD last_error = GetLastError();
             int len = snprintf(
-                sym_buf, AWS_ARRAY_SIZE(sym_buf), "at 0x%p: Failed to lookup symbol: error %u", stack[i], last_error);
+                sym_buf,
+                AWS_ARRAY_SIZE(sym_buf),
+                "at 0x%p: Failed to lookup symbol: error %u",
+                stack_frames[i],
+                last_error);
             if (len > 0) {
                 struct aws_byte_cursor sym_cur = aws_byte_cursor_from_array(sym_buf, len);
                 aws_byte_buf_append_dynamic(&symbols, &sym_cur);
@@ -202,8 +231,8 @@ char **aws_backtrace_symbols(void *const *stack, size_t num_frames) {
     return (char **)symbols.buffer; /* buffer must be freed by the caller */
 }
 
-char **aws_backtrace_addr2line(void *const *frames, size_t stack_depth) {
-    return aws_backtrace_symbols(frames, stack_depth);
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    return aws_backtrace_symbols(stack_frames, stack_depth);
 }
 
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
@@ -225,10 +254,10 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         fprintf(fp, "%s\n", symbol);
     }
     fflush(fp);
-    free(symbols);
+    aws_mem_release(aws_default_allocator(), symbols);
 }
 
-void aws_backtrace_log() {
+void aws_backtrace_log(int log_level) {
     if (!s_init_dbghelp()) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Unable to initialize dbghelp.dll for backtrace");
         return;
@@ -239,7 +268,35 @@ void aws_backtrace_log() {
     char **symbols = aws_backtrace_symbols(stack, num_frames);
     for (size_t line = 0; line < num_frames; ++line) {
         const char *symbol = symbols[line];
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "%s", symbol);
+        AWS_LOGF(log_level, AWS_LS_COMMON_GENERAL, "%s", symbol);
     }
-    free(symbols);
+    aws_mem_release(aws_default_allocator(), symbols);
 }
+#else  /* !AWS_OS_WINDOWS_DESKTOP */
+size_t aws_backtrace(void **stack_frames, size_t size) {
+    (void)stack_frames;
+    (void)size;
+    return 0;
+}
+char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
+    (void)stack_frames;
+    (void)stack_depth;
+    return NULL;
+}
+
+char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
+    return aws_backtrace_symbols(stack_frames, stack_depth);
+}
+
+void aws_backtrace_print(FILE *fp, void *call_site_data) {
+    (void)fp;
+    (void)call_site_data;
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_GENERAL, "aws_backtrace_print: backtrace requested, but logging is unsupported on this platform");
+}
+
+void aws_backtrace_log() {
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
+}
+#endif /* AWS_OS_WINDOWS_DESKTOP */

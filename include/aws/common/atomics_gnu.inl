@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_ATOMICS_GNU_INL
 #define AWS_COMMON_ATOMICS_GNU_INL
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 /* These are implicitly included, but help with editor highlighting */
@@ -79,7 +69,7 @@ size_t aws_atomic_load_int_explicit(volatile const struct aws_atomic_var *var, e
 }
 
 /**
- * Reads an atomic var as an pointer, using the specified ordering, and returns the result.
+ * Reads an atomic var as a pointer, using the specified ordering, and returns the result.
  */
 AWS_STATIC_IMPL
 void *aws_atomic_load_ptr_explicit(volatile const struct aws_atomic_var *var, enum aws_memory_order memory_order) {

@@ -1,16 +1,6 @@
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/assert.h>
@@ -35,6 +25,10 @@
 #    pragma warning(disable : 4100)
 #endif
 
+#ifndef PAGE_SIZE
+#    define PAGE_SIZE (4 * 1024)
+#endif
+
 bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
     /* An allocator must define mem_acquire and mem_release.  All other fields are optional */
     return alloc && AWS_OBJECT_PTR_IS_READABLE(alloc) && alloc->mem_acquire && alloc->mem_release;
@@ -42,23 +36,68 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
 
 static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
-    return malloc(size);
+    /* larger allocations should be aligned so that AVX and friends can avoid
+     * the extra preable during unaligned versions of memcpy/memset on big buffers
+     * This will also accelerate hardware CRC and SHA on ARM chips
+     *
+     * 64 byte alignment for > page allocations on 64 bit systems
+     * 32 byte alignment for > page allocations on 32 bit systems
+     * 16 byte alignment for <= page allocations on 64 bit systems
+     * 8 byte alignment for <= page allocations on 32 bit systems
+     *
+     * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
+     * this size or greater that are not data buffers
+     */
+    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
+#if !defined(_WIN32)
+    void *result = NULL;
+    return (posix_memalign(&result, alignment, size)) ? NULL : result;
+#else
+    return _aligned_malloc(size, alignment);
+#endif
 }
 
 static void s_default_free(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
+#if !defined(_WIN32)
     free(ptr);
+#else
+    _aligned_free(ptr);
+#endif
 }
 
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    return realloc(ptr, newsize);
+#if !defined(_WIN32)
+    if (newsize == 0 || !ptr) {
+        free(ptr);
+        return NULL;
+    }
+
+    if (newsize <= oldsize) {
+        return ptr;
+    }
+
+    /* newsize is > oldsize, need more memory */
+    void *new_mem = s_default_malloc(allocator, newsize);
+    if (new_mem) {
+        memcpy(new_mem, ptr, oldsize);
+        s_default_free(allocator, ptr);
+    }
+    return new_mem;
+#else
+    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
+    return _aligned_realloc(ptr, newsize, alignment);
+#endif
 }
 
 static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    (void)allocator;
-    return calloc(num, size);
+    void *mem = s_default_malloc(allocator, num * size);
+    if (mem) {
+        memset(mem, 0, num * size);
+    }
+    return mem;
 }
 
 static struct aws_allocator default_allocator = {

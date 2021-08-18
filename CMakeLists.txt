@@ -1,21 +1,13 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
+
+message(STATUS "CMake ${CMAKE_VERSION}")
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
@@ -31,6 +23,7 @@ include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
+include(AwsThreadAffinity)
 include(AwsSIMD)
 include(CTest)
 
@@ -95,18 +88,14 @@ else ()
     endif ()
 
     if (APPLE)
-        find_library(CORE_FOUNDATION_LIB CoreFoundation)
-        if (NOT CORE_FOUNDATION_LIB)
-            message(FATAL_ERROR "Core Foundation not found")
-        endif ()
-
-        list(APPEND PLATFORM_LIBS Threads::Threads ${CORE_FOUNDATION_LIB})
+        # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
+        list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
-        list(APPEND PLATFORM_LIBS m Threads::Threads rt)
+        list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        list(APPEND PLATFORM_LIBS m thr execinfo)
+        list(APPEND PLATFORM_LIBS dl m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
+        list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
@@ -126,10 +115,20 @@ if (MSVC AND AWS_ARCH_INTEL)
         )
 
     source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
-elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM)
+elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM AND NOT LEGACY_COMPILER_SUPPORT)
     file(GLOB AWS_COMMON_ARCH_SRC
         "source/arch/intel/*.c"
          "source/arch/intel/asm/*.c"
+        )
+endif()
+
+if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/msvc/*.c"
+        )
+elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
+    file(GLOB AWS_COMMON_ARCH_SRC
+        "source/arch/arm/asm/*.c"
         )
 endif()
 
@@ -163,6 +162,8 @@ if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
 
+aws_set_thread_affinity_method(${PROJECT_NAME})
+
 aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
@@ -171,9 +172,8 @@ if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
 endif()
 
-# Our ABI is not yet stable
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
-set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0unstable)
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -252,6 +252,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSanitizers.cmake"
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
+    "cmake/AwsFeatureTests.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

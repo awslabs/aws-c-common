@@ -1,25 +1,15 @@
 #ifndef AWS_COMMON_BYTE_ORDER_INL
 #define AWS_COMMON_BYTE_ORDER_INL
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/byte_order.h>
 #include <aws/common/common.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #    include <stdlib.h>
 #else
 #    include <netinet/in.h>
@@ -52,7 +42,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
 #elif defined(_MSC_VER)
     return _byteswap_uint64(x);
 #else
-    uint32_t low = (uint32_t)x;
+    uint32_t low = x & UINT32_MAX;
     uint32_t high = (uint32_t)(x >> 32);
     return ((uint64_t)htonl(low)) << 32 | htonl(high);
 #endif
@@ -69,7 +59,7 @@ AWS_STATIC_IMPL uint64_t aws_ntoh64(uint64_t x) {
  * Convert 32 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_hton32(uint32_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return htonl(x);
@@ -126,7 +116,7 @@ AWS_STATIC_IMPL double aws_htonf64(double x) {
  * Convert 32 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ulong(x);
 #else
     return ntohl(x);
@@ -151,7 +141,7 @@ AWS_STATIC_IMPL double aws_ntohf64(double x) {
  * Convert 16 bit integer from host to network byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return htons(x);
@@ -162,7 +152,7 @@ AWS_STATIC_IMPL uint16_t aws_hton16(uint16_t x) {
  * Convert 16 bit integer from network to host byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return aws_is_big_endian() ? x : _byteswap_ushort(x);
 #else
     return ntohs(x);

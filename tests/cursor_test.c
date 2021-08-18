@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/byte_buf.h>
@@ -254,7 +244,6 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_FALSE(aws_byte_buf_write_u8(&buffer, 0));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
-    buffer.capacity = 7;
     ASSERT_FALSE(aws_byte_buf_write_u8_n(&buffer, 0x0, 8));
     ASSERT_BIN_ARRAYS_EQUALS(buf, sizeof(buf), starting_buf, sizeof(starting_buf));
 
@@ -265,6 +254,56 @@ static int s_byte_cursor_limit_tests_fn(struct aws_allocator *allocator, void *c
     ASSERT_TRUE(aws_byte_buf_write_from_whole_buffer(&buffer, arrbuf));
     ASSERT_UINT_EQUALS(0, arr[0]);
     ASSERT_UINT_EQUALS(0, arr[1]);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_byte_cursor_read_hex_u8, s_test_byte_cursor_read_hex_u8)
+static int s_test_byte_cursor_read_hex_u8(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_byte_cursor cur;
+    uint8_t val = 0;
+
+    cur = aws_byte_cursor_from_c_str("90");
+    ASSERT_TRUE(aws_byte_cursor_read_hex_u8(&cur, &val));
+    ASSERT_UINT_EQUALS(0x90, val);
+    ASSERT_UINT_EQUALS(0, cur.len);
+
+    cur = aws_byte_cursor_from_c_str("001");
+    ASSERT_TRUE(aws_byte_cursor_read_hex_u8(&cur, &val));
+    ASSERT_UINT_EQUALS(0x00, val);
+    ASSERT_UINT_EQUALS(1, cur.len);
+    ASSERT_UINT_EQUALS('1', cur.ptr[0]);
+
+    cur = aws_byte_cursor_from_c_str("Fa");
+    ASSERT_TRUE(aws_byte_cursor_read_hex_u8(&cur, &val));
+    ASSERT_UINT_EQUALS(0xFA, val);
+    ASSERT_UINT_EQUALS(0, cur.len);
+
+    /* bad short buffer */
+    cur = aws_byte_cursor_from_c_str("0");
+    ASSERT_FALSE(aws_byte_cursor_read_hex_u8(&cur, &val));
+    ASSERT_UINT_EQUALS(1, cur.len);
+
+    cur.len = 0;
+    ASSERT_FALSE(aws_byte_cursor_read_hex_u8(&cur, &val));
+    ASSERT_UINT_EQUALS(0, cur.len);
+
+    /* bad characters */
+    uint8_t bad_chars[][2] = {
+        {'0', 0},
+        {'-', '0'},
+        {'/', '0'},
+        {'g', '0'},
+        {'x', '0'},
+    };
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(bad_chars); ++i) {
+        cur = aws_byte_cursor_from_array(bad_chars[i], 2);
+        ASSERT_FALSE(aws_byte_cursor_read_hex_u8(&cur, &val));
+        ASSERT_UINT_EQUALS(2, cur.len);
+    }
 
     return 0;
 }

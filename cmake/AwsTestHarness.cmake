@@ -1,15 +1,5 @@
-# Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License is located at
-#
-#  http://aws.amazon.com/apache2.0
-#
-# or in the "license" file accompanying this file. This file is distributed
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0.
 
 include(AwsCFlags)
 include(AwsSanitizers)
@@ -44,6 +34,17 @@ function(generate_test_driver driver_exe_name)
 
     add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.c ${TESTS})
     aws_set_common_properties(${driver_exe_name} NO_WEXTRA NO_PEDANTIC)
+
+     # Some versions of CMake (3.9-3.11) generate a test_runner.c file with
+     # a strncpy() call that triggers the "stringop-overflow" warning in GCC 8.1+
+     # This warning doesn't exist until GCC 7 though, so test for it before disabling.
+    if (NOT MSVC)
+        check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
+        if (HAS_WNO_STRINGOP_OVERFLOW)
+            SET_SOURCE_FILES_PROPERTIES(test_runner.c PROPERTIES COMPILE_FLAGS -Wno-stringop-overflow)
+        endif()
+    endif()
+
     aws_add_sanitizers(${driver_exe_name} ${${PROJECT_NAME}_SANITIZERS})
 
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})

@@ -113,3 +113,25 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(mutex_aquire_release_test, s_test_mutex_acquire_release)
 AWS_TEST_CASE(mutex_is_actually_mutex_test, s_test_mutex_is_actually_mutex)
+
+static int s_test_mutex_try_lock_is_correct(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_mutex lock;
+    ASSERT_SUCCESS(aws_mutex_init(&lock));
+
+    ASSERT_SUCCESS(aws_mutex_lock(&lock));
+    ASSERT_FAILS(aws_mutex_try_lock(&lock));
+    ASSERT_SUCCESS(aws_mutex_unlock(&lock));
+
+    ASSERT_SUCCESS(aws_mutex_try_lock(&lock));
+    ASSERT_FAILS(aws_mutex_try_lock(&lock));
+    ASSERT_SUCCESS(aws_mutex_unlock(&lock));
+
+    aws_mutex_clean_up(&lock);
+
+    return 0;
+}
+
+AWS_TEST_CASE(mutex_try_lock_is_correct_test, s_test_mutex_try_lock_is_correct)

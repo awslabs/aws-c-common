@@ -1,16 +1,6 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <Windows.h>
@@ -61,10 +51,9 @@ int aws_high_res_clock_get_ticks(uint64_t *timestamp) {
     LARGE_INTEGER ticks, frequency;
     /* QPC runs on sub-microsecond precision, convert to nanoseconds */
     if (QueryPerformanceFrequency(&frequency) && QueryPerformanceCounter(&ticks)) {
-        *timestamp = aws_timestamp_convert((uint64_t)ticks.QuadPart, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_MICROS, NULL) /
-                     (uint64_t)frequency.QuadPart;
+        *timestamp = aws_timestamp_convert_u64(
+            (uint64_t)ticks.QuadPart, (uint64_t)frequency.QuadPart, AWS_TIMESTAMP_NANOS, NULL);
 
-        *timestamp = aws_timestamp_convert(*timestamp, AWS_TIMESTAMP_MICROS, AWS_TIMESTAMP_NANOS, NULL);
         return AWS_OP_SUCCESS;
     }
 

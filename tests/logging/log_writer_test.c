@@ -1,22 +1,13 @@
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include "logging_test_utilities.h"
 
 #include <aws/common/log_writer.h>
 
+#include <aws/common/file.h>
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
@@ -26,10 +17,6 @@
 #ifndef _WIN32
 #    include <sys/file.h>
 #endif /* _WIN32 */
-
-#ifdef _MSC_VER
-#    pragma warning(disable : 4996) /* Disable warnings about fopen() being insecure */
-#endif                              /* _MSC_VER */
 
 #define TEST_WRITER_MAX_BUFFER_SIZE 4096
 
@@ -53,7 +40,7 @@ int do_default_log_writer_test(
     }
 
     char buffer[TEST_WRITER_MAX_BUFFER_SIZE];
-    FILE *file = fopen(test_file_name, "r");
+    FILE *file = aws_fopen(test_file_name, "r");
     int open_error = errno;
     size_t bytes_read = 0;
 
@@ -135,7 +122,7 @@ static int s_log_writer_existing_file_test(struct aws_allocator *allocator, void
     const char *test_file_cstr = aws_string_c_str(test_file_str);
     remove(test_file_cstr);
 
-    FILE *fp = fopen(test_file_cstr, "w+");
+    FILE *fp = aws_fopen(test_file_cstr, "w+");
     fprintf(fp, EXISTING_TEXT);
     fclose(fp);
 

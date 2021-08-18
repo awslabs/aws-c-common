@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_ARRAY_LIST_INL
 #define AWS_COMMON_ARRAY_LIST_INL
 
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 /* This is implicitly included, but helps with editor highlighting */
@@ -97,8 +87,8 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
     bool required_size_is_valid =
         (aws_mul_size_checked(list->length, list->item_size, &required_size) == AWS_OP_SUCCESS);
     bool current_size_is_valid = (list->current_size >= required_size);
-    bool data_is_valid =
-        ((list->current_size == 0 && list->data == NULL) || AWS_MEM_IS_WRITABLE(list->data, list->current_size));
+    bool data_is_valid = AWS_IMPLIES(list->current_size == 0, list->data == NULL) &&
+                         AWS_IMPLIES(list->current_size != 0, AWS_MEM_IS_WRITABLE(list->data, list->current_size));
     bool item_size_is_valid = (list->item_size != 0);
     return required_size_is_valid && current_size_is_valid && data_is_valid && item_size_is_valid;
 }

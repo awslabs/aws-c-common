@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_RING_BUFFER_INL
 #define AWS_COMMON_RING_BUFFER_INL
-/*
- * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/ring_buffer.h>
@@ -24,7 +14,7 @@ AWS_EXTERN_C_BEGIN
 AWS_STATIC_IMPL bool aws_ring_buffer_check_atomic_ptr(
     const struct aws_ring_buffer *ring_buf,
     const uint8_t *atomic_ptr) {
-    return (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end);
+    return ((atomic_ptr != NULL) && (atomic_ptr >= ring_buf->allocation && atomic_ptr <= ring_buf->allocation_end));
 }
 
 /**
@@ -47,8 +37,8 @@ AWS_STATIC_IMPL bool aws_ring_buffer_is_valid(const struct aws_ring_buffer *ring
     bool tail_in_range = aws_ring_buffer_check_atomic_ptr(ring_buf, tail);
     /* if head points-to the first element of the buffer then tail must too */
     bool valid_head_tail = (head != ring_buf->allocation) || (tail == ring_buf->allocation);
-    return ring_buf && AWS_MEM_IS_READABLE(ring_buf->allocation, ring_buf->allocation_end - ring_buf->allocation) &&
-           head_in_range && tail_in_range && valid_head_tail && (ring_buf->allocator != NULL);
+    return ring_buf && (ring_buf->allocation != NULL) && head_in_range && tail_in_range && valid_head_tail &&
+           (ring_buf->allocator != NULL);
 }
 AWS_EXTERN_C_END
 #endif /* AWS_COMMON_RING_BUFFER_INL */

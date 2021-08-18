@@ -1,19 +1,9 @@
 #ifndef AWS_COMMON_HASH_TABLE_H
 #define AWS_COMMON_HASH_TABLE_H
 
-/*
- * Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #include <aws/common/common.h>
@@ -22,6 +12,7 @@
 
 #define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
 #define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
+#define AWS_COMMON_HASH_TABLE_ITER_ERROR (1 << 2)
 
 /**
  * Hash table data structure. This module provides an automatically resizing
@@ -331,6 +322,10 @@ int aws_hash_table_remove_element(struct aws_hash_table *map, struct aws_hash_el
  *     element (if not set, iteration stops)
  * # AWS_COMMON_HASH_TABLE_ITER_DELETE   - Deletes the current value and
  *     continues iteration.  destroy_fn will NOT be invoked.
+ * # AWS_COMMON_HASH_TABLE_ITER_ERROR   - Stop iteration with error.
+ *     No action will be taken for the current value and the value before this.
+ *     No rolling back. The deleted value before will NOT be back.
+ *     aws_hash_table_foreach returns AWS_OP_ERR after stropping the iteration.
  *
  * Invoking any method which may change the contents of the hashtable
  * during iteration results in undefined behavior. However, you may safely

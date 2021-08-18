@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_MACROS_H
 #define AWS_COMMON_MACROS_H
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 
 #ifdef __cplusplus
@@ -63,6 +53,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    define AWS_LIKELY(x) x
 #    define AWS_UNLIKELY(x) x
 #    define AWS_FORCE_INLINE __forceinline
+#    define AWS_NO_INLINE __declspec(noinline)
 #    define AWS_VARIABLE_LENGTH_ARRAY(type, name, length) type *name = _alloca(sizeof(type) * (length))
 #    define AWS_DECLSPEC_NORETURN __declspec(noreturn)
 #    define AWS_ATTRIBUTE_NORETURN
@@ -73,6 +64,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #        define AWS_LIKELY(x) __builtin_expect(!!(x), 1)
 #        define AWS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #        define AWS_FORCE_INLINE __attribute__((always_inline))
+#        define AWS_NO_INLINE __attribute__((noinline))
 #        define AWS_DECLSPEC_NORETURN
 #        define AWS_ATTRIBUTE_NORETURN __attribute__((noreturn))
 #        if defined(__cplusplus)
@@ -82,6 +74,16 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #        endif /* defined(__cplusplus) */
 #    endif     /*  defined(__GNUC__) || defined(__clang__) */
 #endif         /*  defined(_MSC_VER) */
+
+#if defined(__has_feature)
+#    if __has_feature(address_sanitizer)
+#        define AWS_SUPPRESS_ASAN __attribute__((no_sanitize("address")))
+#    endif
+#endif
+
+#if !defined(AWS_SUPPRESS_ASAN)
+#    define AWS_SUPPRESS_ASAN
+#endif
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
  * If visual C++ building in C mode, the restrict definition is __restrict.

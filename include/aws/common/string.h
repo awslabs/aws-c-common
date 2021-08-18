@@ -1,18 +1,8 @@
 #ifndef AWS_COMMON_STRING_H
 #define AWS_COMMON_STRING_H
-/*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
@@ -110,14 +100,30 @@ bool aws_string_eq_c_str_ignore_case(const struct aws_string *str, const char *c
  */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, const char *c_str);
+
+/**
+ * Allocate a new string with the same contents as array.
+ */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len);
 
 /**
- * Allocate a new string with the same contents as the old.
+ * Allocate a new string with the same contents as another string.
  */
 AWS_COMMON_API
 struct aws_string *aws_string_new_from_string(struct aws_allocator *allocator, const struct aws_string *str);
+
+/**
+ * Allocate a new string with the same contents as cursor.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_new_from_cursor(struct aws_allocator *allocator, const struct aws_byte_cursor *cursor);
+
+/**
+ * Allocate a new string with the same contents as buf.
+ */
+AWS_COMMON_API
+struct aws_string *aws_string_new_from_buf(struct aws_allocator *allocator, const struct aws_byte_buf *buf);
 
 /**
  * Deallocate string.
