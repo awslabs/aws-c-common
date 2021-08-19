@@ -21,7 +21,7 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/mutex.h>
-#include <aws/common/ring_buffer.h>
+#include <aws/common/atomics.h>
 #include <aws/common/thread.h>
 
 #ifdef _MSC_VER
@@ -253,7 +253,8 @@ struct bus_async_impl {
     } slots;
     /* Queue of bus_messages to deliver */
     struct {
-        struct aws_ring_buffer buffer;
+        void* buffer;
+        struct aws_linked_list free;
         struct aws_linked_list msgs;
         struct aws_mutex mutex;
     } msg_queue;
@@ -288,7 +289,7 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
 
     aws_hash_table_clean_up(&impl->slots.table);
     aws_mutex_clean_up(&impl->slots.mutex);
-    aws_ring_buffer_clean_up(&impl->msg_queue.buffer);
+    aws_mem_release(bus->allocator, impl->msg_queue.buffer);
     aws_mutex_clean_up(&impl->msg_queue.mutex);
     aws_mem_release(bus->allocator, impl);
 }
@@ -338,8 +339,10 @@ static void s_bus_async_deliver(void *user_data) {
                 msg->destructor(msg->payload);
             }
 
-            struct aws_byte_buf entry_buf = aws_byte_buf_from_array(msg, sizeof(*msg));
-            aws_ring_buffer_release(&impl->msg_queue.buffer, &entry_buf);
+            AWS_ZERO_STRUCT(*msg);
+            aws_mutex_lock(&impl->msg_queue.mutex);
+            aws_linked_list_push_back(&impl->msg_queue.free, &msg->list_node);
+            aws_mutex_unlock(&impl->msg_queue.mutex);
         }
     }
 
@@ -349,24 +352,32 @@ static void s_bus_async_deliver(void *user_data) {
 int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_async_impl *impl = bus->impl;
 
-    struct aws_byte_buf entry_buf;
-    AWS_ZERO_STRUCT(entry_buf);
-    if (aws_ring_buffer_acquire(&impl->msg_queue.buffer, sizeof(struct bus_message), &entry_buf)) {
+    aws_mutex_lock(&impl->msg_queue.mutex);
+    /* BEGIN CRITICAL SECTION */
+
+    /* take a msg from the free list, or bail if there aren't any */
+    if (aws_linked_list_empty(&impl->msg_queue.free)) {
+        aws_mutex_unlock(&impl->msg_queue.mutex);
         return AWS_OP_ERR;
     }
+    struct aws_linked_list_node *msg_node = aws_linked_list_pop_back(&impl->msg_queue.free);
 
-    struct bus_message *msg = (struct bus_message *)entry_buf.buffer;
+    /* initialize the new message */
+    struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
+    AWS_ZERO_STRUCT(*msg);
     msg->address = address;
     msg->payload = payload;
     msg->destructor = destructor;
 
-    aws_mutex_lock(&impl->msg_queue.mutex);
-    /* BEGIN CRITICAL SECTION */
+    /* push the messgae onto the delivery queue */
     struct aws_linked_list *queue = &impl->msg_queue.msgs;
     aws_linked_list_push_back(queue, &msg->list_node);
     /* END CRITICAL SECTION */
     aws_mutex_unlock(&impl->msg_queue.mutex);
+
+    /* notify the delivery thread to wake up */
     aws_condition_variable_notify_one(&impl->consumer.notify);
+
     return AWS_OP_SUCCESS;
 }
 
@@ -402,9 +413,13 @@ static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
     aws_linked_list_init(&impl->msg_queue.msgs);
-    const size_t ring_buffer_size = options->buffer_size ? options->buffer_size : (4 * 1024);
-    if (aws_ring_buffer_init(&impl->msg_queue.buffer, bus->allocator, ring_buffer_size)) {
-        goto error;
+    aws_linked_list_init(&impl->msg_queue.free);
+    const size_t buffer_size = options->buffer_size ? options->buffer_size : (4 * 1024);
+    impl->msg_queue.buffer = aws_mem_calloc(bus->allocator, 1, buffer_size);
+    const size_t msg_count = buffer_size / sizeof(struct bus_message);
+    for (int msg_idx = 0; msg_idx < msg_count; ++msg_idx) {
+        struct bus_message *msg = (void*)&((char*)impl->msg_queue.buffer)[msg_idx * sizeof(struct bus_message)];
+        aws_linked_list_push_back(&impl->msg_queue.free, &msg->list_node);
     }
 
     /* init subscription table */
@@ -436,7 +451,7 @@ error:
     aws_condition_variable_clean_up(&impl->consumer.notify);
     aws_hash_table_clean_up(&impl->slots.table);
     aws_mutex_clean_up(&impl->slots.mutex);
-    aws_ring_buffer_clean_up(&impl->msg_queue.buffer);
+    aws_mem_release(bus->allocator, &impl->msg_queue.buffer);
     aws_mutex_clean_up(&impl->msg_queue.mutex);
 
     aws_mem_release(bus->allocator, impl);

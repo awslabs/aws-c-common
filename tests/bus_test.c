@@ -169,6 +169,7 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
     for (int send = 0; send < 1024; ++send) {
         uint64_t address = aws_max_i32(rand() % 1024, 1);
         struct bus_async_msg *msg = aws_mem_calloc(allocator, 1, sizeof(struct bus_async_msg));
+        /* released in s_bus_async_msg_dtor */
         msg->allocator = allocator;
         msg->destination = address;
         s_bus_async.expected_sum += address;
@@ -176,10 +177,12 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
     }
     aws_bus_send(async_bus, 1024, NULL, NULL);
 
+    /* wait for all messages to be delivered */
     while (!aws_atomic_load_int(&s_bus_async.closed)) {
         aws_thread_current_sleep(1000 * 1000);
     }
 
+    /* global handler should have been called exactly as many times as there were messages, not including close */
     ASSERT_INT_EQUALS(1024, s_bus_async.call_count);
     ASSERT_INT_EQUALS(s_bus_async.expected_sum, s_bus_async.sum);
 
@@ -190,8 +193,81 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
 }
 AWS_TEST_CASE(bus_async_test_send_single_threaded, s_bus_async_test_send_single_threaded)
 
+static struct {
+    struct aws_atomic_var call_count;
+    struct aws_atomic_var expected_sum;
+    struct aws_atomic_var running_sum;
+} s_bus_mt_data;
+
+static void s_async_bus_producer(void *user_data) {
+    struct aws_bus *bus = user_data;
+    for (int send = 0; send < 1000; ++ send) {
+        const uint64_t address = aws_max_i32(rand() % 1024, 1);
+        struct bus_async_msg *msg = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_msg));
+        /* released in s_bus_async_msg_dtor */
+        msg->allocator = bus->allocator;
+        msg->destination = address;
+        aws_atomic_fetch_add(&s_bus_mt_data.expected_sum, address);
+        AWS_ASSERT(AWS_OP_SUCCESS == aws_bus_send(bus, address, msg, s_bus_async_msg_dtor));
+    }
+}
+
+static void s_record_call_count(uint64_t address, const void *payload, void *user_data) {
+    if (address == AWS_BUS_ADDRESS_CLOSE) {
+        return;
+    }
+    aws_atomic_fetch_add(&s_bus_mt_data.call_count, 1);
+}
+
+static void s_address_to_running_sum(uint64_t address, const void* payload, void *user_data) {
+    if (address == AWS_BUS_ADDRESS_CLOSE) {
+        return;
+    }
+    aws_atomic_fetch_add(&s_bus_mt_data.running_sum, address);
+}
+
 static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
+    srand(4096);
+
+    aws_atomic_init_int(&s_bus_mt_data.call_count, 0);
+    aws_atomic_init_int(&s_bus_mt_data.expected_sum, 0);
+    aws_atomic_init_int(&s_bus_mt_data.running_sum, 0);
+
+    struct aws_bus_options options = {
+        .allocator = allocator,
+        .policy = AWS_BUS_ASYNC,
+        .buffer_size = 512 * 1024,
+    };
+
+    struct aws_bus *bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    ASSERT_NOT_NULL(bus);
+    AWS_ZERO_STRUCT(*bus);
+    ASSERT_SUCCESS(aws_bus_init(bus, &options));
+
+    /* test sending to all, sending to a bunch of addresses, then close */
+    aws_bus_subscribe(bus, AWS_BUS_ADDRESS_ALL, s_record_call_count, NULL);
+    for (int address = 1; address < 1024; ++address) {
+        aws_bus_subscribe(bus, address, s_address_to_running_sum, &s_bus_mt_data);
+    }
+
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
+    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+        aws_thread_init(&threads[t], allocator);
+        aws_thread_launch(&threads[t], s_async_bus_producer, bus, aws_default_thread_options());
+    }
+
+    /* wait for all of the wildcard messages to be delivered */
+    while (aws_atomic_load_int(&s_bus_mt_data.call_count) < AWS_ARRAY_SIZE(threads) * 1000) {
+        aws_thread_current_sleep(1000 * 1000);
+    }
+
+    ASSERT_INT_EQUALS(aws_atomic_load_int(&s_bus_mt_data.expected_sum), aws_atomic_load_int(&s_bus_mt_data.running_sum));
+    ASSERT_INT_EQUALS(AWS_ARRAY_SIZE(threads) * 1000, aws_atomic_load_int(&s_bus_mt_data.call_count));
+
+    aws_bus_clean_up(bus);
+    aws_mem_release(allocator, bus);
+
     return 0;
 }
 AWS_TEST_CASE(bus_async_test_send_multi_threaded, s_bus_async_test_send_multi_threaded)
