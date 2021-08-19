@@ -266,6 +266,10 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
         aws_thread_current_sleep(1000 * 1000);
     }
 
+    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+        aws_thread_join(&threads[t]);
+    }
+
     ASSERT_INT_EQUALS(
         aws_atomic_load_int(&s_bus_mt_data.expected_sum), aws_atomic_load_int(&s_bus_mt_data.running_sum));
     ASSERT_INT_EQUALS(AWS_ARRAY_SIZE(threads) * 1000, aws_atomic_load_int(&s_bus_mt_data.call_count));
