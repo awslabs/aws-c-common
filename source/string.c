@@ -86,7 +86,8 @@ static struct aws_string *s_convert_from_wchar(
     *(struct aws_allocator **)(&str->allocator) = allocator;
     *(size_t *)(&str->len) = bytes_size;
 
-    int converted_res = WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, str->bytes, (int)str->len, NULL, NULL);
+    int converted_res =
+        WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, (char *)str->bytes, (int)str->len, NULL, NULL);
     /* windows had its chance to do its thing, no take backsies. */
     AWS_FATAL_ASSERT(converted_res > 0);
 
@@ -114,7 +115,7 @@ size_t aws_string_wchar_num_chars(const struct aws_string *str) {
     }
 
     AWS_FATAL_ASSERT(str->len % 2 == 0);
-    return str->len / sizeof(whchar_t);
+    return str->len / sizeof(wchar_t);
 }
 
 #endif /* _WIN32 */
