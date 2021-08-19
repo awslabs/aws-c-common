@@ -60,7 +60,7 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     const int send_count = 100;
     for (int send = 0; send < send_count; ++send) {
-        ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void*)&s_test_payload[0], s_test_payload_dtor));
+        ASSERT_SUCCESS(aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor));
     }
 
     ASSERT_INT_EQUALS(send_count, s_sync_test.count);
@@ -72,7 +72,6 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(bus_sync_test_send, s_bus_sync_test_send)
-
 
 static int s_bus_async_test_lifetime(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -126,7 +125,7 @@ static void s_bus_async_handle_msg(uint64_t address, const void *payload, void *
     const bool is_close = (address == AWS_BUS_ADDRESS_CLOSE && !payload);
     AWS_ASSERT(is_normal || is_close);
     AWS_ASSERT(user_data == &s_bus_async);
-    AWS_ASSERT(!payload || ((struct bus_async_msg*)payload)->destination == address);
+    AWS_ASSERT(!payload || ((struct bus_async_msg *)payload)->destination == address);
     if (address != AWS_BUS_ADDRESS_CLOSE) {
         s_bus_async.sum += address;
     }
@@ -205,7 +204,7 @@ static struct {
 
 static void s_async_bus_producer(void *user_data) {
     struct aws_bus *bus = user_data;
-    for (int send = 0; send < 1000; ++ send) {
+    for (int send = 0; send < 1000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         struct bus_async_msg *msg = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_msg));
         /* released in s_bus_async_msg_dtor */
@@ -223,7 +222,7 @@ static void s_record_call_count(uint64_t address, const void *payload, void *use
     aws_atomic_fetch_add(&s_bus_mt_data.call_count, 1);
 }
 
-static void s_address_to_running_sum(uint64_t address, const void* payload, void *user_data) {
+static void s_address_to_running_sum(uint64_t address, const void *payload, void *user_data) {
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return;
     }
@@ -266,7 +265,8 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
         aws_thread_current_sleep(1000 * 1000);
     }
 
-    ASSERT_INT_EQUALS(aws_atomic_load_int(&s_bus_mt_data.expected_sum), aws_atomic_load_int(&s_bus_mt_data.running_sum));
+    ASSERT_INT_EQUALS(
+        aws_atomic_load_int(&s_bus_mt_data.expected_sum), aws_atomic_load_int(&s_bus_mt_data.running_sum));
     ASSERT_INT_EQUALS(AWS_ARRAY_SIZE(threads) * 1000, aws_atomic_load_int(&s_bus_mt_data.call_count));
 
     aws_bus_clean_up(bus);

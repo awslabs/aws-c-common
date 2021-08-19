@@ -16,12 +16,12 @@
 #include <aws/common/bus.h>
 
 #include <aws/common/allocator.h>
+#include <aws/common/atomics.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/condition_variable.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/mutex.h>
-#include <aws/common/atomics.h>
 #include <aws/common/thread.h>
 
 #ifdef _MSC_VER
@@ -82,7 +82,12 @@ static struct listener_list *s_find_or_create_listeners(
     return list;
 }
 
-static int s_bus_deliver_msg_to_slot(struct aws_bus *bus, uint64_t slot, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+static int s_bus_deliver_msg_to_slot(
+    struct aws_bus *bus,
+    uint64_t slot,
+    uint64_t address,
+    struct aws_hash_table *slots,
+    const void *payload) {
     struct listener_list *list = s_find_listeners(slots, slot);
     if (!list) {
         return AWS_OP_SUCCESS;
@@ -253,7 +258,7 @@ struct bus_async_impl {
     } slots;
     /* Queue of bus_messages to deliver */
     struct {
-        void* buffer;
+        void *buffer;
         struct aws_linked_list free;
         struct aws_linked_list msgs;
         struct aws_mutex mutex;
@@ -311,7 +316,7 @@ static void s_bus_async_deliver(void *user_data) {
     while (aws_atomic_load_int(&impl->consumer.running)) {
         aws_mutex_lock(&impl->msg_queue.mutex);
         aws_condition_variable_wait_for_pred(
-                &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl);
+            &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl);
         aws_mutex_unlock(&impl->msg_queue.mutex);
 
         /* Copy out the messages and dispatch them */
@@ -417,7 +422,7 @@ static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *option
     impl->msg_queue.buffer = aws_mem_calloc(bus->allocator, 1, buffer_size);
     const size_t msg_count = buffer_size / sizeof(struct bus_message);
     for (int msg_idx = 0; msg_idx < msg_count; ++msg_idx) {
-        struct bus_message *msg = (void*)&((char*)impl->msg_queue.buffer)[msg_idx * sizeof(struct bus_message)];
+        struct bus_message *msg = (void *)&((char *)impl->msg_queue.buffer)[msg_idx * sizeof(struct bus_message)];
         aws_linked_list_push_back(&impl->msg_queue.free, &msg->list_node);
     }
 
