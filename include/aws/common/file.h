@@ -54,16 +54,15 @@ typedef bool(aws_on_directory_entry)(const struct aws_directory_entry *entry, vo
 
 AWS_EXTERN_C_BEGIN
 
-AWS_COMMON_API
 /**
  * Don't use this. It never should have been added in the first place. It's now deprecated.
  */
-FILE *aws_fopen(const char *file_path, const char *mode);
+AWS_COMMON_API FILE *aws_fopen(const char *file_path, const char *mode);
 
 /**
  * Opens file at file_path using mode. Returns the FILE pointer if successful.
  */
-FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode);
+AWS_COMMON_API FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode);
 
 /**
  * Creates a directory if it doesn't currently exist. If the directory already exists, it's ignored and assumed

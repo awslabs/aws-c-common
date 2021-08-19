@@ -160,6 +160,7 @@ struct directory_traversal_abort_test_data {
 };
 
 bool directory_traversal_abort_test_data(const struct aws_directory_entry *entry, void *user_data) {
+    (void)entry;
     struct directory_traversal_abort_test_data *test_data = user_data;
     test_data->times_called += 1;
 
