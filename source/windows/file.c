@@ -14,10 +14,15 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
     struct aws_string *w_file_path = aws_string_convert_to_wchar_str(aws_default_allocator(), file_path);
     struct aws_string *w_mode = aws_string_convert_to_wchar_str(aws_default_allocator(), mode);
 
-    FILE *file = _wfopen_s(&file, aws_string_wchar_c_str(w_file_path), aws_string_wchar_c_str(w_mode));
+    FILE *file = NULL : errno_t error =
+                            _wfopen_s(&file, aws_string_wchar_c_str(w_file_path), aws_string_wchar_c_str(w_mode));
     /* actually handle the error correctly here. */
     aws_string_destroy(w_mode);
     aws_string_destroy(w_file_path);
+
+    if (error) {
+        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
 
     return file;
 }
