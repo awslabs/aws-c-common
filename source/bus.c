@@ -51,7 +51,7 @@ struct listener_list {
 };
 
 /* find a listener list (or NULL) by address */
-static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint64_t address) {
+static struct listener_list *bus_find_listeners(struct aws_hash_table *slots, uint64_t address) {
     struct aws_hash_element *elem = NULL;
     if (aws_hash_table_find(slots, (void *)(uintptr_t)address, &elem)) {
         return NULL;
@@ -66,11 +66,11 @@ static struct listener_list *s_find_listeners(struct aws_hash_table *slots, uint
 }
 
 /* find a listener list by address, or create/insert/return a new one */
-static struct listener_list *s_find_or_create_listeners(
+static struct listener_list *bus_find_or_create_listeners(
     struct aws_allocator *allocator,
     struct aws_hash_table *slots,
     uint64_t address) {
-    struct listener_list *list = s_find_listeners(slots, address);
+    struct listener_list *list = bus_find_listeners(slots, address);
     if (list) {
         return list;
     }
@@ -82,14 +82,14 @@ static struct listener_list *s_find_or_create_listeners(
     return list;
 }
 
-static int s_bus_deliver_msg_to_slot(
+static int bus_deliver_msg_to_slot(
     struct aws_bus *bus,
     uint64_t slot,
     uint64_t address,
     struct aws_hash_table *slots,
     const void *payload) {
     (void)bus;
-    struct listener_list *list = s_find_listeners(slots, slot);
+    struct listener_list *list = bus_find_listeners(slots, slot);
     if (!list) {
         return AWS_OP_SUCCESS;
     }
@@ -103,22 +103,22 @@ static int s_bus_deliver_msg_to_slot(
 }
 
 /* common delivery logic */
-static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+static int bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
     (void)bus;
     int result = AWS_OP_SUCCESS;
-    result |= s_bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
-    result |= s_bus_deliver_msg_to_slot(bus, address, address, slots, payload);
+    result |= bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
+    result |= bus_deliver_msg_to_slot(bus, address, address, slots, payload);
     return result;
 }
 
 /* common subscribe logic */
-static int s_bus_subscribe(
+static int bus_subscribe(
     struct aws_bus *bus,
     uint64_t address,
     struct aws_hash_table *slots,
     aws_bus_listener_fn *callback,
     void *user_data) {
-    struct listener_list *list = s_find_or_create_listeners(bus->allocator, slots, address);
+    struct listener_list *list = bus_find_or_create_listeners(bus->allocator, slots, address);
     if (!list) {
         return AWS_OP_ERR;
     }
@@ -132,7 +132,7 @@ static int s_bus_subscribe(
 }
 
 /* common unsubscribe logic */
-static int s_bus_unsubscribe(
+static int bus_unsubscribe(
     struct aws_bus *bus,
     uint64_t address,
     struct aws_hash_table *slots,
@@ -140,7 +140,7 @@ static int s_bus_unsubscribe(
     void *user_data) {
     (void)bus;
 
-    struct listener_list *list = s_find_listeners(slots, address);
+    struct listener_list *list = bus_find_listeners(slots, address);
     if (!list) {
         return AWS_OP_SUCCESS;
     }
@@ -161,7 +161,7 @@ static int s_bus_unsubscribe(
 }
 
 /* destructor for listener lists in the slots tables */
-void s_destroy_listener_list(void *data) {
+void bus_destroy_listener_list(void *data) {
     struct listener_list *list = data;
     AWS_PRECONDITION(list->allocator);
     /* call all listeners with a 0 message type to clean up */
@@ -187,16 +187,16 @@ struct bus_sync_impl {
     struct aws_byte_buf msg_buffer;
 };
 
-static void s_bus_sync_clean_up(struct aws_bus *bus) {
+static void bus_sync_clean_up(struct aws_bus *bus) {
     struct bus_sync_impl *impl = bus->impl;
     aws_hash_table_clean_up(&impl->slots.table);
     aws_byte_buf_clean_up(&impl->msg_buffer);
     aws_mem_release(bus->allocator, impl);
 }
 
-static int s_bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
+static int bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_sync_impl *impl = bus->impl;
-    int result = s_bus_deliver_msg(bus, address, &impl->slots.table, payload);
+    int result = bus_deliver_msg(bus, address, &impl->slots.table, payload);
     if (destructor) {
         destructor(payload);
     } else {
@@ -205,39 +205,35 @@ static int s_bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload,
     return result;
 }
 
-static int s_bus_sync_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+static int bus_sync_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
     struct bus_sync_impl *impl = bus->impl;
-    return s_bus_subscribe(bus, address, &impl->slots.table, callback, user_data);
+    return bus_subscribe(bus, address, &impl->slots.table, callback, user_data);
 }
 
-static int s_bus_sync_unsubscribe(
-    struct aws_bus *bus,
-    uint64_t address,
-    aws_bus_listener_fn *callback,
-    void *user_data) {
+static int bus_sync_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
     struct bus_sync_impl *impl = bus->impl;
-    return s_bus_unsubscribe(bus, address, &impl->slots.table, callback, user_data);
+    return bus_unsubscribe(bus, address, &impl->slots.table, callback, user_data);
 }
 
-static struct bus_vtable s_sync_vtable = {
-    .clean_up = s_bus_sync_clean_up,
-    .send = s_bus_sync_send,
-    .subscribe = s_bus_sync_subscribe,
-    .unsubscribe = s_bus_sync_unsubscribe,
+static struct bus_vtable bus_sync_vtable = {
+    .clean_up = bus_sync_clean_up,
+    .send = bus_sync_send,
+    .subscribe = bus_sync_subscribe,
+    .unsubscribe = bus_sync_unsubscribe,
 };
 
-static void s_bus_sync_init(struct aws_bus *bus, struct aws_bus_options *options) {
+static void bus_sync_init(struct aws_bus *bus, struct aws_bus_options *options) {
     (void)options;
 
     struct bus_sync_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
-    impl->vtable = s_sync_vtable;
+    impl->vtable = bus_sync_vtable;
 
     if (aws_byte_buf_init(&impl->msg_buffer, bus->allocator, 256)) {
         goto error;
     }
 
     if (aws_hash_table_init(
-            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_listener_list)) {
+            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, bus_destroy_listener_list)) {
         goto error;
     }
 
@@ -253,16 +249,22 @@ error:
 struct bus_async_impl {
     struct bus_vtable vtable;
     struct {
+        struct aws_mutex mutex;
         /* Map of address -> list of listeners */
         struct aws_hash_table table;
-        struct aws_mutex mutex;
+        /* list of pending adds/removes of listeners */
+        struct aws_linked_list pending;
     } slots;
+
     /* Queue of bus_messages to deliver */
     struct {
-        void *buffer;
-        struct aws_linked_list free;
-        struct aws_linked_list msgs;
         struct aws_mutex mutex;
+        /* backing memory for the message free list */
+        void *buffer;
+        /* message free list */
+        struct aws_linked_list free;
+        /* message delivery queue */
+        struct aws_linked_list msgs;
     } msg_queue;
 
     /* consumer thread */
@@ -282,7 +284,16 @@ struct bus_message {
     void (*destructor)(void *);
 };
 
-static void s_bus_async_clean_up(struct aws_bus *bus) {
+struct pending_listener {
+    struct aws_linked_list_node list_node;
+    uint64_t address;
+    aws_bus_listener_fn *listener;
+    void *user_data;
+    uint32_t add : 1;
+    uint32_t remove : 1;
+};
+
+static void bus_async_clean_up(struct aws_bus *bus) {
     struct bus_async_impl *impl = bus->impl;
 
     /* shut down delivery thread */
@@ -301,43 +312,60 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, impl);
 }
 
-static bool s_bus_async_should_wake_up(void *user_data) {
+static bool bus_async_should_wake_up(void *user_data) {
     struct bus_async_impl *impl = user_data;
-    if (!aws_atomic_load_int(&impl->consumer.running)) {
-        return true;
+    return !aws_atomic_load_int(&impl->consumer.running) || !aws_linked_list_empty(&impl->msg_queue.msgs) ||
+           !aws_linked_list_empty(&impl->slots.pending);
+}
+
+/* resolve all adds and removes of listeners, in FIFO order */
+static void bus_apply_listeners(struct aws_bus *bus) {
+    struct bus_async_impl *impl = bus->impl;
+    struct aws_linked_list *pending_listeners = &impl->slots.pending;
+    aws_mutex_lock(&impl->slots.mutex);
+    while (!aws_linked_list_empty(pending_listeners)) {
+        struct aws_linked_list_node *node = aws_linked_list_pop_front(pending_listeners);
+        struct pending_listener *listener = AWS_CONTAINER_OF(node, struct pending_listener, list_node);
+        if (listener->add) {
+            bus_subscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
+        } else if (listener->remove) {
+            bus_unsubscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
+        }
+        aws_mem_release(bus->allocator, listener);
     }
-    return !aws_linked_list_empty(&impl->msg_queue.msgs);
+    aws_mutex_unlock(&impl->slots.mutex);
 }
 
 /* Async bus delivery thread loop */
-static void s_bus_async_deliver(void *user_data) {
+static void bus_async_deliver(void *user_data) {
     struct aws_bus *bus = user_data;
     struct bus_async_impl *impl = bus->impl;
 
     while (aws_atomic_load_int(&impl->consumer.running)) {
         aws_mutex_lock(&impl->msg_queue.mutex);
         aws_condition_variable_wait_for_pred(
-            &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl);
+            &impl->consumer.notify, &impl->msg_queue.mutex, 100, bus_async_should_wake_up, impl);
         aws_mutex_unlock(&impl->msg_queue.mutex);
+
+        /* resolve adds/removes to listeners before delivery */
+        if (!aws_linked_list_empty(&impl->slots.pending)) {
+            bus_apply_listeners(bus);
+        }
 
         /* Copy out the messages and dispatch them */
         struct aws_linked_list msg_list;
         aws_linked_list_init(&msg_list);
+
         aws_mutex_lock(&impl->msg_queue.mutex);
-        /* BEGIN CRITICAL SECTION */
         aws_linked_list_swap_contents(&msg_list, &impl->msg_queue.msgs);
-        /* END CRITICAL SECTION */
         aws_mutex_unlock(&impl->msg_queue.mutex);
 
         /* TODO: synchronize subscribers */
         while (!aws_linked_list_empty(&msg_list)) {
-            struct aws_linked_list_node *node = aws_linked_list_front(&msg_list);
-            aws_linked_list_pop_front(&msg_list);
+            struct aws_linked_list_node *node = aws_linked_list_pop_front(&msg_list);
 
             struct bus_message *msg = AWS_CONTAINER_OF(node, struct bus_message, list_node);
-            aws_mutex_lock(&impl->slots.mutex);
-            s_bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
-            aws_mutex_unlock(&impl->slots.mutex);
+            bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
 
             /* Release payload, then message queue entry */
             if (msg->destructor) {
@@ -354,7 +382,7 @@ static void s_bus_async_deliver(void *user_data) {
     aws_atomic_exchange_int(&impl->consumer.exited, 1);
 }
 
-int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
+int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_async_impl *impl = bus->impl;
 
     aws_mutex_lock(&impl->msg_queue.mutex);
@@ -386,32 +414,43 @@ int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void 
     return AWS_OP_SUCCESS;
 }
 
-int s_bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+int bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_async_impl *impl = bus->impl;
+    struct pending_listener *sub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
+    sub->address = address;
+    sub->listener = listener;
+    sub->user_data = user_data;
+    sub->add = true;
     aws_mutex_lock(&impl->slots.mutex);
-    int result = s_bus_subscribe(bus, address, &impl->slots.table, callback, user_data);
+    aws_linked_list_push_back(&impl->slots.pending, &sub->list_node);
     aws_mutex_unlock(&impl->slots.mutex);
-    return result;
+    aws_condition_variable_notify_one(&impl->consumer.notify);
+    return AWS_OP_SUCCESS;
 }
 
-int s_bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+int bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_async_impl *impl = bus->impl;
+    struct pending_listener *unsub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
+    unsub->address = address;
+    unsub->listener = listener;
+    unsub->user_data = user_data;
+    unsub->remove = true;
     aws_mutex_lock(&impl->slots.mutex);
-    int result = s_bus_unsubscribe(bus, address, &impl->slots.table, callback, user_data);
+    aws_linked_list_push_back(&impl->slots.pending, &unsub->list_node);
     aws_mutex_unlock(&impl->slots.mutex);
-    return result;
+    return AWS_OP_SUCCESS;
 }
 
-static struct bus_vtable s_async_vtable = {
-    .clean_up = s_bus_async_clean_up,
-    .send = s_bus_async_send,
-    .subscribe = s_bus_async_subscribe,
-    .unsubscribe = s_bus_async_unsubscribe,
+static struct bus_vtable bus_async_vtable = {
+    .clean_up = bus_async_clean_up,
+    .send = bus_async_send,
+    .subscribe = bus_async_subscribe,
+    .unsubscribe = bus_async_unsubscribe,
 };
 
-static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *options) {
+static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options) {
     struct bus_async_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_impl));
-    impl->vtable = s_async_vtable;
+    impl->vtable = bus_async_vtable;
 
     /* init msg queue */
     if (aws_mutex_init(&impl->msg_queue.mutex)) {
@@ -432,9 +471,10 @@ static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
     if (aws_hash_table_init(
-            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_destroy_listener_list)) {
+            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, bus_destroy_listener_list)) {
         goto error;
     }
+    aws_linked_list_init(&impl->slots.pending);
 
     /* Setup dispatch thread */
     if (aws_condition_variable_init(&impl->consumer.notify)) {
@@ -446,7 +486,7 @@ static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *option
     }
 
     aws_atomic_exchange_int(&impl->consumer.running, 1);
-    if (aws_thread_launch(&impl->consumer.thread, s_bus_async_deliver, bus, aws_default_thread_options())) {
+    if (aws_thread_launch(&impl->consumer.thread, bus_async_deliver, bus, aws_default_thread_options())) {
         goto error;
     }
 
@@ -470,9 +510,9 @@ int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
     bus->allocator = options->allocator;
 
     if (options->policy == AWS_BUS_ASYNC) {
-        s_bus_async_init(bus, options);
+        bus_async_init(bus, options);
     } else if (options->policy == AWS_BUS_SYNC) {
-        s_bus_sync_init(bus, options);
+        bus_sync_init(bus, options);
     }
 
     if (!bus->impl) {
