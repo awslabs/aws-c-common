@@ -249,12 +249,12 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
     AWS_ZERO_STRUCT(*bus);
     ASSERT_SUCCESS(aws_bus_init(bus, &options));
 
-    /* test sending to all, sending to a bunch of addresses, then close */
     ASSERT_SUCCESS(aws_bus_subscribe(bus, AWS_BUS_ADDRESS_ALL, s_record_call_count, NULL));
     for (int address = 1; address < 1024; ++address) {
         ASSERT_SUCCESS(aws_bus_subscribe(bus, address, s_address_to_running_sum, &s_bus_mt_data));
     }
 
+    /* test sending to a bunch of addresses from many threads */
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         aws_thread_init(&threads[t], allocator);

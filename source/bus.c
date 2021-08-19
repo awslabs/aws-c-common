@@ -164,7 +164,7 @@ static int bus_unsubscribe(
 void bus_destroy_listener_list(void *data) {
     struct listener_list *list = data;
     AWS_PRECONDITION(list->allocator);
-    /* call all listeners with a 0 message type to clean up */
+    /* call all listeners with an AWS_BUS_ADDRESS_CLOSE message type to clean up */
     while (!aws_linked_list_empty(&list->listeners)) {
         struct aws_linked_list_node *back = aws_linked_list_back(&list->listeners);
         struct bus_listener *listener = AWS_CONTAINER_OF(back, struct bus_listener, list_node);
@@ -184,13 +184,11 @@ struct bus_sync_impl {
         /* Map of address -> list of listeners */
         struct aws_hash_table table;
     } slots;
-    struct aws_byte_buf msg_buffer;
 };
 
 static void bus_sync_clean_up(struct aws_bus *bus) {
     struct bus_sync_impl *impl = bus->impl;
     aws_hash_table_clean_up(&impl->slots.table);
-    aws_byte_buf_clean_up(&impl->msg_buffer);
     aws_mem_release(bus->allocator, impl);
 }
 
@@ -199,8 +197,6 @@ static int bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload, v
     int result = bus_deliver_msg(bus, address, &impl->slots.table, payload);
     if (destructor) {
         destructor(payload);
-    } else {
-        aws_byte_buf_reset(&impl->msg_buffer, false);
     }
     return result;
 }
@@ -227,10 +223,6 @@ static void bus_sync_init(struct aws_bus *bus, struct aws_bus_options *options) 
 
     struct bus_sync_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
     impl->vtable = bus_sync_vtable;
-
-    if (aws_byte_buf_init(&impl->msg_buffer, bus->allocator, 256)) {
-        goto error;
-    }
 
     if (aws_hash_table_init(
             &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, bus_destroy_listener_list)) {
@@ -386,7 +378,6 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
     struct bus_async_impl *impl = bus->impl;
 
     aws_mutex_lock(&impl->msg_queue.mutex);
-    /* BEGIN CRITICAL SECTION */
 
     /* take a msg from the free list, or bail if there aren't any */
     if (aws_linked_list_empty(&impl->msg_queue.free)) {
