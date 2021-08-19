@@ -548,6 +548,7 @@ static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, vo
     (void)ctx;
 
     uint8_t buf_storage[5];
+    AWS_ZERO_ARRAY(buf_storage);
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(buf_storage, sizeof(buf_storage));
 
     /* Test a write to a fresh buffer with plenty of space */
