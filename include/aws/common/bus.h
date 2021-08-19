@@ -11,7 +11,7 @@
 /*
  * A message bus is a mapping of integer message addresses/types -> listeners/callbacks.
  * A listener can listen to a single message, or to all messages on a bus
- * Message addresses/types can be any 64-bit integer, starting at 1. 
+ * Message addresses/types can be any 64-bit integer, starting at 1.
  * AWS_BUS_ADDRESS_ALL (0) is reserved for broadcast to all listeners.
  * AWS_BUS_ADDRESS_CLOSE (0xffffffffffffffff) is reserved for notifying listeners to clean up
  * Listeners will be sent a message of type AWS_BUS_ADDRESS_CLOSE when it is time to clean any state up.
