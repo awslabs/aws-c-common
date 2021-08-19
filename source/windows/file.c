@@ -42,7 +42,7 @@ struct aws_string *s_to_long_path(const struct aws_string *path) {
     struct aws_string *long_path = aws_string_new_from_buf(aws_default_allocator(), &new_path);
     aws_byte_buf_clean_up(&new_path);
 
-    return new_path;
+    return long_path;
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
@@ -65,10 +65,10 @@ bool aws_directory_exists(const struct aws_string *dir_path) {
     struct aws_string *long_dir_path = s_to_long_path(w_dir_path);
     aws_string_destroy(w_dir_path);
 
-    DWORD attributes = GetFileAttributes(aws_string_wchar_c_str(long_dir_path));
+    DWORD attributes = GetFileAttributesW(aws_string_wchar_c_str(long_dir_path));
     aws_string_destroy(long_dir_path);
 
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    return (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, void *user_data) {
@@ -95,6 +95,8 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     if (!aws_directory_exists(dir_path)) {
         return AWS_OP_SUCCESS;
     }
+
+    int ret_val = AWS_OP_SUCCESS;
 
     if (recursive) {
         ret_val = aws_directory_traverse(aws_default_allocator(), dir_path, true, s_delete_file_or_directory, NULL);
