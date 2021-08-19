@@ -26,9 +26,9 @@ static struct {
 static const char s_test_payload[] = "TEST ME SENPAI";
 
 static void s_bus_sync_test_recv(uint64_t address, const void *msg, void *user_data) {
-    AWS_ASSERT(42 == address);
-    AWS_ASSERT(0 == strcmp(msg, s_test_payload));
-    AWS_ASSERT(&s_sync_test == user_data);
+    AWS_FATAL_ASSERT(42 == address);
+    AWS_FATAL_ASSERT(0 == strcmp(msg, s_test_payload));
+    AWS_FATAL_ASSERT(&s_sync_test == user_data);
     ++s_sync_test.count;
 }
 
@@ -115,26 +115,26 @@ static void s_bus_async_handle_all(uint64_t address, const void *payload, void *
     const bool is_close = (address == AWS_BUS_ADDRESS_CLOSE) && payload == NULL;
     const bool is_wildcard = (address > 0 && address < 1024) && payload;
     const bool is_final = (address == 1024) && payload == NULL;
-    AWS_ASSERT(is_wildcard || is_final || is_close);
-    AWS_ASSERT(user_data == NULL);
+    AWS_FATAL_ASSERT(is_wildcard || is_final || is_close);
+    AWS_FATAL_ASSERT(user_data == NULL);
     aws_atomic_fetch_add(&s_bus_async.call_count, (payload != NULL));
 }
 
 static void s_bus_async_handle_msg(uint64_t address, const void *payload, void *user_data) {
     const bool is_normal = (address > 0 && address < 1024 && payload);
     const bool is_close = (address == AWS_BUS_ADDRESS_CLOSE && !payload);
-    AWS_ASSERT(is_normal || is_close);
-    AWS_ASSERT(user_data == &s_bus_async);
-    AWS_ASSERT(!payload || ((struct bus_async_msg *)payload)->destination == address);
+    AWS_FATAL_ASSERT(is_normal || is_close);
+    AWS_FATAL_ASSERT(user_data == &s_bus_async);
+    AWS_FATAL_ASSERT(!payload || ((struct bus_async_msg *)payload)->destination == address);
     if (address != AWS_BUS_ADDRESS_CLOSE) {
         s_bus_async.sum += address;
     }
 }
 
 static void s_bus_async_handle_close(uint64_t address, const void *payload, void *user_data) {
-    AWS_ASSERT(address == 1024 || address == AWS_BUS_ADDRESS_CLOSE);
-    AWS_ASSERT(user_data == &s_bus_async);
-    AWS_ASSERT(payload == NULL);
+    AWS_FATAL_ASSERT(address == 1024 || address == AWS_BUS_ADDRESS_CLOSE);
+    AWS_FATAL_ASSERT(user_data == &s_bus_async);
+    AWS_FATAL_ASSERT(payload == NULL);
 
     if (address == 1024) {
         aws_atomic_store_int(&s_bus_async.closed, 1);
@@ -211,7 +211,8 @@ static void s_async_bus_producer(void *user_data) {
         msg->allocator = bus->allocator;
         msg->destination = address;
         aws_atomic_fetch_add(&s_bus_mt_data.expected_sum, address);
-        AWS_ASSERT(AWS_OP_SUCCESS == aws_bus_send(bus, address, msg, s_bus_async_msg_dtor));
+        int result = aws_bus_send(bus, address, msg, s_bus_async_msg_dtor);
+        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == result);
     }
 }
 
