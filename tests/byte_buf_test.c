@@ -225,6 +225,7 @@ static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
 
     uint8_t arr[16];
+    AWS_ZERO_ARRAY(arr);
     struct aws_byte_buf src_buf = aws_byte_buf_from_empty_array(arr, sizeof(arr));
 
     struct aws_byte_buf dst_buf = {0};
