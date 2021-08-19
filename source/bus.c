@@ -332,7 +332,8 @@ static void bus_async_clean_up(struct aws_bus *bus) {
 
 static bool bus_async_should_wake_up(void *user_data) {
     struct bus_async_impl *impl = user_data;
-    return !aws_atomic_load_int(&impl->dispatch.running);
+    return !aws_atomic_load_int(&impl->dispatch.running) || !aws_linked_list_empty(&impl->queue.subs) ||
+           !aws_linked_list_empty(&impl->queue.msgs);
 }
 
 /* Async bus delivery thread loop */
