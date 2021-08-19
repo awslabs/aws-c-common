@@ -88,6 +88,7 @@ static int s_bus_deliver_msg_to_slot(
     uint64_t address,
     struct aws_hash_table *slots,
     const void *payload) {
+    (void)bus;
     struct listener_list *list = s_find_listeners(slots, slot);
     if (!list) {
         return AWS_OP_SUCCESS;
