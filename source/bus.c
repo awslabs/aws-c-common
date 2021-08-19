@@ -281,6 +281,7 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
 
     /* shut down delivery thread */
     aws_atomic_exchange_int(&impl->consumer.running, 0);
+    aws_condition_variable_notify_one(&impl->consumer.notify);
     while (!aws_atomic_load_int(&impl->consumer.exited)) {
         aws_thread_current_sleep(1000 * 1000);
     }
@@ -306,8 +307,6 @@ static bool s_bus_async_should_wake_up(void *user_data) {
 static void s_bus_async_deliver(void *user_data) {
     struct aws_bus *bus = user_data;
     struct bus_async_impl *impl = bus->impl;
-
-    aws_atomic_exchange_int(&impl->consumer.running, 1);
 
     while (aws_atomic_load_int(&impl->consumer.running)) {
         aws_mutex_lock(&impl->msg_queue.mutex);
@@ -440,6 +439,7 @@ static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
 
+    aws_atomic_exchange_int(&impl->consumer.running, 1);
     if (aws_thread_launch(&impl->consumer.thread, s_bus_async_deliver, bus, aws_default_thread_options())) {
         goto error;
     }
