@@ -16,6 +16,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <aws/common/bus.h>
+#include <aws/common/math.h>
 
 static struct {
     int count;
@@ -97,29 +98,9 @@ AWS_TEST_CASE(bus_async_test_lifetime, s_bus_async_test_lifetime)
 static struct {
     uint64_t sum;
     uint64_t expected_sum;
+    uint64_t call_count;
     struct aws_atomic_var closed;
 } s_bus_async;
-
-static void s_bus_async_handle_all(uint64_t address, const void *payload, void *user_data) {
-    AWS_ASSERT((address != 0 && payload) || (address == 0 && !payload));
-    AWS_ASSERT(user_data == &s_bus_async);
-}
-
-static void s_bus_async_handle_msg(uint64_t address, const void *payload, void *user_data) {
-    AWS_ASSERT((address > 0 && address < 1024 && payload) || (address == 0 && !payload));
-    AWS_ASSERT(user_data == &s_bus_async);
-    s_bus_async.sum += address;
-}
-
-static void s_bus_async_handle_close(uint64_t address, const void *payload, void *user_data) {
-    AWS_ASSERT(address == 1024 || address == 0);
-    AWS_ASSERT(user_data == &s_bus_async);
-    AWS_ASSERT(payload == NULL);
-
-    if (address) {
-        aws_atomic_exchange_int(&s_bus_async.closed, 1);
-    }
-}
 
 struct bus_async_msg {
     struct aws_allocator *allocator;
@@ -129,6 +110,36 @@ struct bus_async_msg {
 static void s_bus_async_msg_dtor(void *data) {
     struct bus_async_msg *msg = data;
     aws_mem_release(msg->allocator, msg);
+}
+
+static void s_bus_async_handle_all(uint64_t address, const void *payload, void *user_data) {
+    const bool is_close = (address == AWS_BUS_ADDRESS_CLOSE) && payload == NULL;
+    const bool is_wildcard = (address > 0 && address < 1024) && payload;
+    const bool is_final = (address == 1024) && payload == NULL;
+    AWS_ASSERT(is_wildcard || is_final || is_close);
+    AWS_ASSERT(user_data == NULL);
+    s_bus_async.call_count += (payload != NULL);
+}
+
+static void s_bus_async_handle_msg(uint64_t address, const void *payload, void *user_data) {
+    const bool is_normal = (address > 0 && address < 1024 && payload);
+    const bool is_close = (address == AWS_BUS_ADDRESS_CLOSE && !payload);
+    AWS_ASSERT(is_normal || is_close);
+    AWS_ASSERT(user_data == &s_bus_async);
+    AWS_ASSERT(!payload || ((struct bus_async_msg*)payload)->destination == address);
+    if (address != AWS_BUS_ADDRESS_CLOSE) {
+        s_bus_async.sum += address;
+    }
+}
+
+static void s_bus_async_handle_close(uint64_t address, const void *payload, void *user_data) {
+    AWS_ASSERT(address == 1024 || address == AWS_BUS_ADDRESS_CLOSE);
+    AWS_ASSERT(user_data == &s_bus_async);
+    AWS_ASSERT(payload == NULL);
+
+    if (address) {
+        aws_atomic_exchange_int(&s_bus_async.closed, 1);
+    }
 }
 
 static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator, void *ctx) {
@@ -156,7 +167,7 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
     aws_bus_subscribe(async_bus, 1024, s_bus_async_handle_close, &s_bus_async);
 
     for (int send = 0; send < 1024; ++send) {
-        uint64_t address = rand() / 1024;
+        uint64_t address = aws_max_i32(rand() % 1024, 1);
         struct bus_async_msg *msg = aws_mem_calloc(allocator, 1, sizeof(struct bus_async_msg));
         msg->allocator = allocator;
         msg->destination = address;
@@ -168,6 +179,9 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
     while (!aws_atomic_load_int(&s_bus_async.closed)) {
         aws_thread_current_sleep(1000 * 1000);
     }
+
+    ASSERT_INT_EQUALS(1024, s_bus_async.call_count);
+    ASSERT_INT_EQUALS(s_bus_async.expected_sum, s_bus_async.sum);
 
     aws_bus_clean_up(async_bus);
     aws_mem_release(allocator, async_bus);

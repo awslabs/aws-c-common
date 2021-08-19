@@ -82,22 +82,27 @@ static struct listener_list *s_find_or_create_listeners(
     return list;
 }
 
-/* common delivery logic */
-static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
-    (void)bus;
-    struct listener_list *list = s_find_listeners(slots, address);
+static int s_bus_deliver_msg_to_slot(struct aws_bus *bus, uint64_t slot, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+    struct listener_list *list = s_find_listeners(slots, slot);
     if (!list) {
         return AWS_OP_SUCCESS;
     }
-    struct aws_linked_list_node *node;
-    for (node = aws_linked_list_begin(&list->listeners); node != aws_linked_list_end(&list->listeners);
-         node = aws_linked_list_next(node)) {
-
+    struct aws_linked_list_node *node = aws_linked_list_begin(&list->listeners);
+    for (; node != aws_linked_list_end(&list->listeners); node = aws_linked_list_next(node)) {
         struct bus_listener *listener = AWS_CONTAINER_OF(node, struct bus_listener, list_node);
         listener->deliver(address, payload, listener->user_data);
     }
 
     return AWS_OP_SUCCESS;
+}
+
+/* common delivery logic */
+static int s_bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+    (void)bus;
+    int result = AWS_OP_SUCCESS;
+    result |= s_bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
+    result |= s_bus_deliver_msg_to_slot(bus, address, address, slots, payload);
+    return result;
 }
 
 /* common subscribe logic */
@@ -157,7 +162,7 @@ void s_destroy_listener_list(void *data) {
     while (!aws_linked_list_empty(&list->listeners)) {
         struct aws_linked_list_node *back = aws_linked_list_back(&list->listeners);
         struct bus_listener *listener = AWS_CONTAINER_OF(back, struct bus_listener, list_node);
-        listener->deliver(0, NULL, listener->user_data);
+        listener->deliver(AWS_BUS_ADDRESS_CLOSE, NULL, listener->user_data);
         aws_linked_list_pop_back(&list->listeners);
         aws_mem_release(list->allocator, listener);
     }
@@ -215,13 +220,10 @@ static struct bus_vtable s_sync_vtable = {
     .unsubscribe = s_bus_sync_unsubscribe,
 };
 
-static void *s_bus_sync_new(struct aws_bus *bus, struct aws_bus_options *options) {
+static void s_bus_sync_init(struct aws_bus *bus, struct aws_bus_options *options) {
     (void)options;
 
     struct bus_sync_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
-    if (!impl) {
-        return NULL;
-    }
     impl->vtable = s_sync_vtable;
 
     if (aws_byte_buf_init(&impl->msg_buffer, bus->allocator, 256)) {
@@ -233,11 +235,10 @@ static void *s_bus_sync_new(struct aws_bus *bus, struct aws_bus_options *options
         goto error;
     }
 
-    return impl;
+    return;
 
 error:
     aws_mem_release(bus->allocator, impl);
-    return NULL;
 }
 
 /*
@@ -283,6 +284,7 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
         aws_thread_current_sleep(1000 * 1000);
     }
     aws_thread_join(&impl->consumer.thread);
+    aws_condition_variable_clean_up(&impl->consumer.notify);
 
     aws_hash_table_clean_up(&impl->slots.table);
     aws_mutex_clean_up(&impl->slots.mutex);
@@ -293,7 +295,10 @@ static void s_bus_async_clean_up(struct aws_bus *bus) {
 
 static bool s_bus_async_should_wake_up(void *user_data) {
     struct bus_async_impl *impl = user_data;
-    return !aws_atomic_load_int(&impl->consumer.running) || !aws_linked_list_empty(&impl->msg_queue.msgs);
+    if (!aws_atomic_load_int(&impl->consumer.running)) {
+        return true;
+    }
+    return !aws_linked_list_empty(&impl->msg_queue.msgs);
 }
 
 /* Async bus delivery thread loop */
@@ -304,10 +309,10 @@ static void s_bus_async_deliver(void *user_data) {
     aws_atomic_exchange_int(&impl->consumer.running, 1);
 
     while (aws_atomic_load_int(&impl->consumer.running)) {
-        if (aws_condition_variable_wait_for_pred(
-                &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl)) {
-            break;
-        }
+        aws_mutex_lock(&impl->msg_queue.mutex);
+        aws_condition_variable_wait_for_pred(
+                &impl->consumer.notify, &impl->msg_queue.mutex, 100, s_bus_async_should_wake_up, impl);
+        aws_mutex_unlock(&impl->msg_queue.mutex);
 
         /* Copy out the messages and dispatch them */
         struct aws_linked_list msg_list;
@@ -324,7 +329,9 @@ static void s_bus_async_deliver(void *user_data) {
             aws_linked_list_pop_front(&msg_list);
 
             struct bus_message *msg = AWS_CONTAINER_OF(node, struct bus_message, list_node);
+            aws_mutex_lock(&impl->slots.mutex);
             s_bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
+            aws_mutex_unlock(&impl->slots.mutex);
 
             /* Release payload, then message queue entry */
             if (msg->destructor) {
@@ -359,6 +366,7 @@ int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void 
     aws_linked_list_push_back(queue, &msg->list_node);
     /* END CRITICAL SECTION */
     aws_mutex_unlock(&impl->msg_queue.mutex);
+    aws_condition_variable_notify_one(&impl->consumer.notify);
     return AWS_OP_SUCCESS;
 }
 
@@ -385,8 +393,8 @@ static struct bus_vtable s_async_vtable = {
     .unsubscribe = s_bus_async_unsubscribe,
 };
 
-static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *options) {
-    struct bus_async_impl *impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_impl));
+static void s_bus_async_init(struct aws_bus *bus, struct aws_bus_options *options) {
+    struct bus_async_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_impl));
     impl->vtable = s_async_vtable;
 
     /* init msg queue */
@@ -421,7 +429,7 @@ static void *s_bus_async_new(struct aws_bus *bus, struct aws_bus_options *option
         goto error;
     }
 
-    return impl;
+    return;
 
 error:
     aws_thread_clean_up(&impl->consumer.thread);
@@ -432,7 +440,6 @@ error:
     aws_mutex_clean_up(&impl->msg_queue.mutex);
 
     aws_mem_release(bus->allocator, impl);
-    return NULL;
 }
 
 /*
@@ -442,9 +449,9 @@ int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options) {
     bus->allocator = options->allocator;
 
     if (options->policy == AWS_BUS_ASYNC) {
-        bus->impl = s_bus_async_new(bus, options);
+        s_bus_async_init(bus, options);
     } else if (options->policy == AWS_BUS_SYNC) {
-        bus->impl = s_bus_sync_new(bus, options);
+        s_bus_sync_init(bus, options);
     }
 
     if (!bus->impl) {

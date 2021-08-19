@@ -43,6 +43,7 @@ enum aws_bus_policy {
 };
 
 #define AWS_BUS_ADDRESS_ALL 0
+#define AWS_BUS_ADDRESS_CLOSE ((uint64_t)-1)
 
 struct aws_bus_options {
     enum aws_bus_policy policy;
