@@ -21,6 +21,7 @@
 #include <aws/common/condition_variable.h>
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
+#include <aws/common/logging.h>
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
 
@@ -105,6 +106,8 @@ static void bus_deliver_msg_to_slot(
 
 /* common delivery logic */
 static void bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %llu, payload: %p", (void *)bus, address, (void *)payload);
     bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
     bus_deliver_msg_to_slot(bus, address, address, slots, payload);
 }
@@ -127,6 +130,14 @@ static int bus_subscribe(
     listener->user_data = user_data;
     aws_linked_list_push_back(&list->listeners, &listener->list_node);
 
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_BUS,
+        "bus: %p subscribe: address: %llu, listener: %p, user_data: %p",
+        (void *)bus,
+        address,
+        (void *)callback,
+        user_data);
+
     return AWS_OP_SUCCESS;
 }
 
@@ -142,6 +153,14 @@ static int bus_unsubscribe(
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return AWS_OP_ERR;
     }
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_COMMON_BUS,
+        "bus: %p unsubscribe: address: %llu, listener: %p, user_data: %p",
+        (void *)bus,
+        address,
+        (void *)callback,
+        user_data);
 
     struct listener_list *list = bus_find_listeners(slots, address);
     if (!list) {
@@ -356,29 +375,23 @@ static void bus_async_clean_up(struct aws_bus *bus) {
     struct bus_async_impl *impl = bus->impl;
 
     /* shut down delivery thread, clean up dispatch */
+    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: starting final drain", (void *)bus);
     aws_atomic_exchange_int(&impl->dispatch.running, 0);
     aws_condition_variable_notify_one(&impl->dispatch.notify);
     while (!aws_atomic_load_int(&impl->dispatch.exited)) {
         aws_thread_current_sleep(1000 * 1000);
     }
+    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: finished final drain", (void *)bus);
     aws_thread_join(&impl->dispatch.thread);
     aws_condition_variable_clean_up(&impl->dispatch.notify);
 
-    /* clean up msg queue payloads */
-    while (!aws_linked_list_empty(&impl->queue.msgs)) {
-        struct aws_linked_list_node *msg_node = aws_linked_list_pop_front(&impl->queue.msgs);
-        struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-        bus_async_free_message(bus, msg);
-    }
+    /* should be impossible for subs or msgs to remain after final drain */
+    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->queue.msgs));
+    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->queue.subs));
+
     /* this frees everything that the free/msgs lists point to */
     if (impl->queue.buffer) {
         aws_mem_release(bus->allocator, impl->queue.buffer);
-    }
-
-    /* clean up work queue */
-    while (!aws_linked_list_empty(&impl->queue.subs)) {
-        /* apply the subs so they'll be cleaned up when the table is cleaned up */
-        bus_apply_listeners(bus, &impl->queue.subs);
     }
 
     aws_mutex_clean_up(&impl->queue.mutex);
@@ -399,6 +412,7 @@ static void bus_async_deliver(void *user_data) {
     struct bus_async_impl *impl = bus->impl;
 
     aws_atomic_store_int(&impl->dispatch.started, 1);
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: delivery thread loop started", (void *)bus);
 
     while (aws_atomic_load_int(&impl->dispatch.running)) {
         struct aws_linked_list pending_msgs;
@@ -412,6 +426,10 @@ static void bus_async_deliver(void *user_data) {
             aws_condition_variable_wait_for_pred(
                 &impl->dispatch.notify, &impl->queue.mutex, 100, bus_async_should_wake_up, impl);
 
+            if (!aws_atomic_load_int(&impl->dispatch.running)) {
+                AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: woke up for final drain", (void *)bus);
+            }
+
             /* copy out any queued subs/unsubs */
             aws_linked_list_swap_contents(&pending_subs, &impl->queue.subs);
             /* copy out any queued messages */
@@ -419,6 +437,7 @@ static void bus_async_deliver(void *user_data) {
 
             /* resolve any pending sub/unsubs first under lock */
             if (!aws_linked_list_empty(&pending_subs)) {
+                AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: applying pending subs/unsubs", (void *)bus);
                 bus_apply_listeners(bus, &pending_subs);
             }
         }
@@ -455,6 +474,7 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
     struct bus_async_impl *impl = bus->impl;
 
     if (!aws_atomic_load_int(&impl->dispatch.running)) {
+        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %llu", (void *)bus, address);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -538,15 +558,30 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
     /* init subscription table */
     if (aws_hash_table_init(
             &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, bus_destroy_listener_list)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_BUS,
+            "bus %p: Unable to initialize bus addressing table: %s",
+            (void *)bus,
+            aws_error_name(aws_last_error()));
         goto error;
     }
 
     /* Setup dispatch thread */
     if (aws_condition_variable_init(&impl->dispatch.notify)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_BUS,
+            "bus %p: Unable to initialize async notify: %s",
+            (void *)bus,
+            aws_error_name(aws_last_error()));
         goto error;
     }
 
     if (aws_thread_init(&impl->dispatch.thread, bus->allocator)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_BUS,
+            "bus %p: Unable to initialize background thread: %s",
+            (void *)bus,
+            aws_error_name(aws_last_error()));
         goto error;
     }
 
@@ -554,13 +589,20 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
     aws_atomic_init_int(&impl->dispatch.running, 1);
     aws_atomic_init_int(&impl->dispatch.exited, 0);
     if (aws_thread_launch(&impl->dispatch.thread, bus_async_deliver, bus, aws_default_thread_options())) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_BUS,
+            "bus %p: Unable to launch delivery thread: %s",
+            (void *)bus,
+            aws_error_name(aws_last_error()));
         goto error;
     }
 
     /* wait for dispatch thread to start before returning control */
+    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Waiting for delivery thread to start", (void *)bus);
     while (!aws_atomic_load_int(&impl->dispatch.started)) {
         aws_thread_current_sleep(1000 * 1000);
     }
+    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Delivery thread started", (void*)bus);
 
     return;
 
