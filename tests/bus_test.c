@@ -18,6 +18,8 @@
 #include <aws/common/bus.h>
 #include <aws/common/math.h>
 
+#include <inttypes.h>
+
 static struct {
     int count;
     bool payload_deleted;
@@ -328,8 +330,10 @@ static void s_bus_async_test_churn_worker(void *user_data) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         const int roll = (rand() % 10);
         if (roll == 0) {
+            AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "thread: %p unsubscribe address: %" PRIu64 "", (void*)aws_thread_current_thread_id(), address);
             aws_bus_unsubscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         } else if (roll < 8) {
+            AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "thread: %p send address: %" PRIu64 "", (void*)aws_thread_current_thread_id(), address);
             struct bus_async_msg *msg = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_msg));
             /* released in s_bus_async_msg_dtor */
             msg->allocator = bus->allocator;
@@ -338,6 +342,7 @@ static void s_bus_async_test_churn_worker(void *user_data) {
             AWS_FATAL_ASSERT(sent);
             aws_atomic_fetch_add(&s_bus_async_churn_data.send_count, sent);
         } else {
+            AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "thread: %p subscribe address: %" PRIu64 "", (void*)aws_thread_current_thread_id(), address);
             aws_bus_subscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         }
     }
