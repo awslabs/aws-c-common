@@ -561,6 +561,7 @@ error:
     aws_mem_release(bus->allocator, &impl->queue.buffer);
     aws_mutex_clean_up(&impl->queue.mutex);
     aws_mem_release(bus->allocator, impl);
+    bus->impl = NULL;
 }
 
 /*
