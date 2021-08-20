@@ -217,6 +217,8 @@ static void s_async_bus_producer(void *user_data) {
 }
 
 static void s_record_call_count(uint64_t address, const void *payload, void *user_data) {
+    (void)payload;
+    (void)user_data;
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return;
     }
@@ -224,6 +226,8 @@ static void s_record_call_count(uint64_t address, const void *payload, void *use
 }
 
 static void s_address_to_running_sum(uint64_t address, const void *payload, void *user_data) {
+    (void)payload;
+    (void)user_data;
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return;
     }
