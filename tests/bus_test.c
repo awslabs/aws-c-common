@@ -404,6 +404,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
     fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
     send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "BUS CHURN: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
     /* Ensure SOME messages made it */
     ASSERT_TRUE(recv_count > 0);
     /* ensure every send is accounted for */

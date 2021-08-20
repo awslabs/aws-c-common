@@ -452,7 +452,7 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
     struct bus_async_impl *impl = bus->impl;
 
     if (!aws_atomic_load_int(&impl->dispatch.running)) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     aws_mutex_lock(&impl->queue.mutex);
