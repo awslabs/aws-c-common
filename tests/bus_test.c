@@ -203,11 +203,6 @@ static struct {
     struct aws_atomic_var running_sum;
 } s_bus_mt_data;
 
-struct producer_data {
-    struct aws_bus *bus;
-    struct aws_atomic_var finished;
-};
-
 static void s_async_bus_producer(void *user_data) {
     struct aws_bus *bus = user_data;
     for (int send = 0; send < 1000; ++send) {
@@ -277,6 +272,7 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
 
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         aws_thread_join(&threads[t]);
+        aws_thread_clean_up(&threads[t]);
     }
 
     ASSERT_INT_EQUALS(
@@ -320,6 +316,11 @@ static void s_bus_async_test_churn_dummy_listener(const uint64_t address, const 
     (void)user_data;
 }
 
+struct producer_data {
+    struct aws_bus *bus;
+    struct aws_atomic_var finished;
+};
+
 static void s_bus_async_test_churn_worker(void *user_data) {
     struct producer_data *producer = user_data;
     struct aws_bus *bus = producer->bus;
@@ -334,12 +335,13 @@ static void s_bus_async_test_churn_worker(void *user_data) {
             msg->allocator = bus->allocator;
             msg->destination = address;
             bool sent = aws_bus_send(bus, address, msg, s_bus_async_test_churn_msg_dtor) == AWS_OP_SUCCESS;
+            AWS_FATAL_ASSERT(sent);
             aws_atomic_fetch_add(&s_bus_async_churn_data.send_count, sent);
         } else {
             aws_bus_subscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         }
     }
-    aws_atomic_store_int(&producer->finished, true);
+    aws_atomic_store_int(&producer->finished, 1);
 }
 
 /* test subscribing, unsubscribing, sending, all from any thread on an unreliable bus */
@@ -385,6 +387,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
             aws_thread_current_sleep(wait_ns);
         }
         aws_thread_join(&threads[t]);
+        aws_thread_clean_up(&threads[t]);
     }
 
     /* wait for all messages to be delivered */
@@ -406,6 +409,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
     AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "BUS CHURN: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
     /* Ensure SOME messages made it */
+    ASSERT_TRUE(send_count > 0);
     ASSERT_TRUE(recv_count > 0);
     /* ensure every send is accounted for */
     ASSERT_TRUE(send_count == fail_count + recv_count);
