@@ -203,6 +203,11 @@ static struct {
     struct aws_atomic_var running_sum;
 } s_bus_mt_data;
 
+struct producer_data {
+    struct aws_bus *bus;
+    struct aws_atomic_var finished;
+};
+
 static void s_async_bus_producer(void *user_data) {
     struct aws_bus *bus = user_data;
     for (int send = 0; send < 1000; ++send) {
@@ -296,7 +301,7 @@ static void s_bus_async_test_churn_listener(uint64_t address, const void *payloa
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return;
     }
-    struct bus_async_msg *msg = (void*)payload;
+    struct bus_async_msg *msg = (void *)payload;
     msg->delivered = true;
     aws_atomic_fetch_add(&s_bus_async_churn_data.recv_count, (address != AWS_BUS_ADDRESS_CLOSE));
 }
@@ -316,7 +321,8 @@ static void s_bus_async_test_churn_dummy_listener(const uint64_t address, const 
 }
 
 static void s_bus_async_test_churn_worker(void *user_data) {
-    struct aws_bus *bus = user_data;
+    struct producer_data *producer = user_data;
+    struct aws_bus *bus = producer->bus;
     for (int send = 0; send < 10000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         const int roll = (rand() % 10);
@@ -333,6 +339,7 @@ static void s_bus_async_test_churn_worker(void *user_data) {
             aws_bus_subscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         }
     }
+    aws_atomic_store_int(&producer->finished, true);
 }
 
 /* test subscribing, unsubscribing, sending, all from any thread on an unreliable bus */
@@ -354,19 +361,27 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     AWS_ZERO_STRUCT(*bus);
     ASSERT_SUCCESS(aws_bus_init(bus, &options));
 
-    /* start fully subscribed, let the test mutate this over time */
+    /* count all messages sent on all addresses */
     for (int address = 1; address < 1024; ++address) {
         ASSERT_SUCCESS(aws_bus_subscribe(bus, address, s_bus_async_test_churn_listener, NULL));
     }
 
     /* test sending to a bunch of addresses from many threads */
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
+    AWS_VARIABLE_LENGTH_ARRAY(struct producer_data, thread_data, AWS_ARRAY_SIZE(threads));
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         aws_thread_init(&threads[t], allocator);
-        ASSERT_SUCCESS(aws_thread_launch(&threads[t], s_bus_async_test_churn_worker, bus, aws_default_thread_options()));
+        thread_data[t].bus = bus;
+        aws_atomic_init_int(&thread_data[t].finished, 0);
+        ASSERT_SUCCESS(aws_thread_launch(
+            &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
+    /* wait for all producer threads to finish */
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+        while (!aws_atomic_load_int(&thread_data[t].finished)) {
+            aws_thread_current_sleep(1000 * 1000);
+        }
         aws_thread_join(&threads[t]);
     }
 
