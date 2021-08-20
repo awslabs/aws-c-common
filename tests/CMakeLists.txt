@@ -151,6 +151,7 @@ add_test_case(bus_sync_test_send)
 add_test_case(bus_async_test_lifetime)
 add_test_case(bus_async_test_send_single_threaded)
 add_test_case(bus_async_test_send_multi_threaded)
+add_test_case(bus_async_test_churn)
 
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
