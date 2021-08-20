@@ -25,6 +25,8 @@
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
 
+#include <inttypes.h>
+
 #ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4204) /* nonstandard extension used: non-constant aggregate initializer */
@@ -107,7 +109,7 @@ static void bus_deliver_msg_to_slot(
 /* common delivery logic */
 static void bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
     AWS_LOGF_TRACE(
-        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %llu, payload: %p", (void *)bus, address, (void *)payload);
+            AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void *)payload);
     bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
     bus_deliver_msg_to_slot(bus, address, address, slots, payload);
 }
@@ -132,7 +134,7 @@ static int bus_subscribe(
 
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_BUS,
-        "bus: %p subscribe: address: %llu, listener: %p, user_data: %p",
+        "bus: %p subscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
         (void *)bus,
         address,
         (void *)callback,
@@ -156,7 +158,7 @@ static int bus_unsubscribe(
 
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_BUS,
-        "bus: %p unsubscribe: address: %llu, listener: %p, user_data: %p",
+        "bus: %p unsubscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
         (void *)bus,
         address,
         (void *)callback,
@@ -474,7 +476,7 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
     struct bus_async_impl *impl = bus->impl;
 
     if (!aws_atomic_load_int(&impl->dispatch.running)) {
-        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %llu", (void *)bus, address);
+        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
