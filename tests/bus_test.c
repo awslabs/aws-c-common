@@ -346,6 +346,8 @@ static void s_bus_async_test_churn_worker(void *user_data) {
 static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
+    const uint64_t wait_ns = 15 * 1000 * 1000; /* 15 ms */
+
     aws_atomic_init_int(&s_bus_async_churn_data.recv_count, 0);
     aws_atomic_init_int(&s_bus_async_churn_data.send_count, 0);
     aws_atomic_init_int(&s_bus_async_churn_data.fail_count, 0);
@@ -377,10 +379,21 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
             &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
+    /* wait for all messages to be delivered */
+    size_t recv_count = 0;
+    size_t fail_count = 0;
+    size_t send_count = 0;
+    do {
+        aws_thread_current_sleep(wait_ns);
+        recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
+        fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
+        send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
+    } while ((recv_count + fail_count) < send_count);
+
     /* wait for all producer threads to finish */
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         while (!aws_atomic_load_int(&thread_data[t].finished)) {
-            aws_thread_current_sleep(1000 * 1000);
+            aws_thread_current_sleep(wait_ns);
         }
         aws_thread_join(&threads[t]);
     }
@@ -388,9 +401,9 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     aws_bus_clean_up(bus);
     aws_mem_release(allocator, bus);
 
-    const size_t recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
-    const size_t fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
-    const size_t send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
+    recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
+    fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
+    send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
     /* Ensure SOME messages made it */
     ASSERT_TRUE(recv_count > 0);
     /* ensure every send is accounted for */
