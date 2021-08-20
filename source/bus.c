@@ -109,9 +109,19 @@ static void bus_deliver_msg_to_slot(
 /* common delivery logic */
 static void bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
     AWS_LOGF_TRACE(
-            AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void *)payload);
+        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void *)payload);
     bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
     bus_deliver_msg_to_slot(bus, address, address, slots, payload);
+}
+
+static void *bus_listener_func_to_void(aws_bus_listener_fn *listener) {
+    union {
+        aws_bus_listener_fn *l;
+        void *p;
+    } convert = {
+        .l = listener,
+    };
+    return convert.p;
 }
 
 /* common subscribe logic */
@@ -137,7 +147,7 @@ static int bus_subscribe(
         "bus: %p subscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
         (void *)bus,
         address,
-        (void *)callback,
+        bus_listener_func_to_void(callback),
         user_data);
 
     return AWS_OP_SUCCESS;
@@ -161,7 +171,7 @@ static int bus_unsubscribe(
         "bus: %p unsubscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
         (void *)bus,
         address,
-        (void *)callback,
+        bus_listener_func_to_void(callback),
         user_data);
 
     struct listener_list *list = bus_find_listeners(slots, address);
@@ -476,7 +486,8 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
     struct bus_async_impl *impl = bus->impl;
 
     if (!aws_atomic_load_int(&impl->dispatch.running)) {
-        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
@@ -604,7 +615,7 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
     while (!aws_atomic_load_int(&impl->dispatch.started)) {
         aws_thread_current_sleep(1000 * 1000);
     }
-    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Delivery thread started", (void*)bus);
+    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Delivery thread started", (void *)bus);
 
     return;
 
