@@ -216,7 +216,7 @@ static void s_async_bus_producer(void *user_data) {
         /* released in s_bus_async_msg_dtor */
         msg->allocator = bus->allocator;
         msg->destination = address;
-        aws_atomic_fetch_add(&s_bus_mt_data.expected_sum, address);
+        aws_atomic_fetch_add(&s_bus_mt_data.expected_sum, (size_t)address);
         aws_bus_send(bus, address, msg, s_bus_async_msg_dtor);
     }
 }
@@ -236,7 +236,7 @@ static void s_address_to_running_sum(uint64_t address, const void *payload, void
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return;
     }
-    aws_atomic_fetch_add(&s_bus_mt_data.running_sum, address);
+    aws_atomic_fetch_add(&s_bus_mt_data.running_sum, (size_t)address);
 }
 
 static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator, void *ctx) {
