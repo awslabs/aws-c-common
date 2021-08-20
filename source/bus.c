@@ -443,13 +443,12 @@ static void bus_async_deliver(void *user_data) {
             }
 
             /* copy out any queued subs/unsubs */
-            aws_linked_list_swap_contents(&pending_subs, &impl->queue.subs);
+            aws_linked_list_swap_contents(&impl->queue.subs, &pending_subs);
             /* copy out any queued messages */
-            aws_linked_list_swap_contents(&pending_msgs, &impl->queue.msgs);
+            aws_linked_list_swap_contents(&impl->queue.msgs, &pending_msgs);
 
             /* resolve any pending sub/unsubs first under lock */
             if (!aws_linked_list_empty(&pending_subs)) {
-                AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: applying pending subs/unsubs", (void *)bus);
                 bus_apply_listeners(bus, &pending_subs);
             }
         }
@@ -491,6 +490,8 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
+    AWS_LOGF_TRACE(
+        AWS_LS_COMMON_BUS, "bus %p: message queued: address: %" PRIu64 ", payload: %p", (void *)bus, address, payload);
     aws_mutex_lock(&impl->queue.mutex);
     {
         struct bus_message *msg = bus_async_alloc_message(bus);
@@ -499,8 +500,7 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
         msg->destructor = destructor;
 
         /* push the message onto the delivery queue */
-        struct aws_linked_list *queue = &impl->queue.msgs;
-        aws_linked_list_push_back(queue, &msg->list_node);
+        aws_linked_list_push_back(&impl->queue.msgs, &msg->list_node);
     }
     aws_mutex_unlock(&impl->queue.mutex);
 
@@ -518,8 +518,9 @@ int bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_
     sub->user_data = user_data;
     sub->add = true;
     aws_mutex_lock(&impl->queue.mutex);
-    aws_linked_list_push_back(&impl->queue.subs, &sub->list_node);
+    { aws_linked_list_push_back(&impl->queue.subs, &sub->list_node); }
     aws_mutex_unlock(&impl->queue.mutex);
+    /* notify the delivery thread to wake up */
     aws_condition_variable_notify_one(&impl->dispatch.notify);
     return AWS_OP_SUCCESS;
 }
@@ -532,8 +533,10 @@ int bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listene
     unsub->user_data = user_data;
     unsub->remove = true;
     aws_mutex_lock(&impl->queue.mutex);
-    aws_linked_list_push_back(&impl->queue.subs, &unsub->list_node);
+    { aws_linked_list_push_back(&impl->queue.subs, &unsub->list_node); }
     aws_mutex_unlock(&impl->queue.mutex);
+    /* notify the delivery thread to wake up */
+    aws_condition_variable_notify_one(&impl->dispatch.notify);
     return AWS_OP_SUCCESS;
 }
 
