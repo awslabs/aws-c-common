@@ -525,7 +525,7 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
     if (options->buffer_size) {
         impl->queue.buffer = aws_mem_calloc(bus->allocator, 1, options->buffer_size);
         impl->queue.buffer_end = ((uint8_t *)impl->queue.buffer) + options->buffer_size;
-        const size_t msg_count = options->buffer_size / sizeof(struct bus_message);
+        const int msg_count = (int)(options->buffer_size / sizeof(struct bus_message));
         for (int msg_idx = 0; msg_idx < msg_count; ++msg_idx) {
             struct bus_message *msg = (void *)&((char *)impl->queue.buffer)[msg_idx * sizeof(struct bus_message)];
             aws_linked_list_push_back(&impl->queue.free, &msg->list_node);
