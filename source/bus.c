@@ -266,6 +266,7 @@ struct bus_async_impl {
     struct {
         struct aws_thread thread;
         struct aws_condition_variable notify;
+        struct aws_atomic_var started;
         struct aws_atomic_var running;
         struct aws_atomic_var exited;
     } dispatch;
@@ -396,6 +397,8 @@ static bool bus_async_should_wake_up(void *user_data) {
 static void bus_async_deliver(void *user_data) {
     struct aws_bus *bus = user_data;
     struct bus_async_impl *impl = bus->impl;
+
+    aws_atomic_store_int(&impl->dispatch.started, 1);
 
     while (aws_atomic_load_int(&impl->dispatch.running)) {
         struct aws_linked_list pending_msgs;
@@ -547,9 +550,16 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
         goto error;
     }
 
-    aws_atomic_exchange_int(&impl->dispatch.running, 1);
+    aws_atomic_init_int(&impl->dispatch.started, 0);
+    aws_atomic_init_int(&impl->dispatch.running, 1);
+    aws_atomic_init_int(&impl->dispatch.exited, 0);
     if (aws_thread_launch(&impl->dispatch.thread, bus_async_deliver, bus, aws_default_thread_options())) {
         goto error;
+    }
+
+    /* wait for dispatch thread to start before returning control */
+    while (!aws_atomic_load_int(&impl->dispatch.started)) {
+        aws_thread_current_sleep(1000 * 1000);
     }
 
     return;
