@@ -418,24 +418,21 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         aws_thread_clean_up(&threads[t]);
     }
 
-    /* wait for all messages to be delivered */
-    size_t recv_count = 0;
-    size_t fail_count = 0;
-    size_t send_count = 0;
-    do {
-        aws_thread_current_sleep(wait_ns);
-        recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
-        fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
-        send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
-    } while ((recv_count + fail_count) < send_count);
+    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Joining producer thread %d", t);
+        aws_thread_join(&threads[t]);
+        aws_thread_clean_up(&threads[t]);
+    }
+
+    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Cleaning up test bus");
 
     aws_bus_clean_up(bus);
     aws_mem_release(allocator, bus);
 
-    recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
-    fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
-    send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
-    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "BUS CHURN TEST: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
+    size_t recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
+    size_t fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
+    size_t send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
+    AWS_LOGF_INFO(AWS_LS_COMMON_TEST, "BUS CHURN TEST: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
     /* Ensure SOME messages made it */
     ASSERT_TRUE(send_count > 0);
     ASSERT_TRUE(recv_count > 0);
