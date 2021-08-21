@@ -320,6 +320,7 @@ static void s_bus_async_test_churn_dummy_listener(const uint64_t address, const 
 
 struct producer_data {
     struct aws_bus *bus;
+    int index;
     struct aws_atomic_var started;
     struct aws_atomic_var finished;
 };
@@ -327,7 +328,10 @@ struct producer_data {
 static void s_bus_async_test_churn_worker(void *user_data) {
     struct producer_data *producer = user_data;
     struct aws_bus *bus = producer->bus;
+
     aws_atomic_store_int(&producer->started, 1);
+    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d starting", producer->index);
+
     for (int send = 0; send < 10000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         const int roll = (rand() % 10);
@@ -348,7 +352,9 @@ static void s_bus_async_test_churn_worker(void *user_data) {
             aws_bus_subscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         }
     }
+
     aws_atomic_store_int(&producer->finished, 1);
+    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer therad %d finished", producer->index);
 }
 
 /* test subscribing, unsubscribing, sending, all from any thread on an unreliable bus */
@@ -384,6 +390,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         aws_thread_init(&threads[t], allocator);
         struct producer_data *producer = &thread_data[t];
         producer->bus = bus;
+        producer->index = t;
         aws_atomic_store_int(&producer->started, 0);
         aws_atomic_init_int(&producer->finished, 0);
         ASSERT_SUCCESS(aws_thread_launch(
