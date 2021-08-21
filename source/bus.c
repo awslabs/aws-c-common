@@ -108,9 +108,6 @@ static void bus_deliver_msg_to_slot(
 
 /* common delivery logic */
 static void bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
-    //    AWS_LOGF_TRACE(
-    //        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void
-    //        *)payload);
     bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
     bus_deliver_msg_to_slot(bus, address, address, slots, payload);
 }
@@ -402,6 +399,7 @@ static void bus_async_deliver(void *user_data) {
     aws_atomic_store_int(&impl->dispatch.started, 1);
     AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: delivery thread loop started", (void *)bus);
 
+    /* once shutdown has been triggered, need to drain one more time to ensure all queues are empty */
     int shutdown_loops = 0;
     do {
         struct aws_linked_list pending_msgs;
@@ -545,6 +543,11 @@ static void bus_async_init(struct aws_bus *bus, struct aws_bus_options *options)
 
     /* init msg queue */
     if (aws_mutex_init(&impl->queue.mutex)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_BUS,
+            "bus %p: Unable to initialize queue synchronization: %s",
+            (void *)bus,
+            aws_error_name(aws_last_error()));
         goto error;
     }
     aws_linked_list_init(&impl->queue.msgs);
