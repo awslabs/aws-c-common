@@ -395,6 +395,7 @@ static void bus_async_clean_up(struct aws_bus *bus) {
     }
     AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: finished final drain", (void *)bus);
     aws_thread_join(&impl->dispatch.thread);
+    aws_thread_clean_up(&impl->dispatch.thread);
     aws_condition_variable_clean_up(&impl->dispatch.notify);
 
     /* should be impossible for subs or msgs to remain after final drain */
@@ -484,16 +485,18 @@ static void bus_async_deliver(void *user_data) {
 int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_async_impl *impl = bus->impl;
 
-    if (!aws_atomic_load_int(&impl->dispatch.running)) {
-        AWS_LOGF_WARN(
-            AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    AWS_LOGF_TRACE(
-        AWS_LS_COMMON_BUS, "bus %p: message queued: address: %" PRIu64 ", payload: %p", (void *)bus, address, payload);
     aws_mutex_lock(&impl->queue.mutex);
     {
+        if (!aws_atomic_load_int(&impl->dispatch.running)) {
+            AWS_LOGF_WARN(
+                    AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
+            aws_mutex_unlock(&impl->queue.mutex);
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+
+        AWS_LOGF_TRACE(
+                AWS_LS_COMMON_BUS, "bus %p: message queued: address: %" PRIu64 ", payload: %p", (void *)bus, address, payload);
+
         struct bus_message *msg = bus_async_alloc_message(bus);
         msg->address = address;
         msg->payload = payload;
