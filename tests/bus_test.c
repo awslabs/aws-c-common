@@ -414,12 +414,10 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
             aws_thread_current_sleep(wait_ns);
         }
         AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d is finished", t);
-        aws_thread_join(&threads[t]);
-        aws_thread_clean_up(&threads[t]);
     }
 
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
-        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Joining producer thread %d", t);
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Joining/cleaning up producer thread %d", t);
         aws_thread_join(&threads[t]);
         aws_thread_clean_up(&threads[t]);
     }
