@@ -386,7 +386,8 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     /* test sending to a bunch of addresses from many threads */
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
     AWS_VARIABLE_LENGTH_ARRAY(struct producer_data, thread_data, AWS_ARRAY_SIZE(threads));
-    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+    const int num_threads = AWS_ARRAY_SIZE(threads);
+    for (int t = 0; t < num_threads; ++t) {
         aws_thread_init(&threads[t], allocator);
         struct producer_data *producer = &thread_data[t];
         producer->bus = bus;
@@ -398,7 +399,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
             &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
-    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+    for (int t = 0; t < num_threads; ++t) {
         struct producer_data *producer = &thread_data[t];
         while (!aws_atomic_load_int(&producer->started)) {
             AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer thread %d to start", t);
@@ -408,7 +409,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     }
 
     /* wait for all producer threads to finish sending */
-    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+    for (int t = 0; t < num_threads; ++t) {
         struct producer_data *producer = &thread_data[t];
         AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer thread %d to finish", t);
         while (!aws_atomic_load_int(&producer->finished)) {
@@ -417,7 +418,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d is finished", t);
     }
 
-    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+    for (int t = 0; t < num_threads; ++t) {
         AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Joining/cleaning up producer thread %d", t);
         aws_thread_join(&threads[t]);
         aws_thread_clean_up(&threads[t]);
