@@ -400,7 +400,7 @@ static void bus_async_deliver(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: delivery thread loop started", (void *)bus);
 
     /* once shutdown has been triggered, need to drain one more time to ensure all queues are empty */
-    int shutdown_loops = 0;
+    int pending_drains = 1;
     do {
         struct aws_linked_list pending_msgs;
         aws_linked_list_init(&pending_msgs);
@@ -446,7 +446,7 @@ static void bus_async_deliver(void *user_data) {
             }
         }
         aws_mutex_unlock(&impl->queue.mutex);
-    } while (aws_atomic_load_int(&impl->dispatch.running) || shutdown_loops++ < 2);
+    } while (aws_atomic_load_int(&impl->dispatch.running) || pending_drains--);
 
     /* record that the dispatch thread is done */
     aws_atomic_store_int(&impl->dispatch.exited, 1);
