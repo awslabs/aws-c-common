@@ -393,18 +393,19 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         producer->index = t;
         aws_atomic_store_int(&producer->started, 0);
         aws_atomic_init_int(&producer->finished, 0);
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Launching producer thread %d", t);
         ASSERT_SUCCESS(aws_thread_launch(
             &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
-    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer threads to start");
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         struct producer_data *producer = &thread_data[t];
         while (!aws_atomic_load_int(&producer->started)) {
+            AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer thread %d to start", t);
             aws_thread_current_sleep(wait_ns);
         }
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d is running", t);
     }
-    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer threads are running");
 
     /* wait for all producer threads to finish sending */
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
