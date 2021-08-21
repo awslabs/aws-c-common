@@ -303,24 +303,6 @@ static void bus_message_clean_up(struct bus_message *msg) {
     msg->payload = NULL;
 }
 
-/*
- * resolve all adds and removes of listeners, in FIFO order
- * NOTE: expects mutex to be held by caller
- */
-static void bus_apply_listeners(struct aws_bus *bus, struct aws_linked_list *pending_subs) {
-    struct bus_async_impl *impl = bus->impl;
-    while (!aws_linked_list_empty(pending_subs)) {
-        struct aws_linked_list_node *node = aws_linked_list_pop_front(pending_subs);
-        struct pending_listener *listener = AWS_CONTAINER_OF(node, struct pending_listener, list_node);
-        if (listener->add) {
-            bus_subscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
-        } else if (listener->remove) {
-            bus_unsubscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
-        }
-        aws_mem_release(bus->allocator, listener);
-    }
-}
-
 /* Assumes the caller holds the lock */
 void bus_async_free_message(struct aws_bus *bus, struct bus_message *msg) {
     struct bus_async_impl *impl = bus->impl;
@@ -353,6 +335,45 @@ struct bus_message *bus_async_alloc_message(struct aws_bus *bus) {
     }
 
     return aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_message));
+}
+
+/*
+ * resolve all adds and removes of listeners, in FIFO order
+ * NOTE: expects mutex to be held by caller
+ */
+static void bus_apply_listeners(struct aws_bus *bus, struct aws_linked_list *pending_subs) {
+    struct bus_async_impl *impl = bus->impl;
+    while (!aws_linked_list_empty(pending_subs)) {
+        struct aws_linked_list_node *node = aws_linked_list_pop_front(pending_subs);
+        struct pending_listener *listener = AWS_CONTAINER_OF(node, struct pending_listener, list_node);
+        if (listener->add) {
+            bus_subscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
+        } else if (listener->remove) {
+            bus_unsubscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
+        }
+        aws_mem_release(bus->allocator, listener);
+    }
+}
+
+static void bus_deliver_messages(struct aws_bus *bus, struct aws_linked_list *pending_msgs) {
+    struct bus_async_impl *impl = bus->impl;
+    struct aws_linked_list_node *msg_node = aws_linked_list_begin(pending_msgs);
+    for (; msg_node != aws_linked_list_end(pending_msgs); msg_node = aws_linked_list_next(msg_node)) {
+        struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
+        bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
+        bus_message_clean_up(msg);
+    }
+
+    /* push all pending messages back on the free list */
+    aws_mutex_lock(&impl->queue.mutex);
+    {
+        while (!aws_linked_list_empty(pending_msgs)) {
+            msg_node = aws_linked_list_pop_front(pending_msgs);
+            struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
+            bus_async_free_message(bus, msg);
+        }
+    }
+    aws_mutex_unlock(&impl->queue.mutex);
 }
 
 static void bus_async_clean_up(struct aws_bus *bus) {
@@ -425,27 +446,9 @@ static void bus_async_deliver(void *user_data) {
         }
         aws_mutex_unlock(&impl->queue.mutex);
 
-        if (aws_linked_list_empty(&pending_msgs)) {
-            continue;
+        if (!aws_linked_list_empty(&pending_msgs)) {
+            bus_deliver_messages(bus, &pending_msgs);
         }
-
-        struct aws_linked_list_node *msg_node = aws_linked_list_begin(&pending_msgs);
-        for (; msg_node != aws_linked_list_end(&pending_msgs); msg_node = aws_linked_list_next(msg_node)) {
-            struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-            bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
-            bus_message_clean_up(msg);
-        }
-
-        /* push all pending messages back on the free list */
-        aws_mutex_lock(&impl->queue.mutex);
-        {
-            while (!aws_linked_list_empty(&pending_msgs)) {
-                msg_node = aws_linked_list_pop_front(&pending_msgs);
-                struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-                bus_async_free_message(bus, msg);
-            }
-        }
-        aws_mutex_unlock(&impl->queue.mutex);
     } while (aws_atomic_load_int(&impl->dispatch.running) || pending_drains--);
 
     /* record that the dispatch thread is done */
