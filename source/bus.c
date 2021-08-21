@@ -108,20 +108,11 @@ static void bus_deliver_msg_to_slot(
 
 /* common delivery logic */
 static void bus_deliver_msg(struct aws_bus *bus, uint64_t address, struct aws_hash_table *slots, const void *payload) {
-    AWS_LOGF_TRACE(
-        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void *)payload);
+    //    AWS_LOGF_TRACE(
+    //        AWS_LS_COMMON_BUS, "bus: %p deliver: address: %" PRIu64 ", payload: %p", (void *)bus, address, (void
+    //        *)payload);
     bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
     bus_deliver_msg_to_slot(bus, address, address, slots, payload);
-}
-
-static void *bus_listener_func_to_void(aws_bus_listener_fn *listener) {
-    union {
-        aws_bus_listener_fn *l;
-        void *p;
-    } convert = {
-        .l = listener,
-    };
-    return convert.p;
 }
 
 /* common subscribe logic */
@@ -142,14 +133,6 @@ static int bus_subscribe(
     listener->user_data = user_data;
     aws_linked_list_push_back(&list->listeners, &listener->list_node);
 
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_BUS,
-        "bus: %p subscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
-        (void *)bus,
-        address,
-        bus_listener_func_to_void(callback),
-        user_data);
-
     return AWS_OP_SUCCESS;
 }
 
@@ -165,14 +148,6 @@ static int bus_unsubscribe(
     if (address == AWS_BUS_ADDRESS_CLOSE) {
         return AWS_OP_ERR;
     }
-
-    AWS_LOGF_DEBUG(
-        AWS_LS_COMMON_BUS,
-        "bus: %p unsubscribe: address: %" PRIu64 ", listener: %p, user_data: %p",
-        (void *)bus,
-        address,
-        bus_listener_func_to_void(callback),
-        user_data);
 
     struct listener_list *list = bus_find_listeners(slots, address);
     if (!list) {
@@ -388,7 +363,7 @@ static void bus_async_clean_up(struct aws_bus *bus) {
 
     /* shut down delivery thread, clean up dispatch */
     AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: starting final drain", (void *)bus);
-    aws_atomic_exchange_int(&impl->dispatch.running, 0);
+    aws_atomic_store_int(&impl->dispatch.running, 0);
     aws_condition_variable_notify_one(&impl->dispatch.notify);
     while (!aws_atomic_load_int(&impl->dispatch.exited)) {
         aws_thread_current_sleep(1000 * 1000);
@@ -427,7 +402,8 @@ static void bus_async_deliver(void *user_data) {
     aws_atomic_store_int(&impl->dispatch.started, 1);
     AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: delivery thread loop started", (void *)bus);
 
-    while (aws_atomic_load_int(&impl->dispatch.running)) {
+    int shutdown_loops = 0;
+    do {
         struct aws_linked_list pending_msgs;
         aws_linked_list_init(&pending_msgs);
 
@@ -438,10 +414,6 @@ static void bus_async_deliver(void *user_data) {
         {
             aws_condition_variable_wait_for_pred(
                 &impl->dispatch.notify, &impl->queue.mutex, 100, bus_async_should_wake_up, impl);
-
-            if (!aws_atomic_load_int(&impl->dispatch.running)) {
-                AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: woke up for final drain", (void *)bus);
-            }
 
             /* copy out any queued subs/unsubs */
             aws_linked_list_swap_contents(&impl->queue.subs, &pending_subs);
@@ -476,27 +448,23 @@ static void bus_async_deliver(void *user_data) {
             }
         }
         aws_mutex_unlock(&impl->queue.mutex);
-    }
+    } while (aws_atomic_load_int(&impl->dispatch.running) || shutdown_loops++ < 2);
 
     /* record that the dispatch thread is done */
-    aws_atomic_exchange_int(&impl->dispatch.exited, 1);
+    aws_atomic_store_int(&impl->dispatch.exited, 1);
 }
 
 int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
     struct bus_async_impl *impl = bus->impl;
 
+    if (!aws_atomic_load_int(&impl->dispatch.running)) {
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
     aws_mutex_lock(&impl->queue.mutex);
     {
-        if (!aws_atomic_load_int(&impl->dispatch.running)) {
-            AWS_LOGF_WARN(
-                    AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
-            aws_mutex_unlock(&impl->queue.mutex);
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        }
-
-        AWS_LOGF_TRACE(
-                AWS_LS_COMMON_BUS, "bus %p: message queued: address: %" PRIu64 ", payload: %p", (void *)bus, address, payload);
-
         struct bus_message *msg = bus_async_alloc_message(bus);
         msg->address = address;
         msg->payload = payload;
@@ -515,13 +483,23 @@ int bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*
 
 int bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_async_impl *impl = bus->impl;
+
+    if (!aws_atomic_load_int(&impl->dispatch.running)) {
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: unsubscribe requested after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            address);
+        return AWS_OP_ERR;
+    }
+
     struct pending_listener *sub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
     sub->address = address;
     sub->listener = listener;
     sub->user_data = user_data;
     sub->add = true;
     aws_mutex_lock(&impl->queue.mutex);
-    { aws_linked_list_push_back(&impl->queue.subs, &sub->list_node); }
+    aws_linked_list_push_back(&impl->queue.subs, &sub->list_node);
     aws_mutex_unlock(&impl->queue.mutex);
     /* notify the delivery thread to wake up */
     aws_condition_variable_notify_one(&impl->dispatch.notify);
@@ -530,13 +508,23 @@ int bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_
 
 int bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
     struct bus_async_impl *impl = bus->impl;
+
+    if (!aws_atomic_load_int(&impl->dispatch.running)) {
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: subscribe requested after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            address);
+        return AWS_OP_ERR;
+    }
+
     struct pending_listener *unsub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
     unsub->address = address;
     unsub->listener = listener;
     unsub->user_data = user_data;
     unsub->remove = true;
     aws_mutex_lock(&impl->queue.mutex);
-    { aws_linked_list_push_back(&impl->queue.subs, &unsub->list_node); }
+    aws_linked_list_push_back(&impl->queue.subs, &unsub->list_node);
     aws_mutex_unlock(&impl->queue.mutex);
     /* notify the delivery thread to wake up */
     aws_condition_variable_notify_one(&impl->dispatch.notify);
