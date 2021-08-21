@@ -380,15 +380,22 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     AWS_VARIABLE_LENGTH_ARRAY(struct producer_data, thread_data, AWS_ARRAY_SIZE(threads));
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         aws_thread_init(&threads[t], allocator);
-        thread_data[t].bus = bus;
-        aws_atomic_init_int(&thread_data[t].finished, 0);
+        struct producer_data *producer = &thread_data[t];
+        producer->bus = bus;
+        aws_atomic_init_int(&producer->finished, 0);
         ASSERT_SUCCESS(aws_thread_launch(
             &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
+    /* make sure some thread starts sending */
+    while (!aws_atomic_load_int(&s_bus_async_churn_data.send_count)) {
+        aws_thread_current_sleep(wait_ns);
+    }
+
     /* wait for all producer threads to finish sending */
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
-        while (!aws_atomic_load_int(&thread_data[t].finished)) {
+        struct producer_data *producer = &thread_data[t];
+        while (!aws_atomic_load_int(&producer->finished)) {
             aws_thread_current_sleep(wait_ns);
         }
         aws_thread_join(&threads[t]);
