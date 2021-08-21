@@ -320,12 +320,14 @@ static void s_bus_async_test_churn_dummy_listener(const uint64_t address, const 
 
 struct producer_data {
     struct aws_bus *bus;
+    struct aws_atomic_var started;
     struct aws_atomic_var finished;
 };
 
 static void s_bus_async_test_churn_worker(void *user_data) {
     struct producer_data *producer = user_data;
     struct aws_bus *bus = producer->bus;
+    aws_atomic_store_int(&producer->started, 1);
     for (int send = 0; send < 10000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         const int roll = (rand() % 10);
@@ -382,22 +384,29 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         aws_thread_init(&threads[t], allocator);
         struct producer_data *producer = &thread_data[t];
         producer->bus = bus;
+        aws_atomic_store_int(&producer->started, 0);
         aws_atomic_init_int(&producer->finished, 0);
         ASSERT_SUCCESS(aws_thread_launch(
             &threads[t], s_bus_async_test_churn_worker, &thread_data[t], aws_default_thread_options()));
     }
 
-    /* make sure some thread starts sending */
-    while (!aws_atomic_load_int(&s_bus_async_churn_data.send_count)) {
-        aws_thread_current_sleep(wait_ns);
+    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer threads to start");
+    for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
+        struct producer_data *producer = &thread_data[t];
+        while (!aws_atomic_load_int(&producer->started)) {
+            aws_thread_current_sleep(wait_ns);
+        }
     }
+    AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer threads are running");
 
     /* wait for all producer threads to finish sending */
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         struct producer_data *producer = &thread_data[t];
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Waiting for producer thread %d to finish", t);
         while (!aws_atomic_load_int(&producer->finished)) {
             aws_thread_current_sleep(wait_ns);
         }
+        AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d is finished", t);
         aws_thread_join(&threads[t]);
         aws_thread_clean_up(&threads[t]);
     }
@@ -419,7 +428,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
     fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
     send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
-    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "BUS CHURN: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
+    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "BUS CHURN TEST: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
     /* Ensure SOME messages made it */
     ASSERT_TRUE(send_count > 0);
     ASSERT_TRUE(recv_count > 0);
