@@ -435,7 +435,6 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(recv_count > 0);
     /* ensure every send is accounted for */
     ASSERT_TRUE(send_count == fail_count + recv_count);
-    ASSERT_TRUE(recv_count > fail_count);
 
     return 0;
 }
