@@ -332,7 +332,7 @@ static void s_bus_async_test_churn_worker(void *user_data) {
     aws_atomic_store_int(&producer->started, 1);
     AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Producer thread %d starting", producer->index);
 
-    for (int send = 0; send < 10000; ++send) {
+    for (int send = 0; send < 1000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
         const int roll = (rand() % 10);
         if (roll == 0) {
