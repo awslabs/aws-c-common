@@ -27,14 +27,14 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
     return file;
 }
 
-struct aws_string *s_to_long_path(const struct aws_string *path) {
+struct aws_string *s_to_long_path(struct aws_allocator *allocator, const struct aws_string *path) {
 
     wchar_t prefix[] = L"\\\\?\\";
     size_t prefix_size = sizeof(prefix);
     if (path->len > MAX_PATH - prefix_size) {
 
         struct aws_byte_buf new_path;
-        aws_byte_buf_init(&new_path, aws_default_allocator(), sizeof(prefix) + path->len + 2);
+        aws_byte_buf_init(&new_path, allocator, sizeof(prefix) + path->len + 2);
 
         struct aws_byte_cursor prefix_cur = aws_byte_cursor_from_array((uint8_t *)prefix, sizeof(prefix) - 2);
         aws_byte_buf_append_dynamic(&new_path, &prefix_cur);
@@ -42,18 +42,18 @@ struct aws_string *s_to_long_path(const struct aws_string *path) {
         struct aws_byte_cursor path_cur = aws_byte_cursor_from_array(aws_string_bytes(path), path->len);
         aws_byte_buf_append_dynamic(&new_path, &path_cur);
 
-        struct aws_string *long_path = aws_string_new_from_buf(aws_default_allocator(), &new_path);
+        struct aws_string *long_path = aws_string_new_from_buf(allocator, &new_path);
         aws_byte_buf_clean_up(&new_path);
 
         return long_path;
     }
 
-    return aws_string_new_from_string(aws_default_allocator(), path);
+    return aws_string_new_from_string(allocator, path);
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
     struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(w_dir_path);
+    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator() , w_dir_path);
     aws_string_destroy(w_dir_path);
 
     BOOL create_dir_res = CreateDirectoryW(aws_string_wchar_c_str(long_dir_path), NULL);
@@ -61,9 +61,18 @@ int aws_directory_create(const struct aws_string *dir_path) {
 
     int error = GetLastError();
     if (!create_dir_res) {
+        if (error == ERROR_ALREADY_EXISTS) {
+            return AWS_OP_SUCCESS;
+        }
+
         if (error == ERROR_PATH_NOT_FOUND) {
             return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
         }
+
+        if (error == ERROR_ACCESS_DENIED) {
+            return aws_raise_error(AWS_ERROR_NO_PERMISSION);
+        }
+
         return aws_raise_error(AWS_ERROR_UNKNOWN);
     }
 
@@ -72,7 +81,7 @@ int aws_directory_create(const struct aws_string *dir_path) {
 
 bool aws_directory_exists(const struct aws_string *dir_path) {
     struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(w_dir_path);
+    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
     aws_string_destroy(w_dir_path);
 
     DWORD attributes = GetFileAttributesW(aws_string_wchar_c_str(long_dir_path));
@@ -122,7 +131,7 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     }
 
     struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(w_dir_path);
+    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
     aws_string_destroy(w_dir_path);
 
     BOOL remove_dir_res = RemoveDirectoryW(aws_string_wchar_c_str(long_dir_path));
@@ -134,6 +143,10 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
             return aws_raise_error(AWS_ERROR_DIRECTORY_NOT_EMPTY);
         }
 
+        if (error == ERROR_ACCESS_DENIED) {
+            return aws_raise_error(AWS_ERROR_NO_PERMISSION);
+        }
+        
         return aws_raise_error(AWS_ERROR_UNKNOWN);
     }
 
@@ -142,7 +155,7 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
 
 int aws_file_delete(const struct aws_string *file_path) {
     struct aws_string *w_file_path = aws_string_convert_to_wchar_str(aws_default_allocator(), file_path);
-    struct aws_string *long_file_path = s_to_long_path(w_file_path);
+    struct aws_string *long_file_path = s_to_long_path(aws_default_allocator(), w_file_path);
     aws_string_destroy(w_file_path);
 
     BOOL remove_file_res = DeleteFileW(aws_string_wchar_c_str(long_file_path));
@@ -166,11 +179,11 @@ int aws_file_delete(const struct aws_string *file_path) {
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
     struct aws_string *w_from_path = aws_string_convert_to_wchar_str(aws_default_allocator(), from);
-    struct aws_string *long_from_path = s_to_long_path(w_from_path);
+    struct aws_string *long_from_path = s_to_long_path(aws_default_allocator(), w_from_path);
     aws_string_destroy(w_from_path);
 
     struct aws_string *w_to_path = aws_string_convert_to_wchar_str(aws_default_allocator(), to);
-    struct aws_string *long_to_path = s_to_long_path(w_to_path);
+    struct aws_string *long_to_path = s_to_long_path(aws_default_allocator(), w_to_path);
     aws_string_destroy(w_to_path);
 
     BOOL move_res = MoveFileW(aws_string_wchar_c_str(long_from_path), aws_string_wchar_c_str(long_to_path));
@@ -200,7 +213,7 @@ int aws_directory_traverse(
     aws_on_directory_entry *on_entry,
     void *user_data) {
     struct aws_string *w_path_wchar = aws_string_convert_to_wchar_str(allocator, path);
-    struct aws_string *long_path_wchar = s_to_long_path(w_path_wchar);
+    struct aws_string *long_path_wchar = s_to_long_path(allocator, w_path_wchar);
     aws_string_destroy(w_path_wchar);
 
     /* windows doesn't fail in FindFirstFile if it's not a directory. Do the check here. We don't call the perfectly
@@ -284,7 +297,6 @@ int aws_directory_traverse(
 
         /* now get the absolute path from the relative path we just computed. */
         DWORD path_res = GetFullPathNameW((wchar_t *)relative_path_wchar.buffer, 0, NULL, NULL);
-        wchar_t *test = (wchar_t *)relative_path_wchar.buffer;
 
         AWS_FATAL_ASSERT(path_res > 0);
         struct aws_byte_buf full_path_wchar_buf;
@@ -304,9 +316,9 @@ int aws_directory_traverse(
             aws_string_convert_from_wchar_c_str(allocator, (wchar_t *)full_path_wchar_buf.buffer);
         aws_byte_buf_clean_up(&full_path_wchar_buf);
 
-        (void)test;
         struct aws_string *relative_path_multi_char =
             aws_string_convert_from_wchar_c_str(allocator, (wchar_t *)relative_path_wchar.buffer);
+
 
         struct aws_directory_entry entry;
         AWS_ZERO_STRUCT(entry);
