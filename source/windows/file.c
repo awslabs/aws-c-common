@@ -53,7 +53,7 @@ struct aws_string *s_to_long_path(struct aws_allocator *allocator, const struct 
 
 int aws_directory_create(const struct aws_string *dir_path) {
     struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator() , w_dir_path);
+    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
     aws_string_destroy(w_dir_path);
 
     BOOL create_dir_res = CreateDirectoryW(aws_string_wchar_c_str(long_dir_path), NULL);
@@ -146,7 +146,7 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
         if (error == ERROR_ACCESS_DENIED) {
             return aws_raise_error(AWS_ERROR_NO_PERMISSION);
         }
-        
+
         return aws_raise_error(AWS_ERROR_UNKNOWN);
     }
 
@@ -318,7 +318,6 @@ int aws_directory_traverse(
 
         struct aws_string *relative_path_multi_char =
             aws_string_convert_from_wchar_c_str(allocator, (wchar_t *)relative_path_wchar.buffer);
-
 
         struct aws_directory_entry entry;
         AWS_ZERO_STRUCT(entry);
