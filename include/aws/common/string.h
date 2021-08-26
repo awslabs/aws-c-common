@@ -64,18 +64,46 @@ AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert);
 
+/**
+ * For windows only. Converts `to_convert` to a windows whcar format (UTF-16) for use with windows OS interop.
+ *
+ * Note: `to_convert` is assumed to be UTF-8 or ASCII.
+ *
+ * returns NULL on failure.
+ */
 AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
     struct aws_allocator *allocator,
     const struct aws_byte_cursor *to_convert);
 
+/**
+ * For windows only. Converts `to_convert` from a windows whcar format (UTF-16) to UTF-8.
+ *
+ * Note: `to_convert` is assumed to be wchar already.
+ *
+ * returns NULL on failure.
+ */
 AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert);
 
+/**
+ * For windows only. Converts `to_convert` from a windows whcar format (UTF-16) to UTF-8.
+ *
+ * Note: `to_convert` is assumed to be wchar already.
+ *
+ * returns NULL on failure.
+ */
 AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_byte_cursor(
     struct aws_allocator *allocator,
     const struct aws_byte_cursor *to_convert);
 
+/**
+ * For windows only. Converts `to_convert` from a windows whcar format (UTF-16) to UTF-8.
+ *
+ * Note: `to_convert` is assumed to be wchar already.
+ *
+ * returns NULL on failure.
+ */
 AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_c_str(
     struct aws_allocator *allocator,
     const wchar_t *to_convert);

@@ -26,8 +26,8 @@ struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
         return NULL;
     }
 
-    size_t str_len_size;
-    size_t malloc_size;
+    size_t str_len_size = 0;
+    size_t malloc_size = 0;
 
     /* double the size because the return value above is # of characters, not bytes size. */
     if (aws_mul_size_checked(sizeof(wchar_t), converted_size, &str_len_size)) {
@@ -71,9 +71,10 @@ static struct aws_string *s_convert_from_wchar(
         return NULL;
     }
 
-    size_t malloc_size;
+    size_t malloc_size = 0;
 
-    if (aws_add_size_checked(sizeof(struct aws_string) + 1, bytes_size, &malloc_size)) {
+    /* bytes_size already contains the space for the null terminator */
+    if (aws_add_size_checked(sizeof(struct aws_string), bytes_size, &malloc_size)) {
         return NULL;
     }
 
@@ -84,10 +85,10 @@ static struct aws_string *s_convert_from_wchar(
 
     /* Fields are declared const, so we need to copy them in like this */
     *(struct aws_allocator **)(&str->allocator) = allocator;
-    *(size_t *)(&str->len) = bytes_size;
+    *(size_t *)(&str->len) = (size_t)bytes_size - 1;
 
     int converted_res =
-        WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, (char *)str->bytes, (int)str->len, NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, (char *)str->bytes, bytes_size, NULL, NULL);
     /* windows had its chance to do its thing, no take backsies. */
     AWS_FATAL_ASSERT(converted_res > 0);
 
@@ -129,7 +130,7 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
     size_t malloc_size;
-    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
+    if (aws_add_size_checked(sizeof(struct aws_string) + 2, len, &malloc_size)) {
         return NULL;
     }
     struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
@@ -143,7 +144,8 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     if (len > 0) {
         memcpy((void *)str->bytes, bytes, len);
     }
-    *(uint8_t *)&str->bytes[len] = '\0';
+    *(uint8_t *)&str->bytes[len] = 0;
+    *(uint8_t *)&str->bytes[len + 1] = 0;
     AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
 }
 
