@@ -6,8 +6,6 @@
  */
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
-#include <aws/common/linked_list.h>
-#include <aws/common/ref_count.h>
 
 #ifdef _WIN32
 #    define AWS_PATH_DELIM '\\'
