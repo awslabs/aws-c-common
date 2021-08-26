@@ -144,6 +144,7 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     if (len > 0) {
         memcpy((void *)str->bytes, bytes, len);
     }
+    /* in case this is a utf-16 string in the array, allow that here. */
     *(uint8_t *)&str->bytes[len] = 0;
     *(uint8_t *)&str->bytes[len + 1] = 0;
     AWS_RETURN_WITH_POSTCONDITION(str, aws_string_is_valid(str));
