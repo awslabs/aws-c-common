@@ -30,9 +30,9 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 struct aws_string *s_to_long_path(const struct aws_string *path) {
 
     wchar_t prefix[] = L"\\\\?\\";
-    size_t prefix_size = sizeof(prefix); 
+    size_t prefix_size = sizeof(prefix);
     if (path->len > MAX_PATH - prefix_size) {
-        
+
         struct aws_byte_buf new_path;
         aws_byte_buf_init(&new_path, aws_default_allocator(), sizeof(prefix) + path->len + 2);
 
@@ -59,7 +59,7 @@ int aws_directory_create(const struct aws_string *dir_path) {
     BOOL create_dir_res = CreateDirectoryW(aws_string_wchar_c_str(long_dir_path), NULL);
     aws_string_destroy(long_dir_path);
 
-    int error = GetLastError();    
+    int error = GetLastError();
     if (!create_dir_res) {
         if (error == ERROR_PATH_NOT_FOUND) {
             return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
@@ -229,7 +229,8 @@ int aws_directory_traverse(
     FindClose(find_handle);
 
     /* create search path string */
-    struct aws_byte_cursor path_wchar_cur = aws_byte_cursor_from_array(aws_string_bytes(long_path_wchar), long_path_wchar->len);
+    struct aws_byte_cursor path_wchar_cur =
+        aws_byte_cursor_from_array(aws_string_bytes(long_path_wchar), long_path_wchar->len);
     struct aws_byte_buf search_wchar_buf;
     aws_byte_buf_init_copy_from_cursor(&search_wchar_buf, allocator, path_wchar_cur);
 
@@ -250,17 +251,17 @@ int aws_directory_traverse(
     /* iterate each entry in the directory. Do a bunch of utf-16 conversions. Figure out the paths etc....
        invoke the visitor, and continue recursing if the flag was set. */
     do {
-        struct aws_string *name_component_multi_char_str = aws_string_convert_from_wchar_c_str(allocator, ffd.cFileName);
+        struct aws_string *name_component_multi_char_str =
+            aws_string_convert_from_wchar_c_str(allocator, ffd.cFileName);
         struct aws_byte_cursor name_component_multi_char = aws_byte_cursor_from_string(name_component_multi_char_str);
 
         /* disgard . and .. */
         char *ascend_mark = "..";
         char *cd_mark = ".";
-        struct aws_byte_cursor ascend_mark_cur =
-            aws_byte_cursor_from_c_str(ascend_mark); 
-        struct aws_byte_cursor cd_mark_cur =
-            aws_byte_cursor_from_c_str(cd_mark);
-        if (aws_byte_cursor_eq(&name_component_multi_char, &ascend_mark_cur) || aws_byte_cursor_eq(&name_component_multi_char, &cd_mark_cur)) {
+        struct aws_byte_cursor ascend_mark_cur = aws_byte_cursor_from_c_str(ascend_mark);
+        struct aws_byte_cursor cd_mark_cur = aws_byte_cursor_from_c_str(cd_mark);
+        if (aws_byte_cursor_eq(&name_component_multi_char, &ascend_mark_cur) ||
+            aws_byte_cursor_eq(&name_component_multi_char, &cd_mark_cur)) {
             aws_string_destroy(name_component_multi_char_str);
             continue;
         }
@@ -270,9 +271,11 @@ int aws_directory_traverse(
         aws_byte_buf_init_copy_from_cursor(&relative_path_wchar, allocator, path_wchar_cur);
 
         wchar_t unicode_delim[] = L"\\";
-        struct aws_byte_cursor delimiter_cur = aws_byte_cursor_from_array((uint8_t *)unicode_delim, sizeof(unicode_delim) - 2);
-        aws_byte_buf_append_dynamic(&relative_path_wchar, &delimiter_cur); 
-        struct aws_byte_cursor name_str = aws_byte_cursor_from_array(ffd.cFileName, wcsnlen(ffd.cFileName, sizeof(ffd.cFileName)) * sizeof(wchar_t));
+        struct aws_byte_cursor delimiter_cur =
+            aws_byte_cursor_from_array((uint8_t *)unicode_delim, sizeof(unicode_delim) - 2);
+        aws_byte_buf_append_dynamic(&relative_path_wchar, &delimiter_cur);
+        struct aws_byte_cursor name_str =
+            aws_byte_cursor_from_array(ffd.cFileName, wcsnlen(ffd.cFileName, sizeof(ffd.cFileName)) * sizeof(wchar_t));
         aws_byte_buf_append_dynamic(&relative_path_wchar, &name_str);
         aws_byte_buf_append_byte_dynamic(&relative_path_wchar, 0);
         aws_byte_buf_append_byte_dynamic(&relative_path_wchar, 0);
@@ -289,12 +292,9 @@ int aws_directory_traverse(
 
         full_path_wchar_buf.len = full_path_wchar_buf.capacity - 2;
         path_res = GetFullPathNameW(
-            (wchar_t *)relative_path_wchar.buffer,
-            (DWORD)path_res + 1,
-            (wchar_t *)full_path_wchar_buf.buffer,
-            NULL);
+            (wchar_t *)relative_path_wchar.buffer, (DWORD)path_res + 1, (wchar_t *)full_path_wchar_buf.buffer, NULL);
         AWS_FATAL_ASSERT(path_res > 0);
-            
+
         aws_byte_buf_append_byte_dynamic(&full_path_wchar_buf, 0);
         aws_byte_buf_append_byte_dynamic(&full_path_wchar_buf, 0);
 
@@ -305,7 +305,8 @@ int aws_directory_traverse(
         aws_byte_buf_clean_up(&full_path_wchar_buf);
 
         (void)test;
-        struct aws_string *relative_path_multi_char = aws_string_convert_from_wchar_c_str(allocator, (wchar_t *)relative_path_wchar.buffer);
+        struct aws_string *relative_path_multi_char =
+            aws_string_convert_from_wchar_c_str(allocator, (wchar_t *)relative_path_wchar.buffer);
 
         struct aws_directory_entry entry;
         AWS_ZERO_STRUCT(entry);
