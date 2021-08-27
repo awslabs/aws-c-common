@@ -51,8 +51,8 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
 #if !defined(_WIN32)
     void *result = NULL;
-    posix_memalign(&result, alignment, size);
-    AWS_FATAL_POSTCONDITION(result && "posix_memalign failed to allocate memory");
+    int ret_val = posix_memalign(&result, alignment, size);
+    AWS_FATAL_POSTCONDITION(!ret_val && result && "posix_memalign failed to allocate memory");
     return result;
 #else
     void *mem = _aligned_malloc(size, alignment);
