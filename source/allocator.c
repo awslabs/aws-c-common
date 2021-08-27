@@ -52,11 +52,11 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
 #if !defined(_WIN32)
     void *result = NULL;
     int ret_val = posix_memalign(&result, alignment, size);
-    AWS_ASSUME(!ret_val && result && "posix_memalign failed to allocate memory");
+    AWS_FATAL_POSTCONDITION(!ret_val && result && "posix_memalign failed to allocate memory");
     return result;
 #else
     void *mem = _aligned_malloc(size, alignment);
-    AWS_ASSUME(mem && "_aligned_malloc failed to allocate memory");
+    AWS_FATAL_POSTCONDITION(mem && "_aligned_malloc failed to allocate memory");
     return mem;
 #endif
 }
@@ -83,7 +83,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 
     /* newsize is > oldsize, need more memory */
     void *new_mem = s_default_malloc(allocator, newsize);
-    AWS_ASSUME(new_mem && "Unhandled OOM encountered in s_default_malloc");
+    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in s_default_malloc");
     memcpy(new_mem, ptr, oldsize);
     s_default_free(allocator, ptr);
 
@@ -91,14 +91,14 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 #else
     const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
     void *new_mem = _aligned_realloc(ptr, newsize, alignment);
-    AWS_ASSUME(new_mem && "Unhandled OOM encountered in _aligned_realloc");
+    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in _aligned_realloc");
     return new_mem;
 #endif
 }
 
 static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     void *mem = s_default_malloc(allocator, num * size);
-    AWS_ASSUME(mem && "Unhandled OOM encountered in s_default_malloc");
+    AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in s_default_malloc");
     memset(mem, 0, num * size);
     return mem;
 }
@@ -121,7 +121,7 @@ void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
     AWS_FATAL_PRECONDITION(size != 0);
 
     void *mem = allocator->mem_acquire(allocator, size);
-    AWS_ASSUME(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+    AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
     return mem;
 }
@@ -136,20 +136,21 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
      * https://wiki.sei.cmu.edu/confluence/display/c/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
      */
     size_t required_bytes = 0;
-    AWS_ASSUME(!aws_mul_size_checked(num, size, &required_bytes) && "calloc computed size > SIZE_MAX");
+    AWS_FATAL_POSTCONDITION(!aws_mul_size_checked(num, size, &required_bytes) && "calloc computed size > SIZE_MAX");
 
     /* If there is a defined calloc, use it */
     if (allocator->mem_calloc) {
         void *mem = allocator->mem_calloc(allocator, num, size);
-        AWS_ASSUME(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+        AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
         return mem;
     }
 
     /* Otherwise, emulate calloc */
     void *mem = allocator->mem_acquire(allocator, required_bytes);
-    AWS_ASSUME(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+    AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
     memset(mem, 0, required_bytes);
+    AWS_POSTCONDITION(mem != NULL);
     return mem;
 }
 
@@ -180,7 +181,7 @@ void *aws_mem_acquire_many(struct aws_allocator *allocator, size_t count, ...) {
     if (total_size > 0) {
 
         allocation = aws_mem_acquire(allocator, total_size);
-        AWS_ASSUME(allocation && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+        AWS_FATAL_POSTCONDITION(allocation && "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
         uint8_t *current_ptr = allocation;
 
@@ -225,7 +226,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
 
     if (allocator->mem_realloc) {
         void *newptr = allocator->mem_realloc(allocator, *ptr, oldsize, newsize);
-        AWS_ASSUME(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+        AWS_FATAL_POSTCONDITION(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
         *ptr = newptr;
         return AWS_OP_SUCCESS;
@@ -237,7 +238,7 @@ int aws_mem_realloc(struct aws_allocator *allocator, void **ptr, size_t oldsize,
     }
 
     void *newptr = allocator->mem_acquire(allocator, newsize);
-    AWS_ASSUME(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
+    AWS_FATAL_POSTCONDITION(newptr && "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
     memcpy(newptr, *ptr, oldsize);
     memset((uint8_t *)newptr + oldsize, 0, newsize - oldsize);
