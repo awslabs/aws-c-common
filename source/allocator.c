@@ -73,8 +73,8 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    AWS_FATAL_PRECONDITION(ptr)
-    AWS_FATAL_PRECONDITION(newsize)
+    AWS_FATAL_PRECONDITION(ptr);
+    AWS_FATAL_PRECONDITION(newsize);
 
 #if !defined(_WIN32)
     if (newsize <= oldsize) {
@@ -83,7 +83,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 
     /* newsize is > oldsize, need more memory */
     void *new_mem = s_default_malloc(allocator, newsize);
-    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in s_default_malloc")
+    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in s_default_malloc");
     memcpy(new_mem, ptr, oldsize);
     s_default_free(allocator, ptr);
 
@@ -91,14 +91,14 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 #else
     const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
     void *new_mem = _aligned_realloc(ptr, newsize, alignment);
-    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in _aligned_realloc")
+    AWS_FATAL_POSTCONDITION(new_mem && "Unhandled OOM encountered in _aligned_realloc");
     return new_mem;
 #endif
 }
 
 static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     void *mem = s_default_malloc(allocator, num * size);
-    AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in s_default_malloc")
+    AWS_FATAL_POSTCONDITION(mem && "Unhandled OOM encountered in s_default_malloc");
     memset(mem, 0, num * size);
     return mem;
 }
