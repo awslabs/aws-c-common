@@ -30,7 +30,7 @@ AWS_EXTERN_C_END
 #    define AWS_PANIC_OOM(mem, msg)                                                                                    \
         do {                                                                                                           \
             if (!(mem)) {                                                                                              \
-                fprintf(stderr, "%s: %s, line %d", msg, __FILE__, __LINE__);                                           \
+                fprintf(stderr, "%s", msg);                                                                            \
                 abort();                                                                                               \
             }                                                                                                          \
         } while (0)

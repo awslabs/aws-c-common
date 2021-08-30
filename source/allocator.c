@@ -51,7 +51,8 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
     const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
 #if !defined(_WIN32)
     void *result = NULL;
-    posix_memalign(&result, alignment, size);
+    int err = posix_memalign(&result, alignment, size);
+    (void)err;
     AWS_PANIC_OOM(result, "posix_memalign failed to allocate memory");
     return result;
 #else
@@ -73,8 +74,6 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
-    AWS_FATAL_PRECONDITION(ptr);
-    AWS_FATAL_PRECONDITION(newsize);
 
 #if !defined(_WIN32)
     if (newsize <= oldsize) {
