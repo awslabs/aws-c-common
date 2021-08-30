@@ -10,6 +10,8 @@
 struct aws_string *aws_string_convert_to_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert) {
+    AWS_PRECONDITION(to_convert);
+
     struct aws_byte_cursor convert_cur = aws_byte_cursor_from_string(to_convert);
     return aws_string_convert_to_wchar_from_byte_cursor(allocator, &convert_cur);
 }
@@ -17,6 +19,8 @@ struct aws_string *aws_string_convert_to_wchar_str(
 struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
     struct aws_allocator *allocator,
     const struct aws_byte_cursor *to_convert) {
+    AWS_PRECONDITION(to_convert);
+
     /* if a length is passed for the to_convert string, converted size does not include the null terminator,
      * which is a good thing. */
     int converted_size = MultiByteToWideChar(CP_UTF8, 0, (const char *)to_convert->ptr, (int)to_convert->len, NULL, 0);
@@ -63,6 +67,7 @@ static struct aws_string *s_convert_from_wchar(
     struct aws_allocator *allocator,
     const wchar_t *to_convert,
     int len_chars) {
+    AWS_FATAL_PRECONDITION(to_convert);
 
     int bytes_size = WideCharToMultiByte(CP_UTF8, 0, to_convert, len_chars, NULL, 0, NULL, NULL);
 
@@ -99,6 +104,8 @@ static struct aws_string *s_convert_from_wchar(
 struct aws_string *aws_string_convert_from_wchar_str(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert) {
+    AWS_FATAL_PRECONDITION(to_convert);
+
     return s_convert_from_wchar(
         allocator, aws_string_wchar_c_str(to_convert), (int)aws_string_wchar_num_chars(to_convert));
 }
@@ -107,10 +114,13 @@ struct aws_string *aws_string_convert_from_wchar_c_str(struct aws_allocator *all
 }
 
 const wchar_t *aws_string_wchar_c_str(const struct aws_string *str) {
+    AWS_PRECONDITION(str);
     return (wchar_t *)str->bytes;
 }
 
 size_t aws_string_wchar_num_chars(const struct aws_string *str) {
+    AWS_PRECONDITION(str);
+
     if (str->len == 0) {
         return 0;
     }

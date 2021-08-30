@@ -74,6 +74,7 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
+    AWS_FATAL_PRECONDITION(newsize);
 
 #if !defined(_WIN32)
     if (newsize <= oldsize) {
@@ -83,8 +84,11 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     /* newsize is > oldsize, need more memory */
     void *new_mem = s_default_malloc(allocator, newsize);
     AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in s_default_malloc");
-    memcpy(new_mem, ptr, oldsize);
-    s_default_free(allocator, ptr);
+
+    if (ptr) {
+        memcpy(new_mem, ptr, oldsize);
+        s_default_free(allocator, ptr);
+    }
 
     return new_mem;
 #else
@@ -135,7 +139,7 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
      * https://wiki.sei.cmu.edu/confluence/display/c/MEM07-C.+Ensure+that+the+arguments+to+calloc%28%29%2C+when+multiplied%2C+do+not+wrap
      */
     size_t required_bytes = 0;
-    AWS_FATAL_POSTCONDITION(!aws_mul_size_checked(num, size, &required_bytes) && "calloc computed size > SIZE_MAX");
+    AWS_FATAL_POSTCONDITION(!aws_mul_size_checked(num, size, &required_bytes), "calloc computed size > SIZE_MAX");
 
     /* If there is a defined calloc, use it */
     if (allocator->mem_calloc) {
@@ -149,7 +153,6 @@ void *aws_mem_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
     AWS_PANIC_OOM(mem, "Unhandled OOM encountered in aws_mem_acquire with allocator");
 
     memset(mem, 0, required_bytes);
-    AWS_POSTCONDITION(mem != NULL);
     return mem;
 }
 
