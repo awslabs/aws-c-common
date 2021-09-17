@@ -12,7 +12,22 @@
 #include <aws/common/cpuid.h>
 #include <stdlib.h>
 
-extern void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd);
+extern void aws_run_cpuid_impl(uint32_t eax, uint32_t ecx, uint32_t *abcd);
+
+static void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd) {
+    /* cpuid should be called with 0 first, to learn highest supported EAX */
+    aws_run_cpuid_impl(0, 0, abcd);
+    uint32_t eax_max = abcd[0];
+
+    if (AWS_LIKELY(eax < eax_max)) {
+        aws_run_cpuid_impl(eax, ecx, abcd);
+    } else {
+        abcd[0] = 0;
+        abcd[1] = 0;
+        abcd[2] = 0;
+        abcd[3] = 0;
+    }
+}
 
 typedef bool(has_feature_fn)(void);
 
@@ -52,9 +67,9 @@ static bool s_has_sse42(void) {
 static bool s_has_avx2(void) {
     uint32_t abcd[4];
     uint32_t avx2_bmi12_mask = (1 << 5) | (1 << 3) | (1 << 8);
-    /* CPUID.(EAX=01H, ECX=0H):ECX.FMA[bit 12]==1   &&
-       CPUID.(EAX=01H, ECX=0H):ECX.MOVBE[bit 22]==1 &&
-       CPUID.(EAX=01H, ECX=0H):ECX.OSXSAVE[bit 27]==1 */
+    /*  CPUID.(EAX=07H, ECX=0H):EBX.AVX2[bit 5]==1  &&
+        CPUID.(EAX=07H, ECX=0H):EBX.BMI1[bit 3]==1  &&
+        CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1  */
     aws_run_cpuid(7, 0, abcd);
 
     if ((abcd[1] & avx2_bmi12_mask) != avx2_bmi12_mask)

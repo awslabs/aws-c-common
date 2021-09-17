@@ -5,7 +5,7 @@
 
 #include <aws/common/cpuid.h>
 
-void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd) {
+void aws_run_cpuid_impl(uint32_t eax, uint32_t ecx, uint32_t *abcd) {
     uint32_t ebx = 0;
     uint32_t edx = 0;
 
