@@ -459,14 +459,15 @@ static void bus_async_deliver(void *user_data) {
             aws_linked_list_swap_contents(&impl->queue.subs, &pending_subs);
             /* copy out any queued messages */
             aws_linked_list_swap_contents(&impl->queue.msgs, &pending_msgs);
-
-            /* resolve any pending sub/unsubs first under lock */
-            if (!aws_linked_list_empty(&pending_subs)) {
-                bus_apply_listeners(bus, &pending_subs);
-            }
         }
         aws_mutex_unlock(&impl->queue.mutex);
 
+        /* first resolve subs/unsubs */
+        if (!aws_linked_list_empty(&pending_subs)) {
+            bus_apply_listeners(bus, &pending_subs);
+        }
+
+        /* Then deliver queued messages */
         if (!aws_linked_list_empty(&pending_msgs)) {
             bus_async_deliver_messages(bus, &pending_msgs);
         }
