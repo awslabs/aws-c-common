@@ -43,16 +43,15 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
     struct aws_bus_options options = {
-        .allocator = allocator,
         .policy = AWS_BUS_SYNC_RELIABLE,
     };
 
-    struct aws_bus bus;
-    ASSERT_SUCCESS(aws_bus_init(&bus, &options));
+    struct aws_bus *bus = aws_bus_new(allocator, &options);
+    ASSERT_NOT_NULL(bus);
     AWS_ZERO_STRUCT(s_sync_test);
 
-    ASSERT_SUCCESS(aws_bus_subscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test));
-    aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
+    ASSERT_SUCCESS(aws_bus_subscribe(bus, 42, s_bus_sync_test_recv, &s_sync_test));
+    aws_bus_send(bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
 
     ASSERT_INT_EQUALS(1, s_sync_test.count);
     ASSERT_TRUE(s_sync_test.payload_deleted);
@@ -62,14 +61,14 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     const int send_count = 100;
     for (int send = 0; send < send_count; ++send) {
-        aws_bus_send(&bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
+        aws_bus_send(bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
     }
 
     ASSERT_INT_EQUALS(send_count, s_sync_test.count);
     ASSERT_TRUE(s_sync_test.payload_deleted);
 
-    aws_bus_unsubscribe(&bus, 42, s_bus_sync_test_recv, &s_sync_test);
-    aws_bus_clean_up(&bus);
+    aws_bus_unsubscribe(bus, 42, s_bus_sync_test_recv, &s_sync_test);
+    aws_bus_destroy(bus);
 
     return 0;
 }
@@ -79,16 +78,12 @@ static int s_bus_async_test_lifetime(struct aws_allocator *allocator, void *ctx)
     (void)ctx;
 
     struct aws_bus_options options = {
-        .allocator = allocator,
         .policy = AWS_BUS_ASYNC_RELIABLE,
     };
 
-    struct aws_bus *async_bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    struct aws_bus *async_bus = aws_bus_new(allocator, &options);
     ASSERT_NOT_NULL(async_bus);
-    AWS_ZERO_STRUCT(*async_bus);
-    ASSERT_SUCCESS(aws_bus_init(async_bus, &options));
-    aws_bus_clean_up(async_bus);
-    aws_mem_release(allocator, async_bus);
+    aws_bus_destroy(async_bus);
 
     /* If the background thread didn't exit cleanly, there will be hangs/leaks */
 
@@ -153,15 +148,12 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
     aws_atomic_init_int(&s_bus_async.closed, 0);
 
     struct aws_bus_options options = {
-        .allocator = allocator,
         .policy = AWS_BUS_ASYNC_RELIABLE,
         .buffer_size = 64 * 1024,
     };
 
-    struct aws_bus *async_bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    struct aws_bus *async_bus = aws_bus_new(allocator, &options);
     ASSERT_NOT_NULL(async_bus);
-    AWS_ZERO_STRUCT(*async_bus);
-    ASSERT_SUCCESS(aws_bus_init(async_bus, &options));
 
     /* test sending to all, sending to a bunch of addresses, then close */
     ASSERT_SUCCESS(aws_bus_subscribe(async_bus, AWS_BUS_ADDRESS_ALL, s_bus_async_handle_all, NULL));
@@ -192,8 +184,7 @@ static int s_bus_async_test_send_single_threaded(struct aws_allocator *allocator
 
     ASSERT_INT_EQUALS(s_bus_async.expected_sum, s_bus_async.sum);
 
-    aws_bus_clean_up(async_bus);
-    aws_mem_release(allocator, async_bus);
+    aws_bus_destroy(async_bus);
 
     return 0;
 }
@@ -205,16 +196,21 @@ static struct {
     struct aws_atomic_var running_sum;
 } s_bus_mt_data;
 
+struct bus_test_ctx {
+    struct aws_bus *bus;
+    struct aws_allocator *allocator;
+};
+
 static void s_async_bus_producer(void *user_data) {
-    struct aws_bus *bus = user_data;
+    struct bus_test_ctx *ctx = user_data;
     for (int send = 0; send < 1000; ++send) {
         const uint64_t address = aws_max_i32(rand() % 1024, 1);
-        struct bus_async_msg *msg = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_msg));
+        struct bus_async_msg *msg = aws_mem_calloc(ctx->allocator, 1, sizeof(struct bus_async_msg));
         /* released in s_bus_async_msg_dtor */
-        msg->allocator = bus->allocator;
+        msg->allocator = ctx->allocator;
         msg->destination = address;
         aws_atomic_fetch_add(&s_bus_mt_data.expected_sum, (size_t)address);
-        aws_bus_send(bus, address, msg, s_bus_async_msg_dtor);
+        aws_bus_send(ctx->bus, address, msg, s_bus_async_msg_dtor);
     }
 }
 
@@ -245,15 +241,12 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
     aws_atomic_init_int(&s_bus_mt_data.running_sum, 0);
 
     struct aws_bus_options options = {
-        .allocator = allocator,
         .policy = AWS_BUS_ASYNC_RELIABLE,
         .buffer_size = 512 * 1024,
     };
 
-    struct aws_bus *bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    struct aws_bus *bus = aws_bus_new(allocator, &options);
     ASSERT_NOT_NULL(bus);
-    AWS_ZERO_STRUCT(*bus);
-    ASSERT_SUCCESS(aws_bus_init(bus, &options));
 
     ASSERT_SUCCESS(aws_bus_subscribe(bus, AWS_BUS_ADDRESS_ALL, s_record_call_count, NULL));
     for (int address = 1; address < 1024; ++address) {
@@ -261,10 +254,14 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
     }
 
     /* test sending to a bunch of addresses from many threads */
+    struct bus_test_ctx thread_ctx = {
+            .bus = bus,
+            .allocator = allocator,
+    };
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
         aws_thread_init(&threads[t], allocator);
-        ASSERT_SUCCESS(aws_thread_launch(&threads[t], s_async_bus_producer, bus, aws_default_thread_options()));
+        ASSERT_SUCCESS(aws_thread_launch(&threads[t], s_async_bus_producer, &thread_ctx, aws_default_thread_options()));
     }
 
     /* wait for all of the wildcard messages to be delivered */
@@ -281,8 +278,7 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
         aws_atomic_load_int(&s_bus_mt_data.expected_sum), aws_atomic_load_int(&s_bus_mt_data.running_sum));
     ASSERT_INT_EQUALS(AWS_ARRAY_SIZE(threads) * 1000, aws_atomic_load_int(&s_bus_mt_data.call_count));
 
-    aws_bus_clean_up(bus);
-    aws_mem_release(allocator, bus);
+    aws_bus_destroy(bus);
 
     return 0;
 }
@@ -320,6 +316,7 @@ static void s_bus_async_test_churn_dummy_listener(const uint64_t address, const 
 
 struct producer_data {
     struct aws_bus *bus;
+    struct aws_allocator *allocator;
     int index;
     struct aws_atomic_var started;
     struct aws_atomic_var finished;
@@ -338,9 +335,9 @@ static void s_bus_async_test_churn_worker(void *user_data) {
         if (roll == 0) {
             aws_bus_unsubscribe(bus, address, s_bus_async_test_churn_dummy_listener, NULL);
         } else if (roll < 8) {
-            struct bus_async_msg *msg = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_msg));
+            struct bus_async_msg *msg = aws_mem_calloc(producer->allocator, 1, sizeof(struct bus_async_msg));
             /* released in s_bus_async_msg_dtor */
-            msg->allocator = bus->allocator;
+            msg->allocator = producer->allocator;
             msg->destination = address;
             bool sent = aws_bus_send(bus, address, msg, s_bus_async_test_churn_msg_dtor) == AWS_OP_SUCCESS;
             AWS_FATAL_ASSERT(sent);
@@ -365,15 +362,12 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     aws_atomic_init_int(&s_bus_async_churn_data.fail_count, 0);
 
     struct aws_bus_options options = {
-        .allocator = allocator,
         .policy = AWS_BUS_ASYNC_UNRELIABLE,
         .buffer_size = 1024 * 1024,
     };
 
-    struct aws_bus *bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    struct aws_bus *bus = aws_bus_new(allocator, &options);
     ASSERT_NOT_NULL(bus);
-    AWS_ZERO_STRUCT(*bus);
-    ASSERT_SUCCESS(aws_bus_init(bus, &options));
 
     /* count all messages sent on all addresses */
     for (int address = 1; address < 1024; ++address) {
@@ -388,6 +382,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
         aws_thread_init(&threads[t], allocator);
         struct producer_data *producer = &thread_data[t];
         producer->bus = bus;
+        producer->allocator = allocator;
         producer->index = t;
         aws_atomic_store_int(&producer->started, 0);
         aws_atomic_init_int(&producer->finished, 0);
@@ -423,8 +418,7 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
 
     AWS_LOGF_TRACE(AWS_LS_COMMON_TEST, "Cleaning up test bus");
 
-    aws_bus_clean_up(bus);
-    aws_mem_release(allocator, bus);
+    aws_bus_destroy(bus);
 
     size_t recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
     size_t fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);

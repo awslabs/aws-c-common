@@ -19,12 +19,7 @@
  * Under the AWS_BUS_ASYNC policy, message delivery happens in a separate thread from sending, so listeners are
  * responsible for their own thread safety.
  */
-struct aws_bus {
-    struct aws_allocator *allocator;
-
-    /* vtable and additional data structures for delivery policy */
-    void *impl;
-};
+struct aws_bus;
 
 enum aws_bus_policy {
     /**
@@ -52,7 +47,6 @@ enum aws_bus_policy {
 
 struct aws_bus_options {
     enum aws_bus_policy policy;
-    struct aws_allocator *allocator;
     /**
      * Size of buffer for unreliable message delivery queue.
      * Unused if policy is AWS_BUS_ASYNC_RELIABNLE or AWS_BUS_SYNC_RELIABLE
@@ -67,16 +61,16 @@ struct aws_bus_options {
 typedef void(aws_bus_listener_fn)(uint64_t address, const void *payload, void *user_data);
 
 /**
- * Initializes a message bus
+ * Allocates and initializes a message bus
  */
 AWS_COMMON_API
-int aws_bus_init(struct aws_bus *bus, const struct aws_bus_options *options);
+struct aws_bus *aws_bus_new(struct aws_allocator *allocator, const struct aws_bus_options *options);
 
 /**
- * Cleans up a message bus, including notifying all listeners to close
+ * Cleans up a message bus, including notifying all remaining listeners to close
  */
 AWS_COMMON_API
-void aws_bus_clean_up(struct aws_bus *bus);
+void aws_bus_destroy(struct aws_bus *bus);
 
 /**
  * Subscribes a listener to a message type. user_data's lifetime is the responsibility of the subscriber.

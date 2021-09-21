@@ -32,6 +32,13 @@
 #    pragma warning(disable : 4204) /* nonstandard extension used: non-constant aggregate initializer */
 #endif
 
+struct aws_bus {
+    struct aws_allocator *allocator;
+
+    /* vtable and additional data structures for delivery policy */
+    void *impl;
+};
+
 /* MUST be the first member of any impl to allow blind casting */
 struct bus_vtable {
     void (*clean_up)(struct aws_bus *bus);
@@ -664,8 +671,9 @@ error:
 /*
  * Public API
  */
-int aws_bus_init(struct aws_bus *bus, const struct aws_bus_options *options) {
-    bus->allocator = options->allocator;
+struct aws_bus *aws_bus_new(struct aws_allocator *allocator, const struct aws_bus_options *options) {
+    struct aws_bus *bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
+    bus->allocator = allocator;
 
     switch (options->policy) {
         case AWS_BUS_ASYNC_RELIABLE:
@@ -677,12 +685,18 @@ int aws_bus_init(struct aws_bus *bus, const struct aws_bus_options *options) {
             break;
     }
 
-    return bus->impl ? AWS_OP_SUCCESS : AWS_OP_ERR;
+    if (!bus->impl) {
+        aws_mem_release(allocator, bus);
+        return NULL;
+    }
+
+    return bus;
 }
 
-void aws_bus_clean_up(struct aws_bus *bus) {
+void aws_bus_destroy(struct aws_bus *bus) {
     struct bus_vtable *vtable = bus->impl;
     vtable->clean_up(bus);
+    aws_mem_release(bus->allocator, bus);
 }
 
 int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
