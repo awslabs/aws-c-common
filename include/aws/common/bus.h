@@ -32,7 +32,8 @@ enum aws_bus_policy {
      */
     AWS_BUS_ASYNC_RELIABLE = 0x0,
     /**
-     * If a buffer size is supplied, the oldest message will be re-used if the free list is exhausted
+     * Only memory from the bus's internal buffer will be used (if a buffer size is supplied at bus creation time).
+     * If the buffer is full, older buffered messages will be discarded to make room for newer messages.
      */
     AWS_BUS_ASYNC_UNRELIABLE = 0x1,
     /**
@@ -41,6 +42,11 @@ enum aws_bus_policy {
     AWS_BUS_SYNC_RELIABLE = 0x2,
 };
 
+/**
+ * Subscribing to AWS_BUS_ADDRESS_ALL will cause the listener to be invoked for every message sent to the bus
+ * It is possible to send to AWS_BUS_ADDRESS_ALL, just be aware that this will only send to listeners subscribed
+ * to AWS_BUS_ADDRESS_ALL.
+ */
 #define AWS_BUS_ADDRESS_ALL ((uint64_t)-1)
 #define AWS_BUS_ADDRESS_CLOSE 0
 
@@ -48,8 +54,9 @@ struct aws_bus_options {
     enum aws_bus_policy policy;
     struct aws_allocator *allocator;
     /**
-     * Size of buffer for async message queue. Messages are 40 bytes.
-     * Default buffer_size is 4K
+     * Size of buffer for unreliable message delivery queue.
+     * Unused if policy is AWS_BUS_ASYNC_RELIABNLE or AWS_BUS_SYNC_RELIABLE
+     * Messages are 40 bytes. Default buffer_size is 4K. The bus will not allocate memory beyond this size.
      */
     size_t buffer_size;
     /* Not supported yet, but event loop group for delivery */
@@ -63,7 +70,7 @@ typedef void(aws_bus_listener_fn)(uint64_t address, const void *payload, void *u
  * Initializes a message bus
  */
 AWS_COMMON_API
-int aws_bus_init(struct aws_bus *bus, struct aws_bus_options *options);
+int aws_bus_init(struct aws_bus *bus, const struct aws_bus_options *options);
 
 /**
  * Cleans up a message bus, including notifying all listeners to close
@@ -72,13 +79,15 @@ AWS_COMMON_API
 void aws_bus_clean_up(struct aws_bus *bus);
 
 /**
- * Subscribes a listener to a message type
+ * Subscribes a listener to a message type. user_data's lifetime is the responsibility of the subscriber.
  */
 AWS_COMMON_API
 int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
 
 /**
- * Unsubscribe a listener from a specific message
+ * Unsubscribe a listener from a specific message. This is only necessary if the listener has lifetime concerns.
+ * Otherwise, the listener will be called with an address of AWS_BUS_ADDRESS_CLOSE, which indicates that user_data
+ * can be cleaned up if necessary and the listener will never be called again.
  */
 AWS_COMMON_API
 void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
