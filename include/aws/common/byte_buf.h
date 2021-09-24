@@ -125,6 +125,15 @@ AWS_COMMON_API int aws_byte_buf_init_copy(
     const struct aws_byte_buf *src);
 
 /**
+ * Reads 'filename' into 'out_buf'. If successful, 'out_buf' is allocated and filled with the data;
+ * It is your responsibility to call 'aws_byte_buf_clean_up()' on it. Otherwise, 'out_buf' remains
+ * unused. In the very unfortunate case where some API needs to treat out_buf as a c_string, a null terminator
+ * is appended, but is not included as part of the length field.
+ */
+AWS_COMMON_API
+int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename);
+
+/**
  * Evaluates the set of properties that define the shape of all valid aws_byte_buf structures.
  * It is also a cheap check, in the sense it run in constant time (i.e., no loops or recursion).
  */
