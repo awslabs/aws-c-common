@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/aws_profile.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
-#include <aws/common/aws_profile.h>
 #include <aws/common/string.h>
 
 #define PROPERTIES_TABLE_DEFAULT_SIZE 4
