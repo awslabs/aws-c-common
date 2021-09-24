@@ -43,7 +43,7 @@ int aws_fseek(FILE *file, int64_t offset, int whence) {
 #else
     /* must use fseek(), which takes offset as a long */
     if (offset < LONG_MIN || offset > LONG_MAX) {
-        return aws_raise_error(AWS_IO_STREAM_INVALID_SEEK_POSITION);
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     int result = fseek(file, offset, whence);
 #endif /* AWS_HAVE_POSIX_LFS */
