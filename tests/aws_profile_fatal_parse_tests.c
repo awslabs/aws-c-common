@@ -5,7 +5,7 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#include <aws/common/profile.h>
+#include <aws/common/aws_profile.h>
 #include <aws/common/string.h>
 
 static int s_do_aws_profile_fatal_parse_test(

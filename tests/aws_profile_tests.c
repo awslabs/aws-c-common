@@ -6,11 +6,8 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <aws/common/environment.h>
-#include <aws/common/file.h>
-#include <aws/common/profile.h>
+#include <aws/common/aws_profile.h>
 #include <aws/common/string.h>
-
-#include <errno.h>
 
 #define EXPECT_PROFILE_COUNT(profile_collection, profile_count)                                                        \
     { ASSERT_TRUE(aws_profile_collection_get_profile_count(profile_collection) == (profile_count)); }
