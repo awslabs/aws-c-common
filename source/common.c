@@ -266,6 +266,8 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_PROFILE, "profile", "Profile parsing"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_IO, "common-io", "Common IO utilities"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_BUS, "bus", "Message bus"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_TEST, "test", "Unit/integration testing"),
 };
 
 static struct aws_log_subject_info_list s_common_log_subject_list = {
