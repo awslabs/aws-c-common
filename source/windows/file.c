@@ -118,7 +118,7 @@ int aws_fseek(FILE *file, int64_t offset, int whence) {
 int aws_file_get_length(FILE *file, int64_t *length) {
     int fd = _fileno(file);
     if (fd == -1) {
-        return aws_raise_error(AWS_IO_INVALID_FILE_HANDLE);
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
     }
 
     HANDLE os_file = (HANDLE)_get_osfhandle(fd);
