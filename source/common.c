@@ -235,6 +235,15 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_DIVIDE_BY_ZERO,
         "Attempt to divide a number by zero."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_FILE_HANDLE,
+        "Invalid file handle"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_PARSE_FATAL_ERROR,
+    "Fatal error encoutered while parsing"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_PARSE_RECOVERABLE_ERROR,
+    "Error encountered while parsing, but the parser was able to resume"),
 };
 /* clang-format on */
 
