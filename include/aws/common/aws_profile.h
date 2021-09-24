@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#ifndef AWS_COMMON_PROFILE_H
-#define AWS_COMMON_PROFILE_H
+#ifndef AWS_COMMON_AWS_PROFILE_H
+#define AWS_COMMON_AWS_PROFILE_H
 
 #include <aws/common/common.h>
 #include <aws/common/hash_table.h>
@@ -175,4 +175,4 @@ struct aws_string *aws_get_profile_name(struct aws_allocator *allocator, const s
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_PROFILE_H */
+#endif /* AWS_COMMON_AWS_PROFILE_H */
