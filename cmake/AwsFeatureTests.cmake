@@ -4,7 +4,7 @@
 include(CheckCSourceRuns)
 include(AwsCFlags)
 
-option(USE_CPU_EXTENSIONS "Whever possible, use functions optimized for CPUs with specific extensions (ex: SSE, AVX)." ON)
+option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs with specific extensions (ex: SSE, AVX)." ON)
 
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
