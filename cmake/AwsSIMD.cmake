@@ -4,49 +4,51 @@
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 
-if (MSVC)
-    check_c_compiler_flag("/arch:AVX2" HAVE_M_AVX2_FLAG)
-    if (HAVE_M_AVX2_FLAG)
-        set(AVX2_CFLAGS "/arch:AVX2")
+if (USE_CPU_EXTENSIONS)
+    if (MSVC)
+        check_c_compiler_flag("/arch:AVX2" HAVE_M_AVX2_FLAG)
+        if (HAVE_M_AVX2_FLAG)
+            set(AVX2_CFLAGS "/arch:AVX2")
+        endif()
+    else()
+        check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
+        if (HAVE_M_AVX2_FLAG)
+            set(AVX2_CFLAGS "-mavx -mavx2")
+        endif()
     endif()
-else()
-    check_c_compiler_flag(-mavx2 HAVE_M_AVX2_FLAG)
-    if (HAVE_M_AVX2_FLAG)
-        set(AVX2_CFLAGS "-mavx -mavx2")
-    endif()
-endif()
 
 
-set(old_flags "${CMAKE_REQUIRED_FLAGS}")
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
+    set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX2_CFLAGS}")
 
-check_c_source_compiles("
-#include <immintrin.h>
-#include <emmintrin.h>
-#include <string.h>
+    check_c_source_compiles("
+        #include <immintrin.h>
+        #include <emmintrin.h>
+        #include <string.h>
 
-int main() {
-    __m256i vec;
-    memset(&vec, 0, sizeof(vec));
+        int main() {
+            __m256i vec;
+            memset(&vec, 0, sizeof(vec));
 
-    _mm256_shuffle_epi8(vec, vec);
-    _mm256_set_epi32(1,2,3,4,5,6,7,8);
-    _mm256_permutevar8x32_epi32(vec, vec);
+            _mm256_shuffle_epi8(vec, vec);
+            _mm256_set_epi32(1,2,3,4,5,6,7,8);
+            _mm256_permutevar8x32_epi32(vec, vec);
 
-    return 0;
-}"  HAVE_AVX2_INTRINSICS)
+            return 0;
+        }"  HAVE_AVX2_INTRINSICS)
 
-check_c_source_compiles("
-#include <immintrin.h>
-#include <string.h>
+    check_c_source_compiles("
+        #include <immintrin.h>
+        #include <string.h>
 
-int main() {
-    __m256i vec;
-    memset(&vec, 0, sizeof(vec));
-    return (int)_mm256_extract_epi64(vec, 2);
-}" HAVE_MM256_EXTRACT_EPI64)
+        int main() {
+            __m256i vec;
+            memset(&vec, 0, sizeof(vec));
+            return (int)_mm256_extract_epi64(vec, 2);
+        }" HAVE_MM256_EXTRACT_EPI64)
 
-set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+    set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+endif() # USE_CPU_EXTENSIONS
 
 macro(simd_add_definition_if target definition)
     if(${definition})

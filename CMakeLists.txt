@@ -108,28 +108,32 @@ file(GLOB AWS_COMMON_ARCH_SRC
      "source/arch/generic/*.c"
      )
 
-if (MSVC AND AWS_ARCH_INTEL)
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/intel/*.c"
-        "source/arch/intel/msvc/*.c"
-        )
+if (USE_CPU_EXTENSIONS)
+    if (AWS_ARCH_INTEL)
+        if (MSVC)
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/intel/*.c"
+                "source/arch/intel/msvc/*.c"
+                )
 
-    source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
-elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM AND NOT LEGACY_COMPILER_SUPPORT)
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/intel/*.c"
-         "source/arch/intel/asm/*.c"
-        )
-endif()
-
-if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/arm/msvc/*.c"
-        )
-elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/arm/asm/*.c"
-        )
+            source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/intel/*.c"
+                "source/arch/intel/asm/*.c"
+                )
+        endif()
+    elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
+        if (MSVC)
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/msvc/*.c"
+                )
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/asm/*.c"
+                )
+        endif()
+    endif()
 endif()
 
 list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
