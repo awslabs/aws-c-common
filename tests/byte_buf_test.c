@@ -765,8 +765,10 @@ static int s_test_byte_buf_reserve_initial_capacity_zero(struct aws_allocator *a
     (void)ctx;
     struct aws_byte_buf buffer;
     AWS_ZERO_STRUCT(buffer);
+    size_t capacity = 1;
     ASSERT_SUCCESS(aws_byte_buf_init(&buffer, allocator, 0));
-    ASSERT_SUCCESS(aws_byte_buf_reserve(&buffer, 1));
+    ASSERT_SUCCESS(aws_byte_buf_reserve(&buffer, capacity));
+    ASSERT_TRUE(buffer.capacity == capacity);
     aws_byte_buf_clean_up(&buffer);
     return 0;
 }
