@@ -761,6 +761,17 @@ static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(test_byte_buf_reserve, s_test_byte_buf_reserve)
 
+static int s_test_byte_buf_reserve_initial_capacity_zero(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_byte_buf buffer;
+    AWS_ZERO_STRUCT(buffer);
+    ASSERT_SUCCESS(aws_byte_buf_init(&buffer, allocator, 0));
+    ASSERT_SUCCESS(aws_byte_buf_reserve(&buffer, 1));
+    aws_byte_buf_clean_up(&buffer);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reserve_initial_capacity_zero, s_test_byte_buf_reserve_initial_capacity_zero)
+
 static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
