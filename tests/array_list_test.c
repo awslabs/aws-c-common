@@ -148,16 +148,17 @@ static int s_array_list_order_push_front_pop_front_fn(struct aws_allocator *allo
 
     struct aws_array_list list;
 
-    size_t list_size = 2;
+    size_t list_size = 4;
+    size_t init_size = 2;
     int first = 1, second = 2, third = 3, fourth = 4;
 
     ASSERT_SUCCESS(
-        aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
+        aws_array_list_init_dynamic(&list, allocator, init_size, sizeof(int)),
         "List setup should have been successful. err code %d",
         aws_last_error());
     ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
     ASSERT_INT_EQUALS(
-        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+        init_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)init_size * sizeof(int));
 
     ASSERT_SUCCESS(
         aws_array_list_push_front(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
