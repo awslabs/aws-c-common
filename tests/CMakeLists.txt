@@ -66,6 +66,7 @@ add_test_case(test_old_overflow_cases)
 
 add_test_case(array_list_order_push_back_pop_front_test)
 add_test_case(array_list_order_push_back_pop_back_test)
+add_test_case(array_list_order_push_front_pop_front_test)
 add_test_case(array_list_pop_front_n_test)
 add_test_case(array_list_erase_test)
 add_test_case(array_list_exponential_mem_model_test)
