@@ -93,7 +93,7 @@ int aws_array_list_front(const struct aws_array_list *AWS_RESTRICT list, void *v
  * is intended behavior.
  */
 AWS_STATIC_IMPL
-int aws_array_list_push_back(struct aws_array_list *AWS_RESTRICT list, const void *val);
+int aws_array_list_push_front(struct aws_array_list *AWS_RESTRICT list, const void *val);
 
 /**
  * Deletes the element at the front of the list if it exists. If list is empty, AWS_ERROR_LIST_EMPTY will be raised.
