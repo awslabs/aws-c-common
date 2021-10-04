@@ -225,6 +225,7 @@ static int s_test_buffer_advance(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
 
     uint8_t arr[16];
+    AWS_ZERO_ARRAY(arr);
     struct aws_byte_buf src_buf = aws_byte_buf_from_empty_array(arr, sizeof(arr));
 
     struct aws_byte_buf dst_buf = {0};
@@ -548,6 +549,7 @@ static int s_test_byte_buf_write_to_capacity(struct aws_allocator *allocator, vo
     (void)ctx;
 
     uint8_t buf_storage[5];
+    AWS_ZERO_ARRAY(buf_storage);
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(buf_storage, sizeof(buf_storage));
 
     /* Test a write to a fresh buffer with plenty of space */
@@ -758,6 +760,19 @@ static int s_test_byte_buf_reserve(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_reserve, s_test_byte_buf_reserve)
+
+static int s_test_byte_buf_reserve_initial_capacity_zero(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_byte_buf buffer;
+    AWS_ZERO_STRUCT(buffer);
+    size_t capacity = 1;
+    ASSERT_SUCCESS(aws_byte_buf_init(&buffer, allocator, 0));
+    ASSERT_SUCCESS(aws_byte_buf_reserve(&buffer, capacity));
+    ASSERT_TRUE(buffer.capacity == capacity);
+    aws_byte_buf_clean_up(&buffer);
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reserve_initial_capacity_zero, s_test_byte_buf_reserve_initial_capacity_zero)
 
 static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
