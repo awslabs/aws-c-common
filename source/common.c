@@ -236,12 +236,6 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_DIVIDE_BY_ZERO,
         "Attempt to divide a number by zero."),
     AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_PARSE_FATAL_ERROR,
-    "Fatal error encoutered while parsing"),
-    AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_PARSE_RECOVERABLE_ERROR,
-    "Error encountered while parsing, but the parser was able to resume"),
-    AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_FILE_HANDLE,
     "Invalid file handle"),
 };
@@ -264,7 +258,6 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_THREAD, "thread", "Subject for logging thread related functions."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_MEMTRACE, "memtrace", "Output from the aws_mem_trace_dump function"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
-    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_PROFILE, "profile", "Profile parsing"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_IO, "common-io", "Common IO utilities"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_BUS, "bus", "Message bus"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_TEST, "test", "Unit/integration testing"),
