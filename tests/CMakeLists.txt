@@ -465,6 +465,7 @@ add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
 add_test_case(aws_fopen_non_ascii_read_existing_file_test)
 add_test_case(aws_fopen_non_ascii_test)
 add_test_case(aws_fopen_ascii_test)
+add_test_case(test_home_directory_not_null)
 
 add_test_case(promise_test_wait_forever)
 add_test_case(promise_test_wait_for_a_bit)

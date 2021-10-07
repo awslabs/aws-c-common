@@ -81,6 +81,7 @@ enum aws_common_log_subject {
     AWS_LS_COMMON_THREAD,
     AWS_LS_COMMON_MEMTRACE,
     AWS_LS_COMMON_XML_PARSER,
+    AWS_LS_COMMON_IO,
     AWS_LS_COMMON_BUS,
     AWS_LS_COMMON_TEST,
 

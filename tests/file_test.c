@@ -4,6 +4,7 @@
  */
 #include "fcntl.h"
 #include <aws/common/file.h>
+#include <aws/common/string.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -75,3 +76,16 @@ static int s_aws_fopen_ascii_test_fn(struct aws_allocator *allocator, void *ctx)
 }
 
 AWS_TEST_CASE(aws_fopen_ascii_test, s_aws_fopen_ascii_test_fn)
+
+static int s_test_home_directory_not_null(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_string *home_directory = aws_get_home_directory(allocator);
+    ASSERT_TRUE(home_directory != NULL);
+
+    aws_string_destroy(home_directory);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_home_directory_not_null, s_test_home_directory_not_null);
