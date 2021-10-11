@@ -84,9 +84,9 @@ static int total_failures;
         return FAILURE;                                                                                                \
     } while (0)
 
-#define FAIL(format, ...)                                                                                              \
+#define FAIL(...)                                                                                                      \
     do {                                                                                                               \
-        PRINT_FAIL_INTERNAL0(format, ##__VA_ARGS__);                                                                   \
+        PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                             \
         POSTFAIL_INTERNAL();                                                                                           \
     } while (0)
 

@@ -142,6 +142,75 @@ static int s_array_list_order_push_back_pop_back_fn(struct aws_allocator *alloca
 
 AWS_TEST_CASE(array_list_order_push_back_pop_back_test, s_array_list_order_push_back_pop_back_fn)
 
+static int s_array_list_order_push_front_pop_front_fn(struct aws_allocator *allocator, void *ctx) {
+
+    (void)ctx;
+
+    struct aws_array_list list;
+
+    size_t list_size = 4;
+    size_t init_size = 2;
+    int first = 1, second = 2, third = 3, fourth = 4;
+
+    ASSERT_SUCCESS(
+        aws_array_list_init_dynamic(&list, allocator, init_size, sizeof(int)),
+        "List setup should have been successful. err code %d",
+        aws_last_error());
+    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERT_INT_EQUALS(
+        init_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)init_size * sizeof(int));
+
+    ASSERT_SUCCESS(
+        aws_array_list_push_front(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(
+        aws_array_list_push_front(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(
+        aws_array_list_push_front(&list, (void *)&third), "List push failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(
+        aws_array_list_push_front(&list, (void *)&fourth), "List push failed with error code %d", aws_last_error());
+
+    ASSERT_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
+    ASSERT_INT_EQUALS(
+        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+
+    int item = 0;
+    ASSERT_SUCCESS(
+        aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERT_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 1);
+    ASSERT_INT_EQUALS(
+        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+
+    ASSERT_SUCCESS(
+        aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERT_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 2);
+    ASSERT_INT_EQUALS(
+        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+
+    ASSERT_SUCCESS(
+        aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERT_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 3);
+    ASSERT_INT_EQUALS(
+        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+
+    ASSERT_SUCCESS(
+        aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
+    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERT_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 4);
+    ASSERT_INT_EQUALS(
+        list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
+
+    aws_array_list_clean_up(&list);
+    return 0;
+}
+AWS_TEST_CASE(array_list_order_push_front_pop_front_test, s_array_list_order_push_front_pop_front_fn)
+
 static int s_array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
