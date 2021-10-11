@@ -47,7 +47,7 @@ struct aws_string {
     const uint8_t bytes[1];
 };
 
-#ifdef _WIN32
+#ifdef AWS_OS_WINDOWS
 struct aws_wstring {
     struct aws_allocator* const allocator;
     /* number of characters in the string not including the null terminator. */
@@ -55,7 +55,7 @@ struct aws_wstring {
     /* give this a storage specifier for C++ purposes. It will likely be larger after init. */
     const wchar_t bytes[1];
 };
-#endif /* _WIN32 */
+#endif /* AWS_OS_WINDOWS */
 
 #ifdef _MSC_VER
 #    pragma warning(pop)
@@ -63,7 +63,7 @@ struct aws_wstring {
 
 AWS_EXTERN_C_BEGIN
 
-#ifdef _WIN32
+#ifdef AWS_OS_WINDOWS
 /**
  * For windows only. Converts `to_convert` to a windows whcar format (UTF-16) for use with windows OS interop.
  *
@@ -159,7 +159,7 @@ AWS_COMMON_API size_t aws_wstring_size_bytes(const struct aws_wstring* str);
  */
 AWS_COMMON_API bool aws_wstring_is_valid(const struct aws_wstring* str);
 
-#endif /* _WIN32 */
+#endif /* AWS_OS_WINDOWS */
 
 /**
  * Returns true if bytes of string are the same, false otherwise.

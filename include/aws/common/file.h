@@ -6,9 +6,10 @@
  */
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
+#include <aws/common/platform.h>
 #include <stdio.h>
 
-#ifdef _WIN32
+#ifdef AWS_OS_WINDOWS
 #    define AWS_PATH_DELIM '\\'
 #    define AWS_PATH_DELIM_STR "\\"
 #else
@@ -98,7 +99,7 @@ AWS_COMMON_API int aws_directory_or_file_move(const struct aws_string *from, con
 /**
  * Traverse a directory starting at path.
  *
- * If you want the traversal to recursive the entire directory, pass recursive as true. Passing false for this parameter
+ * If you want the traversal to recurse the entire directory, pass recursive as true. Passing false for this parameter
  * will only iterate the contents of the directory, but will not descend into any directories it encounters.
  *
  * If recursive is set to true, the traversal is performed post-order, depth-first
