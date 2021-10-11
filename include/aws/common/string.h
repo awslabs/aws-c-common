@@ -46,6 +46,17 @@ struct aws_string {
     /* give this a storage specifier for C++ purposes. It will likely be larger after init. */
     const uint8_t bytes[1];
 };
+
+#ifdef _WIN32
+struct aws_wstring {
+    struct aws_allocator* const allocator;
+    /* number of characters in the string not including the null terminator. */
+    const size_t len;
+    /* give this a storage specifier for C++ purposes. It will likely be larger after init. */
+    const wchar_t bytes[1];
+};
+#endif /* _WIN32 */
+
 #ifdef _MSC_VER
 #    pragma warning(pop)
 #endif
@@ -60,7 +71,7 @@ AWS_EXTERN_C_BEGIN
  *
  * returns NULL on failure.
  */
-AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_str(
+AWS_COMMON_API struct aws_wstring * aws_string_convert_to_wstring(
     struct aws_allocator *allocator,
     const struct aws_string *to_convert);
 
@@ -71,9 +82,15 @@ AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_str(
  *
  * returns NULL on failure.
  */
-AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
+AWS_COMMON_API struct aws_wstring *aws_string_convert_to_wchar_from_byte_cursor(
     struct aws_allocator *allocator,
     const struct aws_byte_cursor *to_convert);
+
+/**
+ * clean up str.
+ */
+AWS_COMMON_API
+void aws_wstring_destroy(struct aws_wstring* str);
 
 /**
  * For windows only. Converts `to_convert` from a windows whcar format (UTF-16) to UTF-8.
@@ -84,7 +101,7 @@ AWS_COMMON_API struct aws_string *aws_string_convert_to_wchar_from_byte_cursor(
  */
 AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_str(
     struct aws_allocator *allocator,
-    const struct aws_string *to_convert);
+    const struct aws_wstring *to_convert);
 
 /**
  * For windows only. Converts `to_convert` from a windows whcar format (UTF-16) to UTF-8.
@@ -109,14 +126,38 @@ AWS_COMMON_API struct aws_string *aws_string_convert_from_wchar_c_str(
     const wchar_t *to_convert);
 
 /**
+ * Create a new wide string from a byte cursor. This assumes that w_str_cur is already in utf-16.
+ * 
+ * returns NULL on failure.
+ */
+AWS_COMMON_API struct aws_wstring* aws_wstring_new_from_cursor(struct aws_allocator *allocator, const struct aws_byte_cursor* w_str_cur);
+
+/**
+ * Create a new wide string from a utf-16 string enclosing array. The length field is in number of characters not counting the null terminator.
+ * 
+ * returns NULL on failure.
+ */
+AWS_COMMON_API struct aws_wstring* aws_wstring_new_from_array(struct aws_allocator *allocator, const wchar_t* w_str, size_t length);
+
+/**
  * Returns a wchar_t * pointer for use with windows OS interop.
  */
-AWS_COMMON_API const wchar_t *aws_string_wchar_c_str(const struct aws_string *str);
+AWS_COMMON_API const wchar_t *aws_wstring_c_str(const struct aws_wstring *str);
 
 /**
  * Returns the number of characters in the wchar string. NOTE: This is not the length in bytes or the buffer size.
  */
-AWS_COMMON_API size_t aws_string_wchar_num_chars(const struct aws_string *str);
+AWS_COMMON_API size_t aws_wstring_num_chars(const struct aws_wstring *str);
+
+/**
+ * Returns the length in bytes for the buffer.
+ */
+AWS_COMMON_API size_t aws_wstring_size_bytes(const struct aws_wstring* str);
+
+/**
+ * Verifies that str is a valid string. Returns true if it's valid and false otherwise.
+ */
+AWS_COMMON_API bool aws_wstring_is_valid(const struct aws_wstring* str);
 
 #endif /* _WIN32 */
 

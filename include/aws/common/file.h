@@ -135,7 +135,7 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator);
  * Returns true if a file or path exists, otherwise, false.
  */
 AWS_COMMON_API
-bool aws_path_exists(const char *path);
+bool aws_path_exists(const struct aws_string *path);
 
 /*
  * Wrapper for highest-resolution platform-dependent seek implementation.

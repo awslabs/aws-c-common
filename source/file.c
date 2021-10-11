@@ -10,17 +10,18 @@
 
 #include <errno.h>
 
-FILE *aws_fopen(const char *file_path, const char *mode) {
-    struct aws_string *file_path_str = aws_string_new_from_c_str(aws_default_allocator(), file_path);
-    struct aws_string *mode_str = aws_string_new_from_c_str(aws_default_allocator(), mode);
+FILE* aws_fopen(const char* file_path, const char* mode) {
+    struct aws_string* file_path_str = aws_string_new_from_c_str(aws_default_allocator(), file_path);
+    struct aws_string* mode_str = aws_string_new_from_c_str(aws_default_allocator(), mode);
 
-    FILE *file = aws_fopen_safe(file_path_str, mode_str);
+    FILE* file = aws_fopen_safe(file_path_str, mode_str);
     aws_string_destroy(mode_str);
     aws_string_destroy(file_path_str);
 
     return file;
+}
 
-    int aws_byte_buf_init_from_file(struct aws_byte_buf * out_buf, struct aws_allocator * alloc, const char *filename) {
+int aws_byte_buf_init_from_file(struct aws_byte_buf * out_buf, struct aws_allocator * alloc, const char *filename) {
         AWS_ZERO_STRUCT(*out_buf);
         FILE *fp = aws_fopen(filename, "rb");
 
@@ -69,5 +70,4 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
 
     bool aws_is_any_directory_separator(char value) {
         return value == '\\' || value == '/';
->>>>>>> main
     }

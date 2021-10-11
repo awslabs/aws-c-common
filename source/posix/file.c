@@ -236,9 +236,9 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
     return NULL;
 }
 
-bool aws_path_exists(const char *path) {
+bool aws_path_exists(const struct aws_string *path) {
     struct stat buffer;
-    return stat(path, &buffer) == 0;
+    return stat(aws_string_c_str(path), &buffer) == 0;
 }
 
 int aws_fseek(FILE *file, int64_t offset, int whence) {

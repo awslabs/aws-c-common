@@ -10,16 +10,18 @@
 #include <errno.h>
 #include <stdio.h>
 #include <windows.h>
+#include <Shlwapi.h>
+#include <io.h>
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    struct aws_string *w_file_path = aws_string_convert_to_wchar_str(aws_default_allocator(), file_path);
-    struct aws_string *w_mode = aws_string_convert_to_wchar_str(aws_default_allocator(), mode);
+    struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
+    struct aws_wstring *w_mode = aws_string_convert_to_wstring(aws_default_allocator(), mode);
 
     FILE *file = NULL;
-    errno_t error = _wfopen_s(&file, aws_string_wchar_c_str(w_file_path), aws_string_wchar_c_str(w_mode));
+    errno_t error = _wfopen_s(&file, aws_wstring_c_str(w_file_path), aws_wstring_c_str(w_mode));
     /* actually handle the error correctly here. */
-    aws_string_destroy(w_mode);
-    aws_string_destroy(w_file_path);
+    aws_wstring_destroy(w_mode);
+    aws_wstring_destroy(w_file_path);
 
     if (error) {
         aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
@@ -28,11 +30,11 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
     return file;
 }
 
-struct aws_string *s_to_long_path(struct aws_allocator *allocator, const struct aws_string *path) {
+struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct aws_wstring *path) {
 
     wchar_t prefix[] = L"\\\\?\\";
     size_t prefix_size = sizeof(prefix);
-    if (path->len > MAX_PATH - prefix_size) {
+    if (aws_wstring_num_chars(path) > MAX_PATH - prefix_size) {
 
         struct aws_byte_buf new_path;
         aws_byte_buf_init(&new_path, allocator, sizeof(prefix) + path->len + 2);
@@ -40,25 +42,25 @@ struct aws_string *s_to_long_path(struct aws_allocator *allocator, const struct 
         struct aws_byte_cursor prefix_cur = aws_byte_cursor_from_array((uint8_t *)prefix, sizeof(prefix) - 2);
         aws_byte_buf_append_dynamic(&new_path, &prefix_cur);
 
-        struct aws_byte_cursor path_cur = aws_byte_cursor_from_array(aws_string_bytes(path), path->len);
+        struct aws_byte_cursor path_cur = aws_byte_cursor_from_array((uint8_t *)aws_wstring_c_str(path), path->len);
         aws_byte_buf_append_dynamic(&new_path, &path_cur);
 
-        struct aws_string *long_path = aws_string_new_from_buf(allocator, &new_path);
+        struct aws_wstring *long_path = aws_wstring_new_from_array(allocator, (wchar_t *)new_path.buffer, new_path.len / sizeof(wchar_t));
         aws_byte_buf_clean_up(&new_path);
 
         return long_path;
     }
 
-    return aws_string_new_from_string(allocator, path);
+    return aws_wstring_new_from_array(allocator, aws_wstring_c_str(path), aws_wstring_num_chars(path));
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
-    struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
-    aws_string_destroy(w_dir_path);
+    struct aws_wstring *w_dir_path = aws_string_convert_to_wstring(aws_default_allocator(), dir_path);
+    struct aws_wstring *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
+    aws_wstring_destroy(w_dir_path);
 
-    BOOL create_dir_res = CreateDirectoryW(aws_string_wchar_c_str(long_dir_path), NULL);
-    aws_string_destroy(long_dir_path);
+    BOOL create_dir_res = CreateDirectoryW(aws_wstring_c_str(long_dir_path), NULL);
+    aws_wstring_destroy(long_dir_path);
 
     int error = GetLastError();
     if (!create_dir_res) {
@@ -81,12 +83,12 @@ int aws_directory_create(const struct aws_string *dir_path) {
 }
 
 bool aws_directory_exists(const struct aws_string *dir_path) {
-    struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
-    aws_string_destroy(w_dir_path);
+    struct aws_wstring *w_dir_path = aws_string_convert_to_wstring(aws_default_allocator(), dir_path);
+    struct aws_wstring *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
+    aws_wstring_destroy(w_dir_path);
 
-    DWORD attributes = GetFileAttributesW(aws_string_wchar_c_str(long_dir_path));
-    aws_string_destroy(long_dir_path);
+    DWORD attributes = GetFileAttributesW(aws_wstring_c_str(long_dir_path));
+    aws_wstring_destroy(long_dir_path);
 
     return (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY));
 }
@@ -131,12 +133,12 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
         return AWS_OP_ERR;
     }
 
-    struct aws_string *w_dir_path = aws_string_convert_to_wchar_str(aws_default_allocator(), dir_path);
-    struct aws_string *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
-    aws_string_destroy(w_dir_path);
+    struct aws_wstring *w_dir_path = aws_string_convert_to_wstring(aws_default_allocator(), dir_path);
+    struct aws_wstring *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
+    aws_wstring_destroy(w_dir_path);
 
-    BOOL remove_dir_res = RemoveDirectoryW(aws_string_wchar_c_str(long_dir_path));
-    aws_string_destroy(long_dir_path);
+    BOOL remove_dir_res = RemoveDirectoryW(aws_wstring_c_str(long_dir_path));
+    aws_wstring_destroy(long_dir_path);
 
     if (!remove_dir_res) {
         int error = GetLastError();
@@ -155,12 +157,12 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
-    struct aws_string *w_file_path = aws_string_convert_to_wchar_str(aws_default_allocator(), file_path);
-    struct aws_string *long_file_path = s_to_long_path(aws_default_allocator(), w_file_path);
-    aws_string_destroy(w_file_path);
+    struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
+    struct aws_wstring *long_file_path = s_to_long_path(aws_default_allocator(), w_file_path);
+    aws_wstring_destroy(w_file_path);
 
-    BOOL remove_file_res = DeleteFileW(aws_string_wchar_c_str(long_file_path));
-    aws_string_destroy(long_file_path);
+    BOOL remove_file_res = DeleteFileW(aws_wstring_c_str(long_file_path));
+    aws_wstring_destroy(long_file_path);
 
     if (!remove_file_res) {
         int error = GetLastError();
@@ -179,17 +181,17 @@ int aws_file_delete(const struct aws_string *file_path) {
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
-    struct aws_string *w_from_path = aws_string_convert_to_wchar_str(aws_default_allocator(), from);
-    struct aws_string *long_from_path = s_to_long_path(aws_default_allocator(), w_from_path);
-    aws_string_destroy(w_from_path);
+    struct aws_wstring *w_from_path = aws_string_convert_to_wstring(aws_default_allocator(), from);
+    struct aws_wstring *long_from_path = s_to_long_path(aws_default_allocator(), w_from_path);
+    aws_wstring_destroy(w_from_path);
 
-    struct aws_string *w_to_path = aws_string_convert_to_wchar_str(aws_default_allocator(), to);
-    struct aws_string *long_to_path = s_to_long_path(aws_default_allocator(), w_to_path);
-    aws_string_destroy(w_to_path);
+    struct aws_wstring *w_to_path = aws_string_convert_to_wstring(aws_default_allocator(), to);
+    struct aws_wstring *long_to_path = s_to_long_path(aws_default_allocator(), w_to_path);
+    aws_wstring_destroy(w_to_path);
 
-    BOOL move_res = MoveFileW(aws_string_wchar_c_str(long_from_path), aws_string_wchar_c_str(long_to_path));
-    aws_string_destroy(long_from_path);
-    aws_string_destroy(long_to_path);
+    BOOL move_res = MoveFileW(aws_wstring_c_str(long_from_path), aws_wstring_c_str(long_to_path));
+    aws_wstring_destroy(long_from_path);
+    aws_wstring_destroy(long_to_path);
 
     if (!move_res) {
         int error = GetLastError();
@@ -213,23 +215,23 @@ int aws_directory_traverse(
     bool recursive,
     aws_on_directory_entry *on_entry,
     void *user_data) {
-    struct aws_string *w_path_wchar = aws_string_convert_to_wchar_str(allocator, path);
-    struct aws_string *long_path_wchar = s_to_long_path(allocator, w_path_wchar);
-    aws_string_destroy(w_path_wchar);
+    struct aws_wstring *w_path_wchar = aws_string_convert_to_wstring(allocator, path);
+    struct aws_wstring *long_path_wchar = s_to_long_path(allocator, w_path_wchar);
+    aws_wstring_destroy(w_path_wchar);
 
     /* windows doesn't fail in FindFirstFile if it's not a directory. Do the check here. We don't call the perfectly
        good function for this check because the string is already converted to utf-16 and it's trivial to reuse it. */
-    DWORD attributes = GetFileAttributesW(aws_string_wchar_c_str(long_path_wchar));
+    DWORD attributes = GetFileAttributesW(aws_wstring_c_str(long_path_wchar));
     if (!(attributes & FILE_ATTRIBUTE_DIRECTORY)) {
-        aws_string_destroy(long_path_wchar);
+        aws_wstring_destroy(long_path_wchar);
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
     WIN32_FIND_DATAW ffd;
-    HANDLE find_handle = FindFirstFileW(aws_string_wchar_c_str(long_path_wchar), &ffd);
+    HANDLE find_handle = FindFirstFileW(aws_wstring_c_str(long_path_wchar), &ffd);
 
     if (find_handle == INVALID_HANDLE_VALUE) {
-        aws_string_destroy(long_path_wchar);
+        aws_wstring_destroy(long_path_wchar);
 
         int error = GetLastError();
 
@@ -244,7 +246,7 @@ int aws_directory_traverse(
 
     /* create search path string */
     struct aws_byte_cursor path_wchar_cur =
-        aws_byte_cursor_from_array(aws_string_bytes(long_path_wchar), long_path_wchar->len);
+        aws_byte_cursor_from_array(aws_wstring_c_str(long_path_wchar), aws_wstring_size_bytes(long_path_wchar));
     struct aws_byte_buf search_wchar_buf;
     aws_byte_buf_init_copy_from_cursor(&search_wchar_buf, allocator, path_wchar_cur);
 
@@ -253,11 +255,12 @@ int aws_directory_traverse(
         aws_byte_cursor_from_array((uint8_t *)search_wchar_pattern, sizeof(search_wchar_pattern));
 
     aws_byte_buf_append_dynamic(&search_wchar_buf, &search_char_wchar);
+    struct aws_byte_cursor search_wchar_cur = aws_byte_cursor_from_buf(&search_wchar_buf);
     /* it's already converted to wide string */
-    struct aws_string *search_wchar_string = aws_string_new_from_buf(allocator, &search_wchar_buf);
+    struct aws_wstring* search_wchar_string = aws_wstring_new_from_cursor(allocator, &search_wchar_cur);
 
-    find_handle = FindFirstFileW(aws_string_wchar_c_str(search_wchar_string), &ffd);
-    aws_string_destroy(search_wchar_string);
+    find_handle = FindFirstFileW(aws_wstring_c_str(search_wchar_string), &ffd);
+    aws_wstring_destroy(search_wchar_string);
     aws_byte_buf_clean_up(&search_wchar_buf);
 
     int ret_val = AWS_OP_SUCCESS;
@@ -362,7 +365,7 @@ int aws_directory_traverse(
 
     } while (ret_val == AWS_OP_SUCCESS && FindNextFileW(find_handle, &ffd));
 
-    aws_string_destroy(long_path_wchar);
+    aws_wstring_destroy(long_path_wchar);
     if (find_handle != INVALID_HANDLE_VALUE) {
         FindClose(find_handle);
     }
@@ -435,8 +438,11 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
     return NULL;
 }
 
-bool aws_path_exists(const char *path) {
-    return PathFileExistsA(path) == TRUE;
+bool aws_path_exists(const struct aws_string *path) {
+    struct aws_wstring *wchar_path = aws_string_convert_to_wstring(aws_default_allocator(), path);
+    bool ret_val = PathFileExistsW(aws_wstring_c_str(wchar_path)) == TRUE;
+    aws_wstring_destroy(wchar_path);
+    return ret_val;
 }
 
 int aws_fseek(FILE *file, int64_t offset, int whence) {

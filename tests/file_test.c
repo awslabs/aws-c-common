@@ -290,6 +290,8 @@ static int s_directory_move_succeeds_test_fn(struct aws_allocator *allocator, vo
     ASSERT_FALSE(aws_directory_exists(path));
     ASSERT_TRUE(aws_directory_exists(to_path));
 
+    ASSERT_SUCCESS(aws_directory_delete(to_path, true));
+
     aws_string_destroy(to_path);
     aws_string_destroy(path);
     return AWS_OP_SUCCESS;
