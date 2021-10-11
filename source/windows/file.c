@@ -7,11 +7,11 @@
 #include <aws/common/file.h>
 #include <aws/common/string.h>
 
+#include <Shlwapi.h>
 #include <errno.h>
+#include <io.h>
 #include <stdio.h>
 #include <windows.h>
-#include <Shlwapi.h>
-#include <io.h>
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
     struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
@@ -45,7 +45,8 @@ struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct
         struct aws_byte_cursor path_cur = aws_byte_cursor_from_array((uint8_t *)aws_wstring_c_str(path), path->len);
         aws_byte_buf_append_dynamic(&new_path, &path_cur);
 
-        struct aws_wstring *long_path = aws_wstring_new_from_array(allocator, (wchar_t *)new_path.buffer, new_path.len / sizeof(wchar_t));
+        struct aws_wstring *long_path =
+            aws_wstring_new_from_array(allocator, (wchar_t *)new_path.buffer, new_path.len / sizeof(wchar_t));
         aws_byte_buf_clean_up(&new_path);
 
         return long_path;
@@ -257,7 +258,7 @@ int aws_directory_traverse(
     aws_byte_buf_append_dynamic(&search_wchar_buf, &search_char_wchar);
     struct aws_byte_cursor search_wchar_cur = aws_byte_cursor_from_buf(&search_wchar_buf);
     /* it's already converted to wide string */
-    struct aws_wstring* search_wchar_string = aws_wstring_new_from_cursor(allocator, &search_wchar_cur);
+    struct aws_wstring *search_wchar_string = aws_wstring_new_from_cursor(allocator, &search_wchar_cur);
 
     find_handle = FindFirstFileW(aws_wstring_c_str(search_wchar_string), &ffd);
     aws_wstring_destroy(search_wchar_string);
