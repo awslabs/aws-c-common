@@ -6,10 +6,10 @@
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
 #include <aws/common/string.h>
+#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <unistd.h>
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {

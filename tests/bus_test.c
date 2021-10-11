@@ -255,8 +255,8 @@ static int s_bus_async_test_send_multi_threaded(struct aws_allocator *allocator,
 
     /* test sending to a bunch of addresses from many threads */
     struct bus_test_ctx thread_ctx = {
-            .bus = bus,
-            .allocator = allocator,
+        .bus = bus,
+        .allocator = allocator,
     };
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_thread, threads, 8);
     for (int t = 0; t < AWS_ARRAY_SIZE(threads); ++t) {
@@ -423,7 +423,8 @@ static int s_bus_async_test_churn(struct aws_allocator *allocator, void *ctx) {
     size_t recv_count = aws_atomic_load_int(&s_bus_async_churn_data.recv_count);
     size_t fail_count = aws_atomic_load_int(&s_bus_async_churn_data.fail_count);
     size_t send_count = aws_atomic_load_int(&s_bus_async_churn_data.send_count);
-    AWS_LOGF_INFO(AWS_LS_COMMON_TEST, "BUS CHURN TEST: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
+    AWS_LOGF_INFO(
+        AWS_LS_COMMON_TEST, "BUS CHURN TEST: sent: %zu, recv: %zu, fail: %zu", send_count, recv_count, fail_count);
     /* Ensure SOME messages made it */
     ASSERT_TRUE(send_count > 0);
     ASSERT_TRUE(recv_count > 0);
