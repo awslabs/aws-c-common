@@ -18,6 +18,7 @@
 #endif
 
 struct aws_string;
+struct aws_directory_iterator;
 
 enum aws_file_type {
     AWS_FILE_TYPE_FILE = 1,
@@ -113,6 +114,38 @@ AWS_COMMON_API int aws_directory_traverse(
     bool recursive,
     aws_on_directory_entry *on_entry,
     void *user_data);
+
+/**
+ * Creates a read-only iterator of a directory starting at path. If path is invalid or there's any other error
+ * condition, NULL will be returned. Call aws_last_error() for the exact error in that case.
+ */
+AWS_COMMON_API struct aws_directory_iterator *aws_directory_entry_iterator_new(
+    struct aws_allocator *allocator,
+    const struct aws_string *path);
+
+/**
+ * Moves the iterator to the next entry. Returns AWS_OP_SUCCESS if another entry is available, or AWS_OP_ERR with
+ * AWS_ERROR_LIST_EMPTY as the value for aws_last_error() if no more entries are available.
+ */
+AWS_COMMON_API int aws_directory_entry_iterator_next(struct aws_directory_iterator *iterator);
+
+/**
+ * Moves the iterator to the previous entry. Returns AWS_OP_SUCCESS if another entry is available, or AWS_OP_ERR with
+ * AWS_ERROR_LIST_EMPTY as the value for aws_last_error() if no more entries are available.
+ */
+AWS_COMMON_API int aws_directory_entry_iterator_previous(struct aws_directory_iterator *iterator);
+
+/**
+ * Cleanup and deallocate iterator
+ */
+AWS_COMMON_API void aws_directory_entry_iterator_destroy(struct aws_directory_iterator *iterator);
+
+/**
+ * Gets the aws_directory_entry value for iterator at the current position. Returns NULL if the iterator contains no
+ * entries.
+ */
+AWS_COMMON_API const struct aws_directory_entry *aws_directory_entry_iterator_get_value(
+    const struct aws_directory_iterator *iterator);
 
 /**
  * Returns true iff the character is a directory separator on ANY supported platform.

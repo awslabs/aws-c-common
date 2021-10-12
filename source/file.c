@@ -5,6 +5,7 @@
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/file.h>
+#include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 
@@ -70,4 +71,101 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
 
 bool aws_is_any_directory_separator(char value) {
     return value == '\\' || value == '/';
+}
+
+struct aws_directory_iterator {
+    struct aws_linked_list list_data;
+    struct aws_allocator *allocator;
+    struct aws_linked_list_node *current_node;
+};
+
+struct directory_entry_value {
+    struct aws_directory_entry entry;
+    struct aws_byte_buf path;
+    struct aws_byte_buf relative_path;
+    struct aws_linked_list_node node;
+};
+
+static bool s_directory_iterator_directory_entry(const struct aws_directory_entry *entry, void *user_data) {
+    struct aws_directory_iterator *iterator = user_data;
+    struct directory_entry_value *value = aws_mem_calloc(iterator->allocator, 1, sizeof(struct directory_entry_value));
+
+    value->entry = *entry;
+    aws_byte_buf_init_copy_from_cursor(&value->path, iterator->allocator, entry->path);
+    value->entry.path = aws_byte_cursor_from_buf(&value->path);
+    aws_byte_buf_init_copy_from_cursor(&value->relative_path, iterator->allocator, entry->relative_path);
+    value->entry.relative_path = aws_byte_cursor_from_buf(&value->relative_path);
+    aws_linked_list_push_back(&iterator->list_data, &value->node);
+
+    return true;
+}
+
+struct aws_directory_iterator *aws_directory_entry_iterator_new(
+    struct aws_allocator *allocator,
+    const struct aws_string *path) {
+    struct aws_directory_iterator *iterator = aws_mem_acquire(allocator, sizeof(struct aws_directory_iterator));
+    iterator->allocator = allocator;
+    aws_linked_list_init(&iterator->list_data);
+
+    /* the whole point of this iterator is to avoid recursion, so let's do that by passing recurse as false. */
+    if (AWS_OP_SUCCESS ==
+        aws_directory_traverse(allocator, path, false, s_directory_iterator_directory_entry, iterator)) {
+        if (!aws_linked_list_empty(&iterator->list_data)) {
+            iterator->current_node = aws_linked_list_front(&iterator->list_data);
+        }
+        return iterator;
+    }
+
+    aws_mem_release(allocator, iterator);
+    return NULL;
+}
+
+int aws_directory_entry_iterator_next(struct aws_directory_iterator *iterator) {
+    struct aws_linked_list_node *node = iterator->current_node;
+
+    if (!node || node->next == aws_linked_list_end(&iterator->list_data)) {
+        return aws_raise_error(AWS_ERROR_LIST_EMPTY);
+    }
+
+    iterator->current_node = aws_linked_list_next(node);
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_directory_entry_iterator_previous(struct aws_directory_iterator *iterator) {
+    struct aws_linked_list_node *node = iterator->current_node;
+
+    if (!node || node == aws_linked_list_begin(&iterator->list_data)) {
+        return aws_raise_error(AWS_ERROR_LIST_EMPTY);
+    }
+
+    iterator->current_node = aws_linked_list_prev(node);
+
+    return AWS_OP_SUCCESS;
+}
+
+void aws_directory_entry_iterator_destroy(struct aws_directory_iterator *iterator) {
+    while (!aws_linked_list_empty(&iterator->list_data)) {
+        struct aws_linked_list_node *node = aws_linked_list_pop_front(&iterator->list_data);
+        struct directory_entry_value *value = AWS_CONTAINER_OF(node, struct directory_entry_value, node);
+
+        aws_byte_buf_clean_up(&value->path);
+        aws_byte_buf_clean_up(&value->relative_path);
+
+        aws_mem_release(iterator->allocator, value);
+    }
+
+    aws_mem_release(iterator->allocator, iterator);
+}
+
+const struct aws_directory_entry *aws_directory_entry_iterator_get_value(
+    const struct aws_directory_iterator *iterator) {
+    struct aws_linked_list_node *node = iterator->current_node;
+
+    if (!iterator->current_node) {
+        return NULL;
+    }
+
+    struct directory_entry_value *value = AWS_CONTAINER_OF(node, struct directory_entry_value, node);
+    return &value->entry;
 }

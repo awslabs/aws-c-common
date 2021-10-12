@@ -155,6 +155,85 @@ static int s_directory_traversal_test_fn(struct aws_allocator *allocator, void *
 
 AWS_TEST_CASE(directory_traversal_test, s_directory_traversal_test_fn)
 
+static int s_directory_iteration_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_string *path = aws_string_new_from_c_str(allocator, "dir_traversal_test");
+
+    struct aws_directory_iterator *iterator = aws_directory_entry_iterator_new(allocator, path);
+    ASSERT_NOT_NULL(iterator);
+    const struct aws_directory_entry *first_entry = aws_directory_entry_iterator_get_value(iterator);
+    ASSERT_NOT_NULL(first_entry);
+
+    bool first_child_dir_found = false;
+    bool root_file_found = false;
+
+    do {
+        const struct aws_directory_entry *entry = aws_directory_entry_iterator_get_value(iterator);
+        if (entry->file_type == AWS_FILE_TYPE_DIRECTORY) {
+            struct aws_byte_cursor first_child_dir_path_cur = aws_byte_cursor_from_c_str(s_first_child_dir_path);
+            ASSERT_BIN_ARRAYS_EQUALS(
+                first_child_dir_path_cur.ptr,
+                first_child_dir_path_cur.len,
+                entry->relative_path.ptr,
+                entry->relative_path.len);
+            first_child_dir_found = true;
+
+            struct aws_string *next_path = aws_string_new_from_cursor(allocator, &entry->relative_path);
+            struct aws_directory_iterator *next_iter = aws_directory_entry_iterator_new(allocator, next_path);
+            aws_string_destroy(next_path);
+            ASSERT_NOT_NULL(next_iter);
+
+            entry = aws_directory_entry_iterator_get_value(next_iter);
+            struct aws_byte_cursor first_child_file_path_cur = aws_byte_cursor_from_c_str(s_first_child_file_path);
+            ASSERT_BIN_ARRAYS_EQUALS(
+                first_child_file_path_cur.ptr,
+                first_child_file_path_cur.len,
+                entry->relative_path.ptr,
+                entry->relative_path.len);
+            ASSERT_INT_EQUALS(AWS_FILE_TYPE_FILE, entry->file_type);
+
+            ASSERT_ERROR(AWS_ERROR_LIST_EMPTY, aws_directory_entry_iterator_next(next_iter));
+            aws_directory_entry_iterator_destroy(next_iter);
+        } else {
+            struct aws_byte_cursor root_child_file_path_cur = aws_byte_cursor_from_c_str(s_root_child_path);
+            ASSERT_BIN_ARRAYS_EQUALS(
+                root_child_file_path_cur.ptr,
+                root_child_file_path_cur.len,
+                entry->relative_path.ptr,
+                entry->relative_path.len);
+            ASSERT_INT_EQUALS(AWS_FILE_TYPE_FILE, entry->file_type);
+            root_file_found = true;
+        }
+    } while (aws_directory_entry_iterator_next(iterator) == AWS_OP_SUCCESS);
+
+    ASSERT_ERROR(AWS_ERROR_LIST_EMPTY, aws_directory_entry_iterator_next(iterator));
+    ASSERT_SUCCESS(aws_directory_entry_iterator_previous(iterator));
+    ASSERT_PTR_EQUALS(first_entry, aws_directory_entry_iterator_get_value(iterator));
+    aws_directory_entry_iterator_destroy(iterator);
+    aws_string_destroy(path);
+
+    ASSERT_TRUE(root_file_found);
+    ASSERT_TRUE(first_child_dir_found);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(directory_iteration_test, s_directory_iteration_test_fn)
+
+static int s_directory_iteration_non_existent_directory_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_string *path = aws_string_new_from_c_str(allocator, "dir_traversal_test_non_existent");
+
+    struct aws_directory_iterator *iterator = aws_directory_entry_iterator_new(allocator, path);
+    ASSERT_NULL(iterator);
+    ASSERT_INT_EQUALS(aws_last_error(), AWS_ERROR_FILE_INVALID_PATH);
+
+    aws_string_destroy(path);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(directory_iteration_non_existent_directory_test, s_directory_iteration_non_existent_directory_test_fn)
+
 struct directory_traversal_abort_test_data {
     int times_called;
 };
