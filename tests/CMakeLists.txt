@@ -441,12 +441,6 @@ add_test_case(max_io_handles_sanity_check_test)
 add_test_case(run_command_test_success)
 add_test_case(run_command_test_bad_command)
 
-add_test_case(parse_resource_name_test)
-add_test_case(parse_resource_name_failures_test)
-add_test_case(resource_name_tostring_test)
-add_test_case(resource_name_tostring_failure_test)
-add_test_case(resource_name_length_test)
-
 add_test_case(cpuid_test)
 
 add_test_case(xml_parser_root_with_text)
@@ -465,6 +459,7 @@ add_test_case(test_scheduler_cancellation_for_pending_scheduled_task)
 add_test_case(aws_fopen_non_ascii_read_existing_file_test)
 add_test_case(aws_fopen_non_ascii_test)
 add_test_case(aws_fopen_ascii_test)
+add_test_case(test_home_directory_not_null)
 
 add_test_case(promise_test_wait_forever)
 add_test_case(promise_test_wait_for_a_bit)
