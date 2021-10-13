@@ -173,6 +173,9 @@ int aws_array_list_push_front(struct aws_array_list *AWS_RESTRICT list, const vo
     if (err_code && aws_last_error() == AWS_ERROR_INVALID_INDEX && !list->alloc) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return aws_raise_error(AWS_ERROR_LIST_EXCEEDS_MAX_SIZE);
+    } else if (err_code) {
+        AWS_POSTCONDITION(aws_array_list_is_valid(list));
+        return err_code;
     }
     if (orig_len) {
         memmove((uint8_t *)list->data + list->item_size, list->data, orig_len * list->item_size);
