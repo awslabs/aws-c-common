@@ -1,0 +1,1 @@
+dir_traversal_test->first_child_dir->child.txt

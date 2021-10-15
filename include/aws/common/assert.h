@@ -19,6 +19,24 @@ void aws_fatal_assert(const char *cond_str, const char *file, int line) AWS_ATTR
 AWS_EXTERN_C_END
 
 #if defined(CBMC)
+#    define AWS_PANIC_OOM(mem, msg)                                                                                    \
+        do {                                                                                                           \
+            if (!(mem)) {                                                                                              \
+                fprintf(stderr, "%s: %s, line %d", msg, __FILE__, __LINE__);                                           \
+                exit(-1);                                                                                              \
+            }                                                                                                          \
+        } while (0)
+#else
+#    define AWS_PANIC_OOM(mem, msg)                                                                                    \
+        do {                                                                                                           \
+            if (!(mem)) {                                                                                              \
+                fprintf(stderr, "%s", msg);                                                                            \
+                abort();                                                                                               \
+            }                                                                                                          \
+        } while (0)
+#endif /* defined(CBMC) */
+
+#if defined(CBMC)
 #    define AWS_ASSUME(cond) __CPROVER_assume(cond)
 #elif defined(_MSC_VER)
 #    define AWS_ASSUME(cond) __assume(cond)

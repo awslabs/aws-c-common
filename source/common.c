@@ -237,7 +237,15 @@ static struct aws_error_info errors[] = {
         "Attempt to divide a number by zero."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_FILE_HANDLE,
-    "Invalid file handle"),
+        "Invalid file handle"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_OPERATION_INTERUPTED,
+        "The operation was interrupted."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_DIRECTORY_NOT_EMPTY,
+        "An operation on a directory was attempted which is not allowed when the directory is not empty."
+    ),
 };
 /* clang-format on */
 
