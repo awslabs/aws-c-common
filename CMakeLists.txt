@@ -128,7 +128,7 @@ if (USE_CPU_EXTENSIONS)
             file(GLOB AWS_COMMON_ARCH_SRC
                 "source/arch/arm/msvc/*.c"
                 )
-        else()
+        elseif (AWS_HAVE_AUXV)
             file(GLOB AWS_COMMON_ARCH_SRC
                 "source/arch/arm/asm/*.c"
                 )
