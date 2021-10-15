@@ -70,7 +70,7 @@ struct aws_wstring *aws_wstring_new_from_cursor(
 
 struct aws_wstring *aws_wstring_new_from_array(struct aws_allocator *allocator, const wchar_t *w_str, size_t len) {
     AWS_PRECONDITION(allocator);
-    AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
+    AWS_PRECONDITION(AWS_MEM_IS_READABLE(w_str, len));
 
     size_t str_byte_len = 0;
     size_t malloc_size = 0;
@@ -103,7 +103,7 @@ bool aws_wstring_is_valid(const struct aws_wstring *str) {
 }
 
 void aws_wstring_destroy(struct aws_wstring *str) {
-    AWS_PRECONDITION(!str || aws_string_is_valid(str));
+    AWS_PRECONDITION(!str || aws_wstring_is_valid(str));
     if (str && str->allocator) {
         aws_mem_release(str->allocator, str);
     }
