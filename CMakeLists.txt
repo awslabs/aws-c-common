@@ -112,14 +112,14 @@ if (USE_CPU_EXTENSIONS)
     if (AWS_ARCH_INTEL)
         if (MSVC)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/intel/*.c"
+                "source/arch/intel/cpuid.c"
                 "source/arch/intel/msvc/*.c"
                 )
 
             source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
         else()
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/intel/*.c"
+                "source/arch/intel/cpuid.c"
                 "source/arch/intel/asm/*.c"
                 )
         endif()
