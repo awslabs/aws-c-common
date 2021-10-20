@@ -201,6 +201,7 @@ struct aws_string *nondet_allocate_string_bounded_length(size_t max_size) {
 }
 
 struct aws_string *ensure_string_is_allocated(size_t len) {
+    __CPROVER_assume(len <= SIZE_MAX - 1 - sizeof(struct aws_string));
     struct aws_string *str = malloc(sizeof(struct aws_string) + len + 1);
     if (str == NULL) {
         return NULL;
