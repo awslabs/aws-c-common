@@ -9,6 +9,9 @@ option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs w
 # In the current (11/2/21) state of mingw64, the packaged gcc is not capable of emitting properly aligned avx2 instructions under certain circumstances.
 # This leads to crashes for windows builds using mingw64 when invoking the avx2-enabled versions of certain functions.  Until we can find a better 
 # work-around (in theory that inline nature of encode_stride should address this, but it doesn't in practice), disable avx2 (and all other extensions) in mingw builds.
+#
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
+#
 if (MINGW)
     message(STATUS "MINGW detected!  Disabling avx2 and other CPU extensions");
     set(USE_CPU_EXTENSIONS OFF)
