@@ -13,7 +13,7 @@ option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs w
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
 #
 if (MINGW)
-    message(STATUS "MINGW detected!  Disabling avx2 and other CPU extensions");
+    message(STATUS "MINGW detected!  Disabling avx2 and other CPU extensions")
     set(USE_CPU_EXTENSIONS OFF)
 endif()
 
