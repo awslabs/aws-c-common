@@ -13,6 +13,10 @@
 
 #include <inttypes.h>
 
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L## #s
+#define WIDEN(s) WIDEN2(s)
+
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
@@ -145,22 +149,21 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
 
 #if defined(AWS_OS_WINDOWS_DESKTOP)
 /* Check for functions that don't exist on ancient windows */
-static INIT_ONCE s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
+static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
 
 typedef DWORD(GetActiveProcessorCount_fn)(WORD);
 static GetActiveProcessorCount_fn *s_GetActiveProcessorCount;
 
-typedef WORD(GetActiveProcessorGroupCount_fn)(
-    void) static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
+typedef WORD(GetActiveProcessorGroupCount_fn)(void);
+static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
 
 static void s_check_active_processor_functions(void *user_data) {
     (void)user_data;
-    HMODULE kernel = GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"); /*TODO: do I need to "close" this?*/
 
-    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(kernel, "GetActiveProcessorCount");
-
-    s_GetActiveProcessorGroupCount =
-        (GetActiveProcessorGroupCount_fn *)GetProcAddress(kernel, "GetActiveProcessorGroupCount");
+    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
+    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
 }
 #endif
 
@@ -175,6 +178,7 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
     }
 
     unsigned group_count = s_GetActiveProcessorGroupCount();
+    // group_count = GetActiveProcessorGroupCount();
 
     unsigned total_processors_detected = 0;
     uint8_t group_with_desired_processor = 0;
@@ -182,7 +186,8 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
 
     /* for each group, keep counting til we find the group and the processor mask */
     for (uint8_t i = 0; i < group_count; ++group_count) {
-        DWORD processor_count_in_group = s_GetActiveProcessorCount((WORD)i);
+        // DWORD processor_count_in_group = s_GetActiveProcessorCount((WORD)i);
+        DWORD processor_count_in_group = GetActiveProcessorCount((WORD)i);
         if (total_processors_detected + processor_count_in_group > desired_cpu) {
             group_with_desired_processor = i;
             group_mask_for_desired_processor = (uint8_t)(desired_cpu - total_processors_detected);
@@ -196,7 +201,7 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
     return;
 
 no_processor_groups: /* TODO: is this too weird with the ifdef and the goto?*/
-#endif /* non-desktop has no processor groups */
+#endif               /* non-desktop has no processor groups */
     (void)desired_cpu;
     *group = 0;
     *proc_num = 0;
