@@ -147,10 +147,11 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
-#if defined(AWS_OS_WINDOWS_DESKTOP)
 /* Check for functions that don't exist on ancient windows */
-static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
+static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
 typedef DWORD(GetActiveProcessorCount_fn)(WORD);
 static GetActiveProcessorCount_fn *s_GetActiveProcessorCount;
 
@@ -205,6 +206,19 @@ no_processor_groups: /* TODO: is this too weird with the ifdef and the goto?*/
     (void)desired_cpu;
     *group = 0;
     *proc_num = 0;
+}
+
+typedef BOOL(SetThreadIdealProcessorEx_fn)(
+    HANDLE hThread,
+    PPROCESSOR_NUMBER lpIdealProcessor,
+    PPROCESSOR_NUMBER lpPreviousIdealProcessor);
+static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
+
+static void s_check_thread_ideal_processor_function(void *user_data) {
+    (void)user_data;
+
+    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
 }
 
 int aws_thread_launch(
@@ -274,23 +288,27 @@ int aws_thread_launch(
             (int8_t)set_group_val);
 
         if (set_group_val) {
-            PROCESSOR_NUMBER processor_number;
-            AWS_ZERO_STRUCT(processor_number);
-            processor_number.Group = (WORD)group;
-            processor_number.Number = proc_num;
+            /* Check for functions that don't exist on ancient Windows */
+            aws_thread_call_once(&s_check_functions_once, s_check_thread_ideal_processor_function, NULL);
+            if (s_SetThreadIdealProcessorEx) {
+                PROCESSOR_NUMBER processor_number;
+                AWS_ZERO_STRUCT(processor_number);
+                processor_number.Group = (WORD)group;
+                processor_number.Number = proc_num;
 
-            BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
-            AWS_LOGF_DEBUG(
-                AWS_LS_COMMON_THREAD,
-                "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
-                (void *)thread,
-                (int8_t)set_processor_val);
-            if (!set_processor_val) {
-                AWS_LOGF_WARN(
+                BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+                AWS_LOGF_DEBUG(
                     AWS_LS_COMMON_THREAD,
-                    "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
+                    "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
                     (void *)thread,
-                    (uint32_t)GetLastError());
+                    (int8_t)set_processor_val);
+                if (!set_processor_val) {
+                    AWS_LOGF_WARN(
+                        AWS_LS_COMMON_THREAD,
+                        "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
+                        (void *)thread,
+                        (uint32_t)GetLastError());
+                }
             }
         } else {
             AWS_LOGF_WARN(
