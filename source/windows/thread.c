@@ -152,18 +152,18 @@ static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
 #if defined(AWS_OS_WINDOWS_DESKTOP)
 static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
-typedef DWORD(WINAPI *GetActiveProcessorCount_fn)(WORD);
-static GetActiveProcessorCount_fn s_GetActiveProcessorCount;
+typedef DWORD WINAPI GetActiveProcessorCount_fn(WORD);
+static GetActiveProcessorCount_fn *s_GetActiveProcessorCount;
 
-typedef WORD(WINAPI *GetActiveProcessorGroupCount_fn)(void);
-static GetActiveProcessorGroupCount_fn s_GetActiveProcessorGroupCount;
+typedef WORD WINAPI GetActiveProcessorGroupCount_fn(void);
+static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
 
 static void s_check_active_processor_functions(void *user_data) {
     (void)user_data;
 
-    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn)GetProcAddress(
+    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
-    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn)GetProcAddress(
+    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
 }
 #endif
@@ -207,16 +207,16 @@ no_processor_groups: /* TODO: is this too weird with the ifdef and the goto?*/
     *proc_num = 0;
 }
 
-typedef BOOL(WINAPI *SetThreadIdealProcessorEx_fn)(
+typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
     HANDLE hThread,
     PPROCESSOR_NUMBER lpIdealProcessor,
     PPROCESSOR_NUMBER lpPreviousIdealProcessor);
-static SetThreadIdealProcessorEx_fn s_SetThreadIdealProcessorEx;
+static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
 
 static void s_check_thread_ideal_processor_function(void *user_data) {
     (void)user_data;
 
-    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn)GetProcAddress(
+    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
 }
 
