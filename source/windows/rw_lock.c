@@ -34,9 +34,27 @@ int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
+typedef BOOL WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
+static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
+typedef BOOL WINAPI TryAcquireSRWLockShared_fn(PSRWLOCK SRWLock);
+static TryAcquireSRWLockShared_fn *s_TryAcquireSRWLockShared;
 
-    if (TryAcquireSRWLockShared(AWSSRW_TO_WINDOWS(lock))) {
+static void s_check_try_lock_function(void *user_data) {
+    (void)user_data;
+
+    s_TryAcquireSRWLockExclusive = (TryAcquireSRWLockExclusive_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "TryAcquireSRWLockExclusive");
+    s_TryAcquireSRWLockShared = (TryAcquireSRWLockShared_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "TryAcquireSRWLockShared");
+}
+
+int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
+    (void)lock;
+    if (!s_TryAcquireSRWLockShared) {
+        return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+    }
+
+    if (s_TryAcquireSRWLockShared(AWSSRW_TO_WINDOWS(lock))) {
         return AWS_OP_SUCCESS;
     }
 
@@ -44,8 +62,12 @@ int aws_rw_lock_try_rlock(struct aws_rw_lock *lock) {
 }
 
 int aws_rw_lock_try_wlock(struct aws_rw_lock *lock) {
+    (void)lock;
+    if (!s_TryAcquireSRWLockExclusive) {
+        return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+    }
 
-    if (TryAcquireSRWLockExclusive(AWSSRW_TO_WINDOWS(lock))) {
+    if (s_TryAcquireSRWLockExclusive(AWSSRW_TO_WINDOWS(lock))) {
         return AWS_OP_SUCCESS;
     }
 

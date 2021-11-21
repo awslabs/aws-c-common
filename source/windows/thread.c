@@ -207,6 +207,12 @@ no_processor_groups: /* TODO: is this too weird with the ifdef and the goto?*/
     *proc_num = 0;
 }
 
+typedef BOOL WINAPI SetThreadGroupAffinity_fn(
+    HANDLE hThread,
+    const GROUP_AFFINITY *GroupAffinity,
+    PGROUP_AFFINITY PreviousGroupAffinity);
+static SetThreadGroupAffinity_fn *s_SetThreadGroupAffinity;
+
 typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
     HANDLE hThread,
     PPROCESSOR_NUMBER lpIdealProcessor,
@@ -216,6 +222,8 @@ static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
 static void s_check_thread_ideal_processor_function(void *user_data) {
     (void)user_data;
 
+    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadGroupAffinity");
     s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
 }
@@ -279,7 +287,12 @@ int aws_thread_launch(
             (uint64_t)group_afinity.Mask,
             (uint16_t)group_afinity.Group);
 
-        BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
+        /* Check for functions that don't exist on ancient Windows */
+        aws_thread_call_once(&s_check_functions_once, s_check_thread_ideal_processor_function, NULL);
+        if (!s_SetThreadGroupAffinity || !s_SetThreadIdealProcessorEx) {
+            goto no_thread_affinity;
+        }
+        BOOL set_group_val = s_SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
             "id=%p: SetThreadGroupAffinity() result %" PRIi8 ".",
@@ -287,28 +300,25 @@ int aws_thread_launch(
             (int8_t)set_group_val);
 
         if (set_group_val) {
-            /* Check for functions that don't exist on ancient Windows */
-            aws_thread_call_once(&s_check_functions_once, s_check_thread_ideal_processor_function, NULL);
-            if (s_SetThreadIdealProcessorEx) {
-                PROCESSOR_NUMBER processor_number;
-                AWS_ZERO_STRUCT(processor_number);
-                processor_number.Group = (WORD)group;
-                processor_number.Number = proc_num;
+            PROCESSOR_NUMBER processor_number;
+            AWS_ZERO_STRUCT(processor_number);
+            processor_number.Group = (WORD)group;
+            processor_number.Number = proc_num;
 
-                BOOL set_processor_val = s_SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
-                AWS_LOGF_DEBUG(
+            BOOL set_processor_val = s_SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
+                (void *)thread,
+                (int8_t)set_processor_val);
+            if (!set_processor_val) {
+                AWS_LOGF_WARN(
                     AWS_LS_COMMON_THREAD,
-                    "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
+                    "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
                     (void *)thread,
-                    (int8_t)set_processor_val);
-                if (!set_processor_val) {
-                    AWS_LOGF_WARN(
-                        AWS_LS_COMMON_THREAD,
-                        "id=%p: SetThreadIdealProcessorEx() failed with %" PRIx32 ".",
-                        (void *)thread,
-                        (uint32_t)GetLastError());
-                }
+                    (uint32_t)GetLastError());
             }
+
         } else {
             AWS_LOGF_WARN(
                 AWS_LS_COMMON_THREAD,
@@ -317,7 +327,7 @@ int aws_thread_launch(
                 (uint32_t)GetLastError());
         }
     }
-
+no_thread_affinity:
     /*
      * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
      * completion.

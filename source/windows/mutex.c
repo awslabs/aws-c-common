@@ -33,10 +33,22 @@ int aws_mutex_lock(struct aws_mutex *mutex) {
     return AWS_OP_SUCCESS;
 }
 
+typedef BOOL WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
+static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
+
+static void s_check_try_lock_function(void *user_data) {
+    (void)user_data;
+
+    s_TryAcquireSRWLockExclusive = (TryAcquireSRWLockExclusive_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "TryAcquireSRWLockExclusive");
+}
+
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
-    BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
-
+    if (!s_TryAcquireSRWLockExclusive) {
+        return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+    }
+    BOOL res = s_TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     /*
      * Per Windows documentation, a return value of zero indicates a failure to acquire the lock.
      */
