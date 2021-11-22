@@ -6,6 +6,17 @@ include(AwsCFlags)
 
 option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs with specific extensions (ex: SSE, AVX)." ON)
 
+# In the current (11/2/21) state of mingw64, the packaged gcc is not capable of emitting properly aligned avx2 instructions under certain circumstances.
+# This leads to crashes for windows builds using mingw64 when invoking the avx2-enabled versions of certain functions.  Until we can find a better 
+# work-around, disable avx2 (and all other extensions) in mingw builds.
+#
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
+#
+if (MINGW)
+    message(STATUS "MINGW detected!  Disabling avx2 and other CPU extensions")
+    set(USE_CPU_EXTENSIONS OFF)
+endif()
+
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
     #include <stdbool.h>
