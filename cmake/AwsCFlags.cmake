@@ -111,7 +111,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_FLAGS -Wno-long-long)
 
         # Always enable position independent code, since this code will always end up in a shared lib
-        check_c_compiler_flag(-fPIC HAS_FPIC_FLAG)
+        check_c_compiler_flag("-fPIC -Werror" HAS_FPIC_FLAG)
         if (HAS_FPIC_FLAG)
             list(APPEND AWS_C_FLAGS -fPIC)
         endif()
@@ -122,7 +122,7 @@ function(aws_set_common_properties target)
 
        # -moutline-atomics generates code for both older load/store exclusive atomics and also
        # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
-        check_c_compiler_flag(-moutline-atomics HAS_MOUTLINE_ATOMICS)
+        check_c_compiler_flag("-moutline-atomics -Werror" HAS_MOUTLINE_ATOMICS)
         if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
             list(APPEND AWS_C_FLAGS -moutline-atomics)
         endif()
@@ -158,7 +158,7 @@ function(aws_set_common_properties target)
     endif()
 
     if(NOT SET_PROPERTIES_NO_WGNU)
-        check_c_compiler_flag(-Wgnu HAS_WGNU)
+        check_c_compiler_flag("-Wgnu -Werror" HAS_WGNU)
         if(HAS_WGNU)
             # -Wgnu-zero-variadic-macro-arguments results in a lot of false positives
             list(APPEND AWS_C_FLAGS -Wgnu -Wno-gnu-zero-variadic-macro-arguments)
