@@ -20,7 +20,7 @@ bool aws_byte_buf_has_allocator(const struct aws_byte_buf *const buf) {
 void ensure_byte_buf_has_allocated_buffer_member(struct aws_byte_buf *const buf) {
     if (buf) {
         buf->allocator = (nondet_bool()) ? NULL : aws_default_allocator();
-        buf->buffer = malloc(sizeof(*(buf->buffer)) * buf->capacity);
+        buf->buffer = (buf->capacity == 0) ? NULL : malloc(sizeof(*(buf->buffer)) * buf->capacity);
     }
 }
 
