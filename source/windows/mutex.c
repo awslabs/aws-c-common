@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/mutex.h>
+#include <aws/common/thread.h>
 
 #include <Windows.h>
 
@@ -36,6 +37,8 @@ int aws_mutex_lock(struct aws_mutex *mutex) {
     AcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     return AWS_OP_SUCCESS;
 }
+/* Check for functions that don't exist on ancient windows */
+static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
 typedef BOOL WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
 static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
@@ -49,6 +52,9 @@ static void s_check_try_lock_function(void *user_data) {
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_functions_once, s_check_try_lock_function, NULL);
+
     if (!s_TryAcquireSRWLockExclusive) {
         return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
     }
