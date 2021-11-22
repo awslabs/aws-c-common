@@ -171,15 +171,17 @@ static void s_check_active_processor_functions(void *user_data) {
 /* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
    have processor groups per process. We need to find the mask in the correct group. */
 static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
+    (void)desired_cpu;
+    *group = 0;
+    *proc_num = 0;
 #if defined(AWS_OS_WINDOWS_DESKTOP)
     /* Check for functions that don't exist on ancient Windows */
     aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
     if (!s_GetActiveProcessorCount || !s_GetActiveProcessorGroupCount) {
-        goto no_processor_groups;
+        return;
     }
 
     unsigned group_count = s_GetActiveProcessorGroupCount();
-    // group_count = GetActiveProcessorGroupCount();
 
     unsigned total_processors_detected = 0;
     uint8_t group_with_desired_processor = 0;
@@ -199,12 +201,7 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
     *proc_num = group_mask_for_desired_processor;
     *group = group_with_desired_processor;
     return;
-
-no_processor_groups: /* TODO: is this too weird with the ifdef and the goto?*/
-#endif               /* non-desktop has no processor groups */
-    (void)desired_cpu;
-    *group = 0;
-    *proc_num = 0;
+#endif /* non-desktop has no processor groups */
 }
 
 typedef BOOL WINAPI SetThreadGroupAffinity_fn(
