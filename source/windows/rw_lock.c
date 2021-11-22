@@ -42,9 +42,9 @@ int aws_rw_lock_wlock(struct aws_rw_lock *lock) {
 /* Check for functions that don't exist on ancient windows */
 static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
-typedef BOOL WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
+typedef BOOLEAN WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
 static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
-typedef BOOL WINAPI TryAcquireSRWLockShared_fn(PSRWLOCK SRWLock);
+typedef BOOLEAN WINAPI TryAcquireSRWLockShared_fn(PSRWLOCK SRWLock);
 static TryAcquireSRWLockShared_fn *s_TryAcquireSRWLockShared;
 
 static void s_check_try_lock_function(void *user_data) {

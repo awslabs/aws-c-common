@@ -40,7 +40,7 @@ int aws_mutex_lock(struct aws_mutex *mutex) {
 /* Check for functions that don't exist on ancient windows */
 static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
-typedef BOOL WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
+typedef BOOLEAN WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
 static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
 
 static void s_check_try_lock_function(void *user_data) {
