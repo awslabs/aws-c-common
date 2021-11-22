@@ -8,6 +8,10 @@
 #include <Windows.h>
 #include <synchapi.h>
 
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L## #s
+#define WIDEN(s) WIDEN2(s)
+
 /* Ensure our rwlock and Windows' rwlocks are the same size */
 AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(struct aws_rw_lock));
 

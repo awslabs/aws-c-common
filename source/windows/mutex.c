@@ -7,6 +7,10 @@
 
 #include <Windows.h>
 
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L## #s
+#define WIDEN(s) WIDEN2(s)
+
 int aws_mutex_init(struct aws_mutex *mutex) {
     /* Ensure our mutex and Windows' mutex are the same size */
     AWS_STATIC_ASSERT(sizeof(SRWLOCK) == sizeof(mutex->mutex_handle));
