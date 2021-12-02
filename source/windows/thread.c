@@ -13,6 +13,10 @@
 
 #include <inttypes.h>
 
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L## #s
+#define WIDEN(s) WIDEN2(s)
+
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
@@ -143,11 +147,41 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
+/* Check for functions that don't exist on ancient windows */
+static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
+
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
+typedef DWORD WINAPI GetActiveProcessorCount_fn(WORD);
+static GetActiveProcessorCount_fn *s_GetActiveProcessorCount;
+
+typedef WORD WINAPI GetActiveProcessorGroupCount_fn(void);
+static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
+
+static void s_check_active_processor_functions(void *user_data) {
+    (void)user_data;
+
+    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
+    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
+}
+#endif
+
 /* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
    have processor groups per process. We need to find the mask in the correct group. */
 static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
+    (void)desired_cpu;
+    *group = 0;
+    *proc_num = 0;
 #if defined(AWS_OS_WINDOWS_DESKTOP)
-    unsigned group_count = GetActiveProcessorGroupCount();
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
+    if (!s_GetActiveProcessorCount || !s_GetActiveProcessorGroupCount) {
+        return;
+    }
+
+    unsigned group_count = s_GetActiveProcessorGroupCount();
 
     unsigned total_processors_detected = 0;
     uint8_t group_with_desired_processor = 0;
@@ -155,7 +189,7 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
 
     /* for each group, keep counting til we find the group and the processor mask */
     for (uint8_t i = 0; i < group_count; ++group_count) {
-        DWORD processor_count_in_group = GetActiveProcessorCount((WORD)i);
+        DWORD processor_count_in_group = s_GetActiveProcessorCount((WORD)i);
         if (total_processors_detected + processor_count_in_group > desired_cpu) {
             group_with_desired_processor = i;
             group_mask_for_desired_processor = (uint8_t)(desired_cpu - total_processors_detected);
@@ -166,11 +200,29 @@ static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_
 
     *proc_num = group_mask_for_desired_processor;
     *group = group_with_desired_processor;
-#else /* non-desktop has no processor groups */
-    (void)desired_cpu;
-    *group = 0;
-    *proc_num = 0;
-#endif
+    return;
+#endif /* non-desktop has no processor groups */
+}
+
+typedef BOOL WINAPI SetThreadGroupAffinity_fn(
+    HANDLE hThread,
+    const GROUP_AFFINITY *GroupAffinity,
+    PGROUP_AFFINITY PreviousGroupAffinity);
+static SetThreadGroupAffinity_fn *s_SetThreadGroupAffinity;
+
+typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
+    HANDLE hThread,
+    PPROCESSOR_NUMBER lpIdealProcessor,
+    PPROCESSOR_NUMBER lpPreviousIdealProcessor);
+static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
+
+static void s_check_thread_ideal_processor_function(void *user_data) {
+    (void)user_data;
+
+    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadGroupAffinity");
+    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
 }
 
 int aws_thread_launch(
@@ -232,7 +284,12 @@ int aws_thread_launch(
             (uint64_t)group_afinity.Mask,
             (uint16_t)group_afinity.Group);
 
-        BOOL set_group_val = SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
+        /* Check for functions that don't exist on ancient Windows */
+        aws_thread_call_once(&s_check_functions_once, s_check_thread_ideal_processor_function, NULL);
+        if (!s_SetThreadGroupAffinity || !s_SetThreadIdealProcessorEx) {
+            goto no_thread_affinity;
+        }
+        BOOL set_group_val = s_SetThreadGroupAffinity(thread->thread_handle, &group_afinity, NULL);
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
             "id=%p: SetThreadGroupAffinity() result %" PRIi8 ".",
@@ -245,7 +302,7 @@ int aws_thread_launch(
             processor_number.Group = (WORD)group;
             processor_number.Number = proc_num;
 
-            BOOL set_processor_val = SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
+            BOOL set_processor_val = s_SetThreadIdealProcessorEx(thread->thread_handle, &processor_number, NULL);
             AWS_LOGF_DEBUG(
                 AWS_LS_COMMON_THREAD,
                 "id=%p: SetThreadIdealProcessorEx() result %" PRIi8 ".",
@@ -258,6 +315,7 @@ int aws_thread_launch(
                     (void *)thread,
                     (uint32_t)GetLastError());
             }
+
         } else {
             AWS_LOGF_WARN(
                 AWS_LS_COMMON_THREAD,
@@ -266,7 +324,7 @@ int aws_thread_launch(
                 (uint32_t)GetLastError());
         }
     }
-
+no_thread_affinity:
     /*
      * Managed threads need to stay unjoinable from an external perspective.  We'll handle it after thread function
      * completion.

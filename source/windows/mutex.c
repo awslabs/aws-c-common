@@ -4,8 +4,13 @@
  */
 
 #include <aws/common/mutex.h>
+#include <aws/common/thread.h>
 
 #include <Windows.h>
+
+/* Convert a string from a macro to a wide string */
+#define WIDEN2(s) L## #s
+#define WIDEN(s) WIDEN2(s)
 
 int aws_mutex_init(struct aws_mutex *mutex) {
     /* Ensure our mutex and Windows' mutex are the same size */
@@ -32,11 +37,28 @@ int aws_mutex_lock(struct aws_mutex *mutex) {
     AcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     return AWS_OP_SUCCESS;
 }
+/* Check for functions that don't exist on ancient windows */
+static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
+
+typedef BOOLEAN WINAPI TryAcquireSRWLockExclusive_fn(PSRWLOCK SRWLock);
+static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
+
+static void s_check_try_lock_function(void *user_data) {
+    (void)user_data;
+
+    s_TryAcquireSRWLockExclusive = (TryAcquireSRWLockExclusive_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "TryAcquireSRWLockExclusive");
+}
 
 int aws_mutex_try_lock(struct aws_mutex *mutex) {
     AWS_PRECONDITION(mutex && mutex->initialized);
-    BOOL res = TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_functions_once, s_check_try_lock_function, NULL);
 
+    if (!s_TryAcquireSRWLockExclusive) {
+        return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+    }
+    BOOL res = s_TryAcquireSRWLockExclusive(AWSMUTEX_TO_WINDOWS(mutex));
     /*
      * Per Windows documentation, a return value of zero indicates a failure to acquire the lock.
      */
