@@ -134,7 +134,7 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
         /* capture stack frames, skip 2 for this function and the allocation vtable function */
         AWS_VARIABLE_LENGTH_ARRAY(void *, stack_frames, (FRAMES_TO_SKIP + tracer->frames_per_stack));
         size_t stack_depth = aws_backtrace(stack_frames, FRAMES_TO_SKIP + tracer->frames_per_stack);
-        if (stack_depth) {
+        if (stack_depth >= FRAMES_TO_SKIP) {
             /* hash the stack pointers */
             struct aws_byte_cursor stack_cursor =
                 aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void *));
