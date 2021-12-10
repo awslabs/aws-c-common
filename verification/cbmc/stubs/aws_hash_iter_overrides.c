@@ -62,32 +62,21 @@ void aws_hash_iter_next(struct aws_hash_iter *iter) {
         return;
     }
 
-    /* Build a nondet iterator, set the required fields, and copy it over */
-    struct aws_hash_iter rval;
-    rval.map = iter->map;
-    rval.limit = iter->limit;
+    /* set the required fields */
     size_t next_step;
     __CPROVER_assume(next_step > 0 && next_step <= iter->limit - iter->slot);
-    rval.limit = iter->limit;
-    rval.slot = iter->slot + next_step;
-    rval.status = (rval.slot == rval.limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
+    iter->slot = iter->slot + next_step;
+    iter->status = (iter->slot == iter->limit) ? AWS_HASH_ITER_STATUS_DONE : AWS_HASH_ITER_STATUS_READY_FOR_USE;
 #ifdef HASH_ITER_ELEMENT_GENERATOR
     HASH_ITER_ELEMENT_GENERATOR(&rval, iter);
 #endif
-
-    *iter = rval;
 }
 
 /* delete always leaves the element unusable, so we'll just leave the element totally nondet */
 void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
-    /* Build a nondet iterator, set the required fields, and copy it over */
-    struct aws_hash_iter rval;
-    rval.map = iter->map;
-    rval.slot = iter->slot;
-    rval.limit = iter->limit - 1;
-    rval.status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
-    rval.map->p_impl->entry_count = iter->map->p_impl->entry_count;
-    if (rval.map->p_impl->entry_count)
-        rval.map->p_impl->entry_count--;
-    *iter = rval;
+    /* set the required fields */
+    iter->limit = iter->limit - 1;
+    iter->status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
+    if (iter->map->p_impl->entry_count)
+        iter->map->p_impl->entry_count--;
 }
