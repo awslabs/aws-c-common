@@ -160,3 +160,62 @@ static int s_test_unknown_argument_parse_fn(struct aws_allocator *allocator, voi
 }
 
 AWS_TEST_CASE(unknown_argument_parse, s_test_unknown_argument_parse_fn)
+
+struct subcommand_dispatch_data {
+    const char *command_name;
+    int argc;
+    char const **argv;
+};
+
+static int s_subcommand_callback(int argc, char const *argv[], const char *command_name, void *user_data) {
+    struct subcommand_dispatch_data *dispatch_data = user_data;
+    dispatch_data->command_name = command_name;
+    dispatch_data->argc = argc;
+    dispatch_data->argv = argv;
+
+    return AWS_OP_SUCCESS;
+}
+
+static int s_test_command_dispatch_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct subcommand_dispatch_data dispatch_data;
+    AWS_ZERO_STRUCT(dispatch_data);
+
+    struct aws_cli_subcommand_dispatch dispatch_table[] = {
+        {
+            .command_name = "command1",
+            .subcommand_fn = s_subcommand_callback,
+            .user_data = &dispatch_data,
+        },
+        {
+            .command_name = "command2",
+            .subcommand_fn = s_subcommand_callback,
+            .user_data = &dispatch_data,
+        },
+    };
+
+    char *const args_1[] = {"prog-name", "command1", "-BOO!", "--beeee", "bval", "-c", "operand"};
+    ASSERT_SUCCESS(aws_cli_dispatch_on_subcommand(7, args_1, dispatch_table, 2));
+    ASSERT_STR_EQUALS("command1", dispatch_data.command_name);
+    ASSERT_INT_EQUALS(6, dispatch_data.argc);
+    ASSERT_STR_EQUALS("command1", dispatch_data.argv[0]);
+
+    AWS_ZERO_STRUCT(dispatch_data);
+    char *const args_2[] = {"prog-name", "command2", "-BOO!", "--beeee", "bval", "-c", "operand"};
+    ASSERT_SUCCESS(aws_cli_dispatch_on_subcommand(7, args_2, dispatch_table, 2));
+    ASSERT_STR_EQUALS("command2", dispatch_data.command_name);
+    ASSERT_INT_EQUALS(6, dispatch_data.argc);
+    ASSERT_STR_EQUALS("command2", dispatch_data.argv[0]);
+
+    char *const args_3[] = {"prog-name", "command3", "-BOO!", "--beeee", "bval", "-c", "operand"};
+    ASSERT_ERROR(AWS_ERROR_UNIMPLEMENTED, aws_cli_dispatch_on_subcommand(7, args_3, dispatch_table, 2));
+
+    char *const args_4[] = {"prog-name"};
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_cli_dispatch_on_subcommand(1, args_4, dispatch_table, 2));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_command_dispatch, s_test_command_dispatch_fn)

@@ -12,6 +12,14 @@ enum aws_cli_options_has_arg {
     AWS_CLI_OPTIONS_OPTIONAL_ARGUMENT = 2,
 };
 
+typedef int(aws_cli_options_subcommand_fn)(int argc, char const *argv[], const char *command_name, void *user_data);
+
+struct aws_cli_subcommand_dispatch {
+    aws_cli_options_subcommand_fn *subcommand_fn;
+    const char *command_name;
+    void *user_data;
+};
+
 /* Ignoring padding since we're trying to maintain getopt.h compatibility */
 /* NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding) */
 struct aws_cli_option {
@@ -53,6 +61,24 @@ AWS_COMMON_API int aws_cli_getopt_long(
     const char *optstring,
     const struct aws_cli_option *longopts,
     int *longindex);
+
+/**
+ * Dispatches the current command line arguments with a subcommand from the second input argument in argv[], if
+ * dispatch table contains a command that matches the argument. When the command is dispatched, argc and argv will be
+ * updated to reflect the new argument count. The cli options are required to come after the subcommand. If either, no
+ * dispatch was found or there was no argument passed to the program, this function will return AWS_OP_ERR. Check
+ * aws_last_error() for details on the error.
+ * @param argc number of arguments passed to int main()
+ * @param argv the arguments passed to int main()
+ * @param dispatch_table table containing functions and command name to dispatch on.
+ * @param table_length numnber of entries in dispatch_table.
+ * @return AWS_OP_SUCCESS(0) on success, AWS_OP_ERR(-1) on failure
+ */
+AWS_COMMON_API int aws_cli_dispatch_on_subcommand(
+    int argc,
+    char *const argv[],
+    struct aws_cli_subcommand_dispatch *dispatch_table,
+    int table_length);
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_COMMAND_LINE_PARSER_H */
