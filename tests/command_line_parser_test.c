@@ -116,9 +116,9 @@ static int s_test_unqualified_argument_parse_fn(struct aws_allocator *allocator,
     ASSERT_INT_EQUALS('c', arg);
     ASSERT_INT_EQUALS(2, longindex);
 
-    ASSERT_INT_EQUALS(-1, aws_cli_getopt_long(argc, args, "ab:c", options, &longindex));
-    ASSERT_TRUE(aws_cli_optind < argc);
-    ASSERT_STR_EQUALS("operand", args[aws_cli_optind++]);
+    ASSERT_INT_EQUALS(0x02, aws_cli_getopt_long(argc, args, "ab:c", options, &longindex));
+    ASSERT_TRUE(aws_cli_optind == argc);
+    ASSERT_STR_EQUALS("operand", aws_cli_positional_arg);
 
     return AWS_OP_SUCCESS;
 }
@@ -152,9 +152,10 @@ static int s_test_unknown_argument_parse_fn(struct aws_allocator *allocator, voi
     ASSERT_INT_EQUALS('c', arg);
     ASSERT_INT_EQUALS(2, longindex);
 
-    ASSERT_INT_EQUALS(-1, aws_cli_getopt_long(argc, args, "ab:c", options, &longindex));
-    ASSERT_TRUE(aws_cli_optind < argc);
-    ASSERT_STR_EQUALS("operand", args[aws_cli_optind++]);
+    arg = aws_cli_getopt_long(argc, args, "ab:c", options, &longindex);
+    ASSERT_TRUE(arg == 0x02);
+    ASSERT_TRUE(aws_cli_optind == argc);
+    ASSERT_STR_EQUALS("operand", aws_cli_positional_arg);
 
     return AWS_OP_SUCCESS;
 }
