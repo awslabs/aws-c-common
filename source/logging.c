@@ -488,13 +488,15 @@ static int s_noalloc_stderr_logger_log(
 
     aws_mutex_lock(&impl->lock);
 
+    int write_result = AWS_OP_SUCCESS;
     if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
-        return aws_translate_and_raise_io_error(errno);
+        aws_translate_and_raise_io_error(errno);
+        write_result = AWS_OP_ERR;
     }
 
     aws_mutex_unlock(&impl->lock);
 
-    return AWS_OP_SUCCESS;
+    return write_result;
 }
 
 static void s_noalloc_stderr_logger_clean_up(struct aws_logger *logger) {
