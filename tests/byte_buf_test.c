@@ -1120,3 +1120,98 @@ static int s_test_isspace(struct aws_allocator *allocator, void *ctx) {
     return 0;
 }
 AWS_TEST_CASE(test_isspace, s_test_isspace)
+
+AWS_TEST_CASE(test_byte_cursor_utf8_parse_u64, s_byte_cursor_utf8_parse_u64);
+static int s_byte_cursor_utf8_parse_u64(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint64_t val;
+
+    /* sanity check */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("0"), &val));
+    ASSERT_UINT_EQUALS(0, val);
+
+    /* every acceptable character */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("9876543210"), &val));
+    ASSERT_UINT_EQUALS(9876543210, val);
+
+    /* max value */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("18446744073709551615"), &val));
+    ASSERT_UINT_EQUALS(UINT64_MAX, val);
+
+    /* leading zeros should have no effect */
+    ASSERT_SUCCESS(
+        aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("00000000000018446744073709551615"), &val));
+    ASSERT_UINT_EQUALS(UINT64_MAX, val);
+
+    /* one bigger than max */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("18446744073709551616"), &val));
+
+    /* overflow on base multiply */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("184467440737095516150"), &val));
+
+    /* whitespace is not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str(" 0"), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("0 "), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("0 0"), &val));
+
+    /* blank strings are not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str(""), &val));
+
+    /* hex is not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("0x0"), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("FF"), &val));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_byte_cursor_utf8_parse_u64_hex, s_byte_cursor_parse_uint64_hex);
+static int s_byte_cursor_parse_uint64_hex(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint64_t val;
+
+    /* sanity check */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("0"), &val));
+    ASSERT_UINT_EQUALS(0x0, val);
+
+    /* every possible character */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("9876543210"), &val));
+    ASSERT_UINT_EQUALS(0x9876543210, val);
+
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("ABCDEFabcdef"), &val));
+    ASSERT_UINT_EQUALS(0xABCDEFabcdefULL, val);
+
+    /* max value */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("ffffffffffffffff"), &val));
+    ASSERT_UINT_EQUALS(UINT64_MAX, val);
+
+    /* ignore leading zeroes */
+    ASSERT_SUCCESS(
+        aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("0000000000000000ffffffffffffffff"), &val));
+    ASSERT_UINT_EQUALS(UINT64_MAX, val);
+
+    /* overflow */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("10000000000000000"), &val));
+
+    /* overflow - regression test */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("fffffffffffffffff"), &val));
+
+    /* invalid character */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64_hex(aws_byte_cursor_from_c_str("g"), &val));
+
+    return 0;
+}
