@@ -1652,15 +1652,11 @@ static int s_read_unsigned(struct aws_byte_cursor cursor, uint64_t *dst, uint8_t
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
 
-        const uint64_t prev_val = val;
-
-        val *= base;
-        if (val < prev_val) {
+        if (aws_mul_u64_checked(val, base, &val)) {
             return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
         }
 
-        val += cval;
-        if (val < prev_val) {
+        if (aws_add_u64_checked(val, cval, &val)) {
             return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
         }
     }
