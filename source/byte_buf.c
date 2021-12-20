@@ -1665,10 +1665,10 @@ static int s_read_unsigned(struct aws_byte_cursor cursor, uint64_t *dst, uint8_t
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_cursor_parse_uint64(struct aws_byte_cursor cursor, uint64_t *dst) {
+int aws_byte_cursor_utf8_parse_u64(struct aws_byte_cursor cursor, uint64_t *dst) {
     return s_read_unsigned(cursor, dst, 10 /*base*/);
 }
 
-int aws_byte_cursor_parse_uint64_hex(struct aws_byte_cursor cursor, uint64_t *dst) {
+int aws_byte_cursor_utf8_parse_u64_hex(struct aws_byte_cursor cursor, uint64_t *dst) {
     return s_read_unsigned(cursor, dst, 16 /*base*/);
 }

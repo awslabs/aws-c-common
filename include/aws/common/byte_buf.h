@@ -901,7 +901,7 @@ AWS_COMMON_API bool aws_isspace(uint8_t ch);
  * "999999999999999999999999999999999999999999" // larger than max u64
  */
 AWS_COMMON_API
-int aws_byte_cursor_parse_uint64(struct aws_byte_cursor cursor, uint64_t *dst);
+int aws_byte_cursor_utf8_parse_u64(struct aws_byte_cursor cursor, uint64_t *dst);
 
 /**
  * Read entire cursor as ASCII/UTF-8 unsigned base-16 number with NO "0x" prefix.
@@ -920,7 +920,7 @@ int aws_byte_cursor_parse_uint64(struct aws_byte_cursor cursor, uint64_t *dst);
  * "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" // larger than max u64
  */
 AWS_COMMON_API
-int aws_byte_cursor_parse_uint64_hex(struct aws_byte_cursor cursor, uint64_t *dst);
+int aws_byte_cursor_utf8_parse_u64_hex(struct aws_byte_cursor cursor, uint64_t *dst);
 
 AWS_EXTERN_C_END
 
