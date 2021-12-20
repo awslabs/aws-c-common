@@ -282,6 +282,8 @@ add_test_case(test_isalpha)
 add_test_case(test_isdigit)
 add_test_case(test_isxdigit)
 add_test_case(test_isspace)
+add_test_case(test_byte_cursor_parse_uint64)
+add_test_case(test_byte_cursor_parse_uint64_hex)
 
 add_test_case(byte_swap_test)
 

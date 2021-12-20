@@ -1633,3 +1633,46 @@ bool aws_isspace(uint8_t ch) {
             return false;
     }
 }
+
+static int s_read_unsigned(struct aws_byte_cursor cursor, uint64_t *dst, uint8_t base) {
+    uint64_t val = 0;
+    *dst = 0;
+
+    if (cursor.len == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    const uint8_t *hex_to_num_table = aws_lookup_table_hex_to_num_get();
+
+    /* read from left to right */
+    for (size_t i = 0; i < cursor.len; ++i) {
+        const uint8_t c = cursor.ptr[i];
+        const uint8_t cval = hex_to_num_table[c];
+        if (cval >= base) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        const uint64_t prev_val = val;
+
+        val *= base;
+        if (val < prev_val) {
+            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+        }
+
+        val += cval;
+        if (val < prev_val) {
+            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+        }
+    }
+
+    *dst = val;
+    return AWS_OP_SUCCESS;
+}
+
+int aws_byte_cursor_parse_uint64(struct aws_byte_cursor cursor, uint64_t *dst) {
+    return s_read_unsigned(cursor, dst, 10 /*base*/);
+}
+
+int aws_byte_cursor_parse_uint64_hex(struct aws_byte_cursor cursor, uint64_t *dst) {
+    return s_read_unsigned(cursor, dst, 16 /*base*/);
+}

@@ -882,6 +882,46 @@ AWS_COMMON_API bool aws_isxdigit(uint8_t ch);
  */
 AWS_COMMON_API bool aws_isspace(uint8_t ch);
 
+/**
+ * Read entire cursor as ASCII/UTF-8 unsigned base-10 number.
+ * Stricter than strtoull(), which allows whitespace and inputs that start with "0x"
+ *
+ * Examples:
+ * "0" -> 0
+ * "123" -> 123
+ * "00004" -> 4 // leading zeros ok
+ *
+ * Rejects things like:
+ * "-1" // negative numbers not allowed
+ * "1,000" // only characters 0-9 allowed
+ * "" // blank string not allowed
+ * " 0 " // whitespace not allowed
+ * "0x0" // hex not allowed
+ * "FF" // hex not allowed
+ * "999999999999999999999999999999999999999999" // larger than max u64
+ */
+AWS_COMMON_API
+int aws_byte_cursor_parse_uint64(struct aws_byte_cursor cursor, uint64_t *dst);
+
+/**
+ * Read entire cursor as ASCII/UTF-8 unsigned base-16 number with NO "0x" prefix.
+ *
+ * Examples:
+ * "F" -> 15
+ * "000000ff" -> 255 // leading zeros ok
+ * "Ff" -> 255 // mixed case ok
+ * "123" -> 291
+ * "FFFFFFFFFFFFFFFF" -> 18446744073709551616 // max u64
+ *
+ * Rejects things like:
+ * "0x0" // 0x prefix not allowed
+ * "" // blank string not allowed
+ * " F " // whitespace not allowed
+ * "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" // larger than max u64
+ */
+AWS_COMMON_API
+int aws_byte_cursor_parse_uint64_hex(struct aws_byte_cursor cursor, uint64_t *dst);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_BYTE_BUF_H */
