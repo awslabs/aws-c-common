@@ -22,7 +22,6 @@ AWS_EXTERN_C_BEGIN
  * Initialize the array_list with map structure, which support constant time of insert, remove and get random element
  * from the data structure.
  *
- * The underlying arraylist will have a deep copy of the element.
  * The underlying hash map will use hash_fn to compute the hash of each element. equals_fn to compute equality of two
  * keys.
  *
@@ -30,6 +29,7 @@ AWS_EXTERN_C_BEGIN
  * @param allocator                 Allocator
  * @param hash_fn                   Compute the hash of each element
  * @param equals_fn                 Compute equality of two keys
+ * @param destroy_key_fn            Called when the element is removed
  * @param item_size                 Size of each element
  * @param initial_item_allocation   The initial number of item to allocate.
  * @return AWS_OP_ERR if any fails to initialize, AWS_OP_SUCCESS on success.
@@ -40,6 +40,7 @@ int aws_array_list_with_map_init(
     struct aws_allocator *allocator,
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
+    aws_hash_callback_destroy_fn *destroy_element_fn,
     size_t item_size,
     size_t initial_item_allocation);
 

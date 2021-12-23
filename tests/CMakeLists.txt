@@ -66,6 +66,7 @@ add_test_case(test_old_overflow_cases)
 
 add_test_case(array_list_with_map_sanitize_test)
 add_test_case(array_list_with_map_insert_test)
+add_test_case(array_list_with_map_insert_owns_element_test)
 add_test_case(array_list_with_map_get_random_test)
 add_test_case(array_list_with_map_exist_test)
 add_test_case(array_list_with_map_remove_test)
