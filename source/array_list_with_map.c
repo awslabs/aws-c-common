@@ -19,7 +19,7 @@ int aws_array_list_with_map_init(
     if (aws_array_list_init_dynamic(&list_with_map->list, allocator, initial_item_allocation, item_size)) {
         return AWS_OP_ERR;
     }
-    /* Array list owns the element, so, no need to destroy the key. */
+
     if (aws_hash_table_init(
             &list_with_map->map, allocator, initial_item_allocation, hash_fn, equals_fn, destroy_element_fn, NULL)) {
         aws_array_list_clean_up(&list_with_map->list);
