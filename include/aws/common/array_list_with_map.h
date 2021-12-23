@@ -29,7 +29,7 @@ AWS_EXTERN_C_BEGIN
  * @param allocator                 Allocator
  * @param hash_fn                   Compute the hash of each element
  * @param equals_fn                 Compute equality of two keys
- * @param destroy_key_fn            Called when the element is removed
+ * @param destroy_element_fn        Called when the element is removed
  * @param item_size                 Size of each element
  * @param initial_item_allocation   The initial number of item to allocate.
  * @return AWS_OP_ERR if any fails to initialize, AWS_OP_SUCCESS on success.
