@@ -91,7 +91,7 @@ AWS_TEST_CASE(array_list_with_map_exist_test, s_array_list_with_map_exist_fn)
 
 static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(foo, "too");
     AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
     AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
 
