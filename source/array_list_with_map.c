@@ -101,14 +101,19 @@ int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map
     return AWS_OP_SUCCESS;
 }
 
-void aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_with_map, void *out) {
+int aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_with_map, void *out) {
     AWS_PRECONDITION(list_with_map);
     size_t length = aws_array_list_length(&list_with_map->list);
+    if (length == 0) {
+        return aws_raise_error(AWS_ERROR_LIST_EMPTY);
+    }
+
     /* use the best of two algorithm to select the connection with the lowest load. */
     uint64_t random_64_bit_num = 0;
     aws_device_random_u64(&random_64_bit_num);
     size_t index = random_64_bit_num % length;
     AWS_FATAL_ASSERT(aws_array_list_get_at(&list_with_map->list, out, index) == AWS_OP_SUCCESS);
+    return AWS_OP_SUCCESS;
 }
 
 size_t aws_array_list_with_map_length(struct aws_array_list_with_map *list_with_map) {

@@ -61,10 +61,10 @@ AWS_COMMON_API
 int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map, const void *element);
 
 /**
- * Get a random element from the data structure.
+ * Get a random element from the data structure. Fails when the data structure is empty.
  */
 AWS_COMMON_API
-void aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_with_map, void *out);
+int aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_with_map, void *out);
 
 AWS_COMMON_API
 size_t aws_array_list_with_map_length(struct aws_array_list_with_map *list_with_map);

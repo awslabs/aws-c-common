@@ -54,12 +54,14 @@ static int s_array_list_with_map_get_random_fn(struct aws_allocator *allocator, 
     /* With only 1 initial element. */
     ASSERT_SUCCESS(aws_array_list_with_map_init(
         &list_with_map, allocator, aws_hash_string, aws_hash_callback_string_eq, sizeof(struct aws_string), 1));
+    struct aws_string left_element;
+    /* Fail to get any, when there is nothing in it. */
+    ASSERT_FAILS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foo));
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
-    struct aws_string left_element;
-    aws_array_list_with_map_get_random(&list_with_map, &left_element);
+    ASSERT_SUCCESS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
     ASSERT_TRUE(aws_string_eq(&left_element, foo));
 
     aws_array_list_with_map_clean_up(&list_with_map);
@@ -112,7 +114,7 @@ static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
     struct aws_string left_element;
-    aws_array_list_with_map_get_random(&list_with_map, &left_element);
+    ASSERT_SUCCESS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
     ASSERT_TRUE(aws_string_eq(&left_element, foobar));
 
     /* Remove last thing and make sure everything should still work */
@@ -120,7 +122,7 @@ static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 0);
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foo));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
-    aws_array_list_with_map_get_random(&list_with_map, &left_element);
+    ASSERT_SUCCESS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
     ASSERT_TRUE(aws_string_eq(&left_element, foo));
 
     aws_array_list_with_map_clean_up(&list_with_map);
