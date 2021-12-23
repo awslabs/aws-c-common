@@ -86,9 +86,11 @@ int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map
         AWS_FATAL_ASSERT(aws_array_list_back(&list_with_map->list, last_element) == AWS_OP_SUCCESS);
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
-        AWS_FATAL_ASSERT(
-            aws_hash_table_find(&list_with_map->map, last_element, &element_to_update) == AWS_OP_SUCCESS &&
-            element_to_update);
+        AWS_FATAL_ASSERT(aws_hash_table_find(&list_with_map->map, last_element, &element_to_update) == AWS_OP_SUCCESS);
+        if (!element_to_update) {
+            /* Should be fatal error, put it to fail to debug */
+            return AWS_OP_ERR;
+        }
         element_to_update->value = (void *)index_to_remove;
         /* Swap the last element with the element to remove in the list */
         aws_array_list_swap(&list_with_map->list, index_to_remove, current_length - 1);
