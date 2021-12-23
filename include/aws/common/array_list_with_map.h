@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_LIST_WITH_MAP_H
-#define AWS_COMMON_LIST_WITH_MAP_H
+#ifndef AWS_COMMON_ARRAY_LIST_WITH_MAP_H
+#define AWS_COMMON_ARRAY_LIST_WITH_MAP_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -78,4 +78,4 @@ bool aws_array_list_with_map_exist(struct aws_array_list_with_map *list_with_map
 /* TODO: Other operations: iterate through, find/check exist? */
 
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_LIST_WITH_MAP_H */
+#endif /* AWS_COMMON_ARRAY_LIST_WITH_MAP_H */
