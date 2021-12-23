@@ -159,9 +159,9 @@ static int s_array_list_with_map_insert_owns_element_fn(struct aws_allocator *al
     /* You cannot have duplicates */
     ASSERT_FAILS(aws_array_list_with_map_insert(&list_with_map, foobar));
 
-    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
-    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foobar));
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 0);
