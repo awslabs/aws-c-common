@@ -83,10 +83,10 @@ int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
         void *last_element = aws_mem_acquire(list_with_map->list.alloc, list_with_map->list.item_size);
-        AWS_ASSERT(aws_array_list_back(&list_with_map->list, last_element) == AWS_OP_SUCCESS);
+        AWS_FATAL_ASSERT(aws_array_list_back(&list_with_map->list, last_element) == AWS_OP_SUCCESS);
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
-        AWS_ASSERT(
+        AWS_FATAL_ASSERT(
             aws_hash_table_find(&list_with_map->map, last_element, &element_to_update) == AWS_OP_SUCCESS &&
             element_to_update);
         element_to_update->value = (void *)index_to_remove;
@@ -95,7 +95,7 @@ int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map
         aws_mem_release(list_with_map->list.alloc, last_element);
     }
     /* Remove the current last element from the list */
-    AWS_ASSERT(aws_array_list_pop_back(&list_with_map->list) == AWS_OP_SUCCESS);
+    AWS_FATAL_ASSERT(aws_array_list_pop_back(&list_with_map->list) == AWS_OP_SUCCESS);
     return AWS_OP_SUCCESS;
 }
 
@@ -105,7 +105,8 @@ void aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_wit
     /* use the best of two algorithm to select the connection with the lowest load. */
     uint64_t random_64_bit_num = 0;
     aws_device_random_u64(&random_64_bit_num);
-    AWS_ASSERT(aws_array_list_get_at(&list_with_map->list, out, random_64_bit_num % length) == AWS_OP_SUCCESS);
+    size_t index = random_64_bit_num % length;
+    AWS_FATAL_ASSERT(aws_array_list_get_at(&list_with_map->list, out, index) == AWS_OP_SUCCESS);
 }
 
 size_t aws_array_list_with_map_length(struct aws_array_list_with_map *list_with_map) {
@@ -114,6 +115,6 @@ size_t aws_array_list_with_map_length(struct aws_array_list_with_map *list_with_
 
 bool aws_array_list_with_map_exist(struct aws_array_list_with_map *list_with_map, const void *element) {
     struct aws_hash_element *find = NULL;
-    AWS_ASSERT(aws_hash_table_find(&list_with_map->map, element, &find) == AWS_OP_SUCCESS);
+    AWS_FATAL_ASSERT(aws_hash_table_find(&list_with_map->map, element, &find) == AWS_OP_SUCCESS);
     return find != NULL;
 }
