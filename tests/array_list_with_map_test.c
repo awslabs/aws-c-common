@@ -89,7 +89,8 @@ static int s_array_list_with_map_exist_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(array_list_with_map_exist_test, s_array_list_with_map_exist_fn)
 
-// TODO: this test fails on 32 bit machine, I think it because the hash function we have `aws_hash_string`.
+// TODO: this test fails on 32 bit machine, I think it because the hash function we have `aws_hash_string`. Probably
+// not...
 static int s_array_list_with_map_remove_fail_32_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
@@ -134,9 +135,10 @@ AWS_TEST_CASE(array_list_with_map_remove_fail_32_test, s_array_list_with_map_rem
 
 static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    AWS_STATIC_STRING_FROM_LITERAL(foo, "123");
-    AWS_STATIC_STRING_FROM_LITERAL(bar, "4567");
-    AWS_STATIC_STRING_FROM_LITERAL(foobar, "89000");
+    (void)ctx;
+    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
+    AWS_STATIC_STRING_FROM_LITERAL(bar, "foobar");
+    AWS_STATIC_STRING_FROM_LITERAL(foobar, "bar");
 
     struct aws_array_list_with_map list_with_map;
     /* With only 1 initial element. */
