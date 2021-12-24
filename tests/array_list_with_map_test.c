@@ -110,8 +110,8 @@ static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void
     /* Should be fine to remove something not existing anymore? */
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
 
-    /* Remove all beside foobar, so, if we get one random, it will be foobar */
-    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foobar));
+    /* Remove all beside bar, so, if we get one random, it will be bar */
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foobar));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
     struct aws_string left_element;
     ASSERT_SUCCESS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
