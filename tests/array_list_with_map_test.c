@@ -136,7 +136,7 @@ static void s_aws_string_destroy_callback(void *key) {
     aws_string_destroy(str);
 }
 
-static int s_array_list_with_map_insert_owns_element_fn(struct aws_allocator *allocator, void *ctx) {
+static int s_array_list_with_map_owns_element_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     struct aws_string *foo = aws_string_new_from_c_str(allocator, "foo");
     struct aws_string *bar = aws_string_new_from_c_str(allocator, "bar");
@@ -171,4 +171,4 @@ static int s_array_list_with_map_insert_owns_element_fn(struct aws_allocator *al
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(array_list_with_map_insert_owns_element_test, s_array_list_with_map_insert_owns_element_fn)
+AWS_TEST_CASE(array_list_with_map_owns_element_test, s_array_list_with_map_owns_element_fn)
