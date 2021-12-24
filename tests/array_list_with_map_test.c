@@ -99,26 +99,26 @@ static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void
     /* With only 1 initial element. */
     ASSERT_SUCCESS(aws_array_list_with_map_init(
         &list_with_map, allocator, aws_hash_string, aws_hash_callback_string_eq, NULL, sizeof(struct aws_string), 1));
-    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, bar));
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, bar));
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foo));
 
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 2);
 
-    // /* Should be fine to remove something not existing anymore? */
-    // ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
+    /* Should be fine to remove something not existing anymore? */
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
 
     /* Remove all beside foobar, so, if we get one random, it will be foobar */
-    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
+    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foobar));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
     struct aws_string left_element;
     ASSERT_SUCCESS(aws_array_list_with_map_get_random(&list_with_map, &left_element));
-    ASSERT_TRUE(aws_string_eq(&left_element, foobar));
+    ASSERT_TRUE(aws_string_eq(&left_element, bar));
 
     /* Remove last thing and make sure everything should still work */
-    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 0);
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foo));
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 1);
@@ -152,16 +152,16 @@ static int s_array_list_with_map_owns_element_fn(struct aws_allocator *allocator
         s_aws_string_destroy_callback,
         sizeof(struct aws_string),
         1));
-    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, bar));
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, bar));
     ASSERT_SUCCESS(aws_array_list_with_map_insert(&list_with_map, foo));
 
     /* You cannot have duplicates */
     ASSERT_FAILS(aws_array_list_with_map_insert(&list_with_map, foobar));
 
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foo));
-    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
     ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_array_list_with_map_remove(&list_with_map, bar));
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_array_list_with_map_length(&list_with_map), 0);
