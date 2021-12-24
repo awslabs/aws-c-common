@@ -69,6 +69,7 @@ add_test_case(array_list_with_map_insert_test)
 add_test_case(array_list_with_map_get_random_test)
 add_test_case(array_list_with_map_exist_test)
 add_test_case(array_list_with_map_remove_test)
+add_test_case(array_list_with_map_remove_fail_32_test)
 add_test_case(array_list_with_map_owns_element_test)
 
 add_test_case(array_list_order_push_back_pop_front_test)
