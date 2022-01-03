@@ -246,6 +246,9 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_DIRECTORY_NOT_EMPTY,
         "An operation on a directory was attempted which is not allowed when the directory is not empty."
     ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_PLATFORM_NOT_SUPPORTED,
+        "Feature not supported on this platform"),
 };
 /* clang-format on */
 
