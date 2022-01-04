@@ -324,7 +324,7 @@ static int s_test_hash_table_put_remove_find_fn(struct aws_allocator *allocator,
     ASSERT_SUCCESS(aws_hash_table_remove(&hash_table, (void *)bar, NULL, NULL));
 
     struct aws_hash_element *element = NULL;
-    ASSERT_SUCCESS(aws_hash_table_find(&hash_table, (void *)foobar, element));
+    ASSERT_SUCCESS(aws_hash_table_find(&hash_table, (void *)foobar, &element));
 
     ASSERT_NOT_NULL(element);
 
