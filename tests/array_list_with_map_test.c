@@ -137,8 +137,8 @@ static int s_array_list_with_map_remove_fn(struct aws_allocator *allocator, void
     (void)ctx;
     (void)ctx;
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
-    AWS_STATIC_STRING_FROM_LITERAL(bar, "foobar");
-    AWS_STATIC_STRING_FROM_LITERAL(foobar, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
+    AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
 
     struct aws_array_list_with_map list_with_map;
     /* With only 1 initial element. */

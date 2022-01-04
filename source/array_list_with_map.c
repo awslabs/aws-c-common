@@ -7,6 +7,7 @@
 #include <aws/common/allocator.h>
 #include <aws/common/array_list_with_map.h>
 #include <aws/common/device_random.h>
+#include <aws/common/string.h>
 
 int aws_array_list_with_map_init(
     struct aws_array_list_with_map *list_with_map,
@@ -86,6 +87,8 @@ int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
         void *last_element = aws_mem_acquire(list_with_map->list.alloc, list_with_map->list.item_size);
         AWS_FATAL_ASSERT(aws_array_list_back(&list_with_map->list, last_element) == AWS_OP_SUCCESS);
+        struct aws_string *str = (struct aws_string *)last_element;
+        printf("%s\n", aws_string_c_str(str));
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
         AWS_FATAL_ASSERT(aws_hash_table_find(&list_with_map->map, last_element, &element_to_update) == AWS_OP_SUCCESS);
