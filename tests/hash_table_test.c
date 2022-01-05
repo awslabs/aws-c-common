@@ -304,35 +304,6 @@ static int s_test_hash_table_put_null_dtor_fn(struct aws_allocator *allocator, v
     return 0;
 }
 
-AWS_TEST_CASE(test_hash_table_put_remove_find, s_test_hash_table_put_remove_find_fn)
-static int s_test_hash_table_put_remove_find_fn(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    struct aws_hash_table hash_table;
-
-    int ret = aws_hash_table_init(&hash_table, allocator, 10, aws_hash_string, aws_hash_callback_string_eq, NULL, NULL);
-    ASSERT_SUCCESS(ret, "Hash Map init should have succeeded.");
-
-    AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
-    AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
-    AWS_STATIC_STRING_FROM_LITERAL(foobar, "foobar");
-    ASSERT_SUCCESS(aws_hash_table_put(&hash_table, bar, (void *)bar, NULL));
-    ASSERT_SUCCESS(aws_hash_table_put(&hash_table, foobar, (void *)foobar, NULL));
-    ASSERT_SUCCESS(aws_hash_table_put(&hash_table, foo, (void *)foo, NULL));
-
-    ASSERT_SUCCESS(aws_hash_table_remove(&hash_table, (void *)foo, NULL, NULL));
-    ASSERT_SUCCESS(aws_hash_table_remove(&hash_table, (void *)bar, NULL, NULL));
-
-    struct aws_hash_element *element = NULL;
-    ASSERT_SUCCESS(aws_hash_table_find(&hash_table, (void *)foobar, &element));
-
-    ASSERT_NOT_NULL(element);
-
-    aws_hash_table_clean_up(&hash_table);
-
-    return 0;
-}
-
 AWS_TEST_CASE(test_hash_table_swap_move, s_test_hash_table_swap_move)
 static int s_test_hash_table_swap_move(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;

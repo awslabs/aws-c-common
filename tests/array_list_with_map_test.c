@@ -150,9 +150,11 @@ static void s_aws_string_destroy_callback(void *key) {
 
 static int s_array_list_with_map_owns_element_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_string *foo = aws_string_new_from_c_str(allocator, "foo");
-    struct aws_string *bar = aws_string_new_from_c_str(allocator, "bar");
-    struct aws_string *foobar = aws_string_new_from_c_str(allocator, "foobar");
+    /* If we copy the aws string itself, the underlying data will be copied as a pointer, if the data is
+     * less than the size of a pointer, we will be fine. The long string will test against it. */
+    struct aws_string *foo = aws_string_new_from_c_str(allocator, "foo123456");
+    struct aws_string *bar = aws_string_new_from_c_str(allocator, "bar7894156132121");
+    struct aws_string *foobar = aws_string_new_from_c_str(allocator, "foobar970712389709123");
 
     struct aws_array_list_with_map list_with_map;
     /* With only 1 initial element. Add clean up for the string */
