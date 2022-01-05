@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_ARRAY_LIST_WITH_MAP_H
-#define AWS_COMMON_ARRAY_LIST_WITH_MAP_H
+#ifndef AWS_COMMON_RANDOM_ACCESS_SET_H
+#define AWS_COMMON_RANDOM_ACCESS_SET_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -10,9 +10,10 @@
 #include <aws/common/common.h>
 #include <aws/common/hash_table.h>
 
-struct aws_array_list_with_map {
+struct aws_random_access_set {
     struct aws_array_list list;
     struct aws_hash_table map; /* map from the element to the index in the array */
+    aws_hash_callback_destroy_fn *destroy_element_fn;
 };
 
 AWS_EXTERN_C_BEGIN
@@ -28,15 +29,15 @@ AWS_EXTERN_C_BEGIN
  * @param list_with_map             Pointer of structure to initialize with
  * @param allocator                 Allocator
  * @param hash_fn                   Compute the hash of each element
- * @param equals_fn                 Compute equality of two keys
- * @param destroy_element_fn        Called when the element is removed
+ * @param equals_fn                 Compute equality of two elements
+ * @param destroy_element_fn        Optional. Called when the element is removed
  * @param item_size                 Size of each element
  * @param initial_item_allocation   The initial number of item to allocate.
  * @return AWS_OP_ERR if any fails to initialize, AWS_OP_SUCCESS on success.
  */
 AWS_COMMON_API
-int aws_array_list_with_map_init(
-    struct aws_array_list_with_map *list_with_map,
+int aws_random_access_set_init(
+    struct aws_random_access_set *list_with_map,
     struct aws_allocator *allocator,
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
@@ -45,13 +46,13 @@ int aws_array_list_with_map_init(
     size_t initial_item_allocation);
 
 AWS_COMMON_API
-void aws_array_list_with_map_clean_up(struct aws_array_list_with_map *list_with_map);
+void aws_random_access_set_clean_up(struct aws_random_access_set *list_with_map);
 
 /**
  * Insert the element to the end of the array list. A map from the element to the index of it to the hash table.
  */
 AWS_COMMON_API
-int aws_array_list_with_map_insert(struct aws_array_list_with_map *list_with_map, const void *element);
+int aws_random_access_set_insert(struct aws_random_access_set *list_with_map, const void *element);
 
 /**
  * Find and remove the element from the table. If the element not exist or the table is empty, nothing will happen.
@@ -59,24 +60,24 @@ int aws_array_list_with_map_insert(struct aws_array_list_with_map *list_with_map
  * Remove the end of the arraylist
  */
 AWS_COMMON_API
-int aws_array_list_with_map_remove(struct aws_array_list_with_map *list_with_map, const void *element);
+int aws_random_access_set_remove(struct aws_random_access_set *list_with_map, void *element);
 
 /**
  * Get a random element from the data structure. Fails when the data structure is empty.
  */
 AWS_COMMON_API
-int aws_array_list_with_map_get_random(struct aws_array_list_with_map *list_with_map, void *out);
+int aws_random_access_set_get_random(struct aws_random_access_set *list_with_map, void *out);
 
 AWS_COMMON_API
-size_t aws_array_list_with_map_length(struct aws_array_list_with_map *list_with_map);
+size_t aws_random_access_set_length(struct aws_random_access_set *list_with_map);
 
 /**
  * Check the element exist in the data structure or not.
  */
 AWS_COMMON_API
-bool aws_array_list_with_map_exist(struct aws_array_list_with_map *list_with_map, const void *element);
+bool aws_random_access_set_exist(struct aws_random_access_set *list_with_map, const void *element);
 
 /* TODO: Other operations: iterate through, find/check exist? */
 
 AWS_EXTERN_C_END
-#endif /* AWS_COMMON_ARRAY_LIST_WITH_MAP_H */
+#endif /* AWS_COMMON_RANDOM_ACCESS_SET_H */
