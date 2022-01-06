@@ -150,7 +150,8 @@ int aws_random_access_set_get_random(struct aws_random_access_set *set, void *ou
     uint64_t random_64_bit_num = 0;
     aws_device_random_u64(&random_64_bit_num);
 
-    size_t index = length > 1 ? random_64_bit_num / (UINT64_MAX / length + 1) : random_64_bit_num % length;
+    size_t index =
+        length > 1 ? (size_t)random_64_bit_num / (UINT64_MAX / length + 1) : (size_t)random_64_bit_num % length;
     AWS_FATAL_ASSERT(aws_array_list_get_at(&set->impl->list, out, index) == AWS_OP_SUCCESS);
 
     return AWS_OP_SUCCESS;
