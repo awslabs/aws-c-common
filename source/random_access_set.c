@@ -123,8 +123,6 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
         void *last_element = aws_mem_acquire(set->impl->allocator, set->impl->list.item_size);
         AWS_FATAL_ASSERT(aws_array_list_back(&set->impl->list, last_element) == AWS_OP_SUCCESS);
-        AWS_FATAL_ASSERT(
-            aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
         AWS_FATAL_ASSERT(aws_hash_table_find(&set->impl->map, last_element, &element_to_update) == AWS_OP_SUCCESS);
