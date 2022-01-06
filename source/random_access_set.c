@@ -93,7 +93,7 @@ list_push_error:
     return AWS_OP_ERR;
 }
 
-int aws_random_access_set_remove(struct aws_random_access_set *set, void *element) {
+int aws_random_access_set_remove(struct aws_random_access_set *set, const void *element) {
     AWS_PRECONDITION(set);
     AWS_PRECONDITION(element);
     size_t current_length = aws_array_list_length(&set->impl->list);
@@ -135,7 +135,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, void *elemen
     /* Remove the current last element from the list */
     AWS_FATAL_ASSERT(aws_array_list_pop_back(&set->impl->list) == AWS_OP_SUCCESS);
     if (set->impl->destroy_element_fn) {
-        set->impl->destroy_element_fn(element);
+        set->impl->destroy_element_fn((void *)element);
     }
     return AWS_OP_SUCCESS;
 }

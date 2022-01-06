@@ -59,7 +59,7 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
  * happen. Switch the element with the end of the arraylist if needed. Remove the end of the arraylist
  */
 AWS_COMMON_API
-int aws_random_access_set_remove(struct aws_random_access_set *set, void *element);
+int aws_random_access_set_remove(struct aws_random_access_set *set, const void *element);
 
 /**
  * Get a random element from the data structure. Fails when the data structure is empty.
