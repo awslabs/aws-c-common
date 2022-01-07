@@ -121,8 +121,9 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
 
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
-        void *last_element = aws_mem_acquire(set->impl->allocator, set->impl->list.item_size);
-        AWS_FATAL_ASSERT(aws_array_list_back(&set->impl->list, last_element) == AWS_OP_SUCCESS);
+        void *last_element = NULL;
+        AWS_FATAL_ASSERT(
+            aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
         AWS_FATAL_ASSERT(aws_hash_table_find(&set->impl->map, last_element, &element_to_update) == AWS_OP_SUCCESS);
@@ -130,7 +131,6 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         element_to_update->value = (void *)index_to_remove;
         /* Swap the last element with the element to remove in the list */
         aws_array_list_swap(&set->impl->list, index_to_remove, current_length - 1);
-        aws_mem_release(set->impl->allocator, last_element);
     }
     /* Remove the current last element from the list */
     AWS_FATAL_ASSERT(aws_array_list_pop_back(&set->impl->list) == AWS_OP_SUCCESS);
@@ -150,8 +150,7 @@ int aws_random_access_set_get_random(struct aws_random_access_set *set, void *ou
     uint64_t random_64_bit_num = 0;
     aws_device_random_u64(&random_64_bit_num);
 
-    size_t index =
-        length > 1 ? (size_t)random_64_bit_num / (UINT64_MAX / length + 1) : (size_t)random_64_bit_num % length;
+    size_t index = (size_t)random_64_bit_num % length;
     AWS_FATAL_ASSERT(aws_array_list_get_at(&set->impl->list, out, index) == AWS_OP_SUCCESS);
 
     return AWS_OP_SUCCESS;
