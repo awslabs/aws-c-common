@@ -146,7 +146,11 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         aws_array_list_swap(&set->impl->list, index_to_remove, current_length - 1);
     }
     /* Remove the current last element from the list */
+    AWS_LOGF_ERROR(
+        AWS_LS_COMMON_GENERAL, "length before pop back is %d\n", (int)aws_array_list_length(&set->impl->list));
     AWS_FATAL_ASSERT(aws_array_list_pop_back(&set->impl->list) == AWS_OP_SUCCESS);
+    AWS_LOGF_ERROR(
+        AWS_LS_COMMON_GENERAL, "length after pop back is %d\n", (int)aws_array_list_length(&set->impl->list));
     if (set->impl->destroy_element_fn) {
         set->impl->destroy_element_fn((void *)element);
     }
