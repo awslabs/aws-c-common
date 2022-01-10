@@ -110,8 +110,9 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         AWS_FATAL_ASSERT(
             aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
         struct aws_string *str = *(struct aws_string **)last_element;
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "%d %s\n", (int)str->len, aws_string_c_str(str));
-        printf("%d %s\n", (int)str->len, aws_string_c_str(str));
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "last element: %d %s\n", (int)str->len, aws_string_c_str(str));
+        str = *(struct aws_string **)element;
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "current element: %d %s\n", (int)str->len, aws_string_c_str(str));
     }
 
     struct aws_hash_element *find = NULL;
@@ -132,6 +133,8 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         return AWS_OP_ERR;
     }
     /* Nothing else can fail after here. */
+    AWS_LOGF_ERROR(
+        AWS_LS_COMMON_GENERAL, "index to remove: %d, current length: %d\n", (int)index_to_remove, (int)current_length);
 
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
