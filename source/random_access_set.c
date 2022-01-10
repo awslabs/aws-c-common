@@ -79,13 +79,12 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
     if (aws_random_access_set_exist(set, element)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT /*TODO: some more specific error or not?*/);
     }
-    size_t current_length = aws_array_list_length(&set->impl->list);
     if (aws_array_list_push_back(&set->impl->list, (void *)&element)) {
         goto list_push_error;
     }
     // AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, " index for it: %zu", current_length);
     // (void)current_length;
-    if (aws_hash_table_put(&set->impl->map, element, (void *)current_length, NULL)) {
+    if (aws_hash_table_put(&set->impl->map, element, (void *)(aws_array_list_length(&set->impl->list) - 1), NULL)) {
         goto error;
     }
     return AWS_OP_SUCCESS;
