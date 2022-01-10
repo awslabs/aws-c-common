@@ -83,7 +83,8 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
     if (aws_array_list_push_back(&set->impl->list, (void *)&element)) {
         goto list_push_error;
     }
-    (void)current_length;
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, " index for it: %zu", current_length);
+    // (void)current_length;
     if (aws_hash_table_put(&set->impl->map, element, (void *)current_length, NULL)) {
         goto error;
     }
@@ -102,7 +103,16 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         /* Nothing to remove */
         return AWS_OP_SUCCESS;
     }
-
+    {
+        void *last_element = NULL;
+        AWS_FATAL_ASSERT(
+            aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
+        struct aws_string *str = *(struct aws_string **)last_element;
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "last element: %d %s\n", (int)str->len, aws_string_c_str(str));
+        str = *(struct aws_string **)element;
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL, "current element to remove: %d %s\n", (int)str->len, aws_string_c_str(str));
+    }
     struct aws_hash_element *find = NULL;
     /* find and remove the element from table */
     if (aws_hash_table_find(&set->impl->map, element, &find)) {
@@ -117,6 +127,8 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     if (aws_hash_table_remove_element(&set->impl->map, find)) {
         return AWS_OP_ERR;
     }
+    AWS_LOGF_ERROR(
+        AWS_LS_COMMON_GENERAL, "index to remove: %d, current length: %d\n", (int)index_to_remove, (int)current_length);
     /* Nothing else can fail after here. */
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
