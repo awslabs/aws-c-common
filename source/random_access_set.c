@@ -10,8 +10,8 @@
 
 struct aws_random_access_set_impl {
     struct aws_allocator *allocator;
-    struct aws_array_list list;
-    struct aws_hash_table map; /* map from the element to the index in the array */
+    struct aws_array_list list; /* Always store the pointer of the element. */
+    struct aws_hash_table map;  /* Map from the element to the index in the array. */
     aws_hash_callback_destroy_fn *destroy_element_fn;
 };
 
@@ -32,7 +32,7 @@ static struct aws_random_access_set_impl *s_impl_new(
     size_t initial_item_allocation) {
     struct aws_random_access_set_impl *impl = aws_mem_calloc(allocator, 1, sizeof(struct aws_random_access_set_impl));
     impl->allocator = allocator;
-
+    /* Will always store the pointer of the element. */
     if (aws_array_list_init_dynamic(&impl->list, allocator, initial_item_allocation, sizeof(void *))) {
         s_impl_destroy(impl);
         return NULL;
@@ -76,6 +76,7 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
     if (aws_random_access_set_exist(set, element)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT /*TODO: some more specific error or not?*/);
     }
+    /* deep copy the pointer of element to store at the array list */
     if (aws_array_list_push_back(&set->impl->list, (void *)&element)) {
         goto list_push_error;
     }
@@ -115,6 +116,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
         void *last_element = NULL;
+        /* The last element is a pointer of pointer of element. */
         AWS_FATAL_ASSERT(
             aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
         /* Update the last element index in the table */
@@ -134,7 +136,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     return AWS_OP_SUCCESS;
 }
 
-int aws_random_access_set_get_random(struct aws_random_access_set *set, void *out) {
+int aws_random_access_set_random_get_ptr(struct aws_random_access_set *set, void **out) {
     AWS_PRECONDITION(set);
     size_t length = aws_array_list_length(&set->impl->list);
     if (length == 0) {
@@ -145,9 +147,8 @@ int aws_random_access_set_get_random(struct aws_random_access_set *set, void *ou
     aws_device_random_u64(&random_64_bit_num);
 
     size_t index = (size_t)random_64_bit_num % length;
-    void *element = NULL;
-    AWS_FATAL_ASSERT(aws_array_list_get_at_ptr(&set->impl->list, &element, index) == AWS_OP_SUCCESS);
-    memcpy(out, *(void **)element, sizeof(void *));
+    /* The array list stores the pointer of the element. */
+    AWS_FATAL_ASSERT(aws_array_list_get_at(&set->impl->list, (void *)out, index) == AWS_OP_SUCCESS);
 
     return AWS_OP_SUCCESS;
 }

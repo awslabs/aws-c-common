@@ -61,18 +61,19 @@ static int s_random_access_set_get_random_fn(struct aws_allocator *allocator, vo
     AWS_STATIC_STRING_FROM_LITERAL(foo, "foo");
 
     struct aws_random_access_set list_with_map;
-    /* With only 1 initial element. */
+    /* Insert a pointer of pointer of string to the structure */
     ASSERT_SUCCESS(
         aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
-    struct aws_string *left_element = NULL;
+    /* Get the pointer of pointer to the string from the struct */
+    struct aws_string **left_element = NULL;
     /* Fail to get any, when there is nothing in it. */
-    ASSERT_FAILS(aws_random_access_set_get_random(&list_with_map, &left_element));
+    ASSERT_FAILS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 1);
-    ASSERT_SUCCESS(aws_random_access_set_get_random(&list_with_map, &left_element));
-    ASSERT_TRUE(aws_string_eq(left_element, foo));
+    ASSERT_SUCCESS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
+    ASSERT_TRUE(aws_string_eq(*left_element, foo));
 
     aws_random_access_set_clean_up(&list_with_map);
     return AWS_OP_SUCCESS;
@@ -109,31 +110,31 @@ static int s_random_access_set_remove_fn(struct aws_allocator *allocator, void *
     struct aws_random_access_set list_with_map;
     /* With only 1 initial element. */
     ASSERT_SUCCESS(
-        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+        aws_random_access_set_init(&list_with_map, allocator, aws_hash_string, aws_hash_callback_string_eq, NULL, 1));
+    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, bar));
+    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foobar));
+    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foo));
 
-    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &foo));
+    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, foo));
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 2);
 
     /* Should success and do nothing */
-    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &foo));
+    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, foo));
 
     /* Remove all beside foobar, so, if we get one random, it will be foobar */
-    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &bar));
+    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, bar));
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 1);
     struct aws_string *left_element = NULL;
-    ASSERT_SUCCESS(aws_random_access_set_get_random(&list_with_map, &left_element));
+    ASSERT_SUCCESS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
     ASSERT_TRUE(aws_string_eq(left_element, foobar));
 
     /* Remove last thing and make sure everything should still work */
-    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &foobar));
+    ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, foobar));
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 0);
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foo));
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 1);
-    ASSERT_SUCCESS(aws_random_access_set_get_random(&list_with_map, &left_element));
+    ASSERT_SUCCESS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
     ASSERT_TRUE(aws_string_eq(left_element, foo));
 
     aws_random_access_set_clean_up(&list_with_map);

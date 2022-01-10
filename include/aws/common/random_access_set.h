@@ -60,10 +60,10 @@ AWS_COMMON_API
 int aws_random_access_set_remove(struct aws_random_access_set *set, const void *element);
 
 /**
- * Get a random element from the data structure. Fails when the data structure is empty.
+ * Get the pointer to a random element from the data structure. Fails when the data structure is empty.
  */
 AWS_COMMON_API
-int aws_random_access_set_get_random(struct aws_random_access_set *set, void *out);
+int aws_random_access_set_random_get_ptr(struct aws_random_access_set *set, void **out);
 
 AWS_COMMON_API
 size_t aws_random_access_set_get_size(struct aws_random_access_set *set);
