@@ -9,6 +9,8 @@
 #include <aws/common/random_access_set.h>
 #include <aws/common/string.h>
 
+#include <aws/common/logging.h>
+
 struct aws_random_access_set_impl {
     struct aws_allocator *allocator;
     struct aws_array_list list;
@@ -125,6 +127,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
         AWS_FATAL_ASSERT(
             aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
         struct aws_string *str = *(struct aws_string **)last_element;
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "%d %s\n", (int)str->len, aws_string_c_str(str));
         printf("%d %s\n", (int)str->len, aws_string_c_str(str));
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
