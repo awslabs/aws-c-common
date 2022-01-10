@@ -31,7 +31,6 @@ AWS_EXTERN_C_BEGIN
  * @param hash_fn                   Compute the hash of each element
  * @param equals_fn                 Compute equality of two elements
  * @param destroy_element_fn        Optional. Called when the element is removed
- * @param element_size              Size of each element
  * @param initial_item_allocation   The initial number of item to allocate.
  * @return AWS_OP_ERR if any fails to initialize, AWS_OP_SUCCESS on success.
  */
@@ -42,7 +41,6 @@ int aws_random_access_set_init(
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_element_fn,
-    size_t element_size,
     size_t initial_item_allocation);
 
 AWS_COMMON_API

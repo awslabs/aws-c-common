@@ -32,12 +32,11 @@ static struct aws_random_access_set_impl *s_impl_new(
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_element_fn,
-    size_t element_size,
     size_t initial_item_allocation) {
     struct aws_random_access_set_impl *impl = aws_mem_calloc(allocator, 1, sizeof(struct aws_random_access_set_impl));
     impl->allocator = allocator;
 
-    if (aws_array_list_init_dynamic(&impl->list, allocator, initial_item_allocation, element_size)) {
+    if (aws_array_list_init_dynamic(&impl->list, allocator, initial_item_allocation, sizeof(void *))) {
         s_impl_destroy(impl);
         return NULL;
     }
@@ -57,10 +56,9 @@ int aws_random_access_set_init(
     aws_hash_fn *hash_fn,
     aws_hash_callback_eq_fn *equals_fn,
     aws_hash_callback_destroy_fn *destroy_element_fn,
-    size_t element_size,
     size_t initial_item_allocation) {
     struct aws_random_access_set_impl *impl =
-        s_impl_new(allocator, hash_fn, equals_fn, destroy_element_fn, element_size, initial_item_allocation);
+        s_impl_new(allocator, hash_fn, equals_fn, destroy_element_fn, initial_item_allocation);
     if (!impl) {
         return AWS_OP_ERR;
     }
@@ -82,16 +80,10 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT /*TODO: some more specific error or not?*/);
     }
     size_t current_length = aws_array_list_length(&set->impl->list);
-    if (aws_array_list_push_back(&set->impl->list, element)) {
+    if (aws_array_list_push_back(&set->impl->list, (void *)&element)) {
         goto list_push_error;
     }
     struct aws_string *str = *(struct aws_string **)element;
-    AWS_LOGF_ERROR(
-        AWS_LS_COMMON_GENERAL,
-        "element inserted: %d %s\n, index for it: %d",
-        (int)str->len,
-        aws_string_c_str(str),
-        (int)current_length);
     if (aws_hash_table_put(&set->impl->map, element, (void *)current_length, NULL)) {
         goto error;
     }
@@ -106,69 +98,45 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     AWS_PRECONDITION(set);
     AWS_PRECONDITION(element);
     size_t current_length = aws_array_list_length(&set->impl->list);
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 1");
     if (current_length == 0) {
         /* Nothing to remove */
         return AWS_OP_SUCCESS;
     }
-    /* find the index of element first */
-    {
-        void *last_element = NULL;
-        AWS_FATAL_ASSERT(
-            aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
-        struct aws_string *str = *(struct aws_string **)last_element;
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "last element: %d %s\n", (int)str->len, aws_string_c_str(str));
-        str = *(struct aws_string **)element;
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "current element: %d %s\n", (int)str->len, aws_string_c_str(str));
-    }
 
     struct aws_hash_element *find = NULL;
     /* find and remove the element from table */
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 2");
     if (aws_hash_table_find(&set->impl->map, element, &find)) {
         return AWS_OP_ERR;
     }
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 3");
     if (!find) {
         /* It's removed already */
         return AWS_OP_SUCCESS;
     }
 
     size_t index_to_remove = (size_t)find->value;
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 4");
     if (aws_hash_table_remove_element(&set->impl->map, find)) {
         return AWS_OP_ERR;
     }
     /* Nothing else can fail after here. */
-    AWS_LOGF_ERROR(
-        AWS_LS_COMMON_GENERAL, "index to remove: %d, current length: %d\n", (int)index_to_remove, (int)current_length);
-
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
         void *last_element = NULL;
         AWS_FATAL_ASSERT(
             aws_array_list_get_at_ptr(&set->impl->list, &last_element, current_length - 1) == AWS_OP_SUCCESS);
-        struct aws_string *str = *(struct aws_string **)last_element;
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "%d %s\n", (int)str->len, aws_string_c_str(str));
-        printf("%d %s\n", (int)str->len, aws_string_c_str(str));
         /* Update the last element index in the table */
         struct aws_hash_element *element_to_update = NULL;
-        AWS_FATAL_ASSERT(aws_hash_table_find(&set->impl->map, last_element, &element_to_update) == AWS_OP_SUCCESS);
+        AWS_FATAL_ASSERT(
+            aws_hash_table_find(&set->impl->map, *(void **)last_element, &element_to_update) == AWS_OP_SUCCESS);
         AWS_FATAL_ASSERT(element_to_update != NULL);
         element_to_update->value = (void *)index_to_remove;
         /* Swap the last element with the element to remove in the list */
         aws_array_list_swap(&set->impl->list, index_to_remove, current_length - 1);
     }
     /* Remove the current last element from the list */
-    AWS_LOGF_ERROR(
-        AWS_LS_COMMON_GENERAL, "length before pop back is %d\n", (int)aws_array_list_length(&set->impl->list));
     AWS_FATAL_ASSERT(aws_array_list_pop_back(&set->impl->list) == AWS_OP_SUCCESS);
-    AWS_LOGF_ERROR(
-        AWS_LS_COMMON_GENERAL, "length after pop back is %d\n", (int)aws_array_list_length(&set->impl->list));
     if (set->impl->destroy_element_fn) {
         set->impl->destroy_element_fn((void *)element);
     }
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 5");
     return AWS_OP_SUCCESS;
 }
 
@@ -183,7 +151,9 @@ int aws_random_access_set_get_random(struct aws_random_access_set *set, void *ou
     aws_device_random_u64(&random_64_bit_num);
 
     size_t index = (size_t)random_64_bit_num % length;
-    AWS_FATAL_ASSERT(aws_array_list_get_at(&set->impl->list, out, index) == AWS_OP_SUCCESS);
+    void *element = NULL;
+    AWS_FATAL_ASSERT(aws_array_list_get_at_ptr(&set->impl->list, &element, index) == AWS_OP_SUCCESS);
+    memcpy(out, *(void **)element, sizeof(void *));
 
     return AWS_OP_SUCCESS;
 }

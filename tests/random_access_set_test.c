@@ -23,8 +23,7 @@ static int s_random_access_set_sanitize_fn(struct aws_allocator *allocator, void
     (void)ctx;
 
     struct aws_random_access_set list_with_map;
-    ASSERT_SUCCESS(
-        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, aws_ptr_eq, NULL, sizeof(void *), 0));
+    ASSERT_SUCCESS(aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, aws_ptr_eq, NULL, 0));
     aws_random_access_set_clean_up(&list_with_map);
     return AWS_OP_SUCCESS;
 }
@@ -39,8 +38,8 @@ static int s_random_access_set_insert_fn(struct aws_allocator *allocator, void *
 
     struct aws_random_access_set list_with_map;
     /* With only 1 initial element. */
-    ASSERT_SUCCESS(aws_random_access_set_init(
-        &list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, sizeof(struct aws_string *), 1));
+    ASSERT_SUCCESS(
+        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
@@ -63,8 +62,8 @@ static int s_random_access_set_get_random_fn(struct aws_allocator *allocator, vo
 
     struct aws_random_access_set list_with_map;
     /* With only 1 initial element. */
-    ASSERT_SUCCESS(aws_random_access_set_init(
-        &list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, sizeof(struct aws_string *), 1));
+    ASSERT_SUCCESS(
+        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
     struct aws_string *left_element = NULL;
     /* Fail to get any, when there is nothing in it. */
     ASSERT_FAILS(aws_random_access_set_get_random(&list_with_map, &left_element));
@@ -87,8 +86,8 @@ static int s_random_access_set_exist_fn(struct aws_allocator *allocator, void *c
     AWS_STATIC_STRING_FROM_LITERAL(bar, "bar");
 
     struct aws_random_access_set list_with_map;
-    ASSERT_SUCCESS(aws_random_access_set_init(
-        &list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, sizeof(struct aws_string *), 1));
+    ASSERT_SUCCESS(
+        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
 
     ASSERT_TRUE(aws_random_access_set_exist(&list_with_map, &foo));
@@ -109,8 +108,8 @@ static int s_random_access_set_remove_fn(struct aws_allocator *allocator, void *
 
     struct aws_random_access_set list_with_map;
     /* With only 1 initial element. */
-    ASSERT_SUCCESS(aws_random_access_set_init(
-        &list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, sizeof(struct aws_string *), 1));
+    ASSERT_SUCCESS(
+        aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
@@ -164,7 +163,7 @@ static int s_random_access_set_owns_element_fn(struct aws_allocator *allocator, 
         s_hash_string_ptr,
         s_hash_string_ptr_eq,
         s_aws_string_destroy_callback,
-        sizeof(struct aws_string *),
+
         1));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
     ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
