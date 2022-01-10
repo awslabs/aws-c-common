@@ -99,6 +99,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     AWS_PRECONDITION(set);
     AWS_PRECONDITION(element);
     size_t current_length = aws_array_list_length(&set->impl->list);
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 1");
     if (current_length == 0) {
         /* Nothing to remove */
         return AWS_OP_SUCCESS;
@@ -115,15 +116,18 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
 
     struct aws_hash_element *find = NULL;
     /* find and remove the element from table */
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 2");
     if (aws_hash_table_find(&set->impl->map, element, &find)) {
         return AWS_OP_ERR;
     }
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 3");
     if (!find) {
         /* It's removed already */
         return AWS_OP_SUCCESS;
     }
 
     size_t index_to_remove = (size_t)find->value;
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 4");
     if (aws_hash_table_remove_element(&set->impl->map, find)) {
         return AWS_OP_ERR;
     }
@@ -154,6 +158,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     if (set->impl->destroy_element_fn) {
         set->impl->destroy_element_fn((void *)element);
     }
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "remove 5");
     return AWS_OP_SUCCESS;
 }
 
