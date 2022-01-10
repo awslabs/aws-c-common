@@ -83,8 +83,7 @@ int aws_random_access_set_insert(struct aws_random_access_set *set, const void *
     if (aws_array_list_push_back(&set->impl->list, (void *)&element)) {
         goto list_push_error;
     }
-    // struct aws_string *str = *(struct aws_string **)element;
-    // AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, " index for it: %zu", current_length);
+    (void)current_length;
     if (aws_hash_table_put(&set->impl->map, element, (void *)current_length, NULL)) {
         goto error;
     }
