@@ -50,7 +50,7 @@ void aws_random_access_set_clean_up(struct aws_random_access_set *set);
  * Insert the element to the end of the array list. A map from the element to the index of it to the hash table.
  */
 AWS_COMMON_API
-int aws_random_access_set_insert(struct aws_random_access_set *set, const void *element);
+int aws_random_access_set_add(struct aws_random_access_set *set, const void *element, bool *added);
 
 /**
  * Find and remove the element from the table. If the element does not exist, or the table is empty, nothing will
@@ -72,7 +72,7 @@ size_t aws_random_access_set_get_size(struct aws_random_access_set *set);
  * Check the element exist in the data structure or not.
  */
 AWS_COMMON_API
-bool aws_random_access_set_exist(struct aws_random_access_set *set, const void *element);
+int aws_random_access_set_exist(struct aws_random_access_set *set, const void *element, bool *exist);
 
 /* TODO: Other operations: iterate through, find/check exist? */
 

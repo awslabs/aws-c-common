@@ -40,12 +40,17 @@ static int s_random_access_set_insert_fn(struct aws_allocator *allocator, void *
     /* With only 1 initial element. */
     ASSERT_SUCCESS(
         aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+    bool added = true;
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foobar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &bar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foo, &added));
+    ASSERT_TRUE(added);
 
     /* You cannot have duplicates */
-    ASSERT_FAILS(aws_random_access_set_insert(&list_with_map, &foobar));
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foobar, &added));
+    ASSERT_FALSE(added);
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 3);
@@ -68,7 +73,9 @@ static int s_random_access_set_get_random_fn(struct aws_allocator *allocator, vo
     struct aws_string **left_element = NULL;
     /* Fail to get any, when there is nothing in it. */
     ASSERT_FAILS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+    bool added = false;
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foo, &added));
+    ASSERT_TRUE(added);
 
     /* Check the size */
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 1);
@@ -89,10 +96,16 @@ static int s_random_access_set_exist_fn(struct aws_allocator *allocator, void *c
     struct aws_random_access_set list_with_map;
     ASSERT_SUCCESS(
         aws_random_access_set_init(&list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, NULL, 1));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+    bool added = false;
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foo, &added));
+    ASSERT_TRUE(added);
 
-    ASSERT_TRUE(aws_random_access_set_exist(&list_with_map, &foo));
-    ASSERT_FALSE(aws_random_access_set_exist(&list_with_map, &bar));
+    bool exist = false;
+    ASSERT_SUCCESS(aws_random_access_set_exist(&list_with_map, &foo, &exist));
+    ASSERT_TRUE(exist);
+
+    ASSERT_SUCCESS(aws_random_access_set_exist(&list_with_map, &bar, &exist));
+    ASSERT_FALSE(exist);
 
     aws_random_access_set_clean_up(&list_with_map);
     return AWS_OP_SUCCESS;
@@ -111,9 +124,13 @@ static int s_random_access_set_remove_fn(struct aws_allocator *allocator, void *
     /* With only 1 initial element. */
     ASSERT_SUCCESS(
         aws_random_access_set_init(&list_with_map, allocator, aws_hash_string, aws_hash_callback_string_eq, NULL, 1));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, bar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foobar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foo));
+    bool added = false;
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, bar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, foobar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, foo, &added));
+    ASSERT_TRUE(added);
 
     ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, foo));
     /* Check the size */
@@ -132,7 +149,8 @@ static int s_random_access_set_remove_fn(struct aws_allocator *allocator, void *
     /* Remove last thing and make sure everything should still work */
     ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, foobar));
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 0);
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, foo));
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, foo, &added));
+    ASSERT_TRUE(added);
     ASSERT_UINT_EQUALS(aws_random_access_set_get_size(&list_with_map), 1);
     ASSERT_SUCCESS(aws_random_access_set_random_get_ptr(&list_with_map, (void **)&left_element));
     ASSERT_TRUE(aws_string_eq(left_element, foo));
@@ -159,19 +177,18 @@ static int s_random_access_set_owns_element_fn(struct aws_allocator *allocator, 
     struct aws_random_access_set list_with_map;
     /* With only 1 initial element. Add clean up for the string */
     ASSERT_SUCCESS(aws_random_access_set_init(
-        &list_with_map,
-        allocator,
-        s_hash_string_ptr,
-        s_hash_string_ptr_eq,
-        s_aws_string_destroy_callback,
-
-        1));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foobar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &bar));
-    ASSERT_SUCCESS(aws_random_access_set_insert(&list_with_map, &foo));
+        &list_with_map, allocator, s_hash_string_ptr, s_hash_string_ptr_eq, s_aws_string_destroy_callback, 1));
+    bool added = false;
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foobar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &bar, &added));
+    ASSERT_TRUE(added);
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foo, &added));
+    ASSERT_TRUE(added);
 
     /* You cannot have duplicates */
-    ASSERT_FAILS(aws_random_access_set_insert(&list_with_map, &foobar));
+    ASSERT_SUCCESS(aws_random_access_set_add(&list_with_map, &foobar, &added));
+    ASSERT_FALSE(added);
 
     ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &foo));
     ASSERT_SUCCESS(aws_random_access_set_remove(&list_with_map, &foobar));
