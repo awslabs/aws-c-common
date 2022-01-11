@@ -124,6 +124,7 @@ int aws_random_access_set_remove(struct aws_random_access_set *set, const void *
     }
     /* If assert code failed, we won't be recovered from the failure */
     int assert_re = AWS_OP_SUCCESS;
+    (void)assert_re;
     /* Nothing else can fail after here. */
     if (index_to_remove != current_length - 1) {
         /* It's not the last element, we need to swap it with the end of the list and remove the last element */
