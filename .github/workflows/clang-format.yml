@@ -5,7 +5,7 @@ on: [push]
 jobs:
   clang-format:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-20.04 # latest
 
     steps:
     - name: Checkout Sources
