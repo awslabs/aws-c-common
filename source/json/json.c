@@ -102,14 +102,14 @@ struct aws_json_parse_credentials_results aws_json_parse_credentials_from_cjson(
     if (creds_expiration) {
         struct aws_byte_cursor creds_expiration_cursor = aws_byte_cursor_from_c_str(creds_expiration->valuestring);
         if (options->expiration_required && creds_expiration_cursor.len == 0) {
-            AWS_LOGF_ERROR(AWS_OP_ERR, "Parsed an unexpected credentials json document with empty expiration.");
+            AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Parsed an unexpected credentials json document with empty expiration.");
             goto done;
         }
         if (creds_expiration_cursor.len != 0) {
             struct aws_date_time expiration;
             if (aws_date_time_init_from_str_cursor(&expiration, &creds_expiration_cursor, AWS_DATE_FORMAT_ISO_8601) ==
                 AWS_OP_ERR) {
-                AWS_LOGF_ERROR(AWS_OP_ERR, "Expiration in Json document is not a valid ISO_8601 date string.");
+                AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Expiration in Json document is not a valid ISO_8601 date string.");
                 if (options->expiration_required) {
                     goto done;
                 }
@@ -166,7 +166,7 @@ cJSON *aws_json_create_cjson_string(const char *item_value) {
 cJSON *aws_json_parse_cjson_from_string(const char *string) {
     cJSON *object = cJSON_Parse(string);
     if (object == NULL) {
-        AWS_LOGF_ERROR(AWS_OP_ERR, "Failed to parse document as Json document.");
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Failed to parse document as Json document.");
         return NULL;
     }
     return object;
@@ -201,7 +201,7 @@ cJSON *aws_json_get_cjson(cJSON *object, const char *item_key) {
 cJSON *aws_json_get_cjson_with_validate(cJSON *object, const char *item_key, const char *log_key_name) {
     cJSON *return_val = aws_json_get_cjson(object, item_key);
     if (!cJSON_IsString(return_val) || (return_val->valuestring == NULL)) {
-        AWS_LOGF_ERROR(AWS_OP_ERR, "Failed to parse from Json document: %s", log_key_name);
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Failed to parse from Json document: %s", log_key_name);
         return NULL;
     }
     return return_val;

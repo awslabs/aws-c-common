@@ -31,6 +31,7 @@ This file has been modified from its original version by Amazon:
 */
 
 /* clang-format off */
+// NOLINTBEGIN(*)
 
 /* cJSON */
 /* JSON parser in C. */
@@ -2985,3 +2986,5 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
 {
   global_hooks.deallocate(object);
 }
+
+// NOLINTEND(*)

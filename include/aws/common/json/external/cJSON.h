@@ -28,6 +28,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 */
 
 /* clang-format off */
+// NOLINTBEGIN(*)
 
 #ifndef cJSON__h
 #define cJSON__h
@@ -292,3 +293,4 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #endif
 
 #endif
+// NOLINTEND(*)
