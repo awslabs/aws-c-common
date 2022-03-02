@@ -9,9 +9,6 @@
 #include <aws/common/json/external/cJSON.h>
 #include <aws/common/thread.h>
 
-struct aws_allocator *aws_json_module_allocator;
-bool aws_json_module_initialized;
-
 void *aws_cJSON_alloc(size_t sz);
 void aws_cJSON_free(void *ptr);
 
@@ -72,7 +69,7 @@ struct cJSON *aws_json_create_cjson(void);
  * @param output The newly created cJSON object.
  * @return Returns true if creation and addition was successful.
  */
-bool aws_json_create_and_add_cjson(cJSON *object, const char* item_key, cJSON* output);
+bool aws_json_create_and_add_cjson(cJSON *object, const char *item_key, cJSON *output);
 /**
  * Creates a new cJSON array and returns a pointer to it
  * @return A pointer to a new cJSON array
@@ -86,26 +83,26 @@ struct cJSON *aws_json_create_cjson_array(void);
  * @param output The newly created cJSON array.
  * @return Returns true if creation and addition was successful.
  */
-bool aws_json_create_and_add_cjson_array(cJSON *object, const char* item_key, cJSON* output);
+bool aws_json_create_and_add_cjson_array(cJSON *object, const char *item_key, cJSON *output);
 /**
  * Creates a new cJSON number object and returns a pointer to it.
  * @param item_value The number to be stored in the cJSON number object.
  * @return A pointer to the new cJSON number object.
  */
-cJSON* aws_json_create_cjson_number(const double item_value);
+cJSON *aws_json_create_cjson_number(const double item_value);
 /**
  * Creates a new cJSON string object and returns a pointer to it.
  * @param item_value The string to be stored in the cJSON string object.
  * @return A pointer to the new cJSON string object.
  */
-cJSON* aws_json_create_cjson_string(const char* item_value);
+cJSON *aws_json_create_cjson_string(const char *item_value);
 
 /**
  * Parses a string containing a JSON document and returns the root JSON element as a cJSON object.
  * @param string The string containing the JSON document.
  * @return A pointer to the cJSON object created from the JSON document, or null if parsing fails.
  */
-cJSON* aws_json_parse_cjson_from_string(const char* string);
+cJSON *aws_json_parse_cjson_from_string(const char *string);
 
 /**
  * Adds a cJSON object (item_value) to another cJSON object (object) at the given key (item_key).
@@ -113,13 +110,13 @@ cJSON* aws_json_parse_cjson_from_string(const char* string);
  * @param item_key The key name you want to place the cJSON object at.
  * @param item_value The cJSON object you want to add.
  */
-void aws_json_add_item_to_cjson(cJSON *object, const char* item_key, cJSON *item_value);
+void aws_json_add_item_to_cjson(cJSON *object, const char *item_key, cJSON *item_value);
 /**
  * Adds a cJSON object (item_value) to a cJSON array (object) at the end of the cJSON array.
  * @param array The cJSON array you want to add a cJSON object to.
  * @param item_value The cJSON object you want to add.
  */
-void aws_json_add_item_to_cjson_array(cJSON *array, cJSON* item_value);
+void aws_json_add_item_to_cjson_array(cJSON *array, cJSON *item_value);
 /**
  * Adds a cJSON string to the cJSON object at the given key.
  * @param object The cJSON object you want to add a cJSON string to.
@@ -127,7 +124,7 @@ void aws_json_add_item_to_cjson_array(cJSON *array, cJSON* item_value);
  * @param item_value The string you want to add.
  * @return True if adding the cJSON string is successful, false otherwise.
  */
-bool aws_json_add_string_to_cjson(cJSON *object, const char* item_key, const char* item_value);
+bool aws_json_add_string_to_cjson(cJSON *object, const char *item_key, const char *item_value);
 /**
  * Adds a cJSON number to the cJSON object at the given key.
  * @param object The cJSON object you want to add a cJSON number to.
@@ -135,7 +132,7 @@ bool aws_json_add_string_to_cjson(cJSON *object, const char* item_key, const cha
  * @param item_value The number you want to add.
  * @return True if adding the cJSON number is successful, false otherwise.
  */
-bool aws_json_add_number_to_cjson(cJSON *object, const char* item_key, const double item_value);
+bool aws_json_add_number_to_cjson(cJSON *object, const char *item_key, const double item_value);
 
 /**
  * Returns the cJSON item in the passed-in cJSON item at the given key.
@@ -143,7 +140,7 @@ bool aws_json_add_number_to_cjson(cJSON *object, const char* item_key, const dou
  * @param item_key The key name where the cJSON item is placed.
  * @return A pointer to the cJSON item at the given key if it exists, otherwise null.
  */
-cJSON* aws_json_get_cjson(cJSON *object, const char* item_key);
+cJSON *aws_json_get_cjson(cJSON *object, const char *item_key);
 /**
  * Returns the cJSON item in the passed-in cJSON item at the given key. Will validate the existence of
  * the cJSON key and will print a log error if the cJSON item does not exist.
@@ -152,46 +149,46 @@ cJSON* aws_json_get_cjson(cJSON *object, const char* item_key);
  * @param log_key_name The name to show in the error log if the key does not exist in the cJSON item.
  * @return A pointer to the cJSON item at the given key if it exists, otherwise null.
  */
-cJSON *aws_json_get_cjson_with_validate(cJSON *object, const char* item_key, const char* log_key_name);
+cJSON *aws_json_get_cjson_with_validate(cJSON *object, const char *item_key, const char *log_key_name);
 /**
  * Returns the cJSON item in the passed-in cJSON item at the given case-sensitive key.
  * @param object The cJSON item that contains the cJSON item at the key.
  * @param item_key The case sensitive key name where teh cJSON item is placed.
  * @return A pointer to the cJSON item at the given key if it exists, otherwise null.
  */
-cJSON* aws_json_get_cjson_case_sensitive(cJSON *object, const char* item_key);
+cJSON *aws_json_get_cjson_case_sensitive(cJSON *object, const char *item_key);
 /**
  * Gets the string value from the cJSON object and returns it.
  * @param object The cJSON object containing the string value.
  * @return The string value in the cJSON object.
  */
-char* aws_json_get_cjson_string(cJSON *object);
+char *aws_json_get_cjson_string(cJSON *object);
 /**
  * Returns the cJSON object at the given array index, if it exists.
  * @param object The cJSON array.
  * @param index The index in the cJSON array.
  * @return A pointer to the cJSON item at the given index if it exists, otherwise null.
  */
-cJSON* aws_json_get_cjson_array_item(cJSON *object, int index);
+cJSON *aws_json_get_cjson_array_item(cJSON *object, int index);
 
 /**
  * Checks whether the cJSON pointer is a cJSON object.
  * @param object The cJSON pointer to check.
  * @return True if the cJSON pointer is a cJSON object, otherwise false.
  */
-bool aws_json_is_cjson_object(cJSON* object);
+bool aws_json_is_cjson_object(cJSON *object);
 /**
  * Checks whether the cJSON pointer is a cJSON number.
  * @param object The cJSON pointer to check.
  * @return True if the cJSON pointer is a cJSON number, otherwise false.
  */
-bool aws_json_is_cjson_number(cJSON* object);
+bool aws_json_is_cjson_number(cJSON *object);
 /**
  * Checks whether the cJSON pointer is a cJSON array.
  * @param object The cJSON pointer to check.
  * @return True if the cJSON pointer is a cJSON array, otherwise false.
  */
-bool aws_json_is_cjson_array(cJSON* object);
+bool aws_json_is_cjson_array(cJSON *object);
 
 /**
  * Returns a string containing the unformatted print of a cJSON object. Can be used to get the JSON string from a
@@ -199,7 +196,7 @@ bool aws_json_is_cjson_array(cJSON* object);
  * @param object The cJSON object to print.
  * @return An unformatted JSON string of the cJSON object.
  */
-char*aws_json_print_unformatted_cjson(cJSON *object);
+char *aws_json_print_unformatted_cjson(cJSON *object);
 /**
  * Stores a string containing the unformatted print of a cJSON object into the given string as output.
  * @param object The cJSON object to print.
@@ -207,7 +204,7 @@ char*aws_json_print_unformatted_cjson(cJSON *object);
  * @param length The length of the string.
  * @param fmt Whether to format the output (0 = false, 1 = true).
  */
-void aws_json_print_preallocated_cjson(cJSON* object, char* output, int length, int fmt);
+void aws_json_print_preallocated_cjson(cJSON *object, char *output, int length, int fmt);
 
 /**
  * Deletes the cJSON object

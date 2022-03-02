@@ -1,14 +1,13 @@
 /**
-* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0.
-*/
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 
 #include <aws/common/json/json.h>
 
 #include <aws/common/byte_buf.h>
-#include <aws/common/logging.h>
 #include <aws/common/date_time.h>
-
+#include <aws/common/logging.h>
 
 struct aws_allocator *aws_json_module_allocator = NULL;
 bool aws_json_module_initialized = false;
@@ -22,8 +21,7 @@ void aws_cJSON_free(void *ptr) {
 }
 
 void aws_json_init(struct aws_allocator *allocator) {
-    if (!aws_json_module_initialized)
-    {
+    if (!aws_json_module_initialized) {
         aws_json_module_allocator = allocator;
         struct cJSON_Hooks allocation_hooks = {.malloc_fn = aws_cJSON_alloc, .free_fn = aws_cJSON_free};
         cJSON_InitHooks(&allocation_hooks);
@@ -31,10 +29,8 @@ void aws_json_init(struct aws_allocator *allocator) {
     }
 }
 
-void aws_json_clean_up()
-{
-    if (aws_json_module_initialized)
-    {
+void aws_json_clean_up() {
+    if (aws_json_module_initialized) {
         aws_json_module_allocator = NULL;
         aws_json_module_initialized = false;
     }
@@ -111,7 +107,8 @@ struct aws_json_parse_credentials_results aws_json_parse_credentials_from_cjson(
         }
         if (creds_expiration_cursor.len != 0) {
             struct aws_date_time expiration;
-            if (aws_date_time_init_from_str_cursor(&expiration, &creds_expiration_cursor, AWS_DATE_FORMAT_ISO_8601) == AWS_OP_ERR) {
+            if (aws_date_time_init_from_str_cursor(&expiration, &creds_expiration_cursor, AWS_DATE_FORMAT_ISO_8601) ==
+                AWS_OP_ERR) {
                 AWS_LOGF_ERROR(AWS_OP_ERR, "Expiration in Json document is not a valid ISO_8601 date string.");
                 if (options->expiration_required) {
                     goto done;
@@ -133,49 +130,40 @@ done:
     return return_val;
 }
 
-struct cJSON* aws_json_create_cjson()
-{
+struct cJSON *aws_json_create_cjson() {
     return cJSON_CreateObject();
 }
 
-bool aws_json_create_and_add_cjson(cJSON *object, const char* item_key, cJSON *output)
-{
+bool aws_json_create_and_add_cjson(cJSON *object, const char *item_key, cJSON *output) {
     output = aws_json_create_cjson();
-    if (output == NULL)
-    {
+    if (output == NULL) {
         return false;
     }
     aws_json_add_item_to_cjson(object, item_key, output);
     return true;
 }
 
-struct cJSON* aws_json_create_cjson_array()
-{
+struct cJSON *aws_json_create_cjson_array() {
     return cJSON_CreateArray();
 }
 
-bool aws_json_create_and_add_cjson_array(cJSON *object, const char* item_key, cJSON *output)
-{
+bool aws_json_create_and_add_cjson_array(cJSON *object, const char *item_key, cJSON *output) {
     output = aws_json_create_cjson_array();
-    if (output == NULL)
-    {
+    if (output == NULL) {
         return false;
     }
     aws_json_add_item_to_cjson(object, item_key, output);
     return true;
 }
 
-cJSON* aws_json_create_cjson_number(const double item_value)
-{
+cJSON *aws_json_create_cjson_number(const double item_value) {
     return cJSON_CreateNumber(item_value);
 }
-cJSON* aws_json_create_cjson_string(const char* item_value)
-{
+cJSON *aws_json_create_cjson_string(const char *item_value) {
     return cJSON_CreateString(item_value);
 }
 
-cJSON* aws_json_parse_cjson_from_string(const char* string)
-{
+cJSON *aws_json_parse_cjson_from_string(const char *string) {
     cJSON *object = cJSON_Parse(string);
     if (object == NULL) {
         AWS_LOGF_ERROR(AWS_OP_ERR, "Failed to parse document as Json document.");
@@ -184,41 +172,33 @@ cJSON* aws_json_parse_cjson_from_string(const char* string)
     return object;
 }
 
-void aws_json_add_item_to_cjson(cJSON *object, const char* item_key, cJSON *item_value)
-{
+void aws_json_add_item_to_cjson(cJSON *object, const char *item_key, cJSON *item_value) {
     cJSON_AddItemToObject(object, item_key, item_value);
 }
 
-void aws_json_add_item_to_cjson_array(cJSON *array, cJSON* item_value)
-{
+void aws_json_add_item_to_cjson_array(cJSON *array, cJSON *item_value) {
     cJSON_AddItemToArray(array, item_value);
 }
 
-bool aws_json_add_string_to_cjson(cJSON *object, const char* item_key, const char* item_value)
-{
-    if (cJSON_AddStringToObject(object, item_key, item_value) == NULL)
-    {
+bool aws_json_add_string_to_cjson(cJSON *object, const char *item_key, const char *item_value) {
+    if (cJSON_AddStringToObject(object, item_key, item_value) == NULL) {
         return false;
     }
     return true;
 }
 
-bool aws_json_add_number_to_cjson(cJSON *object, const char* item_key, const double item_value)
-{
-    if (cJSON_AddNumberToObject(object, item_key, item_value) == NULL)
-    {
+bool aws_json_add_number_to_cjson(cJSON *object, const char *item_key, const double item_value) {
+    if (cJSON_AddNumberToObject(object, item_key, item_value) == NULL) {
         return false;
     }
     return true;
 }
 
-cJSON* aws_json_get_cjson(cJSON *object, const char* item_key)
-{
+cJSON *aws_json_get_cjson(cJSON *object, const char *item_key) {
     return cJSON_GetObjectItem(object, item_key);
 }
 
-cJSON* aws_json_get_cjson_with_validate(cJSON *object, const char* item_key, const char* log_key_name)
-{
+cJSON *aws_json_get_cjson_with_validate(cJSON *object, const char *item_key, const char *log_key_name) {
     cJSON *return_val = aws_json_get_cjson(object, item_key);
     if (!cJSON_IsString(return_val) || (return_val->valuestring == NULL)) {
         AWS_LOGF_ERROR(AWS_OP_ERR, "Failed to parse from Json document: %s", log_key_name);
@@ -227,52 +207,42 @@ cJSON* aws_json_get_cjson_with_validate(cJSON *object, const char* item_key, con
     return return_val;
 }
 
-cJSON*aws_json_get_cjson_case_sensitive(cJSON *object, const char* item_key)
-{
+cJSON *aws_json_get_cjson_case_sensitive(cJSON *object, const char *item_key) {
     return cJSON_GetObjectItemCaseSensitive(object, item_key);
 }
 
-char*aws_json_get_cjson_string(cJSON *object)
-{
+char *aws_json_get_cjson_string(cJSON *object) {
     return cJSON_GetStringValue(object);
 }
 
-cJSON*aws_json_get_cjson_array_item(cJSON *object, int index)
-{
+cJSON *aws_json_get_cjson_array_item(cJSON *object, int index) {
     return cJSON_GetArrayItem(object, index);
 }
 
-bool aws_json_is_cjson_object(cJSON* object)
-{
+bool aws_json_is_cjson_object(cJSON *object) {
     return cJSON_IsObject(object);
 }
 
-bool aws_json_is_cjson_number(cJSON* object)
-{
+bool aws_json_is_cjson_number(cJSON *object) {
     return cJSON_IsNumber(object);
 }
 
-bool aws_json_is_cjson_array(cJSON* object)
-{
+bool aws_json_is_cjson_array(cJSON *object) {
     return cJSON_IsArray(object);
 }
 
-char*aws_json_print_unformatted_cjson(cJSON *object)
-{
+char *aws_json_print_unformatted_cjson(cJSON *object) {
     return cJSON_PrintUnformatted(object);
 }
 
-void aws_json_print_preallocated_cjson(cJSON* object, char* output, int length, int fmt)
-{
+void aws_json_print_preallocated_cjson(cJSON *object, char *output, int length, int fmt) {
     cJSON_PrintPreallocated(object, output, length, fmt);
 }
 
-void aws_json_delete_cjson(cJSON *object)
-{
+void aws_json_delete_cjson(cJSON *object) {
     cJSON_Delete(object);
 }
 
-void aws_json_free_cjson(cJSON *object)
-{
+void aws_json_free_cjson(cJSON *object) {
     cJSON_free(object);
 }
