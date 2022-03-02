@@ -29,6 +29,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 
 /* clang-format off */
 // NOLINTBEGIN(*)
+#ifndef __clang_analyzer__ // ignore in clang-analyzer
 
 #ifndef cJSON__h
 #define cJSON__h
@@ -293,4 +294,6 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #endif
 
 #endif
+
+#endif // clang-analzer
 // NOLINTEND(*)

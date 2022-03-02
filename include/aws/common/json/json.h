@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_JSON_H
-#define AWS_COMMON_JSON_H
+#ifndef AWS_COMMON_JSON_JSON_H
+#define AWS_COMMON_JSON_JSON_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -217,4 +217,4 @@ void aws_json_delete_cjson(cJSON *object);
  */
 void aws_json_free_cjson(cJSON *object);
 
-#endif // AWS_COMMON_JSON_H
+#endif // AWS_COMMON_JSON_JSON_H
