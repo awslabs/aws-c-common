@@ -3,7 +3,7 @@ include(AwsTestHarness)
 enable_testing()
 
 file(GLOB META_TEST_SRC "assert_test.c")
-file(GLOB TEST_BASE_SRC "*.c")
+file(GLOB TEST_BASE_SRC "*.*c")
 file(GLOB TEST_LOGGING_SRC "logging/*.c")
 file(GLOB TEST_SRC ${TEST_BASE_SRC} ${TEST_LOGGING_SRC})
 list(REMOVE_ITEM TEST_SRC ${META_TEST_SRC})
@@ -473,6 +473,8 @@ add_test_case(promise_test_wait_for_a_bit)
 add_test_case(promise_test_finish_immediately)
 add_test_case(promise_test_finish_before_wait)
 add_test_case(promise_test_multiple_waiters)
+
+add_test_case(test_json_parse_from_string)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
