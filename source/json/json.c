@@ -6,8 +6,6 @@
 #include <aws/common/json/json.h>
 #include <aws/common/json/external/cJSON.h>
 
-// ====================
-// Create and pass type
 void *aws_json_make_node(void) {
     return (void*)cJSON_CreateObject();
 }
@@ -29,10 +27,7 @@ void *aws_json_make_node_null(void) {
 void *aws_json_make_node_object(void) {
     return aws_json_make_node();
 }
-// ====================
 
-// ====================
-// Value setters and getters
 bool aws_json_set_string(void *node, char *string) {
     cJSON *cjson = (cJSON*)node;
     if (cJSON_IsString(cjson)) {
@@ -87,10 +82,7 @@ bool aws_json_node_get_boolean(void *node) {
     }
     return NULL;
 }
-// ====================
 
-// ====================
-// Object API
 bool aws_json_object_add_node(void *object, char *key, void *node) {
     cJSON *cjson = (cJSON*)object;
     if (cJSON_IsObject(cjson)) {
@@ -106,14 +98,14 @@ bool aws_json_object_add_node(void *object, char *key, void *node) {
 void *aws_json_object_get_node(void *object, char *key) {
     cJSON *cjson = (cJSON*)object;
     if (cJSON_IsObject(cjson)) {
-        cJSON_GetObjectItem(cjson, key);
+        return cJSON_GetObjectItem(cjson, key);
     }
     return NULL;
 }
 void *aws_json_object_get_node_case_insensitive(void *object, char *key) {
     cJSON *cjson = (cJSON*)object;
     if (cJSON_IsObject(cjson)) {
-        cJSON_GetObjectItemCaseSensitive(cjson, key);
+        return cJSON_GetObjectItemCaseSensitive(cjson, key);
     }
     return NULL;
 }
@@ -147,10 +139,7 @@ bool aws_json_object_delete_node_with_node(void *object, void *node) {
     }
     return false;
 }
-// ====================
 
-// ====================
-// Array API
 bool aws_json_array_add_node(void *array, void *node) {
     cJSON *cjson = (cJSON*)array;
     if (cJSON_IsArray(cjson)) {
@@ -220,10 +209,7 @@ bool aws_json_array_delete_node_with_node(void *array, void *node) {
     }
     return false;
 }
-// ====================
 
-// ====================
-// Checks
 bool aws_json_node_is_string(void *node) {
     cJSON *cjson = (cJSON*)node;
     return cJSON_IsString(cjson);
@@ -248,10 +234,7 @@ bool aws_json_node_is_object(void *node) {
     cJSON *cjson = (cJSON*)node;
     return cJSON_IsObject(cjson);
 }
-// ====================
 
-// ====================
-// Memory Management
 static struct aws_allocator *s_aws_json_module_allocator = NULL;
 static bool s_aws_json_module_initialized = false;
 
@@ -293,10 +276,7 @@ bool aws_json_node_free(void *node) {
     }
     return false;
 }
-// ====================
 
-// ====================
-// Utility
 char* aws_json_node_to_string(void *node) {
     cJSON *cjson = (cJSON*)node;
     if (node != NULL) {
@@ -331,4 +311,3 @@ bool aws_json_node_is_valid(void *node) {
     }
     return false;
 }
-// ====================

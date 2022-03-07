@@ -6,13 +6,7 @@
 #include <aws/testing/aws_test_harness.h>
 #include <aws/common/json/json.h>
 
-//static char* s_test_json = "{array: [1,2,3], boolean: true, color: gold, null: null, number: 123, object: {a: b, c: d}}";
-//static char* s_test_json = "{\"array\": [1,2,3]}";
-
 static char* s_test_json = "{\"array\": [1,2,3], \"boolean\": true, \"color\": \"gold\", \"null\": null, \"number\": 123, \"object\": {\"a\": \"b\", \"c\": \"d\"}}";
-// =========
-
-
 
 AWS_TEST_CASE(test_json_parse_from_string, s_test_json_parse_from_string)
 static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *ctx) {
@@ -20,8 +14,6 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
 
     aws_json_module_init(allocator);
     void *root = aws_json_node_from_string(s_test_json);
-
-    //fprintf(stdout, "%s", aws_json_node_to_string_formatted(root));
 
     ASSERT_NOT_NULL(root);
     AWS_ASSERT(aws_json_node_is_object(root));
