@@ -30,8 +30,8 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 /* clang-format off */
 // NOLINTBEGIN(*)
 
-#ifndef cJSON__h
-#define cJSON__h
+#ifndef AWS_COMMON_JSON_EXTERNAL_CJSON_H
+#define AWS_COMMON_JSON_EXTERNAL_CJSON_H
 
 #ifndef __clang_analyzer__ // ignore in clang-analyzer
 

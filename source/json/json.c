@@ -7,22 +7,22 @@
 #include <aws/common/json/json.h>
 
 struct aws_json_node *aws_json_make_node(void) {
-    return (void *)cJSON_CreateObject();
+    return (void *)(uintptr_t)cJSON_CreateObject();
 }
 struct aws_json_node *aws_json_make_node_string(char *string) {
-    return (void *)cJSON_CreateString(string);
+    return (void *)(uintptr_t)cJSON_CreateString(string);
 }
 struct aws_json_node *aws_json_make_node_number(double number) {
-    return (void *)cJSON_CreateNumber(number);
+    return (void *)(uintptr_t)cJSON_CreateNumber(number);
 }
 struct aws_json_node *aws_json_make_node_array(void) {
-    return (void *)cJSON_CreateArray();
+    return (void *)(uintptr_t)cJSON_CreateArray();
 }
 struct aws_json_node *aws_json_make_node_boolean(bool boolean) {
-    return (void *)cJSON_CreateBool(boolean);
+    return (void *)(uintptr_t)cJSON_CreateBool(boolean);
 }
 struct aws_json_node *aws_json_make_node_null(void) {
-    return (void *)cJSON_CreateNull();
+    return (void *)(uintptr_t)cJSON_CreateNull();
 }
 struct aws_json_node *aws_json_make_node_object(void) {
     return aws_json_make_node();
@@ -152,7 +152,7 @@ bool aws_json_array_add_node(struct aws_json_node *array, struct aws_json_node *
 struct aws_json_node *aws_json_array_get_node(struct aws_json_node *array, int index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        return (void*)cJSON_GetArrayItem(cjson, index);
+        return (void *)(uintptr_t)cJSON_GetArrayItem(cjson, index);
     }
     return NULL;
 }
@@ -193,7 +193,7 @@ bool aws_json_array_delete_node(struct aws_json_node *array, int index) {
 bool aws_json_array_delete_node_with_node(struct aws_json_node *array, struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        struct cJSON *cjson_node = (struct cJSON*)node;
+        struct cJSON *cjson_node = (struct cJSON *)node;
         int index = 0;
 
         struct cJSON *array_child = cjson->child;
@@ -277,27 +277,27 @@ bool aws_json_node_free(struct aws_json_node *node) {
     return false;
 }
 
-char* aws_json_node_to_string(struct aws_json_node *node) {
+char *aws_json_node_to_string(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
         return cJSON_PrintUnformatted(cjson);
     }
     return NULL;
 }
-char* aws_json_node_to_string_formatted(struct aws_json_node *node) {
+char *aws_json_node_to_string_formatted(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
         return cJSON_Print(cjson);
     }
     return NULL;
 }
-void aws_json_print_to_string_preallocated(struct aws_json_node *node, char* output, int length, bool format) {
+void aws_json_print_to_string_preallocated(struct aws_json_node *node, char *output, int length, bool format) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
         cJSON_PrintPreallocated(cjson, output, length, format);
     }
 }
-struct aws_json_node *aws_json_node_from_string(char* string) {
+struct aws_json_node *aws_json_node_from_string(char *string) {
     if (string == NULL) {
         return NULL;
     }
