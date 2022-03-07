@@ -13,50 +13,50 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     (void)ctx;
 
     aws_json_module_init(allocator);
-    void *root = aws_json_node_from_string(s_test_json);
+    struct aws_json_node *root = aws_json_node_from_string(s_test_json);
 
     ASSERT_NOT_NULL(root);
     AWS_ASSERT(aws_json_node_is_object(root));
 
     // Testing valid array
-    void* array_node = aws_json_object_get_node(root, "array");
+    struct aws_json_node* array_node = aws_json_object_get_node(root, "array");
     ASSERT_NOT_NULL(array_node);
     ASSERT_TRUE(aws_json_node_is_array(array_node));
     ASSERT_TRUE(aws_json_array_get_count(array_node) == 3);
-    void* array_node_one = aws_json_array_get_node(array_node, 0);
+    struct aws_json_node* array_node_one = aws_json_array_get_node(array_node, 0);
     ASSERT_NOT_NULL(array_node_one);
     ASSERT_TRUE(aws_json_node_is_number(array_node_one));
     ASSERT_TRUE(*aws_json_node_get_number(array_node_one) == (double)1);
 
     // Testing valid boolean
-    void* boolean_node = aws_json_object_get_node(root, "boolean");
+    struct aws_json_node* boolean_node = aws_json_object_get_node(root, "boolean");
     ASSERT_NOT_NULL(boolean_node);
     ASSERT_TRUE(aws_json_node_is_boolean(boolean_node));
     ASSERT_TRUE(aws_json_node_get_boolean(boolean_node));
 
     // Testing valid string
-    void* string_node = aws_json_object_get_node(root, "color");
+    struct aws_json_node* string_node = aws_json_object_get_node(root, "color");
     ASSERT_NOT_NULL(string_node);
     ASSERT_TRUE(aws_json_node_is_string(string_node));
     ASSERT_TRUE(strcmp(aws_json_node_get_string(string_node), "gold") == 0);
 
     // Testing valid number
-    void *number_node = aws_json_object_get_node(root, "number");
+    struct aws_json_node *number_node = aws_json_object_get_node(root, "number");
     ASSERT_NOT_NULL(number_node);
     ASSERT_TRUE(aws_json_node_is_number(number_node));
     ASSERT_TRUE(*aws_json_node_get_number(number_node) == (double)123);
 
     // Testing valid object
-    void *object_node = aws_json_object_get_node(root, "object");
+    struct aws_json_node *object_node = aws_json_object_get_node(root, "object");
     ASSERT_NOT_NULL(object_node);
     ASSERT_TRUE(aws_json_node_is_object(object_node) == true);
-    void *sub_object_node = aws_json_object_get_node(object_node, "a");
+    struct aws_json_node *sub_object_node = aws_json_object_get_node(object_node, "a");
     ASSERT_NOT_NULL(sub_object_node);
     ASSERT_TRUE(aws_json_node_is_string(sub_object_node));
     ASSERT_TRUE(strcmp(aws_json_node_get_string(sub_object_node), "b") == 0);
 
     // Testing invalid object
-    void *invalid_object = aws_json_object_get_node(root, "invalid");
+    struct aws_json_node *invalid_object = aws_json_object_get_node(root, "invalid");
     ASSERT_NULL(invalid_object);
     ASSERT_NULL(aws_json_node_get_number(invalid_object));
     // Test getting invalid type of data
@@ -74,9 +74,9 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
 
     aws_json_module_init(allocator);
 
-    void *root = aws_json_make_node_object();
+    struct aws_json_node *root = aws_json_make_node_object();
 
-    void *array = aws_json_make_node_array();
+    struct aws_json_node *array = aws_json_make_node_array();
     aws_json_array_add_node(array, aws_json_make_node_number(1));
     aws_json_array_add_node(array, aws_json_make_node_number(2));
     aws_json_array_add_node(array, aws_json_make_node_number(3));
@@ -87,7 +87,7 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     aws_json_object_add_node(root, "null", aws_json_make_node_null());
     aws_json_object_add_node(root, "number", aws_json_make_node_number(123));
 
-    void *object = aws_json_make_node_object();
+    struct aws_json_node *object = aws_json_make_node_object();
     aws_json_object_add_node(object, "a", aws_json_make_node_string("b"));
     aws_json_object_add_node(object, "c", aws_json_make_node_string("d"));
     aws_json_object_add_node(root, "object", object);
@@ -95,7 +95,7 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     char* result_string = aws_json_node_to_string(root);
     ASSERT_STR_EQUALS(s_test_json, result_string);
 
-    aws_json_node_free(result_string);
+    aws_json_node_free((void *)result_string);
     aws_json_node_delete(root);
     aws_json_module_cleanup();
 
