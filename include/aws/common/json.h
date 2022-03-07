@@ -5,7 +5,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/common/thread.h>
+#include "thread.h"
 
 struct aws_json_node;
 

@@ -68,7 +68,7 @@ This file has been modified from its original version by Amazon:
 #pragma GCC visibility pop
 #endif
 
-#include <aws/common/json/external/cJSON.h>
+#include "aws/common/external/cJSON.h"
 
 /* define our own boolean type */
 #ifdef true

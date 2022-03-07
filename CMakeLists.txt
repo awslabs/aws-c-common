@@ -35,8 +35,7 @@ set(CONFIG_HEADER_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/confi
 file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
-        "include/aws/common/json/*.h"
-        "include/aws/common/json/external/*.h"
+        "include/aws/common/external/*.h"
         )
 
 file(GLOB AWS_TEST_HEADERS
@@ -50,8 +49,7 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
-        "source/json/*.c"
-        "source/json/external/*.c"
+        "source/external/*.c"
         )
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)

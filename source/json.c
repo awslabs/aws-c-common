@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/json/external/cJSON.h>
-#include <aws/common/json/json.h>
+#include "aws/common/external/cJSON.h"
+#include "aws/common/json.h"
 
 struct aws_json_node *aws_json_make_node(void) {
     return (void *)(uintptr_t)cJSON_CreateObject();

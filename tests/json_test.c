@@ -5,7 +5,7 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#include <aws/common/json/json.h>
+#include <aws/common/json.h>
 
 static char* s_test_json = "{\"array\":[1,2,3],\"boolean\":true,\"color\":\"gold\",\"null\":null,\"number\":123,\"object\":{\"a\":\"b\",\"c\":\"d\"}}";
 
