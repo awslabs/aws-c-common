@@ -80,7 +80,7 @@ bool aws_json_node_get_boolean(struct aws_json_node *node) {
             return false;
         }
     }
-    return NULL;
+    return false;
 }
 
 bool aws_json_object_add_node(struct aws_json_node *object, char *key, struct aws_json_node *node) {
