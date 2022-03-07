@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_JSON_JSON_H
-#define AWS_COMMON_JSON_JSON_H
+#ifndef AWS_COMMON_JSON_H
+#define AWS_COMMON_JSON_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -392,4 +392,4 @@ AWS_COMMON_API
 int aws_json_is_valid(struct aws_json_node *node);
 // ====================
 
-#endif // AWS_COMMON_JSON_JSON_H
+#endif // AWS_COMMON_JSON_H
