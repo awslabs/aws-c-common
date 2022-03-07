@@ -475,6 +475,7 @@ add_test_case(promise_test_finish_before_wait)
 add_test_case(promise_test_multiple_waiters)
 
 add_test_case(test_json_parse_from_string)
+add_test_case(test_json_parse_to_string)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
