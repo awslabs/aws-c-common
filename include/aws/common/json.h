@@ -53,6 +53,7 @@ struct aws_json_node *aws_json_number_new(double number);
  * Deleting this array will also delete any aws_json_nodes it contains.
  * @return A new array aws_json_node
  */
+AWS_COMMON_API
 struct aws_json_node *aws_json_array_new(void);
 
 /**
