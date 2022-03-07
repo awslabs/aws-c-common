@@ -4,7 +4,7 @@
  */
 
 #include "aws/common/json.h"
-#include "aws/common/external/cJSON.h"
+#include "external/cJSON.c"
 
 struct aws_json_node *aws_json_node_new(void) {
     return (void *)(uintptr_t)cJSON_CreateObject();
