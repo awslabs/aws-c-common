@@ -7,7 +7,6 @@
  */
 #include "thread.h"
 
-AWS_COMMON_API
 struct aws_json_node;
 
 // ====================
