@@ -302,7 +302,7 @@ struct aws_json_node *aws_json_node_from_string(char *string) {
         return NULL;
     }
     struct cJSON *cjson = cJSON_Parse(string);
-    return (void*)cjson;
+    return (void *)cjson;
 }
 bool aws_json_node_is_valid(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
