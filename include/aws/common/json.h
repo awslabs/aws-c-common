@@ -5,6 +5,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#include "byte_buf.h"
 #include "common.h"
 
 struct aws_json_value;
