@@ -1,13 +1,16 @@
 /*
 Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -15,15 +18,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
-
-/*
-This file has been modified from its original version by Amazon:
-*   (1) Include path
-*   (2) header order via clang-format
-*   (3) Clang-tidy error removal: Added parens around macro params in a number of macro bodies
-*   (4) NOLINT annotations to disable clang-tidy errors around raw/unsafe function use
-*   (5) strcpy() replaced with memcpy()
 */
 
 /* cJSON */
@@ -43,13 +37,13 @@ This file has been modified from its original version by Amazon:
 #pragma warning (disable : 4001)
 #endif
 
-#include <ctype.h>
-#include <limits.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <float.h>
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <ctype.h>
+#include <float.h>
 
 #ifdef ENABLE_LOCALES
 #include <locale.h>
@@ -300,9 +294,9 @@ typedef struct
 } parse_buffer;
 
 /* check if the given size is left to read in a given parse buffer (starting with 1) */
-#define can_read(buffer, size) (((buffer) != NULL) && (((buffer)->offset + (size)) <= (buffer)->length))
+#define can_read(buffer, size) ((buffer != NULL) && (((buffer)->offset + size) <= (buffer)->length))
 /* check if the buffer can be accessed at the given index (starting with 0) */
-#define can_access_at_index(buffer, index) (((buffer) != NULL) && (((buffer)->offset + (index)) < (buffer)->length))
+#define can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
 #define cannot_access_at_index(buffer, index) (!can_access_at_index(buffer, index))
 /* get a pointer to the buffer at the position */
 #define buffer_at_offset(buffer) ((buffer)->content + (buffer)->offset)
@@ -413,7 +407,8 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
   }
   if (strlen(valuestring) <= strlen(object->valuestring))
   {
-      memcpy(object->valuestring, valuestring, sizeof(valuestring));
+      int value_length = strlen(valuestring) + sizeof("");
+      memcpy(object->valuestring, valuestring, value_length);
       return object->valuestring;
   }
   copy = (char*) cJSON_strdup((const unsigned char*)valuestring, &global_hooks);
@@ -517,6 +512,7 @@ static unsigned char* ensure(printbuffer * const p, size_t needed)
 
           return NULL;
       }
+
       memcpy(newbuffer, p->buffer, p->offset + 1);
       p->hooks.deallocate(p->buffer);
   }
@@ -565,11 +561,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
   /* This checks for NaN and Infinity */
   if (isnan(d) || isinf(d))
   {
-      length = snprintf((char*)number_buffer, sizeof (number_buffer) / sizeof(char), "null");
-  }
-  else if(d == (double)item->valueint)
-  {
-      length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), item->valueint);
+      length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "null");
   }
   else
   {
@@ -1032,12 +1024,12 @@ static cJSON_bool print_string(const cJSON * const item, printbuffer * const p)
 }
 
 /* Predeclare these prototypes. */
-static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buffer); /* NOLINT */
-static cJSON_bool print_value(const cJSON * const item, printbuffer * const output_buffer); /* NOLINT */
-static cJSON_bool parse_array(cJSON * const item, parse_buffer * const input_buffer); /* NOLINT */
-static cJSON_bool print_array(const cJSON * const item, printbuffer * const output_buffer); /* NOLINT */
-static cJSON_bool parse_object(cJSON * const item, parse_buffer * const input_buffer); /* NOLINT */
-static cJSON_bool print_object(const cJSON * const item, printbuffer * const output_buffer); /* NOLINT */
+static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buffer);
+static cJSON_bool print_value(const cJSON * const item, printbuffer * const output_buffer);
+static cJSON_bool parse_array(cJSON * const item, parse_buffer * const input_buffer);
+static cJSON_bool print_array(const cJSON * const item, printbuffer * const output_buffer);
+static cJSON_bool parse_object(cJSON * const item, parse_buffer * const input_buffer);
+static cJSON_bool print_object(const cJSON * const item, printbuffer * const output_buffer);
 
 /* Utility to jump whitespace and cr/lf */
 static parse_buffer *buffer_skip_whitespace(parse_buffer * const buffer)

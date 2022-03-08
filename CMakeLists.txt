@@ -148,8 +148,8 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
-        ${AWS_TEST_HEADERS}
         ${AWS_COMMON_EXTERNAL_HEADERS}
+        ${AWS_TEST_HEADERS}
         )
 
 file(GLOB COMMON_SRC
@@ -194,6 +194,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # but at build time we need to explicitly include this here
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${PROJECT_NAME})
