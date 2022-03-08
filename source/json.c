@@ -40,7 +40,7 @@ struct aws_json_value *aws_json_object_new(const struct aws_allocator *allocator
 int aws_json_value_get_string(const struct aws_json_value *node, struct aws_byte_cursor *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cJSON_IsString(cjson)) {
-        output = (struct aws_byte_cursor *)aws_byte_cursor_from_c_str(cJSON_GetStringValue(cjson)).ptr;
+        *output = aws_byte_cursor_from_c_str(cJSON_GetStringValue(cjson));
         return AWS_OP_SUCCESS;
     }
     return AWS_OP_ERR;
@@ -49,7 +49,7 @@ int aws_json_value_get_string(const struct aws_json_value *node, struct aws_byte
 int aws_json_value_get_number(const struct aws_json_value *node, double *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cJSON_IsNumber(cjson)) {
-        output = &cjson->valuedouble;
+        memcpy(output, &cjson->valuedouble, sizeof(double *));
         return AWS_OP_SUCCESS;
     }
     return AWS_OP_ERR;
@@ -285,20 +285,24 @@ int aws_json_destroy(const struct aws_json_value *node) {
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
 
-struct aws_byte_buf *aws_json_to_string(const struct aws_json_value *node) {
+int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_cursor *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
-        return (struct aws_byte_buf *)aws_byte_buf_from_c_str(cJSON_PrintUnformatted(cjson)).buffer;
+        char *test = cJSON_PrintUnformatted(cjson);
+        *output = aws_byte_cursor_from_c_str(test);
+        cJSON_free(test);
+        return AWS_OP_SUCCESS;
     }
-    return NULL;
+    return AWS_OP_ERR;
 }
 
-struct aws_byte_buf *aws_json_to_string_formatted(const struct aws_json_value *node) {
+int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
-        return (struct aws_byte_buf *)aws_byte_buf_from_c_str(cJSON_Print(cjson)).buffer;
+        *output = aws_byte_buf_from_c_str(cJSON_Print(cjson));
+        return AWS_OP_SUCCESS;
     }
-    return NULL;
+    return AWS_OP_ERR;
 }
 
 struct aws_json_value *aws_json_from_string(const struct aws_byte_cursor *cursor, const struct aws_allocator *allocator) {

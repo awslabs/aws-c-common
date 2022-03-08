@@ -21,7 +21,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_json_value *root = aws_json_from_string(&str_s_test_json_cursor, allocator);
 
     ASSERT_NOT_NULL(root);
-    ASSERT_INT_EQUALS(aws_json_is_object(root), AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_json_is_object(root));
 
     // Testing valid array
     struct aws_byte_cursor str_array_cursor = aws_byte_cursor_from_c_str("array");
@@ -32,18 +32,19 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_json_value* array_node_one = aws_json_array_get(array_node, 0);
     ASSERT_NOT_NULL(array_node_one);
     ASSERT_TRUE(aws_json_is_number(array_node_one));
-    double *double_check_value;
-    aws_json_value_get_number(array_node_one, double_check_value);
-    ASSERT_TRUE(*double_check_value == (double)1);
+    double double_check_value = 0;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_value_get_number(array_node_one, &double_check_value));
+    ASSERT_NOT_NULL(double_check_value);
+    ASSERT_TRUE(double_check_value == (double)1);
 
     // Testing valid boolean
     struct aws_byte_cursor str_boolean_cursor = aws_byte_cursor_from_c_str("boolean");
     struct aws_json_value* boolean_node = aws_json_object_get(root, &str_boolean_cursor, allocator);
     ASSERT_NOT_NULL(boolean_node);
     ASSERT_TRUE(aws_json_is_boolean(boolean_node));
-    bool *bool_check_value;
-    aws_json_value_get_boolean(boolean_node, bool_check_value);
-    ASSERT_TRUE(*bool_check_value);
+    bool bool_check_value = false;
+    aws_json_value_get_boolean(boolean_node, &bool_check_value);
+    ASSERT_TRUE(bool_check_value);
 
     // Testing valid string
     struct aws_byte_cursor str_color_cursor = aws_byte_cursor_from_c_str("color");
@@ -60,10 +61,10 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_byte_cursor str_number_cursor = aws_byte_cursor_from_c_str("number");
     struct aws_json_value *number_node = aws_json_object_get(root, &str_number_cursor, allocator);
     ASSERT_NOT_NULL(number_node);
-    ASSERT_INT_EQUALS(aws_json_is_number(number_node), AWS_OP_SUCCESS);
-    double *double_test_two;
-    aws_json_value_get_number(number_node, double_test_two);
-    ASSERT_TRUE(*double_test_two == (double)123);
+    ASSERT_TRUE(aws_json_is_number(number_node));
+    double double_test_two = 0;
+    aws_json_value_get_number(number_node, &double_test_two);
+    ASSERT_TRUE(double_test_two == (double)123);
 
     // Testing valid object
     struct aws_byte_cursor str_object_cursor = aws_byte_cursor_from_c_str("object");
@@ -129,8 +130,9 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     struct aws_byte_cursor str_object_cursor = aws_byte_cursor_from_c_str("object");
     aws_json_object_add(root, &str_object_cursor, allocator, object);
 
-    struct aws_byte_buf *result_string_buffer = aws_json_to_string(root);
-    struct aws_string *result_string = aws_string_new_from_buf(allocator, result_string_buffer);
+    struct aws_byte_cursor result_string_cursor;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_to_string(root, &result_string_cursor));
+    struct aws_string *result_string = aws_string_new_from_cursor(allocator, &result_string_cursor);
     ASSERT_STR_EQUALS(aws_string_c_str(result_string), s_test_json);
     aws_string_destroy_secure(result_string);
 

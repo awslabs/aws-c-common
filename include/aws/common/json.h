@@ -118,6 +118,9 @@ int aws_json_value_get_boolean(const struct aws_json_value *node, bool *output);
 
 /**
  * Adds a aws_json_value to a object aws_json_value.
+ *
+ * Note that the aws_json_value will be destroyed when the aws_json_value object is destroyed
+ * by calling "aws_json_destroy()"
  * @param object The object aws_json_value you want to add a node to.
  * @param key The key to add the aws_json_value at.
  * @param node The aws_json_value you want to add.
@@ -174,6 +177,9 @@ int aws_json_object_remove(const struct aws_json_value *object, const struct aws
 
 /**
  * Adds a aws_json_value to the given array aws_json_value.
+ *
+ * Note that the aws_json_value will be destroyed when the aws_json_value array is destroyed
+ * by calling "aws_json_destroy()"
  * @param array The array aws_json_value you want to add an aws_json_value to.
  * @param node The aws_json_value you want to add.
  * @return AWS_OP_SUCCESS if adding the aws_json_value was successful, otherwise AWS_OP_ERR.
@@ -279,6 +285,10 @@ void aws_json_module_cleanup(void);
 /**
  * Removes the aws_json_value from memory. If the aws_json_value is a object or array, it will also destroy
  * attached aws_json_values as well.
+ *
+ * For example, if you called "aws_json_array_add(b, a)" to add an object "a" to an array "b", if you call
+ * "aws_json_destroy(b)" then it will also free "a" automatically. All children/attached aws_json_values are freed
+ * when the parent/root aws_json_value is destroyed.
  * @param node The aws_json_value to destroy.
  * @return AWS_OP_SUCCESS if the destroy was successful, otherwise AWS_OP_ERR.
  */
@@ -292,18 +302,20 @@ int aws_json_destroy(const struct aws_json_value *node);
 /**
  * Returns an unformatted JSON string representation of the aws_json_value.
  * @param node The aws_json_value to format.
+ * @param output The destination for the JSON string
  * @return A string containing the JSON.
  */
 AWS_COMMON_API
-struct aws_byte_buf *aws_json_to_string(const struct aws_json_value *node);
+int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_cursor *output);
 
 /**
  * Returns a formatted JSON string representation of the aws_json_value.
  * @param node The aws_json_value to format.
+ * @param output The destination for the JSON string
  * @return A string containing the JSON.
  */
 AWS_COMMON_API
-struct aws_byte_buf *aws_json_to_string_formatted(const struct aws_json_value *node);
+int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output);
 
 /**
  * Parses the JSON string and returns a aws_json_value containing the root of the JSON.
