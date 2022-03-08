@@ -1,7 +1,7 @@
 /**
-* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0.
-*/
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -10,7 +10,8 @@
 
 #include <aws/common/json.h>
 
-static char* s_test_json = "{\"array\":[1,2,3],\"boolean\":true,\"color\":\"gold\",\"null\":null,\"number\":123,\"object\":{\"a\":\"b\",\"c\":\"d\"}}";
+static char *s_test_json = "{\"array\":[1,2,3],\"boolean\":true,\"color\":\"gold\",\"null\":null,\"number\":123,"
+                           "\"object\":{\"a\":\"b\",\"c\":\"d\"}}";
 
 AWS_TEST_CASE(test_json_parse_from_string, s_test_json_parse_from_string)
 static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *ctx) {
@@ -25,11 +26,11 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
 
     // Testing valid array
     struct aws_byte_cursor str_array_cursor = aws_byte_cursor_from_c_str("array");
-    struct aws_json_value* array_node = aws_json_object_get(root, &str_array_cursor, allocator);
+    struct aws_json_value *array_node = aws_json_object_get(root, &str_array_cursor, allocator);
     ASSERT_NOT_NULL(array_node);
     ASSERT_TRUE(aws_json_is_array(array_node));
     ASSERT_TRUE(aws_json_array_get_count(array_node) == 3);
-    struct aws_json_value* array_node_one = aws_json_array_get(array_node, 0);
+    struct aws_json_value *array_node_one = aws_json_array_get(array_node, 0);
     ASSERT_NOT_NULL(array_node_one);
     ASSERT_TRUE(aws_json_is_number(array_node_one));
     double double_check_value = 0;
@@ -39,7 +40,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
 
     // Testing valid boolean
     struct aws_byte_cursor str_boolean_cursor = aws_byte_cursor_from_c_str("boolean");
-    struct aws_json_value* boolean_node = aws_json_object_get(root, &str_boolean_cursor, allocator);
+    struct aws_json_value *boolean_node = aws_json_object_get(root, &str_boolean_cursor, allocator);
     ASSERT_NOT_NULL(boolean_node);
     ASSERT_TRUE(aws_json_is_boolean(boolean_node));
     bool bool_check_value = false;
@@ -48,7 +49,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
 
     // Testing valid string
     struct aws_byte_cursor str_color_cursor = aws_byte_cursor_from_c_str("color");
-    struct aws_json_value* string_node = aws_json_object_get(root, &str_color_cursor, allocator);
+    struct aws_json_value *string_node = aws_json_object_get(root, &str_color_cursor, allocator);
     ASSERT_NOT_NULL(string_node);
     ASSERT_TRUE(aws_json_is_string(string_node));
     struct aws_byte_cursor str_string_check_value;
