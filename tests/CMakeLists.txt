@@ -3,7 +3,6 @@ include(AwsTestHarness)
 enable_testing()
 
 file(GLOB META_TEST_SRC "assert_test.c")
-file(GLOB TEST_BASE_SRC "*.*c")
 file(GLOB TEST_LOGGING_SRC "logging/*.c")
 file(GLOB TEST_SRC ${TEST_BASE_SRC} ${TEST_LOGGING_SRC})
 list(REMOVE_ITEM TEST_SRC ${META_TEST_SRC})

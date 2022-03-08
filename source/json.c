@@ -7,81 +7,59 @@
 
 #include "aws/common/external/cJSON.h"
 
-struct aws_json_node *aws_json_node_new(void) {
-    return (void *)(uintptr_t)cJSON_CreateObject();
-}
 struct aws_json_node *aws_json_string_new(char *string) {
     return (void *)(uintptr_t)cJSON_CreateString(string);
 }
+
 struct aws_json_node *aws_json_number_new(double number) {
     return (void *)(uintptr_t)cJSON_CreateNumber(number);
 }
+
 struct aws_json_node *aws_json_array_new(void) {
     return (void *)(uintptr_t)cJSON_CreateArray();
 }
+
 struct aws_json_node *aws_json_boolean_new(bool boolean) {
     return (void *)(uintptr_t)cJSON_CreateBool(boolean);
 }
+
 struct aws_json_node *aws_json_null_new(void) {
     return (void *)(uintptr_t)cJSON_CreateNull();
 }
+
 struct aws_json_node *aws_json_object_new(void) {
-    return aws_json_node_new();
+    return (void *)(uintptr_t)cJSON_CreateObject();
 }
 
-int aws_json_string_set(struct aws_json_node *node, char *string) {
+int aws_json_string_get(struct aws_json_node *node, char *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cJSON_IsString(cjson)) {
-        cjson->valuestring = string;
+        output = cJSON_GetStringValue(cjson);
         return AWS_OP_SUCCESS;
     }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-}
-int aws_json_number_set(struct aws_json_node *node, double number) {
-    struct cJSON *cjson = (struct cJSON *)node;
-    if (cJSON_IsNumber(cjson)) {
-        cJSON_SetNumberHelper(cjson, number);
-        return AWS_OP_SUCCESS;
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-}
-int aws_json_boolean_set(struct aws_json_node *node, bool boolean) {
-    struct cJSON *cjson = (struct cJSON *)node;
-    if (cJSON_IsNumber(cjson)) {
-        if (boolean) {
-            cjson->type = cJSON_True;
-        } else {
-            cjson->type = cJSON_False;
-        }
-        return AWS_OP_SUCCESS;
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    return AWS_OP_ERR;
 }
 
-char *aws_json_string_get(struct aws_json_node *node) {
-    struct cJSON *cjson = (struct cJSON *)node;
-    if (cJSON_IsString(cjson)) {
-        return cJSON_GetStringValue(cjson);
-    }
-    return NULL;
-}
-double *aws_json_number_get(struct aws_json_node *node) {
+int aws_json_number_get(struct aws_json_node *node, double *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cJSON_IsNumber(cjson)) {
-        return &cjson->valuedouble;
+        output = &cjson->valuedouble;
+        return AWS_OP_SUCCESS;
     }
-    return NULL;
+    return AWS_OP_ERR;
 }
-bool aws_json_boolean_get(struct aws_json_node *node) {
+
+int aws_json_boolean_get(struct aws_json_node *node, bool *output) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cJSON_IsBool(cjson)) {
         if (cjson->type == cJSON_True) {
-            return true;
+            *output = true;
         } else {
-            return false;
+            *output = false;
         }
+        return AWS_OP_SUCCESS;
     }
-    return false;
+    return AWS_OP_ERR;
 }
 
 int aws_json_object_add(struct aws_json_node *object, char *key, struct aws_json_node *node) {
@@ -96,6 +74,7 @@ int aws_json_object_add(struct aws_json_node *object, char *key, struct aws_json
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
+
 struct aws_json_node *aws_json_object_get(struct aws_json_node *object, char *key) {
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
@@ -103,6 +82,7 @@ struct aws_json_node *aws_json_object_get(struct aws_json_node *object, char *ke
     }
     return NULL;
 }
+
 struct aws_json_node *aws_json_object_get_insensitive(struct aws_json_node *object, char *key) {
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
@@ -110,6 +90,7 @@ struct aws_json_node *aws_json_object_get_insensitive(struct aws_json_node *obje
     }
     return NULL;
 }
+
 int aws_json_object_has(struct aws_json_node *object, char *key) {
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
@@ -120,6 +101,7 @@ int aws_json_object_has(struct aws_json_node *object, char *key) {
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
+
 int aws_json_object_remove(struct aws_json_node *object, char *key) {
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
@@ -128,21 +110,6 @@ int aws_json_object_remove(struct aws_json_node *object, char *key) {
             return AWS_OP_SUCCESS;
         }
         return AWS_OP_ERR;
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-}
-int aws_json_object_remove_node(struct aws_json_node *object, struct aws_json_node *node) {
-    struct cJSON *cjson = (struct cJSON *)object;
-    if (cJSON_IsObject(cjson)) {
-        struct cJSON *cjson_node = (struct cJSON *)node;
-        if (cjson_node->string != NULL) {
-            if (cJSON_HasObjectItem(cjson, cjson_node->string)) {
-                cJSON_DeleteItemFromObject(cjson, cjson_node->string);
-                return AWS_OP_SUCCESS;
-            }
-            return AWS_OP_ERR;
-        }
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
@@ -156,13 +123,19 @@ int aws_json_array_add(struct aws_json_node *array, struct aws_json_node *node) 
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
-struct aws_json_node *aws_json_array_get(struct aws_json_node *array, int index) {
+
+struct aws_json_node *aws_json_array_get(struct aws_json_node *array, size_t index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        return (void *)(uintptr_t)cJSON_GetArrayItem(cjson, index);
+        if (index < 0 || index > cJSON_GetArraySize(cjson)) {
+            aws_raise_error(AWS_ERROR_INVALID_INDEX);
+            return NULL;
+        }
+        return (void *)(uintptr_t)cJSON_GetArrayItem(cjson, (int)index);
     }
     return NULL;
 }
+
 int aws_json_array_get_count(struct aws_json_node *array) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
@@ -170,112 +143,83 @@ int aws_json_array_get_count(struct aws_json_node *array) {
     }
     return 0;
 }
-int aws_json_array_has(struct aws_json_node *array, struct aws_json_node *node) {
-    struct cJSON *cjson = (struct cJSON *)array;
-    if (cJSON_IsArray(cjson)) {
-        struct cJSON *cjson_node = (struct cJSON *)node;
 
-        struct cJSON *array_child = cjson->child;
-        while (array_child != NULL) {
-            if (array_child == cjson_node) {
-                return AWS_OP_SUCCESS;
-            }
-            array_child = array_child->next;
-        }
-        return AWS_OP_ERR;
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-}
-int aws_json_array_remove(struct aws_json_node *array, int index) {
+int aws_json_array_remove(struct aws_json_node *array, size_t index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
         if (index > 0 && index < cJSON_GetArraySize(cjson)) {
             cJSON_DeleteItemFromArray(cjson, index);
             return AWS_OP_SUCCESS;
         }
-        aws_raise_error(AWS_ERROR_INVALID_INDEX);
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-}
-int aws_json_array_remove_node(struct aws_json_node *array, struct aws_json_node *node) {
-    struct cJSON *cjson = (struct cJSON *)array;
-    if (cJSON_IsArray(cjson)) {
-        struct cJSON *cjson_node = (struct cJSON *)node;
-        int index = 0;
-
-        struct cJSON *array_child = cjson->child;
-        while (array_child != NULL) {
-            if (array_child == cjson_node) {
-                cJSON_DeleteItemFromArray(cjson, index);
-                return AWS_OP_SUCCESS;
-            }
-            array_child = array_child->next;
-            index += 1;
-        }
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_INDEX);
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
 
-int aws_json_is_string(struct aws_json_node *node) {
+bool aws_json_is_string(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsString(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
-int aws_json_is_number(struct aws_json_node *node) {
+
+bool aws_json_is_number(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsNumber(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
-int aws_json_is_array(struct aws_json_node *node) {
+
+bool aws_json_is_array(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsArray(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
-int aws_json_is_boolean(struct aws_json_node *node) {
+
+bool aws_json_is_boolean(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsBool(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
-int aws_json_is_null(struct aws_json_node *node) {
+
+bool aws_json_is_null(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsNull(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
-int aws_json_is_object(struct aws_json_node *node) {
+
+bool aws_json_is_object(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson == NULL) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     if (cJSON_IsObject(cjson) == true) {
-        return AWS_OP_SUCCESS;
+        return true;
     }
-    return AWS_OP_ERR;
+    return false;
 }
 
 static struct aws_allocator *s_aws_json_module_allocator = NULL;
@@ -297,13 +241,15 @@ void aws_json_module_init(struct aws_allocator *allocator) {
         s_aws_json_module_initialized = true;
     }
 }
+
 void aws_json_module_cleanup(void) {
     if (s_aws_json_module_initialized) {
         s_aws_json_module_allocator = NULL;
         s_aws_json_module_initialized = false;
     }
 }
-int aws_json_delete(struct aws_json_node *node) {
+
+int aws_json_destroy(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson != NULL) {
         cJSON_Delete(cjson);
@@ -311,6 +257,7 @@ int aws_json_delete(struct aws_json_node *node) {
     }
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
+
 int aws_json_free(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (cjson != NULL) {
@@ -327,6 +274,7 @@ char *aws_json_to_string(struct aws_json_node *node) {
     }
     return NULL;
 }
+
 char *aws_json_to_string_formatted(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
@@ -334,12 +282,7 @@ char *aws_json_to_string_formatted(struct aws_json_node *node) {
     }
     return NULL;
 }
-void aws_json_to_string_preallocated(struct aws_json_node *node, char *output, int length, bool format) {
-    struct cJSON *cjson = (struct cJSON *)node;
-    if (node != NULL) {
-        cJSON_PrintPreallocated(cjson, output, length, format);
-    }
-}
+
 struct aws_json_node *aws_json_from_string(char *string) {
     if (string == NULL) {
         return NULL;
@@ -347,6 +290,7 @@ struct aws_json_node *aws_json_from_string(char *string) {
     struct cJSON *cjson = cJSON_Parse(string);
     return (void *)cjson;
 }
+
 int aws_json_is_valid(struct aws_json_node *node) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {

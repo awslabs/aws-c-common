@@ -5,7 +5,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include "thread.h"
+#include "common.h"
 
 struct aws_json_node;
 
@@ -13,19 +13,9 @@ struct aws_json_node;
 // Create and pass type
 
 /**
- * Creates a new aws_json_node and returns a pointer to it.
- *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
- * on the object/array containing the aws_json_node.
- * @return A new aws_json_node
- */
-AWS_COMMON_API
-struct aws_json_node *aws_json_node_new(void);
-
-/**
  * Creates a new string aws_json_node with the given string and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
  * @param string The string you want to store in the aws_json_node
  * @return A new string aws_json_node
@@ -36,7 +26,7 @@ struct aws_json_node *aws_json_string_new(char *string);
 /**
  * Creates a new number aws_json_node with the given number and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
  * @param number The number you want to store in the aws_json_node
  * @return A new number aws_json_node
@@ -47,9 +37,9 @@ struct aws_json_node *aws_json_number_new(double number);
 /**
  * Creates a new array aws_json_node and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
- * Deleting this array will also delete any aws_json_nodes it contains.
+ * Deleting this array will also destroy any aws_json_nodes it contains.
  * @return A new array aws_json_node
  */
 AWS_COMMON_API
@@ -58,7 +48,7 @@ struct aws_json_node *aws_json_array_new(void);
 /**
  * Creates a new boolean aws_json_node with the given boolean and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
  * @param boolean The boolean you want to store in the aws_json_node
  * @return A new boolean aws_json_node
@@ -69,7 +59,7 @@ struct aws_json_node *aws_json_boolean_new(bool boolean);
 /**
  * Creates a new null aws_json_node and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
  * @return
  */
@@ -79,9 +69,9 @@ struct aws_json_node *aws_json_null_new(void);
 /**
  * Creates a new object aws_json_node and returns a pointer to it.
  *
- * Note: You will need to free the memory for the aws_json_node using aws_json_delete on the aws_json_node or
+ * Note: You will need to free the memory for the aws_json_node using aws_json_destroy on the aws_json_node or
  * on the object/array containing the aws_json_node.
- * Deleting this object will also delete any aws_json_nodes it contains.
+ * Deleting this object will also destroy any aws_json_nodes it contains.
  * @return
  */
 AWS_COMMON_API
@@ -89,34 +79,7 @@ struct aws_json_node *aws_json_object_new(void);
 // ====================
 
 // ====================
-// Value setters and getters
-
-/**
- * Sets the string value of a string aws_json_node.
- * @param node The string aws_json_node.
- * @param string The new string value.
- * @return AWS_OP_SUCCESS if the string was successfully set, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_string_set(struct aws_json_node *node, char *string);
-
-/**
- * Sets the number value of a number aws_json_node.
- * @param node The number aws_json_node.
- * @param number The new number value.
- * @return AWS_OP_SUCCESS if the number was successfully set, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_number_set(struct aws_json_node *node, double number);
-
-/**
- * Sets the boolean value of a boolean aws_json_node.
- * @param node The boolean aws_json_node.
- * @param boolean The new boolean value.
- * @return AWS_OP_SUCCESS if the boolean was successfully set, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_boolean_set(struct aws_json_node *node, bool boolean);
+// Value getters
 
 /**
  * Gets the string of a string aws_json_node.
@@ -124,7 +87,7 @@ int aws_json_boolean_set(struct aws_json_node *node, bool boolean);
  * @return The string of the string aws_json_node, otherwise NULL.
  */
 AWS_COMMON_API
-char *aws_json_string_get(struct aws_json_node *node);
+int aws_json_string_get(struct aws_json_node *node, char *output);
 
 /**
  * Gets the number of a number aws_json_node.
@@ -132,7 +95,7 @@ char *aws_json_string_get(struct aws_json_node *node);
  * @return The number of the number aws_json_node, otherwise NULL.
  */
 AWS_COMMON_API
-double *aws_json_number_get(struct aws_json_node *node);
+int aws_json_number_get(struct aws_json_node *node, double *output);
 
 /**
  * Gets the boolean of a boolean aws_json_node.
@@ -140,7 +103,7 @@ double *aws_json_number_get(struct aws_json_node *node);
  * @return The boolean of the boolean aws_json_node, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_boolean_get(struct aws_json_node *node);
+int aws_json_boolean_get(struct aws_json_node *node, bool *output);
 // ====================
 
 // ====================
@@ -191,15 +154,6 @@ int aws_json_object_has(struct aws_json_node *object, char *key);
  */
 AWS_COMMON_API
 int aws_json_object_remove(struct aws_json_node *object, char *key);
-
-/**
- * Removes the aws_json_node from the aws_json_object using a pointer to the aws_json_node.
- * @param object The object aws_json_node you want to remove a aws_json_node in.
- * @param node The aws_json_node you want to remove from the object aws_json_node.
- * @return AWS_OP_SUCCESS if the aws_json_node was removed, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_object_remove_node(struct aws_json_node *object, struct aws_json_node *node);
 // ====================
 
 // ====================
@@ -221,7 +175,7 @@ int aws_json_array_add(struct aws_json_node *array, struct aws_json_node *node);
  * @return A pointer to the aws_json_node at the given index in the array, otherwise NULL.
  */
 AWS_COMMON_API
-struct aws_json_node *aws_json_array_get(struct aws_json_node *array, int index);
+struct aws_json_node *aws_json_array_get(struct aws_json_node *array, size_t index);
 
 /**
  * Returns the number of items in the array aws_json_node.
@@ -232,31 +186,13 @@ AWS_COMMON_API
 int aws_json_array_get_count(struct aws_json_node *array);
 
 /**
- * Returns whether the given aws_json_node is located within the array aws_json_node.
- * @param array The array aws_json_node.
- * @param node The aws_json_node to check for.
- * @return AWS_OP_SUCCESS if the aws_json_node exists in the array, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_array_has(struct aws_json_node *array, struct aws_json_node *node);
-
-/**
  * Removes the aws_json_node at the given index in the array aws_json_node.
  * @param array The array aws_json_node.
  * @param index The index containing the aws_json_node you want to remove.
  * @return AWS_OP_SUCCESS if the aws_json_node at the index was removed, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_array_remove(struct aws_json_node *array, int index);
-
-/**
- * Removes the aws_json_node in the array aws_json_node using a pointer to the aws_json_node.
- * @param array The array aws_json_node.
- * @param node The aws_json_node you want to remove from the array.
- * @return AWS_OP_SUCCESS if the aws_json_node was removed from the array, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_array_remove_node(struct aws_json_node *array, struct aws_json_node *node);
+int aws_json_array_remove(struct aws_json_node *array, size_t index);
 // ====================
 
 // ====================
@@ -268,7 +204,7 @@ int aws_json_array_remove_node(struct aws_json_node *array, struct aws_json_node
  * @return AWS_OP_SUCCESS if the aws_json_node is a string aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_string(struct aws_json_node *node);
+bool aws_json_is_string(struct aws_json_node *node);
 
 /**
  * Checks if the aws_json_node is a number.
@@ -276,7 +212,7 @@ int aws_json_is_string(struct aws_json_node *node);
  * @return AWS_OP_SUCCESS if the aws_json_node is a number aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_number(struct aws_json_node *node);
+bool aws_json_is_number(struct aws_json_node *node);
 
 /**
  * Checks if the aws_json_node is a array.
@@ -284,7 +220,7 @@ int aws_json_is_number(struct aws_json_node *node);
  * @return AWS_OP_SUCCESS if the aws_json_node is a array aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_array(struct aws_json_node *node);
+bool aws_json_is_array(struct aws_json_node *node);
 
 /**
  * Checks if the aws_json_node is a boolean.
@@ -292,7 +228,7 @@ int aws_json_is_array(struct aws_json_node *node);
  * @return AWS_OP_SUCCESS if the aws_json_node is a boolean aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_boolean(struct aws_json_node *node);
+bool aws_json_is_boolean(struct aws_json_node *node);
 
 /**
  * Checks if the aws_json_node is a null aws_json_node.
@@ -300,7 +236,7 @@ int aws_json_is_boolean(struct aws_json_node *node);
  * @return AWS_OP_SUCCESS if the aws_json_node is a null aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_null(struct aws_json_node *node);
+bool aws_json_is_null(struct aws_json_node *node);
 
 /**
  * Checks if the aws_json_node is a object aws_json_node.
@@ -308,7 +244,7 @@ int aws_json_is_null(struct aws_json_node *node);
  * @return AWS_OP_SUCCESS if the aws_json_node is a object aws_json_node, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_is_object(struct aws_json_node *node);
+bool aws_json_is_object(struct aws_json_node *node);
 // ====================
 
 // ====================
@@ -328,13 +264,13 @@ AWS_COMMON_API
 void aws_json_module_cleanup(void);
 
 /**
- * Deletes the aws_json_node from memory. If the aws_json_node is a object or array, it will also delete
+ * Removes the aws_json_node from memory. If the aws_json_node is a object or array, it will also destroy
  * attached aws_json_nodes as well.
- * @param node The aws_json_node to delete.
- * @return AWS_OP_SUCCESS if the delete was successful, otherwise AWS_OP_ERR.
+ * @param node The aws_json_node to destroy.
+ * @return AWS_OP_SUCCESS if the destroy was successful, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_delete(struct aws_json_node *node);
+int aws_json_destroy(struct aws_json_node *node);
 
 /**
  * Frees the memory of the aws_json_node. Can also be used to free the strings returned
@@ -364,16 +300,6 @@ char *aws_json_to_string(struct aws_json_node *node);
  */
 AWS_COMMON_API
 char *aws_json_to_string_formatted(struct aws_json_node *node);
-
-/**
- * Fills the passed in string with a JSON string representation of the aws_json_node.
- * @param node The aws_json_node to format.
- * @param output The string to place the JSON into.
- * @param length The length of the aws_json_node string.
- * @param format A boolean to determine whether to format the result.
- */
-AWS_COMMON_API
-void aws_json_to_string_preallocated(struct aws_json_node *node, char *output, int length, bool format);
 
 /**
  * Parses the JSON string and returns a aws_json_node containing the root of the JSON.
