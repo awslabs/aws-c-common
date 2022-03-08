@@ -11,7 +11,7 @@
 #include "aws/common/external/cJSON.h"
 
 struct aws_json_value *aws_json_string_new(const struct aws_byte_cursor *cursor, const struct aws_allocator *allocator) {
-    struct aws_string *tmp = aws_string_new_from_cursor(allocator, cursor);
+    struct aws_string *tmp = aws_string_new_from_cursor((struct aws_allocator *)allocator, cursor);
     void *ret_val = cJSON_CreateString(aws_string_c_str(tmp));
     aws_string_destroy_secure(tmp);
     return ret_val;
@@ -74,7 +74,7 @@ int aws_json_object_add(const struct aws_json_value *object, const struct aws_by
     if (cJSON_IsObject(cjson)) {
         struct cJSON *cjson_node = (struct cJSON *)node;
         int return_result = AWS_OP_ERR;
-        struct aws_string* tmp = aws_string_new_from_cursor(allocator, cursor);
+        struct aws_string* tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
         if (cJSON_HasObjectItem(cjson, aws_string_c_str(tmp)) == false) {
             cJSON_AddItemToObject(cjson, aws_string_c_str(tmp), cjson_node);
             return_result = AWS_OP_SUCCESS;
@@ -90,7 +90,7 @@ struct aws_json_value *aws_json_object_get(const struct aws_json_value *object, 
     struct cJSON *cjson = (struct cJSON *)object;
     void *return_value = NULL;
     if (cJSON_IsObject(cjson)) {
-        struct aws_string* tmp = aws_string_new_from_cursor(allocator, cursor);
+        struct aws_string* tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
         return_value = (void *)cJSON_GetObjectItem(cjson, aws_string_c_str(tmp));
         aws_string_destroy_secure(tmp);
     }
@@ -103,7 +103,7 @@ struct aws_json_value *aws_json_object_get_insensitive(const struct aws_json_val
     struct cJSON *cjson = (struct cJSON *)object;
     void *return_value = NULL;
     if (cJSON_IsObject(cjson)) {
-        struct aws_string* tmp = aws_string_new_from_cursor(allocator, cursor);
+        struct aws_string* tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
         return_value = (void *)cJSON_GetObjectItemCaseSensitive(cjson, aws_string_c_str(tmp));
         aws_string_destroy_secure(tmp);
     }
@@ -115,7 +115,7 @@ int aws_json_object_has(const struct aws_json_value *object, const struct aws_by
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
         int return_value = AWS_OP_ERR;
-        struct aws_string* tmp = aws_string_new_from_cursor(allocator, cursor);
+        struct aws_string* tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
         if (cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
             return_value = AWS_OP_SUCCESS;
         }
@@ -130,7 +130,7 @@ int aws_json_object_remove(const struct aws_json_value *object, const struct aws
     struct cJSON *cjson = (struct cJSON *)object;
     if (cJSON_IsObject(cjson)) {
         int return_value = AWS_OP_ERR;
-        struct aws_string* tmp = aws_string_new_from_cursor(allocator, cursor);
+        struct aws_string* tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
         if (cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
             cJSON_DeleteItemFromObject(cjson, aws_string_c_str(tmp));
             return_value = AWS_OP_SUCCESS;
@@ -262,7 +262,7 @@ void aws_cJSON_free(void *ptr) {
 
 void aws_json_module_init(const struct aws_allocator *allocator) {
     if (!s_aws_json_module_initialized) {
-        s_aws_json_module_allocator = allocator;
+        s_aws_json_module_allocator = (struct aws_allocator *) allocator;
         struct cJSON_Hooks allocation_hooks = {.malloc_fn = aws_cJSON_alloc, .free_fn = aws_cJSON_free};
         cJSON_InitHooks(&allocation_hooks);
         s_aws_json_module_initialized = true;
@@ -305,7 +305,7 @@ struct aws_json_value *aws_json_from_string(const struct aws_byte_cursor *cursor
     if (cursor == NULL) {
         return NULL;
     }
-    struct aws_string *tmp = aws_string_new_from_cursor(allocator, cursor);
+    struct aws_string *tmp = aws_string_new_from_cursor((struct aws_allocator *) allocator, cursor);
     struct cJSON *cjson = cJSON_Parse(aws_string_c_str(tmp));
     aws_string_destroy_secure(tmp);
     return (void *)cjson;
