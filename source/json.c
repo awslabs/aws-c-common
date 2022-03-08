@@ -166,7 +166,7 @@ int aws_json_array_add(const struct aws_json_value *array, const struct aws_json
 struct aws_json_value *aws_json_array_get(const struct aws_json_value *array, const size_t index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        if (index < 0 || index > cJSON_GetArraySize(cjson)) {
+        if (index > cJSON_GetArraySize(cjson)) {
             aws_raise_error(AWS_ERROR_INVALID_INDEX);
             return NULL;
         }

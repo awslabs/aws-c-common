@@ -127,8 +127,11 @@ int aws_json_value_get_boolean(const struct aws_json_value *node, bool *output);
  * @return AWS_OP_SUCCESS if adding was successful, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_object_add(const struct aws_json_value *object, const struct aws_byte_cursor *cursor,
-                        const struct aws_allocator *allocator, const struct aws_json_value *node);
+int aws_json_object_add(
+    const struct aws_json_value *object,
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator,
+    const struct aws_json_value *node);
 
 /**
  * Returns the aws_json_value at the given key.
@@ -137,8 +140,10 @@ int aws_json_object_add(const struct aws_json_value *object, const struct aws_by
  * @return The aws_json_value at the given key, otherwise NULL.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_object_get(const struct aws_json_value *object, const struct aws_byte_cursor *cursor,
-                                           const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_object_get(
+    const struct aws_json_value *object,
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator);
 
 /**
  * Returns the aws_json_value at the given case insensitive key.
@@ -147,9 +152,10 @@ struct aws_json_value *aws_json_object_get(const struct aws_json_value *object, 
  * @return The aws_json_value at the given key, otherwise NULL.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_object_get_insensitive(const struct aws_json_value *object,
-                                                       const struct aws_byte_cursor *cursor,
-                                                       const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_object_get_insensitive(
+    const struct aws_json_value *object,
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator);
 
 /**
  * Checks if there is a aws_json_value at the given key.
@@ -158,8 +164,10 @@ struct aws_json_value *aws_json_object_get_insensitive(const struct aws_json_val
  * @return AWS_OP_SUCCESS if a aws_json_value is found, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_object_has(const struct aws_json_value *object, const struct aws_byte_cursor *cursor,
-                        const struct aws_allocator *allocator);
+int aws_json_object_has(
+    const struct aws_json_value *object,
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator);
 
 /**
  * Removes the aws_json_value at the given key.
@@ -168,8 +176,10 @@ int aws_json_object_has(const struct aws_json_value *object, const struct aws_by
  * @return AWS_OP_SUCCESS if the aws_json_value was removed, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_object_remove(const struct aws_json_value *object, const struct aws_byte_cursor *cursor,
-                           const struct aws_allocator *allocator);
+int aws_json_object_remove(
+    const struct aws_json_value *object,
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator);
 // ====================
 
 // ====================
@@ -323,7 +333,9 @@ int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_b
  * @return The root aws_json_value of the JSON.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_from_string(const struct aws_byte_cursor *cursor, const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_from_string(
+    const struct aws_byte_cursor *cursor,
+    const struct aws_allocator *allocator);
 
 /**
  * Determines if the aws_json_value is a valid aws_json_value.
