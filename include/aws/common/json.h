@@ -5,9 +5,9 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include "byte_buf.h"
-#include "common.h"
-#include "string.h"
+
+#include <aws/common/byte_buf.h>
+#include <aws/common/common.h>
 
 struct aws_json_value;
 
@@ -24,7 +24,7 @@ struct aws_json_value;
  * @return A new string aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_string_new(const struct aws_byte_cursor *cursor, const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_string(struct aws_allocator *allocator, const struct aws_byte_cursor cursor);
 
 /**
  * Creates a new number aws_json_value with the given number and returns a pointer to it.
@@ -36,7 +36,7 @@ struct aws_json_value *aws_json_string_new(const struct aws_byte_cursor *cursor,
  * @return A new number aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_number_new(const double number, const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_number(struct aws_allocator *allocator, double number);
 
 /**
  * Creates a new array aws_json_value and returns a pointer to it.
@@ -48,7 +48,7 @@ struct aws_json_value *aws_json_number_new(const double number, const struct aws
  * @return A new array aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_array_new(const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_array(struct aws_allocator *allocator);
 
 /**
  * Creates a new boolean aws_json_value with the given boolean and returns a pointer to it.
@@ -60,7 +60,7 @@ struct aws_json_value *aws_json_array_new(const struct aws_allocator *allocator)
  * @return A new boolean aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_boolean_new(const bool boolean, const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, bool boolean);
 
 /**
  * Creates a new null aws_json_value and returns a pointer to it.
@@ -71,7 +71,7 @@ struct aws_json_value *aws_json_boolean_new(const bool boolean, const struct aws
  * @return A new null aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_null_new(const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_null(struct aws_allocator *allocator);
 
 /**
  * Creates a new object aws_json_value and returns a pointer to it.
@@ -83,7 +83,7 @@ struct aws_json_value *aws_json_null_new(const struct aws_allocator *allocator);
  * @return A new object aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_object_new(const struct aws_allocator *allocator);
+struct aws_json_value *aws_json_new_object(struct aws_allocator *allocator);
 // ====================
 
 // ====================
@@ -91,27 +91,30 @@ struct aws_json_value *aws_json_object_new(const struct aws_allocator *allocator
 
 /**
  * Gets the string of a string aws_json_value.
- * @param node The string aws_json_value.
- * @return The string of the string aws_json_value, otherwise NULL.
+ * @param value The string aws_json_value.
+ * @param output THe string
+ * @return AWS_OP_SUCESS if the value is a string, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_value_get_string(const struct aws_json_value *node, struct aws_byte_cursor *output);
+int aws_json_value_get_string(const struct aws_json_value *value, struct aws_byte_cursor *output);
 
 /**
  * Gets the number of a number aws_json_value.
- * @param node The number aws_json_value.
- * @return The number of the number aws_json_value, otherwise NULL.
+ * @param value The number aws_json_value.
+ * @param output THe number
+ * @return AWS_OP_SUCESS if the value is a number, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_value_get_number(const struct aws_json_value *node, double *output);
+int aws_json_value_get_number(const struct aws_json_value *value, double *output);
 
 /**
  * Gets the boolean of a boolean aws_json_value.
- * @param node The boolean aws_json_value.
- * @return The boolean of the boolean aws_json_value, otherwise false.
+ * @param value The boolean aws_json_value.
+ * @param output THe boolean
+ * @return AWS_OP_SUCESS if the value is a boolean, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_json_value_get_boolean(const struct aws_json_value *node, bool *output);
+int aws_json_value_get_boolean(const struct aws_json_value *value, bool *output);
 // ====================
 
 // ====================
@@ -122,65 +125,53 @@ int aws_json_value_get_boolean(const struct aws_json_value *node, bool *output);
  *
  * Note that the aws_json_value will be destroyed when the aws_json_value object is destroyed
  * by calling "aws_json_destroy()"
- * @param object The object aws_json_value you want to add a node to.
+ * @param object The object aws_json_value you want to add a value to.
  * @param key The key to add the aws_json_value at.
- * @param node The aws_json_value you want to add.
- * @return AWS_OP_SUCCESS if adding was successful, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value you want to add.
+ * @return AWS_OP_SUCCESS if adding was successful.
+ *          Will return AWS_ERROR_INVALID_ARGUMENT if the object passed is invalid or
+ *          AWS_OP_ERROR if the passed key is already in use in the object.
  */
 AWS_COMMON_API
-int aws_json_object_add(
-    const struct aws_json_value *object,
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator,
-    const struct aws_json_value *node);
+int aws_json_value_add_to_object(
+    struct aws_json_value *object,
+    const struct aws_byte_cursor cursor,
+    struct aws_json_value *value);
 
 /**
  * Returns the aws_json_value at the given key.
- * @param object The object aws_json_value you want to get the node from.
+ * @param object The object aws_json_value you want to get the value from.
  * @param key The key that the aws_json_value is at. Is case sensitive.
  * @return The aws_json_value at the given key, otherwise NULL.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_object_get(
+struct aws_json_value *aws_json_value_get_from_object(
     const struct aws_json_value *object,
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator);
-
-/**
- * Returns the aws_json_value at the given case insensitive key.
- * @param object The object aws_json_value you want to get the node from.
- * @param key The key that the aws_json_value is at. Is not case sensitive.
- * @return The aws_json_value at the given key, otherwise NULL.
- */
-AWS_COMMON_API
-struct aws_json_value *aws_json_object_get_insensitive(
-    const struct aws_json_value *object,
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator);
+    const struct aws_byte_cursor cursor);
 
 /**
  * Checks if there is a aws_json_value at the given key.
  * @param object The object aws_json_value you want to check a key in.
  * @param key The key that you want to check. Is case sensitive.
- * @return AWS_OP_SUCCESS if a aws_json_value is found, otherwise AWS_OP_ERR.
+ * @return True if a aws_json_value is found.
  */
 AWS_COMMON_API
-int aws_json_object_has(
+bool aws_json_value_check_has_in_object(
     const struct aws_json_value *object,
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator);
+    const struct aws_byte_cursor cursor);
 
 /**
  * Removes the aws_json_value at the given key.
  * @param object The object aws_json_value you want to remove a aws_json_value in.
  * @param key The key that the aws_json_value is at. Is case sensitive.
- * @return AWS_OP_SUCCESS if the aws_json_value was removed, otherwise AWS_OP_ERR.
+ * @return AWS_OP_SUCCESS if the aws_json_value was removed.
+ *          Will return AWS_ERROR_INVALID_ARGUMENT if the object passed is invalid or
+ *          AWS_INVALID_INDEX if the value at the key cannot be found.
  */
 AWS_COMMON_API
-int aws_json_object_remove(
-    const struct aws_json_value *object,
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator);
+int aws_json_value_remove_from_object(
+    struct aws_json_value *object,
+    const struct aws_byte_cursor cursor);
 // ====================
 
 // ====================
@@ -192,11 +183,12 @@ int aws_json_object_remove(
  * Note that the aws_json_value will be destroyed when the aws_json_value array is destroyed
  * by calling "aws_json_destroy()"
  * @param array The array aws_json_value you want to add an aws_json_value to.
- * @param node The aws_json_value you want to add.
- * @return AWS_OP_SUCCESS if adding the aws_json_value was successful, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value you want to add.
+ * @return AWS_OP_SUCCESS if adding the aws_json_value was successful.
+ *          Will return AWS_ERROR_INVALID_ARGUMENT if the array passed is invalid.
  */
 AWS_COMMON_API
-int aws_json_array_add(const struct aws_json_value *array, const struct aws_json_value *node);
+int aws_json_value_add_to_array(struct aws_json_value *array, const struct aws_json_value *value);
 
 /**
  * Returns the aws_json_value at the given index in the array aws_json_value.
@@ -205,24 +197,26 @@ int aws_json_array_add(const struct aws_json_value *array, const struct aws_json
  * @return A pointer to the aws_json_value at the given index in the array, otherwise NULL.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_array_get(const struct aws_json_value *array, const size_t index);
+struct aws_json_value *aws_json_value_get_from_array(const struct aws_json_value *array, const size_t index);
 
 /**
  * Returns the number of items in the array aws_json_value.
  * @param array The array aws_json_value.
- * @return The number of items in the array_json_node.
+ * @return The number of items in the array_json_value.
  */
 AWS_COMMON_API
-int aws_json_array_get_count(const struct aws_json_value *array);
+size_t aws_json_value_count_in_array(const struct aws_json_value *array);
 
 /**
  * Removes the aws_json_value at the given index in the array aws_json_value.
  * @param array The array aws_json_value.
  * @param index The index containing the aws_json_value you want to remove.
- * @return AWS_OP_SUCCESS if the aws_json_value at the index was removed, otherwise AWS_OP_ERR.
+ * @return AWS_OP_SUCCESS if the aws_json_value at the index was removed.
+ *          Will return AWS_ERROR_INVALID_ARGUMENT if the array passed is invalid or
+ *          AWS_ERROR_INVALID_INDEX if the index passed is out of range.
  */
 AWS_COMMON_API
-int aws_json_array_remove(const struct aws_json_value *array, const size_t index);
+int aws_json_value_remove_from_array(struct aws_json_value *array, const size_t index);
 // ====================
 
 // ====================
@@ -230,51 +224,51 @@ int aws_json_array_remove(const struct aws_json_value *array, const size_t index
 
 /**
  * Checks if the aws_json_value is a string.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a string aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a string aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_string(const struct aws_json_value *node);
+bool aws_json_value_is_string(const struct aws_json_value *value);
 
 /**
  * Checks if the aws_json_value is a number.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a number aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a number aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_number(const struct aws_json_value *node);
+bool aws_json_value_is_number(const struct aws_json_value *value);
 
 /**
  * Checks if the aws_json_value is a array.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a array aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a array aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_array(const struct aws_json_value *node);
+bool aws_json_value_is_array(const struct aws_json_value *value);
 
 /**
  * Checks if the aws_json_value is a boolean.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a boolean aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a boolean aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_boolean(const struct aws_json_value *node);
+bool aws_json_value_is_boolean(const struct aws_json_value *value);
 
 /**
  * Checks if the aws_json_value is a null aws_json_value.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a null aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a null aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_null(const struct aws_json_value *node);
+bool aws_json_value_is_null(const struct aws_json_value *value);
 
 /**
  * Checks if the aws_json_value is a object aws_json_value.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is a object aws_json_value, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to check.
+ * @return True if the aws_json_value is a object aws_json_value, otherwise false.
  */
 AWS_COMMON_API
-bool aws_json_is_object(const struct aws_json_value *node);
+bool aws_json_value_is_object(const struct aws_json_value *value);
 // ====================
 
 // ====================
@@ -285,7 +279,7 @@ bool aws_json_is_object(const struct aws_json_value *node);
  * @param allocator The allocator to use for creating aws_json_value structs.
  */
 AWS_COMMON_API
-void aws_json_module_init(const struct aws_allocator *allocator);
+void aws_json_module_init(struct aws_allocator *allocator);
 
 /**
  * Cleans up the JSON module. Should be called when finished using the module.
@@ -300,59 +294,58 @@ void aws_json_module_cleanup(void);
  * For example, if you called "aws_json_array_add(b, a)" to add an object "a" to an array "b", if you call
  * "aws_json_destroy(b)" then it will also free "a" automatically. All children/attached aws_json_values are freed
  * when the parent/root aws_json_value is destroyed.
- * @param node The aws_json_value to destroy.
- * @return AWS_OP_SUCCESS if the destroy was successful, otherwise AWS_OP_ERR.
+ * @param value The aws_json_value to destroy.
+ * @return AWS_OP_SUCCESS if the destroy was successful.
+ *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is NULL or not valid.
  */
 AWS_COMMON_API
-int aws_json_destroy(const struct aws_json_value *node);
+int aws_json_value_destroy(struct aws_json_value *value);
 // ====================
 
 // ====================
 // Utility
 
 /**
- * Returns an unformatted JSON string representation of the aws_json_value.
+ * Places a unformatted JSON string representation of the aws_json_value into the passed byte buffer.
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
- * @param node The aws_json_value to format.
+ * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
- * @return A string containing the JSON.
+ * @param allocator The allocator used to allocate the JSON string
+ * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
+ *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value
  */
 AWS_COMMON_API
-int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_buf *output,
-                       struct aws_allocator *allocator);
+int aws_json_value_to_string(struct aws_allocator *allocator, const struct aws_json_value *value, struct aws_byte_buf *output);
 
 /**
- * Returns a formatted JSON string representation of the aws_json_value.
+ * Places a formatted JSON string representation of the aws_json_value into the passed byte buffer.
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
- * @param node The aws_json_value to format.
+ * @param allocator The allocator used to allocate the JSON string
+ * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
- * @return A string containing the JSON.
+ * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
+ *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value
  */
 AWS_COMMON_API
-int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output,
-                                 struct aws_allocator *allocator);
+int aws_json_value_to_string_formatted(
+    struct aws_allocator *allocator,
+    const struct aws_json_value *value,
+    struct aws_byte_buf *output);
 
 /**
  * Parses the JSON string and returns a aws_json_value containing the root of the JSON.
+ * @param allocator The allocator used to create the value
  * @param string The string containing the JSON.
  * @return The root aws_json_value of the JSON.
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_from_string(
-    const struct aws_byte_cursor *cursor,
-    const struct aws_allocator *allocator);
-
-/**
- * Determines if the aws_json_value is a valid aws_json_value.
- * @param node The aws_json_value to check.
- * @return AWS_OP_SUCCESS if the aws_json_value is valid, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_json_is_valid(const struct aws_json_value *node);
+struct aws_json_value *aws_json_value_new_from_string(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor cursor);
 // ====================
 
 #endif // AWS_COMMON_JSON_H
