@@ -7,6 +7,7 @@
  */
 #include "byte_buf.h"
 #include "common.h"
+#include "string.h"
 
 struct aws_json_value;
 
@@ -311,21 +312,29 @@ int aws_json_destroy(const struct aws_json_value *node);
 
 /**
  * Returns an unformatted JSON string representation of the aws_json_value.
+ *
+ * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
+ * the memory used, as it will NOT be called automatically.
  * @param node The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return A string containing the JSON.
  */
 AWS_COMMON_API
-int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_cursor *output);
+int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_buf *output,
+                       struct aws_allocator *allocator);
 
 /**
  * Returns a formatted JSON string representation of the aws_json_value.
+ *
+ * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
+ * the memory used, as it will NOT be called automatically.
  * @param node The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return A string containing the JSON.
  */
 AWS_COMMON_API
-int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output);
+int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output,
+                                 struct aws_allocator *allocator);
 
 /**
  * Parses the JSON string and returns a aws_json_value containing the root of the JSON.

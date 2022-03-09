@@ -297,21 +297,25 @@ int aws_json_destroy(const struct aws_json_value *node) {
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
 
-int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_cursor *output) {
+int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_buf *output,
+                       struct aws_allocator *allocator) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
-        char *test = cJSON_PrintUnformatted(cjson);
-        *output = aws_byte_cursor_from_c_str(test);
-        cJSON_free(test);
+        char *tmp = cJSON_PrintUnformatted(cjson);
+        *output = aws_byte_buf_from_c_str(tmp);
+        output->allocator = allocator;
         return AWS_OP_SUCCESS;
     }
     return AWS_OP_ERR;
 }
 
-int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output) {
+int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output,
+                                 struct aws_allocator *allocator) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
-        *output = aws_byte_buf_from_c_str(cJSON_Print(cjson));
+        char *tmp = cJSON_Print(cjson);
+        *output = aws_byte_buf_from_c_str(tmp);
+        output->allocator = allocator;
         return AWS_OP_SUCCESS;
     }
     return AWS_OP_ERR;

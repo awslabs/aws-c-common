@@ -131,10 +131,11 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     struct aws_byte_cursor str_object_cursor = aws_byte_cursor_from_c_str("object");
     aws_json_object_add(root, &str_object_cursor, allocator, object);
 
-    struct aws_byte_cursor result_string_cursor;
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_to_string(root, &result_string_cursor));
-    struct aws_string *result_string = aws_string_new_from_cursor(allocator, &result_string_cursor);
+    struct aws_byte_buf result_string_buf;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_to_string(root, &result_string_buf, allocator));
+    struct aws_string *result_string = aws_string_new_from_buf(allocator, &result_string_buf);
     ASSERT_STR_EQUALS(aws_string_c_str(result_string), s_test_json);
+    aws_byte_buf_clean_up_secure(&result_string_buf);
     aws_string_destroy_secure(result_string);
 
     aws_json_destroy(root);
