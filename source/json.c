@@ -20,22 +20,27 @@ struct aws_json_value *aws_json_string_new(
 }
 
 struct aws_json_value *aws_json_number_new(const double number, const struct aws_allocator *allocator) {
+    (void)(allocator); // prevent warnings over unused parameter
     return (void *)(uintptr_t)cJSON_CreateNumber(number);
 }
 
 struct aws_json_value *aws_json_array_new(const struct aws_allocator *allocator) {
+    (void)(allocator); // prevent warnings over unused parameter
     return (void *)(uintptr_t)cJSON_CreateArray();
 }
 
 struct aws_json_value *aws_json_boolean_new(const bool boolean, const struct aws_allocator *allocator) {
+    (void)(allocator); // prevent warnings over unused parameter
     return (void *)(uintptr_t)cJSON_CreateBool(boolean);
 }
 
 struct aws_json_value *aws_json_null_new(const struct aws_allocator *allocator) {
+    (void)(allocator); // prevent warnings over unused parameter
     return (void *)(uintptr_t)cJSON_CreateNull();
 }
 
 struct aws_json_value *aws_json_object_new(const struct aws_allocator *allocator) {
+    (void)(allocator); // prevent warnings over unused parameter
     return (void *)(uintptr_t)cJSON_CreateObject();
 }
 
@@ -297,8 +302,10 @@ int aws_json_destroy(const struct aws_json_value *node) {
     return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
 }
 
-int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_buf *output,
-                       struct aws_allocator *allocator) {
+int aws_json_to_string(
+    const struct aws_json_value *node,
+    struct aws_byte_buf *output,
+    struct aws_allocator *allocator) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
         char *tmp = cJSON_PrintUnformatted(cjson);
@@ -309,8 +316,10 @@ int aws_json_to_string(const struct aws_json_value *node, struct aws_byte_buf *o
     return AWS_OP_ERR;
 }
 
-int aws_json_to_string_formatted(const struct aws_json_value *node, struct aws_byte_buf *output,
-                                 struct aws_allocator *allocator) {
+int aws_json_to_string_formatted(
+    const struct aws_json_value *node,
+    struct aws_byte_buf *output,
+    struct aws_allocator *allocator) {
     struct cJSON *cjson = (struct cJSON *)node;
     if (node != NULL) {
         char *tmp = cJSON_Print(cjson);
