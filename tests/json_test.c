@@ -66,7 +66,8 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_json_value *object_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("object"));
     ASSERT_NOT_NULL(object_node);
     ASSERT_TRUE(aws_json_value_is_object(object_node));
-    struct aws_json_value *sub_object_node = aws_json_value_get_from_object(object_node, aws_byte_cursor_from_c_str("a"));
+    struct aws_json_value *sub_object_node =
+        aws_json_value_get_from_object(object_node, aws_byte_cursor_from_c_str("a"));
     ASSERT_NOT_NULL(sub_object_node);
     ASSERT_TRUE(aws_json_value_is_string(sub_object_node));
     struct aws_byte_cursor str_a_value_cursor;
@@ -103,17 +104,20 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("array"), array);
 
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("boolean"), aws_json_new_boolean(allocator, true));
-    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("color"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
+    aws_json_value_add_to_object(
+        root, aws_byte_cursor_from_c_str("color"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("null"), aws_json_new_null(allocator));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("number"), aws_json_new_number(allocator, 123));
 
     struct aws_json_value *object = aws_json_new_object(allocator);
-    aws_json_value_add_to_object(object, aws_byte_cursor_from_c_str("a"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("b")));
-    aws_json_value_add_to_object(object, aws_byte_cursor_from_c_str("c"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("d")));
+    aws_json_value_add_to_object(
+        object, aws_byte_cursor_from_c_str("a"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("b")));
+    aws_json_value_add_to_object(
+        object, aws_byte_cursor_from_c_str("c"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("d")));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("object"), object);
 
     struct aws_byte_buf result_string_buf;
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_value_to_string(allocator, root, &result_string_buf));
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_value_to_string(root, &result_string_buf));
     struct aws_string *result_string = aws_string_new_from_buf(allocator, &result_string_buf);
     ASSERT_STR_EQUALS(aws_string_c_str(result_string), s_test_json);
     aws_byte_buf_clean_up_secure(&result_string_buf);

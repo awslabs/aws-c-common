@@ -156,9 +156,7 @@ struct aws_json_value *aws_json_value_get_from_object(
  * @return True if a aws_json_value is found.
  */
 AWS_COMMON_API
-bool aws_json_value_check_has_in_object(
-    const struct aws_json_value *object,
-    const struct aws_byte_cursor cursor);
+bool aws_json_value_check_has_in_object(const struct aws_json_value *object, const struct aws_byte_cursor cursor);
 
 /**
  * Removes the aws_json_value at the given key.
@@ -169,9 +167,7 @@ bool aws_json_value_check_has_in_object(
  *          AWS_INVALID_INDEX if the value at the key cannot be found.
  */
 AWS_COMMON_API
-int aws_json_value_remove_from_object(
-    struct aws_json_value *object,
-    const struct aws_byte_cursor cursor);
+int aws_json_value_remove_from_object(struct aws_json_value *object, const struct aws_byte_cursor cursor);
 // ====================
 
 // ====================
@@ -278,13 +274,13 @@ bool aws_json_value_is_object(const struct aws_json_value *value);
  * Initializes the JSON module for use.
  * @param allocator The allocator to use for creating aws_json_value structs.
  */
-AWS_COMMON_API
+// AWS_COMMON_API
 void aws_json_module_init(struct aws_allocator *allocator);
 
 /**
  * Cleans up the JSON module. Should be called when finished using the module.
  */
-AWS_COMMON_API
+// AWS_COMMON_API
 void aws_json_module_cleanup(void);
 
 /**
@@ -312,29 +308,24 @@ int aws_json_value_destroy(struct aws_json_value *value);
  * the memory used, as it will NOT be called automatically.
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
- * @param allocator The allocator used to allocate the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
  *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value
  */
 AWS_COMMON_API
-int aws_json_value_to_string(struct aws_allocator *allocator, const struct aws_json_value *value, struct aws_byte_buf *output);
+int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte_buf *output);
 
 /**
  * Places a formatted JSON string representation of the aws_json_value into the passed byte buffer.
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
- * @param allocator The allocator used to allocate the JSON string
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
  *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value
  */
 AWS_COMMON_API
-int aws_json_value_to_string_formatted(
-    struct aws_allocator *allocator,
-    const struct aws_json_value *value,
-    struct aws_byte_buf *output);
+int aws_json_value_to_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output);
 
 /**
  * Parses the JSON string and returns a aws_json_value containing the root of the JSON.
