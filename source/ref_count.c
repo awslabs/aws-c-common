@@ -15,7 +15,9 @@ void aws_ref_count_init(struct aws_ref_count *ref_count, void *object, aws_simpl
 }
 
 void *aws_ref_count_acquire(struct aws_ref_count *ref_count) {
-    aws_atomic_fetch_add(&ref_count->ref_count, 1);
+    size_t old_value = aws_atomic_fetch_add(&ref_count->ref_count, 1);
+    AWS_ASSERT(old_value > 0 && "refcount has been zero, it's invalid to use it again.");
+    (void)old_value;
 
     return ref_count->object;
 }
