@@ -270,17 +270,26 @@ int aws_logger_init_from_external(
  * Global API
  */
 static struct aws_logger *s_root_logger_ptr = &s_null_logger;
+static struct aws_mutex s_root_logger_lock = AWS_MUTEX_INIT;
 
 void aws_logger_set(struct aws_logger *logger) {
+    aws_mutex_lock(&s_root_logger_lock);
     if (logger != NULL) {
         s_root_logger_ptr = logger;
     } else {
         s_root_logger_ptr = &s_null_logger;
     }
+    aws_mutex_unlock(&s_root_logger_lock);
 }
 
 struct aws_logger *aws_logger_get(void) {
-    return s_root_logger_ptr;
+    struct aws_logger *result;
+
+    aws_mutex_lock(&s_root_logger_lock);
+    result = s_root_logger_ptr;
+    aws_mutex_unlock(&s_root_logger_lock);
+
+    return result;
 }
 
 void aws_logger_clean_up(struct aws_logger *logger) {
