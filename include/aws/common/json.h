@@ -60,7 +60,7 @@ struct aws_json_value *aws_json_new_array(struct aws_allocator *allocator);
  * @return A new boolean aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, bool boolean);
+struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, const bool boolean);
 
 /**
  * Creates a new null aws_json_value and returns a pointer to it.
