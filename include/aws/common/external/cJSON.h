@@ -29,10 +29,8 @@ THE SOFTWARE.
 
 /* clang-format off */
 
-#ifndef AWS_COMMON_EXTERNAL_CJSON_H
-#define AWS_COMMON_EXTERNAL_CJSON_H
-
-#ifndef __clang_analyzer__ // ignore in clang-analyzer
+#ifndef AWS_COMMON_EXTERNAL_CJSON_H // NOLINT
+#define AWS_COMMON_EXTERNAL_CJSON_H // NOLINT
 
 #ifdef __cplusplus
 extern "C"
@@ -136,7 +134,7 @@ typedef struct cJSON
 typedef struct cJSON_Hooks
 {
     /* malloc/free are CDECL on Windows regardless of the default calling convention of the compiler, so ensure the hooks allow passing those functions directly. */
-    void *(CJSON_CDECL *malloc_fn)(size_t sz);
+    void *(CJSON_CDECL *malloc_fn)(size_t sz); // NOLINT
     void (CJSON_CDECL *free_fn)(void *ptr);
 } cJSON_Hooks;
 
@@ -263,7 +261,7 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse);
 * The item->next and ->prev pointers are always zero on return from Duplicate. */
 /* Recursively compare two cJSON items for equality. If either a or b is NULL or invalid, they will be considered unequal.
 * case_sensitive determines if object keys are treated case sensitive (1) or case insensitive (0) */
-CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * const b, const cJSON_bool case_sensitive);
+CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * const b, const cJSON_bool case_sensitive); // NOLINT
 
 /* Minify a strings, remove blank characters(such as ' ', '\t', '\r', '\n') from strings.
 * The input pointer json cannot point to a read-only address area, such as a string constant,
@@ -283,15 +281,15 @@ CJSON_PUBLIC(cJSON*) cJSON_AddObjectToObject(cJSON * const object, const char * 
 CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * const name);
 
 /* When assigning an integer value, it needs to be propagated to valuedouble too. */
-#define cJSON_SetIntValue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number))
+#define cJSON_SetIntValue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number)) //NOLINT
 /* helper for the cJSON_SetNumberValue macro */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
-#define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
+#define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number)) //NOLINT
 /* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring);
 
 /* Macro for iterating over an array or object */
-#define cJSON_ArrayForEach(element, array) for(element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next)
+#define cJSON_ArrayForEach(element, array) for(element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next) //NOLINT
 
 /* malloc/free objects using the malloc/free functions that have been set with cJSON_InitHooks */
 CJSON_PUBLIC(void *) cJSON_malloc(size_t size);
@@ -299,8 +297,6 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 #endif

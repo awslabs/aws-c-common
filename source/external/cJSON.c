@@ -91,7 +91,7 @@ typedef struct {
 } error;
 static error global_error = { NULL, 0 };
 
-CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void) // NOLINT
+CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
 {
   return (const char*) (global_error.json + global_error.position);
 }

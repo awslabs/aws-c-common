@@ -146,7 +146,7 @@ int aws_json_value_add_to_array(struct aws_json_value *array, const struct aws_j
 struct aws_json_value *aws_json_value_get_from_array(const struct aws_json_value *array, const size_t index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        if (index > cJSON_GetArraySize(cjson)) {
+        if (index > (size_t)cJSON_GetArraySize(cjson)) {
             aws_raise_error(AWS_ERROR_INVALID_INDEX);
             return NULL;
         }
@@ -166,7 +166,7 @@ size_t aws_json_value_count_in_array(const struct aws_json_value *array) {
 int aws_json_value_remove_from_array(struct aws_json_value *array, const size_t index) {
     struct cJSON *cjson = (struct cJSON *)array;
     if (cJSON_IsArray(cjson)) {
-        if (index > 0 && index < cJSON_GetArraySize(cjson)) {
+        if (index > 0 && index < (size_t)cJSON_GetArraySize(cjson)) {
             cJSON_DeleteItemFromArray(cjson, (int)index);
             return AWS_OP_SUCCESS;
         }
