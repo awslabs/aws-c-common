@@ -274,13 +274,13 @@ bool aws_json_value_is_object(const struct aws_json_value *value);
  * Initializes the JSON module for use.
  * @param allocator The allocator to use for creating aws_json_value structs.
  */
-// AWS_COMMON_API
+AWS_COMMON_API
 void aws_json_module_init(struct aws_allocator *allocator);
 
 /**
  * Cleans up the JSON module. Should be called when finished using the module.
  */
-// AWS_COMMON_API
+AWS_COMMON_API
 void aws_json_module_cleanup(void);
 
 /**

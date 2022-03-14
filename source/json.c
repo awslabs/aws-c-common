@@ -6,9 +6,9 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/string.h>
 
-#include "aws/common/json.h"
+#include <aws/common/json.h>
 
-#include "aws/common/external/cJSON.h"
+#include <aws/common/external/cJSON.h>
 
 static struct aws_allocator *s_aws_json_module_allocator = NULL;
 static bool s_aws_json_module_initialized = false;
