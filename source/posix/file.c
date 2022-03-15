@@ -7,6 +7,7 @@
 #include <aws/common/file.h>
 #include <aws/common/string.h>
 #include <dirent.h>
+#include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -226,14 +227,20 @@ char aws_get_platform_directory_separator(void) {
 AWS_STATIC_STRING_FROM_LITERAL(s_home_env_var, "HOME");
 
 struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
-
-    /* ToDo: check getpwuid_r if environment check fails */
     struct aws_string *home_env_var_value = NULL;
-    if (aws_get_environment_value(allocator, s_home_env_var, &home_env_var_value) == 0 && home_env_var_value != NULL) {
-        return home_env_var_value;
-    }
 
-    return NULL;
+    if (aws_get_environment_value(allocator, s_home_env_var, &home_env_var_value) != 0 ||
+        home_env_var_value == NULL || *home_env_var_value->bytes == '\0') {
+        char buf[16384];
+        struct passwd pw;
+        struct passwd *result;
+        const uid_t uid = getuid();
+
+        if (!getpwuid_r(uid, &pw, buf, sizeof(buf), &result) && result) {
+            return aws_string_new_from_c_str(allocator, result->pw_dir);
+        }
+    }
+    return home_env_var_value;
 }
 
 bool aws_path_exists(const struct aws_string *path) {
