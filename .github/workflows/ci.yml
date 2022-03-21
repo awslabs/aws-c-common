@@ -24,8 +24,6 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - manylinux1-x64
-          - manylinux1-x86
           - manylinux2014-x64
           - manylinux2014-x86
           - debian-stretch-arm32v5
