@@ -197,7 +197,7 @@ struct aws_json_value *aws_json_get_array_element(const struct aws_json_value *a
         return NULL;
     }
 
-    if (index < 0 || index > (size_t)cJSON_GetArraySize(cjson)) {
+    if (index > (size_t)cJSON_GetArraySize(cjson)) {
         aws_raise_error(AWS_ERROR_INVALID_INDEX);
         return NULL;
     }
@@ -221,7 +221,7 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    if (index < 0 || index > (size_t)cJSON_GetArraySize(cjson)) {
+    if (index > (size_t)cJSON_GetArraySize(cjson)) {
         return aws_raise_error(AWS_ERROR_INVALID_INDEX);
     }
 
@@ -321,10 +321,8 @@ int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte
     }
 
     // clean the buffer before re-assigning
-    if (output != NULL) {
-        if (aws_byte_buf_is_valid(output)) {
-            aws_byte_buf_clean_up_secure(output);
-        }
+    if (aws_byte_buf_is_valid(output)) {
+        aws_byte_buf_clean_up(output);
     }
 
     *output = aws_byte_buf_from_c_str(tmp);
@@ -344,10 +342,8 @@ int aws_json_value_to_string_formatted(const struct aws_json_value *value, struc
     }
 
     // clean the buffer before re-assigning
-    if (output != NULL) {
-        if (aws_byte_buf_is_valid(output)) {
-            aws_byte_buf_clean_up_secure(output);
-        }
+    if (aws_byte_buf_is_valid(output)) {
+        aws_byte_buf_clean_up(output);
     }
 
     *output = aws_byte_buf_from_c_str(tmp);

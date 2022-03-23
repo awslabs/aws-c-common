@@ -116,7 +116,7 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
         object, aws_byte_cursor_from_c_str("c"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("d")));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("object"), object);
 
-    struct aws_byte_buf result_string_buf;
+    struct aws_byte_buf result_string_buf = aws_byte_buf_from_c_str("tmp");
     ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_value_to_string(root, &result_string_buf));
     struct aws_string *result_string = aws_string_new_from_buf(allocator, &result_string_buf);
     ASSERT_STR_EQUALS(aws_string_c_str(result_string), s_test_json);
