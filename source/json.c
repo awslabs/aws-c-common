@@ -321,7 +321,12 @@ int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte
     }
 
     // clean the buffer before re-assigning
-    aws_byte_buf_clean_up_secure(output);
+    if (output != NULL) {
+        if (aws_byte_buf_is_valid(output)) {
+            aws_byte_buf_clean_up_secure(output);
+        }
+    }
+
     *output = aws_byte_buf_from_c_str(tmp);
     output->allocator = s_aws_json_module_allocator;
     return AWS_OP_SUCCESS;
@@ -339,7 +344,12 @@ int aws_json_value_to_string_formatted(const struct aws_json_value *value, struc
     }
 
     // clean the buffer before re-assigning
-    aws_byte_buf_clean_up_secure(output);
+    if (output != NULL) {
+        if (aws_byte_buf_is_valid(output)) {
+            aws_byte_buf_clean_up_secure(output);
+        }
+    }
+
     *output = aws_byte_buf_from_c_str(tmp);
     output->allocator = s_aws_json_module_allocator;
     return AWS_OP_SUCCESS;
