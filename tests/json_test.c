@@ -27,8 +27,8 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_json_value *array_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("array"));
     ASSERT_NOT_NULL(array_node);
     ASSERT_TRUE(aws_json_value_is_array(array_node));
-    ASSERT_TRUE(aws_json_value_count_in_array(array_node) == 3);
-    struct aws_json_value *array_node_one = aws_json_value_get_from_array(array_node, 0);
+    ASSERT_TRUE(aws_json_get_array_size(array_node) == 3);
+    struct aws_json_value *array_node_one = aws_json_get_array_element(array_node, 0);
     ASSERT_NOT_NULL(array_node_one);
     ASSERT_TRUE(aws_json_value_is_number(array_node_one));
     double double_check_value = 0;
@@ -98,9 +98,9 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     struct aws_json_value *root = aws_json_new_object(allocator);
 
     struct aws_json_value *array = aws_json_new_array(allocator);
-    aws_json_value_add_to_array(array, aws_json_new_number(allocator, 1));
-    aws_json_value_add_to_array(array, aws_json_new_number(allocator, 2));
-    aws_json_value_add_to_array(array, aws_json_new_number(allocator, 3));
+    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 1));
+    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 2));
+    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 3));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("array"), array);
 
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("boolean"), aws_json_new_boolean(allocator, true));
