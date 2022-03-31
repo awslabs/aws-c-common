@@ -85,7 +85,15 @@ else ()
 
     if (UNIX OR APPLE)
         find_package(Threads REQUIRED)
-    endif ()
+
+        if (NOT ANDROID AND NOT CMAKE_THREAD_LIBS_INIT)
+            check_symbol_exists(pthread_mutexattr_init "<pthread.h>" HAVE_PTHREAD_MUTEXATTR_INIT)
+            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT)
+                # fsanitize=... results in GLIBC library to provide some pthread APIs but not all
+                list(APPEND PLATFORM_LIBS pthread)
+            endif()
+        endif()
+    endif()
 
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
