@@ -181,9 +181,9 @@ cleanup:
 
 static void s_sba_clean_up(struct small_block_allocator *sba) {
     /* free all known pages, then free the working page */
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
         struct sba_bin *bin = &sba->bins[idx];
-        for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
+        for (size_t page_idx = 0; page_idx < bin->active_pages.length; page_idx++) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
             struct page_header *page = page_addr;
