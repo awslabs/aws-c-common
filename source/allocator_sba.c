@@ -181,11 +181,10 @@ cleanup:
 
 static void s_sba_clean_up(struct small_block_allocator *sba) {
     /* free all known pages, then free the working page */
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct sba_bin *bin = &sba->bins[idx];
 
-        sba->lock(&bin->mutex);
-        for (size_t page_idx = 0; page_idx < bin->active_pages.length; page_idx++) {
+        for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
             struct page_header *page = page_addr;
@@ -198,7 +197,6 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
             AWS_ASSERT(page->alloc_count == 0 && "Memory still allocated in aws_sba_allocator (page)");
             s_aligned_free(page);
         }
-        sba->unlock(&bin->mutex);
 
         aws_array_list_clean_up(&bin->active_pages);
         aws_array_list_clean_up(&bin->free_chunks);
