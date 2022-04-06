@@ -8,6 +8,8 @@
 #include <aws/common/assert.h>
 #include <aws/common/mutex.h>
 
+#include <aws/common/logging.h>
+
 /*
  * Small Block Allocator
  * This is a fairly standard approach, the idea is to always allocate aligned pages of memory so that for
@@ -431,11 +433,13 @@ static void s_sba_free(struct small_block_allocator *sba, void *addr) {
 
 static void *s_sba_mem_acquire(struct aws_allocator *allocator, size_t size) {
     struct small_block_allocator *sba = allocator->impl;
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "Allocated bytes: %zu", size);
     return s_sba_alloc(sba, size);
 }
 
 static void s_sba_mem_release(struct aws_allocator *allocator, void *ptr) {
     struct small_block_allocator *sba = allocator->impl;
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "Released pointer: %p", ptr);
     s_sba_free(sba, ptr);
 }
 
