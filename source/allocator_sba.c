@@ -151,7 +151,7 @@ static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *a
     sba->lock = multi_threaded ? s_mutex_lock : s_null_lock;
     sba->unlock = multi_threaded ? s_mutex_unlock : s_null_unlock;
 
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
         struct sba_bin *bin = &sba->bins[idx];
         bin->size = s_bin_sizes[idx];
         if (multi_threaded && aws_mutex_init(&bin->mutex)) {
@@ -170,7 +170,7 @@ static int s_sba_init(struct small_block_allocator *sba, struct aws_allocator *a
     return AWS_OP_SUCCESS;
 
 cleanup:
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
         struct sba_bin *bin = &sba->bins[idx];
         aws_mutex_clean_up(&bin->mutex);
         aws_array_list_clean_up(&bin->active_pages);
@@ -185,7 +185,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
         struct sba_bin *bin = &sba->bins[idx];
 
         sba->lock(&bin->mutex);
-        for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
+        for (size_t page_idx = 0; page_idx < bin->active_pages.length; page_idx++) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
             struct page_header *page = page_addr;
@@ -253,10 +253,10 @@ size_t aws_small_block_allocator_bytes_active(struct aws_allocator *sba_allocato
     AWS_FATAL_ASSERT(sba && "aws_small_block_allocator_bytes_used: supplied allocator has invalid SBA impl");
 
     size_t used = 0;
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
         struct sba_bin *bin = &sba->bins[idx];
         sba->lock(&bin->mutex);
-        for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
+        for (size_t page_idx = 0; page_idx < bin->active_pages.length; page_idx++) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
             struct page_header *page = page_addr;
@@ -279,7 +279,7 @@ size_t aws_small_block_allocator_bytes_reserved(struct aws_allocator *sba_alloca
     AWS_FATAL_ASSERT(sba && "aws_small_block_allocator_bytes_used: supplied allocator has invalid SBA impl");
 
     size_t used = 0;
-    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
+    for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; idx++) {
         struct sba_bin *bin = &sba->bins[idx];
         sba->lock(&bin->mutex);
         used += (bin->active_pages.length + (bin->page_cursor != NULL)) * AWS_SBA_PAGE_SIZE;
@@ -348,7 +348,7 @@ static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
         uint8_t *page_end = page_start + AWS_SBA_PAGE_SIZE;
         /* Remove all chunks in the page from the free list */
         intptr_t chunk_idx = bin->free_chunks.length;
-        for (; chunk_idx >= 0; --chunk_idx) {
+        for (; chunk_idx >= 0; chunk_idx--) {
             uint8_t *chunk = NULL;
             aws_array_list_get_at(&bin->free_chunks, &chunk, chunk_idx);
             if (chunk >= page_start && chunk < page_end) {
@@ -358,7 +358,7 @@ static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
         }
 
         /* Find page in pages list and remove it */
-        for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
+        for (size_t page_idx = 0; page_idx < bin->active_pages.length; page_idx++) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
             if (page_addr == page) {
