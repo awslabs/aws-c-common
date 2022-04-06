@@ -184,6 +184,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
     for (unsigned idx = 0; idx < AWS_SBA_BIN_COUNT; ++idx) {
         struct sba_bin *bin = &sba->bins[idx];
 
+        sba->lock(&bin->mutex);
         for (size_t page_idx = 0; page_idx < bin->active_pages.length; ++page_idx) {
             void *page_addr = NULL;
             aws_array_list_get_at(&bin->active_pages, &page_addr, page_idx);
@@ -197,6 +198,7 @@ static void s_sba_clean_up(struct small_block_allocator *sba) {
             AWS_ASSERT(page->alloc_count == 0 && "Memory still allocated in aws_sba_allocator (page)");
             s_aligned_free(page);
         }
+        sba->unlock(&bin->mutex);
 
         aws_array_list_clean_up(&bin->active_pages);
         aws_array_list_clean_up(&bin->free_chunks);
@@ -224,6 +226,7 @@ struct aws_allocator *aws_small_block_allocator_new(struct aws_allocator *alloca
     if (s_sba_init(sba, allocator, multi_threaded)) {
         s_sba_clean_up(sba);
         aws_mem_release(allocator, sba);
+        aws_mem_release(allocator, sba_allocator);
         return NULL;
     }
     return sba_allocator;
@@ -241,6 +244,7 @@ void aws_small_block_allocator_destroy(struct aws_allocator *sba_allocator) {
     struct aws_allocator *allocator = sba->allocator;
     s_sba_clean_up(sba);
     aws_mem_release(allocator, sba);
+    aws_mem_release(allocator, sba_allocator);
 }
 
 size_t aws_small_block_allocator_bytes_active(struct aws_allocator *sba_allocator) {
