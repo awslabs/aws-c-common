@@ -100,6 +100,24 @@ void aws_backtrace_print(FILE *fp, void *call_site_data);
 AWS_COMMON_API
 void aws_backtrace_log(int log_level);
 
+/**
+ * Sets the passed double value as the current CPU usage. Only supported on Linux currently.
+ */
+AWS_COMMON_API
+int aws_get_cpu_usage(double *output);
+
+/**
+ * Sets the passed double value as the memory usage in kilobytes. Only supported on Linux currently.
+ */
+AWS_COMMON_API
+int aws_get_memory_usage(double *output);
+
+/**
+ * Sets the passed double value as the process count. Only supported on Linux currently.
+ */
+AWS_COMMON_API
+int aws_get_process_count(double *output);
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_SYSTEM_INFO_H */
