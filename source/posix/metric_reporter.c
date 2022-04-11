@@ -20,8 +20,7 @@ static void s_getCurrentCpuUsage(
     uint64_t *totalUser,
     uint64_t *totalUserLow,
     uint64_t *totalSystem,
-    uint64_t *totalIdle)
-{
+    uint64_t *totalIdle) {
     *totalUser = 0;    // prevent warnings over unused parameter on Mac
     *totalUserLow = 0; // prevent warnings over unused parameter on Mac
     *totalSystem = 0;  // prevent warnings over unused parameter on Mac
@@ -40,16 +39,13 @@ static void s_getCurrentCpuUsage(
         (long long unsigned int *)totalSystem,
         (long long unsigned int *)totalIdle);
     fclose(file);
-    if (matchedResults == EOF || matchedResults != 4)
-    {
+    if (matchedResults == EOF || matchedResults != 4) {
         aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
-    return;
 #endif
 }
 
-int aws_get_custom_metric_cpu_usage(double *output)
-{
+int aws_get_custom_metric_cpu_usage(double *output) {
 // Get the CPU usage from Linux
 #if defined(__linux__) || defined(__unix__)
     int return_result = AWS_OP_ERR;
@@ -58,13 +54,10 @@ int aws_get_custom_metric_cpu_usage(double *output)
     double percent;
 
     // Overflow detection
-    if (totalUser < s_cpuLastTotalUser || totalUserLow < s_cpuLastTotalUserLow ||
-        totalSystem < s_cpuLastTotalSystem || totalIdle < s_cpuLastTotalIdle)
-    {
+    if (totalUser < s_cpuLastTotalUser || totalUserLow < s_cpuLastTotalUserLow || totalSystem < s_cpuLastTotalSystem ||
+    totalIdle < s_cpuLastTotalIdle) {
         *output = 0;
-    }
-    else
-    {
+    } else {
         total = (totalUser - s_cpuLastTotalUser) + (totalUserLow - s_cpuLastTotalUserLow) +
                 (totalSystem - s_cpuLastTotalSystem);
         percent = total;
@@ -72,13 +65,10 @@ int aws_get_custom_metric_cpu_usage(double *output)
         percent = (percent / total) * 100;
 
         // If percent is negative, then there was an error (overflow?)
-        if (percent < 0)
-        {
+        if (percent < 0) {
             *output = 0;
             return_result = AWS_OP_ERR;
-        }
-        else
-        {
+        } else {
             *output = percent;
             return_result = AWS_OP_SUCCESS;
         }
@@ -92,14 +82,18 @@ int aws_get_custom_metric_cpu_usage(double *output)
     return return_result;
 #endif
 
+    s_cpuLastTotalUser = 0;    // prevent warnings over unused parameter on Mac
+    s_cpuLastTotalUserLow = 0; // prevent warnings over unused parameter on Mac
+    s_cpuLastTotalSystem = 0;  // prevent warnings over unused parameter on Mac
+    s_cpuLastTotalIdle = 0;    // prevent warnings over unused parameter on Mac
+
     // OS not supported? Just return an error and set the output to 0
     *output = 0;
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
     return AWS_OP_ERR;
 }
 
-int aws_get_custom_metric_memory_usage(double *output)
-{
+int aws_get_custom_metric_memory_usage(double *output) {
 // Get the Memory usage from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo memoryInfo;
@@ -118,8 +112,7 @@ int aws_get_custom_metric_memory_usage(double *output)
     return AWS_OP_ERR;
 }
 
-int aws_get_custom_metric_process_count(double *output)
-{
+int aws_get_custom_metric_process_count(double *output) {
 // Get the process count from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo systemInfo;
