@@ -82,10 +82,12 @@ int aws_get_custom_metric_cpu_usage(double *output) {
     return return_result;
 #endif
 
-    s_cpuLastTotalUser = 0;    // prevent warnings over unused parameter on Mac
-    s_cpuLastTotalUserLow = 0; // prevent warnings over unused parameter on Mac
-    s_cpuLastTotalSystem = 0;  // prevent warnings over unused parameter on Mac
-    s_cpuLastTotalIdle = 0;    // prevent warnings over unused parameter on Mac
+    // prevent warnings over unused parameter on Mac
+    s_getCurrentCpuUsage(
+        s_cpuLastTotalUser,
+        s_cpuLastTotalUserLow,
+        s_cpuLastTotalSystem,
+        s_cpuLastTotalIdle);
 
     // OS not supported? Just return an error and set the output to 0
     *output = 0;
