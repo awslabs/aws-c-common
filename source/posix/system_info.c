@@ -451,7 +451,6 @@ enum aws_platform_os aws_get_platform_build_os(void) {
 }
 #endif /* AWS_OS_APPLE */
 
-
 /** Static variables to store the last CPU usage call. */
 static uint64_t s_cpu_last_total_user = 0;
 static uint64_t s_cpu_last_total_user_low = 0;
@@ -463,10 +462,10 @@ static void s_getCurrentCpuUsage(
     uint64_t *total_user_low,
     uint64_t *total_system,
     uint64_t *total_idle) {
-    *total_user = 0;    // prevent warnings over unused parameter on Mac
+    *total_user = 0;     // prevent warnings over unused parameter on Mac
     *total_user_low = 0; // prevent warnings over unused parameter on Mac
-    *total_system = 0;  // prevent warnings over unused parameter on Mac
-    *total_idle = 0;    // prevent warnings over unused parameter on Mac
+    *total_system = 0;   // prevent warnings over unused parameter on Mac
+    *total_idle = 0;     // prevent warnings over unused parameter on Mac
 
 // Get the CPU usage from Linux
 #if defined(__linux__) || defined(__unix__)
@@ -496,8 +495,8 @@ int aws_get_cpu_usage(double *output) {
     double percent;
 
     // Overflow detection
-    if (total_user < s_cpu_last_total_user || total_user_low < s_cpu_last_total_user_low || total_system < s_cpu_last_total_system ||
-        total_idle < s_cpu_last_total_idle) {
+    if (total_user < s_cpu_last_total_user || total_user_low < s_cpu_last_total_user_low ||
+        total_system < s_cpu_last_total_system || total_idle < s_cpu_last_total_idle) {
         *output = 0;
     } else {
         total = (total_user - s_cpu_last_total_user) + (total_user_low - s_cpu_last_total_user_low) +
@@ -525,7 +524,8 @@ int aws_get_cpu_usage(double *output) {
 #endif
 
     // prevent warnings over unused parameter on Mac
-    s_getCurrentCpuUsage(&s_cpu_last_total_user, &s_cpu_last_total_user_low, &s_cpu_last_total_system, &s_cpu_last_total_idle);
+    s_getCurrentCpuUsage(
+        &s_cpu_last_total_user, &s_cpu_last_total_user_low, &s_cpu_last_total_system, &s_cpu_last_total_idle);
 
     // OS not supported? Just return an error and set the output to 0
     *output = 0;

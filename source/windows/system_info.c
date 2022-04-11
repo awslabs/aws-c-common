@@ -272,7 +272,7 @@ void aws_backtrace_log(int log_level) {
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
-#else  /* !AWS_OS_WINDOWS_DESKTOP */
+#else /* !AWS_OS_WINDOWS_DESKTOP */
 size_t aws_backtrace(void **stack_frames, size_t size) {
     (void)stack_frames;
     (void)size;
