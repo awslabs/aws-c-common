@@ -451,11 +451,7 @@ enum aws_platform_os aws_get_platform_build_os(void) {
 }
 #endif /* AWS_OS_APPLE */
 
-/** Static variables to store the last CPU usage call. */
-static uint64_t s_cpu_last_total_user = 0;
-static uint64_t s_cpu_last_total_user_low = 0;
-static uint64_t s_cpu_last_total_system = 0;
-static uint64_t s_cpu_last_total_idle = 0;
+static const uint64_t S_BYTES_TO_KILO_BYTES = 1024;
 
 static void s_getCurrentCpuUsage(
     uint64_t *total_user,
@@ -486,46 +482,77 @@ static void s_getCurrentCpuUsage(
 #endif
 }
 
-int aws_get_cpu_usage(double *output) {
+int aws_get_cpu_usage(uint64_t *cpu_last_total_user, uint64_t *cpu_last_total_user_low,
+    uint64_t *cpu_last_total_system, uint64_t *cpu_last_total_idle, double *output) {
 // Get the CPU usage from Linux
 #if defined(__linux__) || defined(__unix__)
     int return_result = AWS_OP_ERR;
     uint64_t total_user, total_user_low, total_system, total_idle, total;
     s_getCurrentCpuUsage(&total_user, &total_user_low, &total_system, &total_idle);
-    double percent;
+    // total_combined needs to be double to allow for fractions
+    double percent, total_combined;
 
-    // Overflow detection
-    if (total_user < s_cpu_last_total_user || total_user_low < s_cpu_last_total_user_low ||
-        total_system < s_cpu_last_total_system || total_idle < s_cpu_last_total_idle) {
-        *output = 0;
-    } else {
-        total = (total_user - s_cpu_last_total_user) + (total_user_low - s_cpu_last_total_user_low) +
-                (total_system - s_cpu_last_total_system);
-        percent = total;
-        total += total_idle - s_cpu_last_total_idle;
-        percent = (percent / total) * 100;
-
-        // If percent is negative, then there was an error (overflow?)
-        if (percent < 0) {
-            *output = 0;
-            return_result = AWS_OP_ERR;
-        } else {
-            *output = percent;
-            return_result = AWS_OP_SUCCESS;
-        }
+    // If the value has overflown and wrapped around, swap the variables
+    uint64_t tmp;
+    if (total_user < *cpu_last_total_user) {
+        tmp = total_user;
+        total_user = *cpu_last_total_user;
+        *cpu_last_total_user = tmp;
+    }
+    if (total_user_low < *cpu_last_total_user_low) {
+        tmp = total_user_low;
+        total_user_low = *cpu_last_total_user_low;
+        *cpu_last_total_user_low = tmp;
+    }
+    if (total_system < *cpu_last_total_system) {
+        tmp = total_system;
+        total_system = *cpu_last_total_system;
+        *cpu_last_total_system = tmp;
+    }
+    if (total_idle < *cpu_last_total_idle) {
+        tmp = total_idle;
+        total_idle = *cpu_last_total_idle;
+        *cpu_last_total_idle = tmp;
     }
 
-    s_cpu_last_total_user = total_user;
-    s_cpu_last_total_user_low = total_user_low;
-    s_cpu_last_total_system = total_system;
-    s_cpu_last_total_idle = total_idle;
+    total_combined = (total_user - *cpu_last_total_user) + (total_user_low - *cpu_last_total_user_low) +
+            (total_system - *cpu_last_total_system);
+    total = total_combined + (total_idle - *cpu_last_total_idle);
+
+    // If negative, there was an error (overflow?)
+    if (total < 0 || total_combined < 0) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+
+    if (total == 0) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+
+    percent = (total_combined / total) * 100;
+    *output = percent;
+    return_result = AWS_OP_SUCCESS;
+
+    fprintf(stdout, "\nOutput: %f \n", percent);
+
+    *output = percent;
+
+cleanup:
+    // Cache results
+    *cpu_last_total_user = total_user;
+    *cpu_last_total_user_low = total_user_low;
+    *cpu_last_total_system = total_system;
+    *cpu_last_total_idle = total_idle;
 
     return return_result;
 #endif
 
     // prevent warnings over unused parameter on Mac
     s_getCurrentCpuUsage(
-        &s_cpu_last_total_user, &s_cpu_last_total_user_low, &s_cpu_last_total_system, &s_cpu_last_total_idle);
+        cpu_last_total_user, cpu_last_total_user_low, cpu_last_total_system, cpu_last_total_idle);
 
     // OS not supported? Just return an error and set the output to 0
     *output = 0;
@@ -541,7 +568,7 @@ int aws_get_memory_usage(double *output) {
     uint64_t physical_memory_used = memory_info.totalram - memory_info.freeram;
     physical_memory_used *= memory_info.mem_unit;
     // Return data in Kilobytes
-    physical_memory_used = physical_memory_used / (1024);
+    physical_memory_used = physical_memory_used / S_BYTES_TO_KILO_BYTES;
     *output = (double)physical_memory_used;
     return AWS_OP_SUCCESS;
 #endif
