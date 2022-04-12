@@ -104,8 +104,12 @@ void aws_backtrace_log(int log_level);
  * Sets the passed double value as the current CPU usage. Only supported on Linux currently.
  */
 AWS_COMMON_API
-int aws_get_cpu_usage(uint64_t *cpu_last_total_user, uint64_t *cpu_last_total_user_low,
-    uint64_t *cpu_last_total_system, uint64_t *cpu_last_total_idle, double *output);
+int aws_get_cpu_usage(
+    uint64_t *cpu_last_total_user,
+    uint64_t *cpu_last_total_user_low,
+    uint64_t *cpu_last_total_system,
+    uint64_t *cpu_last_total_idle,
+    double *output);
 
 /**
  * Sets the passed double value as the memory usage in kilobytes. Only supported on Linux currently.

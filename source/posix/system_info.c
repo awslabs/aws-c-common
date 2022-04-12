@@ -482,8 +482,12 @@ static void s_getCurrentCpuUsage(
 #endif
 }
 
-int aws_get_cpu_usage(uint64_t *cpu_last_total_user, uint64_t *cpu_last_total_user_low,
-    uint64_t *cpu_last_total_system, uint64_t *cpu_last_total_idle, double *output) {
+int aws_get_cpu_usage(
+    uint64_t *cpu_last_total_user,
+    uint64_t *cpu_last_total_user_low,
+    uint64_t *cpu_last_total_system,
+    uint64_t *cpu_last_total_idle,
+    double *output) {
 // Get the CPU usage from Linux
 #if defined(__linux__) || defined(__unix__)
     int return_result = AWS_OP_ERR;
@@ -515,9 +519,9 @@ int aws_get_cpu_usage(uint64_t *cpu_last_total_user, uint64_t *cpu_last_total_us
         *cpu_last_total_idle = tmp;
     }
 
-    total_combined = (total_user - *cpu_last_total_user) + (total_user_low - *cpu_last_total_user_low) +
-            (total_system - *cpu_last_total_system);
-    total = total_combined + (total_idle - *cpu_last_total_idle);
+    total_combined = (double)(total_user - *cpu_last_total_user) + (double)(total_user_low - *cpu_last_total_user_low) +
+                     (double)(total_system - *cpu_last_total_system);
+    total = total_combined + (double)(total_idle - *cpu_last_total_idle);
 
     // If negative, there was an error (overflow?)
     if (total < 0 || total_combined < 0) {
@@ -551,8 +555,7 @@ cleanup:
 #endif
 
     // prevent warnings over unused parameter on Mac
-    s_getCurrentCpuUsage(
-        cpu_last_total_user, cpu_last_total_user_low, cpu_last_total_system, cpu_last_total_idle);
+    s_getCurrentCpuUsage(cpu_last_total_user, cpu_last_total_user_low, cpu_last_total_system, cpu_last_total_idle);
 
     // OS not supported? Just return an error and set the output to 0
     *output = 0;

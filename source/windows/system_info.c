@@ -300,8 +300,12 @@ void aws_backtrace_log() {
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
 
-int aws_get_cpu_usage(uint64_t *cpu_last_total_user, uint64_t *cpu_last_total_user_low,
-    uint64_t *cpu_last_total_system, uint64_t *cpu_last_total_idle, double *output) {
+int aws_get_cpu_usage(
+    uint64_t *cpu_last_total_user,
+    uint64_t *cpu_last_total_user_low,
+    uint64_t *cpu_last_total_system,
+    uint64_t *cpu_last_total_idle,
+    double *output) {
     // Windows is currently not supported.
     *cpu_last_total_user = 0;
     *cpu_last_total_user_low = 0;
