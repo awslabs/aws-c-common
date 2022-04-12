@@ -521,9 +521,31 @@ int aws_get_cpu_usage(
         *cpu_last_total_idle = tmp;
     }
 
-    total_combined = (double)(total_user - *cpu_last_total_user) + (double)(total_user_low - *cpu_last_total_user_low) +
-                     (double)(total_system - *cpu_last_total_system);
-    total = total_combined + (double)(total_idle - *cpu_last_total_idle);
+    uint64_t total_user_delta, total_user_low_delta, total_system_delta, total_idle_delta;
+    if (aws_sub_u64_checked(total_user, *cpu_last_total_user, &total_user_delta) != AWS_OP_SUCCESS) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+    if (aws_sub_u64_checked(total_user_low, *cpu_last_total_user_low, &total_user_low_delta) != AWS_OP_SUCCESS) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+    if (aws_sub_u64_checked(total_system, *cpu_last_total_system, &total_system_delta) != AWS_OP_SUCCESS) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+    if (aws_sub_u64_checked(total_idle, *cpu_last_total_idle, &total_idle_delta) != AWS_OP_SUCCESS) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+
+    total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) +
+                     (double)(total_system_delta);
+    total = total_combined + (double)(total_idle_delta);
 
     if (total == 0) {
         *output = 0;
@@ -542,8 +564,6 @@ int aws_get_cpu_usage(
 
     *output = percent;
     return_result = AWS_OP_SUCCESS;
-
-    fprintf(stdout, "\nOutput: %f \n", percent);
 
     *output = percent;
 
