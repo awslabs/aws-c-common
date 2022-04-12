@@ -451,7 +451,9 @@ enum aws_platform_os aws_get_platform_build_os(void) {
 }
 #endif /* AWS_OS_APPLE */
 
+#if defined(__linux__) || defined(__unix__)
 static const uint64_t S_BYTES_TO_KILO_BYTES = 1024;
+#endif
 
 static void s_getCurrentCpuUsage(
     uint64_t *total_user,
@@ -523,13 +525,6 @@ int aws_get_cpu_usage(
                      (double)(total_system - *cpu_last_total_system);
     total = total_combined + (double)(total_idle - *cpu_last_total_idle);
 
-    // If negative, there was an error (overflow?)
-    if (total < 0 || total_combined < 0) {
-        *output = 0;
-        return_result = AWS_OP_ERR;
-        goto cleanup;
-    }
-
     if (total == 0) {
         *output = 0;
         return_result = AWS_OP_ERR;
@@ -537,6 +532,14 @@ int aws_get_cpu_usage(
     }
 
     percent = (total_combined / total) * 100;
+
+    // If negative, there was an error (overflow?)
+    if (percent < 0) {
+        *output = 0;
+        return_result = AWS_OP_ERR;
+        goto cleanup;
+    }
+
     *output = percent;
     return_result = AWS_OP_SUCCESS;
 
