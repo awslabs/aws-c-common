@@ -543,8 +543,7 @@ int aws_get_cpu_usage(
         goto cleanup;
     }
 
-    total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) +
-                     (double)(total_system_delta);
+    total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) + (double)(total_system_delta);
     total = total_combined + (double)(total_idle_delta);
 
     if (total == 0) {
