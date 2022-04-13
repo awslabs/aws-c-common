@@ -188,14 +188,12 @@ static int s_test_memtrace_none(struct aws_allocator *allocator, void *ctx) {
     struct aws_allocator *tracer = aws_mem_tracer_new(allocator, NULL, AWS_MEMTRACE_NONE, 0);
 
     void *allocs[NUM_ALLOCS] = {0};
-    size_t total = 0;
 
     for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         uint32_t size = 0;
         aws_device_random_u32(&size);
         size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
         allocs[idx] = aws_mem_acquire(tracer, size);
-        total += size;
     }
 
     ASSERT_UINT_EQUALS(0, aws_mem_tracer_bytes(tracer));
