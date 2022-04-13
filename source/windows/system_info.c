@@ -316,14 +316,14 @@ int aws_get_cpu_usage(
     return AWS_OP_ERR;
 }
 
-int aws_get_memory_usage(double *output) {
+int64_t aws_get_memory_usage(int64_t *output) {
     // Windows is currently not supported.
     *output = 0;
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
     return AWS_OP_ERR;
 }
 
-int aws_get_process_count(double *output) {
+int64_t aws_get_process_count(int64_t *output) {
     // Windows is currently not supported.
     *output = 0;
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);

@@ -585,7 +585,7 @@ cleanup:
     return AWS_OP_ERR;
 }
 
-int aws_get_memory_usage(double *output) {
+int64_t aws_get_memory_usage(int64_t *output) {
 // Get the Memory usage from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo memory_info;
@@ -594,7 +594,7 @@ int aws_get_memory_usage(double *output) {
     physical_memory_used *= memory_info.mem_unit;
     // Return data in Kilobytes
     physical_memory_used = physical_memory_used / S_BYTES_TO_KILO_BYTES;
-    *output = (double)physical_memory_used;
+    *output = physical_memory_used;
     return AWS_OP_SUCCESS;
 #endif
 
@@ -604,12 +604,12 @@ int aws_get_memory_usage(double *output) {
     return AWS_OP_ERR;
 }
 
-int aws_get_process_count(double *output) {
+int64_t aws_get_process_count(int64_t *output) {
 // Get the process count from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo system_info;
     sysinfo(&system_info);
-    *output = (double)system_info.procs;
+    *output = (int64_t)system_info.procs;
     return AWS_OP_SUCCESS;
 #endif
     // OS not supported? Just return an error and set the output to 0
