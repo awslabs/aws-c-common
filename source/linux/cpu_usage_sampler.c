@@ -6,11 +6,8 @@
 #include <aws/common/cpu_usage_sampler.h>
 
 #include <inttypes.h>
-
-#if defined(__linux__) || defined(__unix__)
-#    include <sys/sysinfo.h>
-#    include <sys/types.h>
-#endif
+#include <sys/sysinfo.h>
+#include <sys/types.h>
 
 /*********************************************************************************************************************
  * Base implementation
@@ -27,23 +24,9 @@ struct aws_cpu_sampler {
     void *impl;
 };
 
-static void aws_cpu_sampler_destroy_default(struct aws_cpu_sampler *sampler) {
-    if (sampler == NULL) {
-        return;
-    }
-    aws_mem_release(sampler->allocator, sampler);
-}
-
-static struct aws_cpu_sampler_vtable aws_cpu_sampler_vtable_default = {
-    .aws_get_cpu_sample_fn = NULL,
-    .aws_cpu_sampler_destroy = aws_cpu_sampler_destroy_default,
-};
-
 /*********************************************************************************************************************
- * Linux
+ * Linux Specific
  ********************************************************************************************************************/
-
-#if defined(__linux__) || defined(__unix__)
 
 struct aws_cpu_sampler_linux {
     struct aws_cpu_sampler base;
@@ -52,7 +35,7 @@ struct aws_cpu_sampler_linux {
     uint64_t cpu_last_total_user_low;
     uint64_t cpu_last_total_system;
     uint64_t cpu_last_total_idle;
-    // CPU usage is reported in deltas on Linux.
+    // CPU usage is reported in deltas.
     // For the first report we have to process and cache but not send.
     bool cpu_only_gather;
 };
@@ -68,7 +51,6 @@ static void s_get_cpu_usage_linux(
     file = fopen("/proc/stat", "r");
     matched_results = fscanf(
         file,
-        //"cpu %llu %llu %llu %llu",
         "cpu %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "",
         (uint64_t *)total_user,
         (uint64_t *)total_user_low,
@@ -170,8 +152,6 @@ static struct aws_cpu_sampler_vtable aws_cpu_sampler_vtable_linux = {
     .aws_cpu_sampler_destroy = aws_cpu_sampler_destroy_linux,
 };
 
-#endif // Linux
-
 /*********************************************************************************************************************
  * Public operations
  ********************************************************************************************************************/
@@ -182,8 +162,6 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
         return NULL;
     }
 
-    // Linux
-#if defined(__linux__) || defined(__unix__)
     struct aws_cpu_sampler_linux *output_linux = aws_mem_calloc(allocator, 1, sizeof(struct aws_cpu_sampler_linux));
     if (output_linux == NULL) {
         return NULL;
@@ -193,14 +171,6 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
     output_linux->base.impl = output_linux;
     output_linux->cpu_only_gather = true;
     return &output_linux->base;
-#endif
-
-    // OS not supported
-    struct aws_cpu_sampler *output_unsupported = aws_mem_calloc(allocator, 1, sizeof(struct aws_cpu_sampler));
-    output_unsupported->allocator = allocator;
-    output_unsupported->impl = NULL;
-    output_unsupported->vtable = &aws_cpu_sampler_vtable_default;
-    return output_unsupported;
 }
 
 void aws_cpu_sampler_destroy(struct aws_cpu_sampler *sampler) {

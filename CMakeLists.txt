@@ -95,6 +95,13 @@ else ()
         endif()
     endif()
 
+    # OS specific includes
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c")
+    elseif (APPLE)
+        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c")
+    endif()
+
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
