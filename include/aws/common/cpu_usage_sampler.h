@@ -11,28 +11,46 @@
 
 AWS_EXTERN_C_BEGIN
 
-struct cpu_usage_sampler {
-    struct aws_allocator *allocator;
-};
+/**
+ * A struct that contains the CPU sampler for this platform.
+ * Currently only Linux is supported.
+ * 
+ * Note: Must be freed from memory using aws_cpu_sampler_clean_up when finished.
+ */
+struct aws_cpu_sampler;
 
+/**
+ * Creates a new CPU sampler using the provided allocator, or will return NULL if there is an error.
+ * 
+ * Note: On unsupported platforms, the CPU sampler returned will return AWS_OP_ERR when calling
+ * aws_cpu_sampler_get_sample. You will still need to call aws_cpu_sampler_clean_up when finished
+ * to free the memory even for unsupported platforms.
+ */
 AWS_COMMON_API
-int aws_cpu_sampler_new(struct aws_allocator *allocator, struct cpu_usage_sampler *sampler);
-void aws_cpu_sampler_cleanup(struct cpu_usage_sampler *sampler);
-int aws_cpu_sampler_get_sample(struct cpu_usage_sampler *sampler, double *output);
+struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator);
+
+/**
+ * Frees the memory used by the CPU sampler.
+ */
+AWS_COMMON_API
+void aws_cpu_sampler_clean_up(struct aws_cpu_sampler *sampler);
+
+/**
+ * Gets the CPU usage and populates the given double, output, with the value. The value
+ * returned is a percentage from 0.0 to 100.0.
+ * 
+ * Will return AWS_OP_SUCCESS if polling the CPU was successful. AWS_OP_ERR will be returned
+ * if the result should not be used or if there was an error polling the CPU.
+ * 
+ * Will always return AWS_OP_ERR for unsupported platforms.
+ * 
+ * On Linux, will return AWS_OP_ERR on the first poll, as on Linux the CPU usage is calcualted using
+ * deltas, so the first call will be cached for later calculations, but on its own it cannot return
+ * the CPU usage. After the first call, the CPU usage will be accurate if called at regular intervals.
+ */
+AWS_COMMON_API
+int aws_cpu_sampler_get_sample(struct aws_cpu_sampler *sampler, double *output);
 
 AWS_EXTERN_C_END
-
-// Platform specific bindings
-// Linux
-#if defined(__linux__) || defined(__unix__)
-struct cpu_usage_sampler_linux {
-    struct aws_allocator *allocator;
-    uint64_t *cpu_last_total_user;
-    uint64_t *cpu_last_total_user_low;
-    uint64_t *cpu_last_total_system;
-    uint64_t *cpu_last_total_idle;
-};
-const int sample_usage_linux(struct cpu_usage_sampler_linux *sampler, double *output);
-#endif // Linux
 
 #endif /* AWS_COMMON_CPU_USAGE_SAMPLER_H */
