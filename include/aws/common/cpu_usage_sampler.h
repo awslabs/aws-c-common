@@ -9,8 +9,6 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
-AWS_EXTERN_C_BEGIN
-
 /**
  * A struct that contains the CPU sampler for this platform.
  * Currently only Linux is supported.
@@ -18,6 +16,8 @@ AWS_EXTERN_C_BEGIN
  * Note: Must be freed from memory using aws_cpu_sampler_clean_up when finished.
  */
 struct aws_cpu_sampler;
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Creates a new CPU sampler using the provided allocator, or will return NULL if there is an error.
@@ -33,7 +33,7 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator);
  * Frees the memory used by the CPU sampler.
  */
 AWS_COMMON_API
-void aws_cpu_sampler_clean_up(struct aws_cpu_sampler *sampler);
+void aws_cpu_sampler_destroy(struct aws_cpu_sampler *sampler);
 
 /**
  * Gets the CPU usage and populates the given double, output, with the value. The value
