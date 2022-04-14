@@ -13,34 +13,34 @@
 static struct aws_allocator *s_aws_json_module_allocator = NULL;
 static bool s_aws_json_module_initialized = false;
 
-struct aws_json_value *aws_json_new_string(struct aws_allocator *allocator, struct aws_byte_cursor string) {
+struct aws_json_value *aws_json_string_new(struct aws_allocator *allocator, struct aws_byte_cursor string) {
     struct aws_string *tmp = aws_string_new_from_cursor((struct aws_allocator *)allocator, &string);
     void *ret_val = cJSON_CreateString(aws_string_c_str(tmp));
     aws_string_destroy_secure(tmp);
     return ret_val;
 }
 
-struct aws_json_value *aws_json_new_number(struct aws_allocator *allocator, double number) {
+struct aws_json_value *aws_json_number_new(struct aws_allocator *allocator, double number) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateNumber(number);
 }
 
-struct aws_json_value *aws_json_new_array(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_array_new(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateArray();
 }
 
-struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, bool boolean) {
+struct aws_json_value *aws_json_boolean_new(struct aws_allocator *allocator, bool boolean) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateBool(boolean);
 }
 
-struct aws_json_value *aws_json_new_null(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_null_new(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateNull();
 }
 
-struct aws_json_value *aws_json_new_object(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_object_new(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateObject();
 }
@@ -82,7 +82,7 @@ int aws_json_value_add_to_object(
 
     struct cJSON *cjson = (struct cJSON *)object;
     if (!cJSON_IsObject(cjson)) {
-        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         goto done;
     }
 
@@ -99,9 +99,7 @@ int aws_json_value_add_to_object(
     result = AWS_OP_SUCCESS;
 
 done:
-    if (tmp != NULL) {
-        aws_string_destroy_secure(tmp);
-    }
+    aws_string_destroy_secure(tmp);
     return result;
 }
 
@@ -122,13 +120,11 @@ struct aws_json_value *aws_json_value_get_from_object(const struct aws_json_valu
     return_value = (void *)cJSON_GetObjectItem(cjson, aws_string_c_str(tmp));
 
 done:
-    if (tmp != NULL) {
-        aws_string_destroy_secure(tmp);
-    }
+    aws_string_destroy_secure(tmp);
     return return_value;
 }
 
-bool aws_json_object_has_key(const struct aws_json_value *object, struct aws_byte_cursor key) {
+bool aws_json_value_has_key(const struct aws_json_value *object, struct aws_byte_cursor key) {
 
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
     bool result = false;
@@ -143,9 +139,7 @@ bool aws_json_object_has_key(const struct aws_json_value *object, struct aws_byt
     result = true;
 
 done:
-    if (tmp != NULL) {
-        aws_string_destroy_secure(tmp);
-    }
+    aws_string_destroy_secure(tmp);
     return result;
 }
 
@@ -156,7 +150,7 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
 
     struct cJSON *cjson = (struct cJSON *)object;
     if (!cJSON_IsObject(cjson)) {
-        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         goto done;
     }
     if (!cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
@@ -167,9 +161,7 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
     result = AWS_OP_SUCCESS;
 
 done:
-    if (tmp != NULL) {
-        aws_string_destroy_secure(tmp);
-    }
+    aws_string_destroy_secure(tmp);
     return result;
 }
 
@@ -202,7 +194,7 @@ struct aws_json_value *aws_json_get_array_element(const struct aws_json_value *a
         return NULL;
     }
 
-    return (void *)(uintptr_t)cJSON_GetArrayItem(cjson, (int)index);
+    return (void *)cJSON_GetArrayItem(cjson, (int)index);
 }
 
 size_t aws_json_get_array_size(const struct aws_json_value *array) {
@@ -277,11 +269,11 @@ bool aws_json_value_is_object(const struct aws_json_value *value) {
     return cJSON_IsObject(cjson);
 }
 
-void *aws_cJSON_alloc(size_t sz) {
+static void *aws_cJSON_alloc(size_t sz) {
     return aws_mem_acquire(s_aws_json_module_allocator, sz);
 }
 
-void aws_cJSON_free(void *ptr) {
+static void aws_cJSON_free(void *ptr) {
     aws_mem_release(s_aws_json_module_allocator, ptr);
 }
 
@@ -321,9 +313,7 @@ int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte
     }
 
     // clean the buffer before re-assigning
-    if (aws_byte_buf_is_valid(output)) {
-        aws_byte_buf_clean_up(output);
-    }
+    aws_byte_buf_clean_up(output);
 
     *output = aws_byte_buf_from_c_str(tmp);
     output->allocator = s_aws_json_module_allocator;
@@ -342,9 +332,7 @@ int aws_json_value_to_string_formatted(const struct aws_json_value *value, struc
     }
 
     // clean the buffer before re-assigning
-    if (aws_byte_buf_is_valid(output)) {
-        aws_byte_buf_clean_up(output);
-    }
+    aws_byte_buf_clean_up(output);
 
     *output = aws_byte_buf_from_c_str(tmp);
     output->allocator = s_aws_json_module_allocator;

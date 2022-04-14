@@ -95,25 +95,25 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
 
     aws_json_module_init(allocator);
 
-    struct aws_json_value *root = aws_json_new_object(allocator);
+    struct aws_json_value *root = aws_json_object_new(allocator);
 
-    struct aws_json_value *array = aws_json_new_array(allocator);
-    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 1));
-    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 2));
-    aws_json_value_add_array_element(array, aws_json_new_number(allocator, 3));
+    struct aws_json_value *array = aws_json_array_new(allocator);
+    aws_json_value_add_array_element(array, aws_json_number_new(allocator, 1));
+    aws_json_value_add_array_element(array, aws_json_number_new(allocator, 2));
+    aws_json_value_add_array_element(array, aws_json_number_new(allocator, 3));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("array"), array);
 
-    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("boolean"), aws_json_new_boolean(allocator, true));
+    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("boolean"), aws_json_boolean_new(allocator, true));
     aws_json_value_add_to_object(
-        root, aws_byte_cursor_from_c_str("color"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
-    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("null"), aws_json_new_null(allocator));
-    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("number"), aws_json_new_number(allocator, 123));
+        root, aws_byte_cursor_from_c_str("color"), aws_json_string_new(allocator, aws_byte_cursor_from_c_str("gold")));
+    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("null"), aws_json_null_new(allocator));
+    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("number"), aws_json_number_new(allocator, 123));
 
-    struct aws_json_value *object = aws_json_new_object(allocator);
+    struct aws_json_value *object = aws_json_object_new(allocator);
     aws_json_value_add_to_object(
-        object, aws_byte_cursor_from_c_str("a"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("b")));
+        object, aws_byte_cursor_from_c_str("a"), aws_json_string_new(allocator, aws_byte_cursor_from_c_str("b")));
     aws_json_value_add_to_object(
-        object, aws_byte_cursor_from_c_str("c"), aws_json_new_string(allocator, aws_byte_cursor_from_c_str("d")));
+        object, aws_byte_cursor_from_c_str("c"), aws_json_string_new(allocator, aws_byte_cursor_from_c_str("d")));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("object"), object);
 
     struct aws_byte_buf result_string_buf = aws_byte_buf_from_c_str("tmp");

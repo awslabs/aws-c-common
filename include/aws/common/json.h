@@ -24,7 +24,7 @@ struct aws_json_value;
  * @return A new string aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_string(struct aws_allocator *allocator, struct aws_byte_cursor string);
+struct aws_json_value *aws_json_string_new(struct aws_allocator *allocator, struct aws_byte_cursor string);
 
 /**
  * Creates a new number aws_json_value with the given number and returns a pointer to it.
@@ -36,7 +36,7 @@ struct aws_json_value *aws_json_new_string(struct aws_allocator *allocator, stru
  * @return A new number aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_number(struct aws_allocator *allocator, double number);
+struct aws_json_value *aws_json_number_new(struct aws_allocator *allocator, double number);
 
 /**
  * Creates a new array aws_json_value and returns a pointer to it.
@@ -48,7 +48,7 @@ struct aws_json_value *aws_json_new_number(struct aws_allocator *allocator, doub
  * @return A new array aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_array(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_array_new(struct aws_allocator *allocator);
 
 /**
  * Creates a new boolean aws_json_value with the given boolean and returns a pointer to it.
@@ -60,7 +60,7 @@ struct aws_json_value *aws_json_new_array(struct aws_allocator *allocator);
  * @return A new boolean aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, bool boolean);
+struct aws_json_value *aws_json_boolean_new(struct aws_allocator *allocator, bool boolean);
 
 /**
  * Creates a new null aws_json_value and returns a pointer to it.
@@ -71,7 +71,7 @@ struct aws_json_value *aws_json_new_boolean(struct aws_allocator *allocator, boo
  * @return A new null aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_null(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_null_new(struct aws_allocator *allocator);
 
 /**
  * Creates a new object aws_json_value and returns a pointer to it.
@@ -83,7 +83,7 @@ struct aws_json_value *aws_json_new_null(struct aws_allocator *allocator);
  * @return A new object aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_new_object(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_object_new(struct aws_allocator *allocator);
 // ====================
 
 // ====================
@@ -149,12 +149,12 @@ struct aws_json_value *aws_json_value_get_from_object(const struct aws_json_valu
 
 /**
  * Checks if there is a aws_json_value at the given key.
- * @param object The object aws_json_value you want to check a key in.
+ * @param object The value aws_json_value you want to check a key in.
  * @param key The key that you want to check. Is case sensitive.
  * @return True if a aws_json_value is found.
  */
 AWS_COMMON_API
-bool aws_json_object_has_key(const struct aws_json_value *object, struct aws_byte_cursor key);
+bool aws_json_value_has_key(const struct aws_json_value *object, struct aws_byte_cursor key);
 
 /**
  * Removes the aws_json_value at the given key.
@@ -303,6 +303,9 @@ void aws_json_value_destroy(struct aws_json_value *value);
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
+ *
+ * Note: The byte buffer is assumed to be initialized. Passing an uninitialized byte buffer will
+ * cause this function to crash.
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
@@ -317,6 +320,9 @@ int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
+ *
+ * Note: The byte buffer is assumed to be initialized. Passing an uninitialized byte buffer will
+ * cause this function to crash.
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
