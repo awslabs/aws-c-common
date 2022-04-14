@@ -45,7 +45,7 @@ static struct aws_cpu_sampler_vtable aws_cpu_sampler_vtable_default = {
 
 struct aws_cpu_sampler_linux {
     struct aws_cpu_sampler base;
-    
+
     uint64_t cpu_last_total_user;
     uint64_t cpu_last_total_user_low;
     uint64_t cpu_last_total_system;
@@ -173,7 +173,7 @@ static void aws_cpu_sampler_destroy_linux(struct aws_cpu_sampler *sampler) {
     if (sampler == NULL) {
         return;
     }
-    struct aws_cpu_sampler_linux *sampler_linux = (struct aws_cpu_sampler_linux*)sampler->impl;
+    struct aws_cpu_sampler_linux *sampler_linux = (struct aws_cpu_sampler_linux *)sampler->impl;
     aws_mem_release(sampler->allocator, sampler_linux);
 }
 
