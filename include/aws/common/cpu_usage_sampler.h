@@ -14,14 +14,14 @@ AWS_EXTERN_C_BEGIN
 /**
  * A struct that contains the CPU sampler for this platform.
  * Currently only Linux is supported.
- * 
+ *
  * Note: Must be freed from memory using aws_cpu_sampler_clean_up when finished.
  */
 struct aws_cpu_sampler;
 
 /**
  * Creates a new CPU sampler using the provided allocator, or will return NULL if there is an error.
- * 
+ *
  * Note: On unsupported platforms, the CPU sampler returned will return AWS_OP_ERR when calling
  * aws_cpu_sampler_get_sample. You will still need to call aws_cpu_sampler_clean_up when finished
  * to free the memory even for unsupported platforms.
@@ -38,12 +38,12 @@ void aws_cpu_sampler_clean_up(struct aws_cpu_sampler *sampler);
 /**
  * Gets the CPU usage and populates the given double, output, with the value. The value
  * returned is a percentage from 0.0 to 100.0.
- * 
+ *
  * Will return AWS_OP_SUCCESS if polling the CPU was successful. AWS_OP_ERR will be returned
  * if the result should not be used or if there was an error polling the CPU.
- * 
+ *
  * Will always return AWS_OP_ERR for unsupported platforms.
- * 
+ *
  * On Linux, will return AWS_OP_ERR on the first poll, as on Linux the CPU usage is calcualted using
  * deltas, so the first call will be cached for later calculations, but on its own it cannot return
  * the CPU usage. After the first call, the CPU usage will be accurate if called at regular intervals.

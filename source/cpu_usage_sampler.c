@@ -14,23 +14,19 @@
  * Base implementation
  ********************************************************************************************************************/
 
-struct aws_cpu_sampler_vtable
-{
+struct aws_cpu_sampler_vtable {
     int (*aws_get_cpu_sample_fn)(struct aws_cpu_sampler *sampler, double *output);
     void (*aws_cpu_sampler_destroy)(struct aws_cpu_sampler *sampler);
 };
 
-struct aws_cpu_sampler
-{
+struct aws_cpu_sampler {
     const struct aws_cpu_sampler_vtable *vtable;
     struct aws_allocator *allocator;
     void *impl;
 };
 
-static void aws_cpu_sampler_destroy_default(struct aws_cpu_sampler *sampler)
-{
-    if (sampler == NULL)
-    {
+static void aws_cpu_sampler_destroy_default(struct aws_cpu_sampler *sampler) {
+    if (sampler == NULL) {
         return;
     }
     aws_mem_release(sampler->allocator, sampler);
@@ -47,8 +43,7 @@ static struct aws_cpu_sampler_vtable aws_cpu_sampler_vtable_default = {
 
 #if defined(__linux__) || defined(__unix__)
 
-struct aws_cpu_sampler_linux
-{
+struct aws_cpu_sampler_linux {
     struct aws_cpu_sampler base;
     
     uint64_t cpu_last_total_user;
@@ -82,8 +77,7 @@ static void s_get_cpu_usage_linux(
     }
 }
 
-static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *output)
-{
+static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *output) {
     struct aws_cpu_sampler_linux *sampler_linux = sampler->impl;
 
     int return_result = AWS_OP_ERR;
@@ -121,12 +115,14 @@ static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *
         return_result = AWS_OP_ERR;
         goto cleanup;
     }
-    if (aws_sub_u64_checked(total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta) != AWS_OP_SUCCESS) {
+    if (aws_sub_u64_checked(total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta) !=
+        AWS_OP_SUCCESS) {
         *output = 0;
         return_result = AWS_OP_ERR;
         goto cleanup;
     }
-    if (aws_sub_u64_checked(total_system, sampler_linux->cpu_last_total_system, &total_system_delta) != AWS_OP_SUCCESS) {
+    if (aws_sub_u64_checked(total_system, sampler_linux->cpu_last_total_system, &total_system_delta) !=
+        AWS_OP_SUCCESS) {
         *output = 0;
         return_result = AWS_OP_ERR;
         goto cleanup;
@@ -173,10 +169,8 @@ cleanup:
     return return_result;
 }
 
-static void aws_cpu_sampler_destroy_linux(struct aws_cpu_sampler *sampler)
-{
-    if (sampler == NULL)
-    {
+static void aws_cpu_sampler_destroy_linux(struct aws_cpu_sampler *sampler) {
+    if (sampler == NULL) {
         return;
     }
     struct aws_cpu_sampler_linux *sampler_linux = (struct aws_cpu_sampler_linux*)sampler->impl;
@@ -194,10 +188,8 @@ static struct aws_cpu_sampler_vtable aws_cpu_sampler_vtable_linux = {
  * Public operations
  ********************************************************************************************************************/
 
-struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator)
-{
-    if (allocator == NULL)
-    {
+struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
+    if (allocator == NULL) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
@@ -205,8 +197,7 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator)
     // Linux
 #if defined(__linux__) || defined(__unix__)
     struct aws_cpu_sampler_linux *output_linux = aws_mem_calloc(allocator, 1, sizeof(struct aws_cpu_sampler_linux));
-    if (output_linux == NULL)
-    {
+    if (output_linux == NULL) {
         return NULL;
     }
     output_linux->base.allocator = allocator;
@@ -224,28 +215,22 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator)
     return output_unsupported;
 }
 
-void aws_cpu_sampler_clean_up(struct aws_cpu_sampler *sampler)
-{
-    if (sampler == NULL)
-    {
+void aws_cpu_sampler_clean_up(struct aws_cpu_sampler *sampler) {
+    if (sampler == NULL) {
         return;
     }
-    if (sampler->vtable->aws_cpu_sampler_destroy == NULL)
-    {
+    if (sampler->vtable->aws_cpu_sampler_destroy == NULL) {
         return;
     }
     sampler->vtable->aws_cpu_sampler_destroy(sampler);
 }
 
-int aws_cpu_sampler_get_sample(struct aws_cpu_sampler *sampler, double *output)
-{
-    if (sampler == NULL)
-    {
+int aws_cpu_sampler_get_sample(struct aws_cpu_sampler *sampler, double *output) {
+    if (sampler == NULL) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return AWS_OP_ERR;
     }
-    if (sampler->vtable->aws_get_cpu_sample_fn == NULL)
-    {
+    if (sampler->vtable->aws_get_cpu_sample_fn == NULL) {
         aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
         return AWS_OP_ERR;
     }
