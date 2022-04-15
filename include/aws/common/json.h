@@ -24,7 +24,7 @@ struct aws_json_value;
  * @return A new string aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_string_new(struct aws_allocator *allocator, struct aws_byte_cursor string);
+struct aws_json_value *aws_json_value_new_string(struct aws_allocator *allocator, struct aws_byte_cursor string);
 
 /**
  * Creates a new number aws_json_value with the given number and returns a pointer to it.
@@ -36,7 +36,7 @@ struct aws_json_value *aws_json_string_new(struct aws_allocator *allocator, stru
  * @return A new number aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_number_new(struct aws_allocator *allocator, double number);
+struct aws_json_value *aws_json_value_new_number(struct aws_allocator *allocator, double number);
 
 /**
  * Creates a new array aws_json_value and returns a pointer to it.
@@ -48,7 +48,7 @@ struct aws_json_value *aws_json_number_new(struct aws_allocator *allocator, doub
  * @return A new array aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_array_new(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_value_new_array(struct aws_allocator *allocator);
 
 /**
  * Creates a new boolean aws_json_value with the given boolean and returns a pointer to it.
@@ -60,7 +60,7 @@ struct aws_json_value *aws_json_array_new(struct aws_allocator *allocator);
  * @return A new boolean aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_boolean_new(struct aws_allocator *allocator, bool boolean);
+struct aws_json_value *aws_json_value_new_boolean(struct aws_allocator *allocator, bool boolean);
 
 /**
  * Creates a new null aws_json_value and returns a pointer to it.
@@ -71,7 +71,7 @@ struct aws_json_value *aws_json_boolean_new(struct aws_allocator *allocator, boo
  * @return A new null aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_null_new(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_value_new_null(struct aws_allocator *allocator);
 
 /**
  * Creates a new object aws_json_value and returns a pointer to it.
@@ -83,7 +83,7 @@ struct aws_json_value *aws_json_null_new(struct aws_allocator *allocator);
  * @return A new object aws_json_value
  */
 AWS_COMMON_API
-struct aws_json_value *aws_json_object_new(struct aws_allocator *allocator);
+struct aws_json_value *aws_json_value_new_object(struct aws_allocator *allocator);
 // ====================
 
 // ====================
@@ -298,38 +298,42 @@ void aws_json_value_destroy(struct aws_json_value *value);
 // Utility
 
 /**
- * Places a unformatted JSON string representation of the aws_json_value into the passed byte buffer.
- * The byte buffer will be cleaned when passed and then populated with the JSON string output.
+ * Appends a unformatted JSON string representation of the aws_json_value into the passed byte buffer.
+ * The byte buffer is expected to be already initialized so the function can append the JSON into it.
+ *
+ * Note: The byte buffer will automatically have its size extended if the JSON string is over the byte
+ * buffer capacity AND the byte buffer has an allocator associated with it. If the byte buffer does not
+ * have an allocator associated and the JSON string is over capacity, AWS_OP_ERR will be returned.
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
- *
- * Note: The byte buffer is assumed to be initialized. Passing an uninitialized byte buffer will
- * cause this function to crash.
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
- *      Will return AWS_OP_ERR if the value passed is not an aws_json_value
+ *      Will return AWS_OP_ERR if the value passed is not an aws_json_value or if there
+ *      was an error appending the JSON into the byte buffer.
  */
 AWS_COMMON_API
-int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte_buf *output);
+int aws_byte_buf_append_json_string(const struct aws_json_value *value, struct aws_byte_buf *output);
 
 /**
- * Places a formatted JSON string representation of the aws_json_value into the passed byte buffer.
- * The byte buffer will be cleaned when passed and then populated with the JSON string output.
+ * Appends a formatted JSON string representation of the aws_json_value into the passed byte buffer.
+ * The byte buffer is expected to already be initialized so the function can append the JSON into it.
+ *
+ * Note: The byte buffer will automatically have its size extended if the JSON string is over the byte
+ * buffer capacity AND the byte buffer has an allocator associated with it. If the byte buffer does not
+ * have an allocator associated and the JSON string is over capacity, AWS_OP_ERR will be returned.
  *
  * Note: When you are finished with the aws_byte_buf, you must call "aws_byte_buf_clean_up_secure" to free
  * the memory used, as it will NOT be called automatically.
- *
- * Note: The byte buffer is assumed to be initialized. Passing an uninitialized byte buffer will
- * cause this function to crash.
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
- *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value
+ *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value or if there
+ *      aws an error appending the JSON into the byte buffer.
  */
 AWS_COMMON_API
-int aws_json_value_to_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output);
+int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output);
 
 /**
  * Parses the JSON string and returns a aws_json_value containing the root of the JSON.

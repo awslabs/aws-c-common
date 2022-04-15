@@ -13,34 +13,34 @@
 static struct aws_allocator *s_aws_json_module_allocator = NULL;
 static bool s_aws_json_module_initialized = false;
 
-struct aws_json_value *aws_json_string_new(struct aws_allocator *allocator, struct aws_byte_cursor string) {
+struct aws_json_value *aws_json_value_new_string(struct aws_allocator *allocator, struct aws_byte_cursor string) {
     struct aws_string *tmp = aws_string_new_from_cursor((struct aws_allocator *)allocator, &string);
     void *ret_val = cJSON_CreateString(aws_string_c_str(tmp));
     aws_string_destroy_secure(tmp);
     return ret_val;
 }
 
-struct aws_json_value *aws_json_number_new(struct aws_allocator *allocator, double number) {
+struct aws_json_value *aws_json_value_new_number(struct aws_allocator *allocator, double number) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateNumber(number);
 }
 
-struct aws_json_value *aws_json_array_new(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_value_new_array(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateArray();
 }
 
-struct aws_json_value *aws_json_boolean_new(struct aws_allocator *allocator, bool boolean) {
+struct aws_json_value *aws_json_value_new_boolean(struct aws_allocator *allocator, bool boolean) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateBool(boolean);
 }
 
-struct aws_json_value *aws_json_null_new(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_value_new_null(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateNull();
 }
 
-struct aws_json_value *aws_json_object_new(struct aws_allocator *allocator) {
+struct aws_json_value *aws_json_value_new_object(struct aws_allocator *allocator) {
     (void)allocator; // prevent warnings over unused parameter
     return (void *)cJSON_CreateObject();
 }
@@ -269,18 +269,18 @@ bool aws_json_value_is_object(const struct aws_json_value *value) {
     return cJSON_IsObject(cjson);
 }
 
-static void *aws_cJSON_alloc(size_t sz) {
+static void *s_aws_cJSON_alloc(size_t sz) {
     return aws_mem_acquire(s_aws_json_module_allocator, sz);
 }
 
-static void aws_cJSON_free(void *ptr) {
+static void s_aws_cJSON_free(void *ptr) {
     aws_mem_release(s_aws_json_module_allocator, ptr);
 }
 
 void aws_json_module_init(struct aws_allocator *allocator) {
     if (!s_aws_json_module_initialized) {
         s_aws_json_module_allocator = allocator;
-        struct cJSON_Hooks allocation_hooks = {.malloc_fn = aws_cJSON_alloc, .free_fn = aws_cJSON_free};
+        struct cJSON_Hooks allocation_hooks = {.malloc_fn = s_aws_cJSON_alloc, .free_fn = s_aws_cJSON_free};
         cJSON_InitHooks(&allocation_hooks);
         s_aws_json_module_initialized = true;
     }
@@ -300,8 +300,7 @@ void aws_json_value_destroy(struct aws_json_value *value) {
     }
 }
 
-int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte_buf *output) {
-
+int aws_byte_buf_append_json_string(const struct aws_json_value *value, struct aws_byte_buf *output) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -312,15 +311,13 @@ int aws_json_value_to_string(const struct aws_json_value *value, struct aws_byte
         return AWS_OP_ERR;
     }
 
-    // clean the buffer before re-assigning
-    aws_byte_buf_clean_up(output);
-
-    *output = aws_byte_buf_from_c_str(tmp);
-    output->allocator = s_aws_json_module_allocator;
-    return AWS_OP_SUCCESS;
+    // Append the text to the byte buffer
+    struct aws_byte_cursor tmp_cursor = aws_byte_cursor_from_c_str(tmp);
+    s_aws_cJSON_free(tmp); // free the char* now that we do not need it
+    return aws_byte_buf_append_dynamic(output, &tmp_cursor);
 }
 
-int aws_json_value_to_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output) {
+int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -331,12 +328,10 @@ int aws_json_value_to_string_formatted(const struct aws_json_value *value, struc
         return AWS_OP_ERR;
     }
 
-    // clean the buffer before re-assigning
-    aws_byte_buf_clean_up(output);
-
-    *output = aws_byte_buf_from_c_str(tmp);
-    output->allocator = s_aws_json_module_allocator;
-    return AWS_OP_SUCCESS;
+    // Append the text to the byte buffer
+    struct aws_byte_cursor tmp_cursor = aws_byte_cursor_from_c_str(tmp);
+    s_aws_cJSON_free(tmp); // free the char* now that we do not need it
+    return aws_byte_buf_append_dynamic(output, &tmp_cursor);
 }
 
 struct aws_json_value *aws_json_value_new_from_string(struct aws_allocator *allocator, struct aws_byte_cursor string) {
