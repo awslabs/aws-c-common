@@ -313,8 +313,9 @@ int aws_byte_buf_append_json_string(const struct aws_json_value *value, struct a
 
     // Append the text to the byte buffer
     struct aws_byte_cursor tmp_cursor = aws_byte_cursor_from_c_str(tmp);
+    int return_val = aws_byte_buf_append_dynamic_secure(output, &tmp_cursor);
     s_aws_cJSON_free(tmp); // free the char* now that we do not need it
-    return aws_byte_buf_append_dynamic_secure(output, &tmp_cursor);
+    return return_val;
 }
 
 int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value, struct aws_byte_buf *output) {
@@ -330,8 +331,9 @@ int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value
 
     // Append the text to the byte buffer
     struct aws_byte_cursor tmp_cursor = aws_byte_cursor_from_c_str(tmp);
+    int return_val = aws_byte_buf_append_dynamic_secure(output, &tmp_cursor);
     s_aws_cJSON_free(tmp); // free the char* now that we do not need it
-    return aws_byte_buf_append_dynamic_secure(output, &tmp_cursor);
+    return return_val;
 }
 
 struct aws_json_value *aws_json_value_new_from_string(struct aws_allocator *allocator, struct aws_byte_cursor string) {
