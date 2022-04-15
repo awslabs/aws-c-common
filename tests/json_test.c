@@ -121,7 +121,7 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
 
     ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_byte_buf_append_json_string(root, &result_string_buf));
     struct aws_string *result_string = aws_string_new_from_buf(allocator, &result_string_buf);
-    ASSERT_STR_EQUALS(aws_string_c_str(result_string), s_test_json);
+    ASSERT_STR_EQUALS(s_test_json, aws_string_c_str(result_string));
     aws_byte_buf_clean_up_secure(&result_string_buf);
     aws_string_destroy_secure(result_string);
 
