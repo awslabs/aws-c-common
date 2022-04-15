@@ -37,6 +37,9 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.inl"
         )
 
+file (GLOB AWS_COMMON_EXTERNAL_HEADERS
+        "include/aws/common/external/*.h")
+
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
         )
@@ -49,6 +52,9 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
+
+file (GLOB AWS_COMMON_EXTERNAL_SRC
+        "source/external/*.c")
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
@@ -150,6 +156,7 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
+        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         )
 
@@ -157,6 +164,7 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
         ${AWS_COMMON_ARCH_SRC}
+        ${AWS_COMMON_EXTERNAL_SRC}
         )
 
 
@@ -194,6 +202,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # but at build time we need to explicitly include this here
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${PROJECT_NAME})
