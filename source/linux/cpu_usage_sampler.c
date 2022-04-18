@@ -51,7 +51,7 @@ static void s_get_cpu_usage_linux(
     file = fopen("/proc/stat", "r");
     matched_results = fscanf(
         file,
-        "cpu %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "",
+        "cpu %" SCNu64 " %" SCNu64 " %" SCNu64 " %" SCNu64 "",
         (uint64_t *)total_user,
         (uint64_t *)total_user_low,
         (uint64_t *)total_system,
@@ -62,14 +62,12 @@ static void s_get_cpu_usage_linux(
     }
 }
 
-static int aws_get_cpu_sample_fn_linux_get_uint64_delta(uint64_t *first, uint64_t *second, uint64_t *output) {
-    int64_t ret_val = AWS_OP_SUCCESS;
-    if (*first > *second) {
-        ret_val = aws_sub_u64_checked(*first, *second, output);
+static void aws_get_cpu_sample_fn_linux_get_uint64_delta(uint64_t first, uint64_t second, uint64_t *output) {
+    if (first > second) {
+        aws_sub_u64_checked(first, second, output);
     } else {
-        ret_val = aws_add_u64_checked((UINT64_MAX - *second), *first, output);
+        aws_add_u64_checked((UINT64_MAX - second), first, output);
     }
-    return ret_val;
 }
 
 static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *output) {
@@ -82,26 +80,14 @@ static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *
     double percent, total_combined;
 
     uint64_t total_user_delta, total_user_low_delta, total_system_delta, total_idle_delta;
-    if (aws_get_cpu_sample_fn_linux_get_uint64_delta(
-            &total_user, &sampler_linux->cpu_last_total_user, &total_user_delta) != AWS_OP_SUCCESS) {
-        *output = 0;
-        goto cleanup;
-    }
-    if (aws_get_cpu_sample_fn_linux_get_uint64_delta(
-            &total_user_low, &sampler_linux->cpu_last_total_user_low, &total_user_low_delta) != AWS_OP_SUCCESS) {
-        *output = 0;
-        goto cleanup;
-    }
-    if (aws_get_cpu_sample_fn_linux_get_uint64_delta(
-            &total_system, &sampler_linux->cpu_last_total_system, &total_system_delta) != AWS_OP_SUCCESS) {
-        *output = 0;
-        goto cleanup;
-    }
-    if (aws_get_cpu_sample_fn_linux_get_uint64_delta(
-            &total_idle, &sampler_linux->cpu_last_total_idle, &total_idle_delta) != AWS_OP_SUCCESS) {
-        *output = 0;
-        goto cleanup;
-    }
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(
+        total_user, sampler_linux->cpu_last_total_user, &total_user_delta);
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(
+        total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta);
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(
+        total_system, sampler_linux->cpu_last_total_system, &total_system_delta);
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(
+        total_idle, sampler_linux->cpu_last_total_idle, &total_idle_delta);
 
     total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) + (double)(total_system_delta);
     total = total_combined + (double)(total_idle_delta);
@@ -171,26 +157,4 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
     output_linux->base.impl = output_linux;
     output_linux->cpu_only_gather = true;
     return &output_linux->base;
-}
-
-void aws_cpu_sampler_destroy(struct aws_cpu_sampler *sampler) {
-    if (sampler == NULL) {
-        return;
-    }
-    if (sampler->vtable->aws_cpu_sampler_destroy == NULL) {
-        return;
-    }
-    sampler->vtable->aws_cpu_sampler_destroy(sampler);
-}
-
-int aws_cpu_sampler_get_sample(struct aws_cpu_sampler *sampler, double *output) {
-    if (sampler == NULL) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return AWS_OP_ERR;
-    }
-    if (sampler->vtable->aws_get_cpu_sample_fn == NULL) {
-        aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-        return AWS_OP_ERR;
-    }
-    return sampler->vtable->aws_get_cpu_sample_fn(sampler, output);
 }

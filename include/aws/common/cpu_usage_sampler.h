@@ -13,7 +13,7 @@
  * A struct that contains the CPU sampler for this platform.
  * Currently only Linux is supported.
  *
- * Note: Must be freed from memory using aws_cpu_sampler_clean_up when finished.
+ * Note: Must be freed from memory using aws_cpu_sampler_destroy when finished.
  */
 struct aws_cpu_sampler;
 
