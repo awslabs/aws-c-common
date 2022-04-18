@@ -80,14 +80,12 @@ static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *
     double percent, total_combined;
 
     uint64_t total_user_delta, total_user_low_delta, total_system_delta, total_idle_delta;
-    aws_get_cpu_sample_fn_linux_get_uint64_delta(
-        total_user, sampler_linux->cpu_last_total_user, &total_user_delta);
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user, sampler_linux->cpu_last_total_user, &total_user_delta);
     aws_get_cpu_sample_fn_linux_get_uint64_delta(
         total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta);
     aws_get_cpu_sample_fn_linux_get_uint64_delta(
         total_system, sampler_linux->cpu_last_total_system, &total_system_delta);
-    aws_get_cpu_sample_fn_linux_get_uint64_delta(
-        total_idle, sampler_linux->cpu_last_total_idle, &total_idle_delta);
+    aws_get_cpu_sample_fn_linux_get_uint64_delta(total_idle, sampler_linux->cpu_last_total_idle, &total_idle_delta);
 
     total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) + (double)(total_system_delta);
     total = total_combined + (double)(total_idle_delta);

@@ -9,6 +9,17 @@
  * Base implementation
  ********************************************************************************************************************/
 
+struct aws_cpu_sampler_vtable {
+    int (*aws_get_cpu_sample_fn)(struct aws_cpu_sampler *sampler, double *output);
+    void (*aws_cpu_sampler_destroy)(struct aws_cpu_sampler *sampler);
+};
+
+struct aws_cpu_sampler {
+    const struct aws_cpu_sampler_vtable *vtable;
+    struct aws_allocator *allocator;
+    void *impl;
+};
+
 static void aws_cpu_sampler_destroy_default(struct aws_cpu_sampler *sampler) {
     if (sampler == NULL) {
         return;
