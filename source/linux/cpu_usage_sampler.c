@@ -79,7 +79,7 @@ static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *
     // total_combined needs to be double to allow for fractions
     double percent, total_combined;
 
-    uint64_t total_user_delta, total_user_low_delta, total_system_delta, total_idle_delta;
+    uint64_t total_user_delta = 0, total_user_low_delta = 0, total_system_delta = 0, total_idle_delta = 0;
     aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user, sampler_linux->cpu_last_total_user, &total_user_delta);
     aws_get_cpu_sample_fn_linux_get_uint64_delta(
         total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta);
