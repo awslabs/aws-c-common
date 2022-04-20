@@ -104,13 +104,13 @@ void aws_backtrace_log(int log_level);
  * Sets the passed int value as the memory usage in kilobytes. Only supported on Linux currently.
  */
 AWS_COMMON_API
-int64_t aws_get_memory_usage(int64_t *output);
+int aws_get_memory_usage(int64_t *output);
 
 /**
  * Sets the passed int value as the process count. Only supported on Linux currently.
  */
 AWS_COMMON_API
-int64_t aws_get_process_count(int64_t *output);
+int aws_get_process_count(int64_t *output);
 
 AWS_EXTERN_C_END
 

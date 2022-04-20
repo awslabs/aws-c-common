@@ -300,14 +300,14 @@ void aws_backtrace_log() {
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
 
-int64_t aws_get_memory_usage(int64_t *output) {
+int aws_get_memory_usage(int64_t *output) {
     // Windows is currently not supported.
     *output = 0;
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
     return AWS_OP_ERR;
 }
 
-int64_t aws_get_process_count(int64_t *output) {
+int aws_get_process_count(int64_t *output) {
     // Windows is currently not supported.
     *output = 0;
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);

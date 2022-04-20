@@ -4,25 +4,11 @@
  */
 
 #include <aws/common/cpu_usage_sampler.h>
+#include <aws/common/private/cpu_usage_sampler_private.h>
 
 #include <inttypes.h>
 #include <sys/sysinfo.h>
 #include <sys/types.h>
-
-/*********************************************************************************************************************
- * Base implementation
- ********************************************************************************************************************/
-
-struct aws_cpu_sampler_vtable {
-    int (*aws_get_cpu_sample_fn)(struct aws_cpu_sampler *sampler, double *output);
-    void (*aws_cpu_sampler_destroy)(struct aws_cpu_sampler *sampler);
-};
-
-struct aws_cpu_sampler {
-    const struct aws_cpu_sampler_vtable *vtable;
-    struct aws_allocator *allocator;
-    void *impl;
-};
 
 /*********************************************************************************************************************
  * Linux Specific
@@ -35,9 +21,6 @@ struct aws_cpu_sampler_linux {
     uint64_t cpu_last_total_user_low;
     uint64_t cpu_last_total_system;
     uint64_t cpu_last_total_idle;
-    // CPU usage is reported in deltas.
-    // For the first report we have to process and cache but not send.
-    bool cpu_only_gather;
 };
 
 static void s_get_cpu_usage_linux(
@@ -105,12 +88,8 @@ static int aws_get_cpu_sample_fn_linux(struct aws_cpu_sampler *sampler, double *
         goto cleanup;
     }
 
-    if (sampler_linux->cpu_only_gather == false) {
-        *output = percent;
-        return_result = AWS_OP_SUCCESS;
-    } else {
-        return_result = AWS_OP_ERR; // will tell DeviceDefender not to send
-    }
+    *output = percent;
+    return_result = AWS_OP_SUCCESS;
 
 cleanup:
     // Cache results
@@ -118,7 +97,6 @@ cleanup:
     sampler_linux->cpu_last_total_user_low = total_user_low;
     sampler_linux->cpu_last_total_system = total_system;
     sampler_linux->cpu_last_total_idle = total_idle;
-    sampler_linux->cpu_only_gather = false;
 
     return return_result;
 }
@@ -153,6 +131,10 @@ struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
     output_linux->base.allocator = allocator;
     output_linux->base.vtable = &aws_cpu_sampler_vtable_linux;
     output_linux->base.impl = output_linux;
-    output_linux->cpu_only_gather = true;
+
+    // CPU reporting is done via deltas, so we need to cache the initial CPU values
+    double tmp = 0;
+    aws_get_cpu_sample_fn_linux(&output_linux->base, &tmp);
+
     return &output_linux->base;
 }

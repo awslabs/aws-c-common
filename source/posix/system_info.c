@@ -455,7 +455,7 @@ enum aws_platform_os aws_get_platform_build_os(void) {
 static const uint64_t S_BYTES_TO_KILO_BYTES = 1024;
 #endif
 
-int64_t aws_get_memory_usage(int64_t *output) {
+int aws_get_memory_usage(int64_t *output) {
 // Get the Memory usage from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo memory_info;
@@ -474,7 +474,7 @@ int64_t aws_get_memory_usage(int64_t *output) {
     return AWS_OP_ERR;
 }
 
-int64_t aws_get_process_count(int64_t *output) {
+int aws_get_process_count(int64_t *output) {
 // Get the process count from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo system_info;

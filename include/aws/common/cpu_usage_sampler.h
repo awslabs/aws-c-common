@@ -43,10 +43,6 @@ void aws_cpu_sampler_destroy(struct aws_cpu_sampler *sampler);
  * if the result should not be used or if there was an error polling the CPU.
  *
  * Will always return AWS_OP_ERR for unsupported platforms.
- *
- * On Linux, will return AWS_OP_ERR on the first poll, as on Linux the CPU usage is calcualted using
- * deltas, so the first call will be cached for later calculations, but on its own it cannot return
- * the CPU usage. After the first call, the CPU usage will be accurate if called at regular intervals.
  */
 AWS_COMMON_API
 int aws_cpu_sampler_get_sample(struct aws_cpu_sampler *sampler, double *output);
