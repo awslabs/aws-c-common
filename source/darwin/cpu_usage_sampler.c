@@ -12,6 +12,7 @@
 
 struct aws_cpu_sampler *aws_cpu_sampler_new(struct aws_allocator *allocator) {
     // OS currently not supported
+    (void)(allocator);
     aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
     return NULL;
 }
