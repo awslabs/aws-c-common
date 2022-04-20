@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_CPU_USAGE_SAMPLER_PRIVATE_H
-#define AWS_COMMON_CPU_USAGE_SAMPLER_PRIVATE_H
+#ifndef AWS_COMMON_PRIVATE_CPU_USAGE_SAMPLER_PRIVATE_H
+#define AWS_COMMON_PRIVATE_CPU_USAGE_SAMPLER_PRIVATE_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -26,4 +26,4 @@ struct aws_cpu_sampler {
     void *impl;
 };
 
-#endif /* AWS_COMMON_CPU_USAGE_SAMPLER_PRIVATE_H */
+#endif /* AWS_COMMON_PRIVATE_CPU_USAGE_SAMPLER_PRIVATE_H */
