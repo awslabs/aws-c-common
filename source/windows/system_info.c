@@ -272,7 +272,7 @@ void aws_backtrace_log(int log_level) {
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
-#else  /* !AWS_OS_WINDOWS_DESKTOP */
+#else /* !AWS_OS_WINDOWS_DESKTOP */
 size_t aws_backtrace(void **stack_frames, size_t size) {
     (void)stack_frames;
     (void)size;
@@ -299,4 +299,19 @@ void aws_backtrace_log() {
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
+
+int aws_get_memory_usage(int64_t *output) {
+    // Windows is currently not supported.
+    *output = 0;
+    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+    return AWS_OP_ERR;
+}
+
+int aws_get_process_count(int64_t *output) {
+    // Windows is currently not supported.
+    *output = 0;
+    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+    return AWS_OP_ERR;
+}
+
 #endif /* AWS_OS_WINDOWS_DESKTOP */
