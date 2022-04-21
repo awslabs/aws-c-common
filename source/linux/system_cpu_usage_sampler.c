@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/cpu_usage_sampler.h>
-#include <aws/common/private/cpu_usage_sampler_private.h>
+#include <aws/common/system_info.h>
+#include <aws/common/private/system_cpu_usage_sampler_private.h>
 
 #include <aws/common/logging.h>
 
@@ -45,12 +45,14 @@ static int s_get_cpu_usage_linux(
     fclose(file);
 
     if (matched_results == EOF) {
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "CPU sampler failed to parse /proc/stat. 'cpu' row was not found in file.");
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL, "CPU sampler failed to parse /proc/stat. 'cpu' row was not found in file.");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     if (matched_results != 4) {
         // There was not 4 CPU results (likely an unsupported platform)
-        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "CPU sampler failed to parse /proc/stat. 'cpu' row did not contain 4 rows of data.");
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL, "CPU sampler failed to parse /proc/stat. 'cpu' row did not contain 4 rows of data.");
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
     return AWS_OP_SUCCESS;
@@ -78,10 +80,14 @@ static int aws_get_cpu_sample_fn_linux(struct aws_system_cpu_sampler *sampler, d
         return AWS_OP_ERR;
     }
 
-    uint64_t total_user_delta = aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user, sampler_linux->cpu_last_total_user);
-    uint64_t total_user_low_delta = aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user_low, sampler_linux->cpu_last_total_user_low);
-    uint64_t total_system_delta = aws_get_cpu_sample_fn_linux_get_uint64_delta(total_system, sampler_linux->cpu_last_total_system);
-    uint64_t total_idle_delta = aws_get_cpu_sample_fn_linux_get_uint64_delta(total_idle, sampler_linux->cpu_last_total_idle);
+    uint64_t total_user_delta =
+        aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user, sampler_linux->cpu_last_total_user);
+    uint64_t total_user_low_delta =
+        aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user_low, sampler_linux->cpu_last_total_user_low);
+    uint64_t total_system_delta =
+        aws_get_cpu_sample_fn_linux_get_uint64_delta(total_system, sampler_linux->cpu_last_total_system);
+    uint64_t total_idle_delta =
+        aws_get_cpu_sample_fn_linux_get_uint64_delta(total_idle, sampler_linux->cpu_last_total_idle);
 
     double total_combined = (double)(total_user_delta) + (double)(total_user_low_delta) + (double)(total_system_delta);
     double total = total_combined + (double)(total_idle_delta);

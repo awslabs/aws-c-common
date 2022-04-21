@@ -5,6 +5,8 @@
 
 #include <aws/common/system_info.h>
 
+#include <aws/common/private/system_cpu_usage_sampler_private.h>
+
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
 #include <aws/common/platform.h>
@@ -516,4 +518,15 @@ int aws_get_system_process_count(uint64_t *output) {
     *output = 0;
     return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
 #endif
+}
+
+void aws_system_cpu_sampler_destroy(struct aws_system_cpu_sampler *sampler) {
+    if (sampler == NULL) {
+        return;
+    }
+    sampler->vtable->destroy(sampler);
+}
+
+int aws_system_cpu_sampler_get_sample(struct aws_system_cpu_sampler *sampler, double *output) {
+    return sampler->vtable->get_sample(sampler, output);
 }
