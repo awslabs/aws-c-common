@@ -7,6 +7,7 @@
 #include <aws/common/system_info.h>
 
 #include <aws/common/logging.h>
+#include <aws/common/math.h>
 
 #include <inttypes.h>
 #include <sys/sysinfo.h>

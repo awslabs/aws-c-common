@@ -4,7 +4,7 @@
  */
 
 #include <aws/common/private/system_cpu_usage_sampler_private.h>
-#include <aws/common/system_info.h>>
+#include <aws/common/system_info.h>
 
 /*********************************************************************************************************************
  * Public operations
