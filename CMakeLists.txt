@@ -110,10 +110,8 @@ else ()
         list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
-        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
-        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")

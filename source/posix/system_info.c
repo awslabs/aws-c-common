@@ -503,13 +503,12 @@ int aws_get_system_process_count(uint64_t *output) {
 
 #elif defined(__APPLE__)
 
-    pid_t pid_array[2048];
-    int pid_bytes = proc_listpids(PROC_ALL_PIDS, 0, pid_array, sizeof(pid_array));
-    if (pid_bytes == 0) {
+    int pid_bytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (pid_bytes <= 0) {
         // Error occured - there should be at least a single process with some bytes
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
-    *output = (uint64_t)(pid_bytes / sizeof(pid_array[0]));
+    *output = (uint64_t)(pid_bytes / sizeof(pid_t));
     return AWS_OP_SUCCESS;
 
 #else

@@ -13,8 +13,8 @@
  * The VTable for the CPU sampler in cpu_usage_sampler.h
  */
 struct aws_system_cpu_sampler_vtable {
-    int (*aws_get_cpu_sample_fn)(struct aws_system_cpu_sampler *sampler, double *output);
-    void (*aws_system_cpu_sampler_destroy)(struct aws_system_cpu_sampler *sampler);
+    int (*get_sample)(struct aws_system_cpu_sampler *sampler, double *output);
+    void (*destroy)(struct aws_system_cpu_sampler *sampler);
 };
 
 /**

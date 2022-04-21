@@ -14,9 +14,9 @@ void aws_system_cpu_sampler_destroy(struct aws_system_cpu_sampler *sampler) {
     if (sampler == NULL) {
         return;
     }
-    sampler->vtable->aws_system_cpu_sampler_destroy(sampler);
+    sampler->vtable->destroy(sampler);
 }
 
 int aws_system_cpu_sampler_get_sample(struct aws_system_cpu_sampler *sampler, double *output) {
-    return sampler->vtable->aws_get_cpu_sample_fn(sampler, output);
+    return sampler->vtable->get_sample(sampler, output);
 }

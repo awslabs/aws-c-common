@@ -313,16 +313,11 @@ int aws_get_system_memory_usage(int64_t *output) {
 }
 
 int aws_get_system_process_count(uint64_t *output) {
-    DWORD processes_array[1024], processes_array_size, processes_count;
+    DWORD processes_array[1024], processes_array_size;
     if (EnumProcesses(processes_array, sizeof(processes_array), &processes_array_size) == 0) {
-        // Try a larger array
-        DWORD processes_array_big[2048];
-        if EnumProcesses(processes_array_big, sizeof(processes_array_big), &processes_array_size) == 0) {
-                // Error twice - something is wrong!
-                return aws_raise_error(AWS_ERROR_INVALID_STATE);
-            }
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
-    *output = (double)(processes_array_size / sizeof(DWORD));
+    *output = (processes_array_size / sizeof(DWORD));
     return AWS_OP_SUCCESS;
 }
 

@@ -101,7 +101,7 @@ AWS_COMMON_API
 void aws_backtrace_log(int log_level);
 
 /**
- * Sets the passed int value as the memory usage in kilobytes. Only supported on Linux currently.
+ * Sets the passed int value as the memory usage in bytes. Only supported on Linux currently.
  */
 AWS_COMMON_API
 int aws_get_system_memory_usage(uint64_t *output);

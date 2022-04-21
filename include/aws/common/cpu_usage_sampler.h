@@ -22,8 +22,8 @@ AWS_EXTERN_C_BEGIN
  * Creates a new CPU sampler using the provided allocator, or will return NULL if there is an error.
  *
  * Note: On unsupported platforms, the CPU sampler returned will return AWS_OP_ERR when calling
- * aws_system_cpu_sampler_get_sample. You will still need to call aws_system_cpu_sampler_clean_up when finished
- * to free the memory even for unsupported platforms.
+ * aws_system_cpu_sampler_get_sample. You will still need to call aws_system_cpu_sampler_destroy when finished
+ * to free the memory.
  */
 AWS_COMMON_API
 struct aws_system_cpu_sampler *aws_system_cpu_sampler_new(struct aws_allocator *allocator);
