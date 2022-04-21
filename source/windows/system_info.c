@@ -300,18 +300,30 @@ void aws_backtrace_log() {
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
 
-int aws_get_memory_usage(int64_t *output) {
-    // Windows is currently not supported.
-    *output = 0;
-    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-    return AWS_OP_ERR;
+int aws_get_system_memory_usage(int64_t *output) {
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof(statex);
+    int memory_status = GlobalMemoryStatusEx(&statex);
+    if (memory_status == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+    // Get the memory in use (total - free = memory in use)
+    *output = statex.ullTotalPhys - statex.ullAvailPhys;
+    return AWS_OP_SUCCESS;
 }
 
-int aws_get_process_count(int64_t *output) {
-    // Windows is currently not supported.
-    *output = 0;
-    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-    return AWS_OP_ERR;
+int aws_get_system_process_count(uint64_t *output) {
+    DWORD processes_array[1024], processes_array_size, processes_count;
+    if (EnumProcesses(processes_array, sizeof(processes_array), &processes_array_size) == 0) {
+        // Try a larger array
+        DWORD processes_array_big[2048];
+        if EnumProcesses(processes_array_big, sizeof(processes_array_big), &processes_array_size) == 0) {
+            // Error twice - something is wrong!
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+    }
+    *output = (double)(processes_array_size / sizeof(DWORD));
+    return AWS_OP_SUCCESS;
 }
 
 #endif /* AWS_OS_WINDOWS_DESKTOP */

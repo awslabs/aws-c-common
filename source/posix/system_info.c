@@ -451,39 +451,38 @@ enum aws_platform_os aws_get_platform_build_os(void) {
 }
 #endif /* AWS_OS_APPLE */
 
-#if defined(__linux__) || defined(__unix__)
-static const uint64_t S_BYTES_TO_KILO_BYTES = 1024;
-#endif
-
-int aws_get_memory_usage(int64_t *output) {
+int aws_get_system_memory_usage(uint64_t *output) {
 // Get the Memory usage from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo memory_info;
-    sysinfo(&memory_info);
+    int sysinfo_result = sysinfo(&memory_info);
+    if (sysinfo_result != 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
     uint64_t physical_memory_used = memory_info.totalram - memory_info.freeram;
     physical_memory_used *= memory_info.mem_unit;
-    // Return data in Kilobytes
-    physical_memory_used = physical_memory_used / S_BYTES_TO_KILO_BYTES;
     *output = physical_memory_used;
     return AWS_OP_SUCCESS;
-#endif
 
+    // TODO - add Apple support
+
+#else
     // OS not supported? Just return an error and set the output to 0
     *output = 0;
-    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-    return AWS_OP_ERR;
+    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+#endif
 }
 
-int aws_get_process_count(int64_t *output) {
+int aws_get_system_process_count(uint64_t *output) {
 // Get the process count from Linux
 #if defined(__linux__) || defined(__unix__)
     struct sysinfo system_info;
     sysinfo(&system_info);
-    *output = (int64_t)system_info.procs;
+    *output = (uint64_t)system_info.procs;
     return AWS_OP_SUCCESS;
-#endif
+#else
     // OS not supported? Just return an error and set the output to 0
     *output = 0;
-    aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-    return AWS_OP_ERR;
+    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+#endif
 }
