@@ -199,9 +199,9 @@ char *s_whitelist_chars(char *path) {
 #        include <libproc.h>     // For getting process count
 #        include <mach-o/dyld.h> // For getting memory
 #        include <mach/vm_statistics.h>
-#        include <mach/mach_types.h>
-#        include <mach/mach_init.h>
 #        include <mach/mach_host.h>
+#        include <mach/mach_init.h>
+#        include <mach/mach_types.h>
 static char s_exe_path[PATH_MAX];
 static const char *s_get_executable_path(void) {
     static const char *s_exe = NULL;
@@ -476,7 +476,7 @@ int aws_get_system_memory_usage(uint64_t *output) {
     mach_msg_type_number_t count;
     vm_statistics64_data_t vm_stats;
 
-    match_port = match_host_self();
+    mach_port = mach_host_self();
     count = sizeof(vm_stats) / sizeof(natural_t);
     if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
         KERN_SUCCESS == host_statistics64(mach_port, HOST_VM_INFO, (host_info64_t)&vm_stats, &count)) {
@@ -504,7 +504,7 @@ int aws_get_system_process_count(uint64_t *output) {
 #elif defined(__APPLE__)
 
     pid_t pid_array[2048];
-    int pid_bytes = proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
+    int pid_bytes = proc_listpids(PROC_ALL_PIDS, 0, pid_array, sizeof(pid_array));
     if (pid_bytes == 0) {
         // Error occured - there should be at least a single process with some bytes
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
