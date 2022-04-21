@@ -65,14 +65,16 @@ static int aws_get_cpu_sample_fn_linux(struct aws_system_cpu_sampler *sampler, d
     struct aws_system_cpu_sampler_linux *sampler_linux = sampler->impl;
 
     int return_result = AWS_OP_ERR;
-    uint64_t total_user, total_user_low, total_system, total_idle;
+    // Have to define these here for cleanup
+    uint64_t total_user = 0, total_user_low = 0, total_system = 0, total_idle = 0;
+    uint64_t total_user_delta = 0, total_user_low_delta = 0, total_system_delta = 0, total_idle_delta = 0;
+
     return_result = s_get_cpu_usage_linux(&total_user, &total_user_low, &total_system, &total_idle);
     if (return_result != AWS_OP_SUCCESS) {
         *output = 0;
         goto cleanup;
     }
 
-    uint64_t total_user_delta = 0, total_user_low_delta = 0, total_system_delta = 0, total_idle_delta = 0;
     aws_get_cpu_sample_fn_linux_get_uint64_delta(total_user, sampler_linux->cpu_last_total_user, &total_user_delta);
     aws_get_cpu_sample_fn_linux_get_uint64_delta(
         total_user_low, sampler_linux->cpu_last_total_user_low, &total_user_low_delta);
