@@ -97,13 +97,6 @@ static int aws_get_cpu_sample_fn_linux(struct aws_system_cpu_sampler *sampler, d
         percent = 1;
     }
 
-    // If negative, there was an error (overflow?)
-    if (percent < 0) {
-        *output = 0;
-        return_result = AWS_OP_ERR;
-        goto cleanup;
-    }
-
     *output = percent;
     return_result = AWS_OP_SUCCESS;
 
