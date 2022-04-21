@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/system_info.h>
 #include <aws/common/private/system_cpu_usage_sampler_private.h>
+#include <aws/common/system_info.h>
 
 #include <aws/common/logging.h>
 
