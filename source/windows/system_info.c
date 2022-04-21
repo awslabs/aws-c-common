@@ -318,9 +318,9 @@ int aws_get_system_process_count(uint64_t *output) {
         // Try a larger array
         DWORD processes_array_big[2048];
         if EnumProcesses(processes_array_big, sizeof(processes_array_big), &processes_array_size) == 0) {
-            // Error twice - something is wrong!
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
-        }
+                // Error twice - something is wrong!
+                return aws_raise_error(AWS_ERROR_INVALID_STATE);
+            }
     }
     *output = (double)(processes_array_size / sizeof(DWORD));
     return AWS_OP_SUCCESS;

@@ -133,7 +133,8 @@ static struct aws_system_cpu_sampler_vtable aws_system_cpu_sampler_vtable_linux 
  ********************************************************************************************************************/
 
 struct aws_system_cpu_sampler *aws_system_cpu_sampler_new(struct aws_allocator *allocator) {
-    struct aws_system_cpu_sampler_linux *output_linux = aws_mem_calloc(allocator, 1, sizeof(struct aws_system_cpu_sampler_linux));
+    struct aws_system_cpu_sampler_linux *output_linux =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_system_cpu_sampler_linux));
     output_linux->base.allocator = allocator;
     output_linux->base.vtable = &aws_system_cpu_sampler_vtable_linux;
     output_linux->base.impl = output_linux;
