@@ -7,7 +7,7 @@
  */
 
 #include <aws/common/common.h>
-#include <aws/common/math.h>
+#include <aws/common/system_info.h>
 
 /**
  * The VTable for the CPU sampler in cpu_usage_sampler.h
