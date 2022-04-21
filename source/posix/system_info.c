@@ -198,10 +198,10 @@ char *s_whitelist_chars(char *path) {
 #        include <dlfcn.h>
 #        include <libproc.h>     // For getting process count
 #        include <mach-o/dyld.h> // For getting memory
-#        include <mach/vm_statistics.h>
 #        include <mach/mach_host.h>
 #        include <mach/mach_init.h>
 #        include <mach/mach_types.h>
+#        include <mach/vm_statistics.h>
 static char s_exe_path[PATH_MAX];
 static const char *s_get_executable_path(void) {
     static const char *s_exe = NULL;
