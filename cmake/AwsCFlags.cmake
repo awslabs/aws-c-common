@@ -123,7 +123,7 @@ function(aws_set_common_properties target)
        # -moutline-atomics generates code for both older load/store exclusive atomics and also
        # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
         check_c_compiler_flag("-moutline-atomics -Werror" HAS_MOUTLINE_ATOMICS)
-        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
+        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64 AND NOT IOS)
             list(APPEND AWS_C_FLAGS -moutline-atomics)
         endif()
 
