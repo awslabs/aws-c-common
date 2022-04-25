@@ -155,7 +155,7 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} "--cmake-extra=-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+        ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DCMAKE_OSX_ARCHITECTURES=arm64\;x86_64
 
   # build universal binary that works on both x86_64 and arm64
   osx-universal2-shared-libs:
@@ -165,7 +165,7 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }} "--cmake-extra=-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" --cmake-extra=-DBUILD_SHARED_LIBS=ON
+        ./builder build -p ${{ env.PACKAGE_NAME }} "--cmake-extra=-DCMAKE_OSX_ARCHITECTURES=arm64\;x86_64" --cmake-extra=-DBUILD_SHARED_LIBS=ON
 
   cross_compile:
     name: Cross Compile ${{matrix.arch}}
