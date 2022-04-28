@@ -5,8 +5,6 @@
 
 #include <aws/common/system_info.h>
 
-#include <aws/common/private/system_cpu_usage_sampler_private.h>
-
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
 #include <aws/common/platform.h>
@@ -457,76 +455,3 @@ enum aws_platform_os aws_get_platform_build_os(void) {
     return AWS_PLATFORM_OS_UNIX;
 }
 #endif /* AWS_OS_APPLE */
-
-int aws_get_system_memory_usage(uint64_t *output) {
-// Get the Memory usage from Linux
-#if defined(__linux__) || defined(__unix__)
-    struct sysinfo memory_info;
-    int sysinfo_result = sysinfo(&memory_info);
-    if (sysinfo_result != 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    uint64_t physical_memory_used = memory_info.totalram - memory_info.freeram;
-    physical_memory_used *= memory_info.mem_unit;
-    *output = physical_memory_used;
-    return AWS_OP_SUCCESS;
-
-#elif defined(__APPLE__)
-
-    vm_size_t page_size;
-    mach_port_t mach_port;
-    mach_msg_type_number_t count;
-    vm_statistics64_data_t vm_stats;
-
-    mach_port = mach_host_self();
-    count = sizeof(vm_stats) / sizeof(natural_t);
-    if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
-        KERN_SUCCESS == host_statistics64(mach_port, HOST_VM_INFO, (host_info64_t)&vm_stats, &count)) {
-        *output =
-            (double)(((int64_t)vm_stats.active_count + (int64_t)vm_stats.inactive_count + (int64_t)vm_stats.wire_count) * (int64_t)page_size);
-        return AWS_OP_SUCCESS;
-    }
-    return aws_raise_error(AWS_ERROR_INVALID_STATE);
-
-#else
-    // OS not supported? Just return an error and set the output to 0
-    *output = 0;
-    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-#endif
-}
-
-int aws_get_system_process_count(uint64_t *output) {
-// Get the process count from Linux
-#if defined(__linux__) || defined(__unix__)
-    struct sysinfo system_info;
-    sysinfo(&system_info);
-    *output = (uint64_t)system_info.procs;
-    return AWS_OP_SUCCESS;
-
-#elif defined(__APPLE__)
-
-    int pid_bytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (pid_bytes <= 0) {
-        // Error occured - there should be at least a single process with some bytes
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    *output = (uint64_t)(pid_bytes / sizeof(pid_t));
-    return AWS_OP_SUCCESS;
-
-#else
-    // OS not supported? Just return an error and set the output to 0
-    *output = 0;
-    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
-#endif
-}
-
-void aws_system_cpu_sampler_destroy(struct aws_system_cpu_sampler *sampler) {
-    if (sampler == NULL) {
-        return;
-    }
-    sampler->vtable->destroy(sampler);
-}
-
-int aws_system_cpu_sampler_get_sample(struct aws_system_cpu_sampler *sampler, double *output) {
-    return sampler->vtable->get_sample(sampler, output);
-}

@@ -5,8 +5,6 @@
 
 #include <aws/common/system_info.h>
 
-#include <aws/common/private/system_cpu_usage_sampler_private.h>
-
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
 #include <aws/common/thread.h>
@@ -300,38 +298,6 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
 void aws_backtrace_log() {
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
-}
-
-int aws_get_system_memory_usage(int64_t *output) {
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-    int memory_status = GlobalMemoryStatusEx(&statex);
-    if (memory_status == 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    // Get the memory in use (total - free = memory in use)
-    *output = statex.ullTotalPhys - statex.ullAvailPhys;
-    return AWS_OP_SUCCESS;
-}
-
-int aws_get_system_process_count(uint64_t *output) {
-    DWORD processes_array[1024], processes_array_size;
-    if (EnumProcesses(processes_array, sizeof(processes_array), &processes_array_size) == 0) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-    *output = (processes_array_size / sizeof(DWORD));
-    return AWS_OP_SUCCESS;
-}
-
-void aws_system_cpu_sampler_destroy(struct aws_system_cpu_sampler *sampler) {
-    if (sampler == NULL) {
-        return;
-    }
-    sampler->vtable->destroy(sampler);
-}
-
-int aws_system_cpu_sampler_get_sample(struct aws_system_cpu_sampler *sampler, double *output) {
-    return sampler->vtable->get_sample(sampler, output);
 }
 
 #endif /* AWS_OS_WINDOWS_DESKTOP */
