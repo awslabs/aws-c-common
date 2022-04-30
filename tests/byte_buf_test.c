@@ -820,8 +820,8 @@ static int s_test_byte_cursor_starts_with(struct aws_allocator *allocator, void 
 
     /* FALSE */
     ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &abcde)); /* too long */
-    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &ABCD)); /* wrong case */
-    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &AB)); /* wrong case */
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &ABCD));  /* wrong case */
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &AB));    /* wrong case */
     ASSERT_FALSE(aws_byte_cursor_starts_with(&empty_string, &a));
     ASSERT_FALSE(aws_byte_cursor_starts_with(&empty_string, &null_char_string));
     ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &null_char_string));
@@ -858,9 +858,9 @@ static int s_test_byte_cursor_starts_with_ignore_case(struct aws_allocator *allo
     ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &empty_string));
 
     /* FALSE */
-    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &abcde)); /* too long */
-    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &azcd)); /* z doesn't match */
-    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &a)); /* too long */
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &abcde));                    /* too long */
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &azcd));                     /* z doesn't match */
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &a));                /* too long */
     ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &null_char_string)); /* too long */
 
     return 0;
