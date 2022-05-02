@@ -53,7 +53,7 @@ function(generate_test_driver driver_exe_name)
 
     # Exclude symbols from linked libs
     if (NOT APPLE)
-       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,libcrypto.a")
     endif()
 
     if (MSVC)
@@ -84,7 +84,7 @@ function(generate_cpp_test_driver driver_exe_name)
 
     # Exclude symbols from linked libs
     if (NOT APPLE)
-       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,libcrypto.a")
     endif()
 
     if (MSVC)
