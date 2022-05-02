@@ -50,6 +50,12 @@ function(generate_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+
+    # Exclude symbols from linked libs
+    if (NOT APPLE)
+       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+    endif()
+
     if (MSVC)
         if(STATIC_CRT)
             target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
@@ -75,6 +81,12 @@ function(generate_cpp_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
+
+    # Exclude symbols from linked libs
+    if (NOT APPLE)
+       set_target_properties(${driver_exe_name} PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+    endif()
+
     if (MSVC)
         if(STATIC_CRT)
             target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
@@ -82,6 +94,7 @@ function(generate_cpp_test_driver driver_exe_name)
             target_compile_options(${driver_exe_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
         endif()
     endif()
+    
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
