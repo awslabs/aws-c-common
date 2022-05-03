@@ -101,18 +101,13 @@ else ()
         endif()
     endif()
 
-    # OS specific includes
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c")
-    elseif (APPLE)
-        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c")
-    endif()
-
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
+        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
