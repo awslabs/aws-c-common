@@ -7,7 +7,7 @@ include(AwsCFlags)
 option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs with specific extensions (ex: SSE, AVX)." ON)
 
 # In the current (11/2/21) state of mingw64, the packaged gcc is not capable of emitting properly aligned avx2 instructions under certain circumstances.
-# This leads to crashes for windows builds using mingw64 when invoking the avx2-enabled versions of certain functions.  Until we can find a better 
+# This leads to crashes for windows builds using mingw64 when invoking the avx2-enabled versions of certain functions.  Until we can find a better
 # work-around, disable avx2 (and all other extensions) in mingw builds.
 #
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
@@ -106,3 +106,9 @@ if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
         return 0;
     }" AWS_HAVE_EXECINFO)
 endif()
+
+check_c_source_compiles("
+#include <linux/if_link.h>
+int main() {
+    return 1;
+}" AWS_HAVE_LINUX_IF_LINK_H)
