@@ -505,6 +505,20 @@ AWS_COMMON_API
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str);
 
 /**
+ * Return true if the input starts with the prefix (exact byte comparison).
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_starts_with(const struct aws_byte_cursor *input, const struct aws_byte_cursor *prefix);
+
+/**
+ * Return true if the input starts with the prefix (case-insensitive).
+ * The "C" locale is used for comparing upper and lowercase letters.
+ * Data is assumed to be ASCII text, UTF-8 will work fine too.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_starts_with_ignore_case(const struct aws_byte_cursor *input, const struct aws_byte_cursor *prefix);
+
+/**
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
  */
 AWS_COMMON_API
