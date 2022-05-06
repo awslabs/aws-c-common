@@ -21,7 +21,8 @@ struct aws_ref_count {
 };
 
 struct aws_shutdown_callback_options {
-    aws_simple_completion_callback *shutdown_callback_fn;
+    aws_simple_completion_callback *shutdown_started_callback_fn;
+    aws_simple_completion_callback *shutdown_completed_callback_fn;
     void *shutdown_callback_user_data;
 };
 
