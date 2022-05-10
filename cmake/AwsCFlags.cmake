@@ -120,11 +120,26 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
 
-       # -moutline-atomics generates code for both older load/store exclusive atomics and also
-       # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
-        check_c_compiler_flag("-moutline-atomics -Werror" HAS_MOUTLINE_ATOMICS)
-        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
-            list(APPEND AWS_C_FLAGS -moutline-atomics)
+        # -moutline-atomics generates code for both older load/store exclusive atomics and also
+        # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems.
+        #
+        # Test by compiling a program that actually uses atomics.
+        # Previously we'd simply used check_c_compiler_flag() but that wasn't detecting
+        # some real-world problems (see https://github.com/awslabs/aws-c-common/issues/902).
+        if (AWS_ARCH_ARM64)
+            set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+            set(CMAKE_REQUIRED_FLAGS "-moutline-atomics -Werror")
+            check_c_source_compiles("
+                int main() {
+                    int x = 1;
+                    __atomic_fetch_add(&x, -1, __ATOMIC_SEQ_CST);
+                    return x;
+                }" HAS_MOUTLINE_ATOMICS)
+            set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
+            if (HAS_MOUTLINE_ATOMICS)
+                list(APPEND AWS_C_FLAGS -moutline-atomics)
+            endif()
         endif()
 
         # Check for Posix Large File Support (LFS).
