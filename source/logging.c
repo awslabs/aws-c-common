@@ -553,9 +553,6 @@ int aws_logger_init_noalloc(
         } else {
             impl->file = stderr;
             impl->should_close = false;
-            AWS_LOGF_WARN(
-                AWS_ERROR_INVALID_FILE_HANDLE,
-                "No file or filename passed to aws_logger_init_noalloc. Using stderr...");
         }
     }
 
