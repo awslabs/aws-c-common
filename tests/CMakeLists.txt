@@ -277,6 +277,8 @@ add_test_case(test_byte_buf_reserve_relative)
 add_test_case(test_byte_buf_reset)
 add_test_case(test_byte_cursor_compare_lexical)
 add_test_case(test_byte_cursor_compare_lookup)
+add_test_case(test_byte_cursor_starts_with)
+add_test_case(test_byte_cursor_starts_with_ignore_case)
 add_test_case(test_isalnum)
 add_test_case(test_isalpha)
 add_test_case(test_isdigit)
@@ -473,6 +475,9 @@ add_test_case(promise_test_wait_for_a_bit)
 add_test_case(promise_test_finish_immediately)
 add_test_case(promise_test_finish_before_wait)
 add_test_case(promise_test_multiple_waiters)
+
+add_test_case(test_json_parse_from_string)
+add_test_case(test_json_parse_to_string)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 

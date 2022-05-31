@@ -14,6 +14,11 @@
 #    define __BSD_VISIBLE 1
 #endif
 
+#if defined(__linux__) || defined(__unix__)
+#    include <sys/sysinfo.h>
+#    include <sys/types.h>
+#endif
+
 #include <unistd.h>
 
 #if defined(HAVE_SYSCONF)

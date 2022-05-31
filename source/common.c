@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/json.h>
 #include <aws/common/logging.h>
 #include <aws/common/math.h>
 #include <aws/common/private/dlloads.h>
@@ -289,6 +290,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         aws_register_error_info(&s_list);
         aws_register_log_subject_info_list(&s_common_log_subject_list);
         aws_thread_initialize_thread_management();
+        aws_json_module_init(allocator);
 
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
@@ -358,6 +360,7 @@ void aws_common_library_clean_up(void) {
         aws_thread_join_all_managed();
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
+        aws_json_module_cleanup();
 #if !defined(_WIN32) && !defined(WIN32)
         if (g_libnuma_handle) {
             dlclose(g_libnuma_handle);
