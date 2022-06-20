@@ -141,6 +141,9 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     if (s_is_string_empty(dir_path)) {
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
+    if (!aws_directory_exists(dir_path)) {
+        return AWS_OP_SUCCESS;
+    }
 
     int ret_val = AWS_OP_SUCCESS;
 
