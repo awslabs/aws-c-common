@@ -13,8 +13,16 @@
 #include <stdio.h>
 #include <windows.h>
 
+static bool s_is_string_non_empty(const struct aws_string *str) {
+    return str != NULL && str->len > 0;
+}
+
+static bool s_is_wstring_non_empty(const struct aws_wstring *str) {
+    return str != NULL && str->len > 0;
+}
+
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    if (!file_path || aws_string_eq_c_str(file_path, "")) {
+    if (!s_is_string_non_empty(file_path) || !s_is_string_non_empty(mode)) {
         return NULL;
     }
 
@@ -35,7 +43,7 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 }
 
 struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct aws_wstring *path) {
-    if (!path || !aws_wstring_is_valid(path)) {
+    if (!s_is_wstring_non_empty(path)) {
         return NULL;
     }
 
@@ -63,7 +71,7 @@ struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
-    if (!dir_path || aws_string_eq_c_str(dir_path, "")) {
+    if (!s_is_string_non_empty(dir_path)) {
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
@@ -95,7 +103,7 @@ int aws_directory_create(const struct aws_string *dir_path) {
 }
 
 bool aws_directory_exists(const struct aws_string *dir_path) {
-    if (!dir_path || aws_string_eq_c_str(dir_path, "")) {
+    if (!s_is_string_non_empty(dir_path)) {
         return false;
     }
 
@@ -130,8 +138,8 @@ static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, 
 }
 
 int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
-    if (!aws_directory_exists(dir_path)) {
-        return AWS_OP_SUCCESS;
+    if (!s_is_string_non_empty(dir_path)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
     int ret_val = AWS_OP_SUCCESS;
@@ -173,7 +181,7 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
-    if (!file_path || aws_string_eq_c_str(file_path, "")) {
+    if (!s_is_string_non_empty(file_path)) {
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
@@ -201,7 +209,7 @@ int aws_file_delete(const struct aws_string *file_path) {
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
-    if (!from || aws_string_eq_c_str(from, "") || !to || aws_string_eq_c_str(to, "")) {
+    if (!s_is_string_non_empty(from) || !s_is_string_non_empty(to)) {
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
@@ -240,7 +248,7 @@ int aws_directory_traverse(
     aws_on_directory_entry *on_entry,
     void *user_data) {
 
-    if (!path || aws_string_eq_c_str(path, "")) {
+    if (!s_is_string_non_empty(path)) {
         return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
     }
 
@@ -468,7 +476,7 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
 }
 
 bool aws_path_exists(const struct aws_string *path) {
-    if (!path || aws_string_eq_c_str(path, "")) {
+    if (!s_is_string_non_empty(path)) {
         return false;
     }
 
