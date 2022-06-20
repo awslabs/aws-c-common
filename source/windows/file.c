@@ -15,7 +15,7 @@
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
     if (!file_path || aws_string_eq_c_str(file_path, "")) {
-        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        return NULL;
     }
 
     struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
@@ -36,7 +36,7 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
 struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct aws_wstring *path) {
     if (!path || !aws_wstring_is_valid(path)) {
-        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        return NULL;
     }
 
     wchar_t prefix[] = L"\\\\?\\";
