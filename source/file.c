@@ -12,6 +12,11 @@
 #include <errno.h>
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
+    if (!file_path || strlen(file_path) == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file %s", file_path);
+        return NULL;
+    }
+
     struct aws_string *file_path_str = aws_string_new_from_c_str(aws_default_allocator(), file_path);
     struct aws_string *mode_str = aws_string_new_from_c_str(aws_default_allocator(), mode);
 
@@ -23,6 +28,11 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
 }
 
 int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename) {
+    if (!filename || strlen(filename) == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file %s", filename);
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
+
     AWS_ZERO_STRUCT(*out_buf);
     FILE *fp = aws_fopen(filename, "rb");
 
