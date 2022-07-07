@@ -433,6 +433,8 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
     if (!test_res) {
         if (!harness->suppress_memcheck) {
+            /* Reset the logger as test can set their own logger and clean it up. */
+            aws_logger_set(&err_logger);
             const size_t leaked_bytes = aws_mem_tracer_count(allocator);
             if (leaked_bytes) {
                 aws_mem_tracer_dump(allocator);
