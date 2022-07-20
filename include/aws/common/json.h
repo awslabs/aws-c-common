@@ -6,10 +6,10 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
 struct aws_json_value;
+struct aws_byte_buf;
 
 // ====================
 // Create and pass type
@@ -267,19 +267,6 @@ bool aws_json_value_is_object(const struct aws_json_value *value);
 
 // ====================
 // Memory Management
-
-/**
- * Initializes the JSON module for use.
- * @param allocator The allocator to use for creating aws_json_value structs.
- */
-AWS_COMMON_API
-void aws_json_module_init(struct aws_allocator *allocator);
-
-/**
- * Cleans up the JSON module. Should be called when finished using the module.
- */
-AWS_COMMON_API
-void aws_json_module_cleanup(void);
 
 /**
  * Removes the aws_json_value from memory. If the aws_json_value is a object or array, it will also destroy

@@ -17,7 +17,7 @@ AWS_TEST_CASE(test_json_parse_from_string, s_test_json_parse_from_string)
 static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    aws_json_module_init(allocator);
+    aws_common_library_init(allocator);
     struct aws_json_value *root = aws_json_value_new_from_string(allocator, aws_byte_cursor_from_c_str(s_test_json));
 
     ASSERT_NOT_NULL(root);
@@ -84,17 +84,16 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_INT_EQUALS(aws_json_value_get_number(string_node, NULL), AWS_OP_ERR);
 
     aws_json_value_destroy(root);
-    aws_json_module_cleanup();
+    aws_common_library_clean_up();
 
-    return 0;
+    return AWS_OP_SUCCESS;
 }
 
 AWS_TEST_CASE(test_json_parse_to_string, s_test_json_parse_to_string)
 static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    aws_json_module_init(allocator);
-
+    aws_common_library_init(allocator);
     struct aws_json_value *root = aws_json_value_new_object(allocator);
 
     struct aws_json_value *array = aws_json_value_new_array(allocator);
@@ -103,9 +102,12 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     aws_json_value_add_array_element(array, aws_json_value_new_number(allocator, 3));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("array"), array);
 
-    aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("boolean"), aws_json_value_new_boolean(allocator, true));
     aws_json_value_add_to_object(
-        root, aws_byte_cursor_from_c_str("color"), aws_json_value_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
+        root, aws_byte_cursor_from_c_str("boolean"), aws_json_value_new_boolean(allocator, true));
+    aws_json_value_add_to_object(
+        root,
+        aws_byte_cursor_from_c_str("color"),
+        aws_json_value_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("null"), aws_json_value_new_null(allocator));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("number"), aws_json_value_new_number(allocator, 123));
 
@@ -126,7 +128,7 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     aws_string_destroy_secure(result_string);
 
     aws_json_value_destroy(root);
-    aws_json_module_cleanup();
+    aws_common_library_clean_up();
 
-    return 0;
+    return AWS_OP_SUCCESS;
 }
