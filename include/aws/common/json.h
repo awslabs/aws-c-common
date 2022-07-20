@@ -6,10 +6,10 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
 struct aws_json_value;
-struct aws_byte_buf;
 
 // ====================
 // Create and pass type
