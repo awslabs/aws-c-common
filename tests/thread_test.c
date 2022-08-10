@@ -51,16 +51,14 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
 
     sigset_t after_thread_launch;
     pthread_sigmask(SIG_SETMASK, NULL, &after_thread_launch);
-    ASSERT_INT_EQUALS(
-        before_thread_launch,
-        after_thread_launch,
+    ASSERT_SUCCESS(
+        before_thread_launch == after_thread_launch,
         "current thread mask should stay the same after thread launch");
 
     sigset_t full_sig_mask;
     sigfillset(&full_sig_mask);
-    ASSERT_INT_EQUALS(
-        full_sig_mask,
-        test_data.thread_sig_mask,
+    ASSERT_SUCCESS(
+        full_sig_mask == test_data.thread_sig_mask,
         "launched thread mask should be filled");
 
     aws_thread_clean_up(&thread);
