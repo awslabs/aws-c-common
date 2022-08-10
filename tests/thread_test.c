@@ -33,8 +33,11 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
      * path is exercised. */
     thread_options.cpu_id = 0;
 
-    sigset_t before_thread_launch;
-    pthread_sigmask(SIG_SETMASK, NULL, &before_thread_launch);
+    sigset_t before_thread_launch_sigset;
+    ASSERT_SUCCESS(pthread_sigmask(SIG_SETMASK, NULL, &before_thread_launch_sigset));
+    ASSERT_SUCCESS(
+        !sigismember(&before_thread_launch_sigset, SIGINT),
+        "current thread signal should not be blocked before test");
 
     ASSERT_SUCCESS(
         aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
@@ -49,17 +52,18 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
 
-    sigset_t after_thread_launch;
-    pthread_sigmask(SIG_SETMASK, NULL, &after_thread_launch);
+    sigset_t after_thread_launch_sigset;
+    ASSERT_SUCCESS(pthread_sigmask(SIG_SETMASK, NULL, &after_thread_launch_sigset));
+
     ASSERT_SUCCESS(
-        before_thread_launch == after_thread_launch,
-        "current thread mask should stay the same after thread launch");
+        !sigismember(&after_thread_launch_sigset, SIGINT),
+        "current thread signal should not be blocked");
 
     sigset_t full_sig_mask;
     sigfillset(&full_sig_mask);
     ASSERT_SUCCESS(
-        full_sig_mask == test_data.thread_sig_mask,
-        "launched thread mask should be filled");
+        sigismember(&test_data.thread_sig_mask, SIGINT),
+        "new launched thread signal should be blocked");
 
     aws_thread_clean_up(&thread);
     aws_common_library_clean_up();
