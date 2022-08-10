@@ -11,11 +11,13 @@
 
 struct thread_test_data {
     aws_thread_id_t thread_id;
+    sigset_t thread_sig_mask;
 };
 
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
+    pthread_sigmask(SIG_SETMASK, NULL, test_data->thread_sig_mask);
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
@@ -31,6 +33,9 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
      * path is exercised. */
     thread_options.cpu_id = 0;
 
+    sigset_t before_thread_launch;
+    pthread_sigmask(SIG_SETMASK, NULL, &before_thread_launch);
+
     ASSERT_SUCCESS(
         aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
     ASSERT_INT_EQUALS(
@@ -43,6 +48,20 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         AWS_THREAD_JOIN_COMPLETED,
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
+
+    sigset_t after_thread_launch;
+    pthread_sigmask(SIG_SETMASK, NULL, &after_thread_launch);
+    ASSERT_INT_EQUALS(
+        before_thread_launch,
+        after_thread_launch,
+        "current thread mask should stay the same after thread launch");
+
+    sigset_t full_sig_mask;
+    sigfillset(&full_sig_mask);
+    ASSERT_INT_EQUALS(
+        full_sig_mask,
+        test_data.thread_sig_mask,
+        "launched thread mask should be filled");
 
     aws_thread_clean_up(&thread);
     aws_common_library_clean_up();
