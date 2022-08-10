@@ -19,9 +19,9 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <sched.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
-#include <signal.h>
 
 #if defined(__FreeBSD__) || defined(__NETBSD__)
 #    include <pthread_np.h>
@@ -288,7 +288,13 @@ int aws_thread_launch(
     sigset_t blockset;
     sigset_t oldset;
     sigfillset(&blockset);
-    
+
+    /*
+     * update sigmask to block all signals
+     * following posix doc recommended approach of setting current thread mask,
+     * letting new thread inherit it and resetting back,
+     * since function to set sigmask on attr is not available eveywhere
+     */
     attr_return = pthread_sigmask(SIG_BLOCK, &blockset, &oldset);
 
     if (attr_return) {
