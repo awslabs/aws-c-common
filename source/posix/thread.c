@@ -21,6 +21,7 @@
 #include <sched.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #if defined(__FreeBSD__) || defined(__NETBSD__)
 #    include <pthread_np.h>
@@ -220,6 +221,7 @@ int aws_thread_launch(
     }
 
     if (options) {
+
         attr_return = pthread_attr_init(&attributes);
 
         if (attr_return) {
@@ -283,6 +285,16 @@ int aws_thread_launch(
     wrapper->func = func;
     wrapper->arg = arg;
 
+    sigset_t blockset;
+    sigset_t oldset;
+    sigfillset(&blockset);
+    
+    attr_return = pthread_sigmask(SIG_BLOCK, &blockset, &oldset);
+
+    if (attr_return) {
+        goto cleanup;
+    }
+
     /*
      * Increment the count prior to spawning the thread.  Decrement back if the create failed.
      */
@@ -296,6 +308,8 @@ int aws_thread_launch(
         if (is_managed_thread) {
             aws_thread_decrement_unjoined_count();
         }
+        attr_return = pthread_sigmask(SIG_BLOCK, &oldset, NULL);
+        AWS_FATAL_ASSERT(attr_return == 0 && "failed to revert mask")
         goto cleanup;
     }
 
@@ -335,6 +349,8 @@ cleanup:
     if (attributes_ptr) {
         pthread_attr_destroy(attributes_ptr);
     }
+
+    AWS_FATAL_ASSERT(attr_return != EFAULT);
 
     if (attr_return == EINVAL) {
         return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
