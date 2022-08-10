@@ -17,7 +17,7 @@ struct thread_test_data {
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
-    pthread_sigmask(SIG_SETMASK, NULL, test_data->thread_sig_mask);
+    pthread_sigmask(SIG_SETMASK, NULL, &test_data->thread_sig_mask);
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
