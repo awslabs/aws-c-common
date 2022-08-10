@@ -314,7 +314,7 @@ int aws_thread_launch(
         if (is_managed_thread) {
             aws_thread_decrement_unjoined_count();
         }
-        attr_return = pthread_sigmask(SIG_BLOCK, &oldset, NULL);
+        attr_return = pthread_sigmask(SIG_SETMASK, &oldset, NULL);
         AWS_FATAL_ASSERT(attr_return == 0 && "failed to revert mask")
         goto cleanup;
     }
