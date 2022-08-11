@@ -36,7 +36,7 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     sigset_t before_thread_launch_sigset;
     ASSERT_SUCCESS(pthread_sigmask(SIG_SETMASK, NULL, &before_thread_launch_sigset));
     ASSERT_SUCCESS(
-        !sigismember(&before_thread_launch_sigset, SIGINT),
+        !sigismember(&before_thread_launch_sigset, SIGFPE),
         "current thread signal should not be blocked before test");
 
     ASSERT_SUCCESS(
@@ -56,13 +56,11 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     ASSERT_SUCCESS(pthread_sigmask(SIG_SETMASK, NULL, &after_thread_launch_sigset));
 
     ASSERT_SUCCESS(
-        !sigismember(&after_thread_launch_sigset, SIGINT),
+        !sigismember(&after_thread_launch_sigset, SIGFPE),
         "current thread signal should not be blocked");
 
-    sigset_t full_sig_mask;
-    sigfillset(&full_sig_mask);
     ASSERT_SUCCESS(
-        sigismember(&test_data.thread_sig_mask, SIGINT),
+        sigismember(&test_data.thread_sig_mask, SIGFPE),
         "new launched thread signal should be blocked");
 
     aws_thread_clean_up(&thread);
