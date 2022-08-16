@@ -277,7 +277,6 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
-    "cmake/AwsCrtLoadTarget.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
