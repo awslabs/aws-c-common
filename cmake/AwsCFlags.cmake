@@ -49,6 +49,9 @@ function(aws_set_common_properties target)
     set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
+    # check if target is SHARED_LIBRARY, STATIC_LIBRARY, or EXECUTABLE
+    get_target_property(target_type ${target} TYPE)
+
     if(MSVC)
         # Remove other /W flags
         if(CMAKE_C_FLAGS MATCHES "/W[0-4]")
@@ -159,6 +162,24 @@ function(aws_set_common_properties target)
         # This becomes a define in config.h
         set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
 
+        # Hide symbols from libcrypto.a
+        #
+        # This avoids problems when an application ends up using both libcrypto.a and libcrypto.so.
+        # This can happen if a CRT library built with libcrypto.a from AWS-LC,
+        # but at runtime libsofthsm2.so is loaded, which uses the libcrypto.so from OpenSSL.
+        # If the symbols from libcrypto.a aren't hidden, then SOME libcrypto function
+        # calls going to one library and SOME function calls go to the other, which
+        # leads to weird crashes.
+        #
+        # We can only apply this option to shared libs and executables.
+        # Applying it to a static lib has no effect.
+        if (NOT target_type STREQUAL STATIC_LIBRARY)
+            # libcrypto is only used on UNIX
+            if (UNIX AND NOT APPLE)
+                list(APPEND AWS_C_LINK_FLAGS "-Wl,--exclude-libs,libcrypto.a")
+            endif()
+        endif()
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
@@ -230,7 +251,7 @@ function(aws_set_common_properties target)
         endif()
     endif()
 
-    if(BUILD_SHARED_LIBS)
+    if(target_type STREQUAL SHARED_LIBRARY)
         if (NOT MSVC)
             # this should only be set when building shared libs.
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
@@ -239,6 +260,7 @@ function(aws_set_common_properties target)
 
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
+    target_link_options(${target} PRIVATE ${AWS_C_LINK_FLAGS})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     if (AWS_ENABLE_LTO)
         set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
