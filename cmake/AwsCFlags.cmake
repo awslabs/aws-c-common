@@ -163,8 +163,8 @@ function(aws_set_common_properties target)
         set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
 
         # Hide symbols from libcrypto.a
-        #
         # This avoids problems when an application ends up using both libcrypto.a and libcrypto.so.
+        #
         # An example of this happening is the aws-c-io tests.
         # All the C libs are compiled statically, but then a PKCS#11 library is
         # loaded at runtime which happens to use libcrypto.so from OpenSSL.
