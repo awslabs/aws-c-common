@@ -171,15 +171,9 @@ function(aws_set_common_properties target)
         # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
         # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
         if (UNIX AND NOT APPLE)
-            # Making this flag PUBLIC instead of PRIVATE.
-            # This flag has no effect on static libs, it only affects the shared
-            # lib or application that libcrypto.a is finally linked into,
-            # and we're not 100% sure which shared lib or application that will be.
-            # (i.e if the user's application builds all the libs statically then
-            # it's the final user application that needs this flag)
-            # Therefore we make the flag PUBLIC, so that the shared lib or application
-            # which finally ends up needing this flag will probably magically get it.
-            target_link_options(${target} PUBLIC -Wl,--exclude-libs,libcrypto.a)
+            # using set_property() because target_link_options() isn't available until CMake 3.13
+            # if we had target_link_options() we could make these flags PUBLIC
+            set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS -Wl,--exclude-libs,libcrypto.a)
         endif()
 
     endif()
