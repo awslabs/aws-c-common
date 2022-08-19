@@ -165,19 +165,21 @@ function(aws_set_common_properties target)
         # Hide symbols from libcrypto.a
         #
         # This avoids problems when an application ends up using both libcrypto.a and libcrypto.so.
-        # This can happen if a CRT library built with libcrypto.a from AWS-LC,
-        # but at runtime libsofthsm2.so is loaded, which uses the libcrypto.so from OpenSSL.
-        # If the symbols from libcrypto.a aren't hidden, then SOME libcrypto function
-        # calls going to one library and SOME function calls go to the other, which
-        # leads to weird crashes.
-        #
-        # We can only apply this option to shared libs and executables.
-        # Applying it to a static lib has no effect.
-        if (NOT target_type STREQUAL STATIC_LIBRARY)
-            # libcrypto is only used on UNIX
-            if (UNIX AND NOT APPLE)
-                list(APPEND AWS_C_LINK_FLAGS "-Wl,--exclude-libs,libcrypto.a")
-            endif()
+        # An example of this happening is the aws-c-io tests.
+        # All the C libs are compiled statically, but then a PKCS#11 library is
+        # loaded at runtime which happens to use libcrypto.so from OpenSSL.
+        # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
+        # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
+        if (UNIX AND NOT APPLE)
+            # Making this flag PUBLIC instead of PRIVATE.
+            # This flag has no effect on static libs, it only affects the shared
+            # lib or application that libcrypto.a is finally linked into,
+            # and we're not 100% sure which shared lib or application that will be.
+            # (i.e if the user's application builds all the libs statically then
+            # it's the final user application that needs this flag)
+            # Therefore we make the flag PUBLIC, so that the shared lib or application
+            # which finally ends up needing this flag will probably magically get it.
+            target_link_options(${target} PUBLIC -Wl,--exclude-libs,libcrypto.a)
         endif()
 
     endif()
@@ -260,7 +262,6 @@ function(aws_set_common_properties target)
 
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
-    target_link_options(${target} PRIVATE ${AWS_C_LINK_FLAGS})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     if (AWS_ENABLE_LTO)
         set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
