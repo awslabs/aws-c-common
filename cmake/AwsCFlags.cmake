@@ -173,7 +173,6 @@ function(aws_set_common_properties target)
         if (UNIX AND NOT APPLE)
             # NOTE 1: using set_property() because target_link_options() isn't available until CMake 3.13.
             #   If we had target_link_options(), we could make these flags PUBLIC.
-            #
             # NOTE 2: using APPEND_STRING and starting with " " to combine with any existing link flags.
             #   If we had target_link_options(), the flags combine without us being so careful.
             set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
