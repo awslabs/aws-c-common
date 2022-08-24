@@ -49,9 +49,6 @@ function(aws_set_common_properties target)
     set(options NO_WGNU NO_WEXTRA NO_PEDANTIC NO_LTO)
     cmake_parse_arguments(SET_PROPERTIES "${options}" "" "" ${ARGN})
 
-    # check if target is SHARED_LIBRARY, STATIC_LIBRARY, or EXECUTABLE
-    get_target_property(target_type ${target} TYPE)
-
     if(MSVC)
         # Remove other /W flags
         if(CMAKE_C_FLAGS MATCHES "/W[0-4]")
@@ -246,7 +243,7 @@ function(aws_set_common_properties target)
         endif()
     endif()
 
-    if(target_type STREQUAL SHARED_LIBRARY)
+    if(BUILD_SHARED_LIBS)
         if (NOT MSVC)
             # this should only be set when building shared libs.
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
