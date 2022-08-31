@@ -13,6 +13,28 @@
 static char *s_test_json = "{\"array\":[1,2,3],\"boolean\":true,\"color\":\"gold\",\"null\":null,\"number\":123,"
                            "\"object\":{\"a\":\"b\",\"c\":\"d\"}}";
 
+struct json_parse_test_data {
+    int elements_encountered;
+    bool all_elements_are_strings;
+    bool all_elements_are_numbers;
+};
+
+static bool s_on_obj_key(const struct aws_byte_cursor *key, struct aws_json_value *value, void *user_data) {
+    struct json_parse_test_data *data = user_data;
+    ++(data->elements_encountered);
+    data->all_elements_are_strings &= aws_json_value_is_string(value);
+    data->all_elements_are_numbers &= aws_json_value_is_number(value);
+    return true;
+}
+
+static bool s_on_array_element(size_t index, struct aws_json_value *value, void *user_data) {
+    struct json_parse_test_data *data = user_data;
+    ++(data->elements_encountered);
+    data->all_elements_are_strings &= aws_json_value_is_string(value);
+    data->all_elements_are_numbers &= aws_json_value_is_number(value);
+    return true;
+}
+
 AWS_TEST_CASE(test_json_parse_from_string, s_test_json_parse_from_string)
 static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -36,6 +58,15 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_NOT_NULL(double_check_value);
     ASSERT_TRUE(double_check_value == (double)1);
 
+    struct json_parse_test_data array_test_data;
+    array_test_data.elements_encountered = 0;
+    array_test_data.all_elements_are_strings = true;
+    array_test_data.all_elements_are_numbers = true;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_iterate_array(array_node, s_on_array_element, &array_test_data));
+    ASSERT_INT_EQUALS(array_test_data.elements_encountered, 3);
+    ASSERT_FALSE(array_test_data.all_elements_are_strings);
+    ASSERT_TRUE(array_test_data.all_elements_are_numbers);
+
     // Testing valid boolean
     struct aws_json_value *boolean_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("boolean"));
     ASSERT_NOT_NULL(boolean_node);
@@ -43,6 +74,9 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     bool bool_check_value = false;
     aws_json_value_get_boolean(boolean_node, &bool_check_value);
     ASSERT_TRUE(bool_check_value);
+
+    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_iterate_object(boolean_node, s_on_obj_key, NULL));
+    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_iterate_array(boolean_node, s_on_array_element, NULL));
 
     // Testing valid string
     struct aws_json_value *string_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("color"));
@@ -75,6 +109,15 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     struct aws_string *sub_a_string = aws_string_new_from_cursor(allocator, &str_a_value_cursor);
     ASSERT_TRUE(strcmp(aws_string_c_str(sub_a_string), "b") == 0);
     aws_string_destroy_secure(sub_a_string);
+
+    struct json_parse_test_data test_data;
+    test_data.elements_encountered = 0;
+    test_data.all_elements_are_strings = true;
+    test_data.all_elements_are_numbers = true;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_iterate_object(object_node, s_on_obj_key, &test_data));
+    ASSERT_INT_EQUALS(test_data.elements_encountered, 2);
+    ASSERT_TRUE(test_data.all_elements_are_strings);
+    ASSERT_FALSE(test_data.all_elements_are_numbers);
 
     // Testing invalid object
     struct aws_json_value *invalid_object = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("invalid"));

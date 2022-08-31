@@ -166,6 +166,26 @@ bool aws_json_value_has_key(const struct aws_json_value *object, struct aws_byte
  */
 AWS_COMMON_API
 int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_byte_cursor key);
+
+/**
+ * @brief callback for iterating keys of an object
+ * return false to exit early
+ */
+typedef bool(
+    aws_json_on_key_encountered_fn)(const struct aws_byte_cursor *key, struct aws_json_value *value, void *user_data);
+
+/**
+ * @brief iterates though fields of the object.
+ * iteration is sequential in order fields were initially parsed.
+ * @param object object to iterate over.
+ * @param on_key callback for when key is endcountered.
+ * @param user_data user data to pass back in callback.
+ * @return AWS_OP_SUCCESS when iteration finishes completely or exits early,
+ * AWS_OP_ERR if value is not an object.
+ */
+AWS_COMMON_API
+int aws_json_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_fn *on_key, void *user_data);
+
 // ====================
 
 // ====================
@@ -211,6 +231,27 @@ size_t aws_json_get_array_size(const struct aws_json_value *array);
  */
 AWS_COMMON_API
 int aws_json_value_remove_array_element(struct aws_json_value *array, size_t index);
+
+/**
+ * @brief callback for iterating elements of an array.
+ * return false to exit early.
+ */
+typedef bool(
+    aws_json_on_element_encountered_fn)(size_t key, struct aws_json_value *value, void *user_data);
+
+/**
+ * @brief iterates though elements of an array.
+ * iteration is sequential starting with 0th element. 
+ * likely to be faster than manually calling get element at.
+ * @param array array to iterate over.
+ * @param on_key callback for when element is endcountered.
+ * @param user_data user data to pass back in callback.
+ * @return AWS_OP_SUCCESS when iteration finishes completely or exits early,
+ * AWS_OP_ERR if value is not an array.
+ */
+AWS_COMMON_API
+int aws_json_iterate_array(struct aws_json_value *array, aws_json_on_element_encountered_fn *on_element, void *user_data);
+
 // ====================
 
 // ====================

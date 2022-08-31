@@ -166,6 +166,29 @@ done:
     return result;
 }
 
+int aws_json_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_fn *on_key, void *user_data) {
+    int result = AWS_OP_ERR;
+
+    struct cJSON *cjson = (struct cJSON *)object;
+    if (!cJSON_IsObject(cjson)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        goto done;
+    }
+
+    const cJSON *key = NULL;
+    cJSON_ArrayForEach(key, cjson) {
+        struct aws_byte_cursor key_cur = aws_byte_cursor_from_c_str(key->string);
+        if (!on_key(&key_cur, (struct aws_json_value *)key, user_data)) {
+            break;
+        }
+    }
+
+    result = AWS_OP_SUCCESS;
+
+done:
+    return result;    
+}
+
 int aws_json_value_add_array_element(struct aws_json_value *array, const struct aws_json_value *value) {
 
     struct cJSON *cjson = (struct cJSON *)array;
@@ -220,6 +243,30 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
 
     cJSON_DeleteItemFromArray(cjson, (int)index);
     return AWS_OP_SUCCESS;
+}
+
+int aws_json_iterate_array(struct aws_json_value *array, aws_json_on_element_encountered_fn *on_element, void *user_data) {
+    int result = AWS_OP_ERR;
+
+    struct cJSON *cjson = (struct cJSON *)array;
+    if (!cJSON_IsArray(cjson)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        goto done;
+    }
+
+    size_t idx = 0;
+    const cJSON *element = NULL;
+    cJSON_ArrayForEach(element, cjson) {
+        if (!on_element(idx, (struct aws_json_value *)element, user_data)) {
+            break;
+        }
+        ++idx;
+    }
+
+    result = AWS_OP_SUCCESS;
+
+done:
+    return result;   
 }
 
 bool aws_json_value_is_string(const struct aws_json_value *value) {
