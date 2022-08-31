@@ -236,12 +236,11 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
  * @brief callback for iterating elements of an array.
  * return false to exit early.
  */
-typedef bool(
-    aws_json_on_element_encountered_fn)(size_t key, struct aws_json_value *value, void *user_data);
+typedef bool(aws_json_on_element_encountered_fn)(size_t key, struct aws_json_value *value, void *user_data);
 
 /**
  * @brief iterates though elements of an array.
- * iteration is sequential starting with 0th element. 
+ * iteration is sequential starting with 0th element.
  * likely to be faster than manually calling get element at.
  * @param array array to iterate over.
  * @param on_key callback for when element is endcountered.
@@ -250,7 +249,10 @@ typedef bool(
  * AWS_OP_ERR if value is not an array.
  */
 AWS_COMMON_API
-int aws_json_iterate_array(struct aws_json_value *array, aws_json_on_element_encountered_fn *on_element, void *user_data);
+int aws_json_iterate_array(
+    struct aws_json_value *array,
+    aws_json_on_element_encountered_fn *on_element,
+    void *user_data);
 
 // ====================
 

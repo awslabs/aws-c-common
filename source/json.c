@@ -186,7 +186,7 @@ int aws_json_iterate_object(struct aws_json_value *object, aws_json_on_key_encou
     result = AWS_OP_SUCCESS;
 
 done:
-    return result;    
+    return result;
 }
 
 int aws_json_value_add_array_element(struct aws_json_value *array, const struct aws_json_value *value) {
@@ -245,7 +245,10 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
     return AWS_OP_SUCCESS;
 }
 
-int aws_json_iterate_array(struct aws_json_value *array, aws_json_on_element_encountered_fn *on_element, void *user_data) {
+int aws_json_iterate_array(
+    struct aws_json_value *array,
+    aws_json_on_element_encountered_fn *on_element,
+    void *user_data) {
     int result = AWS_OP_ERR;
 
     struct cJSON *cjson = (struct cJSON *)array;
@@ -266,7 +269,7 @@ int aws_json_iterate_array(struct aws_json_value *array, aws_json_on_element_enc
     result = AWS_OP_SUCCESS;
 
 done:
-    return result;   
+    return result;
 }
 
 bool aws_json_value_is_string(const struct aws_json_value *value) {
