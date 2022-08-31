@@ -29,7 +29,7 @@ static bool s_on_obj_key(const struct aws_byte_cursor *key, struct aws_json_valu
 }
 
 static bool s_on_array_element(size_t index, struct aws_json_value *value, void *user_data) {
-    void(index);
+    (void)index;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
     data->all_elements_are_strings &= aws_json_value_is_string(value);
