@@ -180,7 +180,7 @@ typedef bool(aws_json_on_member_encountered_const_fn)(
  * @brief iterates though fields of the object.
  * iteration is sequential in order fields were initially parsed.
  * @param object object to iterate over.
- * @param on_key callback for when key is endcountered.
+ * @param on_memeber callback for when member is endcountered.
  * @param user_data user data to pass back in callback.
  * @return AWS_OP_SUCCESS when iteration finishes completely or exits early,
  * AWS_OP_ERR if value is not an object.
@@ -248,7 +248,7 @@ typedef bool(aws_json_on_value_encountered_const_fn)(size_t index, const struct 
  * iteration is sequential starting with 0th element.
  * likely to be faster than manually calling get element at.
  * @param array array to iterate over.
- * @param on_key callback for when element is endcountered.
+ * @param on_value callback for when element is endcountered.
  * @param user_data user data to pass back in callback.
  * @return AWS_OP_SUCCESS when iteration finishes completely or exits early,
  * AWS_OP_ERR if value is not an array.
