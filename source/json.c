@@ -166,7 +166,7 @@ done:
     return result;
 }
 
-int aws_json_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_fn *on_key, void *user_data) {
+int aws_json_const_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_const_fn *on_key, void *user_data) {
     int result = AWS_OP_ERR;
 
     struct cJSON *cjson = (struct cJSON *)object;
@@ -245,9 +245,9 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
     return AWS_OP_SUCCESS;
 }
 
-int aws_json_iterate_array(
+int aws_json_const_iterate_array(
     struct aws_json_value *array,
-    aws_json_on_element_encountered_fn *on_element,
+    aws_json_on_element_encountered_const_fn *on_element,
     void *user_data) {
     int result = AWS_OP_ERR;
 
