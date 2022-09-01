@@ -19,7 +19,7 @@ struct json_parse_test_data {
     bool all_elements_are_numbers;
 };
 
-static bool s_on_obj_key(const struct aws_byte_cursor *key, const struct aws_json_value *value, void *user_data) {
+static bool s_on_obj_member(const struct aws_byte_cursor *key, const struct aws_json_value *value, void *user_data) {
     (void)key;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
@@ -77,7 +77,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     aws_json_value_get_boolean(boolean_node, &bool_check_value);
     ASSERT_TRUE(bool_check_value);
 
-    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_const_iterate_object(boolean_node, s_on_obj_key, NULL));
+    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_const_iterate_object(boolean_node, s_on_obj_member, NULL));
     ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_const_iterate_array(boolean_node, s_on_array_element, NULL));
 
     // Testing valid string
@@ -116,7 +116,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     test_data.elements_encountered = 0;
     test_data.all_elements_are_strings = true;
     test_data.all_elements_are_numbers = true;
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_const_iterate_object(object_node, s_on_obj_key, &test_data));
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_const_iterate_object(object_node, s_on_obj_member, &test_data));
     ASSERT_INT_EQUALS(test_data.elements_encountered, 2);
     ASSERT_TRUE(test_data.all_elements_are_strings);
     ASSERT_FALSE(test_data.all_elements_are_numbers);

@@ -168,7 +168,7 @@ done:
 
 int aws_json_const_iterate_object(
     struct aws_json_value *object,
-    aws_json_on_key_encountered_const_fn *on_key,
+    aws_json_on_member_encountered_const_fn *on_key,
     void *user_data) {
     int result = AWS_OP_ERR;
 
@@ -181,7 +181,7 @@ int aws_json_const_iterate_object(
     const cJSON *key = NULL;
     cJSON_ArrayForEach(key, cjson) {
         struct aws_byte_cursor key_cur = aws_byte_cursor_from_c_str(key->string);
-        if (!on_key(&key_cur, (struct aws_json_value *)key, user_data)) {
+        if (!on_member(&key_cur, (struct aws_json_value *)key, user_data)) {
             break;
         }
     }

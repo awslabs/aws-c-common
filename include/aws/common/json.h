@@ -171,7 +171,7 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
  * @brief callback for iterating keys of an object
  * return false to exit early
  */
-typedef bool(aws_json_on_key_encountered_const_fn)(
+typedef bool(aws_json_on_member_encountered_const_fn)(
     const struct aws_byte_cursor *key,
     const struct aws_json_value *value,
     void *user_data);
@@ -187,8 +187,8 @@ typedef bool(aws_json_on_key_encountered_const_fn)(
  */
 AWS_COMMON_API
 int aws_json_const_iterate_object(
-    struct aws_json_value *object,
-    aws_json_on_key_encountered_const_fn *on_key,
+    const struct aws_json_value *object,
+    aws_json_on_member_encountered_const_fn *on_member,
     void *user_data);
 
 // ====================
@@ -241,7 +241,7 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
  * @brief callback for iterating elements of an array.
  * return false to exit early.
  */
-typedef bool(aws_json_on_element_encountered_const_fn)(size_t key, const struct aws_json_value *value, void *user_data);
+typedef bool(aws_json_on_element_encountered_const_fn)(size_t index, const struct aws_json_value *value, void *user_data);
 
 /**
  * @brief iterates though elements of an array.
@@ -255,7 +255,7 @@ typedef bool(aws_json_on_element_encountered_const_fn)(size_t key, const struct 
  */
 AWS_COMMON_API
 int aws_json_const_iterate_array(
-    struct aws_json_value *array,
+    const struct aws_json_value *array,
     aws_json_on_element_encountered_const_fn *on_element,
     void *user_data);
 
