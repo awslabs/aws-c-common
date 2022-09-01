@@ -250,7 +250,7 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
 
 int aws_json_const_iterate_array(
     struct aws_json_value *array,
-    aws_json_on_element_encountered_const_fn *on_element,
+    aws_json_on_value_encountered_const_fn *on_value,
     void *user_data) {
     int result = AWS_OP_ERR;
 
@@ -261,9 +261,9 @@ int aws_json_const_iterate_array(
     }
 
     size_t idx = 0;
-    const cJSON *element = NULL;
-    cJSON_ArrayForEach(element, cjson) {
-        if (!on_element(idx, (struct aws_json_value *)element, user_data)) {
+    const cJSON *value = NULL;
+    cJSON_ArrayForEach(value, cjson) {
+        if (!on_value(idx, (struct aws_json_value *)value, user_data)) {
             break;
         }
         ++idx;
