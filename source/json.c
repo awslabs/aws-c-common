@@ -167,8 +167,8 @@ done:
 }
 
 int aws_json_const_iterate_object(
-    struct aws_json_value *object,
-    aws_json_on_member_encountered_const_fn *on_key,
+    const struct aws_json_value *object,
+    aws_json_on_member_encountered_const_fn *on_member,
     void *user_data) {
     int result = AWS_OP_ERR;
 
@@ -249,7 +249,7 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
 }
 
 int aws_json_const_iterate_array(
-    struct aws_json_value *array,
+    const struct aws_json_value *array,
     aws_json_on_value_encountered_const_fn *on_value,
     void *user_data) {
     int result = AWS_OP_ERR;
