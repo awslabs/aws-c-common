@@ -171,8 +171,10 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
  * @brief callback for iterating keys of an object
  * return false to exit early
  */
-typedef bool(
-    aws_json_on_key_encountered_const_fn)(const struct aws_byte_cursor *key, const struct aws_json_value *value, void *user_data);
+typedef bool(aws_json_on_key_encountered_const_fn)(
+    const struct aws_byte_cursor *key,
+    const struct aws_json_value *value,
+    void *user_data);
 
 /**
  * @brief iterates though fields of the object.
@@ -184,7 +186,10 @@ typedef bool(
  * AWS_OP_ERR if value is not an object.
  */
 AWS_COMMON_API
-int aws_json_const_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_const_fn *on_key, void *user_data);
+int aws_json_const_iterate_object(
+    struct aws_json_value *object,
+    aws_json_on_key_encountered_const_fn *on_key,
+    void *user_data);
 
 // ====================
 

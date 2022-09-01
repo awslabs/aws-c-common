@@ -166,7 +166,10 @@ done:
     return result;
 }
 
-int aws_json_const_iterate_object(struct aws_json_value *object, aws_json_on_key_encountered_const_fn *on_key, void *user_data) {
+int aws_json_const_iterate_object(
+    struct aws_json_value *object,
+    aws_json_on_key_encountered_const_fn *on_key,
+    void *user_data) {
     int result = AWS_OP_ERR;
 
     struct cJSON *cjson = (struct cJSON *)object;
