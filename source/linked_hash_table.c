@@ -30,6 +30,7 @@ int aws_linked_hash_table_init(
 
     table->allocator = allocator;
     table->user_on_value_destroy = destroy_value_fn;
+    table->user_on_key_destroy = destroy_key_fn;
 
     aws_linked_list_init(&table->list);
     return aws_hash_table_init(
@@ -102,6 +103,25 @@ int aws_linked_hash_table_put(struct aws_linked_hash_table *table, const void *k
     node->key = key;
     node->table = table;
     element->value = node;
+
+    /*
+     * Potentially a NOOP, but under certain circumstances (when the key and value are a part of the same structure
+     * and we're overwriting the existing entry, for example), this is necessary.  Equality via function does not
+     * imply equal pointers.
+     */
+    if (!was_added) {
+
+        /*
+         * We're reusing an old element.  The keys might be different references but "equal" via comparison.  In that
+         * case we need to destroy the key (if appropriate) and point the element to the new key.  This underhanded
+         * mutation of the element is safe with respect to the hash table because the keys are "equal."
+         */
+        if (node->table->user_on_key_destroy && element->key != key) {
+            node->table->user_on_key_destroy((void *)element->key);
+        }
+
+        element->key = key;
+    }
 
     aws_linked_list_push_back(&table->list, &node->node);
 
