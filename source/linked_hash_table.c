@@ -116,8 +116,8 @@ int aws_linked_hash_table_put(struct aws_linked_hash_table *table, const void *k
          * case we need to destroy the key (if appropriate) and point the element to the new key.  This underhanded
          * mutation of the element is safe with respect to the hash table because the keys are "equal."
          */
-        if (node->table->user_on_key_destroy && element->key != key) {
-            node->table->user_on_key_destroy((void *)element->key);
+        if (table->user_on_key_destroy && element->key != key) {
+            table->user_on_key_destroy((void *)element->key);
         }
 
         element->key = key;

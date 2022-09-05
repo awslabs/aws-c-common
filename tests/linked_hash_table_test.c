@@ -14,6 +14,8 @@
  */
 
 #include <aws/common/linked_hash_table.h>
+#include <aws/common/string.h>
+
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_linked_hash_table_preserves_insertion_order_fn(struct aws_allocator *allocator, void *ctx) {
@@ -176,3 +178,47 @@ static int s_test_linked_hash_table_entries_overwrite_fn(struct aws_allocator *a
 }
 
 AWS_TEST_CASE(test_linked_hash_table_entries_overwrite, s_test_linked_hash_table_entries_overwrite_fn)
+
+static int s_test_linked_hash_table_entries_overwrite_reference_unequal_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_linked_hash_table table;
+
+    ASSERT_SUCCESS(aws_linked_hash_table_init(
+        &table,
+        allocator,
+        aws_hash_string,
+        aws_hash_callback_string_eq,
+        aws_hash_callback_string_destroy,
+        s_linked_hash_table_element_value_destroy,
+        2));
+
+    struct aws_string *first_key = aws_string_new_from_c_str(allocator, "first");
+    struct aws_string *first_key_v2 = aws_string_new_from_c_str(allocator, "first");
+
+    struct linked_hash_table_test_value_element first = {.value_removed = false};
+    struct linked_hash_table_test_value_element second = {.value_removed = false};
+
+    ASSERT_SUCCESS(aws_linked_hash_table_put(&table, first_key, &first));
+    ASSERT_SUCCESS(aws_linked_hash_table_put(&table, first_key_v2, &second));
+    ASSERT_INT_EQUALS(1, aws_linked_hash_table_get_element_count(&table));
+
+    ASSERT_TRUE(first.value_removed);
+    ASSERT_FALSE(second.value_removed);
+
+    struct linked_hash_table_test_value_element *value = NULL;
+    struct aws_string *first_key_v3 = aws_string_new_from_c_str(allocator, "first");
+    ASSERT_SUCCESS(aws_linked_hash_table_find(&table, first_key_v3, (void **)&value));
+    ASSERT_NOT_NULL(value);
+    ASSERT_PTR_EQUALS(&second, value);
+
+    aws_linked_hash_table_clean_up(&table);
+
+    aws_string_destroy(first_key_v3);
+
+    return 0;
+}
+
+AWS_TEST_CASE(
+    test_linked_hash_table_entries_overwrite_reference_unequal,
+    s_test_linked_hash_table_entries_overwrite_reference_unequal_fn)
