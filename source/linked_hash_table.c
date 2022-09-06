@@ -97,6 +97,11 @@ int aws_linked_hash_table_put(struct aws_linked_hash_table *table, const void *k
 
     if (element->value) {
         AWS_ASSERT(!was_added);
+
+        /*
+         * There's an existing element with a key that is "equal" to the submitted key.  We need to destroy that
+         * existing element's value if applicable.
+         */
         s_element_destroy(element->value);
 
         /*
@@ -107,19 +112,19 @@ int aws_linked_hash_table_put(struct aws_linked_hash_table *table, const void *k
         if (table->user_on_key_destroy && element->key != key) {
             table->user_on_key_destroy((void *)element->key);
         }
+
+        /*
+         * Potentially a NOOP, but under certain circumstances (when the key and value are a part of the same structure
+         * and we're overwriting the existing entry, for example), this is necessary.  Equality via function does not
+         * imply equal pointers.
+         */
+        element->key = key;
     }
 
     node->value = p_value;
     node->key = key;
     node->table = table;
     element->value = node;
-
-    /*
-     * Potentially a NOOP, but under certain circumstances (when the key and value are a part of the same structure
-     * and we're overwriting the existing entry, for example), this is necessary.  Equality via function does not
-     * imply equal pointers.
-     */
-    element->key = key;
 
     aws_linked_list_push_back(&table->list, &node->node);
 
