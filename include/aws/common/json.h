@@ -176,7 +176,7 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
  *   stop iteration without error
  * - return AWS_OP_ERR - stop iteration with error
  */
-typedef bool(aws_json_on_member_encountered_const_fn)(
+typedef int(aws_json_on_member_encountered_const_fn)(
     const struct aws_byte_cursor *key,
     const struct aws_json_value *value,
     bool *out_should_continue,

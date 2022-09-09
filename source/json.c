@@ -271,7 +271,6 @@ int aws_json_const_iterate_array(
         bool should_continue = true;
         if (on_value(idx, (struct aws_json_value *)value, &should_continue, user_data)) {
             return AWS_OP_ERR;
-            ;
         }
 
         if (!should_continue) {
