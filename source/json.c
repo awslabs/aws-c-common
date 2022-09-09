@@ -183,7 +183,7 @@ int aws_json_const_iterate_object(
         bool should_continue = true;
         struct aws_byte_cursor key_cur = aws_byte_cursor_from_c_str(key->string);
         if (on_member(&key_cur, (struct aws_json_value *)key, &should_continue, user_data)) {
-            return AWS_OP_ERR;
+            goto done;
         }
 
         if (!should_continue) {
@@ -270,7 +270,7 @@ int aws_json_const_iterate_array(
     cJSON_ArrayForEach(value, cjson) {
         bool should_continue = true;
         if (on_value(idx, (struct aws_json_value *)value, &should_continue, user_data)) {
-            return AWS_OP_ERR;
+            goto done;
         }
 
         if (!should_continue) {

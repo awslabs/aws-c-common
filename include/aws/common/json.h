@@ -170,7 +170,7 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
 /**
  * @brief callback for iterating members of an object
  * Iteration can be controlled as follows:
- * - return AWS_OP_SUCCESS and out_continue is set to true (default value) -
+ * - return AWS_OP_SUCCESS and out_should_continue is set to true (default value) -
  *   continue iteration without error
  * - return AWS_OP_SUCCESS and out_continue is set to false -
  *   stop iteration without error
@@ -246,7 +246,7 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
 /**
  * @brief callback for iterating values of an array.
  * Iteration can be controlled as follows:
- * - return AWS_OP_SUCCESS and out_continue is set to true (default value) -
+ * - return AWS_OP_SUCCESS and out_should_continue is set to true (default value) -
  *   continue iteration without error
  * - return AWS_OP_SUCCESS and out_continue is set to false -
  *   stop iteration without error
