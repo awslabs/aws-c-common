@@ -25,6 +25,7 @@ static int s_on_obj_member(
     bool *out_should_continue,
     void *user_data) {
     (void)key;
+    (void)out_should_continue;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
     data->all_elements_are_strings &= aws_json_value_is_string(value);
@@ -38,6 +39,7 @@ static int s_on_array_value(
     bool *out_should_continue,
     void *user_data) {
     (void)index;
+    (void)out_should_continue;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
     data->all_elements_are_strings &= aws_json_value_is_string(value);
@@ -77,7 +79,7 @@ static int s_on_obj_member_early(
     (void)key;
     (void)value;
     (void)user_data;
-    out_should_continue = false;
+    *out_should_continue = false;
     return AWS_OP_SUCCESS;
 }
 
@@ -89,7 +91,7 @@ static int s_on_array_value_early(
     (void)index;
     (void)value;
     (void)user_data;
-    out_should_continue = false;
+    *out_should_continue = false;
     return AWS_OP_SUCCESS;
 }
 
