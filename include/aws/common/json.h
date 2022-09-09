@@ -169,11 +169,17 @@ int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_
 
 /**
  * @brief callback for iterating members of an object
- * return false to exit early
+ * Iteration can be controlled as follows:
+ * - return AWS_OP_SUCCESS and out_continue is set to true (default value) -
+ *   continue iteration without error
+ * - return AWS_OP_SUCCESS and out_continue is set to false -
+ *   stop iteration without error
+ * - return AWS_OP_ERR - stop iteration with error
  */
 typedef bool(aws_json_on_member_encountered_const_fn)(
     const struct aws_byte_cursor *key,
     const struct aws_json_value *value,
+    bool *out_should_continue,
     void *user_data);
 
 /**
@@ -239,9 +245,18 @@ int aws_json_value_remove_array_element(struct aws_json_value *array, size_t ind
 
 /**
  * @brief callback for iterating values of an array.
- * return false to exit early.
+ * Iteration can be controlled as follows:
+ * - return AWS_OP_SUCCESS and out_continue is set to true (default value) -
+ *   continue iteration without error
+ * - return AWS_OP_SUCCESS and out_continue is set to false -
+ *   stop iteration without error
+ * - return AWS_OP_ERR - stop iteration with error
  */
-typedef bool(aws_json_on_value_encountered_const_fn)(size_t index, const struct aws_json_value *value, void *user_data);
+typedef int(aws_json_on_value_encountered_const_fn)(
+    size_t index,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data);
 
 /**
  * @brief iterates through values of an array.

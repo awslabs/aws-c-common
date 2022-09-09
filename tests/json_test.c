@@ -19,22 +19,78 @@ struct json_parse_test_data {
     bool all_elements_are_numbers;
 };
 
-static bool s_on_obj_member(const struct aws_byte_cursor *key, const struct aws_json_value *value, void *user_data) {
+static int s_on_obj_member(
+    const struct aws_byte_cursor *key,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
     (void)key;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
     data->all_elements_are_strings &= aws_json_value_is_string(value);
     data->all_elements_are_numbers &= aws_json_value_is_number(value);
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
-static bool s_on_array_value(size_t index, const struct aws_json_value *value, void *user_data) {
+static int s_on_array_value(
+    size_t index,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
     (void)index;
     struct json_parse_test_data *data = user_data;
     ++(data->elements_encountered);
     data->all_elements_are_strings &= aws_json_value_is_string(value);
     data->all_elements_are_numbers &= aws_json_value_is_number(value);
-    return true;
+    return AWS_OP_SUCCESS;
+}
+
+static int s_on_obj_member_error(
+    const struct aws_byte_cursor *key,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
+    (void)key;
+    (void)value;
+    (void)out_should_continue;
+    (void)user_data;
+    return AWS_OP_ERR;
+}
+
+static int s_on_array_value_error(
+    size_t index,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
+    (void)index;
+    (void)value;
+    (void)out_should_continue;
+    (void)user_data;
+    return AWS_OP_ERR;
+}
+
+static int s_on_obj_member_early(
+    const struct aws_byte_cursor *key,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
+    (void)key;
+    (void)value;
+    (void)user_data;
+    out_should_continue = false;
+    return AWS_OP_SUCCESS;
+}
+
+static int s_on_array_value_early(
+    size_t index,
+    const struct aws_json_value *value,
+    bool *out_should_continue,
+    void *user_data) {
+    (void)index;
+    (void)value;
+    (void)user_data;
+    out_should_continue = false;
+    return AWS_OP_SUCCESS;
 }
 
 AWS_TEST_CASE(test_json_parse_from_string, s_test_json_parse_from_string)
@@ -68,6 +124,13 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_INT_EQUALS(array_test_data.elements_encountered, 3);
     ASSERT_FALSE(array_test_data.all_elements_are_strings);
     ASSERT_TRUE(array_test_data.all_elements_are_numbers);
+
+    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_const_iterate_array(array_node, s_on_array_value_error, &array_test_data));
+
+    array_test_data.elements_encountered = 0;
+    ASSERT_INT_EQUALS(
+        AWS_OP_SUCCESS, aws_json_const_iterate_array(array_node, s_on_array_value_early, &array_test_data));
+    ASSERT_INT_EQUALS(array_test_data.elements_encountered, 0);
 
     // Testing valid boolean
     struct aws_json_value *boolean_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("boolean"));
@@ -120,6 +183,12 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_INT_EQUALS(test_data.elements_encountered, 2);
     ASSERT_TRUE(test_data.all_elements_are_strings);
     ASSERT_FALSE(test_data.all_elements_are_numbers);
+
+    ASSERT_INT_EQUALS(AWS_OP_ERR, aws_json_const_iterate_object(object_node, s_on_obj_member_error, &test_data));
+
+    test_data.elements_encountered = 0;
+    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, aws_json_const_iterate_object(object_node, s_on_obj_member_early, &test_data));
+    ASSERT_INT_EQUALS(test_data.elements_encountered, 0);
 
     // Testing invalid object
     struct aws_json_value *invalid_object = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("invalid"));

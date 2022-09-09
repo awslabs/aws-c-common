@@ -180,8 +180,13 @@ int aws_json_const_iterate_object(
 
     const cJSON *key = NULL;
     cJSON_ArrayForEach(key, cjson) {
+        bool should_continue = true;
         struct aws_byte_cursor key_cur = aws_byte_cursor_from_c_str(key->string);
-        if (!on_member(&key_cur, (struct aws_json_value *)key, user_data)) {
+        if (on_member(&key_cur, (struct aws_json_value *)key, &should_continue, user_data)) {
+            return AWS_OP_ERR;
+        }
+
+        if (!should_continue) {
             break;
         }
     }
@@ -263,7 +268,13 @@ int aws_json_const_iterate_array(
     size_t idx = 0;
     const cJSON *value = NULL;
     cJSON_ArrayForEach(value, cjson) {
-        if (!on_value(idx, (struct aws_json_value *)value, user_data)) {
+        bool should_continue = true;
+        if (on_value(idx, (struct aws_json_value *)value, &should_continue, user_data)) {
+            return AWS_OP_ERR;
+            ;
+        }
+
+        if (!should_continue) {
             break;
         }
         ++idx;
