@@ -283,7 +283,7 @@ struct aws_logger *aws_logger_get(void) {
     return s_root_logger_ptr;
 }
 
-struct aws_logger *aws_logger_get_conditional(enum aws_common_log_subject subject, enum aws_log_level level) {
+struct aws_logger *aws_logger_get_conditional(aws_log_subject_t subject, enum aws_log_level level) {
     if (s_root_logger_ptr == NULL) {
         return NULL;
     }
