@@ -110,6 +110,7 @@ jobs:
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install boto3
         python -m pip install termcolor
         python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --ctest_path ${{ env.APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ env.APP_VERIFIER_CTEST_XML_PATH }} --xml_file_path ${{ env.APP_VERIFIER_XML_PATH }}
 
@@ -126,6 +127,7 @@ jobs:
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install boto3
         python -m pip install termcolor
         python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --ctest_path ${{ env.APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ env.APP_VERIFIER_CTEST_XML_PATH }} --xml_file_path ${{ env.APP_VERIFIER_XML_PATH }}
 
@@ -139,6 +141,7 @@ jobs:
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install boto3
         python -m pip install termcolor
         python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --ctest_path ${{ env.APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ env.APP_VERIFIER_CTEST_XML_PATH }} --xml_file_path ${{ env.APP_VERIFIER_XML_PATH }}
 
@@ -152,6 +155,7 @@ jobs:
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install boto3
         python -m pip install termcolor
         python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --ctest_path ${{ env.APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ env.APP_VERIFIER_CTEST_XML_PATH }} --xml_file_path ${{ env.APP_VERIFIER_XML_PATH }}
 
