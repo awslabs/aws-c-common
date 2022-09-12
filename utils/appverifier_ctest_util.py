@@ -38,8 +38,7 @@ def main():
     # NOTE: Needs elevated permissions. We need this for the XML dump below so I figured we might as well
     # also set AppVerifier here too then, simplifying the setup and running process
     app_verified_executables = []
-    # app_verifier_tests = ["Exceptions", "Handles", "Heaps", "Leak", "Locks", "Memory", "SRWLock", "Threadpool", "TLS"]
-    app_verifier_tests = ["Exceptions", "Handles", "Heaps", "Leak", "Memory", "SRWLock", "Threadpool", "TLS"]
+    app_verifier_tests = ["Exceptions", "Handles", "Heaps", "Leak", "Locks", "Memory", "SRWLock", "Threadpool", "TLS"]
 
     json_tests_list = output_json["tests"]
     for test_data in json_tests_list:
