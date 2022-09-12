@@ -16,6 +16,12 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
 
+  APP_VERIFIER_CTEST_PROJECT_DIR: D:\a\aws-c-common\aws-c-common\aws-c-common\
+  APP_VERIFIER_CTEST_BUILD_DIR: D:\a\aws-c-common\aws-c-common\aws-c-common\build\aws-c-common
+  APP_VERIFIER_CTEST_CTEST_UTIL_PATH: D:\a\aws-c-common\aws-c-common\aws-c-common\utils\appverifier_ctest_util.py
+  APP_VERIFIER_CTEST__XML_PATH: D:\a\aws-c-common\aws-c-common\aws-c-common\utils\appverifier_xml_util.py
+  APP_VERIFIER_XML_PATH: D:\a\aws-c-common\aws-c-common\aws-c-common\build\app_verifier_output.xml
+
 jobs:
   linux-compat:
     runs-on: ubuntu-20.04 # latest
@@ -101,6 +107,11 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }}
+    - name: Run and check AppVerifier
+      run: |
+        echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install termcolor
+        python ${{ APP_VERIFIER_CTEST_CTEST_UTIL_PATH }} --ctest_path ${{ APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ APP_VERIFIER_CTEST__XML_PATH }} --xml_file_path ${{ APP_VERIFIER_XML_PATH }}
 
   windows-vc14:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
@@ -112,6 +123,11 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14
+    - name: Run and check AppVerifier
+      run: |
+        echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install termcolor
+        python ${{ APP_VERIFIER_CTEST_CTEST_UTIL_PATH }} --ctest_path ${{ APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ APP_VERIFIER_CTEST__XML_PATH }} --xml_file_path ${{ APP_VERIFIER_XML_PATH }}
 
   windows-shared-libs:
     runs-on: windows-2022 # latest
@@ -120,6 +136,11 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DBUILD_SHARED_LIBS=ON
+    - name: Run and check AppVerifier
+      run: |
+        echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install termcolor
+        python ${{ APP_VERIFIER_CTEST_CTEST_UTIL_PATH }} --ctest_path ${{ APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ APP_VERIFIER_CTEST__XML_PATH }} --xml_file_path ${{ APP_VERIFIER_XML_PATH }}
 
   windows-no-cpu-extensions:
     runs-on: windows-2022 # latest
@@ -128,6 +149,11 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
+    - name: Run and check AppVerifier
+      run: |
+        echo "Starting to run AppVerifier on all tests found by CTest"
+        python -m pip install termcolor
+        python ${{ APP_VERIFIER_CTEST_CTEST_UTIL_PATH }} --ctest_path ${{ APP_VERIFIER_CTEST_PROJECT_DIR }} --build_directory ${{ APP_VERIFIER_CTEST_BUILD_DIR }} --xml_util_path ${{ APP_VERIFIER_CTEST__XML_PATH }} --xml_file_path ${{ APP_VERIFIER_XML_PATH }}
 
   osx:
     runs-on: macos-11 # latest
