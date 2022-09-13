@@ -7,7 +7,6 @@ import argparse
 import subprocess
 import os
 import json
-import pathlib
 # Needs to be installed via pip
 from termcolor import colored  # - for terminal colored output
 
@@ -52,15 +51,15 @@ def main():
             arguments = ["appverif", "-enable"] + app_verifier_tests + ["-for", tmp_path]
             # NOTE: Needs elevated permissions. We need this for the XML dump below so I figured we might as well
             # also set AppVerifier here too then, simplifying the setup and running process
-            app_verif = subprocess.run(args=arguments)
+            subprocess.run(args=arguments)
     
     # Run all the tests!
     for i in range(0, len(test_names)):
         print ("Running test " + test_names[i] + "(" + str(i) + "/" + str(len(test_names)) + ")", flush=True)
-        execute_return = subprocess.run(args=["ctest", parsed_commands.ctest_path, "-R", "^" + test_names[0] + "$"])
+        subprocess.run(args=["ctest", parsed_commands.ctest_path, "-R", "^" + test_names[0] + "$"])
 
         # NOTE: Needs elevated permissions, not sure on best way to work around this...
-        app_verif = subprocess.run(args=["appverif", "-export", "log", "-for", test_executables[0], "-with", "to="+ str(parsed_commands.xml_file_path)])
+        subprocess.run(args=["appverif", "-export", "log", "-for", test_executables[0], "-with", "to="+ str(parsed_commands.xml_file_path)])
 
         xml_verif = subprocess.run(args=["python", parsed_commands.xml_util_path, "--parse_xml", "True", "--xml_file", parsed_commands.xml_file_path])
         if (xml_verif.returncode != 0):
@@ -76,7 +75,7 @@ def main():
     for test_executable in app_verified_executables:
         # NOTE: Needs elevated permissions. We need this for the XML dump below so I figured we might as well
         # also set AppVerifier here too then, simplifying the setup and running process
-        app_verif = subprocess.run(args=["appverif", "-delete", "settings", "-for", test_executable])
+        subprocess.run(args=["appverif", "-delete", "settings", "-for", test_executable])
     
     print (colored("Finished running all tests!", "green"), flush=True)
     exit(0)

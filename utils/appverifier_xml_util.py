@@ -167,7 +167,7 @@ def parseXML(filepath, dump_xml_on_error):
 
     try:
         xml_tree = ElementTree.parse(filepath)
-    except:
+    except BaseException:
         print(
             colored("Exception occured while trying to open XML file!", "red"), flush=True)
         return -1
@@ -259,7 +259,7 @@ def launchSample(sample_file, sample_secret_endpoint, sample_secret_certificate,
             SecretId=sample_secret_certificate)
         sample_private_key = secrets_client.get_secret_value(
             SecretId=sample_secret_private_key)
-    except:
+    except BaseException:
         print(colored("Could not get secrets to launch sample!", "red"))
         exit(-1)
 
@@ -271,9 +271,9 @@ def launchSample(sample_file, sample_secret_endpoint, sample_secret_certificate,
     tmp_certificate_file_path = str(current_folder) + "tmp_certificate.pem"
     tmp_private_key_path = str(current_folder) + "tmp_privatekey.pem.key"
     with open(tmp_certificate_file_path, "w") as file:
-        file.write(sample_certificate["SecretString"])
+        file.write(sample_certificate["SecretString"]) # lgtm [py/clear-text-storage-sensitive-data]
     with open(tmp_private_key_path, "w") as file:
-        file.write(sample_private_key["SecretString"])
+        file.write(sample_private_key["SecretString"]) # lgtm [py/clear-text-storage-sensitive-data]
     print("Saved credentials to file...", flush=True)
 
     print("Processing arguments...", flush=True)
