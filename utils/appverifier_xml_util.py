@@ -167,7 +167,7 @@ def parseXML(filepath, dump_xml_on_error):
 
     try:
         xml_tree = ElementTree.parse(filepath)
-    except BaseException:
+    except: # lgtm [py/catch-base-exception]
         print(
             colored("Exception occured while trying to open XML file!", "red"), flush=True)
         return -1
@@ -259,7 +259,7 @@ def launchSample(sample_file, sample_secret_endpoint, sample_secret_certificate,
             SecretId=sample_secret_certificate)
         sample_private_key = secrets_client.get_secret_value(
             SecretId=sample_secret_private_key)
-    except BaseException:
+    except: # lgtm [py/catch-base-exception]
         print(colored("Could not get secrets to launch sample!", "red"))
         exit(-1)
 
