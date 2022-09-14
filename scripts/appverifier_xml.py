@@ -2,15 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0.
 
 # Built-in
-from asyncio import subprocess
 import xml.etree.ElementTree as ElementTree
 import argparse
-import os
-import subprocess
-import pathlib
-# Needs to be installed via pip
-import boto3  # - for launching sample
-from termcolor import colored  # - for terminal colored output
 
 s_AppVerifier_LogText = "{Application Verifier}logSession"
 s_AppVerifier_EntryText = "{Application Verifier}logEntry"
@@ -18,6 +11,12 @@ s_AppVerifier_ErrorSeverities = ["Warning", "Error", "UNKNOWN"]
 
 # A dictionary to take the error codes and convert them to basic information
 # on what went wrong.
+#
+# How to adjust/learn more:
+# To add/remove from this list, run "appverif" in a Windows terminal with
+# administrator privileges and then press F1 to get the help page. Then search
+# for the error code you got (minus the "0x" part at the beginning) and use the
+# information there to add/adjust the entry in the dictionary below.
 s_AppVerifier_ErrorCodeHelp = {
     "Exceptions": {
         "0x650": "The application is trying to run code from an address that is non-executable or free"
@@ -167,9 +166,8 @@ def parseXML(filepath, dump_xml_on_error):
 
     try:
         xml_tree = ElementTree.parse(filepath)
-    except: # lgtm [py/catch-base-exception]
-        print(
-            colored("Exception occured while trying to open XML file!", "red"), flush=True)
+    except Exception: # lgtm [py/catch-base-exception]
+        print("ERROR: Exception occured while trying to open XML file!", flush=True)
         return -1
 
     # Go through every element in the XML tree
@@ -181,14 +179,13 @@ def parseXML(filepath, dump_xml_on_error):
 
     # If the XML does not have any AppVerifier data, then something went wrong!
     if (xml_is_app_verifier == False):
-        print(colored(
-            "XML File from AppVerifier does not include a AppVerifier session!", "red"), flush=True)
+        print("ERROR: XML File from AppVerifier does not include a AppVerifier session!", flush=True)
         return -1
 
     # If we have AppVerifier entries, then a test or tests failed, so process the data,
     # print it, and then return with an error to stop the GitHub action from passing
     if (len(app_verifier_entries) > 0):
-        print(colored("AppVerifier entries found:", "yellow"), flush=True)
+        print("WARNING: AppVerifier entries found:", flush=True)
         severity_error_found = False
 
         for entry in app_verifier_entries:
@@ -203,13 +200,12 @@ def parseXML(filepath, dump_xml_on_error):
                 print_red = True
 
             if (print_red):
-                print(colored(
-                    f"[{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}", "red"), flush=True)
+                print(
+                    f"ERROR: [{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}", flush=True)
             else:
                 print(
                     f"[{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}", flush=True)
-            print("\t" + getErrorCodeMeaning(element_layer_name,
-                  element_code), flush=True)
+            print(f"\t{getErrorCodeMeaning(element_layer_name, element_code)}", flush=True)
 
         print(
             "\nNOTE: The error codes and information provided are just guesses based on the error code.\n"
@@ -219,21 +215,20 @@ def parseXML(filepath, dump_xml_on_error):
 
         if (severity_error_found == True and dump_xml_on_error != None):
             if (dump_xml_on_error == True):
-                print(colored("\nRaw XML output for errors found:\n", "red"), flush=True)
+                print("\nERROR: Raw XML output for errors found:\n", flush=True)
                 for entry in app_verifier_entries:
                     print(ElementTree.tostring(
                         entry, encoding="unicode"), flush=True)
 
         if (severity_error_found == True):
-            print(colored(
-                "\nFailed due to AppVerifier finding entries marked as severe", "red"), flush=True)
+            print(
+                "\nERROR: Failed due to AppVerifier finding entries marked as severe", flush=True)
             return -1
         else:
-            print(
-                colored("AppVerifier entries were not marked as severe", "green"), flush=True)
+            print("SUCCESS: AppVerifier entries were not marked as severe", flush=True)
             return 0
     else:
-        print(colored("No AppVerifier entries found! AppVerifier ran successfully and did not generate any entries", "green"), flush=True)
+        print("SUCCESS: No AppVerifier entries found! AppVerifier ran successfully and did not generate any entries", flush=True)
         return 0
 
 
@@ -247,65 +242,6 @@ def getErrorCodeMeaning(element_layer_name, element_code):
     return "Util-script unknown layer: " + element_layer_name + " and error code: " + element_code
 
 
-def launchSample(sample_file, sample_secret_endpoint, sample_secret_certificate, sample_secret_private_key, sample_arguments):
-
-    print("Getting credentials from secrets...", flush=True)
-    try:
-        secrets_client = boto3.client(
-            "secretsmanager", region_name="us-east-1")
-        sample_endpoint = secrets_client.get_secret_value(
-            SecretId=sample_secret_endpoint)["SecretString"]
-        sample_certificate = secrets_client.get_secret_value(
-            SecretId=sample_secret_certificate)
-        sample_private_key = secrets_client.get_secret_value(
-            SecretId=sample_secret_private_key)
-    except: # lgtm [py/catch-base-exception]
-        print(colored("Could not get secrets to launch sample!", "red"))
-        exit(-1)
-
-    current_folder = pathlib.Path(__file__).resolve()
-    # Remove the name of the python file
-    current_folder = str(current_folder).replace("appverifier_xml_util.py", "")
-
-    print("Saving credentials to file...", flush=True)
-    tmp_certificate_file_path = str(current_folder) + "tmp_certificate.pem"
-    tmp_private_key_path = str(current_folder) + "tmp_privatekey.pem.key"
-    with open(tmp_certificate_file_path, "w") as file:
-        file.write(sample_certificate["SecretString"]) # lgtm [py/clear-text-storage-sensitive-data]
-    with open(tmp_private_key_path, "w") as file:
-        file.write(sample_private_key["SecretString"]) # lgtm [py/clear-text-storage-sensitive-data]
-    print("Saved credentials to file...", flush=True)
-
-    print("Processing arguments...", flush=True)
-    launch_arguments = []
-    launch_arguments.append("--endpoint")
-    launch_arguments.append(sample_endpoint)
-    launch_arguments.append("--cert")
-    launch_arguments.append(tmp_certificate_file_path)
-    launch_arguments.append("--key")
-    launch_arguments.append(tmp_private_key_path)
-    sample_arguments_split = sample_arguments.split(" ")
-    for arg in sample_arguments_split:
-        launch_arguments.append(arg)
-
-    print("Running sample...", flush=True)
-    exit_code = 0
-    sample_return = subprocess.run(
-        args=launch_arguments, executable=sample_file)
-    exit_code = sample_return.returncode
-
-    print("Deleting credentials files...", flush=True)
-    os.remove(tmp_certificate_file_path)
-    os.remove(tmp_private_key_path)
-
-    if (exit_code == 0):
-        print(colored("Finished running sample! Exiting with success",
-              "green"), flush=True)
-    else:
-        print(colored("Sample did not return success! Exit code " + str(exit_code), "red"))
-    return exit_code
-
-
 def booleanString(string):
     string = string.lower()
     if string not in {"false", "true"}:
@@ -316,21 +252,7 @@ def booleanString(string):
 def main():
     argument_parser = argparse.ArgumentParser(
         description="AppVerifier XML output util")
-    argument_parser.add_argument("--launch_sample", metavar="<True/False>", required=False, default=False, type=booleanString,
-                                 help="If true, will launch the sample with the given arguments. Note that endpoint, certificate, and private key are all gotten via Boto3 secrets")
-    argument_parser.add_argument("--sample_file", metavar="<C:\\example\\sample.exe>",
-                                 required=False, default="", help="Sample to launch that AppVerifier is following")
-    argument_parser.add_argument("--sample_secret_endpoint", metavar="<Name of endpoint secret>",
-                                 required=False, default="unit-test/endpoint", help="The name of the secret containing the endpoint")
-    argument_parser.add_argument("--sample_secret_certificate", metavar="<Name of certificate secret>", required=False,
-                                 default="unit-test/certificate", help="The name of the secret containing the certificate PEM file")
-    argument_parser.add_argument("--sample_secret_private_key", metavar="<Name of private key secret>", required=False,
-                                 default="unit-test/privatekey", help="The name of the secret containing the private key PEM file")
-    argument_parser.add_argument("--sample_arguments", metavar="<Arguments here in single string!>",
-                                 required=False, default="", help="Arguments to pass to sample")
 
-    argument_parser.add_argument("--parse_xml", metavar="<True/False>", required=False, default=False,
-                                 type=booleanString, help="If true, the utility script will parse the AppVerifier XML passed")
     argument_parser.add_argument("--xml_file", metavar="<C:\\example\\file.xml>",
                                  required=False, help="Path to XML file from AppVerifier")
     argument_parser.add_argument("--dump_xml_on_error", metavar="<True/False>", default=True, required=False,
@@ -338,27 +260,12 @@ def main():
 
     parsed_commands = argument_parser.parse_args()
 
-    if (parsed_commands.launch_sample == True):
-        print("\n" + colored("Starting to launch sample...", "green"), flush=True)
-        sample_result = launchSample(
-            parsed_commands.sample_file,
-            parsed_commands.sample_secret_endpoint,
-            parsed_commands.sample_secret_certificate,
-            parsed_commands.sample_secret_private_key,
-            parsed_commands.sample_arguments)
-        print("\n")
-        exit(sample_result)
-    elif (parsed_commands.parse_xml == True):
-        print("\n" + colored("Starting AppVerifier XML check...", "green"), flush=True)
-        print(parsed_commands.dump_xml_on_error)
-        xml_result = parseXML(parsed_commands.xml_file,
-                              parsed_commands.dump_xml_on_error)
-        print("\n")
-        exit(xml_result)
-    else:
-        print("\n" + colored("Error! Was not told to start sample or parse XML!",
-              "red") + "\n", flush=True)
-        exit(-1)
+    print("\nStarting AppVerifier XML check...", flush=True)
+    print(parsed_commands.dump_xml_on_error)
+    xml_result = parseXML(parsed_commands.xml_file,
+                            parsed_commands.dump_xml_on_error)
+    print("\n")
+    exit(xml_result)
 
 
 if __name__ == "__main__":
