@@ -31,7 +31,9 @@ def main():
                                 required=True, default="../aws-c-common-build", help="Absolute path to CMake build folder to run CTest in")
     parsed_commands = argument_parser.parse_args()
 
-    os.chdir(os.path.abspath(parsed_commands.build_directory))
+    ctest_execute_directory = os.path.abspath(parsed_commands.build_directory)
+    print (f"CTest execute directory: {ctest_execute_directory}")
+    os.chdir(ctest_execute_directory)
     xml_util_path = os.path.join(os.path.dirname(__file__), "appverifier_xml.py")
     tmp_xml_file_path = os.path.join(tempfile.gettempdir(), "tmp.xml")
 
@@ -57,6 +59,9 @@ def main():
         test_executables.append(tmp_path)
         if not (tmp_path in app_verified_executables):
             app_verified_executables.append(tmp_path)
+    if (len(test_names) <= 0):
+        print("ERROR: No tests found via CTest")
+        exit(-1)
 
     # Register with AppVerifier
     add_app_verifier_settings(app_verified_executables, app_verifier_tests)
