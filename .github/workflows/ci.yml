@@ -141,7 +141,6 @@ jobs:
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
-        cd D:\a\aws-c-common\aws-c-common\aws-c-common\
         python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }}
 
   osx:
