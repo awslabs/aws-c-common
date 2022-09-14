@@ -31,7 +31,7 @@ def main():
                                 required=True, default="../aws-c-common-build", help="Absolute path to CMake build folder to run CTest in")
     parsed_commands = argument_parser.parse_args()
 
-    os.chdir(parsed_commands.build_directory)
+    os.chdir(os.path.abspath(parsed_commands.build_directory))
     xml_util_path = os.path.join(os.path.dirname(__file__), "appverifier_xml.py")
     tmp_xml_file_path = os.path.join(tempfile.gettempdir(), "tmp.xml")
 
