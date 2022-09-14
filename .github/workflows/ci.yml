@@ -15,7 +15,7 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
-  APP_VERIFIER_CTEST_BUILD_DIR: ..\aws-c-common\build\aws-c-common\
+  APP_VERIFIER_CTEST_BUILD_DIR: .\build\aws-c-common\
   APP_VERIFIER_CTEST_UTIL_PATH: .\scripts\appverifier_ctest.py
 
 jobs:
@@ -142,7 +142,7 @@ jobs:
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
         cd D:\a\aws-c-common\aws-c-common\aws-c-common\
-        python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }}
+        python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }} --package_name ${{ env.PACKAGE_NAME }}
 
   osx:
     runs-on: macos-11 # latest

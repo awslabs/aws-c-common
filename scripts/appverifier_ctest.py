@@ -28,7 +28,9 @@ def main():
     argument_parser = argparse.ArgumentParser(
         description="AppVerifier Ctest runner util")
     argument_parser.add_argument("--build_directory", metavar="<Path to CTest project to run>",
-                                required=True, default="../aws-c-common-build", help="Absolute path to CMake build folder to run CTest in")
+                                required=True, default="../aws-c-common-build", help="Path to CMake build folder to run CTest in")
+    argument_parser.add_argument("--package_name", metavar="<Name of the package>",
+                                required=True, default="aws-c-common", help="Name of the package to run CTest on")
     parsed_commands = argument_parser.parse_args()
 
     ctest_execute_directory = os.path.abspath(parsed_commands.build_directory)
@@ -37,7 +39,7 @@ def main():
     xml_util_path = os.path.join(os.path.dirname(__file__), "appverifier_xml.py")
     tmp_xml_file_path = os.path.join(tempfile.gettempdir(), "tmp.xml")
 
-    launch_arguments = ["ctest", "--show-only=json-v1"]
+    launch_arguments = ["ctest", parsed_commands.package_name, "--show-only=json-v1"]
     print (f"Launching CTest with arguments: {subprocess.list2cmdline(launch_arguments)}")
     sample_return = subprocess.run(args=launch_arguments, capture_output=True, encoding="utf8")
     if (sample_return.returncode != 0):
