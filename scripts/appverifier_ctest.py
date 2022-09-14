@@ -36,6 +36,7 @@ def main():
     tmp_xml_file_path = os.path.join(tempfile.gettempdir(), "tmp.xml")
 
     launch_arguments = ["ctest", "--show-only=json-v1"]
+    print (f"Launching CTest with arguments: {subprocess.list2cmdline(launch_arguments)}")
     sample_return = subprocess.run(args=launch_arguments, capture_output=True, encoding="utf8")
     if (sample_return.returncode != 0):
         print (f"ERROR: CTest returned error! {sample_return.returncode}", flush=True)
