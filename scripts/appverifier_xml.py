@@ -162,13 +162,8 @@ def parseXML(filepath, dump_xml_on_error):
     xml_is_app_verifier = False
     app_verifier_entries = []
 
-    print("Looking for AppVerifier XML file...", flush=True)
-
-    try:
-        xml_tree = ElementTree.parse(filepath)
-    except Exception: # lgtm [py/catch-base-exception]
-        print("ERROR: Exception occured while trying to open XML file!", flush=True)
-        return -1
+    print("Looking for AppVerifier XML file...")
+    xml_tree = ElementTree.parse(filepath)
 
     # Go through every element in the XML tree
     for elem in xml_tree.iter():
@@ -179,13 +174,13 @@ def parseXML(filepath, dump_xml_on_error):
 
     # If the XML does not have any AppVerifier data, then something went wrong!
     if (xml_is_app_verifier == False):
-        print("ERROR: XML File from AppVerifier does not include a AppVerifier session!", flush=True)
+        print("ERROR: XML File from AppVerifier does not include a AppVerifier session!")
         return -1
 
     # If we have AppVerifier entries, then a test or tests failed, so process the data,
     # print it, and then return with an error to stop the GitHub action from passing
     if (len(app_verifier_entries) > 0):
-        print("WARNING: AppVerifier entries found:", flush=True)
+        print("WARNING: AppVerifier entries found:")
         severity_error_found = False
 
         for entry in app_verifier_entries:
@@ -201,34 +196,33 @@ def parseXML(filepath, dump_xml_on_error):
 
             if (print_red):
                 print(
-                    f"ERROR: [{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}", flush=True)
+                    f"ERROR: [{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}")
             else:
                 print(
-                    f"[{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}", flush=True)
-            print(f"\t{getErrorCodeMeaning(element_layer_name, element_code)}", flush=True)
+                    f"[{element_time}] {element_severity.upper()} - Test: {element_layer_name} - Stop Code: {element_code}")
+            print(f"\t{getErrorCodeMeaning(element_layer_name, element_code)}")
 
         print(
             "\nNOTE: The error codes and information provided are just guesses based on the error code.\n"
             "\tRun AppVerifier locally and use WinDBG combined with the AppVerifier help to discover more "
-            "about the error from its error code and how to debug it.",
-            flush=True)
+            "about the error from its error code and how to debug it.")
 
         if (severity_error_found == True and dump_xml_on_error != None):
             if (dump_xml_on_error == True):
-                print("\nERROR: Raw XML output for errors found:\n", flush=True)
+                print("\nERROR: Raw XML output for errors found:\n")
                 for entry in app_verifier_entries:
                     print(ElementTree.tostring(
-                        entry, encoding="unicode"), flush=True)
+                        entry, encoding="unicode"))
 
         if (severity_error_found == True):
             print(
-                "\nERROR: Failed due to AppVerifier finding entries marked as severe", flush=True)
+                "\nERROR: Failed due to AppVerifier finding entries marked as severe")
             return -1
         else:
-            print("SUCCESS: AppVerifier entries were not marked as severe", flush=True)
+            print("SUCCESS: AppVerifier entries were not marked as severe")
             return 0
     else:
-        print("SUCCESS: No AppVerifier entries found! AppVerifier ran successfully and did not generate any entries", flush=True)
+        print("SUCCESS: No AppVerifier entries found! AppVerifier ran successfully and did not generate any entries")
         return 0
 
 

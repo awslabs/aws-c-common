@@ -15,8 +15,6 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
-  APP_VERIFIER_CTEST_BUILD_DIR: .\aws-c-common\build\aws-c-common
-  APP_VERIFIER_CTEST_UTIL_PATH: .\aws-c-common\scripts\appverifier_ctest.py
 
 jobs:
   linux-compat:
@@ -137,11 +135,11 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }}
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} run_tests=false --cmake-extra=-DBUILD_TESTING=ON
     - name: Run and check AppVerifier
       run: |
         echo "Starting to run AppVerifier on all tests found by CTest"
-        python ${{ env.APP_VERIFIER_CTEST_UTIL_PATH }} --build_directory ${{ env.APP_VERIFIER_CTEST_BUILD_DIR }}
+        python .\aws-c-common\build\aws-c-common --build_directory .\aws-c-common\scripts\appverifier_ctest.py
 
   osx:
     runs-on: macos-11 # latest
