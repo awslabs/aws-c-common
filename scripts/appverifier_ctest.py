@@ -78,7 +78,7 @@ def main():
             # NOTE: Needs elevated permissions
             subprocess.run(args=appverif_xml_dump_args)
 
-            xml_result = appverifier_xml.parseXML(tmp_xml_file_path)
+            xml_result = appverifier_xml.parseXML(tmp_xml_file_path, True)
             if (xml_result != 0):
                 print (f"ERROR: Test {test_names[i]} - failed!")
                 remove_app_verifier_settings(app_verified_executables)
