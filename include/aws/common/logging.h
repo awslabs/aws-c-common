@@ -137,6 +137,13 @@ struct aws_logger {
     }
 
 /**
+ * Unconditional logging macro that takes a logger and does not do a level check or a null check.  Intended for
+ * situations when you need to log many things and do a single manual level check before beginning.
+ */
+#define AWS_LOGUF(logger, log_level, subject, ...)                                                                     \
+    { logger->vtable->log(logger, log_level, subject, __VA_ARGS__); }
+
+/**
  * LOGF_<level> variants for each level.  These are what should be used directly to do all logging.
  *
  * i.e.
@@ -221,6 +228,16 @@ void aws_logger_set(struct aws_logger *logger);
  */
 AWS_COMMON_API
 struct aws_logger *aws_logger_get(void);
+
+/**
+ * Gets the aws logger used globally across the process if the logging level is at least the inputted level.
+ *
+ * @param subject log subject to perform the level check versus, not currently used
+ * @param level logging level to check against in order to return the logger
+ * @return the current logger if the current logging level is at or more detailed then the supplied logging level
+ */
+AWS_COMMON_API
+struct aws_logger *aws_logger_get_conditional(aws_log_subject_t subject, enum aws_log_level level);
 
 /**
  * Cleans up all resources used by the logger; simply invokes the clean_up v-function
