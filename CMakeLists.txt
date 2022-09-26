@@ -37,6 +37,9 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.inl"
         )
 
+file (GLOB AWS_COMMON_EXTERNAL_HEADERS
+        "include/aws/common/external/*.h")
+
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
         )
@@ -49,6 +52,9 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
+
+file (GLOB AWS_COMMON_EXTERNAL_SRC
+        "source/external/*.c")
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
@@ -72,7 +78,7 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32)
+    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
@@ -85,13 +91,23 @@ else ()
 
     if (UNIX OR APPLE)
         find_package(Threads REQUIRED)
-    endif ()
+
+        if (NOT ANDROID AND NOT CMAKE_THREAD_LIBS_INIT)
+            check_symbol_exists(pthread_mutexattr_init "<pthread.h>" HAVE_PTHREAD_MUTEXATTR_INIT)
+            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT)
+                # fsanitize=... results in GLIBC library to provide some pthread APIs but not all
+                list(APPEND PLATFORM_LIBS pthread)
+            endif()
+        endif()
+    endif()
 
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
+        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
@@ -108,28 +124,32 @@ file(GLOB AWS_COMMON_ARCH_SRC
      "source/arch/generic/*.c"
      )
 
-if (MSVC AND AWS_ARCH_INTEL)
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/intel/*.c"
-        "source/arch/intel/msvc/*.c"
-        )
+if (USE_CPU_EXTENSIONS)
+    if (AWS_ARCH_INTEL)
+        if (MSVC)
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/intel/cpuid.c"
+                "source/arch/intel/msvc/*.c"
+                )
 
-    source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
-elseif(AWS_ARCH_INTEL AND AWS_HAVE_GCC_INLINE_ASM AND NOT LEGACY_COMPILER_SUPPORT)
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/intel/*.c"
-         "source/arch/intel/asm/*.c"
-        )
-endif()
-
-if (MSVC AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/arm/msvc/*.c"
-        )
-elseif (AWS_HAVE_AUXV AND (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32))
-    file(GLOB AWS_COMMON_ARCH_SRC
-        "source/arch/arm/asm/*.c"
-        )
+            source_group("Source Files\\arch\\intel" FILES ${AWS_COMMON_ARCH_SRC})
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/intel/cpuid.c"
+                "source/arch/intel/asm/*.c"
+                )
+        endif()
+    elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
+        if (MSVC)
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/msvc/*.c"
+                )
+        elseif (AWS_HAVE_AUXV)
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/asm/*.c"
+                )
+        endif()
+    endif()
 endif()
 
 list(APPEND PLATFORM_LIBS ${CMAKE_DL_LIBS})
@@ -138,6 +158,7 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
+        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         )
 
@@ -145,6 +166,7 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
         ${AWS_COMMON_ARCH_SRC}
+        ${AWS_COMMON_EXTERNAL_SRC}
         )
 
 
@@ -182,6 +204,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # but at build time we need to explicitly include this here
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${PROJECT_NAME})

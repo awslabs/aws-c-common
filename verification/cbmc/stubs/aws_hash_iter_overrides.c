@@ -86,5 +86,8 @@ void aws_hash_iter_delete(struct aws_hash_iter *iter, bool destroy_contents) {
     rval.slot = iter->slot;
     rval.limit = iter->limit - 1;
     rval.status = AWS_HASH_ITER_STATUS_DELETE_CALLED;
+    rval.map->p_impl->entry_count = iter->map->p_impl->entry_count;
+    if (rval.map->p_impl->entry_count)
+        rval.map->p_impl->entry_count--;
     *iter = rval;
 }

@@ -29,21 +29,7 @@ static int s_test_calloc_on_given_allocator(struct aws_allocator *allocator, boo
         ASSERT_TRUE((intptr_t)allocator->impl == 8);
     }
     aws_mem_release(allocator, p);
-    /* Check that calloc handles overflow securely, by returning null
-     * Choose values such that [small_val == (small_val)*(large_val)(mod 2**SIZE_BITS)]
-     */
-    for (size_t small_bits = 1; small_bits < 9; ++small_bits) {
-        size_t large_bits = SIZE_BITS - small_bits;
-        size_t small_val = (size_t)1 << small_bits;
-        size_t large_val = ((size_t)1 << large_bits) + 1;
-        ASSERT_TRUE(small_val * large_val == small_val);
-        ASSERT_NULL(aws_mem_calloc(allocator, small_val, large_val));
-        if (using_calloc_stub_impl) {
-            /* Calloc should never even be called if overflow could occur */
-            ASSERT_TRUE((intptr_t)allocator->impl == 0);
-        }
-    }
-    return 0;
+    return AWS_OP_SUCCESS;
 }
 
 AWS_TEST_CASE(test_calloc_override, s_test_calloc_override_fn)

@@ -7,6 +7,7 @@
 #include <aws/common/logging.h>
 #include <aws/common/math.h>
 #include <aws/common/private/dlloads.h>
+#include <aws/common/private/json_impl.h>
 #include <aws/common/private/thread_shared.h>
 
 #include <stdarg.h>
@@ -235,6 +236,20 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_DIVIDE_BY_ZERO,
         "Attempt to divide a number by zero."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_FILE_HANDLE,
+        "Invalid file handle"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_OPERATION_INTERUPTED,
+        "The operation was interrupted."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_DIRECTORY_NOT_EMPTY,
+        "An operation on a directory was attempted which is not allowed when the directory is not empty."
+    ),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_PLATFORM_NOT_SUPPORTED,
+        "Feature not supported on this platform"),
 };
 /* clang-format on */
 
@@ -255,6 +270,9 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_THREAD, "thread", "Subject for logging thread related functions."),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_MEMTRACE, "memtrace", "Output from the aws_mem_trace_dump function"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_XML_PARSER, "xml-parser", "Subject for xml parser specific logging."),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_IO, "common-io", "Common IO utilities"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_BUS, "bus", "Message bus"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_TEST, "test", "Unit/integration testing"),
 };
 
 static struct aws_log_subject_info_list s_common_log_subject_list = {
@@ -272,10 +290,11 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         aws_register_error_info(&s_list);
         aws_register_log_subject_info_list(&s_common_log_subject_list);
         aws_thread_initialize_thread_management();
+        aws_json_module_init(allocator);
 
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
-#if !defined(_WIN32) && !defined(WIN32)
+#ifdef AWS_OS_LINUX
         /* libnuma defines set_mempolicy() as a WEAK symbol. Loading into the global symbol table overwrites symbols and
            assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
            like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
@@ -341,7 +360,8 @@ void aws_common_library_clean_up(void) {
         aws_thread_join_all_managed();
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
-#if !defined(_WIN32) && !defined(WIN32)
+        aws_json_module_cleanup();
+#ifdef AWS_OS_LINUX
         if (g_libnuma_handle) {
             dlclose(g_libnuma_handle);
         }

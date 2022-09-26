@@ -42,6 +42,7 @@ int do_log_test(
 
 struct aws_string *aws_string_new_log_writer_test_filename(struct aws_allocator *allocator) {
     char filename_array[64];
+    AWS_ZERO_ARRAY(filename_array);
     struct aws_byte_buf filename_buf = aws_byte_buf_from_empty_array(filename_array, sizeof(filename_array));
 
 #ifndef _WIN32

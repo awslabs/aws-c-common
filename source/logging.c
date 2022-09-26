@@ -283,6 +283,18 @@ struct aws_logger *aws_logger_get(void) {
     return s_root_logger_ptr;
 }
 
+struct aws_logger *aws_logger_get_conditional(aws_log_subject_t subject, enum aws_log_level level) {
+    if (s_root_logger_ptr == NULL) {
+        return NULL;
+    }
+
+    if (s_root_logger_ptr->vtable->get_log_level(s_root_logger_ptr, subject) < level) {
+        return NULL;
+    }
+
+    return s_root_logger_ptr;
+}
+
 void aws_logger_clean_up(struct aws_logger *logger) {
     AWS_ASSERT(logger->vtable->clean_up != NULL);
 
@@ -488,13 +500,15 @@ static int s_noalloc_stderr_logger_log(
 
     aws_mutex_lock(&impl->lock);
 
+    int write_result = AWS_OP_SUCCESS;
     if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
-        return aws_translate_and_raise_io_error(errno);
+        aws_translate_and_raise_io_error(errno);
+        write_result = AWS_OP_ERR;
     }
 
     aws_mutex_unlock(&impl->lock);
 
-    return AWS_OP_SUCCESS;
+    return write_result;
 }
 
 static void s_noalloc_stderr_logger_clean_up(struct aws_logger *logger) {
@@ -545,8 +559,13 @@ int aws_logger_init_noalloc(
         impl->file = options->file;
         impl->should_close = false;
     } else { /* _MSC_VER */
-        impl->file = aws_fopen(options->filename, "w");
-        impl->should_close = true;
+        if (options->filename != NULL) {
+            impl->file = aws_fopen(options->filename, "w");
+            impl->should_close = true;
+        } else {
+            impl->file = stderr;
+            impl->should_close = false;
+        }
     }
 
     aws_mutex_init(&impl->lock);
