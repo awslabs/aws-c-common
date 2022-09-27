@@ -46,6 +46,11 @@ function(aws_add_sanitizers target)
     cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
+
+    if(NOT HAS_SANITIZERS AND ENABLE_SANITIZERS)
+        message(FATAL_ERROR "ENABLE_SANITIZERS is set but sanitizers are not available")
+    endif()
+
     if(HAS_SANITIZERS)
 
         list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
