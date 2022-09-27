@@ -103,6 +103,7 @@ if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
     check_c_source_compiles("
     #include <execinfo.h>
     int main() {
+        backtrace(NULL, 0);
         return 0;
     }" AWS_HAVE_EXECINFO)
 endif()
