@@ -114,6 +114,7 @@ struct aws_logger_vtable {
     enum aws_log_level (*const get_log_level)(struct aws_logger *logger, aws_log_subject_t subject);
     void (*const clean_up)(struct aws_logger *logger);
     int (*set_log_level)(struct aws_logger *logger, enum aws_log_level);
+    void (*flush_and_close)(struct aws_logger *logger);
 };
 
 struct aws_logger {
@@ -341,6 +342,8 @@ int aws_logger_init_noalloc(
     struct aws_logger *logger,
     struct aws_allocator *allocator,
     struct aws_logger_standard_options *options);
+
+void aws_logger_flush_and_close(struct aws_logger *logger);
 
 AWS_EXTERN_C_END
 

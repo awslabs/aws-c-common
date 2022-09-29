@@ -134,11 +134,16 @@ static int s_aws_logger_pipeline_set_log_level(struct aws_logger *logger, enum a
     return AWS_OP_SUCCESS;
 }
 
+static void s_aws_logger_pipeline_flush_and_close(struct aws_logger *logger) {
+    s_aws_logger_pipeline_owned_clean_up(logger);
+}
+
 struct aws_logger_vtable g_pipeline_logger_owned_vtable = {
     .get_log_level = s_aws_logger_pipeline_get_log_level,
     .log = s_aws_logger_pipeline_log,
     .clean_up = s_aws_logger_pipeline_owned_clean_up,
     .set_log_level = s_aws_logger_pipeline_set_log_level,
+    .flush_and_close = s_aws_logger_pipeline_flush_and_close,
 };
 
 int aws_logger_init_standard(
@@ -604,11 +609,23 @@ int s_no_alloc_stderr_logger_set_log_level(struct aws_logger *logger, enum aws_l
     return AWS_OP_SUCCESS;
 }
 
+static void s_no_alloc_flush_and_close(struct aws_logger *logger) {
+    struct aws_logger_noalloc *impl = logger->p_impl;
+
+    aws_mutex_lock(&impl->lock);
+    if (impl->file != NULL) {
+        fclose(impl->file);
+        impl->file = NULL;
+    }
+    aws_mutex_unlock(&impl->lock);
+}
+
 static struct aws_logger_vtable s_noalloc_stderr_vtable = {
     .get_log_level = s_noalloc_stderr_logger_get_log_level,
     .log = s_noalloc_stderr_logger_log,
     .clean_up = s_noalloc_stderr_logger_clean_up,
     .set_log_level = s_no_alloc_stderr_logger_set_log_level,
+    .flush_and_close = s_no_alloc_flush_and_close,
 };
 
 int aws_logger_init_noalloc(
@@ -658,4 +675,8 @@ int aws_logger_set_log_level(struct aws_logger *logger, enum aws_log_level level
     }
 
     return logger->vtable->set_log_level(logger, level);
+}
+
+void aws_logger_flush_and_close(struct aws_logger *logger) {
+    (*logger->vtable->flush_and_close)(logger);
 }
