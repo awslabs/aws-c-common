@@ -37,6 +37,7 @@ struct aws_log_writer {
 struct aws_log_writer_file_options {
     const char *filename;
     FILE *file;
+    int maximum_log_file_index;
 };
 
 AWS_EXTERN_C_BEGIN
