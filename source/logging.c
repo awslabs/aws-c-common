@@ -166,6 +166,7 @@ int aws_logger_init_standard(
     struct aws_log_writer_file_options file_writer_options = {
         .filename = options->filename,
         .file = options->file,
+        .maximum_log_file_index = 2,
     };
 
     if (aws_log_writer_init_file(writer, allocator, &file_writer_options)) {
