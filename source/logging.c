@@ -590,6 +590,8 @@ static void s_noalloc_stderr_logger_clean_up(struct aws_logger *logger) {
 
     aws_mutex_clean_up(&impl->lock);
 
+    aws_string_destroy(impl->file_name_base);
+
     aws_mem_release(logger->allocator, impl);
     AWS_ZERO_STRUCT(*logger);
 }
@@ -630,6 +632,7 @@ int aws_logger_init_noalloc(
             impl->should_close = true;
             impl->maximum_log_index = options->maximum_log_file_index;
             impl->maximum_log_file_bytes = options->maximum_log_file_size;
+            impl->file_name_base = aws_string_new_from_c_str(allocator, options->filename);
         } else {
             impl->file = stderr;
             impl->should_close = false;
