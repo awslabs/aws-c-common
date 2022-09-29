@@ -213,6 +213,9 @@ struct aws_logger_standard_options {
     enum aws_log_level level;
     const char *filename;
     FILE *file;
+
+    int maximum_log_file_index;
+    size_t maximum_log_file_size;
 };
 
 AWS_EXTERN_C_BEGIN

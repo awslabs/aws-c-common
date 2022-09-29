@@ -178,7 +178,8 @@ int aws_log_writer_init_file(
     struct aws_log_writer *writer,
     struct aws_allocator *allocator,
     struct aws_log_writer_file_options *options) {
-    return s_aws_file_writer_init_internal(writer, allocator, options->filename, options->file, options->maximum_log_file_index);
+    return s_aws_file_writer_init_internal(
+        writer, allocator, options->filename, options->file, options->maximum_log_file_index);
 }
 
 void aws_log_writer_clean_up(struct aws_log_writer *writer) {

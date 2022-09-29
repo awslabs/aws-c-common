@@ -446,7 +446,57 @@ struct aws_logger_noalloc {
     FILE *file;
     bool should_close;
     struct aws_mutex lock;
+
+    size_t current_log_file_bytes;
+    size_t maximum_log_file_bytes;
+    int next_log_file_index;
+    int maximum_log_index;
+    struct aws_string *file_name_base;
 };
+
+static struct aws_string *s_no_alloc_compute_log_file_name(
+    struct aws_logger_noalloc *logger,
+    struct aws_allocator *allocator) {
+
+    if (logger->maximum_log_index > 0) {
+        char name_buffer[512];
+        snprintf(
+            name_buffer,
+            AWS_ARRAY_SIZE(name_buffer),
+            "%s%d",
+            aws_string_c_str(logger->file_name_base),
+            logger->next_log_file_index);
+
+        return aws_string_new_from_array(allocator, (const uint8_t *)name_buffer, AWS_ARRAY_SIZE(name_buffer));
+    } else {
+        return aws_string_new_from_string(allocator, logger->file_name_base);
+    }
+}
+
+static int s_aws_file_writer_create_file(struct aws_logger_noalloc *logger, struct aws_allocator *allocator) {
+    logger->current_log_file_bytes = 0;
+
+    struct aws_string *file_name = s_no_alloc_compute_log_file_name(logger, allocator);
+    if (file_name == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    if (logger->maximum_log_index > 0) {
+        logger->next_log_file_index++;
+        if (logger->next_log_file_index > logger->maximum_log_index) {
+            logger->next_log_file_index = 0;
+        }
+    }
+
+    logger->file = aws_fopen(aws_string_c_str(file_name), "w+");
+    aws_string_destroy(file_name);
+
+    if (logger->file == NULL) {
+        return aws_translate_and_raise_io_error(errno);
+    }
+
+    return AWS_OP_SUCCESS;
+}
 
 static enum aws_log_level s_noalloc_stderr_logger_get_log_level(struct aws_logger *logger, aws_log_subject_t subject) {
     (void)subject;
@@ -501,8 +551,24 @@ static int s_noalloc_stderr_logger_log(
 
     aws_mutex_lock(&impl->lock);
 
+    if (impl->file == NULL) {
+        if (s_aws_file_writer_create_file(impl, logger->allocator)) {
+            return AWS_OP_ERR;
+        }
+    }
+
     int write_result = AWS_OP_SUCCESS;
-    if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
+    size_t bytes_written = fwrite(format_buffer, 1, format_data.amount_written, impl->file);
+    impl->current_log_file_bytes += bytes_written;
+
+    if (impl->maximum_log_file_bytes > 0 && impl->current_log_file_bytes >= impl->maximum_log_file_bytes) {
+        if (impl->should_close) {
+            fclose(impl->file);
+            impl->file = NULL;
+        }
+    }
+
+    if (bytes_written < format_data.amount_written) {
         aws_translate_and_raise_io_error(errno);
         write_result = AWS_OP_ERR;
     }
@@ -561,8 +627,9 @@ int aws_logger_init_noalloc(
         impl->should_close = false;
     } else { /* _MSC_VER */
         if (options->filename != NULL) {
-            impl->file = aws_fopen(options->filename, "w");
             impl->should_close = true;
+            impl->maximum_log_index = options->maximum_log_file_index;
+            impl->maximum_log_file_bytes = options->maximum_log_file_size;
         } else {
             impl->file = stderr;
             impl->should_close = false;
