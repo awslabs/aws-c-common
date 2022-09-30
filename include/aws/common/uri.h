@@ -1,5 +1,5 @@
-#ifndef AWS_IO_URI_H
-#define AWS_IO_URI_H
+#ifndef AWS_COMMON_URI_H
+#define AWS_COMMON_URI_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
@@ -159,4 +159,4 @@ AWS_COMMON_API int aws_byte_buf_append_decoding_uri(struct aws_byte_buf *buffer,
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_IO_URI_H */
+#endif /* AWS_COMMON_URI_H */
