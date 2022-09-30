@@ -5,7 +5,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/common/common.h>
+#include <aws/common/byte_buf.h>
 
 #ifndef _WIN32
 #    include <pthread.h>
@@ -67,6 +67,9 @@ struct aws_thread_options {
     int32_t cpu_id;
 
     enum aws_thread_join_strategy join_strategy;
+
+    /* Thread name, for debugging purpose */
+    struct aws_byte_cursor name;
 };
 
 #ifdef _WIN32
