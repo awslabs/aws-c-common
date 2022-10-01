@@ -120,7 +120,8 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
     }
 }
 
-/* Must be called from the thread itself */
+/* This must be called from the thread itself.
+ * (only necessary for Apple, but we'll do it that way on every platform for consistency) */
 static void s_set_thread_name(pthread_t thread_id, const char *name) {
 #if defined(__APPLE__)
     (void)thread_id;
@@ -143,6 +144,14 @@ static void *thread_fn(void *arg) {
      */
     wrapper_ptr->thread_copy.thread_id = aws_thread_current_thread_id();
 
+    /* If there's a name, set it.
+     * Then free the aws_string before we make copies of the wrapper struct */
+    if (wrapper_ptr->name) {
+        s_set_thread_name(wrapper_ptr->thread_copy.thread_id, aws_string_c_str(wrapper_ptr->name));
+        aws_string_destroy(wrapper_ptr->name);
+        wrapper_ptr->name = NULL;
+    }
+
     struct thread_wrapper wrapper = *wrapper_ptr;
     struct aws_allocator *allocator = wrapper.allocator;
     tl_wrapper = &wrapper;
@@ -161,10 +170,6 @@ static void *thread_fn(void *arg) {
         }
     }
 
-    if (wrapper.name) {
-        s_set_thread_name(wrapper.thread_copy.thread_id, aws_string_c_str(wrapper.name));
-    }
-
     wrapper.func(wrapper.arg);
 
     /*
@@ -173,7 +178,8 @@ static void *thread_fn(void *arg) {
      */
     bool is_managed_thread = wrapper.thread_copy.detach_state == AWS_THREAD_MANAGED;
     if (!is_managed_thread) {
-        aws_mem_release(allocator, arg);
+        s_thread_wrapper_destroy(wrapper_ptr);
+        wrapper_ptr = NULL;
     }
 
     struct thread_atexit_callback *exit_callback_data = wrapper.atexit;
