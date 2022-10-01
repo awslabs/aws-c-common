@@ -10,8 +10,7 @@ function(aws_set_thread_name_method target)
         # On Windows we do a runtime check, instead of compile-time check
         return()
     elseif (APPLE)
-        # All modern Apple platforms have the same function, so no need for compile-time check.
-        # We don't support ancient Apple platforms.
+        # All Apple platforms we support have the same function, so no need for compile-time check.
         return()
     endif()
 
