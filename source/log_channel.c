@@ -217,7 +217,8 @@ int aws_log_channel_init_background(
     /*
      * Logging thread should need very little stack, but let's defer this to later
      */
-    struct aws_thread_options thread_options = {.stack_size = 0};
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    thread_options.name = aws_byte_cursor_from_c_str("aws-logger");
 
     if (aws_thread_launch(&impl->background_thread, s_background_thread_writer, channel, &thread_options) ==
         AWS_OP_SUCCESS) {
