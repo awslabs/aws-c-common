@@ -44,7 +44,7 @@ function(aws_set_thread_name_method target)
         return()
     endif()
 
-    # it takes 3 args on modern NetBSD
+    # But on NetBSD it takes 3!
     check_c_source_compiles("
         ${c_source_start}
         pthread_setname_np(thread_id, \"asdf\", NULL);
@@ -55,5 +55,5 @@ function(aws_set_thread_name_method target)
         return()
     endif()
 
-    # And on older/weirder platforms it's just not supported
+    # And on many older/weirder platforms it's just not supported
 endfunction()
