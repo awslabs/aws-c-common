@@ -10,7 +10,7 @@ function(aws_set_thread_name_method target)
         # On Windows we do a runtime check, instead of compile-time check
         return()
     elseif (APPLE)
-        # Apple always does it the same way, so no need for compile-time check
+        # All modern Apple OSs are the same, and we don't support ancient APPLE, so no need for compile-time check
         return()
     endif()
 
@@ -31,6 +31,7 @@ function(aws_set_thread_name_method target)
 
     set(c_source_end "}")
 
+    # pthread_setname_np() usually takes 2 args
     check_c_source_compiles("
         ${c_source_start}
         pthread_setname_np(thread_id, \"asdf\");
@@ -41,6 +42,7 @@ function(aws_set_thread_name_method target)
         return()
     endif()
 
+    # it takes 3 args on modern NetBSD
     check_c_source_compiles("
         ${c_source_start}
         pthread_setname_np(thread_id, \"asdf\", NULL);
@@ -50,4 +52,6 @@ function(aws_set_thread_name_method target)
         target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_SETNAME_TAKES_3ARGS)
         return()
     endif()
+
+    # And on older/weirder platforms it's just not supported
 endfunction()
