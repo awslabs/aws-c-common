@@ -8,6 +8,7 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
 #include <aws/common/private/thread_shared.h>
+#include <aws/common/string.h>
 
 #include <Windows.h>
 
