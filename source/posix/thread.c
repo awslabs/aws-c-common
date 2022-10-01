@@ -169,7 +169,6 @@ static void *thread_fn(void *arg) {
             AWS_LOGF_WARN(AWS_LS_COMMON_THREAD, "call to set_mempolicy() failed with errno %d", errno);
         }
     }
-
     wrapper.func(wrapper.arg);
 
     /*
@@ -350,7 +349,7 @@ int aws_thread_launch(
         CPU_ZERO(&cpuset);
         CPU_SET((uint32_t)options->cpu_id, &cpuset);
 
-        /* If this fails, just warn. The thread has already launched, we can't take it back. */
+        /* If this fails, just warn. We can't fail anymore, the thread has already launched. */
         int setaffinity_return = pthread_setaffinity_np(thread->thread_id, sizeof(cpuset), &cpuset);
         if (setaffinity_return) {
             AWS_LOGF_WARN(

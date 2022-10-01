@@ -68,7 +68,10 @@ struct aws_thread_options {
 
     enum aws_thread_join_strategy join_strategy;
 
-    /* Thread name, for debugging purpose. Length should be <=15 for max compatibility across platforms. */
+    /**
+     * Thread name, for debugging purpose.
+     * Length should be <=15 for max compatibility across platforms.
+     */
     struct aws_byte_cursor name;
 };
 

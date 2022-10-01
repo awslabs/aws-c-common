@@ -10,13 +10,15 @@ function(aws_set_thread_name_method target)
         # On Windows we do a runtime check, instead of compile-time check
         return()
     elseif (APPLE)
-        # All modern Apple OSs are the same, and we don't support ancient APPLE, so no need for compile-time check
+        # All modern Apple platforms have the same function, so no need for compile-time check.
+        # We don't support ancient Apple platforms.
         return()
     endif()
 
     list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
     list(APPEND CMAKE_REQUIRED_LIBRARIES pthread)
 
+    # The start of the test program
     set(c_source_start "
         #define _GNU_SOURCE
         #include <pthread.h>
@@ -29,6 +31,7 @@ function(aws_set_thread_name_method target)
             pthread_t thread_id;
         ")
 
+    # The end of the test program
     set(c_source_end "}")
 
     # pthread_setname_np() usually takes 2 args
