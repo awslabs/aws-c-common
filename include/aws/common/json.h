@@ -279,6 +279,16 @@ int aws_json_const_iterate_array(
 // Checks
 
 /**
+ * Checks whether two json values are equivalent.
+ * @param a first value to compare.
+ * @param b second value to compare.
+ * @param is_case_sensitive case sensitive compare or not.
+ * @return True is values are equal, false otherwise
+ */
+AWS_COMMON_API
+bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_json_value *b, bool is_case_sensitive);
+
+/**
  * Checks if the aws_json_value is a string.
  * @param value The aws_json_value to check.
  * @return True if the aws_json_value is a string aws_json_value, otherwise false.

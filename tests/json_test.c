@@ -105,6 +105,13 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_NOT_NULL(root);
     ASSERT_TRUE(aws_json_value_is_object(root));
 
+    ASSERT_TRUE(aws_json_value_compare(root, root, true));
+    ASSERT_TRUE(aws_json_value_compare(root, root, false));
+
+    struct aws_json_value *temp = aws_json_value_new_null(allocator);
+    ASSERT_FALSE(aws_json_value_compare(root, temp, true));
+    aws_json_value_destroy(temp);
+
     // Testing valid array
     struct aws_json_value *array_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("array"));
     ASSERT_NOT_NULL(array_node);
