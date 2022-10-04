@@ -412,6 +412,9 @@ int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value
 struct aws_json_value *aws_json_value_new_from_string(struct aws_allocator *allocator, struct aws_byte_cursor string) {
     struct aws_string *tmp = aws_string_new_from_cursor((struct aws_allocator *)allocator, &string);
     struct cJSON *cjson = cJSON_Parse(aws_string_c_str(tmp));
+    if (cjson == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_JSON_PARSER, "Failed to parse json at %s", cJSON_GetErrorPtr());
+    }
     aws_string_destroy_secure(tmp);
     return (void *)cjson;
 }
