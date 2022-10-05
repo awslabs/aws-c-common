@@ -520,7 +520,7 @@ static int s_test_uri_ipv6_no_port_parse(struct aws_allocator *allocator, void *
     return AWS_OP_SUCCESS;
 }
 
-AWS_TEST_CASE(uri_ipv6_parse, s_test_uri_ipv6_parse);
+AWS_TEST_CASE(uri_ipv6_no_port_parse, s_test_uri_ipv6_no_port_parse);
 
 static int s_test_uri_invalid_scheme_parse(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
