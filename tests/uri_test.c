@@ -493,6 +493,8 @@ static int s_test_uri_ipv6_parse(struct aws_allocator *allocator, void *ctx) {
     return AWS_OP_SUCCESS;
 }
 
+AWS_TEST_CASE(uri_ipv6_parse, s_test_uri_ipv6_parse);
+
 static int s_test_uri_ipv6_no_port_parse(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     const char *str_uri = "https://[2001:db8:85a3:8d3:1319:8a2e:370:7348%25en0]";
