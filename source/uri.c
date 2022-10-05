@@ -355,7 +355,7 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
          * enclosed within square brackets. We must ignore any colons within
          * IPv6 literals and only search for port delimiter after closing bracket.*/
         uint8_t *port_search_start = authority_parse_csr.ptr;
-        if (authority_parse_csr.ptr[0] == '[') {
+        if (authority_parse_csr.len > 0 && authority_parse_csr.ptr[0] == '[') {
             port_search_start = memchr(authority_parse_csr.ptr, ']', authority_parse_csr.len);
             if (!port_search_start) {
                 parser->state = ERROR;
