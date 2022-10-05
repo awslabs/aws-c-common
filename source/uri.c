@@ -364,7 +364,8 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
             }
         }
 
-        uint8_t *port_delim = memchr(port_search_start, ':', authority_parse_csr.len);
+        uint8_t *port_delim = memchr(port_search_start, ':',
+            authority_parse_csr.len - (port_search_start - authority_parse_csr.ptr));
 
         if (!port_delim) {
             parser->uri->port = 0;
