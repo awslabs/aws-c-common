@@ -285,6 +285,12 @@ done:
     return result;
 }
 
+bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_json_value *b, bool is_case_sensitive) {
+    struct cJSON *cjson_a = (struct cJSON *)a;
+    struct cJSON *cjson_b = (struct cJSON *)b;
+    return cJSON_Compare(cjson_a, cjson_b, is_case_sensitive);
+}
+
 bool aws_json_value_is_string(const struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
