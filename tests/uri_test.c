@@ -507,7 +507,7 @@ static int s_test_uri_ipv6_no_port_parse(struct aws_allocator *allocator, void *
     ASSERT_BIN_ARRAYS_EQUALS(expected_scheme.ptr, expected_scheme.len, uri.scheme.ptr, uri.scheme.len);
 
     struct aws_byte_cursor expected_authority =
-        aws_byte_cursor_from_c_str("[2001:db8:85a3:8d3:1319:8a2e:370:7348%25en0]:443");
+        aws_byte_cursor_from_c_str("[2001:db8:85a3:8d3:1319:8a2e:370:7348%25en0]");
     ASSERT_BIN_ARRAYS_EQUALS(expected_authority.ptr, expected_authority.len, uri.authority.ptr, uri.authority.len);
 
     struct aws_byte_cursor expected_host = aws_byte_cursor_from_c_str("[2001:db8:85a3:8d3:1319:8a2e:370:7348%25en0]");
