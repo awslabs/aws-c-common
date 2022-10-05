@@ -350,7 +350,21 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
                 parser->uri->user = userinfo_parse_csr;
             }
         }
-        uint8_t *port_delim = memchr(authority_parse_csr.ptr, ':', authority_parse_csr.len);
+
+        /* RFC-3986 section 3.2: host identified by IPv6 literal address is
+         * enclosed within square brackets. We must ignore any colons within
+         * IPv6 literals and only search for port delimiter after closing bracket.*/
+        uint8_t *port_search_start = authority_parse_csr.ptr;
+        if (authority_parse_csr.ptr[0] == '[') {
+            port_search_start = memchr(authority_parse_csr.ptr, ']', authority_parse_csr.len);
+            if (!port_search_start) {
+                parser->state = ERROR;
+                aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+                return;
+            }
+        }
+
+        uint8_t *port_delim = memchr(port_search_start, ':', authority_parse_csr.len);
 
         if (!port_delim) {
             parser->uri->port = 0;
