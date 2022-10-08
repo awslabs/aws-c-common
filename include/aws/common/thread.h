@@ -52,6 +52,13 @@ enum aws_thread_join_strategy {
     AWS_TJS_MANAGED,
 };
 
+/**
+ * Thread names should be 15 characters or less.
+ * Longer names will not display on Linux.
+ * This length does not include a null terminator.
+ */
+#define AWS_THREAD_NAME_RECOMMENDED_LEN 15
+
 struct aws_thread_options {
     size_t stack_size;
     /* default is -1. If you set this to anything >= 0, and the platform supports it, the thread will be pinned to
@@ -70,7 +77,8 @@ struct aws_thread_options {
 
     /**
      * Thread name, for debugging purpose.
-     * Length should be <=15 for max compatibility across platforms.
+     * The length should not exceed AWS_THREAD_NAME_RECOMMENDED_LEN(15)
+     * if you want it to display properly on all platforms.
      */
     struct aws_byte_cursor name;
 };
