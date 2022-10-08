@@ -154,8 +154,6 @@ static void aws_logger_thread(void *thread_data) {
     while (true) {
         aws_mutex_lock(&impl->sync);
 
-        /* This is its own function that's where this thread spends 99% of its time,
-         * and */
         aws_logger_listen_for_messages(impl);
 
         size_t line_count = aws_array_list_length(&impl->pending_log_lines);
