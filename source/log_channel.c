@@ -233,8 +233,7 @@ int aws_log_channel_init_background(
     struct aws_thread_options thread_options = *aws_default_thread_options();
     thread_options.name = aws_byte_cursor_from_c_str("AwsLogger");
 
-    if (aws_thread_launch(&impl->background_thread, aws_logger_thread, channel, &thread_options) ==
-        AWS_OP_SUCCESS) {
+    if (aws_thread_launch(&impl->background_thread, aws_logger_thread, channel, &thread_options) == AWS_OP_SUCCESS) {
         return AWS_OP_SUCCESS;
     }
 
