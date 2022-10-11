@@ -184,6 +184,10 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_TRUE(strcmp(aws_string_c_str(sub_a_string), "b") == 0);
     aws_string_destroy_secure(sub_a_string);
 
+    struct aws_json_value *duplicate = aws_json_value_duplicate(object_node);
+    ASSERT_TRUE(aws_json_value_compare(object_node, duplicate, true));
+    aws_json_value_destroy(duplicate);
+
     struct json_parse_test_data test_data;
     test_data.elements_encountered = 0;
     test_data.all_elements_are_strings = true;
