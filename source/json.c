@@ -294,7 +294,8 @@ bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_jso
 struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
-        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
     }
 
     return (void *)cJSON_Duplicate(cjson, true);
