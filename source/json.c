@@ -298,6 +298,11 @@ struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *val
         return NULL;
     }
 
+    struct cJSON *ret = cJSON_Duplicate(cjson, true);
+    if (ret == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
     return (void *)cJSON_Duplicate(cjson, true);
 }
 
