@@ -303,7 +303,7 @@ struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *val
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    return (void *)cJSON_Duplicate(cjson, true);
+    return (void *)ret;
 }
 
 bool aws_json_value_is_string(const struct aws_json_value *value) {
