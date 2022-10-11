@@ -291,6 +291,21 @@ bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_jso
     return cJSON_Compare(cjson_a, cjson_b, is_case_sensitive);
 }
 
+struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *value) {
+    struct cJSON *cjson = (struct cJSON *)value;
+    if (cJSON_IsInvalid(cjson)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    struct cJSON *ret = cJSON_Duplicate(cjson, true);
+    if (ret == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    return (void *)ret;
+}
+
 bool aws_json_value_is_string(const struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
