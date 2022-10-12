@@ -292,8 +292,6 @@ static void s_parse_scheme(struct uri_parser *parser, struct aws_byte_cursor *st
     parser->state = ON_AUTHORITY;
 }
 
-static const char *s_default_path = "/";
-
 static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor *str) {
     uint8_t *location_of_slash = memchr(str->ptr, '/', str->len);
     uint8_t *location_of_qmark = memchr(str->ptr, '?', str->len);
@@ -302,8 +300,8 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
         parser->uri->authority.ptr = str->ptr;
         parser->uri->authority.len = str->len;
 
-        parser->uri->path.ptr = (uint8_t *)s_default_path;
-        parser->uri->path.len = 1;
+        parser->uri->path.ptr = NULL;
+        parser->uri->path.len = 0;
         parser->uri->path_and_query = parser->uri->path;
         parser->state = FINISHED;
         aws_byte_cursor_advance(str, parser->uri->authority.len);
