@@ -284,7 +284,7 @@ static int s_test_uri_root_only_parse(struct aws_allocator *allocator, void *ctx
 
     ASSERT_UINT_EQUALS(0, uri.port);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
@@ -294,6 +294,36 @@ static int s_test_uri_root_only_parse(struct aws_allocator *allocator, void *ctx
 }
 
 AWS_TEST_CASE(uri_root_only_parse, s_test_uri_root_only_parse);
+
+static int s_test_uri_root_slash_only_path_parse(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    const char *str_uri = "https://www.test.com/";
+
+    struct aws_byte_cursor uri_csr = aws_byte_cursor_from_c_str(str_uri);
+    struct aws_uri uri;
+    ASSERT_SUCCESS(aws_uri_init_parse(&uri, allocator, &uri_csr));
+
+    struct aws_byte_cursor expected_scheme = aws_byte_cursor_from_c_str("https");
+    ASSERT_BIN_ARRAYS_EQUALS(expected_scheme.ptr, expected_scheme.len, uri.scheme.ptr, uri.scheme.len);
+
+    struct aws_byte_cursor expected_authority = aws_byte_cursor_from_c_str("www.test.com");
+    ASSERT_BIN_ARRAYS_EQUALS(expected_authority.ptr, expected_authority.len, uri.authority.ptr, uri.authority.len);
+
+    struct aws_byte_cursor expected_host = aws_byte_cursor_from_c_str("www.test.com");
+    ASSERT_BIN_ARRAYS_EQUALS(expected_host.ptr, expected_host.len, uri.host_name.ptr, uri.host_name.len);
+
+    ASSERT_UINT_EQUALS(0, uri.port);
+
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
+
+    ASSERT_UINT_EQUALS(0u, uri.query_string.len);
+
+    aws_uri_clean_up(&uri);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(uri_root_slash_only_path_parse, s_test_uri_root_slash_only_path_parse);
 
 static int s_test_uri_userinfo_no_password_parse(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -324,7 +354,7 @@ static int s_test_uri_userinfo_no_password_parse(struct aws_allocator *allocator
 
     ASSERT_UINT_EQUALS(0, uri.port);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
@@ -361,7 +391,7 @@ static int s_test_uri_empty_user_parse(struct aws_allocator *allocator, void *ct
 
     ASSERT_UINT_EQUALS(0, uri.port);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
@@ -453,7 +483,7 @@ static int s_test_uri_ipv4_parse(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(8443, uri.port);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
@@ -484,7 +514,7 @@ static int s_test_uri_ipv6_parse(struct aws_allocator *allocator, void *ctx) {
 
     ASSERT_UINT_EQUALS(443, uri.port);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
@@ -513,7 +543,7 @@ static int s_test_uri_ipv6_no_port_parse(struct aws_allocator *allocator, void *
     struct aws_byte_cursor expected_host = aws_byte_cursor_from_c_str("[2001:db8:85a3:8d3:1319:8a2e:370:7348%25en0]");
     ASSERT_BIN_ARRAYS_EQUALS(expected_host.ptr, expected_host.len, uri.host_name.ptr, uri.host_name.len);
 
-    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor expected_path = aws_byte_cursor_from_c_str("");
     ASSERT_BIN_ARRAYS_EQUALS(expected_path.ptr, expected_path.len, uri.path.ptr, uri.path.len);
 
     ASSERT_UINT_EQUALS(0u, uri.query_string.len);
