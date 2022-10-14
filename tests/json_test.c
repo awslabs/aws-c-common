@@ -211,6 +211,10 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_INT_EQUALS(aws_json_value_get_number(string_node, NULL), AWS_OP_ERR);
 
     aws_json_value_destroy(root);
+
+    //Make sure that destroying NULL does not have any bad effects.
+    aws_json_value_destroy(NULL);
+
     aws_common_library_clean_up();
 
     return AWS_OP_SUCCESS;
