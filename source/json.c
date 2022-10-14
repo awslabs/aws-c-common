@@ -383,7 +383,7 @@ void aws_json_module_cleanup(void) {
 
 void aws_json_value_destroy(struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
-    if (!cJSON_IsInvalid(cjson)) {
+    if (cjson != NULL && !cJSON_IsInvalid(cjson)) {
         cJSON_Delete(cjson);
     }
 }
