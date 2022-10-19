@@ -56,7 +56,7 @@ struct aws_byte_cursor {
 #define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
 
 /**
- * Helper Macro for inititilizing a byte cursor from a string literal
+ * Helper Macro for initializing a byte cursor from a string literal
  */
 #define AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(literal)                                                                 \
     { .ptr = (uint8_t *)(const char *)(literal), .len = sizeof(literal) - 1 }
@@ -229,15 +229,23 @@ AWS_COMMON_API
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str);
 
 /**
- * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.
+ * No copies, no buffer allocations. Iterates over input_str, and returns the
+ * next substring between split_on instances relative to previous substr.
+ * Function assumes that input_str implicitly starts and ends with split_on
+ * char, so first substr will be from input_str start to first occurrence of
+ * split_on and last substr will be from last occurrence of split_on until the
+ * end of string.
+ * 
+ * Returns true if substr has value and false if not (substr will be zeroed in
+ * that case). 
+ * 
+ * Note: It is the user's responsibility zero-initialize substr before the first call.
  *
  * Edge case rules are as follows:
  * If the input is an empty string, an empty cursor will be the one entry returned.
  * If the input begins with split_on, an empty cursor will be the first entry returned.
  * If the input has two adjacent split_on tokens, an empty cursor will be returned.
  * If the input ends with split_on, an empty cursor will be returned last.
- *
- * It is the user's responsibility zero-initialize substr before the first call.
  *
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.
