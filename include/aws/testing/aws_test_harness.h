@@ -301,19 +301,19 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                         \
+#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                       \
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
         size_t assert_ex_s = (cursor).len;                                                                             \
-        const uint8_t *assert_got_p = (const uint8_t *)cstring;                                       \
-        size_t assert_got_s = strlen(cstring);                                                                           \
+        const uint8_t *assert_got_p = (const uint8_t *)cstring;                                                        \
+        size_t assert_got_s = strlen(cstring);                                                                         \
         if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
             break;                                                                                                     \
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
             fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
@@ -335,7 +335,7 @@ static int total_failures;
                 fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
             }                                                                                                          \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \

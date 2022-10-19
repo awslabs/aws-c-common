@@ -235,10 +235,10 @@ bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, con
  * char, so first substr will be from input_str start to first occurrence of
  * split_on and last substr will be from last occurrence of split_on until the
  * end of string.
- * 
+ *
  * Returns true if substr has value and false if not (substr will be zeroed in
- * that case). 
- * 
+ * that case).
+ *
  * Note: It is the user's responsibility zero-initialize substr before the first call.
  *
  * Edge case rules are as follows:
