@@ -327,5 +327,20 @@ static int s_test_byte_cursor_next_split(struct aws_allocator *allocator, void *
     ASSERT_FALSE(aws_byte_cursor_next_split(&to_split3, ';', &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
+    struct aws_byte_cursor to_split4 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("A;B");
+    struct aws_byte_cursor result4 = {0};
+    bool is_found = false;
+    ASSERT_TRUE(aws_byte_cursor_next_split_with_found(&to_split4, ';', &result4, &is_found));
+    ASSERT_TRUE(is_found);
+
+    ASSERT_TRUE(aws_byte_cursor_next_split_with_found(&to_split4, ';', &result4, &is_found));
+    ASSERT_FALSE(is_found);
+
+    struct aws_byte_cursor to_split5 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("AAA");
+    struct aws_byte_cursor result5 = {0};
+    is_found = false;
+    ASSERT_TRUE(aws_byte_cursor_next_split_with_found(&to_split5, ';', &result5, &is_found));
+    ASSERT_FALSE(is_found);
+
     return 0;
 }

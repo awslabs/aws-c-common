@@ -231,21 +231,24 @@ bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, con
 /**
  * No copies, no buffer allocations. Iterates over input_str, and returns the
  * next substring between split_on instances relative to previous substr.
- * Function assumes that input_str implicitly starts and ends with split_on
- * char, so first substr will be from input_str start to first occurrence of
- * split_on and last substr will be from last occurrence of split_on until the
- * end of string.
+ * Behaves similar to strtok with substr being used as state for next split.
  *
- * Returns true if substr has value and false if not (substr will be zeroed in
- * that case).
+ * Returns true each time substr is set and false when there is no more splits
+ * (substr is set to empty in that case).
+ *
+ * Example usage.
+ * struct aws_byte_cursor substr = {0};
+ * while (aws_byte_cursor_next_split(&input_str, ';', &substr)) {
+ *   // ...use substr...
+ * }
  *
  * Note: It is the user's responsibility zero-initialize substr before the first call.
  *
  * Edge case rules are as follows:
- * If the input is an empty string, an empty cursor will be the one entry returned.
- * If the input begins with split_on, an empty cursor will be the first entry returned.
- * If the input has two adjacent split_on tokens, an empty cursor will be returned.
- * If the input ends with split_on, an empty cursor will be returned last.
+ * empty input will have single empty split. ex. "" splits into ""
+ * if input starts with split_on then first split is empty. ex ";A" splits into "", "A"
+ * adjacent split tokens result in empty split. ex "A;;B" splits into "A", "", "B"
+ * If the input ends with split_on, last split is empty. ex. "A;" splits into "A", ""
  *
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.
@@ -255,6 +258,17 @@ bool aws_byte_cursor_next_split(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr);
+
+/*
+ * Same exact function as aws_byte_cursor_next_split, but has additional out
+ * argument to indicate whether split_on was found.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_next_split_with_found(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    char split_on,
+    struct aws_byte_cursor *AWS_RESTRICT substr,
+    bool *out_is_found);
 
 /**
  * No copies, no buffer allocations. Fills in output with a list of
