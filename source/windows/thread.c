@@ -217,7 +217,7 @@ typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
     PPROCESSOR_NUMBER lpPreviousIdealProcessor);
 static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
 
-typedef HRESULT SetThreadDescription_fn(HANDLE hThread, PCWSTR lpThreadDescription);
+typedef HRESULT WINAPI SetThreadDescription_fn(HANDLE hThread, PCWSTR lpThreadDescription);
 static SetThreadDescription_fn *s_SetThreadDescription;
 
 static void s_check_thread_functions(void *user_data) {
