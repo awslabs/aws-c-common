@@ -57,7 +57,7 @@ enum aws_thread_join_strategy {
  * Longer names will not display on Linux.
  * This length does not include a null terminator.
  */
-#define AWS_THREAD_NAME_RECOMMENDED_LEN 15
+#define AWS_THREAD_NAME_RECOMMENDED_STRLEN 15
 
 struct aws_thread_options {
     size_t stack_size;
@@ -77,7 +77,7 @@ struct aws_thread_options {
 
     /**
      * Thread name, for debugging purpose.
-     * The length should not exceed AWS_THREAD_NAME_RECOMMENDED_LEN(15)
+     * The length should not exceed AWS_THREAD_NAME_RECOMMENDED_STRLEN(15)
      * if you want it to display properly on all platforms.
      */
     struct aws_byte_cursor name;
