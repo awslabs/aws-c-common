@@ -197,19 +197,9 @@ bool aws_byte_cursor_next_split(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr) {
-    bool is_found = false;
-    return aws_byte_cursor_next_split_with_found(input_str, split_on, substr, &is_found);
-}
-
-bool aws_byte_cursor_next_split_with_found(
-    const struct aws_byte_cursor *AWS_RESTRICT input_str,
-    char split_on,
-    struct aws_byte_cursor *AWS_RESTRICT substr,
-    bool *out_is_found) {
 
     AWS_PRECONDITION(aws_byte_cursor_is_valid(input_str));
 
-    *out_is_found = false;
     /* If substr is zeroed-out, then this is the first run. */
     const bool first_run = substr->ptr == NULL;
 
@@ -257,7 +247,6 @@ bool aws_byte_cursor_next_split_with_found(
 
         /* Character found, update string length. */
         substr->len = new_location - substr->ptr;
-        *out_is_found = true;
     }
 
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(substr));

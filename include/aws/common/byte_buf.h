@@ -259,17 +259,6 @@ bool aws_byte_cursor_next_split(
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr);
 
-/*
- * Same exact function as aws_byte_cursor_next_split, but has additional out
- * argument to indicate whether split_on was found.
- */
-AWS_COMMON_API
-bool aws_byte_cursor_next_split_with_found(
-    const struct aws_byte_cursor *AWS_RESTRICT input_str,
-    char split_on,
-    struct aws_byte_cursor *AWS_RESTRICT substr,
-    bool *out_is_found);
-
 /**
  * No copies, no buffer allocations. Fills in output with a list of
  * aws_byte_cursor instances where buffer is an offset into the input_str and
