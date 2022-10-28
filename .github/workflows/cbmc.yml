@@ -1,0 +1,95 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+name: Run CBMC proofs
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+
+jobs:
+  run_cbmc_proofs:
+    env:
+      CBMC_VERSION: 5.68.0
+      CBMC_VIEWER_VERSION: 3.6
+      LITANI_VERSION: 1.27.0
+      PROOFS_DIR: verification/cbmc/proofs
+    name: cbmc_proofs
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Install CBMC ${{ env.CBMC_VERSION }}
+        id: install_cbmc
+        shell: bash
+        run: |
+          curl -o cbmc.deb -L \
+            https://github.com/diffblue/cbmc/releases/download/cbmc-${{ env.CBMC_VERSION }}/ubuntu-20.04-cbmc-${{ env.CBMC_VERSION }}-Linux.deb
+          sudo apt-get update \
+              && sudo apt-get install --no-install-recommends --yes ./cbmc.deb \
+              && rm -r cbmc.deb
+      - name: Install CBMC viewer ${{ env.CBMC_VIEWER_VERSION }}
+        id: install_cbmc_viewer
+        shell: bash
+        run: |
+          sudo apt-get update \
+              && sudo apt-get install --no-install-recommends --yes build-essential \
+              && sudo apt-get install --no-install-recommends --yes universal-ctags
+          pip3 install cbmc-viewer==${{ env.CBMC_VIEWER_VERSION }}
+      - name: Install Litani ${{ env.LITANI_VERSION }}
+        id: install_litani
+        shell: bash
+        run: |
+          curl -o litani.deb -L \
+            https://github.com/awslabs/aws-build-accumulator/releases/download/${{ env.LITANI_VERSION }}/litani-${{ env.LITANI_VERSION }}.deb
+          sudo apt-get update \
+              && sudo apt-get install --no-install-recommends --yes ./litani.deb \
+              && rm -r litani.deb
+      - name: Run CBMC proofs with kissat
+        id: run_cbmc_proofs_with_kissat
+        shell: bash
+        env:
+          VERSION: 3.0.0
+          COMMIT_SHA: c25429f
+        run: |
+          git clone https://github.com/arminbiere/kissat.git \
+            && pushd kissat \
+            && git checkout ${COMMIT_SHA} \
+            && ./configure \
+            && pushd build \
+            && make ;
+          echo "$(pwd)/kissat" >> $GITHUB_PATH
+          export EXTERNAL_SAT_SOLVER="$(pwd)/kissat"
+          popd
+          popd
+          cd $PROOFS_DIR
+          ./run-cbmc-proofs.py
+      - name: Set artifact name
+        id: artifact
+        run: |
+          echo "name=${{ fromJson(toJson(github.event.repository)).name }}_$(date +%Y_%m_%d_%H_%M_%S)_cbmc" >> $GITHUB_OUTPUT
+      - name: Create final report archive
+        shell: bash
+        run: |
+          zip -r ${{  steps.artifact.outputs.name }}.zip $PROOFS_DIR/output/latest/html
+      - name: Upload final report archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: ${{ steps.artifact.outputs.name }}.zip
+      - name: Summarize execution of CBMC proofs
+        shell: bash
+        run: |
+          cp $PROOFS_DIR/lib/summarize.py .
+          python3 summarize.py $PROOFS_DIR/output/latest/html/run.json > summary.md
+          cat summary.md >> $GITHUB_STEP_SUMMARY
+          cat summary.md
+      - name: Exit
+        shell: bash
+        run: |
+          cat summary.md | [[ $(grep -cim1 -e "fail" -e "in progress") -eq 0 ]] ; echo $?

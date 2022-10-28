@@ -3,6 +3,7 @@
 
 import json
 import logging
+import sys
 
 
 def _get_max_length_per_column_list(data):
@@ -90,3 +91,7 @@ def print_proof_results(out_file):
                 print(_get_rendered_table(summary))
     except Exception as ex: # pylint: disable=broad-except
         logging.critical("Could not print results. Exception: %s", str(ex))
+
+
+if __name__ == '__main__':
+    print_proof_results(sys.argv[1])
