@@ -68,7 +68,7 @@ jobs:
           popd
           popd
           cd $PROOFS_DIR
-          ./run-cbmc-proofs.py -p aws_string_new_from_string
+          ./run-cbmc-proofs.py -p aws_string_new_from_string aws_priority_queue_s_remove_node
       - name: Set artifact name
         id: artifact
         run: |
