@@ -68,7 +68,7 @@ jobs:
           popd
           popd
           cd $PROOFS_DIR
-          ./run-cbmc-proofs.py
+          ./run-cbmc-proofs.py -p aws_string_new_from_string
       - name: Set artifact name
         id: artifact
         run: |
