@@ -69,6 +69,18 @@ jobs:
           popd
           cd $PROOFS_DIR
           ./run-cbmc-proofs.py -p aws_string_new_from_string aws_priority_queue_s_remove_node
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ secrets.PROOF_CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.PROOF_CI_IAM_ROLE }}
+          role-session-name: cbmc_ci
+          role-duration-seconds: 3600
+      - name: Upload final report directory to AWS
+        id: aws_upload
+        shell: bash
+        run: |
+          aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.PROOF_CI_S3_BUCKET }}/BuildArtifacts/${{ github.event.after }}/final --only-show-errors
       - name: Set artifact name
         id: artifact
         run: |
