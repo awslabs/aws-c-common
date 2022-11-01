@@ -12,6 +12,7 @@ jobs:
       CBMC_VERSION: 5.68.0
       CBMC_VIEWER_VERSION: 3.6
       LITANI_VERSION: 1.27.0
+      PROOF_CI_CLOUDFRONT_DOMAIN_URL: d2blln0mu8e500.cloudfront.net
       PROOFS_DIR: verification/cbmc/proofs
     name: cbmc_proofs
     runs-on: ubuntu-20.04
@@ -69,6 +70,9 @@ jobs:
           popd
           cd $PROOFS_DIR
           ./run-cbmc-proofs.py -p aws_string_new_from_string aws_priority_queue_s_remove_node
+      - name: Set S3 URI
+        id: s3_uri
+        run: echo "name=BuildArtifacts/${{ github.event.after }}/final" >> $GITHUB_OUTPUT
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
@@ -80,7 +84,7 @@ jobs:
         id: aws_upload
         shell: bash
         run: |
-          aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.PROOF_CI_S3_BUCKET }}/BuildArtifacts/${{ github.event.after }}/final --only-show-errors
+          aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.PROOF_CI_S3_BUCKET }}/${{ steps.s3_uri.outputs.name }} --only-show-errors
       - name: Set artifact name
         id: artifact
         run: |
@@ -97,8 +101,12 @@ jobs:
       - name: Summarize execution of CBMC proofs
         shell: bash
         run: |
-          cp $PROOFS_DIR/lib/summarize.py .
-          python3 summarize.py $PROOFS_DIR/output/latest/html/run.json > summary.md
+          echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)"
+          echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)" >> $GITHUB_STEP_SUMMARY
+          echo "## Summary of proof executions"
+          echo "## Summary of proof executions" >> $GITHUB_STEP_SUMMARY
+          cd $PROOFS_DIR/lib
+          python3 summarize.py ../output/latest/html/run.json > summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
           cat summary.md
       - name: Exit
