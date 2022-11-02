@@ -69,7 +69,7 @@ jobs:
           popd
           popd
           cd $PROOFS_DIR
-          ./run-cbmc-proofs.py -p aws_string_new_from_string aws_priority_queue_s_remove_node
+          ./run-cbmc-proofs.py -p aws_string_new_from_string
       - name: Set S3 URI
         id: s3_uri
         run: echo "name=BuildArtifacts/${{ github.event.after }}/final" >> $GITHUB_OUTPUT
@@ -101,15 +101,10 @@ jobs:
       - name: Summarize execution of CBMC proofs
         shell: bash
         run: |
-          echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)"
           echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)" >> $GITHUB_STEP_SUMMARY
-          echo "## Summary of proof executions"
           echo "## Summary of proof executions" >> $GITHUB_STEP_SUMMARY
           cd $PROOFS_DIR/lib
           python3 summarize.py ../output/latest/html/run.json > summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
           cat summary.md
-      - name: Exit
-        shell: bash
-        run: |
           cat summary.md | [[ $(grep -cim1 -e "fail" -e "in progress") -eq 0 ]] ; echo $?
