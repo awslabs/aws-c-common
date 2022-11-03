@@ -48,7 +48,7 @@ def _get_rendered_table(data):
     return "".join(table)
 
 
-def _get_status_and_proof_summaries(run_dict):
+def _get_status_and_proof_summaries(run_dict, cloudfront_final_report_prefix):
     """Parse a dict representing a Litani run and create lists summarizing the
     proof results.
 
@@ -64,7 +64,7 @@ def _get_status_and_proof_summaries(run_dict):
     The second sub-list maps each proof to its status.
     """
     count_statuses = {}
-    proofs = [["Proof", "Status"]]
+    proofs = [["Proof", "Status", "CBMC viewer report"]]
     for proof_pipeline in run_dict["pipelines"]:
         status_pretty_name = proof_pipeline["status"].title().replace("_", " ")
         try:
@@ -72,14 +72,15 @@ def _get_status_and_proof_summaries(run_dict):
         except KeyError:
             count_statuses[status_pretty_name] = 1
         proof = proof_pipeline["name"]
-        proofs.append([proof, status_pretty_name])
+        viewer_html_report = f"[Details]({cloudfront_final_report_prefix}/artifacts/{proof}/report/html/index.html)"
+        proofs.append([proof, status_pretty_name, viewer_html_report])
     statuses = [["Status", "Count"]]
     for status, count in count_statuses.items():
         statuses.append([status, str(count)])
     return [statuses, proofs]
 
 
-def print_proof_results(out_file):
+def print_proof_results(out_file, cloudfront_final_report_prefix):
     """
     Print 2 strings that summarize the proof results.
     When printing, each string will render as a GitHub flavored Markdown table.
@@ -87,11 +88,14 @@ def print_proof_results(out_file):
     try:
         with open(out_file, encoding='utf-8') as run_json:
             run_dict = json.load(run_json)
-            for summary in _get_status_and_proof_summaries(run_dict):
+            for summary in _get_status_and_proof_summaries(
+                    run_dict, cloudfront_final_report_prefix):
                 print(_get_rendered_table(summary))
     except Exception as ex: # pylint: disable=broad-except
         logging.critical("Could not print results. Exception: %s", str(ex))
 
 
 if __name__ == '__main__':
-    print_proof_results(sys.argv[1])
+    filename = sys.argv[1]
+    cloudfront_final_report_prefix = sys.argv[2]
+    print_proof_results(filename, cloudfront_final_report_prefix)

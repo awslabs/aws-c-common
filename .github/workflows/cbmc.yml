@@ -106,7 +106,7 @@ jobs:
           echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)" >> $GITHUB_STEP_SUMMARY
           echo "## Summary of proof executions" >> $GITHUB_STEP_SUMMARY
           cd $PROOFS_DIR/lib
-          python3 summarize.py ../output/latest/html/run.json > summary.md
+          python3 summarize.py ../output/latest/html/run.json https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }} > summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
           cat summary.md
           cat summary.md | [[ $(grep -cim1 -e "fail" -e "in progress") -eq 0 ]] ; echo $?
