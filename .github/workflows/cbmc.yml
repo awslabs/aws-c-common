@@ -12,7 +12,7 @@ jobs:
       CBMC_VERSION: 5.68.0
       CBMC_VIEWER_VERSION: 3.6
       LITANI_VERSION: 1.27.0
-      PROOF_CI_CLOUDFRONT_DOMAIN_URL: d2blln0mu8e500.cloudfront.net
+      PROOF_CI_CLOUDFRONT_DOMAIN_URL: d15devythnoyvy.cloudfront.net
       PROOFS_DIR: verification/cbmc/proofs
     name: cbmc_proofs
     runs-on: ubuntu-20.04
@@ -76,15 +76,15 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-region: ${{ secrets.PROOF_CI_AWS_REGION }}
-          role-to-assume: ${{ secrets.PROOF_CI_IAM_ROLE }}
+          aws-region: ${{ secrets.ALTERNATIVE_PROOF_CI_AWS_REGION }}
+          role-to-assume: ${{ secrets.ALTERNATIVE_PROOF_CI_IAM_ROLE }}
           role-session-name: cbmc_ci
           role-duration-seconds: 3600
       - name: Upload final report directory to AWS
         id: aws_upload
         shell: bash
         run: |
-          aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.PROOF_CI_S3_BUCKET }}/${{ steps.s3_uri.outputs.name }} --only-show-errors
+          aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.ALTERNATIVE_PROOF_CI_S3_BUCKET }}/${{ steps.s3_uri.outputs.name }} --only-show-errors
       - name: Set artifact name
         id: artifact
         run: |
