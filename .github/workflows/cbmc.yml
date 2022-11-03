@@ -92,7 +92,9 @@ jobs:
       - name: Create final report archive
         shell: bash
         run: |
-          zip -r ${{  steps.artifact.outputs.name }}.zip $PROOFS_DIR/output/latest/html
+          pushd $PROOFS_DIR/output/latest/html && zip -r ${{ steps.artifact.outputs.name }}.zip .
+          popd
+          mv $PROOFS_DIR/output/latest/html/${{ steps.artifact.outputs.name }}.zip .
       - name: Upload final report archive
         uses: actions/upload-artifact@v3
         with:
