@@ -23,6 +23,8 @@
 /* disables warning non const declared initializers for Microsoft compilers */
 #    pragma warning(disable : 4204)
 #    pragma warning(disable : 4706)
+/* sscanf warning */
+#    pragma warning(disable : 4996)
 #endif
 
 int aws_uuid_init(struct aws_uuid *uuid) {
