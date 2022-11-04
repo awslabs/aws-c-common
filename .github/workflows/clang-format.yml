@@ -15,5 +15,5 @@ jobs:
       uses: DoozyX/clang-format-lint-action@v0.3.1
       with:
         # List of extensions to check
-        extensions: c,h
-        source: 'source include'
+        extensions: c,h,inl
+        source: 'source include tests verification'
