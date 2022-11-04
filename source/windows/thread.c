@@ -8,6 +8,7 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/logging.h>
 #include <aws/common/private/thread_shared.h>
+#include <aws/common/string.h>
 
 #include <Windows.h>
 
@@ -216,13 +217,18 @@ typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
     PPROCESSOR_NUMBER lpPreviousIdealProcessor);
 static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
 
-static void s_check_thread_ideal_processor_function(void *user_data) {
+typedef HRESULT WINAPI SetThreadDescription_fn(HANDLE hThread, PCWSTR lpThreadDescription);
+static SetThreadDescription_fn *s_SetThreadDescription;
+
+static void s_check_thread_functions(void *user_data) {
     (void)user_data;
 
     s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadGroupAffinity");
     s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
+    s_SetThreadDescription = (SetThreadDescription_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadDescription");
 }
 
 int aws_thread_launch(
@@ -230,6 +236,9 @@ int aws_thread_launch(
     void (*func)(void *arg),
     void *arg,
     const struct aws_thread_options *options) {
+
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_functions_once, s_check_thread_functions, NULL);
 
     SIZE_T stack_size = 0;
     if (options && options->stack_size > 0) {
@@ -263,6 +272,15 @@ int aws_thread_launch(
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
+    if (options && (options->name.len > 0) && s_SetThreadDescription) {
+        /* Don't particularly care if this fails, it's just for debugging */
+        struct aws_wstring *name = aws_string_convert_to_wchar_from_byte_cursor(thread->allocator, &options->name);
+        if (name) {
+            s_SetThreadDescription(thread->thread_handle, aws_wstring_c_str(name));
+            aws_wstring_destroy(name);
+        }
+    }
+
     if (options && options->cpu_id >= 0) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
@@ -284,8 +302,6 @@ int aws_thread_launch(
             (uint64_t)group_afinity.Mask,
             (uint16_t)group_afinity.Group);
 
-        /* Check for functions that don't exist on ancient Windows */
-        aws_thread_call_once(&s_check_functions_once, s_check_thread_ideal_processor_function, NULL);
         if (!s_SetThreadGroupAffinity || !s_SetThreadIdealProcessorEx) {
             goto no_thread_affinity;
         }
