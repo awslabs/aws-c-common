@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-name: Run CBMC proofs
+name: Run CBMC proofs in GitHub Actions
 on:
   push:
     branches-ignore:
@@ -55,12 +55,11 @@ jobs:
         id: run_cbmc_proofs_with_kissat
         shell: bash
         env:
-          VERSION: 3.0.0
-          COMMIT_SHA: c25429f
+          KISSAT_COMMIT_SHA: c25429f
         run: |
           git clone https://github.com/arminbiere/kissat.git \
             && pushd kissat \
-            && git checkout ${COMMIT_SHA} \
+            && git checkout ${KISSAT_COMMIT_SHA} \
             && ./configure \
             && pushd build \
             && make ;
@@ -82,6 +81,7 @@ jobs:
           role-duration-seconds: 3600
       - name: Upload final report directory to AWS
         id: aws_upload
+        if: ${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL != '' }}
         shell: bash
         run: |
           aws s3 sync $PROOFS_DIR/output/latest/html s3://${{ secrets.ALTERNATIVE_PROOF_CI_S3_BUCKET }}/${{ steps.s3_uri.outputs.name }} --only-show-errors
@@ -106,7 +106,7 @@ jobs:
           echo "## [Litani HTML Report](https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }}/index.html)" >> $GITHUB_STEP_SUMMARY
           echo "## Summary of proof executions" >> $GITHUB_STEP_SUMMARY
           cd $PROOFS_DIR/lib
-          python3 summarize.py ../output/latest/html/run.json https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }} > summary.md
+          python3 summarize.py --run-file ../output/latest/html/run.json --cloudfront-domain https://${{ env.PROOF_CI_CLOUDFRONT_DOMAIN_URL }}/${{ steps.s3_uri.outputs.name }} > summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
           cat summary.md
           cat summary.md | [[ $(grep -cim1 -e "fail" -e "in progress") -eq 0 ]] ; echo $?

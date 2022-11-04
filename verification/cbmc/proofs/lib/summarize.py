@@ -1,9 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
+import argparse
 import json
 import logging
-import sys
 
 
 def _get_max_length_per_column_list(data):
@@ -48,7 +48,7 @@ def _get_rendered_table(data):
     return "".join(table)
 
 
-def _get_status_and_proof_summaries(run_dict, cloudfront_final_report_prefix):
+def _get_status_and_proof_summaries(run_dict, cloudfront_domain=None):
     """Parse a dict representing a Litani run and create lists summarizing the
     proof results.
 
@@ -56,6 +56,8 @@ def _get_status_and_proof_summaries(run_dict, cloudfront_final_report_prefix):
     ----------
     run_dict
         A dictionary representing a Litani run.
+    cloudfront_domain
+        A string representing the CloudFront distribution
 
     Returns
     -------
@@ -64,7 +66,9 @@ def _get_status_and_proof_summaries(run_dict, cloudfront_final_report_prefix):
     The second sub-list maps each proof to its status.
     """
     count_statuses = {}
-    proofs = [["Proof", "Status", "CBMC viewer report"]]
+    proofs = [["Proof", "Status"]]
+    if cloudfront_domain:
+        proofs[0].append("CBMC viewer HTML report")
     for proof_pipeline in run_dict["pipelines"]:
         status_pretty_name = proof_pipeline["status"].title().replace("_", " ")
         try:
@@ -72,15 +76,18 @@ def _get_status_and_proof_summaries(run_dict, cloudfront_final_report_prefix):
         except KeyError:
             count_statuses[status_pretty_name] = 1
         proof = proof_pipeline["name"]
-        viewer_html_report = f"[Details]({cloudfront_final_report_prefix}/artifacts/{proof}/report/html/index.html)"
-        proofs.append([proof, status_pretty_name, viewer_html_report])
+        proofs.append([proof, status_pretty_name])
+    if cloudfront_domain:
+        for i in range(1, len(proofs)):
+            viewer_details = f"[Details]({cloudfront_domain}/artifacts/{proofs[i][0]}/report/html/index.html)"
+            proofs[i].append(viewer_details)
     statuses = [["Status", "Count"]]
     for status, count in count_statuses.items():
         statuses.append([status, str(count)])
     return [statuses, proofs]
 
 
-def print_proof_results(out_file, cloudfront_final_report_prefix):
+def print_proof_results(out_file, cloudfront_domain=None):
     """
     Print 2 strings that summarize the proof results.
     When printing, each string will render as a GitHub flavored Markdown table.
@@ -88,14 +95,33 @@ def print_proof_results(out_file, cloudfront_final_report_prefix):
     try:
         with open(out_file, encoding='utf-8') as run_json:
             run_dict = json.load(run_json)
-            for summary in _get_status_and_proof_summaries(
-                    run_dict, cloudfront_final_report_prefix):
+            summaries = _get_status_and_proof_summaries(
+                run_dict, cloudfront_domain=cloudfront_domain)
+            for summary in summaries:
                 print(_get_rendered_table(summary))
     except Exception as ex: # pylint: disable=broad-except
         logging.critical("Could not print results. Exception: %s", str(ex))
 
 
+def get_args():
+    pars = argparse.ArgumentParser(
+        description="Summarize execution of proofs by printing 2 tables")
+    for arg in [{
+            "flags": ["--run-file"],
+            "help": "path to the Litani run.json file",
+            "required": True,
+    }, {
+            "flags": ["--cloudfront-domain"],
+            "help": "the Amazon CloudFront distribution domain that serves "
+                    "Litani reports, that were uploaded to S3 during CI",
+            "required": False,
+    }]:
+        flags = arg.pop("flags")
+        pars.add_argument(*flags, **arg)
+    return pars.parse_args()
+
+
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    cloudfront_final_report_prefix = sys.argv[2]
-    print_proof_results(filename, cloudfront_final_report_prefix)
+    args = get_args()
+    print_proof_results(
+        args.run_file, cloudfront_domain=args.cloudfront_domain)
