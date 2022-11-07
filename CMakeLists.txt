@@ -24,6 +24,7 @@ include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
+include(AwsThreadName)
 include(AwsSIMD)
 include(CTest)
 
@@ -185,6 +186,7 @@ if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
 endif()
 
 aws_set_thread_affinity_method(${PROJECT_NAME})
+aws_set_thread_name_method(${PROJECT_NAME})
 
 aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
