@@ -16,7 +16,7 @@
         "windows": {
             "+build_steps": [
                 "build",
-                [ "dir", "/s", "/b" ]
+                ["dir", "/s", "/b"]
             ]
         }
     }
