@@ -2,43 +2,21 @@
     "name": "aws-c-common",
     "upstream": [],
     "downstream": [
-        {
-            "name": "aws-checksums"
-        },
-        {
-            "name": "aws-c-cal"
-        },
-        {
-            "name": "aws-c-io"
-        },
-        {
-            "name": "aws-c-event-stream"
-        },
-        {
-            "name": "aws-c-compression"
-        },
-        {
-            "name": "aws-c-sdkutils"
-        },
-        {
-            "name": "aws-c-mqtt"
-        },
-        {
-            "name": "aws-c-http"
-        },
-        {
-            "name": "aws-c-auth"
-        }
+        { "name": "aws-checksums" },
+        { "name": "aws-c-cal" },
+        { "name": "aws-c-io" },
+        { "name": "aws-c-event-stream" },
+        { "name": "aws-c-compression" },
+        { "name": "aws-c-sdkutils" },
+        { "name": "aws-c-mqtt" },
+        { "name": "aws-c-http" },
+        { "name": "aws-c-auth" }
     ],
     "targets": {
         "windows": {
             "+build_steps": [
                 "build",
-                [
-                    "dir",
-                    "/s",
-                    "/b"
-                ]
+                [ "dir", "/s", "/b" ]
             ]
         }
     }
