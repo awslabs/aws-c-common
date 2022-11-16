@@ -105,6 +105,13 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_NOT_NULL(root);
     ASSERT_TRUE(aws_json_value_is_object(root));
 
+    ASSERT_TRUE(aws_json_value_compare(root, root, true));
+    ASSERT_TRUE(aws_json_value_compare(root, root, false));
+
+    struct aws_json_value *temp = aws_json_value_new_null(allocator);
+    ASSERT_FALSE(aws_json_value_compare(root, temp, true));
+    aws_json_value_destroy(temp);
+
     // Testing valid array
     struct aws_json_value *array_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("array"));
     ASSERT_NOT_NULL(array_node);
@@ -177,6 +184,10 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_TRUE(strcmp(aws_string_c_str(sub_a_string), "b") == 0);
     aws_string_destroy_secure(sub_a_string);
 
+    struct aws_json_value *duplicate = aws_json_value_duplicate(object_node);
+    ASSERT_TRUE(aws_json_value_compare(object_node, duplicate, true));
+    aws_json_value_destroy(duplicate);
+
     struct json_parse_test_data test_data;
     test_data.elements_encountered = 0;
     test_data.all_elements_are_strings = true;
@@ -200,6 +211,10 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     ASSERT_INT_EQUALS(aws_json_value_get_number(string_node, NULL), AWS_OP_ERR);
 
     aws_json_value_destroy(root);
+
+    // Make sure that destroying NULL does not have any bad effects.
+    aws_json_value_destroy(NULL);
+
     aws_common_library_clean_up();
 
     return AWS_OP_SUCCESS;
