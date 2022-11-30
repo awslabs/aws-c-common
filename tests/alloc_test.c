@@ -265,28 +265,56 @@ static int s_sba_metrics_test(struct aws_allocator *allocator, void *ctx) {
     struct aws_allocator *sba = aws_small_block_allocator_new(allocator, false);
 
     size_t expected_active_size = 0;
-    void *allocs[10] = {0};
+    void *allocs[512] = {0};
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
-        size_t size = aws_max_size(rand() % 512, 1);
+        size_t size = idx + 1;
         size_t bin_size = 0;
         ASSERT_SUCCESS(aws_round_up_to_power_of_two(size, &bin_size));
         expected_active_size += bin_size;
         allocs[idx] = aws_mem_acquire(sba, size);
 
         ASSERT_TRUE(aws_small_block_allocator_bytes_reserved(sba) > aws_small_block_allocator_bytes_active(sba));
-        ASSERT_INT_EQUALS(expected_active_size, aws_small_block_allocator_bytes_active(sba));
+        ASSERT_TRUE(expected_active_size <= aws_small_block_allocator_bytes_active(sba));
     }
+
+    /*
+     * There are
+     *
+     *   32 allocations of size < 32 # (bin 0)
+     *   32 allocations of 32 < size <= 64 # (bin 1)
+     *   64 allocations of 64 < size <= 128 # (bin 2)
+     *   128 allocations of 128 < size <= 256 # (bin 3)
+     *   256 allocations of 256 < size <= 512 # (bin 4)
+     *
+     * If we let actual_page_size = allocated_page_size - sizeof(page_header), then we expect to have reserved
+     *
+     *   (32 + actual_page_size / 32 - 1) / (actual_page_size / 32) # (bin 0)
+     *   (32 + actual_page_size / 64 - 1) / (actual_page_size / 64) # (bin 1)
+     *   (64 + actual_page_size / 128 - 1) / (actual_page_size / 128) # (bin 2)
+     *   (128 + actual_page_size / 256 - 1) / (actual_page_size / 256) # (bin 3)
+     *   (256 + actual_page_size / 512 - 1) / (actual_page_size / 512) # (bin 4)
+     *
+     *   total pages during the allocations.
+     */
+    size_t actual_page_size = aws_small_block_allocator_page_size_available(sba);
+
+    size_t bin0_pages = (32 + actual_page_size / 32 - 1) / (actual_page_size / 32);
+    size_t bin1_pages = (32 + actual_page_size / 64 - 1) / (actual_page_size / 64);
+    size_t bin2_pages = (64 + actual_page_size / 128 - 1) / (actual_page_size / 128);
+    size_t bin3_pages = (128 + actual_page_size / 256 - 1) / (actual_page_size / 256);
+    size_t bin4_pages = (256 + actual_page_size / 512 - 1) / (actual_page_size / 512);
+    size_t expected_page_count = bin0_pages + bin1_pages + bin2_pages + bin3_pages + bin4_pages;
+    ASSERT_INT_EQUALS(
+        expected_page_count * aws_small_block_allocator_page_size(sba), aws_small_block_allocator_bytes_reserved(sba));
 
     for (int idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
         aws_mem_release(sba, allocs[idx]);
     }
 
     ASSERT_INT_EQUALS(0, aws_small_block_allocator_bytes_active(sba));
-    /*
-     * There are only 5 bin sizes, so the reserve better be less than that, we have not allocated enough to
-     * push beyond that. Max possible allocation is alloc count * 512
-     */
-    ASSERT_TRUE(5 * aws_small_block_allocator_page_size(sba) > aws_small_block_allocator_bytes_reserved(sba));
+
+    /* after freeing everything, we should have reliniquished all but one page in each bin */
+    ASSERT_INT_EQUALS(5 * aws_small_block_allocator_page_size(sba), aws_small_block_allocator_bytes_reserved(sba));
 
     aws_small_block_allocator_destroy(sba);
     return 0;

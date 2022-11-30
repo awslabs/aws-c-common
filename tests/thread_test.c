@@ -31,6 +31,9 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
      * path is exercised. */
     thread_options.cpu_id = 0;
 
+    /* Exercise the thread naming code path */
+    thread_options.name = aws_byte_cursor_from_c_str("MyThreadName");
+
     ASSERT_SUCCESS(
         aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
     ASSERT_INT_EQUALS(

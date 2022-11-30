@@ -285,6 +285,27 @@ done:
     return result;
 }
 
+bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_json_value *b, bool is_case_sensitive) {
+    struct cJSON *cjson_a = (struct cJSON *)a;
+    struct cJSON *cjson_b = (struct cJSON *)b;
+    return cJSON_Compare(cjson_a, cjson_b, is_case_sensitive);
+}
+
+struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *value) {
+    struct cJSON *cjson = (struct cJSON *)value;
+    if (cJSON_IsInvalid(cjson)) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    struct cJSON *ret = cJSON_Duplicate(cjson, true);
+    if (ret == NULL) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    return (void *)ret;
+}
+
 bool aws_json_value_is_string(const struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson)) {
@@ -362,7 +383,9 @@ void aws_json_module_cleanup(void) {
 
 void aws_json_value_destroy(struct aws_json_value *value) {
     struct cJSON *cjson = (struct cJSON *)value;
-    if (!cJSON_IsInvalid(cjson)) {
+    /* Note: cJSON_IsInvalid returns false for NULL values, so we need explicit
+        check for NULL to skip delete */
+    if (cjson != NULL && !cJSON_IsInvalid(cjson)) {
         cJSON_Delete(cjson);
     }
 }
