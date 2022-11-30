@@ -301,19 +301,19 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                       \
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
         size_t assert_ex_s = (cursor).len;                                                                             \
-        const uint8_t *assert_got_p = (const uint8_t *)aws_string_c_str(string);                                       \
-        size_t assert_got_s = (string)->len;                                                                           \
+        const uint8_t *assert_got_p = (const uint8_t *)cstring;                                                        \
+        size_t assert_got_s = strlen(cstring);                                                                         \
         if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
             break;                                                                                                     \
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
             fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
@@ -335,11 +335,14 @@ static int total_failures;
                 fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
             }                                                                                                          \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
+
+#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, aws_string_c_str(string));
 
 typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
@@ -433,6 +436,8 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
 
     if (!test_res) {
         if (!harness->suppress_memcheck) {
+            /* Reset the logger as test can set their own logger and clean it up. */
+            aws_logger_set(&err_logger);
             const size_t leaked_bytes = aws_mem_tracer_count(allocator);
             if (leaked_bytes) {
                 aws_mem_tracer_dump(allocator);

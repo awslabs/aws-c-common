@@ -120,11 +120,26 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
 
-       # -moutline-atomics generates code for both older load/store exclusive atomics and also
-       # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
-        check_c_compiler_flag("-moutline-atomics -Werror" HAS_MOUTLINE_ATOMICS)
-        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
-            list(APPEND AWS_C_FLAGS -moutline-atomics)
+        # -moutline-atomics generates code for both older load/store exclusive atomics and also
+        # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems.
+        #
+        # Test by compiling a program that actually uses atomics.
+        # Previously we'd simply used check_c_compiler_flag() but that wasn't detecting
+        # some real-world problems (see https://github.com/awslabs/aws-c-common/issues/902).
+        if (AWS_ARCH_ARM64)
+            set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+            set(CMAKE_REQUIRED_FLAGS "-moutline-atomics -Werror")
+            check_c_source_compiles("
+                int main() {
+                    int x = 1;
+                    __atomic_fetch_add(&x, -1, __ATOMIC_SEQ_CST);
+                    return x;
+                }" HAS_MOUTLINE_ATOMICS)
+            set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
+            if (HAS_MOUTLINE_ATOMICS)
+                list(APPEND AWS_C_FLAGS -moutline-atomics)
+            endif()
         endif()
 
         # Check for Posix Large File Support (LFS).
@@ -143,6 +158,19 @@ function(aws_set_common_properties target)
         endif()
         # This becomes a define in config.h
         set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
+
+        # Hide symbols from libcrypto.a
+        # This avoids problems when an application ends up using both libcrypto.a and libcrypto.so.
+        #
+        # An example of this happening is the aws-c-io tests.
+        # All the C libs are compiled statically, but then a PKCS#11 library is
+        # loaded at runtime which happens to use libcrypto.so from OpenSSL.
+        # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
+        # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
+        if (UNIX AND NOT APPLE)
+            # If we used target_link_options() (CMake 3.13+) we could make these flags PUBLIC
+            set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
+        endif()
 
     endif()
 

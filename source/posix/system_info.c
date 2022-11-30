@@ -14,6 +14,14 @@
 #    define __BSD_VISIBLE 1
 #endif
 
+#if defined(__linux__)
+#    include <sys/sysinfo.h>
+#endif
+
+#if defined(__linux__) || defined(__unix__)
+#    include <sys/types.h>
+#endif
+
 #include <unistd.h>
 
 #if defined(HAVE_SYSCONF)
@@ -413,9 +421,9 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
     fprintf(fp, "No call stack information available\n");
 }
 
-size_t aws_backtrace(void **stack_frames, size_t size) {
+size_t aws_backtrace(void **stack_frames, size_t num_frames) {
     (void)stack_frames;
-    (void)size;
+    (void)num_frames;
     return 0;
 }
 

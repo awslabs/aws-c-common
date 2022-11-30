@@ -9,6 +9,7 @@ Release
 *#
 *.iml
 tags
+.vscode
 
 #vim swap file
 *.swp
@@ -34,6 +35,7 @@ _build
 build
 _build_*
 cmake-build*
+*-build
 
 # Compiled Object files
 *.slo
