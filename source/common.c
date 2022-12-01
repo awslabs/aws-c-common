@@ -38,6 +38,9 @@ int (*g_numa_node_of_cpu_ptr)(int cpu) = NULL;
 void *g_libnuma_handle = NULL;
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
+    if (pBuf == NULL || bufsize == 0) {
+        return;
+    }
 #if defined(_WIN32)
     SecureZeroMemory(pBuf, bufsize);
 #else
