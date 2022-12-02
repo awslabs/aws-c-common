@@ -1094,10 +1094,6 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseWithLengthOpts(const char *value, size_t buffer
   parse_buffer buffer = { 0, 0, 0, 0, { 0, 0, 0 } };
   cJSON *item = NULL;
 
-  /* reset error position */
-  global_error.json = NULL;
-  global_error.position = 0;
-
   if (value == NULL || 0 == buffer_length)
   {
       goto fail;
@@ -1140,29 +1136,6 @@ fail:
   if (item != NULL)
   {
       cJSON_Delete(item);
-  }
-
-  if (value != NULL)
-  {
-      error local_error;
-      local_error.json = (const unsigned char*)value;
-      local_error.position = 0;
-
-      if (buffer.offset < buffer.length)
-      {
-          local_error.position = buffer.offset;
-      }
-      else if (buffer.length > 0)
-      {
-          local_error.position = buffer.length - 1;
-      }
-
-      if (return_parse_end != NULL)
-      {
-          *return_parse_end = (const char*)local_error.json + local_error.position;
-      }
-
-      global_error = local_error;
   }
 
   return NULL;
