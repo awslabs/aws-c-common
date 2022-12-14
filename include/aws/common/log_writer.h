@@ -34,9 +34,37 @@ struct aws_log_writer {
     void *impl;
 };
 
+/**
+ * Log rolling is only supported when logging to a file created by the logger (not stdout, stderr)
+ *
+ * The current log file will use the configured filename.
+ *
+ * Rolled log files will have a number appended to the end of their name, the bigger the number, the older the logs.
+ */
+struct aws_logger_file_roll_config {
+
+    /*
+     * Maximum number of additional "rolled" log files to create.
+     *
+     * If this is zero, log rolling will not be done.
+     */
+    uint32_t roll_file_count;
+
+    /*
+     * Maximum size per log file (and rolled log files).  When the current log file exceeds this size, all logs
+     * will be rolled:
+     *
+     * filename -> filename1 -> filename2 -> ... -> filenameN
+     *
+     * and a new current log file will be created.
+     */
+    int64_t maximum_file_size;
+};
+
 struct aws_log_writer_file_options {
     const char *filename;
     FILE *file;
+    struct aws_logger_file_roll_config *roll_options;
 };
 
 AWS_EXTERN_C_BEGIN

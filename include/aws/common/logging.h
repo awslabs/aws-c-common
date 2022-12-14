@@ -10,6 +10,8 @@
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
 
+struct aws_logger_file_roll_config;
+
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
 #define AWS_LOG_LEVEL_ERROR 2
@@ -214,6 +216,7 @@ struct aws_logger_standard_options {
     enum aws_log_level level;
     const char *filename;
     FILE *file;
+    struct aws_logger_file_roll_config *roll_options;
 };
 
 AWS_EXTERN_C_BEGIN

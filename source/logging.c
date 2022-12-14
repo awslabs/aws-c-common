@@ -166,6 +166,7 @@ int aws_logger_init_standard(
     struct aws_log_writer_file_options file_writer_options = {
         .filename = options->filename,
         .file = options->file,
+        .roll_options = options->roll_options,
     };
 
     if (aws_log_writer_init_file(writer, allocator, &file_writer_options)) {
