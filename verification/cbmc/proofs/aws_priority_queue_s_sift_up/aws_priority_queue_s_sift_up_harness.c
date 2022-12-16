@@ -6,7 +6,7 @@
 #include <aws/common/priority_queue.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void __CPROVER_file_local_priority_queue_c_s_sift_up(struct aws_priority_queue *queue, size_t root);
+_Bool __CPROVER_file_local_priority_queue_c_s_sift_up(struct aws_priority_queue *queue, size_t root);
 
 void aws_priority_queue_s_sift_up_harness() {
     /* Data structure */
