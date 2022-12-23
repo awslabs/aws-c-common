@@ -23,7 +23,7 @@ enum aws_thread_detach_state {
  * in the managed thread system.  The managed thread system provides logic to guarantee a join on all participating
  * threads at the cost of laziness (the user cannot control when joins happen).
  *
- * Manual - thread does not particpate in the managed thread system; any joins must be done by the user.  This
+ * Manual - thread does not participate in the managed thread system; any joins must be done by the user.  This
  * is the default.  The user must call aws_thread_clean_up(), but only after any desired join operation has completed.
  * Not doing so will cause the windows handle to leak.
  *
