@@ -204,7 +204,7 @@ int aws_json_value_add_array_element(struct aws_json_value *array, const struct 
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    const struct cJSON *cjson_value = (const struct cJSON *)value;
+    struct cJSON *cjson_value = (struct cJSON *)value;
     if (cJSON_IsInvalid(cjson_value)) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
