@@ -81,12 +81,12 @@ AWS_EXTERN_C_END
             }                                                                                                          \
             __pragma(warning(pop))
 #    else
-#        define AWS_FATAL_ASSERT(cond)                                                                                 \
-            do {                                                                                                       \
-                if (!(cond)) {                                                                                         \
-                    aws_fatal_assert(#cond, __FILE__, __LINE__);                                                       \
-                }                                                                                                      \
-            } while (0)
+#        define AWS_FATAL_ASSERT(cond)                                                                                  \
+            do {                                                                                                        \
+                if (!(cond)) {                                                                                          \
+                    aws_fatal_assert(#cond, __FILE__, __LINE__);                                                        \
+                }                                                                                                       \
+            } while(0)
 #    endif /* defined(_MSC_VER) */
 #endif     /* defined(CBMC) */
 
