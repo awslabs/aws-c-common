@@ -98,16 +98,20 @@ AWS_EXTERN_C_END
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
+// clang-format off
+// disable clang format, since it likes to break formatting of stringize macro.
+// seems to be fixed in v15 plus, but we are not ready to update to it yet
 #    define AWS_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), (#cond) " check failed")
+#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
 #    define AWS_FATAL_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), (#cond) " check failed")
+#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
 #    define AWS_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
 #    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
 #    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), (#cond) " check failed")
+#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
 #    define AWS_MEM_IS_READABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #    define AWS_MEM_IS_WRITABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
+// clang-format on
 #else
 #    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
@@ -152,7 +156,7 @@ AWS_EXTERN_C_END
     } while (0)
 
 #define AWS_RETURN_ERROR_IF3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("InternalCheck", cond, err, explanation)
-#define AWS_RETURN_ERROR_IF2(cond, err) AWS_RETURN_ERROR_IF3(cond, err, #cond" check failed")
+#define AWS_RETURN_ERROR_IF2(cond, err) AWS_RETURN_ERROR_IF3(cond, err, #cond " check failed")
 #define AWS_RETURN_ERROR_IF(...) CALL_OVERLOAD(AWS_RETURN_ERROR_IF, __VA_ARGS__)
 
 #define AWS_ERROR_PRECONDITION3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("Precondition", cond, err, explanation)
@@ -161,7 +165,7 @@ AWS_EXTERN_C_END
 
 #define AWS_ERROR_POSTCONDITION3(cond, err, explanation)                                                               \
     AWS_RETURN_ERROR_IF_IMPL("Postcondition", cond, err, explanation)
-#define AWS_ERROR_POSTCONDITION2(cond, err) AWS_ERROR_POSTCONDITION3(cond, err, (#cond)" check failed")
+#define AWS_ERROR_POSTCONDITION2(cond, err) AWS_ERROR_POSTCONDITION3(cond, err, #cond " check failed")
 #define AWS_ERROR_POSTCONDITION1(cond) AWS_ERROR_POSTCONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
