@@ -152,16 +152,16 @@ AWS_EXTERN_C_END
     } while (0)
 
 #define AWS_RETURN_ERROR_IF3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("InternalCheck", cond, err, explanation)
-#define AWS_RETURN_ERROR_IF2(cond, err) AWS_RETURN_ERROR_IF3(cond, err, #cond " check failed")
+#define AWS_RETURN_ERROR_IF2(cond, err) AWS_RETURN_ERROR_IF3(cond, err, #cond" check failed")
 #define AWS_RETURN_ERROR_IF(...) CALL_OVERLOAD(AWS_RETURN_ERROR_IF, __VA_ARGS__)
 
 #define AWS_ERROR_PRECONDITION3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("Precondition", cond, err, explanation)
-#define AWS_ERROR_PRECONDITION2(cond, err) AWS_ERROR_PRECONDITION3(cond, err, #cond " check failed")
+#define AWS_ERROR_PRECONDITION2(cond, err) AWS_ERROR_PRECONDITION3(cond, err, #cond" check failed")
 #define AWS_ERROR_PRECONDITION1(cond) AWS_ERROR_PRECONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
 #define AWS_ERROR_POSTCONDITION3(cond, err, explanation)                                                               \
     AWS_RETURN_ERROR_IF_IMPL("Postcondition", cond, err, explanation)
-#define AWS_ERROR_POSTCONDITION2(cond, err) AWS_ERROR_POSTCONDITION3(cond, err, #cond " check failed")
+#define AWS_ERROR_POSTCONDITION2(cond, err) AWS_ERROR_POSTCONDITION3(cond, err, (#cond)" check failed")
 #define AWS_ERROR_POSTCONDITION1(cond) AWS_ERROR_POSTCONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
 // The UNUSED is used to silence the complains of GCC for zero arguments in variadic macro
