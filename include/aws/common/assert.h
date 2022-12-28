@@ -156,7 +156,7 @@ AWS_EXTERN_C_END
 #define AWS_RETURN_ERROR_IF(...) CALL_OVERLOAD(AWS_RETURN_ERROR_IF, __VA_ARGS__)
 
 #define AWS_ERROR_PRECONDITION3(cond, err, explanation) AWS_RETURN_ERROR_IF_IMPL("Precondition", cond, err, explanation)
-#define AWS_ERROR_PRECONDITION2(cond, err) AWS_ERROR_PRECONDITION3(cond, err, #cond" check failed")
+#define AWS_ERROR_PRECONDITION2(cond, err) AWS_ERROR_PRECONDITION3(cond, err, #cond " check failed")
 #define AWS_ERROR_PRECONDITION1(cond) AWS_ERROR_PRECONDITION2(cond, AWS_ERROR_INVALID_ARGUMENT)
 
 #define AWS_ERROR_POSTCONDITION3(cond, err, explanation)                                                               \
