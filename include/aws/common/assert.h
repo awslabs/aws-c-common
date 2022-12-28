@@ -99,13 +99,13 @@ AWS_EXTERN_C_END
  */
 #ifdef CBMC
 #    define AWS_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
+#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), (#cond) " check failed")
 #    define AWS_FATAL_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
+#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), (#cond) " check failed")
 #    define AWS_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
 #    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
 #    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
+#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), (#cond) " check failed")
 #    define AWS_MEM_IS_READABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #    define AWS_MEM_IS_WRITABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #else
