@@ -42,7 +42,7 @@ def main():
     launch_arguments = ["ctest", "--show-only=json-v1"]
     print (f"Launching CTest with arguments: {subprocess.list2cmdline(launch_arguments)}")
     ctest_json_output = subprocess.run(args=launch_arguments, capture_output=True, encoding="utf8", check=True)
-    
+
     output_json = json.loads(ctest_json_output.stdout)
     test_names = []
     test_executables = []
@@ -69,11 +69,11 @@ def main():
     for i in range(0, len(test_names)):
         try:
             print (f"Running test {test_names[i]} ({i}/{len(test_names)})")
-            ctest_args = ["ctest", "-R", "^" + test_names[0] + "$"]
+            ctest_args = ["ctest", "-R", "^" + test_names[i] + "$"]
             print (f"With arguments: {subprocess.list2cmdline(ctest_args)}")
             subprocess.run(args=ctest_args)
 
-            appverif_xml_dump_args = ["appverif", "-export", "log", "-for", test_executables[0], "-with", "to="+ tmp_xml_file_path]
+            appverif_xml_dump_args = ["appverif", "-export", "log", "-for", test_executables[i], "-with", "to="+ tmp_xml_file_path]
             print (f'Calling AppVerifier with: {subprocess.list2cmdline(appverif_xml_dump_args)}')
             # NOTE: Needs elevated permissions
             subprocess.run(args=appverif_xml_dump_args)
@@ -89,10 +89,10 @@ def main():
             # AppVerifier freaks out - so we just have to make files in a temporary directory
             # and delete them when we're finished
             os.remove(tmp_xml_file_path)
-    
+
     # Delete AppVerifier settings
     remove_app_verifier_settings(app_verified_executables)
-    
+
     print ("SUCCESS: Finished running all tests!")
 
 if __name__ == "__main__":
