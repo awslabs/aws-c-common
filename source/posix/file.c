@@ -231,7 +231,7 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
 
     if (aws_get_environment_value(allocator, s_home_env_var, &home_env_var_value) != 0 ||
         home_env_var_value == NULL || *home_env_var_value->bytes == '\0') {
-        char buf[16384];
+        char buf[4096];
         struct passwd pw;
         struct passwd *result;
         const uid_t uid = getuid();
