@@ -16,8 +16,8 @@
 
 AWS_EXTERN_C_BEGIN
 
-#if !(defined(_M_IX86) || defined(_M_X64))
-#    error Atomics are not currently supported for non-x86 MSVC platforms
+// #if !(defined(_M_IX86) || defined(_M_X64))
+// #    error Atomics are not currently supported for non-x86 MSVC platforms
 
 /*
  * In particular, it's not clear that seq_cst will work properly on non-x86
