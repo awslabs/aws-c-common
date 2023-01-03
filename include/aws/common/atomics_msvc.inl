@@ -28,7 +28,7 @@ AWS_EXTERN_C_BEGIN
  * code breaks before people take too much of a dependency on it.
  */
 
-#endif
+// #endif
 
 /**
  * Some general notes:
