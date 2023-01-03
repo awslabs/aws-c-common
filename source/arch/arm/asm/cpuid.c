@@ -75,6 +75,7 @@ bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
 
 #else  /* defined(__linux__) || defined(__FreeBSD__) */
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
+    (void)feature_name;
     return false;
 }
 #endif /* defined(__linux__) || defined(__FreeBSD__) */

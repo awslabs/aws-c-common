@@ -17,5 +17,6 @@
 #include <stdlib.h>
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
+    (void)feature_name;
     return false;
 }
