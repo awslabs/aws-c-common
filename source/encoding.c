@@ -455,7 +455,7 @@ int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_b
                 validator->codepoint = byte;
                 validator->min = 0;
             } else if ((byte & 0xE0) == 0xC0) {
-                /* 2 byte codepoints start with 0xxxxxxx */
+                /* 2 byte codepoints start with 110xxxxx */
                 validator->remaining = 1;
                 validator->codepoint = byte & 0x1F;
                 validator->min = 0x80;
