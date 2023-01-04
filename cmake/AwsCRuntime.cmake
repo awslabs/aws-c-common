@@ -2,7 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0.
 
 # This function detects the local host's c runtime and writes a tag into the supplied output variable
-# Output is "cruntime" on non-Linux platforms.  Output is "glibc" or "musl" on Linux platforms
+# Output is "cruntime" on non-Linux platforms.  Output is "glibc" or "musl" on Linux platforms.
+#
+# Intended usage is for managed language CRTs to use this function to build native artifact paths, facilitating
+# support for alternative C runtimes like Musl.
 #
 function(aws_determine_local_c_runtime target)
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
