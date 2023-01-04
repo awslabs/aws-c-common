@@ -1,10 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-# This function enables sanitizers on the given target
-# Options:
-#  SANITIZERS: The list of extra sanitizers to enable
-#  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
+# This function detects the local host's c runtime and writes a tag into the supplied output variable
+# Output is "cruntime" on non-Linux platforms.  Output is "glibc" or "musl" on Linux platforms
+#
 function(aws_determine_local_c_runtime target)
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         execute_process(COMMAND "ldd" "--version" OUTPUT_VARIABLE AWS_LDD_OUTPUT ERROR_VARIABLE AWS_LDD_OUTPUT)
