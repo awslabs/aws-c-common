@@ -274,7 +274,7 @@ int aws_thread_launch(
 
 /* AFAIK you can't set thread affinity on apple platforms, and it doesn't really matter since all memory
  * NUMA or not is setup in interleave mode.
- * Thread afinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
+ * Thread affinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
  * configuration, you've got bigger problems. */
 #if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
         if (options->cpu_id >= 0) {
