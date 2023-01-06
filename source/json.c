@@ -376,7 +376,12 @@ void aws_json_module_init(struct aws_allocator *allocator) {
 
 void aws_json_module_cleanup(void) {
     if (s_aws_json_module_initialized) {
+        /*
+         * Note: not setting the module_allocator to NULL to avoid deallocation-after-cleanup issues
+         *       that happen with `aws-sdk-cpp` threads that are still running after main() exists.
+         *       See issue #964 for details. Depends on resolving aws-sdk-cpp issue #2274.
         s_aws_json_module_allocator = NULL;
+         */
         s_aws_json_module_initialized = false;
     }
 }
