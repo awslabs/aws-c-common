@@ -256,6 +256,12 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PLATFORM_NOT_SUPPORTED,
         "Feature not supported on this platform"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_UTF8,
+        "Invalid UTF-8"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_GET_HOME_DIRECTORY_FAILED,
+        "Failed to get home directory"),
 };
 /* clang-format on */
 
