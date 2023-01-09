@@ -155,7 +155,7 @@ static void s_bus_unsubscribe(
     (void)bus;
 
     if (address == AWS_BUS_ADDRESS_CLOSE) {
-        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "Attempted to unsubscribe from invalid address AWS_BUS_ADDRESS_CLOSE")
+        AWS_LOGF_WARN(AWS_LS_COMMON_BUS, "Attempted to unsubscribe from invalid address AWS_BUS_ADDRESS_CLOSE");
         return;
     }
 

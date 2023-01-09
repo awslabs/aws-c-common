@@ -49,7 +49,7 @@ struct aws_bus_options {
     enum aws_bus_policy policy;
     /**
      * Size of buffer for unreliable message delivery queue.
-     * Unused if policy is AWS_BUS_ASYNC_RELIABNLE or AWS_BUS_SYNC_RELIABLE
+     * Unused if policy is AWS_BUS_ASYNC_RELIABLE or AWS_BUS_SYNC_RELIABLE
      * Messages are 40 bytes. Default buffer_size is 4K. The bus will not allocate memory beyond this size.
      */
     size_t buffer_size;
