@@ -5,9 +5,11 @@
 
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 #include <dirent.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -227,13 +229,39 @@ AWS_STATIC_STRING_FROM_LITERAL(s_home_env_var, "HOME");
 
 struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
 
-    /* ToDo: check getpwuid_r if environment check fails */
-    struct aws_string *home_env_var_value = NULL;
-    if (aws_get_environment_value(allocator, s_home_env_var, &home_env_var_value) == 0 && home_env_var_value != NULL) {
-        return home_env_var_value;
+    /* First, check "HOME" environment variable.
+     * If it's set, then return it, even if it's an empty string. */
+    struct aws_string *home_value = NULL;
+    aws_get_environment_value(allocator, s_home_env_var, &home_value);
+    if (home_value != NULL) {
+        return home_value;
     }
 
-    return NULL;
+    /* Next, check getpwuid_r().
+     * We need to allocate a tmp buffer to store the result strings,
+     * and the max possible size for this thing can be pretty big,
+     * so start with a reasonable allocation, and if that's not enough try something bigger. */
+    uid_t uid = getuid(); /* cannot fail */
+    struct passwd pwd;
+    struct passwd *result = NULL;
+    char *buf = NULL;
+    int status = ERANGE;
+    for (size_t bufsize = 1024; bufsize <= 16384 && status == ERANGE; bufsize *= 2) {
+        if (buf) {
+            aws_mem_release(allocator, buf);
+        }
+        buf = aws_mem_acquire(allocator, bufsize);
+        status = getpwuid_r(uid, &pwd, buf, bufsize, &result);
+    }
+
+    if (status == 0 && result != NULL && result->pw_dir != NULL) {
+        home_value = aws_string_new_from_c_str(allocator, result->pw_dir);
+    } else {
+        aws_raise_error(AWS_ERROR_GET_HOME_DIRECTORY_FAILED);
+    }
+
+    aws_mem_release(allocator, buf);
+    return home_value;
 }
 
 bool aws_path_exists(const struct aws_string *path) {
