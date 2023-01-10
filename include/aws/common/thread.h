@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/byte_buf.h>
+#include <aws/common/string.h>
 
 #ifndef _WIN32
 #    include <pthread.h>
@@ -236,6 +237,8 @@ AWS_COMMON_API void aws_thread_increment_unjoined_count(void);
  * aws_thread_join_all_managed() will not return until this count has gone to zero.
  */
 AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
+
+AWS_COMMON_API struct aws_string *aws_thread_current_name(struct aws_allocator *allocator);
 
 AWS_EXTERN_C_END
 
