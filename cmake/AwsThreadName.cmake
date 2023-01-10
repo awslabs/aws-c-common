@@ -55,5 +55,16 @@ function(aws_set_thread_name_method target)
         return()
     endif()
 
+    check_c_source_compiles("
+        ${c_source_start}
+        char name[16] = {0};
+        pthread_getname_np(thread_id, name, 16);
+        ${c_source_end}
+        " PTHREAD_SETNAME_TAKES_3ARGS)
+    if (PTHREAD_HAS_GETNAME)
+        target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_HAS_GETNAME)
+        return()
+    endif()
+
     # And on many older/weirder platforms it's just not supported
 endfunction()
