@@ -417,7 +417,7 @@ struct aws_string *aws_thread_current_name(struct aws_allocator *allocator) {
     if (s_GetThreadDescription) {
 
         PWSTR wname = NULL;
-        if(SUCCEEDED(s_GetThreadDescription(GetCurrentThread(), &wname)) {
+        if(SUCCEEDED(s_GetThreadDescription(GetCurrentThread(), &wname))) {
             struct aws_string *name = aws_string_convert_from_wchar_c_str(allocator, wname);
             LocalFree(wname);
             return name;
