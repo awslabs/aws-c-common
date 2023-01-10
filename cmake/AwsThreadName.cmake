@@ -3,14 +3,16 @@
 
 include(CheckSymbolExists)
 
-# Check how the platform supports setting thread name
+# Check how the platform supports setting or getting thread name thread name
 function(aws_set_thread_name_method target)
 
     if (WINDOWS)
         # On Windows we do a runtime check, instead of compile-time check
         return()
     elseif (APPLE)
-        # All Apple platforms we support have the same function, so no need for compile-time check.
+        # All Apple platforms we support have the same function, so no need for
+        # compile-time check.
+        target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_HAS_GETNAME)
         return()
     endif()
 
@@ -41,7 +43,7 @@ function(aws_set_thread_name_method target)
         PTHREAD_SETNAME_TAKES_2ARGS)
     if (PTHREAD_SETNAME_TAKES_2ARGS)
         target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_SETNAME_TAKES_2ARGS)
-        return()
+        #return()
     endif()
 
     # But on NetBSD it takes 3!
@@ -52,7 +54,7 @@ function(aws_set_thread_name_method target)
         " PTHREAD_SETNAME_TAKES_3ARGS)
     if (PTHREAD_SETNAME_TAKES_3ARGS)
         target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_SETNAME_TAKES_3ARGS)
-        return()
+        #return()
     endif()
 
     check_c_source_compiles("
@@ -60,10 +62,10 @@ function(aws_set_thread_name_method target)
         char name[16] = {0};
         pthread_getname_np(thread_id, name, 16);
         ${c_source_end}
-        " PTHREAD_SETNAME_TAKES_3ARGS)
+        " PTHREAD_HAS_GETNAME)
     if (PTHREAD_HAS_GETNAME)
         target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_HAS_GETNAME)
-        return()
+        #return()
     endif()
 
     # And on many older/weirder platforms it's just not supported
