@@ -554,7 +554,6 @@ int aws_logger_init_noalloc(
     }
 
     aws_atomic_store_int(&impl->level, (size_t)options->level);
-    aws_mutex_init(&impl->lock);
 
     if (options->file != NULL) {
         impl->file = options->file;
