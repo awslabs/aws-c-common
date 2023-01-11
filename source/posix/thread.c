@@ -464,7 +464,7 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
 struct aws_string *aws_thread_current_name(struct aws_allocator *allocator) {
 #ifdef AWS_PTHREAD_HAS_GETNAME 
     char name[16] = {0};
-    int result = pthread_getname_np(aws_thread_current_thread_id(), name, 16)
+    int result = pthread_getname_np(aws_thread_current_thread_id(), name, 16);
     if (result) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         AWS_LOGF_INFO(
