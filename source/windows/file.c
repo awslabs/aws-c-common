@@ -22,7 +22,15 @@ static bool s_is_wstring_empty(const struct aws_wstring *str) {
 }
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    if (s_is_string_empty(file_path) || s_is_string_empty(mode)) {
+    if (s_is_string_empty(file_path)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. path is empty");
+        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        return NULL;
+    }
+
+    if (s_is_string_empty(mode)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. mode is empty");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -37,6 +45,12 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
     if (error) {
         aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO,
+                       "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
+                       aws_string_cstr(file_path),
+                       aws_string_cstr(mode);
+                       error,
+                       aws_error_name(aws_last_error());
     }
 
     return file;

@@ -554,6 +554,7 @@ int aws_logger_init_noalloc(
     }
 
     aws_atomic_store_int(&impl->level, (size_t)options->level);
+    aws_mutex_init(&impl->lock);
 
     if (options->file != NULL) {
         impl->file = options->file;
@@ -561,6 +562,10 @@ int aws_logger_init_noalloc(
     } else { /* _MSC_VER */
         if (options->filename != NULL) {
             impl->file = aws_fopen(options->filename, "w");
+            if (!impl->file) {
+                aws_mem_release(allocator, impl);
+                return AWS_OP_ERR;
+            }
             impl->should_close = true;
         } else {
             impl->file = stderr;

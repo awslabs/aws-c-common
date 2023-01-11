@@ -13,7 +13,7 @@
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
     if (!file_path || strlen(file_path) == 0) {
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file %s", file_path);
+        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
         return NULL;
     }
 
@@ -70,12 +70,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
         return AWS_OP_SUCCESS;
     }
 
-    AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file %s with errno %d", filename, errno);
-
-    if (errno == 0) {
-        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
-    }
-    return aws_translate_and_raise_io_error(errno);
+    return AWS_OP_ERR;
 }
 
 bool aws_is_any_directory_separator(char value) {
