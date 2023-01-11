@@ -23,6 +23,7 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
             AWS_LS_COMMON_IO,
             "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
             aws_string_c_str(file_path),
+            aws_string_c_str(mode),
             errno_cpy,
             aws_error_name(aws_last_error()));
     }
