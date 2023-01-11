@@ -3,7 +3,7 @@
 
 include(CheckSymbolExists)
 
-# Check how the platform supports setting or getting thread name thread name
+# Check how the platform supports setting or getting thread name
 function(aws_set_thread_name_method target)
 
     if (WINDOWS)
