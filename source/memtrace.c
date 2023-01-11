@@ -43,8 +43,8 @@ struct stack_trace {
 #endif
 
 /* Tracking structure, used as the allocator impl.
- * This structure, and all its bookkeeping datastructures, are created with the aws_default_allocator().
- * This is not customizeable because it's too expensive for every little allocation to store
+ * This structure, and all its bookkeeping data structures, are created with the aws_default_allocator().
+ * This is not customizable because it's too expensive for every little allocation to store
  * a pointer back to its original allocator. */
 struct alloc_tracer {
     struct aws_allocator *traced_allocator; /* underlying allocator */
@@ -110,7 +110,7 @@ static void s_alloc_tracer_init(
         if (frames_per_stack > 128) {
             frames_per_stack = 128;
         }
-        tracer->frames_per_stack = (frames_per_stack) ? frames_per_stack : 8;
+        tracer->frames_per_stack = frames_per_stack ? frames_per_stack : 8;
         AWS_FATAL_ASSERT(
             AWS_OP_SUCCESS ==
             aws_hash_table_init(
@@ -460,7 +460,7 @@ struct aws_allocator *aws_mem_tracer_new(
     enum aws_mem_trace_level level,
     size_t frames_per_stack) {
 
-    /* deprecated customizeable bookkeeping allocator */
+    /* deprecated customizable bookkeeping allocator */
     (void)deprecated;
 
     struct alloc_tracer *tracer = NULL;

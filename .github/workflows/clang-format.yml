@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout Sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
     - name: clang-format lint
       uses: DoozyX/clang-format-lint-action@v0.3.1

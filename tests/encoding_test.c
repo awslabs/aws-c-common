@@ -1116,3 +1116,265 @@ static int s_text_encoding_is_utf8(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(text_encoding_is_utf8, s_text_encoding_is_utf8)
+
+struct utf8_example {
+    const char *name;
+    struct aws_byte_cursor text;
+};
+
+static struct utf8_example s_valid_utf8_examples[] = {
+    {
+        .name = "1 letter",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("a"),
+    },
+    {
+        .name = "Several ascii letters",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("ascii word"),
+    },
+    {
+        .name = "empty string",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(""),
+    },
+    {
+        .name = "Embedded null byte",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("a\x00b"),
+    },
+    {
+        .name = "2 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC2\xA3"),
+    },
+    {
+        .name = "3 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xE2\x82\xAC"),
+    },
+    {
+        .name = "4 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF0\x90\x8D\x88"),
+    },
+    {
+        .name = "A variety of different length codepoints",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(
+            "\xF0\x90\x8D\x88\xE2\x82\xAC\xC2\xA3\x24\xC2\xA3\xE2\x82\xAC\xF0\x90\x8D\x88"),
+    },
+    {
+        .name = "UTF8 BOM",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xEF\xBB\xBF"),
+    },
+    {
+        .name = "UTF8 BOM plus extra",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xEF\xBB\xBF\x24\xC2\xA3"),
+    },
+    {
+        .name = "First possible 1 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x00"),
+    },
+    {
+        .name = "First possible 2 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC2\x80"),
+    },
+    {
+        .name = "First possible 3 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xE0\xA0\x80"),
+    },
+    {
+        .name = "First possible 4 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF0\x90\x80\x80"),
+    },
+    {
+        .name = "Last possible 1 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x7F"),
+    },
+    {
+        .name = "Last possible 2 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xDF\xBF"),
+    },
+    {
+        .name = "Last possible 3 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xEF\xBF\xBF"),
+    },
+    {
+        .name = "Last possible 4 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF7\xBF\xBF\xBF"),
+    },
+    {
+        .name = "Last valid codepoint before prohibited range U+D800 - U+DFFF",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xED\x9F\xBF"),
+    },
+    {
+        .name = "Next valid codepoint after prohibited range U+D800 - U+DFFF",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xEE\x80\x80"),
+    },
+    {
+        .name = "Boundary condition",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xEF\xBF\xBD"),
+    },
+    {
+        .name = "Boundary condition",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF4\x8F\xBF\xBF"),
+    },
+    {
+        .name = "Boundary condition",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF4\x90\x80\x80"),
+    },
+};
+
+static struct utf8_example s_illegal_utf8_examples[] = {
+    {
+        .name = "Missing last byte of 2 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC2"),
+    },
+    {
+        .name = "Missing last byte of 3 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xE2\x82"),
+    },
+    {
+        .name = "Missing last byte of 4 byte codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF0\x90\x8D"),
+    },
+    {
+        .name = "5 byte codepoints not allowed by RFC-3629",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF8\x88\x80\x80\x80"),
+    },
+    {
+        .name = "6 byte codepoints not allowed by RFC-3629",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xFC\x84\x80\x80\x80\x80"),
+    },
+    {
+        .name = "Illegal first byte",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xFF"),
+    },
+    {
+        .name = "Overlong 2 byte encoding of U+00",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC0\x80"),
+    },
+    {
+        .name = "Overlong 3 byte encoding of U+00",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xE0\x80\x80"),
+    },
+    {
+        .name = "Overlong 4 byte encoding of U+00",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xF0\x80\x80\x80"),
+    },
+    {
+        .name = "Continuation byte as first byte (lowest possible value)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x80"),
+    },
+    {
+        .name = "Continuation byte as first byte (highest possible value)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xBF"),
+    },
+    {
+        .name = "Unexpected continuation byte after valid codepoint",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x61\x80"),
+    },
+    {
+        .name = "Illegal value for continuation byte (starts 11xxxxxx)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC2\xC0"),
+    },
+    {
+        .name = "Illegal value for continuation byte (starts 00xxxxxx)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xC2\x3F"),
+    },
+    {
+        .name = "Codepoint in prohibited range U+D800 - U+DFFF (lowest possible value)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xED\xA0\x80"),
+    },
+    {
+        .name = "Codepoint in prohibited range U+D800 - U+DFFF (highest possible value)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xED\xBF\xBF"),
+    },
+    {
+        .name = "Codepoint in prohibited range U+D800 - U+DFFF (in the middle)",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\xED\xA3\xBF"),
+    },
+};
+
+static int s_text_is_valid_utf8(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    /* Check the valid test cases */
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        struct utf8_example example = s_valid_utf8_examples[i];
+        printf("valid example [%zu]: %s\n", i, example.name);
+        ASSERT_TRUE(aws_text_is_valid_utf8(example.text));
+    }
+
+    /* Glue all the valid test cases together, they ought to pass */
+    struct aws_byte_buf all_good_text;
+    aws_byte_buf_init(&all_good_text, allocator, 1024);
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        aws_byte_buf_append_dynamic(&all_good_text, &s_valid_utf8_examples[i].text);
+    }
+    ASSERT_TRUE(aws_text_is_valid_utf8(aws_byte_cursor_from_buf(&all_good_text)));
+    aws_byte_buf_clean_up(&all_good_text);
+
+    /* Check the illegal test cases */
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
+        struct utf8_example example = s_illegal_utf8_examples[i];
+        printf("illegal example [%zu]: %s\n", i, example.name);
+        ASSERT_FALSE(aws_text_is_valid_utf8(example.text));
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(text_is_valid_utf8, s_text_is_valid_utf8);
+
+static int s_utf8_validator_update_in_chunks(
+    struct aws_utf8_validator *validator,
+    struct aws_byte_cursor text,
+    size_t chunk_size) {
+
+    while (text.len > 0) {
+        struct aws_byte_cursor chunk = aws_byte_cursor_advance(&text, aws_min_size(chunk_size, text.len));
+        if (aws_utf8_validator_update(validator, chunk)) {
+            return AWS_OP_ERR;
+        }
+    }
+    return AWS_OP_SUCCESS;
+}
+
+static int s_utf8_validator(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_utf8_validator *validator = aws_utf8_validator_new(allocator);
+    ASSERT_NOT_NULL(validator);
+
+    /* Check valid examples, streaming the text in at various sized chunks*/
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        struct utf8_example example = s_valid_utf8_examples[i];
+        printf("valid example [%zu]: %s\n", i, example.name);
+        aws_utf8_validator_reset(validator);
+
+        for (size_t chunk_size = 1; chunk_size <= example.text.len; ++chunk_size) {
+            printf("   processing %zu byte chunks\n", chunk_size);
+            ASSERT_SUCCESS(s_utf8_validator_update_in_chunks(validator, example.text, chunk_size));
+        }
+        ASSERT_SUCCESS(aws_utf8_validator_finalize(validator));
+    }
+
+    /* Check illegal examples, streaming the text in at various sized chunks*/
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
+        struct utf8_example example = s_illegal_utf8_examples[i];
+        printf("illegal example [%zu]: %s\n", i, example.name);
+        aws_utf8_validator_reset(validator);
+
+        bool validator_error = false;
+        for (size_t chunk_size = 1; chunk_size <= example.text.len; ++chunk_size) {
+            printf("   processing %zu byte chunks\n", chunk_size);
+            if (s_utf8_validator_update_in_chunks(validator, example.text, chunk_size)) {
+                ASSERT_INT_EQUALS(AWS_ERROR_INVALID_UTF8, aws_last_error());
+                validator_error = true;
+                break;
+            }
+        }
+
+        if (!validator_error) {
+            ASSERT_ERROR(AWS_ERROR_INVALID_UTF8, aws_utf8_validator_finalize(validator));
+        }
+    }
+
+    aws_utf8_validator_destroy(validator);
+    return 0;
+}
+
+AWS_TEST_CASE(utf8_validator, s_utf8_validator);

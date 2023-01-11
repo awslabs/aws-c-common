@@ -199,7 +199,8 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
         return;
     }
 
-    void *item1 = NULL, *item2 = NULL;
+    void *item1 = NULL;
+    void *item2 = NULL;
     aws_array_list_get_at_ptr(list, &item1, a);
     aws_array_list_get_at_ptr(list, &item2, b);
     aws_array_list_mem_swap(item1, item2, list->item_size);

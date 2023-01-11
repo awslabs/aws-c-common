@@ -38,7 +38,7 @@ static inline bool aws_common_private_has_avx2(void) {
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
-static const uint8_t BASE64_SENTIANAL_VALUE = 0xff;
+static const uint8_t BASE64_SENTINEL_VALUE = 0xff;
 static const uint8_t BASE64_ENCODING_TABLE[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
@@ -337,10 +337,10 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     return AWS_OP_SUCCESS;
 }
 
-static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *value, int8_t allow_sentinal) {
+static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *value, int8_t allow_sentinel) {
 
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
-    if (decode_value != 0xDD && (decode_value != BASE64_SENTIANAL_VALUE || allow_sentinal)) {
+    if (decode_value != 0xDD && (decode_value != BASE64_SENTINEL_VALUE || allow_sentinel)) {
         *value = decode_value;
         return AWS_OP_SUCCESS;
     }
@@ -401,13 +401,125 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
 
         output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
 
-        if (value3 != BASE64_SENTIANAL_VALUE) {
+        if (value3 != BASE64_SENTINEL_VALUE) {
             output->buffer[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
-            if (value4 != BASE64_SENTIANAL_VALUE) {
+            if (value4 != BASE64_SENTINEL_VALUE) {
                 output->buffer[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
             }
         }
     }
     output->len = decoded_length;
     return AWS_OP_SUCCESS;
+}
+
+struct aws_utf8_validator {
+    struct aws_allocator *alloc;
+    /* Value of current codepoint, updated as we read each byte */
+    uint32_t codepoint;
+    /* Minimum value that current codepoint is allowed to end up with
+     * (i.e. text cannot use 2 bytes to encode what would have fit in 1 byte) */
+    uint32_t min;
+    /* Number of bytes remaining the current codepoint */
+    uint8_t remaining;
+};
+
+struct aws_utf8_validator *aws_utf8_validator_new(struct aws_allocator *allocator) {
+    struct aws_utf8_validator *validator = aws_mem_calloc(allocator, 1, sizeof(struct aws_utf8_validator));
+    validator->alloc = allocator;
+    return validator;
+}
+
+void aws_utf8_validator_destroy(struct aws_utf8_validator *validator) {
+    if (validator) {
+        aws_mem_release(validator->alloc, validator);
+    }
+}
+
+void aws_utf8_validator_reset(struct aws_utf8_validator *validator) {
+    validator->codepoint = 0;
+    validator->min = 0;
+    validator->remaining = 0;
+}
+
+/* Why yes, this could be optimized. */
+int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes) {
+    /* We're respecting RFC-3629, which uses 1 to 4 byte sequences (never 5 or 6) */
+    for (size_t i = 0; i < bytes.len; ++i) {
+        uint8_t byte = bytes.ptr[i];
+
+        if (validator->remaining == 0) {
+            /* Check first byte of the codepoint to determine how many more bytes remain */
+            if ((byte & 0x80) == 0x00) {
+                /* 1 byte codepoints start with 0xxxxxxx */
+                validator->remaining = 0;
+                validator->codepoint = byte;
+                validator->min = 0;
+            } else if ((byte & 0xE0) == 0xC0) {
+                /* 2 byte codepoints start with 110xxxxx */
+                validator->remaining = 1;
+                validator->codepoint = byte & 0x1F;
+                validator->min = 0x80;
+            } else if ((byte & 0xF0) == 0xE0) {
+                /* 3 byte codepoints start with 1110xxxx */
+                validator->remaining = 2;
+                validator->codepoint = byte & 0x0F;
+                validator->min = 0x800;
+            } else if ((byte & 0xF8) == 0xF0) {
+                /* 4 byte codepoints start with 11110xxx */
+                validator->remaining = 3;
+                validator->codepoint = byte & 0x07;
+                validator->min = 0x10000;
+            } else {
+                return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+            }
+        } else {
+            /* This is not the first byte of a codepoint.
+             * Ensure it starts with 10xxxxxx*/
+            if ((byte & 0xC0) != 0x80) {
+                return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+            }
+
+            /* Insert the 6 newly decoded bits:
+             * shifting left anything we've already decoded, and insert the new bits to the right */
+            validator->codepoint = (validator->codepoint << 6) | (byte & 0x3F);
+
+            /* If we've decoded the whole codepoint, check it for validity
+             * (don't need to do these particular checks on 1 byte codepoints) */
+            if (--validator->remaining == 0) {
+                /* Check that it's not "overlong" (encoded using more bytes than necessary) */
+                if (validator->codepoint < validator->min) {
+                    return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+                }
+
+                /* UTF-8 prohibits encoding character numbers between U+D800 and U+DFFF,
+                 * which are reserved for use with the UTF-16 encoding form (as
+                 * surrogate pairs) and do not directly represent characters */
+                if (validator->codepoint >= 0xD800 && validator->codepoint <= 0xDFFF) {
+                    return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+                }
+            }
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_utf8_validator_finalize(struct aws_utf8_validator *validator) {
+    bool valid = validator->remaining == 0;
+    aws_utf8_validator_reset(validator);
+    if (AWS_LIKELY(valid)) {
+        return AWS_OP_SUCCESS;
+    }
+    return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+}
+
+bool aws_text_is_valid_utf8(struct aws_byte_cursor bytes) {
+    struct aws_utf8_validator validator = {.remaining = 0};
+    if (aws_utf8_validator_update(&validator, bytes)) {
+        return false;
+    }
+    if (validator.remaining != 0) {
+        return false;
+    }
+    return true;
 }
