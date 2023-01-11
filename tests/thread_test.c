@@ -51,7 +51,10 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         AWS_THREAD_JOIN_COMPLETED,
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
-    ASSERT_CURSOR_VALUE_STRING_EQUALS(aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+
+    #ifdef AWS_PTHREAD_HAS_GETNAME
+        ASSERT_CURSOR_VALUE_STRING_EQUALS(aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+    #endif
 
     aws_string_destroy(test_data.thread_name);
     aws_thread_clean_up(&thread);
