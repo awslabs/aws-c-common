@@ -24,9 +24,7 @@ static void s_thread_fn(void *arg) {
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     aws_common_library_init(allocator);
-    struct thread_test_data test_data = {
-        .allocator = allocator
-    };
+    struct thread_test_data test_data = {.allocator = allocator};
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
@@ -52,9 +50,10 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
 
-    #ifdef AWS_PTHREAD_HAS_GETNAME
-        ASSERT_CURSOR_VALUE_STRING_EQUALS(aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
-    #endif
+#ifdef AWS_PTHREAD_HAS_GETNAME
+    ASSERT_CURSOR_VALUE_STRING_EQUALS(
+        aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+#endif
 
     aws_string_destroy(test_data.thread_name);
     aws_thread_clean_up(&thread);
