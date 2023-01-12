@@ -561,6 +561,10 @@ int aws_logger_init_noalloc(
     } else { /* _MSC_VER */
         if (options->filename != NULL) {
             impl->file = aws_fopen(options->filename, "w");
+            if (!impl->file) {
+                aws_mem_release(allocator, impl);
+                return AWS_OP_ERR;
+            }
             impl->should_close = true;
         } else {
             impl->file = stderr;

@@ -15,31 +15,20 @@
 #include <unistd.h>
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    return fopen(aws_string_c_str(file_path), aws_string_c_str(mode));
-}
-
-static int s_parse_and_raise_error(int errno_cpy) {
-    if (errno_cpy == 0) {
-        return AWS_OP_SUCCESS;
+    FILE *f = fopen(aws_string_c_str(file_path), aws_string_c_str(mode));
+    if (!f) {
+        int errno_cpy = errno;
+        aws_translate_and_raise_io_error(errno_cpy);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
+            aws_string_c_str(file_path),
+            aws_string_c_str(mode),
+            errno_cpy,
+            aws_last_error(),
+            aws_error_name(aws_last_error()));
     }
-
-    if (errno_cpy == ENOENT || errno_cpy == ENOTDIR) {
-        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
-    }
-
-    if (errno_cpy == EMFILE || errno_cpy == ENFILE) {
-        return aws_raise_error(AWS_ERROR_MAX_FDS_EXCEEDED);
-    }
-
-    if (errno_cpy == EACCES) {
-        return aws_raise_error(AWS_ERROR_NO_PERMISSION);
-    }
-
-    if (errno_cpy == ENOTEMPTY) {
-        return aws_raise_error(AWS_ERROR_DIRECTORY_NOT_EMPTY);
-    }
-
-    return aws_raise_error(AWS_ERROR_UNKNOWN);
+    return f;
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
@@ -47,7 +36,7 @@ int aws_directory_create(const struct aws_string *dir_path) {
 
     /** nobody cares if it already existed. */
     if (mkdir_ret != 0 && errno != EEXIST) {
-        return s_parse_and_raise_error(errno);
+        return aws_translate_and_raise_io_error(errno);
     }
 
     return AWS_OP_SUCCESS;
@@ -104,13 +93,13 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
 
     int error_code = rmdir(aws_string_c_str(dir_path));
 
-    return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno);
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
     int error_code = rename(aws_string_c_str(from), aws_string_c_str(to));
 
-    return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno);
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
@@ -120,7 +109,7 @@ int aws_file_delete(const struct aws_string *file_path) {
         return AWS_OP_SUCCESS;
     }
 
-    return s_parse_and_raise_error(errno);
+    return aws_translate_and_raise_io_error(errno);
 }
 
 int aws_directory_traverse(
@@ -132,7 +121,7 @@ int aws_directory_traverse(
     DIR *dir = opendir(aws_string_c_str(path));
 
     if (!dir) {
-        return s_parse_and_raise_error(errno);
+        return aws_translate_and_raise_io_error(errno);
     }
 
     struct aws_byte_cursor current_path = aws_byte_cursor_from_string(path);
