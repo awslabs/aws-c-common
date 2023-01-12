@@ -21,10 +21,11 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
         aws_translate_and_raise_io_error(errno_cpy);
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
             aws_string_c_str(file_path),
             aws_string_c_str(mode),
             errno_cpy,
+            aws_last_error(),
             aws_error_name(aws_last_error()));
     }
     return f;

@@ -40,18 +40,18 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
     FILE *file = NULL;
     errno_t error = _wfopen_s(&file, aws_wstring_c_str(w_file_path), aws_wstring_c_str(w_mode));
-    /* actually handle the error correctly here. */
     aws_wstring_destroy(w_mode);
     aws_wstring_destroy(w_file_path);
 
     if (error) {
-        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        aws_translate_and_raise_io_error(error);
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
-            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
             aws_string_c_str(file_path),
             aws_string_c_str(mode),
             error,
+            aws_last_error(),
             aws_error_name(aws_last_error()));
     }
 
