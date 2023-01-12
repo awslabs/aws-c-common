@@ -18,6 +18,12 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
         return NULL;
     }
 
+    if (!mode || strlen(mode) == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. mode is empty");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
     struct aws_string *file_path_str = aws_string_new_from_c_str(aws_default_allocator(), file_path);
     struct aws_string *mode_str = aws_string_new_from_c_str(aws_default_allocator(), mode);
 
