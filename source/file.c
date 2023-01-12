@@ -13,6 +13,7 @@
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
     if (!file_path || strlen(file_path) == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. path is empty");
         aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
         return NULL;
     }
