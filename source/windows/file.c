@@ -5,6 +5,7 @@
 
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 
 #include <Shlwapi.h>
@@ -45,12 +46,13 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
     if (error) {
         aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
-        AWS_LOGF_ERROR(AWS_LS_COMMON_IO,
-                       "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
-                       aws_string_cstr(file_path),
-                       aws_string_cstr(mode);
-                       error,
-                       aws_error_name(aws_last_error());
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%s",
+            aws_string_c_str(file_path),
+            aws_string_c_str(mode),
+            error,
+            aws_error_name(aws_last_error()));
     }
 
     return file;
