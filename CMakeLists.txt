@@ -279,6 +279,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
+    "cmake/AwsCRuntime.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
