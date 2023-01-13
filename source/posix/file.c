@@ -33,10 +33,11 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
 int aws_directory_create(const struct aws_string *dir_path) {
     int mkdir_ret = mkdir(aws_string_c_str(dir_path), S_IRWXU | S_IRWXG | S_IRWXO);
+    int errno_value = errno;
 
     /** nobody cares if it already existed. */
-    if (mkdir_ret != 0 && errno != EEXIST) {
-        return aws_translate_and_raise_io_error(errno);
+    if (mkdir_ret != 0 && errno_value != EEXIST) {
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -92,24 +93,27 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     }
 
     int error_code = rmdir(aws_string_c_str(dir_path));
+    int errno_value = errno;
 
-    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
     int error_code = rename(aws_string_c_str(from), aws_string_c_str(to));
+    int errno_value = errno;
 
-    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
     int error_code = unlink(aws_string_c_str(file_path));
+    int errno_value = errno;
 
-    if (!error_code || errno == ENOENT) {
+    if (!error_code || errno_value == ENOENT) {
         return AWS_OP_SUCCESS;
     }
 
-    return aws_translate_and_raise_io_error(errno);
+    return aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_directory_traverse(
@@ -119,9 +123,10 @@ int aws_directory_traverse(
     aws_on_directory_entry *on_entry,
     void *user_data) {
     DIR *dir = opendir(aws_string_c_str(path));
+    int errno_value = errno;
 
     if (!dir) {
-        return aws_translate_and_raise_io_error(errno);
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     struct aws_byte_cursor current_path = aws_byte_cursor_from_string(path);
@@ -269,9 +274,10 @@ int aws_fseek(FILE *file, int64_t offset, int whence) {
     }
     int result = fseek(file, offset, whence);
 #endif /* AWS_HAVE_POSIX_LFS */
+    int errno_value = errno;
 
     if (result != 0) {
-        return aws_translate_and_raise_io_error(errno);
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -287,7 +293,8 @@ int aws_file_get_length(FILE *file, int64_t *length) {
     }
 
     if (fstat(fd, &file_stats)) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno;
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     *length = file_stats.st_size;
