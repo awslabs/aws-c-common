@@ -27,7 +27,7 @@ static int s_aws_file_writer_write(struct aws_log_writer *writer, const struct a
 
     size_t length = output->len;
     if (fwrite(output->bytes, 1, length, impl->log_file) < length) {
-        int errno_value = errno;
+        int errno_value = errno; /* Always cache errno before potential side-effect */
         return aws_translate_and_raise_io_error(errno_value);
     }
 

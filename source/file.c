@@ -41,7 +41,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
 
     if (fp) {
         if (fseek(fp, 0L, SEEK_END)) {
-            int errno_value = errno;
+            int errno_value = errno; /* Always cache errno before potential side-effect */
             AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to seek file %s with errno %d", filename, errno_value);
             fclose(fp);
             return aws_translate_and_raise_io_error(errno_value);
@@ -60,7 +60,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
         out_buf->buffer[out_buf->len] = 0;
 
         if (fseek(fp, 0L, SEEK_SET)) {
-            int errno_value = errno;
+            int errno_value = errno; /* Always cache errno before potential side-effect */
             AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to seek file %s with errno %d", filename, errno_value);
             aws_byte_buf_clean_up(out_buf);
             fclose(fp);
@@ -68,7 +68,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
         }
 
         size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
-        int errno_cpy = errno;
+        int errno_cpy = errno; /* Always cache errno before potential side-effect */
         fclose(fp);
         if (read < out_buf->len) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to read file %s with errno %d", filename, errno_cpy);
