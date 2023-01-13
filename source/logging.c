@@ -502,7 +502,8 @@ static int s_noalloc_stderr_logger_log(
 
     int write_result = AWS_OP_SUCCESS;
     if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
-        aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        aws_translate_and_raise_io_error(errno_value);
         write_result = AWS_OP_ERR;
     }
 
