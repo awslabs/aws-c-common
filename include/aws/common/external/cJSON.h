@@ -25,7 +25,7 @@ THE SOFTWARE.
  *   (1) Address clang-tidy errors by renaming function parameters in a number of places
  *   to match their .c counterparts.
  *   (2) Misc tweaks to unchecked writes to make security static analysis happier
- *   (3) Comment cJSON_GetErrorPtr and global_error as they are not thread-safe api.
+ *   (3) Comment cJSON_GetErrorPtr and global_error as they are not thread-safe.
  */
 
 /* clang-format off */
