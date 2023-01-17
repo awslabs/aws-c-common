@@ -129,7 +129,9 @@ AWS_COMMON_API
 void aws_unregister_error_info(const struct aws_error_info_list *error_info);
 
 /**
- * Convert a c library io error into an aws error.
+ * Convert a c library io error into an aws error, and raise it.
+ * If no conversion is found, AWS_ERROR_SYS_CALL_FAILURE is raised.
+ * Always returns AWS_OP_ERR.
  */
 AWS_COMMON_API
 int aws_translate_and_raise_io_error(int error_no);
