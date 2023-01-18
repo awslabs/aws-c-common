@@ -3,10 +3,11 @@
     "upstream": [],
     "downstream": [
         { "name": "aws-checksums" },
+        { "name": "aws-c-cal" },
+        { "name": "aws-c-io" },
         { "name": "aws-c-event-stream" },
         { "name": "aws-c-compression" },
-        { "name": "aws-c-io" },
-        { "name": "aws-c-cal" },
+        { "name": "aws-c-sdkutils" },
         { "name": "aws-c-mqtt" },
         { "name": "aws-c-http" },
         { "name": "aws-c-auth" }

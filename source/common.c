@@ -38,6 +38,12 @@ int (*g_numa_node_of_cpu_ptr)(int cpu) = NULL;
 void *g_libnuma_handle = NULL;
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
+    /* don't pass NULL to memset(), it's undefined behavior */
+    if (pBuf == NULL || bufsize == 0) {
+        AWS_ASSERT(bufsize == 0); /* if you believe your NULL buffer has a size, then you have issues */
+        return;
+    }
+
 #if defined(_WIN32)
     SecureZeroMemory(pBuf, bufsize);
 #else
@@ -250,6 +256,12 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PLATFORM_NOT_SUPPORTED,
         "Feature not supported on this platform"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_UTF8,
+        "Invalid UTF-8"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_GET_HOME_DIRECTORY_FAILED,
+        "Failed to get home directory"),
 };
 /* clang-format on */
 
@@ -298,7 +310,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         /* libnuma defines set_mempolicy() as a WEAK symbol. Loading into the global symbol table overwrites symbols and
            assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
            like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
-           Also, please don't do numa configurations if memory is your economic bottlneck. */
+           Also, please don't do numa configurations if memory is your economic bottleneck. */
         g_libnuma_handle = dlopen("libnuma.so", RTLD_LOCAL);
 
         /* turns out so versioning is really inconsistent these days */
