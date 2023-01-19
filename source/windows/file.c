@@ -507,7 +507,8 @@ bool aws_path_exists(const struct aws_string *path) {
 
 int aws_fseek(FILE *file, int64_t offset, int whence) {
     if (_fseeki64(file, offset, whence)) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -525,7 +526,8 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     HANDLE os_file = (HANDLE)_get_osfhandle(fd);
     if (os_file == INVALID_HANDLE_VALUE) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     LARGE_INTEGER os_size;
