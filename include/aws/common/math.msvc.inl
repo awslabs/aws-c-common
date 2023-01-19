@@ -45,9 +45,9 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
  */
 AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
-        uint32_t out;
-        uint32_t ret_val = _mulx_u32(a, b, &out);
-        return (out == 0) ? ret_val : UINT32_MAX;
+        uint32_t high_32;
+        uint32_t ret_val = _mulx_u32(a, b, &high_32);
+        return (high_32 == 0) ? ret_val : UINT32_MAX;
     } else {
         /* If BMI2 unavailable, use __emulu instead */
         uint64_t result = __emulu(a, b);
@@ -61,10 +61,10 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     if(aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2) {
-        uint32_t out;
-        *r = _mulx_u32(a, b, &out);
+        uint32_t high_32;
+        *r = _mulx_u32(a, b, &high_32);
 
-        if (out != 0) {
+        if (high_32 != 0) {
             return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
         }
     } else {
