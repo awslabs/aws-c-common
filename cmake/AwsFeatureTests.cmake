@@ -33,15 +33,6 @@ if(NOT CMAKE_CROSSCOMPILING)
         return 0;
     }" AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
 
-    if (USE_CPU_EXTENSIONS)
-        check_c_source_runs("
-        int main() {
-        int foo = 42;
-        _mulx_u32(1, 2, &foo);
-        return foo != 2;
-        }" AWS_HAVE_MSVC_MULX)
-    endif()
-
 endif()
 
 check_c_source_compiles("
