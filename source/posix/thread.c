@@ -465,14 +465,14 @@ int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string *
     return aws_thread_name(allocator, aws_thread_current_thread_id(), out_name);
 }
 
-static size_t s_thread_name_buffer_size = 256;
+#define THREAD_NAME_BUFFER_SIZE 256
 int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name) {
     *out_name = NULL;
-#if defined(PTHREAD_GETNAME_TAKES_3ARGS) || defined(PTHREAD_GETNAME_TAKES_2ARGS)
-    char name[s_thread_name_buffer_size] = {0};
-#   ifdef PTHREAD_GETNAME_TAKES_3ARGS
-    if (pthread_getname_np(thread_id, name, s_thread_name_buffer_size)) {
-#   elif PTHREAD_GETNAME_TAKES_2ARGS
+#if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS)
+    char name[THREAD_NAME_BUFFER_SIZE] = {0};
+#   ifdef AWS_PTHREAD_GETNAME_TAKES_3ARGS
+    if (pthread_getname_np(thread_id, name, THREAD_NAME_BUFFER_SIZE)) {
+#   elif AWS_PTHREAD_GETNAME_TAKES_2ARGS
     if (pthread_getname_np(thread_id, name)) {
 # endif
         return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
@@ -481,7 +481,6 @@ int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, 
     *out_name = aws_string_new_from_c_str(allocator, name);
     return AWS_OP_SUCCESS;
 #else
-    (void)s_thread_name_buffer_size;
     return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
 #endif
 }
