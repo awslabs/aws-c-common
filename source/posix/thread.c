@@ -464,7 +464,7 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
 static size_t s_thread_name_buffer_size = 256;
 int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name) {
     *out_name = NULL;
-#ifdef PTHREAD_GETNAME_TAKES_3ARGS || PTHREAD_GETNAME_TAKES_2ARGS
+#if defined(PTHREAD_GETNAME_TAKES_3ARGS) || defined(PTHREAD_GETNAME_TAKES_2ARGS)
     char name[s_thread_name_buffer_size] = {0};
 #   ifdef PTHREAD_GETNAME_TAKES_3ARGS
     if (pthread_getname_np(aws_thread_current_thread_id(), name, s_thread_name_buffer_size)) {
