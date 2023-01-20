@@ -438,7 +438,7 @@ int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, 
             AWS_LOGF_WARN(
                     AWS_LS_COMMON_THREAD,
                     "thread_id=%lu: OpenThread() failed with %" PRIx32 ".",
-                    (void *)thread_id,
+                    thread_id,
                     (uint32_t)GetLastError());
             return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
         }
