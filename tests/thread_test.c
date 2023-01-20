@@ -19,7 +19,7 @@ struct thread_test_data {
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
-     AWS_OP_SUCCESS;
+    test_data->get_thread_name_error = AWS_OP_SUCCESS;
     if (aws_thread_name(test_data->allocator, test_data->thread_id, &test_data->thread_name)) {
         test_data->get_thread_name_error = aws_last_error();
     }
