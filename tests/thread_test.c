@@ -18,7 +18,7 @@ struct thread_test_data {
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
-    test_data->thread_name = aws_thread_current_name(test_data->allocator);
+    aws_thread_current_name(test_data->allocator, &test_data->thread_name);
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {

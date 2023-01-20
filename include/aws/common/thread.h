@@ -241,10 +241,11 @@ AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
 /**
  * Gets name of the current thread.
  * Caller is responsible for destroying returned string.
- * If thread does not have a name, NULL is returned.
- * If call failed NULL is returned and aws error is raised.
+ * If thread does not have a name, AWS_OP_SUCCESS is returned and out_name is
+ * set to NULL.
+ * In case of error, out_name is set to NULL
  */
-AWS_COMMON_API struct aws_string *aws_thread_current_name(struct aws_allocator *allocator);
+AWS_COMMON_API int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name);
 
 AWS_EXTERN_C_END
 

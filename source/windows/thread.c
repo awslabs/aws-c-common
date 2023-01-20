@@ -413,18 +413,18 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     return AWS_OP_SUCCESS;
 }
 
-struct aws_string *aws_thread_current_name(struct aws_allocator *allocator) {
+int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name) {
     if (s_GetThreadDescription) {
 
         PWSTR wname = NULL;
         if (SUCCEEDED(s_GetThreadDescription(GetCurrentThread(), &wname))) {
-            struct aws_string *name = aws_string_convert_from_wchar_c_str(allocator, wname);
+            *out_name = aws_string_convert_from_wchar_c_str(allocator, wname);
             LocalFree(wname);
-            return name;
+            return AWS_OP_SUCCESS;
         }
 
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
 
-    return NULL;
+    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
 }

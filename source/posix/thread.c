@@ -461,15 +461,23 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     return AWS_OP_SUCCESS;
 }
 
-struct aws_string *aws_thread_current_name(struct aws_allocator *allocator) {
-#ifdef AWS_PTHREAD_HAS_GETNAME
-    char name[16] = {0};
-    if (pthread_getname_np(aws_thread_current_thread_id(), name, 16)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return NULL;
+static size_t s_thread_name_buffer_size = 256;
+int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name) {
+    *out_name = NULL;
+#ifdef PTHREAD_GETNAME_TAKES_3ARGS || PTHREAD_GETNAME_TAKES_2ARGS
+    char name[s_thread_name_buffer_size] = {0};
+#   ifdef PTHREAD_GETNAME_TAKES_3ARGS
+    if (pthread_getname_np(aws_thread_current_thread_id(), name, s_thread_name_buffer_size)) {
+#   elif PTHREAD_GETNAME_TAKES_2ARGS
+    if (pthread_getname_np(aws_thread_current_thread_id(), name)) {
+# endif
+        return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
-    return aws_string_new_from_c_str(allocator, name);
+
+    *out_name = aws_string_new_from_c_str(allocator, name);
+    return AWS_OP_SUCCESS;
 #else
-    return NULL;
+    (void)s_thread_name_buffer_size;
+    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
 #endif
 }
