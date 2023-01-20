@@ -243,9 +243,22 @@ AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
  * Caller is responsible for destroying returned string.
  * If thread does not have a name, AWS_OP_SUCCESS is returned and out_name is
  * set to NULL.
- * In case of error, out_name is set to NULL
+ * If underlying OS call fails,  AWS_ERROR_SYS_CALL_FAILURE will be raised
+ * If OS does not support getting thread name, AWS_ERROR_PLATFORM_NOT_SUPPORTED
+ * will be raised
  */
 AWS_COMMON_API int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name);
+
+/**
+ * Gets name of the thread.
+ * Caller is responsible for destroying returned string.
+ * If thread does not have a name, AWS_OP_SUCCESS is returned and out_name is
+ * set to NULL.
+ * If underlying OS call fails,  AWS_ERROR_SYS_CALL_FAILURE will be raised
+ * If OS does not support getting thread name, AWS_ERROR_PLATFORM_NOT_SUPPORTED
+ * will be raised
+ */
+AWS_COMMON_API int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name);
 
 AWS_EXTERN_C_END
 

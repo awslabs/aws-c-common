@@ -461,15 +461,19 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     return AWS_OP_SUCCESS;
 }
 
-static size_t s_thread_name_buffer_size = 256;
 int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name) {
+    return aws_thread_name(allocator, aws_thread_current_thread_id(), out_name);
+}
+
+static size_t s_thread_name_buffer_size = 256;
+int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name) {
     *out_name = NULL;
 #if defined(PTHREAD_GETNAME_TAKES_3ARGS) || defined(PTHREAD_GETNAME_TAKES_2ARGS)
     char name[s_thread_name_buffer_size] = {0};
 #   ifdef PTHREAD_GETNAME_TAKES_3ARGS
-    if (pthread_getname_np(aws_thread_current_thread_id(), name, s_thread_name_buffer_size)) {
+    if (pthread_getname_np(thread_id, name, s_thread_name_buffer_size)) {
 #   elif PTHREAD_GETNAME_TAKES_2ARGS
-    if (pthread_getname_np(aws_thread_current_thread_id(), name)) {
+    if (pthread_getname_np(thread_id, name)) {
 # endif
         return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
