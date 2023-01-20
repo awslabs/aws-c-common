@@ -470,19 +470,19 @@ int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, 
     *out_name = NULL;
 #if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS)
     char name[THREAD_NAME_BUFFER_SIZE] = {0};
-#   ifdef AWS_PTHREAD_GETNAME_TAKES_3ARGS
+#    ifdef AWS_PTHREAD_GETNAME_TAKES_3ARGS
     if (pthread_getname_np(thread_id, name, THREAD_NAME_BUFFER_SIZE)) {
-#   elif AWS_PTHREAD_GETNAME_TAKES_2ARGS
+#    elif AWS_PTHREAD_GETNAME_TAKES_2ARGS
     if (pthread_getname_np(thread_id, name)) {
-# endif
-        
+#    endif
+
         return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
 
     *out_name = aws_string_new_from_c_str(allocator, name);
     return AWS_OP_SUCCESS;
 #else
-    
+
     return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
 #endif
 }

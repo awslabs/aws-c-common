@@ -258,7 +258,10 @@ AWS_COMMON_API int aws_thread_current_name(struct aws_allocator *allocator, stru
  * If OS does not support getting thread name, AWS_ERROR_PLATFORM_NOT_SUPPORTED
  * will be raised
  */
-AWS_COMMON_API int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name);
+AWS_COMMON_API int aws_thread_name(
+    struct aws_allocator *allocator,
+    aws_thread_id_t thread_id,
+    struct aws_string **out_name);
 
 AWS_EXTERN_C_END
 
