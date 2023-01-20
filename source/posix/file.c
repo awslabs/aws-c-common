@@ -15,39 +15,29 @@
 #include <unistd.h>
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    return fopen(aws_string_c_str(file_path), aws_string_c_str(mode));
-}
-
-static int s_parse_and_raise_error(int errno_cpy) {
-    if (errno_cpy == 0) {
-        return AWS_OP_SUCCESS;
+    FILE *f = fopen(aws_string_c_str(file_path), aws_string_c_str(mode));
+    if (!f) {
+        int errno_cpy = errno; /* Always cache errno before potential side-effect */
+        aws_translate_and_raise_io_error(errno_cpy);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
+            aws_string_c_str(file_path),
+            aws_string_c_str(mode),
+            errno_cpy,
+            aws_last_error(),
+            aws_error_name(aws_last_error()));
     }
-
-    if (errno_cpy == ENOENT || errno_cpy == ENOTDIR) {
-        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
-    }
-
-    if (errno_cpy == EMFILE || errno_cpy == ENFILE) {
-        return aws_raise_error(AWS_ERROR_MAX_FDS_EXCEEDED);
-    }
-
-    if (errno_cpy == EACCES) {
-        return aws_raise_error(AWS_ERROR_NO_PERMISSION);
-    }
-
-    if (errno_cpy == ENOTEMPTY) {
-        return aws_raise_error(AWS_ERROR_DIRECTORY_NOT_EMPTY);
-    }
-
-    return aws_raise_error(AWS_ERROR_UNKNOWN);
+    return f;
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
     int mkdir_ret = mkdir(aws_string_c_str(dir_path), S_IRWXU | S_IRWXG | S_IRWXO);
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
     /** nobody cares if it already existed. */
-    if (mkdir_ret != 0 && errno != EEXIST) {
-        return s_parse_and_raise_error(errno);
+    if (mkdir_ret != 0 && errno_value != EEXIST) {
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -103,24 +93,27 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
     }
 
     int error_code = rmdir(aws_string_c_str(dir_path));
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
-    return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
     int error_code = rename(aws_string_c_str(from), aws_string_c_str(to));
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
-    return error_code == 0 ? AWS_OP_SUCCESS : s_parse_and_raise_error(errno);
+    return error_code == 0 ? AWS_OP_SUCCESS : aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
     int error_code = unlink(aws_string_c_str(file_path));
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
-    if (!error_code || errno == ENOENT) {
+    if (!error_code || errno_value == ENOENT) {
         return AWS_OP_SUCCESS;
     }
 
-    return s_parse_and_raise_error(errno);
+    return aws_translate_and_raise_io_error(errno_value);
 }
 
 int aws_directory_traverse(
@@ -130,9 +123,10 @@ int aws_directory_traverse(
     aws_on_directory_entry *on_entry,
     void *user_data) {
     DIR *dir = opendir(aws_string_c_str(path));
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
     if (!dir) {
-        return s_parse_and_raise_error(errno);
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     struct aws_byte_cursor current_path = aws_byte_cursor_from_string(path);
@@ -279,10 +273,11 @@ int aws_fseek(FILE *file, int64_t offset, int whence) {
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
     int result = fseek(file, offset, whence);
-#endif /* AWS_HAVE_POSIX_LFS */
+#endif                       /* AWS_HAVE_POSIX_LFS */
+    int errno_value = errno; /* Always cache errno before potential side-effect */
 
     if (result != 0) {
-        return aws_translate_and_raise_io_error(errno);
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -298,7 +293,8 @@ int aws_file_get_length(FILE *file, int64_t *length) {
     }
 
     if (fstat(fd, &file_stats)) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     *length = file_stats.st_size;
