@@ -19,8 +19,10 @@ struct thread_test_data {
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
-    test_data->get_thread_name_error = aws_thread_name(test_data->allocator, 
-        test_data->thread_id, &test_data->thread_name);
+     AWS_OP_SUCCESS;
+    if (aws_thread_name(test_data->allocator, test_data->thread_id, &test_data->thread_name)) {
+        test_data->get_thread_name_error = aws_last_error();
+    }
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
@@ -52,9 +54,13 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
 
+#if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS) || defined(AWS_OS_WINDOWS)
     ASSERT_SUCCESS(test_data.get_thread_name_error);
     ASSERT_CURSOR_VALUE_STRING_EQUALS(
         aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+#else
+    ASSERT_INT_EQUALS(test_data.get_thread_name_error, AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+#endif
 
     aws_string_destroy(test_data.thread_name);
     aws_thread_clean_up(&thread);
