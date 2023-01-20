@@ -10,21 +10,18 @@
 #include <aws/testing/aws_test_harness.h>
 
 struct thread_test_data {
-    struct aws_allocator *allocator;
     aws_thread_id_t thread_id;
-    struct aws_string *thread_name;
 };
 
 static void s_thread_fn(void *arg) {
     struct thread_test_data *test_data = (struct thread_test_data *)arg;
     test_data->thread_id = aws_thread_current_thread_id();
-    aws_thread_current_name(test_data->allocator, &test_data->thread_name);
 }
 
 static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     aws_common_library_init(allocator);
-    struct thread_test_data test_data = {.allocator = allocator};
+    struct thread_test_data test_data;
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
@@ -50,10 +47,12 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
 
+    struct aws_string *thread_name = NULL;
+    ASSERT_SUCCESS(aws_thread_name(allocator, aws_thread_get_id(&thread), &thread_name), "Getting thread name failed");
     ASSERT_CURSOR_VALUE_STRING_EQUALS(
-        aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+        aws_byte_cursor_from_c_str("MyThreadName"), thread_name, "thread name equals");
 
-    aws_string_destroy(test_data.thread_name);
+    aws_string_destroy(thread_name);
     aws_thread_clean_up(&thread);
     aws_common_library_clean_up();
 
