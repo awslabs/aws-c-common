@@ -69,7 +69,9 @@ void aws_array_list_init_static(
 
     list->alloc = NULL;
 
-    int no_overflow = !aws_mul_size_checked(item_count, item_size, &list->current_size);
+    size_t current_size = 0;
+    int no_overflow = !aws_mul_size_checked(item_count, item_size, &current_size);
+    list->current_size = current_size;
     AWS_FATAL_PRECONDITION(no_overflow);
 
     list->item_size = item_size;
