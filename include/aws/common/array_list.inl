@@ -67,6 +67,7 @@ void aws_array_list_init_static(
     AWS_FATAL_PRECONDITION(item_count > 0);
     AWS_FATAL_PRECONDITION(item_size > 0);
 
+    AWS_ZERO_STRUCT(*list);
     list->alloc = NULL;
 
     size_t current_size = 0;
