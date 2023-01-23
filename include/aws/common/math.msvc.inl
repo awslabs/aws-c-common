@@ -23,9 +23,7 @@ AWS_EXTERN_C_BEGIN
  */
 AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t out;
-#ifdef AWS_HAVE_MSVC_INTRIN_64
     uint64_t ret_val = _umul128(a, b, &out);
-#endif
     return (out == 0) ? ret_val : UINT64_MAX;
 }
 
