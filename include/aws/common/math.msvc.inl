@@ -23,7 +23,9 @@ AWS_EXTERN_C_BEGIN
  */
 AWS_STATIC_IMPL uint64_t aws_mul_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t out;
+#ifdef AWS_HAVE_MSVC_INTRIN_64
     uint64_t ret_val = _umul128(a, b, &out);
+#endif
     return (out == 0) ? ret_val : UINT64_MAX;
 }
 
@@ -132,26 +134,34 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
  */
 AWS_STATIC_IMPL size_t aws_clz_u32(uint32_t n) {
     unsigned long idx = 0;
-    _BitScanReverse(&idx, n);
-    return idx;
+    if (_BitScanReverse(&idx, n)) {
+        return 31 - idx;
+    }
+    return 32;
 }
 
 AWS_STATIC_IMPL size_t aws_clz_i32(int32_t n) {
     unsigned long idx = 0;
-    _BitScanReverse(&idx, n);
-    return idx;
+    if (_BitScanReverse(&idx, n)) {
+        return 31 - idx;
+    }
+    return 32;
 }
 
 AWS_STATIC_IMPL size_t aws_clz_u64(uint64_t n) {
     unsigned long idx = 0;
-    _BitScanReverse64(&idx, n);
-    return idx;
+    if (_BitScanReverse64(&idx, n)) {
+        return 63 - idx;
+    }
+    return 64;
 }
 
 AWS_STATIC_IMPL size_t aws_clz_i64(int64_t n) {
     unsigned long idx = 0;
-    _BitScanReverse64(&idx, n);
-    return idx;
+    if (_BitScanReverse64(&idx, n)) {
+        return 63 - idx;
+    }
+    return 64;
 }
 
 AWS_STATIC_IMPL size_t aws_clz_size(size_t n) {
@@ -167,26 +177,34 @@ AWS_STATIC_IMPL size_t aws_clz_size(size_t n) {
  */
 AWS_STATIC_IMPL size_t aws_ctz_u32(uint32_t n) {
     unsigned long idx = 0;
-    _BitScanForward(&idx, n);
-    return idx;
+    if (_BitScanForward(&idx, n)) {
+        return idx;
+    }
+    return 32;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i32(int32_t n) {
     unsigned long idx = 0;
-    _BitScanForward(&idx, n);
-    return idx;
+    if (_BitScanForward(&idx, n)) {
+        return idx;
+    }
+    return 32;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_u64(uint64_t n) {
     unsigned long idx = 0;
-    _BitScanForward64(&idx, n);
-    return idx;
+    if (_BitScanForward64(&idx, n)) {
+        return idx;
+    }
+    return 64;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_i64(int64_t n) {
     unsigned long idx = 0;
-    _BitScanForward64(&idx, n);
-    return idx;
+    if (_BitScanForward64(&idx, n)) {
+        return idx;
+    }
+    return 64;
 }
 
 AWS_STATIC_IMPL size_t aws_ctz_size(size_t n) {

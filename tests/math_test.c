@@ -937,3 +937,51 @@ static int s_test_min_max(struct aws_allocator *allocator, void *ctx) {
 
     return 0;
 }
+
+AWS_TEST_CASE(test_clz, s_test_clz)
+static int s_test_clz(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(0, aws_clz_u32(UINT32_MAX));
+    ASSERT_UINT_EQUALS(1, aws_clz_u32(INT32_MAX));
+    ASSERT_UINT_EQUALS(32, aws_clz_u32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_i32(-1));
+    ASSERT_UINT_EQUALS(1, aws_clz_i32(INT32_MAX));
+    ASSERT_UINT_EQUALS(32, aws_clz_i32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_u64(UINT64_MAX));
+    ASSERT_UINT_EQUALS(1, aws_clz_u64(INT64_MAX));
+    ASSERT_UINT_EQUALS(64, aws_clz_u64(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_i64(-1));
+    ASSERT_UINT_EQUALS(1, aws_clz_i64(INT64_MAX));
+    ASSERT_UINT_EQUALS(64, aws_clz_i64(0));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_ctz, s_test_ctz)
+static int s_test_ctz(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_u32(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_u32(2));
+    ASSERT_UINT_EQUALS(32, aws_ctz_u32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_i32(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_i32(2));
+    ASSERT_UINT_EQUALS(32, aws_ctz_i32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_u64(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_u64(2));
+    ASSERT_UINT_EQUALS(64, aws_ctz_u64(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_i64(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_i64(2));
+    ASSERT_UINT_EQUALS(64, aws_ctz_i64(0));
+
+    return 0;
+}
