@@ -108,6 +108,7 @@ int main() {
 if(MSVC)
     check_c_source_compiles("
     #include <immintrin.h>
+    #include <intrin.h>
     int main() {
         unsigned __int64 a = 0x0fffffffffffffffI64;
         unsigned __int64 b = 0xf0000000I64;
