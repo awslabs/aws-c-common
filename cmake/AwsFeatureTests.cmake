@@ -113,5 +113,5 @@ if(MSVC)
         unsigned __int64 b = 0xf0000000I64;
         unsigned __int64 c, d;
         d = _umul128(a, b, &c);
-    }" AWS_HAVE_MSVC_INTRIN_64)
+    }" AWS_HAVE_MSVC_INTRINSICS_64)
 endif()
