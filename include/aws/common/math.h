@@ -28,7 +28,7 @@ AWS_EXTERN_C_BEGIN
 
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) ||                 \
     (defined(__x86_64__) || defined(__aarch64__)) && defined(AWS_HAVE_GCC_INLINE_ASM) ||                               \
-    defined(_MSC_VER) && defined(AWS_ARCH_INTEL) || defined(CBMC) || !defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
+    defined(AWS_HAVE_MSVC_INTRIN_64) || defined(CBMC) || !defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
 /* In all these cases, we can use fast static inline versions of this code */
 #    define AWS_COMMON_MATH_API AWS_STATIC_IMPL
 #else
