@@ -106,7 +106,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
   windows:
-    runs-on: windows-2019 # latest
+    runs-on: windows-2022 # latest
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
