@@ -14,6 +14,7 @@
 #include <aws/common/private/thread_shared.h>
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
+#include <aws/common/trace_event.h>
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -123,6 +124,7 @@ void aws_thread_join_and_free_wrapper_list(struct aws_linked_list *wrapper_list)
 /* This must be called from the thread itself.
  * (only necessary for Apple, but we'll do it that way on every platform for consistency) */
 static void s_set_thread_name(pthread_t thread_id, const char *name) {
+    AWS_TRACE_EVENT_NAME_THREAD(name);
 #if defined(__APPLE__)
     (void)thread_id;
     pthread_setname_np(name);
