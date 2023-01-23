@@ -11,6 +11,7 @@
  * highlighting happier.
  */
 #include <aws/common/common.h>
+#include <aws/common/cpuid.h>
 #include <aws/common/math.h>
 
 #include <immintrin.h>
@@ -60,7 +61,7 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
  * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if(aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2) {
+    if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
         uint32_t high_32;
         *r = _mulx_u32(a, b, &high_32);
 
@@ -82,8 +83,8 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  * If a + b overflows, returns AWS_OP_ERR; otherwise adds
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
-AWS_STATIC_IMPL int aws_add_u64_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (_addcarry_u64(0, a, b, *r)) {
+AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
+    if (_addcarry_u64(0, a, b, r)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     return AWS_OP_SUCCESS;
@@ -92,8 +93,8 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint32_t a, uint32_t b, uint32_t *r) {
 /**
  * Adds a + b. If the result overflows, returns 2^64 - 1.
  */
-AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint32_t a, uint32_t b) {
-    uint32_t res;
+AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
+    uint64_t res;
 
     if (_addcarry_u64(0, a, b, &res)) {
         res = UINT64_MAX;
@@ -107,7 +108,7 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint32_t a, uint32_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-  if(_addcarry_u32(0, a, b, *r){
+    if (_addcarry_u32(0, a, b, r)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     return AWS_OP_SUCCESS;
@@ -116,7 +117,7 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 /**
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
-AWS_STATIC_IMPL uint64_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t res;
 
     if (_addcarry_u32(0, a, b, &res)) {
