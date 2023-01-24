@@ -570,7 +570,7 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
     CHECK_SAT(aws_add_size_saturating, HALF_MAX, ACTUAL_MAX, ACTUAL_MAX);
     CHECK_SAT(aws_add_size_saturating, 100, ACTUAL_MAX - 99, ACTUAL_MAX);
     CHECK_SAT(aws_add_size_saturating, 100, ACTUAL_MAX - 1, ACTUAL_MAX);
-    return 0;
+    return -1;
 }
 
 AWS_TEST_CASE(test_sub_size_saturating, s_test_sub_size_saturating_fn)
