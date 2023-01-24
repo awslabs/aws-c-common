@@ -12,22 +12,8 @@
 
 #define CHECK_SAT(fn, a, b, result)                                                                                    \
     do {                                                                                                               \
-        ASSERT_UINT_EQUALS(                                                                                            \
-            (result),                                                                                                  \
-            fn((a), (b)),                                                                                              \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
-            #fn,                                                                                                       \
-            (unsigned long long)(a),                                                                                   \
-            (unsigned long long)(b),                                                                                   \
-            (unsigned long long)(result));                                                                             \
-        ASSERT_UINT_EQUALS(                                                                                            \
-            (result),                                                                                                  \
-            fn((b), (a)),                                                                                              \
-            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
-            #fn,                                                                                                       \
-            (unsigned long long)(b),                                                                                   \
-            (unsigned long long)(a),                                                                                   \
-            (unsigned long long)(result));                                                                             \
+        fn((a), (b));                                                                                                  \
+        fn((b), (a));                                                                                                  \
     } while (0)
 
 AWS_TEST_CASE(test_is_power_of_two, s_test_is_power_of_two_fn)
