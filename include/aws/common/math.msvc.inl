@@ -86,7 +86,7 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint8_t c_in = 0u;
     uint8_t c_out = _addcarry_u64(c_in, a, b, r);
-    printf("XXXXXXXXXXXXXXXXXXXXXXXX      c_out: %d", (int)c_out);
+    printf("a:%d   b:%d  r:%d   c_in:%d  c_out: %d\n", (int)a, (int)b, (int)*r, (int)c_in, (int)c_out);
     if (c_out) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
@@ -99,8 +99,10 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t res = 0;
     uint8_t c_in = 0u;
+    uint8_t c_out = _addcarry_u64(c_in, a, b, &res);
+    printf("a:%d   b:%d  r:%d   c_in:%d  c_out: %d\n", (int)a, (int)b, (int)*r, (int)c_in, (int)c_out);
 
-    if (_addcarry_u64(c_in, a, b, &res)) {
+    if (c_out) {
         res = UINT64_MAX;
     }
 

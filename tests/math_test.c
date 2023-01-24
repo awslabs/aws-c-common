@@ -339,7 +339,7 @@ static int s_test_add_size_checked_fn(struct aws_allocator *allocator, void *ctx
     FAIL("Unexpected size for size_t: %zu", sizeof(size_t));
 #endif
 
-    // CHECK_NO_OVF(aws_add_size_checked, size_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_add_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_add_size_checked, size_t, 0, 1, 1);
     CHECK_NO_OVF(aws_add_size_checked, size_t, 4, 5, 9);
     CHECK_NO_OVF(aws_add_size_checked, size_t, 1234, 4321, 5555);
@@ -564,7 +564,7 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
     (void)HALF_MAX;
     (void)ACTUAL_MAX;
     /* No overflow expected */
-    // CHECK_SAT(aws_add_size_saturating, 0, 0, 0);
+    CHECK_SAT(aws_add_size_saturating, 0, 0, 0);
     CHECK_SAT(aws_add_size_saturating, 0, 1, 1);
     CHECK_SAT(aws_add_size_saturating, 4, 5, 9);
     CHECK_SAT(aws_add_size_saturating, 1234, 4321, 5555);
