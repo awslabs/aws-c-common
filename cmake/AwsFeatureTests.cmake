@@ -111,11 +111,11 @@ if(MSVC)
     #include <intrin.h>
     int main() {
         unsigned __int64 a = 0;
-        unsigned __int64 b = 1;
+        unsigned __int64 b = 0;
         unsigned char c = 0;
         c = _addcarry_u64(c, a, b, &a);
         if(c) {
-            return 1;
+            return -1;
         }
         return 0;
     }" AWS_HAVE_MSVC_INTRINSICS_64)
