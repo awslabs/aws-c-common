@@ -113,38 +113,20 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }}
 
-  windows-vc16:
-    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
-    strategy:
-      matrix:
-        arch: [x86, x64]
-    steps:
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-16
-
-  windows-vc15:
-    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
-    strategy:
-      matrix:
-        arch: [x86, x64]
-    steps:
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-15
-
   windows-vc14:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
     strategy:
       matrix:
         arch: [x86, x64]
+        compiler:
+          - msvc-14
+          - msvc-15
+          - msvc-16
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler {{ matrix.compiler }}
 
   windows-shared-libs:
     runs-on: windows-2022 # latest
