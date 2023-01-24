@@ -110,10 +110,10 @@ if(MSVC)
     #include <immintrin.h>
     #include <intrin.h>
     int main() {
-        unsigned __int64 a = 0x0fffffffffffffffI64;
-        unsigned __int64 b = 0xf0000000I64;
-        unsigned __int64 c, d;
-        d = _umul128(a, b, &c);
+        unsigned __int64 a = 0;
+        unsigned __int64 b = 1;
+        unsigned char c = 0;
+        c = _addcarry_u64(c, a, b, &a);
         return 0;
     }" AWS_HAVE_MSVC_INTRINSICS_64)
 endif()
