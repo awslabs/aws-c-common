@@ -128,7 +128,7 @@ jobs:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
     strategy:
       matrix:
-        arch: [x86, x64]
+        arch: [x64]
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
