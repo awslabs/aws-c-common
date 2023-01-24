@@ -100,7 +100,7 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
     uint64_t res = 0;
     uint8_t c_in = 0u;
     uint8_t c_out = _addcarry_u64(c_in, a, b, &res);
-    printf("a:%d   b:%d  r:%d   c_in:%d  c_out: %d\n", (int)a, (int)b, (int)*r, (int)c_in, (int)c_out);
+    printf("a:%d   b:%d  res:%d   c_in:%d  c_out: %d\n", (int)a, (int)b, (int)res, (int)c_in, (int)c_out);
 
     if (c_out) {
         res = UINT64_MAX;
