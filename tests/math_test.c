@@ -12,8 +12,22 @@
 
 #define CHECK_SAT(fn, a, b, result)                                                                                    \
     do {                                                                                                               \
-        fn((a), (b));                                                                                                  \
-        fn((b), (a));                                                                                                  \
+        ASSERT_UINT_EQUALS(                                                                                            \
+            (result),                                                                                                  \
+            fn((a), (b)),                                                                                              \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
+            #fn,                                                                                                       \
+            (unsigned long long)(a),                                                                                   \
+            (unsigned long long)(b),                                                                                   \
+            (unsigned long long)(result));                                                                             \
+        ASSERT_UINT_EQUALS(                                                                                            \
+            (result),                                                                                                  \
+            fn((b), (a)),                                                                                              \
+            "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
+            #fn,                                                                                                       \
+            (unsigned long long)(b),                                                                                   \
+            (unsigned long long)(a),                                                                                   \
+            (unsigned long long)(result));                                                                             \
     } while (0)
 
 AWS_TEST_CASE(test_is_power_of_two, s_test_is_power_of_two_fn)
@@ -570,7 +584,7 @@ static int s_test_add_size_saturating_fn(struct aws_allocator *allocator, void *
     CHECK_SAT(aws_add_size_saturating, HALF_MAX, ACTUAL_MAX, ACTUAL_MAX);
     CHECK_SAT(aws_add_size_saturating, 100, ACTUAL_MAX - 99, ACTUAL_MAX);
     CHECK_SAT(aws_add_size_saturating, 100, ACTUAL_MAX - 1, ACTUAL_MAX);
-    return -1;
+    return 0;
 }
 
 AWS_TEST_CASE(test_sub_size_saturating, s_test_sub_size_saturating_fn)

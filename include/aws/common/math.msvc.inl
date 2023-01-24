@@ -85,6 +85,12 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint8_t c_in = 0u;
+    if (a == 0 || b == 0) {
+        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
+         * platform (MSVC 15) */
+        *r = a + b;
+        return AWS_OP_SUCCESS;
+    }
     uint8_t c_out = _addcarry_u64(c_in, a, b, r);
     printf("a:%llu   b:%llu  res:%llu   c_in:%d  c_out: %d\n", a, b, *r, (int)c_in, (int)c_out);
     if (c_out) {
@@ -97,6 +103,11 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
  * Adds a + b. If the result overflows, returns 2^64 - 1.
  */
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
+    if (a == 0 || b == 0) {
+        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
+         * platform (MSVC 15) */
+        return a + b;
+    }
     uint64_t res = 0;
     uint8_t c_in = 0u;
     uint8_t c_out = _addcarry_u64(c_in, a, b, &res);
@@ -114,6 +125,12 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    if (a == 0 || b == 0) {
+        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
+         * platform (MSVC 15) */
+        *r = a + b;
+        return AWS_OP_SUCCESS;
+    }
     uint8_t c_in = 0u;
     if (_addcarry_u32(c_in, a, b, r)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
@@ -125,6 +142,11 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
 AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
+    if (a == 0 || b == 0) {
+        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
+         * platform (MSVC 15) */
+        return a + b;
+    }
     uint32_t res = 0;
     uint8_t c_in = 0u;
 
