@@ -85,7 +85,9 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint8_t c_in = 0u;
-    if (_addcarry_u64(c_in, a, b, r)) {
+    uint8_t c_out = _addcarry_u64(c_in, a, b, r);
+    printf("XXXXXXXXXXXXXXXXXXXXXXXX      c_out: %d", (int)c_out);
+    if (c_out) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     return AWS_OP_SUCCESS;
