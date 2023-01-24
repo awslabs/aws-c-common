@@ -85,10 +85,10 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint8_t c_in = 0u;
-    if (a == 0 || b == 0) {
+    if (a == 0) {
         /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
          * platform (MSVC 15) */
-        *r = a + b;
+        *r = b;
         return AWS_OP_SUCCESS;
     }
     uint8_t c_out = _addcarry_u64(c_in, a, b, r);
@@ -103,10 +103,10 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
  * Adds a + b. If the result overflows, returns 2^64 - 1.
  */
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
-    if (a == 0 || b == 0) {
+    if (a == 0) {
         /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
          * platform (MSVC 15) */
-        return a + b;
+        return b;
     }
 
     uint64_t res = 0;
@@ -125,10 +125,10 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (a == 0 || b == 0) {
+    if (a == 0) {
         /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
          * platform (MSVC 15) */
-        *r = a + b;
+        *r = b;
         return AWS_OP_SUCCESS;
     }
     uint8_t c_in = 0u;
@@ -142,10 +142,10 @@ AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
 AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
-    if (a == 0 || b == 0) {
+    if (a == 0) {
         /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
          * platform (MSVC 15) */
-        return a + b;
+        return b;
     }
     uint32_t res = 0;
     uint8_t c_in = 0u;
