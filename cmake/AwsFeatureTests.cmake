@@ -106,7 +106,7 @@ int main() {
 }" AWS_HAVE_LINUX_IF_LINK_H)
 
 if(MSVC)
-    check_c_source_compiles("
+    check_c_source_runs("
     #include <immintrin.h>
     #include <intrin.h>
     int main() {
@@ -114,6 +114,9 @@ if(MSVC)
         unsigned __int64 b = 1;
         unsigned char c = 0;
         c = _addcarry_u64(c, a, b, &a);
+        if(c) {
+            return 1;
+        }
         return 0;
     }" AWS_HAVE_MSVC_INTRINSICS_64)
 endif()
