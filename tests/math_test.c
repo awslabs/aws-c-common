@@ -193,7 +193,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
 
 #define CHECK_OVF_0(fn, type, a, b)                                                                                    \
     do {                                                                                                               \
-        type result_val;                                                                                               \
+        type result_val = 0;                                                                                           \
         ASSERT_TRUE(fn((a), (b), &result_val));                                                                        \
     } while (0)
 
@@ -205,7 +205,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
 
 #define CHECK_NO_OVF_0(fn, type, a, b, r)                                                                              \
     do {                                                                                                               \
-        type result_val;                                                                                               \
+        type result_val = 0;                                                                                           \
         ASSERT_FALSE(fn((a), (b), &result_val));                                                                       \
         ASSERT_INT_EQUALS(                                                                                             \
             (uint64_t)result_val,                                                                                      \
