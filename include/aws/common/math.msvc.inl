@@ -76,6 +76,7 @@ static int s_mulx_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     if (high_32 != 0) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
+    return AWS_OP_SUCCESS;
 }
 
 static int s_emulu_checked(uint32_t a, uint32_t b, uint32_t *r) {
@@ -84,20 +85,21 @@ static int s_emulu_checked(uint32_t a, uint32_t b, uint32_t *r) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     *r = (uint32_t)result;
+    return AWS_OP_SUCCESS;
 }
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
  * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (AWS_UNLIKELY(!s_mul_32_checked_fn_ptr)) {
+    if (AWS_UNLIKELY(!s_mul_u32_checked_fn_ptr)) {
         if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
-            s_mul_32_checked_fn_ptr = s_mulx_u32_checked;
+            s_mul_u32_checked_fn_ptr = s_mulx_u32_checked;
         } else {
-            s_mul_32_checked_fn_ptr = s_emulu_checked;
+            s_mul_u32_checked_fn_ptr = s_emulu_checked;
         }
     }
-    return s_mul_32_checked_fn_ptr(a, b, r);
+    return s_mul_u32_checked_fn_ptr(a, b, r);
 }
 
 /**
@@ -129,6 +131,7 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
         return UINT64_MAX;
     return a + b;
 #else
+    uint64_t res = 0;
     if (_addcarry_u64(c_in, a, b, &res)) {
         res = UINT64_MAX;
     }
@@ -165,6 +168,7 @@ AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
         return UINT32_MAX;
     return a + b;
 #else
+    uint32_t res = 0;
     if (_addcarry_u32(c_in, a, b, &res)) {
         res = UINT32_MAX;
     }
