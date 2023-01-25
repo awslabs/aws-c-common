@@ -61,6 +61,7 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
         if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
             s_mul_u32_saturating_fn_ptr = s_mulx_u32_saturating;
         } else {
+            /* If BMI2 unavailable, use __emulu instead */
             s_mul_u32_saturating_fn_ptr = s_emulu_saturating;
         }
     }
@@ -96,6 +97,7 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
         if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
             s_mul_u32_checked_fn_ptr = s_mulx_u32_checked;
         } else {
+            /* If BMI2 unavailable, use __emulu instead */
             s_mul_u32_checked_fn_ptr = s_emulu_checked;
         }
     }
