@@ -41,42 +41,63 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     return AWS_OP_SUCCESS;
 }
 
+static uint32_t (*s_mul_u32_saturating_fn_ptr)(uint32_t a, uint32_t b) = 0;
+
+static uint32_t s_mulx_u32_saturating(uint32_t a, uint32_t b) {
+    uint32_t high_32;
+    uint32_t ret_val = _mulx_u32(a, b, &high_32);
+    return (high_32 == 0) ? ret_val : UINT32_MAX;
+}
+
+static uint32_t s_emulu_saturating(uint32_t a, uint32_t b) {
+    uint64_t result = __emulu(a, b);
+    return (result > UINT32_MAX) ? UINT32_MAX : (uint32_t)result;
+}
 /**
  * Multiplies a * b. If the result overflows, returns 2^32 - 1.
  */
 AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
-    if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
-        uint32_t high_32;
-        uint32_t ret_val = _mulx_u32(a, b, &high_32);
-        return (high_32 == 0) ? ret_val : UINT32_MAX;
-    } else {
-        /* If BMI2 unavailable, use __emulu instead */
-        uint64_t result = __emulu(a, b);
-        return (result > UINT32_MAX) ? UINT32_MAX : (uint32_t)result;
+    if (AWS_UNLIKELY(!s_mul_u32_saturating_fn_ptr)) {
+        if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
+            s_mul_u32_saturating_fn_ptr = s_mulx_u32_saturating;
+        } else {
+            s_mul_u32_saturating_fn_ptr = s_emulu_saturating;
+        }
+    }
+    return s_mul_u32_saturating_fn_ptr(a, b);
+}
+
+static int (*s_mul_u32_checked_fn_ptr)(uint32_t a, uint32_t b, uint32_t *r) = 0;
+
+static int s_mulx_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    uint32_t high_32;
+    *r = _mulx_u32(a, b, &high_32);
+
+    if (high_32 != 0) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 }
 
+static int s_emulu_checked(uint32_t a, uint32_t b, uint32_t *r) {
+    uint64_t result = __emulu(a, b);
+    if (result > UINT32_MAX) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+    *r = (uint32_t)result;
+}
 /**
  * If a * b overflows, returns AWS_OP_ERR; otherwise multiplies
  * a * b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
-        uint32_t high_32;
-        *r = _mulx_u32(a, b, &high_32);
-
-        if (high_32 != 0) {
-            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    if (AWS_UNLIKELY(!s_mul_32_checked_fn_ptr)) {
+        if (aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2)) {
+            s_mul_32_checked_fn_ptr = s_mulx_u32_checked;
+        } else {
+            s_mul_32_checked_fn_ptr = s_emulu_checked;
         }
-    } else {
-        /* If BMI2 unavailable, use __emulu instead */
-        uint64_t result = __emulu(a, b);
-        if (result > UINT32_MAX) {
-            return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-        }
-        *r = (uint32_t)result;
     }
-    return AWS_OP_SUCCESS;
+    return s_mul_32_checked_fn_ptr(a, b, r);
 }
 
 /**
@@ -84,41 +105,35 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
-    uint8_t c_in = 0u;
-    // if (a == 0) {
-    //     /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at
-    //     certain
-    //      * platform (MSVC 15) */
-    //     *r = b;
-    //     return AWS_OP_SUCCESS;
-    // }
-    uint8_t c_out = _addcarry_u64(c_in, a, b, r);
-
-    if (c_out) {
+#if !defined(_MSC_VER) || _MSC_VER < 1920
+    /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
+    if ((b > 0) && (a > (UINT64_MAX - b)))
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    *r = a + b;
+    return AWS_OP_SUCCESS;
+#else
+    if (_addcarry_u64(0, a, b, r)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     return AWS_OP_SUCCESS;
+#endif
 }
 
 /**
  * Adds a + b. If the result overflows, returns 2^64 - 1.
  */
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
-    if (a == 0) {
-        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
-         * platform (MSVC 15) */
-        return b;
-    }
-
-    uint64_t res = 0;
-    uint8_t c_in = 0u;
-    uint8_t c_out = _addcarry_u64(c_in, a, b, &res);
-
-    if (c_out) {
+#if !defined(_MSC_VER) || _MSC_VER < 1920
+    /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
+    if ((b > 0) && (a > (UINT64_MAX - b)))
+        return UINT64_MAX;
+    return a + b;
+#else
+    if (_addcarry_u64(c_in, a, b, &res)) {
         res = UINT64_MAX;
     }
-
     return res;
+#endif
 }
 
 /**
@@ -126,36 +141,35 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
  * a + b, returns the result in *r, and returns AWS_OP_SUCCESS.
  */
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
-    if (a == 0) {
-        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
-         * platform (MSVC 15) */
-        *r = b;
-        return AWS_OP_SUCCESS;
-    }
-    uint8_t c_in = 0u;
-    if (_addcarry_u32(c_in, a, b, r)) {
+#if !defined(_MSC_VER) || _MSC_VER < 1920
+    /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
+    if ((b > 0) && (a > (UINT32_MAX - b)))
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    *r = a + b;
+    return AWS_OP_SUCCESS;
+#else
+    if (_addcarry_u32(0, a, b, r)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
     return AWS_OP_SUCCESS;
+#endif
 }
 
 /**
  * Adds a + b. If the result overflows, returns 2^32 - 1.
  */
 AWS_STATIC_IMPL uint32_t aws_add_u32_saturating(uint32_t a, uint32_t b) {
-    if (a == 0) {
-        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
-         * platform (MSVC 15) */
-        return b;
-    }
-    uint32_t res = 0;
-    uint8_t c_in = 0u;
-
+#if !defined(_MSC_VER) || _MSC_VER < 1920
+    /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
+    if ((b > 0) && (a > (UINT32_MAX - b)))
+        return UINT32_MAX;
+    return a + b;
+#else
     if (_addcarry_u32(c_in, a, b, &res)) {
         res = UINT32_MAX;
     }
-
     return res;
+#endif
 }
 
 /**

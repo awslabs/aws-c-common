@@ -106,17 +106,13 @@ int main() {
 }" AWS_HAVE_LINUX_IF_LINK_H)
 
 if(MSVC)
-    check_c_source_runs("
-    #include <immintrin.h>
+    check_c_source_compiles("
     #include <intrin.h>
     int main() {
-        unsigned __int64 a = 0;
-        unsigned __int64 b = 0;
-        unsigned char c = 0;
-        c = _addcarry_u64(c, a, b, &a);
-        if(c) {
-            return -1;
-        }
+        unsigned __int64 a = 0x0fffffffffffffffI64;
+        unsigned __int64 b = 0xf0000000I64;
+        unsigned __int64 c, d;
+        d = _umul128(a, b, &c);
         return 0;
-    }" AWS_HAVE_MSVC_INTRINSICS_64)
+    }" AWS_HAVE_MSVC_INTRINSICS_X64)
 endif()
