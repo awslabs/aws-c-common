@@ -85,12 +85,13 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  */
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint8_t c_in = 0u;
-    if (a == 0) {
-        /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at certain
-         * platform (MSVC 15) */
-        *r = b;
-        return AWS_OP_SUCCESS;
-    }
+    // if (a == 0) {
+    //     /* Fallback for any one is zero, as a weird bug happened if a=0, returned carry out will always be 1 at
+    //     certain
+    //      * platform (MSVC 15) */
+    //     *r = b;
+    //     return AWS_OP_SUCCESS;
+    // }
     uint8_t c_out = _addcarry_u64(c_in, a, b, r);
 
     if (c_out) {
