@@ -754,14 +754,11 @@ static int s_test_add_u64_checked_fn(struct aws_allocator *allocator, void *ctx)
 
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;
-    uint64_t r = 0;
-    ASSERT_SUCCESS(aws_add_u64_checked(0ull, 0ull, &r));
-    ASSERT_UINT_EQUALS(0, r);
-    // CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 0, 0);
-    // CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 1, 1);
+    CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 0, 0);
+    CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 1, 1);
     CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 4, 5, 9);
     CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 1234, 4321, 5555);
-    // CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, ACTUAL_MAX, ACTUAL_MAX);
+    CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, ACTUAL_MAX, ACTUAL_MAX);
     CHECK_NO_OVF(aws_add_u64_checked, uint64_t, HALF_MAX, HALF_MAX, ACTUAL_MAX - 1);
     CHECK_NO_OVF(aws_add_u64_checked, uint64_t, HALF_MAX + 1, HALF_MAX, ACTUAL_MAX);
     CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 100, ACTUAL_MAX - 102, ACTUAL_MAX - 2);
