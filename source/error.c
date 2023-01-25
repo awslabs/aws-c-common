@@ -150,7 +150,7 @@ void aws_register_error_info(const struct aws_error_info_list *error_info) {
     if (error_info->error_list[0].error_code != expected_first_code) {
         fprintf(
             stderr,
-            "Expected first entry in error info list to be %d, but got %d (%s)\n",
+            "Missing info: First error in list should be %d, not %d (%s)\n",
             expected_first_code,
             error_info->error_list[0].error_code,
             error_info->error_list[0].literal_name);
