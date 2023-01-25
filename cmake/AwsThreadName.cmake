@@ -25,6 +25,17 @@ function(aws_set_thread_name_method target)
             return()
         endif()
 
+        # OpenBSD's function takes 2 args, but has a different name.
+        check_c_source_compiles("
+            ${c_source_start}
+            pthread_set_name_np(thread_id, \"asdf\");
+            ${c_source_end}"
+            PTHREAD_SET_NAME_TAKES_2ARGS)
+        if (PTHREAD_SET_NAME_TAKES_2ARGS)
+            target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_SET_NAME_TAKES_2ARGS)
+            return()
+        endif()
+
         # But on NetBSD it takes 3!
         check_c_source_compiles("
             ${c_source_start}
@@ -60,6 +71,18 @@ function(aws_set_thread_name_method target)
             return()
         endif()
 
+        # Some platforms have 2 arg version but with a different name (eg, OpenBSD)
+        check_c_source_compiles("
+            ${c_source_start}
+                char name[16] = {0};
+                pthread_get_name_np(thread_id, name);
+            ${c_source_end}
+        " PTHREAD_GET_NAME_TAKES_2ARGS)
+        if (PTHREAD_GET_NAME_TAKES_2ARGS)
+            target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_GET_NAME_TAKES_2ARGS)
+            return()
+        endif()
+
         # But majority have 3
         check_c_source_compiles("
             ${c_source_start}
@@ -87,7 +110,7 @@ function(aws_set_thread_name_method target)
         #define _GNU_SOURCE
         #include <pthread.h>
 
-        #if defined(__FreeBSD__) || defined(__NETBSD__)
+        #if defined(__FreeBSD__) || defined(__NETBSD__) || defined(__OpenBSD__)
         #include <pthread_np.h>
         #endif
 
