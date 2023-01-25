@@ -755,7 +755,7 @@ static int s_test_add_u64_checked_fn(struct aws_allocator *allocator, void *ctx)
     const uint64_t HALF_MAX = UINT64_MAX / 2;
     const uint64_t ACTUAL_MAX = UINT64_MAX;
     uint64_t r = 0;
-    ASSERT_SUCCESS(aws_add_u64_checked(0, 0, &r));
+    ASSERT_SUCCESS(aws_add_u64_checked(0ull, 0ull, &r));
     ASSERT_UINT_EQUALS(0, r);
     // CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 0, 0);
     // CHECK_NO_OVF(aws_add_u64_checked, uint64_t, 0, 1, 1);
