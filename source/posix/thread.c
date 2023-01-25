@@ -473,7 +473,7 @@ int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string *
 #define THREAD_NAME_BUFFER_SIZE 256
 int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name) {
     *out_name = NULL;
-#if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS) || \
+#if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS) ||                            \
     defined(AWS_PTHREAD_GET_NAME_TAKES_2_ARGS)
     char name[THREAD_NAME_BUFFER_SIZE] = {0};
 #    ifdef AWS_PTHREAD_GETNAME_TAKES_3ARGS
