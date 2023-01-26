@@ -1368,7 +1368,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         } else {
             printf("valid example should still failed by the callback[%zu]: %s\n", i, example.name);
             ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
-            ASSERT_TRUE(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED == aws_last_error());
+            ASSERT_INT_EQUALS(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED, aws_last_error());
         }
     }
 
@@ -1382,7 +1382,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         } else {
             printf("The callback should fail the valid example [%zu]: %s\n", i, example.name);
             ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_false));
-            ASSERT_TRUE(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED == aws_last_error());
+            ASSERT_INT_EQUALS(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED, aws_last_error());
         }
     }
 
@@ -1394,7 +1394,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
     }
     ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(
         aws_byte_cursor_from_buf(&all_good_text), s_utf8_validation_callback_always_false));
-    ASSERT_TRUE(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED == aws_last_error());
+    ASSERT_INT_EQUALS(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED, aws_last_error());
     aws_byte_buf_clean_up(&all_good_text);
 
     /* Check the illegal test cases with always true callbck, it should still fail*/
@@ -1402,7 +1402,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         struct utf8_example example = s_illegal_utf8_examples[i];
         printf("illegal example [%zu]: %s\n", i, example.name);
         ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_true));
-        ASSERT_TRUE(AWS_ERROR_INVALID_UTF8 == aws_last_error());
+        ASSERT_INT_EQUALS(AWS_ERROR_INVALID_UTF8, aws_last_error());
     }
 
     return 0;
