@@ -138,6 +138,14 @@ enum aws_text_encoding {
     AWS_TEXT_ASCII,
 };
 
+/**
+ * Callbacks to add another path to customized validation for UTF-8 code point.
+ * @param codepoint the codepoint for validation. We assume that the codepoint
+ *                  would already be respecting RFC-3629.
+ * @return true if the codepoint is valid, otherwise false
+ */
+typedef bool(aws_utf8_customzied_validator_callback_fn)(const uint32_t codepoint);
+
 /* Checks the BOM in the buffer to see if encoding can be determined. If there is no BOM or
  * it is unrecognizable, then AWS_TEXT_UNKNOWN will be returned.
  */
@@ -157,6 +165,15 @@ AWS_STATIC_IMPL bool aws_text_is_utf8(const uint8_t *bytes, size_t size);
 AWS_COMMON_API bool aws_text_is_valid_utf8(struct aws_byte_cursor bytes);
 
 /**
+ * Scans every byte, and returns true if it is valid UTF8/ASCII as defined in RFC-3629 and
+ * user's customized validation callback.
+ * The text does not need to begin with a UTF8 BOM.
+ */
+AWS_COMMON_API bool aws_text_is_valid_utf8_with_callback(
+    struct aws_byte_cursor bytes,
+    aws_utf8_customzied_validator_callback_fn callback);
+
+/**
  * A UTF8 validator scans every byte of text, incrementally,
  * and raises AWS_ERROR_INVALID_UTF8 if isn't valid UTF8/ASCII as defined in RFC-3629.
  * The text does not need to begin with a UTF8 BOM.
@@ -169,10 +186,19 @@ AWS_COMMON_API void aws_utf8_validator_destroy(struct aws_utf8_validator *valida
 AWS_COMMON_API void aws_utf8_validator_reset(struct aws_utf8_validator *validator);
 
 /**
- * Update the validator with more bytes of text.
+ * Update the validator with more bytes of text
  * Raises AWS_ERROR_INVALID_UTF8 if invalid UTF8 is encountered.
  */
 AWS_COMMON_API int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes);
+
+/**
+ * Update the validator with more bytes of text, using extra validation callback.
+ * Raises AWS_ERROR_INVALID_UTF8 if invalid UTF8 is encountered.
+ */
+AWS_COMMON_API int aws_utf8_validator_update_with_callback(
+    struct aws_utf8_validator *validator,
+    struct aws_byte_cursor bytes,
+    aws_utf8_customzied_validator_callback_fn customized_validation_fn);
 
 /**
  * Tell the validator that you've reached the end of your text.

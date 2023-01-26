@@ -443,6 +443,14 @@ void aws_utf8_validator_reset(struct aws_utf8_validator *validator) {
 
 /* Why yes, this could be optimized. */
 int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes) {
+    return aws_utf8_validator_update_with_callback(validator, bytes, NULL);
+}
+
+/* Why yes, this could be optimized. */
+int aws_utf8_validator_update_with_callback(
+    struct aws_utf8_validator *validator,
+    struct aws_byte_cursor bytes,
+    aws_utf8_customzied_validator_callback_fn validation_fn) {
     /* We're respecting RFC-3629, which uses 1 to 4 byte sequences (never 5 or 6) */
     for (size_t i = 0; i < bytes.len; ++i) {
         uint8_t byte = bytes.ptr[i];
@@ -499,6 +507,11 @@ int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_b
                 }
             }
         }
+
+        // Extra parse for customized validation callback.
+        if (validation_fn && validator->remaining == 0) {
+            return validation_fn(validator->codepoint) ? AWS_OP_SUCCESS : aws_raise_error(AWS_ERROR_INVALID_UTF8);
+        }
     }
 
     return AWS_OP_SUCCESS;
@@ -513,13 +526,19 @@ int aws_utf8_validator_finalize(struct aws_utf8_validator *validator) {
     return aws_raise_error(AWS_ERROR_INVALID_UTF8);
 }
 
-bool aws_text_is_valid_utf8(struct aws_byte_cursor bytes) {
+bool aws_text_is_valid_utf8_with_callback(
+    struct aws_byte_cursor bytes,
+    aws_utf8_customzied_validator_callback_fn callback) {
     struct aws_utf8_validator validator = {.remaining = 0};
-    if (aws_utf8_validator_update(&validator, bytes)) {
+    if (aws_utf8_validator_update_with_callback(&validator, bytes, callback)) {
         return false;
     }
     if (validator.remaining != 0) {
         return false;
     }
     return true;
+}
+
+bool aws_text_is_valid_utf8(struct aws_byte_cursor bytes) {
+    return aws_text_is_valid_utf8_with_callback(bytes, NULL);
 }
