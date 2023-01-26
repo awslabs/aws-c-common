@@ -441,7 +441,6 @@ void aws_utf8_validator_reset(struct aws_utf8_validator *validator) {
     validator->remaining = 0;
 }
 
-/* Why yes, this could be optimized. */
 int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes) {
     return aws_utf8_validator_update_with_callback(validator, bytes, NULL);
 }
@@ -508,7 +507,7 @@ int aws_utf8_validator_update_with_callback(
             }
         }
 
-        // Extra parse for customized validation callback.
+        // Extra parse for caller defined validation callback.
         if (validation_fn && validator->remaining == 0) {
             if (!validation_fn(validator->codepoint)) {
                 return aws_raise_error(AWS_ERROR_INVALID_UTF8);

@@ -139,7 +139,7 @@ enum aws_text_encoding {
 };
 
 /**
- * Callbacks to add another path to customized validation for UTF-8 code point.
+ * Callbacks to add another parse to customized validation for UTF-8 code point.
  * @param codepoint the codepoint for validation. We assume that the codepoint
  *                  would already be respecting RFC-3629.
  * @return true if the codepoint is valid, otherwise false
@@ -186,7 +186,7 @@ AWS_COMMON_API void aws_utf8_validator_destroy(struct aws_utf8_validator *valida
 AWS_COMMON_API void aws_utf8_validator_reset(struct aws_utf8_validator *validator);
 
 /**
- * Update the validator with more bytes of text
+ * Update the validator with more bytes of text.
  * Raises AWS_ERROR_INVALID_UTF8 if invalid UTF8 is encountered.
  */
 AWS_COMMON_API int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes);
