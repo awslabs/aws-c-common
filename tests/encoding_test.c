@@ -1290,10 +1290,12 @@ static struct utf8_example s_illegal_utf8_examples[] = {
 };
 
 static bool s_utf8_validation_callback_always_false(const uint32_t codepoint) {
+    (void)codepoint;
     return false;
 }
 
 static bool s_utf8_validation_callback_always_true(const uint32_t codepoint) {
+    (void)codepoint;
     return true;
 }
 
@@ -1359,11 +1361,12 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
     /* s_valid_utf8_examples which would failed by the callback */
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
         struct utf8_example example = s_valid_utf8_examples[i];
-        printf("valid example should still failed by the callback[%zu]: %s\n", i, example.name);
-        /* The validation will always be true for empty string */
         if (example.text.len == 0) {
+            /* The validation will always be true for empty string */
+            printf("empty string would be always valid[%zu]: %s\n", i, example.name);
             ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         } else {
+            printf("valid example should still failed by the callback[%zu]: %s\n", i, example.name);
             ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         }
     }
@@ -1371,14 +1374,25 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
     /* The callback should failed the valid test cases */
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
         struct utf8_example example = s_valid_utf8_examples[i];
-        printf("The callback should fail the valid example [%zu]: %s\n", i, example.name);
-        /* The validation will always be true for empty string */
         if (example.text.len == 0) {
+            /* The validation will always be true for empty string */
+            printf("empty string would be always valid[%zu]: %s\n", i, example.name);
             ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         } else {
+            printf("The callback should fail the valid example [%zu]: %s\n", i, example.name);
             ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_false));
         }
     }
+
+    /* Glue all the valid test cases together, they ought to failed by the always false callback */
+    struct aws_byte_buf all_good_text;
+    aws_byte_buf_init(&all_good_text, allocator, 1024);
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        aws_byte_buf_append_dynamic(&all_good_text, &s_valid_utf8_examples[i].text);
+    }
+    ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(
+        aws_byte_cursor_from_buf(&all_good_text), s_utf8_validation_callback_always_false));
+    aws_byte_buf_clean_up(&all_good_text);
 
     /* Check the illegal test cases with always true callbck, it should still fail*/
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
