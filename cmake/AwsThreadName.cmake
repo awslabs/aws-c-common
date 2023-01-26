@@ -110,7 +110,7 @@ function(aws_set_thread_name_method target)
         #define _GNU_SOURCE
         #include <pthread.h>
 
-        #if defined(__FreeBSD__) || defined(__NETBSD__) || defined(__OpenBSD__)
+        #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
         #include <pthread_np.h>
         #endif
 
