@@ -1362,7 +1362,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         printf("valid example should still failed by the callback[%zu]: %s\n", i, example.name);
         /* The validation will always be true for empty string */
         if (example.text.len == 0) {
-            ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
+            ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         }
         ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
     }
@@ -1373,7 +1373,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         printf("The callback should fail the valid example [%zu]: %s\n", i, example.name);
         /* The validation will always be true for empty string */
         if (example.text.len == 0) {
-            ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
+            ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         }
         ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_false));
     }
