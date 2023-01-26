@@ -510,7 +510,7 @@ int aws_utf8_validator_update_with_callback(
 
         // Extra parse for customized validation callback.
         if (validation_fn && validator->remaining == 0) {
-            if(!validation_fn(validator->codepoint)){
+            if (!validation_fn(validator->codepoint)) {
                 return aws_raise_error(AWS_ERROR_INVALID_UTF8);
             }
         }
