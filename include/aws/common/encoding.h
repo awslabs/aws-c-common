@@ -189,12 +189,22 @@ AWS_COMMON_API void aws_utf8_validator_reset(struct aws_utf8_validator *validato
 /**
  * Update the validator with more bytes of text.
  * Raises AWS_ERROR_INVALID_UTF8 if invalid UTF8 is encountered.
+ *
+ * Please note, there could be bytes remaining in the validator. In that case the
+ * update function will not report the invalidation and waiting for more input.
+ * You can manually check the validator->remaining or calling aws_utf8_validator_finalize
+ * to make sure there are no bytes left in the validator.
  */
 AWS_COMMON_API int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes);
 
 /**
  * Update the validator with more bytes of text, using extra validation callback.
  * Raises AWS_ERROR_INVALID_UTF8 if invalid UTF8 is encountered.
+ *
+ * Please note, there could be bytes remaining in the validator. In that case the
+ * update function will not report the invalidation and waiting for more input.
+ * You can manually check the validator->remaining or calling aws_utf8_validator_finalize
+ * to make sure there are no bytes left in the validator.
  */
 AWS_COMMON_API int aws_utf8_validator_update_with_callback(
     struct aws_utf8_validator *validator,
