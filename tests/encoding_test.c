@@ -1297,18 +1297,17 @@ static bool s_utf8_validation_callback_always_true(const uint32_t codepoint) {
     return true;
 }
 
-static struct utf8_example s_valid_utf8_examples_for_callback[] =
-    {{
-         .name = "one byte",
-         .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01"),
-     },
-     {
-         .name = "Several valid bytes",
-         .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01\x02\x02\x01\x01"),
-     }}
+static struct utf8_example s_valid_utf8_examples_for_callback[] = {
+    {
+        .name = "one byte",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01"),
+    },
+    {
+        .name = "Several valid bytes",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01\x02\x02\x01\x01"),
+    }};
 
-static bool
-    s_utf8_validation_callback(const uint32_t codepoint) {
+static bool s_utf8_validation_callback(const uint32_t codepoint) {
     return codepoint >= 0x01 && codepoint <= 0x2;
 }
 
