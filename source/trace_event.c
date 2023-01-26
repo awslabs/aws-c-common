@@ -59,7 +59,7 @@ struct aws_trace_event_data {
     /* stores optional args and optional args' name */
     int value[2];
     const char *value_name[2];
-    char value_str[2][24];
+    char value_str[2][32];
 };
 
 static struct trace_system *s_trace;
