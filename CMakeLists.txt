@@ -113,6 +113,8 @@ else ()
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+        list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
@@ -180,7 +182,7 @@ aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AW
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
-if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
+if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD|OpenBSD)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
@@ -279,6 +281,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
+    "cmake/AwsCRuntime.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

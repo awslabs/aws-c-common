@@ -5,6 +5,7 @@
 
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 
 #include <Shlwapi.h>
@@ -22,7 +23,15 @@ static bool s_is_wstring_empty(const struct aws_wstring *str) {
 }
 
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
-    if (s_is_string_empty(file_path) || s_is_string_empty(mode)) {
+    if (s_is_string_empty(file_path)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. path is empty");
+        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        return NULL;
+    }
+
+    if (s_is_string_empty(mode)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. mode is empty");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -31,12 +40,19 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
 
     FILE *file = NULL;
     errno_t error = _wfopen_s(&file, aws_wstring_c_str(w_file_path), aws_wstring_c_str(w_mode));
-    /* actually handle the error correctly here. */
     aws_wstring_destroy(w_mode);
     aws_wstring_destroy(w_file_path);
 
     if (error) {
-        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        aws_translate_and_raise_io_error(error);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
+            aws_string_c_str(file_path),
+            aws_string_c_str(mode),
+            error,
+            aws_last_error(),
+            aws_error_name(aws_last_error()));
     }
 
     return file;
@@ -491,7 +507,8 @@ bool aws_path_exists(const struct aws_string *path) {
 
 int aws_fseek(FILE *file, int64_t offset, int whence) {
     if (_fseeki64(file, offset, whence)) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     return AWS_OP_SUCCESS;
@@ -509,7 +526,8 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     HANDLE os_file = (HANDLE)_get_osfhandle(fd);
     if (os_file == INVALID_HANDLE_VALUE) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     LARGE_INTEGER os_size;
