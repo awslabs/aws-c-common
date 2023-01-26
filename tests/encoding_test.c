@@ -1370,7 +1370,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
         struct utf8_example example = s_illegal_utf8_examples[i];
         printf("illegal example [%zu]: %s\n", i, example.name);
-        ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text), s_utf8_validation_callback_always_true);
+        ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_true));
     }
 
     return 0;
