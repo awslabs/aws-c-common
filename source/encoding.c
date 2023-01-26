@@ -449,7 +449,7 @@ int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_b
 int aws_utf8_validator_update_with_callback(
     struct aws_utf8_validator *validator,
     struct aws_byte_cursor bytes,
-    aws_utf8_customzied_validator_callback_fn validation_fn) {
+    aws_utf8_customized_validator_callback_fn *validator_fn) {
     /* We're respecting RFC-3629, which uses 1 to 4 byte sequences (never 5 or 6) */
     for (size_t i = 0; i < bytes.len; ++i) {
         uint8_t byte = bytes.ptr[i];
@@ -508,9 +508,9 @@ int aws_utf8_validator_update_with_callback(
         }
 
         // Extra parse for caller defined validation callback.
-        if (validation_fn && validator->remaining == 0) {
-            if (!validation_fn(validator->codepoint)) {
-                return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+        if (validator_fn && validator->remaining == 0) {
+            if (!validator_fn(validator->codepoint)) {
+                return aws_raise_error(AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED);
             }
         }
     }
@@ -529,9 +529,9 @@ int aws_utf8_validator_finalize(struct aws_utf8_validator *validator) {
 
 bool aws_text_is_valid_utf8_with_callback(
     struct aws_byte_cursor bytes,
-    aws_utf8_customzied_validator_callback_fn callback) {
+    aws_utf8_customized_validator_callback_fn *validator_fn) {
     struct aws_utf8_validator validator = {.remaining = 0};
-    if (aws_utf8_validator_update_with_callback(&validator, bytes, callback)) {
+    if (aws_utf8_validator_update_with_callback(&validator, bytes, validator_fn)) {
         return false;
     }
     if (validator.remaining != 0) {
