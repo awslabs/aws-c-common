@@ -166,7 +166,8 @@ AWS_COMMON_API bool aws_text_is_valid_utf8(struct aws_byte_cursor bytes);
 
 /**
  * Scans every byte, and returns true if it is valid UTF8/ASCII as defined in RFC-3629 and
- * user's customized validation callback.
+ * user's customized validation callback. The function will return true for empty string
+ * regardless of the callback functions.
  * The text does not need to begin with a UTF8 BOM.
  */
 AWS_COMMON_API bool aws_text_is_valid_utf8_with_callback(
