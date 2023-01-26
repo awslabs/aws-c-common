@@ -1363,8 +1363,9 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         /* The validation will always be true for empty string */
         if (example.text.len == 0) {
             ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
+        } else {
+            ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
         }
-        ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
     }
 
     /* The callback should failed the valid test cases */
@@ -1374,8 +1375,9 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
         /* The validation will always be true for empty string */
         if (example.text.len == 0) {
             ASSERT_TRUE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback));
+        } else {
+            ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_false));
         }
-        ASSERT_FALSE(aws_text_is_valid_utf8_with_callback(example.text, s_utf8_validation_callback_always_false));
     }
 
     /* Check the illegal test cases with always true callbck, it should still fail*/
