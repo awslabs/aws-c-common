@@ -535,6 +535,7 @@ bool aws_text_is_valid_utf8_with_callback(
         return false;
     }
     if (validator.remaining != 0) {
+        aws_raise_error(AWS_ERROR_INVALID_UTF8);
         return false;
     }
     return true;
