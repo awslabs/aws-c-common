@@ -23,7 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#if defined(__FreeBSD__) || defined(__NETBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #    include <pthread_np.h>
 typedef cpuset_t cpu_set_t;
 #elif defined(__OpenBSD__)
