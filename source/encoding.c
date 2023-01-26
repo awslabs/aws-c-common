@@ -38,7 +38,7 @@ static inline bool aws_common_private_has_avx2(void) {
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
-static const uint8_t BASE64_SENTIANAL_VALUE = 0xff;
+static const uint8_t BASE64_SENTINEL_VALUE = 0xff;
 static const uint8_t BASE64_ENCODING_TABLE[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* in this table, 0xDD is an invalid decoded value, if you have to do byte counting for any reason, there's 16 bytes
@@ -337,10 +337,10 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
     return AWS_OP_SUCCESS;
 }
 
-static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *value, int8_t allow_sentinal) {
+static inline int s_base64_get_decoded_value(unsigned char to_decode, uint8_t *value, int8_t allow_sentinel) {
 
     uint8_t decode_value = BASE64_DECODING_TABLE[(size_t)to_decode];
-    if (decode_value != 0xDD && (decode_value != BASE64_SENTIANAL_VALUE || allow_sentinal)) {
+    if (decode_value != 0xDD && (decode_value != BASE64_SENTINEL_VALUE || allow_sentinel)) {
         *value = decode_value;
         return AWS_OP_SUCCESS;
     }
@@ -401,9 +401,9 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
 
         output->buffer[buffer_index++] = (uint8_t)((value1 << 2) | ((value2 >> 4) & 0x03));
 
-        if (value3 != BASE64_SENTIANAL_VALUE) {
+        if (value3 != BASE64_SENTINEL_VALUE) {
             output->buffer[buffer_index++] = (uint8_t)(((value2 << 4) & 0xF0) | ((value3 >> 2) & 0x0F));
-            if (value4 != BASE64_SENTIANAL_VALUE) {
+            if (value4 != BASE64_SENTINEL_VALUE) {
                 output->buffer[buffer_index] = (uint8_t)((value3 & 0x03) << 6 | value4);
             }
         }
