@@ -260,7 +260,7 @@ static struct aws_error_info errors[] = {
         AWS_ERROR_INVALID_UTF8,
         "Invalid UTF-8"),
     AWS_DEFINE_ERROR_INFO_COMMON(
-        AWS_ERROR_UTF8_EXTRA_VALIDATION_FAILED,
+        AWS_ERROR_UTF8_CODEPOINT_VALIDATION_FAILED,
         "Failed to validate UTF-8 with the validation callback"),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_GET_HOME_DIRECTORY_FAILED,
