@@ -429,7 +429,6 @@ struct aws_utf8_validator {
 
 struct aws_utf8_validator *aws_utf8_validator_new(struct aws_allocator *allocator) {
     struct aws_utf8_validator *validator = aws_mem_calloc(allocator, 1, sizeof(struct aws_utf8_validator));
-    AWS_ZERO_STRUCT(validator);
     validator->alloc = allocator;
     return validator;
 }
@@ -439,7 +438,6 @@ struct aws_utf8_validator *aws_utf8_validator_new_with_callback(
     aws_on_utf8_codepoint_fn *validator_fn,
     void *user_data) {
     struct aws_utf8_validator *validator = aws_mem_calloc(allocator, 1, sizeof(struct aws_utf8_validator));
-    AWS_ZERO_STRUCT(validator);
     validator->alloc = allocator;
     validator->codepoint_validation_fn = validator_fn;
     validator->user_data = user_data;
