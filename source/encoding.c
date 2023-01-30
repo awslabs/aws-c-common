@@ -423,20 +423,26 @@ struct aws_utf8_validator {
     uint8_t remaining;
     /* callback function for customized decoder parse*/
     aws_on_utf8_codepoint_fn *codepoint_validation_fn;
+    /* user_data for codepoint_validation_fn*/
+    void *user_data;
 };
 
 struct aws_utf8_validator *aws_utf8_validator_new(struct aws_allocator *allocator) {
     struct aws_utf8_validator *validator = aws_mem_calloc(allocator, 1, sizeof(struct aws_utf8_validator));
+    AWS_ZERO_STRUCT(validator);
     validator->alloc = allocator;
     return validator;
 }
 
 struct aws_utf8_validator *aws_utf8_validator_new_with_callback(
     struct aws_allocator *allocator,
-    aws_on_utf8_codepoint_fn *validator_fn) {
+    aws_on_utf8_codepoint_fn *validator_fn,
+    void *user_data) {
     struct aws_utf8_validator *validator = aws_mem_calloc(allocator, 1, sizeof(struct aws_utf8_validator));
+    AWS_ZERO_STRUCT(validator);
     validator->alloc = allocator;
     validator->codepoint_validation_fn = validator_fn;
+    validator->user_data = user_data;
     return validator;
 }
 
@@ -453,14 +459,11 @@ void aws_utf8_validator_reset(struct aws_utf8_validator *validator) {
 }
 
 int aws_utf8_validator_update(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes) {
-    return aws_utf8_validator_update_with_callback(validator, bytes, NULL);
+    return aws_utf8_validator_update_with_callback(validator, bytes);
 }
 
 /* Why yes, this could be optimized. */
-int aws_utf8_validator_update_with_callback(
-    struct aws_utf8_validator *validator,
-    struct aws_byte_cursor bytes,
-    void *user_data) {
+int aws_utf8_validator_update_with_callback(struct aws_utf8_validator *validator, struct aws_byte_cursor bytes) {
     /* We're respecting RFC-3629, which uses 1 to 4 byte sequences (never 5 or 6) */
     for (size_t i = 0; i < bytes.len; ++i) {
         uint8_t byte = bytes.ptr[i];
@@ -520,8 +523,9 @@ int aws_utf8_validator_update_with_callback(
 
         // Extra parse for caller defined validation callback.
         if (validator->codepoint_validation_fn && validator->remaining == 0) {
-            if (validator->codepoint_validation_fn(validator->codepoint, user_data)) {
-                return aws_raise_error(AWS_ERROR_UTF8_CODEPOINT_VALIDATION_FAILED);
+            int validation_result = validator->codepoint_validation_fn(validator->codepoint, validator->user_data);
+            if (validation_result != AWS_ERROR_SUCCESS) {
+                return validation_result;
             }
         }
     }
@@ -541,7 +545,8 @@ int aws_utf8_validator_finalize(struct aws_utf8_validator *validator) {
 int aws_decode_utf8(struct aws_byte_cursor bytes, aws_on_utf8_codepoint_fn *on_codepoint, void *user_data) {
     struct aws_utf8_validator validator = {.remaining = 0};
     validator.codepoint_validation_fn = on_codepoint;
-    if (aws_utf8_validator_update_with_callback(&validator, bytes, user_data)) {
+    validator.user_data = user_data;
+    if (aws_utf8_validator_update_with_callback(&validator, bytes)) {
         return false;
     }
     if (validator.remaining != 0) {

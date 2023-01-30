@@ -191,7 +191,8 @@ struct aws_utf8_validator;
 AWS_COMMON_API struct aws_utf8_validator *aws_utf8_validator_new(struct aws_allocator *allocator);
 AWS_COMMON_API struct aws_utf8_validator *aws_utf8_validator_new_with_callback(
     struct aws_allocator *allocator,
-    aws_on_utf8_codepoint_fn *validator_fn);
+    aws_on_utf8_codepoint_fn *validator_fn,
+    void *user_data);
 AWS_COMMON_API void aws_utf8_validator_destroy(struct aws_utf8_validator *validator);
 AWS_COMMON_API void aws_utf8_validator_reset(struct aws_utf8_validator *validator);
 
@@ -217,8 +218,7 @@ AWS_COMMON_API int aws_utf8_validator_update(struct aws_utf8_validator *validato
  */
 AWS_COMMON_API int aws_utf8_validator_update_with_callback(
     struct aws_utf8_validator *validator,
-    struct aws_byte_cursor bytes,
-    void *user_data);
+    struct aws_byte_cursor bytes);
 
 /**
  * Tell the validator that you've reached the end of your text.
