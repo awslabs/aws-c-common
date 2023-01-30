@@ -149,7 +149,7 @@ add_test_case(text_encoding_ascii)
 add_test_case(text_encoding_is_utf8)
 add_test_case(text_is_valid_utf8)
 add_test_case(text_is_valid_utf8_callback)
-add_test_case(utf8_validator)
+add_test_case(utf8_decoder)
 
 add_test_case(bus_sync_test_send)
 add_test_case(bus_async_test_lifetime)
