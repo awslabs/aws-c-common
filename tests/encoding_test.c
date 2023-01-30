@@ -1291,13 +1291,13 @@ static struct utf8_example s_illegal_utf8_examples[] = {
 
 static int s_utf8_validation_callback_always_false(const uint32_t codepoint, void *user_data) {
     (void)codepoint;
-    (void *)user_data;
+    (void)user_data;
     return aws_raise_error(AWS_ERROR_INVALID_UTF8);
 }
 
 static int s_utf8_validation_callback_always_true(const uint32_t codepoint, void *user_data) {
-    (void *)user_data;
     (void)codepoint;
+    (void)user_data;
     return AWS_ERROR_SUCCESS;
 }
 
@@ -1316,7 +1316,7 @@ static struct utf8_example s_valid_utf8_examples_for_callback[] = {
     }};
 
 static int s_utf8_validation_callback(const uint32_t codepoint, void *user_data) {
-    (void *)user_data;
+    (void)user_data;
     return (codepoint >= 0x01 && codepoint <= 0x2) ? AWS_ERROR_SUCCESS : aws_raise_error(AWS_ERROR_INVALID_UTF8);
 }
 
