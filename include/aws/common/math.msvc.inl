@@ -41,7 +41,7 @@ AWS_STATIC_IMPL int aws_mul_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     return AWS_OP_SUCCESS;
 }
 
-static uint32_t (*s_mul_u32_saturating_fn_ptr)(uint32_t a, uint32_t b) = 0;
+static uint32_t (*s_mul_u32_saturating_fn_ptr)(uint32_t a, uint32_t b) = NULL;
 
 static uint32_t s_mulx_u32_saturating(uint32_t a, uint32_t b) {
     uint32_t high_32;
@@ -68,7 +68,7 @@ AWS_STATIC_IMPL uint32_t aws_mul_u32_saturating(uint32_t a, uint32_t b) {
     return s_mul_u32_saturating_fn_ptr(a, b);
 }
 
-static int (*s_mul_u32_checked_fn_ptr)(uint32_t a, uint32_t b, uint32_t *r) = 0;
+static int (*s_mul_u32_checked_fn_ptr)(uint32_t a, uint32_t b, uint32_t *r) = NULL;
 
 static int s_mulx_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
     uint32_t high_32;
@@ -111,8 +111,9 @@ AWS_STATIC_IMPL int aws_mul_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 #if !defined(_MSC_VER) || _MSC_VER < 1920
     /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
-    if ((b > 0) && (a > (UINT64_MAX - b)))
+    if ((b > 0) && (a > (UINT64_MAX - b))) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
     *r = a + b;
     return AWS_OP_SUCCESS;
 #else
@@ -129,8 +130,9 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
 AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
 #if !defined(_MSC_VER) || _MSC_VER < 1920
     /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
-    if ((b > 0) && (a > (UINT64_MAX - b)))
+    if ((b > 0) && (a > (UINT64_MAX - b))) {
         return UINT64_MAX;
+    }
     return a + b;
 #else
     uint64_t res = 0;
@@ -148,8 +150,9 @@ AWS_STATIC_IMPL uint64_t aws_add_u64_saturating(uint64_t a, uint64_t b) {
 AWS_STATIC_IMPL int aws_add_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
 #if !defined(_MSC_VER) || _MSC_VER < 1920
     /* Fallback MSVC 2017 and older, _addcarry doesn't work correctly for those compiler */
-    if ((b > 0) && (a > (UINT32_MAX - b)))
+    if ((b > 0) && (a > (UINT32_MAX - b))) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
     *r = a + b;
     return AWS_OP_SUCCESS;
 #else

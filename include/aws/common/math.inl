@@ -28,7 +28,6 @@ AWS_EXTERN_C_BEGIN
 #elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_arm64_asm.inl>
 #elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
-/* If targeted at 32bit doesn't support 64bit intrinsics, and no replacement was implemented by MSVC, fallback */
 #    include <aws/common/math.msvc.inl>
 #elif defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
