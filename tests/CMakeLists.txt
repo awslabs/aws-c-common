@@ -14,7 +14,7 @@ file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 
 set(METATEST_BINARY_NAME ${PROJECT_NAME}-assert-tests)
 
-if (NOT LEGACY_COMPILER_SUPPORT)
+if(NOT LEGACY_COMPILER_SUPPORT)
     add_executable(${METATEST_BINARY_NAME} ${META_TEST_SRC})
     aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
     aws_add_sanitizers(${METATEST_BINARY_NAME} ${${PROJECT_NAME}_SANITIZERS})
@@ -22,6 +22,7 @@ if (NOT LEGACY_COMPILER_SUPPORT)
 
     target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+
     if(MSVC)
         target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE "-D_CRT_SECURE_NO_WARNINGS")
     endif()
@@ -218,6 +219,8 @@ add_test_case(test_add_u32_saturating)
 add_test_case(test_add_u64_checked)
 add_test_case(test_add_u64_saturating)
 add_test_case(test_min_max)
+add_test_case(test_clz)
+add_test_case(test_ctz)
 
 add_test_case(nospec_index_test)
 add_test_case(test_byte_cursor_advance)
@@ -295,12 +298,11 @@ add_test_case(test_byte_cursor_utf8_parse_u64_hex)
 
 add_test_case(byte_swap_test)
 
-if (HAVE_AVX2_INTRINSICS)
+if(HAVE_AVX2_INTRINSICS)
     add_test_case(alignment32_test)
 else()
     add_test_case(alignment16_test)
 endif()
-
 
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
@@ -398,7 +400,8 @@ add_test_case(ring_buffer_acquire_up_to_multi_threaded_test)
 
 add_test_case(string_to_log_level_success_test)
 add_test_case(string_to_log_level_failure_test)
-if (NOT ANDROID)
+
+if(NOT ANDROID)
     add_test_case(test_logging_filter_at_AWS_LL_NONE_s_logf_all_levels)
     add_test_case(test_logging_filter_at_AWS_LL_FATAL_s_logf_all_levels)
     add_test_case(test_logging_filter_at_AWS_LL_ERROR_s_logf_all_levels)
@@ -511,19 +514,19 @@ add_test_case(test_uri_decode)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
-if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
-    #we have some tests here that purposely overflow
+if(NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
+    # we have some tests here that purposely overflow
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -Wno-overflow)
 endif()
 
-if (MSVC)
+if(MSVC)
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-file(GLOB FUZZ_TESTS    "fuzz/*.c")
+file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
 
 # Resources to use for testing.
 add_custom_command(TARGET ${PROJECT_NAME}-tests PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
