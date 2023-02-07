@@ -9,6 +9,7 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
+#include <aws/common/hash_table.h>
 
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
@@ -120,6 +121,7 @@ struct aws_logger_vtable {
 struct aws_logger {
     struct aws_logger_vtable *vtable;
     struct aws_allocator *allocator;
+    struct aws_hash_table *excluded_log_subjects;
     void *p_impl;
 };
 
@@ -131,7 +133,9 @@ struct aws_logger {
     do {                                                                                                               \
         AWS_ASSERT(log_level > 0);                                                                                     \
         struct aws_logger *logger = aws_logger_get();                                                                  \
-        if (logger != NULL && logger->vtable->get_log_level(logger, (subject)) >= (log_level)) {                       \
+        struct aws_hash_elemet *elem = NULL;                                                                            \
+        if (logger != NULL && logger->vtable->get_log_level(logger, (subject)) >= (log_level)&&                        \
+        aws_hash_table_find(logger->excluded_log_subjects, subject, &elem) == 0 && elem == NULL) {                     \
             logger->vtable->log(logger, log_level, subject, __VA_ARGS__);                                              \
         }                                                                                                              \
     } while (0)
@@ -252,6 +256,12 @@ void aws_logger_clean_up(struct aws_logger *logger);
  */
 AWS_COMMON_API
 int aws_logger_set_log_level(struct aws_logger *logger, enum aws_log_level level);
+
+/**
+ * Exclude writing logs from log subject
+ */
+AWS_COMMON_API
+int aws_logger_exclude_subject(struct aws_logger *logger, aws_log_subject_t subject);
 
 /**
  * Converts a log level to a c-string constant.  Intended primarily to support building log lines that

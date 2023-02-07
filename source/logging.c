@@ -57,6 +57,7 @@ static struct aws_logger_vtable s_null_vtable = {
 static struct aws_logger s_null_logger = {
     .vtable = &s_null_vtable,
     .allocator = NULL,
+    .excluded_log_subjects = NULL,
     .p_impl = NULL,
 };
 
@@ -74,6 +75,8 @@ static void s_aws_logger_pipeline_owned_clean_up(struct aws_logger *logger) {
 
     AWS_ASSERT(impl->writer->vtable->clean_up != NULL);
     (impl->writer->vtable->clean_up)(impl->writer);
+
+    aws_hash_table_clean_up(logger->excluded_log_subjects);
 
     aws_mem_release(impl->allocator, impl->channel);
     aws_mem_release(impl->allocator, impl->formatter);
@@ -543,6 +546,14 @@ static struct aws_logger_vtable s_noalloc_stderr_vtable = {
     .set_log_level = s_no_alloc_stderr_logger_set_log_level,
 };
 
+static uint64_t s_hash_uint32_t(const void *item) {
+    return *(uint32_t *)item;
+}
+
+static bool s_uint32_t_eq(const void *a, const void *b){
+    return *(uint32_t *)a == *(uint32_t *)b;
+}
+
 int aws_logger_init_noalloc(
     struct aws_logger *logger,
     struct aws_allocator *allocator,
@@ -577,6 +588,11 @@ int aws_logger_init_noalloc(
 
     logger->vtable = &s_noalloc_stderr_vtable;
     logger->allocator = allocator;
+    if(aws_hash_table_init(logger->excluded_log_subjects,
+    allocator,10,s_hash_uint32_t, s_uint32_t_eq, NULL, NULL)){
+        /* Nowhere to log the error */
+        return AWS_OP_ERR;
+    }
     logger->p_impl = impl;
 
     return AWS_OP_SUCCESS;
@@ -592,4 +608,14 @@ int aws_logger_set_log_level(struct aws_logger *logger, enum aws_log_level level
     }
 
     return logger->vtable->set_log_level(logger, level);
+}
+
+int aws_logger_exclude_subject(struct aws_logger *logger, aws_log_subject_t subject){
+    if(logger == NULL || logger->excluded_log_subjects == NULL){
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    if (aws_hash_table_put(logger->excluded_log_subjects, subject, NULL, NULL)){
+        return AWS_OP_ERR;
+    }
+    return AWS_OP_SUCCESS;
 }
