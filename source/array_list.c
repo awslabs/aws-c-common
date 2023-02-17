@@ -10,7 +10,7 @@
 
 int aws_array_list_calc_necessary_size(struct aws_array_list *AWS_RESTRICT list, size_t index, size_t *necessary_size) {
     AWS_PRECONDITION(aws_array_list_is_valid(list));
-    size_t index_inc;
+    size_t index_inc = 0;
     if (aws_add_size_checked(index, 1, &index_inc)) {
         AWS_POSTCONDITION(aws_array_list_is_valid(list));
         return AWS_OP_ERR;
