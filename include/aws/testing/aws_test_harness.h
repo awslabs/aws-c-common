@@ -26,7 +26,7 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #    define AWS_TESTING_REPORT_FD stderr
 #endif
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(disable : 4221) /* aggregate initializer using local variable addresses */
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
