@@ -276,10 +276,6 @@ int aws_string_compare(const struct aws_string *a, const struct aws_string *b);
 AWS_COMMON_API
 int aws_array_list_comparator_string(const void *a, const void *b);
 
-/* NOLINTBEGIN(bugprone-macro-parentheses)
- * clang-tidy complains that (name) isn't in parentheses,
- * but gcc8-c++ complains that the parentheses are unnecessary */
-
 /**
  * Defines a (static const struct aws_string *) with name specified in first
  * argument that points to constant memory and has data bytes containing the
@@ -295,9 +291,10 @@ int aws_array_list_comparator_string(const void *a, const void *b);
         const size_t len;                                                                                              \
         const uint8_t bytes[sizeof(literal)];                                                                          \
     } name##_s = {NULL, sizeof(literal) - 1, literal};                                                                 \
-    static const struct aws_string *name = (struct aws_string *)(&name##_s)
+    static const struct aws_string *name = (struct aws_string *)(&name##_s) /* NOLINT(bugprone-macro-parentheses) */
 
-/* NOLINTEND(bugprone-macro-parentheses) */
+/* NOLINT above is because clang-tidy complains that (name) isn't in parentheses,
+ * but gcc8-c++ complains that the parentheses are unnecessary */
 
 /*
  * A related macro that declares the string pointer without static, allowing it to be externed as a global constant
