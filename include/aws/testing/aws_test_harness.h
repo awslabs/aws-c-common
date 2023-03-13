@@ -86,8 +86,7 @@ static int total_failures;
 
 #define FAIL(...)                                                                                                      \
     do {                                                                                                               \
-        fprintf(AWS_TESTING_REPORT_FD, __VA_ARGS__);                                                                   \
-        fprintf(AWS_TESTING_REPORT_FD, "\n");                                                                          \
+        PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                             \
         POSTFAIL_INTERNAL();                                                                                           \
     } while (0)
 
@@ -447,7 +446,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         const size_t leaked_bytes = aws_mem_tracer_count(allocator);
         if (leaked_bytes) {
             aws_mem_tracer_dump(allocator);
-            fprintf(AWS_TESTING_REPORT_FD, "%sTest leaked memory: %zu bytes\n", FAIL_PREFIX, leaked_bytes);
+            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes", leaked_bytes);
             goto fail;
         }
 
