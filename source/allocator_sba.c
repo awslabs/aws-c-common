@@ -7,6 +7,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/assert.h>
 #include <aws/common/mutex.h>
+#include <aws/common/macros.h>
 
 /*
  * Small Block Allocator
@@ -338,7 +339,7 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
 }
 
 /* NOTE: Expects the mutex to be held by the caller */
-static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
+static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) AWS_SUPPRESS_TSAN {
     AWS_PRECONDITION(addr);
     struct page_header *page = s_page_base(addr);
     AWS_ASSERT(page->bin == bin);

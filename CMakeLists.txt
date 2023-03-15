@@ -190,7 +190,7 @@ endif()
 aws_set_thread_affinity_method(${PROJECT_NAME})
 aws_set_thread_name_method(${PROJECT_NAME})
 
-aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
+aws_add_sanitizers(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
