@@ -75,7 +75,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    endif     /*  defined(__GNUC__) || defined(__clang__) */
 #endif         /*  defined(_MSC_VER) */
 
-#if defined(__clang__) || defined (__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
 #    define AWS_SUPPRESS_ASAN __attribute__((no_sanitize_address))
 #else
 #    define AWS_SUPPRESS_ASAN
