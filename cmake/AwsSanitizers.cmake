@@ -45,7 +45,7 @@ function(aws_add_sanitizers target)
     set(multiValueArgs SANITIZERS)
     cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    check_c_compiler_flag(-fsanitize= HAS_SANITIZERS)
+    check_c_compiler_flag(-fsanitize HAS_SANITIZERS)
     if(HAS_SANITIZERS)
 
         list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
