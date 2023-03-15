@@ -16,7 +16,7 @@
 #    ifndef alloca
 #        define alloca _alloca
 #    endif
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #    include <stdlib.h>
 #else
 #    include <alloca.h>
