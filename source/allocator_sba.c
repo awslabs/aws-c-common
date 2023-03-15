@@ -339,7 +339,6 @@ static void *s_sba_alloc_from_bin(struct sba_bin *bin) {
 }
 
 /* NOTE: Expects the mutex to be held by the caller */
-AWS_SUPPRESS_TSAN
 static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
     AWS_PRECONDITION(addr);
     struct page_header *page = s_page_base(addr);
@@ -407,6 +406,7 @@ static void *s_sba_alloc(struct small_block_allocator *sba, size_t size) {
     return aws_mem_acquire(sba->allocator, size);
 }
 
+AWS_SUPPRESS_TSAN
 static void s_sba_free(struct small_block_allocator *sba, void *addr) {
     if (!addr) {
         return;
