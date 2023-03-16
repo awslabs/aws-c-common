@@ -651,7 +651,7 @@ static int s_aws_byte_buf_append_dynamic(
     bool clear_released_memory) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
-    
+
     if (to->capacity - to->len < from->len) {
         AWS_ERROR_PRECONDITION(to->allocator);
         /*
