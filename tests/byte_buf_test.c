@@ -1011,7 +1011,6 @@ AWS_TEST_CASE(test_byte_buf_init_cache_and_update_cursors, s_test_byte_buf_init_
 
 static int s_test_byte_buf_empty_appends(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    (void)allocator;
 
     { /* append */
         struct aws_byte_buf buffer;
@@ -1029,7 +1028,7 @@ static int s_test_byte_buf_empty_appends(struct aws_allocator *allocator, void *
 
     { /* dynamic append */
         struct aws_byte_buf buffer;
-        AWS_ZERO_STRUCT(buffer);
+        aws_byte_buf_init(&buffer, allocator, 0);
 
         struct aws_byte_cursor zeroed_out;
         AWS_ZERO_STRUCT(zeroed_out);
