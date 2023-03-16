@@ -27,7 +27,7 @@ function(aws_check_headers target)
                 (void)argv;
 
                 return 0;
-            }")
+            }\n")
 
         set(HEADER_CHECKER_LIB ${target}-header-check)
         add_executable(${HEADER_CHECKER_LIB} ${HEADER_CHECKER_MAIN})
@@ -40,18 +40,28 @@ function(aws_check_headers target)
             LINKER_LANGUAGE CXX
             CXX_STANDARD 11
             CXX_STANDARD_REQUIRED 0
-            C_STANDARD 90
+            C_STANDARD 99 # TODO ???
         )
+
+        # Max out warnings
+        if(MSVC)
+            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /Wall /WX)
+        else()
+            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        endif()
 
         foreach(header IN LISTS ARGN)
             if (NOT ${header} MATCHES "\\.inl$")
-                file(RELATIVE_PATH rel_header ${CMAKE_HOME_DIRECTORY} ${header})
-                file(RELATIVE_PATH include_path "${CMAKE_HOME_DIRECTORY}/include" ${header})
+                file(RELATIVE_PATH rel_header ${CMAKE_CURRENT_SOURCE_DIR} ${header})
+                file(RELATIVE_PATH include_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header})
                 set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
                 file(MAKE_DIRECTORY "${stub_dir}")
+                # compiler complains if there's nothing in the file
+                # so add an int with a unique name (based on header's path)
+                string(REGEX REPLACE "[^a-zA-Z0-9]" "_" unique_token ${include_path})
                 # include header twice to check for include-guards
-                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n#include <${include_path}>\n")
-                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n#include <${include_path}>\n")
+                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
+                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
 
                 target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c" "${stub_dir}/checkcpp.cpp")
             endif()
