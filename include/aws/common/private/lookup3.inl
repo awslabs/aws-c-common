@@ -535,7 +535,7 @@ AWS_SUPPRESS_ASAN static void hashlittle2(
      * does it on word boundaries, so is OK with this. But VALGRIND and CBMC
      * will still catch it and complain. CBMC will ignore this type of error
      * in the code block between the pragmas "CPROVER check push" and
-     * "CPROVER check pop". The masking trick does make the hash noticably
+     * "CPROVER check pop". The masking trick does make the hash noticeably
      * faster for short strings (like English words).
      */
 #ifndef VALGRIND
