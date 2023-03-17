@@ -29,6 +29,8 @@
 #    pragma warning(disable : 4100)
 #endif
 
+extern uint64_t g_app_start_time = 0;
+
 long (*g_set_mempolicy_ptr)(int, const unsigned long *, unsigned long) = NULL;
 int (*g_numa_available_ptr)(void) = NULL;
 int (*g_numa_num_configured_nodes_ptr)(void) = NULL;

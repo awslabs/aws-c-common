@@ -41,6 +41,9 @@ void aws_common_library_clean_up(void);
 AWS_COMMON_API
 void aws_common_fatal_assert_library_initialized(void);
 
+AWS_COMMON_API
+extern uint64_t g_app_start_time;
+
 AWS_EXTERN_C_END
 
 #endif /* AWS_COMMON_COMMON_H */
