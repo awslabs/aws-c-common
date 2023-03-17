@@ -272,7 +272,7 @@ static int run_races(
     int *participant_indexes = alloca(n_participants_local * sizeof(*participant_indexes));
     struct aws_thread *threads = alloca(n_participants_local * sizeof(struct aws_thread));
 
-    *last_race = (size_t)-1;
+    *last_race = SIZE_MAX;
     n_participants = n_participants_local;
     done_racing = false;
     aws_atomic_init_int(&last_race_index, 0);
@@ -293,7 +293,7 @@ static int run_races(
         *last_race = n_races;
     } else {
         *last_race = (size_t)aws_atomic_load_int_explicit(&last_race_index, aws_memory_order_relaxed);
-        if (*last_race == (size_t)-1) {
+        if (*last_race == SIZE_MAX) {
             /* We didn't even see the first race complete */
             *last_race = 0;
         }
