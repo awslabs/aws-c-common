@@ -7,6 +7,8 @@
 
 #include <aws/common/atomics.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
  * releases. For any other use case (other than the single-threaded use-case), you must manage thread-safety manually.
@@ -101,5 +103,6 @@ AWS_COMMON_API void aws_ring_buffer_allocator_clean_up(struct aws_allocator *all
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_RING_BUFFER_H */

@@ -20,7 +20,7 @@ function(aws_check_headers target)
         set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker")
 
         # Write stub main file
-        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/stub.c")
+        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
         file(WRITE ${HEADER_CHECKER_MAIN} "
             int main(int argc, char **argv) {
                 (void)argc;
@@ -43,27 +43,26 @@ function(aws_check_headers target)
             C_STANDARD 99 # TODO ???
         )
 
-        # Max out warnings
+        # Ensure our headers can be included by an application with its warnings set reasonably high
         if(MSVC)
-            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /Wall /WX)
+            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
         else()
             target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()
 
         foreach(header IN LISTS ARGN)
             if (NOT ${header} MATCHES "\\.inl$")
-                file(RELATIVE_PATH rel_header ${CMAKE_CURRENT_SOURCE_DIR} ${header})
                 file(RELATIVE_PATH include_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header})
-                set(stub_dir "${HEADER_CHECKER_ROOT}/${rel_header}")
-                file(MAKE_DIRECTORY "${stub_dir}")
-                # compiler complains if there's nothing in the file
-                # so add an int with a unique name (based on header's path)
+                # create unique token from include_path (replace non-alphanumeric characters with underscores)
                 string(REGEX REPLACE "[^a-zA-Z0-9]" "_" unique_token ${include_path})
+                set(c_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.c")
+                set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
                 # include header twice to check for include-guards
-                file(WRITE "${stub_dir}/check.c" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
-                file(WRITE "${stub_dir}/checkcpp.cpp" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
+                # define a unique int or compiler complains that there's nothing in the file
+                file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
+                file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
 
-                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${stub_dir}/check.c" "${stub_dir}/checkcpp.cpp")
+                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}" "${cpp_file}")
             endif()
         endforeach(header)
     endif() # PERFORM_HEADER_CHECK

@@ -5,6 +5,22 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#if defined(_MSC_VER)
+
+#    define AWS_PUSH_SANE_WARNING_LEVEL \
+    _Pragma("warning(push)") \
+    _Pragma("warning(disable : 4820)") /* padding added to struct */ \
+    _Pragma("warning(disable : 4514)") /* unreferenced inline function has been removed */
+
+#    define AWS_POP_SANE_WARNING_LEVEL _Pragma("warning(pop)")
+
+#else
+#    define AWS_PUSH_SANE_WARNING_LEVEL
+#    define AWS_POP_SANE_WARNING_LEVEL
+#endif
+
+
+
 #ifdef __cplusplus
 #    define AWS_EXTERN_C_BEGIN extern "C" {
 #    define AWS_EXTERN_C_END }

@@ -404,15 +404,6 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
     return AWS_OP_SUCCESS;
 }
 
-AWS_STATIC_IMPL
-void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
-    if (list->data) {
-        qsort(list->data, aws_array_list_length(list), list->item_size, compare_fn);
-    }
-    AWS_POSTCONDITION(aws_array_list_is_valid(list));
-}
-
 AWS_EXTERN_C_END
 
 #endif /*  AWS_COMMON_ARRAY_LIST_INL */
