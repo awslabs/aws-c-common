@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.26
+  BUILDER_VERSION: v0.9.35
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -27,8 +27,7 @@ jobs:
           - manylinux1-x86
           - manylinux2014-x64
           - manylinux2014-x86
-          - debian-stretch-arm32v5
-          - debian-stretch-arm32v7
+          - raspbian-bullseye
           - fedora-34-x64
           - opensuse-leap
           - rhel8-x64
@@ -191,6 +190,23 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
+
+  openbsd:
+    runs-on: ubuntu-latest  # unit tests hang on macos; use ubuntu instead
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        uses: cross-platform-actions/action@v0.10.0
+        with:
+          operating_system: openbsd
+          architecture: x86-64
+          version: '7.2'
+          shell: bash
+          run: |
+            sudo pkg_add py3-urllib3
+            python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
+            chmod a+x builder
+            ./builder build -p ${{ env.PACKAGE_NAME }}
 
   cross_compile:
     name: Cross Compile ${{matrix.arch}}

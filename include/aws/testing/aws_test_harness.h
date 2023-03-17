@@ -26,12 +26,12 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #    define AWS_TESTING_REPORT_FD stderr
 #endif
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(disable : 4221) /* aggregate initializer using local variable addresses */
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 
-/** Prints a message to stdout using printf format that appends the function, file and line number.
+/** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
  */
 static int s_cunit_failure_message0(
@@ -52,7 +52,7 @@ static int s_cunit_failure_message0(
     vfprintf(AWS_TESTING_REPORT_FD, format, ap);
     va_end(ap);
 
-    fprintf(AWS_TESTING_REPORT_FD, " [%s():%s@#%d]\n", function, file, line);
+    fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
 
     return 1;
 }
@@ -434,30 +434,31 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (!test_res) {
-        if (!harness->suppress_memcheck) {
-            /* Reset the logger as test can set their own logger and clean it up. */
-            aws_logger_set(&err_logger);
-            const size_t leaked_bytes = aws_mem_tracer_count(allocator);
-            if (leaked_bytes) {
-                aws_mem_tracer_dump(allocator);
-            }
-            ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(allocator));
-        }
+    if (test_res != AWS_OP_SUCCESS) {
+        goto fail;
     }
 
-    /* clean up */
     if (!harness->suppress_memcheck) {
+        /* Reset the logger, as test can set their own logger and clean it up,
+         * but aws_mem_tracer_dump() needs a valid logger to be active */
+        aws_logger_set(&err_logger);
+
+        const size_t leaked_bytes = aws_mem_tracer_count(allocator);
+        if (leaked_bytes) {
+            aws_mem_tracer_dump(allocator);
+            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes", leaked_bytes);
+            goto fail;
+        }
+
         aws_mem_tracer_destroy(allocator);
     }
+
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    if (!test_res) {
-        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
-    } else {
-        FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
-    }
+    RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
+fail:
+    FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */
