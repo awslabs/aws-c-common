@@ -63,6 +63,8 @@ function(aws_add_sanitizers target)
             set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS},${sanitizer}")
         endif()
     endforeach()
+    
+    message(INFO "Present sanitizers: ${PRESENT_SANITIZERS}")  
 
     if(PRESENT_SANITIZERS)
         target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
