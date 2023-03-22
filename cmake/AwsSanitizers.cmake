@@ -45,9 +45,6 @@ function(aws_add_sanitizers target)
     set(multiValueArgs SANITIZERS)
     cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    #set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
-    check_c_compiler_flag("-fsanitize=" HAS_SANITIZERS)
-
     list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
     message(STATUS "attempting to use sanitizer list ${SANITIZER_SANITIZERS}")
 
@@ -59,9 +56,9 @@ function(aws_add_sanitizers target)
 
         aws_check_sanitizer(${sanitizer} ${sanitizer_variable})
         if(${${sanitizer_variable}})
-            if (NOT "${PRESENT_SANITIZERS}" STREQUAL "")
-                set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}$,")
-            endif()
+            #if (NOT "${PRESENT_SANITIZERS}" STREQUAL "")
+            #    set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}$,")
+            #endif()
             set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}$,{sanitizer}")
         endif()
     endforeach()
