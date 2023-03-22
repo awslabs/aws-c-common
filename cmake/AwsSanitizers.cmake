@@ -60,7 +60,7 @@ function(aws_add_sanitizers target)
             if (NOT "${PRESENT_SANITIZERS}" STREQUAL "")
                 set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}$,")
             endif()
-            set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS},${sanitizer}")
+            set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}${sanitizer}")
         endif()
     endforeach()
     
