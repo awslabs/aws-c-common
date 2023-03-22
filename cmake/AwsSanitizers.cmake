@@ -12,6 +12,8 @@ set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build wit
 #  out_variable: The variable to assign the result to. Defaults to HAS_SANITIZER_${sanitizer}
 function(aws_check_sanitizer sanitizer)
 
+    message(INFO "Checking if sanitizer ${sanitizer} exists")  
+
     if(NOT ${ARGN})
         set(out_variable "${ARGN}")
     else()
@@ -39,7 +41,6 @@ endfunction()
 # This function enables sanitizers on the given target
 # Options:
 #  SANITIZERS: The list of extra sanitizers to enable
-#  BLACKLIST: The blacklist file to use (passed to -fsanitizer-blacklist=)
 function(aws_add_sanitizers target)
     set(oneValueArgs BLACKLIST)
     set(multiValueArgs SANITIZERS)
