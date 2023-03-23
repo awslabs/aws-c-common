@@ -126,7 +126,7 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DENABLE_SANITIZERS=ON
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }}
 
   windows-vc16:
     runs-on: windows-2022 # latest
@@ -138,7 +138,7 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{
-        matrix.arch }} --compiler msvc-16 --cmake-extra=-DENABLE_SANITIZERS=ON
+        matrix.arch }} --compiler msvc-16
 
   windows-vc15:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2017 (v15.0)
@@ -150,7 +150,7 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{
-        matrix.arch }} --compiler msvc-15 --cmake-extra=-DENABLE_SANITIZERS=ON
+        matrix.arch }} --compiler msvc-15
 
   windows-vc14:
     runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
@@ -162,7 +162,7 @@ jobs:
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{
-        matrix.arch }} --compiler msvc-14 --cmake-extra=-DENABLE_SANITIZERS=ON
+        matrix.arch }} --compiler msvc-14
 
   windows-shared-libs:
     runs-on: windows-2022 # latest
@@ -178,7 +178,7 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF --cmake-extra=-DENABLE_SANITIZERS=ON
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
   windows-app-verifier:
     runs-on: windows-2022 # latest
