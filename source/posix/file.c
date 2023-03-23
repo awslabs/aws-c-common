@@ -245,7 +245,10 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
             aws_mem_release(allocator, buf);
         }
         buf = aws_mem_acquire(allocator, bufsize);
-        AWS_ASSERT(buf != NULL);
+        if (buf == NULL) {
+            aws_raise_error(AWS_ERROR_GET_HOME_DIRECTORY_FAILED);
+        }
+
         status = getpwuid_r(uid, &pwd, buf, bufsize, &result);
     }
 
