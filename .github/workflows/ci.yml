@@ -178,8 +178,7 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }}
-        --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF --cmake-extra=-DENABLE_SANITIZERS=ON
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF --cmake-extra=-DENABLE_SANITIZERS=ON
 
   windows-app-verifier:
     runs-on: windows-2022 # latest
@@ -209,8 +208,7 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }}
-        --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF --cmake-extra=-DENABLE_SANITIZERS=ON
+        ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF --cmake-extra=-DENABLE_SANITIZERS=ON
 
   openbsd:
     runs-on: ubuntu-latest  # unit tests hang on macos; use ubuntu instead

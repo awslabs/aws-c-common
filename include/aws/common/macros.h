@@ -81,7 +81,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    endif
 #elif defined(__SANITIZE_ADDRESS__)
 #   if defined (__GNUC__)
-#       define AWS_SUPPRESS_ASAN __attribute__((no_sanitize("address")))
+#       define AWS_SUPPRESS_ASAN __attribute__((no_sanitize_address)))
 #   elif defined(_MSC_VER)
 #       define AWS_SUPPRESS_ASAN __declspec(no_sanitize_address)
 #   endif
@@ -97,7 +97,7 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    endif
 #elif defined(__SANITIZE_THREAD__)
 #   if defined (__GNUC__)
-#       define AWS_SUPPRESS_TSAN __attribute__((no_sanitize("thread")))
+#       define AWS_SUPPRESS_TSAN __attribute__((no_sanitize_thread))
 #   else
 #       define AWS_SUPPRESS_TSAN
 #   endif
