@@ -12,8 +12,6 @@ set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build wit
 #  out_variable: The variable to assign the result to. Defaults to HAS_SANITIZER_${sanitizer}
 function(aws_check_sanitizer sanitizer)
 
-    message(INFO "Checking if sanitizer ${sanitizer} exists")  
-
     if(NOT ${ARGN})
         set(out_variable "${ARGN}")
     else()
@@ -63,16 +61,10 @@ function(aws_add_sanitizers target)
             set(PRESENT_SANITIZERS "${PRESENT_SANITIZERS}${sanitizer}")
         endif()
     endforeach()
-    
-    message(INFO "Present sanitizers: ${PRESENT_SANITIZERS}")  
 
     if(PRESENT_SANITIZERS)
         target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
         target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
-
-        if(SANITIZER_BLACKLIST)
-            target_compile_options(${target} PRIVATE -fsanitize-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/${SANITIZER_BLACKLIST})
-        endif()
 
         string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
         set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
