@@ -1,0 +1,28 @@
+name: Rust-builds
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+
+jobs:
+  test:
+    name: Rust-Build
+    env:
+      PROJECT_NAME_UNDERSCORE: rust_ci_github_actions_workflow
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort
+      RUSTDOCFLAGS: -Cpanic=abort
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: Generate test result and coverage report
+        run: |
+          cd aws_crt_common_ws;
+          cargo test;

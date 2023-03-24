@@ -6,6 +6,10 @@
 #include <aws/common/math.h>
 #include <stdarg.h>
 
+#if AWS_NO_STATIC_IMPL
+#    include <aws/common/math.inl>
+#endif
+
 AWS_COMMON_API int aws_add_size_checked_varargs(size_t num, size_t *r, ...) {
     va_list argp;
     va_start(argp, r);

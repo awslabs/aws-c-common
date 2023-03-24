@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "aws-crt-common",
+    "aws-crt-common-sys",
+    "aws-crt-c-flags",
+]
+

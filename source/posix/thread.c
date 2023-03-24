@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#if !defined(__MACH__)
+#if !defined(__MACH__) && !defined(_GNU_SOURCE)
 #    define _GNU_SOURCE
 #endif
 

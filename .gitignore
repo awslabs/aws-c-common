@@ -69,3 +69,7 @@ cmake-build*
 # CBMC files
 *.goto
 *.log
+
+# Rust and Cargo
+Cargo.lock
+target/
