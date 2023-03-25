@@ -89,8 +89,9 @@ static bool s_verify_mock_equal(
 
     size_t line_count = aws_array_list_length(&impl->log_lines);
     if (line_count != array_length) {
-        sprintf(
+        snprintf(
             s_test_error_message,
+            sizeof(s_test_error_message),
             "Expected %" PRIu64 " lines, but received %" PRIu64 "",
             (uint64_t)array_length,
             (uint64_t)line_count);
@@ -100,14 +101,15 @@ static bool s_verify_mock_equal(
     for (size_t i = 0; i < array_length; ++i) {
         struct aws_string *captured = NULL;
         if (aws_array_list_get_at(&impl->log_lines, &captured, i)) {
-            sprintf(s_test_error_message, "Unable to fetch log line from array list");
+            snprintf(s_test_error_message, sizeof(s_test_error_message), "Unable to fetch log line from array list");
             return false;
         }
 
         const struct aws_string *original = *(test_lines[i]);
         if (!aws_string_eq(original, captured)) {
-            sprintf(
+            snprintf(
                 s_test_error_message,
+                sizeof(s_test_error_message),
                 "Expected log line:\n%s\nbut received log line:\n%s",
                 (char *)original->bytes,
                 (char *)captured->bytes);
@@ -144,7 +146,7 @@ static int s_do_channel_test(
         struct aws_string *test_line_copy = aws_string_new_from_string(log_channel.allocator, *(test_lines[i]));
 
         if ((log_channel.vtable->send)(&log_channel, test_line_copy)) {
-            sprintf(s_test_error_message, "Failed call to log channel send");
+            snprintf(s_test_error_message, sizeof(s_test_error_message), "Failed call to log channel send");
             result = AWS_OP_ERR;
         }
 

@@ -5,7 +5,8 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/common/common.h>
+#include <aws/common/byte_buf.h>
+#include <aws/common/string.h>
 
 #ifndef _WIN32
 #    include <pthread.h>
@@ -23,7 +24,7 @@ enum aws_thread_detach_state {
  * in the managed thread system.  The managed thread system provides logic to guarantee a join on all participating
  * threads at the cost of laziness (the user cannot control when joins happen).
  *
- * Manual - thread does not particpate in the managed thread system; any joins must be done by the user.  This
+ * Manual - thread does not participate in the managed thread system; any joins must be done by the user.  This
  * is the default.  The user must call aws_thread_clean_up(), but only after any desired join operation has completed.
  * Not doing so will cause the windows handle to leak.
  *
@@ -52,6 +53,13 @@ enum aws_thread_join_strategy {
     AWS_TJS_MANAGED,
 };
 
+/**
+ * Thread names should be 15 characters or less.
+ * Longer names will not display on Linux.
+ * This length does not include a null terminator.
+ */
+#define AWS_THREAD_NAME_RECOMMENDED_STRLEN 15
+
 struct aws_thread_options {
     size_t stack_size;
     /* default is -1. If you set this to anything >= 0, and the platform supports it, the thread will be pinned to
@@ -67,6 +75,13 @@ struct aws_thread_options {
     int32_t cpu_id;
 
     enum aws_thread_join_strategy join_strategy;
+
+    /**
+     * Thread name, for debugging purpose.
+     * The length should not exceed AWS_THREAD_NAME_RECOMMENDED_STRLEN(15)
+     * if you want it to display properly on all platforms.
+     */
+    struct aws_byte_cursor name;
 };
 
 #ifdef _WIN32
@@ -222,6 +237,31 @@ AWS_COMMON_API void aws_thread_increment_unjoined_count(void);
  * aws_thread_join_all_managed() will not return until this count has gone to zero.
  */
 AWS_COMMON_API void aws_thread_decrement_unjoined_count(void);
+
+/**
+ * Gets name of the current thread.
+ * Caller is responsible for destroying returned string.
+ * If thread does not have a name, AWS_OP_SUCCESS is returned and out_name is
+ * set to NULL.
+ * If underlying OS call fails,  AWS_ERROR_SYS_CALL_FAILURE will be raised
+ * If OS does not support getting thread name, AWS_ERROR_PLATFORM_NOT_SUPPORTED
+ * will be raised
+ */
+AWS_COMMON_API int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name);
+
+/**
+ * Gets name of the thread.
+ * Caller is responsible for destroying returned string.
+ * If thread does not have a name, AWS_OP_SUCCESS is returned and out_name is
+ * set to NULL.
+ * If underlying OS call fails,  AWS_ERROR_SYS_CALL_FAILURE will be raised
+ * If OS does not support getting thread name, AWS_ERROR_PLATFORM_NOT_SUPPORTED
+ * will be raised
+ */
+AWS_COMMON_API int aws_thread_name(
+    struct aws_allocator *allocator,
+    aws_thread_id_t thread_id,
+    struct aws_string **out_name);
 
 AWS_EXTERN_C_END
 

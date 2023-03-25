@@ -56,7 +56,7 @@ struct aws_byte_cursor {
 #define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
 
 /**
- * Helper Macro for inititilizing a byte cursor from a string literal
+ * Helper Macro for initializing a byte cursor from a string literal
  */
 #define AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(literal)                                                                 \
     { .ptr = (uint8_t *)(const char *)(literal), .len = sizeof(literal) - 1 }
@@ -229,15 +229,26 @@ AWS_COMMON_API
 bool aws_byte_buf_eq_c_str_ignore_case(const struct aws_byte_buf *const buf, const char *const c_str);
 
 /**
- * No copies, no buffer allocations. Iterates over input_str, and returns the next substring between split_on instances.
+ * No copies, no buffer allocations. Iterates over input_str, and returns the
+ * next substring between split_on instances relative to previous substr.
+ * Behaves similar to strtok with substr being used as state for next split.
+ *
+ * Returns true each time substr is set and false when there is no more splits
+ * (substr is set to empty in that case).
+ *
+ * Example usage.
+ * struct aws_byte_cursor substr = {0};
+ * while (aws_byte_cursor_next_split(&input_str, ';', &substr)) {
+ *   // ...use substr...
+ * }
+ *
+ * Note: It is the user's responsibility zero-initialize substr before the first call.
  *
  * Edge case rules are as follows:
- * If the input is an empty string, an empty cursor will be the one entry returned.
- * If the input begins with split_on, an empty cursor will be the first entry returned.
- * If the input has two adjacent split_on tokens, an empty cursor will be returned.
- * If the input ends with split_on, an empty cursor will be returned last.
- *
- * It is the user's responsibility zero-initialize substr before the first call.
+ * empty input will have single empty split. ex. "" splits into ""
+ * if input starts with split_on then first split is empty. ex ";A" splits into "", "A"
+ * adjacent split tokens result in empty split. ex "A;;B" splits into "A", "", "B"
+ * If the input ends with split_on, last split is empty. ex. "A;" splits into "A", ""
  *
  * It is the user's responsibility to make sure the input buffer stays in memory
  * long enough to use the results.
@@ -503,6 +514,20 @@ bool aws_byte_cursor_eq_c_str(const struct aws_byte_cursor *const cursor, const 
  */
 AWS_COMMON_API
 bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cursor, const char *const c_str);
+
+/**
+ * Return true if the input starts with the prefix (exact byte comparison).
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_starts_with(const struct aws_byte_cursor *input, const struct aws_byte_cursor *prefix);
+
+/**
+ * Return true if the input starts with the prefix (case-insensitive).
+ * The "C" locale is used for comparing upper and lowercase letters.
+ * Data is assumed to be ASCII text, UTF-8 will work fine too.
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_starts_with_ignore_case(const struct aws_byte_cursor *input, const struct aws_byte_cursor *prefix);
 
 /**
  * Case-insensitive hash function for array containing ASCII or UTF-8 text.
@@ -881,6 +906,46 @@ AWS_COMMON_API bool aws_isxdigit(uint8_t ch);
  * line feed (0x0A), carriage return (0x0D), horizontal tab (0x09), or vertical tab (0x0B).
  */
 AWS_COMMON_API bool aws_isspace(uint8_t ch);
+
+/**
+ * Read entire cursor as ASCII/UTF-8 unsigned base-10 number.
+ * Stricter than strtoull(), which allows whitespace and inputs that start with "0x"
+ *
+ * Examples:
+ * "0" -> 0
+ * "123" -> 123
+ * "00004" -> 4 // leading zeros ok
+ *
+ * Rejects things like:
+ * "-1" // negative numbers not allowed
+ * "1,000" // only characters 0-9 allowed
+ * "" // blank string not allowed
+ * " 0 " // whitespace not allowed
+ * "0x0" // hex not allowed
+ * "FF" // hex not allowed
+ * "999999999999999999999999999999999999999999" // larger than max u64
+ */
+AWS_COMMON_API
+int aws_byte_cursor_utf8_parse_u64(struct aws_byte_cursor cursor, uint64_t *dst);
+
+/**
+ * Read entire cursor as ASCII/UTF-8 unsigned base-16 number with NO "0x" prefix.
+ *
+ * Examples:
+ * "F" -> 15
+ * "000000ff" -> 255 // leading zeros ok
+ * "Ff" -> 255 // mixed case ok
+ * "123" -> 291
+ * "FFFFFFFFFFFFFFFF" -> 18446744073709551616 // max u64
+ *
+ * Rejects things like:
+ * "0x0" // 0x prefix not allowed
+ * "" // blank string not allowed
+ * " F " // whitespace not allowed
+ * "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" // larger than max u64
+ */
+AWS_COMMON_API
+int aws_byte_cursor_utf8_parse_u64_hex(struct aws_byte_cursor cursor, uint64_t *dst);
 
 AWS_EXTERN_C_END
 

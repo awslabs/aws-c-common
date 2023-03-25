@@ -24,6 +24,7 @@ include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
+include(AwsThreadName)
 include(AwsSIMD)
 include(CTest)
 
@@ -37,6 +38,9 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.inl"
         )
 
+file (GLOB AWS_COMMON_EXTERNAL_HEADERS
+        "include/aws/common/external/*.h")
+
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
         )
@@ -49,6 +53,9 @@ file(GLOB AWS_COMMON_PRIV_HEADERS
 file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
+
+file (GLOB AWS_COMMON_EXTERNAL_SRC
+        "source/external/*.c")
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
@@ -85,17 +92,29 @@ else ()
 
     if (UNIX OR APPLE)
         find_package(Threads REQUIRED)
-    endif ()
+
+        if (NOT ANDROID AND NOT CMAKE_THREAD_LIBS_INIT)
+            check_symbol_exists(pthread_mutexattr_init "<pthread.h>" HAVE_PTHREAD_MUTEXATTR_INIT)
+            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT)
+                # fsanitize=... results in GLIBC library to provide some pthread APIs but not all
+                list(APPEND PLATFORM_LIBS pthread)
+            endif()
+        endif()
+    endif()
 
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
+        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+        list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
@@ -142,6 +161,7 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
+        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         )
 
@@ -149,6 +169,7 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
         ${AWS_COMMON_ARCH_SRC}
+        ${AWS_COMMON_EXTERNAL_SRC}
         )
 
 
@@ -161,12 +182,13 @@ aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AW
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
-if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
+if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD|OpenBSD)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
 
 aws_set_thread_affinity_method(${PROJECT_NAME})
+aws_set_thread_name_method(${PROJECT_NAME})
 
 aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
@@ -186,6 +208,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # but at build time we need to explicitly include this here
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 # Enable SIMD encoder if the compiler supports the right features
 simd_add_definitions(${PROJECT_NAME})
@@ -257,6 +281,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
+    "cmake/AwsCRuntime.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

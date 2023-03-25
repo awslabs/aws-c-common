@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int __CPROVER_file_local_hash_table_c_s_update_template_size(
+    struct hash_table_state *template,
+    size_t expected_elements);
+
 int __CPROVER_file_local_hash_table_c_s_expand_table(struct aws_hash_table *map) {
     struct hash_table_state *old_state = map->p_impl;
     struct hash_table_state template = *old_state;

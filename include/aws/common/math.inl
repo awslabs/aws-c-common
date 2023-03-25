@@ -27,7 +27,7 @@ AWS_EXTERN_C_BEGIN
 #    include <aws/common/math.gcc_x64_asm.inl>
 #elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_arm64_asm.inl>
-#elif defined(AWS_HAVE_MSVC_MULX)
+#elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
 #    include <aws/common/math.msvc.inl>
 #elif defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
@@ -48,7 +48,7 @@ AWS_EXTERN_C_BEGIN
 #    include <aws/common/math.gcc_builtin.inl>
 #endif
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
 #endif                              /* _MSC_VER */
@@ -188,7 +188,7 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
     return AWS_OP_SUCCESS;
 }
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(pop)
 #endif /* _MSC_VER */
 
