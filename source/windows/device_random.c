@@ -27,8 +27,9 @@ static void s_init_rand(void *user_data) {
 int aws_device_random_buffer(struct aws_byte_buf *output) {
     aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
-    size_t offset = output->capacity - output->len;
-    NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, (ULONG)offset, 0);
+    /* cast it here because MSVC updated their compiler and broke our builds over it. */
+    ULONG offset = (ULONG)(output->capacity - output->len);
+    NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, offset, 0);
 
     if (!BCRYPT_SUCCESS(status)) {
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
