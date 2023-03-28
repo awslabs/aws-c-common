@@ -35,23 +35,26 @@ static void s_init_rand(void *user_data) {
     }
 }
 
-static int s_fallback_device_random_buffer(struct aws_byte_buf *output) {
+int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
 
     aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
-    size_t diff = output->capacity - output->len;
+    size_t space_available = output->capacity - output->len;
+    if (space_available < n) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
 
-    ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, diff);
+    ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, n);
 
-    if (amount_read != diff) {
+    if (amount_read != n) {
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
     }
 
-    output->len += diff;
+    output->len += n;
 
     return AWS_OP_SUCCESS;
 }
 
 int aws_device_random_buffer(struct aws_byte_buf *output) {
-    return s_fallback_device_random_buffer(output);
+    return aws_device_random_buffer_append(output, output->capacity - output->len);
 }
