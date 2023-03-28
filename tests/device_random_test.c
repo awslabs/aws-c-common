@@ -135,8 +135,8 @@ static int s_device_rand_buffer_append_distribution_fn(struct aws_allocator *all
     (void)allocator;
     (void)ctx;
 
-    /* Create array full of zeroes, but only fill half of it with randomness */
-    uint8_t array[DISTRIBUTION_PUT_COUNT * 2] = {0};
+    /* Create array full of zeroes, but only partially fill it with randomness */
+    uint8_t array[DISTRIBUTION_PUT_COUNT + 100] = {0};
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));
     ASSERT_SUCCESS(aws_device_random_buffer_append(&buf, DISTRIBUTION_PUT_COUNT));
 
