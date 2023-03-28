@@ -36,22 +36,26 @@ static void s_init_rand(void *user_data) {
 }
 
 int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
 
     aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
     size_t space_available = output->capacity - output->len;
     if (space_available < n) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
     ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, n);
 
     if (amount_read != n) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
     }
 
     output->len += n;
 
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
     return AWS_OP_SUCCESS;
 }
 

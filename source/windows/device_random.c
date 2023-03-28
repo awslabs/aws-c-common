@@ -29,10 +29,13 @@ int aws_device_random_buffer(struct aws_byte_buf *output) {
 }
 
 int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
+    AWS_PRECONDITION(aws_byte_buf_is_valid(output));
+
     aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
     size_t space_available = output->capacity - output->len;
     if (space_available < n) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
@@ -46,6 +49,7 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
 
         if (!BCRYPT_SUCCESS(status)) {
             output->len = original_len;
+            AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
             return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
         }
 
@@ -53,5 +57,6 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
         n -= n32;
     }
 
+    AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
     return AWS_OP_SUCCESS;
 }
