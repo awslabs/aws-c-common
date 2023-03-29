@@ -180,12 +180,13 @@ static int s_device_rand_buffer_gigantic(struct aws_allocator *allocator, void *
 
     /* Stress test VERY large buffers.
      * Capacity should be a number large enough to push the limits of the underlying APIs,
-     * but not so big that the test takes more than a minute on dev platforms.
-     * If a platform fails to allocate this much, add a more ifdefs here... */
+     * but not so big that allocation fails on common platforms,
+     * or the test takes more than a minute on dev platforms.
+     * If a niche platform fails to allocate this much, add a more #elif here... */
 #if SIZE_MAX >= UINT64_MAX
     const size_t capacity = (size_t)UINT32_MAX + 100;
 #else
-    const size_t capacity = PTRDIFF_MAX - 2048;
+    const size_t capacity = PTRDIFF_MAX - (1024 * 1024 * 512 /* 512 MiB */);
 #endif
 
     /* Number of bytes to check, at beginning and end of buffer */
