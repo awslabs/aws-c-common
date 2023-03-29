@@ -40,7 +40,7 @@ function(aws_check_headers target)
             LINKER_LANGUAGE CXX
             CXX_STANDARD 11
             CXX_STANDARD_REQUIRED 0
-            C_STANDARD 90
+            C_STANDARD 99
         )
 
         # Ensure our headers can be included by an application with its warnings set reasonably high
