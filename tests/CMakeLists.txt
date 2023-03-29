@@ -370,6 +370,8 @@ add_test_case(device_rand_u64_distribution)
 add_test_case(device_rand_u32_distribution)
 add_test_case(device_rand_u16_distribution)
 add_test_case(device_rand_buffer_distribution)
+add_test_case(device_rand_buffer_append_distribution)
+add_test_case(device_rand_buffer_append_short_buffer)
 
 add_test_case(uuid_string)
 add_test_case(prefilled_uuid_string)
