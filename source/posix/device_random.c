@@ -7,7 +7,6 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/thread.h>
 
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -57,7 +56,6 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
         ssize_t amount_read = read(s_rand_fd, output->buffer + output->len, capped_n);
 
         if (amount_read <= 0) {
-            printf("ERRNO: %d\n", errno);
             output->len = original_len;
             AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
             return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
