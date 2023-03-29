@@ -9,12 +9,12 @@
 
 /* clang-format off */
 #    define AWS_PUSH_SANE_WARNING_LEVEL                                                                                \
-        _Pragma("warning(push)")                                                                                       \
-        _Pragma("warning(disable : 4820)") /* padding added to struct */                                               \
-        _Pragma("warning(disable : 4514)") /* unreferenced inline function has been removed */
+        __pragma(warning(push))                                                                                        \
+        __pragma(warning(disable : 4820)) /* padding added to struct */                                                \
+        __pragma(warning(disable : 4514)) /* unreferenced inline function has been removed */
 /* clang-format on */
 
-#    define AWS_POP_SANE_WARNING_LEVEL _Pragma("warning(pop)")
+#    define AWS_POP_SANE_WARNING_LEVEL __pragma(warning(pop))
 
 #else
 #    define AWS_PUSH_SANE_WARNING_LEVEL
