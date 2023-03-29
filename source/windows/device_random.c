@@ -41,11 +41,12 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
 
     size_t original_len = output->len;
 
+    /* BCryptGenRandom() takes 32bit length, but we accept size_t,
+     * so work in chunks if necessary. */
     while (n > 0) {
-        /* BCryptGenRandom takes 32bit length */
-        uint32_t n32 = (uint32_t)aws_min_size(n, UINT32_MAX);
+        uint32_t capped_n = (uint32_t)aws_min_size(n, UINT32_MAX);
 
-        NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, n32, 0 /*flags*/);
+        NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, capped_n, 0 /*flags*/);
 
         if (!BCRYPT_SUCCESS(status)) {
             output->len = original_len;
@@ -53,8 +54,8 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
             return aws_raise_error(AWS_ERROR_RANDOM_GEN_FAILED);
         }
 
-        output->len += n32;
-        n -= n32;
+        output->len += capped_n;
+        n -= capped_n;
     }
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(output));
