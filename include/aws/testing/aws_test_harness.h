@@ -31,6 +31,10 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 /** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
  */

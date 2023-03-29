@@ -178,7 +178,7 @@ aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
-aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS}) # TODO ${AWS_TEST_HEADERS}
+aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
