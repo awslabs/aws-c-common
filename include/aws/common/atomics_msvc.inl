@@ -10,7 +10,11 @@
 #include <aws/common/atomics.h>
 #include <aws/common/common.h>
 
+/* This file generates level 4 compiler warnings in Visual Studio 2017 and older */
+#pragma warning(push, 3)
 #include <intrin.h>
+#pragma warning(pop)
+
 #include <stdint.h>
 #include <stdlib.h>
 

@@ -14,8 +14,10 @@
 #include <aws/common/cpuid.h>
 #include <aws/common/math.h>
 
-#include <immintrin.h>
+/* This file generates level 4 compiler warnings in Visual Studio 2017 and older */
+#pragma warning(push, 3)
 #include <intrin.h>
+#pragma warning(pop)
 
 AWS_EXTERN_C_BEGIN
 /**
