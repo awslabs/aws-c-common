@@ -40,12 +40,12 @@ function(aws_check_headers target)
             LINKER_LANGUAGE CXX
             CXX_STANDARD 11
             CXX_STANDARD_REQUIRED 0
-            C_STANDARD 99 # TODO ???
+            C_STANDARD 90
         )
 
         # Ensure our headers can be included by an application with its warnings set reasonably high
         if(MSVC)
-            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
+            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /Wall /WX)
         else()
             target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()

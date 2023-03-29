@@ -38,7 +38,9 @@ AWS_EXTERN_C_BEGIN
  */
 #ifdef _MSC_VER
 #    pragma warning(push)
-#    pragma warning(disable : 4200)
+#    pragma warning(disable : 4623) /* default constructor was implicitly defined as deleted */
+#    pragma warning(disable : 4626) /* assignment operator was implicitly defined as deleted */
+#    pragma warning(disable : 5027) /* move assignment operator was implicitly defined as deleted */
 #endif
 struct aws_string {
     struct aws_allocator *const allocator;

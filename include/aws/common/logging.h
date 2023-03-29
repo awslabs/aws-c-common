@@ -96,6 +96,13 @@ struct aws_log_formatter;
 struct aws_log_channel;
 struct aws_log_writer;
 
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4623) /* default constructor was implicitly defined as deleted */
+#    pragma warning(disable : 4626) /* assignment operator was implicitly defined as deleted */
+#    pragma warning(disable : 5027) /* move assignment operator was implicitly defined as deleted */
+#endif
+
 /**
  * We separate the log level function from the log call itself so that we can do the filter check in the macros (see
  * below)
@@ -118,6 +125,10 @@ struct aws_logger_vtable {
     void (*const clean_up)(struct aws_logger *logger);
     int (*set_log_level)(struct aws_logger *logger, enum aws_log_level);
 };
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
 
 struct aws_logger {
     struct aws_logger_vtable *vtable;
