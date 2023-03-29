@@ -244,7 +244,8 @@ bool aws_atomic_compare_exchange_int_explicit(
     aws_atomic_priv_check_order(order_success);
     aws_atomic_priv_check_order(order_failure);
 
-    size_t oldval = (size_t)AWS_INTERLOCKED_INT(CompareExchange)(&AWS_ATOMIC_VAR_INTVAL(var), (aws_atomic_impl_int_t)desired, (aws_atomic_impl_int_t)*expected);
+    size_t oldval = (size_t)AWS_INTERLOCKED_INT(CompareExchange)(
+        &AWS_ATOMIC_VAR_INTVAL(var), (aws_atomic_impl_int_t)desired, (aws_atomic_impl_int_t)*expected);
     bool successful = oldval == *expected;
     *expected = oldval;
 
