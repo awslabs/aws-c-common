@@ -6,9 +6,9 @@
  */
 #include <aws/common/common.h>
 
-struct aws_byte_buf;
-
 AWS_EXTERN_C_BEGIN
+
+struct aws_byte_buf;
 
 /**
  * Get an unpredictably random 64bit number, suitable for cryptographic use.

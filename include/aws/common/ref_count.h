@@ -9,6 +9,8 @@
 
 #include <aws/common/atomics.h>
 
+AWS_EXTERN_C_BEGIN
+
 typedef void(aws_simple_completion_callback)(void *);
 
 /*
@@ -24,8 +26,6 @@ struct aws_shutdown_callback_options {
     aws_simple_completion_callback *shutdown_callback_fn;
     void *shutdown_callback_user_data;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a ref-counter structure.  After initialization, the ref count will be 1.

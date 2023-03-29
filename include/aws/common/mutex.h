@@ -14,7 +14,7 @@
 #    include <pthread.h>
 #endif
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 struct aws_mutex {
 #ifdef _WIN32
@@ -32,8 +32,6 @@ struct aws_mutex {
 #    define AWS_MUTEX_INIT                                                                                             \
         { .mutex_handle = PTHREAD_MUTEX_INITIALIZER, .initialized = true }
 #endif
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a new platform instance of mutex.
@@ -71,6 +69,5 @@ AWS_COMMON_API
 int aws_mutex_unlock(struct aws_mutex *mutex);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_MUTEX_H */

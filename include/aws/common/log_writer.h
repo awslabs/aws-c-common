@@ -9,6 +9,8 @@
 
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_allocator;
 struct aws_string;
 
@@ -38,8 +40,6 @@ struct aws_log_writer_file_options {
     const char *filename;
     FILE *file;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /*
  * Initialize a log writer that sends log lines to stdout.  Uses C library IO.

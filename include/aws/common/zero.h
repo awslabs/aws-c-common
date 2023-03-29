@@ -11,7 +11,6 @@
 
 #include <string.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 /**
@@ -61,6 +60,5 @@ void aws_secure_zero(void *pBuf, size_t bufsize);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ZERO_H */

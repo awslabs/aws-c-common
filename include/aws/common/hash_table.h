@@ -10,6 +10,8 @@
 
 #include <stddef.h>
 
+AWS_EXTERN_C_BEGIN
+
 #define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
 #define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
 #define AWS_COMMON_HASH_TABLE_ITER_ERROR (1 << 2)
@@ -115,8 +117,6 @@ typedef bool(aws_hash_callback_eq_fn)(const void *a, const void *b);
  * on the key and value of a removed element.
  */
 typedef void(aws_hash_callback_destroy_fn)(void *key_or_value);
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a hash map with initial capacity for 'size' elements

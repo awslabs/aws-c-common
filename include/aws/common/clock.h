@@ -9,7 +9,7 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 enum aws_timestamp_unit {
     AWS_TIMESTAMP_SECS = 1,
@@ -17,8 +17,6 @@ enum aws_timestamp_unit {
     AWS_TIMESTAMP_MICROS = 1000000,
     AWS_TIMESTAMP_NANOS = 1000000000,
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Converts 'timestamp' from unit 'convert_from' to unit 'convert_to', if the units are the same then 'timestamp' is
@@ -59,6 +57,5 @@ int aws_sys_clock_get_ticks(uint64_t *timestamp);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_CLOCK_H */

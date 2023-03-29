@@ -8,6 +8,8 @@
 #include <aws/common/array_list.h>
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 /* The comparator should return a positive value if the second argument has a
  * higher priority than the first; Otherwise, it should return a negative value
  * or zero. NOTE: priority_queue pops its highest priority element first. For
@@ -44,8 +46,6 @@ struct aws_priority_queue_node {
     /** The current index of the node in question, or SIZE_MAX if the node has been removed. */
     size_t current_index;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a priority queue struct for use. This mode will grow memory automatically (exponential model)

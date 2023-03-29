@@ -8,7 +8,7 @@
 
 #include <time.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 #define AWS_DATE_TIME_STR_MAX_LEN 100
 #define AWS_DATE_TIME_STR_MAX_BASIC_LEN 20
@@ -56,8 +56,6 @@ struct aws_date_time {
     struct tm local_time;
     bool utc_assumed;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes dt to be the current system time.
@@ -157,6 +155,5 @@ AWS_COMMON_API bool aws_date_time_dst(const struct aws_date_time *dt, bool local
 AWS_COMMON_API time_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_DATE_TIME_H */

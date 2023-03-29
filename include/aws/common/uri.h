@@ -7,6 +7,8 @@
 
 #include <aws/common/byte_buf.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Data representing a URI. uri_str is always allocated and filled in.
  * The other portions are merely storing offsets into uri_str.
@@ -51,8 +53,6 @@ struct aws_uri_builder_options {
     struct aws_array_list *query_params;
     struct aws_byte_cursor query_string;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Parses 'uri_str' and initializes uri. Returns AWS_OP_SUCCESS, on success, AWS_OP_ERR on failure.

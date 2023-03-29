@@ -10,7 +10,7 @@
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
@@ -216,8 +216,6 @@ struct aws_logger_standard_options {
     FILE *file;
 };
 
-AWS_EXTERN_C_BEGIN
-
 /**
  * Sets the aws logger used globally across the process.  Not thread-safe.  Must only be called once.
  */
@@ -341,6 +339,5 @@ int aws_logger_init_noalloc(
     struct aws_logger_standard_options *options);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LOGGING_H */

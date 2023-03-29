@@ -9,9 +9,9 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
-struct aws_json_value;
-
 AWS_EXTERN_C_BEGIN
+
+struct aws_json_value;
 
 // ====================
 // Create and pass type

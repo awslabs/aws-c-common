@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 struct aws_allocator;
 struct aws_string;
@@ -65,8 +65,6 @@ struct aws_logging_standard_formatting_data {
     size_t amount_written;
 };
 
-AWS_EXTERN_C_BEGIN
-
 /*
  * Initializes the default log formatter which outputs lines in the format:
  *
@@ -93,6 +91,5 @@ AWS_COMMON_API
 int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *formatting_data, va_list args);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LOG_FORMATTER_H */

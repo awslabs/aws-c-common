@@ -7,11 +7,11 @@
 
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_thread_scheduler;
 struct aws_thread_options;
 struct aws_task;
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Creates a new instance of a thread scheduler. This object receives scheduled tasks and executes them inside a

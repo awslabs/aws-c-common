@@ -10,6 +10,8 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/priority_queue.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_task;
 
 typedef enum aws_task_status {
@@ -47,8 +49,6 @@ struct aws_task_scheduler {
     struct aws_linked_list timed_list;     /* If timed_queue runs out of memory, further timed tests are stored here */
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Init an aws_task

@@ -7,6 +7,8 @@
 
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 enum aws_cpu_feature_name {
     AWS_CPU_FEATURE_CLMUL,
     AWS_CPU_FEATURE_SSE_4_1,
@@ -16,8 +18,6 @@ enum aws_cpu_feature_name {
     AWS_CPU_FEATURE_BMI2,
     AWS_CPU_FEATURE_COUNT,
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Returns true if a cpu feature is supported, false otherwise.

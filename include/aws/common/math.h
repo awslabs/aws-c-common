@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 /* The number of bits in a size_t variable */
 #if SIZE_MAX == UINT32_MAX
@@ -25,8 +25,6 @@ AWS_PUSH_SANE_WARNING_LEVEL
 
 /* The largest power of two that can be stored in a size_t */
 #define SIZE_MAX_POWER_OF_TWO (((size_t)1) << (SIZE_BITS - 1))
-
-AWS_EXTERN_C_BEGIN
 
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) ||                 \
     (defined(__x86_64__) || defined(__aarch64__)) && defined(AWS_HAVE_GCC_INLINE_ASM) ||                               \
@@ -205,6 +203,5 @@ AWS_STATIC_IMPL double aws_max_double(double a, double b);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_MATH_H */

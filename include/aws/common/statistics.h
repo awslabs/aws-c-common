@@ -11,6 +11,8 @@
 
 #include <aws/common/stdint.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_array_list;
 
 typedef uint32_t aws_crt_statistics_category_t;
@@ -102,8 +104,6 @@ struct aws_crt_statistics_handler {
     struct aws_allocator *allocator;
     void *impl;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Submits a list of statistics objects to a statistics handler for processing

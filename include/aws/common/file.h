@@ -9,7 +9,7 @@
 #include <aws/common/platform.h>
 #include <stdio.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 #ifdef AWS_OS_WINDOWS
 #    define AWS_PATH_DELIM '\\'
@@ -54,8 +54,6 @@ struct aws_directory_entry {
  * Return true to continue the traversal, or alternatively, if you have a reason to abort the traversal, return false.
  */
 typedef bool(aws_on_directory_entry)(const struct aws_directory_entry *entry, void *user_data);
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Deprecated - Use aws_fopen_safe() instead, avoid const char * in public APIs.
@@ -199,6 +197,5 @@ AWS_COMMON_API
 int aws_file_get_length(FILE *file, int64_t *length);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */

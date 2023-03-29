@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 struct aws_linked_list_node {
     struct aws_linked_list_node *next;
@@ -21,8 +21,6 @@ struct aws_linked_list {
     struct aws_linked_list_node head;
     struct aws_linked_list_node tail;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Set node's next and prev pointers to NULL.
@@ -186,6 +184,5 @@ AWS_STATIC_IMPL void aws_linked_list_move_all_front(
 #    include <aws/common/linked_list.inl>
 #endif /* AWS_NO_STATIC_IMPL */
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LINKED_LIST_H */

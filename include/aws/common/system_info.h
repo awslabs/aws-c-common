@@ -8,6 +8,8 @@
 
 #include <aws/common/common.h>
 
+AWS_EXTERN_C_BEGIN
+
 enum aws_platform_os {
     AWS_PLATFORM_OS_WINDOWS,
     AWS_PLATFORM_OS_MAC,
@@ -18,8 +20,6 @@ struct aws_cpu_info {
     int32_t cpu_id;
     bool suspected_hyper_thread;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /* Returns the OS this was built under */
 AWS_COMMON_API

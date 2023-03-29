@@ -7,6 +7,8 @@
 
 #include <aws/common/linked_hash_table.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_cache;
 
 struct aws_cache_vtable {
@@ -37,7 +39,6 @@ int aws_cache_base_default_remove(struct aws_cache *cache, const void *key);
 void aws_cache_base_default_clear(struct aws_cache *cache);
 size_t aws_cache_base_default_get_element_count(const struct aws_cache *cache);
 
-AWS_EXTERN_C_BEGIN
 /**
  * Cleans up the cache. Elements in the cache will be evicted and cleanup
  * callbacks will be invoked.

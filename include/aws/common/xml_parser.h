@@ -11,6 +11,8 @@
 
 #include <aws/common/exports.h>
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_xml_parser;
 struct aws_xml_node;
 
@@ -38,8 +40,6 @@ struct aws_xml_parser_options {
     /* Max node depth used for parsing document. */
     size_t max_depth;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Allocates an xml parser.

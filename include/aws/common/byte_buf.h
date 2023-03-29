@@ -11,6 +11,8 @@
 
 #include <string.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Represents a length-delimited binary string or buffer. If byte buffer points
  * to constant memory or memory that should otherwise not be freed by this
@@ -65,8 +67,6 @@ struct aws_byte_cursor {
  * Signature for function argument to trim APIs
  */
 typedef bool(aws_byte_predicate_fn)(uint8_t value);
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Compare two arrays.

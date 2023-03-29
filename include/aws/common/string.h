@@ -7,7 +7,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 /**
  * Represents an immutable string holding either text or binary data. If the
@@ -62,8 +62,6 @@ struct aws_wstring {
 #ifdef _MSC_VER
 #    pragma warning(pop)
 #endif
-
-AWS_EXTERN_C_BEGIN
 
 #ifdef AWS_OS_WINDOWS
 /**
@@ -376,6 +374,5 @@ bool aws_char_is_space(uint8_t c);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_STRING_H */

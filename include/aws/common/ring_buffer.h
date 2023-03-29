@@ -7,7 +7,7 @@
 
 #include <aws/common/atomics.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 /**
  * Lockless ring buffer implementation that is thread safe assuming a single thread acquires and a single thread
@@ -26,8 +26,6 @@ struct aws_ring_buffer {
 };
 
 struct aws_byte_buf;
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a ring buffer with an allocation of size `size`. Returns AWS_OP_SUCCESS on a successful initialization,
@@ -103,6 +101,5 @@ AWS_COMMON_API void aws_ring_buffer_allocator_clean_up(struct aws_allocator *all
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_RING_BUFFER_H */

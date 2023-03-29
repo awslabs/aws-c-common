@@ -8,8 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 /**
  * struct aws_atomic_var represents an atomic variable - a value which can hold an integer or pointer
@@ -88,8 +87,6 @@ enum aws_memory_order {
  */
 #define AWS_ATOMIC_INIT_PTR(x)                                                                                         \
     { .value = (void *)(x) }
-
-AWS_EXTERN_C_BEGIN
 
 /*
  * Note: We do not use the C11 atomics API; this is because we want to make sure the representation
@@ -326,7 +323,5 @@ void aws_atomic_thread_fence(enum aws_memory_order order);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
-
 
 #endif

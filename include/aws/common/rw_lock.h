@@ -14,6 +14,8 @@
 #    include <pthread.h>
 #endif
 
+AWS_EXTERN_C_BEGIN
+
 struct aws_rw_lock {
 #ifdef _WIN32
     void *lock_handle;
@@ -29,8 +31,6 @@ struct aws_rw_lock {
 #    define AWS_RW_LOCK_INIT                                                                                           \
         { .lock_handle = PTHREAD_RWLOCK_INITIALIZER }
 #endif
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a new platform instance of mutex.

@@ -12,7 +12,7 @@
 #include <aws/common/package.h>
 #include <aws/common/stdint.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 #define AWS_OP_SUCCESS (0)
 #define AWS_OP_ERR (-1)
@@ -43,8 +43,6 @@ struct aws_error_info_list {
     }
 
 typedef void(aws_error_handler_fn)(int err, void *ctx);
-
-AWS_EXTERN_C_BEGIN
 
 /*
  * Returns the latest error code on the current thread, or 0 if none have
@@ -204,5 +202,4 @@ enum aws_common_error {
     AWS_ERROR_END_COMMON_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
 
-AWS_POP_SANE_WARNING_LEVEL
 #endif /* AWS_COMMON_ERROR_H */

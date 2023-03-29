@@ -11,7 +11,7 @@
 
 #include <aws/common/logging.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 struct aws_string;
 struct aws_log_writer;
@@ -38,8 +38,6 @@ struct aws_log_channel {
     struct aws_log_writer *writer;
     void *impl;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /*
  * Simple channel that results in log lines being written in the same thread they were generated in.
@@ -70,6 +68,5 @@ AWS_COMMON_API
 void aws_log_channel_clean_up(struct aws_log_channel *channel);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LOG_CHANNEL_H */

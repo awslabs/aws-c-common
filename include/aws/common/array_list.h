@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 #define AWS_ARRAY_LIST_DEBUG_FILL 0xDD
 
@@ -31,8 +31,6 @@ struct aws_array_list {
  * if a < b.
  */
 typedef int(aws_array_list_comparator_fn)(const void *a, const void *b);
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes an array list with an array of size initial_item_allocation * item_size. In this mode, the array size
@@ -221,6 +219,5 @@ void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_lis
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ARRAY_LIST_H */

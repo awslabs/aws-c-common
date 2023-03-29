@@ -12,7 +12,7 @@
 #    include <pthread.h>
 #endif
 
-AWS_PUSH_SANE_WARNING_LEVEL
+AWS_EXTERN_C_BEGIN
 
 enum aws_thread_detach_state {
     AWS_THREAD_NOT_CREATED = 1,
@@ -114,8 +114,6 @@ struct aws_thread {
 #endif
     aws_thread_id_t thread_id;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Returns an instance of system default thread options.
@@ -266,6 +264,5 @@ AWS_COMMON_API int aws_thread_name(
     struct aws_string **out_name);
 
 AWS_EXTERN_C_END
-AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_THREAD_H */

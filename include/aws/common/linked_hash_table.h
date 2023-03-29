@@ -7,6 +7,8 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Simple linked hash table. Preserves insertion order, and can be iterated in insertion order.
  *
@@ -30,8 +32,6 @@ struct aws_linked_hash_table_node {
     const void *key;
     void *value;
 };
-
-AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes the table. Sets up the underlying hash table and linked list.
