@@ -475,6 +475,8 @@ add_test_case(directory_non_empty_deletion_recursively_succeeds_test)
 add_test_case(directory_move_succeeds_test)
 add_test_case(directory_move_src_non_existent_test)
 add_test_case(test_home_directory_not_null)
+add_test_case(test_normalize_posix_directory_separator)
+add_test_case(test_normalize_windows_directory_separator)
 
 add_test_case(promise_test_wait_forever)
 add_test_case(promise_test_wait_for_a_bit)
