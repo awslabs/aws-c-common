@@ -79,6 +79,8 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    if __has_feature(address_sanitizer)
 #        define AWS_SUPPRESS_ASAN __attribute__((no_sanitize("address")))
 #    endif
+#elif defined(_MSC_VER) && __SANITIZE_ADDRESS__
+#    define AWS_SUPPRESS_ASAN __declspec(no_sanitize_address)
 #endif
 
 #if !defined(AWS_SUPPRESS_ASAN)

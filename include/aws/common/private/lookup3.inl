@@ -496,12 +496,12 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
  * the key.  *pc is better mixed than *pb, so use *pc first.  If you want
  * a 64-bit value do something like "*pc + (((uint64_t)*pb)<<32)".
  */
+AWS_SUPPRESS_ASAN      /* AddressSanitizer hates this implementation, even though it's innocuous */
 static void hashlittle2(
   const void *key,       /* the key to hash */
   size_t      length,    /* length of the key */
   uint32_t   *pc,        /* IN: primary initval, OUT: primary hash */
   uint32_t   *pb)        /* IN: secondary initval, OUT: secondary hash */
-  AWS_SUPPRESS_ASAN      /* AddressSanitizer hates this implementation, even though it's innocuous */
 {
   uint32_t a,b,c;                                          /* internal state */
   union { const void *ptr; size_t i; } u;     /* needed for Mac Powerbook G4 */
