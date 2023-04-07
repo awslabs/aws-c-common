@@ -10,6 +10,9 @@ option(ENABLE_NET_TESTS "Run tests requiring an internet connection." ON)
 define_property(GLOBAL PROPERTY AWS_TEST_CASES BRIEF_DOCS "Test Cases" FULL_DOCS "Test Cases")
 set(AWS_TEST_CASES "" CACHE INTERNAL "Test cases valid for this configuration")
 
+# The return value for the skipped test cases. Refer to the return code defined in aws_test_harness.h
+set(SKIP_RETURN_CODE_VALUE 1)
+
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)
 macro(add_test_case name)
     list(APPEND TEST_CASES "${name}")
@@ -87,6 +90,7 @@ function(generate_cpp_test_driver driver_exe_name)
 
     foreach(name IN LISTS TEST_CASES)
         add_test(${name} ${driver_exe_name} "${name}")
+        set_tests_properties("${name}" PROPERTIES SKIP_RETURN_CODE ${SKIP_RETURN_CODE_VALUE})
     endforeach()
 
     # Clear test cases in case another driver needsto be generated
