@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.35
+  BUILDER_VERSION: v0.9.36
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -40,22 +40,6 @@ jobs:
         docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
-  # some older compilers do not support sanitizers correctly, so run tests
-  # without them
-  linux-compiler-compat-no-san:
-    runs-on: ubuntu-20.04 # latest
-    strategy:
-      matrix:
-        compiler:
-          - gcc-4.8
-    steps:
-      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{
-          env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler}} --cmake-extra=-DENABLE_SANITIZERS=OFF
-
   linux-compiler-compat:
     runs-on: ubuntu-20.04 # latest
     strategy:
@@ -67,6 +51,7 @@ jobs:
           - clang-9
           - clang-10
           - clang-11
+          - gcc-4.8
           - gcc-5
           - gcc-6
           - gcc-7
