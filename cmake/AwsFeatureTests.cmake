@@ -93,6 +93,7 @@ string(REGEX MATCH "^(aarch64|arm)" ARM_CPU "${CMAKE_SYSTEM_PROCESSOR}")
 if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
     check_c_source_compiles("
     #include <execinfo.h>
+    #include <stdlib.h>
     int main() {
         backtrace(NULL, 0);
         return 0;

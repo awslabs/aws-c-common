@@ -35,9 +35,16 @@ static int s_test_mutex_acquire_release(struct aws_allocator *allocator, void *c
 
 struct thread_mutex_data {
     struct aws_mutex mutex;
-    volatile int counter;
+    int counter;
     int max_counts;
-    volatile int thread_fn_increments;
+
+    /* To ensure both threads are in their loops at the same time, fighting over the mutex,
+     * the main thread will wait for the spawned thread to tick the counter from 0->1
+     * and the spawned thread will wait for the main thread to tick the counter from 1->2.
+     * Without this, it's possible for either thread to do all the work before
+     * the other one enters its loop. */
+    int thread_fn_increments;
+    int main_fn_increments;
 };
 
 static void s_mutex_thread_fn(void *mutex_data) {
@@ -46,10 +53,14 @@ static void s_mutex_thread_fn(void *mutex_data) {
     while (!finished) {
         aws_mutex_lock(&p_mutex->mutex);
         if (p_mutex->counter != p_mutex->max_counts) {
-            int counter = p_mutex->counter + 1;
-            p_mutex->counter = counter;
-            p_mutex->thread_fn_increments += 1;
-            finished = p_mutex->counter == p_mutex->max_counts;
+            if (p_mutex->counter == 1) {
+                /* wait for the main thread to tick the counter from 1->2. (see notes on thread_mutex_data)*/
+            } else {
+                int counter = p_mutex->counter + 1;
+                p_mutex->counter = counter;
+                p_mutex->thread_fn_increments += 1;
+                finished = p_mutex->counter == p_mutex->max_counts;
+            }
         } else {
             finished = 1;
         }
@@ -64,6 +75,7 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
         .counter = 0,
         .max_counts = 1000000,
         .thread_fn_increments = 0,
+        .main_fn_increments = 0,
     };
 
     aws_mutex_init(&mutex_data.mutex);
@@ -75,17 +87,16 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
         "thread creation failed with error %d",
         aws_last_error());
     int finished = 0;
-    int increments = 0;
     while (!finished) {
         aws_mutex_lock(&mutex_data.mutex);
-        /*add some fairness for thread startup time.*/
+        /* wait for the spawned thread to tick the counter from 0->1. (see notes on thread_mutex_data)*/
         if (!mutex_data.thread_fn_increments) {
             aws_mutex_unlock(&mutex_data.mutex);
             continue;
         }
 
         if (mutex_data.counter != mutex_data.max_counts) {
-            increments += 1;
+            mutex_data.main_fn_increments += 1;
             int counter = mutex_data.counter + 1;
             mutex_data.counter = counter;
             finished = mutex_data.counter == mutex_data.max_counts;
@@ -97,12 +108,12 @@ static int s_test_mutex_is_actually_mutex(struct aws_allocator *allocator, void 
 
     ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
     ASSERT_TRUE(mutex_data.thread_fn_increments > 0, "Thread 2 should have written some");
-    ASSERT_TRUE(increments > 0, "Thread 1 should have written some");
+    ASSERT_TRUE(mutex_data.main_fn_increments > 0, "Main thread should have written some");
     ASSERT_INT_EQUALS(
         mutex_data.max_counts, mutex_data.counter, "Both threads should have written exactly the max counts.");
     ASSERT_INT_EQUALS(
         mutex_data.counter,
-        mutex_data.thread_fn_increments + increments,
+        mutex_data.thread_fn_increments + mutex_data.main_fn_increments,
         "Both threads should have written up to the max count");
 
     aws_thread_clean_up(&thread);
