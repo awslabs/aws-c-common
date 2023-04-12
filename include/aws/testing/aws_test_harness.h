@@ -18,7 +18,7 @@
 
 /**
  * The return code for skipped tests. Use the return code if the test should be skipped.
-*/
+ */
 #define AWS_OP_SKIP (-2)
 
 #ifndef AWS_UNSTABLE_TESTING_API
@@ -71,6 +71,8 @@ static int total_skip;
 
 #define SUCCESS (0)
 #define FAILURE (-1)
+/* The skip code returned to ctest to indicate the test is skipped. Refer to cmake doc:
+ * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html */
 #define SKIP (1)
 
 #define POSTSKIP_INTERNAL()                                                                                            \
