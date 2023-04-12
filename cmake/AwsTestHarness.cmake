@@ -10,7 +10,8 @@ option(ENABLE_NET_TESTS "Run tests requiring an internet connection." ON)
 define_property(GLOBAL PROPERTY AWS_TEST_CASES BRIEF_DOCS "Test Cases" FULL_DOCS "Test Cases")
 set(AWS_TEST_CASES "" CACHE INTERNAL "Test cases valid for this configuration")
 
-# The return value for the skipped test cases. Refer to the return code defined in aws_test_harness.h
+# The return value for the skipped test cases. Refer to the return code defined in aws_test_harness.h:
+# #define SKIP (1)
 set(SKIP_RETURN_CODE_VALUE 1)
 
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)

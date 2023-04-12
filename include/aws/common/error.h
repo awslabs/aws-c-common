@@ -14,7 +14,6 @@
 
 #define AWS_OP_SUCCESS (0)
 #define AWS_OP_ERR (-1)
-#define AWS_OP_SKIP (1)
 
 /* Each library gets space for 2^^10 error entries */
 #define AWS_ERROR_ENUM_STRIDE_BITS 10

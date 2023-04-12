@@ -16,6 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * The return code for skipped tests. Use the return code if the test should be skipped.
+*/
+#define AWS_OP_SKIP (-2)
+
 #ifndef AWS_UNSTABLE_TESTING_API
 #    error The AWS Test Fixture is designed only for use by AWS owned libraries for the AWS C99 SDK. You are welcome to use it,   \
 but you should be aware we make no promises on the stability of this API.  To enable use of the aws test fixtures, set \
@@ -449,7 +454,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (test_res != AWS_OP_ERR && test_res != AWS_OP_SKIP) {
+    if (test_res != AWS_OP_SUCCESS && test_res != AWS_OP_SKIP) {
         goto fail;
     }
 
