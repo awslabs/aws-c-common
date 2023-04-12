@@ -449,7 +449,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (test_res == AWS_OP_ERR) {
+    if (test_res != AWS_OP_ERR && test_res != AWS_OP_SKIP) {
         goto fail;
     }
 
