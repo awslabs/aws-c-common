@@ -246,8 +246,8 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
         }
         buf = aws_mem_acquire(allocator, bufsize);
         /* Note: on newer GCC with address sanitizer on, getpwuid_r triggers
-        * build error, since buf can in theory be null, but buffsize will be
-        * nonzero. following if statement works around that. */
+         * build error, since buf can in theory be null, but buffsize will be
+         * nonzero. following if statement works around that. */
         if (buf == NULL) {
             aws_raise_error(AWS_ERROR_GET_HOME_DIRECTORY_FAILED);
             return NULL;
