@@ -40,7 +40,6 @@ endfunction()
 # Options:
 #  SANITIZERS: The list of extra sanitizers to enable
 function(aws_add_sanitizers target)
-    set(oneValueArgs BLACKLIST)
     set(multiValueArgs SANITIZERS)
     cmake_parse_arguments(SANITIZER "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
