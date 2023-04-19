@@ -48,7 +48,6 @@ function(aws_add_sanitizers target)
     endif()
 
     list(APPEND SANITIZER_SANITIZERS ${SANITIZERS})
-    message(STATUS "attempting to use sanitizer list ${SANITIZER_SANITIZERS}")
 
     foreach(sanitizer IN LISTS SANITIZER_SANITIZERS)
 
@@ -66,7 +65,6 @@ function(aws_add_sanitizers target)
     endforeach()
 
     if(PRESENT_SANITIZERS)
-        message(STATUS "Supported sanitizers ${PRESENT_SANITIZERS}")
         target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
         target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
 
