@@ -15,11 +15,10 @@ AWS_EXTERN_C_BEGIN
  * The future will be "complete" when it holds a result value or error code.
  *
  * The "producer" is responsible for completing the future,
- * setting the result or error code.
+ * setting the result value or error code.
  *
- * The "consumer" is responsible for waiting until the future is complete,
- * and taking ownership of the result (the future doesn't know how to clean
- * up the result).
+ * The "consumer" waits until the future is complete,
+ * before taking ownership of the result value.
  *
  * There are several ways for the consumer to determine a future is complete:
  *
@@ -44,9 +43,11 @@ struct aws_future;
 
 /**
  * Invoked exactly once when the future is complete.
- * You can now call aws_future_get_result() and aws_future_get_error() with confidence.
+ * You can now call aws_future_take_result() and aws_future_get_error() with confidence.
  */
-void aws_future_complete_fn(void *user_data);
+typedef void(aws_future_on_complete_fn)(void *user_data);
+
+typedef void(aws_future_value_dtor_fn)(void *value);
 
 /**
  * Create a new, incomplete, future with a reference count of 1.
@@ -59,7 +60,7 @@ struct aws_future *aws_future_new(struct aws_allocator *alloc);
  * Release the future for cleanup by decrementing its reference count.
  * This is the only function you MAY pass NULL to.
  * NULL is ALWAYS returned from this function.
- * After calling this, you MUST not touch the future again.
+ * After calling this, you MUST NOT touch the future again.
  *
  * If you are the producer, you MUST set the result (or error), before calling this.
  * If you are the consumer, you MUST take ownership of the result before calling this.
@@ -75,23 +76,14 @@ AWS_COMMON_API
 struct aws_future *aws_future_acquire(struct aws_future *future);
 
 /**
- * Set the future as complete, with a successful result.
+ * Set the future as complete, with a successful result value.
  * Only the producer should call this.
- *
- * TODO: warn about callbacks firing
- * TODO: maybe just one function that combines set_result/set_error?
- *
- * If AWS_OP_SUCCESS is returned, then future is now complete with the given result.
- * The result is stored by pointer within the future and the consumer.
- * Note the the future will not clean up the result,
- * it is up to the consumer to call aws_future_get_result() and take ownership.
- *
- * This function can only fail if the future is already complete.
- * In this case, AWS_OP_ERR is returned and AWS_ERROR_FUTURE_ALREADY_COMPLETE is raised,
- * and the future does NOT take ownership of the result so you must clean it up.
+ * The value MUST be non-NULL.
+ * This MUST NOT be called if the future is already complete.
+ * The dtor is optional, it is only called if the consumer never takes ownership of the value.
  */
 AWS_COMMON_API
-int aws_future_set_result(struct aws_future *future, void *result);
+void aws_future_set_value(struct aws_future *future, void *value, aws_future_value_dtor_fn *dtor);
 
 /**
  * Set the future as complete, with an error.
@@ -139,70 +131,61 @@ bool aws_future_is_complete(const struct aws_future *future);
  * TODO: this can be void function if we fatally assert it's used correctly, or store an array of callbacks?
  */
 AWS_COMMON_API
-int aws_future_set_completion_callback(struct aws_future *future, aws_future_complete_fn *on_complete, void *user_data);
+void aws_future_set_completion_callback(
+    struct aws_future *future,
+    aws_future_on_complete_fn *on_complete,
+    void *user_data);
 
 /**
- * Determine that the future is complete,
- * or register a callback to learn asynchronously when the future is complete.
+ * Learn that the future is already complete, or register a callback
+ * that will be invoked when the future is completed asynchronously.
  *
- * If the future is already complete AWS_OP_SUCCESS is returned, out_is_complete is set true,
- * and the on_complete callback will never be invoked.
+ * If the future is already complete, true is returned and the callback
+ * will never be invoked.
  *
- * If the future is incomplete, AWS_OP_SUCCESS is returned, out_is_complete is set false,
- * and the on_complete callback will be invoked exactly once.
- * The callback will never be invoked synchronously (on this thread before this function call returns).
+ * If the future is incomplete, false is returned.
+ * The callback will be invoked (always asynchronously) when the future finally completes.
  *
- * This function can only fail if a completion callback has already been set,
- * in which case AWS_OP_ERR is returned and AWS_ERROR_FUTURE_CALLBACK_ALREADY_SET is raised.
- * TODO: this could return a bool if we fatally assert it's used correctly, or store an array of callbacks?
+ * You MUST NOT call this if a callback is already registered.
  */
 AWS_COMMON_API
-int aws_future_is_complete_else_set_callback(
+bool aws_future_is_complete_else_set_callback(
     struct aws_future *future,
-    aws_completion_fn *on_complete,
-    void *user_data,
-    bool *out_is_complete);
+    aws_future_on_complete_fn *on_complete,
+    void *on_complete_user_data);
 
 /**
  * Block this thread until the future is complete.
  * You probably only want to do this in unit tests, on the main thread.
  * There is a huge risk of deadlocking the program if this is called from an event-loop thread.
  *
- * If the future completes within the timeout duration, then AWS_OP_SUCCESS is returned.
- *
- * Otherwise, AWS_OP_ERR is returned.
- * If the future did not complete within the wait duration, then AWS_ERROR_FUTURE_WAIT_TIMEOUT is raised.
- * If a callback is already set then AWS_ERROR_FUTURE_CALLBACK_ALREADY_SET is raised.
- * There are no other possible errors.
+ * Returns true if the future completes within the timeout duration.
  */
 AWS_COMMON_API
-int aws_future_wait_until_complete(struct aws_future, uint64_t timeout_ns); /*TODO: milliseconds? */
+bool aws_future_wait_until_complete(struct aws_future, uint64_t timeout_ns);
 
 /**
- * Get the result of a completed future.
+ * Take the result value of a completed future.
  * Only the consumer should call this.
  *
- * If the future completed successfully, the result is returned by pointer.
- * You own the result and are responsible for cleaning it up.
+ * If the future completed successfully, the value is returned.
+ * You own the value now, the future will not try to clean it up.
  *
- * Otherwise NULL is returned.
- * If the future completed with an error, that error-code is raised.
- * If the future is incomplete, AWS_ERROR_FUTURE_INCOMPLETE is raised.
- */
-void *aws_future_get_result(const struct aws_future *future);
-
-/**
- * Get the error code of a completed future.
- * Only the consumer should call this.
+ * If the future completed with an error, NULL is returned.
+ * Call aws_last_error() to get the error_code.
  *
- * If the future completed successfully, 0 is returned.
- * If the future completed with an error, that error code is returned.
- * If the future is incomplete, AWS_ERROR_FUTURE_INCOMPLETE is returned.
+ * You MUST NOT call this on an incomplete future.
+ * You MUST NOT call this multiple times.
  */
-int aws_future_get_error(const struct aws_future *future);
+void *aws_future_take_value(struct aws_future *future);
 
 /* TODO:
+    -   simple API vs minimizing locks
     -   do like C++ and separate producer/consumer APIs into promise/future?
+    -   should future release result?
+        -   if so, set_result_with_cleanup() could be a void function
+        -   forces refcounting?
+    -   on_complete passes result and error_code to reduce locking?
     -   support for cancel? If so, does that complete future automatically, or is it up to the producer?
         downside of automatic completion is that set_result() calls are always at risk of failing */
 
