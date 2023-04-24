@@ -339,7 +339,6 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * list.
      */
     AWS_FATAL_PRECONDITION(!list->length || list->data);
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
     AWS_PRECONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     size_t len = list->length;
     AWS_POSTCONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
