@@ -10,6 +10,7 @@ option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consu
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
+option(AWS_ENABLE_ASSERT "Enables assert and pre_conditions irrespective of Build type" OFF)
 
 # Check for Posix Large Files Support (LFS).
 # On most 64bit systems, LFS is enabled by default.
@@ -225,6 +226,9 @@ function(aws_set_common_properties target)
     if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
         list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
     else() # release build
+        if(AWS_ENABLE_ASSERT)
+            list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
+        endif()
         if (POLICY CMP0069)
             if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
                 cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
