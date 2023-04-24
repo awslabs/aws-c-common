@@ -65,6 +65,7 @@ add_test_case(test_precision_loss_remainders_conversion)
 add_test_case(test_overflow_conversion)
 add_test_case(test_old_overflow_cases)
 
+add_test_case(array_list_zero_length)
 add_test_case(array_list_order_push_back_pop_front_test)
 add_test_case(array_list_order_push_back_pop_back_test)
 add_test_case(array_list_order_push_front_pop_front_test)

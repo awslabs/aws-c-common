@@ -8,12 +8,23 @@
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
+static int s_array_list_zero_length(struct aws_allocator *allocator, void *ctx) {
+
+    (void)ctx;
+
+    struct aws_array_list list;
+    AWS_ZERO_STRUCT(list);
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
+
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(array_list_zero_length, s_array_list_zero_length)
+
 static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *allocator, void *ctx) {
 
     (void)ctx;
 
     struct aws_array_list list;
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
     size_t list_size = 4;
     int first = 1, second = 2, third = 3, fourth = 4;
 
