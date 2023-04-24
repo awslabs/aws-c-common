@@ -9,7 +9,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_array_list_zero_length(struct aws_allocator *allocator, void *ctx) {
-
+    AWS_ASSERT(false);
     (void)ctx;
     (void)allocator;
 
