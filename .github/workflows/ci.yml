@@ -231,6 +231,8 @@ jobs:
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --config Debug
 
+  # Windows has a weird interactive pop-up in debug whenever 'abort()' is called, which can be triggered by hitting any aws_assert or aws_pre_condition, causing the CI to hang.
+  # The workaround is to enable asserts and not set the build type to debug to avoid the pop-up.
   windows-debug:
     runs-on: windows-2022 # latest
     steps:
