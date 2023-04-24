@@ -11,7 +11,12 @@
 static int s_array_list_zero_length(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
-    abort();
+
+    struct aws_array_list list;
+    AWS_ZERO_STRUCT(list);
+    ASSERT_INT_EQUALS(0, aws_array_list_length(&list));
+
+    return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(array_list_zero_length, s_array_list_zero_length)
 
