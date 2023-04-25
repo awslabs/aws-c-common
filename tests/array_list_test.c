@@ -25,6 +25,7 @@ static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc
     (void)ctx;
 
     struct aws_array_list list;
+
     size_t list_size = 4;
     int first = 1, second = 2, third = 3, fourth = 4;
 
