@@ -404,6 +404,9 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     AWS_ASSERT(harness->run);
 
 #if defined(_WIN32)
+#    if defined(AWS_WIN_ABORT_POP_UP_DISABLE)
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#    endif
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
     /* Set working directory to path to this exe */
     char cwd[512];
