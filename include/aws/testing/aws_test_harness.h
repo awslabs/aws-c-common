@@ -402,11 +402,15 @@ static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
 
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     AWS_ASSERT(harness->run);
+/*
+ * MSVC compiler has a weird interactive pop-up in debug whenever 'abort()' is called, which can be triggered
+ * by hitting any aws_assert or aws_pre_condition, causing the CI to hang. So disable the pop up in tests.
+ */
+#ifdef _MSC_VER
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
 
 #if defined(_WIN32)
-#    if defined(AWS_WIN_ABORT_POP_UP_DISABLE)
-    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
-#    endif
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
     /* Set working directory to path to this exe */
     char cwd[512];

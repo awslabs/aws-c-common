@@ -10,7 +10,6 @@ option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consu
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
-option(AWS_WIN_ABORT_POP_UP_DISABLE "Disables Windows abort pop-up by using `_set_error_mode` in tests" OFF)
 
 # Check for Posix Large Files Support (LFS).
 # On most 64bit systems, LFS is enabled by default.

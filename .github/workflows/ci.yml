@@ -231,15 +231,13 @@ jobs:
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --config Debug
 
-  # When 'abort()' is called, Windows displays an interactive pop-up in debug mode, which can cause the CI to hang.
-  # To prevent this issue, we need to to disable the pop-up during tests using `AWS_WIN_ABORT_POP_UP_DISABLE` flag.
   windows-debug:
     runs-on: windows-2022 # latest
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --config Debug --cmake-extra=-DAWS_WIN_ABORT_POP_UP_DISABLE=ON
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --config Debug
 
   osx-debug:
     runs-on: macos-12 # latest
