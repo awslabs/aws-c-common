@@ -163,6 +163,13 @@ AWS_COMMON_API
 char aws_get_platform_directory_separator(void);
 
 /**
+ * Normalizes the path by replacing any directory separator with the local platform's directory separator.
+ * @param path path to normalize. Must be writeable.
+ */
+AWS_COMMON_API
+void aws_normalize_directory_separator(struct aws_byte_buf *path);
+
+/**
  * Returns the current user's home directory.
  */
 AWS_COMMON_API

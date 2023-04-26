@@ -404,3 +404,38 @@ static int s_test_home_directory_not_null(struct aws_allocator *allocator, void 
 }
 
 AWS_TEST_CASE(test_home_directory_not_null, s_test_home_directory_not_null);
+
+static int s_test_normalize_posix_directory_separator(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_string *buffer = aws_string_new_from_c_str(allocator, "./test/path/abc");
+    struct aws_byte_buf path_buf = aws_byte_buf_from_array(buffer->bytes, buffer->len);
+    aws_normalize_directory_separator(&path_buf);
+    for (size_t i = 0; i < path_buf.len; ++i) {
+        if (aws_is_any_directory_separator((char)path_buf.buffer[i])) {
+            ASSERT_INT_EQUALS(aws_get_platform_directory_separator(), path_buf.buffer[i]);
+        }
+    }
+
+    aws_string_destroy(buffer);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_normalize_posix_directory_separator, s_test_normalize_posix_directory_separator);
+
+static int s_test_normalize_windows_directory_separator(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_string *buffer = aws_string_new_from_c_str(allocator, ".\\test\\path\\abc");
+    struct aws_byte_buf path_buf = aws_byte_buf_from_array(buffer->bytes, buffer->len);
+    aws_normalize_directory_separator(&path_buf);
+    for (size_t i = 0; i < path_buf.len; ++i) {
+        if (aws_is_any_directory_separator((char)path_buf.buffer[i])) {
+            ASSERT_INT_EQUALS(aws_get_platform_directory_separator(), path_buf.buffer[i]);
+        }
+    }
+    aws_string_destroy(buffer);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_normalize_windows_directory_separator, s_test_normalize_windows_directory_separator);

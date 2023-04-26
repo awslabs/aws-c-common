@@ -100,10 +100,34 @@ AWS_STATIC_ASSERT(CALL_OVERLOAD_TEST(1, 2, 3) == 3);
 #    if __has_feature(address_sanitizer)
 #        define AWS_SUPPRESS_ASAN __attribute__((no_sanitize("address")))
 #    endif
+#elif defined(__SANITIZE_ADDRESS__)
+#    if defined(__GNUC__)
+#        define AWS_SUPPRESS_ASAN __attribute__((no_sanitize_address))
+#    elif defined(_MSC_VER)
+#        define AWS_SUPPRESS_ASAN __declspec(no_sanitize_address)
+#    endif
 #endif
 
 #if !defined(AWS_SUPPRESS_ASAN)
 #    define AWS_SUPPRESS_ASAN
+#endif
+
+#if defined(__has_feature)
+#    if __has_feature(thread_sanitizer)
+#        define AWS_SUPPRESS_TSAN __attribute__((no_sanitize("thread")))
+#    endif
+#elif defined(__SANITIZE_THREAD__)
+#    if defined(__GNUC__)
+#        define AWS_SUPPRESS_TSAN __attribute__((no_sanitize_thread))
+#    else
+#        define AWS_SUPPRESS_TSAN
+#    endif
+#else
+#    define AWS_SUPPRESS_TSAN
+#endif
+
+#if !defined(AWS_SUPPRESS_TSAN)
+#    define AWS_SUPPRESS_TSAN
 #endif
 
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.

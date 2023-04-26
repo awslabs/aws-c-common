@@ -16,6 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * The return code for skipped tests. Use the return code if the test should be skipped.
+ */
+#define AWS_OP_SKIP (-2)
+
 #ifndef AWS_UNSTABLE_TESTING_API
 #    error The AWS Test Fixture is designed only for use by AWS owned libraries for the AWS C99 SDK. You are welcome to use it,   \
 but you should be aware we make no promises on the stability of this API.  To enable use of the aws test fixtures, set \
@@ -66,9 +71,26 @@ static int s_cunit_failure_message0(
     s_cunit_failure_message0(FAIL_PREFIX, func, file, line, format, #__VA_ARGS__)
 
 static int total_failures;
+static int total_skip;
 
 #define SUCCESS (0)
 #define FAILURE (-1)
+/* The skip code returned to ctest to indicate the test is skipped. Refer to cmake doc:
+ * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html */
+#define SKIP (1)
+
+#define POSTSKIP_INTERNAL()                                                                                            \
+    do {                                                                                                               \
+        total_skip++;                                                                                                  \
+        return SKIP;                                                                                                   \
+    } while (0)
+
+#define RETURN_SKIP(format, ...)                                                                                       \
+    do {                                                                                                               \
+        printf(format, ##__VA_ARGS__);                                                                                 \
+        printf("\n");                                                                                                  \
+        POSTSKIP_INTERNAL();                                                                                           \
+    } while (0)
 
 #define RETURN_SUCCESS(format, ...)                                                                                    \
     do {                                                                                                               \
@@ -438,7 +460,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (test_res != AWS_OP_SUCCESS) {
+    if (test_res != AWS_OP_SUCCESS && test_res != AWS_OP_SKIP) {
         goto fail;
     }
 
@@ -460,7 +482,12 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
+    if (test_res == AWS_OP_SUCCESS) {
+        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
+    } else if (test_res == AWS_OP_SKIP) {
+        RETURN_SKIP("%s [ \033[32mSKIP\033[0m ]", harness->test_name);
+    }
+
 fail:
     FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
 }
