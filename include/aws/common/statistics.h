@@ -11,7 +11,7 @@
 
 #include <aws/common/stdint.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_array_list;
 
@@ -105,6 +105,8 @@ struct aws_crt_statistics_handler {
     void *impl;
 };
 
+AWS_EXTERN_C_BEGIN
+
 /**
  * Submits a list of statistics objects to a statistics handler for processing
  *
@@ -136,5 +138,6 @@ AWS_COMMON_API
 void aws_crt_statistics_handler_destroy(struct aws_crt_statistics_handler *handler);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_STATISTICS_H */

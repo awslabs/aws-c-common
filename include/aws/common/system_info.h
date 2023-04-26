@@ -8,7 +8,7 @@
 
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 enum aws_platform_os {
     AWS_PLATFORM_OS_WINDOWS,
@@ -20,6 +20,8 @@ struct aws_cpu_info {
     int32_t cpu_id;
     bool suspected_hyper_thread;
 };
+
+AWS_EXTERN_C_BEGIN
 
 /* Returns the OS this was built under */
 AWS_COMMON_API
@@ -101,5 +103,6 @@ AWS_COMMON_API
 void aws_backtrace_log(int log_level);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_SYSTEM_INFO_H */

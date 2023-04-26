@@ -22,16 +22,11 @@
 #endif
 
 #ifdef __cplusplus
-#    define AWS_EXTERN_C_BEGIN                                                                                         \
-        extern "C" {                                                                                                   \
-        AWS_PUSH_SANE_WARNING_LEVEL
-
-#    define AWS_EXTERN_C_END                                                                                           \
-        AWS_POP_SANE_WARNING_LEVEL                                                                                     \
-        }
+#    define AWS_EXTERN_C_BEGIN extern "C" {
+#    define AWS_EXTERN_C_END }
 #else
-#    define AWS_EXTERN_C_BEGIN AWS_PUSH_SANE_WARNING_LEVEL
-#    define AWS_EXTERN_C_END AWS_POP_SANE_WARNING_LEVEL
+#    define AWS_EXTERN_C_BEGIN
+#    define AWS_EXTERN_C_END
 #endif /*  __cplusplus */
 
 #define AWS_CONCAT(A, B) A##B

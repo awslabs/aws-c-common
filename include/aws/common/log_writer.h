@@ -9,7 +9,7 @@
 
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_allocator;
 struct aws_string;
@@ -41,6 +41,8 @@ struct aws_log_writer_file_options {
     FILE *file;
 };
 
+AWS_EXTERN_C_BEGIN
+
 /*
  * Initialize a log writer that sends log lines to stdout.  Uses C library IO.
  */
@@ -69,5 +71,6 @@ AWS_COMMON_API
 void aws_log_writer_clean_up(struct aws_log_writer *writer);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LOG_WRITER_H */

@@ -10,7 +10,7 @@
 #include <aws/common/linked_list.h>
 #include <aws/common/priority_queue.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_task;
 
@@ -49,6 +49,8 @@ struct aws_task_scheduler {
     struct aws_linked_list timed_list;     /* If timed_queue runs out of memory, further timed tests are stored here */
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
 };
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Init an aws_task
@@ -125,5 +127,6 @@ AWS_COMMON_API
 const char *aws_task_status_to_c_str(enum aws_task_status status);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_TASK_SCHEDULER_H */

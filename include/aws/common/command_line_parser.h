@@ -6,7 +6,7 @@
  */
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 enum aws_cli_options_has_arg {
     AWS_CLI_OPTIONS_NO_ARGUMENT = 0,
@@ -38,6 +38,7 @@ struct aws_cli_option {
     int val;
 };
 
+AWS_EXTERN_C_BEGIN
 /**
  * Initialized to 1 (for where the first argument would be). As arguments are parsed, this number is the index
  * of the next argument to parse. Reset this to 1 to parse another set of arguments, or to rerun the parser.
@@ -101,7 +102,7 @@ AWS_COMMON_API int aws_cli_dispatch_on_subcommand(
     struct aws_cli_subcommand_dispatch *dispatch_table,
     int table_length,
     void *user_data);
-
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_COMMAND_LINE_PARSER_H */

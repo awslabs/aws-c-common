@@ -8,7 +8,7 @@
 #include <aws/common/array_list.h>
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 /* The comparator should return a positive value if the second argument has a
  * higher priority than the first; Otherwise, it should return a negative value
@@ -46,6 +46,8 @@ struct aws_priority_queue_node {
     /** The current index of the node in question, or SIZE_MAX if the node has been removed. */
     size_t current_index;
 };
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a priority queue struct for use. This mode will grow memory automatically (exponential model)
@@ -174,5 +176,6 @@ AWS_COMMON_API
 size_t aws_priority_queue_capacity(const struct aws_priority_queue *queue);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_PRIORITY_QUEUE_H */

@@ -10,6 +10,7 @@
 #include <aws/common/macros.h>
 #include <stdio.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
@@ -186,5 +187,7 @@ AWS_EXTERN_C_END
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*(ptr)))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*(ptr)))
+
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ASSERT_H */

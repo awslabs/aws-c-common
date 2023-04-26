@@ -11,7 +11,7 @@
 #    include <pthread.h>
 #endif
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_mutex;
 
@@ -43,6 +43,8 @@ struct aws_condition_variable {
 #    define AWS_CONDITION_VARIABLE_INIT                                                                                \
         { .condition_handle = PTHREAD_COND_INITIALIZER, .initialized = true }
 #endif
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Initializes a condition variable.
@@ -108,5 +110,6 @@ int aws_condition_variable_wait_for_pred(
     void *pred_ctx);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_CONDITION_VARIABLE_H */

@@ -8,7 +8,7 @@
 
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_string;
 
@@ -17,6 +17,7 @@ struct aws_string;
  *
  * Not thread safe to use set/unset unsynced with get.  Set/unset only used in unit tests.
  */
+AWS_EXTERN_C_BEGIN
 
 /*
  * Get the value of an environment variable.  If the variable is not set, the output string will be set to NULL.
@@ -43,5 +44,6 @@ AWS_COMMON_API
 int aws_unset_environment_value(const struct aws_string *variable_name);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ENVIRONMENT_H */

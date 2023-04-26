@@ -7,11 +7,13 @@
 
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_thread_scheduler;
 struct aws_thread_options;
 struct aws_task;
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Creates a new instance of a thread scheduler. This object receives scheduled tasks and executes them inside a
@@ -56,5 +58,6 @@ AWS_COMMON_API void aws_thread_scheduler_schedule_now(struct aws_thread_schedule
 AWS_COMMON_API void aws_thread_scheduler_cancel_task(struct aws_thread_scheduler *scheduler, struct aws_task *task);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_THREAD_SCHEDULER_H */

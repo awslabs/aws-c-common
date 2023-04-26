@@ -11,7 +11,7 @@
 
 #include <aws/common/exports.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_xml_parser;
 struct aws_xml_node;
@@ -40,6 +40,8 @@ struct aws_xml_parser_options {
     /* Max node depth used for parsing document. */
     size_t max_depth;
 };
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Allocates an xml parser.
@@ -104,5 +106,6 @@ int aws_xml_node_get_attribute(
     struct aws_xml_attribute *out_attribute);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_XML_PARSER_H */

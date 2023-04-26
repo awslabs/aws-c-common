@@ -6,9 +6,11 @@
  */
 #include <aws/common/common.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_byte_buf;
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Get an unpredictably random 64bit number, suitable for cryptographic use.
@@ -43,5 +45,6 @@ AWS_COMMON_API int aws_device_random_buffer(struct aws_byte_buf *output);
 AWS_COMMON_API int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_DEVICE_RANDOM_H */

@@ -7,7 +7,7 @@
 
 #include <aws/common/byte_buf.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 /**
  * Data representing a URI. uri_str is always allocated and filled in.
@@ -53,6 +53,8 @@ struct aws_uri_builder_options {
     struct aws_array_list *query_params;
     struct aws_byte_cursor query_string;
 };
+
+AWS_EXTERN_C_BEGIN
 
 /**
  * Parses 'uri_str' and initializes uri. Returns AWS_OP_SUCCESS, on success, AWS_OP_ERR on failure.
@@ -158,5 +160,6 @@ AWS_COMMON_API int aws_byte_buf_append_encoding_uri_param(
 AWS_COMMON_API int aws_byte_buf_append_decoding_uri(struct aws_byte_buf *buffer, const struct aws_byte_cursor *cursor);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_URI_H */

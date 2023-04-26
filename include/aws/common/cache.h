@@ -7,7 +7,7 @@
 
 #include <aws/common/linked_hash_table.h>
 
-AWS_EXTERN_C_BEGIN
+AWS_PUSH_SANE_WARNING_LEVEL
 
 struct aws_cache;
 
@@ -39,6 +39,7 @@ int aws_cache_base_default_remove(struct aws_cache *cache, const void *key);
 void aws_cache_base_default_clear(struct aws_cache *cache);
 size_t aws_cache_base_default_get_element_count(const struct aws_cache *cache);
 
+AWS_EXTERN_C_BEGIN
 /**
  * Cleans up the cache. Elements in the cache will be evicted and cleanup
  * callbacks will be invoked.
@@ -81,5 +82,6 @@ AWS_COMMON_API
 size_t aws_cache_get_element_count(const struct aws_cache *cache);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_CACHE_H */
