@@ -295,14 +295,14 @@ int aws_array_list_pop_back(struct aws_array_list *AWS_RESTRICT list) {
 
 AWS_STATIC_IMPL
 void aws_array_list_clear(struct aws_array_list *AWS_RESTRICT list) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     if (list->data) {
 #ifdef DEBUG_BUILD
         memset(list->data, AWS_ARRAY_LIST_DEBUG_FILL, list->current_size);
 #endif
         list->length = 0;
     }
-    AWS_POSTCONDITION(aws_array_list_is_valid(list));
+    AWS_POSTCONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
 }
 
 AWS_STATIC_IMPL
@@ -339,9 +339,9 @@ size_t aws_array_list_length(const struct aws_array_list *AWS_RESTRICT list) {
      * list.
      */
     AWS_FATAL_PRECONDITION(!list->length || list->data);
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    AWS_PRECONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     size_t len = list->length;
-    AWS_POSTCONDITION(aws_array_list_is_valid(list));
+    AWS_POSTCONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     return len;
 }
 
