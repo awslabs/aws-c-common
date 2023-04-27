@@ -43,7 +43,7 @@ function(aws_check_headers target)
             C_STANDARD 99
         )
 
-        # Ensure our headers can be included by an application with its warnings set reasonably high
+        # Ensure our headers can be included by an application with its warnings set very high
         if(MSVC)
             target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /Wall /WX)
         else()
@@ -52,8 +52,10 @@ function(aws_check_headers target)
 
         foreach(header IN LISTS ARGN)
             if (NOT ${header} MATCHES "\\.inl$")
+                # create unique token for this file, e.g.:
+                # "${CMAKE_CURRENT_SOURCE_DIR}/include/aws/common/byte_buf.h" -> "aws_common_byte_buf_h"
                 file(RELATIVE_PATH include_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header})
-                # create unique token from include_path (replace non-alphanumeric characters with underscores)
+                # replace non-alphanumeric characters with underscores
                 string(REGEX REPLACE "[^a-zA-Z0-9]" "_" unique_token ${include_path})
                 set(c_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.c")
                 set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
