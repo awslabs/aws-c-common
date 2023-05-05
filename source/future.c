@@ -5,6 +5,7 @@
 
 #include <aws/common/future.h>
 
+#include <aws/common/condition_variable.h>
 #include <aws/common/mutex.h>
 #include <aws/common/ref_count.h>
 
@@ -16,22 +17,24 @@ struct aws_future {
     struct aws_allocator *alloc;
     struct aws_ref_count ref_count;
     struct aws_mutex lock;
-    aws_future_on_complete_fn *on_complete_cb;
-    void *on_complete_user_data;
+    struct aws_condition_variable wait_cvar;
+    aws_future_on_done_fn *on_done_cb;
+    void *on_done_user_data;
     void *value;
-    void (*value_dtor)(void *);
+    void (*value_destructor)(void *);
     int error_code;
-    bool is_complete;
+    bool is_done;
 };
 
 static void s_future_destroy(void *user_data) {
     struct aws_future *future = user_data;
 
     /* If no one took ownership of the value, call its destructor */
-    if (future->value_dtor) {
-        future->value_dtor(value);
+    if (future->value_destructor) {
+        future->value_destructor(future->value);
     }
 
+    aws_condition_variable_clean_up(&future->wait_cvar);
     aws_mutex_clean_up(&future->lock);
 }
 
@@ -42,6 +45,7 @@ struct aws_future *aws_future_new(struct aws_allocator *alloc) {
     future->alloc = alloc;
     aws_ref_count_init(&future->ref_count, future, s_future_destroy);
     aws_mutex_init(&future->lock);
+    aws_condition_variable_init(&future->wait_cvar);
     return future;
 }
 
@@ -58,110 +62,143 @@ struct aws_future *aws_future_acquire(struct aws_future *future) {
     return future;
 }
 
-bool aws_future_is_complete(const struct aws_future *future) {
+bool aws_future_is_done(const struct aws_future *future) {
     AWS_ASSERT(future);
 
+    /* this function is conceptually const, but we need to hold the lock a moment */
+    struct aws_mutex *mutable_lock = (struct aws_mutex *)&future->lock;
+
     /* BEGIN CRITICAL SECTION */
-    aws_mutex_lock(&((struct aws_future *)future)->lock);
-    bool is_complete = future->is_complete;
-    aws_mutex_unlock(&((struct aws_future *)future)->lock);
+    aws_mutex_lock(mutable_lock);
+    bool is_done = future->is_done;
+    aws_mutex_unlock(mutable_lock);
     /* END CRITICAL SECTION */
 
-    return is_complete;
+    return is_done;
 }
 
-void aws_future_set_completion_callback(
-    struct aws_future *future,
-    aws_future_on_complete_fn *on_complete,
-    void *user_data) {
+static bool s_future_is_done_pred(void *user_data) {
+    struct aws_future *future = user_data;
+    return future->is_done;
+}
+
+bool aws_future_is_done_after_wait(const struct aws_future *future, uint64_t duration_ns) {
+    AWS_ASSERT(future);
+
+    /* this function is conceptually const, but we need to use synchronization primitives */
+    struct aws_future *mutable_future = (struct aws_future *)future;
+
+    /* BEGIN CRITICAL SECTION */
+    aws_mutex_lock(&mutable_future->lock);
+
+    bool is_done = aws_condition_variable_wait_for_pred(
+                       &mutable_future->wait_cvar,
+                       &mutable_future->lock,
+                       (int64_t)duration_ns,
+                       s_future_is_done_pred,
+                       mutable_future) == AWS_OP_SUCCESS;
+
+    aws_mutex_unlock(&mutable_future->lock);
+    /* END CRITICAL SECTION */
+
+    return is_done;
+}
+
+void aws_future_set_done_callback(struct aws_future *future, aws_future_on_done_fn *on_done, void *user_data) {
 
     /* BEGIN CRITICAL SECTION */
     aws_mutex_lock(&future->lock);
 
-    AWS_FATAL_ASSERT(future->on_complete_cb == NULL && "Future completion callback must only be set once");
+    AWS_FATAL_ASSERT(future->on_done_cb == NULL && "Future done callback must only be set once");
 
-    bool is_complete = future->is_complete;
+    bool is_done = future->is_done;
 
-    /* if incomplete, store callback for later */
-    if (!is_complete) {
-        future->on_complete_cb = on_complete;
-        future->on_complete_user_data = user_data;
+    /* if not done, store callback for later */
+    if (!is_done) {
+        future->on_done_cb = on_done;
+        future->on_done_user_data = user_data;
     }
 
     aws_mutex_unlock(&future->lock);
     /* END CRITICAL SECTION */
 
-    /* if already complete, fire callback now */
-    if (is_complete) {
-        on_complete(user_data);
+    /* if already done, fire callback now */
+    if (is_done) {
+        on_done(user_data);
     }
 }
 
-bool aws_future_is_complete_else_set_callback(
+bool aws_future_is_done_else_set_callback(
     struct aws_future *future,
-    aws_future_on_complete_fn *on_complete,
-    void *on_complete_user_data) {
+    aws_future_on_done_fn *on_done,
+    void *on_done_user_data) {
 
     /* BEGIN CRITICAL SECTION */
     aws_mutex_lock(&future->lock);
 
-    AWS_FATAL_ASSERT(future->on_complete_cb == NULL && "Future completion callback must only be set once");
+    AWS_FATAL_ASSERT(future->on_done_cb == NULL && "Future done callback must only be set once");
 
-    bool is_complete = future->is_complete;
-    if (!is_complete) {
-        future->on_complete_cb = on_complete;
-        future->on_complete_user_data = on_complete_user_data;
+    bool is_done = future->is_done;
+    if (!is_done) {
+        future->on_done_cb = on_done;
+        future->on_done_user_data = on_done_user_data;
     }
 
     aws_mutex_unlock(&future->lock);
     /* END CRITICAL SECTION */
 
-    return is_complete;
+    return is_done;
 }
 
-static void s_future_set_complete(
+static void s_future_set_done(
     struct aws_future *future,
     void *value,
-    aws_future_value_dtor_fn *value_dtor,
-    error_code) {
+    aws_future_value_destructor_fn *value_destructor,
+    int error_code) {
 
     /* BEGIN CRITICAL SECTION */
     aws_mutex_lock(&future->lock);
 
-    AWS_FATAL_ASSERT(!future->is_complete && "The future must complete exactly once");
+    aws_future_on_done_fn *on_done_cb = future->on_done_cb;
+    void *on_done_user_data = future->on_done_user_data;
 
-    future->is_complete = true;
-    future->value = value;
-    future->value_dtor = value_dtor;
-    future->error_code = error_code;
+    bool first_time = !future->is_done;
+    if (first_time) {
+        future->is_done = true;
+        future->value = value;
+        future->value_destructor = value_destructor;
+        future->error_code = error_code;
+        future->on_done_cb = NULL;
+        future->on_done_user_data = NULL;
 
-    aws_future_on_complete_fn *on_complete_cb = future->on_complete_cb;
-    void *on_complete_user_data = future->on_complete_user_data;
-
-    future->on_complete_cb = NULL;
-    future->on_complete_user_data = NULL;
+        aws_condition_variable_notify_all(&future->wait_cvar);
+    }
 
     aws_mutex_unlock(&future->lock);
     /* END CRITICAL SECTION */
 
-    /* Invoke completion callback outside critical section to avoid deadlock */
-    if (on_complete_cb) {
-        on_complete_cb(on_complete_user_data);
-    }
+    if (first_time) {
+        /* invoke done callback outside critical section to avoid deadlock */
+        if (on_done_cb) {
+            on_done_cb(on_done_user_data);
+        }
 
-    return AWS_OP_SUCCESS;
+    } else if (value_destructor != NULL) {
+        /* future was already done, so just destroy this newer value */
+        value_destructor(value);
+    }
 }
 
-void aws_future_set_value(struct aws_future *future, void *value, aws_future_value_dtor_fn *dtor) {
+void aws_future_set_value(struct aws_future *future, void *value, aws_future_value_destructor_fn *destructor) {
     AWS_ASSERT(future != NULL);
 
     AWS_FATAL_ASSERT(value != NULL && "The future's result value cannot be NULL");
-    AWS_FATAL_ASSERT(dtor != NULL && "The future's result value must have a destructor");
+    AWS_FATAL_ASSERT(destructor != NULL && "The future's result value must have a destructor");
 
-    return s_future_set_complete(future, value, dtor, 0 /*error_code*/);
+    s_future_set_done(future, value, destructor, 0 /*error_code*/);
 }
 
-int aws_future_set_error(struct aws_future *future, int error_code) {
+void aws_future_set_error(struct aws_future *future, int error_code) {
     AWS_ASSERT(future != NULL);
 
     /* handle recoverable usage error */
@@ -170,24 +207,25 @@ int aws_future_set_error(struct aws_future *future, int error_code) {
         error_code = AWS_ERROR_UNKNOWN;
     }
 
-    return s_future_set_complete(future, NULL /*value*/, NULL /*value_dtor*/, error_code);
+    s_future_set_done(future, NULL /*value*/, NULL /*value_destructor*/, error_code);
 }
 
 void *aws_future_take_value(struct aws_future *future) {
     AWS_ASSERT(future != NULL);
 
-    /* not bothering with lock because this function must only be called after the future is complete,
+    /* not bothering with lock because this function must only be called after the future is done,
      * and must only be called once */
-    AWS_FATAL_ASSERT(future->is_complete && "Cannot take value from incomplete future");
-    AWS_FATAL_ASSERT(future->value_dtor && "Cannot take value from future multiple times");
-
-    /* relinquish ownership of the value */
-    future->value_dtor = NULL;
+    AWS_FATAL_ASSERT(future->is_done && "Cannot take value before future is done");
+    AWS_FATAL_ASSERT(future->value_destructor != NULL && "Cannot take value from future multiple times");
 
     if (future->error_code != 0) {
         aws_raise_error(future->error_code);
         return NULL;
     } else {
-        return future->value;
+        /* relinquish ownership of the value */
+        void *value = future->value;
+        future->value = NULL;
+        future->value_destructor = NULL;
+        return value;
     }
 }
