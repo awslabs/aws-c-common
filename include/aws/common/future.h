@@ -10,14 +10,24 @@
 
 AWS_EXTERN_C_BEGIN
 
+struct aws_byte_buf;
+
 struct aws_future;
 
 typedef void(aws_future_on_done_fn)(void *user_data);
 
-typedef void(aws_future_value_destructor_fn)(void *value);
+typedef void(aws_future_pointer_destructor_fn)(void *value);
+
+enum aws_future_type {
+    AWS_FUTURE_POINTER,
+    AWS_FUTURE_VALUELESS,
+    AWS_FUTURE_BOOL,
+    AWS_FUTURE_SIZE,
+    AWS_FUTURE_BYTE_BUF,
+};
 
 AWS_COMMON_API
-struct aws_future *aws_future_new(struct aws_allocator *alloc);
+struct aws_future *aws_future_new(struct aws_allocator *alloc, enum aws_future_type type);
 
 AWS_COMMON_API
 struct aws_future *aws_future_release(struct aws_future *future);
@@ -26,13 +36,22 @@ AWS_COMMON_API
 struct aws_future *aws_future_acquire(struct aws_future *future);
 
 AWS_COMMON_API
-void aws_future_set_value(struct aws_future *future, void *value, aws_future_value_destructor_fn *destructor);
-
-AWS_COMMON_API
 void aws_future_set_error(struct aws_future *future, int error_code);
 
 AWS_COMMON_API
-void aws_future_set_void(struct aws_future *future);
+void aws_future_set_pointer(struct aws_future *future, void *value, aws_future_pointer_destructor_fn *destructor);
+
+AWS_COMMON_API
+void aws_future_set_valueless(struct aws_future *future);
+
+AWS_COMMON_API
+void aws_future_set_bool(struct aws_future *future, bool value);
+
+AWS_COMMON_API
+void aws_future_set_size(struct aws_future *future, size_t value);
+
+AWS_COMMON_API
+void aws_future_set_byte_buf_passing_ownership(struct aws_future *future, struct aws_byte_buf *value);
 
 AWS_COMMON_API
 bool aws_future_is_done(const struct aws_future *future);
@@ -40,23 +59,35 @@ bool aws_future_is_done(const struct aws_future *future);
 AWS_COMMON_API
 void aws_future_set_done_callback(
     struct aws_future *future,
-    aws_future_value_destructor_fn *on_complete,
+    aws_future_on_done_fn *on_done,
     void *user_data);
 
 AWS_COMMON_API
 bool aws_future_is_done_else_set_callback(
     struct aws_future *future,
-    aws_future_value_destructor_fn *on_complete,
-    void *on_complete_user_data);
+    aws_future_on_done_fn *on_done,
+    void *user_data);
 
 AWS_COMMON_API
-bool aws_future_is_done_after_wait(const struct aws_future *future, uint64_t duration_ns);
+bool aws_future_wait(const struct aws_future *future, uint64_t duration_ns);
 
 AWS_COMMON_API
-void *aws_future_take_value(struct aws_future *future);
+int aws_future_get_error(const struct aws_future *future);
 
 AWS_COMMON_API
-void *aws_future_get_error(struct aws_future *future);
+void *aws_future_get_pointer(const struct aws_future *future);
+
+AWS_COMMON_API
+bool aws_future_get_bool(const struct aws_future *future);
+
+AWS_COMMON_API
+size_t aws_future_get_size(const struct aws_future *future);
+
+AWS_COMMON_API
+struct aws_byte_buf *aws_future_get_byte_buf(struct aws_future *future);
+
+AWS_COMMON_API
+struct aws_byte_buf aws_future_get_byte_buf_taking_ownership(struct aws_future *future);
 
 /* TODO:
     -   support for cancel?
