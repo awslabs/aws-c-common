@@ -85,8 +85,9 @@ struct aws_future *aws_future_release(struct aws_future *future) {
 }
 
 struct aws_future *aws_future_acquire(struct aws_future *future) {
-    AWS_ASSERT(future != NULL);
-    aws_ref_count_acquire(&future->ref_count);
+    if (future != NULL) {
+        aws_ref_count_acquire(&future->ref_count);
+    }
     return future;
 }
 
@@ -132,7 +133,7 @@ bool aws_future_wait(const struct aws_future *future, uint64_t duration_ns) {
     return is_done;
 }
 
-void aws_future_set_done_callback(struct aws_future *future, aws_future_on_done_fn *on_done, void *user_data) {
+void aws_future_register_callback(struct aws_future *future, aws_future_on_done_fn *on_done, void *user_data) {
 
     /* BEGIN CRITICAL SECTION */
     aws_mutex_lock(&future->lock);
@@ -152,11 +153,11 @@ void aws_future_set_done_callback(struct aws_future *future, aws_future_on_done_
 
     /* if already done, fire callback now */
     if (is_done) {
-        on_done(user_data);
+        on_done(future, user_data);
     }
 }
 
-bool aws_future_is_done_else_set_callback(
+bool aws_future_is_done_else_register_callback(
     struct aws_future *future,
     aws_future_on_done_fn *on_done,
     void *on_done_user_data) {
@@ -203,7 +204,7 @@ static void s_future_set_done(struct aws_future *future, union aws_future_value_
     if (first_time) {
         /* invoke done callback outside critical section to avoid deadlock */
         if (on_done_cb) {
-            on_done_cb(on_done_user_data);
+            on_done_cb(future, on_done_user_data);
         }
     } else if (!is_error) {
         /* future was already done, so just destroy this newer value */

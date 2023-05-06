@@ -14,7 +14,7 @@ struct aws_byte_buf;
 
 struct aws_future;
 
-typedef void(aws_future_on_done_fn)(void *user_data);
+typedef void(aws_future_on_done_fn)(struct aws_future *future, void *user_data);
 
 typedef void(aws_future_pointer_destructor_fn)(void *value);
 
@@ -57,13 +57,13 @@ AWS_COMMON_API
 bool aws_future_is_done(const struct aws_future *future);
 
 AWS_COMMON_API
-void aws_future_set_done_callback(
+void aws_future_register_callback(
     struct aws_future *future,
     aws_future_on_done_fn *on_done,
     void *user_data);
 
 AWS_COMMON_API
-bool aws_future_is_done_else_set_callback(
+bool aws_future_is_done_else_register_callback(
     struct aws_future *future,
     aws_future_on_done_fn *on_done,
     void *user_data);
