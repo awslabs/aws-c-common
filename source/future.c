@@ -63,6 +63,7 @@ static void s_future_destroy(void *user_data) {
     s_future_value_union_clean_up(&future->val_u, future->type);
     aws_condition_variable_clean_up(&future->wait_cvar);
     aws_mutex_clean_up(&future->lock);
+    aws_mem_release(future->alloc, future);
 }
 
 struct aws_future *aws_future_new(struct aws_allocator *alloc, enum aws_future_type type) {
