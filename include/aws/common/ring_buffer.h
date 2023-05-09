@@ -91,11 +91,6 @@ AWS_COMMON_API bool aws_ring_buffer_buf_belongs_to_pool(
     const struct aws_ring_buffer *ring_buffer,
     const struct aws_byte_buf *buf);
 
-/**
- * Cleans up a ring buffer allocator instance. Does not clean up the ring buffer.
- */
-AWS_COMMON_API void aws_ring_buffer_allocator_clean_up(struct aws_allocator *allocator);
-
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/ring_buffer.inl>
 #endif /* AWS_NO_STATIC_IMPL */
