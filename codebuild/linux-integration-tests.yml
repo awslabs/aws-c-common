@@ -2,9 +2,9 @@ version: 0.2
 env:
   shell: bash
   variables:
-    BUILDER_VERSION: v0.9.40
+    BUILDER_VERSION: setup_crt_ci_from_action
+    BUILDER_SOURCE: channels
     BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
-    BUILDER_SOURCE: releases
     PACKAGE_NAME: aws-c-common
 #this buildspec assumes usage of an Ubuntu image
 phases:
