@@ -18,6 +18,9 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
      * that must be running on at least one core).... */
     ASSERT_TRUE(processor_count > 0);
 
+    // JUST A TEST - Test to see if an error return results in a skip rather than error on Codebuild
+    ASSERT_TRUE(false);
+
     return 0;
 }
 
