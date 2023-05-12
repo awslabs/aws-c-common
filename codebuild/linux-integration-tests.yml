@@ -1,0 +1,30 @@
+version: 0.2
+env:
+  shell: bash
+  variables:
+    BUILDER_VERSION: v0.9.40
+    BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
+    BUILDER_SOURCE: releases
+    PACKAGE_NAME: aws-c-common
+#this buildspec assumes usage of an Ubuntu image
+phases:
+  install:
+    commands:
+      - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
+      - sudo apt-get update -y
+      - sudo apt-get install gcc-7 cmake python3 python3-pip -y -f
+  pre_build:
+    commands:
+      - export CC=gcc-7
+  build:
+    commands:
+      - echo Build started on `date`
+      - git submodule update --init
+      # Build using builder, which will also run tests
+      - python3 -c "from urllib.request import urlretrieve; urlretrieve('$BUILDER_HOST/$BUILDER_SOURCE/$BUILDER_VERSION/builder.pyz?run=$CODEBUILD_BUILD_ID', 'builder.pyz')"
+      - python3 builder.pyz build --project aws-c-common downstream
+  post_build:
+    commands:
+      - echo Build completed on `date`
