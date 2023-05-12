@@ -18,10 +18,10 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
      * that must be running on at least one core).... */
     ASSERT_TRUE(processor_count > 0);
 
-    // JUST A TEST - Test to see if an error return results in a skip rather than error on Codebuild
-    ASSERT_TRUE(false);
+    // Skip this first test
+    return -2;
 
-    return 0;
+    // return 0;
 }
 
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
@@ -113,7 +113,10 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_UNIX);
 #endif
 
-    return 0;
+    // Assert false in this test
+    ASSERT_TRUE(false);
+
+    // return 0;
 }
 
 AWS_TEST_CASE(test_platform_build_os, s_test_platform_build_os_fn)
