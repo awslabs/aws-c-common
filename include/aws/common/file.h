@@ -9,6 +9,8 @@
 #include <aws/common/platform.h>
 #include <stdio.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 #ifdef AWS_OS_WINDOWS
 #    define AWS_PATH_DELIM '\\'
 #    define AWS_PATH_DELIM_STR "\\"
@@ -204,5 +206,6 @@ AWS_COMMON_API
 int aws_file_get_length(FILE *file, int64_t *length);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */

@@ -5,6 +5,27 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+/* clang-format off */
+
+/* Use these macros in public header files to suppress unreasonable compiler
+ * warnings. Public header files are included by external applications,
+ * which may set their warning levels pedantically high.
+ *
+ * Developers of AWS libraries should hesitate before adding more warnings to this macro.
+ * Prefer disabling the warning within a .c file, or in the library's CFLAGS,
+ * or push/pop the warning around a single problematic declaration. */
+#if defined(_MSC_VER)
+#    define AWS_PUSH_SANE_WARNING_LEVEL                                                                                \
+        __pragma(warning(push))                                                                                        \
+        __pragma(warning(disable : 4820)) /* padding added to struct */                                                \
+        __pragma(warning(disable : 4514)) /* unreferenced inline function has been removed */
+#    define AWS_POP_SANE_WARNING_LEVEL __pragma(warning(pop))
+#else
+#    define AWS_PUSH_SANE_WARNING_LEVEL
+#    define AWS_POP_SANE_WARNING_LEVEL
+#endif
+/* clang-format on */
+
 #ifdef __cplusplus
 #    define AWS_EXTERN_C_BEGIN extern "C" {
 #    define AWS_EXTERN_C_END }

@@ -97,18 +97,6 @@ bool aws_array_list_is_valid(const struct aws_array_list *AWS_RESTRICT list) {
 }
 
 AWS_STATIC_IMPL
-void aws_array_list_debug_print(const struct aws_array_list *list) {
-    printf(
-        "arraylist %p. Alloc %p. current_size %zu. length %zu. item_size %zu. data %p\n",
-        (void *)list,
-        (void *)list->alloc,
-        list->current_size,
-        list->length,
-        list->item_size,
-        (void *)list->data);
-}
-
-AWS_STATIC_IMPL
 void aws_array_list_clean_up(struct aws_array_list *AWS_RESTRICT list) {
     AWS_PRECONDITION(AWS_IS_ZEROED(*list) || aws_array_list_is_valid(list));
     if (list->alloc && list->data) {
@@ -402,15 +390,6 @@ int aws_array_list_set_at(struct aws_array_list *AWS_RESTRICT list, const void *
 
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
     return AWS_OP_SUCCESS;
-}
-
-AWS_STATIC_IMPL
-void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn) {
-    AWS_PRECONDITION(aws_array_list_is_valid(list));
-    if (list->data) {
-        qsort(list->data, aws_array_list_length(list), list->item_size, compare_fn);
-    }
-    AWS_POSTCONDITION(aws_array_list_is_valid(list));
 }
 
 AWS_EXTERN_C_END

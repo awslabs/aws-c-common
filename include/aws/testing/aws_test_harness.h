@@ -36,6 +36,10 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 /** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
  */
@@ -94,11 +98,11 @@ static int total_skip;
         printf("\n");                                                                                                  \
         return SUCCESS;                                                                                                \
     } while (0)
-#define PRINT_FAIL_INTERNAL(...)                                                                                       \
-    CUNIT_FAILURE_MESSAGE(__FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+
+#define PRINT_FAIL_INTERNAL(...) CUNIT_FAILURE_MESSAGE(__func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
 #define PRINT_FAIL_INTERNAL0(...)                                                                                      \
-    s_cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+    s_cunit_failure_message0(FAIL_PREFIX, __func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
 #define POSTFAIL_INTERNAL()                                                                                            \
     do {                                                                                                               \

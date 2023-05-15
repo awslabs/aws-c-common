@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.40
+  BUILDER_VERSION: v0.9.43
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -125,7 +125,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-16
 
   windows-vc15:
-    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2017 (v15.0)
+    runs-on: windows-2022 # latest
     strategy:
       matrix:
         arch: [x86, x64]
