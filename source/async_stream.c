@@ -83,21 +83,20 @@ static void s_async_stream_fill_operation_loop(struct aws_future *read1_future, 
          * It's NULL the first time the operation ever enters the loop.
          * But it's set in subsequent runs of the loop, and when this is a read1_future completion callback. */
         if (read1_future) {
-            if (aws_future_is_done_else_register_callback(
-                    read1_future, s_async_stream_fill_operation_loop, operation)) {
-                /* read1_future is done */
-                int error_code = aws_future_get_error(read1_future);
-                bool eof = error_code ? false : aws_future_get_bool(read1_future);
-                bool reached_capacity = operation->dest->len == operation->dest->capacity;
-                read1_future = aws_future_release(read1_future);
+            if (aws_future_register_callback_if_not_done(read1_future, s_async_stream_fill_operation_loop, operation)) {
+                /* not done, we'll resume this loop when callback fires */
+                return;
+            }
 
-                if (error_code || eof || reached_capacity) {
-                    /* operation complete! */
-                    s_async_stream_fill_operation_complete(operation, eof, error_code);
-                    return;
-                }
-            } else {
-                /* callback registered, we'll resume this loop later */
+            /* read1_future is done */
+            int error_code = aws_future_get_error(read1_future);
+            bool eof = error_code ? false : aws_future_get_bool(read1_future);
+            bool reached_capacity = operation->dest->len == operation->dest->capacity;
+            read1_future = aws_future_release(read1_future);
+
+            if (error_code || eof || reached_capacity) {
+                /* operation complete! */
+                s_async_stream_fill_operation_complete(operation, eof, error_code);
                 return;
             }
         }

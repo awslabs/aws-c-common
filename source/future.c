@@ -158,7 +158,7 @@ void aws_future_register_callback(struct aws_future *future, aws_future_on_done_
     }
 }
 
-bool aws_future_is_done_else_register_callback(
+bool aws_future_register_callback_if_not_done(
     struct aws_future *future,
     aws_future_on_done_fn *on_done,
     void *on_done_user_data) {
@@ -177,7 +177,7 @@ bool aws_future_is_done_else_register_callback(
     aws_mutex_unlock(&future->lock);
     /* END CRITICAL SECTION */
 
-    return is_done;
+    return !is_done;
 }
 
 static void s_future_set_done(struct aws_future *future, union aws_future_value_union *val_u, bool is_error) {
@@ -229,8 +229,6 @@ void aws_future_set_error(struct aws_future *future, int error_code) {
 void aws_future_set_pointer(struct aws_future *future, void *value, aws_future_pointer_destructor_fn *destructor) {
     AWS_ASSERT(future != NULL);
     AWS_FATAL_ASSERT(future->type == AWS_FUTURE_POINTER && "This future's result value must be a pointer");
-    AWS_FATAL_ASSERT(value != NULL && "This future's result value cannot be NULL");
-    AWS_FATAL_ASSERT(destructor != NULL && "This future's result value must have a destructor");
 
     union aws_future_value_union val_u = {
         .pointer = {.value = value, .destructor = destructor},

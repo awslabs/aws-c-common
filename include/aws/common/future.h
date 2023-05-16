@@ -57,13 +57,10 @@ AWS_COMMON_API
 bool aws_future_is_done(const struct aws_future *future);
 
 AWS_COMMON_API
-void aws_future_register_callback(
-    struct aws_future *future,
-    aws_future_on_done_fn *on_done,
-    void *user_data);
+void aws_future_register_callback(struct aws_future *future, aws_future_on_done_fn *on_done, void *user_data);
 
 AWS_COMMON_API
-bool aws_future_is_done_else_register_callback(
+bool aws_future_register_callback_if_not_done(
     struct aws_future *future,
     aws_future_on_done_fn *on_done,
     void *user_data);
