@@ -8,6 +8,7 @@
 
 #include <aws/common/common.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 struct aws_byte_buf;
@@ -92,5 +93,6 @@ struct aws_byte_buf aws_future_get_byte_buf_taking_ownership(struct aws_future *
 */
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FUTURE_H */
