@@ -15,15 +15,11 @@ endif()
 
 # Call as: aws_check_headers(${target} HEADERS TO CHECK LIST)
 function(aws_check_headers target)
- # parse function arguments
- set(options DISABLE_C_CHECKER)
- cmake_parse_arguments(ARG "${options}" "" "" ${ARGN})
+    # parse function arguments
+    set(options DISABLE_C_HEADER_CHECKER)
+    cmake_parse_arguments(ARG "${options}" "" "" ${ARGN})
 
-# include(CMakePrintHelpers)
-# cmake_print_variables(${ARG_DISABLE_C_CHECKER})
-# cmake_print_variables(${ARG_UNPARSED_ARGUMENTS})
-
- if (PERFORM_HEADER_CHECK)
+    if (PERFORM_HEADER_CHECK)
         aws_check_headers_internal(${target} 11 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
         aws_check_headers_internal(${target} 14 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
         aws_check_headers_internal(${target} 17 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
@@ -42,11 +38,6 @@ include(CMakePrintHelpers)
         return()
     endif()
 
-    # MSVC's c++ 20 has issues with templates
-    if (MSVC AND NOT ${std} LESS 20)
-        return()
-    endif()
-
     set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker-${std}")
 
     # Write stub main file
@@ -54,8 +45,8 @@ include(CMakePrintHelpers)
         set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.cpp")
         set(HEADER_CHECKER_LIB ${target}-header-check-cxx-${std})
     else()
-            set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
-            set(HEADER_CHECKER_LIB ${target}-header-check-${std})
+        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
+        set(HEADER_CHECKER_LIB ${target}-header-check-${std})
     endif()
     file(WRITE ${HEADER_CHECKER_MAIN} "
         int main(int argc, char **argv) {
