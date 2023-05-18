@@ -29,9 +29,6 @@ function(aws_check_headers target)
 endfunction()
 
 function(aws_check_headers_internal target std disable_c_header_checker)
-include(CMakePrintHelpers)
-
-
     # Check that compiler supports this std
     list (FIND CMAKE_CXX_COMPILE_FEATURES "cxx_std_${std}" feature_idx)
     if (${feature_idx} LESS 0)
