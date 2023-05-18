@@ -8,6 +8,8 @@
 
 #include <aws/common/ref_count.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 struct aws_byte_buf;
 
 struct aws_async_stream {
@@ -89,5 +91,6 @@ AWS_COMMON_API
 struct aws_future *aws_async_stream_read_to_fill(struct aws_async_stream *stream, struct aws_byte_buf *dest);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /*AWS_ASYNC_STREAM_H */
