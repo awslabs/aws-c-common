@@ -15,23 +15,27 @@ endif()
 
 # Call as: aws_check_headers(${target} HEADERS TO CHECK LIST)
 function(aws_check_headers target)
-    set(oneValueArgs DISABLE_C_HEADER_CHECKER)
-    set(multiValueArgs)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "${oneValueArgs}" "${multiValueArgs}")
-    if(NOT DEFINED DISABLE_C_HEADER_CHECKER)
-        set(DISABLE_C_HEADER_CHECKER FALSE)
-    endif()
+ # parse function arguments
+ set(options DISABLE_C_CHECKER)
+ cmake_parse_arguments(ARG "${options}" "" "" ${ARGN})
 
-    if (PERFORM_HEADER_CHECK)
-        aws_check_headers_internal(${target} 11 ${ARGN})
-        aws_check_headers_internal(${target} 14 ${ARGN})
-        aws_check_headers_internal(${target} 17 ${ARGN})
-        aws_check_headers_internal(${target} 20 ${ARGN})
-        aws_check_headers_internal(${target} 23 ${ARGN})
+# include(CMakePrintHelpers)
+# cmake_print_variables(${ARG_DISABLE_C_CHECKER})
+# cmake_print_variables(${ARG_UNPARSED_ARGUMENTS})
+
+ if (PERFORM_HEADER_CHECK)
+        aws_check_headers_internal(${target} 11 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
+        aws_check_headers_internal(${target} 14 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
+        aws_check_headers_internal(${target} 17 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
+        aws_check_headers_internal(${target} 20 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
+        aws_check_headers_internal(${target} 23 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
     endif() # PERFORM_HEADER_CHECK
 endfunction()
 
 function(aws_check_headers_internal target std disable_c_header_checker)
+include(CMakePrintHelpers)
+
+
     # Check that compiler supports this std
     list (FIND CMAKE_CXX_COMPILE_FEATURES "cxx_std_${std}" feature_idx)
     if (${feature_idx} LESS 0)
@@ -43,15 +47,15 @@ function(aws_check_headers_internal target std disable_c_header_checker)
         return()
     endif()
 
-    set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker")
+    set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker-${std}")
 
     # Write stub main file
-    if(NOT disable_c_header_checker)
-        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
-        set(HEADER_CHECKER_LIB ${target}-header-check)
-    else()
+    if(disable_c_header_checker)
         set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.cpp")
-        set(HEADER_CHECKER_LIB ${target}-header-check-cxx)
+        set(HEADER_CHECKER_LIB ${target}-header-check-cxx-${std})
+    else()
+            set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
+            set(HEADER_CHECKER_LIB ${target}-header-check-${std})
     endif()
     file(WRITE ${HEADER_CHECKER_MAIN} "
         int main(int argc, char **argv) {
@@ -93,11 +97,14 @@ function(aws_check_headers_internal target std disable_c_header_checker)
             set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
             # include header twice to check for include-guards
             # define a unique int or compiler complains that there's nothing in the file
-            if(NOT disable_c_header_checker)
+            if(disable_c_header_checker)
+                file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
+                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${cpp_file}")
+            else()
                 file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
+                file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
+                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}" "${cpp_file}")
             endif()
-            file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
-            target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}" "${cpp_file}")
         endif()
     endforeach(header)
 endfunction()
