@@ -80,7 +80,7 @@ function(aws_check_headers_internal target std)
             set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
             # include header twice to check for include-guards
             # define a unique int or compiler complains that there's nothing in the file
-            file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
+            #file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
             file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
             target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}" "${cpp_file}")
         endif()
