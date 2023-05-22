@@ -15,36 +15,32 @@ endif()
 
 # Call as: aws_check_headers(${target} HEADERS TO CHECK LIST)
 function(aws_check_headers target)
+    if (NOT PERFORM_HEADER_CHECK)
+        return()
+    endif()
     # parse function arguments
-    set(options DISABLE_C_HEADER_CHECKER)
+    set(options IS_CXX)
     cmake_parse_arguments(ARG "${options}" "" "" ${ARGN})
 
-    if (PERFORM_HEADER_CHECK)
-        aws_check_headers_internal(${target} 11 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
-        aws_check_headers_internal(${target} 14 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
-        aws_check_headers_internal(${target} 17 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
-        aws_check_headers_internal(${target} 20 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
-        aws_check_headers_internal(${target} 23 ${ARG_DISABLE_C_CHECKER} ${ARG_UNPARSED_ARGUMENTS})
-    endif() # PERFORM_HEADER_CHECK
+    aws_check_headers_internal(${target} 11 ${ARG_IS_CXX} ${ARG_UNPARSED_ARGUMENTS})
+    aws_check_headers_internal(${target} 14 ${ARG_IS_CXX} ${ARG_UNPARSED_ARGUMENTS})
+    aws_check_headers_internal(${target} 17 ${ARG_IS_CXX} ${ARG_UNPARSED_ARGUMENTS})
+    aws_check_headers_internal(${target} 20 ${ARG_IS_CXX} ${ARG_UNPARSED_ARGUMENTS})
+    aws_check_headers_internal(${target} 23 ${ARG_IS_CXX} ${ARG_UNPARSED_ARGUMENTS})
 endfunction()
 
-function(aws_check_headers_internal target std disable_c_header_checker)
+function(aws_check_headers_internal target std is_cxx)
     # Check that compiler supports this std
     list (FIND CMAKE_CXX_COMPILE_FEATURES "cxx_std_${std}" feature_idx)
     if (${feature_idx} LESS 0)
         return()
     endif()
 
-    set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker-${std}")
+    set(HEADER_CHECKER_ROOT "${CMAKE_CURRENT_BINARY_DIR}/header-checker-cxx${std}")
 
     # Write stub main file
-    if(disable_c_header_checker)
-        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.cpp")
-        set(HEADER_CHECKER_LIB ${target}-header-check-cxx-${std})
-    else()
-        set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
-        set(HEADER_CHECKER_LIB ${target}-header-check-${std})
-    endif()
+    set(HEADER_CHECKER_MAIN "${HEADER_CHECKER_ROOT}/headerchecker_main.c")
+    set(HEADER_CHECKER_LIB ${target}-header-check-cxx${std})
     file(WRITE ${HEADER_CHECKER_MAIN} "
         int main(int argc, char **argv) {
             (void)argc;
@@ -69,6 +65,7 @@ function(aws_check_headers_internal target std disable_c_header_checker)
 
     # Ensure our headers can be included by an application with its warnings set very high
     if(MSVC)
+        # In MSVC, the C++ std library headers trigger /Wall warnings, so use /W4 instead.
         target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
     else()
         target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -85,13 +82,11 @@ function(aws_check_headers_internal target std disable_c_header_checker)
             set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
             # include header twice to check for include-guards
             # define a unique int or compiler complains that there's nothing in the file
-            if(disable_c_header_checker)
-                file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
-                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${cpp_file}")
-            else()
+            file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
+            target_sources(${HEADER_CHECKER_LIB} PUBLIC "${cpp_file}")
+            if (NOT is_cxx)
                 file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
-                file(WRITE "${cpp_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_cpp;")
-                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}" "${cpp_file}")
+                target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}")
             endif()
         endif()
     endforeach(header)
