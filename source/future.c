@@ -154,7 +154,7 @@ void aws_future_register_callback(struct aws_future *future, aws_future_on_done_
 
     /* if already done, fire callback now */
     if (is_done) {
-        on_done(future, user_data);
+        on_done(user_data);
     }
 }
 
@@ -205,7 +205,7 @@ static void s_future_set_done(struct aws_future *future, union aws_future_value_
     if (first_time) {
         /* invoke done callback outside critical section to avoid deadlock */
         if (on_done_cb) {
-            on_done_cb(future, on_done_user_data);
+            on_done_cb(on_done_user_data);
         }
     } else if (!is_error) {
         /* future was already done, so just destroy this newer value */

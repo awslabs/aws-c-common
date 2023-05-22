@@ -50,7 +50,10 @@ struct aws_future *aws_async_stream_read_once(struct aws_async_stream *stream, s
 struct aws_async_stream_fill_operation {
     struct aws_async_stream *stream;
     struct aws_byte_buf *dest;
-    struct aws_future *future;
+    /* Future for each read_once step */
+    struct aws_future *read1_future;
+    /* Future to set when this operation completes */
+    struct aws_future *my_future;
 };
 
 static void s_async_stream_fill_operation_complete(
@@ -59,11 +62,11 @@ static void s_async_stream_fill_operation_complete(
     int error_code) {
 
     if (error_code) {
-        aws_future_set_error(operation->future, error_code);
+        aws_future_set_error(operation->my_future, error_code);
     } else {
-        aws_future_set_bool(operation->future, eof);
+        aws_future_set_bool(operation->my_future, eof);
     }
-    aws_future_release(operation->future);
+    aws_future_release(operation->my_future);
 
     struct aws_async_stream *stream = operation->stream;
     aws_mem_release(stream->alloc, operation);
@@ -75,24 +78,26 @@ static void s_async_stream_fill_operation_complete(
  * but this risks our call stack growing large if there are many small, synchronous, reads.
  * So be complicated and loop until a read_once call is actually async,
  * and only then set the completion callback (which is this same function, where we resume looping). */
-static void s_async_stream_fill_operation_loop(struct aws_future *read1_future, void *user_data) {
+static void s_async_stream_fill_operation_loop(void *user_data) {
     struct aws_async_stream_fill_operation *operation = user_data;
 
     while (true) {
         /* Process read1_future from previous iteration of loop.
          * It's NULL the first time the operation ever enters the loop.
          * But it's set in subsequent runs of the loop, and when this is a read1_future completion callback. */
-        if (read1_future) {
-            if (aws_future_register_callback_if_not_done(read1_future, s_async_stream_fill_operation_loop, operation)) {
+        if (operation->read1_future) {
+            if (aws_future_register_callback_if_not_done(
+                    operation->read1_future, s_async_stream_fill_operation_loop, operation)) {
+
                 /* not done, we'll resume this loop when callback fires */
                 return;
             }
 
             /* read1_future is done */
-            int error_code = aws_future_get_error(read1_future);
-            bool eof = error_code ? false : aws_future_get_bool(read1_future);
+            int error_code = aws_future_get_error(operation->read1_future);
+            bool eof = error_code ? false : aws_future_get_bool(operation->read1_future);
             bool reached_capacity = operation->dest->len == operation->dest->capacity;
-            read1_future = aws_future_release(read1_future);
+            operation->read1_future = aws_future_release(operation->read1_future); /* release and NULL */
 
             if (error_code || eof || reached_capacity) {
                 /* operation complete! */
@@ -102,7 +107,7 @@ static void s_async_stream_fill_operation_loop(struct aws_future *read1_future, 
         }
 
         /* Kick off a read, which may or may not complete async */
-        read1_future = aws_async_stream_read_once(operation->stream, operation->dest);
+        operation->read1_future = aws_async_stream_read_once(operation->stream, operation->dest);
     }
 }
 
@@ -120,10 +125,10 @@ struct aws_future *aws_async_stream_read_to_fill(struct aws_async_stream *stream
         aws_mem_calloc(stream->alloc, 1, sizeof(struct aws_async_stream_fill_operation));
     operation->stream = aws_async_stream_acquire(stream);
     operation->dest = dest;
-    operation->future = aws_future_acquire(future);
+    operation->my_future = aws_future_acquire(future);
 
     /* Kick off work  */
-    s_async_stream_fill_operation_loop(NULL, operation);
+    s_async_stream_fill_operation_loop(operation);
 
     /* TODO: OOHHHH DANG if future completes synchronously then its refcount goes to 0
      * maybe have 2 separate objects to make refcount accidents harder? */

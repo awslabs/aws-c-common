@@ -13,7 +13,7 @@ AWS_EXTERN_C_BEGIN
 
 struct aws_future;
 
-typedef void(aws_future_on_done_fn)(struct aws_future *future, void *user_data);
+typedef void(aws_future_on_done_fn)(void *user_data);
 
 typedef void(aws_future_pointer_destructor_fn)(void *value);
 
