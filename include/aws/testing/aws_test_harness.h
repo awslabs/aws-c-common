@@ -337,29 +337,17 @@ static int total_skip;
             break;                                                                                                     \
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
-            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: \n", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
+            fprintf(AWS_TESTING_REPORT_FD, "%sGot: \"" PRInSTR "\"; Expected: \"%s\" \n", FAIL_PREFIX,                 \
+                    AWS_BYTE_CURSOR_PRI(cursor), cstring);                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
-            if (assert_got_s <= 1024) {                                                                                \
-                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
-                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
-                        fprintf(                                                                                       \
-                            AWS_TESTING_REPORT_FD,                                                                     \
-                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
-                            FAIL_PREFIX,                                                                               \
-                            assert_i,                                                                                  \
-                            assert_ex_p[assert_i],                                                                     \
-                            assert_got_p[assert_i]);                                                                   \
-                        break;                                                                                         \
-                    }                                                                                                  \
-                }                                                                                                      \
-            } else {                                                                                                   \
-                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
-            }                                                                                                          \
+            fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch; Got: \"" PRInSTR "\"; Expected: \"%s\" \n", FAIL_PREFIX,  \
+                    AWS_BYTE_CURSOR_PRI(cursor), cstring);                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
