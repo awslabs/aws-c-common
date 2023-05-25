@@ -337,17 +337,25 @@ static int total_skip;
             break;                                                                                                     \
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
-            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: \n", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
-            fprintf(AWS_TESTING_REPORT_FD, "%sGot: \"" PRInSTR "\"; Expected: \"%s\" \n", FAIL_PREFIX,                 \
-                    AWS_BYTE_CURSOR_PRI(cursor), cstring);                                                             \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: \n", FAIL_PREFIX, assert_ex_s, assert_got_s); \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sGot: \"" PRInSTR "\"; Expected: \"%s\" \n",                                                         \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
-            fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch; Got: \"" PRInSTR "\"; Expected: \"%s\" \n", FAIL_PREFIX,  \
-                    AWS_BYTE_CURSOR_PRI(cursor), cstring);                                                             \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sData mismatch; Got: \"" PRInSTR "\"; Expected: \"%s\" \n",                                          \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
