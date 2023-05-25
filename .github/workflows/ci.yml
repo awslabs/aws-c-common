@@ -67,7 +67,7 @@ jobs:
   # Test downstream repos.
   # This should not be required because we can run into a chicken and egg problem if there is a change that needs some fix in a downstream repo.
   downstream:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
       - name: Build ${{ env.PACKAGE_NAME }}
