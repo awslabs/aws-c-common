@@ -18,7 +18,8 @@
 #    define AWS_PUSH_SANE_WARNING_LEVEL                                                                                \
         __pragma(warning(push))                                                                                        \
         __pragma(warning(disable : 4820)) /* padding added to struct */                                                \
-        __pragma(warning(disable : 4514)) /* unreferenced inline function has been removed */
+        __pragma(warning(disable : 4514)) /* unreferenced inline function has been removed */                          \
+        __pragma(warning(disable : 5039)) /* reference to potentially throwing function passed to extern C function */
 #    define AWS_POP_SANE_WARNING_LEVEL __pragma(warning(pop))
 #else
 #    define AWS_PUSH_SANE_WARNING_LEVEL
