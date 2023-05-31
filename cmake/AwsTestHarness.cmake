@@ -68,7 +68,7 @@ function(generate_test_driver driver_exe_name)
         add_test(${name} ${driver_exe_name} "${name}")
     endforeach()
 
-    # Clear test cases in case another driver needsto be generated
+    # Clear test cases in case another driver needs to be generated
     unset(TEST_CASES PARENT_SCOPE)
 endfunction()
 
@@ -94,6 +94,6 @@ function(generate_cpp_test_driver driver_exe_name)
         set_tests_properties("${name}" PROPERTIES SKIP_RETURN_CODE ${SKIP_RETURN_CODE_VALUE})
     endforeach()
 
-    # Clear test cases in case another driver needsto be generated
+    # Clear test cases in case another driver needs to be generated
     unset(TEST_CASES PARENT_SCOPE)
 endfunction()
