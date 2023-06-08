@@ -1,1 +1,0 @@
-../templates/template-for-repository/proofs/prepare.py

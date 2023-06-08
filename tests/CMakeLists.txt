@@ -14,7 +14,7 @@ file(GLOB TESTS ${TEST_HDRS} ${TEST_SRC})
 
 set(METATEST_BINARY_NAME ${PROJECT_NAME}-assert-tests)
 
-if (NOT LEGACY_COMPILER_SUPPORT)
+if(NOT LEGACY_COMPILER_SUPPORT)
     add_executable(${METATEST_BINARY_NAME} ${META_TEST_SRC})
     aws_set_common_properties(${METATEST_BINARY_NAME} NO_WEXTRA NO_PEDANTIC)
     aws_add_sanitizers(${METATEST_BINARY_NAME} ${${PROJECT_NAME}_SANITIZERS})
@@ -22,6 +22,7 @@ if (NOT LEGACY_COMPILER_SUPPORT)
 
     target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${METATEST_BINARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+
     if(MSVC)
         target_compile_definitions(${METATEST_BINARY_NAME} PRIVATE "-D_CRT_SECURE_NO_WARNINGS")
     endif()
@@ -64,6 +65,7 @@ add_test_case(test_precision_loss_remainders_conversion)
 add_test_case(test_overflow_conversion)
 add_test_case(test_old_overflow_cases)
 
+add_test_case(array_list_zero_length)
 add_test_case(array_list_order_push_back_pop_front_test)
 add_test_case(array_list_order_push_back_pop_back_test)
 add_test_case(array_list_order_push_front_pop_front_test)
@@ -148,13 +150,8 @@ add_test_case(text_encoding_utf16)
 add_test_case(text_encoding_ascii)
 add_test_case(text_encoding_is_utf8)
 add_test_case(text_is_valid_utf8)
-add_test_case(utf8_validator)
-
-add_test_case(bus_sync_test_send)
-add_test_case(bus_async_test_lifetime)
-add_test_case(bus_async_test_send_single_threaded)
-add_test_case(bus_async_test_send_multi_threaded)
-add_test_case(bus_async_test_churn)
+add_test_case(text_is_valid_utf8_callback)
+add_test_case(utf8_decoder)
 
 add_test_case(scheduler_cleanup_cancellation)
 add_test_case(scheduler_ordering_test)
@@ -217,6 +214,8 @@ add_test_case(test_add_u32_saturating)
 add_test_case(test_add_u64_checked)
 add_test_case(test_add_u64_saturating)
 add_test_case(test_min_max)
+add_test_case(test_clz)
+add_test_case(test_ctz)
 
 add_test_case(nospec_index_test)
 add_test_case(test_byte_cursor_advance)
@@ -270,6 +269,7 @@ add_test_case(test_array_eq_c_str_ignore_case)
 add_test_case(test_array_hash_ignore_case)
 add_test_case(test_byte_buf_write_to_capacity)
 add_test_case(test_byte_buf_init_cache_and_update_cursors)
+add_test_case(test_byte_buf_empty_appends)
 add_test_case(test_byte_buf_append_and_update_fail)
 add_test_case(test_byte_buf_append_and_update_success)
 add_test_case(test_byte_buf_append_dynamic)
@@ -294,12 +294,11 @@ add_test_case(test_byte_cursor_utf8_parse_u64_hex)
 
 add_test_case(byte_swap_test)
 
-if (HAVE_AVX2_INTRINSICS)
+if(HAVE_AVX2_INTRINSICS)
     add_test_case(alignment32_test)
 else()
     add_test_case(alignment16_test)
 endif()
-
 
 add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
@@ -372,6 +371,8 @@ add_test_case(device_rand_u64_distribution)
 add_test_case(device_rand_u32_distribution)
 add_test_case(device_rand_u16_distribution)
 add_test_case(device_rand_buffer_distribution)
+add_test_case(device_rand_buffer_append_distribution)
+add_test_case(device_rand_buffer_append_short_buffer)
 
 add_test_case(uuid_string)
 add_test_case(prefilled_uuid_string)
@@ -397,7 +398,8 @@ add_test_case(ring_buffer_acquire_up_to_multi_threaded_test)
 
 add_test_case(string_to_log_level_success_test)
 add_test_case(string_to_log_level_failure_test)
-if (NOT ANDROID)
+
+if(NOT ANDROID)
     add_test_case(test_logging_filter_at_AWS_LL_NONE_s_logf_all_levels)
     add_test_case(test_logging_filter_at_AWS_LL_FATAL_s_logf_all_levels)
     add_test_case(test_logging_filter_at_AWS_LL_ERROR_s_logf_all_levels)
@@ -474,6 +476,8 @@ add_test_case(directory_non_empty_deletion_recursively_succeeds_test)
 add_test_case(directory_move_succeeds_test)
 add_test_case(directory_move_src_non_existent_test)
 add_test_case(test_home_directory_not_null)
+add_test_case(test_normalize_posix_directory_separator)
+add_test_case(test_normalize_windows_directory_separator)
 
 add_test_case(promise_test_wait_forever)
 add_test_case(promise_test_wait_for_a_bit)
@@ -510,19 +514,19 @@ add_test_case(test_uri_decode)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
-if (NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
-    #we have some tests here that purposely overflow
+if(NOT MSVC AND NOT LEGACY_COMPILER_SUPPORT)
+    # we have some tests here that purposely overflow
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -Wno-overflow)
 endif()
 
-if (MSVC)
+if(MSVC)
     target_compile_options(${PROJECT_NAME}-tests PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-file(GLOB FUZZ_TESTS    "fuzz/*.c")
+file(GLOB FUZZ_TESTS "fuzz/*.c")
 aws_add_fuzz_tests("${FUZZ_TESTS}" "" "")
 
 # Resources to use for testing.
 add_custom_command(TARGET ${PROJECT_NAME}-tests PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)

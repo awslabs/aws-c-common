@@ -12,7 +12,7 @@ option(USE_CPU_EXTENSIONS "Whenever possible, use functions optimized for CPUs w
 #
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54412
 #
-if (MINGW)
+if(MINGW)
     message(STATUS "MINGW detected!  Disabling avx2 and other CPU extensions")
     set(USE_CPU_EXTENSIONS OFF)
 endif()
@@ -32,16 +32,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 
         return 0;
     }" AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
-
-    if (USE_CPU_EXTENSIONS)
-        check_c_source_runs("
-        int main() {
-        int foo = 42;
-        _mulx_u32(1, 2, &foo);
-        return foo != 2;
-        }" AWS_HAVE_MSVC_MULX)
-    endif()
-
 endif()
 
 check_c_source_compiles("
@@ -99,9 +89,11 @@ int main() {
 }" AWS_HAVE_AUXV)
 
 string(REGEX MATCH "^(aarch64|arm)" ARM_CPU "${CMAKE_SYSTEM_PROCESSOR}")
+
 if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
     check_c_source_compiles("
     #include <execinfo.h>
+    #include <stdlib.h>
     int main() {
         backtrace(NULL, 0);
         return 0;
@@ -113,3 +105,15 @@ check_c_source_compiles("
 int main() {
     return 1;
 }" AWS_HAVE_LINUX_IF_LINK_H)
+
+if(MSVC)
+    check_c_source_compiles("
+    #include <intrin.h>
+    int main() {
+        unsigned __int64 a = 0x0fffffffffffffffI64;
+        unsigned __int64 b = 0xf0000000I64;
+        unsigned __int64 c, d;
+        d = _umul128(a, b, &c);
+        return 0;
+    }" AWS_HAVE_MSVC_INTRINSICS_X64)
+endif()

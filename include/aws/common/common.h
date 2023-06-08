@@ -23,6 +23,7 @@
 #include <stdlib.h> /* for abort() */
 #include <string.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 /**
@@ -45,5 +46,6 @@ AWS_COMMON_API
 extern uint64_t g_app_start_time;
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_COMMON_H */

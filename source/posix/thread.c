@@ -24,9 +24,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#if defined(__FreeBSD__) || defined(__NETBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #    include <pthread_np.h>
 typedef cpuset_t cpu_set_t;
+#elif defined(__OpenBSD__)
+#    include <pthread_np.h>
 #endif
 
 #if !defined(AWS_AFFINITY_METHOD)
@@ -130,6 +132,8 @@ static void s_set_thread_name(pthread_t thread_id, const char *name) {
     pthread_setname_np(name);
 #elif defined(AWS_PTHREAD_SETNAME_TAKES_2ARGS)
     pthread_setname_np(thread_id, name);
+#elif defined(AWS_PTHREAD_SET_NAME_TAKES_2ARGS)
+    pthread_set_name_np(thread_id, name);
 #elif defined(AWS_PTHREAD_SETNAME_TAKES_3ARGS)
     pthread_setname_np(thread_id, name, NULL);
 #else
@@ -462,4 +466,33 @@ int aws_thread_current_at_exit(aws_thread_atexit_fn *callback, void *user_data) 
     cb->next = tl_wrapper->atexit;
     tl_wrapper->atexit = cb;
     return AWS_OP_SUCCESS;
+}
+
+int aws_thread_current_name(struct aws_allocator *allocator, struct aws_string **out_name) {
+    return aws_thread_name(allocator, aws_thread_current_thread_id(), out_name);
+}
+
+#define THREAD_NAME_BUFFER_SIZE 256
+int aws_thread_name(struct aws_allocator *allocator, aws_thread_id_t thread_id, struct aws_string **out_name) {
+    *out_name = NULL;
+#if defined(AWS_PTHREAD_GETNAME_TAKES_2ARGS) || defined(AWS_PTHREAD_GETNAME_TAKES_3ARGS) ||                            \
+    defined(AWS_PTHREAD_GET_NAME_TAKES_2_ARGS)
+    char name[THREAD_NAME_BUFFER_SIZE] = {0};
+#    ifdef AWS_PTHREAD_GETNAME_TAKES_3ARGS
+    if (pthread_getname_np(thread_id, name, THREAD_NAME_BUFFER_SIZE)) {
+#    elif AWS_PTHREAD_GETNAME_TAKES_2ARGS
+    if (pthread_getname_np(thread_id, name)) {
+#    elif AWS_PTHREAD_GET_NAME_TAKES_2ARGS
+    if (pthread_get_name_np(thread_id, name)) {
+#    endif
+
+        return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
+    }
+
+    *out_name = aws_string_new_from_c_str(allocator, name);
+    return AWS_OP_SUCCESS;
+#else
+
+    return aws_raise_error(AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+#endif
 }

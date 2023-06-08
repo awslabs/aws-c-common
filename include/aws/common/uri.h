@@ -7,6 +7,8 @@
 
 #include <aws/common/byte_buf.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 /**
  * Data representing a URI. uri_str is always allocated and filled in.
  * The other portions are merely storing offsets into uri_str.
@@ -87,7 +89,7 @@ AWS_COMMON_API const struct aws_byte_cursor *aws_uri_scheme(const struct aws_uri
 AWS_COMMON_API const struct aws_byte_cursor *aws_uri_authority(const struct aws_uri *uri);
 
 /**
- * Returns the path portion of the uri. If the original value was empty, this value will be "/".
+ * Returns the path portion of the uri, including any leading '/'. If not present, this value will be empty.
  */
 AWS_COMMON_API const struct aws_byte_cursor *aws_uri_path(const struct aws_uri *uri);
 
@@ -158,5 +160,6 @@ AWS_COMMON_API int aws_byte_buf_append_encoding_uri_param(
 AWS_COMMON_API int aws_byte_buf_append_decoding_uri(struct aws_byte_buf *buffer, const struct aws_byte_cursor *cursor);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_URI_H */

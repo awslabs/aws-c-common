@@ -7,6 +7,8 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 /**
  * Represents an immutable string holding either text or binary data. If the
  * string is in constant memory or memory that should otherwise not be freed by
@@ -36,7 +38,9 @@
  */
 #ifdef _MSC_VER
 #    pragma warning(push)
-#    pragma warning(disable : 4200)
+#    pragma warning(disable : 4623) /* default constructor was implicitly defined as deleted */
+#    pragma warning(disable : 4626) /* assignment operator was implicitly defined as deleted */
+#    pragma warning(disable : 5027) /* move assignment operator was implicitly defined as deleted */
 #endif
 struct aws_string {
     struct aws_allocator *const allocator;
@@ -291,7 +295,10 @@ int aws_array_list_comparator_string(const void *a, const void *b);
         const size_t len;                                                                                              \
         const uint8_t bytes[sizeof(literal)];                                                                          \
     } name##_s = {NULL, sizeof(literal) - 1, literal};                                                                 \
-    static const struct aws_string *(name) = (struct aws_string *)(&name##_s)
+    static const struct aws_string *name = (struct aws_string *)(&name##_s) /* NOLINT(bugprone-macro-parentheses) */
+
+/* NOLINT above is because clang-tidy complains that (name) isn't in parentheses,
+ * but gcc8-c++ complains that the parentheses are unnecessary */
 
 /*
  * A related macro that declares the string pointer without static, allowing it to be externed as a global constant
@@ -371,5 +378,6 @@ bool aws_char_is_space(uint8_t c);
 #endif /* AWS_NO_STATIC_IMPL */
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_STRING_H */

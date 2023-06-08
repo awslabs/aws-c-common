@@ -130,3 +130,47 @@ static int s_device_rand_buffer_distribution_fn(struct aws_allocator *allocator,
 }
 
 AWS_TEST_CASE(device_rand_buffer_distribution, s_device_rand_buffer_distribution_fn)
+
+static int s_device_rand_buffer_append_distribution_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    /* Create array full of zeroes, but only partially fill it with randomness */
+    uint8_t array[DISTRIBUTION_PUT_COUNT + 100] = {0};
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));
+    ASSERT_SUCCESS(aws_device_random_buffer_append(&buf, DISTRIBUTION_PUT_COUNT));
+
+    /* Test that first half of buffer has randomness */
+    struct distribution_tester tester = {.max_value = UINT8_MAX};
+
+    for (size_t i = 0; i < DISTRIBUTION_PUT_COUNT; ++i) {
+        ASSERT_SUCCESS(s_distribution_tester_put(&tester, array[i]));
+    }
+
+    ASSERT_SUCCESS(s_distribution_tester_check_results(&tester));
+
+    /* Test that second half of buffer is untouched (still full of zeroes) */
+    ASSERT_UINT_EQUALS(DISTRIBUTION_PUT_COUNT, buf.len);
+    ASSERT_UINT_EQUALS(sizeof(array), buf.capacity);
+    for (size_t i = buf.len; i < buf.capacity; ++i) {
+        ASSERT_UINT_EQUALS(0, buf.buffer[i]);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(device_rand_buffer_append_distribution, s_device_rand_buffer_append_distribution_fn)
+
+static int s_device_rand_buffer_append_short_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    uint8_t array[200] = {0};
+    struct aws_byte_buf buf = aws_byte_buf_from_empty_array(array, sizeof(array));
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_device_random_buffer_append(&buf, sizeof(array) + 1));
+    ASSERT_UINT_EQUALS(0, buf.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(device_rand_buffer_append_short_buffer, s_device_rand_buffer_append_short_buffer_fn)

@@ -5,7 +5,7 @@
 
 #include <aws/common/encoding.h>
 #include <aws/common/file.h>
-
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 
 #include <aws/testing/aws_test_harness.h>
@@ -1289,6 +1289,37 @@ static struct utf8_example s_illegal_utf8_examples[] = {
     },
 };
 
+static int s_utf8_validation_callback_always_fails(const uint32_t codepoint, void *user_data) {
+    (void)codepoint;
+    (void)user_data;
+    return aws_raise_error(AWS_ERROR_INVALID_UTF8);
+}
+
+static int s_utf8_validation_callback_always_passes(const uint32_t codepoint, void *user_data) {
+    (void)codepoint;
+    (void)user_data;
+    return AWS_ERROR_SUCCESS;
+}
+
+static struct utf8_example s_valid_utf8_examples_for_callback[] = {
+    {
+        .name = "one byte",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01"),
+    },
+    {
+        .name = "empty string",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(""),
+    },
+    {
+        .name = "Several valid bytes",
+        .text = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("\x01\x02\x02\x01\x01"),
+    }};
+
+static int s_utf8_validation_callback(const uint32_t codepoint, void *user_data) {
+    (void)user_data;
+    return (codepoint >= 0x01 && codepoint <= 0x02) ? AWS_ERROR_SUCCESS : aws_raise_error(AWS_ERROR_INVALID_UTF8);
+}
+
 static int s_text_is_valid_utf8(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -1296,7 +1327,7 @@ static int s_text_is_valid_utf8(struct aws_allocator *allocator, void *ctx) {
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
         struct utf8_example example = s_valid_utf8_examples[i];
         printf("valid example [%zu]: %s\n", i, example.name);
-        ASSERT_TRUE(aws_text_is_valid_utf8(example.text));
+        ASSERT_SUCCESS(aws_decode_utf8(example.text, NULL /*options*/));
     }
 
     /* Glue all the valid test cases together, they ought to pass */
@@ -1305,14 +1336,14 @@ static int s_text_is_valid_utf8(struct aws_allocator *allocator, void *ctx) {
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
         aws_byte_buf_append_dynamic(&all_good_text, &s_valid_utf8_examples[i].text);
     }
-    ASSERT_TRUE(aws_text_is_valid_utf8(aws_byte_cursor_from_buf(&all_good_text)));
+    ASSERT_SUCCESS(aws_decode_utf8(aws_byte_cursor_from_buf(&all_good_text), NULL /*options*/));
     aws_byte_buf_clean_up(&all_good_text);
 
     /* Check the illegal test cases */
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
         struct utf8_example example = s_illegal_utf8_examples[i];
         printf("illegal example [%zu]: %s\n", i, example.name);
-        ASSERT_FALSE(aws_text_is_valid_utf8(example.text));
+        ASSERT_FAILS(aws_decode_utf8(example.text, NULL /*options*/));
     }
 
     return 0;
@@ -1320,61 +1351,130 @@ static int s_text_is_valid_utf8(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(text_is_valid_utf8, s_text_is_valid_utf8);
 
-static int s_utf8_validator_update_in_chunks(
-    struct aws_utf8_validator *validator,
+static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_utf8_decoder_options with_validation_callback = {
+        .on_codepoint = s_utf8_validation_callback,
+    };
+
+    struct aws_utf8_decoder_options with_validation_callback_always_fails = {
+        .on_codepoint = s_utf8_validation_callback_always_fails,
+    };
+
+    struct aws_utf8_decoder_options with_validation_callback_always_passes = {
+        .on_codepoint = s_utf8_validation_callback_always_passes,
+    };
+
+    /* s_valid_utf8_examples_for_callback which would pass the validation callback */
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples_for_callback); ++i) {
+        struct utf8_example example = s_valid_utf8_examples_for_callback[i];
+        printf("valid example [%zu]: %s\n", i, example.name);
+        ASSERT_SUCCESS(aws_decode_utf8(example.text, &with_validation_callback));
+    }
+
+    /* s_valid_utf8_examples which would failed by the callback */
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        struct utf8_example example = s_valid_utf8_examples[i];
+        if (example.text.len == 0) {
+            /* The validation will always be true for empty string */
+            printf("empty string would be always valid[%zu]: %s\n", i, example.name);
+            ASSERT_SUCCESS(aws_decode_utf8(example.text, &with_validation_callback));
+        } else {
+            printf("valid example should still failed by the callback[%zu]: %s\n", i, example.name);
+            ASSERT_FAILS(aws_decode_utf8(example.text, &with_validation_callback));
+        }
+    }
+
+    /* The callback should failed the valid test cases */
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        struct utf8_example example = s_valid_utf8_examples[i];
+        if (example.text.len == 0) {
+            /* The validation will always be true for empty string */
+            printf("empty string would be always valid[%zu]: %s\n", i, example.name);
+            ASSERT_SUCCESS(aws_decode_utf8(example.text, &with_validation_callback));
+        } else {
+            printf("The callback should fail the valid example [%zu]: %s\n", i, example.name);
+            ASSERT_FAILS(aws_decode_utf8(example.text, &with_validation_callback_always_fails));
+        }
+    }
+
+    /* Glue all the valid test cases together, they ought to failed by the always false callback */
+    struct aws_byte_buf all_good_text;
+    aws_byte_buf_init(&all_good_text, allocator, 1024);
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
+        aws_byte_buf_append_dynamic(&all_good_text, &s_valid_utf8_examples[i].text);
+    }
+    ASSERT_FAILS(aws_decode_utf8(aws_byte_cursor_from_buf(&all_good_text), &with_validation_callback_always_fails));
+    aws_byte_buf_clean_up(&all_good_text);
+
+    /* Check the illegal test cases with always true callbck, it should still fail*/
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
+        struct utf8_example example = s_illegal_utf8_examples[i];
+        printf("illegal example [%zu]: %s\n", i, example.name);
+        ASSERT_FAILS(aws_decode_utf8(example.text, &with_validation_callback_always_passes));
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(text_is_valid_utf8_callback, s_text_is_valid_utf8_callback);
+
+static int s_utf8_decoder_update_in_chunks(
+    struct aws_utf8_decoder *decoder,
     struct aws_byte_cursor text,
     size_t chunk_size) {
 
     while (text.len > 0) {
         struct aws_byte_cursor chunk = aws_byte_cursor_advance(&text, aws_min_size(chunk_size, text.len));
-        if (aws_utf8_validator_update(validator, chunk)) {
+        if (aws_utf8_decoder_update(decoder, chunk)) {
             return AWS_OP_ERR;
         }
     }
     return AWS_OP_SUCCESS;
 }
 
-static int s_utf8_validator(struct aws_allocator *allocator, void *ctx) {
+static int s_utf8_decoder(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_utf8_validator *validator = aws_utf8_validator_new(allocator);
-    ASSERT_NOT_NULL(validator);
+    struct aws_utf8_decoder *decoder = aws_utf8_decoder_new(allocator, NULL /*options*/);
+    ASSERT_NOT_NULL(decoder);
 
     /* Check valid examples, streaming the text in at various sized chunks*/
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_valid_utf8_examples); ++i) {
         struct utf8_example example = s_valid_utf8_examples[i];
         printf("valid example [%zu]: %s\n", i, example.name);
-        aws_utf8_validator_reset(validator);
+        aws_utf8_decoder_reset(decoder);
 
         for (size_t chunk_size = 1; chunk_size <= example.text.len; ++chunk_size) {
             printf("   processing %zu byte chunks\n", chunk_size);
-            ASSERT_SUCCESS(s_utf8_validator_update_in_chunks(validator, example.text, chunk_size));
+            ASSERT_SUCCESS(s_utf8_decoder_update_in_chunks(decoder, example.text, chunk_size));
         }
-        ASSERT_SUCCESS(aws_utf8_validator_finalize(validator));
+        ASSERT_SUCCESS(aws_utf8_decoder_finalize(decoder));
     }
 
     /* Check illegal examples, streaming the text in at various sized chunks*/
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
         struct utf8_example example = s_illegal_utf8_examples[i];
         printf("illegal example [%zu]: %s\n", i, example.name);
-        aws_utf8_validator_reset(validator);
+        aws_utf8_decoder_reset(decoder);
 
-        bool validator_error = false;
+        bool decoder_error = false;
         for (size_t chunk_size = 1; chunk_size <= example.text.len; ++chunk_size) {
             printf("   processing %zu byte chunks\n", chunk_size);
-            if (s_utf8_validator_update_in_chunks(validator, example.text, chunk_size)) {
+            if (s_utf8_decoder_update_in_chunks(decoder, example.text, chunk_size)) {
                 ASSERT_INT_EQUALS(AWS_ERROR_INVALID_UTF8, aws_last_error());
-                validator_error = true;
+                decoder_error = true;
                 break;
             }
         }
 
-        if (!validator_error) {
-            ASSERT_ERROR(AWS_ERROR_INVALID_UTF8, aws_utf8_validator_finalize(validator));
+        if (!decoder_error) {
+            ASSERT_ERROR(AWS_ERROR_INVALID_UTF8, aws_utf8_decoder_finalize(decoder));
         }
     }
 
-    aws_utf8_validator_destroy(validator);
+    aws_utf8_decoder_destroy(decoder);
     return 0;
 }
 
-AWS_TEST_CASE(utf8_validator, s_utf8_validator);
+AWS_TEST_CASE(utf8_decoder, s_utf8_decoder);
