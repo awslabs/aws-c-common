@@ -65,12 +65,8 @@ function(aws_check_headers_internal target std is_cxx)
 
     # Ensure our headers can be included by an application with its warnings set very high
     if(MSVC)
-        if (is_cxx)
-        # In MSVC, the C++ std library headers trigger /Wall warnings, so use /W4 instead.
-            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
-        else()
-            target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /Wall /WX)
-        endif()
+        # MSVC complains about windows' own header files. Use /W4 instead of /Wall 
+        target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
     else()
         target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
