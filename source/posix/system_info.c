@@ -26,7 +26,15 @@
 
 #if defined(HAVE_SYSCONF)
 size_t aws_system_info_processor_count(void) {
-    long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+    long nprocs;
+
+    const char *env_num_procs = getenv("AWS_COMMON_MAX_PROCS");
+    if (AWS_UNLIKELY(env_num_procs)) {
+        nprocs = atoi(env_num_procs);
+    } else {
+        nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+    }
+    
     if (AWS_LIKELY(nprocs >= 0)) {
         return (size_t)nprocs;
     }
