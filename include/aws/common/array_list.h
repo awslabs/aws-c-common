@@ -63,7 +63,9 @@ void aws_array_list_init_static(
  * Initializes an array list with a preallocated array of *already-initialized* elements. item_count is the number of
  * elements in the array, and item_size is the size in bytes of each element.
  *
- * Primary use is to be able to treat an already initialized C array as an array list.
+ * Once initialized, nothing further can be added to the list, since it will be full and cannot resize.
+ *
+ * Primary use case is to treat an already-initialized C array as an array list.
  */
 AWS_STATIC_IMPL
 void aws_array_list_init_static_from_initialized(
