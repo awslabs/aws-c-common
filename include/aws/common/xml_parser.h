@@ -20,21 +20,18 @@ struct aws_xml_attribute {
     struct aws_byte_cursor value;
 };
 
-/* TODO: remove stop_parsing support */
-
 /**
  * Callback for when an xml node is encountered in the document. As a user you have a few options:
  *
- * 1. call aws_xml_node_traverse() on the node to descend into the node with a new callback and user_data.
- * 2. call aws_xml_node_as_body() to retrieve the contents of the node as text.
- * 3. return AWS_OP_ERR (after an error has been raised) to fail doc parsing.
- * 4. set `*stop_parsing = true` and return AWS_OP_SUCCESS to immediately stop doc parsing without failing it.
+ * 1. fail the parse by returning AWS_OP_ERR (after an error has been raised). This will stop any further parsing.
+ * 2. call aws_xml_node_traverse() on the node to descend into the node with a new callback and user_data.
+ * 3. call aws_xml_node_as_body() to retrieve the contents of the node as text.
  *
  * You MUST NOT call both aws_xml_node_traverse() and aws_xml_node_as_body() on the same node.
  *
  * return true to continue the parsing operation.
  */
-typedef int(aws_xml_parser_on_node_encountered_fn)(struct aws_xml_node *node, bool *stop_parsing, void *user_data);
+typedef int(aws_xml_parser_on_node_encountered_fn)(struct aws_xml_node *node, void *user_data);
 
 struct aws_xml_parser_options {
     /* xml document to parse. */

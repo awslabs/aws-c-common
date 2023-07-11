@@ -106,7 +106,6 @@ int aws_xml_parse(struct aws_allocator *allocator, const struct aws_xml_parser_o
         .doc = options->doc,
         .max_depth = options->max_depth ? options->max_depth : s_max_document_depth,
         .error = AWS_OP_SUCCESS,
-        .stop_parsing = false,
     };
     aws_array_list_init_dynamic(&parser.callback_stack, allocator, 4, sizeof(struct cb_stack_data));
 
@@ -268,7 +267,7 @@ int aws_xml_node_traverse(
 
     /* look for the next node at the current level. do this until we encounter the parent node's
      * closing tag. */
-    while (!parser->stop_parsing && !parser->error) {
+    while (!parser->error) {
         const uint8_t *next_location = memchr(parser->doc.ptr, '<', parser->doc.len);
 
         if (!next_location) {
@@ -311,24 +310,16 @@ int aws_xml_node_traverse(
             return AWS_OP_ERR;
         }
 
-        if (on_node_encountered(&next_node, &parser->stop_parsing, user_data)) {
+        if (on_node_encountered(&next_node, user_data)) {
             goto error;
         }
 
-        if (parser->stop_parsing) {
-            return parser->error;
-        }
-
         /* if the user simply returned while skipping the node altogether, go ahead and do the skip over. */
-        if (!parser->stop_parsing && !next_node.processed) {
+        if (!next_node.processed) {
             if (s_advance_to_closing_tag(parser, &next_node, NULL)) {
                 goto error;
             }
         }
-    }
-
-    if (parser->stop_parsing) {
-        return parser->error;
     }
 
     aws_array_list_pop_back(&parser->callback_stack);
@@ -398,7 +389,9 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
     aws_array_list_back(&parser->callback_stack, &stack_data);
     AWS_FATAL_ASSERT(stack_data.cb);
 
-    parser->stop_parsing = !stack_data.cb(&sibling_node, &parser->stop_parsing, stack_data.user_data);
+    if (stack_data.cb(&sibling_node, stack_data.user_data)) {
+        return AWS_OP_ERR;
+    }
 
     /* if the user simply returned while skipping the node altogether, go ahead and do the skip over. */
     if (!sibling_node.processed) {

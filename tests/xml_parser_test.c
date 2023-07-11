@@ -13,8 +13,7 @@ struct root_with_text_capture {
     struct aws_byte_cursor node_name;
 };
 
-int s_root_with_text_root_node(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_root_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct root_with_text_capture *capture = user_data;
     if (aws_xml_node_as_body(node, &capture->capture)) {
         return AWS_OP_ERR;
@@ -56,8 +55,7 @@ struct child_text_capture {
     struct aws_byte_cursor node_name;
 };
 
-int s_child_with_text_root_node(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_child_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct child_text_capture *capture = user_data;
     if (aws_xml_node_as_body(node, &capture->capture)) {
         return AWS_OP_ERR;
@@ -67,8 +65,7 @@ int s_child_with_text_root_node(struct aws_xml_node *node, bool *stop_parsing, v
     return AWS_OP_SUCCESS;
 }
 
-int s_root_with_child(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_root_with_child(struct aws_xml_node *node, void *user_data) {
     if (aws_xml_node_traverse(node, s_child_with_text_root_node, user_data)) {
         return AWS_OP_ERR;
     }
@@ -109,8 +106,7 @@ struct sibling_text_capture {
     struct aws_byte_cursor node_name2;
 };
 
-int s_sibling_with_text_root_node(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_sibling_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct sibling_text_capture *capture = user_data;
 
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
@@ -133,8 +129,7 @@ int s_sibling_with_text_root_node(struct aws_xml_node *node, bool *stop_parsing,
     return AWS_OP_SUCCESS;
 }
 
-int s_root_with_child_siblings(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_root_with_child_siblings(struct aws_xml_node *node, void *user_data) {
     return aws_xml_node_traverse(node, s_sibling_with_text_root_node, user_data);
 }
 
@@ -188,8 +183,7 @@ struct preamble_and_attributes_capture {
     struct aws_xml_attribute root_attr2;
 };
 
-int s_preamble_and_attributes_child_node(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_preamble_and_attributes_child_node(struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
@@ -216,8 +210,7 @@ int s_preamble_and_attributes_child_node(struct aws_xml_node *node, bool *stop_p
     return AWS_OP_SUCCESS;
 }
 
-int s_preamble_and_attributes(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_preamble_and_attributes(struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
     ASSERT_TRUE(aws_xml_node_get_num_attributes(node) == 2);
@@ -315,8 +308,7 @@ struct nested_node_capture {
     struct aws_byte_cursor node_body;
 };
 
-int s_nested_node(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_nested_node(struct aws_xml_node *node, void *user_data) {
     struct nested_node_capture *capture = user_data;
 
     return aws_xml_node_as_body(node, &capture->node_body);
@@ -361,8 +353,7 @@ const char *nested_nodes_deep_recursion_doc = "<?xml version=\"1.0\" encoding=\"
                                               "    </Node>\n"
                                               "</Node>";
 
-int s_nested_node_deep_recursion(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
-    (void)stop_parsing;
+int s_nested_node_deep_recursion(struct aws_xml_node *node, void *user_data) {
     return aws_xml_node_traverse(node, s_nested_node_deep_recursion, user_data);
 }
 
@@ -390,9 +381,8 @@ const char *too_many_attributes = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                   "attribute8=\"def\" attribute9=\"def\" attribute10=\"def\" attribute11=\"def\">\n"
                                   "</rootNode>";
 
-int s_too_many_attributes(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
+int s_too_many_attributes(struct aws_xml_node *node, void *user_data) {
     (void)node;
-    (void)stop_parsing;
     (void)user_data;
     return AWS_OP_SUCCESS;
 }
@@ -425,9 +415,8 @@ const char *node_name_too_long =
     "klmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst"
     "uvwxyzabcdefghijklmnopqrstuvwxyz>";
 
-int s_too_long(struct aws_xml_node *node, bool *stop_parsing, void *user_data) {
+int s_too_long(struct aws_xml_node *node, void *user_data) {
     (void)node;
-    (void)stop_parsing;
     (void)user_data;
     return AWS_OP_SUCCESS;
 }
