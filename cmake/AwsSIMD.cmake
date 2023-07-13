@@ -48,12 +48,13 @@ if (USE_CPU_EXTENSIONS)
             return 0;
         }"  AWS_HAVE_AVX2_INTRINSICS)
 
-    check_c_source_compiles("
-        #include <nmintrin.h>
-        int main() {
-            __m128i a = _mm_setzero_si128();
-            return 0;
-        }" AWS_HAVE_SSE42_INTRINSICS)
+    # we already assume sse42 intrinsics if cpu extensions are at all allowed.
+    #check_c_source_compiles("
+    #    #include <nmintrin.h>
+    #    int main() {
+    #        __m128i a = _mm_setzero_si128();
+    #        return 0;
+    #    }" AWS_HAVE_SSE42_INTRINSICS)
 
     check_c_source_compiles("
         #include <immintrin.h>
