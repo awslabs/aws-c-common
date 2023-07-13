@@ -365,7 +365,7 @@ static int s_xml_parser_nested_node_deep_recursion_test(struct aws_allocator *al
         .on_root_encountered = s_nested_node_deep_recursion,
         .user_data = NULL,
     };
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parse(allocator, &options));
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
     return AWS_OP_SUCCESS;
 }
@@ -395,7 +395,7 @@ static int s_xml_parser_too_many_attributes_test(struct aws_allocator *allocator
         .on_root_encountered = s_too_many_attributes,
         .user_data = NULL,
     };
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parse(allocator, &options));
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
     return AWS_OP_SUCCESS;
 }
@@ -429,7 +429,7 @@ static int s_xml_parser_name_too_long_test(struct aws_allocator *allocator, void
         .on_root_encountered = s_too_long,
         .user_data = NULL,
     };
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parse(allocator, &options));
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
     return AWS_OP_SUCCESS;
 }

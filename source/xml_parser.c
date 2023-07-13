@@ -51,14 +51,14 @@ static int s_load_node_decl(
      * we limit to 10 attributes, if this is exceeded we consider it invalid document. */
     if (aws_byte_cursor_split_on_char(decl_body, ' ', &splits)) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        return aws_raise_error(AWS_ERROR_INVALID_XML);
     }
 
     size_t splits_count = aws_array_list_length(&splits);
 
     if (splits_count < 1) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        return aws_raise_error(AWS_ERROR_INVALID_XML);
     }
 
     aws_array_list_get_at(&splits, &node->name, 0);
@@ -114,14 +114,14 @@ int aws_xml_parse(struct aws_allocator *allocator, const struct aws_xml_parser_o
         const uint8_t *start = memchr(parser.doc.ptr, '<', parser.doc.len);
         if (!start) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            parser.error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+            parser.error = aws_raise_error(AWS_ERROR_INVALID_XML);
             goto clean_up;
         }
 
         const uint8_t *location = memchr(parser.doc.ptr, '>', parser.doc.len);
         if (!location) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            parser.error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+            parser.error = aws_raise_error(AWS_ERROR_INVALID_XML);
             goto clean_up;
         }
 
@@ -170,13 +170,13 @@ int s_advance_to_closing_tag(
 
     if (closing_name_len > node->doc_at_body.len) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        parser->error = aws_raise_error(AWS_ERROR_INVALID_XML);
         return AWS_OP_ERR;
     }
 
     if (sizeof(name_close) < closing_name_len) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        parser->error = aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        parser->error = aws_raise_error(AWS_ERROR_INVALID_XML);
         return AWS_OP_ERR;
     }
 
@@ -200,7 +200,7 @@ int s_advance_to_closing_tag(
     do {
         if (aws_byte_cursor_find_exact(&parser->doc, &to_find_close, &close_find_result)) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+            return aws_raise_error(AWS_ERROR_INVALID_XML);
         }
 
         /* if we find an opening node with the same name, before the closing tag keep going. */
@@ -259,7 +259,7 @@ int aws_xml_node_traverse(
     size_t doc_depth = aws_array_list_length(&parser->callback_stack);
     if (doc_depth >= parser->max_depth) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document exceeds max depth.");
-        aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        aws_raise_error(AWS_ERROR_INVALID_XML);
         goto error;
     }
 
@@ -272,7 +272,7 @@ int aws_xml_node_traverse(
 
         if (!next_location) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+            aws_raise_error(AWS_ERROR_INVALID_XML);
             goto error;
         }
 
@@ -280,7 +280,7 @@ int aws_xml_node_traverse(
 
         if (!end_location) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+            aws_raise_error(AWS_ERROR_INVALID_XML);
             goto error;
         }
 
@@ -366,7 +366,7 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
 
     if (!end_location) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        return aws_raise_error(AWS_ERROR_MALFORMED_INPUT_STRING);
+        return aws_raise_error(AWS_ERROR_INVALID_XML);
     }
 
     size_t node_name_len = end_location - next_location;
