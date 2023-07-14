@@ -210,9 +210,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
-# Enable SIMD encoder if the compiler supports the right features
-simd_add_definitions(${PROJECT_NAME})
-
 if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
     simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")

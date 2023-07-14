@@ -71,19 +71,8 @@ if (USE_CPU_EXTENSIONS)
     set(CMAKE_REQUIRED_FLAGS "${old_flags}")
 endif() # USE_CPU_EXTENSIONS
 
-macro(simd_add_definition_if target definition)
-    if(${definition})
-        target_compile_definitions(${target} PRIVATE -D${definition})
-    endif(${definition})
-endmacro(simd_add_definition_if)
-
-# Configure private preprocessor definitions for SIMD-related features
-# Does not set any processor feature codegen flags
-function(simd_add_definitions target)
-    simd_add_definition_if(${target} AWS_HAVE_AVX2_INTRINSICS)
-    simd_add_definition_if(${target} AWS_HAVE_AVX512_INTRINSICS)
-    simd_add_definition_if(${target} AWS_HAVE_MM256_EXTRACT_EPI64)
-endfunction(simd_add_definitions)
+# The part where the definition is added to the compiler flags has been moved to config.h.in
+# see git history for more details.
 
 # Adds AVX flags, if any, that are supported. These files will be built with
 # available avx intrinsics enabled.
