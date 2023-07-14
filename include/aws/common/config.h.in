@@ -19,5 +19,8 @@
 #cmakedefine AWS_HAVE_EXECINFO
 #cmakedefine AWS_HAVE_WINAPI_DESKTOP
 #cmakedefine AWS_HAVE_LINUX_IF_LINK_H
+#cmakedefine AWS_HAVE_AVX2_INTRINSICS
+#cmakedefine AWS_HAVE_AVX512_INTRINSICS
+#cmakedefine AWS_HAVE_MM256_EXTRACT_EPI64
 
 #endif

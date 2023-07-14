@@ -20,12 +20,14 @@ if (USE_CPU_EXTENSIONS)
     if (MSVC)
         check_c_compiler_flag("/arch:AVX512" HAVE_M_AVX512_FLAG)
         if (HAVE_M_AVX512_FLAG)
-            set(AVX_CFLAGS "/arch:AVX512")
+            # docs imply AVX512 brings in AVX2. And it will compile, but it will break at runtime on
+            # instructions such as _mm256_load_si256(). Leave it on.
+            set(AVX_CFLAGS "/arch:AVX512 /arch:AVX2")
         endif()
     else()
         check_c_compiler_flag(-mavx512f HAVE_M_AVX512_FLAG)
         if (HAVE_M_AVX512_FLAG)
-            set(AVX_CFLAGS "-mavx512f -msse4.2 -mvpclmulqdq -mpclmul")
+            set(AVX_CFLAGS "-mavx512f -mavx -mavx2 -msse4.2 -mvpclmulqdq -mpclmul")
         endif()
     endif()
 
@@ -46,15 +48,7 @@ if (USE_CPU_EXTENSIONS)
             _mm256_permutevar8x32_epi32(vec, vec);
 
             return 0;
-        }"  AWS_HAVE_AVX2_INTRINSICS)
-
-    # we already assume sse42 intrinsics if cpu extensions are at all allowed.
-    #check_c_source_compiles("
-    #    #include <nmintrin.h>
-    #    int main() {
-    #        __m128i a = _mm_setzero_si128();
-    #        return 0;
-    #    }" AWS_HAVE_SSE42_INTRINSICS)
+        }"  AWS_HAVE_AVX2_INTRINSICS)          
 
     check_c_source_compiles("
         #include <immintrin.h>

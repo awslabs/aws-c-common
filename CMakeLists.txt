@@ -25,8 +25,6 @@ include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
-#included in AwsFeatureTests.cmake
-#include(AwsSIMD)
 include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
