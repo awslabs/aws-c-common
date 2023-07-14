@@ -72,3 +72,20 @@ function(simd_add_source_avx2 target)
         set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "${AVX2_CFLAGS}")
     endforeach()
 endfunction(simd_add_source_avx2)
+
+set(CMAKE_REQUIRED_FLAGS "-msse4.2")
+check_c_source_compiles("
+    #include <nmmintrin.h>
+    int main() {
+        __m128i a = _mm_setzero_si128();
+        return 0;
+    }" HAVE_SSE42_INTRINSICS)
+
+set(CMAKE_REQUIRED_FLAGS "-mavx512f")
+check_c_source_compiles("
+    #include <immintrin.h>
+    int main() {
+        __m512 a = _mm512_setzero_ps();
+        return 0;
+    }" HAVE_AVX512_INTRINSICS)
+
