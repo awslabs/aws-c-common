@@ -262,6 +262,9 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_GET_HOME_DIRECTORY_FAILED,
         "Failed to get home directory"),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_XML,
+        "Invalid XML document"),
 };
 /* clang-format on */
 
