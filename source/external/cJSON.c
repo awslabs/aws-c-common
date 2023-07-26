@@ -545,6 +545,11 @@ static cJSON_bool compare_double(double a, double b) // NOLINT
 /* Render the number nicely from the given item into a string. */
 static cJSON_bool print_number(const cJSON * const item, printbuffer * const output_buffer) // NOLINT
 {
+    if (output_buffer == NULL)
+    {
+        return false;
+    }
+
     unsigned char *output_pointer = NULL;
     double d = item->valuedouble;
     int length = 0;
@@ -552,11 +557,6 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     unsigned char number_buffer[26] = {0}; /* temporary buffer to print the number into */
     unsigned char decimal_point = get_decimal_point(); // NOLINT
     double test = 0.0;
-
-    if (output_buffer == NULL)
-    {
-        return false;
-    }
 
     /* This checks for NaN and Infinity */
     if (isnan(d) || isinf(d))
