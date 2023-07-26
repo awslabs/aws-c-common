@@ -557,7 +557,7 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     {
         length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "null");
     }
-	else if (d == (double)item->valueint) // NOLINT
+    else if (d == (double)item->valueint)
     {
         length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "%d", item->valueint);
     }
