@@ -558,9 +558,9 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
         length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "null");
     }
 	else if (d == (double)item->valueint) // NOLINT
-	{
+    {
         length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "%d", item->valueint);
-	}
+    }
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
