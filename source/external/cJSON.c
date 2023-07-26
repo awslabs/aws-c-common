@@ -22,6 +22,7 @@
 
 /* cJSON */
 /* JSON parser in C. */
+/* NOLINTBEGIN */
 
 /* disable warnings about old C89 functions in MSVC */
 #if !defined(_CRT_SECURE_NO_DEPRECATE) && defined(_MSC_VER)
@@ -288,25 +289,25 @@ typedef struct
 } parse_buffer;
 
 /* check if the given size is left to read in a given parse buffer (starting with 1) */
-#define can_read(buffer, size) (((buffer) != NULL) && (((buffer)->offset + (size)) <= (buffer)->length))
+#define can_read(buffer, size) ((buffer != NULL) && (((buffer)->offset + size) <= (buffer)->length))
 /* check if the buffer can be accessed at the given index (starting with 0) */
-#define can_access_at_index(buffer, index) (((buffer) != NULL) && (((buffer)->offset + (index)) < (buffer)->length))
+#define can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
 #define cannot_access_at_index(buffer, index) (!can_access_at_index(buffer, index))
 /* get a pointer to the buffer at the position */
 #define buffer_at_offset(buffer) ((buffer)->content + (buffer)->offset)
 
 /* Parse the input text to generate a number, and populate the result into item. */
-static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_buffer) // NOLINT
+static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_buffer)
 {
     double number = 0;
     unsigned char *after_end = NULL;
     unsigned char number_c_string[64];
-    unsigned char decimal_point = get_decimal_point(); // NOLINT
+    unsigned char decimal_point = get_decimal_point();
     size_t i = 0;
 
     if ((input_buffer == NULL) || (input_buffer->content == NULL))
     {
-        return false; // NOLINT
+        return false;
     }
 
     /* copy the number into a temporary buffer and replace '.' with the decimal point
@@ -347,14 +348,14 @@ loop_end:
     number = strtod((const char*)number_c_string, (char**)&after_end);
     if (number_c_string == after_end)
     {
-        return false; /* parse_error */ // NOLINT
+        return false; /* parse_error */
     }
 
     item->valuedouble = number;
 
     /* use saturation in case of overflow */
     if (number >= INT_MAX)
-    { // NOLINT
+    {
         item->valueint = INT_MAX;
     }
     else if (number <= (double)INT_MIN)
@@ -366,14 +367,14 @@ loop_end:
         item->valueint = (int)number;
     }
 
-    item->type = cJSON_Number; // NOLINT
+    item->type = cJSON_Number;
 
     input_buffer->offset += (size_t)(after_end - number_c_string);
-    return true; // NOLINT
+    return true;
 }
 
 /* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
-CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number) // NOLINT
+CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
 {
     if (number >= INT_MAX)
     {
@@ -401,8 +402,7 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     }
     if (strlen(valuestring) <= strlen(object->valuestring))
     {
-        size_t value_length = strlen(valuestring) + sizeof("");
-        memcpy(object->valuestring, valuestring, value_length);
+        strcpy(object->valuestring, valuestring);
         return object->valuestring;
     }
     copy = (char*) cJSON_strdup((const unsigned char*)valuestring, &global_hooks);
@@ -431,7 +431,7 @@ typedef struct
 } printbuffer;
 
 /* realloc printbuffer if necessary to have at least "needed" bytes more */
-static unsigned char* ensure(printbuffer * const p, size_t needed) // NOLINT
+static unsigned char* ensure(printbuffer * const p, size_t needed)
 {
     unsigned char *newbuffer = NULL;
     size_t newsize = 0;
@@ -517,7 +517,7 @@ static unsigned char* ensure(printbuffer * const p, size_t needed) // NOLINT
 }
 
 /* calculate the new length of the string in a printbuffer and update the offset */
-static void update_offset(printbuffer * const buffer) // NOLINT
+static void update_offset(printbuffer * const buffer)
 {
     const unsigned char *buffer_pointer = NULL;
     if ((buffer == NULL) || (buffer->buffer == NULL))
@@ -530,21 +530,21 @@ static void update_offset(printbuffer * const buffer) // NOLINT
 }
 
 /* securely comparison of floating-point variables */
-static cJSON_bool compare_double(double a, double b) // NOLINT
+static cJSON_bool compare_double(double a, double b)
 {
     double maxVal = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
     return (fabs(a - b) <= maxVal * DBL_EPSILON);
 }
 
 /* Render the number nicely from the given item into a string. */
-static cJSON_bool print_number(const cJSON * const item, printbuffer * const output_buffer) // NOLINT
+static cJSON_bool print_number(const cJSON * const item, printbuffer * const output_buffer)
 {
     unsigned char *output_pointer = NULL;
     double d = item->valuedouble;
     int length = 0;
     size_t i = 0;
     unsigned char number_buffer[26] = {0}; /* temporary buffer to print the number into */
-    unsigned char decimal_point = get_decimal_point(); // NOLINT
+    unsigned char decimal_point = get_decimal_point();
     double test = 0.0;
 
     if (output_buffer == NULL)
@@ -765,7 +765,7 @@ fail:
 }
 
 /* Parse the input text into an unescaped cinput, and populate item. */
-static cJSON_bool parse_string(cJSON * const item, parse_buffer * const input_buffer) // NOLINT
+static cJSON_bool parse_string(cJSON * const item, parse_buffer * const input_buffer)
 {
     const unsigned char *input_pointer = buffer_at_offset(input_buffer) + 1;
     const unsigned char *input_end = buffer_at_offset(input_buffer) + 1;
@@ -894,7 +894,7 @@ fail:
 }
 
 /* Render the cstring provided to an escaped version that can be printed. */
-static cJSON_bool print_string_ptr(const unsigned char * const input, printbuffer * const output_buffer) // NOLINT
+static cJSON_bool print_string_ptr(const unsigned char * const input, printbuffer * const output_buffer)
 {
     const unsigned char *input_pointer = NULL;
     unsigned char *output = NULL;
@@ -916,7 +916,7 @@ static cJSON_bool print_string_ptr(const unsigned char * const input, printbuffe
         {
             return false;
         }
-        memcpy(output, "\"\"", 3); /* NOLINT */
+        strcpy((char*)output, "\"\"");
 
         return true;
     }
@@ -1030,7 +1030,7 @@ static cJSON_bool parse_object(cJSON * const item, parse_buffer * const input_bu
 static cJSON_bool print_object(const cJSON * const item, printbuffer * const output_buffer);
 
 /* Utility to jump whitespace and cr/lf */
-static parse_buffer *buffer_skip_whitespace(parse_buffer * const buffer) // NOLINT
+static parse_buffer *buffer_skip_whitespace(parse_buffer * const buffer)
 {
     if ((buffer == NULL) || (buffer->content == NULL))
     {
@@ -1056,7 +1056,7 @@ static parse_buffer *buffer_skip_whitespace(parse_buffer * const buffer) // NOLI
 }
 
 /* skip the UTF-8 BOM (byte order mark) if it is at the beginning of a buffer */
-static parse_buffer *skip_utf8_bom(parse_buffer * const buffer) // NOLINT
+static parse_buffer *skip_utf8_bom(parse_buffer * const buffer)
 {
     if ((buffer == NULL) || (buffer->content == NULL) || (buffer->offset != 0))
     {
@@ -1370,7 +1370,7 @@ static cJSON_bool print_value(const cJSON * const item, printbuffer * const outp
             {
                 return false;
             }
-            memcpy(output, "null", 5); /* NOLINT */
+            strcpy((char*)output, "null");
             return true;
 
         case cJSON_False:
@@ -1379,7 +1379,7 @@ static cJSON_bool print_value(const cJSON * const item, printbuffer * const outp
             {
                 return false;
             }
-            memcpy(output, "false", 6); /* NOLINT */
+            strcpy((char*)output, "false");
             return true;
 
         case cJSON_True:
@@ -1388,7 +1388,7 @@ static cJSON_bool print_value(const cJSON * const item, printbuffer * const outp
             {
                 return false;
             }
-             memcpy(output, "true", 5); /* NOLINT */
+            strcpy((char*)output, "true");
             return true;
 
         case cJSON_Number:
@@ -3109,3 +3109,4 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
 {
     global_hooks.deallocate(object);
 }
+/* NOLINTEND */

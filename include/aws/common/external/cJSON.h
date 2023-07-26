@@ -28,10 +28,10 @@
  *   (3) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
  */
 
-/* clang-format off */
+/* NOLINTBEGIN */
 
-#ifndef AWS_COMMON_EXTERNAL_CJSON_H // NOLINT
-#define AWS_COMMON_EXTERNAL_CJSON_H // NOLINT
+#ifndef AWS_COMMON_EXTERNAL_CJSON_H
+#define AWS_COMMON_EXTERNAL_CJSON_H
 
 #ifdef __cplusplus
 extern "C"
@@ -283,19 +283,19 @@ CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * c
 #define cJSON_SetIntValue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number))
 /* helper for the cJSON_SetNumberValue macro */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
-#define cJSON_SetNumberValue(object, number) (((object) != NULL) ? cJSON_SetNumberHelper((object), (double)(number)) : (number))
+#define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
 /* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring);
 
 /* If the object is not a boolean type this does nothing and returns cJSON_Invalid else it returns the new type*/
 #define cJSON_SetBoolValue(object, boolValue) ( \
-    ((object) != NULL && ((object)->type & (cJSON_False|cJSON_True))) ? \
+    (object != NULL && ((object)->type & (cJSON_False|cJSON_True))) ? \
     (object)->type=((object)->type &(~(cJSON_False|cJSON_True)))|((boolValue)?cJSON_True:cJSON_False) : \
     cJSON_Invalid\
 )
 
 /* Macro for iterating over an array or object */
-#define cJSON_ArrayForEach(element, array) for((element) = ((array) != NULL) ? (array)->child : NULL; (element) != NULL; (element) = (element)->next)
+#define cJSON_ArrayForEach(element, array) for(element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next)
 
 /* malloc/free objects using the malloc/free functions that have been set with cJSON_InitHooks */
 CJSON_PUBLIC(void *) cJSON_malloc(size_t size);
@@ -304,5 +304,5 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #ifdef __cplusplus
 }
 #endif
-
+/* NOLINTEND */
 #endif
