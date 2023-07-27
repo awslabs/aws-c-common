@@ -24,7 +24,7 @@ size_t aws_system_info_processor_count(void) {
 /* the next three functions need actual implementations before we can have proper numa alignment on windows.
  * For now leave them stubbed out. */
 uint16_t aws_get_cpu_group_count(void) {
-    return 1u;
+    return 1U;
 }
 
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {

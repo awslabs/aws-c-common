@@ -1,5 +1,8 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,readability-*,modernize-*,bugprone-*,misc-*,google-runtime-int,llvm-header-guard,fuchsia-restrict-system-includes,-clang-analyzer-valist.Uninitialized,-clang-analyzer-security.insecureAPI.rand,-clang-analyzer-alpha.*,-readability-magic-numbers,-readability-non-const-parameter,-readability-avoid-const-params-in-decls,-readability-else-after-return,-readability-isolate-declaration,-readability-uppercase-literal-suffix,-bugprone-sizeof-expression'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,readability-*,modernize-*,bugprone-*,misc-*,google-runtime-int,llvm-header-guard,\
+                  fuchsia-restrict-system-includes,-clang-analyzer-valist.Uninitialized,-clang-analyzer-security.insecureAPI.rand,-clang-analyzer-alpha.*,\
+                  -readability-magic-numbers,-readability-non-const-parameter,-readability-avoid-const-params-in-decls,-readability-else-after-return,-readability-isolate-declaration,\
+                  -readability-uppercase-literal-suffix,-bugprone-sizeof-expression,-bugprone-easily-swappable-parameters,-bugprone-narrowing-conversions,-readability-identifier-length,-misc-no-recursion,-readability-function-cognitive-complexity,-readability-magic-numbers'
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*\.[h|inl]$'
 FormatStyle: 'file'

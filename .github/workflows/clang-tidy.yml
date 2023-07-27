@@ -7,7 +7,7 @@ jobs:
 
     strategy:
       matrix:
-        host: [ubuntu-20.04] # latest
+        host: [ubuntu-22.04] # latest
 
     runs-on: ${{ matrix.host }}
 

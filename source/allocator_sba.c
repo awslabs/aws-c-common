@@ -348,7 +348,7 @@ static void s_sba_free_to_bin(struct sba_bin *bin, void *addr) {
         uint8_t *page_start = (uint8_t *)page + sizeof(struct page_header);
         uint8_t *page_end = page_start + AWS_SBA_PAGE_SIZE;
         /* Remove all chunks in the page from the free list */
-        intptr_t chunk_idx = bin->free_chunks.length;
+        intptr_t chunk_idx = (intptr_t)bin->free_chunks.length;
         for (; chunk_idx >= 0; --chunk_idx) {
             uint8_t *chunk = NULL;
             aws_array_list_get_at(&bin->free_chunks, &chunk, chunk_idx);

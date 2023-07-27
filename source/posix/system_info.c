@@ -53,7 +53,7 @@ uint16_t aws_get_cpu_group_count(void) {
         return (uint16_t)g_numa_num_configured_nodes_ptr();
     }
 
-    return 1u;
+    return 1U;
 }
 
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {

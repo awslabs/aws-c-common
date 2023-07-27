@@ -48,7 +48,7 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
      * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
      * this size or greater that are not data buffers
      */
-    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
+    const size_t alignment = sizeof(void *) * (size > (size_t)PAGE_SIZE ? 8 : 2);
 #if !defined(_WIN32)
     void *result = NULL;
     int err = posix_memalign(&result, alignment, size);
@@ -92,7 +92,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 
     return new_mem;
 #else
-    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
+    const size_t alignment = sizeof(void *) * (newsize > (size_t)PAGE_SIZE ? 8 : 2);
     void *new_mem = _aligned_realloc(ptr, newsize, alignment);
     AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in _aligned_realloc");
     return new_mem;
