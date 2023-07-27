@@ -242,7 +242,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     if (function_len >= (sizeof(frame->function) - 1)) {
         function_len = sizeof(frame->function) - 1;
     }
-    strncpy(frame->function, function_start, function_end - function_start);
+    strncpy(frame->function, function_start, function_len);
 
     /* find base addr for library/exe */
     Dl_info addr_info;

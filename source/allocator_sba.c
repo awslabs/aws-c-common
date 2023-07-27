@@ -44,7 +44,7 @@
 #define AWS_SBA_TAG_VALUE 0x736f6d6570736575ULL
 
 /* list of sizes of bins, must be powers of 2, and less than AWS_SBA_PAGE_SIZE * 0.5 */
-#define AWS_SBA_BIN_COUNT 5
+enum { AWS_SBA_BIN_COUNT = 5 };
 static const size_t s_bin_sizes[AWS_SBA_BIN_COUNT] = {32, 64, 128, 256, 512};
 static const size_t s_max_bin_size = 512;
 

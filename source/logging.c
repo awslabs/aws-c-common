@@ -454,7 +454,7 @@ static enum aws_log_level s_noalloc_stderr_logger_get_log_level(struct aws_logge
     return (enum aws_log_level)aws_atomic_load_int(&impl->level);
 }
 
-#define MAXIMUM_NO_ALLOC_LOG_LINE_SIZE 8192
+enum { MAXIMUM_NO_ALLOC_LOG_LINE_SIZE = 8192 };
 
 static int s_noalloc_stderr_logger_log(
     struct aws_logger *logger,
