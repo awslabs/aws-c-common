@@ -306,7 +306,7 @@ static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, v
     (void)hint;
     (void)info;
 
-    return size + sizeof(size_t);
+    return (CFIndex)(size + sizeof(size_t));
 }
 
 CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
