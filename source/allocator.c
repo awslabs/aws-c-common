@@ -291,7 +291,7 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
     aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size);
 
     size_t new_allocation_size = (size_t)new_size;
-    memcpy(original_allocation, &new_allocation_size, sizeof(size_t)); /* NOLINT */
+    memcpy(original_allocation, &new_allocation_size, sizeof(size_t)); /* NOLINT(clang-analyzer-unix.cstring.NullArg) */
 
     return (void *)((uint8_t *)original_allocation + sizeof(size_t));
 }
