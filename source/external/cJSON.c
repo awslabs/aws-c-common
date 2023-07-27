@@ -22,7 +22,7 @@
 
 /* cJSON */
 /* JSON parser in C. */
-// NOLINTBEGIN
+/* NOLINTBEGIN */
 
 /* disable warnings about old C89 functions in MSVC */
 #if !defined(_CRT_SECURE_NO_DEPRECATE) && defined(_MSC_VER)
@@ -3109,4 +3109,4 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
 {
     global_hooks.deallocate(object);
 }
-// NOLINTEND
+/* NOLINTEND */
