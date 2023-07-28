@@ -10,7 +10,10 @@
 
 AWS_PUSH_SANE_WARNING_LEVEL
 
-enum { AWS_DATE_TIME_STR_MAX_LEN = 100, AWS_DATE_TIME_STR_MAX_BASIC_LEN = 20 };
+enum {
+    AWS_DATE_TIME_STR_MAX_LEN = 100,
+    AWS_DATE_TIME_STR_MAX_BASIC_LEN = 20,
+};
 
 struct aws_byte_buf;
 struct aws_byte_cursor;
