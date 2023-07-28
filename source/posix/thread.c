@@ -4,7 +4,7 @@
  */
 
 #if !defined(__MACH__)
-#    define _GNU_SOURCE
+#    define _GNU_SOURCE /* NOLINT(bugprone-reserved-identifier) */
 #endif
 
 #include <aws/common/clock.h>

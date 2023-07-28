@@ -57,7 +57,7 @@ struct alloc_tracer {
 };
 
 /* number of frames to skip in call stacks (s_alloc_tracer_track, and the vtable function) */
-#define FRAMES_TO_SKIP 2
+enum { FRAMES_TO_SKIP = 2 };
 
 static void *s_trace_mem_acquire(struct aws_allocator *allocator, size_t size);
 static void s_trace_mem_release(struct aws_allocator *allocator, void *ptr);

@@ -48,7 +48,7 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
      * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
      * this size or greater that are not data buffers
      */
-    const size_t alignment = sizeof(void *) * (size > PAGE_SIZE ? 8 : 2);
+    const size_t alignment = sizeof(void *) * (size > (size_t)PAGE_SIZE ? 8 : 2);
 #if !defined(_WIN32)
     void *result = NULL;
     int err = posix_memalign(&result, alignment, size);
@@ -92,7 +92,7 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 
     return new_mem;
 #else
-    const size_t alignment = sizeof(void *) * (newsize > PAGE_SIZE ? 8 : 2);
+    const size_t alignment = sizeof(void *) * (newsize > (size_t)PAGE_SIZE ? 8 : 2);
     void *new_mem = _aligned_realloc(ptr, newsize, alignment);
     AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in _aligned_realloc");
     return new_mem;
@@ -289,7 +289,7 @@ static void *s_cf_allocator_reallocate(void *ptr, CFIndex new_size, CFOptionFlag
     memcpy(&original_size, original_allocation, sizeof(size_t));
 
     aws_mem_realloc(allocator, &original_allocation, original_size, (size_t)new_size);
-
+    AWS_FATAL_ASSERT(original_allocation);
     size_t new_allocation_size = (size_t)new_size;
     memcpy(original_allocation, &new_allocation_size, sizeof(size_t));
 
@@ -306,7 +306,7 @@ static CFIndex s_cf_allocator_preferred_size(CFIndex size, CFOptionFlags hint, v
     (void)hint;
     (void)info;
 
-    return size + sizeof(size_t);
+    return (CFIndex)(size + sizeof(size_t));
 }
 
 CFAllocatorRef aws_wrapped_cf_allocator_new(struct aws_allocator *allocator) {
