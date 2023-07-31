@@ -34,7 +34,7 @@ struct aws_allocator *aws_default_allocator(void);
 
 #ifdef __MACH__
 /* Avoid pulling in CoreFoundation headers in a header file. */
-struct __CFAllocator;
+struct __CFAllocator; /* NOLINT(bugprone-reserved-identifier) */
 typedef const struct __CFAllocator *CFAllocatorRef;
 
 /**
