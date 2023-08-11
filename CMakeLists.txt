@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
-option(INTEL_NO_ITTNOTIFY_API "Disable tracing macros" ON)
+option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
@@ -30,9 +30,11 @@ include(AwsSIMD)
 include(CTest)
 
 
-if(NOT INTEL_NO_ITTNOTIFY_API)
+if(AWS_ENABLE_TRACING)
     message("Enabling Tracing")
     target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
+else()
+    set(INTEL_NO_ITTNOTIFY_API ON)
 endif()
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
