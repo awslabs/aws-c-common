@@ -19,6 +19,6 @@
 #cmakedefine AWS_HAVE_EXECINFO
 #cmakedefine AWS_HAVE_WINAPI_DESKTOP
 #cmakedefine AWS_HAVE_LINUX_IF_LINK_H
-#cmakedefine AWS_ENABLE_TRACING
+#cmakedefine INTEL_NO_ITTNOTIFY_API
 
 #endif

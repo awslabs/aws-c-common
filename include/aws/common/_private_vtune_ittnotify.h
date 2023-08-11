@@ -7,7 +7,7 @@
 #define _ITTNOTIFY_H_
 /*
  * This file has been not modified from its original version apart from adding the NOLINTBEGIN and NOLINTEND.
- * This file is not intended for Public usage.
+ * This file is not intended for public usage.
  */
 /* clang-format off */
 /* NOLINTBEGIN */
