@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.0)
 option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
+option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
@@ -300,3 +301,9 @@ if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
 endif()
 
 include(CPackConfig)
+
+if(AWS_ENABLE_TRACING)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
+else()
+    add_definitions(-DINTEL_NO_ITTNOTIFY_API)
+endif()
