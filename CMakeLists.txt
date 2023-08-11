@@ -8,6 +8,7 @@ option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
 if(NOT AWS_ENABLE_TRACING)
     set(INTEL_NO_ITTNOTIFY_API ON) # Disable intel notify api if tracing is not enabled
 endif()
+
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 message(STATUS "CMake ${CMAKE_VERSION}")
