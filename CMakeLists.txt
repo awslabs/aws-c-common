@@ -33,8 +33,6 @@ include(CTest)
 if(AWS_ENABLE_TRACING)
     message("Enabling Tracing")
     target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
-else()
-    set(INTEL_NO_ITTNOTIFY_API ON)
 endif()
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
