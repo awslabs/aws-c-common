@@ -9,6 +9,7 @@
  * This file has been not modified from its original version apart from adding the NOLINTBEGIN and NOLINTEND.
  * This file is not intended for Public usage.
  */
+/* clang-format off */
 /* NOLINTBEGIN */
 
 /**
