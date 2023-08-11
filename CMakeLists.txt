@@ -29,12 +29,6 @@ include(AwsThreadName)
 include(AwsSIMD)
 include(CTest)
 
-
-if(AWS_ENABLE_TRACING)
-    message("Enabling Tracing")
-    target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
-endif()
-
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
 set(GENERATED_CONFIG_HEADER "${GENERATED_INCLUDE_DIR}/aws/common/config.h")
@@ -307,3 +301,8 @@ if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
 endif()
 
 include(CPackConfig)
+
+if(AWS_ENABLE_TRACING)
+    message("Enabling Tracing")
+    target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
+endif()

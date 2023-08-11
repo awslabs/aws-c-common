@@ -9,11 +9,11 @@
  * THIS IS NOT INTENDED FOR PUBLIC USE.
  */
 #ifdef AWS_ENABLE_TRACING
-#    include "ittnotify.h"
+#    include <aws/common/ittnotify.h>
 extern __itt_domain *s3_domain;
 #else
 #    define INTEL_NO_ITTNOTIFY_API
-#    include "ittnotify.h"
+#    include <aws/common/ittnotify.h>
 #endif
 
 #endif /* AWS_TRACING_MACROS_H */
