@@ -5,7 +5,6 @@
 */
 #ifndef _ITTNOTIFY_H_
 #define _ITTNOTIFY_H_
-
 /**
 @file
 @brief Public User API functions and types
