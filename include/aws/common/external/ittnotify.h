@@ -3,8 +3,8 @@
 
   SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
 */
-#ifndef _AWS_ITTNOTIFY_H_
-#define _AWS_ITTNOTIFY_H_
+#ifndef _ITTNOTIFY_H_
+#define _ITTNOTIFY_H_
 
 /**
 @file
