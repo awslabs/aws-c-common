@@ -254,7 +254,7 @@ function(aws_set_common_properties target)
     if(AWS_ENABLE_TRACING)
         target_link_libraries(${PROJECT_NAME} PRIVATE ittnotify)
     else()
-        set(INTEL_NO_ITTNOTIFY_API ON) # Disable intel notify api if tracing is not enabled
+        list(APPEND AWS_C_DEFINES_PRIVATE -DINTEL_NO_ITTNOTIFY_API) # Disable intel notify api if tracing is not enabled
     endif()
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
