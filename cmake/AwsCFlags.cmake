@@ -10,6 +10,7 @@ option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consu
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
+option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
 
 # Check for Posix Large Files Support (LFS).
 # On most 64bit systems, LFS is enabled by default.
@@ -250,6 +251,11 @@ function(aws_set_common_properties target)
         endif()
     endif()
 
+    if(AWS_ENABLE_TRACING)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ittnotify)
+    else()
+        set(INTEL_NO_ITTNOTIFY_API ON) # Disable intel notify api if tracing is not enabled
+    endif()
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
