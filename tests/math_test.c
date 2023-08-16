@@ -257,21 +257,21 @@ static int s_test_mul_u32_checked_fn(struct aws_allocator *allocator, void *ctx)
 
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 1, 0);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, ~0u, 0);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, ~0U, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 4, 5, 20);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 1234, 4321, 5332114);
 
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 1, 0xFFFF);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10000, 0xFFFF, 0xFFFF0000u);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 0xFFFF, 0xfffe0001U);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10000, 0xFFFF, 0xFFFF0000U);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
     CHECK_OVF(aws_mul_u32_checked, uint32_t, 0x10003, 0xFFFE);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
     CHECK_OVF(aws_mul_u32_checked, uint32_t, 0x1FFFF, 0x1FFFF);
-    CHECK_OVF(aws_mul_u32_checked, uint32_t, ~0u, ~0u);
+    CHECK_OVF(aws_mul_u32_checked, uint32_t, ~0U, ~0U);
 
     return 0;
 }
@@ -285,21 +285,21 @@ static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx
 #if SIZE_BITS == 32
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0u, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0U, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
 
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 1, 0xFFFF);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000u);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001U);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000U);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
     CHECK_OVF(aws_mul_size_checked, size_t, 0x10003, 0xFFFE);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
     CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFF, 0x1FFFF);
-    CHECK_OVF(aws_mul_size_checked, size_t, ~0u, ~0u);
+    CHECK_OVF(aws_mul_size_checked, size_t, ~0U, ~0U);
 #elif SIZE_BITS == 64
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);

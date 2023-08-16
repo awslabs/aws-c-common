@@ -53,7 +53,7 @@ uint16_t aws_get_cpu_group_count(void) {
         return (uint16_t)g_numa_num_configured_nodes_ptr();
     }
 
-    return 1u;
+    return 1U;
 }
 
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
@@ -242,7 +242,7 @@ int s_parse_symbol(const char *symbol, void *addr, struct aws_stack_frame_info *
     if (function_len >= (sizeof(frame->function) - 1)) {
         function_len = sizeof(frame->function) - 1;
     }
-    strncpy(frame->function, function_start, function_end - function_start);
+    strncpy(frame->function, function_start, function_len);
 
     /* find base addr for library/exe */
     Dl_info addr_info;

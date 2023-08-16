@@ -12,9 +12,11 @@
 
 AWS_PUSH_SANE_WARNING_LEVEL
 
-#define AWS_COMMON_HASH_TABLE_ITER_CONTINUE (1 << 0)
-#define AWS_COMMON_HASH_TABLE_ITER_DELETE (1 << 1)
-#define AWS_COMMON_HASH_TABLE_ITER_ERROR (1 << 2)
+enum {
+    AWS_COMMON_HASH_TABLE_ITER_CONTINUE = (1 << 0),
+    AWS_COMMON_HASH_TABLE_ITER_DELETE = (1 << 1),
+    AWS_COMMON_HASH_TABLE_ITER_ERROR = (1 << 2),
+};
 
 /**
  * Hash table data structure. This module provides an automatically resizing
