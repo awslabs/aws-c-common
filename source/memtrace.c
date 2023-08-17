@@ -124,7 +124,9 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
     }
 
     aws_atomic_fetch_add(&tracer->allocated, size);
-
+    if (AWS_ATOMIC_VAR_INTVAL(&tracer->allocated) > 5 * 1024 * 1024 * 1024) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_MEMTRACE, "waahm7 memory usage: %llu", AWS_ATOMIC_VAR_INTVAL(&tracer->allocated));
+    }
     struct alloc_info *alloc = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct alloc_info));
     AWS_FATAL_ASSERT(alloc);
     alloc->size = size;
