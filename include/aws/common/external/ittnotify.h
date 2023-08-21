@@ -5,10 +5,6 @@
 */
 #ifndef _ITTNOTIFY_H_
 #define _ITTNOTIFY_H_
-/*
- * This file has been not modified from its original version apart from adding the NOLINTBEGIN and NOLINTEND.
- * This file is not intended for public usage.
- */
 
 /**
 @file
@@ -4665,4 +4661,5 @@ ITT_STUB(ITTAPI, const char*, api_version, (void))
 #endif /* __cplusplus */
 
 #endif /* _ITTNOTIFY_PRIVATE_ */
+
 #endif /* INTEL_ITTNOTIFY_API_PRIVATE */
