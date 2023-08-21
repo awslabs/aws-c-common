@@ -250,6 +250,7 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
         endif()
     endif()
+
     if(AWS_ENABLE_TRACING)
         target_link_libraries(${PROJECT_NAME} PRIVATE ittnotify)
     else()
