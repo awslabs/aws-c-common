@@ -301,7 +301,3 @@ endif()
 
 include(CPackConfig)
 
-if(AWS_ENABLE_TRACING)
-    message("Enabling Tracing")
-    target_link_libraries(${PROJECT_NAME} PUBLIC ittnotify)
-endif()
