@@ -28,8 +28,6 @@
  *   (3) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
  */
 
-/* NOLINTBEGIN */
-
 #ifndef AWS_COMMON_EXTERNAL_CJSON_H
 #define AWS_COMMON_EXTERNAL_CJSON_H
 
@@ -304,5 +302,4 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #ifdef __cplusplus
 }
 #endif
-/* NOLINTEND */
 #endif
