@@ -3,6 +3,9 @@
 
   SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
 */
+/*
+  Amazon.com has chosen to use this file under the terms of the BSD-3-Clause license.
+*/
 #ifndef _ITTNOTIFY_H_
 #define _ITTNOTIFY_H_
 
