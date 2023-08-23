@@ -41,6 +41,9 @@ file(GLOB AWS_COMMON_HEADERS
 file (GLOB AWS_COMMON_EXTERNAL_HEADERS
         "include/aws/common/external/*.h")
 
+file (GLOB AWS_COMMON_EXTERNAL_INSTALLED_HEADERS
+        "include/aws/common/external/ittnotify.h")
+
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
         )
@@ -221,7 +224,7 @@ if (HAVE_AVX2_INTRINSICS)
 endif()
 
 # Preserve subdirectories when installing headers
-foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${GENERATED_CONFIG_HEADER} ${AWS_TEST_HEADERS})
+foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${GENERATED_CONFIG_HEADER} ${AWS_TEST_HEADERS} ${AWS_COMMON_EXTERNAL_INSTALLED_HEADERS})
     get_filename_component(HEADER_DIR ${HEADER_SRCPATH} DIRECTORY)
 # Note: We need to replace the generated include directory component first, otherwise if the build
 # directory is located inside the source tree, we'll partially rewrite the path and fail to replace it
