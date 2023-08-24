@@ -48,6 +48,8 @@ struct aws_task_scheduler {
     struct aws_priority_queue timed_queue; /* Tasks scheduled to run at specific times */
     struct aws_linked_list timed_list;     /* If timed_queue runs out of memory, further timed tests are stored here */
     struct aws_linked_list asap_list;      /* Tasks scheduled to run as soon as possible */
+    struct aws_linked_list deferment_list;
+    bool in_deferment_boundary;
 };
 
 AWS_EXTERN_C_BEGIN
@@ -104,6 +106,22 @@ void aws_task_scheduler_schedule_future(
     struct aws_task_scheduler *scheduler,
     struct aws_task *task,
     uint64_t time_to_run);
+
+/**
+ * Upon entering this boundary, all tasks scheduled will not be executed until the boundary is exited via.
+ * aws_task_scheduler_exit_deferment_boundary(). This is done in scenarios when you want users to be
+ * able to schedule, but want to ensure that their tasks are not executed before you intend.
+ * This is for preventing priority inversions in event loops.
+ */
+AWS_COMMON_API
+void aws_task_scheduler_enter_deferment_boundary(struct aws_task_scheduler *scheduler);
+
+/**
+ * Upon exiting this boundary, all tasks scheduled while inside the boundary will be allowed to execute the next time
+ * the scheduler runs its tasks.
+ */
+AWS_COMMON_API
+void aws_task_scheduler_exit_deferment_boundary(struct aws_task_scheduler *scheduler);
 
 /**
  * Removes task from the scheduler and invokes the task with the AWS_TASK_STATUS_CANCELED status.
