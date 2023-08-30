@@ -82,7 +82,7 @@ function(aws_set_common_properties target)
         endif()
 
         # Set MSVC runtime libary.
-        # Note, there are better ways of doing this if we bump our CMake minimum to 3.14+
+        # Note, if we bumped our CMake minimum to 3.14+ there are betters ways of doing this:
         # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
         if (STATIC_CRT)
             list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
@@ -224,25 +224,33 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
-    if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-        list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
-    else() # release build
+    # Use generator expressions, instead of checking ${CMAKE_BUILD_TYPE},
+    # to support multi-config generators like MSVC.
+    # See: https://cmake.org/cmake/help/v3.22/manual/cmake-buildsystem.7.html#build-configurations
+    set(_IS_DEBUG_EXPR $<CONFIG:Debug,>) # true if "Debug" or ""
+
+    list(APPEND AWS_C_DEFINES_PRIVATE $<${_IS_DEBUG_EXPR}:DEBUG_BUILD>)
+
+    if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
+        # enable except in Debug builds
+        set(_ENABLE_LTO_EXPR $<NOT:${_IS_DEBUG_EXPR}>)
+
+        # try to check whether compiler supports LTO/IPO
         if (POLICY CMP0069)
-            if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
-                cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
-                include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
-                if (ipo_check_exists)
-                    check_ipo_supported(RESULT ipo_supported)
-                    if (ipo_supported)
-                        message(STATUS "Enabling IPO/LTO for Release builds")
-                        set(AWS_ENABLE_LTO ON)
-                    else()
-                        message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
-                        set(AWS_ENABLE_LTO OFF)
-                    endif()
+            cmake_policy(SET CMP0069 NEW)
+            include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
+            if (ipo_check_exists)
+                check_ipo_supported(RESULT ipo_supported)
+                if (ipo_supported)
+                    message(STATUS "Enabling IPO/LTO for Release builds")
+                else()
+                    message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
+                    set(_ENABLE_LTO_EXPR OFF)
                 endif()
             endif()
         endif()
+    else()
+        set(_ENABLE_LTO_EXPR OFF)
     endif()
 
     if(BUILD_SHARED_LIBS)
@@ -261,7 +269,5 @@ function(aws_set_common_properties target)
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
-    if (AWS_ENABLE_LTO)
-        set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
+    set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
 endfunction()
