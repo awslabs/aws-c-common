@@ -82,7 +82,7 @@ function(aws_set_common_properties target)
         endif()
 
         # Set MSVC runtime libary.
-        # Note, if we bumped our CMake minimum to 3.14+ there are betters ways of doing this:
+        # Note: there are better ways of doing this if we bump our CMake minimum to 3.14+
         # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
         if (STATIC_CRT)
             list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
@@ -91,11 +91,9 @@ function(aws_set_common_properties target)
         endif()
 
     else()
-        lisD(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
+        list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
 
-        if (NOT CMAKE_BUILD_TYPE STREQUAL Release)
-            list(APPEND AWS_C_FLAGS -fno-omit-frame-pointer)
-        endif()
+        list(APPEND AWS_C_FLAGS $<$<NOT:$<CONFIG:Release>>:-fno-omit-frame-pointer>)
 
         if(AWS_WARNINGS_ARE_ERRORS)
             list(APPEND AWS_C_FLAGS -Werror)
@@ -224,9 +222,6 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
-    # Note: using $<CONFIG> generator expression, instead of checking ${CMAKE_BUILD_TYPE},
-    # to support multi-config generators like Visual Studio.
-    # See: https://cmake.org/cmake/help/v3.22/manual/cmake-buildsystem.7.html#build-configurations
     list(APPEND AWS_C_DEFINES_PRIVATE $<$<CONFIG:Debug>:-DDEBUG_BUILD>)
 
     if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
