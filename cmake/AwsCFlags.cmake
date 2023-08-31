@@ -224,16 +224,14 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
-    # Use generator expressions, instead of checking ${CMAKE_BUILD_TYPE},
-    # to support multi-config generators like MSVC.
+    # Note: using $<CONFIG> generator expression, instead of checking ${CMAKE_BUILD_TYPE},
+    # to support multi-config generators like Visual Studio.
     # See: https://cmake.org/cmake/help/v3.22/manual/cmake-buildsystem.7.html#build-configurations
-    set(_IS_DEBUG_EXPR $<CONFIG:Debug,>) # true if "Debug" or ""
-
-    list(APPEND AWS_C_DEFINES_PRIVATE $<${_IS_DEBUG_EXPR}:DEBUG_BUILD>)
+    list(APPEND AWS_C_DEFINES_PRIVATE $<$<CONFIG:Debug>:-DDEBUG_BUILD>)
 
     if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
         # enable except in Debug builds
-        set(_ENABLE_LTO_EXPR $<NOT:${_IS_DEBUG_EXPR}>)
+        set(_ENABLE_LTO_EXPR $<NOT:$<CONFIG:Debug>>)
 
         # try to check whether compiler supports LTO/IPO
         if (POLICY CMP0069)
