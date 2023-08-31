@@ -82,7 +82,7 @@ function(aws_set_common_properties target)
         endif()
 
         # Set MSVC runtime libary.
-        # Note: there are better ways of doing this if we bump our CMake minimum to 3.14+
+        # Note: there are other ways of doing this if we bump our CMake minimum to 3.14+
         # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
         if (STATIC_CRT)
             list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
