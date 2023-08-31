@@ -222,7 +222,7 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
-    list(APPEND AWS_C_DEFINES_PRIVATE $<$<CONFIG:Debug>:-DDEBUG_BUILD>)
+    list(APPEND AWS_C_DEFINES_PRIVATE $<$<CONFIG:Debug>:DEBUG_BUILD>)
 
     if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
         # enable except in Debug builds
