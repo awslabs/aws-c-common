@@ -42,7 +42,7 @@ Or on windows,
 * -DENABLE_SANITIZERS=ON - Enables gcc/clang sanitizers, by default this adds -fsanitizer=address,undefined to the compile flags for projects that call aws_add_sanitizers.
 * -DENABLE_FUZZ_TESTS=ON - Includes fuzz tests in the unit test suite. Off by default, because fuzz tests can take a long time. Set -DFUZZ_TESTS_MAX_TIME=N to determine how long to run each fuzz test (default 60s).
 * -DCMAKE_INSTALL_PREFIX=/path/to/install - Standard way of installing to a user defined path. If specified when configuring aws-c-common, ensure the same prefix is specified when configuring other aws-c-* SDKs.
-* -DSTATIC_CRT=ON - On MSVC, use /MT(d) to link MSVCRT
+* -DAWS_STATIC_MSVC_RUNTIME_LIBRARY=ON - Windows-only. Turn ON to use the statically-linked MSVC runtime lib, instead of the DLL.
 
 ### API style and conventions
 Every API has a specific set of styles and conventions. We'll outline them here. These conventions are followed in every
@@ -197,7 +197,7 @@ Example:
     Not this:
 
         typedef int(*fn_name_fn)(void *);
-        
+
 * If a callback may be async, then always have it be async.
   Callbacks that are sometimes async and sometimes sync are hard to code around and lead to bugs
   (see [this blog post](https://blog.ometer.com/2011/07/24/callbacks-synchronous-and-asynchronous/)).
@@ -239,7 +239,7 @@ platform, you have more liberty on this.
 * When checking more than one error condition, check and log each condition separately with a unique message.
 
     Do this:
-    
+
         if (options->callback == NULL) {
             AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - callback is null");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -251,7 +251,7 @@ platform, you have more liberty on this.
         }
 
     Not this:
-    
+
         if (options->callback == NULL || options->allocator == NULL) {
             AWS_LOGF_ERROR(AWS_LS_SOME_SUBJECT, "Invalid options - something is null");
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);

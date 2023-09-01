@@ -11,7 +11,8 @@ option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such 
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
 option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
-option(STATIC_CRT "Windows-specific option to specify static/dynamic run-time library" OFF)
+option(AWS_STATIC_MSVC_RUNTIME_LIBRARY "Windows-only. Turn ON to use the statically-linked MSVC runtime lib, instead of the DLL" OFF)
+option(STATIC_CRT "Deprecated. Use AWS_STATIC_MSVC_RUNTIME_LIBRARY instead" OFF)
 
 # Check for Posix Large Files Support (LFS).
 # On most 64bit systems, LFS is enabled by default.
@@ -84,7 +85,7 @@ function(aws_set_common_properties target)
         # Set MSVC runtime libary.
         # Note: there are other ways of doing this if we bump our CMake minimum to 3.14+
         # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
-        if (STATIC_CRT)
+        if (AWS_STATIC_MSVC_RUNTIME_LIBRARY OR STATIC_CRT)
             list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
         else()
             list(APPEND AWS_C_FLAGS "/MD$<$<CONFIG:Debug>:d>")
