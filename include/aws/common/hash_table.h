@@ -103,8 +103,7 @@ typedef uint64_t(aws_hash_fn)(const void *key);
  * keys, but note that the same type is used for a function that compares
  * two hash table values in aws_hash_table_eq.
  *
- * Equality functions used in a hash table must be symmetric (i.e., a == b if
- * and only if b == a), and must be consistent with the hash function in use.
+ * Equality functions used in a hash table must be be reflexive (a == a), symmetric (a == b => b == a), transitive (a == b, b == c => a == c) and consistent (result does not change with time).
  */
 typedef bool(aws_hash_callback_eq_fn)(const void *a, const void *b);
 
