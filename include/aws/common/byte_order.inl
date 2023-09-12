@@ -11,6 +11,7 @@
 
 #ifdef _WIN32
 #    include <stdlib.h>
+#    include <winsock.h>
 #else
 #    include <netinet/in.h>
 #endif /* _MSC_VER */
