@@ -62,7 +62,7 @@ file (GLOB AWS_COMMON_EXTERNAL_SRC
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
-    set(WINDOWS_KERNEL_LIB "Kernel32" CACHE STRING "The name of the kernel library to link against (default: Kernel32)")
+    set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
 
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/windows/*"
@@ -81,7 +81,7 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
+    list(APPEND PLATFORM_LIBS bcrypt ${WINDOWS_KERNEL_LIB} ws2_32 shlwapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"

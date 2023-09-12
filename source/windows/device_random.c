@@ -7,7 +7,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/thread.h>
 
-#include <Windows.h>
+#include <windows.h>
 #include <bcrypt.h>
 
 static BCRYPT_ALG_HANDLE s_alg_handle = NULL;

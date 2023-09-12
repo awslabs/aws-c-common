@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <Windows.h>
+#include <windows.h>
 #include <aws/common/clock.h>
 
 static const uint64_t FILE_TIME_TO_NS = 100;

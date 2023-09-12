@@ -6,7 +6,7 @@
 #include <aws/common/rw_lock.h>
 #include <aws/common/thread.h>
 
-#include <Windows.h>
+#include <windows.h>
 #include <synchapi.h>
 
 /* Convert a string from a macro to a wide string */
