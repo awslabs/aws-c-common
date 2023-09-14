@@ -11,7 +11,6 @@
 #include <aws/common/string.h>
 
 #include <windows.h>
-#include <winnt.h>
 
 #include <inttypes.h>
 
