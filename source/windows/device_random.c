@@ -7,8 +7,8 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/thread.h>
 
-#include <windows.h>
 #include <bcrypt.h>
+#include <windows.h>
 
 static BCRYPT_ALG_HANDLE s_alg_handle = NULL;
 static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
