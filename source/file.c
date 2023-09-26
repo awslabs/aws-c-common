@@ -38,48 +38,59 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
 
     AWS_ZERO_STRUCT(*out_buf);
     FILE *fp = aws_fopen(filename, "rb");
-
-    if (fp) {
-        if (fseek(fp, 0L, SEEK_END)) {
-            int errno_value = errno; /* Always cache errno before potential side-effect */
-            AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to seek file %s with errno %d", filename, errno_value);
-            fclose(fp);
-            return aws_translate_and_raise_io_error(errno_value);
-        }
-
-        size_t allocation_size = (size_t)ftell(fp) + 1;
-        /* Tell the user that we allocate here and if success they're responsible for the free. */
-        if (aws_byte_buf_init(out_buf, alloc, allocation_size)) {
-            fclose(fp);
-            return AWS_OP_ERR;
-        }
-
-        /* Ensure compatibility with null-terminated APIs, but don't consider
-         * the null terminator part of the length of the payload */
-        out_buf->len = out_buf->capacity - 1;
-        out_buf->buffer[out_buf->len] = 0;
-
-        if (fseek(fp, 0L, SEEK_SET)) {
-            int errno_value = errno; /* Always cache errno before potential side-effect */
-            AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to seek file %s with errno %d", filename, errno_value);
-            aws_byte_buf_clean_up(out_buf);
-            fclose(fp);
-            return aws_translate_and_raise_io_error(errno_value);
-        }
-
-        size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
-        int errno_cpy = errno; /* Always cache errno before potential side-effect */
-        fclose(fp);
-        if (read < out_buf->len) {
-            AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to read file %s with errno %d", filename, errno_cpy);
-            aws_secure_zero(out_buf->buffer, out_buf->len);
-            aws_byte_buf_clean_up(out_buf);
-            return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
-        }
-
-        return AWS_OP_SUCCESS;
+    if (fp == NULL) {
+        goto error;
     }
 
+    int64_t len64 = 0;
+    if (aws_file_get_length(fp, &len64)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to get file length. file:'%s' error:%s",
+            filename,
+            aws_error_name(aws_last_error()));
+        goto error;
+    }
+
+    if (len64 >= SIZE_MAX) {
+        aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: File too large to read into memory. file:'%s' error:%s",
+            filename,
+            aws_error_name(aws_last_error()));
+        goto error;
+    }
+
+    size_t allocation_size = (size_t)len64 + 1;
+    aws_byte_buf_init(out_buf, alloc, allocation_size);
+
+    /* Ensure compatibility with null-terminated APIs, but don't consider
+     * the null terminator part of the length of the payload */
+    out_buf->len = out_buf->capacity - 1;
+    out_buf->buffer[out_buf->len] = 0;
+
+    size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
+    if (read < out_buf->len) {
+        int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
+        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed reading file:'%s' errno:%d aws-error:%s",
+            filename,
+            errno_value,
+            aws_error_name(aws_last_error()));
+        goto error;
+    }
+
+    fclose(fp);
+    return AWS_OP_SUCCESS;
+
+error:
+    if (fp) {
+        fclose(fp);
+    }
+    aws_byte_buf_clean_up_secure(out_buf);
     return AWS_OP_ERR;
 }
 
