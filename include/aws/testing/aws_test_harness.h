@@ -474,10 +474,11 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
          * but aws_mem_tracer_dump() needs a valid logger to be active */
         aws_logger_set(&err_logger);
 
+        const size_t leaked_allocations = aws_mem_tracer_count(allocator);
         const size_t leaked_bytes = aws_mem_tracer_bytes(allocator);
         if (leaked_bytes) {
             aws_mem_tracer_dump(allocator);
-            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes", leaked_bytes);
+            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes %zu allocations", leaked_bytes, leaked_allocations);
             goto fail;
         }
 
