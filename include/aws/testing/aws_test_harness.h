@@ -75,9 +75,11 @@ static int total_skip;
 
 #define SUCCESS (0)
 #define FAILURE (-1)
-/* The skip code returned to ctest to indicate the test is skipped. Refer to cmake doc:
- * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html */
-#define SKIP (1)
+/* The exit code returned to ctest to indicate the test is skipped. Refer to cmake doc:
+ * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html
+ * The value has no special meaning, it's just an arbitrary exit code reducing the chance of clashing with exit codes
+ * that may be returned from various tools (e.g. sanitizer). */
+#define SKIP (103)
 
 #define POSTSKIP_INTERNAL()                                                                                            \
     do {                                                                                                               \
