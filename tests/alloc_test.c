@@ -148,7 +148,10 @@ static void s_threaded_alloc_worker(void *user_data) {
     }
 }
 
-static void s_thread_test(struct aws_allocator *allocator, void (*thread_fn)(void *), struct aws_allocator *test_allocator) {
+static void s_thread_test(
+    struct aws_allocator *allocator,
+    void (*thread_fn)(void *),
+    struct aws_allocator *test_allocator) {
     const struct aws_thread_options *thread_options = aws_default_thread_options();
     struct aws_thread threads[NUM_TEST_THREADS];
     struct allocator_thread_test_data thread_data[NUM_TEST_THREADS];
