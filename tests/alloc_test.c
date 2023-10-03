@@ -186,7 +186,7 @@ static int s_sba_threaded_allocs_and_frees(struct aws_allocator *allocator, void
 }
 AWS_TEST_CASE(sba_threaded_allocs_and_frees, s_sba_threaded_allocs_and_frees)
 
-static void s_sba_threaded_realloc_worker(void *user_data) {
+static void s_threaded_realloc_worker(void *user_data) {
     struct allocator_thread_test_data *thread_data = user_data;
     struct aws_allocator *test_allocator = thread_data->test_allocator;
     void *alloc = NULL;
@@ -215,7 +215,7 @@ static int s_sba_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
 
     struct aws_allocator *sba = aws_small_block_allocator_new(allocator, true);
 
-    s_thread_test(allocator, s_sba_threaded_realloc_worker, sba);
+    s_thread_test(allocator, s_threaded_realloc_worker, sba);
 
     aws_small_block_allocator_destroy(sba);
 
@@ -331,7 +331,7 @@ static int s_default_threaded_reallocs(struct aws_allocator *allocator, void *ct
     (void)ctx;
     srand(15);
 
-    s_thread_test(allocator, s_sba_threaded_realloc_worker, allocator);
+    s_thread_test(allocator, s_threaded_realloc_worker, allocator);
 
     return 0;
 }
