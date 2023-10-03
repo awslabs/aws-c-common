@@ -343,7 +343,6 @@ static int s_default_threaded_allocs_and_frees(struct aws_allocator *allocator, 
 
     s_thread_test(allocator, s_threaded_alloc_worker, allocator);
 
-
     return 0;
 }
 AWS_TEST_CASE(default_threaded_allocs_and_frees, s_default_threaded_allocs_and_frees)
