@@ -12,9 +12,6 @@ struct aws_system_environment *aws_system_environment_load(struct aws_allocator 
         goto error;
     }
 
-    aws_system_environment_load_virtualization_vendor_impl(env);
-    aws_system_environment_load_virtualization_product_name_impl(env);
-
     env->os = aws_get_platform_build_os();
     env->cpu_count = aws_system_info_processor_count();
     env->cpu_group_count = aws_get_cpu_group_count();

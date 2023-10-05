@@ -22,8 +22,4 @@ struct aws_system_environment {
 int aws_system_environment_load_platform_impl(struct aws_system_environment *env);
 void aws_system_environment_destroy_platform_impl(struct aws_system_environment *env);
 
-
-void aws_system_environment_load_virtualization_vendor_impl(struct aws_system_environment *env);
-void aws_system_environment_load_virtualization_product_name_impl(struct aws_system_environment *env);
-
 #endif /* AWS_COMMON_SYSTEM_INFO_PRIV_H */
