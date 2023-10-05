@@ -15,3 +15,7 @@ void aws_system_environment_destroy_platform_impl(struct aws_system_environment 
 void aws_system_environment_load_virtualization_vendor_impl(struct aws_system_environment *env) {
     aws_byte_buf_init_from_file(&env->virtualization_vendor, env->allocator, "/sys/devices/virtual/dmi/id/sys_vendor");
 }
+
+void aws_system_environment_load_virtualization_product_name_impl(struct aws_system_environment *env) {
+    aws_byte_buf_init_from_file(&env->virtualization_vendor, env->allocator, "/sys/devices/virtual/dmi/id/product_name");
+}

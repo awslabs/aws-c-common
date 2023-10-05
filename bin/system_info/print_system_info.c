@@ -23,6 +23,8 @@ int main(void) {
 
     struct aws_byte_cursor virtualization_vendor = aws_system_environment_get_virtualization_vendor(env);
     fprintf(stdout, "  'virtualization vendor': '" PRInSTR "'\n", (int)virtualization_vendor.len, virtualization_vendor.ptr);
+    struct aws_byte_cursor product_name = aws_system_environment_get_virtualization_product_name(env);
+    fprintf(stdout, "  'product name': '" PRInSTR "'\n", (int)product_name.len, product_name.ptr);
     fprintf(stdout, "  'number of processors': '%lu'\n", (unsigned long)aws_system_environment_get_processor_count(env));
     size_t numa_nodes = aws_system_environment_get_cpu_group_count(env);
 

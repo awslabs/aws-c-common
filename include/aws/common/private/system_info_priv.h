@@ -12,6 +12,7 @@
 struct aws_system_environment {
     struct aws_allocator *allocator;
     struct aws_byte_buf virtualization_vendor;
+    struct aws_byte_buf product_name;
     enum aws_platform_os os;
     size_t cpu_count;
     size_t cpu_group_count;
@@ -23,5 +24,6 @@ void aws_system_environment_destroy_platform_impl(struct aws_system_environment 
 
 
 void aws_system_environment_load_virtualization_vendor_impl(struct aws_system_environment *env);
+void aws_system_environment_load_virtualization_product_name_impl(struct aws_system_environment *env);
 
 #endif /* AWS_COMMON_SYSTEM_INFO_PRIV_H */
