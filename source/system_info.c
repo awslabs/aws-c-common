@@ -33,7 +33,8 @@ void aws_system_environment_destroy(struct aws_system_environment *env) {
 }
 
 struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(struct aws_system_environment *env) {
-    return aws_byte_cursor_from_buf(&env->virtualization_vendor);
+    struct aws_byte_cursor vendor_string = aws_byte_cursor_from_buf(&env->virtualization_vendor);
+    return aws_byte_cursor_trim_pred(&vendor_string, aws_char_is_space);
 }
 
 size_t aws_system_environment_get_processor_count(struct aws_system_environment *env) {
