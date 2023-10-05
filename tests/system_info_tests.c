@@ -12,7 +12,7 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
     (void)allocator;
     (void)ctx;
 
-    size_t processor_count = aws_system_environment_get_processor_count();
+    size_t processor_count = aws_system_info_processor_count();
     /* I think this is a fairly reasonable assumption given the circumstances
      * (you know this test is part of a program
      * that must be running on at least one core).... */
@@ -119,7 +119,7 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
     (void)ctx;
 
     aws_common_library_init(allocator);
-    size_t processor_count = aws_system_environment_get_processor_count();
+    size_t processor_count = aws_system_info_processor_count();
     ASSERT_TRUE(processor_count > 0);
 
     uint16_t group_count = aws_get_cpu_group_count();
