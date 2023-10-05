@@ -21,7 +21,25 @@ struct aws_cpu_info {
     bool suspected_hyper_thread;
 };
 
+struct aws_system_environment;
+
 AWS_EXTERN_C_BEGIN
+
+AWS_COMMON_API
+struct aws_system_environment *aws_system_environment_load(struct aws_allocator *allocator);
+
+AWS_COMMON_API
+void aws_system_environment_destroy(struct aws_system_environment *env);
+
+
+AWS_COMMON_API
+struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(struct aws_system_environment *env);
+
+AWS_COMMON_API
+size_t aws_system_environment_get_processor_count(struct aws_system_environment *env);
+
+AWS_COMMON_API
+size_t aws_system_environment_get_cpu_group_count(struct aws_system_environment *env);
 
 /* Returns the OS this was built under */
 AWS_COMMON_API

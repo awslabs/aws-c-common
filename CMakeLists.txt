@@ -108,6 +108,8 @@ else ()
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
         list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # just for the moment
+
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
         list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
@@ -298,6 +300,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
 if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
+        add_subdirectory(bin/system_info)
     endif()
 endif()
 
