@@ -73,14 +73,25 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
     size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
     if (read < out_buf->len) {
         int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
-        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO,
-            "static: Failed reading file:'%s' errno:%d aws-error:%s",
-            filename,
-            errno_value,
-            aws_error_name(aws_last_error()));
-        goto error;
+        if (errno_value != 0) {
+            aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_IO,
+                "static: Failed reading file:'%s' errno:%d aws-error:%s",
+                filename,
+                errno_value,
+                aws_error_name(aws_last_error()));
+            goto error;
+        } else {
+            AWS_LOGF_WARN(
+                AWS_LS_COMMON_IO,
+                "static: reading file:'%s' reports longer length %d than actually reading from it: %d. This is not "
+                "necessarily an error as devices will usually report a page for length regardless of actual length.",
+                filename,
+                (int)read,
+                (int)out_buf->len);
+            out_buf->len = read;
+        }
     }
 
     fclose(fp);
