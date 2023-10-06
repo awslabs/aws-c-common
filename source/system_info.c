@@ -28,15 +28,14 @@ void aws_system_environment_destroy(struct aws_system_environment *env) {
         aws_system_environment_destroy_platform_impl(env);
         aws_mem_release(env->allocator, env);
     }
-
 }
 
-struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(struct aws_system_environment *env) {
+struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(const struct aws_system_environment *env) {
     struct aws_byte_cursor vendor_string = aws_byte_cursor_from_buf(&env->virtualization_vendor);
     return aws_byte_cursor_trim_pred(&vendor_string, aws_char_is_space);
 }
 
-struct aws_byte_cursor aws_system_environment_get_virtualization_product_name(struct aws_system_environment *env) {
+struct aws_byte_cursor aws_system_environment_get_virtualization_product_name(const struct aws_system_environment *env) {
     struct aws_byte_cursor product_name_str = aws_byte_cursor_from_buf(&env->product_name);
     return aws_byte_cursor_trim_pred(&product_name_str, aws_char_is_space);
 }

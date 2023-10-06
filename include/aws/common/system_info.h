@@ -33,10 +33,10 @@ void aws_system_environment_destroy(struct aws_system_environment *env);
 
 
 AWS_COMMON_API
-struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(struct aws_system_environment *env);
+struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(const struct aws_system_environment *env);
 
 AWS_COMMON_API
-struct aws_byte_cursor aws_system_environment_get_virtualization_product_name(struct aws_system_environment *env);
+struct aws_byte_cursor aws_system_environment_get_virtualization_product_name(const struct aws_system_environment *env);
 
 AWS_COMMON_API
 size_t aws_system_environment_get_processor_count(struct aws_system_environment *env);
