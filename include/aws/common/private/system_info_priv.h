@@ -16,7 +16,7 @@ struct aws_system_environment {
     enum aws_platform_os os;
     size_t cpu_count;
     size_t cpu_group_count;
-    void *additional_impl_data;
+    void *impl;
 };
 
 /**
