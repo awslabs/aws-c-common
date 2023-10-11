@@ -70,6 +70,7 @@ if (WIN32)
 
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
+        "source/platform_fallback_stubs/system_info.c"
         )
 
     if (MSVC)
