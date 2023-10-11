@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/common.h>
 #include <aws/common/byte_buf.h>
+#include <aws/common/common.h>
 
 AWS_PUSH_SANE_WARNING_LEVEL
 
