@@ -304,6 +304,7 @@ add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
 add_test_case(test_platform_build_os)
 add_test_case(test_sanity_check_numa_discovery)
+add_test_case(test_sanity_check_environment_loader)
 
 add_test_case(test_realloc_fallback)
 add_test_case(test_realloc_passthrough)

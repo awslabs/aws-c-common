@@ -16,10 +16,3 @@ target_include_directories(${SI_PROJECT_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(${SI_PROJECT_NAME} PRIVATE aws-c-common)
-
-install(TARGETS ${SI_PROJECT_NAME}
-        EXPORT ${SI_PROJECT_NAME}-targets
-        COMPONENT Runtime
-        RUNTIME
-        DESTINATION bin
-        COMPONENT Runtime)
