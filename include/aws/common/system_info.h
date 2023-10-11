@@ -7,6 +7,7 @@
  */
 
 #include <aws/common/common.h>
+#include <aws/common/byte_buf.h>
 
 AWS_PUSH_SANE_WARNING_LEVEL
 

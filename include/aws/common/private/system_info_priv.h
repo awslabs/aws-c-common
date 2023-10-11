@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_SYSTEM_INFO_PRIV_H
-#define AWS_COMMON_SYSTEM_INFO_PRIV_H
+#ifndef AWS_COMMON_PRIVATE_SYSTEM_INFO_PRIV_H
+#define AWS_COMMON_PRIVATE_SYSTEM_INFO_PRIV_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
@@ -33,4 +33,4 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
  */
 void aws_system_environment_destroy_platform_impl(struct aws_system_environment *env);
 
-#endif /* AWS_COMMON_SYSTEM_INFO_PRIV_H */
+#endif // AWS_COMMON_PRIVATE_SYSTEM_INFO_PRIV_H
