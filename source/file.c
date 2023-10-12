@@ -44,7 +44,8 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
     return file;
 }
 
-static int s_byte_buf_init_from_file(
+/* Helper function used by aws_byte_buf_init_from_file() and aws_byte_buf_init_from_file_with_size_hint() */
+static int s_byte_buf_init_from_file_impl(
     struct aws_byte_buf *out_buf,
     struct aws_allocator *alloc,
     const char *filename,
@@ -142,7 +143,7 @@ error:
 }
 
 int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename) {
-    return s_byte_buf_init_from_file(out_buf, alloc, filename, true /*use_file_size_as_hint*/, 0 /*size_hint*/);
+    return s_byte_buf_init_from_file_impl(out_buf, alloc, filename, true /*use_file_size_as_hint*/, 0 /*size_hint*/);
 }
 
 int aws_byte_buf_init_from_file_with_size_hint(
@@ -151,7 +152,7 @@ int aws_byte_buf_init_from_file_with_size_hint(
     const char *filename,
     size_t size_hint) {
 
-    return s_byte_buf_init_from_file(out_buf, alloc, filename, false /*use_file_size_as_hint*/, size_hint);
+    return s_byte_buf_init_from_file_impl(out_buf, alloc, filename, false /*use_file_size_as_hint*/, size_hint);
 }
 
 bool aws_is_any_directory_separator(char value) {
