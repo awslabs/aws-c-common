@@ -62,39 +62,43 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
         goto error;
     }
 
+    /*
+     * This number is usually correct, but in cases of device files that don't correspond to storage on disk,
+     * it may just be the size of a page. Go ahead and use it as a good hint of how much to allocate initially,
+     * but otherwise don't rely on it.
+     */
     size_t allocation_size = (size_t)len64 + 1;
     aws_byte_buf_init(out_buf, alloc, allocation_size);
 
-    /* Ensure compatibility with null-terminated APIs, but don't consider
-     * the null terminator part of the length of the payload */
-    out_buf->len = out_buf->capacity - 1;
-    out_buf->buffer[out_buf->len] = 0;
-
-    size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
-    if (read < out_buf->len) {
-        int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
-        if (errno_value != 0) {
-            aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
-            AWS_LOGF_ERROR(
-                AWS_LS_COMMON_IO,
-                "static: Failed reading file:'%s' errno:%d aws-error:%s",
-                filename,
-                errno_value,
-                aws_error_name(aws_last_error()));
-            goto error;
-        } else {
-            AWS_LOGF_WARN(
-                AWS_LS_COMMON_IO,
-                "static: reading file:'%s' reports longer length %d than actually reading from it: %d. This is not "
-                "necessarily an error as devices will usually report a page for length regardless of actual length.",
-                filename,
-                (int)read,
-                (int)out_buf->len);
-            out_buf->len = read;
+    size_t read = -1;
+    size_t total_read = 0;
+    do {
+        if (total_read == out_buf->capacity) {
+            /* just add allocation size space to read some more. It's not perfect but it's plenty good. */
+            aws_byte_buf_reserve_relative(out_buf, allocation_size);
         }
+        read = fread(out_buf->buffer + out_buf->len, 1, out_buf->capacity - out_buf->len, fp);
+        out_buf->len += read;
+        total_read += read;
+    } while (read > 0);
+
+    int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
+    if (errno_value != 0) {
+        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed reading file:'%s' errno:%d aws-error:%s",
+            filename,
+            errno_value,
+            aws_error_name(aws_last_error()));
+        goto error;
     }
 
     fclose(fp);
+    /* write the NULL terminator out. */
+    aws_byte_buf_write_u8(out_buf, 0x00);
+    /* we wrote the NULL terminator, but don't include it in the length. */
+    out_buf->len -= 1;
     return AWS_OP_SUCCESS;
 
 error:

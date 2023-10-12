@@ -4,13 +4,14 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-
 #include <aws/common/byte_buf.h>
+#include <aws/common/ref_count.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
 
 struct aws_system_environment {
     struct aws_allocator *allocator;
+    struct aws_ref_count ref_count;
     struct aws_byte_buf virtualization_vendor;
     struct aws_byte_buf product_name;
     enum aws_platform_os os;

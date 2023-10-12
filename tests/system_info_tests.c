@@ -178,7 +178,7 @@ static int s_test_sanity_check_environment_loader(struct aws_allocator *allocato
     struct aws_byte_cursor virt_product = aws_system_environment_get_virtualization_product_name(env);
     ASSERT_TRUE(aws_byte_cursor_is_valid(&virt_product));
 
-    aws_system_environment_destroy(env);
+    aws_system_environment_release(env);
 
     aws_common_library_clean_up();
     return 0;

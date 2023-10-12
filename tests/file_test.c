@@ -439,3 +439,31 @@ static int s_test_normalize_windows_directory_separator(struct aws_allocator *al
 }
 
 AWS_TEST_CASE(test_normalize_windows_directory_separator, s_test_normalize_windows_directory_separator);
+
+static int s_test_byte_buf_file_read(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    const char *test_string = "This is a message that's going to test a read loop.";
+    struct aws_byte_buf test_buf = aws_byte_buf_from_c_str(test_string);
+    struct aws_string *test_file = aws_string_new_from_c_str(allocator, "test_file.txt");
+    struct aws_string *test_file_mode = aws_string_new_from_c_str(allocator, "w");
+
+    FILE *output_file = aws_fopen("test_file", "w");
+    ASSERT_NOT_NULL(output_file);
+    ASSERT_UINT_EQUALS(test_buf.len, fwrite(test_buf.buffer, 1, test_buf.len, output_file));
+    fclose(output_file);
+
+    struct aws_byte_buf output_buf;
+    AWS_ZERO_STRUCT(output_buf);
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file(&output_buf, allocator, "test_file"));
+    aws_file_delete(test_file);
+    ASSERT_BIN_ARRAYS_EQUALS(test_buf.buffer, test_buf.len, output_buf.buffer, output_buf.len);
+
+    aws_byte_buf_clean_up(&output_buf);
+    aws_string_destroy(test_file_mode);
+    aws_string_destroy(test_file);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_byte_buf_file_read, s_test_byte_buf_file_read);

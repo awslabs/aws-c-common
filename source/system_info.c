@@ -6,9 +6,19 @@
 
 #include <aws/common/logging.h>
 
+void s_destroy_env(void *arg) {
+    struct aws_system_environment *env = arg;
+
+    if (env) {
+        aws_system_environment_destroy_platform_impl(env);
+        aws_mem_release(env->allocator, env);
+    }
+}
+
 struct aws_system_environment *aws_system_environment_load(struct aws_allocator *allocator) {
     struct aws_system_environment *env = aws_mem_calloc(allocator, 1, sizeof(struct aws_system_environment));
     env->allocator = allocator;
+    aws_ref_count_init(&env->ref_count, env, s_destroy_env);
 
     if (aws_system_environment_load_platform_impl(env)) {
         AWS_LOGF_ERROR(
@@ -36,16 +46,17 @@ struct aws_system_environment *aws_system_environment_load(struct aws_allocator 
 
     return env;
 error:
-    aws_mem_release(allocator, env);
-
+    s_destroy_env(env);
     return NULL;
 }
 
-void aws_system_environment_destroy(struct aws_system_environment *env) {
-    if (env) {
-        aws_system_environment_destroy_platform_impl(env);
-        aws_mem_release(env->allocator, env);
-    }
+struct aws_system_environment *aws_system_environment_acquire(struct aws_system_environment *env) {
+    aws_ref_count_acquire(&env->ref_count);
+    return env;
+}
+
+void aws_system_environment_release(struct aws_system_environment *env) {
+    aws_ref_count_release(&env->ref_count);
 }
 
 struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(const struct aws_system_environment *env) {
@@ -64,6 +75,6 @@ size_t aws_system_environment_get_processor_count(struct aws_system_environment 
 }
 
 AWS_COMMON_API
-size_t aws_system_environment_get_cpu_group_count(struct aws_system_environment *env) {
+size_t aws_system_environment_get_cpu_group_count(const struct aws_system_environment *env) {
     return env->cpu_group_count;
 }

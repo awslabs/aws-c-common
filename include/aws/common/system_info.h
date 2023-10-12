@@ -34,7 +34,10 @@ AWS_COMMON_API
 struct aws_system_environment *aws_system_environment_load(struct aws_allocator *allocator);
 
 AWS_COMMON_API
-void aws_system_environment_destroy(struct aws_system_environment *env);
+struct aws_system_environment *aws_system_environment_acquire(struct aws_system_environment *env);
+
+AWS_COMMON_API
+void aws_system_environment_release(struct aws_system_environment *env);
 
 /**
  * Returns the virtualization vendor for the specified compute environment, e.g. "Xen, Amazon EC2, etc..."
@@ -62,7 +65,7 @@ size_t aws_system_environment_get_processor_count(struct aws_system_environment 
  * Returns the number of separate cpu groupings (multi-socket configurations or NUMA).
  */
 AWS_COMMON_API
-size_t aws_system_environment_get_cpu_group_count(struct aws_system_environment *env);
+size_t aws_system_environment_get_cpu_group_count(const struct aws_system_environment *env);
 
 /* Returns the OS this was built under */
 AWS_COMMON_API
