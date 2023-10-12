@@ -11,16 +11,15 @@
 
 #include <errno.h>
 
-/* For "special files", there's no point querying file size before reading.
+/* For "special files", the OS often lies about size.
  * For example, on Amazon Linux 2:
  * /proc/cpuinfo: size is 0, but contents are several KB of data.
  * /sys/devices/virtual/dmi/id/product_name: size is 4096, but contents are "c5.2xlarge"
  *
- * Therefore, let users pass a hint for the buffer's initial size,
- * and grow the buffer as necessary as we read until EOF.
+ * Therefore, we may need to grow the buffer as we read until EOF.
  * This is the min/max step size for growth. */
-#define MIN_BUFFER_GROWTH_READING_SPECIAL_FILES 32
-#define MAX_BUFFER_GROWTH_READING_SPECIAL_FILES 4096
+#define MIN_BUFFER_GROWTH_READING_FILES 32
+#define MAX_BUFFER_GROWTH_READING_FILES 4096
 
 FILE *aws_fopen(const char *file_path, const char *mode) {
     if (!file_path || strlen(file_path) == 0) {
@@ -90,8 +89,8 @@ static int s_byte_buf_init_from_file(
         /* Expand buffer if necessary (at a reasonable rate) */
         if (out_buf->len == out_buf->capacity) {
             size_t additional_capacity = out_buf->capacity;
-            additional_capacity = aws_max_size(MIN_BUFFER_GROWTH_READING_SPECIAL_FILES, additional_capacity);
-            additional_capacity = aws_min_size(MAX_BUFFER_GROWTH_READING_SPECIAL_FILES, additional_capacity);
+            additional_capacity = aws_max_size(MIN_BUFFER_GROWTH_READING_FILES, additional_capacity);
+            additional_capacity = aws_min_size(MAX_BUFFER_GROWTH_READING_FILES, additional_capacity);
             if (aws_byte_buf_reserve_relative(out_buf, additional_capacity)) {
                 AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to grow buffer for file:'%s'", filename);
                 goto error;
@@ -146,7 +145,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
     return s_byte_buf_init_from_file(out_buf, alloc, filename, true /*use_file_size_as_hint*/, 0 /*size_hint*/);
 }
 
-int aws_byte_buf_init_from_special_file(
+int aws_byte_buf_init_from_file_with_size_hint(
     struct aws_byte_buf *out_buf,
     struct aws_allocator *alloc,
     const char *filename,

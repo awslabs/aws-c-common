@@ -462,29 +462,29 @@ static int s_create_file_then_read_it(struct aws_allocator *allocator, struct aw
     ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
     aws_byte_buf_clean_up(&buf);
 
-    /* now we check aws_byte_buf_init_from_special_file() with different size_hints */
+    /* now check aws_byte_buf_init_from_file_with_size_hint() ... */
 
     /* size_hint more then big enough */
     size_t size_hint = contents.len * 2;
-    ASSERT_SUCCESS(aws_byte_buf_init_from_special_file(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
     ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
     aws_byte_buf_clean_up(&buf);
 
     /* size_hint not big enough for null-terminator */
     size_hint = contents.len;
-    ASSERT_SUCCESS(aws_byte_buf_init_from_special_file(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
     ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
     aws_byte_buf_clean_up(&buf);
 
     /* size_hint 0 */
     size_hint = 0;
-    ASSERT_SUCCESS(aws_byte_buf_init_from_special_file(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
     ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
     aws_byte_buf_clean_up(&buf);
 
     /* size_hint 1 */
     size_hint = 1;
-    ASSERT_SUCCESS(aws_byte_buf_init_from_special_file(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
     ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
     aws_byte_buf_clean_up(&buf);
 
@@ -502,11 +502,13 @@ static int s_read_special_file(struct aws_allocator *allocator, const char *file
     }
 
     struct aws_byte_buf buf;
-    ASSERT_SUCCESS(aws_byte_buf_init_from_special_file(&buf, allocator, filename, 128));
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file(&buf, allocator, filename));
     ASSERT_TRUE(buf.capacity > buf.len, "Buffer should end with null-terminator");
     ASSERT_UINT_EQUALS(0, buf.buffer[buf.len], "Buffer should end with null-terminator");
 
-    if (strcmp("/dev/null", filename) != 0) {
+    if (strcmp("/dev/null", filename) == 0) {
+        ASSERT_UINT_EQUALS(0, buf.len, "expected /dev/null to be empty");
+    } else {
         ASSERT_TRUE(buf.len > 0, "expected special file to have data");
     }
 
@@ -530,7 +532,7 @@ static int s_test_byte_buf_init_from_file(struct aws_allocator *allocator, void 
     ASSERT_SUCCESS(s_create_file_then_read_it(allocator, aws_byte_cursor_from_buf(&big_rando)));
     aws_byte_buf_clean_up(&big_rando);
 
-    /* test aws_byte_buf_init_from_special_file() on actual "special files" (if they exist) */
+    /* test some "special files" (if they exist) */
     ASSERT_SUCCESS(s_read_special_file(allocator, "/proc/cpuinfo"));
     ASSERT_SUCCESS(s_read_special_file(allocator, "/proc/net/tcp"));
     ASSERT_SUCCESS(s_read_special_file(allocator, "/sys/devices/virtual/dmi/id/sys_vendor"));
