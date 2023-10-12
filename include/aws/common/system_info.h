@@ -29,6 +29,9 @@ AWS_EXTERN_C_BEGIN
 /**
  * Allocates and initializes information about the system the current process is executing on.
  * If successful returns an instance of aws_system_environment. If it fails, it will return NULL.
+ *
+ * Note: This api is used internally and is still early in its evolution.
+ * It may change in incompatible ways in the future.
  */
 AWS_COMMON_API
 struct aws_system_environment *aws_system_environment_load(struct aws_allocator *allocator);
