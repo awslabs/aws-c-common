@@ -70,7 +70,7 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
     size_t allocation_size = (size_t)len64 + 1;
     aws_byte_buf_init(out_buf, alloc, allocation_size);
 
-    size_t read = -1;
+    size_t read = 0;
     size_t total_read = 0;
     do {
         if (total_read == out_buf->capacity) {
