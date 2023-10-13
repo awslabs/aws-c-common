@@ -11,6 +11,16 @@
 
 #include <errno.h>
 
+/* For "special files", the OS often lies about size.
+ * For example, on Amazon Linux 2:
+ * /proc/cpuinfo: size is 0, but contents are several KB of data.
+ * /sys/devices/virtual/dmi/id/product_name: size is 4096, but contents are "c5.2xlarge"
+ *
+ * Therefore, we may need to grow the buffer as we read until EOF.
+ * This is the min/max step size for growth. */
+#define MIN_BUFFER_GROWTH_READING_FILES 32
+#define MAX_BUFFER_GROWTH_READING_FILES 4096
+
 FILE *aws_fopen(const char *file_path, const char *mode) {
     if (!file_path || strlen(file_path) == 0) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. path is empty");
@@ -34,7 +44,13 @@ FILE *aws_fopen(const char *file_path, const char *mode) {
     return file;
 }
 
-int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename) {
+/* Helper function used by aws_byte_buf_init_from_file() and aws_byte_buf_init_from_file_with_size_hint() */
+static int s_byte_buf_init_from_file_impl(
+    struct aws_byte_buf *out_buf,
+    struct aws_allocator *alloc,
+    const char *filename,
+    bool use_file_size_as_hint,
+    size_t size_hint) {
 
     AWS_ZERO_STRUCT(*out_buf);
     FILE *fp = aws_fopen(filename, "rb");
@@ -42,63 +58,80 @@ int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocat
         goto error;
     }
 
-    int64_t len64 = 0;
-    if (aws_file_get_length(fp, &len64)) {
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO,
-            "static: Failed to get file length. file:'%s' error:%s",
-            filename,
-            aws_error_name(aws_last_error()));
-        goto error;
-    }
-
-    if (len64 >= SIZE_MAX) {
-        aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO,
-            "static: File too large to read into memory. file:'%s' error:%s",
-            filename,
-            aws_error_name(aws_last_error()));
-        goto error;
-    }
-
-    /*
-     * This number is usually correct, but in cases of device files that don't correspond to storage on disk,
-     * it may just be the size of a page. Go ahead and use it as a good hint of how much to allocate initially,
-     * but otherwise don't rely on it.
-     */
-    size_t allocation_size = (size_t)len64 + 1;
-    aws_byte_buf_init(out_buf, alloc, allocation_size);
-
-    size_t read = 0;
-    size_t total_read = 0;
-    do {
-        if (total_read == out_buf->capacity) {
-            /* just add allocation size space to read some more. It's not perfect but it's plenty good. */
-            aws_byte_buf_reserve_relative(out_buf, allocation_size);
+    if (use_file_size_as_hint) {
+        int64_t len64 = 0;
+        if (aws_file_get_length(fp, &len64)) {
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_IO,
+                "static: Failed to get file length. file:'%s' error:%s",
+                filename,
+                aws_error_name(aws_last_error()));
+            goto error;
         }
-        read = fread(out_buf->buffer + out_buf->len, 1, out_buf->capacity - out_buf->len, fp);
-        out_buf->len += read;
-        total_read += read;
-    } while (read > 0);
 
-    int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
-    if (errno_value != 0) {
-        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_IO,
-            "static: Failed reading file:'%s' errno:%d aws-error:%s",
-            filename,
-            errno_value,
-            aws_error_name(aws_last_error()));
-        goto error;
+        if (len64 >= SIZE_MAX) {
+            aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_IO,
+                "static: File too large to read into memory. file:'%s' error:%s",
+                filename,
+                aws_error_name(aws_last_error()));
+            goto error;
+        }
+
+        /* Leave space for null terminator at end of buffer */
+        size_hint = (size_t)len64 + 1;
     }
+
+    aws_byte_buf_init(out_buf, alloc, size_hint);
+
+    /* Read in a loop until we hit EOF */
+    while (true) {
+        /* Expand buffer if necessary (at a reasonable rate) */
+        if (out_buf->len == out_buf->capacity) {
+            size_t additional_capacity = out_buf->capacity;
+            additional_capacity = aws_max_size(MIN_BUFFER_GROWTH_READING_FILES, additional_capacity);
+            additional_capacity = aws_min_size(MAX_BUFFER_GROWTH_READING_FILES, additional_capacity);
+            if (aws_byte_buf_reserve_relative(out_buf, additional_capacity)) {
+                AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to grow buffer for file:'%s'", filename);
+                goto error;
+            }
+        }
+
+        size_t space_available = out_buf->capacity - out_buf->len;
+        size_t bytes_read = fread(out_buf->buffer + out_buf->len, 1, space_available, fp);
+        out_buf->len += bytes_read;
+
+        /* If EOF, we're done! */
+        if (feof(fp)) {
+            break;
+        }
+
+        /* If no EOF but we read 0 bytes, there's been an error or at least we need
+         * to treat it like one because we can't just infinitely loop. */
+        if (bytes_read == 0) {
+            int errno_value = ferror(fp) ? errno : 0; /* Always cache errno before potential side-effect */
+            aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_READ_FAILURE);
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_IO,
+                "static: Failed reading file:'%s' errno:%d aws-error:%s",
+                filename,
+                errno_value,
+                aws_error_name(aws_last_error()));
+            goto error;
+        }
+    }
+
+    /* A null terminator is appended, but is not included as part of the length field. */
+    if (out_buf->len == out_buf->capacity) {
+        if (aws_byte_buf_reserve_relative(out_buf, 1)) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to grow buffer for file:'%s'", filename);
+            goto error;
+        }
+    }
+    out_buf->buffer[out_buf->len] = 0;
 
     fclose(fp);
-    /* write the NULL terminator out. */
-    aws_byte_buf_write_u8(out_buf, 0x00);
-    /* we wrote the NULL terminator, but don't include it in the length. */
-    out_buf->len -= 1;
     return AWS_OP_SUCCESS;
 
 error:
@@ -107,6 +140,19 @@ error:
     }
     aws_byte_buf_clean_up_secure(out_buf);
     return AWS_OP_ERR;
+}
+
+int aws_byte_buf_init_from_file(struct aws_byte_buf *out_buf, struct aws_allocator *alloc, const char *filename) {
+    return s_byte_buf_init_from_file_impl(out_buf, alloc, filename, true /*use_file_size_as_hint*/, 0 /*size_hint*/);
+}
+
+int aws_byte_buf_init_from_file_with_size_hint(
+    struct aws_byte_buf *out_buf,
+    struct aws_allocator *alloc,
+    const char *filename,
+    size_t size_hint) {
+
+    return s_byte_buf_init_from_file_impl(out_buf, alloc, filename, false /*use_file_size_as_hint*/, size_hint);
 }
 
 bool aws_is_any_directory_separator(char value) {
