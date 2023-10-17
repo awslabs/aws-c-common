@@ -32,6 +32,7 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
             struct aws_string *device_name = aws_string_new_from_c_str(env->allocator, iterator->ifa_name);
             aws_array_list_push_back(&env->str_list_network_cards, &device_name);
         }
+        iterator = iterator->ifa_next;
     }
 
     if (addrs) {
