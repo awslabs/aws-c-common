@@ -11,6 +11,7 @@ void s_destroy_env(void *arg) {
 
     if (env) {
         aws_system_environment_destroy_platform_impl(env);
+        aws_array_list_clean_up(&env->str_list_network_cards);
         aws_mem_release(env->allocator, env);
     }
 }
@@ -19,6 +20,8 @@ struct aws_system_environment *aws_system_environment_load(struct aws_allocator 
     struct aws_system_environment *env = aws_mem_calloc(allocator, 1, sizeof(struct aws_system_environment));
     env->allocator = allocator;
     aws_ref_count_init(&env->ref_count, env, s_destroy_env);
+
+    aws_array_list_init_dynamic(&env->str_list_network_cards, env->allocator, 2, sizeof(struct aws_string *));
 
     if (aws_system_environment_load_platform_impl(env)) {
         AWS_LOGF_ERROR(
@@ -74,7 +77,15 @@ size_t aws_system_environment_get_processor_count(struct aws_system_environment 
     return env->cpu_count;
 }
 
-AWS_COMMON_API
 size_t aws_system_environment_get_cpu_group_count(const struct aws_system_environment *env) {
     return env->cpu_group_count;
+}
+
+size_t aws_system_environment_get_network_card_count(const struct aws_system_environment *env) {
+    return aws_array_list_length(&env->str_list_network_cards);
+}
+
+
+const struct aws_string **aws_system_environment_get_network_cards(const struct aws_system_environment *env) {
+    return env->str_list_network_cards.data;
 }

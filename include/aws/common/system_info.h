@@ -58,6 +58,12 @@ struct aws_byte_cursor aws_system_environment_get_virtualization_vendor(const st
 AWS_COMMON_API
 struct aws_byte_cursor aws_system_environment_get_virtualization_product_name(const struct aws_system_environment *env);
 
+AWS_COMMON_API
+size_t aws_system_environment_get_network_card_count(const struct aws_system_environment *env);
+
+AWS_COMMON_API
+const struct aws_string **aws_system_environment_get_network_cards(const struct aws_system_environment *env);
+
 /**
  * Returns the number of processors for the specified compute environment.
  */

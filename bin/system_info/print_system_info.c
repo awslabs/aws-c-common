@@ -33,10 +33,27 @@ int main(void) {
     size_t numa_nodes = aws_system_environment_get_cpu_group_count(env);
 
     if (numa_nodes > 1) {
-        fprintf(stdout, "  'numa architecture': 'true',\n");
+        fprintf(stdout, "  'numa architecture': true,\n");
         fprintf(stdout, "  'number of numa nodes': '%lu'\n", (unsigned long)numa_nodes);
     } else {
-        fprintf(stdout, "  'numa architecture': 'false'\n");
+        fprintf(stdout, "  'numa architecture': false\n");
+    }
+    size_t nic_count = aws_system_environment_get_network_card_count(env);
+    fprintf(stdout, " 'network_card_count': %lu\n", (unsigned long)nic_count);
+
+    if (nic_count > 0) {
+        fprintf(stdout, "  'network_cards: [\n");
+
+        const struct aws_string **nic_array = aws_system_environment_get_network_cards(env);
+        for (size_t i = 0; i < nic_count; ++i) {
+            fprintf(stdout, "    '%s'", aws_string_c_str(nic_array[i]));
+
+            if (i != nic_count - 1) {
+                fprintf(stdout, ",");
+            }
+            fprintf(stdout, "\n");
+        }
+        fprintf(stdout, "  ]\n");
     }
 
     fprintf(stdout, "}\n");

@@ -14,6 +14,7 @@ struct aws_system_environment {
     struct aws_ref_count ref_count;
     struct aws_byte_buf virtualization_vendor;
     struct aws_byte_buf product_name;
+    struct aws_array_list str_list_network_cards;
     enum aws_platform_os os;
     size_t cpu_count;
     size_t cpu_group_count;
