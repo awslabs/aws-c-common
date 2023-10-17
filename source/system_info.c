@@ -12,6 +12,7 @@ void s_destroy_env(void *arg) {
     if (env) {
         aws_system_environment_destroy_platform_impl(env);
         aws_array_list_clean_up(&env->str_list_network_cards);
+        aws_array_list_clean_up(&env->u16_nic_to_cpu_group);
         aws_mem_release(env->allocator, env);
     }
 }
@@ -22,6 +23,7 @@ struct aws_system_environment *aws_system_environment_load(struct aws_allocator 
     aws_ref_count_init(&env->ref_count, env, s_destroy_env);
 
     aws_array_list_init_dynamic(&env->str_list_network_cards, env->allocator, 2, sizeof(struct aws_string *));
+    aws_array_list_init_dynamic(&env->u16_nic_to_cpu_group, env->allocator, 2, sizeof(uint16_t));
 
     if (aws_system_environment_load_platform_impl(env)) {
         AWS_LOGF_ERROR(
@@ -88,4 +90,12 @@ size_t aws_system_environment_get_network_card_count(const struct aws_system_env
 
 const struct aws_string **aws_system_environment_get_network_cards(const struct aws_system_environment *env) {
     return env->str_list_network_cards.data;
+}
+
+uint16_t aws_system_environment_get_cpu_group_for_network_card(const struct aws_system_environment *env, size_t card_index) {
+    AWS_FATAL_ASSERT(card_index < aws_array_list_length(&env->u16_nic_to_cpu_group));
+
+    uint16_t value = 0;
+    aws_array_list_get_at(&env->u16_nic_to_cpu_group, &value, card_index);
+    return value;
 }

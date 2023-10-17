@@ -64,6 +64,9 @@ size_t aws_system_environment_get_network_card_count(const struct aws_system_env
 AWS_COMMON_API
 const struct aws_string **aws_system_environment_get_network_cards(const struct aws_system_environment *env);
 
+AWS_COMMON_API
+uint16_t aws_system_environment_get_cpu_group_for_network_card(const struct aws_system_environment *env, size_t card_index);
+
 /**
  * Returns the number of processors for the specified compute environment.
  */
