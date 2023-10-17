@@ -48,7 +48,7 @@ int main(void) {
         for (size_t i = 0; i < nic_count; ++i) {
             fprintf(stdout, "    {\n");
             fprintf(stdout, "      'device_name: '%s',\n", aws_string_c_str(nic_array[i]));
-            fprintf(stdout, "      'numa_node: 'lu'\n", (unsigned long)aws_system_environment_get_cpu_group_for_network_card(env, i));
+            fprintf(stdout, "      'numa_node': '%lu'\n", (unsigned long)aws_system_environment_get_cpu_group_for_network_card(env, i));
             fprintf(stdout, "    }\n");
             if (i != nic_count - 1) {
                 fprintf(stdout, ",");
