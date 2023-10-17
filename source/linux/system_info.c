@@ -21,12 +21,12 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
     aws_byte_buf_init_from_file_with_size_hint(
         &env->product_name, env->allocator, "/sys/devices/virtual/dmi/id/product_name", 32 /*size_hint*/);
 
-    struct ifaddrs *addrs;
-    struct ifaddrs *iterator;
-    iterator = addrs;
+    struct ifaddrs *addrs = NULL;
+    struct ifaddrs *iterator = NULL;
 
     getifaddrs(&addrs);
-
+    iterator = addrs;
+    
     while(iterator) {
         if (iterator->ifa_addr && iterator->ifa_addr->sa_family == AF_PACKET) {
             struct aws_string *device_name = aws_string_new_from_c_str(env->allocator, iterator->ifa_name);
