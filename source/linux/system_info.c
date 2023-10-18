@@ -6,10 +6,10 @@
 #include <aws/common/private/system_info_priv.h>
 
 #include <ifaddrs.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 static bool s_is_irrelevant_interface(const struct aws_byte_cursor name) {
 
@@ -51,7 +51,7 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
     getifaddrs(&addrs);
     iterator = addrs;
 
-    while(iterator) {
+    while (iterator) {
         if (iterator->ifa_addr && iterator->ifa_addr->sa_family == AF_PACKET) {
             struct aws_string *device_name = aws_string_new_from_c_str(env->allocator, iterator->ifa_name);
             struct aws_byte_cursor device_name_cur = aws_byte_cursor_from_string(device_name);

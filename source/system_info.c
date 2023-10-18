@@ -87,12 +87,13 @@ size_t aws_system_environment_get_network_card_count(const struct aws_system_env
     return aws_array_list_length(&env->str_list_network_cards);
 }
 
-
 const struct aws_string **aws_system_environment_get_network_cards(const struct aws_system_environment *env) {
     return env->str_list_network_cards.data;
 }
 
-uint16_t aws_system_environment_get_cpu_group_for_network_card(const struct aws_system_environment *env, size_t card_index) {
+uint16_t aws_system_environment_get_cpu_group_for_network_card(
+    const struct aws_system_environment *env,
+    size_t card_index) {
     AWS_FATAL_ASSERT(card_index < aws_array_list_length(&env->u16_nic_to_cpu_group));
 
     uint16_t value = 0;
