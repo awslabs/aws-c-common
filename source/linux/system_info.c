@@ -11,6 +11,25 @@
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 
+static bool s_is_irrelevant_interface(const struct aws_byte_cursor name) {
+
+    /* loop-back is important but not for looking at the system configuration,
+      we want the actual cards. */
+    if (aws_byte_cursor_eq_c_str_ignore_case(&name, "lo")) {
+        return true;
+    }
+
+    struct aws_byte_cursor bridge_dev_cur = aws_byte_cursor_from_c_str("br-");
+    /* typical docker devices. */
+    if (aws_byte_cursor_eq_c_str_ignore_case(&name, "docker") ||
+        aws_byte_cursor_eq_c_str_ignore_case(&name, "veth") ||
+        aws_byte_cursor_starts_with_ignore_case(&name, &bridge_dev_cur)) {
+        return true;
+    }
+
+    return false;
+}
+
 int aws_system_environment_load_platform_impl(struct aws_system_environment *env) {
     /* provide size_hint when reading "special files", since some platforms mis-report these files' size as 4KB */
     aws_byte_buf_init_from_file_with_size_hint(
@@ -31,41 +50,45 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
     while(iterator) {
         if (iterator->ifa_addr && iterator->ifa_addr->sa_family == AF_PACKET) {
             struct aws_string *device_name = aws_string_new_from_c_str(env->allocator, iterator->ifa_name);
-            aws_array_list_push_back(&env->str_list_network_cards, &device_name);
-
-            /* figure out what numa node if any the network card is on. */
-            uint16_t group_id = 0;
-
-            struct aws_byte_buf temp_numa_info;
-            aws_byte_buf_init(&temp_numa_info, env->allocator, 256);
-            struct aws_byte_cursor initial_path = aws_byte_cursor_from_c_str("/sys/class/net/");
-            aws_byte_buf_write_from_whole_cursor(&temp_numa_info, initial_path);
             struct aws_byte_cursor device_name_cur = aws_byte_cursor_from_string(device_name);
-            aws_byte_buf_append_dynamic(&temp_numa_info, &device_name_cur);
-            struct aws_byte_cursor final_path_segment = aws_byte_cursor_from_c_str("/device/numa_node");
-            aws_byte_buf_append_dynamic(&temp_numa_info, &final_path_segment);
-            /* add a null terminator for sys-call land. */
-            aws_byte_buf_append_byte_dynamic(&temp_numa_info, 0);
 
-            /* fill in buffer and read it converting to int. */
-            struct aws_byte_buf node_file;
-            AWS_ZERO_STRUCT(node_file);
+            if (!s_is_irrelevant_interface(device_name_cur)) {
+                /* figure out what numa node if any the network card is on. */
+                uint16_t group_id = 0;
 
-            if (aws_byte_buf_init_from_file(&node_file, env->allocator, (const char *)temp_numa_info.buffer) == AWS_OP_SUCCESS) {
-                struct aws_byte_cursor file_cur = aws_byte_cursor_from_buf(&temp_numa_info);
+                struct aws_byte_buf temp_numa_info;
+                aws_byte_buf_init(&temp_numa_info, env->allocator, 256);
+                struct aws_byte_cursor initial_path = aws_byte_cursor_from_c_str("/sys/class/net/");
+                aws_byte_buf_write_from_whole_cursor(&temp_numa_info, initial_path);
+                aws_byte_buf_append_dynamic(&temp_numa_info, &device_name_cur);
+                struct aws_byte_cursor final_path_segment = aws_byte_cursor_from_c_str("/device/numa_node");
+                aws_byte_buf_append_dynamic(&temp_numa_info, &final_path_segment);
+                /* add a null terminator for sys-call land. */
+                aws_byte_buf_append_byte_dynamic(&temp_numa_info, 0);
 
-                uint64_t parsed_int = 0;
-                if (aws_byte_cursor_utf8_parse_u64(file_cur, &parsed_int) == AWS_OP_SUCCESS) {
+                /* fill in buffer and read it converting to int. */
+                struct aws_byte_buf node_file;
+                AWS_ZERO_STRUCT(node_file);
 
-                    /* should always be true, but doesn't hurt to be safe. */
-                    if (parsed_int < UINT16_MAX) {
-                        group_id = (uint16_t)parsed_int;
+                if (aws_byte_buf_init_from_file(&node_file, env->allocator, (const char *)temp_numa_info.buffer) ==
+                    AWS_OP_SUCCESS) {
+                    struct aws_byte_cursor file_cur = aws_byte_cursor_from_buf(&temp_numa_info);
+
+                    uint64_t parsed_int = 0;
+                    if (aws_byte_cursor_utf8_parse_u64(file_cur, &parsed_int) == AWS_OP_SUCCESS) {
+
+                        /* should always be true, but doesn't hurt to be safe. */
+                        if (parsed_int < UINT16_MAX) {
+                            group_id = (uint16_t)parsed_int;
+                        }
                     }
+                    aws_byte_buf_clean_up(&node_file);
                 }
-                aws_byte_buf_clean_up(&node_file);
+                aws_byte_buf_clean_up(&temp_numa_info);
+                
+                aws_array_list_push_back(&env->str_list_network_cards, &device_name);
+                aws_array_list_push_back(&env->u16_nic_to_cpu_group, &group_id);
             }
-            aws_byte_buf_clean_up(&temp_numa_info);
-            aws_array_list_push_back(&env->u16_nic_to_cpu_group, &group_id);
         }
         iterator = iterator->ifa_next;
     }
