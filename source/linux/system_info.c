@@ -15,14 +15,18 @@ static bool s_is_irrelevant_interface(const struct aws_byte_cursor name) {
 
     /* loop-back is important but not for looking at the system configuration,
       we want the actual cards. */
-    if (aws_byte_cursor_eq_c_str_ignore_case(&name, "lo")) {
+    struct aws_byte_cursor loopback_cur = aws_byte_cursor_from_c_str("lo");
+    if (aws_byte_cursor_starts_with_ignore_case(&name, &loopback_cur)) {
         return true;
     }
 
+    /* typical virtual devices we want to ignore. */
     struct aws_byte_cursor bridge_dev_cur = aws_byte_cursor_from_c_str("br-");
-    /* typical docker devices. */
-    if (aws_byte_cursor_eq_c_str_ignore_case(&name, "docker") ||
-        aws_byte_cursor_eq_c_str_ignore_case(&name, "veth") ||
+    struct aws_byte_cursor docker_dev_cur = aws_byte_cursor_from_c_str("docker");
+    struct aws_byte_cursor virtual_eth_cur = aws_byte_cursor_from_c_str("veth");
+
+    if (aws_byte_cursor_starts_with_ignore_case(&name, &docker_dev_cur) ||
+        aws_byte_cursor_starts_with_ignore_case(&name, &virtual_eth_cur) ||
         aws_byte_cursor_starts_with_ignore_case(&name, &bridge_dev_cur)) {
         return true;
     }
@@ -85,7 +89,7 @@ int aws_system_environment_load_platform_impl(struct aws_system_environment *env
                     aws_byte_buf_clean_up(&node_file);
                 }
                 aws_byte_buf_clean_up(&temp_numa_info);
-                
+
                 aws_array_list_push_back(&env->str_list_network_cards, &device_name);
                 aws_array_list_push_back(&env->u16_nic_to_cpu_group, &group_id);
             }
