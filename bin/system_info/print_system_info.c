@@ -36,19 +36,19 @@ int main(void) {
         fprintf(stdout, "  'numa architecture': true,\n");
         fprintf(stdout, "  'number of numa nodes': '%lu'\n", (unsigned long)numa_nodes);
     } else {
-        fprintf(stdout, "  'numa architecture': false\n");
+        fprintf(stdout, "  'numa architecture': false,\n");
     }
     size_t nic_count = aws_system_environment_get_network_card_count(env);
-    fprintf(stdout, "  'network_card_count': %lu\n", (unsigned long)nic_count);
+    fprintf(stdout, "  'network card count': %lu,\n", (unsigned long)nic_count);
 
     if (nic_count > 0) {
-        fprintf(stdout, "  'network_cards: [\n");
+        fprintf(stdout, "  'network cards': [\n");
 
         const struct aws_string **nic_array = aws_system_environment_get_network_cards(env);
         for (size_t i = 0; i < nic_count; ++i) {
             fprintf(stdout, "    {\n");
-            fprintf(stdout, "      'device_name: '%s',\n", aws_string_c_str(nic_array[i]));
-            fprintf(stdout, "      'numa_node': '%lu'\n", (unsigned long)aws_system_environment_get_cpu_group_for_network_card(env, i));
+            fprintf(stdout, "      'device name: '%s',\n", aws_string_c_str(nic_array[i]));
+            fprintf(stdout, "      'numa node': %lu\n", (unsigned long)aws_system_environment_get_cpu_group_for_network_card(env, i));
             fprintf(stdout, "    }");
             if (i != nic_count - 1) {
                 fprintf(stdout, ",");
