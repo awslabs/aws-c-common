@@ -12,7 +12,7 @@ AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 struct aws_memory_usage {
-    size_t maxrss; /* max resident set size in kilobytes since program start */
+    size_t maxrss;      /* max resident set size in kilobytes since program start */
     size_t page_faults; /* num of page faults since program start */
 
     size_t _reserved[8];
@@ -21,7 +21,7 @@ struct aws_memory_usage {
 /*
  * Get memory usage for current process.
  * Raises AWS_ERROR_SYS_CALL_FAILURE on failure.
-*/
+ */
 AWS_COMMON_API int aws_memory_usage_for_current_process(struct aws_memory_usage *memory_usage);
 
 AWS_EXTERN_C_END

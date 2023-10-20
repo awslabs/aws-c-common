@@ -14,7 +14,7 @@ int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
     AWS_PRECONDITION(mu);
 
     HANDLE hProcess = GetCurrentProcess();
-    
+
     PROCESS_MEMORY_COUNTERS pmc;
 
     BOOL ret = GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc));
