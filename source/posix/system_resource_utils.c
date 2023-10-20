@@ -26,6 +26,6 @@ int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
 #else
     mu->maxrss = usage.ru_maxrss;
 #endif
-    ru->page_faults = usage.ru_majflt;
+    mu->page_faults = usage.ru_majflt;
     return AWS_OP_SUCCESS;
 }
