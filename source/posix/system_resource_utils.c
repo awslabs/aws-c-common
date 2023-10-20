@@ -7,8 +7,8 @@
 
 #include <sys/resource.h>
 
-int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
-    AWS_PRECONDITION(mu);
+int aws_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
+    AWS_PRECONDITION(memory_usage);
 
     struct rusage usage;
 
@@ -22,10 +22,10 @@ int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
      * around MacOS 10.6.
      * Make it back to KB. Result might be slightly off due to rounding.
      */
-    mu->maxrss = usage.ru_maxrss / 1024;
+    memory_usage->maxrss = usage.ru_maxrss / 1024;
 #else
-    mu->maxrss = usage.ru_maxrss;
+    memory_usage->maxrss = usage.ru_maxrss;
 #endif
-    mu->page_faults = usage.ru_majflt;
+    memory_usage->page_faults = usage.ru_majflt;
     return AWS_OP_SUCCESS;
 }

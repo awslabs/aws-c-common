@@ -9,8 +9,8 @@
 
 #include <psapi.h>
 
-int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
-    AWS_PRECONDITION(mu);
+int aws_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
+    AWS_PRECONDITION(memory_usage);
 
     HANDLE hProcess = GetCurrentProcess();
 
@@ -23,8 +23,8 @@ int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
         return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
 
-    mu->maxrss = pmc.PeakWorkingSetSize;
-    mu->page_faults = pmc.PageFaultCount;
+    memory_usage->maxrss = pmc.PeakWorkingSetSize;
+    memory_usage->page_faults = pmc.PageFaultCount;
 
     return AWS_OP_SUCCESS;
 }
