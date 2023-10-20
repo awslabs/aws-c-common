@@ -7,8 +7,8 @@
 
 #include <sys/resource.h>
 
-int aws_resource_usage_for_current_process(struct aws_resource_usage *ru) {
-    AWS_PRECONDITION(ru);
+int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
+    AWS_PRECONDITION(mu);
 
     struct rusage usage;
 
@@ -17,9 +17,14 @@ int aws_resource_usage_for_current_process(struct aws_resource_usage *ru) {
     }
 
 #if defined(AWS_OS_APPLE)
-    ru->maxrss = usage.ru_maxrss / 1024;
+    /*
+    * For some reason Apple switched to reporting this in bytes instead of KB
+    * around MacOS 10.6. 
+    * Make it back to KB. Result might be slightly off due to rounding.
+    */
+    mu->maxrss = usage.ru_maxrss / 1024;
 #else
-    ru->maxrss = usage.ru_maxrss;
+    mu->maxrss = usage.ru_maxrss;
 #endif
     ru->page_faults = usage.ru_majflt;
     return AWS_OP_SUCCESS;

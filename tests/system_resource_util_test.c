@@ -7,17 +7,17 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-static int s_test_resource_usage_maxrss(struct aws_allocator *allocator, void *ctx) {
+static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_resource_usage ru;
-    AWS_ZERO_STRUCT(ru);
-    ASSERT_SUCCESS(aws_resource_usage_for_current_process(&ru));
+    struct aws_resource_usage mu;
+    AWS_ZERO_STRUCT(mu);
+    ASSERT_SUCCESS(aws_memory_usage_for_current_process(&mu));
 
-    ASSERT_TRUE(ru.maxrss > 0);
+    ASSERT_TRUE(mu.maxrss > 0);
 
     return 0;
 }
 
-AWS_TEST_CASE(test_resource_usage_maxrss, s_test_resource_usage_maxrss)
+AWS_TEST_CASE(test_memory_usage_maxrss, s_test_memory_usage_maxrss)

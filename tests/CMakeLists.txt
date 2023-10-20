@@ -402,7 +402,7 @@ add_test_case(ring_buffer_acquire_up_to_multi_threaded_test)
 add_test_case(string_to_log_level_success_test)
 add_test_case(string_to_log_level_failure_test)
 
-add_test_case(test_resource_usage_maxrss)
+add_test_case(test_memory_usage_maxrss)
 
 if(NOT ANDROID)
     add_test_case(test_logging_filter_at_AWS_LL_NONE_s_logf_all_levels)
