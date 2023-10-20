@@ -9,7 +9,6 @@
 
 #include <psapi.h>
 
-
 int aws_memory_usage_for_current_process(struct aws_memory_usage *mu) {
     AWS_PRECONDITION(mu);
 
