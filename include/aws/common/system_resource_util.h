@@ -13,12 +13,12 @@ AWS_EXTERN_C_BEGIN
 
 struct aws_resource_usage {
     size_t maxrss;
+    size_t page_faults;
 
     size_t _reserved[8];
 };
 
 AWS_COMMON_API int aws_resource_usage_for_current_process(struct aws_resource_usage *resource_usage);
-
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

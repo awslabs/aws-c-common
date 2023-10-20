@@ -20,6 +20,7 @@ int aws_resource_usage_for_current_process(struct aws_resource_usage *ru) {
     ru->maxrss = usage.ru_maxrss / 1024;
 #else
     ru->maxrss = usage.ru_maxrss;
-#endif 
+#endif
+    ru->page_faults = usage.ru_majflt;
     return AWS_OP_SUCCESS;
 }
