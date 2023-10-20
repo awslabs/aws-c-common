@@ -8,6 +8,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_resource_usage_maxrss(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
     (void)ctx;
 
     struct aws_resource_usage ru;
