@@ -12,6 +12,25 @@
 AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
+/*
+ * Quick guide to allocators:
+ *  CRT offers several flavours of allocators:
+ * - default: basic allocator, targeted toward most common use case. behavior
+ *   can change over time. Current default aligns small allocations on 8 byte
+ *   boundary and big buffers on 32/64 byte (system dependent) boundary.
+ *   Aligned mem can improve perf on some operations, like memcpy or hashes.
+ *   Depending on a system, can result in higher peak memory count in heavy
+ *   acquire/free scenarios (ex. s3), due to memory fragmentation related to how
+ *   aligned allocators work (overallocate, find aligned offset, release extra memory)
+ * - no_align: similar to default, but does not do any alignment. In practice,
+ *   has smaller peak memory footprint than default allocator, at the cost of
+ *   potentially being slower.
+ * - wrapped_cf: wraps MacOS's Security Framework allocator.
+ * - mem_tracer: wraps any allocator and provides tracing functionality to allocations
+ * - small_block_allocator: pools smaller allocations into preallocated buckets.
+ *   Not actively maintained. Avoid if possible.
+ */
+
 /* Allocator structure. An instance of this will be passed around for anything needing memory allocation */
 struct aws_allocator {
     void *(*mem_acquire)(struct aws_allocator *allocator, size_t size);
@@ -31,6 +50,12 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc);
 
 AWS_COMMON_API
 struct aws_allocator *aws_default_allocator(void);
+
+/*
+ * Vanilla allocator. No extra logic on top of system allocator.
+ */
+AWS_COMMON_API
+struct aws_allocator *aws_no_align_allocator(void);
 
 #ifdef __MACH__
 /* Avoid pulling in CoreFoundation headers in a header file. */

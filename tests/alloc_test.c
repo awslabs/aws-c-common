@@ -48,10 +48,11 @@ static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
-    struct aws_allocator test_allocator = {.mem_acquire = s_test_alloc_acquire,
-                                           .mem_release = s_test_alloc_release,
-                                           .mem_realloc = s_test_realloc,
-                                           .mem_calloc = s_test_calloc};
+    struct aws_allocator test_allocator = {
+        .mem_acquire = s_test_alloc_acquire,
+        .mem_release = s_test_alloc_release,
+        .mem_realloc = s_test_realloc,
+        .mem_calloc = s_test_calloc};
 
     /* realloc should handle the case correctly, return null, and free the memory */
     void *p = aws_mem_acquire(&test_allocator, 12);
@@ -346,3 +347,36 @@ static int s_default_threaded_allocs_and_frees(struct aws_allocator *allocator, 
     return 0;
 }
 AWS_TEST_CASE(default_threaded_allocs_and_frees, s_default_threaded_allocs_and_frees)
+
+/*
+ * No align allocator tests.
+ */
+static int s_no_align_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+    srand(15);
+
+    struct aws_allocator *alloc = aws_mem_tracer_new(aws_no_align_allocator(), NULL, AWS_MEMTRACE_STACKS, 8);
+
+    s_thread_test(alloc, s_threaded_realloc_worker, alloc);
+
+    aws_mem_tracer_destroy(alloc);
+
+    return 0;
+}
+AWS_TEST_CASE(no_align_threaded_reallocs, s_no_align_threaded_reallocs)
+
+static int s_no_align_threaded_allocs_and_frees(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+    srand(99);
+
+    struct aws_allocator *alloc = aws_mem_tracer_new(aws_no_align_allocator(), NULL, AWS_MEMTRACE_STACKS, 8);
+
+    s_thread_test(alloc, s_threaded_alloc_worker, alloc);
+
+    aws_mem_tracer_destroy(alloc);
+
+    return 0;
+}
+AWS_TEST_CASE(no_align_threaded_allocs_and_frees, s_no_align_threaded_allocs_and_frees)
