@@ -51,7 +51,7 @@ struct aws_allocator *aws_default_allocator(void);
 
 /*
  * Allocator that align small allocations on 8 byte boundary and big allocations
- * on 32/64 byte boundary. 
+ * on 32/64 byte boundary.
  */
 AWS_COMMON_API
 struct aws_allocator *aws_aligned_allocator(void);
