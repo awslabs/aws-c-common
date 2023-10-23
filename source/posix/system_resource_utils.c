@@ -7,7 +7,7 @@
 
 #include <sys/resource.h>
 
-int aws_init_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
+int aws_init_memory_usage_for_current_process(struct aws_memory_usage_stats *memory_usage) {
     AWS_PRECONDITION(memory_usage);
 
     AWS_ZERO_STRUCT(*memory_usage);
