@@ -12,7 +12,7 @@
 int aws_init_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
     AWS_PRECONDITION(memory_usage);
 
-    AWS_ZERO_STRUCT(memory_usage);
+    AWS_ZERO_STRUCT(*memory_usage);
     HANDLE hProcess = GetCurrentProcess();
 
     PROCESS_MEMORY_COUNTERS pmc;
