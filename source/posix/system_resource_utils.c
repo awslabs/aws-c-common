@@ -6,10 +6,12 @@
 #include <aws/common/system_resource_util.h>
 
 #include <sys/resource.h>
+#include <libproc.h>
 
-int aws_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
+int aws_init_memory_usage_for_current_process(struct aws_memory_usage *memory_usage) {
     AWS_PRECONDITION(memory_usage);
 
+    AWS_ZERO_STRUCT(memory_usage);
     struct rusage usage;
 
     if (getrusage(RUSAGE_SELF, &usage)) {

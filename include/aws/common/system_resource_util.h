@@ -22,7 +22,7 @@ struct aws_memory_usage {
  * Get memory usage for current process.
  * Raises AWS_ERROR_SYS_CALL_FAILURE on failure.
  */
-AWS_COMMON_API int aws_memory_usage_for_current_process(struct aws_memory_usage *memory_usage);
+AWS_COMMON_API int aws_init_memory_usage_for_current_process(struct aws_memory_usage *memory_usage);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

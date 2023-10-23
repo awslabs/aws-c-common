@@ -12,8 +12,7 @@ static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx
     (void)ctx;
 
     struct aws_memory_usage mu;
-    AWS_ZERO_STRUCT(mu);
-    ASSERT_SUCCESS(aws_memory_usage_for_current_process(&mu));
+    ASSERT_SUCCESS(aws_init_memory_usage_for_current_process(&mu));
 
     ASSERT_TRUE(mu.maxrss > 0);
 
