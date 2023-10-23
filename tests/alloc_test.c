@@ -52,7 +52,7 @@ static int s_test_alloc_nothing_fn(struct aws_allocator *allocator, void *ctx) {
         .mem_acquire = s_test_alloc_acquire,
         .mem_release = s_test_alloc_release,
         .mem_realloc = s_test_realloc,
-        .mem_calloc = s_test_calloc, 
+        .mem_calloc = s_test_calloc,
     };
 
     /* realloc should handle the case correctly, return null, and free the memory */
