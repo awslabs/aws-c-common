@@ -13,8 +13,8 @@
 #include <aws/common/private/dlloads.h>
 #include <aws/common/private/thread_shared.h>
 #include <aws/common/string.h>
-#include <aws/common/thread.h>
 #include <aws/common/system_info.h>
+#include <aws/common/thread.h>
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -299,7 +299,7 @@ int aws_thread_launch(
                 aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
 
                 for (size_t i = 0; i < cpu_count; ++i) {
-                    if (!(options->exclude_hyper_threads && cpus[i]suspected_hyper_thread)) {
+                    if (!(options->exclude_hyper_threads && cpus[i] suspected_hyper_thread)) {
                         CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
                     }
                 }
@@ -323,9 +323,6 @@ int aws_thread_launch(
 #endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
     }
 
-    if (options->cpu_group >= 0) {
-        struct aws_cpu_info
-    }
     wrapper = aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
 
     if (options) {
@@ -377,7 +374,7 @@ int aws_thread_launch(
             aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
 
             for (size_t i = 0; i < cpu_count; ++i) {
-                if (!(options->exclude_hyper_threads && cpus[i]suspected_hyper_thread)) {
+                if (!(options->exclude_hyper_threads && cpus[i] suspected_hyper_thread)) {
                     CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
                 }
             }
