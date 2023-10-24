@@ -14,6 +14,7 @@
 #include <aws/common/private/thread_shared.h>
 #include <aws/common/string.h>
 #include <aws/common/thread.h>
+#include <aws/common/system_info.h>
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -282,7 +283,7 @@ int aws_thread_launch(
  * Thread affinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
  * configuration, you've got bigger problems. */
 #if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
-        if (options->cpu_id >= 0) {
+        if (options->cpu_id >= 0 || options->cpu_group >= 0) {
             AWS_LOGF_INFO(
                 AWS_LS_COMMON_THREAD,
                 "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
@@ -291,7 +292,22 @@ int aws_thread_launch(
 
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
-            CPU_SET((uint32_t)options->cpu_id, &cpuset);
+
+            if (options->cpu_group >= 0) {
+                size_t cpu_count = aws_get_cpu_count_for_group(options->cpu_group);
+                struct aws_cpu_info *cpus = aws_mem_calloc(thread->allocator, cpu_count, sizeof(struct aws_cpu_info));
+                aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
+
+                for (size_t i = 0; i < cpu_count; ++i) {
+                    if (!(options->exclude_hyper_threads && cpus[i]suspected_hyper_thread)) {
+                        CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
+                    }
+                }
+
+                aws_mem_release(thread->allocator, cpus);
+            } else {
+                CPU_SET((uint32_t)options->cpu_id, &cpuset);
+            }
 
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
@@ -307,6 +323,9 @@ int aws_thread_launch(
 #endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
     }
 
+    if (options->cpu_group >= 0) {
+        struct aws_cpu_info
+    }
     wrapper = aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
 
     if (options) {
@@ -352,7 +371,21 @@ int aws_thread_launch(
 
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
-        CPU_SET((uint32_t)options->cpu_id, &cpuset);
+        if (options->cpu_group >= 0) {
+            size_t cpu_count = aws_get_cpu_count_for_group(options->cpu_group);
+            struct aws_cpu_info *cpus = aws_mem_calloc(thread->allocator, cpu_count, sizeof(struct aws_cpu_info));
+            aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
+
+            for (size_t i = 0; i < cpu_count; ++i) {
+                if (!(options->exclude_hyper_threads && cpus[i]suspected_hyper_thread)) {
+                    CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
+                }
+            }
+
+            aws_mem_release(thread->allocator, cpus);
+        } else {
+            CPU_SET((uint32_t)options->cpu_id, &cpuset);
+        }
 
         /* If this fails, just warn. We can't fail anymore, the thread has already launched. */
         int setaffinity_return = pthread_setaffinity_np(thread->thread_id, sizeof(cpuset), &cpuset);

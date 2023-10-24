@@ -76,6 +76,9 @@ struct aws_thread_options {
      */
     int32_t cpu_id;
 
+    int16_t cpu_group;
+    bool exclude_hyper_threads;
+
     enum aws_thread_join_strategy join_strategy;
 
     /**
