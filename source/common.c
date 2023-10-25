@@ -323,15 +323,15 @@ void aws_common_library_init(struct aws_allocator *allocator) {
            assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
            like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
            Also, please don't do numa configurations if memory is your economic bottleneck. */
-        g_libnuma_handle = dlopen("libnuma.so", RTLD_LOCAL);
+        g_libnuma_handle = dlopen("libnuma.so", RTLD_LAZY | RTLD_LOCAL);
 
         /* turns out so versioning is really inconsistent these days */
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (g_libnuma_handle) {
