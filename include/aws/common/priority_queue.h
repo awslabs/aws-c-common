@@ -84,10 +84,7 @@ void aws_priority_queue_init_static(
     aws_priority_queue_compare_fn *pred);
 
 /**
- * Initializes a queue node to a default value that indicates the node is not in the queue.  If we used the
- * classical indexing for array-based heaps (starting at 1) we wouldn't need this, but because zero is a valid node
- * index and we use SIZE_MAX as "not-in-the-heap" we need an init so that people aren't hard-coding magic SIZE_MAXs
- * around all over the place.
+ * Initializes a queue node to a default value that indicates the node is not in the queue.
  *
  * @param node priority queue node to initialize with a default value
  */
