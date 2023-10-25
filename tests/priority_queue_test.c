@@ -451,6 +451,8 @@ static int s_test_remove_interior_sift_down(struct aws_allocator *allocator, voi
     return 0;
 }
 
+#define BACKPOINTER_CLEAR_NODE_COUNT 16
+
 static int s_priority_queue_clear_backpointers_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -458,26 +460,24 @@ static int s_priority_queue_clear_backpointers_test(struct aws_allocator *alloca
 
     ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
 
-    static const size_t NODE_COUNT = 16;
+    struct aws_priority_queue_node queue_nodes[BACKPOINTER_CLEAR_NODE_COUNT];
 
-    struct aws_priority_queue_node queue_nodes[NODE_COUNT];
-
-    for (size_t i = 0; i < NODE_COUNT; ++i) {
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
         aws_priority_queue_node_init(&queue_nodes[i]);
     }
 
-    for (int i = 0; i < NODE_COUNT; i++) {
+    for (int i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; i++) {
         aws_priority_queue_push_ref(&queue, &i, &queue_nodes[i]);
     }
 
-    for (size_t i = 0; i < NODE_COUNT; ++i) {
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
         ASSERT_TRUE(aws_priority_queue_node_is_in_queue(&queue_nodes[i]));
     }
 
     aws_priority_queue_clear(&queue);
     ASSERT_INT_EQUALS(0, aws_priority_queue_size(&queue));
 
-    for (size_t i = 0; i < NODE_COUNT; ++i) {
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
         ASSERT_FALSE(aws_priority_queue_node_is_in_queue(&queue_nodes[i]));
     }
 
