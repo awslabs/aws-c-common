@@ -459,7 +459,7 @@ static int s_priority_queue_clear_backpointers_test(struct aws_allocator *alloca
     ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
 
     static const size_t NODE_COUNT = 16;
-    
+
     struct aws_priority_queue_node queue_nodes[NODE_COUNT];
 
     for (size_t i = 0; i < NODE_COUNT; ++i) {
