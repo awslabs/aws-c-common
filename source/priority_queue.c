@@ -404,3 +404,7 @@ size_t aws_priority_queue_capacity(const struct aws_priority_queue *queue) {
 void aws_priority_queue_node_init(struct aws_priority_queue_node *node) {
     node->current_index = SIZE_MAX;
 }
+
+bool aws_priority_queue_node_is_in_queue(const struct aws_priority_queue_node *node) {
+    return node->current_index != SIZE_MAX;
+}
