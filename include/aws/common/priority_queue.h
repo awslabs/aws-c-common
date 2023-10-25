@@ -163,6 +163,12 @@ AWS_COMMON_API
 int aws_priority_queue_top(const struct aws_priority_queue *queue, void **item);
 
 /**
+ * Removes all elements from the queue, but does not free internal memory.
+ */
+AWS_COMMON_API
+void aws_priority_queue_clear(struct aws_priority_queue *queue);
+
+/**
  * Current number of elements in the queue
  */
 AWS_COMMON_API

@@ -94,6 +94,7 @@ add_test_case(priority_queue_remove_root_test)
 add_test_case(priority_queue_remove_leaf_test)
 add_test_case(priority_queue_remove_interior_sift_up_test)
 add_test_case(priority_queue_remove_interior_sift_down_test)
+add_test_case(priority_queue_clear_backpointers_test)
 
 add_test_case(linked_list_push_back_pop_front)
 add_test_case(linked_list_push_front_pop_back)
