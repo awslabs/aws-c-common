@@ -82,7 +82,10 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
+    # PSAPI_VERSION=1 is needed to support GetProcessMemoryInfo on both pre and
+    # post Win7 OS's. 
+    list(APPEND PLATFORM_DEFINES PSAPI_VERSION=1)
+    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi Psapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
