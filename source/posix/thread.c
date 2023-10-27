@@ -299,7 +299,7 @@ int aws_thread_launch(
                 aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
 
                 for (size_t i = 0; i < cpu_count; ++i) {
-                    if (!(options->exclude_hyper_threads && cpus[i] suspected_hyper_thread)) {
+                    if (!(options->exclude_hyper_threads && cpus[i].suspected_hyper_thread)) {
                         CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
                     }
                 }
@@ -374,7 +374,7 @@ int aws_thread_launch(
             aws_get_cpu_ids_for_group(options->cpu_group, cpus, cpu_count);
 
             for (size_t i = 0; i < cpu_count; ++i) {
-                if (!(options->exclude_hyper_threads && cpus[i] suspected_hyper_thread)) {
+                if (!(options->exclude_hyper_threads && cpus[i].suspected_hyper_thread)) {
                     CPU_SET((uint32_t)cpus[i].cpu_id, &cpuset);
                 }
             }
