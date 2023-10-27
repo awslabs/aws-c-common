@@ -274,7 +274,7 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
         struct aws_byte_cursor core_id_trimmed = aws_byte_cursor_trim_pred(&core_id, aws_char_is_space);
 
         if (sibling_file_data.len) {
-            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu % " PRIu32 " has core_id " PRInSTR, cpu_id, AWS_BYTE_CURSOR_PRI(core_id_trimmed));
+            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRIu32 " has core_id " PRInSTR, cpu_id, AWS_BYTE_CURSOR_PRI(core_id_trimmed));
             uint64_t int_val = 0;
             aws_byte_cursor_utf8_parse_u64(core_id_trimmed, &int_val);
             /* not perfect, but it's close. If the cpu_id matches the core id, assume it's the physical core, if it
