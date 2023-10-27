@@ -30,11 +30,6 @@
 #endif
 
 long (*g_set_mempolicy_ptr)(int, const unsigned long *, unsigned long) = NULL;
-int (*g_numa_available_ptr)(void) = NULL;
-int (*g_numa_num_configured_nodes_ptr)(void) = NULL;
-int (*g_numa_num_possible_cpus_ptr)(void) = NULL;
-int (*g_numa_node_of_cpu_ptr)(int cpu) = NULL;
-
 void *g_libnuma_handle = NULL;
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
@@ -323,15 +318,15 @@ void aws_common_library_init(struct aws_allocator *allocator) {
            assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
            like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
            Also, please don't do numa configurations if memory is your economic bottleneck. */
-        g_libnuma_handle = dlopen("libnuma.so", RTLD_LOCAL);
+        g_libnuma_handle = dlopen("libnuma.so", RTLD_LAZY | RTLD_LOCAL);
 
         /* turns out so versioning is really inconsistent these days */
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (g_libnuma_handle) {
@@ -342,35 +337,6 @@ void aws_common_library_init(struct aws_allocator *allocator) {
             } else {
                 AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: set_mempolicy() failed to load");
             }
-
-            *(void **)(&g_numa_available_ptr) = dlsym(g_libnuma_handle, "numa_available");
-            if (g_numa_available_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_available() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_available() failed to load");
-            }
-
-            *(void **)(&g_numa_num_configured_nodes_ptr) = dlsym(g_libnuma_handle, "numa_num_configured_nodes");
-            if (g_numa_num_configured_nodes_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() failed to load");
-            }
-
-            *(void **)(&g_numa_num_possible_cpus_ptr) = dlsym(g_libnuma_handle, "numa_num_possible_cpus");
-            if (g_numa_num_possible_cpus_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() failed to load");
-            }
-
-            *(void **)(&g_numa_node_of_cpu_ptr) = dlsym(g_libnuma_handle, "numa_node_of_cpu");
-            if (g_numa_node_of_cpu_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() failed to load");
-            }
-
         } else {
             AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so failed to load");
         }

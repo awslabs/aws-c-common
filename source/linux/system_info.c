@@ -6,6 +6,7 @@
 #include <aws/common/private/system_info_priv.h>
 
 #include <ifaddrs.h>
+#include <inttypes.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <sys/socket.h>
@@ -115,4 +116,208 @@ void aws_system_environment_destroy_platform_impl(struct aws_system_environment 
 
     aws_byte_buf_clean_up(&env->virtualization_vendor);
     aws_byte_buf_clean_up(&env->product_name);
+}
+
+uint16_t aws_get_cpu_group_count() {
+    struct aws_allocator *allocator = aws_default_allocator();
+    struct aws_string *path = aws_string_new_from_c_str(allocator, "/sys/devices/system/node");
+    struct aws_directory_iterator *dir_iter = aws_directory_entry_iterator_new(allocator, path);
+
+    if (!dir_iter) {
+        return 1U; /* Assuming a single group if unable to open directory */
+    }
+
+    uint16_t count = 0;
+
+    const struct aws_directory_entry *dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
+
+    while (dir_entry) {
+        struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node");
+        if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
+            aws_byte_cursor_starts_with_ignore_case(&dir_entry->path, &search_cur)) {
+            count++;
+        }
+        aws_directory_entry_iterator_next(dir_iter);
+        dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
+    }
+
+    aws_directory_entry_iterator_destroy(dir_iter);
+    return count;
+}
+
+static struct aws_string *s_get_path_for_group_cpulist(uint16_t group_idx) {
+    struct aws_allocator *allocator = aws_default_allocator();
+    struct aws_byte_buf path_buf;
+    aws_byte_buf_init(&path_buf, allocator, 256);
+
+    char group_idx_str[6]; /* Enough to hold any 16-bit integer value */
+    snprintf(group_idx_str, sizeof(group_idx_str), "%u", group_idx);
+
+    struct aws_byte_cursor initial_path = aws_byte_cursor_from_c_str("/sys/devices/system/node/node");
+    struct aws_byte_cursor group_idx_cursor = aws_byte_cursor_from_array(group_idx_str, strlen(group_idx_str));
+    struct aws_byte_cursor final_path_segment = aws_byte_cursor_from_c_str("/cpulist");
+
+    aws_byte_buf_append_dynamic(&path_buf, &initial_path);
+    aws_byte_buf_append_dynamic(&path_buf, &group_idx_cursor);
+    aws_byte_buf_append_dynamic(&path_buf, &final_path_segment);
+
+    struct aws_string *file_path = aws_string_new_from_array(allocator, path_buf.buffer, path_buf.len);
+    aws_byte_buf_clean_up(&path_buf);
+    return file_path;
+}
+
+/** Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
+ * linux /sys hierarchy as follows:
+ *
+ *  The numa nodes are listed in /sys/devices/system/node/node([\d+]),
+ *
+ *  Each Node's cpu list is stored in /sys/devices/system/node/node<node index>/cpulist
+ *
+ *  Whether or not a cpu is a hyper-thread is determined by looking in
+ *  sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
+ *  is present, then it is a hyper-thread.
+ */
+size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
+    size_t cpu_count = 0;
+    struct aws_allocator *allocator = aws_default_allocator();
+    struct aws_string *file_path = s_get_path_for_group_cpulist(group_idx);
+
+    struct aws_byte_buf file_data;
+    if (aws_byte_buf_init_from_file(&file_data, allocator, aws_string_c_str(file_path)) == AWS_OP_SUCCESS) {
+        struct aws_array_list cpu_ranges;
+        if (aws_array_list_init_dynamic(&cpu_ranges, allocator, 10, sizeof(struct aws_byte_cursor)) == AWS_OP_SUCCESS) {
+            struct aws_byte_cursor line_cursor = aws_byte_cursor_from_buf(&file_data);
+            struct aws_byte_cursor token;
+            while (aws_byte_cursor_next_split(&line_cursor, ',', &token)) {
+                aws_array_list_push_back(&cpu_ranges, &token);
+            }
+
+            size_t range_count = aws_array_list_length(&cpu_ranges);
+            for (size_t i = 0; i < range_count; ++i) {
+                struct aws_byte_cursor range_cursor;
+                aws_array_list_get_at(&cpu_ranges, &range_cursor, i);
+                struct aws_byte_cursor start_cursor, end_cursor;
+                if (aws_byte_cursor_next_split(&range_cursor, '-', &start_cursor)) {
+                    aws_byte_cursor_next_split(&range_cursor, '-', &end_cursor);
+                    uint64_t start, end;
+                    if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
+                        aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
+                        cpu_count += (size_t)(end - start + 1);
+                    }
+                } else {
+                    uint64_t cpu_id;
+                    if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS) {
+                        cpu_count++;
+                    }
+                }
+            }
+
+            aws_array_list_clean_up(&cpu_ranges);
+        }
+    }
+
+    aws_byte_buf_clean_up(&file_data);
+    aws_string_destroy(file_path);
+    return cpu_count;
+}
+
+static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
+    struct aws_allocator *allocator = aws_default_allocator();
+    bool is_hyperthread = false;
+
+    /* Check for hyper-threading */
+    struct aws_byte_buf sibling_path_buf;
+    aws_byte_buf_init(&sibling_path_buf, allocator, 256);
+
+    char cpu_id_str[10];
+    snprintf(cpu_id_str, sizeof(cpu_id_str), "%" PRIu32, cpu_id);
+
+    struct aws_byte_cursor sibling_initial_path = aws_byte_cursor_from_c_str("/sys/devices/system/cpu/cpu");
+    struct aws_byte_cursor sibling_idx_cursor = aws_byte_cursor_from_array(cpu_id_str, strlen(cpu_id_str));
+    struct aws_byte_cursor sibling_final_path_segment = aws_byte_cursor_from_c_str("/topology/thread_siblings_list");
+
+    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_initial_path);
+    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_idx_cursor);
+    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_final_path_segment);
+
+    struct aws_string *sibling_file_path =
+        aws_string_new_from_array(allocator, sibling_path_buf.buffer, sibling_path_buf.len);
+    aws_byte_buf_clean_up(&sibling_path_buf);
+
+    struct aws_byte_buf sibling_file_data;
+    if (aws_byte_buf_init_from_file(&sibling_file_data, allocator, aws_string_c_str(sibling_file_path)) ==
+        AWS_OP_SUCCESS) {
+        /* If the file is not empty, this CPU is suspected to be part of a hyper-threaded core */
+        is_hyperthread = sibling_file_data.len > 1;
+        aws_byte_buf_clean_up(&sibling_file_data);
+    } else {
+        is_hyperthread = false;
+    }
+
+    aws_string_destroy(sibling_file_path);
+    return is_hyperthread;
+}
+
+/** Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
+ * linux /sys hierarchy as follows:
+ *
+ *  The numa nodes are listed in /sys/devices/system/node/node([\d+]),
+ *
+ *  Each Node's cpu list is stored in /sys/devices/system/node/node<node index>/cpulist
+ *
+ *  Whether or not a cpu is a hyper-thread is determined by looking in
+ *  sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
+ *  is present, then it is a hyper-thread.
+ */
+void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
+    struct aws_allocator *allocator = aws_default_allocator();
+    struct aws_string *file_path = s_get_path_for_group_cpulist(group_idx);
+
+    /* Read the CPU list from the file */
+    struct aws_byte_buf file_data;
+    if (aws_byte_buf_init_from_file(&file_data, allocator, aws_string_c_str(file_path)) == AWS_OP_SUCCESS) {
+        /* Parse the CPU list */
+        struct aws_array_list cpu_ranges;
+        AWS_FATAL_ASSERT(
+            aws_array_list_init_dynamic(&cpu_ranges, allocator, 10, sizeof(struct aws_byte_cursor)) == AWS_OP_SUCCESS);
+
+        struct aws_byte_cursor line_cursor = aws_byte_cursor_from_buf(&file_data);
+        struct aws_byte_cursor token;
+        while (aws_byte_cursor_next_split(&line_cursor, ',', &token)) {
+            aws_array_list_push_back(&cpu_ranges, &token);
+        }
+
+        /* Iterate over the CPU ranges and fill in the cpu_ids_array */
+        size_t cpu_count = 0;
+        size_t range_count = aws_array_list_length(&cpu_ranges);
+        for (size_t i = 0; i < range_count; ++i) {
+            struct aws_byte_cursor range_cursor;
+            aws_array_list_get_at(&cpu_ranges, &range_cursor, i);
+            struct aws_byte_cursor start_cursor, end_cursor;
+            if (aws_byte_cursor_next_split(&range_cursor, '-', &start_cursor) &&
+                aws_byte_cursor_next_split(&range_cursor, '-', &end_cursor)) {
+                uint64_t start, end;
+                if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
+                    aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
+                    for (uint64_t j = start; j <= end && cpu_count < cpu_ids_array_length; ++j) {
+                        cpu_ids_array[cpu_count].cpu_id = (int32_t)j;
+                        cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)j);
+                        cpu_count++;
+                    }
+                }
+            } else {
+                uint64_t cpu_id;
+                if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS &&
+                    cpu_count < cpu_ids_array_length) {
+                    cpu_ids_array[cpu_count].cpu_id = (int32_t)cpu_id;
+                    cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)cpu_id);
+                    cpu_count++;
+                }
+            }
+        }
+
+        aws_array_list_clean_up(&cpu_ranges);
+    }
+    aws_string_destroy(file_path);
+    aws_byte_buf_clean_up(&file_data);
 }

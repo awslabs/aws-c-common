@@ -45,76 +45,7 @@ size_t aws_system_info_processor_count(void) {
 }
 #endif
 
-#include <ctype.h>
 #include <fcntl.h>
-
-uint16_t aws_get_cpu_group_count(void) {
-    if (g_numa_num_configured_nodes_ptr) {
-        return (uint16_t)g_numa_num_configured_nodes_ptr();
-    }
-
-    return 1U;
-}
-
-size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
-    if (g_numa_node_of_cpu_ptr) {
-        size_t total_cpus = aws_system_info_processor_count();
-
-        uint16_t cpu_count = 0;
-        for (size_t i = 0; i < total_cpus; ++i) {
-            if (group_idx == g_numa_node_of_cpu_ptr((int)i)) {
-                cpu_count++;
-            }
-        }
-        return cpu_count;
-    }
-
-    return aws_system_info_processor_count();
-}
-
-void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
-    AWS_PRECONDITION(cpu_ids_array);
-
-    if (!cpu_ids_array_length) {
-        return;
-    }
-
-    /* go ahead and initialize everything. */
-    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
-        cpu_ids_array[i].cpu_id = -1;
-        cpu_ids_array[i].suspected_hyper_thread = false;
-    }
-
-    if (g_numa_node_of_cpu_ptr) {
-        size_t total_cpus = aws_system_info_processor_count();
-        size_t current_array_idx = 0;
-        for (size_t i = 0; i < total_cpus && current_array_idx < cpu_ids_array_length; ++i) {
-            if ((int)group_idx == g_numa_node_of_cpu_ptr((int)i)) {
-                cpu_ids_array[current_array_idx].cpu_id = (int32_t)i;
-
-                /* looking for an index jump is a more reliable way to find these. If they're in the group and then
-                 * the index jumps, say from 17 to 36, we're most-likely in hyper-thread land. Also, inside a node,
-                 * once we find the first hyper-thread, the remaining cores are also likely hyper threads. */
-                if (current_array_idx > 0 && (cpu_ids_array[current_array_idx - 1].suspected_hyper_thread ||
-                                              cpu_ids_array[current_array_idx - 1].cpu_id < ((int)i - 1))) {
-                    cpu_ids_array[current_array_idx].suspected_hyper_thread = true;
-                }
-                current_array_idx += 1;
-            }
-        }
-
-        return;
-    }
-
-    /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. The assumption if you
-     * hit here is that this is just listing all cpus on the system. */
-    size_t hyper_thread_hint = cpu_ids_array_length / 2 - 1;
-
-    for (size_t i = 0; i < cpu_ids_array_length; ++i) {
-        cpu_ids_array[i].cpu_id = (int32_t)i;
-        cpu_ids_array[i].suspected_hyper_thread = i > hyper_thread_hint;
-    }
-}
 
 bool aws_is_debugger_present(void) {
     /* Open the status file */
