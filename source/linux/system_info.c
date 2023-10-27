@@ -4,6 +4,7 @@
  */
 #include <aws/common/file.h>
 #include <aws/common/private/system_info_priv.h>
+#include <Aws/common/logging.h>
 
 #include <ifaddrs.h>
 #include <inttypes.h>
@@ -11,6 +12,7 @@
 #include <net/ethernet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <inttypes.h>
 
 static bool s_is_irrelevant_interface(const struct aws_byte_cursor name) {
 
@@ -135,6 +137,7 @@ uint16_t aws_get_cpu_group_count() {
             struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node");
             if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
                 aws_byte_cursor_starts_with_ignore_case(&dir_entry->path, &search_cur)) {
+                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered NUMA node at " PRInSTR "\n", AWS_BYTE_CURSOR_PRI(dir_entry->path));
                 count++;
             }
 
@@ -142,6 +145,8 @@ uint16_t aws_get_cpu_group_count() {
     } while (aws_directory_entry_iterator_next(dir_iter) == AWS_OP_SUCCESS);
 
     aws_directory_entry_iterator_destroy(dir_iter);
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "static: discovered %" PRIu16 " NUMA nodes on system\n", count);
+
     return count;
 }
 
