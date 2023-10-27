@@ -12,13 +12,13 @@ static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx
     (void)ctx;
 
     /*
-     * Note: mem usage apis currently rely on getrusage on posix systems. 
+     * Note: mem usage apis currently rely on getrusage on posix systems.
      * On freebsd maxrss seems to return current process rss based on testing,
      * while on every other posix platform maxrss is high water mark for rss
      * over the program lifetime.
      * Workaround it by allocating a buffer first. Long term using procfs should
      * avoid the issue.
-    */
+     */
     struct aws_byte_buf temp;
     aws_byte_buf_init(&temp, allocator, 8 * 1024 * 1024);
 
@@ -27,7 +27,7 @@ static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx
 
     ASSERT_TRUE(mu.maxrss > 0);
 
-     aws_byte_buf_clean_up_secure(&temp);
+    aws_byte_buf_clean_up_secure(&temp);
 
     return 0;
 }
