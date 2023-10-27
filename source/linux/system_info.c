@@ -134,9 +134,9 @@ uint16_t aws_get_cpu_group_count() {
     do {
         const struct aws_directory_entry *dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
         if (dir_entry) {
-            struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node");
+            struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("/node");
             AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered NUMA node at " PRInSTR "\n", AWS_BYTE_CURSOR_PRI(dir_entry->path));
-            
+
             if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
                 aws_byte_cursor_starts_with_ignore_case(&dir_entry->path, &search_cur)) {
                 AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered NUMA node at " PRInSTR "\n", AWS_BYTE_CURSOR_PRI(dir_entry->path));
