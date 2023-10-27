@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/file.h>
-#include <aws/common/private/system_info_priv.h>
 #include <aws/common/logging.h>
+#include <aws/common/private/system_info_priv.h>
 
 #include <ifaddrs.h>
 #include <inttypes.h>
@@ -12,7 +12,6 @@
 #include <net/ethernet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <inttypes.h>
 
 static bool s_is_irrelevant_interface(const struct aws_byte_cursor name) {
 
@@ -139,10 +138,12 @@ uint16_t aws_get_cpu_group_count() {
 
             if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
                 aws_byte_cursor_find_exact(&dir_entry->relative_path, &search_cur, &capture_cur) == AWS_OP_SUCCESS) {
-                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered NUMA node at " PRInSTR "\n", AWS_BYTE_CURSOR_PRI(dir_entry->path));
+                AWS_LOGF_TRACE(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: discovered NUMA node at " PRInSTR "\n",
+                    AWS_BYTE_CURSOR_PRI(dir_entry->path));
                 count++;
             }
-
         }
     } while (aws_directory_entry_iterator_next(dir_iter) == AWS_OP_SUCCESS);
 
@@ -173,7 +174,8 @@ static struct aws_string *s_get_path_for_group_cpulist(uint16_t group_idx) {
     return file_path;
 }
 
-/** Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
+/*
+ * Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
  * linux /sys hierarchy as follows:
  *
  *  The numa nodes are listed in /sys/devices/system/node/node([\d+]),
@@ -181,8 +183,8 @@ static struct aws_string *s_get_path_for_group_cpulist(uint16_t group_idx) {
  *  Each Node's cpu list is stored in /sys/devices/system/node/node<node index>/cpulist
  *
  *  Whether or not a cpu is a hyper-thread is determined by looking in
- *  sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
- *  is present, then it is a hyper-thread.
+ *  /sys/devices/system/cpu/cpu<cpu index>/topology/core_id. If a value
+ *  is present and it does not match cpu index, then it is an SMP thread.
  */
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     size_t cpu_count = 0;
@@ -191,7 +193,11 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
 
     struct aws_byte_buf file_data;
     if (aws_byte_buf_init_from_file(&file_data, allocator, aws_string_c_str(file_path)) == AWS_OP_SUCCESS) {
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered cpulist for NUMA node %" PRIu16 " at %s", group_idx, aws_string_c_str(file_path));
+        AWS_LOGF_TRACE(
+            AWS_LS_COMMON_GENERAL,
+            "static: discovered cpulist for NUMA node %" PRIu16 " at %s",
+            group_idx,
+            aws_string_c_str(file_path));
 
         struct aws_array_list cpu_ranges;
         if (aws_array_list_init_dynamic(&cpu_ranges, allocator, 10, sizeof(struct aws_byte_cursor)) == AWS_OP_SUCCESS) {
@@ -200,7 +206,11 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
             AWS_ZERO_STRUCT(token);
             while (aws_byte_cursor_next_split(&line_cursor, ',', &token)) {
                 struct aws_byte_cursor trimmed_token = aws_byte_cursor_trim_pred(&token, aws_char_is_space);
-                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Found cpu range " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(trimmed_token), group_idx);
+                AWS_LOGF_TRACE(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: Found cpu range " PRInSTR " for node %" PRIu16,
+                    AWS_BYTE_CURSOR_PRI(trimmed_token),
+                    group_idx);
                 aws_array_list_push_back(&cpu_ranges, &trimmed_token);
             }
 
@@ -217,7 +227,12 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
                 end_cursor = split_cur;
 
                 if (start_found && end_found) {
-                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
+                    AWS_LOGF_TRACE(
+                        AWS_LS_COMMON_GENERAL,
+                        "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16,
+                        AWS_BYTE_CURSOR_PRI(start_cursor),
+                        AWS_BYTE_CURSOR_PRI(end_cursor),
+                        group_idx);
                     uint64_t start, end;
                     if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
                         aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
@@ -225,7 +240,11 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
                     }
                 } else {
                     uint64_t cpu_id;
-                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu number " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(range_cursor), group_idx);
+                    AWS_LOGF_TRACE(
+                        AWS_LS_COMMON_GENERAL,
+                        "static: Parsed cpu number " PRInSTR " for node %" PRIu16,
+                        AWS_BYTE_CURSOR_PRI(range_cursor),
+                        group_idx);
 
                     if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS) {
                         cpu_count++;
@@ -236,7 +255,11 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
             aws_array_list_clean_up(&cpu_ranges);
         }
     } else {
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: No cpulist for NUMA node %" PRIu16 " found at %s", group_idx, aws_string_c_str(file_path));
+        AWS_LOGF_TRACE(
+            AWS_LS_COMMON_GENERAL,
+            "static: No cpulist for NUMA node %" PRIu16 " found at %s",
+            group_idx,
+            aws_string_c_str(file_path));
     }
 
     aws_byte_buf_clean_up(&file_data);
@@ -274,7 +297,11 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
         struct aws_byte_cursor core_id_trimmed = aws_byte_cursor_trim_pred(&core_id, aws_char_is_space);
 
         if (sibling_file_data.len) {
-            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRIu32 " has core_id " PRInSTR, cpu_id, AWS_BYTE_CURSOR_PRI(core_id_trimmed));
+            AWS_LOGF_TRACE(
+                AWS_LS_COMMON_GENERAL,
+                "static: cpu %" PRIu32 " has core_id " PRInSTR,
+                cpu_id,
+                AWS_BYTE_CURSOR_PRI(core_id_trimmed));
             uint64_t int_val = 0;
             aws_byte_cursor_utf8_parse_u64(core_id_trimmed, &int_val);
             /* not perfect, but it's close. If the cpu_id matches the core id, assume it's the physical core, if it
@@ -292,7 +319,8 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
     return is_hyperthread;
 }
 
-/** Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
+/*
+ * Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
  * linux /sys hierarchy as follows:
  *
  *  The numa nodes are listed in /sys/devices/system/node/node([\d+]),
@@ -300,8 +328,8 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
  *  Each Node's cpu list is stored in /sys/devices/system/node/node<node index>/cpulist
  *
  *  Whether or not a cpu is a hyper-thread is determined by looking in
- *  /sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
- *  is present, then it is a hyper-thread.
+ *  /sys/devices/system/cpu/cpu<cpu index>/topology/core_id. If a value
+ *  is present and it does not match cpu index, then it is an SMP thread.
  */
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
     struct aws_allocator *allocator = aws_default_allocator();
@@ -310,7 +338,11 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
     /* Read the CPU list from the file */
     struct aws_byte_buf file_data;
     if (aws_byte_buf_init_from_file(&file_data, allocator, aws_string_c_str(file_path)) == AWS_OP_SUCCESS) {
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered cpulist for NUMA node %" PRIu16 " at %s", group_idx, aws_string_c_str(file_path));
+        AWS_LOGF_TRACE(
+            AWS_LS_COMMON_GENERAL,
+            "static: discovered cpulist for NUMA node %" PRIu16 " at %s",
+            group_idx,
+            aws_string_c_str(file_path));
         /* Parse the CPU list */
         struct aws_array_list cpu_ranges;
         AWS_FATAL_ASSERT(
@@ -321,7 +353,11 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         AWS_ZERO_STRUCT(token);
         while (aws_byte_cursor_next_split(&line_cursor, ',', &token)) {
             struct aws_byte_cursor trimmed_token = aws_byte_cursor_trim_pred(&token, aws_char_is_space);
-            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Found cpu range " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(trimmed_token), group_idx);
+            AWS_LOGF_TRACE(
+                AWS_LS_COMMON_GENERAL,
+                "static: Found cpu range " PRInSTR " for node %" PRIu16,
+                AWS_BYTE_CURSOR_PRI(trimmed_token),
+                group_idx);
             aws_array_list_push_back(&cpu_ranges, &trimmed_token);
         }
 
@@ -341,24 +377,41 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
 
             if (start_found && end_found) {
                 uint64_t start, end;
-                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
+                AWS_LOGF_TRACE(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16,
+                    AWS_BYTE_CURSOR_PRI(start_cursor),
+                    AWS_BYTE_CURSOR_PRI(end_cursor),
+                    group_idx);
                 if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
                     aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
                     for (uint64_t j = start; j <= end && cpu_count < cpu_ids_array_length; ++j) {
                         cpu_ids_array[cpu_count].cpu_id = (int32_t)j;
                         cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)j);
-                        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread? %s", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
+                        AWS_LOGF_TRACE(
+                            AWS_LS_COMMON_GENERAL,
+                            "static: cpu %" PRId32 " is hyper-thread? %s",
+                            cpu_ids_array[cpu_count].cpu_id,
+                            cpu_ids_array[cpu_count].suspected_hyper_thread ? "true" : "false");
                         cpu_count++;
                     }
                 }
             } else {
                 uint64_t cpu_id;
-                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu number " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(range_cursor), group_idx);
+                AWS_LOGF_TRACE(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: Parsed cpu number " PRInSTR " for node %" PRIu16,
+                    AWS_BYTE_CURSOR_PRI(range_cursor),
+                    group_idx);
                 if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS &&
                     cpu_count < cpu_ids_array_length) {
                     cpu_ids_array[cpu_count].cpu_id = (int32_t)cpu_id;
                     cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)cpu_id);
-                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread? %s", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
+                    AWS_LOGF_TRACE(
+                        AWS_LS_COMMON_GENERAL,
+                        "static: cpu %" PRId32 " is hyper-thread? %s",
+                        cpu_ids_array[cpu_count].cpu_id,
+                        cpu_ids_array[cpu_count].suspected_hyper_thread ? "true" : "false");
                     cpu_count++;
                 }
             }
@@ -366,7 +419,11 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
 
         aws_array_list_clean_up(&cpu_ranges);
     } else {
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: No cpulist for NUMA node %" PRIu16 " found at %s", group_idx, aws_string_c_str(file_path));
+        AWS_LOGF_TRACE(
+            AWS_LS_COMMON_GENERAL,
+            "static: No cpulist for NUMA node %" PRIu16 " found at %s",
+            group_idx,
+            aws_string_c_str(file_path));
     }
     aws_string_destroy(file_path);
     aws_byte_buf_clean_up(&file_data);
