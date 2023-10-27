@@ -4,7 +4,7 @@
  */
 #include <aws/common/file.h>
 #include <aws/common/private/system_info_priv.h>
-#include <Aws/common/logging.h>
+#include <aws/common/logging.h>
 
 #include <ifaddrs.h>
 #include <inttypes.h>
