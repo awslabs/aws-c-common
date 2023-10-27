@@ -276,6 +276,7 @@ int aws_hash_table_create(
  *
  * Returns AWS_OP_SUCCESS if an item was found or created.
  * Raises AWS_ERROR_OOM if hash table expansion was required and memory
+ * allocation failed.
  */
 AWS_COMMON_API
 int aws_hash_table_put(struct aws_hash_table *map, const void *key, void *value, int *was_created);
