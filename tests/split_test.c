@@ -329,3 +329,22 @@ static int s_test_byte_cursor_next_split(struct aws_allocator *allocator, void *
 
     return 0;
 }
+
+AWS_TEST_CASE(test_byte_cursor_range_split_str, s_test_byte_cursor_range_split_str)
+static int s_test_byte_cursor_range_split_str(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_byte_cursor to_split1 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("0-9");
+    struct aws_byte_cursor result1 = {0};
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, '-', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "0");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, '1', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "9");
+
+    ASSERT_FALSE(aws_byte_cursor_next_split(&to_split1, '-', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "");
+
+    return 0;
+}
