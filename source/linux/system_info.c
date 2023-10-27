@@ -209,11 +209,15 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
                 struct aws_byte_cursor range_cursor;
                 aws_array_list_get_at(&cpu_ranges, &range_cursor, i);
                 struct aws_byte_cursor start_cursor, end_cursor;
-                AWS_ZERO_STRUCT(start_cursor);
-                AWS_ZERO_STRUCT(end_cursor);
-                if (aws_byte_cursor_next_split(&range_cursor, '-', &start_cursor) &&
-                    aws_byte_cursor_next_split(&range_cursor, '-', &end_cursor)) {
-                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu ranges " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
+                struct aws_byte_cursor split_cur;
+                AWS_ZERO_STRUCT(split_cur);
+                bool start_found = aws_byte_cursor_next_split(&range_cursor, '-', &split_cur);
+                start_cursor = split_cur;
+                bool end_found = aws_byte_cursor_next_split(&range_cursor, '-', &split_cur);
+                end_cursor = split_cur;
+
+                if (start_found && end_found) {
+                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
                     uint64_t start, end;
                     if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
                         aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
@@ -317,12 +321,16 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
             struct aws_byte_cursor range_cursor;
             aws_array_list_get_at(&cpu_ranges, &range_cursor, i);
             struct aws_byte_cursor start_cursor, end_cursor;
-            AWS_ZERO_STRUCT(start_cursor);
-            AWS_ZERO_STRUCT(end_cursor);
-            if (aws_byte_cursor_next_split(&range_cursor, '-', &start_cursor) &&
-                aws_byte_cursor_next_split(&range_cursor, '-', &end_cursor)) {
+            struct aws_byte_cursor split_cur;
+            AWS_ZERO_STRUCT(split_cur);
+            bool start_found = aws_byte_cursor_next_split(&range_cursor, '-', &split_cur);
+            start_cursor = split_cur;
+            bool end_found = aws_byte_cursor_next_split(&range_cursor, '-', &split_cur);
+            end_cursor = split_cur;
+
+            if (start_found && end_found) {
                 uint64_t start, end;
-                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu ranges " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
+                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu range " PRInSTR "-" PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
                 if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
                     aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
                     for (uint64_t j = start; j <= end && cpu_count < cpu_ids_array_length; ++j) {

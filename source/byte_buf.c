@@ -244,7 +244,6 @@ bool aws_byte_cursor_next_split(
     /* substr is now remainder of string, search for next split */
     uint8_t *new_location = memchr(substr->ptr, split_on, substr->len);
     if (new_location) {
-
         /* Character found, update string length. */
         substr->len = new_location - substr->ptr;
     }

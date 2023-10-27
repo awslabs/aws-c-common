@@ -340,7 +340,7 @@ static int s_test_byte_cursor_range_split_str(struct aws_allocator *allocator, v
     ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, '-', &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "0");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, '1', &result1));
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, '-', &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "9");
 
     ASSERT_FALSE(aws_byte_cursor_next_split(&to_split1, '-', &result1));
