@@ -360,7 +360,7 @@ int aws_thread_launch(
 #if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD
     /* If we don't have pthread_attr_setaffinity_np, we may
      * still be able to set the thread affinity after creation. */
-    if (options && options->cpu_id >= 0) {
+    if (options && (options->cpu_id >= 0 || optiions->cpu_group >= 0) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
             "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
