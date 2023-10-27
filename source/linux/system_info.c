@@ -129,17 +129,17 @@ uint16_t aws_get_cpu_group_count() {
 
     uint16_t count = 0;
 
-    const struct aws_directory_entry *dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
+    do {
+        const struct aws_directory_entry *dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
+        if (dir_entry) {
+            struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node");
+            if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
+                aws_byte_cursor_starts_with_ignore_case(&dir_entry->path, &search_cur)) {
+                count++;
+            }
 
-    while (dir_entry) {
-        struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node");
-        if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
-            aws_byte_cursor_starts_with_ignore_case(&dir_entry->path, &search_cur)) {
-            count++;
         }
-        aws_directory_entry_iterator_next(dir_iter);
-        dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
-    }
+    } while (aws_directory_entry_iterator_next(dir_iter) == AWS_OP_SUCCESS);
 
     aws_directory_entry_iterator_destroy(dir_iter);
     return count;
