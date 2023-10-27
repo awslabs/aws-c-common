@@ -257,7 +257,7 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
 
     struct aws_byte_cursor sibling_initial_path = aws_byte_cursor_from_c_str("/sys/devices/system/cpu/cpu");
     struct aws_byte_cursor sibling_idx_cursor = aws_byte_cursor_from_array(cpu_id_str, strlen(cpu_id_str));
-    struct aws_byte_cursor sibling_final_path_segment = aws_byte_cursor_from_c_str("/topology/thread_siblings_list");
+    struct aws_byte_cursor sibling_final_path_segment = aws_byte_cursor_from_c_str("/topology/core_id");
 
     aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_initial_path);
     aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_idx_cursor);
@@ -270,8 +270,19 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
     struct aws_byte_buf sibling_file_data;
     if (aws_byte_buf_init_from_file(&sibling_file_data, allocator, aws_string_c_str(sibling_file_path)) ==
         AWS_OP_SUCCESS) {
-        /* If the file is not empty, this CPU is suspected to be part of a hyper-threaded core */
-        is_hyperthread = sibling_file_data.len > 1;
+        struct aws_byte_cursor core_id = aws_byte_cursor_from_buf(&sibling_file_data);
+        struct aws_byte_cursor core_id_trimmed = aws_byte_cursor_trim_pred(&core_id, aws_char_is_space);
+
+        if (sibling_file_data.len) {
+            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu % " PRIu32 " has core_id " PRInSTR, cpu_id, AWS_BYTE_CURSOR_PRI(core_id_trimmed));
+            uint64_t int_val = 0;
+            aws_byte_cursor_utf8_parse_u64(core_id_trimmed, &int_val);
+            /* not perfect, but it's close. If the cpu_id matches the core id, assume it's the physical core, if it
+             * does not, assume it's an SMP core. */
+            is_hyperthread = int_val != cpu_id;
+        } else {
+            is_hyperthread = true;
+        }
         aws_byte_buf_clean_up(&sibling_file_data);
     } else {
         is_hyperthread = false;
@@ -289,7 +300,7 @@ static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
  *  Each Node's cpu list is stored in /sys/devices/system/node/node<node index>/cpulist
  *
  *  Whether or not a cpu is a hyper-thread is determined by looking in
- *  sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
+ *  /sys/devices/system/cpu/cpu<cpu index>/topology/thread_siblings_list. If a value
  *  is present, then it is a hyper-thread.
  */
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
