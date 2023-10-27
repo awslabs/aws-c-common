@@ -14,12 +14,12 @@ static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx
     struct aws_byte_buf temp;
     aws_byte_buf_init(&temp, allocator, 8 * 1024 * 1024);
 
+    aws_byte_buf_clean_up_secure(&temp);
+
     struct aws_memory_usage_stats mu;
     ASSERT_SUCCESS(aws_init_memory_usage_for_current_process(&mu));
 
     ASSERT_TRUE(mu.maxrss > 0);
-
-    aws_byte_buf_clean_up(&temp);
 
     return 0;
 }
