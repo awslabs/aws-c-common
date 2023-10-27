@@ -197,10 +197,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        uses: cross-platform-actions/action@v0.10.0
+        uses: cross-platform-actions/action@v0.20.0
         with:
           operating_system: openbsd
-          architecture: x86-64
           version: '7.2'
           shell: bash
           run: |
@@ -209,22 +208,19 @@ jobs:
             chmod a+x builder
             ./builder build -p ${{ env.PACKAGE_NAME }}
 
-  freebsd: #remove later
+  freebsd:
     runs-on: macos-12
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        uses: vmactions/freebsd-vm@v0
+        uses: cross-platform-actions/action@v0.20.0
         with:
-          envs: 'AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_REGION'
-          usesh: true
-          sync: rsync
-          copyback: false
-          prepare: |
-            pkg install -y python3 py39-urllib3 py39-pip cmake
+          operating_system: freebsd
+          version: '13.2'
           run: |
+            pkg install -y python3 py39-urllib3 py39-pip cmake
             python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
             chmod a+x builder
             ./builder build -p ${{ env.PACKAGE_NAME }}
