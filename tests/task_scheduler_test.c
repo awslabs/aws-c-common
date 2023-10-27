@@ -416,6 +416,49 @@ static int s_test_scheduler_task_delete_on_run(struct aws_allocator *allocator, 
     return 0;
 }
 
+static int s_test_scheduler_deferrment(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    s_executed_tasks_n = 0;
+
+    struct aws_task_scheduler scheduler;
+    aws_task_scheduler_init(&scheduler, allocator);
+
+    aws_task_scheduler_enter_deferment_boundary(&scheduler);
+
+    struct aws_task task1;
+    aws_task_init(&task1, s_task_n_fn, (void *)0, "scheduler_deferrment_boundary1");
+    aws_task_scheduler_schedule_future(&scheduler, &task1, 5);
+
+    struct aws_task task2;
+    aws_task_init(&task2, s_task_n_fn, (void *)0, "scheduler_deferrment_boundary2");
+    aws_task_scheduler_schedule_now(&scheduler, &task2);
+
+    /* Run scheduler after task is supposed to execute, check that it didn't execute */
+    aws_task_scheduler_run_all(&scheduler, 10);
+
+    ASSERT_UINT_EQUALS(0, s_executed_tasks_n);
+
+    aws_task_scheduler_exit_deferment_boundary(&scheduler);
+
+    /* Run scheduler after task is supposed to execute but outside the boundary, and check that it did execute */
+    aws_task_scheduler_run_all(&scheduler, 10);
+    ASSERT_UINT_EQUALS(2, s_executed_tasks_n);
+
+    /* in a single run, asap tasks run first, followed by the timed tasks, so the order should be reversed here. */
+    struct executed_task_data *task1_data = &s_executed_tasks[0];
+    ASSERT_PTR_EQUALS(&task2, task1_data->task);
+    ASSERT_PTR_EQUALS(task2.arg, task1_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task1_data->status);
+
+    struct executed_task_data *task2_data = &s_executed_tasks[1];
+    ASSERT_PTR_EQUALS(&task1, task2_data->task);
+    ASSERT_PTR_EQUALS(task1.arg, task2_data->arg);
+    ASSERT_INT_EQUALS(AWS_TASK_STATUS_RUN_READY, task2_data->status);
+
+    aws_task_scheduler_clean_up(&scheduler);
+    return 0;
+}
+
 AWS_TEST_CASE(scheduler_pops_task_late_test, s_test_scheduler_pops_task_fashionably_late);
 AWS_TEST_CASE(scheduler_ordering_test, s_test_scheduler_ordering);
 AWS_TEST_CASE(scheduler_has_tasks_test, s_test_scheduler_has_tasks);
@@ -425,3 +468,4 @@ AWS_TEST_CASE(scheduler_cleanup_reentrants, s_test_scheduler_cleanup_reentrants)
 AWS_TEST_CASE(scheduler_schedule_cancellation, s_test_scheduler_schedule_cancellation);
 AWS_TEST_CASE(scheduler_cleanup_idempotent, s_test_scheduler_cleanup_idempotent);
 AWS_TEST_CASE(scheduler_task_delete_on_run, s_test_scheduler_task_delete_on_run);
+AWS_TEST_CASE(scheduler_task_deferrment, s_test_scheduler_deferrment)

@@ -162,6 +162,7 @@ add_test_case(scheduler_cleanup_reentrants)
 add_test_case(scheduler_schedule_cancellation)
 add_test_case(scheduler_cleanup_idempotent)
 add_test_case(scheduler_task_delete_on_run)
+add_test_case(scheduler_task_deferrment)
 
 add_test_case(test_hash_table_create_find)
 add_test_case(test_hash_table_string_create_find)

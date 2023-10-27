@@ -65,6 +65,7 @@ int aws_task_scheduler_init(struct aws_task_scheduler *scheduler, struct aws_all
     scheduler->alloc = alloc;
     aws_linked_list_init(&scheduler->timed_list);
     aws_linked_list_init(&scheduler->asap_list);
+    aws_linked_list_init(&scheduler->deferment_list);
 
     AWS_POSTCONDITION(aws_task_scheduler_is_valid(scheduler));
     return AWS_OP_SUCCESS;
@@ -129,15 +130,25 @@ void aws_task_scheduler_schedule_now(struct aws_task_scheduler *scheduler, struc
     AWS_ASSERT(task);
     AWS_ASSERT(task->fn);
 
+    task->priority_queue_node.current_index = SIZE_MAX;
+    aws_linked_list_node_reset(&task->node);
+    task->timestamp = 0;
+
+    if (scheduler->in_deferment_boundary) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_TASK_SCHEDULER,
+            "id=%p: Deferring scheduling %s task for deferred execution",
+            (void *)task,
+            task->type_tag);
+        aws_linked_list_push_back(&scheduler->deferment_list, &task->node);
+        return;
+    }
+
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_TASK_SCHEDULER,
         "id=%p: Scheduling %s task for immediate execution",
         (void *)task,
         task->type_tag);
-
-    task->priority_queue_node.current_index = SIZE_MAX;
-    aws_linked_list_node_reset(&task->node);
-    task->timestamp = 0;
 
     aws_linked_list_push_back(&scheduler->asap_list, &task->node);
     task->abi_extension.scheduled = true;
@@ -152,6 +163,21 @@ void aws_task_scheduler_schedule_future(
     AWS_ASSERT(task);
     AWS_ASSERT(task->fn);
 
+    task->timestamp = time_to_run;
+
+    task->priority_queue_node.current_index = SIZE_MAX;
+    aws_linked_list_node_reset(&task->node);
+
+    if (scheduler->in_deferment_boundary) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_TASK_SCHEDULER,
+            "id=%p: Deferring scheduling %s task for deferred execution",
+            (void *)task,
+            task->type_tag);
+        aws_linked_list_push_back(&scheduler->deferment_list, &task->node);
+        return;
+    }
+
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_TASK_SCHEDULER,
         "id=%p: Scheduling %s task for future execution at time %" PRIu64,
@@ -159,10 +185,7 @@ void aws_task_scheduler_schedule_future(
         task->type_tag,
         time_to_run);
 
-    task->timestamp = time_to_run;
-
-    task->priority_queue_node.current_index = SIZE_MAX;
-    aws_linked_list_node_reset(&task->node);
+    task->abi_extension.scheduled = true;
     int err = aws_priority_queue_push_ref(&scheduler->timed_queue, &task, &task->priority_queue_node);
     if (AWS_UNLIKELY(err)) {
         /* In the (very unlikely) case that we can't push into the timed_queue,
@@ -179,7 +202,28 @@ void aws_task_scheduler_schedule_future(
         }
         aws_linked_list_insert_before(node_i, &task->node);
     }
-    task->abi_extension.scheduled = true;
+}
+
+void aws_task_scheduler_enter_deferment_boundary(struct aws_task_scheduler *scheduler) {
+    scheduler->in_deferment_boundary = true;
+}
+
+void aws_task_scheduler_exit_deferment_boundary(struct aws_task_scheduler *scheduler) {
+    scheduler->in_deferment_boundary = false;
+
+    while (!aws_linked_list_empty(&scheduler->deferment_list)) {
+        struct aws_linked_list_node *deferred_list_node = aws_linked_list_begin(&scheduler->deferment_list);
+        struct aws_task *deferred_list_task = AWS_CONTAINER_OF(deferred_list_node, struct aws_task, node);
+
+        aws_linked_list_remove(deferred_list_node);
+        aws_linked_list_node_reset(deferred_list_node);
+
+        if (deferred_list_task->timestamp) {
+            aws_task_scheduler_schedule_future(scheduler, deferred_list_task, deferred_list_task->timestamp);
+        } else {
+            aws_task_scheduler_schedule_now(scheduler, deferred_list_task);
+        }
+    }
 }
 
 void aws_task_scheduler_run_all(struct aws_task_scheduler *scheduler, uint64_t current_time) {
