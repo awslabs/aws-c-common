@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/byte_buf.h>
+#include <aws/common/device_random.h>
 #include <aws/common/system_resource_util.h>
 
 #include <aws/testing/aws_test_harness.h>
@@ -21,6 +22,7 @@ static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx
      */
     struct aws_byte_buf temp;
     aws_byte_buf_init(&temp, allocator, 8 * 1024 * 1024);
+    ASSERT_SUCCESS(aws_device_random_buffer(&temp));
 
     struct aws_memory_usage_stats mu;
     ASSERT_SUCCESS(aws_init_memory_usage_for_current_process(&mu));
