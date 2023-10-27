@@ -227,6 +227,8 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
 
             aws_array_list_clean_up(&cpu_ranges);
         }
+    } else {
+        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: No cpulist for NUMA node %" PRIu16 " found at %s", group_idx, aws_string_c_str(file_path));
     }
 
     aws_byte_buf_clean_up(&file_data);
