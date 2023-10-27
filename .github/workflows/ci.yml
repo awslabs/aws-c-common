@@ -209,6 +209,26 @@ jobs:
             chmod a+x builder
             ./builder build -p ${{ env.PACKAGE_NAME }}
 
+  freebsd:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        uses: vmactions/freebsd-vm@v0
+        with:
+          envs: 'AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_REGION'
+          usesh: true
+          sync: rsync
+          copyback: false
+          prepare: |
+            pkg install -y python3 py39-urllib3 py39-pip cmake
+          run: |
+            python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
+            chmod a+x builder
+            ./builder build -p ${{ env.PACKAGE_NAME }}
+
   cross_compile:
     name: Cross Compile ${{matrix.arch}}
     runs-on: ubuntu-20.04 # latest
