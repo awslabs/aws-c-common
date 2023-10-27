@@ -326,7 +326,7 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
                     for (uint64_t j = start; j <= end && cpu_count < cpu_ids_array_length; ++j) {
                         cpu_ids_array[cpu_count].cpu_id = (int32_t)j;
                         cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)j);
-                        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread?", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
+                        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread? %s", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
                         cpu_count++;
                     }
                 }
@@ -337,7 +337,7 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
                     cpu_count < cpu_ids_array_length) {
                     cpu_ids_array[cpu_count].cpu_id = (int32_t)cpu_id;
                     cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)cpu_id);
-                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread?", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
+                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: cpu %" PRId32 " is hyper-thread? %s", cpu_ids_array[cpu_count].cpu_id, cpu_ids_array[cpu_count].suspected_hyper_thread ? "true": "false");
                     cpu_count++;
                 }
             }
