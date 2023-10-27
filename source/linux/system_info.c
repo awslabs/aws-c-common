@@ -134,9 +134,8 @@ uint16_t aws_get_cpu_group_count() {
     do {
         const struct aws_directory_entry *dir_entry = aws_directory_entry_iterator_get_value(dir_iter);
         if (dir_entry) {
-            struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("node/node");
+            struct aws_byte_cursor search_cur = aws_byte_cursor_from_c_str("/sys/devices/system/node/node");
             struct aws_byte_cursor capture_cur;
-            AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered NUMA node at " PRInSTR "\n", AWS_BYTE_CURSOR_PRI(dir_entry->relative_path));
 
             if ((dir_entry->file_type & (AWS_FILE_TYPE_SYM_LINK | AWS_FILE_TYPE_DIRECTORY)) &&
                 aws_byte_cursor_find_exact(&dir_entry->relative_path, &search_cur, &capture_cur) == AWS_OP_SUCCESS) {
@@ -192,11 +191,14 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
 
     struct aws_byte_buf file_data;
     if (aws_byte_buf_init_from_file(&file_data, allocator, aws_string_c_str(file_path)) == AWS_OP_SUCCESS) {
+        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: discovered cpulist for NUMA node %" PRIu16 " at %s", group_idx, aws_string_c_str(file_path));
+
         struct aws_array_list cpu_ranges;
         if (aws_array_list_init_dynamic(&cpu_ranges, allocator, 10, sizeof(struct aws_byte_cursor)) == AWS_OP_SUCCESS) {
             struct aws_byte_cursor line_cursor = aws_byte_cursor_from_buf(&file_data);
             struct aws_byte_cursor token;
             while (aws_byte_cursor_next_split(&line_cursor, ',', &token)) {
+                AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Found cpu range " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(token), group_idx);
                 aws_array_list_push_back(&cpu_ranges, &token);
             }
 
@@ -208,12 +210,15 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
                 if (aws_byte_cursor_next_split(&range_cursor, '-', &start_cursor)) {
                     aws_byte_cursor_next_split(&range_cursor, '-', &end_cursor);
                     uint64_t start, end;
+                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu ranges " PRInSTR " - " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(start_cursor), AWS_BYTE_CURSOR_PRI(end_cursor), group_idx);
                     if (aws_byte_cursor_utf8_parse_u64(start_cursor, &start) == AWS_OP_SUCCESS &&
                         aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
                         cpu_count += (size_t)(end - start + 1);
                     }
                 } else {
                     uint64_t cpu_id;
+                    AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Parsed cpu number " PRInSTR " for node %" PRIu16, AWS_BYTE_CURSOR_PRI(range_cursor), group_idx);
+
                     if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS) {
                         cpu_count++;
                     }
