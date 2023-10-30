@@ -16,8 +16,7 @@ AWS_EXTERN_C_BEGIN
  * Quick guide to allocators:
  *  CRT offers several flavours of allocators:
  * - default: basic allocator that invokes system one directly.
- * - aligned: basic allocator, targeted toward most common use case. behavior
- *   can change over time. Current default aligns small allocations on 8 byte
+ * - aligned: basic allocator that aligns small allocations on 8 byte
  *   boundary and big buffers on 32/64 byte (system dependent) boundary.
  *   Aligned mem can improve perf on some operations, like memcpy or hashes.
  *   Depending on a system, can result in higher peak memory count in heavy
