@@ -13,6 +13,7 @@
 #include <mach/mach.h>
 #else
 #include <aws/common/file.h>
+#include <aws/common/string.h>
 #include <unistd.h>
 #endif
 
@@ -83,9 +84,10 @@ int aws_memory_usage_init_for_current_process(struct aws_memory_usage_info *memo
     }
 
     memory_usage->maxrss = (size_t)info.resident_size_max;
-    memory_usage->rss = (size_t)info.resident_size; 
+    memory_usage->rss = (size_t)info.resident_size;
+    
 #else
-    FILE* statm = aws_fopen_safe("/proc/self/statm", "r");
+    FILE* statm = aws_fopen_safe(aws_string_new_from_c_str("/proc/self/statm"), 'r');
     if (statm == NULL) {
         return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
     }
