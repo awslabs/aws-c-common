@@ -25,6 +25,7 @@ int aws_init_memory_usage_for_current_process(struct aws_memory_usage_stats *mem
     }
 
     memory_usage->maxrss = pmc.PeakWorkingSetSize;
+    memory_usage->rss = pmc.WorkingSetSize;
     memory_usage->page_faults = pmc.PageFaultCount;
 
     return AWS_OP_SUCCESS;

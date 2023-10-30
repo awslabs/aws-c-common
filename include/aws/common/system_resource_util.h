@@ -15,7 +15,9 @@ struct aws_memory_usage_stats {
     size_t maxrss;      /* max resident set size in kilobytes since program start */
     size_t page_faults; /* num of page faults since program start */
 
-    size_t _reserved[8];
+    size_t rss;
+
+    size_t _reserved[7];
 };
 
 /*
