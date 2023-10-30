@@ -326,6 +326,7 @@ add_test_case(test_memtrace_none)
 add_test_case(test_memtrace_count)
 add_test_case(test_memtrace_stacks)
 add_test_case(test_memtrace_midstream)
+add_test_case(test_memtrace_sys)
 
 add_test_case(test_calloc_override)
 add_test_case(test_calloc_fallback_from_default_allocator)

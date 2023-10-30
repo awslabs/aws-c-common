@@ -34,6 +34,13 @@ struct aws_run_command_options {
     const char *command;
 };
 
+struct aws_memory_usage_info {
+    size_t maxrss; /* max resident set size in kilobytes since program start */
+    size_t rss;    /* current resident set size in kilobytes */   
+
+    size_t _reserved[4];
+};
+
 AWS_EXTERN_C_BEGIN
 
 /**
@@ -60,6 +67,12 @@ AWS_COMMON_API size_t aws_get_hard_limit_io_handles(void);
  * This operation will always fail with AWS_ERROR_UNIMPLEMENTED error code on Windows.
  */
 AWS_COMMON_API int aws_set_soft_limit_io_handles(size_t max_handles);
+
+/*
+ * Get memory usage for current process.
+ * Raises AWS_ERROR_SYS_CALL_FAILURE on failure.
+ */
+AWS_COMMON_API int aws_memory_usage_init_for_current_process(struct aws_memory_usage_info *memory_usage);
 
 AWS_COMMON_API int aws_run_command_result_init(struct aws_allocator *allocator, struct aws_run_command_result *result);
 

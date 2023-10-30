@@ -9,6 +9,7 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/logging.h>
 #include <aws/common/mutex.h>
+#include <aws/common/process.h>
 #include <aws/common/priority_queue.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
@@ -54,6 +55,7 @@ struct alloc_tracer {
     struct aws_mutex mutex;                 /* protects everything below */
     struct aws_hash_table allocs;           /* live allocations, maps address -> alloc_info */
     struct aws_hash_table stacks;           /* unique stack traces, maps hash -> stack_trace */
+    size_t high_water_mark;
 };
 
 /* number of frames to skip in call stacks (s_alloc_tracer_track, and the vtable function) */
@@ -118,7 +120,8 @@ static void s_alloc_tracer_init(
     }
 }
 
-static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t size) {
+static void s_alloc_tracer_track(struct aws_allocator *allocator, 
+    struct alloc_tracer *tracer, void *ptr, size_t size) {
     if (tracer->level == AWS_MEMTRACE_NONE) {
         return;
     }
@@ -129,6 +132,16 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
     AWS_FATAL_ASSERT(alloc);
     alloc->size = size;
     aws_high_res_clock_get_ticks(&alloc->time);
+
+    if (tracer->level == AWS_MEMTRACE_SYS_USAGE) {
+        struct aws_memory_usage_info mu; 
+        if (AWS_OP_SUCCESS == aws_memory_usage_init_for_current_process(&mu)) {
+            size_t allocated = aws_atomic_load_int(&tracer->allocated);
+            AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, 
+                "TRACE MEM USAGE; ts: %llu rss: %zu maxrss: %zu alloc: %zu total alloc: %zu",
+                 alloc->time, mu.rss, mu.maxrss, size, allocated);
+        }
+    }
 
     if (tracer->level == AWS_MEMTRACE_STACKS) {
         /* capture stack frames, skip 2 for this function and the allocation vtable function */
@@ -161,6 +174,12 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
                 stack->depth = stack_depth - FRAMES_TO_SKIP;
                 item->value = stack;
             }
+
+            size_t allocated = aws_atomic_load_int(&tracer->allocated);
+            if (tracer->high_water_mark >= allocated) {
+                aws_mem_tracer_dump(allocator);
+                tracer->high_water_mark = 0;
+            } 
             aws_mutex_unlock(&tracer->mutex);
         }
     }
@@ -173,6 +192,18 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
 static void s_alloc_tracer_untrack(struct alloc_tracer *tracer, void *ptr) {
     if (tracer->level == AWS_MEMTRACE_NONE) {
         return;
+    }
+
+    uint64_t time = 0;
+    aws_high_res_clock_get_ticks(&time);
+    if (tracer->level == AWS_MEMTRACE_SYS_USAGE) {
+        struct aws_memory_usage_info mu; 
+        if (AWS_OP_SUCCESS == aws_memory_usage_init_for_current_process(&mu)) {
+            size_t allocated = aws_atomic_load_int(&tracer->allocated);
+            AWS_LOGF_TRACE(AWS_LS_COMMON_MEMTRACE, 
+                "TRACE MEM USAGE; ts: %llu rss: %zu maxrss: %zu alloc: %zu total alloc: %zu",
+                time, mu.rss, mu.maxrss, 0, allocated / 1024);
+        }
     }
 
     aws_mutex_lock(&tracer->mutex);
@@ -424,7 +455,7 @@ static void *s_trace_mem_acquire(struct aws_allocator *allocator, size_t size) {
     struct alloc_tracer *tracer = allocator->impl;
     void *ptr = aws_mem_acquire(tracer->traced_allocator, size);
     if (ptr) {
-        s_alloc_tracer_track(tracer, ptr, size);
+        s_alloc_tracer_track(allocator, tracer, ptr, size);
     }
     return ptr;
 }
@@ -450,7 +481,7 @@ static void *s_trace_mem_realloc(struct aws_allocator *allocator, void *old_ptr,
      */
     s_alloc_tracer_untrack(tracer, old_ptr);
     aws_mem_realloc(tracer->traced_allocator, &new_ptr, old_size, new_size);
-    s_alloc_tracer_track(tracer, new_ptr, new_size);
+    s_alloc_tracer_track(allocator, tracer, new_ptr, new_size);
 
     return new_ptr;
 }
@@ -459,7 +490,7 @@ static void *s_trace_mem_calloc(struct aws_allocator *allocator, size_t num, siz
     struct alloc_tracer *tracer = allocator->impl;
     void *ptr = aws_mem_calloc(tracer->traced_allocator, num, size);
     if (ptr) {
-        s_alloc_tracer_track(tracer, ptr, num * size);
+        s_alloc_tracer_track(allocator, tracer, ptr, num * size);
     }
     return ptr;
 }
@@ -492,6 +523,37 @@ struct aws_allocator *aws_mem_tracer_new(
     /* copy the template vtable s*/
     *trace_allocator = s_trace_allocator;
     trace_allocator->impl = tracer;
+
+    s_alloc_tracer_init(tracer, allocator, level, frames_per_stack);
+    return trace_allocator;
+}
+
+struct aws_allocator *aws_mem_tracer_new_with_hwm(
+    struct aws_allocator *allocator,
+    enum aws_mem_trace_level level,
+    size_t frames_per_stack,
+    size_t high_water_mark) {
+
+    struct alloc_tracer *tracer = NULL;
+    struct aws_allocator *trace_allocator = NULL;
+    aws_mem_acquire_many(
+        aws_default_allocator(),
+        2,
+        &tracer,
+        sizeof(struct alloc_tracer),
+        &trace_allocator,
+        sizeof(struct aws_allocator));
+
+    AWS_FATAL_ASSERT(trace_allocator);
+    AWS_FATAL_ASSERT(tracer);
+
+    AWS_ZERO_STRUCT(*trace_allocator);
+    AWS_ZERO_STRUCT(*tracer);
+
+    /* copy the template vtable s*/
+    *trace_allocator = s_trace_allocator;
+    trace_allocator->impl = tracer;
+    tracer->high_water_mark = high_water_mark;
 
     s_alloc_tracer_init(tracer, allocator, level, frames_per_stack);
     return trace_allocator;

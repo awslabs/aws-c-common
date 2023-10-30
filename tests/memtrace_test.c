@@ -264,3 +264,31 @@ static int s_test_memtrace_midstream(struct aws_allocator *allocator, void *ctx)
     return 0;
 }
 AWS_TEST_CASE(test_memtrace_midstream, s_test_memtrace_midstream)
+
+static int s_test_memtrace_sys(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_allocator *tracer = aws_mem_tracer_new_with_hwm(allocator,
+        AWS_MEMTRACE_SYS_USAGE, 0, (size_t)4 * 1024 * 1024 * 1024);
+
+    void *allocs[NUM_ALLOCS] = {0};
+
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        uint32_t size = 0;
+        aws_device_random_u32(&size);
+        size = (size % 1024) + 1; /* not necessary to allocate a gajillion bytes */
+        allocs[idx] = aws_mem_acquire(tracer, size);
+    }
+
+    for (size_t idx = 0; idx < AWS_ARRAY_SIZE(allocs); ++idx) {
+        if (allocs[idx]) {
+            aws_mem_release(tracer, allocs[idx]);
+        }
+    }
+
+    struct aws_allocator *original = aws_mem_tracer_destroy(tracer);
+    ASSERT_PTR_EQUALS(allocator, original);
+
+    return 0;
+}
+AWS_TEST_CASE(test_memtrace_sys, s_test_memtrace_sys)

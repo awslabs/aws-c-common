@@ -81,3 +81,18 @@ static int s_run_command_test_bad_command_fn(struct aws_allocator *allocator, vo
     return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(run_command_test_bad_command, s_run_command_test_bad_command_fn)
+
+static int s_test_memory_usage_maxrss(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_memory_usage_info mu;
+    ASSERT_SUCCESS(aws_memory_usage_init_for_current_process(&mu));
+
+    ASSERT_TRUE(mu.maxrss > 0);
+    ASSERT_TRUE(mu.rss > 0);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_memory_usage_maxrss, s_test_memory_usage_maxrss)

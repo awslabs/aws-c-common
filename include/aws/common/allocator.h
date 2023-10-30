@@ -119,6 +119,7 @@ enum aws_mem_trace_level {
     AWS_MEMTRACE_NONE = 0,   /* no tracing */
     AWS_MEMTRACE_BYTES = 1,  /* just track allocation sizes and total allocated */
     AWS_MEMTRACE_STACKS = 2, /* capture callstacks for each allocation */
+    AWS_MEMTRACE_SYS_USAGE = 3, /* capture system level mem usage */
 };
 
 /*
@@ -137,6 +138,13 @@ struct aws_allocator *aws_mem_tracer_new(
     struct aws_allocator *deprecated,
     enum aws_mem_trace_level level,
     size_t frames_per_stack);
+
+AWS_COMMON_API
+struct aws_allocator *aws_mem_tracer_new_with_hwm(
+    struct aws_allocator *allocator,
+    enum aws_mem_trace_level level,
+    size_t frames_per_stack,
+    size_t high_water_mark);
 
 /*
  * Unwraps the traced allocator and cleans up the tracer.
