@@ -22,18 +22,19 @@ struct aws_system_environment {
     void *impl;
 };
 
+AWS_EXTERN_C_BEGIN
 /**
  * For internal implementors. Fill in info in env that you're able to grab, such as dmi info, os version strings etc...
  * in here. The default just returns AWS_OP_SUCCESS. This is currently only implemented for linux.
  *
  * Returns AWS_OP_ERR if the implementation wasn't able to fill in required information for the platform.
  */
-int aws_system_environment_load_platform_impl(struct aws_system_environment *env);
+AWS_COMMON_API int aws_system_environment_load_platform_impl(struct aws_system_environment *env);
 
 /**
  * For internal implementors. Cleans up anything allocated in aws_system_environment_load_platform_impl,
  * but does not release the memory for env.
  */
-void aws_system_environment_destroy_platform_impl(struct aws_system_environment *env);
-
+AWS_COMMON_API void aws_system_environment_destroy_platform_impl(struct aws_system_environment *env);
+AWS_EXTERN_C_END
 #endif // AWS_COMMON_PRIVATE_SYSTEM_INFO_PRIV_H

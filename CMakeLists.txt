@@ -4,7 +4,12 @@
 cmake_minimum_required(VERSION 3.0)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
+if (WIN32)
+# needed for COM interop */
+project(aws-c-common LANGUAGES C CXX VERSION 0.1.0)
+else()
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
+endif()
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
@@ -70,7 +75,7 @@ if (WIN32)
 
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
-        "source/platform_fallback_stubs/system_info.c"
+        "source/windows/*.cpp"
         )
 
     if (MSVC)
@@ -82,7 +87,7 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
+    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi wbemuuid)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"

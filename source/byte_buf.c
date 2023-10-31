@@ -284,6 +284,71 @@ int aws_byte_cursor_split_on_char_n(
     return AWS_OP_SUCCESS;
 }
 
+int aws_byte_buf_init_and_replace(
+    struct aws_byte_buf* buf,
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor original,
+    struct aws_byte_cursor replacement_pattern,
+    struct aws_byte_cursor replace_with) {
+    if (!allocator || !buf) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    if (replacement_pattern.len == 0) {
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    size_t num_occurrences = 0;
+    struct aws_byte_cursor search_cursor = original;
+    while (search_cursor.len > 0) {
+        struct aws_byte_cursor result;
+        if (aws_byte_cursor_find_exact(&search_cursor, &replacement_pattern, &result) == AWS_OP_SUCCESS) {
+            num_occurrences++;
+            aws_byte_cursor_advance(&search_cursor, (result.ptr - search_cursor.ptr) + replacement_pattern.len);
+        } else {
+            break;
+        }
+    }
+
+    size_t new_len = original.len - (num_occurrences * replacement_pattern.len) + (num_occurrences * replace_with.len);
+    if (aws_byte_buf_init(buf, allocator, new_len)) {
+        return AWS_OP_ERR;
+    }
+
+    search_cursor = original;
+    while (search_cursor.len > 0) {
+        struct aws_byte_cursor result;
+        if (aws_byte_cursor_find_exact(&search_cursor, &replacement_pattern, &result) == AWS_OP_SUCCESS) {
+            /* Copy everything before the found pattern */
+            if (result.ptr != search_cursor.ptr) {
+                struct aws_byte_cursor prefix =
+                    aws_byte_cursor_from_array(search_cursor.ptr, result.ptr - search_cursor.ptr);
+                if (aws_byte_buf_append(buf, &prefix)) {
+                    aws_byte_buf_clean_up(buf);
+                    return AWS_OP_ERR;
+                }
+            }
+            /* Copy the replacement string */
+            if (aws_byte_buf_append(buf, &replace_with)) {
+                aws_byte_buf_clean_up(buf);
+                return AWS_OP_ERR;
+            }
+            /* Move the search cursor */
+            size_t skip_len = (result.ptr - search_cursor.ptr) + replacement_pattern.len;
+            aws_byte_cursor_advance(&search_cursor, skip_len);
+        } else {
+            /* Copy the remaining part of the string, as no more patterns are found */
+            if (aws_byte_buf_append(buf, &search_cursor)) {
+                aws_byte_buf_clean_up(buf);
+                return AWS_OP_ERR;
+            }
+            break;
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 int aws_byte_cursor_split_on_char(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     char split_on,

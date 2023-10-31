@@ -14,9 +14,6 @@
 
 #include <inttypes.h>
 
-/* Convert a string from a macro to a wide string */
-#define WIDEN2(s) L## #s
-#define WIDEN(s) WIDEN2(s)
 
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
@@ -152,12 +149,21 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
 static aws_thread_once s_check_functions_once = INIT_ONCE_STATIC_INIT;
 
 #if defined(AWS_OS_WINDOWS_DESKTOP)
+/* Convert a string from a macro to a wide string */
+#    define WIDEN2(s) L## #    s
+#    define WIDEN(s) WIDEN2(s)
 static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
 typedef DWORD WINAPI GetActiveProcessorCount_fn(WORD);
 static GetActiveProcessorCount_fn *s_GetActiveProcessorCount;
 
 typedef WORD WINAPI GetActiveProcessorGroupCount_fn(void);
 static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
+
+typedef BOOL WINAPI GetLogicalProcessorInformationEx_fn(
+    LOGICAL_PROCESSOR_RELATIONSHIP RelationshipType,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnedLength);
+static GetLogicalProcessorInformationEx_fn *s_GetLogicalProcessorInformationEx;
 
 static void s_check_active_processor_functions(void *user_data) {
     (void)user_data;
@@ -166,41 +172,70 @@ static void s_check_active_processor_functions(void *user_data) {
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
     s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
+    s_GetLogicalProcessorInformationEx = (GetLogicalProcessorInformationEx_fn *)GetProcAddress(
+        GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetLogicalProcessorInformationEx");
 }
 #endif
 
 /* windows is weird because apparently no one ever considered computers having more than 64 processors. Instead they
    have processor groups per process. We need to find the mask in the correct group. */
-static void s_get_group_and_cpu_id(uint32_t desired_cpu, uint16_t *group, uint8_t *proc_num) {
-    (void)desired_cpu;
+static void s_get_group_and_cpu_id(struct aws_allocator *allocator, 
+    const struct aws_thread_options *options, 
+    uint16_t *group, KAFFINITY *proc_mask, uint8_t *proc_num) {
+
+    (void)options;
     *group = 0;
-    *proc_num = 0;
+    *proc_mask = 0;
 #if defined(AWS_OS_WINDOWS_DESKTOP)
     /* Check for functions that don't exist on ancient Windows */
     aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
-    if (!s_GetActiveProcessorCount || !s_GetActiveProcessorGroupCount) {
+    if (!s_GetActiveProcessorCount || !s_GetActiveProcessorGroupCount || !s_GetLogicalProcessorInformationEx) {
         return;
     }
 
-    unsigned group_count = s_GetActiveProcessorGroupCount();
+    if (options->cpu_group >= 0) {
+        ULONG buffer_length = 0;
+        s_GetLogicalProcessorInformationEx(RelationNumaNode, NULL, &buffer_length);
+        AWS_FATAL_ASSERT(buffer_length);
 
-    unsigned total_processors_detected = 0;
-    uint8_t group_with_desired_processor = 0;
-    uint8_t group_mask_for_desired_processor = 0;
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer =
+            (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)aws_mem_acquire(allocator, buffer_length);
+        AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx(RelationNumaNode, buffer, &buffer_length));
 
-    /* for each group, keep counting til we find the group and the processor mask */
-    for (uint8_t i = 0; i < group_count; ++group_count) {
-        DWORD processor_count_in_group = s_GetActiveProcessorCount((WORD)i);
-        if (total_processors_detected + processor_count_in_group > desired_cpu) {
-            group_with_desired_processor = i;
-            group_mask_for_desired_processor = (uint8_t)(desired_cpu - total_processors_detected);
-            break;
+        ULONG offset = 0;
+        while (offset < buffer_length) {
+            PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info =
+                (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((uint8_t *)buffer + offset);
+            if (info->Relationship == RelationNumaNode && info->NumaNode.NodeNumber == (unsigned)options->cpu_group) {
+                *group = info->NumaNode.GroupMask.Group;
+                *proc_mask = info->NumaNode.GroupMask.Mask;
+            }
+            offset += info->Size;
         }
-        total_processors_detected += processor_count_in_group;
-    }
 
-    *proc_num = group_mask_for_desired_processor;
-    *group = group_with_desired_processor;
+        aws_mem_release(allocator, buffer);
+    } else if (options->cpu_id >= 0) {
+
+        unsigned group_count = s_GetActiveProcessorGroupCount();
+
+        unsigned total_processors_detected = 0;
+        uint8_t group_with_desired_processor = 0;
+        uint8_t group_mask_for_desired_processor = 0;
+
+        /* for each group, keep counting til we find the group and the processor mask */
+        for (uint8_t i = 0; i < group_count; ++group_count) {
+            DWORD processor_count_in_group = s_GetActiveProcessorCount((WORD)i);
+            if ((int)(total_processors_detected + processor_count_in_group) > options->cpu_id) {
+                group_with_desired_processor = i;
+                group_mask_for_desired_processor = (uint8_t)(options->cpu_id - total_processors_detected);
+                break;
+            }
+            total_processors_detected += processor_count_in_group;
+        }
+        *proc_num = group_mask_for_desired_processor;
+        *proc_mask = (uint64_t)1 << *proc_num;
+        *group = group_with_desired_processor;
+    }
     return;
 #endif /* non-desktop has no processor groups */
 }
@@ -286,7 +321,7 @@ int aws_thread_launch(
         }
     }
 
-    if (options && options->cpu_id >= 0) {
+    if (options && (options->cpu_id >= 0 || options->cpu_group >= 0)) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
             "id=%p: cpu affinity of cpu_id %" PRIi32 " was specified, attempting to honor the value.",
@@ -294,12 +329,14 @@ int aws_thread_launch(
             options->cpu_id);
 
         uint16_t group = 0;
+        KAFFINITY proc_mask = 0;
         uint8_t proc_num = 0;
-        s_get_group_and_cpu_id(options->cpu_id, &group, &proc_num);
+
+        s_get_group_and_cpu_id(thread->allocator, options, &group, &proc_mask, &proc_num);
         GROUP_AFFINITY group_afinity;
         AWS_ZERO_STRUCT(group_afinity);
         group_afinity.Group = (WORD)group;
-        group_afinity.Mask = (KAFFINITY)((uint64_t)1 << proc_num);
+        group_afinity.Mask = proc_mask;
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
             "id=%p: computed mask %" PRIx64 " on group %" PRIu16 ".",
@@ -317,7 +354,8 @@ int aws_thread_launch(
             (void *)thread,
             (int8_t)set_group_val);
 
-        if (set_group_val) {
+        /* only do the next part if a numa node wasn't specified */
+        if (set_group_val && options->cpu_group < 0) {
             PROCESSOR_NUMBER processor_number;
             AWS_ZERO_STRUCT(processor_number);
             processor_number.Group = (WORD)group;

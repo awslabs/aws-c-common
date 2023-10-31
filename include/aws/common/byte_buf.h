@@ -126,6 +126,18 @@ AWS_COMMON_API int aws_byte_buf_init_copy(
     struct aws_allocator *allocator,
     const struct aws_byte_buf *src);
 
+
+/** 
+ * Initializes an aws_byte_buf structure base from orignal, while also replacing
+ * replacement_pattern found in original with replace_with. 
+ */
+int aws_byte_buf_init_and_replace(
+    struct aws_byte_buf *buf,
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor original,
+    struct aws_byte_cursor replacement_pattern,
+    struct aws_byte_cursor replace_with);
+
 /**
  * Reads 'filename' into 'out_buf'. If successful, 'out_buf' is allocated and filled with the data;
  * It is your responsibility to call 'aws_byte_buf_clean_up()' on it. Otherwise, 'out_buf' remains

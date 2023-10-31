@@ -2,14 +2,13 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-
-#include <aws/common/system_info.h>
+#include <aws/common/private/system_info_priv.h>
 
 #include <aws/common/byte_buf.h>
 #include <aws/common/logging.h>
 #include <aws/common/thread.h>
 
-#include <windows.h>
+#include <Windows.h>
 
 enum aws_platform_os aws_get_platform_build_os(void) {
     return AWS_PLATFORM_OS_WINDOWS;
@@ -21,24 +20,144 @@ size_t aws_system_info_processor_count(void) {
     return info.dwNumberOfProcessors;
 }
 
-/* the next three functions need actual implementations before we can have proper numa alignment on windows.
- * For now leave them stubbed out. */
+
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+/* Convert a string from a macro to a wide string */
+#    define WIDEN2(s) L## #    s
+#    define WIDEN(s) WIDEN2(s)
+
+static aws_thread_once s_check_active_processor_functions_once = INIT_ONCE_STATIC_INIT;
+
+typedef BOOL WINAPI GetLogicalProcessorInformationEx_fn(
+    LOGICAL_PROCESSOR_RELATIONSHIP RelationshipType,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnedLength);
+static GetLogicalProcessorInformationEx_fn *s_GetLogicalProcessorInformationEx;
+
+
+static void s_check_active_processor_functions(void *user_data) {
+    (void)user_data;
+
+    s_GetLogicalProcessorInformationEx =
+        (GetLogicalProcessorInformationEx_fn *)GetProcAddress(GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"),
+         "GetLogicalProcessorInformationEx");
+
+}
+#endif
+
 uint16_t aws_get_cpu_group_count(void) {
-    return 1U;
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx);
+
+    ULONG buffer_length = 0;
+    s_GetLogicalProcessorInformationEx(RelationNumaNode, NULL, &buffer_length);
+    AWS_FATAL_ASSERT(buffer_length);
+
+    struct aws_allocator *allocator = aws_default_allocator();
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer =
+        (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)aws_mem_acquire(allocator, buffer_length);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx(RelationNumaNode, buffer, &buffer_length));
+
+    uint16_t count = 0;
+    ULONG offset = 0;
+    while (offset < buffer_length) {
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info =
+            (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((uint8_t *)buffer + offset);
+        if (info->Relationship == RelationNumaNode) {
+            count++;
+        }
+        offset += info->Size;
+    }
+
+    aws_mem_release(allocator, buffer);
+    return count;
+#else
+    return 1L;
+#endif /* defined(AWS_OS_WINDOWS_DESKTOP) */
+}
+
+static size_t s_count_set_bits(ULONGLONG number) {
+    size_t count = 0;
+    while (number) {
+        count += number & 1;
+        number >>= 1;
+    }
+    return count;
 }
 
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
-    (void)group_idx;
-    return aws_system_info_processor_count();
+
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+    aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx);
+    ULONG buffer_length = 0;
+    s_GetLogicalProcessorInformationEx(RelationNumaNode, NULL, &buffer_length);
+    AWS_FATAL_ASSERT(buffer_length);
+
+    struct aws_allocator *allocator = aws_default_allocator();
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer =
+        (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)aws_mem_acquire(allocator, buffer_length);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx(RelationNumaNode, buffer, &buffer_length));
+
+    size_t cpu_count = 0;
+    ULONG offset = 0;
+    while (offset < buffer_length) {
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info =
+            (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((uint8_t *)buffer + offset);
+        if (info->Relationship == RelationNumaNode && info->NumaNode.NodeNumber == group_idx) {
+            cpu_count = s_count_set_bits(info->NumaNode.GroupMask.Mask);
+            break;
+        }
+        offset += info->Size;
+    }
+
+    aws_mem_release(allocator, buffer);
+    return cpu_count;
+#else
+    return group_idx == 0 ? aws_system_info_processor_count() : 0;
+#endif /* defined(AWS_OS_WINDOWS_DESKTOP) */
+
 }
 
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
-    (void)group_idx;
+#if defined(AWS_OS_WINDOWS_DESKTOP)
+    /* Check for functions that don't exist on ancient Windows */
+    aws_thread_call_once(&s_check_active_processor_functions_once, s_check_active_processor_functions, NULL);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx);
 
-    if (!cpu_ids_array_length) {
-        return;
+    ULONG buffer_length = 0;
+    s_GetLogicalProcessorInformationEx(RelationNumaNode, NULL, &buffer_length);
+    AWS_FATAL_ASSERT(buffer_length);
+
+    struct aws_allocator *allocator = aws_default_allocator();
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer =
+        (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)aws_mem_acquire(allocator, buffer_length);
+    AWS_FATAL_ASSERT(s_GetLogicalProcessorInformationEx(RelationNumaNode, buffer, &buffer_length));
+
+    size_t cpu_count = 0;
+    ULONG offset = 0;
+    size_t hyper_threads_hint = cpu_ids_array_length / 2 - 1;
+
+    while (offset < buffer_length) {
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info =
+            (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((uint8_t *)buffer + offset);
+        if (info->Relationship == RelationNumaNode && info->NumaNode.NodeNumber == group_idx) {
+            ULONGLONG mask = info->NumaNode.GroupMask.Mask;
+            for (size_t i = 0; i < cpu_ids_array_length; i++) {
+                if (mask & ((ULONGLONG)1 << i)) {
+                    cpu_ids_array[i].cpu_id = (int32_t)i;
+                    cpu_ids_array[i].suspected_hyper_thread = i > hyper_threads_hint;
+                }
+            }
+            break;
+        }
+        offset += info->Size;
     }
 
+    aws_mem_release(allocator, buffer);
+#else
     /* a crude hint, but hyper-threads are numbered as the second half of the cpu id listing. */
     size_t hyper_threads_hint = cpu_ids_array_length / 2 - 1;
 
@@ -46,6 +165,7 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         cpu_ids_array[i].cpu_id = (int32_t)i;
         cpu_ids_array[i].suspected_hyper_thread = i > hyper_threads_hint;
     }
+#endif /* defined(AWS_OS_WINDOWS_DESKTOP) */
 }
 
 bool aws_is_debugger_present(void) {
