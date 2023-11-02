@@ -23,7 +23,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     aws_byte_buf_append_dynamic(&nonce_buf, &instance_nonce);
     aws_byte_buf_append_null_terminator(&nonce_buf);
 
-    HANDLE mutex = CreateMutexA(NULL, FALSE, nonce_buf.buffer);
+    HANDLE mutex = CreateMutexA(NULL, FALSE, (LPCSTR)nonce_buf.buffer);
 
     if (!mutex) {
         AWS_LOGF_WARN(
