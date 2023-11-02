@@ -17,6 +17,17 @@ struct aws_ipc_util_instance_lock {
 struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     struct aws_allocator *allocator,
     struct aws_byte_cursor instance_nonce) {
+
+    /* validate we don't have a directory slash. */
+    struct aws_byte_cursor to_find = aws_byte_cursor_from_c_str("\\");
+    struct aws_byte_cursor found;
+    AWS_ZERO_STRUCT(found);
+    if (aws_byte_cursor_find_exact(&instance_nonce, &to_find, &found) != AWS_OP_ERR &&
+        aws_last_error() != AWS_ERROR_STRING_MATCH_NOT_FOUND) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Global/");
     struct aws_byte_buf nonce_buf;
     aws_byte_buf_init_copy_from_cursor(&nonce_buf, allocator, path_prefix);

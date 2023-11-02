@@ -31,4 +31,4 @@ void aws_ipc_util_instance_lock_release(struct aws_ipc_util_instance_lock *insta
 
 AWS_EXTERN_C_END
 
-#endif /* #ifndef AWS_COMMON_IPC_UTIL_H */
+#endif /* AWS_COMMON_IPC_UTIL_H */

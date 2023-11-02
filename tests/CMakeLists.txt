@@ -525,6 +525,7 @@ add_test_case(test_instance_lock_works_in_proc)
 add_test_case(test_instance_lock_works_cross_proc)
 #this one is here for use by test_instance_lock_works_cross_proc
 add_test_case(instance_lock_mp_test_runner)
+add_test_case(test_instance_lock_invalid_nonce_fails)
 
 
 generate_test_driver(${PROJECT_NAME}-tests)

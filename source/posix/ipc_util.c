@@ -20,6 +20,17 @@ struct aws_ipc_util_instance_lock {
 struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     struct aws_allocator *allocator,
     struct aws_byte_cursor instance_nonce) {
+
+    /* validate we don't have a directory slash. */
+    struct aws_byte_cursor to_find = aws_byte_cursor_from_c_str("/");
+    struct aws_byte_cursor found;
+    AWS_ZERO_STRUCT(found);
+    if (aws_byte_cursor_find_exact(&instance_nonce, &to_find, &found) != AWS_OP_ERR &&
+        aws_last_error() != AWS_ERROR_STRING_MATCH_NOT_FOUND) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
     /*
      * The unix standard says /tmp has to be there and be writable. However, while it may be tempting to just use the
      * /tmp/ directory, it often has the sticky bit set which would prevent a subprocess from being able to call open

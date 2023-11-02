@@ -69,11 +69,11 @@ static int s_test_instance_lock_works_cross_proc(struct aws_allocator *allocator
 
     /* Invoke the test runner in a new process for ease so cmake automatically does the work for us. */
     struct aws_run_command_options command_options = {
-#ifdef __WIN32
+#ifdef _WIN32
         .command = "aws-c-common-tests instance_lock_mp_test_runner",
 #else
         .command = "./aws-c-common-tests instance_lock_mp_test_runner",
-#endif
+#endif /* _WIN32 */
     };
 
     struct aws_run_command_result result;
@@ -97,3 +97,22 @@ static int s_test_instance_lock_works_cross_proc(struct aws_allocator *allocator
     return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(test_instance_lock_works_cross_proc, s_test_instance_lock_works_cross_proc)
+
+static int s_test_instance_lock_invalid_nonce(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+#ifdef _WIN32
+    struct aws_byte_cursor lock_nonce = aws_byte_cursor_from_c_str("invalid\\lock_nonce");
+#else
+    struct aws_byte_cursor lock_nonce = aws_byte_cursor_from_c_str("invalid/lock_nonce");
+#endif /* _WIN32 */
+
+    struct aws_ipc_util_instance_lock *instance_lock = aws_ipc_util_instance_lock_try_acquire(allocator, lock_nonce);
+    ASSERT_NULL(instance_lock);
+    ASSERT_INT_EQUALS(AWS_ERROR_INVALID_ARGUMENT, aws_last_error());
+
+    aws_common_library_clean_up();
+
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(test_instance_lock_invalid_nonce_fails, s_test_instance_lock_invalid_nonce)
