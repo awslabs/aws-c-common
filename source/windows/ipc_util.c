@@ -43,6 +43,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
             "static: Lock %s is already acquired by another  instance",
             (const char *)nonce_buf.buffer,
             (void *)mutex);
+        CloseHandle(mutex);
         aws_byte_buf_clean_up(&nonce_buf);
         return NULL;
     }
