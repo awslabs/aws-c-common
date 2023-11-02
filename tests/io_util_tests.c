@@ -8,6 +8,7 @@
 #include <aws/testing/aws_test_harness.h>
 
 static int s_test_instance_lock_works_in_proc(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     aws_common_library_init(allocator);
 
     struct aws_byte_cursor lock_nonce = aws_byte_cursor_from_c_str("lock_nonce");
@@ -30,6 +31,7 @@ static int s_test_instance_lock_works_in_proc(struct aws_allocator *allocator, v
 AWS_TEST_CASE(test_instance_lock_works_in_proc, s_test_instance_lock_works_in_proc)
 
 static int s_instance_lock_mp_test_runner(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     aws_common_library_init(allocator);
 
     /* so the test runner doesn't actually run the portion of the test we want to test unless we're invoking it as a
