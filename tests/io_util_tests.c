@@ -55,6 +55,7 @@ static int s_instance_lock_mp_test_runner(struct aws_allocator *allocator, void 
 AWS_TEST_CASE(instance_lock_mp_test_runner, s_instance_lock_mp_test_runner)
 
 static int s_test_instance_lock_works_cross_proc(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
     aws_common_library_init(allocator);
 
     struct aws_string *test_run_gate = aws_string_new_from_c_str(allocator, "aws_crt_test_run_gate");
