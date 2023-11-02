@@ -69,7 +69,7 @@ static int s_test_instance_lock_works_cross_proc(struct aws_allocator *allocator
 
     /* Invoke the test runner in a new process for ease so cmake automatically does the work for us. */
     struct aws_run_command_options command_options = {
-        .command = "./aws-c-common-tests instance_lock_mp_test_runner",
+        .command = "aws-c-common-tests instance_lock_mp_test_runner",
     };
 
     struct aws_run_command_result result;
