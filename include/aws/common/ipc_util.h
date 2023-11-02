@@ -1,11 +1,11 @@
 #ifndef AWS_COMMON_IPC_UTIL_H
 #define AWS_COMMON_IPC_UTIL_H
 /**
-* Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0.
-*/
-#include <aws/common/common.h>
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 #include <aws/common/byte_buf.h>
+#include <aws/common/common.h>
 
 struct aws_ipc_util_instance_lock;
 AWS_EXTERN_C_BEGIN
@@ -19,7 +19,9 @@ AWS_EXTERN_C_BEGIN
  * If the process exits before the lock is released, the kernel will unlock it for the next consumer.
  */
 AWS_COMMON_API
-struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(struct aws_allocator *allocator, struct aws_byte_cursor instance_nonce);
+struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
+    struct aws_allocator *allocator,
+    struct aws_byte_cursor instance_nonce);
 
 /**
  * Releases the lock so the next caller (may be another process) can get an instance of the lock.
