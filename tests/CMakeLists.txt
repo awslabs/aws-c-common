@@ -521,11 +521,11 @@ add_test_case(test_uri_encode_path_rfc3986)
 add_test_case(test_uri_encode_query)
 add_test_case(test_uri_decode)
 
-add_test_case(test_instance_lock_works_in_proc)
-add_test_case(test_instance_lock_works_cross_proc)
+add_test_case(test_cross_process_lock_works_in_proc)
+add_test_case(test_cross_process_lock_works_cross_proc)
 #this one is here for use by test_instance_lock_works_cross_proc
-add_test_case(instance_lock_mp_test_runner)
-add_test_case(test_instance_lock_invalid_nonce_fails)
+add_test_case(cross_process_lock_mp_test_runner)
+add_test_case(test_cross_process_lock_invalid_nonce_fails)
 
 
 generate_test_driver(${PROJECT_NAME}-tests)

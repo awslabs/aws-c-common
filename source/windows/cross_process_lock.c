@@ -5,17 +5,17 @@
 #include <windows.h>
 
 #include <aws/common/byte_buf.h>
-#include <aws/common/ipc_util.h>
-#include <aws/common/logging.h>
+#include <aws/common/cross_process_lock.h>
 #include <aws/common/error.h>
+#include <aws/common/logging.h>
 #include <inttypes.h>
 
-struct aws_ipc_util_instance_lock {
+struct aws_cross_process_lock {
     struct aws_allocator *allocator;
     HANDLE mutex;
 };
 
-struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
+struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     struct aws_allocator *allocator,
     struct aws_byte_cursor instance_nonce) {
 
@@ -33,7 +33,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
         return NULL;
     }
 
-    struct aws_ipc_util_instance_lock *instance_lock = NULL;
+    struct aws_cross_process_lock *instance_lock = NULL;
 
     /* Local prefix, per the docs, specifies session scope rather than global to the user or system. */
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Local/aws_crt_cross_process_lock/");
@@ -62,13 +62,12 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
             AWS_LS_COMMON_GENERAL,
             "static: Lock %s is already acquired by another instance",
             (const char *)nonce_buf.buffer);
-        CloseHandle(mutex);        
+        CloseHandle(mutex);
         aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
         goto cleanup;
     }
 
-    instance_lock =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_ipc_util_instance_lock));
+    instance_lock = aws_mem_calloc(allocator, 1, sizeof(struct aws_cross_process_lock));
     instance_lock->mutex = mutex;
     instance_lock->allocator = allocator;
 
@@ -85,7 +84,7 @@ cleanup:
     return instance_lock;
 }
 
-void aws_ipc_util_instance_lock_release(struct aws_ipc_util_instance_lock *instance_lock) {
+void aws_ipc_util_instance_lock_release(struct aws_cross_process_lock *instance_lock) {
     if (instance_lock) {
         CloseHandle(instance_lock->mutex);
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Lock released for handle %p", (void *)instance_lock->mutex);

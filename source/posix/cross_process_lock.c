@@ -2,23 +2,23 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/common/ipc_util.h>
+#include <aws/common/cross_process_lock.h>
 
 #include <aws/common/byte_buf.h>
 #include <errno.h>
 #include <sys/file.h>
 #include <unistd.h>
 
+#include <aws/common/error.h>
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
-#include <aws/common/error.h>
 
-struct aws_ipc_util_instance_lock {
+struct aws_cross_process_lock {
     struct aws_allocator *allocator;
     int locked_fd;
 };
 
-struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
+struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     struct aws_allocator *allocator,
     struct aws_byte_cursor instance_nonce) {
 
@@ -56,7 +56,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     aws_byte_buf_append_dynamic(&nonce_buf, &path_suffix);
     aws_byte_buf_append_null_terminator(&nonce_buf);
 
-    struct aws_ipc_util_instance_lock *instance_lock = NULL;
+    struct aws_cross_process_lock *instance_lock = NULL;
 
     int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR, 0666);
     if (fd < 0) {
@@ -73,13 +73,12 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
             AWS_LS_COMMON_GENERAL,
             "static: Lock file %s already acquired by another instance",
             (const char *)nonce_buf.buffer);
-        close(fd); 
+        close(fd);
         aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
         goto cleanup;
     }
 
-    instance_lock =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_ipc_util_instance_lock));
+    instance_lock = aws_mem_calloc(allocator, 1, sizeof(struct aws_cross_process_lock));
     instance_lock->locked_fd = fd;
     instance_lock->allocator = allocator;
 
@@ -89,13 +88,13 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
         (const char *)nonce_buf.buffer,
         fd);
 
-clean_up:
-    aws_byte_buf_clean_up(&nonce_buf)
+cleanup:
+    aws_byte_buf_clean_up(&nonce_buf);
 
     return instance_lock;
 }
 
-void aws_ipc_util_instance_lock_release(struct aws_ipc_util_instance_lock *instance_lock) {
+void aws_cross_process_lock_release(struct aws_cross_process_lock *instance_lock) {
     if (instance_lock) {
         flock(instance_lock->locked_fd, LOCK_UN);
         close(instance_lock->locked_fd);
