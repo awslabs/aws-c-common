@@ -11,6 +11,7 @@
 
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
+#include <aws/common/error.h>
 
 struct aws_ipc_util_instance_lock {
     struct aws_allocator *allocator;
@@ -27,6 +28,10 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     AWS_ZERO_STRUCT(found);
     if (aws_byte_cursor_find_exact(&instance_nonce, &to_find, &found) != AWS_OP_ERR &&
         aws_last_error() != AWS_ERROR_STRING_MATCH_NOT_FOUND) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "static: Lock " PRInSTR "creation has illegal character /",
+            AWS_BYTE_CURSOR_PRI(instance_nonce));
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
@@ -37,7 +42,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
      * with create on the file. The solution is simple, just write it to a subdirectory inside
      * /tmp using the same perms as the current process.
      */
-    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/crt_lock_avoid_sticky_bit/");
+    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
     struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
     /* it's probably there already and we don't care if it is. The open will fail and we will handle it there
      * if we can't open it due to permissions. */
@@ -51,28 +56,29 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     aws_byte_buf_append_dynamic(&nonce_buf, &path_suffix);
     aws_byte_buf_append_null_terminator(&nonce_buf);
 
+    struct aws_ipc_util_instance_lock *instance_lock = NULL;
+
     int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR, 0666);
     if (fd < 0) {
-        aws_raise_error(AWS_ERROR_NO_PERMISSION);
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL,
             "static: Lock file %s failed to open with errno %d",
             (const char *)nonce_buf.buffer,
             errno);
-        aws_byte_buf_clean_up(&nonce_buf);
-        return NULL;
+        aws_translate_and_raise_io_error_or(errno, AWS_ERROR_MUTEX_FAILED);
+        goto cleanup;
     }
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         AWS_LOGF_TRACE(
             AWS_LS_COMMON_GENERAL,
             "static: Lock file %s already acquired by another instance",
             (const char *)nonce_buf.buffer);
-        close(fd);
-        aws_byte_buf_clean_up(&nonce_buf);
-        return NULL;
+        close(fd); 
+        aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
+        goto cleanup;
     }
 
-    struct aws_ipc_util_instance_lock *instance_lock =
+    instance_lock =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_ipc_util_instance_lock));
     instance_lock->locked_fd = fd;
     instance_lock->allocator = allocator;
@@ -82,8 +88,10 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
         "static: Lock file %s acquired by this instance with fd %d",
         (const char *)nonce_buf.buffer,
         fd);
-    /* we could do this once above but then we'd lose logging for the buffer. */
-    aws_byte_buf_clean_up(&nonce_buf);
+
+clean_up:
+    aws_byte_buf_clean_up(&nonce_buf)
+
     return instance_lock;
 }
 

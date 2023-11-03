@@ -7,6 +7,7 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/ipc_util.h>
 #include <aws/common/logging.h>
+#include <aws/common/error.h>
 #include <inttypes.h>
 
 struct aws_ipc_util_instance_lock {
@@ -24,11 +25,18 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     AWS_ZERO_STRUCT(found);
     if (aws_byte_cursor_find_exact(&instance_nonce, &to_find, &found) != AWS_OP_ERR &&
         aws_last_error() != AWS_ERROR_STRING_MATCH_NOT_FOUND) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "static: Lock " PRInSTR " creation has illegal character \\",
+            AWS_BYTE_CURSOR_PRI(instance_nonce));
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
 
-    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Global/");
+    struct aws_ipc_util_instance_lock *instance_lock = NULL;
+
+    /* Local prefix, per the docs, specifies session scope rather than global to the user or system. */
+    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Local/aws_crt_cross_process_lock/");
     struct aws_byte_buf nonce_buf;
     aws_byte_buf_init_copy_from_cursor(&nonce_buf, allocator, path_prefix);
     aws_byte_buf_append_dynamic(&nonce_buf, &instance_nonce);
@@ -42,7 +50,8 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
             "static: Lock %s creation failed with error %" PRIx32,
             (const char *)nonce_buf.buffer,
             GetLastError());
-        aws_byte_buf_clean_up(&nonce_buf);
+        aws_translate_and_raise_io_error_or(GetLastError(), AWS_ERROR_MUTEX_FAILED);
+        goto cleanup;
     }
 
     /* from the docs:
@@ -51,15 +60,14 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
         AWS_LOGF_TRACE(
             AWS_LS_COMMON_GENERAL,
-            "static: Lock %s is already acquired by another  instance",
-            (const char *)nonce_buf.buffer,
-            (void *)mutex);
-        CloseHandle(mutex);
-        aws_byte_buf_clean_up(&nonce_buf);
-        return NULL;
+            "static: Lock %s is already acquired by another instance",
+            (const char *)nonce_buf.buffer);
+        CloseHandle(mutex);        
+        aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
+        goto cleanup;
     }
 
-    struct aws_ipc_util_instance_lock *instance_lock =
+    instance_lock =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_ipc_util_instance_lock));
     instance_lock->mutex = mutex;
     instance_lock->allocator = allocator;
@@ -69,6 +77,9 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
         "static: Lock %s acquired by this instance with HANDLE %p",
         (const char *)nonce_buf.buffer,
         (void *)mutex);
+
+cleanup:
+
     /* we could do this once above but then we'd lose logging for the buffer. */
     aws_byte_buf_clean_up(&nonce_buf);
     return instance_lock;
@@ -77,7 +88,7 @@ struct aws_ipc_util_instance_lock *aws_ipc_util_instance_lock_try_acquire(
 void aws_ipc_util_instance_lock_release(struct aws_ipc_util_instance_lock *instance_lock) {
     if (instance_lock) {
         CloseHandle(instance_lock->mutex);
-        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Lock file released for handle %p", (void *)instance_lock->mutex);
+        AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Lock released for handle %p", (void *)instance_lock->mutex);
         aws_mem_release(instance_lock->allocator, instance_lock);
     }
 }
