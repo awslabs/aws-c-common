@@ -84,7 +84,7 @@ cleanup:
     return instance_lock;
 }
 
-void aws_ipc_util_instance_lock_release(struct aws_cross_process_lock *instance_lock) {
+void aws_cross_process_lock_release(struct aws_cross_process_lock *instance_lock) {
     if (instance_lock) {
         CloseHandle(instance_lock->mutex);
         AWS_LOGF_TRACE(AWS_LS_COMMON_GENERAL, "static: Lock released for handle %p", (void *)instance_lock->mutex);
