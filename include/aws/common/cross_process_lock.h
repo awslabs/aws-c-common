@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_IPC_UTIL_H
-#define AWS_COMMON_IPC_UTIL_H
+#ifndef AWS_COMMON_CROSS_PROCESS_LOCK_H
+#define AWS_COMMON_CROSS_PROCESS_LOCK_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
@@ -31,4 +31,4 @@ void aws_cross_process_lock_release(struct aws_cross_process_lock *instance_lock
 
 AWS_EXTERN_C_END
 
-#endif /* AWS_COMMON_IPC_UTIL_H */
+#endif /* AWS_COMMON_CROSS_PROCESS_LOCK_H */
