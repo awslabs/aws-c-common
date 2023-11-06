@@ -35,8 +35,8 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
 
     struct aws_cross_process_lock *instance_lock = NULL;
 
-    /* Local prefix, per the docs, specifies session scope rather than global to the user or system. */
-    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Local/aws_crt_cross_process_lock/");
+    /* "Local\" prefix, per the docs, specifies user session scope (rather than "Global\" to the system). */
+    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("Local\\aws_crt_cross_process_lock/");
     struct aws_byte_buf nonce_buf;
     aws_byte_buf_init_copy_from_cursor(&nonce_buf, allocator, path_prefix);
     aws_byte_buf_append_dynamic(&nonce_buf, &instance_nonce);
