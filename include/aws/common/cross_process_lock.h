@@ -13,7 +13,8 @@ AWS_EXTERN_C_BEGIN
 /**
  * Attempts to acquire a system-wide (not per process or per user) lock scoped by instance_nonce.
  * For any given unique nonce, a lock will be returned by the first caller. Subsequent calls will
- * return NULL until the either the process owning the lock exits or the program owning the lock
+ * return NULL and raise AWS_ERROR_MUTEX_CALLER_NOT_OWNER
+ * until the either the process owning the lock exits or the program owning the lock
  * calls aws_cross_process_lock_release() explicitly.
  *
  * If the process exits before the lock is released, the kernel will unlock it for the next consumer.
