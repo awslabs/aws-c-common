@@ -6,7 +6,7 @@
 
 #include <aws/common/byte_buf.h>
 #include <errno.h>
-#include <sys/file.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <aws/common/error.h>
