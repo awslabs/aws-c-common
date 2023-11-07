@@ -5,6 +5,7 @@
 
 #include <aws/common/task_scheduler.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/logging.h>
 
 #include <inttypes.h>
@@ -33,12 +34,17 @@ const char *aws_task_status_to_c_str(enum aws_task_status status) {
 
 void aws_task_run(struct aws_task *task, enum aws_task_status status) {
     AWS_ASSERT(task->fn);
+
+    uint64_t now = 0;
+    aws_high_res_clock_get_ticks(&now);
+
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Running %s task with %s status",
+        "id=%p: Running %s task with %s status at time %" PRIu64,
         (void *)task,
         task->type_tag,
-        aws_task_status_to_c_str(status));
+        aws_task_status_to_c_str(status),
+        now);
 
     task->abi_extension.scheduled = false;
     task->fn(task, task->arg, status);
@@ -152,12 +158,16 @@ void aws_task_scheduler_schedule_future(
     AWS_ASSERT(task);
     AWS_ASSERT(task->fn);
 
+    uint64_t now = 0;
+    aws_high_res_clock_get_ticks(&now);
+
     AWS_LOGF_DEBUG(
         AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Scheduling %s task for future execution at time %" PRIu64,
+        "id=%p: Scheduling %s task for future execution at time %" PRIu64 " (Now = %" PRIu64 ")",
         (void *)task,
         task->type_tag,
-        time_to_run);
+        time_to_run,
+        now);
 
     task->timestamp = time_to_run;
 
