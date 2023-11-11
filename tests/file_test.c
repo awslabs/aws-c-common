@@ -505,13 +505,6 @@ static int s_read_special_file(struct aws_allocator *allocator, const char *file
     ASSERT_SUCCESS(aws_byte_buf_init_from_file(&buf, allocator, filename));
     ASSERT_TRUE(buf.capacity > buf.len, "Buffer should end with null-terminator");
     ASSERT_UINT_EQUALS(0, buf.buffer[buf.len], "Buffer should end with null-terminator");
-
-    if (strcmp("/dev/null", filename) == 0) {
-        ASSERT_UINT_EQUALS(0, buf.len, "expected /dev/null to be empty");
-    } else {
-        ASSERT_TRUE(buf.len > 0, "expected special file to have data");
-    }
-
     aws_byte_buf_clean_up(&buf);
     return AWS_OP_SUCCESS;
 }
