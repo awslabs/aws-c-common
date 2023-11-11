@@ -50,7 +50,7 @@ size_t aws_system_info_processor_count(void) {
 
 uint16_t aws_get_cpu_group_count(void) {
     if (g_numa_num_configured_nodes_ptr) {
-        return (uint16_t)g_numa_num_configured_nodes_ptr();
+        return aws_max_u16(1, (uint16_t)g_numa_num_configured_nodes_ptr());
     }
 
     return 1U;
