@@ -122,10 +122,15 @@ jobs:
       - uses: Vampire/setup-wsl@v2
         with:
           distribution: Ubuntu-22.04
+          additional-packages:
+            gcc
+            g++
+            python3
+            cmake
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
-          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-          python builder.pyz build -p ${{ env.PACKAGE_NAME }}
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python3 builder.pyz build -p ${{ env.PACKAGE_NAME }}
 
 
 
