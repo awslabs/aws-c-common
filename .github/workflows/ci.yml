@@ -115,12 +115,14 @@ jobs:
 
   windows-wsl:
     runs-on: windows-2022 # latest
+    defaults:
+      run:
+        shell: wsl-bash {0}
     steps:
       - uses: Vampire/setup-wsl@v2
         with:
           distribution: Ubuntu-22.04
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      - shell: wsl {0}
         run: |
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }}
