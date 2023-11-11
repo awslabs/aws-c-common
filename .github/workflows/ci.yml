@@ -113,6 +113,19 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }}
 
+  windows-wsl:
+    runs-on: windows-2022 # latest
+    steps:
+    - uses: Vampire/setup-wsl@v2
+      with:
+      distribution: Ubuntu-22.04
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+    - shell: wsl-bash_Ubuntu-20.04 {0}
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }}
+
+
   windows-vc16:
     runs-on: windows-2022 # latest
     strategy:
