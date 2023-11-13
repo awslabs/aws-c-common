@@ -136,7 +136,6 @@ jobs:
       - name: install aws cli
         run: |
           pip3 install awscli
-          sudo service docker start
       - name: Setup Docker
         run: |
           sudo apt-get update
