@@ -115,14 +115,34 @@ jobs:
 
   windows-wsl:
     runs-on: windows-2022 # latest
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    env:
+      WSLENV: AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY:AWS_REGION
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        $pass = aws ecr get-login-password
-        echo $pass | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
-        $Env:DOCKER_IMAGE = "123124136734.dkr.ecr.us-east-1.amazonaws.com/aws-crt-" + $Env:LINUX_BASE_IMAGE + ":" + $Env:BUILDER_VERSION
-        docker run --env GITHUB_REF --env GITHUB_HEAD_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env CXXFLAGS --env AWS_CRT_ARCH --env CTEST_PARALLEL_LEVEL $Env:DOCKER_IMAGE --version=$Env:BUILDER_VERSION $args
+      - uses: Vampire/setup-wsl@v2
+        with:
+          distribution: Ubuntu-22.04
+          additional-packages:
+            gcc
+            g++
+            python3
+            cmake
+            zip
+            unzip
+            python3-pip
+            docker.io
+      - name: install aws cli
+        run: |
+          pip3 install awscli
+          echo $
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          export GLOBAL_VAR=${{ env.GLOBAL_VAR }}
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
+
 
   windows-vc16:
     runs-on: windows-2022 # latest
