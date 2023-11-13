@@ -10,7 +10,7 @@ env:
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
-  LINUX_BASE_IMAGE: ubuntu-18-x64
+  LINUX_BASE_IMAGE: ubuntu-22.04
   RUN: ${{ github.run_id }}-${{ github.run_number }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -115,32 +115,12 @@ jobs:
 
   windows-wsl:
     runs-on: windows-2022 # latest
-    defaults:
-      run:
-        shell: wsl-bash {0}
-    env:
-      WSLENV: AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY:AWS_REGION
     steps:
-      - uses: Vampire/setup-wsl@v2
-        with:
-          distribution: Ubuntu-22.04
-          additional-packages:
-            gcc
-            g++
-            python3
-            cmake
-            zip
-            unzip
-            python3-pip
-      - name: install aws cli
-        run: |
-          pip3 install awscli
-          echo $AWS_REGION
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        run: |
-          export GLOBAL_VAR=${{ env.GLOBAL_VAR }}
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
+        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
 
   windows-vc16:
