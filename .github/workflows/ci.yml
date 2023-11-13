@@ -15,6 +15,7 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
+  AWS_DEFAULT_REGION: us-east-1
 
 jobs:
   linux-compat:
@@ -119,7 +120,7 @@ jobs:
       run:
         shell: wsl-bash {0}
     env:
-      WSLENV: AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY:AWS_REGION
+      WSLENV: AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY:AWS_REGION:AWS_DEFAULT_REGION
     steps:
       - uses: Vampire/setup-wsl@v2
         with:
@@ -139,7 +140,6 @@ jobs:
           echo $
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
-          export GLOBAL_VAR=${{ env.GLOBAL_VAR }}
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
