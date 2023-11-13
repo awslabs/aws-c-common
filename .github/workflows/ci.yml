@@ -121,7 +121,7 @@ jobs:
       run: |
         $pass = aws ecr get-login-password
         echo $pass | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
-        $Env:DOCKER_IMAGE = "123124136734.dkr.ecr.us-east-1.amazonaws.com/$Env:IMAGE_NAME:$Env:BUILDER_VERSION"
+        $Env:DOCKER_IMAGE = "123124136734.dkr.ecr.us-east-1.amazonaws.com/$Env:LINUX_BASE_IMAGE:$Env:BUILDER_VERSION"
         docker run --env GITHUB_REF --env GITHUB_HEAD_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env CXXFLAGS --env AWS_CRT_ARCH --env CTEST_PARALLEL_LEVEL $Env:DOCKER_IMAGE --version=$Env:BUILDER_VERSION $args
 
   windows-vc16:
