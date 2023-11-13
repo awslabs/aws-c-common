@@ -129,10 +129,10 @@ jobs:
             cmake
             zip
             unzip
+            python3-pip
       - name: install aws cli
         run: |
-          python3 -m pip install --upgrade pip
-          pip install awscli
+          pip3 install awscli
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
