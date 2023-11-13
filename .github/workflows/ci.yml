@@ -119,8 +119,9 @@ jobs:
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
+        for /f "delims=" %a in ('aws ecr get-login-password') do @docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin %a
+        set "DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/%IMAGE_NAME%:%BUILDER_VERSION%"
+        docker run --env GITHUB_REF --env GITHUB_HEAD_REF --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env CXXFLAGS --env AWS_CRT_ARCH --env CTEST_PARALLEL_LEVEL %DOCKER_IMAGE% --version=%BUILDER_VERSION% %*
 
 
   windows-vc16:
