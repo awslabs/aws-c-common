@@ -118,7 +118,7 @@ jobs:
     runs-on: macos-12 # latest
     steps:
     - uses: docker-practice/actions-setup-docker@master
-      timeout-minutes: 12
+      timeout-minutes: 30
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
