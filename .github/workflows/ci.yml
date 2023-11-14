@@ -119,7 +119,7 @@ jobs:
     steps:
     - name: Setup Docker
       run: |
-        brew install docker colima
+        brew install docker
         colima start
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
