@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <aws/common/error.h>
@@ -41,7 +42,7 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
      * The unix standard says /tmp has to be there and be writable. However, while it may be tempting to just use the
      * /tmp/ directory, it often has the sticky bit set which would prevent a subprocess from being able to call open
      * with create on the file. The solution is simple, just write it to a subdirectory inside
-     * /tmp using 0777 (default behavior for directory creation, as aws_directory_create() overrides umask).
+     * /tmp and override umask via. chmod of 0777.
      */
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
     struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
@@ -50,6 +51,8 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     if (!aws_directory_exists(path_to_create)) {
         /* if this call fails just let it fail on open below. */
         aws_directory_create(path_to_create);
+        /* bypass umask by setting the perms we actually requested */
+        chmod(aws_string_c_str(path_to_create), S_IRWXU | S_IRWXG | S_IRWXO);
     }
     aws_string_destroy(path_to_create);
 
