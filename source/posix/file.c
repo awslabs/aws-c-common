@@ -40,6 +40,9 @@ int aws_directory_create(const struct aws_string *dir_path) {
         return aws_translate_and_raise_io_error(errno_value);
     }
 
+    /* bypass umask by setting the perms we actually requested */
+    chmod(aws_string_c_str(dir_path), S_IRWXU | S_IRWXG | S_IRWXO);
+
     return AWS_OP_SUCCESS;
 }
 

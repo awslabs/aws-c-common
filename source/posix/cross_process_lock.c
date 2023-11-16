@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <aws/common/error.h>
@@ -45,10 +46,12 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
      */
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
     struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
-    /* it's probably there already and we don't care if it is. The open will fail and we will handle it there
+
+    /* it's probably there already and we don't care if it is. The open will fail, and we will handle it there
      * if we can't open it due to permissions. */
     aws_directory_create(path_to_create);
     aws_string_destroy(path_to_create);
+
     struct aws_byte_cursor path_suffix = aws_byte_cursor_from_c_str(".lock");
 
     struct aws_byte_buf nonce_buf;
@@ -59,16 +62,45 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
 
     struct aws_cross_process_lock *instance_lock = NULL;
 
+    errno = 0;
     int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR, 0666);
     if (fd < 0) {
-        AWS_LOGF_ERROR(
+        AWS_LOGF_DEBUG(
             AWS_LS_COMMON_GENERAL,
             "static: Lock file %s failed to open with errno %d",
             (const char *)nonce_buf.buffer,
             errno);
+
         aws_translate_and_raise_io_error_or(errno, AWS_ERROR_MUTEX_FAILED);
-        goto cleanup;
+
+        if (aws_last_error() == AWS_ERROR_NO_PERMISSION) {
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_GENERAL,
+                "static: Lock file %s couldn't be opened due to file ownership permissions. Attempting to open as read "
+                "only",
+                (const char *)nonce_buf.buffer);
+
+            errno = 0;
+            fd = open((const char *)nonce_buf.buffer, O_RDONLY);
+
+            if (fd < 0) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: Lock file %s failed to open with read-only permissions with errno %d",
+                    (const char *)nonce_buf.buffer,
+                    errno);
+                aws_translate_and_raise_io_error_or(errno, AWS_ERROR_MUTEX_FAILED);
+                goto cleanup;
+            }
+        } else {
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_GENERAL,
+                "static: Lock file %s failed to open. The lock cannot be acquired.",
+                (const char *)nonce_buf.buffer);
+            goto cleanup;
+        }
     }
+
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         AWS_LOGF_TRACE(
             AWS_LS_COMMON_GENERAL,
