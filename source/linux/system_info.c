@@ -267,58 +267,6 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     return cpu_count;
 }
 
-static bool s_is_cpu_hyperthread(uint32_t cpu_id) {
-    struct aws_allocator *allocator = aws_default_allocator();
-    bool is_hyperthread = false;
-
-    /* Check for hyper-threading */
-    struct aws_byte_buf sibling_path_buf;
-    aws_byte_buf_init(&sibling_path_buf, allocator, 256);
-
-    char cpu_id_str[10];
-    snprintf(cpu_id_str, sizeof(cpu_id_str), "%" PRIu32, cpu_id);
-
-    struct aws_byte_cursor sibling_initial_path = aws_byte_cursor_from_c_str("/sys/devices/system/cpu/cpu");
-    struct aws_byte_cursor sibling_idx_cursor = aws_byte_cursor_from_array(cpu_id_str, strlen(cpu_id_str));
-    struct aws_byte_cursor sibling_final_path_segment = aws_byte_cursor_from_c_str("/topology/core_id");
-
-    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_initial_path);
-    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_idx_cursor);
-    aws_byte_buf_append_dynamic(&sibling_path_buf, &sibling_final_path_segment);
-
-    struct aws_string *sibling_file_path =
-        aws_string_new_from_array(allocator, sibling_path_buf.buffer, sibling_path_buf.len);
-    aws_byte_buf_clean_up(&sibling_path_buf);
-
-    struct aws_byte_buf sibling_file_data;
-    if (aws_byte_buf_init_from_file(&sibling_file_data, allocator, aws_string_c_str(sibling_file_path)) ==
-        AWS_OP_SUCCESS) {
-        struct aws_byte_cursor core_id = aws_byte_cursor_from_buf(&sibling_file_data);
-        struct aws_byte_cursor core_id_trimmed = aws_byte_cursor_trim_pred(&core_id, aws_char_is_space);
-
-        if (sibling_file_data.len) {
-            AWS_LOGF_TRACE(
-                AWS_LS_COMMON_GENERAL,
-                "static: cpu %" PRIu32 " has core_id " PRInSTR,
-                cpu_id,
-                AWS_BYTE_CURSOR_PRI(core_id_trimmed));
-            uint64_t int_val = 0;
-            aws_byte_cursor_utf8_parse_u64(core_id_trimmed, &int_val);
-            /* not perfect, but it's close. If the cpu_id matches the core id, assume it's the physical core, if it
-             * does not, assume it's an SMP core. */
-            is_hyperthread = int_val != cpu_id;
-        } else {
-            is_hyperthread = true;
-        }
-        aws_byte_buf_clean_up(&sibling_file_data);
-    } else {
-        is_hyperthread = false;
-    }
-
-    aws_string_destroy(sibling_file_path);
-    return is_hyperthread;
-}
-
 /*
  * Rather than rely on libnuma which may or not be available on the system, just read the sys files. This assumes a
  * linux /sys hierarchy as follows:
@@ -364,6 +312,8 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
         /* Iterate over the CPU ranges and fill in the cpu_ids_array */
         size_t cpu_count = 0;
         size_t range_count = aws_array_list_length(&cpu_ranges);
+        size_t smt_hint = range_count / 2;
+
         for (size_t i = 0; i < range_count; ++i) {
             struct aws_byte_cursor range_cursor;
             aws_array_list_get_at(&cpu_ranges, &range_cursor, i);
@@ -387,7 +337,9 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
                     aws_byte_cursor_utf8_parse_u64(end_cursor, &end) == AWS_OP_SUCCESS) {
                     for (uint64_t j = start; j <= end && cpu_count < cpu_ids_array_length; ++j) {
                         cpu_ids_array[cpu_count].cpu_id = (int32_t)j;
-                        cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)j);
+                        /* assume the subsequent ranges are the virtual CPUs (this mirrors the previous behavior).
+                         * To do this perfectly, we need to read the thread_siblings file and parse it. */
+                        cpu_ids_array[cpu_count].suspected_hyper_thread = i > 1;
                         AWS_LOGF_TRACE(
                             AWS_LS_COMMON_GENERAL,
                             "static: cpu %" PRId32 " is hyper-thread? %s",
@@ -406,7 +358,8 @@ void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_
                 if (aws_byte_cursor_utf8_parse_u64(range_cursor, &cpu_id) == AWS_OP_SUCCESS &&
                     cpu_count < cpu_ids_array_length) {
                     cpu_ids_array[cpu_count].cpu_id = (int32_t)cpu_id;
-                    cpu_ids_array[cpu_count].suspected_hyper_thread = s_is_cpu_hyperthread((uint32_t)cpu_id);
+                    /* "usually" right, and it's not a big deal if it's wrong. It's just a hint. */
+                    cpu_ids_array[cpu_count].suspected_hyper_thread = i >= smt_hint;
                     AWS_LOGF_TRACE(
                         AWS_LS_COMMON_GENERAL,
                         "static: cpu %" PRId32 " is hyper-thread? %s",
