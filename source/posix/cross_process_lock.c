@@ -41,7 +41,7 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
      * The unix standard says /tmp has to be there and be writable. However, while it may be tempting to just use the
      * /tmp/ directory, it often has the sticky bit set which would prevent a subprocess from being able to call open
      * with create on the file. The solution is simple, just write it to a subdirectory inside
-     * /tmp using the same perms as the current process.
+     * /tmp using 0777 (default behavior for directory creation, as aws_directory_create() overrides umask).
      */
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
     struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
