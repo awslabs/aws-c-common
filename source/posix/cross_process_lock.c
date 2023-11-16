@@ -46,9 +46,11 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
     struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
 
-    /* it's probably there already and we don't care if it is. The open will fail, and we will handle it there
-     * if we can't open it due to permissions. */
-    aws_directory_create(path_to_create);
+    /* It's probably there already and we don't care if it is. */
+    if (!aws_directory_exists(path_to_create)) {
+        /* if this call fails just let it fail on open below. */
+        aws_directory_create(path_to_create);
+    }
     aws_string_destroy(path_to_create);
 
     struct aws_byte_cursor path_suffix = aws_byte_cursor_from_c_str(".lock");
