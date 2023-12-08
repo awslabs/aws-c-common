@@ -582,7 +582,7 @@ AWS_TEST_CASE(uri_invalid_port_parse, s_test_uri_invalid_port_parse);
 
 static int s_test_uri_port_too_large_parse(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    const char *str_uri = "https://www.test.com:844356/path/to/"
+    const char *str_uri = "https://www.test.com:4294967296/path/to/"
                           "resource?test1=value1&test%20space=value%20space&test2=value2&test2=value3";
 
     struct aws_byte_cursor uri_csr = aws_byte_cursor_from_c_str(str_uri);

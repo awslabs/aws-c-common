@@ -23,7 +23,7 @@ struct aws_uri {
     struct aws_byte_cursor user;
     struct aws_byte_cursor password;
     struct aws_byte_cursor host_name;
-    uint16_t port;
+    uint32_t port;
     struct aws_byte_cursor path;
     struct aws_byte_cursor query_string;
     struct aws_byte_cursor path_and_query;
@@ -49,7 +49,7 @@ struct aws_uri_builder_options {
     struct aws_byte_cursor scheme;
     struct aws_byte_cursor path;
     struct aws_byte_cursor host_name;
-    uint16_t port;
+    uint32_t port;
     struct aws_array_list *query_params;
     struct aws_byte_cursor query_string;
 };
@@ -107,7 +107,7 @@ AWS_COMMON_API const struct aws_byte_cursor *aws_uri_host_name(const struct aws_
  * Returns the port portion of the authority if it was present, otherwise, returns 0.
  * If this is 0, it is the users job to determine the correct port based on scheme and protocol.
  */
-AWS_COMMON_API uint16_t aws_uri_port(const struct aws_uri *uri);
+AWS_COMMON_API uint32_t aws_uri_port(const struct aws_uri *uri);
 
 /**
  * Returns the path and query portion of the uri (i.e., the thing you send across the wire).
