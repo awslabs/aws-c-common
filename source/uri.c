@@ -5,7 +5,6 @@
 #include <aws/common/uri.h>
 
 #include <aws/common/common.h>
-#include <aws/common/string.h>
 
 #include <ctype.h>
 #include <inttypes.h>
