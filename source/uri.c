@@ -212,7 +212,7 @@ uint16_t aws_uri_port(const struct aws_uri *uri) {
     return uri->port;
 }
 
-bool aws_query_string_next_param(struct aws_byte_cursor query_string_cursor, struct aws_uri_param *param) {
+bool aws_query_string_next_param(const struct aws_byte_cursor *query_string_cursor, struct aws_uri_param *param) {
     /* If param is zeroed, then this is the first run. */
     bool first_run = param->value.ptr == NULL;
 
@@ -230,7 +230,7 @@ bool aws_query_string_next_param(struct aws_byte_cursor query_string_cursor, str
 
     /* The do-while is to skip over any empty substrings */
     do {
-        if (!aws_byte_cursor_next_split(&query_string_cursor, '&', &substr)) {
+        if (!aws_byte_cursor_next_split(query_string_cursor, '&', &substr)) {
             /* no more splits, done iterating */
             return false;
         }
@@ -255,7 +255,7 @@ bool aws_query_string_next_param(struct aws_byte_cursor query_string_cursor, str
 int aws_query_string_params(struct aws_byte_cursor query_string_cursor, struct aws_array_list *out_params) {
     struct aws_uri_param param;
     AWS_ZERO_STRUCT(param);
-    while (aws_query_string_next_param(query_string_cursor, &param)) {
+    while (aws_query_string_next_param(&query_string_cursor, &param)) {
         if (aws_array_list_push_back(out_params, &param)) {
             return AWS_OP_ERR;
         }
@@ -265,19 +265,11 @@ int aws_query_string_params(struct aws_byte_cursor query_string_cursor, struct a
 }
 
 bool aws_uri_query_string_next_param(const struct aws_uri *uri, struct aws_uri_param *param) {
-    return aws_query_string_next_param(uri->query_string, param);
+    return aws_query_string_next_param(&uri->query_string, param);
 }
 
 int aws_uri_query_string_params(const struct aws_uri *uri, struct aws_array_list *out_params) {
-    struct aws_uri_param param;
-    AWS_ZERO_STRUCT(param);
-    while (aws_uri_query_string_next_param(uri, &param)) {
-        if (aws_array_list_push_back(out_params, &param)) {
-            return AWS_OP_ERR;
-        }
-    }
-
-    return AWS_OP_SUCCESS;
+    return aws_query_string_params(uri->query_string, out_params);
 }
 
 static void s_parse_scheme(struct uri_parser *parser, struct aws_byte_cursor *str) {
