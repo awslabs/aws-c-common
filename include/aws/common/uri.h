@@ -127,9 +127,7 @@ AWS_COMMON_API const struct aws_byte_cursor *aws_uri_path_and_query(const struct
  * 2) Blank entries are skipped.
  *    Example: The only param in query string "&&a=b" is key="a" value="b"
  */
-AWS_COMMON_API bool aws_query_string_next_param(
-    const struct aws_byte_cursor *query_string,
-    struct aws_uri_param *param);
+AWS_COMMON_API bool aws_query_string_next_param(struct aws_byte_cursor query_string, struct aws_uri_param *param);
 
 /**
  * Parses query string and stores the parameters in 'out_params'. Returns AWS_OP_SUCCESS on success and
