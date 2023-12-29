@@ -22,16 +22,13 @@
 
 /*
  * This file has been modified from its original version by Amazon:
- *   (1) Address clang-tidy errors by renaming function parameters in a number of places
- *   to match their .c counterparts.
- *   (2) Misc tweaks to unchecked writes to make security static analysis happier
- *   (3) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
+ *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
+ *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
  */
-
 /* NOLINTBEGIN */
 
-#ifndef AWS_COMMON_EXTERNAL_CJSON_H
-#define AWS_COMMON_EXTERNAL_CJSON_H
+#ifndef cJSON__h
+#define cJSON__h
 
 #ifdef __cplusplus
 extern "C"
@@ -91,7 +88,7 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 /* project version */
 #define CJSON_VERSION_MAJOR 1
 #define CJSON_VERSION_MINOR 7
-#define CJSON_VERSION_PATCH 16
+#define CJSON_VERSION_PATCH 17
 
 #include <stddef.h>
 
@@ -182,6 +179,10 @@ CJSON_PUBLIC(cJSON *) cJSON_GetArrayItem(const cJSON *array, int index);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string);
+#if 0 /* Amazon edit */
+/* For analysing failed parses. This returns a pointer to the parse error. You'll probably need to look a few chars back to make sense of it. Defined when cJSON_Parse() returns 0. 0 when cJSON_Parse() succeeds. */
+CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
+#endif /* Amazon edit */
 
 /* Check item type and return its value */
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
@@ -304,5 +305,6 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #ifdef __cplusplus
 }
 #endif
+/* Amazon edit */
 /* NOLINTEND */
 #endif
