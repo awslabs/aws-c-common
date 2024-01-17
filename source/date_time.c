@@ -216,7 +216,7 @@ static int s_parse_iso_8601_basic(const struct aws_byte_cursor *date_str_cursor,
     AWS_ZERO_STRUCT(*parsed_time);
 
     while (state < FINISHED && !error && index < date_str_cursor->len) {
-        char c = date_str_cursor->ptr[index];
+        char c = (char)date_str_cursor->ptr[index];
         size_t sub_index = index - state_start_index;
         switch (state) {
             case ON_YEAR:
@@ -322,7 +322,7 @@ static int s_parse_iso_8601(const struct aws_byte_cursor *date_str_cursor, struc
     AWS_ZERO_STRUCT(*parsed_time);
 
     while (state < FINISHED && !error && index < date_str_cursor->len) {
-        char c = date_str_cursor->ptr[index];
+        char c = (char)date_str_cursor->ptr[index];
         switch (state) {
             case ON_YEAR:
                 if (c == '-' && index - state_start_index == 4) {
@@ -446,7 +446,7 @@ static int s_parse_rfc_822(
     AWS_ZERO_STRUCT(*parsed_time);
 
     while (!error && index < len) {
-        char c = date_str_cursor->ptr[index];
+        char c = (char)date_str_cursor->ptr[index];
 
         switch (state) {
             /* week day abbr is optional. */
