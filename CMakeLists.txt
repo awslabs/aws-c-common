@@ -24,7 +24,6 @@ include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
-include(AwsSIMD)
 include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -224,12 +223,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
-# Enable SIMD encoder if the compiler supports the right features
-simd_add_definitions(${PROJECT_NAME})
-
-if (HAVE_AVX2_INTRINSICS)
+if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx2(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
 endif()
 

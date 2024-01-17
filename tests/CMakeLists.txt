@@ -295,7 +295,7 @@ add_test_case(test_byte_cursor_utf8_parse_u64_hex)
 
 add_test_case(byte_swap_test)
 
-if(HAVE_AVX2_INTRINSICS)
+if(AWS_HAVE_AVX2_INTRINSICS)
     add_test_case(alignment32_test)
 else()
     add_test_case(alignment16_test)
