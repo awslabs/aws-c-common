@@ -67,6 +67,13 @@ AWS_STATIC_IMPL bool aws_linked_list_node_prev_is_valid(const struct aws_linked_
 }
 
 /**
+ * Returns whether or not the node is currently in a list.  Correctness assumes nodes have been zeroed on declaration.
+ */
+AWS_STATIC_IMPL bool aws_linked_list_node_is_in_list(const struct aws_linked_list_node *node) {
+    return node && node->next != NULL;
+}
+
+/**
  * Checks that a linked list satisfies double linked list connectivity
  * constraints. This check is O(n) as it traverses the whole linked
  * list to ensure that tail is reachable from head (and vice versa)

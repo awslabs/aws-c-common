@@ -510,6 +510,35 @@ static int s_test_linked_list_move_all_front(struct aws_allocator *allocator, vo
     return AWS_OP_SUCCESS;
 }
 
+static int s_test_linked_list_node_in_list(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    aws_common_library_init(allocator);
+
+    struct aws_linked_list list;
+    AWS_ZERO_STRUCT(list);
+
+    aws_linked_list_init(&list);
+
+    struct aws_linked_list_node node;
+    AWS_ZERO_STRUCT(node);
+
+    ASSERT_FALSE(aws_linked_list_node_is_in_list(&node));
+
+    aws_linked_list_push_back(&list, &node);
+
+    ASSERT_TRUE(aws_linked_list_node_is_in_list(&node));
+
+    aws_linked_list_pop_front(&list);
+
+    ASSERT_FALSE(aws_linked_list_node_is_in_list(&node));
+
+    aws_common_library_clean_up();
+
+    return AWS_OP_SUCCESS;
+}
+
 AWS_TEST_CASE(linked_list_push_back_pop_front, s_test_linked_list_order_push_back_pop_front)
 AWS_TEST_CASE(linked_list_push_front_pop_back, s_test_linked_list_order_push_front_pop_back)
 AWS_TEST_CASE(linked_list_swap_nodes, s_test_linked_list_swap_nodes)
@@ -518,3 +547,4 @@ AWS_TEST_CASE(linked_list_reverse_iteration, s_test_linked_list_reverse_iteratio
 AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)
 AWS_TEST_CASE(linked_list_move_all_back, s_test_linked_list_move_all_back)
 AWS_TEST_CASE(linked_list_move_all_front, s_test_linked_list_move_all_front)
+AWS_TEST_CASE(linked_list_node_in_list, s_test_linked_list_node_in_list)
