@@ -22,5 +22,7 @@
 #cmakedefine AWS_HAVE_AVX2_INTRINSICS
 #cmakedefine AWS_HAVE_AVX512_INTRINSICS
 #cmakedefine AWS_HAVE_MM256_EXTRACT_EPI64
-
+#cmakedefine AWS_HAVE_CLMUL
+#cmakedefine AWS_HAVE_ARM32_CRC
+#cmakedefine AWS_HAVE_ARMv8_1
 #endif

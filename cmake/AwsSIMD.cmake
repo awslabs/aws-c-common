@@ -10,12 +10,14 @@ if (MSVC)
     set(AWS_AVX512vL_FLAG "")
     set(AWS_PCMUL_FLAG "")
     set(AWS_SSE4_2_FLAG "")
+    set(AWS_ARMv8_1_FLAG "/arch:arm8.1")
 else()
     set(AWS_AVX2_FLAG "-mavx -mavx2")
     set(AWS_AVX512_FLAG "-mavx512f")
     set(AWS_AVX512vL_FLAG "mavx512vl")
     set(AWS_PCMUL_FLAG "-mvpclmulqdq -mpcmul")
     set(AWS_SSE4_2_FLAG "-msse4.2")
+    set(AWS_ARMv8_1_FLAG "-march=armv8-a+crc+crypto -mtune=neoverse-v1")
 endif()
 
 if (USE_CPU_EXTENSIONS)
@@ -66,7 +68,35 @@ if (USE_CPU_EXTENSIONS)
             return (int)_mm256_extract_epi64(vec, 2);
         }" AWS_HAVE_MM256_EXTRACT_EPI64)
 
+    check_c_source_compiles("
+        #include <wmmintrin.h>
+        #include <emmintrin.h>
+        int main() {
+            __m128i a = _mm_setzero_si128();
+            __m128i b = _mm_setzero_si128();
+            __m128i result = _mm_clmulepi64_si128(a, b, 0x00);
+            (void)result;
+            return 0;
+        }" AWS_HAVE_CLMUL)
+
+    set(CMAKE_REQUIRED_FLAGS "${AWS_ARMv8_1_FLAG}")
+    check_c_source_compiles("
+            #include <arm_acle.h>
+            int main() {
+                int crc = __crc32d(0, 1);
+                return 0;
+            }" AWS_HAVE_ARM32_CRC)
+
+    check_c_source_compiles("
+        #include <stdatomic.h>
+        int main() {
+            _Atomic int var = 0;
+            atomic_fetch_add_explicit(&var, 1, memory_order_relaxed);
+            return 0;
+    }" AWS_HAVE_ARMv8_1)
+
     set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
 endif() # USE_CPU_EXTENSIONS
 
 # The part where the definition is added to the compiler flags has been moved to config.h.in
@@ -117,3 +147,10 @@ function(simd_append_source_sse42 target)
         set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS "${AWS_SSE4_2_FLAG}")
     endforeach()
 endfunction(simd_append_source_sse42)
+
+function(simd_append_source_armv81 target)
+    foreach(file ${ARGN})
+        target_sources(${target} PRIVATE ${file})
+        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS "${AWS_ARMv8_1_FLAG}")
+    endforeach()
+endfunction(simd_append_source_armv81)
