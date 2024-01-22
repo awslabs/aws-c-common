@@ -225,7 +225,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_append_source_avx2(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
