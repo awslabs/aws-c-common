@@ -16,7 +16,7 @@ else()
     set(AWS_AVX512_FLAG "-mavx512f -mvpclmulqdq")
     set(AWS_AVX512vL_FLAG "-mavx512vl")
     set(AWS_CLMUL_FLAG "-mpclmul")
-    set(AWS_SSE4_2_FLAG "") # not sure this is needed leave here for the moment "-msse4.2")
+    set(AWS_SSE4_2_FLAG "-msse4.2")
     set(AWS_ARMv8_1_FLAG "-march=armv8-a+crc+crypto -mtune=neoverse-v1")
 endif()
 
