@@ -112,45 +112,19 @@ function(simd_add_source_avx target)
     endforeach()
 endfunction(simd_add_source_avx)
 
+# The part where the definition is added to the compiler flags has been moved to config.h.in
+# see git history for more details.
 
-function(simd_append_source_avx512 target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_AVX512_FLAG}")
+# Adds compiler flags to the source and adds the source to target.
+# Unfortunately the flags have to be passed as strings. Predefined flags are
+# at the top of this file.
+# Usage: simd_append_source_and_features(target file1.c ${AWS_AVX512_FLAG} ${AWS_AVX2_FLAG} ...)
+function(simd_append_source_and_features target file)
+    set(CC_FLAGS "")
+    foreach(flag ${ARGN})
+        set(CC_FLAGS "${CC_FLAGS} ${flag}")
     endforeach()
-endfunction(simd_append_source_avx512)
 
-function(simd_append_source_avx2 target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_AVX2_FLAG}")
-    endforeach()
-endfunction(simd_append_source_avx2)
-
-function(simd_append_source_avx512vl target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_AVX512vl_FLAG}")
-    endforeach()
-endfunction(simd_append_source_avx512vl)
-
-function(simd_append_source_clmul target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_CLMUL_FLAG}")
-    endforeach()
-endfunction(simd_append_source_clmul)
-
-function(simd_append_source_sse42 target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_SSE4_2_FLAG}")
-    endforeach()
-endfunction(simd_append_source_sse42)
-
-function(simd_append_source_armv81 target)
-    foreach(file ${ARGN})
-        target_sources(${target} PRIVATE ${file})
-        set_property(SOURCE ${file} APPEND PROPERTY COMPILE_FLAGS " ${AWS_ARMv8_1_FLAG}")
-    endforeach()
-endfunction(simd_append_source_armv81)
+    target_sources(${target} PRIVATE ${file})
+    set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS " ${CC_FLAGS}")
+endfunction(simd_append_source_and_features)
