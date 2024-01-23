@@ -79,7 +79,7 @@ if (USE_CPU_EXTENSIONS)
             return 0;
         }" AWS_HAVE_CLMUL)
 
-    set(CMAKE_REQUIRED_FLAGS "${AWS_ARMv8_1_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${old_flags} ${AWS_ARMv8_1_FLAG}")
     check_c_source_compiles("
             #include <arm_acle.h>
             int main() {
