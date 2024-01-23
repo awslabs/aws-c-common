@@ -11,6 +11,7 @@ if (MSVC)
     set(AWS_CLMUL_FLAG "")
     set(AWS_SSE4_2_FLAG "")
     set(AWS_ARMv8_1_FLAG "/arch:arm8.1")
+    set(WERROR_FLAG "")
 else()
     set(AWS_AVX2_FLAG "-mavx -mavx2")
     set(AWS_AVX512_FLAG "-mavx512f -mvpclmulqdq")
@@ -18,6 +19,7 @@ else()
     set(AWS_CLMUL_FLAG "-mpclmul")
     set(AWS_SSE4_2_FLAG "-msse4.2")
     set(AWS_ARMv8_1_FLAG "-march=armv8-a+crc+crypto -mtune=neoverse-v1")
+    set(WERROR_FLAG "-Werror")
 endif()
 
 if (USE_CPU_EXTENSIONS)
@@ -79,7 +81,7 @@ if (USE_CPU_EXTENSIONS)
             return 0;
         }" AWS_HAVE_CLMUL)
 
-    set(CMAKE_REQUIRED_FLAGS "${old_flags} ${AWS_ARMv8_1_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${old_flags} ${AWS_ARMv8_1_FLAG} ${WERROR_FLAG}")
     check_c_source_compiles("
             #include <arm_acle.h>
             int main() {
