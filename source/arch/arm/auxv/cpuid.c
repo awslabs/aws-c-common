@@ -29,7 +29,9 @@ struct cap_bits {
 
 #    if (defined(__aarch64__))
 struct cap_bits s_check_cap[AWS_CPU_FEATURE_COUNT] = {
-    [AWS_CPU_FEATURE_ARM_CRC] = {0, 1 << 7 /* HWCAP_CRC */},
+    [AWS_CPU_FEATURE_ARM_CRC] = {0, 1 << 7 /* HWCAP_CRC32 */},
+    [AWS_CPU_FEATURE_ARM_PMULL] = {0, 1 << 4 /* HWCAP_PMULL */},
+    [AWS_CPU_FEATURE_ARM_CRYPTO] = {0, 1 << 3 /* HWCAP_AES */},
 };
 #    else
 struct cap_bits s_check_cap[AWS_CPU_FEATURE_COUNT] = {

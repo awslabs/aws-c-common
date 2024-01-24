@@ -155,13 +155,17 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (MSVC)
+        if (WINDOWS)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/msvc/*.c"
+                "source/arch/arm/windows/*.c"
                 )
-        elseif (AWS_HAVE_AUXV)
+        elseif(APPLE)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/asm/*.c"
+                    "source/arch/arm/darwin/*.c"
+                    )
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/auxv/*.c"
                 )
         endif()
     endif()
