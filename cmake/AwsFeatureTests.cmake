@@ -56,6 +56,15 @@ check_c_source_compiles("
 
 check_c_source_compiles("
     int main() {
+#if !(defined(__x86_64__) || defined(_M_X64))
+#    error \"not intel\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_INTEL_X64)
+
+check_c_source_compiles("
+    int main() {
 #if !(defined(__aarch64__) || defined(_M_ARM64))
 #    error \"not arm64\"
 #endif

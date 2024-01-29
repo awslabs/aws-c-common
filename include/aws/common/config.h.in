@@ -25,4 +25,8 @@
 #cmakedefine AWS_HAVE_CLMUL
 #cmakedefine AWS_HAVE_ARM32_CRC
 #cmakedefine AWS_HAVE_ARMv8_1
+#cmakedefine AWS_ARCH_ARM64
+#cmakedefine AWS_ARCH_INTEL
+#cmakedefine AWS_ARCH_INTEL_X64
+
 #endif
