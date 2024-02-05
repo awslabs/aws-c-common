@@ -17,6 +17,8 @@ if(MINGW)
     set(USE_CPU_EXTENSIONS OFF)
 endif()
 
+set(AWS_USE_CPU_EXTENSIONS USE_CPU_EXTENSIONS)
+
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
     #include <stdbool.h>

@@ -28,5 +28,6 @@
 #cmakedefine AWS_ARCH_ARM64
 #cmakedefine AWS_ARCH_INTEL
 #cmakedefine AWS_ARCH_INTEL_X64
+#cmakedefine AWS_USE_CPU_EXTENSIONS
 
 #endif

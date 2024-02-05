@@ -23,18 +23,20 @@ else()
 endif()
 
 if (USE_CPU_EXTENSIONS)
+    set(AVX_CFLAGS ${AWS_SSE4_2_FLAG})
+
     check_c_compiler_flag(${AWS_AVX2_FLAG} HAVE_M_AVX2_FLAG)
     if (HAVE_M_AVX2_FLAG)
-        set(AVX_CFLAGS ${AWS_AVX2_FLAG})
+        set(AVX_CFLAGS "${AWS_AVX2_FLAG} ${AVX_CFLAGS}")
     endif()
 
     check_c_compiler_flag("${AWS_AVX512_FLAG} ${AWS_CLMUL_FLAG}" HAVE_M_AVX512_FLAG)
     if (HAVE_M_AVX512_FLAG)
-        set(AVX_CFLAGS "${AVX_CFLAGS} ${AWS_AVX512_FLAG} ${AWS_CLMUL_FLAG} ${AWS_SSE4_2_FLAG}")
+        set(AVX_CFLAGS "${AWS_AVX512_FLAG} ${AWS_CLMUL_FLAG} ${AVX_CFLAGS}")
     endif()
 
     set(old_flags "${CMAKE_REQUIRED_FLAGS}")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX_CFLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${AVX_CFLAGS} ${WERROR_FLAG}")
 
     check_c_source_compiles("
         #include <immintrin.h>
