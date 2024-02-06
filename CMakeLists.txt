@@ -24,7 +24,6 @@ include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
-include(AwsSIMD)
 include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -70,6 +69,7 @@ if (WIN32)
 
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
+        "source/platform_fallback_stubs/system_info.c"
         )
 
     if (MSVC)
@@ -81,7 +81,10 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
+    # PSAPI_VERSION=1 is needed to support GetProcessMemoryInfo on both pre and
+    # post Win7 OS's. 
+    list(APPEND PLATFORM_DEFINES PSAPI_VERSION=1)
+    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi Psapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
@@ -108,19 +111,26 @@ else ()
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
         list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
         list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
         list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
         list(APPEND AWS_COMMON_OS_SRC "${ANDROID_SRC}")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+    else()
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     endif()
 
 endif()
@@ -213,12 +223,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
-# Enable SIMD encoder if the compiler supports the right features
-simd_add_definitions(${PROJECT_NAME})
-
-if (HAVE_AVX2_INTRINSICS)
+if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx2(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
@@ -298,6 +305,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
 if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
+        add_subdirectory(bin/system_info)
     endif()
 endif()
 

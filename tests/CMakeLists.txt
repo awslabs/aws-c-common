@@ -94,6 +94,7 @@ add_test_case(priority_queue_remove_root_test)
 add_test_case(priority_queue_remove_leaf_test)
 add_test_case(priority_queue_remove_interior_sift_up_test)
 add_test_case(priority_queue_remove_interior_sift_down_test)
+add_test_case(priority_queue_clear_backpointers_test)
 
 add_test_case(linked_list_push_back_pop_front)
 add_test_case(linked_list_push_front_pop_back)
@@ -294,7 +295,7 @@ add_test_case(test_byte_cursor_utf8_parse_u64_hex)
 
 add_test_case(byte_swap_test)
 
-if(HAVE_AVX2_INTRINSICS)
+if(AWS_HAVE_AVX2_INTRINSICS)
     add_test_case(alignment32_test)
 else()
     add_test_case(alignment16_test)
@@ -304,6 +305,7 @@ add_test_case(test_cpu_count_at_least_works_superficially)
 add_test_case(test_stack_trace_decoding)
 add_test_case(test_platform_build_os)
 add_test_case(test_sanity_check_numa_discovery)
+add_test_case(test_sanity_check_environment_loader)
 
 add_test_case(test_realloc_fallback)
 add_test_case(test_realloc_passthrough)
@@ -317,6 +319,10 @@ add_test_case(sba_threaded_allocs_and_frees)
 add_test_case(sba_threaded_reallocs)
 add_test_case(sba_churn)
 add_test_case(sba_metrics)
+add_test_case(default_threaded_reallocs)
+add_test_case(default_threaded_allocs_and_frees)
+add_test_case(aligned_threaded_reallocs)
+add_test_case(aligned_threaded_allocs_and_frees)
 
 add_test_case(test_memtrace_none)
 add_test_case(test_memtrace_count)
@@ -399,6 +405,8 @@ add_test_case(ring_buffer_acquire_up_to_multi_threaded_test)
 add_test_case(string_to_log_level_success_test)
 add_test_case(string_to_log_level_failure_test)
 
+add_test_case(test_memory_usage_maxrss)
+
 if(NOT ANDROID)
     add_test_case(test_logging_filter_at_AWS_LL_NONE_s_logf_all_levels)
     add_test_case(test_logging_filter_at_AWS_LL_FATAL_s_logf_all_levels)
@@ -478,6 +486,7 @@ add_test_case(directory_move_src_non_existent_test)
 add_test_case(test_home_directory_not_null)
 add_test_case(test_normalize_posix_directory_separator)
 add_test_case(test_normalize_windows_directory_separator)
+add_test_case(test_byte_buf_init_from_file)
 
 add_test_case(promise_test_wait_forever)
 add_test_case(promise_test_wait_for_a_bit)
@@ -511,6 +520,13 @@ add_test_case(uri_builder_from_string)
 add_test_case(test_uri_encode_path_rfc3986)
 add_test_case(test_uri_encode_query)
 add_test_case(test_uri_decode)
+
+add_test_case(test_cross_process_lock_works_in_proc)
+add_test_case(test_cross_process_lock_works_cross_proc)
+#this one is here for use by test_instance_lock_works_cross_proc
+add_test_case(cross_process_lock_mp_test_runner)
+add_test_case(test_cross_process_lock_invalid_nonce_fails)
+
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
