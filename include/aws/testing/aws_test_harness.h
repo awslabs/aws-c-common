@@ -109,6 +109,7 @@ static int total_skip;
 #define POSTFAIL_INTERNAL()                                                                                            \
     do {                                                                                                               \
         total_failures++;                                                                                              \
+        _Exit(FAILURE);                                                                                                \
         return FAILURE;                                                                                                \
     } while (0)
 
