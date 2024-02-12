@@ -53,6 +53,11 @@ AWS_EXTERN_C_BEGIN
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
 #endif                              /* _MSC_VER */
 
+#ifdef __cplusplus
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wuseless-cast"
+#endif
+
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;
 }
@@ -86,10 +91,7 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
     return (size_t)aws_mul_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return (size_t)aws_mul_u64_saturating(a, b);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
@@ -103,10 +105,7 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
     return aws_mul_u32_checked(a, b, (uint32_t *)r);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return aws_mul_u64_checked(a, b, (uint64_t *)r);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
@@ -119,10 +118,7 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
     return (size_t)aws_add_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return (size_t)aws_add_u64_saturating(a, b);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
@@ -136,10 +132,7 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
     return aws_add_u32_checked(a, b, (uint32_t *)r);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return aws_add_u64_checked(a, b, (uint64_t *)r);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
@@ -149,10 +142,7 @@ AWS_STATIC_IMPL size_t aws_sub_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
     return (size_t)aws_sub_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return (size_t)aws_sub_u64_saturating(a, b);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
@@ -162,10 +152,7 @@ AWS_STATIC_IMPL int aws_sub_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
     return aws_sub_u32_checked(a, b, (uint32_t *)r);
 #elif SIZE_BITS == 64
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
     return aws_sub_u64_checked(a, b, (uint64_t *)r);
-#    pragma GCC diagnostic pop
 #else
 #    error "Target not supported"
 #endif
