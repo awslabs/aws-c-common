@@ -34,7 +34,7 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
     return alloc && AWS_OBJECT_PTR_IS_READABLE(alloc) && alloc->mem_acquire && alloc->mem_release;
 }
 
-static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
+static void *s_aligned_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
     /* larger allocations should be aligned so that AVX and friends can avoid
      * the extra preamble during unaligned versions of memcpy/memset on big buffers
@@ -62,7 +62,7 @@ static void *s_default_malloc(struct aws_allocator *allocator, size_t size) {
 #endif
 }
 
-static void s_default_free(struct aws_allocator *allocator, void *ptr) {
+static void s_aligned_free(struct aws_allocator *allocator, void *ptr) {
     (void)allocator;
 #if !defined(_WIN32)
     free(ptr);
@@ -71,7 +71,7 @@ static void s_default_free(struct aws_allocator *allocator, void *ptr) {
 #endif
 }
 
-static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+static void *s_aligned_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
     (void)allocator;
     (void)oldsize;
     AWS_FATAL_PRECONDITION(newsize);
@@ -82,12 +82,12 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
     }
 
     /* newsize is > oldsize, need more memory */
-    void *new_mem = s_default_malloc(allocator, newsize);
-    AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in s_default_malloc");
+    void *new_mem = s_aligned_malloc(allocator, newsize);
+    AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in s_aligned_malloc");
 
     if (ptr) {
         memcpy(new_mem, ptr, oldsize);
-        s_default_free(allocator, ptr);
+        s_aligned_free(allocator, ptr);
     }
 
     return new_mem;
@@ -99,22 +99,73 @@ static void *s_default_realloc(struct aws_allocator *allocator, void *ptr, size_
 #endif
 }
 
-static void *s_default_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
-    void *mem = s_default_malloc(allocator, num * size);
-    AWS_PANIC_OOM(mem, "Unhandled OOM encountered in s_default_malloc");
+static void *s_aligned_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    void *mem = s_aligned_malloc(allocator, num * size);
+    AWS_PANIC_OOM(mem, "Unhandled OOM encountered in s_aligned_calloc");
     memset(mem, 0, num * size);
     return mem;
 }
 
+static void *s_non_aligned_malloc(struct aws_allocator *allocator, size_t size) {
+    (void)allocator;
+    void *result = malloc(size);
+    AWS_PANIC_OOM(result, "malloc failed to allocate memory");
+    return result;
+}
+
+static void s_non_aligned_free(struct aws_allocator *allocator, void *ptr) {
+    (void)allocator;
+    free(ptr);
+}
+
+static void *s_non_aligned_realloc(struct aws_allocator *allocator, void *ptr, size_t oldsize, size_t newsize) {
+    (void)allocator;
+    (void)oldsize;
+    AWS_FATAL_PRECONDITION(newsize);
+
+    if (newsize <= oldsize) {
+        return ptr;
+    }
+
+    /* newsize is > oldsize, need more memory */
+    void *new_mem = s_non_aligned_malloc(allocator, newsize);
+    AWS_PANIC_OOM(new_mem, "Unhandled OOM encountered in s_non_aligned_realloc");
+
+    if (ptr) {
+        memcpy(new_mem, ptr, oldsize);
+        s_non_aligned_free(allocator, ptr);
+    }
+
+    return new_mem;
+}
+
+static void *s_non_aligned_calloc(struct aws_allocator *allocator, size_t num, size_t size) {
+    (void)allocator;
+    void *mem = calloc(num, size);
+    AWS_PANIC_OOM(mem, "Unhandled OOM encountered in s_non_aligned_calloc");
+    return mem;
+}
+
 static struct aws_allocator default_allocator = {
-    .mem_acquire = s_default_malloc,
-    .mem_release = s_default_free,
-    .mem_realloc = s_default_realloc,
-    .mem_calloc = s_default_calloc,
+    .mem_acquire = s_non_aligned_malloc,
+    .mem_release = s_non_aligned_free,
+    .mem_realloc = s_non_aligned_realloc,
+    .mem_calloc = s_non_aligned_calloc,
 };
 
 struct aws_allocator *aws_default_allocator(void) {
     return &default_allocator;
+}
+
+static struct aws_allocator aligned_allocator = {
+    .mem_acquire = s_aligned_malloc,
+    .mem_release = s_aligned_free,
+    .mem_realloc = s_aligned_realloc,
+    .mem_calloc = s_aligned_calloc,
+};
+
+struct aws_allocator *aws_aligned_allocator(void) {
+    return &aligned_allocator;
 }
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {

@@ -117,3 +117,7 @@ if(MSVC)
         return 0;
     }" AWS_HAVE_MSVC_INTRINSICS_X64)
 endif()
+
+# This does a lot to detect when intrinsics are available and has to set cflags to do so.
+# leave it in its own file for ease of managing it.
+include(AwsSIMD)

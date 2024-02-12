@@ -451,6 +451,41 @@ static int s_test_remove_interior_sift_down(struct aws_allocator *allocator, voi
     return 0;
 }
 
+#define BACKPOINTER_CLEAR_NODE_COUNT 16
+
+static int s_priority_queue_clear_backpointers_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_priority_queue queue;
+
+    ASSERT_SUCCESS(aws_priority_queue_init_dynamic(&queue, allocator, 16, sizeof(int), s_compare_ints));
+
+    struct aws_priority_queue_node queue_nodes[BACKPOINTER_CLEAR_NODE_COUNT];
+
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
+        aws_priority_queue_node_init(&queue_nodes[i]);
+    }
+
+    for (int i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; i++) {
+        aws_priority_queue_push_ref(&queue, &i, &queue_nodes[i]);
+    }
+
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
+        ASSERT_TRUE(aws_priority_queue_node_is_in_queue(&queue_nodes[i]));
+    }
+
+    aws_priority_queue_clear(&queue);
+    ASSERT_INT_EQUALS(0, aws_priority_queue_size(&queue));
+
+    for (size_t i = 0; i < BACKPOINTER_CLEAR_NODE_COUNT; ++i) {
+        ASSERT_FALSE(aws_priority_queue_node_is_in_queue(&queue_nodes[i]));
+    }
+
+    aws_priority_queue_clean_up(&queue);
+
+    return 0;
+}
+
 AWS_TEST_CASE(priority_queue_remove_interior_sift_down_test, s_test_remove_interior_sift_down);
 AWS_TEST_CASE(priority_queue_remove_interior_sift_up_test, s_test_remove_interior_sift_up);
 AWS_TEST_CASE(priority_queue_remove_leaf_test, s_test_remove_leaf);
@@ -458,3 +493,4 @@ AWS_TEST_CASE(priority_queue_remove_root_test, s_test_remove_root);
 AWS_TEST_CASE(priority_queue_push_pop_order_test, s_test_priority_queue_preserves_order);
 AWS_TEST_CASE(priority_queue_random_values_test, s_test_priority_queue_random_values);
 AWS_TEST_CASE(priority_queue_size_and_capacity_test, s_test_priority_queue_size_and_capacity);
+AWS_TEST_CASE(priority_queue_clear_backpointers_test, s_priority_queue_clear_backpointers_test);

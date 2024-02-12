@@ -158,7 +158,7 @@ Example:
 * Avoid C99 features in header files. For some types such as bool, uint32_t etc..., these are defined if not available for the language
 standard being used in `aws/common/common.h`, so feel free to use them.
 * For C++ compatibility, don't put const members in structs.
-* Avoid C++ style comments e.g. `//`.
+* Avoid C++ style comments e.g. `//` in header files and prefer block style  (`/* */`) for long blocks of text. C++ style comments are fine in C files.
 * All public API functions need C++ guards and Windows dll semantics.
 * Use Unix line endings.
 * Where implementation hiding is desired for either ABI or runtime polymorphism reasons, use the `void *impl` pattern. v-tables

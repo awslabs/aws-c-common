@@ -20,9 +20,16 @@
   THE SOFTWARE.
 */
 
+/*
+ * This file has been modified from its original version by Amazon:
+ *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
+ *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
+ *   (3) Replace sprintf() with snprintf() to make compilers happier.
+ */
+/* NOLINTBEGIN */
+
 /* cJSON */
 /* JSON parser in C. */
-/* NOLINTBEGIN */
 
 /* disable warnings about old C89 functions in MSVC */
 #if !defined(_CRT_SECURE_NO_DEPRECATE) && defined(_MSC_VER)
@@ -57,7 +64,7 @@
 #pragma GCC visibility pop
 #endif
 
-#include <aws/common/external/cJSON.h>
+#include "cJSON.h"
 
 /* define our own boolean type */
 #ifdef true
@@ -90,6 +97,14 @@ typedef struct {
     const unsigned char *json;
     size_t position;
 } error;
+#if 0 /* Amazon edit */
+static error global_error = { NULL, 0 };
+
+CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
+{
+    return (const char*) (global_error.json + global_error.position);
+}
+#endif /* Amazon edit */
 
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
 {
@@ -112,14 +127,14 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
 }
 
 /* This is a safeguard to prevent copy-pasters from using incompatible C and header files */
-#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 7) || (CJSON_VERSION_PATCH != 16)
+#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 7) || (CJSON_VERSION_PATCH != 17)
     #error cJSON.h and cJSON.c have different versions. Make sure that both have the same.
 #endif
 
 CJSON_PUBLIC(const char*) cJSON_Version(void)
 {
     static char version[15];
-    snprintf(version, sizeof(version) / sizeof(char), "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH);
+    snprintf(version, sizeof(version), "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH); /* Amazon edit */
 
     return version;
 }
@@ -396,7 +411,12 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
-    if (!(object->type & cJSON_String) || (object->type & cJSON_IsReference))
+    if ((object == NULL) || !(object->type & cJSON_String) || (object->type & cJSON_IsReference))
+    {
+        return NULL;
+    }
+    /* return NULL if the object is corrupted */
+    if (object->valuestring == NULL)
     {
         return NULL;
     }
@@ -555,22 +575,22 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     /* This checks for NaN and Infinity */
     if (isnan(d) || isinf(d))
     {
-        length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "null");
+        length = snprintf((char*)number_buffer, sizeof(number_buffer), "null"); /* Amazon edit */
     }
-    else if (d == (double)item->valueint)
-    {
-        length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "%d", item->valueint);
-    }
+	else if(d == (double)item->valueint)
+	{
+		length = snprintf((char*)number_buffer, sizeof(number_buffer), "%d", item->valueint); /* Amazon edit */
+	}
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
-        length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "%1.15g", d);
+        length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.15g", d); /* Amazon edit */
 
         /* Check whether the original double can be recovered */
         if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || !compare_double((double)test, d))
         {
             /* If not, print with 17 decimal places of precision */
-        length = snprintf((char*)number_buffer, sizeof(number_buffer) / sizeof(char), "%1.17g", d);
+            length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.17g", d); /* Amazon edit */
         }
     }
 
@@ -1003,7 +1023,7 @@ static cJSON_bool print_string_ptr(const unsigned char * const input, printbuffe
                     break;
                 default:
                     /* escape and print as unicode codepoint */
-                    snprintf((char*)output_pointer, 6 * sizeof(char), "u%04x", *input_pointer);
+                    snprintf((char*)output_pointer, 6, "u%04x", *input_pointer); /* Amazon edit */
                     output_pointer += 4;
                     break;
             }
@@ -1092,6 +1112,12 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseWithLengthOpts(const char *value, size_t buffer
     parse_buffer buffer = { 0, 0, 0, 0, { 0, 0, 0 } };
     cJSON *item = NULL;
 
+#if 0 /* Amazon edit */
+    /* reset error position */
+    global_error.json = NULL;
+    global_error.position = 0;
+#endif /* Amazon edit */
+
     if (value == NULL || 0 == buffer_length)
     {
         goto fail;
@@ -1155,6 +1181,10 @@ fail:
         {
             *return_parse_end = (const char*)local_error.json + local_error.position;
         }
+
+#if 0 /* Amazon edit */
+        global_error = local_error;
+#endif /* Amazon edit */
     }
 
     return NULL;
@@ -1982,14 +2012,11 @@ CJSON_PUBLIC(cJSON_bool) cJSON_AddItemToArray(cJSON *array, cJSON *item)
 }
 
 #if defined(__clang__) || (defined(__GNUC__)  && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 5))))
-  #pragma GCC diagnostic push
+    #pragma GCC diagnostic push
 #endif
 #ifdef __GNUC__
-  #if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 1)))
-      #pragma GCC diagnostic ignored "-Wcast-qual"
-  #endif
+#pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
-
 /* helper function to cast away const */
 static void* cast_away_const(const void* string)
 {
@@ -2256,7 +2283,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_InsertItemInArray(cJSON *array, int which, cJSON 
 {
     cJSON *after_inserted = NULL;
 
-    if (which < 0)
+    if (which < 0 || newitem == NULL)
     {
         return false;
     }
@@ -2265,6 +2292,11 @@ CJSON_PUBLIC(cJSON_bool) cJSON_InsertItemInArray(cJSON *array, int which, cJSON 
     if (after_inserted == NULL)
     {
         return add_item_to_array(array, newitem);
+    }
+
+    if (after_inserted != array->child && after_inserted->prev == NULL) {
+        /* return false if after_inserted is a corrupted array item */
+        return false;
     }
 
     newitem->next = after_inserted;
@@ -3109,4 +3141,5 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
 {
     global_hooks.deallocate(object);
 }
+/* Amazon edit */
 /* NOLINTEND */
