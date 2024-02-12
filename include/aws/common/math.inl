@@ -54,8 +54,10 @@ AWS_EXTERN_C_BEGIN
 #endif                              /* _MSC_VER */
 
 #ifdef __cplusplus
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wuseless-cast"
+#    if defined(__GNUC__)
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wuseless-cast"
+#    endif
 #endif
 
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
