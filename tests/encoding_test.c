@@ -1298,7 +1298,7 @@ static int s_utf8_validation_callback_always_fails(const uint32_t codepoint, voi
 static int s_utf8_validation_callback_always_passes(const uint32_t codepoint, void *user_data) {
     (void)codepoint;
     (void)user_data;
-    return AWS_ERROR_SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 static struct utf8_example s_valid_utf8_examples_for_callback[] = {
