@@ -205,7 +205,7 @@ static int s_default_aws_log_formatter_format(
     struct aws_default_log_formatter_impl *impl = formatter->impl;
 
     if (formatted_output == NULL) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     /*
