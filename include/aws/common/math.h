@@ -15,9 +15,9 @@
 AWS_PUSH_SANE_WARNING_LEVEL
 
 /* The number of bits in a size_t variable */
-#if SIZE_MAX == UINT32_MAX
+#if UINTPTR_MAX == UINT32_MAX
 #    define SIZE_BITS 32
-#elif SIZE_MAX == UINT64_MAX
+#elif UINTPTR_MAX == UINT64_MAX
 #    define SIZE_BITS 64
 #else
 #    error "Target not supported"
