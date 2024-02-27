@@ -20,7 +20,7 @@
 
 AWS_EXTERN_C_BEGIN
 
-#if !(defined(_M_IX86) || defined(_M_X64))
+#if !(defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
 #    error Atomics are not currently supported for non-x86 MSVC platforms
 
 /*
@@ -71,6 +71,18 @@ typedef long aws_atomic_impl_int_t;
 typedef long long aws_atomic_impl_int_t;
 #endif
 
+#ifdef _M_ARM64
+#    define RW_BARRIER() __dmb(_ARM64_BARRIER_SY)
+#    define R_BARRIER() __dmb(_ARM64_BARRIER_LD)
+#    define W_BARRIER() __dmb(_ARM64_BARRIER_ST)
+#    define SW_BARRIER() _ReadWriteBarrier();
+#else
+#    define RW_BARRIER()
+#    define R_BARRIER()
+#    define W_BARRIER()
+#    define SW_BARRIER() _ReadWriteBarrier();
+#endif
+
 static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
 #ifndef NDEBUG
     switch (order) {
@@ -114,7 +126,8 @@ static inline void aws_atomic_priv_barrier_before(enum aws_memory_order order, e
      * Volatile ops may or may not imply this barrier, depending on the /volatile: switch, but adding an extra
      * barrier doesn't hurt.
      */
-    _ReadWriteBarrier();
+    RW_BARRIER();
+    SW_BARRIER();
 }
 
 static inline void aws_atomic_priv_barrier_after(enum aws_memory_order order, enum aws_atomic_mode_priv mode) {
@@ -135,7 +148,8 @@ static inline void aws_atomic_priv_barrier_after(enum aws_memory_order order, en
      * x86: only a compiler barrier is required. For seq_cst, we must use some form of interlocked operation for
      * writes, but that's the caller's responsibility.
      */
-    _ReadWriteBarrier();
+    RW_BARRIER();
+    SW_BARRIER();
 }
 
 /**
@@ -344,9 +358,16 @@ void aws_atomic_thread_fence(enum aws_memory_order order) {
             AWS_INTERLOCKED_INT(Exchange)(&x, 1);
             break;
         case aws_memory_order_release:
+            W_BARRIER();
+            SW_BARRIER();
+            break;
         case aws_memory_order_acquire:
+            R_BARRIER();
+            SW_BARRIER();
+            break;
         case aws_memory_order_acq_rel:
-            _ReadWriteBarrier();
+            RW_BARRIER();
+            SW_BARRIER();
             break;
         case aws_memory_order_relaxed:
             /* no-op */
