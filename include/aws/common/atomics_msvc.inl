@@ -21,7 +21,7 @@
 AWS_EXTERN_C_BEGIN
 
 #if !(defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
-#    error Atomics are not currently supported for non-x86 MSVC platforms
+#    error Atomics are not currently supported for non-x86 or ARM64 MSVC platforms
 
 /*
  * In particular, it's not clear that seq_cst will work properly on non-x86
@@ -63,6 +63,19 @@ AWS_EXTERN_C_BEGIN
  * this use case.
  */
 
+/**
+ * Some general notes about ARM environments:
+ * ARM processors uses a weak memory model as opposed to the strong memory model used by Intel processors
+ * This means more permissible memory ordering allowed between stores and loads.
+ *
+ * Thus ARM port will need more hardware fences/barriers to assure developer intent.
+ * Memory barriers will prevent reordering stores and loads accross them depending on their type (read write, write only, read only ...)
+ *  
+ * For more information about ARM64 memory ordering, see https://developer.arm.com/documentation/102336/0100/Memory-ordering
+ * For more information about Memory barriers, see https://developer.arm.com/documentation/102336/0100/Memory-barriers
+ * For more information about Miscosoft Interensic ARM64 APIs, see https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics?view=msvc-170
+ */
+
 #ifdef _M_IX86
 #    define AWS_INTERLOCKED_INT(x) _Interlocked##x
 typedef long aws_atomic_impl_int_t;
@@ -72,15 +85,15 @@ typedef long long aws_atomic_impl_int_t;
 #endif
 
 #ifdef _M_ARM64
-#    define RW_BARRIER() __dmb(_ARM64_BARRIER_SY)
-#    define R_BARRIER() __dmb(_ARM64_BARRIER_LD)
-#    define W_BARRIER() __dmb(_ARM64_BARRIER_ST)
-#    define SW_BARRIER() _ReadWriteBarrier();
+#    define RW_BARRIER() __dmb(_ARM64_BARRIER_SY) /* hardare read write barrier */
+#    define R_BARRIER() __dmb(_ARM64_BARRIER_LD) /* hardare read barrier */
+#    define W_BARRIER() __dmb(_ARM64_BARRIER_ST) /* hardare write barrier */
+#    define SW_BARRIER() _ReadWriteBarrier(); /* software barrier */
 #else
 #    define RW_BARRIER()
 #    define R_BARRIER()
 #    define W_BARRIER()
-#    define SW_BARRIER() _ReadWriteBarrier();
+#    define SW_BARRIER() _ReadWriteBarrier(); /* software barrier */
 #endif
 
 static inline void aws_atomic_priv_check_order(enum aws_memory_order order) {
