@@ -69,11 +69,15 @@ AWS_EXTERN_C_BEGIN
  * This means more permissible memory ordering allowed between stores and loads.
  *
  * Thus ARM port will need more hardware fences/barriers to assure developer intent.
- * Memory barriers will prevent reordering stores and loads accross them depending on their type (read write, write only, read only ...)
+ * Memory barriers will prevent reordering stores and loads accross them depending on their type
+ * (read write, write only, read only ...)
  *  
- * For more information about ARM64 memory ordering, see https://developer.arm.com/documentation/102336/0100/Memory-ordering
- * For more information about Memory barriers, see https://developer.arm.com/documentation/102336/0100/Memory-barriers
- * For more information about Miscosoft Interensic ARM64 APIs, see https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics?view=msvc-170
+ * For more information about ARM64 memory ordering,
+ * see https://developer.arm.com/documentation/102336/0100/Memory-ordering
+ * For more information about Memory barriers,
+ * see https://developer.arm.com/documentation/102336/0100/Memory-barriers
+ * For more information about Miscosoft Interensic ARM64 APIs,
+ * see https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics?view=msvc-170
  */
 
 #ifdef _M_IX86
