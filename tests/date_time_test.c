@@ -300,7 +300,8 @@ static int s_test_iso8601_parsing_fn(struct aws_allocator *allocator, void *ctx)
         {"20021002T080509.000Z", "basic format"},
         {"20021002T203909+1234", "basic format with fractional seconds"},
         {"2002-10-02T080509.000Z", "weird mix of extended date but basic time"},
-        {"2002-10-02T20:39:09+1234", "weird mix of extended date-time but basic fractional seconds"},
+        {"20021002T08:05:09.000Z", "weird mix of basic date but extended time"},
+        {"2002-10-02T20:39:09+1234", "weird mix of extended date and time but basic fractional seconds"},
     };
 
     for (size_t i = 0; i < AWS_ARRAY_SIZE(valid_dates); ++i) {
