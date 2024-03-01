@@ -350,7 +350,7 @@ static bool s_read_n_digits(struct aws_byte_cursor *str, size_t n, int *out_val)
     }
 
     for (size_t i = 0; i < n; ++i) {
-        char c = str->ptr[i];
+        uint8_t c = str->ptr[i];
         if (aws_isdigit(c)) {
             val = val * 10 + (c - '0');
         } else {
@@ -364,7 +364,7 @@ static bool s_read_n_digits(struct aws_byte_cursor *str, size_t n, int *out_val)
 }
 
 /* Returns true if there's 1 more character, advancing the string and getting the character's value. */
-static bool s_read_1_char(struct aws_byte_cursor *str, char *out_c) {
+static bool s_read_1_char(struct aws_byte_cursor *str, uint8_t *out_c) {
     if (str->len == 0) {
         return false;
     }
@@ -375,7 +375,7 @@ static bool s_read_1_char(struct aws_byte_cursor *str, char *out_c) {
 }
 
 /* Returns true (and advances str) if next character is c */
-static bool s_advance_if_c(struct aws_byte_cursor *str, char c) {
+static bool s_advance_if_c(struct aws_byte_cursor *str, uint8_t c) {
     if (str->len == 0 || str->ptr[0] != c) {
         return false;
     }
@@ -391,7 +391,7 @@ static bool s_read_optional_fractional_seconds(struct aws_byte_cursor *str) {
         return true;
     }
 
-    char c = str->ptr[0];
+    uint8_t c = str->ptr[0];
     if (c != '.' && c != ',') {
         return true;
     }
@@ -418,7 +418,7 @@ static bool s_read_optional_fractional_seconds(struct aws_byte_cursor *str) {
 static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time, time_t *seconds_offset) {
     AWS_ZERO_STRUCT(*parsed_time);
     *seconds_offset = 0;
-    char c = 0;
+    uint8_t c = 0;
 
     /* read year */
     if (!s_read_n_digits(&str, 4, &parsed_time->tm_year)) {
@@ -452,7 +452,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     }
 
     /* followed by T or space (allowed by rfc3339#section-5.6) */
-    if (!s_read_1_char(&str, &c) || !(tolower((uint8_t)c) == 't' || c == ' ')) {
+    if (!s_read_1_char(&str, &c) || !(tolower(c) == 't' || c == ' ')) {
         return false;
     }
 
@@ -490,7 +490,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
         return false;
     }
 
-    if (tolower((uint8_t)c) == 'z') {
+    if (tolower(c) == 'z') {
         /* Success! */
         return true;
     }
