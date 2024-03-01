@@ -80,6 +80,9 @@ AWS_COMMON_API void aws_date_time_init_epoch_secs(struct aws_date_time *dt, doub
  * Initializes dt to be the time represented by date_str in format 'fmt'. Returns AWS_OP_SUCCESS if the
  * string was successfully parsed, returns  AWS_OP_ERR if parsing failed.
  *
+ * The parser is lenient regarding AWS_DATE_FORMAT_RFC822 vs AWS_DATE_FORMAT_ISO_8601_BASIC.
+ * Regardless of which you pass in, both "2002-10-02T08:05:09Z" and "20021002T080509Z" would be accepted.
+ *
  * Notes for AWS_DATE_FORMAT_RFC822:
  * If no time zone information is provided, it is assumed to be local time (please don't do this).
  *

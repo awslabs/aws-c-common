@@ -290,14 +290,17 @@ static int s_test_iso8601_parsing_fn(struct aws_allocator *allocator, void *ctx)
 
     /* array of {"date", "description"} */
     const char *valid_dates[][2] = {
-        {"2002-10-02T08:05:09.000Z", "vanilla"},
-        {"2002-10-02T080509.000Z", "no colon"},
+        {"2002-10-02T08:05:09.000Z", "extended format"},
         {"2002-10-02t08:05:09.000z", "lowercase T and Z"},
         {"2002-10-02 08:05:09Z", "space instead of T"}, /*allowed per NOTE in RFC3339#section-5.6 */
         {"2002-10-02T08:05:09+00:00", "offset instead of Z"},
         {"2002-10-01T19:31:09-12:34", "western offset"},
         {"2002-10-02T20:39:09+12:34", "eastern offset"},
         {"2002-10-02T08:05:09.000+00:00", "fractional seconds and offset"},
+        {"20021002T080509.000Z", "basic format"},
+        {"20021002T203909+1234", "basic format with fractional seconds"},
+        {"2002-10-02T080509.000Z", "weird mix of extended date but basic time"},
+        {"2002-10-02T20:39:09+1234", "weird mix of extended date-time but basic fractional seconds"},
     };
 
     for (size_t i = 0; i < AWS_ARRAY_SIZE(valid_dates); ++i) {
@@ -346,7 +349,7 @@ static int s_test_iso8601_basic_utc_parsing_fn(struct aws_allocator *allocator, 
     (void)ctx;
 
     struct aws_date_time date_time;
-    const char *date_str = "20021002T080509000Z";
+    const char *date_str = "20021002T080509.000Z";
     struct aws_byte_buf date_buf = aws_byte_buf_from_c_str(date_str);
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_ISO_8601_BASIC));
@@ -418,7 +421,7 @@ static int s_test_iso8601_basic_utc_parsing_auto_detect_fn(struct aws_allocator 
     (void)ctx;
 
     struct aws_date_time date_time;
-    const char *date_str = "20021002T080509000Z";
+    const char *date_str = "20021002T080509,000Z";
     struct aws_byte_buf date_buf = aws_byte_buf_from_c_str(date_str);
 
     ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_AUTO_DETECT));
