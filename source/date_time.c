@@ -384,7 +384,7 @@ static bool s_advance_if_c(struct aws_byte_cursor *str, char c) {
     return true;
 }
 
-/* Read the (optional) fractional seconds. If present, str is advanced.
+/* Read the (optional) fractional seconds (".123"). If present, str is advanced.
  * Returns false if there was an error */
 static bool s_read_optional_fractional_seconds(struct aws_byte_cursor *str) {
     if (str->len == 0) {
@@ -516,6 +516,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
         return false;
     }
 
+    /* Success! */
     *seconds_offset = (time_t)(hours_offset * 3600 + minutes_offset * 60) * (negative_offset ? -1 : 1);
     return true;
 }
