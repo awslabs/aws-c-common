@@ -78,6 +78,7 @@ AWS_EXTERN_C_BEGIN
  * see https://developer.arm.com/documentation/102336/0100/Memory-barriers
  * For more information about Miscosoft Interensic ARM64 APIs,
  * see https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics?view=msvc-170
+ * Note: wrt _Interlocked[Op]64 is the same for ARM64 and x64 processors
  */
 
 #ifdef _M_IX86
