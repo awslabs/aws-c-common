@@ -384,7 +384,7 @@ static bool s_advance_if_c(struct aws_byte_cursor *str, uint8_t c) {
     return true;
 }
 
-/* Read the (optional) fractional seconds (".123"). If present, str is advanced.
+/* Read the (optional) fractional seconds (".123" or ",123"). If present, str is advanced.
  * Returns false if there was an error */
 static bool s_read_optional_fractional_seconds(struct aws_byte_cursor *str) {
     if (str->len == 0) {
