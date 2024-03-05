@@ -375,7 +375,7 @@ static bool s_read_1_char(struct aws_byte_cursor *str, uint8_t *out_c) {
 }
 
 /* Returns true (and advances str) if next character is c */
-static bool s_advance_if_c(struct aws_byte_cursor *str, uint8_t c) {
+static bool s_advance_if_next_char_is(struct aws_byte_cursor *str, uint8_t c) {
     if (str->len == 0 || str->ptr[0] != c) {
         return false;
     }
@@ -384,9 +384,9 @@ static bool s_advance_if_c(struct aws_byte_cursor *str, uint8_t c) {
     return true;
 }
 
-/* Read the (optional) fractional seconds (".123" or ",123"). If present, str is advanced.
+/* If the (optional) fractional seconds (".123" or ",123") are next, str is advanced.
  * Returns false if there was an error */
-static bool s_read_optional_fractional_seconds(struct aws_byte_cursor *str) {
+static bool s_skip_optional_fractional_seconds(struct aws_byte_cursor *str) {
     if (str->len == 0) {
         return true;
     }
@@ -427,7 +427,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     parsed_time->tm_year -= 1900;
 
     /* be lenient, allow date with separator or not */
-    bool has_date_separator = s_advance_if_c(&str, '-');
+    bool has_date_separator = s_advance_if_next_char_is(&str, '-');
 
     /* read month */
     if (!s_read_n_digits(&str, 2, &parsed_time->tm_mon)) {
@@ -452,7 +452,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     }
 
     /* followed by T or space (allowed by rfc3339#section-5.6) */
-    if (!s_read_1_char(&str, &c) || !(tolower(c) == 't' || c == ' ')) {
+    if (!s_read_1_char(&str, &c) || (tolower(c) != 't' && c != ' ')) {
         return false;
     }
 
@@ -462,7 +462,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     }
 
     /* be lenient, allow time with separator or not */
-    bool has_time_separator = s_advance_if_c(&str, ':');
+    bool has_time_separator = s_advance_if_next_char_is(&str, ':');
 
     /* read minutes */
     if (!s_read_n_digits(&str, 2, &parsed_time->tm_min)) {
@@ -481,7 +481,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     }
 
     /* fractional seconds are optional (discard value since tm struct has no corresponding field) */
-    if (!s_read_optional_fractional_seconds(&str)) {
+    if (!s_skip_optional_fractional_seconds(&str)) {
         return false;
     }
 
@@ -508,7 +508,7 @@ static bool s_parse_iso_8601(struct aws_byte_cursor str, struct tm *parsed_time,
     }
 
     /* be lenient, allow offset with separator or not */
-    s_advance_if_c(&str, ':');
+    s_advance_if_next_char_is(&str, ':');
 
     /* read minutes offset */
     int minutes_offset = 0;

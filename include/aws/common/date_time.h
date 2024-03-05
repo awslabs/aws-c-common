@@ -86,8 +86,8 @@ AWS_COMMON_API void aws_date_time_init_epoch_secs(struct aws_date_time *dt, doub
  * Notes for AWS_DATE_FORMAT_RFC822:
  * If no time zone information is provided, it is assumed to be local time (please don't do this).
  *
- * If the time zone is something other than something indicating Universal Time (e.g. Z, UT, UTC, or GMT) or an offset
- * from UTC (e.g. +0100, -0700), parsing will fail.
+ * Only time zones indicating Universal Time (e.g. Z, UT, UTC, or GMT),
+ * or offsets from UTC (e.g. +0100, -0700), are accepted.
  *
  * Really, it's just better if you always use Universal Time.
  */
