@@ -277,7 +277,7 @@ int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_a
         CPU_ZERO(&cpuset);
         CPU_SET((uint32_t)cpu_id, &cpuset);
 
-        attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
+        attr_return = pthread_attr_setaffinity_np(out_attributes, sizeof(cpuset), &cpuset);
 
         if (attr_return) {
             AWS_LOGF_ERROR(
