@@ -266,18 +266,18 @@ int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_a
  * Thread affinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
  * configuration, you've got bigger problems. */
 #if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
-    if (options->cpu_id >= 0) {
+    if (cpu_id >= 0) {
         AWS_LOGF_INFO(
             AWS_LS_COMMON_THREAD,
             "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
             (void *)thread,
-            options->cpu_id);
+            cpu_id);
 
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
-        CPU_SET((uint32_t)options->cpu_id, &cpuset);
+        CPU_SET((uint32_t)cpu_id, &cpuset);
 
-        attr_return = pthread_attr_setaffinity_np(out_attributes, sizeof(cpuset), &cpuset);
+        attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
         if (attr_return) {
             AWS_LOGF_ERROR(
@@ -343,9 +343,28 @@ int aws_thread_launch(
 
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
+    if (attr_return == EINVAL && options->cpu_id >= 0) {
+        /* try without cpu_id */
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: pthread_create() failed with %d and cpu_id:%d, trying without cpu_id",
+            (void *)thread,
+            attr_return,
+            options->cpu_id);
+        if (attributes_ptr) {
+            pthread_attr_destroy(attributes_ptr);
+        }
+        wrapper->membind = false;
+        attr_return = s_init_pthread_attr(options->stack_size, options->cpu_id, &attributes);
+        if (attr_return) {
+            goto cleanup;
+        }
+        attributes_ptr = &attributes;
+        attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
+    }
+
     if (attr_return) {
-        if (att)
-            AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "id=%p: pthread_create() failed with %d", (void *)thread, attr_return);
+        AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "id=%p: pthread_create() failed with %d", (void *)thread, attr_return);
         if (is_managed_thread) {
             aws_thread_decrement_unjoined_count();
         }
