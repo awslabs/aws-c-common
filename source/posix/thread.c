@@ -268,10 +268,7 @@ int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_a
 #if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
     if (cpu_id >= 0) {
         AWS_LOGF_INFO(
-            AWS_LS_COMMON_THREAD,
-            "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
-            (void *)thread,
-            cpu_id);
+            AWS_LS_COMMON_THREAD, "cpu affinity of cpu_id %d was specified, attempting to honor the value.", cpu_id);
 
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -280,11 +277,7 @@ int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_a
         attr_return = pthread_attr_setaffinity_np(out_attributes, sizeof(cpuset), &cpuset);
 
         if (attr_return) {
-            AWS_LOGF_ERROR(
-                AWS_LS_COMMON_THREAD,
-                "id=%p: pthread_attr_setaffinity_np() failed with %d.",
-                (void *)thread,
-                attr_return);
+            AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "pthread_attr_setaffinity_np() failed with %d.", attr_return);
             return attr_return;
         }
     }
