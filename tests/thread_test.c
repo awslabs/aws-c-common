@@ -70,6 +70,47 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
 
 AWS_TEST_CASE(thread_creation_join_test, s_test_thread_creation_join_fn)
 
+static int s_test_thread_creation_join_invalid_cpu_id_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+    struct thread_test_data test_data = {.allocator = allocator};
+
+    struct aws_thread thread;
+    aws_thread_init(&thread, allocator);
+
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    /* invalid CPU id, make sure that cpu id is best effort based */
+    thread_options.cpu_id = INT32_MAX;
+
+    ASSERT_SUCCESS(
+        aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
+    ASSERT_INT_EQUALS(
+        AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
+    ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
+    ASSERT_TRUE(
+        aws_thread_thread_id_equal(test_data.thread_id, aws_thread_get_id(&thread)),
+        "get_thread_id should have returned the same id as the thread calling current_thread_id");
+    ASSERT_INT_EQUALS(
+        AWS_THREAD_JOIN_COMPLETED,
+        aws_thread_get_detach_state(&thread),
+        "thread state should have returned JOIN_COMPLETED");
+
+    if (AWS_OP_SUCCESS == test_data.get_thread_name_error) {
+        ASSERT_CURSOR_VALUE_STRING_EQUALS(
+            aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+    } else {
+        ASSERT_INT_EQUALS(test_data.get_thread_name_error, AWS_ERROR_PLATFORM_NOT_SUPPORTED);
+    }
+
+    aws_string_destroy(test_data.thread_name);
+    aws_thread_clean_up(&thread);
+    aws_common_library_clean_up();
+
+    return 0;
+}
+
+AWS_TEST_CASE(thread_creation_join_invalid_cpu_id_test, s_test_thread_creation_join_invalid_cpu_id_fn)
+
 static uint32_t s_atexit_call_count = 0;
 static void s_thread_atexit_fn(void *user_data) {
     (void)user_data;
