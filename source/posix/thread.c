@@ -245,6 +245,54 @@ int aws_thread_init(struct aws_thread *thread, struct aws_allocator *allocator) 
     return AWS_OP_SUCCESS;
 }
 
+int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_attributes) {
+    int attr_return = 0;
+    attr_return = pthread_attr_init(out_attributes);
+
+    if (attr_return) {
+        return attr_return;
+    }
+
+    if (stack_size > PTHREAD_STACK_MIN) {
+        attr_return = pthread_attr_setstacksize(out_attributes, stack_size);
+
+        if (attr_return) {
+            return attr_return;
+        }
+    }
+
+/* AFAIK you can't set thread affinity on apple platforms, and it doesn't really matter since all memory
+ * NUMA or not is setup in interleave mode.
+ * Thread affinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
+ * configuration, you've got bigger problems. */
+#if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
+    if (options->cpu_id >= 0) {
+        AWS_LOGF_INFO(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
+            (void *)thread,
+            options->cpu_id);
+
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET((uint32_t)options->cpu_id, &cpuset);
+
+        attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
+
+        if (attr_return) {
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: pthread_attr_setaffinity_np() failed with %d.",
+                (void *)thread,
+                attr_return);
+            return attr_return;
+        }
+    }
+#endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
+
+    return AWS_OP_SUCCESS;
+}
+
 int aws_thread_launch(
     struct aws_thread *thread,
     void (*func)(void *arg),
@@ -261,50 +309,13 @@ int aws_thread_launch(
     }
 
     if (options) {
-        attr_return = pthread_attr_init(&attributes);
+        attr_return = s_init_pthread_attr(options->stack_size, options->cpu_id, &attributes);
 
         if (attr_return) {
             goto cleanup;
         }
 
         attributes_ptr = &attributes;
-
-        if (options->stack_size > PTHREAD_STACK_MIN) {
-            attr_return = pthread_attr_setstacksize(attributes_ptr, options->stack_size);
-
-            if (attr_return) {
-                goto cleanup;
-            }
-        }
-
-/* AFAIK you can't set thread affinity on apple platforms, and it doesn't really matter since all memory
- * NUMA or not is setup in interleave mode.
- * Thread affinity is also not supported on Android systems, and honestly, if you're running android on a NUMA
- * configuration, you've got bigger problems. */
-#if AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR
-        if (options->cpu_id >= 0) {
-            AWS_LOGF_INFO(
-                AWS_LS_COMMON_THREAD,
-                "id=%p: cpu affinity of cpu_id %d was specified, attempting to honor the value.",
-                (void *)thread,
-                options->cpu_id);
-
-            cpu_set_t cpuset;
-            CPU_ZERO(&cpuset);
-            CPU_SET((uint32_t)options->cpu_id, &cpuset);
-
-            attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
-
-            if (attr_return) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_COMMON_THREAD,
-                    "id=%p: pthread_attr_setaffinity_np() failed with %d.",
-                    (void *)thread,
-                    attr_return);
-                goto cleanup;
-            }
-        }
-#endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
     }
 
     wrapper = aws_mem_calloc(thread->allocator, 1, sizeof(struct thread_wrapper));
@@ -331,6 +342,25 @@ int aws_thread_launch(
     }
 
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
+
+    if (attr_return == EINVAL && options->cpu_id >= 0) {
+        /* try without cpu_id */
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_THREAD,
+            "id=%p: pthread_create() failed with %d and cpu_id:%d, trying without cpu_id",
+            (void *)thread,
+            attr_return,
+            options->cpu_id);
+        if (attributes_ptr) {
+            pthread_attr_destroy(attributes_ptr);
+        }
+        attr_return = s_init_pthread_attr(options->stack_size, options->cpu_id, &attributes);
+        if (attr_return) {
+            goto cleanup;
+        }
+        attributes_ptr = &attributes;
+        attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
+    }
 
     if (attr_return) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "id=%p: pthread_create() failed with %d", (void *)thread, attr_return);
