@@ -388,7 +388,7 @@ cleanup:
                 if (options && options->cpu_id >= 0) {
                     /*
                      * Sometimes, `pthread_create` can fail with an `EINVAL` error if the `cpu_id` is restricted. Since
-                     * the pinning to a particular `cpu_id` is supposed to be best effort, try to launch a thread
+                     * the pinning to a particular `cpu_id` is supposed to be best-effort, try to launch a thread
                      * again without pinning to a specific cpu_id.
                      */
                     struct aws_thread_options new_options = *options;

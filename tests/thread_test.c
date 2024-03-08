@@ -79,7 +79,7 @@ static int s_test_thread_creation_join_invalid_cpu_id_fn(struct aws_allocator *a
     aws_thread_init(&thread, allocator);
 
     struct aws_thread_options thread_options = *aws_default_thread_options();
-    /* invalid CPU id, make sure that cpu id is best effort based */
+    /* invalid cpu_id. Ensure that the cpu_id is best-effort based. */
     thread_options.cpu_id = INT32_MAX;
 
     ASSERT_SUCCESS(
