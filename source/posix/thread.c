@@ -278,7 +278,7 @@ int s_init_pthread_attr(size_t stack_size, int32_t cpu_id, pthread_attr_t *out_a
 
         if (attr_return) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "pthread_attr_setaffinity_np() failed with %d.", attr_return);
-            return attr_return;
+            /* ignore the error */
         }
     }
 #endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
