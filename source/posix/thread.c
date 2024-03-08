@@ -381,9 +381,9 @@ cleanup:
 
     if (attr_return) {
         s_thread_wrapper_destroy(wrapper);
-        if ((attr_return == EINVAL || attr_return == EDEADLK) && (options && options->cpu_id >= 0)) {
+        if (options && options->cpu_id >= 0) {
             /*
-             * `pthread_create` can fail with an `EINVAL` error or `EAGAIN` on freebasd if the `cpu_id` is
+             * `pthread_create` can fail with an `EINVAL` error or `EDEADLK` on freebasd if the `cpu_id` is
              * restricted/invalid. Since the pinning to a particular `cpu_id` is supposed to be best-effort, try to
              * launch a thread again without pinning to a specific cpu_id.
              */
