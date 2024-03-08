@@ -392,7 +392,7 @@ cleanup:
                      */
                     AWS_LOGF_INFO(
                         AWS_LS_COMMON_THREAD,
-                        "id=%p: Attempting to launch the thread again without specifying cpu_id",
+                        "id=%p: Attempting to launch the thread again without pinning to a cpu_id",
                         (void *)thread);
                     struct aws_thread_options new_options = *options;
                     new_options.cpu_id = -1;
