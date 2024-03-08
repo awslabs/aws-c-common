@@ -381,23 +381,22 @@ cleanup:
 
     if (attr_return) {
         s_thread_wrapper_destroy(wrapper);
-
+        if ((attr_return == EINVAL || attr_return == EAGAIN) && (options && options->cpu_id >= 0)) {
+            /*
+             * `pthread_create` can fail with an `EINVAL` error or `EAGAIN` on freebasd if the `cpu_id` is
+             * restricted/invalid. Since the pinning to a particular `cpu_id` is supposed to be best-effort, try to
+             * launch a thread again without pinning to a specific cpu_id.
+             */
+            AWS_LOGF_INFO(
+                AWS_LS_COMMON_THREAD,
+                "id=%p: Attempting to launch the thread again without pinning to a cpu_id",
+                (void *)thread);
+            struct aws_thread_options new_options = *options;
+            new_options.cpu_id = -1;
+            return aws_thread_launch(thread, func, arg, &new_options);
+        }
         switch (attr_return) {
             case EINVAL:
-                if (options && options->cpu_id >= 0) {
-                    /*
-                     * `pthread_create` can fail with an `EINVAL` error if the `cpu_id` is restricted. Since
-                     * the pinning to a particular `cpu_id` is supposed to be best-effort, try to launch a thread
-                     * again without pinning to a specific cpu_id.
-                     */
-                    AWS_LOGF_INFO(
-                        AWS_LS_COMMON_THREAD,
-                        "id=%p: Attempting to launch the thread again without pinning to a cpu_id",
-                        (void *)thread);
-                    struct aws_thread_options new_options = *options;
-                    new_options.cpu_id = -1;
-                    return aws_thread_launch(thread, func, arg, &new_options);
-                }
                 return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
             case EAGAIN:
                 return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
