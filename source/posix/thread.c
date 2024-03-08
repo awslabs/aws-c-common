@@ -336,7 +336,7 @@ int aws_thread_launch(
 
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
 
-    if (attr_return == EINVAL && options->cpu_id >= 0) {
+    if (attr_return == EINVAL && options && options->cpu_id >= 0) {
         /* try without cpu_id */
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_THREAD,
