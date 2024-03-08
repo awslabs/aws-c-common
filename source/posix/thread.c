@@ -296,12 +296,11 @@ int aws_thread_launch(
             attr_return = pthread_attr_setaffinity_np(attributes_ptr, sizeof(cpuset), &cpuset);
 
             if (attr_return) {
-                AWS_LOGF_ERROR(
+                AWS_LOGF_WARN(
                     AWS_LS_COMMON_THREAD,
-                    "id=%p: pthread_attr_setaffinity_np() failed with %d.",
+                    "id=%p: pthread_attr_setaffinity_np() failed with %d. Continuing without cpu affinity",
                     (void *)thread,
                     attr_return);
-                goto cleanup;
             }
         }
 #endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
