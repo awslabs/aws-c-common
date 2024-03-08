@@ -348,7 +348,7 @@ int aws_thread_launch(
             pthread_attr_destroy(attributes_ptr);
         }
         wrapper->membind = false;
-        attr_return = s_init_pthread_attr(options->stack_size, options->cpu_id, &attributes);
+        attr_return = s_init_pthread_attr(options->stack_size, -1, &attributes);
         if (attr_return) {
             goto cleanup;
         }
