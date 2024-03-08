@@ -387,7 +387,7 @@ cleanup:
             case EINVAL:
                 if (options && options->cpu_id >= 0) {
                     struct aws_thread_options new_options = *options;
-                    new_options.cpu_id = -1;
+                    // new_options.cpu_id = -1;
                     return aws_thread_launch(thread, func, arg, &new_options);
                 }
                 return aws_raise_error(AWS_ERROR_THREAD_INVALID_SETTINGS);
