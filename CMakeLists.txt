@@ -36,9 +36,6 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.inl"
         )
 
-file (GLOB AWS_COMMON_EXTERNAL_HEADERS
-        "include/aws/common/external/*.h")
-
 file (GLOB AWS_COMMON_EXTERNAL_INSTALLED_HEADERS
         "include/aws/common/external/ittnotify.h")
 
@@ -82,7 +79,7 @@ if (WIN32)
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
     # PSAPI_VERSION=1 is needed to support GetProcessMemoryInfo on both pre and
-    # post Win7 OS's. 
+    # post Win7 OS's.
     list(APPEND PLATFORM_DEFINES PSAPI_VERSION=1)
     list(APPEND PLATFORM_LIBS bcrypt ${WINDOWS_KERNEL_LIB} ws2_32 shlwapi psapi)
 else ()
@@ -173,7 +170,6 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
-        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         )
 
