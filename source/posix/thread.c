@@ -301,6 +301,7 @@ int aws_thread_launch(
                     "id=%p: pthread_attr_setaffinity_np() failed with %d. Continuing without cpu affinity",
                     (void *)thread,
                     attr_return);
+                goto cleanup;
             }
         }
 #endif /* AWS_AFFINITY_METHOD == AWS_AFFINITY_METHOD_PTHREAD_ATTR */
