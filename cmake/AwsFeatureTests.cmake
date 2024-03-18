@@ -39,7 +39,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 
 check_c_source_compiles("
-    #include <Windows.h>
+    #include <windows.h>
     #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     int main() {
         return 0;

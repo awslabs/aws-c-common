@@ -8,9 +8,9 @@
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 
-#include <Shlwapi.h>
 #include <errno.h>
 #include <io.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <windows.h>
 

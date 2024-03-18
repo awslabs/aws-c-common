@@ -10,7 +10,7 @@
 #include <aws/common/private/thread_shared.h>
 #include <aws/common/string.h>
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <inttypes.h>
 

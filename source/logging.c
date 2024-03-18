@@ -337,11 +337,11 @@ int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bu
         unsigned char c = bytes[i - 1];
         int written = snprintf(buffer + current_index, bufsz - current_index, "%02x", c);
         if (written < 0) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         current_index += written;
         if (bufsz <= current_index) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
         }
     }
     return AWS_OP_SUCCESS;

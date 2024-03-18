@@ -42,6 +42,7 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 
 /** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
+ * If function or file are null, the function, file and line number are not appended.
  */
 static int s_cunit_failure_message0(
     const char *prefix,
@@ -61,7 +62,11 @@ static int s_cunit_failure_message0(
     vfprintf(AWS_TESTING_REPORT_FD, format, ap);
     va_end(ap);
 
-    fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
+    if (function && file) {
+        fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
+    } else {
+        fprintf(AWS_TESTING_REPORT_FD, "\n");
+    }
 
     return 1;
 }
@@ -69,9 +74,6 @@ static int s_cunit_failure_message0(
 #define FAIL_PREFIX "***FAILURE*** "
 #define CUNIT_FAILURE_MESSAGE(func, file, line, format, ...)                                                           \
     s_cunit_failure_message0(FAIL_PREFIX, func, file, line, format, #__VA_ARGS__)
-
-static int total_failures;
-static int total_skip;
 
 #define SUCCESS (0)
 #define FAILURE (-1)
@@ -83,7 +85,6 @@ static int total_skip;
 
 #define POSTSKIP_INTERNAL()                                                                                            \
     do {                                                                                                               \
-        total_skip++;                                                                                                  \
         return SKIP;                                                                                                   \
     } while (0)
 
@@ -106,9 +107,11 @@ static int total_skip;
 #define PRINT_FAIL_INTERNAL0(...)                                                                                      \
     s_cunit_failure_message0(FAIL_PREFIX, __func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
+#define PRINT_FAIL_WITHOUT_LOCATION(...)                                                                               \
+    s_cunit_failure_message0(FAIL_PREFIX, NULL, NULL, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+
 #define POSTFAIL_INTERNAL()                                                                                            \
     do {                                                                                                               \
-        total_failures++;                                                                                              \
         return FAILURE;                                                                                                \
     } while (0)
 
@@ -478,7 +481,8 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         const size_t leaked_bytes = aws_mem_tracer_bytes(allocator);
         if (leaked_bytes) {
             aws_mem_tracer_dump(allocator);
-            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes %zu allocations", leaked_bytes, leaked_allocations);
+            PRINT_FAIL_WITHOUT_LOCATION(
+                "Test leaked memory: %zu bytes %zu allocations", leaked_bytes, leaked_allocations);
             goto fail;
         }
 
@@ -495,14 +499,21 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     }
 
 fail:
-    FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    PRINT_FAIL_WITHOUT_LOCATION("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    /* Use _Exit() to terminate without cleaning up resources.
+     * This prevents LeakSanitizer spam (yes, we know failing tests don't bother cleaning up).
+     * It also prevents errors where threads that haven't cleaned are still using the logger declared in this fn. */
+    fflush(AWS_TESTING_REPORT_FD);
+    fflush(stdout);
+    fflush(stderr);
+    _Exit(FAILURE);
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */
 /* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
 #ifdef _WIN32
 
-#    include <Windows.h>
+#    include <windows.h>
 
 #    ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #        define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
