@@ -116,8 +116,8 @@ static bool s_has_bmi2(void) {
 static bool s_has_vpclmulqdq(void) {
     uint32_t abcd[4];
     /* Check VPCLMULQDQ:
-     * CPUID.(EAX=07H, ECX=0H):ECX.VPCLMULQDQ[bit 20]==1 */
-    uint32_t vpclmulqdq_mask = (1 << 20);
+     * CPUID.(EAX=07H, ECX=0H):ECX.VPCLMULQDQ[bit 10]==1 */
+    uint32_t vpclmulqdq_mask = (1 << 10);
     aws_run_cpuid(7, 0, abcd);
     if ((abcd[2] & vpclmulqdq_mask) != vpclmulqdq_mask) {
         return false;
