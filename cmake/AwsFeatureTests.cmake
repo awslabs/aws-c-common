@@ -17,6 +17,10 @@ if(MINGW)
     set(USE_CPU_EXTENSIONS OFF)
 endif()
 
+if (USE_CPU_EXTENSIONS)
+    set(AWS_USE_CPU_EXTENSIONS ON)
+endif()
+
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
     #include <stdbool.h>
@@ -53,6 +57,15 @@ check_c_source_compiles("
         return 0;
     }
 " AWS_ARCH_INTEL)
+
+check_c_source_compiles("
+    int main() {
+#if !(defined(__x86_64__) || defined(_M_X64))
+#    error \"not intel\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_INTEL_X64)
 
 check_c_source_compiles("
     int main() {

@@ -152,13 +152,17 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (MSVC)
+        if (WINDOWS)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/msvc/*.c"
+                "source/arch/arm/windows/*.c"
                 )
-        elseif (AWS_HAVE_AUXV)
+        elseif(APPLE)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/asm/*.c"
+                    "source/arch/arm/darwin/*.c"
+                    )
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/auxv/*.c"
                 )
         endif()
     endif()
@@ -221,7 +225,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_append_source_and_features(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c" ${AWS_AVX2_FLAG})
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
