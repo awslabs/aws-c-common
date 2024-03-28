@@ -28,7 +28,7 @@ extern "C" {
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize(const cbor_item_t *item,
+_CBOR_NODISCARD size_t cbor_serialize(const cbor_item_t *item,
                                                   cbor_mutable_data buffer,
                                                   size_t buffer_size);
 
@@ -41,7 +41,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize(const cbor_item_t *item,
  * @return Length (>= 1) of the item when serialized. 0 if the length overflows
  * `size_t`.
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t
+_CBOR_NODISCARD size_t
 cbor_serialized_size(const cbor_item_t *item);
 
 /** Serialize the given item, allocating buffers as needed
@@ -62,7 +62,7 @@ cbor_serialized_size(const cbor_item_t *item);
  * @return Length of the result in bytes
  * @return 0 on memory allocation failure, in which case \p buffer is `NULL`.
  */
-CBOR_EXPORT size_t cbor_serialize_alloc(const cbor_item_t *item,
+size_t cbor_serialize_alloc(const cbor_item_t *item,
                                         unsigned char **buffer,
                                         size_t *buffer_size);
 
@@ -74,7 +74,7 @@ CBOR_EXPORT size_t cbor_serialize_alloc(const cbor_item_t *item,
  * @return Length of the result
  * @return 0 if the \p buffer_size doesn't fit the result
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_uint(const cbor_item_t *item,
+_CBOR_NODISCARD size_t cbor_serialize_uint(const cbor_item_t *item,
                                                        cbor_mutable_data buffer,
                                                        size_t buffer_size);
 
@@ -86,7 +86,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_uint(const cbor_item_t *item,
  * @return Length of the result
  * @return 0 if the \p buffer_size doesn't fit the result
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_negint(
+_CBOR_NODISCARD size_t cbor_serialize_negint(
     const cbor_item_t *item, cbor_mutable_data buffer, size_t buffer_size);
 
 /** Serialize a bytestring
@@ -98,7 +98,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_negint(
  * @return 0 if the \p buffer_size doesn't fit the result. The \p buffer may
  * still be modified
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_bytestring(
+_CBOR_NODISCARD size_t cbor_serialize_bytestring(
     const cbor_item_t *item, cbor_mutable_data buffer, size_t buffer_size);
 
 /** Serialize a string
@@ -110,7 +110,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_bytestring(
  * @return 0 if the \p buffer_size doesn't fit the result. The \p buffer may
  * still be modified
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_string(
+_CBOR_NODISCARD size_t cbor_serialize_string(
     const cbor_item_t *item, cbor_mutable_data buffer, size_t buffer_size);
 /** Serialize an array
  *
@@ -121,7 +121,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_string(
  * @return 0 if the \p buffer_size doesn't fit the result. The \p buffer may
  * still be modified
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_array(
+_CBOR_NODISCARD size_t cbor_serialize_array(
     const cbor_item_t *item, cbor_mutable_data buffer, size_t buffer_size);
 
 /** Serialize a map
@@ -133,7 +133,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_array(
  * @return 0 if the \p buffer_size doesn't fit the result. The \p buffer may
  * still be modified
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_map(const cbor_item_t *item,
+_CBOR_NODISCARD size_t cbor_serialize_map(const cbor_item_t *item,
                                                       cbor_mutable_data buffer,
                                                       size_t buffer_size);
 
@@ -146,7 +146,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_map(const cbor_item_t *item,
  * @return 0 if the \p buffer_size doesn't fit the result. The \p buffer may
  * still be modified
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_tag(const cbor_item_t *item,
+_CBOR_NODISCARD size_t cbor_serialize_tag(const cbor_item_t *item,
                                                       cbor_mutable_data buffer,
                                                       size_t buffer_size);
 
@@ -158,7 +158,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_tag(const cbor_item_t *item,
  * @return Length of the result
  * @return 0 if the \p buffer_size doesn't fit the result
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_float_ctrl(
+_CBOR_NODISCARD size_t cbor_serialize_float_ctrl(
     const cbor_item_t *item, cbor_mutable_data buffer, size_t buffer_size);
 
 #ifdef __cplusplus

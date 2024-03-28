@@ -44,7 +44,7 @@ extern "C" {
  * @return `NULL` on failure. In that case, \p result contains the location and
  * description of the error.
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t* cbor_load(
+_CBOR_NODISCARD cbor_item_t* cbor_load(
     cbor_data source, size_t source_size, struct cbor_load_result* result);
 
 /** Take a deep copy of an item
@@ -59,12 +59,12 @@ _CBOR_NODISCARD CBOR_EXPORT cbor_item_t* cbor_load(
  * to one.
  * @return `NULL` if memory allocation fails
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t* cbor_copy(cbor_item_t* item);
+_CBOR_NODISCARD cbor_item_t* cbor_copy(cbor_item_t* item);
 
 #if CBOR_PRETTY_PRINTER
 #include <stdio.h>
 
-CBOR_EXPORT void cbor_describe(cbor_item_t* item, FILE* out);
+void cbor_describe(cbor_item_t* item, FILE* out);
 #endif
 
 #ifdef __cplusplus

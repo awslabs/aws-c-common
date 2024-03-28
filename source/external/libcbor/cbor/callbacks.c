@@ -74,7 +74,7 @@ void cbor_null_boolean_callback(void *_CBOR_UNUSED(_ctx),
 
 void cbor_null_indef_break_callback(void *_CBOR_UNUSED(_ctx)) {}
 
-CBOR_EXPORT const struct cbor_callbacks cbor_empty_callbacks = {
+const struct cbor_callbacks cbor_empty_callbacks = {
     /* Type 0 - Unsigned integers */
     .uint8 = cbor_null_uint8_callback,
     .uint16 = cbor_null_uint16_callback,

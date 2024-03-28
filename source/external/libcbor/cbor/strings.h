@@ -29,7 +29,7 @@ extern "C" {
  * @param item a definite string
  * @return length of the string. Zero if no chunk has been attached yet
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t cbor_string_length(const cbor_item_t *item);
+_CBOR_NODISCARD size_t cbor_string_length(const cbor_item_t *item);
 
 /** The number of codepoints in this string
  *
@@ -39,7 +39,7 @@ _CBOR_NODISCARD CBOR_EXPORT size_t cbor_string_length(const cbor_item_t *item);
  * @param item A string
  * @return The number of codepoints in this string
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t
+_CBOR_NODISCARD size_t
 cbor_string_codepoint_count(const cbor_item_t *item);
 
 /** Is the string definite?
@@ -47,7 +47,7 @@ cbor_string_codepoint_count(const cbor_item_t *item);
  * @param item a string
  * @return Is the string definite?
  */
-_CBOR_NODISCARD CBOR_EXPORT bool cbor_string_is_definite(
+_CBOR_NODISCARD bool cbor_string_is_definite(
     const cbor_item_t *item);
 
 /** Is the string indefinite?
@@ -55,7 +55,7 @@ _CBOR_NODISCARD CBOR_EXPORT bool cbor_string_is_definite(
  * @param item a string
  * @return Is the string indefinite?
  */
-_CBOR_NODISCARD CBOR_EXPORT bool cbor_string_is_indefinite(
+_CBOR_NODISCARD bool cbor_string_is_indefinite(
     const cbor_item_t *item);
 
 /** Get the handle to the underlying string
@@ -67,7 +67,7 @@ _CBOR_NODISCARD CBOR_EXPORT bool cbor_string_is_indefinite(
  * @return The address of the underlying string.
  * @return `NULL` if no data have been assigned yet.
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_mutable_data
+_CBOR_NODISCARD cbor_mutable_data
 cbor_string_handle(const cbor_item_t *item);
 
 /** Set the handle to the underlying string
@@ -86,7 +86,7 @@ cbor_string_handle(const cbor_item_t *item);
  * libcbor will deallocate it when appropriate using its free function
  * @param length Length of the data block
  */
-CBOR_EXPORT void cbor_string_set_handle(
+void cbor_string_set_handle(
     cbor_item_t *item, cbor_mutable_data CBOR_RESTRICT_POINTER data,
     size_t length);
 
@@ -98,7 +98,7 @@ CBOR_EXPORT void cbor_string_set_handle(
  * @param item A indefinite string
  * @return array of #cbor_string_chunk_count definite strings
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t **cbor_string_chunks_handle(
+_CBOR_NODISCARD cbor_item_t **cbor_string_chunks_handle(
     const cbor_item_t *item);
 
 /** Get the number of chunks this string consist of
@@ -106,7 +106,7 @@ _CBOR_NODISCARD CBOR_EXPORT cbor_item_t **cbor_string_chunks_handle(
  * @param item A indefinite string
  * @return The chunk count. 0 for freshly created items.
  */
-_CBOR_NODISCARD CBOR_EXPORT size_t
+_CBOR_NODISCARD size_t
 cbor_string_chunk_count(const cbor_item_t *item);
 
 /** Appends a chunk to the string
@@ -122,7 +122,7 @@ cbor_string_chunk_count(const cbor_item_t *item);
  * case, the refcount of @p `chunk` is not increased and the @p `item` is left
  * intact.
  */
-_CBOR_NODISCARD CBOR_EXPORT bool cbor_string_add_chunk(cbor_item_t *item,
+_CBOR_NODISCARD bool cbor_string_add_chunk(cbor_item_t *item,
                                                        cbor_item_t *chunk);
 
 /** Creates a new definite string
@@ -133,7 +133,7 @@ _CBOR_NODISCARD CBOR_EXPORT bool cbor_string_add_chunk(cbor_item_t *item,
  * initialized to one.
  * @return `NULL` if memory allocation fails
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_new_definite_string(void);
+_CBOR_NODISCARD cbor_item_t *cbor_new_definite_string(void);
 
 /** Creates a new indefinite string
  *
@@ -143,7 +143,7 @@ _CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_new_definite_string(void);
  * initialized to one.
  * @return `NULL` if memory allocation fails
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_new_indefinite_string(void);
+_CBOR_NODISCARD cbor_item_t *cbor_new_indefinite_string(void);
 
 /** Creates a new string and initializes it
  *
@@ -158,7 +158,7 @@ _CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_new_indefinite_string(void);
  * initialized to one.
  * @return `NULL` if memory allocation fails
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_build_string(const char *val);
+_CBOR_NODISCARD cbor_item_t *cbor_build_string(const char *val);
 
 /** Creates a new string and initializes it
  *
@@ -173,7 +173,7 @@ _CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_build_string(const char *val);
  * initialized to one.
  * @return `NULL` if memory allocation fails
  */
-_CBOR_NODISCARD CBOR_EXPORT cbor_item_t *cbor_build_stringn(const char *val,
+_CBOR_NODISCARD cbor_item_t *cbor_build_stringn(const char *val,
                                                             size_t length);
 
 #ifdef __cplusplus
