@@ -11,6 +11,7 @@
 
 #ifdef _MSC_VER
 #    pragma warning(disable : 4028) /* non-constant aggregate initializer */
+#    pragma warning(disable : 2220)
 #    pragma warning(disable : 4715)
 #endif
 

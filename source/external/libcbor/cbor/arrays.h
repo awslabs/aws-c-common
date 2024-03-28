@@ -21,7 +21,7 @@ extern "C" {
  * @return The number of members
  */
 _CBOR_NODISCARD
-size_t cbor_array_size(const cbor_item_t* item);
+CBOR_EXPORT size_t cbor_array_size(const cbor_item_t* item);
 
 /** Get the size of the allocated storage
  *
@@ -29,7 +29,7 @@ size_t cbor_array_size(const cbor_item_t* item);
  * @return The size of the allocated storage (number of items)
  */
 _CBOR_NODISCARD
-size_t cbor_array_allocated(const cbor_item_t* item);
+CBOR_EXPORT size_t cbor_array_allocated(const cbor_item_t* item);
 
 /** Get item by index
  *
@@ -41,7 +41,7 @@ size_t cbor_array_allocated(const cbor_item_t* item);
  * must be released using #cbor_decref.
  */
 _CBOR_NODISCARD
-cbor_item_t* cbor_array_get(const cbor_item_t* item, size_t index);
+CBOR_EXPORT cbor_item_t* cbor_array_get(const cbor_item_t* item, size_t index);
 
 /** Set item by index
  *
@@ -54,7 +54,7 @@ cbor_item_t* cbor_array_get(const cbor_item_t* item, size_t index);
  * @return `true` on success, `false` on allocation failure.
  */
 _CBOR_NODISCARD
-bool cbor_array_set(cbor_item_t* item, size_t index,
+CBOR_EXPORT bool cbor_array_set(cbor_item_t* item, size_t index,
                                 cbor_item_t* value);
 
 /** Replace item at an index
@@ -68,7 +68,7 @@ bool cbor_array_set(cbor_item_t* item, size_t index,
  * @return true on success, false on allocation failure.
  */
 _CBOR_NODISCARD
-bool cbor_array_replace(cbor_item_t* item, size_t index,
+CBOR_EXPORT bool cbor_array_replace(cbor_item_t* item, size_t index,
                                     cbor_item_t* value);
 
 /** Is the array definite?
@@ -77,7 +77,7 @@ bool cbor_array_replace(cbor_item_t* item, size_t index,
  * @return Is the array definite?
  */
 _CBOR_NODISCARD
-bool cbor_array_is_definite(const cbor_item_t* item);
+CBOR_EXPORT bool cbor_array_is_definite(const cbor_item_t* item);
 
 /** Is the array indefinite?
  *
@@ -85,7 +85,7 @@ bool cbor_array_is_definite(const cbor_item_t* item);
  * @return Is the array indefinite?
  */
 _CBOR_NODISCARD
-bool cbor_array_is_indefinite(const cbor_item_t* item);
+CBOR_EXPORT bool cbor_array_is_indefinite(const cbor_item_t* item);
 
 /** Get the array contents
  *
@@ -96,7 +96,7 @@ bool cbor_array_is_indefinite(const cbor_item_t* item);
  * @return An array of #cbor_item_t pointers of size #cbor_array_size.
  */
 _CBOR_NODISCARD
-cbor_item_t** cbor_array_handle(const cbor_item_t* item);
+CBOR_EXPORT cbor_item_t** cbor_array_handle(const cbor_item_t* item);
 
 /** Create new definite array
  *
@@ -106,7 +106,7 @@ cbor_item_t** cbor_array_handle(const cbor_item_t* item);
  * @return `NULL` if memory allocation fails
  */
 _CBOR_NODISCARD
-cbor_item_t* cbor_new_definite_array(size_t size);
+CBOR_EXPORT cbor_item_t* cbor_new_definite_array(size_t size);
 
 /** Create new indefinite array
  *
@@ -115,7 +115,7 @@ cbor_item_t* cbor_new_definite_array(size_t size);
  * @return `NULL` if memory allocation fails
  */
 _CBOR_NODISCARD
-cbor_item_t* cbor_new_indefinite_array(void);
+CBOR_EXPORT cbor_item_t* cbor_new_indefinite_array(void);
 
 /** Append to the end
  *
@@ -128,7 +128,7 @@ cbor_item_t* cbor_new_indefinite_array(void);
  * @return `true` on success, `false` on failure
  */
 _CBOR_NODISCARD
-bool cbor_array_push(cbor_item_t* array, cbor_item_t* pushee);
+CBOR_EXPORT bool cbor_array_push(cbor_item_t* array, cbor_item_t* pushee);
 
 #ifdef __cplusplus
 }
