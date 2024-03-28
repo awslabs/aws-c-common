@@ -53,7 +53,11 @@ file(GLOB AWS_COMMON_SRC
         )
 
 file (GLOB AWS_COMMON_EXTERNAL_SRC
-        "source/external/*.c")
+        "source/external/*.c"
+        "source/external/libcbor/*.c"
+        "source/external/libcbor/internal/*.c"
+        )
+
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
