@@ -9,7 +9,12 @@
 #define CBOR_MAX_STACK_SIZE 2048
 #define CBOR_PRETTY_PRINTER 1
 
+#if defined(_MSC_VER)
+#define CBOR_RESTRICT_SPECIFIER
+# else
 #define CBOR_RESTRICT_SPECIFIER restrict
+#endif
+
 #define CBOR_INLINE_SPECIFIER
 
 #endif  // LIBCBOR_CONFIGURATION_H

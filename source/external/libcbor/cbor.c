@@ -9,7 +9,19 @@
 #include "cbor/internal/builder_callbacks.h"
 #include "cbor/internal/loaders.h"
 
+#ifdef _MSC_VER
+#    pragma warning(disable : 4028) /* non-constant aggregate initializer */
+#endif
+
+#ifdef __clang__
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
+
+
 cbor_item_t *cbor_load(cbor_data source, size_t source_size,
                        struct cbor_load_result *result) {
   /* Context stack */
