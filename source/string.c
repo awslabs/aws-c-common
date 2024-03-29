@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/string.h>
-#include <aws/common/logging.h>
 
 #ifdef _WIN32
 #    include <windows.h>
@@ -190,16 +189,10 @@ struct aws_string *aws_string_new_from_c_str(struct aws_allocator *allocator, co
 struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, const uint8_t *bytes, size_t len) {
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
-    size_t malloc_size;
-    if (aws_add_size_checked(sizeof(struct aws_string) + 1, len, &malloc_size)) {
-        return NULL;
-    }
 
-    size_t malloc_size2 = offsetof(struct aws_string, bytes[len]) + 1;
+    size_t malloc_size = offsetof(struct aws_string, bytes[len]) + 1;
 
-    AWS_LOGF_DEBUG(0, "foo %zu %zu", malloc_size, malloc_size2);    
-
-    struct aws_string *str = aws_mem_acquire(allocator, malloc_size2);
+    struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
     if (!str) {
         return NULL;
     }
