@@ -17,8 +17,9 @@
 
 #define CBOR_INLINE_SPECIFIER
 
+/* Ignore the compiler warnings for libcbor. */
 #ifdef _MSC_VER
-#    pragma warning(disable : 4028) /* non-constant aggregate initializer */
+#    pragma warning(disable : 4028)
 #    pragma warning(disable : 4715)
 #    pragma warning(disable : 4232)
 #endif
@@ -29,6 +30,7 @@
 #elif defined(__GNUC__)
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wreturn-type"
+#    pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #endif
 
 #endif // LIBCBOR_CONFIGURATION_H
