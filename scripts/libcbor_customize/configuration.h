@@ -22,6 +22,7 @@
 #    pragma warning(disable : 4028)
 #    pragma warning(disable : 4715)
 #    pragma warning(disable : 4232)
+#    pragma warning(disable : 4068)
 #endif
 
 #ifdef __clang__

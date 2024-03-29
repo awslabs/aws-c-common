@@ -30,7 +30,6 @@ try:
     for root, dirs, files in os.walk(src_dir):
         # Filter out the cbor/ directory but include cbor/internal
         dir_name = os.path.basename(root)
-        print(os.path.basename(root))
         for file in files:
             if file.endswith((".c", ".h")):
                 src_file = os.path.join(root, file)
