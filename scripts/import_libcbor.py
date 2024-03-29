@@ -28,7 +28,6 @@ try:
         output_dir, "cbor/"), dirs_exist_ok=True)
 
     for root, dirs, files in os.walk(src_dir):
-        # Filter out the cbor/ directory but include cbor/internal
         dir_name = os.path.basename(root)
         for file in files:
             if file.endswith((".c", ".h")):
@@ -61,5 +60,5 @@ except Exception as e:
     print(f"An error occurred: {e}")
 
 finally:
-    # Remove the temporary directories
+    # Remove the temporary directory
     shutil.rmtree(temp_repo_dir, ignore_errors=True)
