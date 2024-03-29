@@ -7,10 +7,6 @@
 
 #include "cbor/common.h"
 
-#ifdef _MSC_VER
-#    pragma warning(disable : 4232)
-#endif
-
 CBOR_EXPORT _cbor_malloc_t _cbor_malloc = malloc;
 CBOR_EXPORT _cbor_realloc_t _cbor_realloc = realloc;
 CBOR_EXPORT _cbor_free_t _cbor_free = free;

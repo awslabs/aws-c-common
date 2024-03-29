@@ -21,10 +21,10 @@ try:
     # Copy files ending with .c and .h from the /src directory
     src_dir = os.path.join(temp_repo_dir, "src")
 
-    # generated header files
-    src_generated_cbor_dir = os.path.join(
-        temp_repo_dir, "examples", "bazel", "third_party", "libcbor", "cbor")
-    shutil.copytree(src_generated_cbor_dir, os.path.join(
+    # Use our customized configurations
+    src_customize_cbor_dir = os.path.join(
+        os.path.dirname(__file__), "libcbor_customize")
+    shutil.copytree(src_customize_cbor_dir, os.path.join(
         output_dir, "cbor/"), dirs_exist_ok=True)
 
     for root, dirs, files in os.walk(src_dir):
