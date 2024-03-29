@@ -190,9 +190,7 @@ struct aws_string *aws_string_new_from_array(struct aws_allocator *allocator, co
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(AWS_MEM_IS_READABLE(bytes, len));
 
-    size_t malloc_size = offsetof(struct aws_string, bytes[len]) + 1;
-
-    struct aws_string *str = aws_mem_acquire(allocator, malloc_size);
+    struct aws_string *str = aws_mem_acquire(allocator, offsetof(struct aws_string, bytes[len]) + 1);
     if (!str) {
         return NULL;
     }
