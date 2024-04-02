@@ -94,7 +94,7 @@ extern bool _cbor_enable_assert;
 #endif
 
 typedef void *(*_cbor_malloc_t)(size_t);
-typedef void *(*_cbor_realloc_t)(void *, size_t);
+typedef void *(*_cbor_realloc_t)(void *, size_t, size_t);
 typedef void (*_cbor_free_t)(void *);
 
 CBOR_EXPORT extern _cbor_malloc_t _cbor_malloc;

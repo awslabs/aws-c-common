@@ -19,4 +19,8 @@ void aws_json_module_init(struct aws_allocator *allocator);
  */
 void aws_json_module_cleanup(void);
 
+void aws_cbor_module_init(struct aws_allocator *allocator);
+
+void aws_cbor_module_cleanup(void);
+
 #endif // AWS_COMMON_PRIVATE_JSON_IMPL_H

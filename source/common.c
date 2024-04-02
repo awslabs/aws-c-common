@@ -315,6 +315,7 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         aws_register_log_subject_info_list(&s_common_log_subject_list);
         aws_thread_initialize_thread_management();
         aws_json_module_init(allocator);
+        aws_cbor_module_init(allocator);
 
 /* NUMA is funky and we can't rely on libnuma.so being available. We also don't want to take a hard dependency on it,
  * try and load it if we can. */
@@ -385,6 +386,7 @@ void aws_common_library_clean_up(void) {
         aws_unregister_error_info(&s_list);
         aws_unregister_log_subject_info_list(&s_common_log_subject_list);
         aws_json_module_cleanup();
+        aws_cbor_module_cleanup();
 #ifdef AWS_OS_LINUX
         if (g_libnuma_handle) {
             dlclose(g_libnuma_handle);

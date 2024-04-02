@@ -47,10 +47,10 @@ void* _cbor_alloc_multiple(size_t item_size, size_t item_count) {
   }
 }
 
-void* _cbor_realloc_multiple(void* pointer, size_t item_size,
+void* _cbor_realloc_multiple(void* pointer, size_t old_pointer_size, size_t item_size,
                              size_t item_count) {
   if (_cbor_safe_to_multiply(item_size, item_count)) {
-    return _cbor_realloc(pointer, item_size * item_count);
+    return _cbor_realloc(pointer, old_pointer_size, item_size * item_count);
   } else {
     return NULL;
   }

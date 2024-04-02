@@ -65,7 +65,7 @@ bool cbor_array_push(cbor_item_t *array, cbor_item_t *pushee) {
                                   : CBOR_BUFFER_GROWTH * metadata->allocated;
 
       unsigned char *new_data = _cbor_realloc_multiple(
-          array->data, sizeof(cbor_item_t *), new_allocation);
+          array->data, metadata->allocated, sizeof(cbor_item_t *), new_allocation);
       if (new_data == NULL) {
         return false;
       }
