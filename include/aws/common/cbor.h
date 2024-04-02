@@ -14,10 +14,8 @@ AWS_EXTERN_C_BEGIN
 
 struct aws_cbor_item;
 
-struct aws_cbor_encoder {
-    struct aws_allocator *alloca;
-    struct aws_byte_buf buffer;
-};
+struct aws_cbor_encoder;
+struct aws_cbor_decoder;
 
 AWS_COMMON_API
 int aws_cbor_encode_uint_append(struct aws_byte_buf *to, uint64_t value);
