@@ -9,7 +9,7 @@
 #define LIBCBOR_BUILDER_CALLBACKS_H
 
 #include "../callbacks.h"
-#include "../common.h"
+#include "cbor/common.h"
 #include "stack.h"
 
 #ifdef __cplusplus

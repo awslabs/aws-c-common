@@ -10,8 +10,8 @@
 
 #include <stdint.h>
 
-#include "cbor_export.h"
-#include "common.h"
+#include "cbor/cbor_export.h"
+#include "cbor/common.h"
 
 #ifdef __cplusplus
 extern "C" {

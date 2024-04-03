@@ -8,8 +8,8 @@
 #ifndef LIBCBOR_BYTESTRINGS_H
 #define LIBCBOR_BYTESTRINGS_H
 
-#include "cbor_export.h"
-#include "common.h"
+#include "cbor/cbor_export.h"
+#include "cbor/common.h"
 
 #ifdef __cplusplus
 extern "C" {

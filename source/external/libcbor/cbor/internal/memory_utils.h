@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "../common.h"
+#include "cbor/common.h"
 
 /** Can `a` and `b` be multiplied without overflowing size_t? */
 _CBOR_NODISCARD

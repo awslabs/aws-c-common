@@ -8,8 +8,8 @@
 #ifndef LIBCBOR_FLOATS_CTRLS_H
 #define LIBCBOR_FLOATS_CTRLS_H
 
-#include "cbor_export.h"
-#include "common.h"
+#include "cbor/cbor_export.h"
+#include "cbor/common.h"
 
 #ifdef __cplusplus
 extern "C" {

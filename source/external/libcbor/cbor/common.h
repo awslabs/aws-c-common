@@ -14,8 +14,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "cbor_export.h"
-#include "configuration.h"
+#include "cbor/cbor_export.h"
+#include "cbor/configuration.h"
 #include "data.h"
 
 #ifdef __cplusplus
