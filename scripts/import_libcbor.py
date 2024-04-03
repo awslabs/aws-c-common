@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import re
 
+# TODO support pass-in version and use the tag
+
 major_version = 0
 minor_version = 11
 patch_version = 0
@@ -11,7 +13,7 @@ patch_version = 0
 GENERATED_NOTES = """/**
  * DO NOT DIRECTLY MODIFY THIS FILE:
  *
- * The code in this file is generated from scripts/.../path_to_actual_source
+ * The code in this file is generated from scripts/import_libcbor.py
  *  and any modifications should be in there.
  */
 """

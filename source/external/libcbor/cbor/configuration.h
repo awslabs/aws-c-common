@@ -1,7 +1,7 @@
 /**
  * DO NOT DIRECTLY MODIFY THIS FILE:
  *
- * The code in this file is generated from scripts/.../path_to_actual_source
+ * The code in this file is generated from scripts/import_libcbor.py
  *  and any modifications should be in there.
  */
 
