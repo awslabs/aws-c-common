@@ -6,7 +6,7 @@
  */
 
 #include "memory_utils.h"
-#include "../common.h"
+#include "cbor/common.h"
 
 // TODO: Consider builtins
 // (https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html)

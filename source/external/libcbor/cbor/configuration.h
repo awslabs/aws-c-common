@@ -1,3 +1,10 @@
+/**
+ * DO NOT DIRECTLY MODIFY THIS FILE:
+ *
+ * The code in this file is generated from scripts/.../path_to_actual_source
+ *  and any modifications should be in there.
+ */
+
 #ifndef LIBCBOR_CONFIGURATION_H
 #define LIBCBOR_CONFIGURATION_H
 
