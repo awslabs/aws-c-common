@@ -61,13 +61,13 @@ void aws_cbor_encoder_clear_encoded_data(struct aws_cbor_encoder *encoder) {
 
 #define ENCODE_THROUGH_LIBCBOR(length_to_reserve, encoder, value, fn)                                                  \
     do {                                                                                                               \
-        aws_byte_buf_reserve_dynamic(&encoder->encoded_buf, encoder->encoded_buf.len + length_to_reserve);             \
+        aws_byte_buf_reserve_dynamic(&(encoder)->encoded_buf, (encoder)->encoded_buf.len + (length_to_reserve));       \
         size_t encoded_len =                                                                                           \
             fn(value,                                                                                                  \
-               encoder->encoded_buf.buffer + encoder->encoded_buf.len,                                                 \
-               encoder->encoded_buf.capacity - encoder->encoded_buf.len);                                              \
-        AWS_ASSERT(encoded_len != 0);                                                                                  \
-        encoder->encoded_buf.len += encoded_len;                                                                       \
+               (encoder)->encoded_buf.buffer + (encoder)->encoded_buf.len,                                             \
+               (encoder)->encoded_buf.capacity - (encoder)->encoded_buf.len);                                          \
+        AWS_ASSERT((encoded_len) != 0);                                                                                \
+        (encoder)->encoded_buf.len += (encoded_len);                                                                   \
     } while (false)
 
 void aws_cbor_encode_uint(struct aws_cbor_encoder *encoder, uint64_t value) {
@@ -118,12 +118,12 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
     ENCODE_THROUGH_LIBCBOR(9, encoder, value, cbor_encode_double);
 }
 
-void aws_cbor_encode_map_start(struct aws_cbor_encoder *encoder, size_t map_size) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, map_size, cbor_encode_map_start);
+void aws_cbor_encode_map_start(struct aws_cbor_encoder *encoder, size_t number_entries) {
+    ENCODE_THROUGH_LIBCBOR(9, encoder, number_entries, cbor_encode_map_start);
 }
 
-void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t map_size) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, map_size, cbor_encode_array_start);
+void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t number_entries) {
+    ENCODE_THROUGH_LIBCBOR(9, encoder, number_entries, cbor_encode_array_start);
 }
 
 void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor *from) {
@@ -262,9 +262,9 @@ size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder) {
 
 #define CHECK_CONTEXT(decoder)                                                                                         \
     do {                                                                                                               \
-        if (decoder->cached_context.type != AWS_CBOR_TYPE_MAX) {                                                       \
+        if ((decoder)->cached_context.type != AWS_CBOR_TYPE_MAX) {                                                     \
             /* Still have cached context */                                                                            \
-            decoder->error_code = AWS_ERROR_INVALID_STATE;                                                             \
+            (decoder)->error_code = AWS_ERROR_INVALID_STATE;                                                           \
             return;                                                                                                    \
         }                                                                                                              \
     } while (0)
@@ -273,8 +273,8 @@ size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder) {
     static void s_##field##_callback(void *ctx, callback_type val) {                                                   \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
         CHECK_CONTEXT(decoder);                                                                                        \
-        decoder->cached_context.field = val;                                                                           \
-        decoder->cached_context.type = cbor_type;                                                                      \
+        (decoder)->cached_context.field = val;                                                                         \
+        (decoder)->cached_context.type = cbor_type;                                                                    \
     }
 
 LIBCBOR_VALUE_CALLBACK(unsigned_val, uint64_t, AWS_CBOR_TYPE_UINT)
@@ -341,7 +341,7 @@ static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t l
     static void s_##field##_callback(void *ctx) {                                                                      \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
         CHECK_CONTEXT(decoder);                                                                                        \
-        decoder->cached_context.type = cbor_type;                                                                      \
+        (decoder)->cached_context.type = cbor_type;                                                                    \
     }
 
 LIBCBOR_SIMPLE_CALLBACK(inf_bytes, AWS_CBOR_TYPE_INF_BYTESTRING)
@@ -423,7 +423,8 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             decoder->error_code = AWS_ERROR_INVALID_ARGUMENT;
             break;
         case CBOR_DECODER_ERROR:
-            decoder->error_code = AWS_ERROR_INVALID_ARGUMENT;
+            /* TODO: specific error code and log. */
+            decoder->error_code = AWS_ERROR_INVALID_INDEX;
             break;
         default:
             break;
@@ -497,11 +498,11 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
 
 #define GET_NEXT_ITEM(field, out_type, expected_cbor_type)                                                             \
     int aws_cbor_decode_get_next_##field(struct aws_cbor_decoder *decoder, out_type *out) {                            \
-        if (decoder->error_code) {                                                                                     \
+        if ((decoder)->error_code) {                                                                                   \
             /* Error happened during decoding */                                                                       \
-            return aws_raise_error(decoder->error_code);                                                               \
+            return aws_raise_error((decoder)->error_code);                                                             \
         }                                                                                                              \
-        if (decoder->cached_context.type != AWS_CBOR_TYPE_MAX) {                                                       \
+        if ((decoder)->cached_context.type != AWS_CBOR_TYPE_MAX) {                                                     \
             /* There was a cached context, check if the cached one meets the expected. */                              \
             goto decode_done;                                                                                          \
         }                                                                                                              \
@@ -509,13 +510,13 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             return AWS_OP_ERR;                                                                                         \
         }                                                                                                              \
     decode_done:                                                                                                       \
-        if (decoder->cached_context.type != expected_cbor_type) {                                                      \
+        if ((decoder)->cached_context.type != expected_cbor_type) {                                                    \
             /* TODO: specific error code: UNEXPECTED_TYPE */                                                           \
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);                                                        \
         } else {                                                                                                       \
             /* Clear the cache as we give it out. */                                                                   \
-            decoder->cached_context.type = AWS_CBOR_TYPE_MAX;                                                          \
-            *out = decoder->cached_context.field;                                                                      \
+            (decoder)->cached_context.type = AWS_CBOR_TYPE_MAX;                                                        \
+            *out = (decoder)->cached_context.field;                                                                    \
         }                                                                                                              \
         return AWS_OP_SUCCESS;                                                                                         \
     }
