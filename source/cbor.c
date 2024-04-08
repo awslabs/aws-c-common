@@ -485,8 +485,7 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             case 3 /* Negative bignum; */:
             case 4 /* Decimal fraction; */:
             case 5 /* Bigfloat; */:
-                /* code */
-                break;
+                return aws_raise_error(AWS_ERROR_UNIMPLEMENTED);
 
             default:
                 break;
@@ -497,6 +496,7 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
 }
 
 #define GET_NEXT_ITEM(field, out_type, expected_cbor_type)                                                             \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                                                                   \
     int aws_cbor_decode_get_next_##field(struct aws_cbor_decoder *decoder, out_type *out) {                            \
         if ((decoder)->error_code) {                                                                                   \
             /* Error happened during decoding */                                                                       \
@@ -510,7 +510,7 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             return AWS_OP_ERR;                                                                                         \
         }                                                                                                              \
     decode_done:                                                                                                       \
-        if ((decoder)->cached_context.type != expected_cbor_type) {                                                    \
+        if ((decoder)->cached_context.type != (expected_cbor_type)) {                                                  \
             /* TODO: specific error code: UNEXPECTED_TYPE */                                                           \
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);                                                        \
         } else {                                                                                                       \
