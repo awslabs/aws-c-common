@@ -258,7 +258,7 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
 
     /* Map with 1 element */
     aws_cbor_encode_map_start(encoder, 1);
-    struct aws_byte_cursor encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* Map start with 1 (key, value pair) only takes 1 byte */
     ASSERT_UINT_EQUALS(encoded_len + 1, encoded_cursor.len);
     encoded_len = encoded_cursor.len;
@@ -270,10 +270,17 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
     }
 
     /* Map with a lot element, not closure. */
-    aws_cbor_encode_map_start(encoder, UINT32_MAX + 1);
-    struct aws_byte_cursor encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
-    /* Map start with 1 (key, value pair) only takes 1 byte */
-    ASSERT_UINT_EQUALS(encoded_len + 1, encoded_cursor.len);
+    aws_cbor_encode_array_start(encoder, UINT16_MAX + 1);
+    encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    /* The size takes 4 bytes and one more for the cbor start item */
+    ASSERT_UINT_EQUALS(encoded_len + 5, encoded_cursor.len);
+    encoded_len = encoded_cursor.len;
+
+    aws_cbor_encode_map_start(encoder, UINT16_MAX + 1);
+    encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    /* The size takes 4 bytes and one more for the cbor start item */
+    ASSERT_UINT_EQUALS(encoded_len + 5, encoded_cursor.len);
+    encoded_len = encoded_cursor.len;
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
@@ -293,6 +300,10 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
         ASSERT_SUCCESS(aws_cbor_decode_get_next_bytes_val(decoder, &result));
         ASSERT_TRUE(aws_byte_cursor_eq(&result, values[i]));
     }
+    aws_cbor_decode_get_next_array_start(decoder, &element_size);
+    ASSERT_UINT_EQUALS(element_size, UINT16_MAX + 1);
+    aws_cbor_decode_get_next_map_start(decoder, &element_size);
+    ASSERT_UINT_EQUALS(element_size, UINT16_MAX + 1);
 
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
