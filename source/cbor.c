@@ -158,7 +158,7 @@ void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value) {
 
 void aws_cbor_encode_null(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 22 (null) */
-    ENCODE_THROUGH_LIBCBOR(1, encoder, 22 /*null*/, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(1, encoder, (uint8_t)22 /*null*/, cbor_encode_ctrl);
 }
 
 void aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type) {
@@ -195,8 +195,16 @@ void aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_e
 }
 
 void aws_cbor_encode_break(struct aws_cbor_encoder *encoder) {
-    /* Major type 7 (simple), value 31 (break) */;
-    ENCODE_THROUGH_LIBCBOR(1, encoder, 31 /*break*/, cbor_encode_ctrl);
+    /* Major type 7 (simple), value 31 (break) */
+    /* break takes 1 byte */
+    /* Notes: cannot use cbor_encode_ctrl cause it will encode value 31 as 1 byte to follow the argument, instead of
+     * argument directly.  */
+    aws_byte_buf_reserve_dynamic(&encoder->encoded_buf, encoder->encoded_buf.len + 1);
+    size_t encoded_len = cbor_encode_break(
+        encoder->encoded_buf.buffer + encoder->encoded_buf.len,
+        encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+    AWS_ASSERT(encoded_len == 1);
+    encoder->encoded_buf.len += encoded_len;
 }
 /* TODO: big number and big decimal */
 
@@ -411,7 +419,7 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
     struct cbor_decoder_result result = cbor_stream_decode(decoder->src.ptr, decoder->src.len, &s_callbacks, decoder);
     switch (result.status) {
         case CBOR_DECODER_NEDATA:
-            /* TODO: specific error code */
+            /* TODO: specific error code and log. */
             decoder->error_code = AWS_ERROR_INVALID_ARGUMENT;
             break;
         case CBOR_DECODER_ERROR:
