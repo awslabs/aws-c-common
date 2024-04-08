@@ -62,10 +62,11 @@ AWS_COMMON_API
 void aws_cbor_encode_negint(struct aws_cbor_encoder *encoder, uint64_t value);
 
 /**
- * @brief Encode a double value to "smallest possible", but will not be encoded into half-precision float, as it's
- not
+ * @brief Encode a double value to "smallest possible", but will not be encoded into half-precision float, as it's not
  * well supported cross languages. To be more specific, it will be encoded into integer/negative/float (Order with
  * priority) when the conversation will not cause precision loss.
+ *
+ * TODO: the double and float math is very tricky. And there is undefined behavior if we just type cast.
  *
  * @param to
  * @param value
@@ -92,6 +93,25 @@ void aws_cbor_encode_epoch_timestamp_secs(struct aws_cbor_encoder *encoder, doub
 void aws_cbor_encode_null(struct aws_cbor_encoder *encoder);
 void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value);
 
+/**
+ * @brief Encode inf start, supported type is:
+ *  AWS_CBOR_TYPE_INF_BYTESTRING
+ *  AWS_CBOR_TYPE_INF_STRING
+ *  AWS_CBOR_TYPE_INF_ARRAY_START
+ *  AWS_CBOR_TYPE_INF_MAP_START
+ * All other type will result in error.
+ *
+ * Notes: It's user's responsibility to track the break to
+ * close the corresponding inf_star
+ *
+ * @param encoder
+ * @param type
+ */
+void aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type);
+
+/* Encode the break for inf collections. Notes: no error checking, it's user's responsibility to track the break to
+ * close the corresponding inf_start */
+void aws_cbor_encode_break(struct aws_cbor_encoder *encoder);
 /* TODO: bignum/bigfloat */
 
 /*******************************************************************************
@@ -99,6 +119,17 @@ void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value);
  ******************************************************************************/
 
 struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src);
+
+struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decoder);
+
+/**
+ * @brief  Get the length of the remaining data. Once the data was decoded, it will consume the data, and result in
+ * decrease of the remaining length.
+ *
+ * @param decoder
+ * @return The length remaining
+ */
+size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Decode the next element and store it in the decoder cache if there was no element cached.
@@ -118,6 +149,14 @@ int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_el
  */
 /* TODO: do we want to track the consumed size??? Decoder handles it already. */
 int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder);
+
+/**
+ * @brief Consume the next element, without the content followed by the element.
+ *
+ * @param src The src to parse data from
+ * @return AWS_OP_SUCCESS successfully consumed the next element, otherwise AWS_OP_ERR.
+ */
+int aws_cbor_decode_consume_next_element(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Get the next element based on the type. If the next element doesn't match the expected type. Error will be
