@@ -72,24 +72,26 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     (void)allocator;
     (void)ctx;
     aws_common_library_init(allocator);
-    enum { VALUE_NUM = 6 };
+    enum { VALUE_NUM = 8 };
 
     /**
      * 1 as unsigned int, takes 1 byte
      * -1 as negative int, takes 1 byte
-     * 1.1 will be double, takes 5 bytes TODO: (double)1.1 turns to 1.1000000000000001 on Mac, thus it will be convert
-     * to double
+     * 1.1 double, takes 9 bytes
+     * 1.1f is float, takes 5 bytes
+     * -1.1f is float, takes 5 bytes
      * INFINITY will be float, takes 5 bytes
      * FLT_MAX still a float, take 5 bytes
-     * DBL_MAX will be a double
-     * takes 9 bytes
+     * DBL_MAX will be a double takes 9 bytes
      */
-    double values[VALUE_NUM] = {1.0, -1.0, 1.1, INFINITY, FLT_MAX, DBL_MAX};
-    uint64_t expected_encoded_len[VALUE_NUM] = {1, 1, 9, 5, 5, 9};
+    double values[VALUE_NUM] = {1.0, -1.0, 1.1, 1.1f, -1.1f, INFINITY, FLT_MAX, DBL_MAX};
+    uint64_t expected_encoded_len[VALUE_NUM] = {1, 1, 9, 5, 5, 5, 5, 9};
 
     int expected_encoded_type[VALUE_NUM] = {
         AWS_CBOR_TYPE_UINT,
         AWS_CBOR_TYPE_NEGINT,
+        AWS_CBOR_TYPE_DOUBLE,
+        AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
@@ -120,8 +122,18 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     ASSERT_SUCCESS(aws_cbor_decode_get_next_neg_val(decoder, &result));
     /* Convert negative val to unsigned for easier comparing. */
     ASSERT_TRUE((-1 * values[index++]) == result);
-    /* 1.1 */
+    /* 1.1 double */
     double double_result = 0;
+    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
+    ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
+    ASSERT_TRUE(values[index++] == double_result);
+    /* 1.1 float */
+    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
+    ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
+    ASSERT_TRUE(values[index++] == double_result);
+    /* -1.1 float */
     ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
@@ -313,6 +325,74 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
     return SUCCESS;
 }
 
+CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
+    (void)allocator;
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 128);
+    aws_cbor_encode_null(encoder);
+    aws_cbor_encode_undefine(encoder);
+    struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    /* in total 2 bytes for two simple value */
+    ASSERT_UINT_EQUALS(2, final_cursor.len);
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
+
+    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_NULL);
+    ASSERT_SUCCESS(aws_cbor_decode_consume_next_element(decoder, NULL));
+    ASSERT_SUCCESS(aws_cbor_decode_consume_next_element(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_UNDEFINE);
+    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
+
+    aws_cbor_encoder_release(encoder);
+    aws_cbor_decoder_release(decoder);
+    aws_common_library_clean_up();
+    return SUCCESS;
+}
+
+CBOR_TEST_CASE(cbor_encode_decode_timestamp_test) {
+    (void)allocator;
+    (void)ctx;
+    aws_common_library_init(allocator);
+    enum { VALUE_NUM = 4 };
+
+    /**
+     * Timestamp with one extra bytes for the timestamp tag
+     *
+     * 1 as unsigned int, takes 1 byte
+     * -1 as negative int, takes 1 byte
+     * 1.1 double, takes 9 bytes
+     * -1.1 double, takes 9 bytes
+     */
+    int64_t values[VALUE_NUM] = {1000, -1000, 1111, -1111};
+    uint64_t expected_encoded_len[VALUE_NUM] = {2, 2, 10, 10};
+    size_t encoded_len = 0;
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 128);
+    for (size_t i = 0; i < VALUE_NUM; i++) {
+        aws_cbor_encode_epoch_timestamp_ms(encoder, values[i]);
+        struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
+        ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
+        encoded_len = cursor.len;
+    }
+    struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
+    for (size_t i = 0; i < VALUE_NUM; i++) {
+        int64_t result = 0;
+        ASSERT_SUCCESS(aws_cbor_decode_get_next_epoch_timestamp_ms_val(decoder, &result));
+        ASSERT_TRUE(values[i] == result);
+    }
+
+    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
+
+    aws_cbor_encoder_release(encoder);
+    aws_cbor_decoder_release(decoder);
+    aws_common_library_clean_up();
+    return SUCCESS;
+}
+
+/* Test a complicate multiple stacks encode and decode */
 CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     (void)allocator;
     (void)ctx;
@@ -337,6 +417,14 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING);
     aws_cbor_encode_bytes(encoder, &val_1);
     aws_cbor_encode_bytes(encoder, &val_2);
+    aws_cbor_encode_break(encoder);
+    /* element 3 as a tag in array */
+    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_BIGFLOAT);
+    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
+    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING);
+    aws_cbor_encode_bytes(encoder, &val_1);
+    aws_cbor_encode_bytes(encoder, &val_2);
+    aws_cbor_encode_break(encoder);
     aws_cbor_encode_break(encoder);
     /* Closure for the array */
     aws_cbor_encode_break(encoder);
