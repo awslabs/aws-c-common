@@ -345,7 +345,7 @@ static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t l
 #define LIBCBOR_SIMPLE_CALLBACK(field, cbor_type)                                                                      \
     static void s_##field##_callback(void *ctx) {                                                                      \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
-        AWS_ASSERT((decoder)->cached_context.type != AWS_CBOR_TYPE_MAX);                                               \
+        AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_MAX);                                               \
         (decoder)->cached_context.type = cbor_type;                                                                    \
     }
 
