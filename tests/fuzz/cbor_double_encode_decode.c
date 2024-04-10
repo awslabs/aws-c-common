@@ -23,21 +23,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
     AWS_FATAL_ASSERT(aws_cbor_decode_peek_type(decoder, &out_type) == 0);
     switch (out_type) {
-        case AWS_CBOR_TYPE_UINT:
+        case AWS_CBOR_TYPE_UINT: {
             uint64_t result = 0;
             AWS_FATAL_ASSERT(aws_cbor_decode_get_next_unsigned_val(decoder, &result) == 0);
             AWS_FATAL_ASSERT((double)result == val);
             break;
-        case AWS_CBOR_TYPE_NEGINT:
+        }
+        case AWS_CBOR_TYPE_NEGINT: {
             uint64_t result = 0;
             AWS_FATAL_ASSERT(aws_cbor_decode_get_next_neg_val(decoder, &result) == 0);
             AWS_FATAL_ASSERT((double)(-1.0 - (double)result) == val);
             break;
-        case AWS_CBOR_TYPE_DOUBLE:
+        }
+        case AWS_CBOR_TYPE_DOUBLE: {
             double result = 0;
             AWS_FATAL_ASSERT(aws_cbor_decode_get_next_double_val(decoder, &result) == 0);
             AWS_FATAL_ASSERT(result == val);
             break;
+        }
 
         default:
             AWS_FATAL_ASSERT(false);
