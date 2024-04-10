@@ -11,6 +11,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     struct aws_byte_cursor input = aws_byte_cursor_from_array(data, size);
     double val = 0;
     if (!aws_byte_cursor_read_float_be64(&input, &val)) {
+        allocator = aws_mem_tracer_destroy(allocator);
         /* Ignore the invalid double */
         return 0;
     }
