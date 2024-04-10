@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/cbor.h>
+#include <math.h>
 
 /* NOLINTNEXTLINE(readability-identifier-naming) */
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
@@ -39,7 +40,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         case AWS_CBOR_TYPE_DOUBLE: {
             double result = 0;
             AWS_FATAL_ASSERT(aws_cbor_decode_get_next_double_val(decoder, &result) == 0);
-            AWS_FATAL_ASSERT(result == val);
+            if (isnan(val)) {
+                AWS_FATAL_ASSERT(isnan(result));
+            } else {
+                AWS_FATAL_ASSERT(result == val);
+            }
             break;
         }
 
