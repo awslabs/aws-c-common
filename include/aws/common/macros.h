@@ -131,6 +131,24 @@ enum { AWS_CACHE_LINE = 64 };
 #    define AWS_SUPPRESS_TSAN
 #endif
 
+#if defined(__has_feature)
+#    if __has_feature(undefined_sanitizer)
+#        define AWS_SUPPRESS_UBSAN __attribute__((no_sanitize("undefined")))
+#    endif
+#elif defined(__SANITIZE_UNDEFINED__)
+#    if defined(__GNUC__)
+#        define AWS_SUPPRESS_UBSAN __attribute__((no_sanitize_undefined))
+#    else
+#        define AWS_SUPPRESS_UBSAN
+#    endif
+#else
+#    define AWS_SUPPRESS_UBSAN
+#endif
+
+#if !defined(AWS_SUPPRESS_UBSAN)
+#    define AWS_SUPPRESS_UBSAN
+#endif
+
 /* If this is C++, restrict isn't supported. If this is not at least C99 on gcc and clang, it isn't supported.
  * If visual C++ building in C mode, the restrict definition is __restrict.
  * This just figures all of that out based on who's including this header file. */

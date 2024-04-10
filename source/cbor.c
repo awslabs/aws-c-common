@@ -86,7 +86,7 @@ void aws_cbor_encode_single_float(struct aws_cbor_encoder *encoder, float value)
     ENCODE_THROUGH_LIBCBOR(5, encoder, value, cbor_encode_single);
 }
 
-void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
+AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
     if (isnan(value) || isinf(value)) {
         /* For special value: NAN/INFINITY, type cast to float and encode into single float. */
         aws_cbor_encode_single_float(encoder, (float)value);
