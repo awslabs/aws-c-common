@@ -120,8 +120,8 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decode_get_next_neg_val(decoder, &result));
-    /* Convert negative val to unsigned for easier comparing. */
-    ASSERT_TRUE((-1 * values[index++]) == result);
+    /* Convert the decode val to expected val. */
+    ASSERT_TRUE((-1 - values[index++]) == result);
     /* 1.1 double */
     double double_result = 0;
     ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
@@ -409,19 +409,19 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     /* Value */
     aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
     /* element 1 in array */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_STRING);
+    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_STRING_START);
     aws_cbor_encode_string(encoder, &val_1);
     aws_cbor_encode_string(encoder, &val_2);
     aws_cbor_encode_break(encoder);
     /* element 2 in array */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING);
+    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
     aws_cbor_encode_bytes(encoder, &val_1);
     aws_cbor_encode_bytes(encoder, &val_2);
     aws_cbor_encode_break(encoder);
     /* element 3 as a tag in array */
     aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_BIGFLOAT);
     aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING);
+    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
     aws_cbor_encode_bytes(encoder, &val_1);
     aws_cbor_encode_bytes(encoder, &val_2);
     aws_cbor_encode_break(encoder);
@@ -445,6 +445,49 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
 
     aws_cbor_encoder_release(encoder);
     aws_cbor_decoder_release(decoder);
+    aws_common_library_clean_up();
+    return SUCCESS;
+}
+
+CBOR_TEST_CASE(cbor_decode_error_handling_test) {
+    (void)allocator;
+    (void)ctx;
+    aws_common_library_init(allocator);
+    struct aws_byte_cursor val_2 = aws_byte_cursor_from_c_str("write more tests");
+
+    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+
+    /* Malformed cbor data */
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &val_2);
+    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
+    aws_cbor_decoder_release(decoder);
+
+    /* Empty cursor */
+    struct aws_byte_cursor empty = {0};
+    decoder = aws_cbor_decoder_new(allocator, &empty);
+    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
+    aws_cbor_decoder_release(decoder);
+
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 128);
+    uint64_t val = 1;
+    aws_cbor_encode_uint(encoder, val);
+    struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    decoder = aws_cbor_decoder_new(allocator, &final_cursor);
+    uint64_t out = 0;
+    ASSERT_FAILS(aws_cbor_decode_get_next_array_start(decoder, &out));
+    ASSERT_UINT_EQUALS(AWS_ERROR_CBOR_UNEXPECTED_TYPE, aws_last_error());
+    /* But, we can still keep decoding for the right type */
+    ASSERT_SUCCESS(aws_cbor_decode_get_next_unsigned_val(decoder, &out));
+    ASSERT_UINT_EQUALS(val, out);
+    /* All the data has been consumed, now it's invalid */
+    ASSERT_FAILS(aws_cbor_decode_consume_next_data_item(decoder));
+    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
+    aws_cbor_decoder_release(decoder);
+
+    aws_cbor_encoder_release(encoder);
     aws_common_library_clean_up();
     return SUCCESS;
 }

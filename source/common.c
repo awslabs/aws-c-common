@@ -274,6 +274,12 @@ static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_FILE_WRITE_FAILURE,
         "Failed writing to file."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_CBOR,
+        "Malformed cbor data."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_CBOR_UNEXPECTED_TYPE,
+        "Unexpected cbor type encountered."),
 };
 /* clang-format on */
 
@@ -297,6 +303,8 @@ static struct aws_log_subject_info s_common_log_subject_infos[] = {
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_IO, "common-io", "Common IO utilities"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_BUS, "bus", "Message bus"),
     DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_TEST, "test", "Unit/integration testing"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_JSON_PARSER, "json-parser", "Subject for json parser specific logging"),
+    DEFINE_LOG_SUBJECT_INFO(AWS_LS_COMMON_CBOR, "cbor", "Subject for CBOR encode and decode"),
 };
 
 static struct aws_log_subject_info_list s_common_log_subject_list = {
