@@ -318,7 +318,7 @@ static void s_float_callback(void *ctx, float data) {
 
 static void s_bytes_callback(void *ctx, const unsigned char *cbor_data, uint64_t length) {
     struct aws_cbor_decoder *decoder = ctx;
-    AWS_ASSERT((decoder)->cached_context.type != AWS_CBOR_TYPE_MAX);
+    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_MAX);
     if (length > SIZE_MAX) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Decoded a bytes with %" PRIu64 " bytes causing overflow .", length);
         decoder->error_code = AWS_ERROR_OVERFLOW_DETECTED;
@@ -331,7 +331,7 @@ static void s_bytes_callback(void *ctx, const unsigned char *cbor_data, uint64_t
 
 static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t length) {
     struct aws_cbor_decoder *decoder = ctx;
-    AWS_ASSERT((decoder)->cached_context.type != AWS_CBOR_TYPE_MAX);
+    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_MAX);
     if (length > SIZE_MAX) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Decoded a string with %" PRIu64 " bytes causing overflow .", length);
         decoder->error_code = AWS_ERROR_OVERFLOW_DETECTED;
