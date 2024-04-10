@@ -675,7 +675,6 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder) {
                 if (aws_cbor_decode_peek_type(decoder, &next_type)) {
                     return AWS_OP_ERR;
                 }
-                ++number_items;
             }
             break;
         }
