@@ -573,7 +573,7 @@ decode_tag_done:
             }
             /* TODO: How to check overflow? */
             double ms_double = timestamp_secs * 1000.0;
-            int64_t timestamp_ms = llround(timestamp_ms);
+            int64_t timestamp_ms = llround(ms_double);
             if (fetestexcept(FE_INVALID) || timestamp_ms > INT64_MAX) {
                 /* LOG */
                 error = AWS_ERROR_OVERFLOW_DETECTED;
