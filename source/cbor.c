@@ -93,7 +93,7 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
         aws_cbor_encode_single_float(encoder, (float)value);
         return;
     }
-    if (value <= INT64_MAX && value >= INT64_MIN) {
+    if (value <= (double)INT64_MAX && value >= (double)INT64_MIN) {
         int64_t int_value = (int64_t)value;
         if (value == (double)int_value) {
             if (int_value < 0) {
