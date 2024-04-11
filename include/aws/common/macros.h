@@ -132,7 +132,7 @@ enum { AWS_CACHE_LINE = 64 };
 #endif
 
 #if defined(__has_feature)
-#    if __has_feature(undefined_sanitizer)
+#    if __has_feature(undefined_behavior_sanitizer)
 #        define AWS_SUPPRESS_UBSAN __attribute__((no_sanitize("undefined")))
 #    endif
 #elif defined(__SANITIZE_UNDEFINED__)

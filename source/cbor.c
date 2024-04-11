@@ -86,6 +86,8 @@ void aws_cbor_encode_single_float(struct aws_cbor_encoder *encoder, float value)
     ENCODE_THROUGH_LIBCBOR(5, encoder, value, cbor_encode_single);
 }
 
+/* Typecast from double to float will result int undefined behavior, but it's fine in this case, as the round trip won't
+ * match. Suppress the ubsan for it. */
 AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
     if (isnan(value) || isinf(value)) {
         /* For special value: NAN/INFINITY, type cast to float and encode into single float. */
@@ -93,10 +95,7 @@ AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder,
         return;
     }
 
-    int64_t int_value = llround(value);
-    /* Ignore the possible exception raised from llround. */
-    feclearexcept(FE_ALL_EXCEPT);
-
+    int64_t int_value = (int64_t)value;
     if (value == (double)int_value) {
         if (int_value < 0) {
             aws_cbor_encode_negint(encoder, (uint64_t)(-1 - int_value));
@@ -105,8 +104,6 @@ AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder,
         }
         return;
     }
-    /* TODO: If the value being converted is outside the range of values that can be represented, the behavior is
-     * undefined? */
     float float_value = (float)value;
     double converted_value = (double)float_value;
     if (value == converted_value) {
