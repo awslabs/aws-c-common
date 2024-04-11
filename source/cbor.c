@@ -93,15 +93,16 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
         aws_cbor_encode_single_float(encoder, (float)value);
         return;
     }
-
-    int64_t int_value = (int64_t)value;
-    if (value == (double)int_value) {
-        if (int_value < 0) {
-            aws_cbor_encode_negint(encoder, (uint64_t)(-1 - int_value));
-        } else {
-            aws_cbor_encode_uint(encoder, (uint64_t)(int_value));
+    if (value <= INT64_MAX && value >= INT64_MIN) {
+        int64_t int_value = (int64_t)value;
+        if (value == (double)int_value) {
+            if (int_value < 0) {
+                aws_cbor_encode_negint(encoder, (uint64_t)(-1 - int_value));
+            } else {
+                aws_cbor_encode_uint(encoder, (uint64_t)(int_value));
+            }
+            return;
         }
-        return;
     }
     if (fabs(value) <= FLT_MAX && fabs(value) >= FLT_MIN) {
         /* Only try to convert the value within the range of float. */
