@@ -75,7 +75,7 @@ bool _cbor_map_add_key(cbor_item_t *item, cbor_item_t *key) {
                                   : CBOR_BUFFER_GROWTH * metadata->allocated;
 
       unsigned char *new_data = _cbor_realloc_multiple(
-          item->data, metadata->allocated, sizeof(struct cbor_pair), new_allocation);
+          item->data, sizeof(struct cbor_pair), new_allocation);
 
       if (new_data == NULL) {
         return false;
