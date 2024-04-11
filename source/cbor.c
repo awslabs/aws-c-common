@@ -3,7 +3,7 @@
 
 #include <aws/common/array_list.h>
 #include <aws/common/logging.h>
-#include <aws/common/private/json_impl.h>
+#include <aws/common/private/external_module_impl.h>
 #include <aws/common/ref_count.h>
 #include <fenv.h>
 #include <float.h>
@@ -93,7 +93,14 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
         aws_cbor_encode_single_float(encoder, (float)value);
         return;
     }
+    /* Conversation from int to floating-type is implementation defined if loss of precision */
     if (value <= (double)INT64_MAX && value >= (double)INT64_MIN) {
+        /**
+         * A prvalue of a floating point type can be converted to a prvalue of an integer type. The conversion
+         * truncates; that is, the fractional part is discarded. The behavior is undefined if the truncated value cannot
+         * be represented in the destination type.
+         * Check against the IMT64 range to avoid undefined behavior
+         **/
         int64_t int_value = (int64_t)value;
         if (value == (double)int_value) {
             if (int_value < 0) {
