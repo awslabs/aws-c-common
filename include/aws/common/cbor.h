@@ -288,8 +288,10 @@ void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_
  * continues for further decoding.
  * - To ignore the next data item (the element and the content of it), `aws_cbor_decode_consume_next_data_item`
  *
+ * Note: it's caller's responsibilty to keep the src outlive the decoder.
+ *
  * @param allocator
- * @param src
+ * @param src   The src data to decode from.
  * @return decoder
  */
 AWS_COMMON_API

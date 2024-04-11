@@ -453,24 +453,27 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     (void)allocator;
     (void)ctx;
     aws_common_library_init(allocator);
-    struct aws_byte_cursor val_2 = aws_byte_cursor_from_c_str("write more tests");
+    /* Major type 7 with argument 30, 11111110, malformed CBOR */
+    uint8_t invalid_data[] = {0xFE};
+    struct aws_byte_cursor invalid_cbor = aws_byte_cursor_from_array(invalid_data, sizeof(invalid_data));
 
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
 
-    /* Malformed cbor data */
-    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &val_2);
+    /* 1. Malformed cbor data */
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &invalid_cbor);
     ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
-    /* Empty cursor */
+    /* 2. Empty cursor */
     struct aws_byte_cursor empty = {0};
     decoder = aws_cbor_decoder_new(allocator, &empty);
     ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
-    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 128);
+    /* 3. Try get wrong type */
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 1);
     uint64_t val = 1;
     aws_cbor_encode_uint(encoder, val);
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
@@ -485,6 +488,42 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     ASSERT_FAILS(aws_cbor_decode_consume_next_data_item(decoder));
     ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
+    aws_cbor_decoder_release(decoder);
+
+    /* 4. Try get wrong type for timestamp */
+    aws_cbor_encoder_clear_encoded_data(encoder);
+    ASSERT_FAILS(aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_BYTESTRING));
+    struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
+    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
+    aws_cbor_encode_bytes(encoder, &val_1);
+    final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    decoder = aws_cbor_decoder_new(allocator, &final_cursor);
+    int64_t result = 0;
+    /* The encoded val is not a timestamp */
+    ASSERT_FAILS(aws_cbor_decode_get_next_epoch_timestamp_ms_val(decoder, &result));
+    /* But I can still get the tag val. */
+    uint64_t tag_val = 0;
+    ASSERT_SUCCESS(aws_cbor_decode_get_next_tag_val(decoder, &tag_val));
+    ASSERT_UINT_EQUALS(AWS_CBOR_TAG_NEGATIVE_BIGNUM, tag_val);
+    aws_cbor_encoder_clear_encoded_data(encoder);
+    aws_cbor_decoder_release(decoder);
+
+    /* 5. Consume data items with size */
+    aws_cbor_encode_map_start(encoder, 1);
+    /* Key */
+    aws_cbor_encode_string(encoder, &val_1);
+    /* Value */
+    aws_cbor_encode_array_start(encoder, 1);
+    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
+    aws_cbor_encode_bytes(encoder, &val_1);
+    final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    decoder = aws_cbor_decoder_new(allocator, &final_cursor);
+    /* The encoded val is not a timestamp */
+    ASSERT_FAILS(aws_cbor_decode_get_next_epoch_timestamp_ms_val(decoder, &result));
+    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(AWS_CBOR_TYPE_MAP_START, out_type);
+    ASSERT_SUCCESS(aws_cbor_decode_consume_next_data_item(decoder));
+    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
     aws_cbor_decoder_release(decoder);
 
     aws_cbor_encoder_release(encoder);
