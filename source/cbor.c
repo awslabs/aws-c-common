@@ -427,7 +427,7 @@ static struct cbor_callbacks s_callbacks = {
 /**
  * decode the next element to the cached_content.
  */
-int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
+static int s_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
     struct cbor_decoder_result result = cbor_stream_decode(decoder->src.ptr, decoder->src.len, &s_callbacks, decoder);
     switch (result.status) {
         case CBOR_DECODER_NEDATA:
@@ -467,7 +467,7 @@ int aws_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             /* There was a cached context, check if the cached one meets the expected. */                              \
             goto decode_done;                                                                                          \
         }                                                                                                              \
-        if (aws_cbor_decode_next_element(decoder)) {                                                                   \
+        if (s_cbor_decode_next_element(decoder)) {                                                                     \
             return AWS_OP_ERR;                                                                                         \
         }                                                                                                              \
     decode_done:                                                                                                       \
@@ -509,7 +509,7 @@ int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_el
     }
 
     /* Decode */
-    if (aws_cbor_decode_next_element(decoder)) {
+    if (s_cbor_decode_next_element(decoder)) {
         return AWS_OP_ERR;
     }
     *out_type = decoder->cached_context.type;
@@ -524,7 +524,7 @@ int aws_cbor_decode_get_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *dec
         /* There was a cached context, check if the cached one meets the expected. */
         goto decode_tag_done;
     }
-    if (aws_cbor_decode_next_element(decoder)) {
+    if (s_cbor_decode_next_element(decoder)) {
         return AWS_OP_ERR;
     }
 
@@ -625,7 +625,7 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder) {
 
     if (decoder->cached_context.type == AWS_CBOR_TYPE_MAX) {
         /* There was no cache, decode the next item */
-        if (aws_cbor_decode_next_element(decoder)) {
+        if (s_cbor_decode_next_element(decoder)) {
             return AWS_OP_ERR;
         }
     }
