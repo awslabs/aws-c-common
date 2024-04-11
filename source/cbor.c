@@ -6,6 +6,7 @@
 #include <aws/common/private/json_impl.h>
 #include <aws/common/ref_count.h>
 #include <fenv.h>
+#include <float.h>
 #include <inttypes.h>
 #include <math.h>
 
@@ -86,9 +87,7 @@ void aws_cbor_encode_single_float(struct aws_cbor_encoder *encoder, float value)
     ENCODE_THROUGH_LIBCBOR(5, encoder, value, cbor_encode_single);
 }
 
-/* Typecast from double to float will result int undefined behavior, but it's fine in this case, as the round trip won't
- * match. Suppress the ubsan for it. */
-AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
+void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
     if (isnan(value) || isinf(value)) {
         /* For special value: NAN/INFINITY, type cast to float and encode into single float. */
         aws_cbor_encode_single_float(encoder, (float)value);
@@ -104,11 +103,14 @@ AWS_SUPPRESS_UBSAN void aws_cbor_encode_double(struct aws_cbor_encoder *encoder,
         }
         return;
     }
-    float float_value = (float)value;
-    double converted_value = (double)float_value;
-    if (value == converted_value) {
-        aws_cbor_encode_single_float(encoder, float_value);
-        return;
+    if (value <= FLT_MAX && value >= FLT_MIN) {
+        /* Only try to convert the value within the range. */
+        float float_value = (float)value;
+        double converted_value = (double)float_value;
+        if (value == converted_value) {
+            aws_cbor_encode_single_float(encoder, float_value);
+            return;
+        }
     }
 
     ENCODE_THROUGH_LIBCBOR(9, encoder, value, cbor_encode_double);
@@ -586,6 +588,7 @@ decode_tag_done:
             }
             /* TODO: How to check overflow? */
             double ms_double = timestamp_secs * 1000.0;
+            /* Round it up instead of type cast incase of overflow */
             int64_t timestamp_ms = llround(ms_double);
             if (fetestexcept(FE_INVALID) || timestamp_ms > INT64_MAX) {
                 goto overflow;
