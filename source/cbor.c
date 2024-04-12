@@ -134,20 +134,20 @@ void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t number
     ENCODE_THROUGH_LIBCBOR(9, encoder, number_entries, cbor_encode_array_start);
 }
 
-void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor *from) {
+void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from) {
     /* Reserve the bytes for the byte string start cbor item and the actual bytes */
     /* Encode the first cbor item for byte string */
-    ENCODE_THROUGH_LIBCBOR(9 + from->len, encoder, from->len, cbor_encode_bytestring_start);
+    ENCODE_THROUGH_LIBCBOR(9 + from.len, encoder, from.len, cbor_encode_bytestring_start);
     /* Append the actual bytes to follow the cbor item */
-    aws_byte_buf_append(&encoder->encoded_buf, from);
+    aws_byte_buf_append(&encoder->encoded_buf, &from);
 }
 
-void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor *from) {
+void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from) {
     /* Reserve the bytes for the byte string start cbor item and the actual string */
     /* Encode the first cbor item for byte string */
-    ENCODE_THROUGH_LIBCBOR(9 + from->len, encoder, from->len, cbor_encode_string_start);
+    ENCODE_THROUGH_LIBCBOR(9 + from.len, encoder, from.len, cbor_encode_string_start);
     /* Append the actual string to follow the cbor item */
-    aws_byte_buf_append(&encoder->encoded_buf, from);
+    aws_byte_buf_append(&encoder->encoded_buf, &from);
 }
 
 void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value) {

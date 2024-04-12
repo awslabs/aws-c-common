@@ -159,7 +159,7 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value);
  * @param from value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor *from);
+void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_STRING value to "smallest possible" in encoder's buffer.
@@ -170,7 +170,7 @@ void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_by
  * @param from value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor *from);
+void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_ARRAY_START value to "smallest possible" in encoder's buffer.
