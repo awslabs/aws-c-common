@@ -13,6 +13,7 @@
 static bool s_aws_cbor_module_initialized = false;
 
 void aws_cbor_module_init(struct aws_allocator *allocator) {
+    (void)allocator;
     if (!s_aws_cbor_module_initialized) {
         /* Not allow any allocation from libcbor */
         cbor_set_allocs(NULL, NULL, NULL);
