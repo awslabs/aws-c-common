@@ -10,12 +10,10 @@
 #include <inttypes.h>
 #include <math.h>
 
-static struct aws_allocator *s_aws_cbor_module_allocator = NULL;
 static bool s_aws_cbor_module_initialized = false;
 
 void aws_cbor_module_init(struct aws_allocator *allocator) {
     if (!s_aws_cbor_module_initialized) {
-        s_aws_cbor_module_allocator = allocator;
         /* Not allow any allocation from libcbor */
         cbor_set_allocs(NULL, NULL, NULL);
         s_aws_cbor_module_initialized = true;
@@ -24,7 +22,6 @@ void aws_cbor_module_init(struct aws_allocator *allocator) {
 
 void aws_cbor_module_cleanup(void) {
     if (s_aws_cbor_module_initialized) {
-        s_aws_cbor_module_allocator = NULL;
         s_aws_cbor_module_initialized = false;
     }
 }
@@ -60,7 +57,7 @@ struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(struct aws_cbor_encoder
     return aws_byte_cursor_from_buf(&encoder->encoded_buf);
 }
 
-void aws_cbor_encoder_clear_encoded_data(struct aws_cbor_encoder *encoder) {
+void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
     aws_byte_buf_reset(&encoder->encoded_buf, false);
 }
 

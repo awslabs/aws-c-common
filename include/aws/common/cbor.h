@@ -113,7 +113,7 @@ struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(struct aws_cbor_encoder
  * @param encoder
  */
 AWS_COMMON_API
-void aws_cbor_encoder_clear_encoded_data(struct aws_cbor_encoder *encoder);
+void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_UINT value to "smallest possible" in encoder's buffer.
@@ -301,11 +301,11 @@ AWS_COMMON_API
 struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decoder);
 
 /**
- * @brief  Get the length of the remaining data. Once the data was decoded, it will consume the data, and result in
- * decrease of the remaining length.
+ * @brief  Get the length of the remaining bytes of the source. Once the source was decoded, it will be consumed,
+ * and result in decrease of the remaining length of bytes.
  *
  * @param decoder
- * @return The length remaining
+ * @return The length of bytes remaining of the decoder source.
  */
 AWS_COMMON_API
 size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder);
@@ -323,6 +323,19 @@ int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_el
 
 /**
  * @brief Consume the next data item, includes all the content within the data item.
+ *
+ * As an example for the following cbor, this function will consume all the data
+ * as it's only one cbor data item, an indefinite map with 2 key, value pair:
+ * 0xbf6346756ef563416d7421ff
+ * BF           -- Start indefinite-length map
+ *   63        -- First key, UTF-8 string length 3
+ *      46756e --   "Fun"
+ *   F5        -- First value, true
+ *   63        -- Second key, UTF-8 string length 3
+ *      416d74 --   "Amt"
+ *   21        -- Second value, -2
+ *   FF        -- "break"
+ *
  * Notes: this function will not ensure the data item is well-formed.
  *
  * @param src The src to parse data from
@@ -333,6 +346,19 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Consume the next element, without the content followed by the element.
+ *
+ * As an example for the following cbor, this function will only consume the
+ * 0xBF, "Start indefinite-length map", not any content of the map represented.
+ * The next element to decode will start from 0x63
+ * 0xbf6346756ef563416d7421ff
+ * BF           -- Start indefinite-length map
+ *   63        -- First key, UTF-8 string length 3
+ *      46756e --   "Fun"
+ *   F5        -- First value, true
+ *   63        -- Second key, UTF-8 string length 3
+ *      416d74 --   "Amt"
+ *   21        -- Second value, -2
+ *   FF        -- "break"
  *
  * @param decoder The decoder to parse data from
  * @param consumed_type Optional, get the type of the consumed element.

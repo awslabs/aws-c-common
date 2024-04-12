@@ -491,7 +491,7 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     aws_cbor_decoder_release(decoder);
 
     /* 4. Try get wrong type for timestamp */
-    aws_cbor_encoder_clear_encoded_data(encoder);
+    aws_cbor_encoder_reset_encoded_data(encoder);
     ASSERT_FAILS(aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_BYTESTRING));
     struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
     aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
@@ -505,7 +505,7 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     uint64_t tag_val = 0;
     ASSERT_SUCCESS(aws_cbor_decode_get_next_tag_val(decoder, &tag_val));
     ASSERT_UINT_EQUALS(AWS_CBOR_TAG_NEGATIVE_BIGNUM, tag_val);
-    aws_cbor_encoder_clear_encoded_data(encoder);
+    aws_cbor_encoder_reset_encoded_data(encoder);
     aws_cbor_decoder_release(decoder);
 
     /* 5. Consume data items with size */
