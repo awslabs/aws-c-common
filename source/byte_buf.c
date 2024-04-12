@@ -14,6 +14,8 @@
 #    pragma warning(disable : 4706)
 #endif
 
+const char *g_empty_string = "";
+
 int aws_byte_buf_init(struct aws_byte_buf *buf, struct aws_allocator *allocator, size_t capacity) {
     AWS_PRECONDITION(buf);
     AWS_PRECONDITION(allocator);

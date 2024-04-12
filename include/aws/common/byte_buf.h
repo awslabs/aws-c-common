@@ -44,20 +44,6 @@ struct aws_byte_cursor {
 };
 
 /**
- * Helper macro for passing aws_byte_cursor to the printf family of functions.
- * Intended for use with the PRInSTR format macro.
- * Ex: printf(PRInSTR "\n", AWS_BYTE_CURSOR_PRI(my_cursor));
- */
-#define AWS_BYTE_CURSOR_PRI(C) ((int)(C).len < 0 ? 0 : (int)(C).len), (const char *)(C).ptr
-
-/**
- * Helper macro for passing aws_byte_buf to the printf family of functions.
- * Intended for use with the PRInSTR format macro.
- * Ex: printf(PRInSTR "\n", AWS_BYTE_BUF_PRI(my_buf));
- */
-#define AWS_BYTE_BUF_PRI(B) ((int)(B).len < 0 ? 0 : (int)(B).len), (const char *)(B).buffer
-
-/**
  * Helper Macro for initializing a byte cursor from a string literal
  */
 #define AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(literal)                                                                 \
@@ -69,6 +55,8 @@ struct aws_byte_cursor {
 typedef bool(aws_byte_predicate_fn)(uint8_t value);
 
 AWS_EXTERN_C_BEGIN
+
+AWS_COMMON_API extern const char *g_empty_string;
 
 /**
  * Compare two arrays.
@@ -962,6 +950,23 @@ AWS_COMMON_API
 int aws_byte_cursor_utf8_parse_u64_hex(struct aws_byte_cursor cursor, uint64_t *dst);
 
 AWS_EXTERN_C_END
+
+/**
+ * Helper macro for passing aws_byte_cursor to the printf family of functions.
+ * Intended for use with the PRInSTR format macro.
+ * Ex: printf(PRInSTR "\n", AWS_BYTE_CURSOR_PRI(my_cursor));
+ */
+#define AWS_BYTE_CURSOR_PRI(C)                                                                                         \
+    ((int)(C).len < 0 ? 0 : (int)(C).len), (((int)(C).len <= 0) ? g_empty_string : ((const char *)(C).ptr))
+
+/**
+ * Helper macro for passing aws_byte_buf to the printf family of functions.
+ * Intended for use with the PRInSTR format macro.
+ * Ex: printf(PRInSTR "\n", AWS_BYTE_BUF_PRI(my_buf));
+ */
+#define AWS_BYTE_BUF_PRI(B)                                                                                            \
+    ((int)(B).len < 0 ? 0 : (int)(B).len), (((int)(B).len <= 0) ? g_empty_string : ((const char *)(B).buffer))
+
 AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_BYTE_BUF_H */
