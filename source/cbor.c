@@ -116,7 +116,7 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
             return;
         }
     }
-    if (fabs(value) <= FLT_MAX && fabs(value) >= FLT_MIN) {
+    if (value <= FLT_MAX && value >= -FLT_MAX) {
         /* Only try to convert the value within the range of float. */
         float float_value = (float)value;
         double converted_value = (double)float_value;
