@@ -17,7 +17,7 @@ CBOR_TEST_CASE(cbor_encode_decode_int_test) {
     (void)allocator;
     (void)ctx;
     aws_common_library_init(allocator);
-    enum { VALUE_NUM = 5 };
+    enum { VALUE_NUM = 6 };
 
     /**
      * Less than 24 only take 1 byte,
@@ -26,8 +26,8 @@ CBOR_TEST_CASE(cbor_encode_decode_int_test) {
      * uint16_t max to uint32_t maxx takes 5 bytes
      * uint32_t max to uint64_t max takes 9 bytes
      */
-    uint64_t values[VALUE_NUM] = {23, 24, UINT8_MAX + 1, UINT16_MAX + 1U, UINT32_MAX + 1LLU};
-    uint64_t expected_encoded_len[VALUE_NUM] = {1, 2, 3, 5, 9};
+    uint64_t values[VALUE_NUM] = {23, 24, UINT8_MAX + 1, UINT16_MAX + 1U, UINT32_MAX + 1LLU, UINT64_MAX};
+    uint64_t expected_encoded_len[VALUE_NUM] = {1, 2, 3, 5, 9, 9};
 
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 128);
