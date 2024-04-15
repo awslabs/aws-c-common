@@ -89,11 +89,12 @@ struct aws_cbor_decoder;
  * Every aws_cbor_encode_* will encode directly into the buffer to follow the encoded data.
  *
  * @param allocator
- * @param init_buffer_size The initial size of the temporary buffer, which will grow as needed.
+ * @param initial_buffer Optional. the buffer for encoder to encode into, if not provided, the encoder will create a new
+ *      one.
  * @return aws_cbor_encoder
  */
 AWS_COMMON_API
-struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, size_t init_buffer_size);
+struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, struct aws_byte_buf *initial_buffer);
 
 AWS_COMMON_API
 struct aws_cbor_encoder *aws_cbor_encoder_release(struct aws_cbor_encoder *encoder);
@@ -282,9 +283,9 @@ void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_
 /**
  * @brief Create a cbor decoder to take src to decode.
  * The typical usage of decoder will be:
- * - If the next element type only accept what expected, `aws_cbor_decode_get_next_*`
+ * - If the next element type only accept what expected, `aws_cbor_decoder_pop_next_*`
  * - If the next element type accept different type, invoke `aws_cbor_decode_peek_type` first, then based on the type to
- * invoke corresponding `aws_cbor_decode_get_next_*`
+ * invoke corresponding `aws_cbor_decoder_pop_next_*`
  * - If the next element type doesn't have corrsponding value, specifically: AWS_CBOR_TYPE_NULL, AWS_CBOR_TYPE_UNDEFINE,
  * AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decode_consume_next_element` to consume it and
  * continues for further decoding.
@@ -373,28 +374,28 @@ int aws_cbor_decode_consume_next_element(struct aws_cbor_decoder *decoder, enum 
  * @brief Get the next element based on the type. If the next element doesn't match the expected type. Error will be
  * raised. If the next element already been cached, it will consume the cached item when no error was returned.
  * Specifically:
- *  AWS_CBOR_TYPE_UINT - aws_cbor_decode_get_next_unsigned_val
- *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decode_get_next_neg_val, it represents (-1 - *out)
- *  AWS_CBOR_TYPE_DOUBLE - aws_cbor_decode_get_next_double_val
- *  AWS_CBOR_TYPE_BYTESTRING - aws_cbor_decode_get_next_bytes_val
- *  AWS_CBOR_TYPE_STRING - aws_cbor_decode_get_next_str_val
+ *  AWS_CBOR_TYPE_UINT - aws_cbor_decoder_pop_next_unsigned_val
+ *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_next_neg_val, it represents (-1 - *out)
+ *  AWS_CBOR_TYPE_DOUBLE - aws_cbor_decoder_pop_next_double_val
+ *  AWS_CBOR_TYPE_BYTESTRING - aws_cbor_decoder_pop_next_bytes_val
+ *  AWS_CBOR_TYPE_STRING - aws_cbor_decoder_pop_next_str_val
  *
  * @param decoder
  * @param out
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_get_next_unsigned_val(struct aws_cbor_decoder *decoder, uint64_t *out);
+int aws_cbor_decoder_pop_next_unsigned_val(struct aws_cbor_decoder *decoder, uint64_t *out);
 AWS_COMMON_API
-int aws_cbor_decode_get_next_neg_val(struct aws_cbor_decoder *decoder, uint64_t *out);
+int aws_cbor_decoder_pop_next_neg_val(struct aws_cbor_decoder *decoder, uint64_t *out);
 AWS_COMMON_API
-int aws_cbor_decode_get_next_double_val(struct aws_cbor_decoder *decoder, double *out);
+int aws_cbor_decoder_pop_next_double_val(struct aws_cbor_decoder *decoder, double *out);
 AWS_COMMON_API
-int aws_cbor_decode_get_next_boolean_val(struct aws_cbor_decoder *decoder, bool *out);
+int aws_cbor_decoder_pop_next_boolean_val(struct aws_cbor_decoder *decoder, bool *out);
 AWS_COMMON_API
-int aws_cbor_decode_get_next_bytes_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
+int aws_cbor_decoder_pop_next_bytes_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
 AWS_COMMON_API
-int aws_cbor_decode_get_next_str_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
+int aws_cbor_decoder_pop_next_str_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
 
 /**
  * @brief Get the next AWS_CBOR_TYPE_ARRAY_START element. Only consume the AWS_CBOR_TYPE_ARRAY_START element and set the
@@ -406,7 +407,7 @@ int aws_cbor_decode_get_next_str_val(struct aws_cbor_decoder *decoder, struct aw
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_get_next_array_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
+int aws_cbor_decoder_pop_next_array_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
 
 /**
  * @brief Get the next AWS_CBOR_TYPE_MAP_START element. Only consume the AWS_CBOR_TYPE_MAP_START element and set the
@@ -418,7 +419,7 @@ int aws_cbor_decode_get_next_array_start(struct aws_cbor_decoder *decoder, uint6
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_get_next_map_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
+int aws_cbor_decoder_pop_next_map_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
 
 /**
  * @brief Get the next AWS_CBOR_TYPE_TAG element. Only consume the AWS_CBOR_TYPE_TAG element and set the
@@ -430,7 +431,7 @@ int aws_cbor_decode_get_next_map_start(struct aws_cbor_decoder *decoder, uint64_
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_get_next_tag_val(struct aws_cbor_decoder *decoder, uint64_t *out_tag_val);
+int aws_cbor_decoder_pop_next_tag_val(struct aws_cbor_decoder *decoder, uint64_t *out_tag_val);
 
 /**
  * @brief Helper to get the next tag element and the value followed. If the value is float/double, the value will be
@@ -441,7 +442,7 @@ int aws_cbor_decode_get_next_tag_val(struct aws_cbor_decoder *decoder, uint64_t 
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_get_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out);
+int aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

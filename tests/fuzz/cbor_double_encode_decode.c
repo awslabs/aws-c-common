@@ -17,7 +17,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         return 0;
     }
     aws_common_library_init(allocator);
-    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, 16);
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     aws_cbor_encode_double(encoder, val);
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
@@ -27,20 +27,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     switch (out_type) {
         case AWS_CBOR_TYPE_UINT: {
             uint64_t result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decode_get_next_unsigned_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_unsigned_val(decoder, &result) == 0);
             AWS_FATAL_ASSERT((double)result == val);
             break;
         }
         case AWS_CBOR_TYPE_NEGINT: {
             uint64_t result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decode_get_next_neg_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_neg_val(decoder, &result) == 0);
             int64_t expected_val = -1 - result;
             AWS_FATAL_ASSERT(expected_val == (int64_t)val);
             break;
         }
         case AWS_CBOR_TYPE_DOUBLE: {
             double result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decode_get_next_double_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_double_val(decoder, &result) == 0);
             if (isnan(val)) {
                 AWS_FATAL_ASSERT(isnan(result));
             } else {

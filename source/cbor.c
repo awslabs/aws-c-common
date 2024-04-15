@@ -3,6 +3,7 @@
 
 #include <aws/common/array_list.h>
 #include <aws/common/logging.h>
+#include <aws/common/private/byte_buf.h>
 #include <aws/common/private/external_module_impl.h>
 #include <aws/common/ref_count.h>
 #include <fenv.h>
@@ -47,38 +48,47 @@ struct aws_cbor_encoder {
 
     /* Refcount maybe */
     struct aws_ref_count refcount;
-    struct aws_byte_buf encoded_buf;
+    struct aws_byte_buf *encoded_buf;
 };
 
-struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, size_t init_buffer_size) {
+struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, struct aws_byte_buf *initial_buffer) {
+    if (initial_buffer && initial_buffer->allocator == NULL) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Cbor encoder only accepts dynamic allocated buffer.");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
     struct aws_cbor_encoder *encoder = aws_mem_acquire(allocator, sizeof(struct aws_cbor_encoder));
     encoder->allocator = allocator;
-    aws_byte_buf_init(&encoder->encoded_buf, allocator, init_buffer_size);
+    if (!initial_buffer) {
+        aws_byte_buf_init(encoder->encoded_buf, allocator, 256);
+    } else {
+        encoder->encoded_buf = initial_buffer;
+    }
 
     /* TODO: refcount */
     return encoder;
 }
 
 struct aws_cbor_encoder *aws_cbor_encoder_release(struct aws_cbor_encoder *encoder) {
-    aws_byte_buf_clean_up(&encoder->encoded_buf);
+    aws_byte_buf_clean_up(encoder->encoded_buf);
     aws_mem_release(encoder->allocator, encoder);
     return NULL;
 }
 
 struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(const struct aws_cbor_encoder *encoder) {
-    return aws_byte_cursor_from_buf(&encoder->encoded_buf);
+    return aws_byte_cursor_from_buf(encoder->encoded_buf);
 }
 
 void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
-    aws_byte_buf_reset(&encoder->encoded_buf, false);
+    aws_byte_buf_reset(encoder->encoded_buf, false);
 }
 
 static uint8_t *s_get_encoder_current_position(struct aws_cbor_encoder *encoder) {
-    return encoder->encoded_buf.buffer + encoder->encoded_buf.len;
+    return encoder->encoded_buf->buffer + encoder->encoded_buf->len;
 }
 
 static size_t s_get_encoder_remaining_len(struct aws_cbor_encoder *encoder) {
-    return encoder->encoded_buf.capacity - encoder->encoded_buf.len;
+    return encoder->encoded_buf->capacity - encoder->encoded_buf->len;
 }
 
 /**
@@ -87,10 +97,12 @@ static size_t s_get_encoder_remaining_len(struct aws_cbor_encoder *encoder) {
  */
 #define ENCODE_THROUGH_LIBCBOR(encoder, length_to_reserve, value, fn)                                                  \
     do {                                                                                                               \
-        aws_byte_buf_reserve_dynamic(&(encoder)->encoded_buf, (encoder)->encoded_buf.len + (length_to_reserve));       \
+        int error =                                                                                                    \
+            aws_byte_buf_ensure_capacity((encoder)->encoded_buf, (encoder)->encoded_buf->len + (length_to_reserve));   \
+        AWS_ASSERT(error == AWS_ERROR_SUCCESS);                                                                        \
         size_t encoded_len = fn(value, s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder)); \
         AWS_ASSERT((encoded_len) != 0);                                                                                \
-        (encoder)->encoded_buf.len += (encoded_len);                                                                   \
+        (encoder)->encoded_buf->len += (encoded_len);                                                                  \
     } while (false)
 
 void aws_cbor_encode_uint(struct aws_cbor_encoder *encoder, uint64_t value) {
@@ -117,7 +129,11 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
          * A prvalue of a floating point type can be converted to a prvalue of an integer type. The conversion
          * truncates; that is, the fractional part is discarded. The behavior is undefined if the truncated value cannot
          * be represented in the destination type.
-         * Check against the IMT64 range to avoid undefined behavior
+         * Check against the INT64 range to avoid undefined behavior
+         *
+         * Comparing against INT64_MAX instead of UINT64_MAX to simplify the code, which may loss the opportunity to
+         * convert the UIN64 range from double to uint64_t. However, converting double to uint64_t will not benefit the
+         * total length encoded.
          **/
         int64_t int_value = (int64_t)value;
         if (value == (double)int_value) {
@@ -160,7 +176,7 @@ void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_by
     /* Encode the first cbor item for byte string */
     ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit + from.len, from.len, cbor_encode_bytestring_start);
     /* Append the actual bytes to follow the cbor item */
-    aws_byte_buf_append(&encoder->encoded_buf, &from);
+    aws_byte_buf_append(encoder->encoded_buf, &from);
 }
 
 void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from) {
@@ -168,7 +184,7 @@ void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_b
     /* Encode the first cbor item for byte string */
     ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit + from.len, from.len, cbor_encode_string_start);
     /* Append the actual string to follow the cbor item */
-    aws_byte_buf_append(&encoder->encoded_buf, &from);
+    aws_byte_buf_append(encoder->encoded_buf, &from);
 }
 
 void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value) {
@@ -189,7 +205,7 @@ void aws_cbor_encode_undefine(struct aws_cbor_encoder *encoder) {
 
 int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type) {
     /* All inf start takes 1 byte only */
-    aws_byte_buf_reserve_dynamic(&encoder->encoded_buf, encoder->encoded_buf.len + 1);
+    aws_byte_buf_ensure_capacity(encoder->encoded_buf, encoder->encoded_buf->len + 1);
     size_t encoded_len = 0;
     switch (type) {
         case AWS_CBOR_TYPE_INF_BYTESTRING_START:
@@ -218,7 +234,7 @@ int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_el
             break;
     }
     AWS_ASSERT(encoded_len == 1);
-    encoder->encoded_buf.len += encoded_len;
+    encoder->encoded_buf->len += encoded_len;
     return AWS_OP_SUCCESS;
 }
 
@@ -227,11 +243,11 @@ void aws_cbor_encode_break(struct aws_cbor_encoder *encoder) {
     /* break takes 1 byte */
     /* Notes: cannot use cbor_encode_ctrl cause it will encode value 31 as 1 byte to follow the argument, instead of
      * argument directly.  */
-    aws_byte_buf_reserve_dynamic(&encoder->encoded_buf, encoder->encoded_buf.len + 1);
+    aws_byte_buf_ensure_capacity(encoder->encoded_buf, encoder->encoded_buf->len + 1);
     size_t encoded_len =
         cbor_encode_break(s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
     AWS_ASSERT(encoded_len == 1);
-    encoder->encoded_buf.len += encoded_len;
+    encoder->encoded_buf->len += encoded_len;
 }
 
 void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms) {
@@ -248,15 +264,17 @@ struct aws_cbor_decoder_context {
     enum aws_cbor_element_type type;
 
     /* All the values only valid when the type is set to corresponding type. */
-    uint64_t unsigned_val;
-    uint64_t neg_val;
-    double double_val;
-    uint64_t tag_val;
-    bool boolean_val;
-    struct aws_byte_cursor str_val;
-    struct aws_byte_cursor bytes_val;
-    uint64_t map_start;
-    uint64_t array_start;
+    union {
+        uint64_t unsigned_val;
+        uint64_t neg_val;
+        double double_val;
+        uint64_t tag_val;
+        bool boolean_val;
+        struct aws_byte_cursor str_val;
+        struct aws_byte_cursor bytes_val;
+        uint64_t map_start;
+        uint64_t array_start;
+    } cbor_data;
 };
 
 struct aws_cbor_decoder {
@@ -298,7 +316,7 @@ size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *deco
     static void s_##field##_callback(void *ctx, callback_type val) {                                                   \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
         AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_MAX);                                               \
-        (decoder)->cached_context.field = val;                                                                         \
+        (decoder)->cached_context.cbor_data.field = val;                                                               \
         (decoder)->cached_context.type = cbor_type;                                                                    \
     }
 
@@ -347,8 +365,8 @@ static void s_bytes_callback(void *ctx, const unsigned char *cbor_data, uint64_t
         return;
     }
     decoder->cached_context.type = AWS_CBOR_TYPE_BYTESTRING;
-    decoder->cached_context.bytes_val.ptr = (uint8_t *)cbor_data;
-    decoder->cached_context.bytes_val.len = (size_t)length;
+    decoder->cached_context.cbor_data.bytes_val.ptr = (uint8_t *)cbor_data;
+    decoder->cached_context.cbor_data.bytes_val.len = (size_t)length;
 }
 
 static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t length) {
@@ -360,8 +378,8 @@ static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t l
         return;
     }
     decoder->cached_context.type = AWS_CBOR_TYPE_STRING;
-    decoder->cached_context.str_val.ptr = (uint8_t *)cbor_data;
-    decoder->cached_context.str_val.len = (size_t)length;
+    decoder->cached_context.cbor_data.str_val.ptr = (uint8_t *)cbor_data;
+    decoder->cached_context.cbor_data.str_val.len = (size_t)length;
 }
 
 #define LIBCBOR_SIMPLE_CALLBACK(field, cbor_type)                                                                      \
@@ -473,7 +491,7 @@ static int s_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
 
 #define GET_NEXT_ITEM(field, out_type, expected_cbor_type)                                                             \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                                                                   \
-    int aws_cbor_decode_get_next_##field(struct aws_cbor_decoder *decoder, out_type *out) {                            \
+    int aws_cbor_decoder_pop_next_##field(struct aws_cbor_decoder *decoder, out_type *out) {                           \
         if ((decoder)->error_code) {                                                                                   \
             /* Error happened during decoding */                                                                       \
             return aws_raise_error((decoder)->error_code);                                                             \
@@ -496,7 +514,7 @@ static int s_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
         } else {                                                                                                       \
             /* Clear the cache as we give it out. */                                                                   \
             (decoder)->cached_context.type = AWS_CBOR_TYPE_MAX;                                                        \
-            *out = (decoder)->cached_context.field;                                                                    \
+            *out = (decoder)->cached_context.cbor_data.field;                                                          \
         }                                                                                                              \
         return AWS_OP_SUCCESS;                                                                                         \
     }
@@ -531,7 +549,7 @@ int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_el
     return AWS_OP_SUCCESS;
 }
 
-int aws_cbor_decode_get_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out) {
+int aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out) {
     if (decoder->error_code) {
         return aws_raise_error(decoder->error_code);
     }
@@ -552,11 +570,11 @@ decode_tag_done:
             decoder->cached_context.type,
             AWS_CBOR_TYPE_TAG);
         return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
-    } else if (decoder->cached_context.tag_val != AWS_CBOR_TAG_EPOCH_TIME) {
+    } else if (decoder->cached_context.cbor_data.tag_val != AWS_CBOR_TAG_EPOCH_TIME) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_CBOR,
             "The decoder got unexpected tag number: %" PRIu64 ", while expecting tag number: %d.",
-            decoder->cached_context.tag_val,
+            decoder->cached_context.cbor_data.tag_val,
             AWS_CBOR_TAG_EPOCH_TIME);
         return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
     }
@@ -569,7 +587,7 @@ decode_tag_done:
     switch (val_type) {
         case AWS_CBOR_TYPE_UINT: {
             uint64_t timestamp_secs = 0;
-            error |= aws_cbor_decode_get_next_unsigned_val(decoder, &timestamp_secs);
+            error |= aws_cbor_decoder_pop_next_unsigned_val(decoder, &timestamp_secs);
             if (error) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
@@ -585,7 +603,7 @@ decode_tag_done:
 
         case AWS_CBOR_TYPE_NEGINT: {
             uint64_t timestamp_secs = 0;
-            error |= aws_cbor_decode_get_next_neg_val(decoder, &timestamp_secs);
+            error |= aws_cbor_decoder_pop_next_neg_val(decoder, &timestamp_secs);
             if (error) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
@@ -603,7 +621,7 @@ decode_tag_done:
 
         case AWS_CBOR_TYPE_DOUBLE: {
             double timestamp_secs = 0;
-            error |= aws_cbor_decode_get_next_double_val(decoder, &timestamp_secs);
+            error |= aws_cbor_decoder_pop_next_double_val(decoder, &timestamp_secs);
             if (error) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
@@ -654,7 +672,7 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder) {
             }
             break;
         case AWS_CBOR_TYPE_MAP_START: {
-            uint64_t num_map_item = decoder->cached_context.map_start;
+            uint64_t num_map_item = decoder->cached_context.cbor_data.map_start;
             /* Reset type */
             decoder->cached_context.type = AWS_CBOR_TYPE_MAX;
             for (uint64_t i = 0; i < num_map_item; i++) {
@@ -670,7 +688,7 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder) {
             break;
         }
         case AWS_CBOR_TYPE_ARRAY_START: {
-            uint64_t num_array_item = decoder->cached_context.array_start;
+            uint64_t num_array_item = decoder->cached_context.cbor_data.array_start;
             /* Reset type */
             decoder->cached_context.type = AWS_CBOR_TYPE_MAX;
             for (uint64_t i = 0; i < num_array_item; i++) {

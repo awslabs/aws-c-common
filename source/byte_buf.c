@@ -817,7 +817,7 @@ static int s_aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_
     return AWS_OP_SUCCESS;
 }
 
-int aws_byte_buf_reserve_dynamic(struct aws_byte_buf *buffer, size_t requested_capacity) {
+int aws_byte_buf_ensure_capacity(struct aws_byte_buf *buffer, size_t requested_capacity) {
     return s_aws_byte_buf_reserve(buffer, requested_capacity, true /*dynamic_expand*/);
 }
 
