@@ -1109,6 +1109,6 @@ uint64_t aws_hash_uint64_t(const void *item) {
     return *(uint64_t *)item;
 }
 
-bool aws_compare_uint64_t_eq(const void *a, const void *b) {
+bool aws_hash_compare_uint64_t_eq(const void *a, const void *b) {
     return *(uint64_t *)a == *(uint64_t *)b;
 }
