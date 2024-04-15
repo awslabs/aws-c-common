@@ -105,6 +105,7 @@ add_test_case(linked_list_reverse_iteration)
 add_test_case(linked_list_swap_contents)
 add_test_case(linked_list_move_all_back)
 add_test_case(linked_list_move_all_front)
+add_test_case(linked_list_node_in_list)
 
 add_test_case(hex_encoding_test_case_empty_test)
 add_test_case(hex_encoding_test_case_f_test)
