@@ -102,6 +102,7 @@ static size_t s_get_encoder_remaining_len(struct aws_cbor_encoder *encoder) {
     do {                                                                                                               \
         int error =                                                                                                    \
             aws_byte_buf_ensure_capacity((encoder)->encoded_buf, (encoder)->encoded_buf->len + (length_to_reserve));   \
+        (void)error;                                                                                                   \
         AWS_ASSERT(error == AWS_ERROR_SUCCESS);                                                                        \
         size_t encoded_len = fn(value, s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder)); \
         AWS_ASSERT((encoded_len) != 0);                                                                                \
