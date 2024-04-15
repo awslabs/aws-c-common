@@ -49,6 +49,7 @@ struct aws_cbor_encoder {
     /* Refcount maybe */
     struct aws_ref_count refcount;
     struct aws_byte_buf *encoded_buf;
+    struct aws_byte_buf temp_buf;
 };
 
 struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, struct aws_byte_buf *initial_buffer) {
@@ -60,9 +61,11 @@ struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, s
     struct aws_cbor_encoder *encoder = aws_mem_acquire(allocator, sizeof(struct aws_cbor_encoder));
     encoder->allocator = allocator;
     if (!initial_buffer) {
-        aws_byte_buf_init(encoder->encoded_buf, allocator, 256);
+        aws_byte_buf_init(&encoder->temp_buf, allocator, 256);
+        encoder->encoded_buf = &encoder->temp_buf;
     } else {
         encoder->encoded_buf = initial_buffer;
+        AWS_ZERO_STRUCT(encoder->temp_buf);
     }
 
     /* TODO: refcount */
@@ -70,7 +73,7 @@ struct aws_cbor_encoder *aws_cbor_encoder_new(struct aws_allocator *allocator, s
 }
 
 struct aws_cbor_encoder *aws_cbor_encoder_release(struct aws_cbor_encoder *encoder) {
-    aws_byte_buf_clean_up(encoder->encoded_buf);
+    aws_byte_buf_clean_up(&encoder->temp_buf);
     aws_mem_release(encoder->allocator, encoder);
     return NULL;
 }
