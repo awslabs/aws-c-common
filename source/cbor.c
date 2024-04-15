@@ -15,6 +15,14 @@ static bool s_aws_cbor_module_initialized = false;
 const static size_t s_cbor_element_width_64bit = 9;
 const static size_t s_cbor_element_width_32bit = 5;
 
+enum s_cbor_simple_val {
+    AWS_CBOR_SIMPLE_VAL_FALSE = 20,
+    AWS_CBOR_SIMPLE_VAL_TRUE = 21,
+    AWS_CBOR_SIMPLE_VAL_NULL = 22,
+    AWS_CBOR_SIMPLE_VAL_UNDEFINED = 23,
+    AWS_CBOR_SIMPLE_VAL_BREAK = 31,
+};
+
 void aws_cbor_module_init(struct aws_allocator *allocator) {
     (void)allocator;
     if (!s_aws_cbor_module_initialized) {
@@ -65,6 +73,14 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
     aws_byte_buf_reset(&encoder->encoded_buf, false);
 }
 
+static uint8_t *s_get_encoder_current_position(struct aws_cbor_encoder *encoder) {
+    return encoder->encoded_buf.buffer + encoder->encoded_buf.len;
+}
+
+static size_t s_get_encoder_remaining_len(struct aws_cbor_encoder *encoder) {
+    return encoder->encoded_buf.capacity - encoder->encoded_buf.len;
+}
+
 /**
  * @brief Marcos to ensure the encoder have enough space to encode the value into the buffer using given `fn`, and then
  * encode it.
@@ -72,10 +88,7 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
 #define ENCODE_THROUGH_LIBCBOR(encoder, length_to_reserve, value, fn)                                                  \
     do {                                                                                                               \
         aws_byte_buf_reserve_dynamic(&(encoder)->encoded_buf, (encoder)->encoded_buf.len + (length_to_reserve));       \
-        size_t encoded_len =                                                                                           \
-            fn(value,                                                                                                  \
-               (encoder)->encoded_buf.buffer + (encoder)->encoded_buf.len,                                             \
-               (encoder)->encoded_buf.capacity - (encoder)->encoded_buf.len);                                          \
+        size_t encoded_len = fn(value, s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder)); \
         AWS_ASSERT((encoded_len) != 0);                                                                                \
         (encoder)->encoded_buf.len += (encoded_len);                                                                   \
     } while (false)
@@ -120,6 +133,7 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
         /* Only try to convert the value within the range of float. */
         float float_value = (float)value;
         double converted_value = (double)float_value;
+        /* Try to cast a round trip to detect any precision loss. */
         if (value == converted_value) {
             aws_cbor_encode_single_float(encoder, float_value);
             return;
@@ -159,18 +173,18 @@ void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_b
 
 void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value) {
     /* Major type 7 (simple), value 20 (false) and 21 (true) */
-    uint8_t ctrl_value = value == true ? 21 : 20;
+    uint8_t ctrl_value = value == true ? AWS_CBOR_SIMPLE_VAL_TRUE : AWS_CBOR_SIMPLE_VAL_FALSE;
     ENCODE_THROUGH_LIBCBOR(encoder, 1, ctrl_value, cbor_encode_ctrl);
 }
 
 void aws_cbor_encode_null(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 22 (null) */
-    ENCODE_THROUGH_LIBCBOR(encoder, 1, (uint8_t)22 /*null*/, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(encoder, 1, AWS_CBOR_SIMPLE_VAL_NULL /*null*/, cbor_encode_ctrl);
 }
 
 void aws_cbor_encode_undefine(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 23 (undefined) */
-    ENCODE_THROUGH_LIBCBOR(encoder, 1, (uint8_t)23 /*undefined*/, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(encoder, 1, AWS_CBOR_SIMPLE_VAL_UNDEFINED /*undefined*/, cbor_encode_ctrl);
 }
 
 int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type) {
@@ -180,23 +194,19 @@ int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_el
     switch (type) {
         case AWS_CBOR_TYPE_INF_BYTESTRING_START:
             encoded_len = cbor_encode_indef_bytestring_start(
-                encoder->encoded_buf.buffer + encoder->encoded_buf.len,
-                encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+                s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
             break;
         case AWS_CBOR_TYPE_INF_STRING_START:
             encoded_len = cbor_encode_indef_string_start(
-                encoder->encoded_buf.buffer + encoder->encoded_buf.len,
-                encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+                s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
             break;
         case AWS_CBOR_TYPE_INF_ARRAY_START:
             encoded_len = cbor_encode_indef_array_start(
-                encoder->encoded_buf.buffer + encoder->encoded_buf.len,
-                encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+                s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
             break;
         case AWS_CBOR_TYPE_INF_MAP_START:
             encoded_len = cbor_encode_indef_map_start(
-                encoder->encoded_buf.buffer + encoder->encoded_buf.len,
-                encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+                s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
             break;
 
         default:
@@ -218,15 +228,15 @@ void aws_cbor_encode_break(struct aws_cbor_encoder *encoder) {
     /* Notes: cannot use cbor_encode_ctrl cause it will encode value 31 as 1 byte to follow the argument, instead of
      * argument directly.  */
     aws_byte_buf_reserve_dynamic(&encoder->encoded_buf, encoder->encoded_buf.len + 1);
-    size_t encoded_len = cbor_encode_break(
-        encoder->encoded_buf.buffer + encoder->encoded_buf.len,
-        encoder->encoded_buf.capacity - encoder->encoded_buf.len);
+    size_t encoded_len =
+        cbor_encode_break(s_get_encoder_current_position(encoder), s_get_encoder_remaining_len(encoder));
     AWS_ASSERT(encoded_len == 1);
     encoder->encoded_buf.len += encoded_len;
 }
 
 void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms) {
     aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_EPOCH_TIME);
+    /* Encode as Secs precision for cbor. */
     aws_cbor_encode_double(encoder, (double)epoch_time_ms / 1000.0);
 }
 
@@ -280,7 +290,7 @@ struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decod
     return NULL;
 }
 
-size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder) {
+size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *decoder) {
     return decoder->src.len;
 }
 

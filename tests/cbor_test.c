@@ -72,7 +72,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     (void)allocator;
     (void)ctx;
     aws_common_library_init(allocator);
-    enum { VALUE_NUM = 9 };
+    enum { VALUE_NUM = 10 };
 
     /**
      * 1 as unsigned int, takes 1 byte
@@ -83,13 +83,16 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
      * INFINITY will be float, takes 5 bytes
      * FLT_MAX still a float, take 5 bytes
      * DBL_MAX will be a double takes 9 bytes
+     * DBL_MIN will be a double takes 9 bytes
+     * HUGE_VAL
      */
-    double values[VALUE_NUM] = {1.0, -1.0, 1.1, 1.1f, -1.1f, INFINITY, FLT_MAX, DBL_MAX, DBL_MIN};
-    uint64_t expected_encoded_len[VALUE_NUM] = {1, 1, 9, 5, 5, 5, 5, 9, 9};
+    double values[VALUE_NUM] = {1.0, -1.0, 1.1, 1.1f, -1.1f, INFINITY, FLT_MAX, DBL_MAX, DBL_MIN, HUGE_VAL};
+    uint64_t expected_encoded_len[VALUE_NUM] = {1, 1, 9, 5, 5, 5, 5, 9, 9, 5};
 
     int expected_encoded_type[VALUE_NUM] = {
         AWS_CBOR_TYPE_UINT,
         AWS_CBOR_TYPE_NEGINT,
+        AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
         AWS_CBOR_TYPE_DOUBLE,
@@ -155,6 +158,11 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* DBL_MIN */
+    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
+    ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
+    ASSERT_TRUE(values[index++] == double_result);
+    /* HUGE_VAL */
     ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decode_get_next_double_val(decoder, &double_result));
