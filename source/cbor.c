@@ -12,6 +12,9 @@
 
 static bool s_aws_cbor_module_initialized = false;
 
+const static size_t s_cbor_element_width_64bit = 9;
+const static size_t s_cbor_element_width_32bit = 5;
+
 void aws_cbor_module_init(struct aws_allocator *allocator) {
     (void)allocator;
     if (!s_aws_cbor_module_initialized) {
@@ -54,7 +57,7 @@ struct aws_cbor_encoder *aws_cbor_encoder_release(struct aws_cbor_encoder *encod
     return NULL;
 }
 
-struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(struct aws_cbor_encoder *encoder) {
+struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(const struct aws_cbor_encoder *encoder) {
     return aws_byte_cursor_from_buf(&encoder->encoded_buf);
 }
 
@@ -62,7 +65,11 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
     aws_byte_buf_reset(&encoder->encoded_buf, false);
 }
 
-#define ENCODE_THROUGH_LIBCBOR(length_to_reserve, encoder, value, fn)                                                  \
+/**
+ * @brief Marcos to ensure the encoder have enough space to encode the value into the buffer using given `fn`, and then
+ * encode it.
+ */
+#define ENCODE_THROUGH_LIBCBOR(encoder, length_to_reserve, value, fn)                                                  \
     do {                                                                                                               \
         aws_byte_buf_reserve_dynamic(&(encoder)->encoded_buf, (encoder)->encoded_buf.len + (length_to_reserve));       \
         size_t encoded_len =                                                                                           \
@@ -74,19 +81,19 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder) {
     } while (false)
 
 void aws_cbor_encode_uint(struct aws_cbor_encoder *encoder, uint64_t value) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, value, cbor_encode_uint);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, value, cbor_encode_uint);
 }
 
 void aws_cbor_encode_negint(struct aws_cbor_encoder *encoder, uint64_t value) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, value, cbor_encode_negint);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, value, cbor_encode_negint);
 }
 
 void aws_cbor_encode_single_float(struct aws_cbor_encoder *encoder, float value) {
-    ENCODE_THROUGH_LIBCBOR(5, encoder, value, cbor_encode_single);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_32bit, value, cbor_encode_single);
 }
 
 void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
-    if (isnan(value) || isinf(value)) {
+    if (!isfinite(value)) {
         /* For special value: NAN/INFINITY, type cast to float and encode into single float. */
         aws_cbor_encode_single_float(encoder, (float)value);
         return;
@@ -119,25 +126,25 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value) {
         }
     }
 
-    ENCODE_THROUGH_LIBCBOR(9, encoder, value, cbor_encode_double);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, value, cbor_encode_double);
 }
 
 void aws_cbor_encode_map_start(struct aws_cbor_encoder *encoder, size_t number_entries) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, number_entries, cbor_encode_map_start);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, number_entries, cbor_encode_map_start);
 }
 
 void aws_cbor_encode_tag(struct aws_cbor_encoder *encoder, uint64_t tag_number) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, tag_number, cbor_encode_tag);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, tag_number, cbor_encode_tag);
 }
 
 void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t number_entries) {
-    ENCODE_THROUGH_LIBCBOR(9, encoder, number_entries, cbor_encode_array_start);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit, number_entries, cbor_encode_array_start);
 }
 
 void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from) {
     /* Reserve the bytes for the byte string start cbor item and the actual bytes */
     /* Encode the first cbor item for byte string */
-    ENCODE_THROUGH_LIBCBOR(9 + from.len, encoder, from.len, cbor_encode_bytestring_start);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit + from.len, from.len, cbor_encode_bytestring_start);
     /* Append the actual bytes to follow the cbor item */
     aws_byte_buf_append(&encoder->encoded_buf, &from);
 }
@@ -145,7 +152,7 @@ void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_by
 void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from) {
     /* Reserve the bytes for the byte string start cbor item and the actual string */
     /* Encode the first cbor item for byte string */
-    ENCODE_THROUGH_LIBCBOR(9 + from.len, encoder, from.len, cbor_encode_string_start);
+    ENCODE_THROUGH_LIBCBOR(encoder, s_cbor_element_width_64bit + from.len, from.len, cbor_encode_string_start);
     /* Append the actual string to follow the cbor item */
     aws_byte_buf_append(&encoder->encoded_buf, &from);
 }
@@ -153,17 +160,17 @@ void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_b
 void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value) {
     /* Major type 7 (simple), value 20 (false) and 21 (true) */
     uint8_t ctrl_value = value == true ? 21 : 20;
-    ENCODE_THROUGH_LIBCBOR(1, encoder, ctrl_value, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(encoder, 1, ctrl_value, cbor_encode_ctrl);
 }
 
 void aws_cbor_encode_null(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 22 (null) */
-    ENCODE_THROUGH_LIBCBOR(1, encoder, (uint8_t)22 /*null*/, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(encoder, 1, (uint8_t)22 /*null*/, cbor_encode_ctrl);
 }
 
 void aws_cbor_encode_undefine(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 23 (undefined) */
-    ENCODE_THROUGH_LIBCBOR(1, encoder, (uint8_t)23 /*undefined*/, cbor_encode_ctrl);
+    ENCODE_THROUGH_LIBCBOR(encoder, 1, (uint8_t)23 /*undefined*/, cbor_encode_ctrl);
 }
 
 int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type) {

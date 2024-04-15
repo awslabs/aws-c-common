@@ -105,7 +105,7 @@ struct aws_cbor_encoder *aws_cbor_encoder_release(struct aws_cbor_encoder *encod
  * @return struct aws_byte_cursor from the encoder buffer.
  */
 AWS_COMMON_API
-struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(struct aws_cbor_encoder *encoder);
+struct aws_byte_cursor aws_cbor_encoder_get_encoded_data(const struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Clear the current encoded buffer from encoder.
@@ -118,6 +118,8 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder);
 /**
  * @brief Encode a AWS_CBOR_TYPE_UINT value to "smallest possible" in encoder's buffer.
  *  Referring to RFC8949 section 4.2.1
+ *
+ * TODO: maybe add a width of the encoded value.
  *
  * @param encoder
  * @param value value to encode.
@@ -308,7 +310,7 @@ struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decod
  * @return The length of bytes remaining of the decoder source.
  */
 AWS_COMMON_API
-size_t aws_cbor_decoder_get_remaining_length(struct aws_cbor_decoder *decoder);
+size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Decode the next element and store it in the decoder cache if there was no element cached.
