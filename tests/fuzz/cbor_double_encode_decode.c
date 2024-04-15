@@ -18,12 +18,12 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
     aws_common_library_init(allocator);
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
-    aws_cbor_encode_double(encoder, val);
+    aws_cbor_encoder_write_double(encoder, val);
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
-    AWS_FATAL_ASSERT(aws_cbor_decode_peek_type(decoder, &out_type) == 0);
+    AWS_FATAL_ASSERT(aws_cbor_decoder_peek_type(decoder, &out_type) == 0);
     switch (out_type) {
         case AWS_CBOR_TYPE_UINT: {
             uint64_t result = 0;

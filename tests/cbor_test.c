@@ -33,14 +33,14 @@ CBOR_TEST_CASE(cbor_encode_decode_int_test) {
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     /* Unsigned int */
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_uint(encoder, values[i]);
+        aws_cbor_encoder_write_uint(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
     }
     /* Negative int */
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_negint(encoder, values[i]);
+        aws_cbor_encoder_write_negint(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
@@ -105,7 +105,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_double(encoder, values[i]);
+        aws_cbor_encoder_write_double(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
@@ -116,54 +116,54 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     size_t index = 0;
     uint64_t result = 0;
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_val(decoder, &result));
     ASSERT_TRUE(values[index++] == result);
     /* negative int, -1 */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_neg_val(decoder, &result));
     /* Convert the decode val to expected val. */
     ASSERT_TRUE((-1 - values[index++]) == result);
     /* 1.1 double */
     double double_result = 0;
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* 1.1 float */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* -1.1 float */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* INFINITY */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* FLT_MAX */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* DBL_MAX */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* DBL_MIN */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
     /* HUGE_VAL */
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_double_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
@@ -187,7 +187,7 @@ CBOR_TEST_CASE(cbor_encode_decode_bool_test) {
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_bool(encoder, values[i]);
+        aws_cbor_encoder_write_bool(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
@@ -222,13 +222,13 @@ CBOR_TEST_CASE(cbor_encode_decode_bytesstr_str_test) {
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_string(encoder, values[i]);
+        aws_cbor_encoder_write_string(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
     }
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_bytes(encoder, values[i]);
+        aws_cbor_encoder_write_bytes(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
@@ -269,40 +269,40 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
 
     /* Array with 2 elements */
-    aws_cbor_encode_array_start(encoder, 2);
+    aws_cbor_encoder_write_array_start(encoder, 2);
     struct aws_byte_cursor encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* Array start with 2 element only takes 1 byte */
     ASSERT_UINT_EQUALS(encoded_len + 1, encoded_cursor.len);
     encoded_len = encoded_cursor.len;
 
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_string(encoder, values[i]);
+        aws_cbor_encoder_write_string(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
     }
 
     /* Map with 1 element */
-    aws_cbor_encode_map_start(encoder, 1);
+    aws_cbor_encoder_write_map_start(encoder, 1);
     encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* Map start with 1 (key, value pair) only takes 1 byte */
     ASSERT_UINT_EQUALS(encoded_len + 1, encoded_cursor.len);
     encoded_len = encoded_cursor.len;
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_bytes(encoder, values[i]);
+        aws_cbor_encoder_write_bytes(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
     }
 
     /* Map with a lot element, not closure. */
-    aws_cbor_encode_array_start(encoder, UINT16_MAX + 1);
+    aws_cbor_encoder_write_array_start(encoder, UINT16_MAX + 1);
     encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* The size takes 4 bytes and one more for the cbor start item */
     ASSERT_UINT_EQUALS(encoded_len + 5, encoded_cursor.len);
     encoded_len = encoded_cursor.len;
 
-    aws_cbor_encode_map_start(encoder, UINT16_MAX + 1);
+    aws_cbor_encoder_write_map_start(encoder, UINT16_MAX + 1);
     encoded_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* The size takes 4 bytes and one more for the cbor start item */
     ASSERT_UINT_EQUALS(encoded_len + 5, encoded_cursor.len);
@@ -345,18 +345,18 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
     aws_common_library_init(allocator);
 
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
-    aws_cbor_encode_null(encoder);
-    aws_cbor_encode_undefine(encoder);
+    aws_cbor_encoder_write_null(encoder);
+    aws_cbor_encoder_write_undefine(encoder);
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* in total 2 bytes for two simple value */
     ASSERT_UINT_EQUALS(2, final_cursor.len);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
 
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_NULL);
-    ASSERT_SUCCESS(aws_cbor_decode_consume_next_element(decoder, NULL));
-    ASSERT_SUCCESS(aws_cbor_decode_consume_next_element(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder, NULL));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_UNDEFINE);
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
@@ -385,7 +385,7 @@ CBOR_TEST_CASE(cbor_encode_decode_timestamp_test) {
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
     for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encode_epoch_timestamp_ms(encoder, values[i]);
+        aws_cbor_encoder_write_epoch_timestamp_ms(encoder, values[i]);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
         ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
         encoded_len = cursor.len;
@@ -417,43 +417,43 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
 
     /* Create a non-sense stack of inf collections. */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_MAP_START);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_MAP_START);
     /* Key */
-    aws_cbor_encode_string(encoder, val_1);
+    aws_cbor_encoder_write_string(encoder, val_1);
     /* Value */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
     /* element 1 in array */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_STRING_START);
-    aws_cbor_encode_string(encoder, val_1);
-    aws_cbor_encode_string(encoder, val_2);
-    aws_cbor_encode_break(encoder);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_STRING_START);
+    aws_cbor_encoder_write_string(encoder, val_1);
+    aws_cbor_encoder_write_string(encoder, val_2);
+    aws_cbor_encoder_write_break(encoder);
     /* element 2 in array */
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
-    aws_cbor_encode_bytes(encoder, val_1);
-    aws_cbor_encode_bytes(encoder, val_2);
-    aws_cbor_encode_break(encoder);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
+    aws_cbor_encoder_write_bytes(encoder, val_1);
+    aws_cbor_encoder_write_bytes(encoder, val_2);
+    aws_cbor_encoder_write_break(encoder);
     /* element 3 as a tag in array */
-    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_BIGFLOAT);
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
-    aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
-    aws_cbor_encode_bytes(encoder, val_1);
-    aws_cbor_encode_bytes(encoder, val_2);
-    aws_cbor_encode_break(encoder);
-    aws_cbor_encode_break(encoder);
+    aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_BIGFLOAT);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_ARRAY_START);
+    aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_INF_BYTESTRING_START);
+    aws_cbor_encoder_write_bytes(encoder, val_1);
+    aws_cbor_encoder_write_bytes(encoder, val_2);
+    aws_cbor_encoder_write_break(encoder);
+    aws_cbor_encoder_write_break(encoder);
     /* Closure for the array */
-    aws_cbor_encode_break(encoder);
+    aws_cbor_encoder_write_break(encoder);
     /* Closure for the map */
-    aws_cbor_encode_break(encoder);
+    aws_cbor_encoder_write_break(encoder);
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
 
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_INF_MAP_START);
 
     /* Get rid of the whole inf map with all the data content */
-    ASSERT_SUCCESS(aws_cbor_decode_consume_next_data_item(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_data_item(decoder));
 
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
@@ -472,24 +472,26 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     struct aws_byte_cursor invalid_cbor = aws_byte_cursor_from_array(invalid_data, sizeof(invalid_data));
 
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    struct aws_byte_buf initial_buffer;
+    aws_byte_buf_init(&initial_buffer, allocator, 1);
 
     /* 1. Malformed cbor data */
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &invalid_cbor);
-    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
     /* 2. Empty cursor */
     struct aws_byte_cursor empty = {0};
     decoder = aws_cbor_decoder_new(allocator, &empty);
-    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
     /* 3. Try get wrong type */
-    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, &initial_buffer);
     uint64_t val = 1;
-    aws_cbor_encode_uint(encoder, val);
+    aws_cbor_encoder_write_uint(encoder, val);
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     decoder = aws_cbor_decoder_new(allocator, &final_cursor);
     uint64_t out = 0;
@@ -499,17 +501,17 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_val(decoder, &out));
     ASSERT_UINT_EQUALS(val, out);
     /* All the data has been consumed, now it's invalid */
-    ASSERT_FAILS(aws_cbor_decode_consume_next_data_item(decoder));
-    ASSERT_FAILS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_FAILS(aws_cbor_decoder_consume_next_data_item(decoder));
+    ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
     /* 4. Try get wrong type for timestamp */
     aws_cbor_encoder_reset_encoded_data(encoder);
-    ASSERT_FAILS(aws_cbor_encode_inf_start(encoder, AWS_CBOR_TYPE_BYTESTRING));
+    ASSERT_FAILS(aws_cbor_encoder_write_inf_start(encoder, AWS_CBOR_TYPE_BYTESTRING));
     struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
-    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encode_bytes(encoder, val_1);
+    aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
+    aws_cbor_encoder_write_bytes(encoder, val_1);
     final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     decoder = aws_cbor_decoder_new(allocator, &final_cursor);
     int64_t result = 0;
@@ -523,23 +525,24 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     aws_cbor_decoder_release(decoder);
 
     /* 5. Consume data items with size */
-    aws_cbor_encode_map_start(encoder, 1);
+    aws_cbor_encoder_write_map_start(encoder, 1);
     /* Key */
-    aws_cbor_encode_string(encoder, val_1);
+    aws_cbor_encoder_write_string(encoder, val_1);
     /* Value */
-    aws_cbor_encode_array_start(encoder, 1);
-    aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encode_bytes(encoder, val_1);
+    aws_cbor_encoder_write_array_start(encoder, 1);
+    aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
+    aws_cbor_encoder_write_bytes(encoder, val_1);
     final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     decoder = aws_cbor_decoder_new(allocator, &final_cursor);
     /* The encoded val is not a timestamp */
     ASSERT_FAILS(aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(decoder, &result));
-    ASSERT_SUCCESS(aws_cbor_decode_peek_type(decoder, &out_type));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_CBOR_TYPE_MAP_START, out_type);
-    ASSERT_SUCCESS(aws_cbor_decode_consume_next_data_item(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_data_item(decoder));
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
     aws_cbor_decoder_release(decoder);
 
+    aws_byte_buf_clean_up(&initial_buffer);
     aws_cbor_encoder_release(encoder);
     aws_common_library_clean_up();
     return SUCCESS;

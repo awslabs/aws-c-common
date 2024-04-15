@@ -86,7 +86,7 @@ struct aws_cbor_decoder;
 
 /**
  * @brief Create a new cbor encoder. Creating a encoder with a temporay buffer.
- * Every aws_cbor_encode_* will encode directly into the buffer to follow the encoded data.
+ * Every aws_cbor_encoder_write_* will encode directly into the buffer to follow the encoded data.
  *
  * @param allocator
  * @param initial_buffer Optional. the buffer for encoder to encode into, if not provided, the encoder will create a new
@@ -126,7 +126,7 @@ void aws_cbor_encoder_reset_encoded_data(struct aws_cbor_encoder *encoder);
  * @param value value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_uint(struct aws_cbor_encoder *encoder, uint64_t value);
+void aws_cbor_encoder_write_uint(struct aws_cbor_encoder *encoder, uint64_t value);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_NEGINT value to "smallest possible" in encoder's buffer.
@@ -138,7 +138,7 @@ void aws_cbor_encode_uint(struct aws_cbor_encoder *encoder, uint64_t value);
  * @param value The argument to encode to negative integer, which is (-1 - expected_val)
  */
 AWS_COMMON_API
-void aws_cbor_encode_negint(struct aws_cbor_encoder *encoder, uint64_t value);
+void aws_cbor_encoder_write_negint(struct aws_cbor_encoder *encoder, uint64_t value);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_DOUBLE value to "smallest possible", but will not be encoded into half-precision float,
@@ -151,7 +151,7 @@ void aws_cbor_encode_negint(struct aws_cbor_encoder *encoder, uint64_t value);
  * @param value value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value);
+void aws_cbor_encoder_write_double(struct aws_cbor_encoder *encoder, double value);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_BYTESTRING value to "smallest possible" in encoder's buffer.
@@ -162,7 +162,7 @@ void aws_cbor_encode_double(struct aws_cbor_encoder *encoder, double value);
  * @param from value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
+void aws_cbor_encoder_write_bytes(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_STRING value to "smallest possible" in encoder's buffer.
@@ -173,7 +173,7 @@ void aws_cbor_encode_bytes(struct aws_cbor_encoder *encoder, const struct aws_by
  * @param from value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
+void aws_cbor_encoder_write_string(struct aws_cbor_encoder *encoder, const struct aws_byte_cursor from);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_ARRAY_START value to "smallest possible" in encoder's buffer.
@@ -185,7 +185,7 @@ void aws_cbor_encode_string(struct aws_cbor_encoder *encoder, const struct aws_b
  * @param number_entries The number of data item in array.
  */
 AWS_COMMON_API
-void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t number_entries);
+void aws_cbor_encoder_write_array_start(struct aws_cbor_encoder *encoder, size_t number_entries);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_MAP_START value to "smallest possible" in encoder's buffer.
@@ -199,7 +199,7 @@ void aws_cbor_encode_array_start(struct aws_cbor_encoder *encoder, size_t number
  * @param number_entries The number of data item in map.
  */
 AWS_COMMON_API
-void aws_cbor_encode_map_start(struct aws_cbor_encoder *encoder, size_t number_entries);
+void aws_cbor_encoder_write_map_start(struct aws_cbor_encoder *encoder, size_t number_entries);
 
 /**
  * @brief Encode a AWS_CBOR_TYPE_TAG value to "smallest possible" in encoder's buffer.
@@ -211,7 +211,7 @@ void aws_cbor_encode_map_start(struct aws_cbor_encoder *encoder, size_t number_e
  * @param tag_number The tag value to encode.
  */
 AWS_COMMON_API
-void aws_cbor_encode_tag(struct aws_cbor_encoder *encoder, uint64_t tag_number);
+void aws_cbor_encoder_write_tag(struct aws_cbor_encoder *encoder, uint64_t tag_number);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_NULL
@@ -219,7 +219,7 @@ void aws_cbor_encode_tag(struct aws_cbor_encoder *encoder, uint64_t tag_number);
  * @param encoder
  */
 AWS_COMMON_API
-void aws_cbor_encode_null(struct aws_cbor_encoder *encoder);
+void aws_cbor_encoder_write_null(struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_UNDEFINE
@@ -227,7 +227,7 @@ void aws_cbor_encode_null(struct aws_cbor_encoder *encoder);
  * @param encoder
  */
 AWS_COMMON_API
-void aws_cbor_encode_undefine(struct aws_cbor_encoder *encoder);
+void aws_cbor_encoder_write_undefine(struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_BOOL
@@ -235,7 +235,7 @@ void aws_cbor_encode_undefine(struct aws_cbor_encoder *encoder);
  * @param encoder
  */
 AWS_COMMON_API
-void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value);
+void aws_cbor_encoder_write_bool(struct aws_cbor_encoder *encoder, bool value);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_BREAK
@@ -244,7 +244,7 @@ void aws_cbor_encode_bool(struct aws_cbor_encoder *encoder, bool value);
  * to close the corresponding inf_start
  */
 AWS_COMMON_API
-void aws_cbor_encode_break(struct aws_cbor_encoder *encoder);
+void aws_cbor_encoder_write_break(struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Encode inf start, supported type is:
@@ -261,20 +261,20 @@ void aws_cbor_encode_break(struct aws_cbor_encoder *encoder);
  * @param type
  */
 AWS_COMMON_API
-int aws_cbor_encode_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type);
+int aws_cbor_encoder_write_inf_start(struct aws_cbor_encoder *encoder, enum aws_cbor_element_type type);
 
 /* TODO: bignum/bigfloat */
 
 /**
  * @brief Helper to encode an epoch timestamp on ms, equivelent to:
- *  aws_cbor_encode_tag(encoder, AWS_CBOR_TAG_EPOCH_TIME);
- *  aws_cbor_encode_double(encoder, (double)epoch_time_ms/1000.0);
+ *  aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_EPOCH_TIME);
+ *  aws_cbor_encoder_write_double(encoder, (double)epoch_time_ms/1000.0);
  *
  * @param encoder
  * @param epoch_time_ms
  */
 AWS_COMMON_API
-void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms);
+void aws_cbor_encoder_write_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms);
 
 /*******************************************************************************
  * DECODE
@@ -284,12 +284,12 @@ void aws_cbor_encode_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_
  * @brief Create a cbor decoder to take src to decode.
  * The typical usage of decoder will be:
  * - If the next element type only accept what expected, `aws_cbor_decoder_pop_next_*`
- * - If the next element type accept different type, invoke `aws_cbor_decode_peek_type` first, then based on the type to
- * invoke corresponding `aws_cbor_decoder_pop_next_*`
+ * - If the next element type accept different type, invoke `aws_cbor_decoder_peek_type` first, then based on the type
+ * to invoke corresponding `aws_cbor_decoder_pop_next_*`
  * - If the next element type doesn't have corrsponding value, specifically: AWS_CBOR_TYPE_NULL, AWS_CBOR_TYPE_UNDEFINE,
- * AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decode_consume_next_element` to consume it and
+ * AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decoder_consume_next_element` to consume it and
  * continues for further decoding.
- * - To ignore the next data item (the element and the content of it), `aws_cbor_decode_consume_next_data_item`
+ * - To ignore the next data item (the element and the content of it), `aws_cbor_decoder_consume_next_data_item`
  *
  * Note: it's caller's responsibilty to keep the src outlive the decoder.
  *
@@ -322,7 +322,7 @@ size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *deco
  * @return AWS_OP_SUCCESS if succeed, AWS_OP_ERR for any decoding error and corresponding error code will be raised.
  */
 AWS_COMMON_API
-int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *out_type);
+int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *out_type);
 
 /**
  * @brief Consume the next data item, includes all the content within the data item.
@@ -345,7 +345,7 @@ int aws_cbor_decode_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_el
  * @return AWS_OP_SUCCESS successfully consumed the next data item, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder);
+int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Consume the next element, without the content followed by the element.
@@ -368,7 +368,7 @@ int aws_cbor_decode_consume_next_data_item(struct aws_cbor_decoder *decoder);
  * @return AWS_OP_SUCCESS successfully consumed the next element, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decode_consume_next_element(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *consumed_type);
+int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *consumed_type);
 
 /**
  * @brief Get the next element based on the type. If the next element doesn't match the expected type. Error will be
