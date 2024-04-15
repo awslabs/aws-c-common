@@ -434,6 +434,16 @@ bool aws_hash_table_is_valid(const struct aws_hash_table *map);
 AWS_COMMON_API
 bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter);
 
+/**
+ * Helper function to hash keys that are uint64_t values.
+ */
+AWS_COMMON_API uint64_t aws_hash_uint64_t(const void *item);
+
+/**
+ * Helper function to compare hash keys that are uint64_t values.
+ */
+AWS_COMMON_API bool aws_hash_compare_uint64_t_eq(const void *a, const void *b);
+
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
 
