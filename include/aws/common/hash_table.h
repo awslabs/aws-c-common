@@ -436,8 +436,12 @@ bool aws_hash_iter_is_valid(const struct aws_hash_iter *iter);
 
 /**
  * Helper function to hash keys that are uint64_t values.
+ *
+ * The function is not a strong hash function in any sense; it merely reflects
+ * the uint64 value back.  Do not use this function as a hash if you need
+ * the properties of a strong hash function.
  */
-AWS_COMMON_API uint64_t aws_hash_uint64_t(const void *item);
+AWS_COMMON_API uint64_t aws_hash_uint64_t_by_identity(const void *item);
 
 /**
  * Helper function to compare hash keys that are uint64_t values.
