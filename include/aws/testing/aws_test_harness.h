@@ -451,7 +451,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     options.file = AWS_TESTING_REPORT_FD;
     options.level = AWS_LL_TRACE;
     options.filename = NULL;
-    aws_logger_init_standard(&err_logger, aws_default_allocator(), &options);
+    aws_logger_init_noalloc(&err_logger, aws_default_allocator(), &options);
     aws_logger_set(&err_logger);
 
     int test_res = AWS_OP_ERR;
