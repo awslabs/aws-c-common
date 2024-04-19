@@ -43,6 +43,9 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("fe80::1"), false));
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%en0"), false));
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("::1"), false));
+    ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("0:0:0:0:0:0:0:1"), false));
+    ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("fd00:ec2::23"), false));
+    ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("fd00:ec2:0:0:0:0:0:23"), false));
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("[2001:0db8:0000:0000:0000:8a2e:0370:7334]"), true));
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1]"), true));
     ASSERT_TRUE(aws_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%25en0]"), true));
