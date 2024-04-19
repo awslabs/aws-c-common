@@ -28,7 +28,7 @@ static bool s_ends_with(struct aws_byte_cursor cur, uint8_t ch) {
     return cur.len > 0 && cur.ptr[cur.len - 1] == ch;
 }
 
-bool aws_is_ipv4(struct aws_byte_cursor host) {
+bool aws_host_utils_is_ipv4(struct aws_byte_cursor host) {
     if (host.len > AWS_IPV4_STR_LEN - 1) {
         return false;
     }
@@ -74,7 +74,7 @@ static struct aws_byte_cursor s_percent_uri_enc = AWS_BYTE_CUR_INIT_FROM_STRING_
  * Implementation is fairly trivial and just iterates through the string
  * keeping track of the spec above.
  */
-bool aws_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
+bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     if (host.len == 0) {
         return false;
     }
