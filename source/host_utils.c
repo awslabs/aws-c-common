@@ -5,6 +5,12 @@
 #include <aws/common/string.h>
 #include <inttypes.h>
 
+#ifdef _MSC_VER /* Disable sscanf warnings on windows. */
+#    pragma warning(disable : 4204)
+#    pragma warning(disable : 4706)
+#    pragma warning(disable : 4996)
+#endif
+
 /* 4 octets of 3 chars max + 3 separators + null terminator */
 #define AWS_IPV4_STR_LEN 16
 #define IP_CHAR_FMT "%03" SCNu16
