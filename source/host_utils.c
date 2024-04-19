@@ -85,7 +85,7 @@ bool aws_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     bool is_split = aws_byte_cursor_next_split(&host, '%', &substr);
     AWS_ASSERT(is_split); /* function is guaranteed to return at least one split */
 
-    if (!is_split || substr.len == 0 || (s_starts_with(substr, ':') || s_ends_with(substr, ':')) ||
+    if (!is_split || substr.len == 0 || (s_ends_with(substr, ':')) ||
         !aws_byte_cursor_satisfies_pred(&substr, s_is_ipv6_char)) {
         return false;
     }
@@ -96,9 +96,9 @@ bool aws_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     while (aws_byte_cursor_next_split(&substr, ':', &group)) {
         ++group_count;
 
-        if (group_count > 8 ||                      /* too many groups */
-            group.len > 4 ||                        /* too many chars in group */
-            (has_double_colon && group.len == 0)) { /* only one double colon allowed */
+        if (group_count > 8 ||                                         /* too many groups */
+            group.len > 4 ||                                           /* too many chars in group */
+            (has_double_colon && group.len == 0 && group_count > 2)) { /* only one double colon allowed */
             return false;
         }
 
