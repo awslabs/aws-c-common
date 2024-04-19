@@ -1,5 +1,5 @@
-#ifndef AWS_IO_HOST_UTILS_H
-#define AWS_IO_HOST_UTILS_H
+#ifndef AWS_COMMON_HOST_UTILS_H
+#define AWS_COMMON_HOST_UTILS_H
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
