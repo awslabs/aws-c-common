@@ -92,7 +92,7 @@ bool aws_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     bool is_split = aws_byte_cursor_next_split(&host, '%', &substr);
     AWS_ASSERT(is_split); /* function is guaranteed to return at least one split */
 
-    if (!is_split || substr.len == 0 || (s_ends_with(substr, ':')) ||
+    if (!is_split || substr.len == 0 || s_ends_with(substr, ':') ||
         !aws_byte_cursor_satisfies_pred(&substr, s_is_ipv6_char)) {
         return false;
     }
