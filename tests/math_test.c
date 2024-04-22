@@ -193,7 +193,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
 
 #define CHECK_OVF_0(fn, type, a, b)                                                                                    \
     do {                                                                                                               \
-        type result_val;                                                                                               \
+        type result_val = 0;                                                                                           \
         ASSERT_TRUE(fn((a), (b), &result_val));                                                                        \
     } while (0)
 
@@ -205,7 +205,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
 
 #define CHECK_NO_OVF_0(fn, type, a, b, r)                                                                              \
     do {                                                                                                               \
-        type result_val;                                                                                               \
+        type result_val = 0;                                                                                           \
         ASSERT_FALSE(fn((a), (b), &result_val));                                                                       \
         ASSERT_INT_EQUALS(                                                                                             \
             (uint64_t)result_val,                                                                                      \
@@ -257,21 +257,21 @@ static int s_test_mul_u32_checked_fn(struct aws_allocator *allocator, void *ctx)
 
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, 1, 0);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, ~0u, 0);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0, ~0U, 0);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 4, 5, 20);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 1234, 4321, 5332114);
 
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 1, 0xFFFF);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
-    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10000, 0xFFFF, 0xFFFF0000u);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFF, 0xFFFF, 0xfffe0001U);
+    CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10000, 0xFFFF, 0xFFFF0000U);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
     CHECK_OVF(aws_mul_u32_checked, uint32_t, 0x10003, 0xFFFE);
     CHECK_NO_OVF(aws_mul_u32_checked, uint32_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
     CHECK_OVF(aws_mul_u32_checked, uint32_t, 0x1FFFF, 0x1FFFF);
-    CHECK_OVF(aws_mul_u32_checked, uint32_t, ~0u, ~0u);
+    CHECK_OVF(aws_mul_u32_checked, uint32_t, ~0U, ~0U);
 
     return 0;
 }
@@ -285,21 +285,21 @@ static int s_test_mul_size_checked_fn(struct aws_allocator *allocator, void *ctx
 #if SIZE_BITS == 32
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0u, 0);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, ~0U, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 4, 5, 20);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 1234, 4321, 5332114);
 
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFFFFFF, 1, 0xFFFFFFFF);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 1, 0xFFFF);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001u);
-    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000u);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFF, 0xFFFF, 0xfffe0001U);
+    CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10000, 0xFFFF, 0xFFFF0000U);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFF, 0xFFFFFFFFu);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10001, 0xFFFE, 0xFFFEFFFEu);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0x10002, 0xFFFE, 0xFFFFFFFCu);
     CHECK_OVF(aws_mul_size_checked, size_t, 0x10003, 0xFFFE);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0xFFFE, 0xFFFE, 0xFFFC0004u);
     CHECK_OVF(aws_mul_size_checked, size_t, 0x1FFFF, 0x1FFFF);
-    CHECK_OVF(aws_mul_size_checked, size_t, ~0u, ~0u);
+    CHECK_OVF(aws_mul_size_checked, size_t, ~0U, ~0U);
 #elif SIZE_BITS == 64
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 0, 0);
     CHECK_NO_OVF(aws_mul_size_checked, size_t, 0, 1, 0);
@@ -934,6 +934,54 @@ static int s_test_min_max(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(DBL_MIN == aws_min_double(DBL_MAX, DBL_MIN));
     ASSERT_TRUE(DBL_MAX == aws_max_double(DBL_MIN, DBL_MAX));
     ASSERT_TRUE(DBL_MAX == aws_max_double(DBL_MAX, DBL_MIN));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_clz, s_test_clz)
+static int s_test_clz(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(0, aws_clz_u32(UINT32_MAX));
+    ASSERT_UINT_EQUALS(1, aws_clz_u32(INT32_MAX));
+    ASSERT_UINT_EQUALS(32, aws_clz_u32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_i32(-1));
+    ASSERT_UINT_EQUALS(1, aws_clz_i32(INT32_MAX));
+    ASSERT_UINT_EQUALS(32, aws_clz_i32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_u64(UINT64_MAX));
+    ASSERT_UINT_EQUALS(1, aws_clz_u64(INT64_MAX));
+    ASSERT_UINT_EQUALS(64, aws_clz_u64(0));
+
+    ASSERT_UINT_EQUALS(0, aws_clz_i64(-1));
+    ASSERT_UINT_EQUALS(1, aws_clz_i64(INT64_MAX));
+    ASSERT_UINT_EQUALS(64, aws_clz_i64(0));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_ctz, s_test_ctz)
+static int s_test_ctz(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_u32(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_u32(2));
+    ASSERT_UINT_EQUALS(32, aws_ctz_u32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_i32(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_i32(2));
+    ASSERT_UINT_EQUALS(32, aws_ctz_i32(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_u64(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_u64(2));
+    ASSERT_UINT_EQUALS(64, aws_ctz_u64(0));
+
+    ASSERT_UINT_EQUALS(0, aws_ctz_i64(1));
+    ASSERT_UINT_EQUALS(1, aws_ctz_i64(2));
+    ASSERT_UINT_EQUALS(64, aws_ctz_i64(0));
 
     return 0;
 }

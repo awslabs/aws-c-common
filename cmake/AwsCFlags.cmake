@@ -10,6 +10,9 @@ option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consu
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
 option(AWS_SUPPORT_WIN7 "Restricts WINAPI calls to Win7 and older (This will have implications in downstream libraries that use TLS especially)" OFF)
 option(AWS_WARNINGS_ARE_ERRORS "Compiler warning is treated as an error. Try turning this off when observing errors on a new or uncommon compiler" OFF)
+option(AWS_ENABLE_TRACING "Enable tracing macros" OFF)
+option(AWS_STATIC_MSVC_RUNTIME_LIBRARY "Windows-only. Turn ON to use the statically-linked MSVC runtime lib, instead of the DLL" OFF)
+option(STATIC_CRT "Deprecated. Use AWS_STATIC_MSVC_RUNTIME_LIBRARY instead" OFF)
 
 # Check for Posix Large Files Support (LFS).
 # On most 64bit systems, LFS is enabled by default.
@@ -79,21 +82,19 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS /DAWS_SUPPORT_WIN7=1)
         endif()
 
-        string(TOUPPER "${CMAKE_BUILD_TYPE}" _CMAKE_BUILD_TYPE)
-        if(STATIC_CRT)
-            string(REPLACE "/MD" "/MT" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
+        # Set MSVC runtime libary.
+        # Note: there are other ways of doing this if we bump our CMake minimum to 3.14+
+        # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
+        if (AWS_STATIC_MSVC_RUNTIME_LIBRARY OR STATIC_CRT)
+            list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
         else()
-            string(REPLACE "/MT" "/MD" _FLAGS "${CMAKE_C_FLAGS_${_CMAKE_BUILD_TYPE}}")
+            list(APPEND AWS_C_FLAGS "/MD$<$<CONFIG:Debug>:d>")
         endif()
-        string(REPLACE " " ";" _FLAGS "${_FLAGS}")
-        list(APPEND AWS_C_FLAGS "${_FLAGS}")
 
     else()
         list(APPEND AWS_C_FLAGS -Wall -Wstrict-prototypes)
 
-        if (NOT CMAKE_BUILD_TYPE STREQUAL Release)
-            list(APPEND AWS_C_FLAGS -fno-omit-frame-pointer)
-        endif()
+        list(APPEND AWS_C_FLAGS $<$<NOT:$<CONFIG:Release>>:-fno-omit-frame-pointer>)
 
         if(AWS_WARNINGS_ARE_ERRORS)
             list(APPEND AWS_C_FLAGS -Werror)
@@ -120,11 +121,26 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS -Wno-strict-aliasing)
         endif()
 
-       # -moutline-atomics generates code for both older load/store exclusive atomics and also
-       # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems
-        check_c_compiler_flag("-moutline-atomics -Werror" HAS_MOUTLINE_ATOMICS)
-        if (HAS_MOUTLINE_ATOMICS AND AWS_ARCH_ARM64)
-            list(APPEND AWS_C_FLAGS -moutline-atomics)
+        # -moutline-atomics generates code for both older load/store exclusive atomics and also
+        # Arm's Large System Extensions (LSE) which scale substantially better on large core count systems.
+        #
+        # Test by compiling a program that actually uses atomics.
+        # Previously we'd simply used check_c_compiler_flag() but that wasn't detecting
+        # some real-world problems (see https://github.com/awslabs/aws-c-common/issues/902).
+        if (AWS_ARCH_ARM64)
+            set(old_flags "${CMAKE_REQUIRED_FLAGS}")
+            set(CMAKE_REQUIRED_FLAGS "-moutline-atomics -Werror")
+            check_c_source_compiles("
+                int main() {
+                    int x = 1;
+                    __atomic_fetch_add(&x, -1, __ATOMIC_SEQ_CST);
+                    return x;
+                }" HAS_MOUTLINE_ATOMICS)
+            set(CMAKE_REQUIRED_FLAGS "${old_flags}")
+
+            if (HAS_MOUTLINE_ATOMICS)
+                list(APPEND AWS_C_FLAGS -moutline-atomics)
+            endif()
         endif()
 
         # Check for Posix Large File Support (LFS).
@@ -143,6 +159,19 @@ function(aws_set_common_properties target)
         endif()
         # This becomes a define in config.h
         set(AWS_HAVE_POSIX_LARGE_FILE_SUPPORT ${HAS_LFS} CACHE BOOL "Posix Large File Support")
+
+        # Hide symbols from libcrypto.a
+        # This avoids problems when an application ends up using both libcrypto.a and libcrypto.so.
+        #
+        # An example of this happening is the aws-c-io tests.
+        # All the C libs are compiled statically, but then a PKCS#11 library is
+        # loaded at runtime which happens to use libcrypto.so from OpenSSL.
+        # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
+        # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
+        if (UNIX AND NOT APPLE)
+            # If we used target_link_options() (CMake 3.13+) we could make these flags PUBLIC
+            set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
+        endif()
 
     endif()
 
@@ -194,25 +223,28 @@ function(aws_set_common_properties target)
         list(APPEND AWS_C_DEFINES_PRIVATE -DHAVE_SYSCONF)
     endif()
 
-    if(CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-        list(APPEND AWS_C_DEFINES_PRIVATE -DDEBUG_BUILD)
-    else() # release build
+    list(APPEND AWS_C_DEFINES_PRIVATE $<$<CONFIG:Debug>:DEBUG_BUILD>)
+
+    if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
+        # enable except in Debug builds
+        set(_ENABLE_LTO_EXPR $<NOT:$<CONFIG:Debug>>)
+
+        # try to check whether compiler supports LTO/IPO
         if (POLICY CMP0069)
-            if ((NOT SET_PROPERTIES_NO_LTO) AND AWS_ENABLE_LTO)
-                cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler
-                include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
-                if (ipo_check_exists)
-                    check_ipo_supported(RESULT ipo_supported)
-                    if (ipo_supported)
-                        message(STATUS "Enabling IPO/LTO for Release builds")
-                        set(AWS_ENABLE_LTO ON)
-                    else()
-                        message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
-                        set(AWS_ENABLE_LTO OFF)
-                    endif()
+            cmake_policy(SET CMP0069 NEW)
+            include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
+            if (ipo_check_exists)
+                check_ipo_supported(RESULT ipo_supported)
+                if (ipo_supported)
+                    message(STATUS "Enabling IPO/LTO for Release builds")
+                else()
+                    message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
+                    set(_ENABLE_LTO_EXPR OFF)
                 endif()
             endif()
         endif()
+    else()
+        set(_ENABLE_LTO_EXPR OFF)
     endif()
 
     if(BUILD_SHARED_LIBS)
@@ -222,10 +254,14 @@ function(aws_set_common_properties target)
         endif()
     endif()
 
+    if(AWS_ENABLE_TRACING)
+        target_link_libraries(${target} PRIVATE ittnotify)
+    else()
+        # Disable intel notify api if tracing is not enabled
+        list(APPEND AWS_C_DEFINES_PRIVATE -DINTEL_NO_ITTNOTIFY_API)
+    endif()
     target_compile_options(${target} PRIVATE ${AWS_C_FLAGS})
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
-    if (AWS_ENABLE_LTO)
-        set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
+    set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
 endfunction()

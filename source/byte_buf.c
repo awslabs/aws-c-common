@@ -558,6 +558,42 @@ bool aws_byte_cursor_eq_c_str_ignore_case(const struct aws_byte_cursor *const cu
     return rv;
 }
 
+bool aws_byte_cursor_starts_with(const struct aws_byte_cursor *input, const struct aws_byte_cursor *prefix) {
+
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(input));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(prefix));
+
+    if (input->len < prefix->len) {
+        return false;
+    }
+
+    struct aws_byte_cursor start = {.ptr = input->ptr, .len = prefix->len};
+    bool rv = aws_byte_cursor_eq(&start, prefix);
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(input));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(prefix));
+    return rv;
+}
+
+bool aws_byte_cursor_starts_with_ignore_case(
+    const struct aws_byte_cursor *input,
+    const struct aws_byte_cursor *prefix) {
+
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(input));
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(prefix));
+
+    if (input->len < prefix->len) {
+        return false;
+    }
+
+    struct aws_byte_cursor start = {.ptr = input->ptr, .len = prefix->len};
+    bool rv = aws_byte_cursor_eq_ignore_case(&start, prefix);
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(input));
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(prefix));
+    return rv;
+}
+
 int aws_byte_buf_append(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
@@ -1595,7 +1631,7 @@ int aws_byte_buf_append_and_update(struct aws_byte_buf *to, struct aws_byte_curs
         return AWS_OP_ERR;
     }
 
-    from_and_update->ptr = to->buffer + (to->len - from_and_update->len);
+    from_and_update->ptr = to->buffer == NULL ? NULL : to->buffer + (to->len - from_and_update->len);
     return AWS_OP_SUCCESS;
 }
 

@@ -21,9 +21,7 @@
 
 #include <aws/common/priority_queue.h>
 
-bool __CPROVER_file_local_priority_queue_c_s_sift_either(struct aws_priority_queue *queue, size_t index) {
+void __CPROVER_file_local_priority_queue_c_s_sift_either(struct aws_priority_queue *queue, size_t index) {
     assert(aws_priority_queue_is_valid(queue));
     assert(index < queue->container.length);
-    bool did_move;
-    return did_move;
 }

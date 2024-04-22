@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <stdarg.h>
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 
@@ -283,6 +283,18 @@ struct aws_logger *aws_logger_get(void) {
     return s_root_logger_ptr;
 }
 
+struct aws_logger *aws_logger_get_conditional(aws_log_subject_t subject, enum aws_log_level level) {
+    if (s_root_logger_ptr == NULL) {
+        return NULL;
+    }
+
+    if (s_root_logger_ptr->vtable->get_log_level(s_root_logger_ptr, subject) < level) {
+        return NULL;
+    }
+
+    return s_root_logger_ptr;
+}
+
 void aws_logger_clean_up(struct aws_logger *logger) {
     AWS_ASSERT(logger->vtable->clean_up != NULL);
 
@@ -325,11 +337,11 @@ int aws_thread_id_t_to_string(aws_thread_id_t thread_id, char *buffer, size_t bu
         unsigned char c = bytes[i - 1];
         int written = snprintf(buffer + current_index, bufsz - current_index, "%02x", c);
         if (written < 0) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }
         current_index += written;
         if (bufsz <= current_index) {
-            return AWS_OP_ERR;
+            return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
         }
     }
     return AWS_OP_SUCCESS;
@@ -442,7 +454,7 @@ static enum aws_log_level s_noalloc_stderr_logger_get_log_level(struct aws_logge
     return (enum aws_log_level)aws_atomic_load_int(&impl->level);
 }
 
-#define MAXIMUM_NO_ALLOC_LOG_LINE_SIZE 8192
+enum { MAXIMUM_NO_ALLOC_LOG_LINE_SIZE = 8192 };
 
 static int s_noalloc_stderr_logger_log(
     struct aws_logger *logger,
@@ -456,7 +468,7 @@ static int s_noalloc_stderr_logger_log(
     va_list format_args;
     va_start(format_args, format);
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4221) /* allow struct member to reference format_buffer  */
 #endif
@@ -472,7 +484,7 @@ static int s_noalloc_stderr_logger_log(
         .amount_written = 0,
     };
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(pop) /* disallow struct member to reference local value */
 #endif
 
@@ -490,7 +502,8 @@ static int s_noalloc_stderr_logger_log(
 
     int write_result = AWS_OP_SUCCESS;
     if (fwrite(format_buffer, 1, format_data.amount_written, impl->file) < format_data.amount_written) {
-        aws_translate_and_raise_io_error(errno);
+        int errno_value = ferror(impl->file) ? errno : 0; /* Always cache errno before potential side-effect */
+        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_FILE_WRITE_FAILURE);
         write_result = AWS_OP_ERR;
     }
 
@@ -547,8 +560,17 @@ int aws_logger_init_noalloc(
         impl->file = options->file;
         impl->should_close = false;
     } else { /* _MSC_VER */
-        impl->file = aws_fopen(options->filename, "w");
-        impl->should_close = true;
+        if (options->filename != NULL) {
+            impl->file = aws_fopen(options->filename, "w");
+            if (!impl->file) {
+                aws_mem_release(allocator, impl);
+                return AWS_OP_ERR;
+            }
+            impl->should_close = true;
+        } else {
+            impl->file = stderr;
+            impl->should_close = false;
+        }
     }
 
     aws_mutex_init(&impl->lock);

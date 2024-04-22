@@ -7,6 +7,8 @@
 #include <aws/common/hash_table.h>
 #include <aws/common/linked_list.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 /**
  * Simple linked hash table. Preserves insertion order, and can be iterated in insertion order.
  *
@@ -17,6 +19,7 @@ struct aws_linked_hash_table {
     struct aws_linked_list list;
     struct aws_hash_table table;
     aws_hash_callback_destroy_fn *user_on_value_destroy;
+    aws_hash_callback_destroy_fn *user_on_key_destroy;
 };
 
 /**
@@ -117,5 +120,6 @@ AWS_COMMON_API
 const struct aws_linked_list *aws_linked_hash_table_get_iteration_list(const struct aws_linked_hash_table *table);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LINKED_HASH_TABLE_H */

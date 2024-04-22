@@ -798,6 +798,75 @@ static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, voi
 }
 AWS_TEST_CASE(test_byte_buf_reserve_relative, s_test_byte_buf_reserve_relative)
 
+static int s_test_byte_cursor_starts_with(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_cursor a = aws_byte_cursor_from_c_str("a");
+    struct aws_byte_cursor abcd = aws_byte_cursor_from_c_str("abcd");
+    struct aws_byte_cursor ab = aws_byte_cursor_from_c_str("ab");
+    struct aws_byte_cursor abcde = aws_byte_cursor_from_c_str("abcde");
+    struct aws_byte_cursor ABCD = aws_byte_cursor_from_c_str("ABCD");
+    struct aws_byte_cursor AB = aws_byte_cursor_from_c_str("AB");
+    struct aws_byte_cursor empty_string = aws_byte_cursor_from_c_str("");
+    struct aws_byte_cursor null_char_string = aws_byte_cursor_from_array("\0", 1);
+
+    /* TRUE */
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&a, &a));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&abcd, &ab));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&abcd, &abcd));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&abcd, &empty_string));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&empty_string, &empty_string));
+
+    /* FALSE */
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &abcde));
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &ABCD));
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &AB));
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&empty_string, &a));
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&empty_string, &null_char_string));
+    ASSERT_FALSE(aws_byte_cursor_starts_with(&abcd, &null_char_string));
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_cursor_starts_with, s_test_byte_cursor_starts_with)
+
+static int s_test_byte_cursor_starts_with_ignore_case(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_cursor a = aws_byte_cursor_from_c_str("a");
+    struct aws_byte_cursor A = aws_byte_cursor_from_c_str("A");
+    struct aws_byte_cursor abcd = aws_byte_cursor_from_c_str("abcd");
+    struct aws_byte_cursor ABCD = aws_byte_cursor_from_c_str("ABCD");
+    struct aws_byte_cursor abcde = aws_byte_cursor_from_c_str("abcde");
+    struct aws_byte_cursor azcd = aws_byte_cursor_from_c_str("azcd");
+    struct aws_byte_cursor empty_string = aws_byte_cursor_from_c_str("");
+    struct aws_byte_cursor null_char_string = aws_byte_cursor_from_array("\0", 1);
+
+    /* TRUE */
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&abcd, &abcd));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&abcd, &ABCD));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&ABCD, &abcd));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&ABCD, &ABCD));
+
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&abcd, &a));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&abcd, &A));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&ABCD, &a));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&ABCD, &A));
+
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&abcd, &empty_string));
+    ASSERT_TRUE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &empty_string));
+
+    /* FALSE */
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &abcde));
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&abcd, &azcd));
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &a));
+    ASSERT_FALSE(aws_byte_cursor_starts_with_ignore_case(&empty_string, &null_char_string));
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_cursor_starts_with_ignore_case, s_test_byte_cursor_starts_with_ignore_case)
+
 static int s_test_byte_cursor_compare_lexical(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     (void)allocator;
@@ -939,6 +1008,72 @@ static int s_test_byte_buf_init_cache_and_update_cursors(struct aws_allocator *a
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_init_cache_and_update_cursors, s_test_byte_buf_init_cache_and_update_cursors)
+
+static int s_test_byte_buf_empty_appends(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    { /* append */
+        struct aws_byte_buf buffer;
+        AWS_ZERO_STRUCT(buffer);
+
+        struct aws_byte_cursor zeroed_out;
+        AWS_ZERO_STRUCT(zeroed_out);
+        ASSERT_SUCCESS(aws_byte_buf_append(&buffer, &zeroed_out));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+
+        struct aws_byte_cursor empty = aws_byte_cursor_from_c_str("");
+        ASSERT_SUCCESS(aws_byte_buf_append(&buffer, &empty));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+    }
+
+    { /* dynamic append */
+        struct aws_byte_buf buffer;
+        aws_byte_buf_init(&buffer, allocator, 0);
+
+        struct aws_byte_cursor zeroed_out;
+        AWS_ZERO_STRUCT(zeroed_out);
+        ASSERT_SUCCESS(aws_byte_buf_append_dynamic(&buffer, &zeroed_out));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+
+        struct aws_byte_cursor empty = aws_byte_cursor_from_c_str("");
+        ASSERT_SUCCESS(aws_byte_buf_append_dynamic(&buffer, &empty));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+    }
+
+    { /* append with lookup */
+        struct aws_byte_buf buffer;
+        AWS_ZERO_STRUCT(buffer);
+
+        struct aws_byte_cursor zeroed_out;
+        AWS_ZERO_STRUCT(zeroed_out);
+        ASSERT_SUCCESS(aws_byte_buf_append_with_lookup(&buffer, &zeroed_out, aws_lookup_table_to_lower_get()));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+
+        struct aws_byte_cursor empty = aws_byte_cursor_from_c_str("");
+        ASSERT_SUCCESS(aws_byte_buf_append_with_lookup(&buffer, &empty, aws_lookup_table_to_lower_get()));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+    }
+
+    { /* append and update */
+        struct aws_byte_buf buffer;
+        AWS_ZERO_STRUCT(buffer);
+
+        struct aws_byte_cursor zeroed_out;
+        AWS_ZERO_STRUCT(zeroed_out);
+        ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &zeroed_out));
+        ASSERT_UINT_EQUALS(buffer.len, 0);
+        ASSERT_NULL(zeroed_out.ptr, 0);
+        ASSERT_UINT_EQUALS(zeroed_out.len, 0);
+
+        struct aws_byte_cursor empty = aws_byte_cursor_from_c_str("");
+        ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &empty));
+        ASSERT_NULL(empty.ptr, 0);
+        ASSERT_UINT_EQUALS(empty.len, 0);
+    }
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_empty_appends, s_test_byte_buf_empty_appends)
 
 static int s_test_byte_buf_append_and_update_fail(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;

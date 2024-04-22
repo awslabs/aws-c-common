@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0.
 
 cmake_minimum_required(VERSION 3.0)
-option(STATIC_CRT "Windows specific option that to specify static/dynamic run-time library" OFF)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
@@ -24,7 +23,7 @@ include(AwsSharedLibSetup)
 include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
-include(AwsSIMD)
+include(AwsThreadName)
 include(CTest)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -36,6 +35,9 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.h"
         "include/aws/common/*.inl"
         )
+
+file (GLOB AWS_COMMON_EXTERNAL_INSTALLED_HEADERS
+        "include/aws/common/external/ittnotify.h")
 
 file(GLOB AWS_TEST_HEADERS
         "include/aws/testing/*.h"
@@ -50,10 +52,13 @@ file(GLOB AWS_COMMON_SRC
         "source/*.c"
         )
 
+file (GLOB AWS_COMMON_EXTERNAL_SRC
+        "source/external/*.c")
+
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
-    set(WINDOWS_KERNEL_LIB "Kernel32" CACHE STRING "The name of the kernel library to link against (default: Kernel32)")
+    set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
 
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/windows/*"
@@ -61,6 +66,7 @@ if (WIN32)
 
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
+        "source/platform_fallback_stubs/system_info.c"
         )
 
     if (MSVC)
@@ -72,7 +78,10 @@ if (WIN32)
     endif ()
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi)
+    # PSAPI_VERSION=1 is needed to support GetProcessMemoryInfo on both pre and
+    # post Win7 OS's.
+    list(APPEND PLATFORM_DEFINES PSAPI_VERSION=1)
+    list(APPEND PLATFORM_LIBS bcrypt ${WINDOWS_KERNEL_LIB} ws2_32 shlwapi psapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
@@ -85,21 +94,40 @@ else ()
 
     if (UNIX OR APPLE)
         find_package(Threads REQUIRED)
-    endif ()
+
+        if (NOT ANDROID AND NOT CMAKE_THREAD_LIBS_INIT)
+            check_symbol_exists(pthread_mutexattr_init "<pthread.h>" HAVE_PTHREAD_MUTEXATTR_INIT)
+            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT)
+                # fsanitize=... results in GLIBC library to provide some pthread APIs but not all
+                list(APPEND PLATFORM_LIBS pthread)
+            endif()
+        endif()
+    endif()
 
     if (APPLE)
         # Don't add the exact path to CoreFoundation as this would hardcode the SDK version
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
+        list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
+        list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+        list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
         list(APPEND AWS_COMMON_OS_SRC "${ANDROID_SRC}")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+    else()
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
     endif()
 
 endif()
@@ -124,13 +152,17 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (MSVC)
+        if (WINDOWS)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/msvc/*.c"
+                "source/arch/arm/windows/*.c"
                 )
-        elseif (AWS_HAVE_AUXV)
+        elseif(APPLE)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/asm/*.c"
+                    "source/arch/arm/darwin/*.c"
+                    )
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/auxv/*.c"
                 )
         endif()
     endif()
@@ -149,6 +181,7 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_SRC}
         ${AWS_COMMON_OS_SRC}
         ${AWS_COMMON_ARCH_SRC}
+        ${AWS_COMMON_EXTERNAL_SRC}
         )
 
 
@@ -157,18 +190,19 @@ aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
-aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS} ${AWS_TEST_HEADERS} ${AWS_COMMON_OS_HEADERS})
+aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
-if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD)
+if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD|OpenBSD)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
 
 aws_set_thread_affinity_method(${PROJECT_NAME})
+aws_set_thread_name_method(${PROJECT_NAME})
 
-aws_add_sanitizers(${PROJECT_NAME} BLACKLIST "sanitizer-blacklist.txt")
+aws_add_sanitizers(${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PLATFORM_LIBS})
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
@@ -187,17 +221,16 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>)
 
-# Enable SIMD encoder if the compiler supports the right features
-simd_add_definitions(${PROJECT_NAME})
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
-if (HAVE_AVX2_INTRINSICS)
+if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx2(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_append_source_and_features(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c" ${AWS_AVX2_FLAG})
     message(STATUS "Building SIMD base64 decoder")
 endif()
 
 # Preserve subdirectories when installing headers
-foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${GENERATED_CONFIG_HEADER} ${AWS_TEST_HEADERS})
+foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} ${GENERATED_CONFIG_HEADER} ${AWS_TEST_HEADERS} ${AWS_COMMON_EXTERNAL_INSTALLED_HEADERS})
     get_filename_component(HEADER_DIR ${HEADER_SRCPATH} DIRECTORY)
 # Note: We need to replace the generated include directory component first, otherwise if the build
 # directory is located inside the source tree, we'll partially rewrite the path and fail to replace it
@@ -257,6 +290,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsSIMD.cmake"
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
+    "cmake/AwsCRuntime.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}
@@ -271,6 +305,7 @@ configure_file(${CONFIG_HEADER_TEMPLATE}
 if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
+        add_subdirectory(bin/system_info)
     endif()
 endif()
 

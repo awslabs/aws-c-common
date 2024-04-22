@@ -1,0 +1,25 @@
+name: Code coverage check
+
+on:
+  push:
+
+env:
+  BUILDER_VERSION: v0.9.55
+  BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
+  BUILDER_SOURCE: releases
+  PACKAGE_NAME: aws-c-common
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-1
+
+jobs:
+  codecov-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v3
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --compiler=gcc-9 --coverage --coverage-exclude=source/external/

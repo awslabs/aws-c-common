@@ -7,13 +7,13 @@ jobs:
 
     strategy:
       matrix:
-        host: [ubuntu-20.04]
+        host: [ubuntu-22.04] # latest
 
     runs-on: ${{ matrix.host }}
 
     steps:
     - name: Checkout Sources
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
     - name: clang-tidy lint
       run: |

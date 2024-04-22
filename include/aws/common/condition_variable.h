@@ -11,6 +11,8 @@
 #    include <pthread.h>
 #endif
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 struct aws_mutex;
 
 struct aws_condition_variable;
@@ -31,7 +33,7 @@ struct aws_condition_variable {
  * You can do something like struct aws_condition_variable var =
  * AWS_CONDITION_VARIABLE_INIT;
  *
- * If on Windows and you get an error about AWS_CONDITION_VARIABLE_INIT being undefined, please include Windows.h to get
+ * If on Windows and you get an error about AWS_CONDITION_VARIABLE_INIT being undefined, please include windows.h to get
  * CONDITION_VARIABLE_INIT.
  */
 #ifdef _WIN32
@@ -108,4 +110,6 @@ int aws_condition_variable_wait_for_pred(
     void *pred_ctx);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
+
 #endif /* AWS_COMMON_CONDITION_VARIABLE_H */

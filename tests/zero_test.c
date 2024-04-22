@@ -37,6 +37,9 @@ static int s_test_secure_zero_fn(struct aws_allocator *allocator, void *ctx) {
         }
     }
 
+    /* check that it's safe to pass NULL */
+    aws_secure_zero(NULL, 0);
+
     return SUCCESS;
 }
 

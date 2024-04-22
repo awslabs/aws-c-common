@@ -5,32 +5,63 @@
 
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 
-#include <Shlwapi.h>
 #include <errno.h>
 #include <io.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <windows.h>
 
+static bool s_is_string_empty(const struct aws_string *str) {
+    return str == NULL || str->len == 0;
+}
+
+static bool s_is_wstring_empty(const struct aws_wstring *str) {
+    return str == NULL || str->len == 0;
+}
+
 FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string *mode) {
+    if (s_is_string_empty(file_path)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. path is empty");
+        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        return NULL;
+    }
+
+    if (s_is_string_empty(mode)) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_IO, "static: Failed to open file. mode is empty");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
     struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
     struct aws_wstring *w_mode = aws_string_convert_to_wstring(aws_default_allocator(), mode);
 
     FILE *file = NULL;
     errno_t error = _wfopen_s(&file, aws_wstring_c_str(w_file_path), aws_wstring_c_str(w_mode));
-    /* actually handle the error correctly here. */
     aws_wstring_destroy(w_mode);
     aws_wstring_destroy(w_file_path);
 
     if (error) {
-        aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+        aws_translate_and_raise_io_error_or(error, AWS_ERROR_FILE_OPEN_FAILURE);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_IO,
+            "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
+            aws_string_c_str(file_path),
+            aws_string_c_str(mode),
+            error,
+            aws_last_error(),
+            aws_error_name(aws_last_error()));
     }
 
     return file;
 }
 
 struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct aws_wstring *path) {
+    if (s_is_wstring_empty(path)) {
+        return NULL;
+    }
 
     wchar_t prefix[] = L"\\\\?\\";
     size_t prefix_size = sizeof(prefix);
@@ -56,6 +87,10 @@ struct aws_wstring *s_to_long_path(struct aws_allocator *allocator, const struct
 }
 
 int aws_directory_create(const struct aws_string *dir_path) {
+    if (s_is_string_empty(dir_path)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
+
     struct aws_wstring *w_dir_path = aws_string_convert_to_wstring(aws_default_allocator(), dir_path);
     struct aws_wstring *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
     aws_wstring_destroy(w_dir_path);
@@ -84,6 +119,10 @@ int aws_directory_create(const struct aws_string *dir_path) {
 }
 
 bool aws_directory_exists(const struct aws_string *dir_path) {
+    if (s_is_string_empty(dir_path)) {
+        return false;
+    }
+
     struct aws_wstring *w_dir_path = aws_string_convert_to_wstring(aws_default_allocator(), dir_path);
     struct aws_wstring *long_dir_path = s_to_long_path(aws_default_allocator(), w_dir_path);
     aws_wstring_destroy(w_dir_path);
@@ -115,6 +154,9 @@ static bool s_delete_file_or_directory(const struct aws_directory_entry *entry, 
 }
 
 int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
+    if (s_is_string_empty(dir_path)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
     if (!aws_directory_exists(dir_path)) {
         return AWS_OP_SUCCESS;
     }
@@ -158,6 +200,10 @@ int aws_directory_delete(const struct aws_string *dir_path, bool recursive) {
 }
 
 int aws_file_delete(const struct aws_string *file_path) {
+    if (s_is_string_empty(file_path)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
+
     struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
     struct aws_wstring *long_file_path = s_to_long_path(aws_default_allocator(), w_file_path);
     aws_wstring_destroy(w_file_path);
@@ -182,6 +228,10 @@ int aws_file_delete(const struct aws_string *file_path) {
 }
 
 int aws_directory_or_file_move(const struct aws_string *from, const struct aws_string *to) {
+    if (s_is_string_empty(from) || s_is_string_empty(to)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
+
     struct aws_wstring *w_from_path = aws_string_convert_to_wstring(aws_default_allocator(), from);
     struct aws_wstring *long_from_path = s_to_long_path(aws_default_allocator(), w_from_path);
     aws_wstring_destroy(w_from_path);
@@ -216,6 +266,11 @@ int aws_directory_traverse(
     bool recursive,
     aws_on_directory_entry *on_entry,
     void *user_data) {
+
+    if (s_is_string_empty(path)) {
+        return aws_raise_error(AWS_ERROR_FILE_INVALID_PATH);
+    }
+
     struct aws_wstring *w_path_wchar = aws_string_convert_to_wstring(allocator, path);
     struct aws_wstring *long_path_wchar = s_to_long_path(allocator, w_path_wchar);
     aws_wstring_destroy(w_path_wchar);
@@ -440,6 +495,10 @@ struct aws_string *aws_get_home_directory(struct aws_allocator *allocator) {
 }
 
 bool aws_path_exists(const struct aws_string *path) {
+    if (s_is_string_empty(path)) {
+        return false;
+    }
+
     struct aws_wstring *wchar_path = aws_string_convert_to_wstring(aws_default_allocator(), path);
     bool ret_val = PathFileExistsW(aws_wstring_c_str(wchar_path)) == TRUE;
     aws_wstring_destroy(wchar_path);
@@ -448,13 +507,18 @@ bool aws_path_exists(const struct aws_string *path) {
 
 int aws_fseek(FILE *file, int64_t offset, int whence) {
     if (_fseeki64(file, offset, whence)) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_STREAM_UNSEEKABLE);
     }
 
     return AWS_OP_SUCCESS;
 }
 
 int aws_file_get_length(FILE *file, int64_t *length) {
+    if (file == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+
     int fd = _fileno(file);
     if (fd == -1) {
         return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
@@ -462,7 +526,8 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     HANDLE os_file = (HANDLE)_get_osfhandle(fd);
     if (os_file == INVALID_HANDLE_VALUE) {
-        return aws_translate_and_raise_io_error(errno);
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
     }
 
     LARGE_INTEGER os_size;

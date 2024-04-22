@@ -24,7 +24,7 @@ size_t aws_system_info_processor_count(void) {
 /* the next three functions need actual implementations before we can have proper numa alignment on windows.
  * For now leave them stubbed out. */
 uint16_t aws_get_cpu_group_count(void) {
-    return 1u;
+    return 1U;
 }
 
 size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
@@ -158,8 +158,8 @@ static bool s_init_dbghelp() {
     return s_SymInitialize != NULL;
 }
 
-size_t aws_backtrace(void **stack_frames, size_t size) {
-    return (int)CaptureStackBackTrace(0, (ULONG)size, stack_frames, NULL);
+size_t aws_backtrace(void **stack_frames, size_t num_frames) {
+    return (int)CaptureStackBackTrace(0, (ULONG)num_frames, stack_frames, NULL);
 }
 
 char **aws_backtrace_symbols(void *const *stack_frames, size_t num_frames) {
@@ -272,10 +272,10 @@ void aws_backtrace_log(int log_level) {
     }
     aws_mem_release(aws_default_allocator(), symbols);
 }
-#else  /* !AWS_OS_WINDOWS_DESKTOP */
-size_t aws_backtrace(void **stack_frames, size_t size) {
+#else /* !AWS_OS_WINDOWS_DESKTOP */
+size_t aws_backtrace(void **stack_frames, size_t num_frames) {
     (void)stack_frames;
-    (void)size;
+    (void)num_frames;
     return 0;
 }
 char **aws_backtrace_symbols(void *const *stack_frames, size_t stack_depth) {
@@ -299,4 +299,5 @@ void aws_backtrace_log() {
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
+
 #endif /* AWS_OS_WINDOWS_DESKTOP */

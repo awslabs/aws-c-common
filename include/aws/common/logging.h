@@ -10,6 +10,8 @@
 #include <aws/common/common.h>
 #include <aws/common/thread.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 #define AWS_LOG_LEVEL_NONE 0
 #define AWS_LOG_LEVEL_FATAL 1
 #define AWS_LOG_LEVEL_ERROR 2
@@ -56,7 +58,9 @@ enum aws_log_level {
 typedef uint32_t aws_log_subject_t;
 
 /* Each library gets space for 2^^10 log subject entries */
-#define AWS_LOG_SUBJECT_STRIDE_BITS 10
+enum {
+    AWS_LOG_SUBJECT_STRIDE_BITS = 10,
+};
 #define AWS_LOG_SUBJECT_STRIDE (1U << AWS_LOG_SUBJECT_STRIDE_BITS)
 #define AWS_LOG_SUBJECT_BEGIN_RANGE(x) ((x)*AWS_LOG_SUBJECT_STRIDE)
 #define AWS_LOG_SUBJECT_END_RANGE(x) (((x) + 1) * AWS_LOG_SUBJECT_STRIDE - 1)
@@ -84,6 +88,7 @@ enum aws_common_log_subject {
     AWS_LS_COMMON_IO,
     AWS_LS_COMMON_BUS,
     AWS_LS_COMMON_TEST,
+    AWS_LS_COMMON_JSON_PARSER,
 
     AWS_LS_COMMON_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
@@ -92,6 +97,13 @@ struct aws_logger;
 struct aws_log_formatter;
 struct aws_log_channel;
 struct aws_log_writer;
+
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4623) /* default constructor was implicitly defined as deleted */
+#    pragma warning(disable : 4626) /* assignment operator was implicitly defined as deleted */
+#    pragma warning(disable : 5027) /* move assignment operator was implicitly defined as deleted */
+#endif
 
 /**
  * We separate the log level function from the log call itself so that we can do the filter check in the macros (see
@@ -116,6 +128,10 @@ struct aws_logger_vtable {
     int (*set_log_level)(struct aws_logger *logger, enum aws_log_level);
 };
 
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
+
 struct aws_logger {
     struct aws_logger_vtable *vtable;
     struct aws_allocator *allocator;
@@ -125,16 +141,21 @@ struct aws_logger {
 /**
  * The base formatted logging macro that all other formatted logging macros resolve to.
  * Checks for a logger and filters based on log level.
- *
  */
 #define AWS_LOGF(log_level, subject, ...)                                                                              \
-    {                                                                                                                  \
+    do {                                                                                                               \
         AWS_ASSERT(log_level > 0);                                                                                     \
         struct aws_logger *logger = aws_logger_get();                                                                  \
         if (logger != NULL && logger->vtable->get_log_level(logger, (subject)) >= (log_level)) {                       \
             logger->vtable->log(logger, log_level, subject, __VA_ARGS__);                                              \
         }                                                                                                              \
-    }
+    } while (0)
+/**
+ * Unconditional logging macro that takes a logger and does not do a level check or a null check.  Intended for
+ * situations when you need to log many things and do a single manual level check before beginning.
+ */
+#define AWS_LOGUF(logger, log_level, subject, ...)                                                                     \
+    { logger->vtable->log(logger, log_level, subject, __VA_ARGS__); }
 
 /**
  * LOGF_<level> variants for each level.  These are what should be used directly to do all logging.
@@ -221,6 +242,16 @@ void aws_logger_set(struct aws_logger *logger);
  */
 AWS_COMMON_API
 struct aws_logger *aws_logger_get(void);
+
+/**
+ * Gets the aws logger used globally across the process if the logging level is at least the inputted level.
+ *
+ * @param subject log subject to perform the level check versus, not currently used
+ * @param level logging level to check against in order to return the logger
+ * @return the current logger if the current logging level is at or more detailed then the supplied logging level
+ */
+AWS_COMMON_API
+struct aws_logger *aws_logger_get_conditional(aws_log_subject_t subject, enum aws_log_level level);
 
 /**
  * Cleans up all resources used by the logger; simply invokes the clean_up v-function
@@ -314,6 +345,7 @@ extern struct aws_logger_vtable g_pipeline_logger_owned_vtable;
 /*
  * Initializes a logger that does not perform any allocation during logging.  Log lines larger than the internal
  * constant are truncated.  Formatting matches the standard logger.  Used for memory tracing logging.
+ * If no file or filename is set in the aws_logger_standard_options, then it will use stderr.
  */
 AWS_COMMON_API
 int aws_logger_init_noalloc(
@@ -322,5 +354,6 @@ int aws_logger_init_noalloc(
     struct aws_logger_standard_options *options);
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_LOGGING_H */

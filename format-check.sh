@@ -4,7 +4,7 @@ if [[ -z $CLANG_FORMAT ]] ; then
     CLANG_FORMAT=clang-format
 fi
 
-if NOT type $CLANG_FORMAT 2> /dev/null ; then
+if ! type $CLANG_FORMAT 2> /dev/null ; then
     echo "No appropriate clang-format found."
     exit 1
 fi
