@@ -528,6 +528,8 @@ add_test_case(test_cross_process_lock_works_cross_proc)
 add_test_case(cross_process_lock_mp_test_runner)
 add_test_case(test_cross_process_lock_invalid_nonce_fails)
 
+add_test_case(host_util_is_ipv4)
+add_test_case(host_util_is_ipv6)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
