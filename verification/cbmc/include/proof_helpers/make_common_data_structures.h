@@ -127,7 +127,7 @@ void hash_proof_destroy_noop(void *p);
 /**
  * Ensures a valid string is allocated, with as much nondet as possible
  */
-struct aws_string *ensure_string_is_allocated_nondet_length();
+struct aws_string *ensure_string_is_allocated_nondet_length(void);
 
 /**
  * Ensures a valid string is allocated, with as much nondet as possible, but len < max
