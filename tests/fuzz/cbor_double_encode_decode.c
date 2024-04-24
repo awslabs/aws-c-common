@@ -17,8 +17,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         return 0;
     }
     aws_common_library_init(allocator);
-    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator, NULL);
-    aws_cbor_encoder_write_double(encoder, val);
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
+    aws_cbor_encoder_write_float(encoder, val);
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
@@ -27,20 +27,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     switch (out_type) {
         case AWS_CBOR_TYPE_UINT: {
             uint64_t result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_unsigned_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &result) == 0);
             AWS_FATAL_ASSERT((double)result == val);
             break;
         }
         case AWS_CBOR_TYPE_NEGINT: {
             uint64_t result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_neg_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_negative_int_val(decoder, &result) == 0);
             int64_t expected_val = -1 - result;
             AWS_FATAL_ASSERT(expected_val == (int64_t)val);
             break;
         }
-        case AWS_CBOR_TYPE_DOUBLE: {
+        case AWS_CBOR_TYPE_FLOAT: {
             double result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_double_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_float_val(decoder, &result) == 0);
             if (isnan(val)) {
                 AWS_FATAL_ASSERT(isnan(result));
             } else {
@@ -54,7 +54,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             break;
     }
     AWS_FATAL_ASSERT(aws_cbor_decoder_get_remaining_length(decoder) == 0);
-    aws_cbor_encoder_release(encoder);
+    aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
 
     atexit(aws_common_library_clean_up);

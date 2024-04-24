@@ -30,20 +30,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         switch (out_type) {
             case AWS_CBOR_TYPE_UINT:
                 AWS_FATAL_ASSERT(
-                    aws_cbor_decoder_pop_next_unsigned_val(decoder, &cbor_data.unsigned_val) == AWS_OP_SUCCESS);
+                    aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &cbor_data.unsigned_val) == AWS_OP_SUCCESS);
                 break;
             case AWS_CBOR_TYPE_NEGINT:
-                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_neg_val(decoder, &cbor_data.neg_val) == AWS_OP_SUCCESS);
+                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_negative_int_val(decoder, &cbor_data.neg_val) == AWS_OP_SUCCESS);
                 break;
-            case AWS_CBOR_TYPE_DOUBLE:
-                AWS_FATAL_ASSERT(
-                    aws_cbor_decoder_pop_next_double_val(decoder, &cbor_data.double_val) == AWS_OP_SUCCESS);
+            case AWS_CBOR_TYPE_FLOAT:
+                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_float_val(decoder, &cbor_data.double_val) == AWS_OP_SUCCESS);
                 break;
-            case AWS_CBOR_TYPE_BYTESTRING:
+            case AWS_CBOR_TYPE_BYTES:
                 AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_bytes_val(decoder, &cbor_data.bytes_val) == AWS_OP_SUCCESS);
                 break;
-            case AWS_CBOR_TYPE_STRING:
-                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_str_val(decoder, &cbor_data.str_val) == AWS_OP_SUCCESS);
+            case AWS_CBOR_TYPE_TEXT:
+                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_text_val(decoder, &cbor_data.str_val) == AWS_OP_SUCCESS);
                 break;
             case AWS_CBOR_TYPE_ARRAY_START:
                 AWS_FATAL_ASSERT(
@@ -62,10 +61,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             case AWS_CBOR_TYPE_NULL:
             case AWS_CBOR_TYPE_UNDEFINE:
             case AWS_CBOR_TYPE_BREAK:
-            case AWS_CBOR_TYPE_INF_BYTESTRING_START:
-            case AWS_CBOR_TYPE_INF_STRING_START:
-            case AWS_CBOR_TYPE_INF_ARRAY_START:
-            case AWS_CBOR_TYPE_INF_MAP_START: {
+            case AWS_CBOR_TYPE_INDEF_BYTES_START:
+            case AWS_CBOR_TYPE_INDEF_TEXT_START:
+            case AWS_CBOR_TYPE_INDEF_ARRAY_START:
+            case AWS_CBOR_TYPE_INDEF_MAP_START: {
                 enum aws_cbor_element_type type = AWS_CBOR_TYPE_MAX;
                 AWS_FATAL_ASSERT(aws_cbor_decoder_consume_next_element(decoder, &type) == AWS_OP_SUCCESS);
                 AWS_FATAL_ASSERT(type == out_type);
