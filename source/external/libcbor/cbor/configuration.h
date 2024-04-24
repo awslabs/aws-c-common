@@ -2,7 +2,7 @@
  * DO NOT DIRECTLY MODIFY THIS FILE:
  *
  * The code in this file is generated from scripts/import_libcbor.py
- *  and any modifications should be in there.
+ * and any modifications should be in there.
  */
 
 #ifndef LIBCBOR_CONFIGURATION_H
@@ -31,6 +31,8 @@
 #    pragma warning(disable : 4232)
 #    pragma warning(disable : 4068)
 #    pragma warning(disable : 4244)
+#    pragma warning(disable : 4701)
+#    pragma warning(disable : 4703)
 #endif
 
 #ifdef __clang__
@@ -40,6 +42,7 @@
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wreturn-type"
 #    pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#    pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
 #endif // LIBCBOR_CONFIGURATION_H
