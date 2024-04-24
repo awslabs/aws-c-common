@@ -3,29 +3,19 @@ import tempfile
 import shutil
 import subprocess
 import argparse
+import re
 
 def parse_version(version_string):
-    if version_string.startswith('v'):
-        version_string = version_string[1:]
-    parts = version_string.split('.')
-    if not parts:
+    match = re.fullmatch(r'v(\d+)\.(\d+)\.(\d+)', version_string)
+    if not match:
         raise ValueError("Invalid version string")
-    major = int(parts[0])
-    minor = 0
-    patch = 0
-    if len(parts) > 1:
-        minor = int(parts[1])
-
-    if len(parts) > 2:
-        patch = int(parts[2])
-
-    return major, minor, patch
+    return match.group(1), match.group(2), match.group(3)
 
 argument_parser = argparse.ArgumentParser(
     description="Helper to import libcbor as external dependency.")
 
 argument_parser.add_argument("--version",
-                                default="v0.11.0", help="Version string to import")
+                                required=True, help="Version string to import")
 
 args = argument_parser.parse_args()
 major_version, minor_version, patch_version = parse_version(args.version)
@@ -80,10 +70,8 @@ CONFIGURATION_H = f"""
 #endif
 
 #ifdef __clang__
-#    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wreturn-type"
 #elif defined(__GNUC__)
-#    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wreturn-type"
 #    pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #    pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
