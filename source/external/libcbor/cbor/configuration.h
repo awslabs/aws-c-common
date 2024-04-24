@@ -2,7 +2,7 @@
  * DO NOT DIRECTLY MODIFY THIS FILE:
  *
  * The code in this file is generated from scripts/import_libcbor.py
- *  and any modifications should be in there.
+ * and any modifications should be in there.
  */
 
 #ifndef LIBCBOR_CONFIGURATION_H

@@ -2,19 +2,39 @@ import os
 import tempfile
 import shutil
 import subprocess
-import re
+import argparse
 
-# TODO support pass-in version and use the tag
+def parse_version(version_string):
+    if version_string.startswith('v'):
+        version_string = version_string[1:]
+    parts = version_string.split('.')
+    if not parts:
+        raise ValueError("Invalid version string")
+    major = int(parts[0])
+    minor = 0
+    patch = 0
+    if len(parts) > 1:
+        minor = int(parts[1])
 
-major_version = 0
-minor_version = 11
-patch_version = 0
+    if len(parts) > 2:
+        patch = int(parts[2])
+
+    return major, minor, patch
+
+argument_parser = argparse.ArgumentParser(
+    description="Helper to import libcbor as external dependency.")
+
+argument_parser.add_argument("--version",
+                                default="v0.11.0", help="Version string to import")
+
+args = argument_parser.parse_args()
+major_version, minor_version, patch_version = parse_version(args.version)
 
 GENERATED_NOTES = """/**
  * DO NOT DIRECTLY MODIFY THIS FILE:
  *
  * The code in this file is generated from scripts/import_libcbor.py
- *  and any modifications should be in there.
+ * and any modifications should be in there.
  */
 """
 
@@ -69,6 +89,8 @@ CONFIGURATION_H = f"""
 #endif // LIBCBOR_CONFIGURATION_H
 """
 
+
+
 # Create a temporary directory for cloning the repository
 temp_repo_dir = tempfile.mkdtemp()
 
@@ -77,10 +99,12 @@ try:
     repo_url = "https://github.com/PJK/libcbor.git"
     clone_command = f"git clone {repo_url} {temp_repo_dir}"
     subprocess.run(clone_command, shell=True, check=True)
+    subprocess.run(["git", "checkout", "tags/" + args.version], cwd=temp_repo_dir, check=True)
 
     # Create a separate folder for the copied files
     output_dir = os.path.join(
         os.path.dirname(__file__), "..", "source", "external", "libcbor")
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
 
     # Copy files ending with .c and .h from the /src directory
@@ -97,16 +121,12 @@ try:
                 shutil.copy(src_file, dest_file)
 
     # Use our customized configurations
-
     with open(os.path.join(output_dir, "cbor/cbor_export.h"), "w") as file:
         file.write(GENERATED_NOTES)
         file.write(CBOR_EXPORT_H)
     with open(os.path.join(output_dir, "cbor/configuration.h"), "w") as file:
         file.write(GENERATED_NOTES)
         file.write(CONFIGURATION_H)
-
-except subprocess.CalledProcessError as e:
-    print(f"An error occurred while cloning the repository: {e}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
