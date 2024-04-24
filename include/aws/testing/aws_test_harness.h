@@ -147,7 +147,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected success at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected success at %s; got return value %d with last error 0x%04d\n",                            \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -162,7 +162,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected failure at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected failure at %s; got return value %d with last error 0x%04d\n",                            \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -179,7 +179,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04x (expected %04x): ",                \
+                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04d (expected %04d): ",                \
                 FAIL_PREFIX,                                                                                           \
                 assert_rv,                                                                                             \
                 assert_err,                                                                                            \
@@ -192,7 +192,7 @@ static int s_cunit_failure_message0(
         if (assert_err != assert_err_expect) {                                                                         \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sIncorrect error code; aws_last_error=%04x (expected %04x): ",                                       \
+                "%sIncorrect error code; aws_last_error=%04d (expected %04d): ",                                       \
                 FAIL_PREFIX,                                                                                           \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \

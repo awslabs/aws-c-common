@@ -105,6 +105,7 @@ add_test_case(linked_list_reverse_iteration)
 add_test_case(linked_list_swap_contents)
 add_test_case(linked_list_move_all_back)
 add_test_case(linked_list_move_all_front)
+add_test_case(linked_list_node_in_list)
 
 add_test_case(hex_encoding_test_case_empty_test)
 add_test_case(hex_encoding_test_case_f_test)
@@ -527,6 +528,8 @@ add_test_case(test_cross_process_lock_works_cross_proc)
 add_test_case(cross_process_lock_mp_test_runner)
 add_test_case(test_cross_process_lock_invalid_nonce_fails)
 
+add_test_case(host_util_is_ipv4)
+add_test_case(host_util_is_ipv6)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
