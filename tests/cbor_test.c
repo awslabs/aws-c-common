@@ -56,7 +56,7 @@ CBOR_TEST_CASE(cbor_encode_decode_int_test) {
     /* Negative int */
     for (size_t i = 0; i < VALUE_NUM; i++) {
         uint64_t result;
-        ASSERT_SUCCESS(aws_cbor_decoder_pop_negative_int_val(decoder, &result));
+        ASSERT_SUCCESS(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result));
         ASSERT_UINT_EQUALS(values[i], result);
     }
 
@@ -123,7 +123,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     /* negative int, -1 */
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_negative_int_val(decoder, &result));
+    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result));
     /* Convert the decode val to expected val. */
     ASSERT_TRUE((-1 - values[index++]) == result);
     /* 1.1 double */

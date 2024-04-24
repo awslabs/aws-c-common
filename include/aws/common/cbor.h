@@ -383,7 +383,7 @@ int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder, enum
  * raised. If the next element already been cached, it will consume the cached item when no error was returned.
  * Specifically:
  *  AWS_CBOR_TYPE_UINT - aws_cbor_decoder_pop_next_unsigned_int_val
- *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_negative_int_val, it represents (-1 - *out)
+ *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_next_negative_int_val, it represents (-1 - *out)
  *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_double_val
  *  AWS_CBOR_TYPE_BYTES - aws_cbor_decoder_pop_next_bytes_val
  *  AWS_CBOR_TYPE_TEXT - aws_cbor_decoder_pop_next_text_val
@@ -395,7 +395,7 @@ int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder, enum
 AWS_COMMON_API
 int aws_cbor_decoder_pop_next_unsigned_int_val(struct aws_cbor_decoder *decoder, uint64_t *out);
 AWS_COMMON_API
-int aws_cbor_decoder_pop_negative_int_val(struct aws_cbor_decoder *decoder, uint64_t *out);
+int aws_cbor_decoder_pop_next_negative_int_val(struct aws_cbor_decoder *decoder, uint64_t *out);
 AWS_COMMON_API
 int aws_cbor_decoder_pop_next_float_val(struct aws_cbor_decoder *decoder, double *out);
 AWS_COMMON_API

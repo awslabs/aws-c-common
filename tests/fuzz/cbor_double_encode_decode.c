@@ -33,7 +33,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
         case AWS_CBOR_TYPE_NEGINT: {
             uint64_t result = 0;
-            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_negative_int_val(decoder, &result) == 0);
+            AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result) == 0);
             int64_t expected_val = -1 - result;
             AWS_FATAL_ASSERT(expected_val == (int64_t)val);
             break;

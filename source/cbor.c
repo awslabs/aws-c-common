@@ -602,7 +602,7 @@ decode_tag_done:
 
         case AWS_CBOR_TYPE_NEGINT: {
             uint64_t timestamp_secs = 0;
-            error |= aws_cbor_decoder_pop_negative_int_val(decoder, &timestamp_secs);
+            error |= aws_cbor_decoder_pop_next_negative_int_val(decoder, &timestamp_secs);
             if (error) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
