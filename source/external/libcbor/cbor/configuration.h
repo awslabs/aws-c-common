@@ -31,15 +31,19 @@
 #    pragma warning(disable : 4232)
 #    pragma warning(disable : 4068)
 #    pragma warning(disable : 4244)
+#    pragma warning(disable : 4701)
+#    pragma warning(disable : 4703)
 #endif
 
 #ifdef __clang__
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wreturn-type"
+#    pragma clang diagnostic ignored "-Wmaybe-uninitialized"
 #elif defined(__GNUC__)
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wreturn-type"
 #    pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#    pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
 #endif // LIBCBOR_CONFIGURATION_H
