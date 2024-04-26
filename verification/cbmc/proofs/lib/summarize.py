@@ -1,8 +1,28 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
+import argparse
 import json
 import logging
+import os
+import sys
+
+
+DESCRIPTION = """Print 2 tables in GitHub-flavored Markdown that summarize
+an execution of CBMC proofs."""
+
+
+def get_args():
+    """Parse arguments for summarize script."""
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    for arg in [{
+            "flags": ["--run-file"],
+            "help": "path to the Litani run.json file",
+            "required": True,
+    }]:
+        flags = arg.pop("flags")
+        parser.add_argument(*flags, **arg)
+    return parser.parse_args()
 
 
 def _get_max_length_per_column_list(data):
@@ -56,6 +76,7 @@ def _get_status_and_proof_summaries(run_dict):
     run_dict
         A dictionary representing a Litani run.
 
+
     Returns
     -------
     A list of 2 lists.
@@ -70,8 +91,9 @@ def _get_status_and_proof_summaries(run_dict):
             count_statuses[status_pretty_name] += 1
         except KeyError:
             count_statuses[status_pretty_name] = 1
-        proof = proof_pipeline["name"]
-        proofs.append([proof, status_pretty_name])
+        if proof_pipeline["name"] == "print_tool_versions":
+            continue
+        proofs.append([proof_pipeline["name"], status_pretty_name])
     statuses = [["Status", "Count"]]
     for status, count in count_statuses.items():
         statuses.append([status, str(count)])
@@ -83,10 +105,39 @@ def print_proof_results(out_file):
     Print 2 strings that summarize the proof results.
     When printing, each string will render as a GitHub flavored Markdown table.
     """
+    output = "## Summary of CBMC proof results\n\n"
+    with open(out_file, encoding='utf-8') as run_json:
+        run_dict = json.load(run_json)
+    status_table, proof_table = _get_status_and_proof_summaries(run_dict)
+    for summary in (status_table, proof_table):
+        output += _get_rendered_table(summary)
+
+    print(output)
+    sys.stdout.flush()
+
+    github_summary_file = os.getenv("GITHUB_STEP_SUMMARY")
+    if github_summary_file:
+        with open(github_summary_file, "a") as handle:
+            print(output, file=handle)
+            handle.flush()
+    else:
+        logging.warning(
+            "$GITHUB_STEP_SUMMARY not set, not writing summary file")
+
+    msg = (
+        "Click the 'Summary' button to view a Markdown table "
+        "summarizing all proof results")
+    if run_dict["status"] != "success":
+        logging.error("Not all proofs passed.")
+        logging.error(msg)
+        sys.exit(1)
+    logging.info(msg)
+
+
+if __name__ == '__main__':
+    args = get_args()
+    logging.basicConfig(format="%(levelname)s: %(message)s")
     try:
-        with open(out_file, encoding='utf-8') as run_json:
-            run_dict = json.load(run_json)
-            for summary in _get_status_and_proof_summaries(run_dict):
-                print(_get_rendered_table(summary))
+        print_proof_results(args.run_file)
     except Exception as ex: # pylint: disable=broad-except
         logging.critical("Could not print results. Exception: %s", str(ex))

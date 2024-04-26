@@ -59,7 +59,8 @@ static bool s_sift_down(struct aws_priority_queue *queue, size_t root) {
         size_t left = LEFT_OF(root);
         size_t right = RIGHT_OF(root);
         size_t first = root;
-        void *first_item = NULL, *other_item = NULL;
+        void *first_item = NULL;
+        void *other_item = NULL;
 
         aws_array_list_get_at_ptr(&queue->container, &first_item, root);
         aws_array_list_get_at_ptr(&queue->container, &other_item, left);
@@ -100,7 +101,8 @@ static bool s_sift_up(struct aws_priority_queue *queue, size_t index) {
 
     bool did_move = false;
 
-    void *parent_item = NULL, *child_item = NULL;
+    void *parent_item = NULL;
+    void *child_item = NULL;
     size_t parent = PARENT_OF(index);
     while (index) {
         /*
@@ -216,8 +218,8 @@ bool aws_priority_queue_backpointers_valid(const struct aws_priority_queue *cons
 
     /* Internal container validity */
     bool backpointer_list_is_valid =
-        ((aws_array_list_is_valid(&queue->backpointers) && (queue->backpointers.current_size != 0) &&
-          (queue->backpointers.data != NULL)));
+        (aws_array_list_is_valid(&queue->backpointers) && (queue->backpointers.current_size != 0) &&
+         (queue->backpointers.data != NULL));
 
     /* Backpointer struct should either be zero or should be
      * initialized to be at most as long as the container, and having
@@ -397,4 +399,28 @@ size_t aws_priority_queue_size(const struct aws_priority_queue *queue) {
 
 size_t aws_priority_queue_capacity(const struct aws_priority_queue *queue) {
     return aws_array_list_capacity(&queue->container);
+}
+
+void aws_priority_queue_clear(struct aws_priority_queue *queue) {
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
+    size_t backpointer_count = aws_array_list_length(&queue->backpointers);
+    for (size_t i = 0; i < backpointer_count; ++i) {
+        struct aws_priority_queue_node *node = NULL;
+        aws_array_list_get_at(&queue->backpointers, &node, i);
+        if (node != NULL) {
+            node->current_index = SIZE_MAX;
+        }
+    }
+
+    aws_array_list_clear(&queue->backpointers);
+    aws_array_list_clear(&queue->container);
+    AWS_PRECONDITION(aws_priority_queue_is_valid(queue));
+}
+
+void aws_priority_queue_node_init(struct aws_priority_queue_node *node) {
+    node->current_index = SIZE_MAX;
+}
+
+bool aws_priority_queue_node_is_in_queue(const struct aws_priority_queue_node *node) {
+    return node->current_index != SIZE_MAX;
 }

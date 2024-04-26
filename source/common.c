@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-#    include <Windows.h>
+#    include <windows.h>
 #else
 #    include <dlfcn.h>
 #endif
@@ -38,6 +38,12 @@ int (*g_numa_node_of_cpu_ptr)(int cpu) = NULL;
 void *g_libnuma_handle = NULL;
 
 void aws_secure_zero(void *pBuf, size_t bufsize) {
+    /* don't pass NULL to memset(), it's undefined behavior */
+    if (pBuf == NULL || bufsize == 0) {
+        AWS_ASSERT(bufsize == 0); /* if you believe your NULL buffer has a size, then you have issues */
+        return;
+    }
+
 #if defined(_WIN32)
     SecureZeroMemory(pBuf, bufsize);
 #else
@@ -214,7 +220,7 @@ static struct aws_error_info errors[] = {
     ),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_SYS_CALL_FAILURE,
-        "System call failure"),
+        "System call failure."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_FILE_INVALID_PATH,
         "Invalid file path."),
@@ -226,7 +232,7 @@ static struct aws_error_info errors[] = {
         "User does not have permission to perform the requested action."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_STREAM_UNSEEKABLE,
-        "Stream does not support seek operations"),
+        "Stream does not support seek operations."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED,
         "A c-string like buffer was passed but a null terminator was not found within the bounds of the buffer."),
@@ -238,7 +244,7 @@ static struct aws_error_info errors[] = {
         "Attempt to divide a number by zero."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_INVALID_FILE_HANDLE,
-        "Invalid file handle"),
+        "Invalid file handle."),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_OPERATION_INTERUPTED,
         "The operation was interrupted."
@@ -249,7 +255,25 @@ static struct aws_error_info errors[] = {
     ),
     AWS_DEFINE_ERROR_INFO_COMMON(
         AWS_ERROR_PLATFORM_NOT_SUPPORTED,
-        "Feature not supported on this platform"),
+        "Feature not supported on this platform."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_UTF8,
+        "Invalid UTF-8."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_GET_HOME_DIRECTORY_FAILED,
+        "Failed to get home directory."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_INVALID_XML,
+        "Invalid XML document."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_FILE_OPEN_FAILURE,
+        "Failed opening file."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_FILE_READ_FAILURE,
+        "Failed reading from file."),
+    AWS_DEFINE_ERROR_INFO_COMMON(
+        AWS_ERROR_FILE_WRITE_FAILURE,
+        "Failed writing to file."),
 };
 /* clang-format on */
 
@@ -298,16 +322,16 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         /* libnuma defines set_mempolicy() as a WEAK symbol. Loading into the global symbol table overwrites symbols and
            assumptions due to the way loaders and dlload are often implemented and those symbols are defined by things
            like libpthread.so on some unix distros. Sorry about the memory usage here, but it's our only safe choice.
-           Also, please don't do numa configurations if memory is your economic bottlneck. */
-        g_libnuma_handle = dlopen("libnuma.so", RTLD_LOCAL);
+           Also, please don't do numa configurations if memory is your economic bottleneck. */
+        g_libnuma_handle = dlopen("libnuma.so", RTLD_LAZY | RTLD_LOCAL);
 
         /* turns out so versioning is really inconsistent these days */
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.1", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (!g_libnuma_handle) {
-            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LOCAL);
+            g_libnuma_handle = dlopen("libnuma.so.2", RTLD_LAZY | RTLD_LOCAL);
         }
 
         if (g_libnuma_handle) {

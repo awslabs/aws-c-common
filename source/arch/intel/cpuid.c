@@ -85,11 +85,54 @@ static bool s_has_avx2(void) {
     return true;
 }
 
+static bool s_has_avx512(void) {
+    uint32_t abcd[4];
+
+    /* Check AVX512F:
+     * CPUID.(EAX=07H, ECX=0H):EBX.AVX512[bit 16]==1 */
+    uint32_t avx512_mask = (1 << 16);
+    aws_run_cpuid(7, 0, abcd);
+    if ((abcd[1] & avx512_mask) != avx512_mask) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool s_has_bmi2(void) {
+    uint32_t abcd[4];
+
+    /* Check BMI2:
+     * CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1 */
+    uint32_t bmi2_mask = (1 << 8);
+    aws_run_cpuid(7, 0, abcd);
+    if ((abcd[1] & bmi2_mask) != bmi2_mask) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool s_has_vpclmulqdq(void) {
+    uint32_t abcd[4];
+    /* Check VPCLMULQDQ:
+     * CPUID.(EAX=07H, ECX=0H):ECX.VPCLMULQDQ[bit 10]==1 */
+    uint32_t vpclmulqdq_mask = (1 << 10);
+    aws_run_cpuid(7, 0, abcd);
+    if ((abcd[2] & vpclmulqdq_mask) != vpclmulqdq_mask) {
+        return false;
+    }
+    return true;
+}
+
 has_feature_fn *s_check_cpu_feature[AWS_CPU_FEATURE_COUNT] = {
     [AWS_CPU_FEATURE_CLMUL] = s_has_clmul,
     [AWS_CPU_FEATURE_SSE_4_1] = s_has_sse41,
     [AWS_CPU_FEATURE_SSE_4_2] = s_has_sse42,
     [AWS_CPU_FEATURE_AVX2] = s_has_avx2,
+    [AWS_CPU_FEATURE_AVX512] = s_has_avx512,
+    [AWS_CPU_FEATURE_BMI2] = s_has_bmi2,
+    [AWS_CPU_FEATURE_VPCLMULQDQ] = s_has_vpclmulqdq,
 };
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {

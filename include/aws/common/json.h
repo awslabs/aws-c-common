@@ -9,7 +9,11 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 struct aws_json_value;
+
+AWS_EXTERN_C_BEGIN
 
 // ====================
 // Create and pass type
@@ -279,6 +283,24 @@ int aws_json_const_iterate_array(
 // Checks
 
 /**
+ * Checks whether two json values are equivalent.
+ * @param a first value to compare.
+ * @param b second value to compare.
+ * @param is_case_sensitive case sensitive compare or not.
+ * @return True is values are equal, false otherwise
+ */
+AWS_COMMON_API
+bool aws_json_value_compare(const struct aws_json_value *a, const struct aws_json_value *b, bool is_case_sensitive);
+
+/**
+ * Duplicates json value.
+ * @param value first value to compare.
+ * @return duplicated value. NULL and last error set if value cannot be duplicated.
+ */
+AWS_COMMON_API
+struct aws_json_value *aws_json_value_duplicate(const struct aws_json_value *value);
+
+/**
  * Checks if the aws_json_value is a string.
  * @param value The aws_json_value to check.
  * @return True if the aws_json_value is a string aws_json_value, otherwise false.
@@ -378,7 +400,7 @@ int aws_byte_buf_append_json_string(const struct aws_json_value *value, struct a
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
- *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value or if there
+ *      Will return AWS_OP_ERR if the value passed is not an aws_json_value or if there
  *      aws an error appending the JSON into the byte buffer.
  */
 AWS_COMMON_API
@@ -393,5 +415,8 @@ int aws_byte_buf_append_json_string_formatted(const struct aws_json_value *value
 AWS_COMMON_API
 struct aws_json_value *aws_json_value_new_from_string(struct aws_allocator *allocator, struct aws_byte_cursor string);
 // ====================
+
+AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif // AWS_COMMON_JSON_H

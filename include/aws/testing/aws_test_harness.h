@@ -16,6 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * The return code for skipped tests. Use the return code if the test should be skipped.
+ */
+#define AWS_OP_SKIP (-2)
+
 #ifndef AWS_UNSTABLE_TESTING_API
 #    error The AWS Test Fixture is designed only for use by AWS owned libraries for the AWS C99 SDK. You are welcome to use it,   \
 but you should be aware we make no promises on the stability of this API.  To enable use of the aws test fixtures, set \
@@ -26,13 +31,18 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 #    define AWS_TESTING_REPORT_FD stderr
 #endif
 
-#if _MSC_VER
+#ifdef _MSC_VER
 #    pragma warning(disable : 4221) /* aggregate initializer using local variable addresses */
 #    pragma warning(disable : 4204) /* non-constant aggregate initializer */
 #endif
 
-/** Prints a message to stdout using printf format that appends the function, file and line number.
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
+/** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
+ * If function or file are null, the function, file and line number are not appended.
  */
 static int s_cunit_failure_message0(
     const char *prefix,
@@ -52,7 +62,11 @@ static int s_cunit_failure_message0(
     vfprintf(AWS_TESTING_REPORT_FD, format, ap);
     va_end(ap);
 
-    fprintf(AWS_TESTING_REPORT_FD, " [%s():%s@#%d]\n", function, file, line);
+    if (function && file) {
+        fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
+    } else {
+        fprintf(AWS_TESTING_REPORT_FD, "\n");
+    }
 
     return 1;
 }
@@ -61,10 +75,25 @@ static int s_cunit_failure_message0(
 #define CUNIT_FAILURE_MESSAGE(func, file, line, format, ...)                                                           \
     s_cunit_failure_message0(FAIL_PREFIX, func, file, line, format, #__VA_ARGS__)
 
-static int total_failures;
-
 #define SUCCESS (0)
 #define FAILURE (-1)
+/* The exit code returned to ctest to indicate the test is skipped. Refer to cmake doc:
+ * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html
+ * The value has no special meaning, it's just an arbitrary exit code reducing the chance of clashing with exit codes
+ * that may be returned from various tools (e.g. sanitizer). */
+#define SKIP (103)
+
+#define POSTSKIP_INTERNAL()                                                                                            \
+    do {                                                                                                               \
+        return SKIP;                                                                                                   \
+    } while (0)
+
+#define RETURN_SKIP(format, ...)                                                                                       \
+    do {                                                                                                               \
+        printf(format, ##__VA_ARGS__);                                                                                 \
+        printf("\n");                                                                                                  \
+        POSTSKIP_INTERNAL();                                                                                           \
+    } while (0)
 
 #define RETURN_SUCCESS(format, ...)                                                                                    \
     do {                                                                                                               \
@@ -72,15 +101,17 @@ static int total_failures;
         printf("\n");                                                                                                  \
         return SUCCESS;                                                                                                \
     } while (0)
-#define PRINT_FAIL_INTERNAL(...)                                                                                       \
-    CUNIT_FAILURE_MESSAGE(__FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+
+#define PRINT_FAIL_INTERNAL(...) CUNIT_FAILURE_MESSAGE(__func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
 #define PRINT_FAIL_INTERNAL0(...)                                                                                      \
-    s_cunit_failure_message0(FAIL_PREFIX, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+    s_cunit_failure_message0(FAIL_PREFIX, __func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+
+#define PRINT_FAIL_WITHOUT_LOCATION(...)                                                                               \
+    s_cunit_failure_message0(FAIL_PREFIX, NULL, NULL, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
 #define POSTFAIL_INTERNAL()                                                                                            \
     do {                                                                                                               \
-        total_failures++;                                                                                              \
         return FAILURE;                                                                                                \
     } while (0)
 
@@ -116,7 +147,7 @@ static int total_failures;
         if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected success at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected success at %s; got return value %d with last error 0x%04d\n",                            \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -131,7 +162,7 @@ static int total_failures;
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected failure at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected failure at %s; got return value %d with last error 0x%04d\n",                            \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -148,7 +179,7 @@ static int total_failures;
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04x (expected %04x): ",                \
+                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04d (expected %04d): ",                \
                 FAIL_PREFIX,                                                                                           \
                 assert_rv,                                                                                             \
                 assert_err,                                                                                            \
@@ -161,7 +192,7 @@ static int total_failures;
         if (assert_err != assert_err_expect) {                                                                         \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sIncorrect error code; aws_last_error=%04x (expected %04x): ",                                       \
+                "%sIncorrect error code; aws_last_error=%04d (expected %04d): ",                                       \
                 FAIL_PREFIX,                                                                                           \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \
@@ -301,45 +332,44 @@ static int total_failures;
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                       \
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
         size_t assert_ex_s = (cursor).len;                                                                             \
-        const uint8_t *assert_got_p = (const uint8_t *)aws_string_c_str(string);                                       \
-        size_t assert_got_s = (string)->len;                                                                           \
+        const uint8_t *assert_got_p = (const uint8_t *)cstring;                                                        \
+        size_t assert_got_s = strlen(cstring);                                                                         \
         if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
             break;                                                                                                     \
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
-            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: \n", FAIL_PREFIX, assert_ex_s, assert_got_s); \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sGot: \"" PRInSTR "\"; Expected: \"%s\" \n",                                                         \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
-            if (assert_got_s <= 1024) {                                                                                \
-                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
-                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
-                        fprintf(                                                                                       \
-                            AWS_TESTING_REPORT_FD,                                                                     \
-                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
-                            FAIL_PREFIX,                                                                               \
-                            assert_i,                                                                                  \
-                            assert_ex_p[assert_i],                                                                     \
-                            assert_got_p[assert_i]);                                                                   \
-                        break;                                                                                         \
-                    }                                                                                                  \
-                }                                                                                                      \
-            } else {                                                                                                   \
-                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
-            }                                                                                                          \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sData mismatch; Got: \"" PRInSTR "\"; Expected: \"%s\" \n",                                          \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #string);                   \
+                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
             }                                                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
+
+#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, aws_string_c_str(string));
 
 typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);
 typedef int(aws_test_run_fn)(struct aws_allocator *allocator, void *ctx);
@@ -377,6 +407,13 @@ static void s_print_stack_trace(int sig, siginfo_t *sig_info, void *user_data) {
 
 static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     AWS_ASSERT(harness->run);
+/*
+ * MSVC compiler has a weird interactive pop-up in debug whenever 'abort()' is called, which can be triggered
+ * by hitting any aws_assert or aws_pre_condition, causing the CI to hang. So disable the pop-up in tests.
+ */
+#ifdef _MSC_VER
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
 
 #if defined(_WIN32)
     SetUnhandledExceptionFilter(s_test_print_stack_trace);
@@ -431,37 +468,52 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (!test_res) {
-        if (!harness->suppress_memcheck) {
-            /* Reset the logger as test can set their own logger and clean it up. */
-            aws_logger_set(&err_logger);
-            const size_t leaked_bytes = aws_mem_tracer_count(allocator);
-            if (leaked_bytes) {
-                aws_mem_tracer_dump(allocator);
-            }
-            ASSERT_UINT_EQUALS(0, aws_mem_tracer_count(allocator));
-        }
+    if (test_res != AWS_OP_SUCCESS && test_res != AWS_OP_SKIP) {
+        goto fail;
     }
 
-    /* clean up */
     if (!harness->suppress_memcheck) {
+        /* Reset the logger, as test can set their own logger and clean it up,
+         * but aws_mem_tracer_dump() needs a valid logger to be active */
+        aws_logger_set(&err_logger);
+
+        const size_t leaked_allocations = aws_mem_tracer_count(allocator);
+        const size_t leaked_bytes = aws_mem_tracer_bytes(allocator);
+        if (leaked_bytes) {
+            aws_mem_tracer_dump(allocator);
+            PRINT_FAIL_WITHOUT_LOCATION(
+                "Test leaked memory: %zu bytes %zu allocations", leaked_bytes, leaked_allocations);
+            goto fail;
+        }
+
         aws_mem_tracer_destroy(allocator);
     }
+
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    if (!test_res) {
+    if (test_res == AWS_OP_SUCCESS) {
         RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
-    } else {
-        FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    } else if (test_res == AWS_OP_SKIP) {
+        RETURN_SKIP("%s [ \033[32mSKIP\033[0m ]", harness->test_name);
     }
+
+fail:
+    PRINT_FAIL_WITHOUT_LOCATION("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    /* Use _Exit() to terminate without cleaning up resources.
+     * This prevents LeakSanitizer spam (yes, we know failing tests don't bother cleaning up).
+     * It also prevents errors where threads that haven't cleaned are still using the logger declared in this fn. */
+    fflush(AWS_TESTING_REPORT_FD);
+    fflush(stdout);
+    fflush(stderr);
+    _Exit(FAILURE);
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */
 /* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
 #ifdef _WIN32
 
-#    include <Windows.h>
+#    include <windows.h>
 
 #    ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #        define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004

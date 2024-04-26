@@ -10,6 +10,7 @@
 #include <aws/common/macros.h>
 #include <stdio.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 AWS_COMMON_API
@@ -59,7 +60,7 @@ AWS_EXTERN_C_END
 #if defined(CBMC)
 #    include <assert.h>
 #    define AWS_ASSERT(cond) assert(cond)
-#elif defined(DEBUG_BUILD) || __clang_analyzer__
+#elif defined(DEBUG_BUILD) || defined(__clang_analyzer__)
 #    define AWS_ASSERT(cond) AWS_FATAL_ASSERT(cond)
 #else
 #    define AWS_ASSERT(cond)
@@ -67,7 +68,7 @@ AWS_EXTERN_C_END
 
 #if defined(CBMC)
 #    define AWS_FATAL_ASSERT(cond) AWS_ASSERT(cond)
-#elif __clang_analyzer__
+#elif defined(__clang_analyzer__)
 #    define AWS_FATAL_ASSERT(cond)                                                                                     \
         if (!(cond)) {                                                                                                 \
             abort();                                                                                                   \
@@ -82,9 +83,11 @@ AWS_EXTERN_C_END
             __pragma(warning(pop))
 #    else
 #        define AWS_FATAL_ASSERT(cond)                                                                                 \
-            if (!(cond)) {                                                                                             \
-                aws_fatal_assert(#cond, __FILE__, __LINE__);                                                           \
-            }
+            do {                                                                                                       \
+                if (!(cond)) {                                                                                         \
+                    aws_fatal_assert(#cond, __FILE__, __LINE__);                                                       \
+                }                                                                                                      \
+            } while (0)
 #    endif /* defined(_MSC_VER) */
 #endif     /* defined(CBMC) */
 
@@ -96,16 +99,20 @@ AWS_EXTERN_C_END
  * Violations of the function contracts are undefined behaviour.
  */
 #ifdef CBMC
+// clang-format off
+// disable clang format, since it likes to break formatting of stringize macro.
+// seems to be fixed in v15 plus, but we are not ready to update to it yet
 #    define AWS_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #    cond " check failed")
+#    define AWS_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
 #    define AWS_FATAL_PRECONDITION2(cond, explanation) __CPROVER_precondition((cond), (explanation))
-#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), #    cond " check failed")
+#    define AWS_FATAL_PRECONDITION1(cond) __CPROVER_precondition((cond), #cond " check failed")
 #    define AWS_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
 #    define AWS_FATAL_POSTCONDITION2(cond, explanation) __CPROVER_assert((cond), (explanation))
-#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #    cond " check failed")
+#    define AWS_FATAL_POSTCONDITION1(cond) __CPROVER_assert((cond), #cond " check failed")
 #    define AWS_MEM_IS_READABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
 #    define AWS_MEM_IS_WRITABLE_CHECK(base, len) (((len) == 0) || (__CPROVER_r_ok((base), (len))))
+// clang-format on
 #else
 #    define AWS_PRECONDITION2(cond, expl) AWS_ASSERT(cond)
 #    define AWS_PRECONDITION1(cond) AWS_ASSERT(cond)
@@ -180,5 +187,7 @@ AWS_EXTERN_C_END
 
 #define AWS_OBJECT_PTR_IS_READABLE(ptr) AWS_MEM_IS_READABLE((ptr), sizeof(*(ptr)))
 #define AWS_OBJECT_PTR_IS_WRITABLE(ptr) AWS_MEM_IS_WRITABLE((ptr), sizeof(*(ptr)))
+
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ASSERT_H */

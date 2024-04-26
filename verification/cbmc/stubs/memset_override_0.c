@@ -12,6 +12,7 @@
  * Benchmark your particular proof to know for sure.
  */
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 

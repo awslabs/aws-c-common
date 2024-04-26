@@ -282,3 +282,50 @@ static int s_test_char_split_output_too_small_fn(struct aws_allocator *allocator
 
     return 0;
 }
+
+AWS_TEST_CASE(test_byte_cursor_next_split, s_test_byte_cursor_next_split)
+static int s_test_byte_cursor_next_split(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_byte_cursor to_split1 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("testa;testb;testc;a");
+    struct aws_byte_cursor result1 = {0};
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, ';', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "testa");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, ';', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "testb");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, ';', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "testc");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split1, ';', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "a");
+
+    ASSERT_FALSE(aws_byte_cursor_next_split(&to_split1, ';', &result1));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "");
+
+    struct aws_byte_cursor to_split2 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("");
+    struct aws_byte_cursor result2 = {0};
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split2, ';', &result2));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result2, "");
+
+    ASSERT_FALSE(aws_byte_cursor_next_split(&to_split2, ';', &result2));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result2, "");
+
+    struct aws_byte_cursor to_split3 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(";;");
+    struct aws_byte_cursor result3 = {0};
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split3, ';', &result3));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split3, ';', &result3));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
+
+    ASSERT_TRUE(aws_byte_cursor_next_split(&to_split3, ';', &result3));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
+
+    ASSERT_FALSE(aws_byte_cursor_next_split(&to_split3, ';', &result3));
+    ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
+
+    return 0;
+}

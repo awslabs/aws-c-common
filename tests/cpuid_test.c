@@ -19,11 +19,14 @@
 static int s_cpuid_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
+    /* TODO: make sure those check returns the expected value. */
     aws_cpu_has_feature(AWS_CPU_FEATURE_CLMUL);
     aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_1);
     aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_2);
     aws_cpu_has_feature(AWS_CPU_FEATURE_AVX2);
+    aws_cpu_has_feature(AWS_CPU_FEATURE_AVX512);
     aws_cpu_has_feature(AWS_CPU_FEATURE_ARM_CRC);
+    aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2);
     return AWS_OP_SUCCESS;
 }
 
