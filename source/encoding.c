@@ -23,7 +23,7 @@ static inline size_t aws_common_private_base64_decode_sse41(const unsigned char 
     (void)out;
     (void)len;
     AWS_ASSERT(false);
-    return (size_t)-1; /* unreachable */
+    return SIZE_MAX; /* unreachable */
 }
 static inline void aws_common_private_base64_encode_sse41(const unsigned char *in, unsigned char *out, size_t len) {
     (void)in;
@@ -361,7 +361,7 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
 
     if (aws_common_private_has_avx2()) {
         size_t result = aws_common_private_base64_decode_sse41(to_decode->ptr, output->buffer, to_decode->len);
-        if (result == -1) {
+        if (result == SIZE_MAX) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
         }
 
