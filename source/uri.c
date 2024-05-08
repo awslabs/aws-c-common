@@ -382,12 +382,12 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
          * brackets.
          * Ignore the sqaure brackets.
          */
-        size_t host_name_offset = is_IPv6_literal ? -1 : 0;
+        size_t host_name_offset = is_IPv6_literal ? 1 : 0;
         size_t host_name_length_correction = is_IPv6_literal ? 2 : 0;
         if (!port_delim) {
             parser->uri->port = 0;
             parser->uri->host_name.ptr = authority_parse_csr.ptr + host_name_offset;
-            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr - host_name_length_correction;
+            parser->uri->host_name.len = authority_parse_csr.len - host_name_length_correction;
             return;
         }
 
