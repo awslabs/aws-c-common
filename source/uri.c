@@ -364,7 +364,9 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
          * IPv6 literals and only search for port delimiter after closing bracket.*/
         const uint8_t *port_search_start = authority_parse_csr.ptr;
         size_t port_search_len = authority_parse_csr.len;
+        bool is_IPv6_literal = false;
         if (authority_parse_csr.len > 0 && authority_parse_csr.ptr[0] == '[') {
+            is_IPv6_literal = true;
             port_search_start = memchr(authority_parse_csr.ptr, ']', authority_parse_csr.len);
             if (!port_search_start) {
                 parser->state = ERROR;
@@ -379,13 +381,28 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
         if (!port_delim) {
             parser->uri->port = 0;
             parser->uri->host_name = authority_parse_csr;
+            /*
+             * RFC-3986 section 3.2.2: A host identified by an IPv6 literal address is represented inside the square
+             * brackets.
+             * Ignore the sqaure brackets.
+             */
+            if (is_IPv6_literal) {
+                parser->uri->host_name.ptr += 1;
+                parser->uri->host_name.len -= 2;
+            }
             return;
         }
+        size_t port_len;
+        if (is_IPv6_literal) {
+            parser->uri->host_name.ptr = authority_parse_csr.ptr + 1;
+            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr - 2;
+            port_len = authority_parse_csr.len - parser->uri->host_name.len - 1 - 2;
+        } else {
+            parser->uri->host_name.ptr = authority_parse_csr.ptr;
+            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr;
+            port_len = authority_parse_csr.len - parser->uri->host_name.len - 1;
+        }
 
-        parser->uri->host_name.ptr = authority_parse_csr.ptr;
-        parser->uri->host_name.len = port_delim - authority_parse_csr.ptr;
-
-        size_t port_len = authority_parse_csr.len - parser->uri->host_name.len - 1;
         port_delim += 1;
 
         uint64_t port_u64 = 0;
