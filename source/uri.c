@@ -378,9 +378,9 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
 
         const uint8_t *port_delim = memchr(port_search_start, ':', port_search_len);
         /*
-         * RFC-3986 section 3.2.2: A host identified by an IPv6 literal address is represented inside the square
+         * RFC-3986 section 3.2.2: A host identified by an IPv6 literal address is represented inside square
          * brackets.
-         * Ignore the sqaure brackets.
+         * Ignore the square brackets.
          */
         size_t host_name_offset = is_IPv6_literal ? 1 : 0;
         size_t host_name_length_correction = is_IPv6_literal ? 2 : 0;
