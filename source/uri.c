@@ -377,32 +377,23 @@ static void s_parse_authority(struct uri_parser *parser, struct aws_byte_cursor 
         }
 
         const uint8_t *port_delim = memchr(port_search_start, ':', port_search_len);
-
+        /*
+         * RFC-3986 section 3.2.2: A host identified by an IPv6 literal address is represented inside the square
+         * brackets.
+         * Ignore the sqaure brackets.
+         */
+        size_t host_name_offset = is_IPv6_literal ? 1 : 0;
+        size_t host_name_length_correction = is_IPv6_literal ? 2 : 0;
         if (!port_delim) {
             parser->uri->port = 0;
-            parser->uri->host_name = authority_parse_csr;
-            /*
-             * RFC-3986 section 3.2.2: A host identified by an IPv6 literal address is represented inside the square
-             * brackets.
-             * Ignore the sqaure brackets.
-             */
-            if (is_IPv6_literal) {
-                parser->uri->host_name.ptr += 1;
-                parser->uri->host_name.len -= 2;
-            }
+            parser->uri->host_name.ptr = authority_parse_csr.ptr + host_name_offset;
+            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr - host_name_length_correction;
             return;
         }
-        size_t port_len;
-        if (is_IPv6_literal) {
-            parser->uri->host_name.ptr = authority_parse_csr.ptr + 1;
-            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr - 2;
-            port_len = authority_parse_csr.len - parser->uri->host_name.len - 1 - 2;
-        } else {
-            parser->uri->host_name.ptr = authority_parse_csr.ptr;
-            parser->uri->host_name.len = port_delim - authority_parse_csr.ptr;
-            port_len = authority_parse_csr.len - parser->uri->host_name.len - 1;
-        }
 
+        parser->uri->host_name.ptr = authority_parse_csr.ptr + host_name_offset;
+        parser->uri->host_name.len = port_delim - authority_parse_csr.ptr - host_name_length_correction;
+        size_t port_len = authority_parse_csr.len - parser->uri->host_name.len - 1 - host_name_length_correction;
         port_delim += 1;
 
         uint64_t port_u64 = 0;
