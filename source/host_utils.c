@@ -20,10 +20,6 @@ static bool s_is_ipv6_char(uint8_t value) {
     return aws_isxdigit(value) || value == ':';
 }
 
-static bool s_starts_with(struct aws_byte_cursor cur, uint8_t ch) {
-    return cur.len > 0 && cur.ptr[0] == ch;
-}
-
 static bool s_ends_with(struct aws_byte_cursor cur, uint8_t ch) {
     return cur.len > 0 && cur.ptr[cur.len - 1] == ch;
 }
