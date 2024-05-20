@@ -346,7 +346,7 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
 
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
     aws_cbor_encoder_write_null(encoder);
-    aws_cbor_encoder_write_undefine(encoder);
+    aws_cbor_encoder_write_undefined(encoder);
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     /* in total 2 bytes for two simple value */
     ASSERT_UINT_EQUALS(2, final_cursor.len);
@@ -355,9 +355,10 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
     enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_NULL);
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder, NULL));
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_UNDEFINE);
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_UNDEFINED);
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder));
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
     aws_cbor_encoder_destroy(encoder);

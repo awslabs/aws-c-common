@@ -191,7 +191,7 @@ void aws_cbor_encoder_write_null(struct aws_cbor_encoder *encoder) {
     ENCODE_THROUGH_LIBCBOR(encoder, 1, AWS_CBOR_SIMPLE_VAL_NULL /*null*/, cbor_encode_ctrl);
 }
 
-void aws_cbor_encoder_write_undefine(struct aws_cbor_encoder *encoder) {
+void aws_cbor_encoder_write_undefined(struct aws_cbor_encoder *encoder) {
     /* Major type 7 (simple), value 23 (undefined) */
     ENCODE_THROUGH_LIBCBOR(encoder, 1, AWS_CBOR_SIMPLE_VAL_UNDEFINED /*undefined*/, cbor_encode_ctrl);
 }
@@ -394,7 +394,7 @@ LIBCBOR_SIMPLE_CALLBACK(inf_array, AWS_CBOR_TYPE_INDEF_ARRAY_START)
 LIBCBOR_SIMPLE_CALLBACK(inf_map, AWS_CBOR_TYPE_INDEF_MAP_START)
 
 LIBCBOR_SIMPLE_CALLBACK(inf_break, AWS_CBOR_TYPE_BREAK)
-LIBCBOR_SIMPLE_CALLBACK(undefined, AWS_CBOR_TYPE_UNDEFINE)
+LIBCBOR_SIMPLE_CALLBACK(undefined, AWS_CBOR_TYPE_UNDEFINED)
 LIBCBOR_SIMPLE_CALLBACK(null, AWS_CBOR_TYPE_NULL)
 
 static struct cbor_callbacks s_callbacks = {
@@ -728,13 +728,10 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *consumed_type) {
+int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder) {
     enum aws_cbor_element_type out_type = 0;
     if (aws_cbor_decoder_peek_type(decoder, &out_type)) {
         return AWS_OP_ERR;
-    }
-    if (consumed_type) {
-        *consumed_type = out_type;
     }
     /* Reset the type to clear the cache. */
     decoder->cached_context.type = AWS_CBOR_TYPE_MAX;

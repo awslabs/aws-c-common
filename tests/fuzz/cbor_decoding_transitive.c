@@ -60,15 +60,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                     aws_cbor_decoder_pop_next_boolean_val(decoder, &cbor_data.boolean_val) == AWS_OP_SUCCESS);
                 break;
             case AWS_CBOR_TYPE_NULL:
-            case AWS_CBOR_TYPE_UNDEFINE:
+            case AWS_CBOR_TYPE_UNDEFINED:
             case AWS_CBOR_TYPE_BREAK:
             case AWS_CBOR_TYPE_INDEF_BYTES_START:
             case AWS_CBOR_TYPE_INDEF_TEXT_START:
             case AWS_CBOR_TYPE_INDEF_ARRAY_START:
             case AWS_CBOR_TYPE_INDEF_MAP_START: {
                 enum aws_cbor_element_type type = AWS_CBOR_TYPE_MAX;
-                AWS_FATAL_ASSERT(aws_cbor_decoder_consume_next_element(decoder, &type) == AWS_OP_SUCCESS);
+                AWS_FATAL_ASSERT(aws_cbor_decoder_peek_type(decoder, &type) == AWS_OP_SUCCESS);
                 AWS_FATAL_ASSERT(type == out_type);
+                AWS_FATAL_ASSERT(aws_cbor_decoder_consume_next_element(decoder) == AWS_OP_SUCCESS);
             } break;
 
             default:

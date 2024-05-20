@@ -25,7 +25,7 @@ AWS_EXTERN_C_BEGIN
  * Major type 7
  *  - 20/21 - AWS_CBOR_TYPE_BOOL
  *  - 22 - AWS_CBOR_TYPE_NULL
- *  - 23 - AWS_CBOR_TYPE_UNDEFINE
+ *  - 23 - AWS_CBOR_TYPE_UNDEFINED
  *  - 25/26/27 - AWS_CBOR_TYPE_FLOAT
  *  - 31 - AWS_CBOR_TYPE_BREAK
  *  - rest of value are not supported.
@@ -44,7 +44,7 @@ enum aws_cbor_element_type {
 
     AWS_CBOR_TYPE_BOOL,
     AWS_CBOR_TYPE_NULL,
-    AWS_CBOR_TYPE_UNDEFINE,
+    AWS_CBOR_TYPE_UNDEFINED,
     AWS_CBOR_TYPE_BREAK,
 
     AWS_CBOR_TYPE_INDEF_BYTES_START,
@@ -214,12 +214,12 @@ AWS_COMMON_API
 void aws_cbor_encoder_write_null(struct aws_cbor_encoder *encoder);
 
 /**
- * @brief Encode a simple value AWS_CBOR_TYPE_UNDEFINE
+ * @brief Encode a simple value AWS_CBOR_TYPE_UNDEFINED
  *
  * @param encoder
  */
 AWS_COMMON_API
-void aws_cbor_encoder_write_undefine(struct aws_cbor_encoder *encoder);
+void aws_cbor_encoder_write_undefined(struct aws_cbor_encoder *encoder);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_BOOL
@@ -294,9 +294,9 @@ void aws_cbor_encoder_write_epoch_timestamp_ms(struct aws_cbor_encoder *encoder,
  * - If the next element type only accept what expected, `aws_cbor_decoder_pop_next_*`
  * - If the next element type accept different type, invoke `aws_cbor_decoder_peek_type` first, then based on the type
  * to invoke corresponding `aws_cbor_decoder_pop_next_*`
- * - If the next element type doesn't have corrsponding value, specifically: AWS_CBOR_TYPE_NULL, AWS_CBOR_TYPE_UNDEFINE,
- * AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decoder_consume_next_element` to consume it and
- * continues for further decoding.
+ * - If the next element type doesn't have corrsponding value, specifically: AWS_CBOR_TYPE_NULL,
+ * AWS_CBOR_TYPE_UNDEFINED, AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decoder_consume_next_element`
+ * to consume it and continues for further decoding.
  * - To ignore the next data item (the element and the content of it), `aws_cbor_decoder_consume_next_data_item`
  *
  * Note: it's caller's responsibilty to keep the src outlive the decoder.
@@ -372,11 +372,10 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder);
  *   FF        -- "break"
  *
  * @param decoder The decoder to parse data from
- * @param consumed_type Optional, get the type of the consumed element.
  * @return AWS_OP_SUCCESS successfully consumed the next element, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *consumed_type);
+int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Get the next element based on the type. If the next element doesn't match the expected type. Error will be
