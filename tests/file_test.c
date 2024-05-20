@@ -2,6 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#include <aws/common/device_random.h>
 #include <aws/common/file.h>
 #include <aws/common/string.h>
 
@@ -404,3 +405,140 @@ static int s_test_home_directory_not_null(struct aws_allocator *allocator, void 
 }
 
 AWS_TEST_CASE(test_home_directory_not_null, s_test_home_directory_not_null);
+
+static int s_test_normalize_posix_directory_separator(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_string *buffer = aws_string_new_from_c_str(allocator, "./test/path/abc");
+    struct aws_byte_buf path_buf = aws_byte_buf_from_array(buffer->bytes, buffer->len);
+    aws_normalize_directory_separator(&path_buf);
+    for (size_t i = 0; i < path_buf.len; ++i) {
+        if (aws_is_any_directory_separator((char)path_buf.buffer[i])) {
+            ASSERT_INT_EQUALS(aws_get_platform_directory_separator(), path_buf.buffer[i]);
+        }
+    }
+
+    aws_string_destroy(buffer);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_normalize_posix_directory_separator, s_test_normalize_posix_directory_separator);
+
+static int s_test_normalize_windows_directory_separator(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_string *buffer = aws_string_new_from_c_str(allocator, ".\\test\\path\\abc");
+    struct aws_byte_buf path_buf = aws_byte_buf_from_array(buffer->bytes, buffer->len);
+    aws_normalize_directory_separator(&path_buf);
+    for (size_t i = 0; i < path_buf.len; ++i) {
+        if (aws_is_any_directory_separator((char)path_buf.buffer[i])) {
+            ASSERT_INT_EQUALS(aws_get_platform_directory_separator(), path_buf.buffer[i]);
+        }
+    }
+    aws_string_destroy(buffer);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_normalize_windows_directory_separator, s_test_normalize_windows_directory_separator);
+
+static int s_check_byte_buf_from_file(const struct aws_byte_buf *buf, struct aws_byte_cursor expected_contents) {
+    ASSERT_TRUE(aws_byte_cursor_eq_byte_buf(&expected_contents, buf), "Contents should match");
+    ASSERT_TRUE(buf->capacity > buf->len, "Buffer should end with null-terminator");
+    ASSERT_UINT_EQUALS(0, buf->buffer[buf->len], "Buffer should end with null-terminator");
+    return AWS_OP_SUCCESS;
+}
+
+static int s_create_file_then_read_it(struct aws_allocator *allocator, struct aws_byte_cursor contents) {
+    /* create file */
+    const char *filename = "testy";
+    FILE *f = aws_fopen(filename, "wb");
+    ASSERT_UINT_EQUALS(contents.len, fwrite(contents.ptr, 1, contents.len, f));
+    ASSERT_INT_EQUALS(0, fclose(f));
+
+    struct aws_byte_buf buf;
+
+    /* check aws_byte_buf_init_from_file() */
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file(&buf, allocator, filename));
+    ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
+    aws_byte_buf_clean_up(&buf);
+
+    /* now check aws_byte_buf_init_from_file_with_size_hint() ... */
+
+    /* size_hint more then big enough */
+    size_t size_hint = contents.len * 2;
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
+    aws_byte_buf_clean_up(&buf);
+
+    /* size_hint not big enough for null-terminator */
+    size_hint = contents.len;
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
+    aws_byte_buf_clean_up(&buf);
+
+    /* size_hint 0 */
+    size_hint = 0;
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
+    aws_byte_buf_clean_up(&buf);
+
+    /* size_hint 1 */
+    size_hint = 1;
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file_with_size_hint(&buf, allocator, filename, size_hint));
+    ASSERT_SUCCESS(s_check_byte_buf_from_file(&buf, contents));
+    aws_byte_buf_clean_up(&buf);
+
+    remove(filename);
+    return AWS_OP_SUCCESS;
+}
+
+/* Read an actual "special file" (if it exists on this machine) */
+static int s_read_special_file(struct aws_allocator *allocator, const char *filename) {
+    struct aws_string *filename_str = aws_string_new_from_c_str(allocator, filename);
+    bool exists = aws_path_exists(filename_str);
+    aws_string_destroy(filename_str);
+    if (!exists) {
+        return AWS_OP_SUCCESS;
+    }
+
+    struct aws_byte_buf buf;
+    ASSERT_SUCCESS(aws_byte_buf_init_from_file(&buf, allocator, filename));
+    ASSERT_TRUE(buf.capacity > buf.len, "Buffer should end with null-terminator");
+    ASSERT_UINT_EQUALS(0, buf.buffer[buf.len], "Buffer should end with null-terminator");
+
+    if (strcmp("/dev/null", filename) == 0) {
+        ASSERT_UINT_EQUALS(0, buf.len, "expected /dev/null to be empty");
+    } else {
+        ASSERT_TRUE(buf.len > 0, "expected special file to have data");
+    }
+
+    aws_byte_buf_clean_up(&buf);
+    return AWS_OP_SUCCESS;
+}
+
+static int s_test_byte_buf_init_from_file(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    /* simple text file */
+    ASSERT_SUCCESS(s_create_file_then_read_it(allocator, aws_byte_cursor_from_c_str("asdf")));
+
+    /* empty file */
+    ASSERT_SUCCESS(s_create_file_then_read_it(allocator, aws_byte_cursor_from_c_str("")));
+
+    /* large 3MB+1byte binary file */
+    struct aws_byte_buf big_rando;
+    aws_byte_buf_init(&big_rando, allocator, (1024 * 1024 * 3) + 1);
+    ASSERT_SUCCESS(aws_device_random_buffer(&big_rando));
+    ASSERT_SUCCESS(s_create_file_then_read_it(allocator, aws_byte_cursor_from_buf(&big_rando)));
+    aws_byte_buf_clean_up(&big_rando);
+
+    /* test some "special files" (if they exist) */
+    ASSERT_SUCCESS(s_read_special_file(allocator, "/proc/cpuinfo"));
+    ASSERT_SUCCESS(s_read_special_file(allocator, "/proc/net/tcp"));
+    ASSERT_SUCCESS(s_read_special_file(allocator, "/sys/devices/virtual/dmi/id/sys_vendor"));
+    ASSERT_SUCCESS(s_read_special_file(allocator, "/dev/null"));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_byte_buf_init_from_file, s_test_byte_buf_init_from_file)

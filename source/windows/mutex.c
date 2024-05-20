@@ -6,7 +6,7 @@
 #include <aws/common/mutex.h>
 #include <aws/common/thread.h>
 
-#include <Windows.h>
+#include <windows.h>
 
 /* Convert a string from a macro to a wide string */
 #define WIDEN2(s) L## #s

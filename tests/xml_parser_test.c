@@ -11,40 +11,36 @@ const char *root_with_text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNod
 struct root_with_text_capture {
     struct aws_byte_cursor capture;
     struct aws_byte_cursor node_name;
-    int error;
 };
 
-bool s_root_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_root_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct root_with_text_capture *capture = user_data;
-    capture->error = aws_xml_node_as_body(parser, node, &capture->capture);
-    capture->error |= aws_xml_node_get_name(node, &capture->node_name);
+    if (aws_xml_node_as_body(node, &capture->capture)) {
+        return AWS_OP_ERR;
+    }
+    capture->node_name = aws_xml_node_get_name(node);
 
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
 static int s_xml_parser_root_with_text_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(root_with_text);
-
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-
-    ASSERT_TRUE(parser != NULL);
 
     struct root_with_text_capture capture;
     AWS_ZERO_STRUCT(capture);
 
-    ASSERT_SUCCESS(aws_xml_parser_parse(parser, s_root_with_text_root_node, &capture));
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(root_with_text),
+        .on_root_encountered = s_root_with_text_root_node,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
 
     const char expected_name[] = "rootNode";
     const char expected_value[] = "TestBody";
 
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, capture.error);
     ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.node_name.ptr, capture.node_name.len);
     ASSERT_BIN_ARRAYS_EQUALS(expected_value, sizeof(expected_value) - 1, capture.capture.ptr, capture.capture.len);
-
-    aws_xml_parser_destroy(parser);
 
     return AWS_OP_SUCCESS;
 }
@@ -57,45 +53,43 @@ const char *child_with_text =
 struct child_text_capture {
     struct aws_byte_cursor capture;
     struct aws_byte_cursor node_name;
-    int error;
 };
 
-bool s_child_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_child_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct child_text_capture *capture = user_data;
-    capture->error |= aws_xml_node_as_body(parser, node, &capture->capture);
-    capture->error |= aws_xml_node_get_name(node, &capture->node_name);
+    if (aws_xml_node_as_body(node, &capture->capture)) {
+        return AWS_OP_ERR;
+    }
+    capture->node_name = aws_xml_node_get_name(node);
 
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
-bool s_root_with_child(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
-    struct child_text_capture *capture = user_data;
-    capture->error |= aws_xml_node_traverse(parser, node, s_child_with_text_root_node, user_data);
-    return true;
+int s_root_with_child(struct aws_xml_node *node, void *user_data) {
+    if (aws_xml_node_traverse(node, s_child_with_text_root_node, user_data)) {
+        return AWS_OP_ERR;
+    }
+    return AWS_OP_SUCCESS;
 }
 
 static int s_xml_parser_child_with_text_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(child_with_text);
-
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
-    struct root_with_text_capture capture;
+    struct child_text_capture capture;
     AWS_ZERO_STRUCT(capture);
 
-    ASSERT_SUCCESS(aws_xml_parser_parse(parser, s_root_with_child, &capture));
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(child_with_text),
+        .on_root_encountered = s_root_with_child,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
 
     const char expected_name[] = "child1";
     const char expected_value[] = "TestBody";
 
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, capture.error);
     ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.node_name.ptr, capture.node_name.len);
     ASSERT_BIN_ARRAYS_EQUALS(expected_value, sizeof(expected_value) - 1, capture.capture.ptr, capture.capture.len);
 
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -110,51 +104,47 @@ struct sibling_text_capture {
     struct aws_byte_cursor capture2;
     struct aws_byte_cursor node_name1;
     struct aws_byte_cursor node_name2;
-    int error;
 };
 
-bool s_sibling_with_text_root_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_sibling_with_text_root_node(struct aws_xml_node *node, void *user_data) {
     struct sibling_text_capture *capture = user_data;
 
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
-    struct aws_byte_cursor node_name;
-    AWS_ZERO_STRUCT(node_name);
-    capture->error |= aws_xml_node_get_name(node, &node_name);
+    struct aws_byte_cursor node_name = aws_xml_node_get_name(node);
 
     if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
         capture->node_name1 = node_name;
-        capture->error |= aws_xml_node_as_body(parser, node, &capture->capture1);
+        if (aws_xml_node_as_body(node, &capture->capture1)) {
+            return AWS_OP_ERR;
+        }
     } else if (aws_byte_cursor_eq_ignore_case(&node_name, &child2_name)) {
         capture->node_name2 = node_name;
-        capture->error |= aws_xml_node_as_body(parser, node, &capture->capture2);
+        if (aws_xml_node_as_body(node, &capture->capture2)) {
+            return AWS_OP_ERR;
+        }
     }
 
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
-bool s_root_with_child_siblings(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
-    struct sibling_text_capture *capture = user_data;
-
-    capture->error |= aws_xml_node_traverse(parser, node, s_sibling_with_text_root_node, user_data);
-    return true;
+int s_root_with_child_siblings(struct aws_xml_node *node, void *user_data) {
+    return aws_xml_node_traverse(node, s_sibling_with_text_root_node, user_data);
 }
 
 static int s_xml_parser_siblings_with_text_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(siblings_with_text);
-
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
     struct sibling_text_capture capture;
     AWS_ZERO_STRUCT(capture);
 
-    ASSERT_SUCCESS(aws_xml_parser_parse(parser, s_root_with_child_siblings, &capture));
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(siblings_with_text),
+        .on_root_encountered = s_root_with_child_siblings,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
 
     const char expected_name1[] = "child1";
     const char expected_value1[] = "TestBody";
@@ -162,7 +152,6 @@ static int s_xml_parser_siblings_with_text_test(struct aws_allocator *allocator,
     const char expected_name2[] = "child2";
     const char expected_value2[] = "TestBody2";
 
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, capture.error);
     ASSERT_BIN_ARRAYS_EQUALS(
         expected_name1, sizeof(expected_name1) - 1, capture.node_name1.ptr, capture.node_name1.len);
     ASSERT_BIN_ARRAYS_EQUALS(expected_value1, sizeof(expected_value1) - 1, capture.capture1.ptr, capture.capture1.len);
@@ -171,7 +160,6 @@ static int s_xml_parser_siblings_with_text_test(struct aws_allocator *allocator,
         expected_name2, sizeof(expected_name2) - 1, capture.node_name2.ptr, capture.node_name2.len);
     ASSERT_BIN_ARRAYS_EQUALS(expected_value2, sizeof(expected_value2) - 1, capture.capture2.ptr, capture.capture2.len);
 
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -193,59 +181,58 @@ struct preamble_and_attributes_capture {
     struct aws_byte_cursor node_name2;
     struct aws_xml_attribute root_attr1;
     struct aws_xml_attribute root_attr2;
-    int error;
 };
 
-bool s_preamble_and_attributes_child_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_preamble_and_attributes_child_node(struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
     struct aws_byte_cursor child1_name = aws_byte_cursor_from_c_str("child1");
     struct aws_byte_cursor child2_name = aws_byte_cursor_from_c_str("child2");
 
-    struct aws_byte_cursor node_name;
-    AWS_ZERO_STRUCT(node_name);
-    capture->error |= aws_xml_node_get_name(node, &node_name);
+    struct aws_byte_cursor node_name = aws_xml_node_get_name(node);
 
     if (aws_byte_cursor_eq_ignore_case(&node_name, &child1_name)) {
         capture->node_name1 = node_name;
-        capture->error |= aws_xml_node_as_body(parser, node, &capture->capture1);
+        if (aws_xml_node_as_body(node, &capture->capture1)) {
+            return AWS_OP_ERR;
+        }
     } else if (aws_byte_cursor_eq_ignore_case(&node_name, &child2_name)) {
         capture->node_name2 = node_name;
-        capture->error |= aws_xml_node_as_body(parser, node, &capture->capture2);
+        if (aws_xml_node_as_body(node, &capture->capture2)) {
+            return AWS_OP_ERR;
+        }
 
         ASSERT_TRUE(aws_xml_node_get_num_attributes(node) == 1);
 
-        capture->error |= aws_xml_node_get_attribute(node, 0, &capture->capture2_attr);
+        capture->capture2_attr = aws_xml_node_get_attribute(node, 0);
     }
 
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
-bool s_preamble_and_attributes(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_preamble_and_attributes(struct aws_xml_node *node, void *user_data) {
     struct preamble_and_attributes_capture *capture = user_data;
 
     ASSERT_TRUE(aws_xml_node_get_num_attributes(node) == 2);
 
-    capture->error |= aws_xml_node_get_attribute(node, 0, &capture->root_attr1);
-    capture->error |= aws_xml_node_get_attribute(node, 1, &capture->root_attr2);
-    capture->error |= aws_xml_node_traverse(parser, node, s_preamble_and_attributes_child_node, user_data);
-    return true;
+    capture->root_attr1 = aws_xml_node_get_attribute(node, 0);
+    capture->root_attr2 = aws_xml_node_get_attribute(node, 1);
+    return aws_xml_node_traverse(node, s_preamble_and_attributes_child_node, user_data);
 }
 
 static int s_xml_parser_preamble_and_attributes_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(preamble_and_attributes);
-
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
     struct preamble_and_attributes_capture capture;
     AWS_ZERO_STRUCT(capture);
 
-    ASSERT_SUCCESS(aws_xml_parser_parse(parser, s_preamble_and_attributes, &capture));
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(preamble_and_attributes),
+        .on_root_encountered = s_preamble_and_attributes,
+        .user_data = &capture,
+    };
+
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
 
     const char expected_attr1_name[] = "attribute1";
     const char expected_attr1_value1[] = "abc";
@@ -275,7 +262,6 @@ static int s_xml_parser_preamble_and_attributes_test(struct aws_allocator *alloc
     const char expected_name2[] = "child2";
     const char expected_value2[] = "TestBody2";
 
-    ASSERT_INT_EQUALS(AWS_OP_SUCCESS, capture.error);
     ASSERT_BIN_ARRAYS_EQUALS(
         expected_name1, sizeof(expected_name1) - 1, capture.node_name1.ptr, capture.node_name1.len);
     ASSERT_BIN_ARRAYS_EQUALS(expected_value1, sizeof(expected_value1) - 1, capture.capture1.ptr, capture.capture1.len);
@@ -298,7 +284,6 @@ static int s_xml_parser_preamble_and_attributes_test(struct aws_allocator *alloc
         capture.capture2_attr.value.ptr,
         capture.capture2_attr.value.len);
 
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -323,28 +308,24 @@ struct nested_node_capture {
     struct aws_byte_cursor node_body;
 };
 
-bool s_nested_node(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
+int s_nested_node(struct aws_xml_node *node, void *user_data) {
     struct nested_node_capture *capture = user_data;
 
-    aws_xml_node_as_body(parser, node, &capture->node_body);
-
-    return true;
+    return aws_xml_node_as_body(node, &capture->node_body);
 }
 
 static int s_xml_parser_nested_node_same_name_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(nested_nodes_same_name_doc);
-
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
     struct nested_node_capture capture;
     AWS_ZERO_STRUCT(capture);
 
-    ASSERT_SUCCESS(aws_xml_parser_parse(parser, s_nested_node, &capture));
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(nested_nodes_same_name_doc),
+        .on_root_encountered = s_nested_node,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
 
     const char *expected_body = "\n    <Node>\n"
                                 "        <Node>\n"
@@ -357,7 +338,6 @@ static int s_xml_parser_nested_node_same_name_test(struct aws_allocator *allocat
 
     ASSERT_BIN_ARRAYS_EQUALS(expected_body, strlen(expected_body), capture.node_body.ptr, capture.node_body.len);
 
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -373,27 +353,20 @@ const char *nested_nodes_deep_recursion_doc = "<?xml version=\"1.0\" encoding=\"
                                               "    </Node>\n"
                                               "</Node>";
 
-bool s_nested_node_deep_recursion(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
-    aws_xml_node_traverse(parser, node, s_nested_node_deep_recursion, user_data);
-    return true;
+int s_nested_node_deep_recursion(struct aws_xml_node *node, void *user_data) {
+    return aws_xml_node_traverse(node, s_nested_node_deep_recursion, user_data);
 }
 
 static int s_xml_parser_nested_node_deep_recursion_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(nested_nodes_deep_recursion_doc);
-    options.max_depth = 2;
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(nested_nodes_deep_recursion_doc),
+        .max_depth = 2,
+        .on_root_encountered = s_nested_node_deep_recursion,
+        .user_data = NULL,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
-    struct nested_node_capture capture;
-    AWS_ZERO_STRUCT(capture);
-
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parser_parse(parser, s_nested_node_deep_recursion, NULL));
-
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -408,26 +381,22 @@ const char *too_many_attributes = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                   "attribute8=\"def\" attribute9=\"def\" attribute10=\"def\" attribute11=\"def\">\n"
                                   "</rootNode>";
 
-bool s_too_many_attributes(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
-    (void)parser;
+int s_too_many_attributes(struct aws_xml_node *node, void *user_data) {
     (void)node;
     (void)user_data;
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
 static int s_xml_parser_too_many_attributes_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(too_many_attributes);
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(too_many_attributes),
+        .on_root_encountered = s_too_many_attributes,
+        .user_data = NULL,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parser_parse(parser, s_too_many_attributes, NULL));
-
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 
@@ -446,26 +415,22 @@ const char *node_name_too_long =
     "klmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst"
     "uvwxyzabcdefghijklmnopqrstuvwxyz>";
 
-bool s_too_long(struct aws_xml_parser *parser, struct aws_xml_node *node, void *user_data) {
-    (void)parser;
+int s_too_long(struct aws_xml_node *node, void *user_data) {
     (void)node;
     (void)user_data;
-    return true;
+    return AWS_OP_SUCCESS;
 }
 
 static int s_xml_parser_name_too_long_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_xml_parser_options options;
-    AWS_ZERO_STRUCT(options);
-    options.doc = aws_byte_cursor_from_c_str(node_name_too_long);
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(node_name_too_long),
+        .on_root_encountered = s_too_long,
+        .user_data = NULL,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
 
-    struct aws_xml_parser *parser = aws_xml_parser_new(allocator, &options);
-    ASSERT_TRUE(parser != NULL);
-
-    ASSERT_ERROR(AWS_ERROR_MALFORMED_INPUT_STRING, aws_xml_parser_parse(parser, s_too_long, NULL));
-
-    aws_xml_parser_destroy(parser);
     return AWS_OP_SUCCESS;
 }
 

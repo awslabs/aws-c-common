@@ -9,6 +9,8 @@
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
+AWS_PUSH_SANE_WARNING_LEVEL
+
 struct aws_json_value;
 
 AWS_EXTERN_C_BEGIN
@@ -398,7 +400,7 @@ int aws_byte_buf_append_json_string(const struct aws_json_value *value, struct a
  * @param value The aws_json_value to format.
  * @param output The destination for the JSON string
  * @return AWS_OP_SUCCESS if the JSON string was allocated to output without any errors
- *      Will return AWS_ERROR_INVALID_ARGUMENT if the value passed is not an aws_json_value or if there
+ *      Will return AWS_OP_ERR if the value passed is not an aws_json_value or if there
  *      aws an error appending the JSON into the byte buffer.
  */
 AWS_COMMON_API
@@ -415,5 +417,6 @@ struct aws_json_value *aws_json_value_new_from_string(struct aws_allocator *allo
 // ====================
 
 AWS_EXTERN_C_END
+AWS_POP_SANE_WARNING_LEVEL
 
 #endif // AWS_COMMON_JSON_H

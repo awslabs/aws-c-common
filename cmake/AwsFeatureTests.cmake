@@ -17,6 +17,10 @@ if(MINGW)
     set(USE_CPU_EXTENSIONS OFF)
 endif()
 
+if (USE_CPU_EXTENSIONS)
+    set(AWS_USE_CPU_EXTENSIONS ON)
+endif()
+
 if(NOT CMAKE_CROSSCOMPILING)
     check_c_source_runs("
     #include <stdbool.h>
@@ -35,7 +39,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 
 check_c_source_compiles("
-    #include <Windows.h>
+    #include <windows.h>
     #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     int main() {
         return 0;
@@ -53,6 +57,15 @@ check_c_source_compiles("
         return 0;
     }
 " AWS_ARCH_INTEL)
+
+check_c_source_compiles("
+    int main() {
+#if !(defined(__x86_64__) || defined(_M_X64))
+#    error \"not intel\"
+#endif
+        return 0;
+    }
+" AWS_ARCH_INTEL_X64)
 
 check_c_source_compiles("
     int main() {
@@ -93,6 +106,7 @@ string(REGEX MATCH "^(aarch64|arm)" ARM_CPU "${CMAKE_SYSTEM_PROCESSOR}")
 if(NOT LEGACY_COMPILER_SUPPORT OR ARM_CPU)
     check_c_source_compiles("
     #include <execinfo.h>
+    #include <stdlib.h>
     int main() {
         backtrace(NULL, 0);
         return 0;
@@ -116,3 +130,7 @@ if(MSVC)
         return 0;
     }" AWS_HAVE_MSVC_INTRINSICS_X64)
 endif()
+
+# This does a lot to detect when intrinsics are available and has to set cflags to do so.
+# leave it in its own file for ease of managing it.
+include(AwsSIMD)

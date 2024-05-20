@@ -8,7 +8,7 @@
 #include <aws/common/clock.h>
 #include <aws/common/mutex.h>
 
-#include <Windows.h>
+#include <windows.h>
 
 #define AWSCV_TO_WINDOWS(pCV) (PCONDITION_VARIABLE) & (pCV)->condition_handle
 

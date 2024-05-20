@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.35
+  BUILDER_VERSION: v0.9.55
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -56,6 +56,7 @@ jobs:
           - gcc-6
           - gcc-7
           - gcc-8
+          - gcc-11
     steps:
       # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -66,7 +67,7 @@ jobs:
   # Test downstream repos.
   # This should not be required because we can run into a chicken and egg problem if there is a change that needs some fix in a downstream repo.
   downstream:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -196,14 +197,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        uses: cross-platform-actions/action@v0.10.0
+        uses: cross-platform-actions/action@v0.20.0
         with:
           operating_system: openbsd
-          architecture: x86-64
           version: '7.2'
           shell: bash
           run: |
             sudo pkg_add py3-urllib3
+            python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
+            chmod a+x builder
+            ./builder build -p ${{ env.PACKAGE_NAME }}
+
+  freebsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        uses: cross-platform-actions/action@v0.20.0
+        with:
+          operating_system: freebsd
+          version: '13.2'
+          run: |
+            sudo pkg install -y python3 py39-urllib3 py39-pip cmake
             python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
             chmod a+x builder
             ./builder build -p ${{ env.PACKAGE_NAME }}
@@ -221,3 +238,28 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --target=${{matrix.arch}}
+
+  linux-debug:
+    runs-on: ubuntu-20.04 # latest
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --config Debug
+
+  windows-debug:
+    runs-on: windows-2022 # latest
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --config Debug
+
+  osx-debug:
+    runs-on: macos-12 # latest
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --config Debug
