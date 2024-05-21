@@ -413,6 +413,12 @@ int aws_cbor_decoder_pop_next_text_val(struct aws_cbor_decoder *decoder, struct 
  * size of array to *out_size, not the content of the array. The next *out_size cbor data items will be the content of
  * the array for a valid cbor data,
  *
+ * Notes: For indefinite-length, this function will fail with "AWS_ERROR_CBOR_UNEXPECTED_TYPE". The designed way to
+ * handle indefinite-length is:
+ * - Get AWS_CBOR_TYPE_INDEF_ARRAY_START from _peek_type
+ * - call `aws_cbor_decoder_consume_next_element` to pop the indefinite-length start.
+ * - Decode the next data item until AWS_CBOR_TYPE_BREAK read.
+ *
  * @param decoder
  * @param out_size store the size of array if succeed.
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
@@ -424,6 +430,12 @@ int aws_cbor_decoder_pop_next_array_start(struct aws_cbor_decoder *decoder, uint
  * @brief Get the next AWS_CBOR_TYPE_MAP_START element. Only consume the AWS_CBOR_TYPE_MAP_START element and set the
  * size of array to *out_size, not the content of the map. The next *out_size pair of cbor data items as key and value
  * will be the content of the array for a valid cbor data,
+ *
+ * Notes: For indefinite-length, this function will fail with "AWS_ERROR_CBOR_UNEXPECTED_TYPE". The designed way to
+ * handle indefinite-length is:
+ * - Get AWS_CBOR_TYPE_INDEF_MAP_START from _peek_type
+ * - call `aws_cbor_decoder_consume_next_element` to pop the indefinite-length start.
+ * - Decode the next data item until AWS_CBOR_TYPE_BREAK read.
  *
  * @param decoder
  * @param out_size store the size of map if succeed.
