@@ -778,7 +778,7 @@ int aws_byte_buf_append_byte_dynamic_secure(struct aws_byte_buf *buffer, uint8_t
     return s_aws_byte_buf_append_byte_dynamic(buffer, value, true);
 }
 
-static int s_aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity, bool dynamic_expand) {
+int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
     AWS_ERROR_PRECONDITION(buffer->allocator);
     AWS_ERROR_PRECONDITION(aws_byte_buf_is_valid(buffer));
 
@@ -786,43 +786,21 @@ static int s_aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_SUCCESS;
     }
-
-    size_t new_capacity = requested_capacity;
-    if (dynamic_expand) {
-        /*
-         * It's ok if this overflows, just clamp to max possible.
-         * In theory this lets us still grow a buffer that's larger than 1/2 size_t space
-         * at least enough to accommodate the append.
-         */
-        size_t growth_capacity = aws_add_size_saturating(buffer->capacity, buffer->capacity);
-        if (new_capacity < growth_capacity) {
-            new_capacity = growth_capacity;
-        }
-    }
-
-    if (!buffer->buffer && !buffer->capacity) {
-        if (aws_byte_buf_init(buffer, buffer->allocator, new_capacity)) {
+    if (!buffer->buffer && !buffer->capacity && requested_capacity > buffer->capacity) {
+        if (aws_byte_buf_init(buffer, buffer->allocator, requested_capacity)) {
             return AWS_OP_ERR;
         }
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
         return AWS_OP_SUCCESS;
     }
-    if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, new_capacity)) {
+    if (aws_mem_realloc(buffer->allocator, (void **)&buffer->buffer, buffer->capacity, requested_capacity)) {
         return AWS_OP_ERR;
     }
 
-    buffer->capacity = new_capacity;
+    buffer->capacity = requested_capacity;
 
     AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
     return AWS_OP_SUCCESS;
-}
-
-int aws_byte_buf_ensure_capacity(struct aws_byte_buf *buffer, size_t requested_capacity) {
-    return s_aws_byte_buf_reserve(buffer, requested_capacity, true /*dynamic_expand*/);
-}
-
-int aws_byte_buf_reserve(struct aws_byte_buf *buffer, size_t requested_capacity) {
-    return s_aws_byte_buf_reserve(buffer, requested_capacity, false /*dynamic_expand*/);
 }
 
 int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional_length) {
@@ -836,6 +814,20 @@ int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional
     }
 
     return aws_byte_buf_reserve(buffer, requested_capacity);
+}
+
+int aws_byte_buf_reserve_smart(struct aws_byte_buf *buffer, size_t requested_capacity) {
+    size_t double_current_capacity = aws_add_size_saturating(buffer->capacity, buffer->capacity);
+    size_t new_capacity = aws_max_size(requested_capacity, double_current_capacity);
+    return aws_byte_buf_reserve(buffer, new_capacity);
+}
+
+int aws_byte_buf_reserve_smart_relative(struct aws_byte_buf *buffer, size_t additional_length) {
+    size_t requested_capacity = 0;
+    if (AWS_UNLIKELY(aws_add_size_checked(buffer->len, additional_length, &requested_capacity))) {
+        return AWS_OP_ERR;
+    }
+    return aws_byte_buf_reserve_smart(buffer, requested_capacity);
 }
 
 struct aws_byte_cursor aws_byte_cursor_right_trim_pred(

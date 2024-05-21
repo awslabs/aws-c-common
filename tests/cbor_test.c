@@ -115,7 +115,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     /* Unsigned int, 1 */
     size_t index = 0;
     uint64_t result = 0;
-    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &result));
@@ -352,7 +352,7 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
     ASSERT_UINT_EQUALS(2, final_cursor.len);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
 
-    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_NULL);
     ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder));
@@ -449,7 +449,7 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
 
-    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_INDEF_MAP_START);
 
@@ -472,7 +472,7 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     uint8_t invalid_data[] = {0xFE};
     struct aws_byte_cursor invalid_cbor = aws_byte_cursor_from_array(invalid_data, sizeof(invalid_data));
 
-    enum aws_cbor_element_type out_type = AWS_CBOR_TYPE_MAX;
+    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
 
     /* 1. Malformed cbor data */
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &invalid_cbor);

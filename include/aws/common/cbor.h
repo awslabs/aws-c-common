@@ -13,8 +13,8 @@ AWS_PUSH_SANE_WARNING_LEVEL
 AWS_EXTERN_C_BEGIN
 
 /**
- * The element types use by peek type.
- * An extension for cbor major type in RFC8949 section 3.1
+ * The types use by APIs, not 1:1 with major type.
+ * It's an extension for cbor major type in RFC8949 section 3.1
  * Major type 0 - AWS_CBOR_TYPE_UINT
  * Major type 1 - AWS_CBOR_TYPE_NEGINT
  * Major type 2 - AWS_CBOR_TYPE_BYTES/AWS_CBOR_TYPE_INDEF_BYTES_START
@@ -25,12 +25,14 @@ AWS_EXTERN_C_BEGIN
  * Major type 7
  *  - 20/21 - AWS_CBOR_TYPE_BOOL
  *  - 22 - AWS_CBOR_TYPE_NULL
- *  - 23 - AWS_CBOR_TYPE_UNDEFINED
+ *  - 23 - AWS_CBOR_TYPE_UNDEFINE
  *  - 25/26/27 - AWS_CBOR_TYPE_FLOAT
  *  - 31 - AWS_CBOR_TYPE_BREAK
  *  - rest of value are not supported.
  */
-enum aws_cbor_element_type {
+enum aws_cbor_type {
+    AWS_CBOR_TYPE_UNKOWN = 0,
+
     AWS_CBOR_TYPE_UINT,
     AWS_CBOR_TYPE_NEGINT,
     AWS_CBOR_TYPE_FLOAT,
@@ -51,8 +53,6 @@ enum aws_cbor_element_type {
     AWS_CBOR_TYPE_INDEF_TEXT_START,
     AWS_CBOR_TYPE_INDEF_ARRAY_START,
     AWS_CBOR_TYPE_INDEF_MAP_START,
-
-    AWS_CBOR_TYPE_MAX,
 };
 
 /**
@@ -76,6 +76,10 @@ struct aws_cbor_decoder;
 /*******************************************************************************
  * ENCODE
  ******************************************************************************/
+
+/* Return c-string for aws_cbor_type */
+AWS_COMMON_API
+const char *aws_cbor_type_cstr(enum aws_cbor_type type);
 
 /**
  * @brief Create a new cbor encoder. Creating a encoder with a temporay buffer.
@@ -271,7 +275,7 @@ void aws_cbor_encoder_write_indef_array_start(struct aws_cbor_encoder *encoder);
 AWS_COMMON_API
 void aws_cbor_encoder_write_indef_map_start(struct aws_cbor_encoder *encoder);
 
-/* TODO: bignum/bigfloat */
+/* TODO: bignum/bigfloat/timestamp helpers, or not. */
 
 /**
  * @brief Helper to encode an epoch timestamp on ms, equivelent to:
@@ -330,7 +334,7 @@ size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *deco
  * @return AWS_OP_SUCCESS if succeed, AWS_OP_ERR for any decoding error and corresponding error code will be raised.
  */
 AWS_COMMON_API
-int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_element_type *out_type);
+int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_type *out_type);
 
 /**
  * @brief Consume the next data item, includes all the content within the data item.
