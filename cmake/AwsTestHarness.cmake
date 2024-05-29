@@ -59,6 +59,7 @@ function(generate_test_driver driver_exe_name)
 
     foreach(name IN LISTS TEST_CASES)
         add_test(${name} ${driver_exe_name} "${name}")
+        set_tests_properties("${name}" PROPERTIES SKIP_RETURN_CODE ${SKIP_RETURN_CODE_VALUE})
     endforeach()
 
     # Clear test cases in case another driver needs to be generated
