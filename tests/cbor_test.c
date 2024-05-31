@@ -65,7 +65,7 @@ CBOR_TEST_CASE(cbor_encode_decode_int_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_encode_decode_double_test) {
@@ -173,7 +173,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_encode_decode_bool_test) {
@@ -205,7 +205,7 @@ CBOR_TEST_CASE(cbor_encode_decode_bool_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_encode_decode_bytesstr_str_test) {
@@ -251,7 +251,7 @@ CBOR_TEST_CASE(cbor_encode_decode_bytesstr_str_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
@@ -336,7 +336,7 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
@@ -364,7 +364,7 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 /* Test a complicate multiple stacks encode and decode */
@@ -421,7 +421,7 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     aws_cbor_encoder_destroy(encoder);
     aws_cbor_decoder_release(decoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
 
 CBOR_TEST_CASE(cbor_decode_error_handling_test) {
@@ -467,6 +467,7 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
 
     /* 4. Consume data items with size */
     struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
+    aws_cbor_encoder_reset(encoder);
     aws_cbor_encoder_write_map_start(encoder, 1);
     /* Key */
     aws_cbor_encoder_write_text(encoder, val_1);
@@ -484,5 +485,5 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
 
     aws_cbor_encoder_destroy(encoder);
     aws_common_library_clean_up();
-    return SUCCESS;
+    return AWS_OP_SUCCESS;
 }
