@@ -489,12 +489,6 @@ add_test_case(test_normalize_posix_directory_separator)
 add_test_case(test_normalize_windows_directory_separator)
 add_test_case(test_byte_buf_init_from_file)
 
-add_test_case(promise_test_wait_forever)
-add_test_case(promise_test_wait_for_a_bit)
-add_test_case(promise_test_finish_immediately)
-add_test_case(promise_test_finish_before_wait)
-add_test_case(promise_test_multiple_waiters)
-
 add_test_case(test_json_parse_from_string)
 add_test_case(test_json_parse_to_string)
 

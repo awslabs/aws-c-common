@@ -46,10 +46,10 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("0:0:0:0:0:0:0:1"), false));
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fd00:ec2::23"), false));
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fd00:ec2:0:0:0:0:0:23"), false));
-    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[2001:0db8:0000:0000:0000:8a2e:0370:7334]"), true));
-    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1]"), true));
-    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%25en0]"), true));
-    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[2001:db8:85a3:8d3:1319:8a2e:370:7348]"), true));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370:7334"), true));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1"), true));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25en0"), true));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8:85a3:8d3:1319:8a2e:370:7348"), true));
 
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370"), false));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370:"), false));
@@ -63,12 +63,11 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("z001::8a2e::8745"), false));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("::2001:0db8:0000:0000:8a2e:0370:7334"), false));
 
-    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25en0"), true));
-    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%en0]"), true));
-    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%24en0]"), true));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%en0"), true));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%24en0"), true));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%25en0"), true));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25en0]"), true));
-    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%25]"), true));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25"), true));
 
     return AWS_OP_SUCCESS;
 }

@@ -20,10 +20,6 @@ static bool s_is_ipv6_char(uint8_t value) {
     return aws_isxdigit(value) || value == ':';
 }
 
-static bool s_starts_with(struct aws_byte_cursor cur, uint8_t ch) {
-    return cur.len > 0 && cur.ptr[0] == ch;
-}
-
 static bool s_ends_with(struct aws_byte_cursor cur, uint8_t ch) {
     return cur.len > 0 && cur.ptr[cur.len - 1] == ch;
 }
@@ -69,22 +65,13 @@ static struct aws_byte_cursor s_percent_uri_enc = AWS_BYTE_CUR_INIT_FROM_STRING_
  * ipv6 literal can be scoped by to zone by appending % followed by zone name
  * ( does not look like there is length reqs on zone name length. this
  * implementation enforces that its > 1 )
- * ipv6 can be embedded in url, in which case it must be wrapped inside []
- * and % be uri encoded as %25.
+ * ipv6 can be embedded in url, in which case % must be uri encoded as %25.
  * Implementation is fairly trivial and just iterates through the string
  * keeping track of the spec above.
  */
 bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     if (host.len == 0) {
         return false;
-    }
-
-    if (is_uri_encoded) {
-        if (!s_starts_with(host, '[') || !s_ends_with(host, ']')) {
-            return false;
-        }
-        aws_byte_cursor_advance(&host, 1);
-        --host.len;
     }
 
     struct aws_byte_cursor substr = {0};
