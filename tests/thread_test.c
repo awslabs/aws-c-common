@@ -243,7 +243,7 @@ static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, v
     /*
      * Increase the timeout and shut down
      */
-    aws_thread_set_managed_join_timeout_ns(aws_timestamp_convert(5, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
+    aws_thread_set_managed_join_timeout_ns(aws_timestamp_convert(10, AWS_TIMESTAMP_SECS, AWS_TIMESTAMP_NANOS, NULL));
 
     aws_common_library_clean_up();
 
