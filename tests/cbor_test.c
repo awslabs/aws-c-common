@@ -355,50 +355,10 @@ CBOR_TEST_CASE(cbor_encode_decode_simple_value_test) {
     enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_NULL);
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_single_element(decoder));
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_UNDEFINED);
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_element(decoder));
-    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
-
-    aws_cbor_encoder_destroy(encoder);
-    aws_cbor_decoder_release(decoder);
-    aws_common_library_clean_up();
-    return SUCCESS;
-}
-
-CBOR_TEST_CASE(cbor_encode_decode_timestamp_test) {
-    (void)allocator;
-    (void)ctx;
-    aws_common_library_init(allocator);
-    enum { VALUE_NUM = 4 };
-
-    /**
-     * Timestamp with one extra bytes for the timestamp tag
-     *
-     * 1 as unsigned int, takes 1 byte
-     * -1 as negative int, takes 1 byte
-     * 1.1 double, takes 9 bytes
-     * -1.1 double, takes 9 bytes
-     */
-    int64_t values[VALUE_NUM] = {1000, -1000, 1111, -1111};
-    uint64_t expected_encoded_len[VALUE_NUM] = {2, 2, 10, 10};
-    size_t encoded_len = 0;
-    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
-    for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encoder_write_epoch_timestamp_ms(encoder, values[i]);
-        struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
-        ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
-        encoded_len = cursor.len;
-    }
-    struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
-    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
-    for (size_t i = 0; i < VALUE_NUM; i++) {
-        int64_t result = 0;
-        ASSERT_SUCCESS(aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(decoder, &result));
-        ASSERT_TRUE(values[i] == result);
-    }
-
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_single_element(decoder));
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
     aws_cbor_encoder_destroy(encoder);
@@ -454,7 +414,7 @@ CBOR_TEST_CASE(cbor_encode_decode_inf_test) {
     ASSERT_UINT_EQUALS(out_type, AWS_CBOR_TYPE_INDEF_MAP_START);
 
     /* Get rid of the whole inf map with all the data content */
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_data_item(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
 
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
@@ -500,29 +460,13 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &out));
     ASSERT_UINT_EQUALS(val, out);
     /* All the data has been consumed, now it's invalid */
-    ASSERT_FAILS(aws_cbor_decoder_consume_next_data_item(decoder));
+    ASSERT_FAILS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
     ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
     aws_cbor_decoder_release(decoder);
 
-    /* 4. Try get wrong type for timestamp */
-    aws_cbor_encoder_reset(encoder);
+    /* 4. Consume data items with size */
     struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
-    aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, val_1);
-    final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
-    decoder = aws_cbor_decoder_new(allocator, &final_cursor);
-    int64_t result = 0;
-    /* The encoded val is not a timestamp */
-    ASSERT_FAILS(aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(decoder, &result));
-    /* But I can still get the tag val. */
-    uint64_t tag_val = 0;
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_tag_val(decoder, &tag_val));
-    ASSERT_UINT_EQUALS(AWS_CBOR_TAG_NEGATIVE_BIGNUM, tag_val);
-    aws_cbor_encoder_reset(encoder);
-    aws_cbor_decoder_release(decoder);
-
-    /* 5. Consume data items with size */
     aws_cbor_encoder_write_map_start(encoder, 1);
     /* Key */
     aws_cbor_encoder_write_text(encoder, val_1);
@@ -532,11 +476,9 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     aws_cbor_encoder_write_bytes(encoder, val_1);
     final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     decoder = aws_cbor_decoder_new(allocator, &final_cursor);
-    /* The encoded val is not a timestamp */
-    ASSERT_FAILS(aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(decoder, &result));
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_CBOR_TYPE_MAP_START, out_type);
-    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_data_item(decoder));
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
     aws_cbor_decoder_release(decoder);
 

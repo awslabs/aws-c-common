@@ -275,19 +275,6 @@ void aws_cbor_encoder_write_indef_array_start(struct aws_cbor_encoder *encoder);
 AWS_COMMON_API
 void aws_cbor_encoder_write_indef_map_start(struct aws_cbor_encoder *encoder);
 
-/* TODO: bignum/bigfloat/timestamp helpers, or not. */
-
-/**
- * @brief Helper to encode an epoch timestamp on ms, equivelent to:
- *  aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_EPOCH_TIME);
- *  aws_cbor_encoder_write_float(encoder, (double)epoch_time_ms/1000.0);
- *
- * @param encoder
- * @param epoch_time_ms
- */
-AWS_COMMON_API
-void aws_cbor_encoder_write_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms);
-
 /*******************************************************************************
  * DECODE
  ******************************************************************************/
@@ -299,9 +286,9 @@ void aws_cbor_encoder_write_epoch_timestamp_ms(struct aws_cbor_encoder *encoder,
  * - If the next element type accept different type, invoke `aws_cbor_decoder_peek_type` first, then based on the type
  * to invoke corresponding `aws_cbor_decoder_pop_next_*`
  * - If the next element type doesn't have corrsponding value, specifically: AWS_CBOR_TYPE_NULL,
- * AWS_CBOR_TYPE_UNDEFINED, AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call `aws_cbor_decoder_consume_next_element`
- * to consume it and continues for further decoding.
- * - To ignore the next data item (the element and the content of it), `aws_cbor_decoder_consume_next_data_item`
+ * AWS_CBOR_TYPE_UNDEFINED, AWS_CBOR_TYPE_INF_*_START, AWS_CBOR_TYPE_BREAK, call
+ * `aws_cbor_decoder_consume_next_single_element` to consume it and continues for further decoding.
+ * - To ignore the next data item (the element and the content of it), `aws_cbor_decoder_consume_next_whole_data_item`
  *
  * Note: it's caller's responsibilty to keep the src outlive the decoder.
  *
@@ -357,10 +344,10 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
  * @return AWS_OP_SUCCESS successfully consumed the next data item, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder);
+int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decoder);
 
 /**
- * @brief Consume the next element, without the content followed by the element.
+ * @brief Consume the next single element, without the content followed by the element.
  *
  * As an example for the following cbor, this function will only consume the
  * 0xBF, "Start indefinite-length map", not any content of the map represented.
@@ -379,7 +366,7 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder);
  * @return AWS_OP_SUCCESS successfully consumed the next element, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder);
+int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief Get the next element based on the type. If the next element doesn't match the expected type. Error will be
@@ -416,7 +403,7 @@ int aws_cbor_decoder_pop_next_text_val(struct aws_cbor_decoder *decoder, struct 
  * Notes: For indefinite-length, this function will fail with "AWS_ERROR_CBOR_UNEXPECTED_TYPE". The designed way to
  * handle indefinite-length is:
  * - Get AWS_CBOR_TYPE_INDEF_ARRAY_START from _peek_type
- * - call `aws_cbor_decoder_consume_next_element` to pop the indefinite-length start.
+ * - call `aws_cbor_decoder_consume_next_single_element` to pop the indefinite-length start.
  * - Decode the next data item until AWS_CBOR_TYPE_BREAK read.
  *
  * @param decoder
@@ -434,7 +421,7 @@ int aws_cbor_decoder_pop_next_array_start(struct aws_cbor_decoder *decoder, uint
  * Notes: For indefinite-length, this function will fail with "AWS_ERROR_CBOR_UNEXPECTED_TYPE". The designed way to
  * handle indefinite-length is:
  * - Get AWS_CBOR_TYPE_INDEF_MAP_START from _peek_type
- * - call `aws_cbor_decoder_consume_next_element` to pop the indefinite-length start.
+ * - call `aws_cbor_decoder_consume_next_single_element` to pop the indefinite-length start.
  * - Decode the next data item until AWS_CBOR_TYPE_BREAK read.
  *
  * @param decoder
@@ -457,15 +444,17 @@ AWS_COMMON_API
 int aws_cbor_decoder_pop_next_tag_val(struct aws_cbor_decoder *decoder, uint64_t *out_tag_val);
 
 /**
- * @brief Helper to get the next tag element and the value followed. If the value is float/double, the value will be
- * truncated to fit millisecond precision.
+ * @brief Helper to get the next numeric(AWS_CBOR_TYPE_UINT, AWS_CBOR_TYPE_NEGINT or AWS_CBOR_TYPE_FLOAT) as double.
+ * - AWS_ERROR_CBOR_UNEXPECTED_TYPE will be raised if the next element is not the type listed above.
+ * - AWS_ERROR_OVERFLOW_DETECTED will be raised if the data cannot be represented in double, the *out
+ *  will be set to the closed representation of data in double.
  *
  * @param decoder
  * @param out
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API
-int aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out);
+int aws_cbor_decoder_pop_next_numeric_as_double(struct aws_cbor_decoder *decoder, double *out);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

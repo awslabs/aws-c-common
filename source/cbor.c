@@ -5,7 +5,6 @@
 #include <aws/common/logging.h>
 #include <aws/common/private/byte_buf.h>
 #include <aws/common/private/external_module_impl.h>
-#include <fenv.h>
 #include <float.h>
 #include <inttypes.h>
 #include <math.h>
@@ -269,12 +268,6 @@ void aws_cbor_encoder_write_indef_map_start(struct aws_cbor_encoder *encoder) {
 
 void aws_cbor_encoder_write_break(struct aws_cbor_encoder *encoder) {
     s_cbor_encoder_write_type_only(encoder, AWS_CBOR_TYPE_BREAK);
-}
-
-void aws_cbor_encoder_write_epoch_timestamp_ms(struct aws_cbor_encoder *encoder, int64_t epoch_time_ms) {
-    aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_EPOCH_TIME);
-    /* Encode as Secs precision for cbor. */
-    aws_cbor_encoder_write_float(encoder, (double)epoch_time_ms / 1000.0);
 }
 
 /*******************************************************************************
@@ -568,7 +561,7 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
     return AWS_OP_SUCCESS;
 }
 
-int aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *decoder, int64_t *out) {
+int aws_cbor_decoder_pop_next_numeric_as_double(struct aws_cbor_decoder *decoder, double *out) {
     if (decoder->error_code) {
         return aws_raise_error(decoder->error_code);
     }
@@ -581,99 +574,61 @@ int aws_cbor_decoder_pop_next_epoch_timestamp_ms_val(struct aws_cbor_decoder *de
     }
 
 decode_tag_done:
+    switch (decoder->cached_context.type) {
 
-    if (decoder->cached_context.type != AWS_CBOR_TYPE_TAG) {
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_CBOR,
-            "The decoder got unexpected type: %d, while expecting type: %d.",
-            decoder->cached_context.type,
-            AWS_CBOR_TYPE_TAG);
-        return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
-    } else if (decoder->cached_context.u.tag_val != AWS_CBOR_TAG_EPOCH_TIME) {
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_CBOR,
-            "The decoder got unexpected tag number: %" PRIu64 ", while expecting tag number: %d.",
-            decoder->cached_context.u.tag_val,
-            AWS_CBOR_TAG_EPOCH_TIME);
-        return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
-    }
-
-    /* Get the next element as the content */
-    enum aws_cbor_type val_type = 0;
-    /* Reset the cache for the tag val */
-    decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
-    int error = aws_cbor_decoder_peek_type(decoder, &val_type);
-    switch (val_type) {
         case AWS_CBOR_TYPE_UINT: {
-            uint64_t timestamp_secs = 0;
-            error |= aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &timestamp_secs);
-            if (error) {
+            uint64_t val = 0;
+            if (aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &val)) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
-                break;
+                return AWS_OP_ERR;
             }
-            uint64_t timestamp_ms = aws_mul_u64_saturating(timestamp_secs, 1000);
-            if (timestamp_ms > INT64_MAX) {
-                goto overflow;
+            double double_val = (double)val;
+            *out = double_val;
+            if (val != (uint64_t)double_val) {
+                return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
             }
-            *out = (int64_t)timestamp_ms;
             break;
         }
 
         case AWS_CBOR_TYPE_NEGINT: {
-            uint64_t timestamp_secs = 0;
-            error |= aws_cbor_decoder_pop_next_negative_int_val(decoder, &timestamp_secs);
-            if (error) {
+            uint64_t val = 0;
+            if (aws_cbor_decoder_pop_next_negative_int_val(decoder, &val)) {
                 /* The error code for decoder must have been set as we already checked the type. */
                 AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
-                break;
+                return AWS_OP_ERR;
             }
             /* convert the value to -1 * expected to do the math as unsigned. */
-            timestamp_secs = aws_add_u64_saturating(timestamp_secs, 1);
-            uint64_t timestamp_ms = aws_mul_u64_saturating(timestamp_secs, 1000);
-            if (timestamp_ms > INT64_MAX) {
-                goto overflow;
+            val = aws_add_u64_saturating(val, 1);
+            double double_val = (double)val;
+            *out = double_val * -1.0;
+            if (val != (uint64_t)double_val) {
+                return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
             }
-            *out = (int64_t)timestamp_ms * -1LL;
             break;
         }
 
         case AWS_CBOR_TYPE_FLOAT: {
-            double timestamp_secs = 0;
-            error |= aws_cbor_decoder_pop_next_float_val(decoder, &timestamp_secs);
-            if (error) {
-                /* The error code for decoder must have been set as we already checked the type. */
-                AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
-                break;
-            }
-            /* TODO: How to check overflow? */
-            double ms_double = timestamp_secs * 1000.0;
-            /* Round it up instead of type cast incase of overflow */
-            int64_t timestamp_ms = llround(ms_double);
-            if (fetestexcept(FE_INVALID) || timestamp_ms > INT64_MAX) {
-                goto overflow;
-            }
-            *out = timestamp_ms;
-            break;
+            return aws_cbor_decoder_pop_next_float_val(decoder, out);
         }
         default:
-            AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "The cbor data is malformed to decode.");
-            decoder->error_code = AWS_ERROR_INVALID_CBOR;
-            error = aws_raise_error(AWS_ERROR_INVALID_CBOR);
-            break;
-    }
-    if (error) {
-        return AWS_OP_ERR;
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_CBOR,
+                "The decoder got unexpected type: %d (%s), while expecting type: %d (%s), %d (%s) or %d (%s).",
+                decoder->cached_context.type,
+                aws_cbor_type_cstr(decoder->cached_context.type),
+                AWS_CBOR_TYPE_UINT,
+                aws_cbor_type_cstr(AWS_CBOR_TYPE_UINT),
+                AWS_CBOR_TYPE_NEGINT,
+                aws_cbor_type_cstr(AWS_CBOR_TYPE_NEGINT),
+                AWS_CBOR_TYPE_FLOAT,
+                aws_cbor_type_cstr(AWS_CBOR_TYPE_FLOAT));
+            return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
     }
     return AWS_OP_SUCCESS;
-overflow:
-    /* Overflow detected, it's technically not a malformed cbor item, but for this helper */
-    AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "The decoded timestamp cannot fit into int64_t.");
-    /* TODO: do we want to revert the decoded part???? Probably??? */
-    return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
 }
 
-int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
+int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decoder) {
     if (decoder->error_code) {
         /* Error happened during decoding */
         return aws_raise_error(decoder->error_code);
@@ -688,9 +643,8 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
     switch (decoder->cached_context.type) {
         case AWS_CBOR_TYPE_TAG:
             /* Read the next data item */
-            /* TODO: error check for the tag content?? */
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
-            if (aws_cbor_decoder_consume_next_data_item(decoder)) {
+            if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                 return AWS_OP_ERR;
             }
             break;
@@ -700,11 +654,11 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
             for (uint64_t i = 0; i < num_map_item; i++) {
                 /* Key */
-                if (aws_cbor_decoder_consume_next_data_item(decoder)) {
+                if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                     return AWS_OP_ERR;
                 }
                 /* Value */
-                if (aws_cbor_decoder_consume_next_data_item(decoder)) {
+                if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                     return AWS_OP_ERR;
                 }
             }
@@ -716,7 +670,7 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
             for (uint64_t i = 0; i < num_array_item; i++) {
                 /* item */
-                if (aws_cbor_decoder_consume_next_data_item(decoder)) {
+                if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                     return AWS_OP_ERR;
                 }
             }
@@ -733,7 +687,7 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
                 return AWS_OP_ERR;
             }
             while (next_type != AWS_CBOR_TYPE_BREAK) {
-                if (aws_cbor_decoder_consume_next_data_item(decoder)) {
+                if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                     return AWS_OP_ERR;
                 }
                 if (aws_cbor_decoder_peek_type(decoder, &next_type)) {
@@ -752,7 +706,7 @@ int aws_cbor_decoder_consume_next_data_item(struct aws_cbor_decoder *decoder) {
     return AWS_OP_SUCCESS;
 }
 
-int aws_cbor_decoder_consume_next_element(struct aws_cbor_decoder *decoder) {
+int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decoder) {
     enum aws_cbor_type out_type = 0;
     if (aws_cbor_decoder_peek_type(decoder, &out_type)) {
         return AWS_OP_ERR;
