@@ -531,7 +531,7 @@ add_test_case(cbor_encode_decode_bool_test)
 add_test_case(cbor_encode_decode_bytesstr_str_test)
 add_test_case(cbor_encode_decode_array_map_test)
 add_test_case(cbor_encode_decode_simple_value_test)
-add_test_case(cbor_encode_decode_inf_test)
+add_test_case(cbor_encode_decode_indef_test)
 add_test_case(cbor_decode_error_handling_test)
 
 generate_test_driver(${PROJECT_NAME}-tests)

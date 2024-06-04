@@ -76,7 +76,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 break;
         }
     }
-    aws_cbor_decoder_release(decoder);
+    aws_cbor_decoder_destroy(decoder);
 
     atexit(aws_common_library_clean_up);
 

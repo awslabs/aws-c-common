@@ -146,7 +146,7 @@ void aws_cbor_encoder_write_float(struct aws_cbor_encoder *encoder, double value
          * Check against the INT64 range to avoid undefined behavior
          *
          * Comparing against INT64_MAX instead of UINT64_MAX to simplify the code, which may loss the opportunity to
-         * convert the UIN64 range from double to uint64_t. However, converting double to uint64_t will not benefit the
+         * convert the UINT64 range from double to uint64_t. However, converting double to uint64_t will not benefit the
          * total length encoded.
          **/
         int64_t int_value = (int64_t)value;
@@ -314,7 +314,7 @@ struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, s
     return decoder;
 }
 
-struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decoder) {
+struct aws_cbor_decoder *aws_cbor_decoder_destroy(struct aws_cbor_decoder *decoder) {
     aws_mem_release(decoder->allocator, decoder);
     return NULL;
 }
@@ -558,73 +558,6 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
         return AWS_OP_ERR;
     }
     *out_type = decoder->cached_context.type;
-    return AWS_OP_SUCCESS;
-}
-
-int aws_cbor_decoder_pop_next_numeric_as_double(struct aws_cbor_decoder *decoder, double *out) {
-    if (decoder->error_code) {
-        return aws_raise_error(decoder->error_code);
-    }
-    if (decoder->cached_context.type != AWS_CBOR_TYPE_UNKOWN) {
-        /* There was a cached context, check if the cached one meets the expected. */
-        goto decode_tag_done;
-    }
-    if (s_cbor_decode_next_element(decoder)) {
-        return AWS_OP_ERR;
-    }
-
-decode_tag_done:
-    switch (decoder->cached_context.type) {
-
-        case AWS_CBOR_TYPE_UINT: {
-            uint64_t val = 0;
-            if (aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &val)) {
-                /* The error code for decoder must have been set as we already checked the type. */
-                AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
-                return AWS_OP_ERR;
-            }
-            double double_val = (double)val;
-            *out = double_val;
-            if (val != (uint64_t)double_val) {
-                return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-            }
-            break;
-        }
-
-        case AWS_CBOR_TYPE_NEGINT: {
-            uint64_t val = 0;
-            if (aws_cbor_decoder_pop_next_negative_int_val(decoder, &val)) {
-                /* The error code for decoder must have been set as we already checked the type. */
-                AWS_ASSERT(decoder->error_code != AWS_ERROR_SUCCESS);
-                return AWS_OP_ERR;
-            }
-            /* convert the value to -1 * expected to do the math as unsigned. */
-            val = aws_add_u64_saturating(val, 1);
-            double double_val = (double)val;
-            *out = double_val * -1.0;
-            if (val != (uint64_t)double_val) {
-                return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-            }
-            break;
-        }
-
-        case AWS_CBOR_TYPE_FLOAT: {
-            return aws_cbor_decoder_pop_next_float_val(decoder, out);
-        }
-        default:
-            AWS_LOGF_ERROR(
-                AWS_LS_COMMON_CBOR,
-                "The decoder got unexpected type: %d (%s), while expecting type: %d (%s), %d (%s) or %d (%s).",
-                decoder->cached_context.type,
-                aws_cbor_type_cstr(decoder->cached_context.type),
-                AWS_CBOR_TYPE_UINT,
-                aws_cbor_type_cstr(AWS_CBOR_TYPE_UINT),
-                AWS_CBOR_TYPE_NEGINT,
-                aws_cbor_type_cstr(AWS_CBOR_TYPE_NEGINT),
-                AWS_CBOR_TYPE_FLOAT,
-                aws_cbor_type_cstr(AWS_CBOR_TYPE_FLOAT));
-            return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);
-    }
     return AWS_OP_SUCCESS;
 }
 

@@ -300,7 +300,7 @@ AWS_COMMON_API
 struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src);
 
 AWS_COMMON_API
-struct aws_cbor_decoder *aws_cbor_decoder_release(struct aws_cbor_decoder *decoder);
+struct aws_cbor_decoder *aws_cbor_decoder_destroy(struct aws_cbor_decoder *decoder);
 
 /**
  * @brief  Get the length of the remaining bytes of the source. Once the source was decoded, it will be consumed,
@@ -442,19 +442,6 @@ int aws_cbor_decoder_pop_next_map_start(struct aws_cbor_decoder *decoder, uint64
  */
 AWS_COMMON_API
 int aws_cbor_decoder_pop_next_tag_val(struct aws_cbor_decoder *decoder, uint64_t *out_tag_val);
-
-/**
- * @brief Helper to get the next numeric(AWS_CBOR_TYPE_UINT, AWS_CBOR_TYPE_NEGINT or AWS_CBOR_TYPE_FLOAT) as double.
- * - AWS_ERROR_CBOR_UNEXPECTED_TYPE will be raised if the next element is not the type listed above.
- * - AWS_ERROR_OVERFLOW_DETECTED will be raised if the data cannot be represented in double, the *out
- *  will be set to the closed representation of data in double.
- *
- * @param decoder
- * @param out
- * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
- */
-AWS_COMMON_API
-int aws_cbor_decoder_pop_next_numeric_as_double(struct aws_cbor_decoder *decoder, double *out);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
