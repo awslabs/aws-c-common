@@ -155,7 +155,7 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
                     sizeof(struct stack_trace) + (sizeof(void *) * tracer->frames_per_stack));
                 AWS_FATAL_ASSERT(stack);
                 /**
-                 * Optimizations can affect the number the number of frames we get and in pathological cases we can
+                 * Optimizations can affect the number of frames we get and in pathological cases we can
                  * get fewer than FRAMES_TO_SKIP frames, but always at least 1 because code has to start somewhere.
                  * (looking at you gcc with -O3 on aarch64)
                  * With optimizations on we cannot trust the stack trace too much.
