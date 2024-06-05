@@ -131,17 +131,16 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
     aws_high_res_clock_get_ticks(&alloc->time);
 
     if (tracer->level == AWS_MEMTRACE_STACKS) {
-        /* capture stack frames, 
-        * skip 2 for this function and the allocation vtable function if we have a full stack trace
-        * and otherwise just capture what ever stack trace we got
-        */
+        /* capture stack frames,
+         * skip 2 for this function and the allocation vtable function if we have a full stack trace
+         * and otherwise just capture what ever stack trace we got
+         */
         AWS_VARIABLE_LENGTH_ARRAY(void *, stack_frames, (FRAMES_TO_SKIP + tracer->frames_per_stack));
         size_t stack_depth = aws_backtrace(stack_frames, FRAMES_TO_SKIP + tracer->frames_per_stack);
         AWS_FATAL_ASSERT(stack_depth > 0);
 
         /* hash the stack pointers */
-        struct aws_byte_cursor stack_cursor =
-            aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void *));
+        struct aws_byte_cursor stack_cursor = aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void *));
         uint64_t stack_id = aws_hash_byte_cursor_ptr(&stack_cursor);
         alloc->stack = stack_id; /* associate the stack with the alloc */
 
@@ -149,14 +148,11 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
         struct aws_hash_element *item = NULL;
         int was_created = 0;
         AWS_FATAL_ASSERT(
-            AWS_OP_SUCCESS ==
-            aws_hash_table_create(&tracer->stacks, (void *)(uintptr_t)stack_id, &item, &was_created));
+            AWS_OP_SUCCESS == aws_hash_table_create(&tracer->stacks, (void *)(uintptr_t)stack_id, &item, &was_created));
         /* If this is a new stack, save it to the hash */
         if (was_created) {
             struct stack_trace *stack = aws_mem_calloc(
-                aws_default_allocator(),
-                1,
-                sizeof(struct stack_trace) + (sizeof(void *) * tracer->frames_per_stack));
+                aws_default_allocator(), 1, sizeof(struct stack_trace) + (sizeof(void *) * tracer->frames_per_stack));
             AWS_FATAL_ASSERT(stack);
             /**
              * Optimizations can affect the number of frames we get and in pathological cases we can
