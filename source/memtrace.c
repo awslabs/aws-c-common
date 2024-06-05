@@ -134,7 +134,7 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
         /* capture stack frames, skip 2 for this function and the allocation vtable function */
         AWS_VARIABLE_LENGTH_ARRAY(void *, stack_frames, (FRAMES_TO_SKIP + tracer->frames_per_stack));
         size_t stack_depth = aws_backtrace(stack_frames, FRAMES_TO_SKIP + tracer->frames_per_stack);
-        if (stack_depth >= FRAMES_TO_SKIP) {
+        if (stack_depth > 0) {
             /* hash the stack pointers */
             struct aws_byte_cursor stack_cursor =
                 aws_byte_cursor_from_array(stack_frames, stack_depth * sizeof(void *));
@@ -154,12 +154,27 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
                     1,
                     sizeof(struct stack_trace) + (sizeof(void *) * tracer->frames_per_stack));
                 AWS_FATAL_ASSERT(stack);
-                memcpy(
-                    (void **)&stack->frames[0],
-                    &stack_frames[FRAMES_TO_SKIP],
-                    (stack_depth - FRAMES_TO_SKIP) * sizeof(void *));
-                stack->depth = stack_depth - FRAMES_TO_SKIP;
-                item->value = stack;
+                /**
+                 * Optimizations can affect the number the number of frames we get and in pathological cases we can
+                 * get fewer than FRAMES_TO_SKIP frames, but always at least 1 because code has to start somewhere.
+                 * (looking at you gcc with -O3 on aarch64)
+                 * With optimizations on we cannot trust the stack trace too much.
+                 * Memtracer makes an assumption that stack trace will be available in all cases if stack trace api
+                 * works. So in the pathological case of stack_depth <= FRAMES_TO_SKIP lets record all the frames we
+                 * have, to at least have an anchor for where allocation is comming from, however inaccurate it is.
+                 */
+                if (stack_depth <= FRAMES_TO_SKIP) {
+                    memcpy((void **)&stack->frames[0], &stack_frames[0], (stack_depth) * sizeof(void *));
+                    stack->depth = stack_depth;
+                    item->value = stack;
+                } else {
+                    memcpy(
+                        (void **)&stack->frames[0],
+                        &stack_frames[FRAMES_TO_SKIP],
+                        (stack_depth - FRAMES_TO_SKIP) * sizeof(void *));
+                    stack->depth = stack_depth - FRAMES_TO_SKIP;
+                    item->value = stack;
+                }
             }
             aws_mutex_unlock(&tracer->mutex);
         }
