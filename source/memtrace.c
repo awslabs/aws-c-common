@@ -175,9 +175,9 @@ static void s_alloc_tracer_track(struct alloc_tracer *tracer, void *ptr, size_t 
                 stack->depth = stack_depth - FRAMES_TO_SKIP;
                 item->value = stack;
             }
-
-            aws_mutex_unlock(&tracer->mutex);
         }
+
+        aws_mutex_unlock(&tracer->mutex);
     }
 
     aws_mutex_lock(&tracer->mutex);
