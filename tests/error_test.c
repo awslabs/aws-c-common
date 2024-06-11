@@ -399,13 +399,15 @@ static void s_error_thread_fn(void *arg) {
 static int s_error_code_cross_thread_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct error_thread_test_data test_data = {.thread_1_code = 0,
-                                               .thread_1_get_last_code = 0,
-                                               .thread_1_encountered_count = 0,
-                                               .thread_2_code = 0,
-                                               .thread_2_get_last_code = 0,
-                                               .thread_2_encountered_count = 0,
-                                               .thread_2_id = 0};
+    struct error_thread_test_data test_data = {
+        .thread_1_code = 0,
+        .thread_1_get_last_code = 0,
+        .thread_1_encountered_count = 0,
+        .thread_2_code = 0,
+        .thread_2_get_last_code = 0,
+        .thread_2_encountered_count = 0,
+        .thread_2_id = 0,
+    };
 
     test_data.thread_1_id = aws_thread_current_thread_id();
 
