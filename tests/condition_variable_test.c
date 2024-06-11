@@ -73,7 +73,7 @@ static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, voi
         .thread_1 = 0,
         .thread_2 = 0,
         .thread_3 = 0,
-        s};
+    };
 
     ASSERT_SUCCESS(aws_mutex_lock(&test_data.mutex));
 
@@ -112,7 +112,8 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
         .predicate_args = &predicate_args,
         .thread_1 = 0,
         .thread_2 = 0,
-        .thread_3 = 0};
+        .thread_3 = 0,
+    };
 
     ASSERT_SUCCESS(aws_mutex_lock(&test_data.mutex));
 
