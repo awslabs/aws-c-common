@@ -107,7 +107,9 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
     return AWS_OP_SUCCESS;
 }
 
-static struct aws_logger_logcat { enum aws_log_level level; } s_logcat_impl;
+static struct aws_logger_logcat {
+    enum aws_log_level level;
+} s_logcat_impl;
 
 static int s_logcat_log(
     struct aws_logger *logger,

@@ -80,7 +80,7 @@ void aws_secure_zero(void *pBuf, size_t bufsize) {
 #endif     // #else not windows
 }
 
-#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) [(C)-0x0000] = AWS_DEFINE_ERROR_INFO(C, ES, "aws-c-common")
+#define AWS_DEFINE_ERROR_INFO_COMMON(C, ES) [(C) - 0x0000] = AWS_DEFINE_ERROR_INFO(C, ES, "aws-c-common")
 /* clang-format off */
 static struct aws_error_info errors[] = {
     AWS_DEFINE_ERROR_INFO_COMMON(
