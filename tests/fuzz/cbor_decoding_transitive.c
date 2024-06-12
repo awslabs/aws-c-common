@@ -12,7 +12,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     struct aws_byte_cursor input = aws_byte_cursor_from_array(data, size);
     aws_common_library_init(allocator);
 
-    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &input);
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, input);
     union {
         uint64_t unsigned_val;
         uint64_t neg_val;

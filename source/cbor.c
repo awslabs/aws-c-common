@@ -295,8 +295,6 @@ struct aws_cbor_decoder {
     struct aws_allocator *allocator;
 
     struct aws_byte_cursor src;
-    /* Keep the original src to revert decoded part. */
-    struct aws_byte_cursor original_src;
 
     struct aws_cbor_decoder_context cached_context;
 
@@ -304,12 +302,11 @@ struct aws_cbor_decoder {
     int error_code;
 };
 
-struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src) {
+struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor src) {
 
     struct aws_cbor_decoder *decoder = aws_mem_calloc(allocator, 1, sizeof(struct aws_cbor_decoder));
     decoder->allocator = allocator;
-    decoder->src = *src;
-    decoder->original_src = *src;
+    decoder->src = src;
     decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
     return decoder;
 }

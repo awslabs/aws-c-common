@@ -297,7 +297,7 @@ void aws_cbor_encoder_write_indef_map_start(struct aws_cbor_encoder *encoder);
  * @return decoder
  */
 AWS_COMMON_API
-struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src);
+struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor src);
 
 AWS_COMMON_API
 struct aws_cbor_decoder *aws_cbor_decoder_destroy(struct aws_cbor_decoder *decoder);
