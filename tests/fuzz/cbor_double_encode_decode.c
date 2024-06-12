@@ -22,7 +22,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, &final_cursor);
-    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKOWN;
+    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKNOWN;
     AWS_FATAL_ASSERT(aws_cbor_decoder_peek_type(decoder, &out_type) == 0);
     switch (out_type) {
         case AWS_CBOR_TYPE_UINT: {

@@ -31,7 +31,7 @@ AWS_EXTERN_C_BEGIN
  *  - rest of value are not supported.
  */
 enum aws_cbor_type {
-    AWS_CBOR_TYPE_UNKOWN = 0,
+    AWS_CBOR_TYPE_UNKNOWN = 0,
 
     AWS_CBOR_TYPE_UINT,
     AWS_CBOR_TYPE_NEGINT,
@@ -95,7 +95,7 @@ AWS_COMMON_API
 struct aws_cbor_encoder *aws_cbor_encoder_destroy(struct aws_cbor_encoder *encoder);
 
 /**
- * @brief Get the current encoded buffer from encoder. The encoded data has the same lifetime as the encoder, and once
+ * @brief Get the current encoded data from encoder. The encoded data has the same lifetime as the encoder, and once
  * any other function call invoked for the encoder, the encoded data is no longer valid.
  *
  * @param encoder
