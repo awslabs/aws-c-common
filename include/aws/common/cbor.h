@@ -25,13 +25,13 @@ AWS_EXTERN_C_BEGIN
  * Major type 7
  *  - 20/21 - AWS_CBOR_TYPE_BOOL
  *  - 22 - AWS_CBOR_TYPE_NULL
- *  - 23 - AWS_CBOR_TYPE_UNDEFINE
+ *  - 23 - AWS_CBOR_TYPE_UNDEFINED
  *  - 25/26/27 - AWS_CBOR_TYPE_FLOAT
  *  - 31 - AWS_CBOR_TYPE_BREAK
  *  - rest of value are not supported.
  */
 enum aws_cbor_type {
-    AWS_CBOR_TYPE_UNKOWN = 0,
+    AWS_CBOR_TYPE_UNKNOWN = 0,
 
     AWS_CBOR_TYPE_UINT,
     AWS_CBOR_TYPE_NEGINT,
@@ -95,7 +95,7 @@ AWS_COMMON_API
 struct aws_cbor_encoder *aws_cbor_encoder_destroy(struct aws_cbor_encoder *encoder);
 
 /**
- * @brief Get the current encoded buffer from encoder. The encoded data has the same lifetime as the encoder, and once
+ * @brief Get the current encoded data from encoder. The encoded data has the same lifetime as the encoder, and once
  * any other function call invoked for the encoder, the encoded data is no longer valid.
  *
  * @param encoder
@@ -297,7 +297,7 @@ void aws_cbor_encoder_write_indef_map_start(struct aws_cbor_encoder *encoder);
  * @return decoder
  */
 AWS_COMMON_API
-struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src);
+struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor src);
 
 AWS_COMMON_API
 struct aws_cbor_decoder *aws_cbor_decoder_destroy(struct aws_cbor_decoder *decoder);

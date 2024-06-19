@@ -295,8 +295,6 @@ struct aws_cbor_decoder {
     struct aws_allocator *allocator;
 
     struct aws_byte_cursor src;
-    /* Keep the original src to revert decoded part. */
-    struct aws_byte_cursor original_src;
 
     struct aws_cbor_decoder_context cached_context;
 
@@ -304,13 +302,12 @@ struct aws_cbor_decoder {
     int error_code;
 };
 
-struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor *src) {
+struct aws_cbor_decoder *aws_cbor_decoder_new(struct aws_allocator *allocator, struct aws_byte_cursor src) {
 
     struct aws_cbor_decoder *decoder = aws_mem_calloc(allocator, 1, sizeof(struct aws_cbor_decoder));
     decoder->allocator = allocator;
-    decoder->src = *src;
-    decoder->original_src = *src;
-    decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+    decoder->src = src;
+    decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
     return decoder;
 }
 
@@ -326,7 +323,7 @@ size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *deco
 #define LIBCBOR_VALUE_CALLBACK(field, callback_type, cbor_type)                                                        \
     static void s_##field##_callback(void *ctx, callback_type val) {                                                   \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
-        AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKOWN);                                            \
+        AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKNOWN);                                           \
         (decoder)->cached_context.u.field = val;                                                                       \
         (decoder)->cached_context.type = cbor_type;                                                                    \
     }
@@ -369,7 +366,7 @@ static void s_float_callback(void *ctx, float data) {
 
 static void s_bytes_callback(void *ctx, const unsigned char *cbor_data, uint64_t length) {
     struct aws_cbor_decoder *decoder = ctx;
-    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKOWN);
+    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKNOWN);
     if (length > SIZE_MAX) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Decoded a bytes with %" PRIu64 " bytes causing overflow .", length);
         decoder->error_code = AWS_ERROR_OVERFLOW_DETECTED;
@@ -382,7 +379,7 @@ static void s_bytes_callback(void *ctx, const unsigned char *cbor_data, uint64_t
 
 static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t length) {
     struct aws_cbor_decoder *decoder = ctx;
-    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKOWN);
+    AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKNOWN);
     if (length > SIZE_MAX) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Decoded a string with %" PRIu64 " bytes causing overflow .", length);
         decoder->error_code = AWS_ERROR_OVERFLOW_DETECTED;
@@ -396,7 +393,7 @@ static void s_str_callback(void *ctx, const unsigned char *cbor_data, uint64_t l
 #define LIBCBOR_SIMPLE_CALLBACK(field, cbor_type)                                                                      \
     static void s_##field##_callback(void *ctx) {                                                                      \
         struct aws_cbor_decoder *decoder = ctx;                                                                        \
-        AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKOWN);                                            \
+        AWS_ASSERT((decoder)->cached_context.type == AWS_CBOR_TYPE_UNKNOWN);                                           \
         (decoder)->cached_context.type = cbor_type;                                                                    \
     }
 
@@ -506,7 +503,7 @@ static int s_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             /* Error happened during decoding */                                                                       \
             return aws_raise_error((decoder)->error_code);                                                             \
         }                                                                                                              \
-        if ((decoder)->cached_context.type != AWS_CBOR_TYPE_UNKOWN) {                                                  \
+        if ((decoder)->cached_context.type != AWS_CBOR_TYPE_UNKNOWN) {                                                 \
             /* There was a cached context, check if the cached one meets the expected. */                              \
             goto decode_done;                                                                                          \
         }                                                                                                              \
@@ -525,7 +522,7 @@ static int s_cbor_decode_next_element(struct aws_cbor_decoder *decoder) {
             return aws_raise_error(AWS_ERROR_CBOR_UNEXPECTED_TYPE);                                                    \
         } else {                                                                                                       \
             /* Clear the cache as we give it out. */                                                                   \
-            (decoder)->cached_context.type = AWS_CBOR_TYPE_UNKOWN;                                                     \
+            (decoder)->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;                                                    \
             *out = (decoder)->cached_context.u.field;                                                                  \
         }                                                                                                              \
         return AWS_OP_SUCCESS;                                                                                         \
@@ -547,7 +544,7 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
         return aws_raise_error(decoder->error_code);
     }
 
-    if (decoder->cached_context.type != AWS_CBOR_TYPE_UNKOWN) {
+    if (decoder->cached_context.type != AWS_CBOR_TYPE_UNKNOWN) {
         /* There was a cached context, return the type. */
         *out_type = decoder->cached_context.type;
         return AWS_OP_SUCCESS;
@@ -567,7 +564,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
         return aws_raise_error(decoder->error_code);
     }
 
-    if (decoder->cached_context.type == AWS_CBOR_TYPE_UNKOWN) {
+    if (decoder->cached_context.type == AWS_CBOR_TYPE_UNKNOWN) {
         /* There was no cache, decode the next item */
         if (s_cbor_decode_next_element(decoder)) {
             return AWS_OP_ERR;
@@ -576,7 +573,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
     switch (decoder->cached_context.type) {
         case AWS_CBOR_TYPE_TAG:
             /* Read the next data item */
-            decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+            decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
             if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
                 return AWS_OP_ERR;
             }
@@ -584,7 +581,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
         case AWS_CBOR_TYPE_MAP_START: {
             uint64_t num_map_item = decoder->cached_context.u.map_start;
             /* Reset type */
-            decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+            decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
             for (uint64_t i = 0; i < num_map_item; i++) {
                 /* Key */
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
@@ -600,7 +597,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
         case AWS_CBOR_TYPE_ARRAY_START: {
             uint64_t num_array_item = decoder->cached_context.u.array_start;
             /* Reset type */
-            decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+            decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
             for (uint64_t i = 0; i < num_array_item; i++) {
                 /* item */
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
@@ -615,7 +612,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
         case AWS_CBOR_TYPE_INDEF_MAP_START: {
             enum aws_cbor_type next_type;
             /* Reset the cache for the tag val */
-            decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+            decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
             if (aws_cbor_decoder_peek_type(decoder, &next_type)) {
                 return AWS_OP_ERR;
             }
@@ -635,7 +632,7 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
     }
 
     /* Done, just reset the cache */
-    decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+    decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
     return AWS_OP_SUCCESS;
 }
 
@@ -645,6 +642,6 @@ int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decode
         return AWS_OP_ERR;
     }
     /* Reset the type to clear the cache. */
-    decoder->cached_context.type = AWS_CBOR_TYPE_UNKOWN;
+    decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
     return AWS_OP_SUCCESS;
 }

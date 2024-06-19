@@ -817,6 +817,11 @@ int aws_byte_buf_reserve_relative(struct aws_byte_buf *buffer, size_t additional
 }
 
 int aws_byte_buf_reserve_smart(struct aws_byte_buf *buffer, size_t requested_capacity) {
+
+    if (requested_capacity <= buffer->capacity) {
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buffer));
+        return AWS_OP_SUCCESS;
+    }
     size_t double_current_capacity = aws_add_size_saturating(buffer->capacity, buffer->capacity);
     size_t new_capacity = aws_max_size(requested_capacity, double_current_capacity);
     return aws_byte_buf_reserve(buffer, new_capacity);
