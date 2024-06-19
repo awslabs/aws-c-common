@@ -47,7 +47,7 @@ static int (*s_gettime_fn)(clockid_t clock_id, struct timespec *tp) = NULL;
 
 static void s_do_osx_loads(void *user_data) {
     (void)user_data;
-    s_gettime_fn = (int (*)(clockid_t clock_id, struct timespec * tp)) dlsym(RTLD_DEFAULT, "clock_gettime");
+    s_gettime_fn = (int (*)(clockid_t clock_id, struct timespec *tp))dlsym(RTLD_DEFAULT, "clock_gettime");
 }
 
 int aws_high_res_clock_get_ticks(uint64_t *timestamp) {

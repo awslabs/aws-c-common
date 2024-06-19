@@ -79,14 +79,12 @@ enum aws_memory_order {
 /**
  * Statically initializes an aws_atomic_var to a given size_t value.
  */
-#define AWS_ATOMIC_INIT_INT(x)                                                                                         \
-    { .value = (void *)(uintptr_t)(x) }
+#define AWS_ATOMIC_INIT_INT(x) {.value = (void *)(uintptr_t)(x)}
 
 /**
  * Statically initializes an aws_atomic_var to a given void * value.
  */
-#define AWS_ATOMIC_INIT_PTR(x)                                                                                         \
-    { .value = (void *)(x) }
+#define AWS_ATOMIC_INIT_PTR(x) {.value = (void *)(x)}
 
 AWS_EXTERN_C_BEGIN
 
