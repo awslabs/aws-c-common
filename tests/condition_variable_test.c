@@ -65,13 +65,15 @@ static int s_test_conditional_notify_one_fn(struct aws_allocator *allocator, voi
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
-    struct conditional_test_data test_data = {.condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
-                                              .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
-                                              .mutex = AWS_MUTEX_INIT,
-                                              .predicate_args = &predicate_args,
-                                              .thread_1 = 0,
-                                              .thread_2 = 0,
-                                              .thread_3 = 0};
+    struct conditional_test_data test_data = {
+        .condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
+        .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
+        .mutex = AWS_MUTEX_INIT,
+        .predicate_args = &predicate_args,
+        .thread_1 = 0,
+        .thread_2 = 0,
+        .thread_3 = 0,
+    };
 
     ASSERT_SUCCESS(aws_mutex_lock(&test_data.mutex));
 
@@ -103,13 +105,15 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
 
     struct condition_predicate_args predicate_args = {.call_count = 0};
 
-    struct conditional_test_data test_data = {.condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
-                                              .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
-                                              .mutex = AWS_MUTEX_INIT,
-                                              .predicate_args = &predicate_args,
-                                              .thread_1 = 0,
-                                              .thread_2 = 0,
-                                              .thread_3 = 0};
+    struct conditional_test_data test_data = {
+        .condition_variable_1 = AWS_CONDITION_VARIABLE_INIT,
+        .condition_variable_2 = AWS_CONDITION_VARIABLE_INIT,
+        .mutex = AWS_MUTEX_INIT,
+        .predicate_args = &predicate_args,
+        .thread_1 = 0,
+        .thread_2 = 0,
+        .thread_3 = 0,
+    };
 
     ASSERT_SUCCESS(aws_mutex_lock(&test_data.mutex));
 
