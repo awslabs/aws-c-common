@@ -20,7 +20,7 @@ AWS_PUSH_SANE_WARNING_LEVEL
 /* Each library gets space for 2^^10 error entries */
 #define AWS_ERROR_ENUM_STRIDE_BITS 10
 #define AWS_ERROR_ENUM_STRIDE (1U << AWS_ERROR_ENUM_STRIDE_BITS)
-#define AWS_ERROR_ENUM_BEGIN_RANGE(x) ((x)*AWS_ERROR_ENUM_STRIDE)
+#define AWS_ERROR_ENUM_BEGIN_RANGE(x) ((x) * AWS_ERROR_ENUM_STRIDE)
 #define AWS_ERROR_ENUM_END_RANGE(x) (((x) + 1) * AWS_ERROR_ENUM_STRIDE - 1)
 
 struct aws_error_info {
@@ -38,7 +38,10 @@ struct aws_error_info_list {
 
 #define AWS_DEFINE_ERROR_INFO(C, ES, LN)                                                                               \
     {                                                                                                                  \
-        .literal_name = #C, .error_code = (C), .error_str = (ES), .lib_name = (LN),                                    \
+        .literal_name = #C,                                                                                            \
+        .error_code = (C),                                                                                             \
+        .error_str = (ES),                                                                                             \
+        .lib_name = (LN),                                                                                              \
         .formatted_name = LN ": " #C ", " ES,                                                                          \
     }
 
