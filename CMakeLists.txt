@@ -157,7 +157,7 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (WINDOWS)
+        if (WIN32)
             file(GLOB AWS_COMMON_ARCH_SRC
                 "source/arch/arm/windows/*.c"
                 )
