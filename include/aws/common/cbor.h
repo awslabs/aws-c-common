@@ -25,7 +25,7 @@ AWS_EXTERN_C_BEGIN
  * Major type 7
  *  - 20/21 - AWS_CBOR_TYPE_BOOL
  *  - 22 - AWS_CBOR_TYPE_NULL
- *  - 23 - AWS_CBOR_TYPE_UNDEFINE
+ *  - 23 - AWS_CBOR_TYPE_UNDEFINED
  *  - 25/26/27 - AWS_CBOR_TYPE_FLOAT
  *  - 31 - AWS_CBOR_TYPE_BREAK
  *  - rest of value are not supported.
