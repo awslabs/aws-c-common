@@ -7,7 +7,7 @@
 #include <aws/common/string.h>
 
 #include <aws/common/json.h>
-#include <aws/common/private/json_impl.h>
+#include <aws/common/private/external_module_impl.h>
 
 #include "external/cJSON.h"
 

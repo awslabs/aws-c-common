@@ -53,7 +53,12 @@ file(GLOB AWS_COMMON_SRC
         )
 
 file (GLOB AWS_COMMON_EXTERNAL_SRC
-        "source/external/*.c")
+        "source/external/*.c"
+        "source/external/libcbor/*.c"
+        "source/external/libcbor/cbor/*.c"
+        "source/external/libcbor/cbor/internal/*.c"
+        )
+
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
@@ -213,6 +218,10 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
+# libcbor files do includes like: #include "cbor/cbor_export.h"
+# To make these paths work, add the location we're storing them as a search path.
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/libcbor)
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
