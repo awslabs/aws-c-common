@@ -23,9 +23,7 @@
 /*
  * This file has been modified from its original version by Amazon:
  *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
- *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
  */
-/* NOLINTBEGIN */
 
 #ifndef cJSON__h
 #define cJSON__h
@@ -306,5 +304,4 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 }
 #endif
 /* Amazon edit */
-/* NOLINTEND */
 #endif

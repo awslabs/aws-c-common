@@ -23,10 +23,8 @@
 /*
  * This file has been modified from its original version by Amazon:
  *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
- *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
- *   (3) Replace sprintf() with snprintf() to make compilers happier.
+ *   (2) Replace sprintf() with snprintf() to make compilers happier.
  */
-/* NOLINTBEGIN */
 
 /* cJSON */
 /* JSON parser in C. */
@@ -3156,4 +3154,3 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
     object = NULL;
 }
 /* Amazon edit */
-/* NOLINTEND */
