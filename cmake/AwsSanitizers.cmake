@@ -71,7 +71,6 @@ function(aws_add_sanitizers target)
             #target_link_libraries(${PROJECT_NAME} PUBLIC
             #    $<$<CONFIG:Release>:clang_rt.asan_dynamic-x86_64>
             #    $<$<CONFIG:Release>:clang_rt.asan_dynamic_runtime_thunk-x86_64>
-        )
         else()
             target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
             target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
