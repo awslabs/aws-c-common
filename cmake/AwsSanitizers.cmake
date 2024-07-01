@@ -68,10 +68,10 @@ function(aws_add_sanitizers target)
         if(MSVC)
             target_compile_options(${target} PRIVATE -fsanitize=${PRESENT_SANITIZERS})
             target_link_libraries(${target} PUBLIC "-fsanitize=${PRESENT_SANITIZERS}")
-        else
+        else()
             target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
             target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
-        endif
+        endif()
 
         string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
         set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
