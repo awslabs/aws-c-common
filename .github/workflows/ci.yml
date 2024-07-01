@@ -108,7 +108,7 @@ jobs:
   windows:
     runs-on: windows-2022 # latest
     steps:
-    - name: Setup MSVC dev command prompt
+    - name: Setup MSVC dev command prompt a
       uses: TheMrMilchmann/setup-msvc-dev@v3
       with:
         arch: x64
