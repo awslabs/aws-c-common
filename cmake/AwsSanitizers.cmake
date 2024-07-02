@@ -75,7 +75,7 @@ function(aws_add_sanitizers target)
             endif()
         else()
             target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
-            target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+            target_link_libraries(${target} PRIVATE "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
         endif()
 
         string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
