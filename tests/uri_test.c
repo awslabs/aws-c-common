@@ -125,6 +125,7 @@ static int s_test_uri_no_port_parse(struct aws_allocator *allocator, void *ctx) 
         expected_request_uri.ptr, expected_request_uri.len, uri.path_and_query.ptr, uri.path_and_query.len);
 
     aws_uri_clean_up(&uri);
+
     return AWS_OP_SUCCESS;
 }
 
@@ -163,6 +164,9 @@ static int s_test_uri_no_path_parse(struct aws_allocator *allocator, void *ctx) 
     ASSERT_BIN_ARRAYS_EQUALS(
         expected_request_uri.ptr, expected_request_uri.len, uri.path_and_query.ptr, uri.path_and_query.len);
     aws_uri_clean_up(&uri);
+
+    int *foo;
+    *foo = 5;
     return AWS_OP_SUCCESS;
 }
 
