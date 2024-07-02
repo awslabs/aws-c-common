@@ -193,7 +193,7 @@ file(GLOB COMMON_SRC
 add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
-target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${PLATFORM_CFLAGS})
 
 aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS})
 
