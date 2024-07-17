@@ -174,8 +174,8 @@ jobs:
         echo "Starting to run AppVerifier on all tests found by CTest"
         python .\aws-c-common\scripts\appverifier_ctest.py --build_directory .\aws-c-common\build\aws-c-common
 
-  osx:
-    runs-on: macos-12 # latest
+  macos-x64:
+    runs-on: macos-14-large # latest
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
@@ -183,8 +183,17 @@ jobs:
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }}
 
-  osx-no-cpu-extensions:
-    runs-on: macos-12 # latest
+  macos:
+    runs-on: macos-14 # latest
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }}
+
+  macos-no-cpu-extensions:
+    runs-on: macos-14 # latest
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
@@ -255,8 +264,8 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --config Debug
 
-  osx-debug:
-    runs-on: macos-12 # latest
+  macos-debug:
+    runs-on: macos-14 # latest
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
