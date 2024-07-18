@@ -84,28 +84,9 @@ int aws_json_value_add_to_object(
     struct aws_byte_cursor key,
     struct aws_json_value *value) {
 
-    int result = AWS_OP_ERR;
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
+    int result = aws_json_value_add_to_object_c_str(object, aws_string_c_str(tmp), value);
 
-    struct cJSON *cjson = (struct cJSON *)object;
-    if (!cJSON_IsObject(cjson)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto done;
-    }
-
-    struct cJSON *cjson_value = (struct cJSON *)value;
-    if (cJSON_IsInvalid(cjson_value)) {
-        result = aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto done;
-    }
-    if (cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
-        goto done;
-    }
-
-    cJSON_AddItemToObject(cjson, aws_string_c_str(tmp), cjson_value);
-    result = AWS_OP_SUCCESS;
-
-done:
     aws_string_destroy_secure(tmp);
     return result;
 }
@@ -131,21 +112,9 @@ int aws_json_value_add_to_object_c_str(struct aws_json_value *object, const char
 
 struct aws_json_value *aws_json_value_get_from_object(const struct aws_json_value *object, struct aws_byte_cursor key) {
 
-    void *return_value = NULL;
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
+    void *return_value = aws_json_value_get_from_object_c_str(object, aws_string_c_str(tmp));
 
-    const struct cJSON *cjson = (const struct cJSON *)object;
-    if (!cJSON_IsObject(cjson)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto done;
-    }
-    if (!cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
-        goto done;
-    }
-
-    return_value = (void *)cJSON_GetObjectItem(cjson, aws_string_c_str(tmp));
-
-done:
     aws_string_destroy_secure(tmp);
     return return_value;
 }
@@ -166,18 +135,8 @@ struct aws_json_value *aws_json_value_get_from_object_c_str(const struct aws_jso
 bool aws_json_value_has_key(const struct aws_json_value *object, struct aws_byte_cursor key) {
 
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
-    bool result = false;
+    bool result = aws_json_value_has_key_c_str(object, aws_string_c_str(tmp));
 
-    const struct cJSON *cjson = (const struct cJSON *)object;
-    if (!cJSON_IsObject(cjson)) {
-        goto done;
-    }
-    if (!cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
-        goto done;
-    }
-    result = true;
-
-done:
     aws_string_destroy_secure(tmp);
     return result;
 }
@@ -196,22 +155,9 @@ bool aws_json_value_has_key_c_str(const struct aws_json_value *object, const cha
 
 int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_byte_cursor key) {
 
-    int result = AWS_OP_ERR;
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
+    int result = aws_json_value_remove_from_object_c_str(object, aws_string_c_str(key));
 
-    struct cJSON *cjson = (struct cJSON *)object;
-    if (!cJSON_IsObject(cjson)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto done;
-    }
-    if (!cJSON_HasObjectItem(cjson, aws_string_c_str(tmp))) {
-        goto done;
-    }
-
-    cJSON_DeleteItemFromObject(cjson, aws_string_c_str(tmp));
-    result = AWS_OP_SUCCESS;
-
-done:
     aws_string_destroy_secure(tmp);
     return result;
 }
