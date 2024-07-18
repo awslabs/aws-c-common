@@ -22,6 +22,7 @@ struct aws_json_value *aws_json_value_new_string(struct aws_allocator *allocator
 }
 
 struct aws_json_value *aws_json_value_new_string_from_c_str(struct aws_allocator *allocator, const char *string) {
+    (void *)allocator;
     void *ret_val = cJSON_CreateString(string);
     return ret_val;
 }
