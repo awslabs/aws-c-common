@@ -156,7 +156,7 @@ bool aws_json_value_has_key_c_str(const struct aws_json_value *object, const cha
 int aws_json_value_remove_from_object(struct aws_json_value *object, struct aws_byte_cursor key) {
 
     struct aws_string *tmp = aws_string_new_from_cursor(s_aws_json_module_allocator, &key);
-    int result = aws_json_value_remove_from_object_c_str(object, aws_string_c_str(key));
+    int result = aws_json_value_remove_from_object_c_str(object, aws_string_c_str(tmp));
 
     aws_string_destroy_secure(tmp);
     return result;
