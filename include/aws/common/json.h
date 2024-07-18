@@ -23,6 +23,7 @@ AWS_EXTERN_C_BEGIN
  *
  * Note: You will need to free the memory for the aws_json_value using aws_json_destroy on the aws_json_value or
  * on the object/array containing the aws_json_value.
+ * Note: might be slower than c_str version due to internal copy
  * @param string A byte cursor you want to store in the aws_json_value
  * @param allocator The allocator to use when creating the value
  * @return A new string aws_json_value
@@ -141,6 +142,7 @@ int aws_json_value_get_boolean(const struct aws_json_value *value, bool *output)
  *
  * Note that the aws_json_value will be destroyed when the aws_json_value object is destroyed
  * by calling "aws_json_destroy()"
+ * Note: might be slower than c_str version due to internal copy
  * @param object The object aws_json_value you want to add a value to.
  * @param key The key to add the aws_json_value at.
  * @param value The aws_json_value you want to add.
@@ -171,6 +173,7 @@ int aws_json_value_add_to_object_c_str(struct aws_json_value *object, const char
 
 /**
  * Returns the aws_json_value at the given key.
+ * Note: might be slower than c_str version due to internal copy
  * @param object The object aws_json_value you want to get the value from.
  * @param key The key that the aws_json_value is at. Is case sensitive.
  * @return The aws_json_value at the given key, otherwise NULL.
@@ -191,6 +194,7 @@ struct aws_json_value *aws_json_value_get_from_object_c_str(const struct aws_jso
 
 /**
  * Checks if there is a aws_json_value at the given key.
+ * Note: might be slower than c_str version due to internal copy
  * @param object The value aws_json_value you want to check a key in.
  * @param key The key that you want to check. Is case sensitive.
  * @return True if a aws_json_value is found.
@@ -211,6 +215,7 @@ bool aws_json_value_has_key_c_str(const struct aws_json_value *object, const cha
 
 /**
  * Removes the aws_json_value at the given key.
+ * Note: might be slower than c_str version due to internal copy
  * @param object The object aws_json_value you want to remove a aws_json_value in.
  * @param key The key that the aws_json_value is at. Is case sensitive.
  * @return AWS_OP_SUCCESS if the aws_json_value was removed.
