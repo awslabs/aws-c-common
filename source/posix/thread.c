@@ -287,7 +287,6 @@ int aws_thread_launch(
                 attr_return = pthread_attr_setstacksize(attributes_ptr, 1 * 1024 * 1024);
                 if (attr_return) {
                     goto cleanup;
-                
                 }
             }
         }
