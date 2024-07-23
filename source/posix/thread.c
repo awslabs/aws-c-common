@@ -276,6 +276,22 @@ int aws_thread_launch(
                 goto cleanup;
             }
         }
+#ifdef AWS_C_RUNTIME_MUSL
+        if (!options->stack_size) {
+            size_t stack_size;
+            attr_return = pthread_attr_getstacksize(&attr, &stack_size);
+            if (attr_return) {
+                goto cleanup;
+            }
+
+            if (stack_size < 2 * 1024 * 1024) {
+                attr_return = pthread_attr_setstacksize(&attr, 2 * 1024 * 1024);
+                if (attr_return) {
+                    goto cleanup;
+                }
+            }
+        }
+#endif
 
 /* AFAIK you can't set thread affinity on apple platforms, and it doesn't really matter since all memory
  * NUMA or not is setup in interleave mode.
