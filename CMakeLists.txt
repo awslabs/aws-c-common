@@ -25,6 +25,9 @@ include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
 include(CTest)
+include(AwsCRuntime)
+
+aws_determine_local_c_runtime(AWS_C_RUNTIME)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -319,5 +322,4 @@ if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
 endif()
 
 include(CPackConfig)
-aws_determine_local_c_runtime(AWS_C_RUNTIME)
 
