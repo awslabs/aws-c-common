@@ -275,8 +275,7 @@ int aws_thread_launch(
             if (attr_return) {
                 goto cleanup;
             }
-        }
-        if (!options->stack_size) {
+        } else if (!options->stack_size) {
             /**
              * On some systems, the default stack size is too low (128KB on musl at the time of writing this), which can
              * cause stack overflow when the dependency chain is long. Increase the stack size to at
