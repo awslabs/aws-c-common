@@ -288,6 +288,7 @@ int aws_thread_launch(
                 if (attr_return) {
                     goto cleanup;
                 
+                }
             }
         }
 
