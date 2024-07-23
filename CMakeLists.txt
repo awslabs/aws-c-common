@@ -319,3 +319,5 @@ if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
 endif()
 
 include(CPackConfig)
+aws_determine_local_c_runtime(AWS_C_RUNTIME)
+

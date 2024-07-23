@@ -279,16 +279,16 @@ int aws_thread_launch(
 #ifdef AWS_C_RUNTIME_MUSL
         if (!options->stack_size) {
             size_t stack_size;
-            attr_return = pthread_attr_getstacksize(&attr, &stack_size);
+            attr_return = pthread_attr_getstacksize(attributes_ptr, &stack_size);
             if (attr_return) {
                 goto cleanup;
             }
 
             if (stack_size < 2 * 1024 * 1024) {
-                attr_return = pthread_attr_setstacksize(&attr, 2 * 1024 * 1024);
+                attr_return = pthread_attr_setstacksize(attributes_ptr, 2 * 1024 * 1024);
                 if (attr_return) {
                     goto cleanup;
-                }
+                
             }
         }
 #endif
