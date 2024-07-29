@@ -6,7 +6,8 @@
 
 #include <aws/common/byte_buf.h>
 
-#include <Windows.h>
+#include <windows.h>
+
 #include <bcrypt.h>
 
 int aws_device_random_buffer(struct aws_byte_buf *output) {

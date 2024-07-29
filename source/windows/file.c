@@ -8,9 +8,9 @@
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 
-#include <Shlwapi.h>
 #include <errno.h>
 #include <io.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <windows.h>
 
@@ -44,7 +44,7 @@ FILE *aws_fopen_safe(const struct aws_string *file_path, const struct aws_string
     aws_wstring_destroy(w_file_path);
 
     if (error) {
-        aws_translate_and_raise_io_error(error);
+        aws_translate_and_raise_io_error_or(error, AWS_ERROR_FILE_OPEN_FAILURE);
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_IO,
             "static: Failed to open file. path:'%s' mode:'%s' errno:%d aws-error:%d(%s)",
@@ -508,7 +508,7 @@ bool aws_path_exists(const struct aws_string *path) {
 int aws_fseek(FILE *file, int64_t offset, int whence) {
     if (_fseeki64(file, offset, whence)) {
         int errno_value = errno; /* Always cache errno before potential side-effect */
-        return aws_translate_and_raise_io_error(errno_value);
+        return aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_STREAM_UNSEEKABLE);
     }
 
     return AWS_OP_SUCCESS;

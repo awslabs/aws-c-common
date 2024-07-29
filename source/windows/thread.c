@@ -10,7 +10,7 @@
 #include <aws/common/private/thread_shared.h>
 #include <aws/common/string.h>
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <inttypes.h>
 
@@ -21,6 +21,7 @@
 static struct aws_thread_options s_default_options = {
     /* zero will make sure whatever the default for that version of windows is used. */
     .stack_size = 0,
+    .cpu_id = -1,
     .join_strategy = AWS_TJS_MANUAL,
 };
 

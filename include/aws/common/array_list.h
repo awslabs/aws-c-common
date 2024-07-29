@@ -12,7 +12,7 @@
 
 AWS_PUSH_SANE_WARNING_LEVEL
 
-#define AWS_ARRAY_LIST_DEBUG_FILL 0xDD
+enum { AWS_ARRAY_LIST_DEBUG_FILL = 0xDD };
 
 struct aws_array_list {
     struct aws_allocator *alloc;

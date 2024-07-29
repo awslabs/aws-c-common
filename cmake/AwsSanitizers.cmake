@@ -11,13 +11,15 @@ set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build wit
 #  sanitizer: The sanitizer to check
 #  out_variable: The variable to assign the result to. Defaults to HAS_SANITIZER_${sanitizer}
 function(aws_check_sanitizer sanitizer)
-
-    if(NOT ${ARGN})
-        set(out_variable "${ARGN}")
-    else()
+    list(LENGTH ARGN extra_count)
+    if(${extra_count} EQUAL 0)
         set(out_variable HAS_SANITIZER_${sanitizer})
         # Sanitize the variable name to remove illegal characters
         string(MAKE_C_IDENTIFIER ${out_variable} out_variable)
+    elseif(${extra_count} EQUAL 1)
+        set(out_variable ${ARGN})
+    else()
+        message(FATAL_ERROR "Error: aws_check_sanitizer() called with multiple out variables")
     endif()
 
     if(ENABLE_SANITIZERS)

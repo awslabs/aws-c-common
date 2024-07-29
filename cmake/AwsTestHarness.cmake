@@ -11,8 +11,8 @@ define_property(GLOBAL PROPERTY AWS_TEST_CASES BRIEF_DOCS "Test Cases" FULL_DOCS
 set(AWS_TEST_CASES "" CACHE INTERNAL "Test cases valid for this configuration")
 
 # The return value for the skipped test cases. Refer to the return code defined in aws_test_harness.h:
-# #define SKIP (1)
-set(SKIP_RETURN_CODE_VALUE 1)
+# #define SKIP (103)
+set(SKIP_RETURN_CODE_VALUE 103)
 
 # Registers a test case by name (the first argument to the AWS_TEST_CASE macro in aws_test_harness.h)
 macro(add_test_case name)
@@ -54,18 +54,12 @@ function(generate_test_driver driver_exe_name)
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
-    if (MSVC)
-        if(STATIC_CRT)
-            target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
-        else()
-            target_compile_options(${driver_exe_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
-        endif()
-    endif()
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
     foreach(name IN LISTS TEST_CASES)
         add_test(${name} ${driver_exe_name} "${name}")
+        set_tests_properties("${name}" PROPERTIES SKIP_RETURN_CODE ${SKIP_RETURN_CODE_VALUE})
     endforeach()
 
     # Clear test cases in case another driver needs to be generated
@@ -80,7 +74,7 @@ function(generate_cpp_test_driver driver_exe_name)
 
     set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
     if (MSVC)
-        if(STATIC_CRT)
+        if(AWS_STATIC_MSVC_RUNTIME_LIBRARY OR STATIC_CRT)
             target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
         else()
             target_compile_options(${driver_exe_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")

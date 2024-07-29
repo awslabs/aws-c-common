@@ -42,6 +42,7 @@ the AWS_UNSTABLE_TESTING_API compiler flag
 
 /** Prints a message to AWS_TESTING_REPORT_FD using printf format that appends the function, file and line number.
  * If format is null, returns 0 without printing anything; otherwise returns 1.
+ * If function or file are null, the function, file and line number are not appended.
  */
 static int s_cunit_failure_message0(
     const char *prefix,
@@ -61,7 +62,11 @@ static int s_cunit_failure_message0(
     vfprintf(AWS_TESTING_REPORT_FD, format, ap);
     va_end(ap);
 
-    fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
+    if (function && file) {
+        fprintf(AWS_TESTING_REPORT_FD, " [%s(): %s:%d]\n", function, file, line);
+    } else {
+        fprintf(AWS_TESTING_REPORT_FD, "\n");
+    }
 
     return 1;
 }
@@ -70,27 +75,13 @@ static int s_cunit_failure_message0(
 #define CUNIT_FAILURE_MESSAGE(func, file, line, format, ...)                                                           \
     s_cunit_failure_message0(FAIL_PREFIX, func, file, line, format, #__VA_ARGS__)
 
-static int total_failures;
-static int total_skip;
-
 #define SUCCESS (0)
 #define FAILURE (-1)
-/* The skip code returned to ctest to indicate the test is skipped. Refer to cmake doc:
- * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html */
-#define SKIP (1)
-
-#define POSTSKIP_INTERNAL()                                                                                            \
-    do {                                                                                                               \
-        total_skip++;                                                                                                  \
-        return SKIP;                                                                                                   \
-    } while (0)
-
-#define RETURN_SKIP(format, ...)                                                                                       \
-    do {                                                                                                               \
-        printf(format, ##__VA_ARGS__);                                                                                 \
-        printf("\n");                                                                                                  \
-        POSTSKIP_INTERNAL();                                                                                           \
-    } while (0)
+/* The exit code returned to ctest to indicate the test is skipped. Refer to cmake doc:
+ * https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html
+ * The value has no special meaning, it's just an arbitrary exit code reducing the chance of clashing with exit codes
+ * that may be returned from various tools (e.g. sanitizer). */
+#define SKIP (103)
 
 #define RETURN_SUCCESS(format, ...)                                                                                    \
     do {                                                                                                               \
@@ -104,9 +95,11 @@ static int total_skip;
 #define PRINT_FAIL_INTERNAL0(...)                                                                                      \
     s_cunit_failure_message0(FAIL_PREFIX, __func__, __FILE__, __LINE__, ##__VA_ARGS__, (const char *)NULL)
 
+#define PRINT_FAIL_WITHOUT_LOCATION(...)                                                                               \
+    s_cunit_failure_message0(FAIL_PREFIX, NULL, NULL, __LINE__, ##__VA_ARGS__, (const char *)NULL)
+
 #define POSTFAIL_INTERNAL()                                                                                            \
     do {                                                                                                               \
-        total_failures++;                                                                                              \
         return FAILURE;                                                                                                \
     } while (0)
 
@@ -142,7 +135,7 @@ static int total_skip;
         if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected success at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected success at %s; got return value %d with last error %d\n",                                \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -157,7 +150,7 @@ static int total_skip;
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected failure at %s; got return value %d with last error 0x%04x\n",                            \
+                    "Expected failure at %s; got return value %d with last error %d\n",                                \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -174,7 +167,7 @@ static int total_skip;
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04x (expected %04x): ",                \
+                "%sExpected error but no error occurred; rv=%d, aws_last_error=%d (expected %d): ",                    \
                 FAIL_PREFIX,                                                                                           \
                 assert_rv,                                                                                             \
                 assert_err,                                                                                            \
@@ -187,7 +180,7 @@ static int total_skip;
         if (assert_err != assert_err_expect) {                                                                         \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sIncorrect error code; aws_last_error=%04x (expected %04x): ",                                       \
+                "%sIncorrect error code; aws_last_error=%d (expected %d): ",                                           \
                 FAIL_PREFIX,                                                                                           \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \
@@ -463,7 +456,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (test_res != AWS_OP_SUCCESS && test_res != AWS_OP_SKIP) {
+    if (test_res != AWS_OP_SUCCESS) {
         goto fail;
     }
 
@@ -472,10 +465,12 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
          * but aws_mem_tracer_dump() needs a valid logger to be active */
         aws_logger_set(&err_logger);
 
-        const size_t leaked_bytes = aws_mem_tracer_count(allocator);
+        const size_t leaked_allocations = aws_mem_tracer_count(allocator);
+        const size_t leaked_bytes = aws_mem_tracer_bytes(allocator);
         if (leaked_bytes) {
             aws_mem_tracer_dump(allocator);
-            PRINT_FAIL_INTERNAL0("Test leaked memory: %zu bytes", leaked_bytes);
+            PRINT_FAIL_WITHOUT_LOCATION(
+                "Test leaked memory: %zu bytes %zu allocations", leaked_bytes, leaked_allocations);
             goto fail;
         }
 
@@ -485,21 +480,28 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    if (test_res == AWS_OP_SUCCESS) {
-        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
-    } else if (test_res == AWS_OP_SKIP) {
-        RETURN_SKIP("%s [ \033[32mSKIP\033[0m ]", harness->test_name);
-    }
+    RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
 
 fail:
-    FAIL("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    if (test_res == AWS_OP_SKIP) {
+        fprintf(AWS_TESTING_REPORT_FD, "%s [ \033[32mSKIP\033[0m ]\n", harness->test_name);
+    } else {
+        PRINT_FAIL_WITHOUT_LOCATION("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    }
+    /* Use _Exit() to terminate without cleaning up resources.
+     * This prevents LeakSanitizer spam (yes, we know failing tests don't bother cleaning up).
+     * It also prevents errors where threads that haven't cleaned are still using the logger declared in this fn. */
+    fflush(AWS_TESTING_REPORT_FD);
+    fflush(stdout);
+    fflush(stderr);
+    _Exit(test_res == AWS_OP_SKIP ? SKIP : FAILURE);
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */
 /* https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences */
 #ifdef _WIN32
 
-#    include <Windows.h>
+#    include <windows.h>
 
 #    ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #        define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004

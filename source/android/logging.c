@@ -5,9 +5,11 @@
 
 #include <android/log.h>
 
+#include <aws/common/clock.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 
+#include <inttypes.h>
 #include <stdarg.h>
 
 #define LOGCAT_MAX_BUFFER_SIZE (4 * 1024)
@@ -59,6 +61,18 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
     }
 
     if (current_index < fake_total_length) {
+        uint64_t now = 0;
+        aws_high_res_clock_get_ticks(&now);
+
+        int current_time_written = snprintf(
+            formatting_data->buffer + current_index, fake_total_length - current_index, "(HRC:%" PRIu64 ") ", now);
+        if (current_time_written < 0) {
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+        current_index = s_advance_and_clamp_index(current_index, current_time_written, fake_total_length);
+    }
+
+    if (current_index < fake_total_length) {
         int separator_written =
             snprintf(formatting_data->buffer + current_index, fake_total_length - current_index, " - ");
         current_index = s_advance_and_clamp_index(current_index, separator_written, fake_total_length);
@@ -93,7 +107,9 @@ static int s_logcat_format(struct logcat_format_data *formatting_data, va_list a
     return AWS_OP_SUCCESS;
 }
 
-static struct aws_logger_logcat { enum aws_log_level level; } s_logcat_impl;
+static struct aws_logger_logcat {
+    enum aws_log_level level;
+} s_logcat_impl;
 
 static int s_logcat_log(
     struct aws_logger *logger,

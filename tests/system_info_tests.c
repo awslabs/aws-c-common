@@ -166,3 +166,22 @@ static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, v
 }
 
 AWS_TEST_CASE(test_sanity_check_numa_discovery, s_test_sanity_check_numa_discovery)
+
+static int s_test_sanity_check_environment_loader(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    aws_common_library_init(allocator);
+    struct aws_system_environment *env = aws_system_environment_load(allocator);
+    ASSERT_NOT_NULL(env);
+    struct aws_byte_cursor virt_vendor = aws_system_environment_get_virtualization_vendor(env);
+    ASSERT_TRUE(aws_byte_cursor_is_valid(&virt_vendor));
+    struct aws_byte_cursor virt_product = aws_system_environment_get_virtualization_product_name(env);
+    ASSERT_TRUE(aws_byte_cursor_is_valid(&virt_product));
+
+    aws_system_environment_release(env);
+
+    aws_common_library_clean_up();
+    return 0;
+}
+
+AWS_TEST_CASE(test_sanity_check_environment_loader, s_test_sanity_check_environment_loader)
