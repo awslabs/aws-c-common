@@ -30,7 +30,8 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
     while (n > 0) {
         uint32_t capped_n = (uint32_t)aws_min_size(n, UINT32_MAX);
 
-        NTSTATUS status = BCryptGenRandom(NULL, output->buffer + output->len, capped_n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+        NTSTATUS status =
+            BCryptGenRandom(NULL, output->buffer + output->len, capped_n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 
         if (!BCRYPT_SUCCESS(status)) {
             output->len = original_len;
