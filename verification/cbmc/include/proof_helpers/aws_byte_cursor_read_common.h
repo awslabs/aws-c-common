@@ -6,7 +6,7 @@
 #include <aws/common/byte_buf.h>
 #include <proof_helpers/make_common_data_structures.h>
 
-void aws_byte_cursor_read_common_harness() {
+void aws_byte_cursor_read_common_harness(void) {
     /* parameters */
     struct aws_byte_cursor cur;
     DEST_TYPE *dest = malloc(sizeof(*dest));

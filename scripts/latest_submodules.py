@@ -53,7 +53,7 @@ def get_submodules():
     return sorted(submodules, key=lambda x: x['name'])
 
 
-def get_release_tags():
+def get_release_tags(prefix='v'):
     """
     Return list of release tags for current repo, sorted high to low.
 
@@ -69,7 +69,7 @@ def get_release_tags():
     for line in git_output.splitlines():
         # line looks like: "e18f041a0c8d17189f2eae2a32f16e0a7a3f0f1c refs/tags/v0.5.18"
         match = re.match(
-            r'([a-f0-9]+)\s+refs/tags/(v([0-9]+)\.([0-9]+)\.([0-9]+))$', line)
+            r'([a-f0-9]+)\s+refs/tags/(' + prefix + r'([0-9]+)\.([0-9]+)\.([0-9]+))$', line)
         if not match:
             # skip malformed release tags
             continue
@@ -118,7 +118,12 @@ def main():
 
         os.chdir(os.path.join(root_path, submodule['path']))
 
-        tags = get_release_tags()
+        version_prefix = 'v'
+        # aws-crt-java uses FIPS releases of aws-lc
+        if name == 'aws-lc' and 'aws-crt-java' in root_path:
+            version_prefix = 'AWS-LC-FIPS-'
+
+        tags = get_release_tags(version_prefix)
         current_commit = get_current_commit()
         current_tag = get_tag_for_commit(tags, current_commit)
         sync_from = current_tag['version'] if current_tag else current_commit

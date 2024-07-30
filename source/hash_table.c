@@ -1104,3 +1104,11 @@ int hash_table_state_required_bytes(size_t size, size_t *required_bytes) {
 
     return AWS_OP_SUCCESS;
 }
+
+uint64_t aws_hash_uint64_t_by_identity(const void *item) {
+    return *(uint64_t *)item;
+}
+
+bool aws_hash_compare_uint64_t_eq(const void *a, const void *b) {
+    return *(uint64_t *)a == *(uint64_t *)b;
+}

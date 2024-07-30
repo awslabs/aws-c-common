@@ -63,31 +63,35 @@ static int s_test_memtrace_count(struct aws_allocator *allocator, void *ctx) {
 }
 AWS_TEST_CASE(test_memtrace_count, s_test_memtrace_count)
 
-#if defined(__GNUC__) || defined(__clang__)
-#    define AWS_PREVENT_OPTIMIZATION __asm__ __volatile__("" ::: "memory")
-#else
-#    define AWS_PREVENT_OPTIMIZATION
+/* Disable optimization for tests to make sure those allocation function still exists. */
+#if defined(__clang__)
+#    pragma clang optimize off
+#elif defined(__GNUC__) || defined(__GNUG__)
+#    pragma GCC push_options
+#    pragma GCC optimize("O0")
 #endif
 
 AWS_NO_INLINE void *s_alloc_1(struct aws_allocator *allocator, size_t size) {
-    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
 AWS_NO_INLINE void *s_alloc_2(struct aws_allocator *allocator, size_t size) {
-    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
 AWS_NO_INLINE void *s_alloc_3(struct aws_allocator *allocator, size_t size) {
-    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
 
 AWS_NO_INLINE void *s_alloc_4(struct aws_allocator *allocator, size_t size) {
-    AWS_PREVENT_OPTIMIZATION;
     return aws_mem_acquire(allocator, size);
 }
+
+#if defined(__clang__)
+#    pragma clang optimize on
+#elif defined(__GNUC__) || defined(__GNUG__)
+#    pragma GCC pop_options
+#endif
 
 static struct aws_logger s_test_logger;
 

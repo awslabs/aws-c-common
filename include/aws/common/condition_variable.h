@@ -33,15 +33,13 @@ struct aws_condition_variable {
  * You can do something like struct aws_condition_variable var =
  * AWS_CONDITION_VARIABLE_INIT;
  *
- * If on Windows and you get an error about AWS_CONDITION_VARIABLE_INIT being undefined, please include Windows.h to get
+ * If on Windows and you get an error about AWS_CONDITION_VARIABLE_INIT being undefined, please include windows.h to get
  * CONDITION_VARIABLE_INIT.
  */
 #ifdef _WIN32
-#    define AWS_CONDITION_VARIABLE_INIT                                                                                \
-        { .condition_handle = NULL, .initialized = true }
+#    define AWS_CONDITION_VARIABLE_INIT {.condition_handle = NULL, .initialized = true}
 #else
-#    define AWS_CONDITION_VARIABLE_INIT                                                                                \
-        { .condition_handle = PTHREAD_COND_INITIALIZER, .initialized = true }
+#    define AWS_CONDITION_VARIABLE_INIT {.condition_handle = PTHREAD_COND_INITIALIZER, .initialized = true}
 #endif
 
 AWS_EXTERN_C_BEGIN

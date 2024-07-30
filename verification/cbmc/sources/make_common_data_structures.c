@@ -189,7 +189,7 @@ bool hash_table_state_has_an_empty_slot(const struct hash_table_state *const sta
  */
 void hash_proof_destroy_noop(void *p) {}
 
-struct aws_string *ensure_string_is_allocated_nondet_length() {
+struct aws_string *ensure_string_is_allocated_nondet_length(void) {
     /* Considers any size up to the maximum possible size for the array [bytes] in aws_string */
     return nondet_allocate_string_bounded_length(SIZE_MAX - 1 - sizeof(struct aws_string));
 }

@@ -518,3 +518,26 @@ AWS_TEST_CASE(linked_list_reverse_iteration, s_test_linked_list_reverse_iteratio
 AWS_TEST_CASE(linked_list_swap_contents, s_test_linked_list_swap_contents)
 AWS_TEST_CASE(linked_list_move_all_back, s_test_linked_list_move_all_back)
 AWS_TEST_CASE(linked_list_move_all_front, s_test_linked_list_move_all_front)
+
+static int s_linked_list_node_in_list_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_linked_list list;
+    aws_linked_list_init(&list);
+
+    struct aws_linked_list_node node;
+    AWS_ZERO_STRUCT(node);
+
+    ASSERT_FALSE(aws_linked_list_node_is_in_list(&node));
+
+    aws_linked_list_push_back(&list, &node);
+    ASSERT_TRUE(aws_linked_list_node_is_in_list(&node));
+    aws_linked_list_remove(&node);
+
+    ASSERT_FALSE(aws_linked_list_node_is_in_list(&node));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(linked_list_node_in_list, s_linked_list_node_in_list_fn)

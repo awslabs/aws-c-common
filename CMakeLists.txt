@@ -36,9 +36,6 @@ file(GLOB AWS_COMMON_HEADERS
         "include/aws/common/*.inl"
         )
 
-file (GLOB AWS_COMMON_EXTERNAL_HEADERS
-        "include/aws/common/external/*.h")
-
 file (GLOB AWS_COMMON_EXTERNAL_INSTALLED_HEADERS
         "include/aws/common/external/ittnotify.h")
 
@@ -56,12 +53,17 @@ file(GLOB AWS_COMMON_SRC
         )
 
 file (GLOB AWS_COMMON_EXTERNAL_SRC
-        "source/external/*.c")
+        "source/external/*.c"
+        "source/external/libcbor/*.c"
+        "source/external/libcbor/cbor/*.c"
+        "source/external/libcbor/cbor/internal/*.c"
+        )
+
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
-    set(WINDOWS_KERNEL_LIB "Kernel32" CACHE STRING "The name of the kernel library to link against (default: Kernel32)")
+    set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
 
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/windows/*"
@@ -82,9 +84,9 @@ if (WIN32)
 
     list(APPEND PLATFORM_DEFINES WINDOWS_KERNEL_LIB=${WINDOWS_KERNEL_LIB})
     # PSAPI_VERSION=1 is needed to support GetProcessMemoryInfo on both pre and
-    # post Win7 OS's. 
+    # post Win7 OS's.
     list(APPEND PLATFORM_DEFINES PSAPI_VERSION=1)
-    list(APPEND PLATFORM_LIBS BCrypt ${WINDOWS_KERNEL_LIB} Ws2_32 Shlwapi Psapi)
+    list(APPEND PLATFORM_LIBS bcrypt ${WINDOWS_KERNEL_LIB} ws2_32 shlwapi psapi)
 else ()
     file(GLOB AWS_COMMON_OS_HEADERS
         "include/aws/common/posix/*"
@@ -155,13 +157,17 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (MSVC)
+        if (WIN32)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/msvc/*.c"
+                "source/arch/arm/windows/*.c"
                 )
-        elseif (AWS_HAVE_AUXV)
+        elseif(APPLE)
             file(GLOB AWS_COMMON_ARCH_SRC
-                "source/arch/arm/asm/*.c"
+                    "source/arch/arm/darwin/*.c"
+                    )
+        else()
+            file(GLOB AWS_COMMON_ARCH_SRC
+                "source/arch/arm/auxv/*.c"
                 )
         endif()
     endif()
@@ -173,7 +179,6 @@ file(GLOB COMMON_HEADERS
         ${AWS_COMMON_HEADERS}
         ${AWS_COMMON_OS_HEADERS}
         ${AWS_COMMON_PRIV_HEADERS}
-        ${AWS_COMMON_EXTERNAL_HEADERS}
         ${AWS_TEST_HEADERS}
         )
 
@@ -213,6 +218,10 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
+# libcbor files do includes like: #include "cbor/cbor_export.h"
+# To make these paths work, add the location we're storing them as a search path.
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/libcbor)
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
@@ -225,7 +234,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DCJSON_HIDE_SYMBOLS)
 
 if (AWS_HAVE_AVX2_INTRINSICS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_SIMD_ENCODING)
-    simd_add_source_avx(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c")
+    simd_append_source_and_features(${PROJECT_NAME} "source/arch/intel/encoding_avx2.c" ${AWS_AVX2_FLAG})
     message(STATUS "Building SIMD base64 decoder")
 endif()
 

@@ -1,7 +1,8 @@
-cadical-tag: latest
-cbmc-version: latest
-cbmc-viewer-version: latest
-kissat-tag: latest
-litani-version: latest
+# Use exact versions (instead of "latest") so we're not broken by surprise upgrades.
+cadical-tag: "rel-2.0.0" # tag of latest release: https://github.com/arminbiere/cadical/releases
+cbmc-version: "6.1.0" # semver of latest release: https://github.com/diffblue/cbmc/releases
+cbmc-viewer-version: "3.9" # semver of latest release: https://github.com/model-checking/cbmc-viewer/releases
+kissat-tag: "rel-3.1.1" # tag of latest release: https://github.com/arminbiere/kissat/releases
+litani-version: "1.29.0" # semver of latest release: https://github.com/awslabs/aws-build-accumulator/releases
 proofs-dir: verification/cbmc/proofs
 run-cbmc-proofs-command: ./run-cbmc-proofs.py

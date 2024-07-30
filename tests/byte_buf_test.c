@@ -4,7 +4,7 @@
  */
 
 #include <aws/common/byte_buf.h>
-
+#include <aws/common/private/byte_buf.h>
 #include <aws/common/string.h>
 #include <aws/testing/aws_test_harness.h>
 
@@ -797,6 +797,63 @@ static int s_test_byte_buf_reserve_relative(struct aws_allocator *allocator, voi
     return 0;
 }
 AWS_TEST_CASE(test_byte_buf_reserve_relative, s_test_byte_buf_reserve_relative)
+
+static int s_test_byte_buf_reserve_smart(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_buf buffer;
+    size_t base = 10;
+    aws_byte_buf_init(&buffer, allocator, base);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart(&buffer, 2 * base) == AWS_OP_SUCCESS);
+    ASSERT_UINT_EQUALS(2 * base, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart(&buffer, 3 * base) == AWS_OP_SUCCESS);
+    /* double the previous capacity instead of just expand the capacity to meet the requirement to reduce the number of
+     * allocations */
+    ASSERT_UINT_EQUALS(4 * base, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart(&buffer, 5 * base) == AWS_OP_SUCCESS);
+    /* double the previous capacity instead of just expand the capacity to meet the requirement to reduce the number of
+     * allocations */
+    ASSERT_UINT_EQUALS(8 * base, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart(&buffer, 5 * base) == AWS_OP_SUCCESS);
+    ASSERT_UINT_EQUALS(8 * base, buffer.capacity);
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reserve_smart, s_test_byte_buf_reserve_smart)
+
+static int s_test_byte_buf_reserve_smart_relative(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    (void)allocator;
+
+    struct aws_byte_buf buffer;
+    aws_byte_buf_init(&buffer, allocator, 1);
+
+    struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_reserve_test_prefix);
+    size_t length = prefix_cursor.len;
+
+    ASSERT_TRUE(aws_byte_buf_reserve_smart_relative(&buffer, length) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
+    ASSERT_UINT_EQUALS(length, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart_relative(&buffer, length) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
+    ASSERT_UINT_EQUALS(2 * length, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart_relative(&buffer, length) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
+    /* 4 times base as it's expanded to twice the original capacity to prevent too many allocation */
+    ASSERT_UINT_EQUALS(4 * length, buffer.capacity);
+    ASSERT_TRUE(aws_byte_buf_reserve_smart_relative(&buffer, length) == AWS_OP_SUCCESS);
+    ASSERT_TRUE(aws_byte_buf_append(&buffer, &prefix_cursor) == AWS_OP_SUCCESS);
+    /* still 4 times base as it doesn't need to expand again */
+    ASSERT_UINT_EQUALS(4 * length, buffer.capacity);
+
+    aws_byte_buf_clean_up(&buffer);
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_reserve_smart_relative, s_test_byte_buf_reserve_smart_relative)
 
 static int s_test_byte_cursor_starts_with(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
