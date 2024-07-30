@@ -68,7 +68,7 @@ function(aws_check_headers_internal target std is_cxx)
         # MSVC complains about windows' own header files. Use /W4 instead of /Wall 
         target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
     else()
-        target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wuseless-cast)
+        target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
 
     foreach(header IN LISTS ARGN)
