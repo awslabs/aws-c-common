@@ -53,13 +53,6 @@ AWS_EXTERN_C_BEGIN
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
 #endif                              /* _MSC_VER */
 
-#ifdef __cplusplus
-#    if defined(__GNUC__)
-#        pragma GCC diagnostic push
-#        pragma GCC diagnostic ignored "-Wuseless-cast"
-#    endif
-#endif
-
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;
 }
@@ -93,7 +86,7 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
     return (size_t)aws_mul_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-    return (size_t)aws_mul_u64_saturating(a, b);
+    return aws_mul_u64_saturating(a, b);
 #else
 #    error "Target not supported"
 #endif
