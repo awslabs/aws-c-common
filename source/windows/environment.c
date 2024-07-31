@@ -24,7 +24,7 @@ int aws_get_environment_value(
 #    pragma warning(pop)
 #endif
 
-    if (value == NULL) {
+    if (value == NULL || value[0] == '\0') {
         *value_out = NULL;
         return AWS_OP_SUCCESS;
     }
