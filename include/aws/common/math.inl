@@ -125,9 +125,9 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
  */
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
-    return aws_add_u32_checked(a, b, (uint32_t *)r);
+    return aws_add_u32_checked(a, b, r);
 #elif SIZE_BITS == 64
-    return aws_add_u64_checked(a, b, (uint64_t *)r);
+    return aws_add_u64_checked(a, b, r);
 #else
 #    error "Target not supported"
 #endif
@@ -145,9 +145,9 @@ AWS_STATIC_IMPL size_t aws_sub_size_saturating(size_t a, size_t b) {
 
 AWS_STATIC_IMPL int aws_sub_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
-    return aws_sub_u32_checked(a, b, (uint32_t *)r);
+    return aws_sub_u32_checked(a, b, r);
 #elif SIZE_BITS == 64
-    return aws_sub_u64_checked(a, b, (uint64_t *)r);
+    return aws_sub_u64_checked(a, b, r);
 #else
 #    error "Target not supported"
 #endif
