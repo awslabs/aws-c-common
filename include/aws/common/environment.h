@@ -20,8 +20,8 @@ struct aws_string;
 AWS_EXTERN_C_BEGIN
 
 /*
- * Get the value of an environment variable.  If the variable is not set or is empty, the output string will be set to NULL.
- * Not thread-safe
+ * Get the value of an environment variable.  If the variable is not set or is empty, the output string will be set to
+ * NULL. Not thread-safe
  */
 AWS_COMMON_API
 int aws_get_environment_value(

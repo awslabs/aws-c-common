@@ -14,7 +14,7 @@ int aws_get_environment_value(
     struct aws_string **value_out) {
 
     const char *value = getenv(aws_string_c_str(variable_name));
-    if (value == NULL || value[0]=='\0') {
+    if (value == NULL || value[0] == '\0') {
         *value_out = NULL;
         return AWS_OP_SUCCESS;
     }
