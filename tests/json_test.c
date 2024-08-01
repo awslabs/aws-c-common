@@ -114,6 +114,7 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
 
     // Testing valid array
     struct aws_json_value *array_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("array"));
+    ASSERT_PTR_EQUALS(array_node, aws_json_value_get_from_object_c_str(root, "array"));
     ASSERT_NOT_NULL(array_node);
     ASSERT_TRUE(aws_json_value_is_array(array_node));
     ASSERT_TRUE(aws_json_get_array_size(array_node) == 3);
@@ -163,12 +164,14 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     aws_string_destroy_secure(tmp_str);
 
     // Testing valid number
-    struct aws_json_value *number_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("number"));
+    struct aws_json_value *number_node = aws_json_value_get_from_object_c_str(root, "number");
     ASSERT_NOT_NULL(number_node);
     ASSERT_TRUE(aws_json_value_is_number(number_node));
     double double_test_two = 0;
     aws_json_value_get_number(number_node, &double_test_two);
     ASSERT_TRUE(double_test_two == (double)123);
+    ASSERT_TRUE(aws_json_value_has_key_c_str(root, "number"));
+    ASSERT_TRUE(aws_json_value_has_key(root, aws_byte_cursor_from_c_str("number")));
 
     // Testing valid object
     struct aws_json_value *object_node = aws_json_value_get_from_object(root, aws_byte_cursor_from_c_str("object"));
@@ -210,6 +213,12 @@ static int s_test_json_parse_from_string(struct aws_allocator *allocator, void *
     // Test getting invalid type of data
     ASSERT_INT_EQUALS(aws_json_value_get_number(string_node, NULL), AWS_OP_ERR);
 
+    ASSERT_SUCCESS(aws_json_value_remove_from_object(root, aws_byte_cursor_from_c_str("number")));
+    ASSERT_FALSE(aws_json_value_has_key_c_str(root, "number"));
+
+    ASSERT_SUCCESS(aws_json_value_remove_from_object_c_str(root, "object"));
+    ASSERT_FALSE(aws_json_value_has_key_c_str(root, "object"));
+
     aws_json_value_destroy(root);
 
     // Make sure that destroying NULL does not have any bad effects.
@@ -233,12 +242,8 @@ static int s_test_json_parse_to_string(struct aws_allocator *allocator, void *ct
     aws_json_value_add_array_element(array, aws_json_value_new_number(allocator, 3));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("array"), array);
 
-    aws_json_value_add_to_object(
-        root, aws_byte_cursor_from_c_str("boolean"), aws_json_value_new_boolean(allocator, true));
-    aws_json_value_add_to_object(
-        root,
-        aws_byte_cursor_from_c_str("color"),
-        aws_json_value_new_string(allocator, aws_byte_cursor_from_c_str("gold")));
+    aws_json_value_add_to_object_c_str(root, "boolean", aws_json_value_new_boolean(allocator, true));
+    aws_json_value_add_to_object_c_str(root, "color", aws_json_value_new_string_from_c_str(allocator, "gold"));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("null"), aws_json_value_new_null(allocator));
     aws_json_value_add_to_object(root, aws_byte_cursor_from_c_str("number"), aws_json_value_new_number(allocator, 123));
 

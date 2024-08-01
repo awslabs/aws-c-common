@@ -5,25 +5,10 @@
 #include <aws/common/device_random.h>
 
 #include <aws/common/byte_buf.h>
-#include <aws/common/thread.h>
 
 #include <windows.h>
 
 #include <bcrypt.h>
-
-static BCRYPT_ALG_HANDLE s_alg_handle = NULL;
-static aws_thread_once s_rand_init = AWS_THREAD_ONCE_STATIC_INIT;
-
-static void s_init_rand(void *user_data) {
-    (void)user_data;
-    NTSTATUS status = 0;
-
-    status = BCryptOpenAlgorithmProvider(&s_alg_handle, BCRYPT_RNG_ALGORITHM, NULL, 0);
-
-    if (!BCRYPT_SUCCESS(status)) {
-        abort();
-    }
-}
 
 int aws_device_random_buffer(struct aws_byte_buf *output) {
     return aws_device_random_buffer_append(output, output->capacity - output->len);
@@ -31,8 +16,6 @@ int aws_device_random_buffer(struct aws_byte_buf *output) {
 
 int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(output));
-
-    aws_thread_call_once(&s_rand_init, s_init_rand, NULL);
 
     size_t space_available = output->capacity - output->len;
     if (space_available < n) {
@@ -47,7 +30,8 @@ int aws_device_random_buffer_append(struct aws_byte_buf *output, size_t n) {
     while (n > 0) {
         uint32_t capped_n = (uint32_t)aws_min_size(n, UINT32_MAX);
 
-        NTSTATUS status = BCryptGenRandom(s_alg_handle, output->buffer + output->len, capped_n, 0 /*flags*/);
+        NTSTATUS status =
+            BCryptGenRandom(NULL, output->buffer + output->len, capped_n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 
         if (!BCRYPT_SUCCESS(status)) {
             output->len = original_len;
