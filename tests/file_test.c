@@ -9,14 +9,11 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <fcntl.h>
+#include <unistd.h>
 
-static int s_aws_fopen_test_helper(char *file_path, char *content) {
+static int s_read_and_verify_helper(char *file_path, char *content) {
     char read_result[100];
     AWS_ZERO_ARRAY(read_result);
-    FILE *file = aws_fopen(file_path, "w+");
-    ASSERT_NOT_NULL(file);
-    fprintf(file, "%s", content);
-    fclose(file);
     FILE *readfile = aws_fopen(file_path, "r");
     ASSERT_NOT_NULL(readfile);
     size_t read_len = fread(read_result, sizeof(char), strlen(content), readfile);
@@ -34,6 +31,14 @@ static int s_aws_fopen_test_helper(char *file_path, char *content) {
     ASSERT_SUCCESS(remove(file_path));
 #endif
     return AWS_OP_SUCCESS;
+}
+
+static int s_aws_fopen_test_helper(char *file_path, char *content) {
+    FILE *file = aws_fopen(file_path, "w+");
+    ASSERT_NOT_NULL(file);
+    fprintf(file, "%s", content);
+    fclose(file);
+    return s_read_and_verify_helper(file_path, content);
 }
 
 static int s_aws_fopen_content_matches(char *file_path, char *content) {
@@ -542,3 +547,23 @@ static int s_test_byte_buf_init_from_file(struct aws_allocator *allocator, void 
 }
 
 AWS_TEST_CASE(test_byte_buf_init_from_file, s_test_byte_buf_init_from_file)
+
+static int s_test_aws_pwrite(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    char file_path[] = "sample.txt";
+    int fd = open(file_path, O_RDWR | O_NONBLOCK | O_CREAT, 0666);
+    struct aws_byte_cursor contents = aws_byte_cursor_from_c_str("hello world");
+
+    size_t byte_written = 0;
+    aws_pwrite(fd, contents.ptr, contents.len, 0, &byte_written);
+    aws_pwrite(fd, contents.ptr, contents.len, contents.len, &byte_written);
+    close(fd);
+
+    /* Verify the written content match expected */
+    ASSERT_SUCCESS(s_read_and_verify_helper(file_path, "hello worldhello world"));
+
+    /* TODO: test error handling. */
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_aws_pwrite, s_test_aws_pwrite)

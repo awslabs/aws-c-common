@@ -47,6 +47,8 @@ struct aws_directory_entry {
     int64_t file_size;
 };
 
+struct aws_file_handle;
+
 /**
  * Invoked during calls to aws_directory_traverse() as an entry is encountered. entry will contain
  * the parsed directory entry info.
@@ -206,6 +208,18 @@ int aws_fseek(FILE *file, int64_t offset, int whence);
  */
 AWS_COMMON_API
 int aws_file_get_length(FILE *file, int64_t *length);
+
+/**
+ * @brief Wrapper for os-specific pwrite implementation.
+ *
+ * @param fd
+ * @param buf
+ * @param count
+ * @param offset
+ * @return AWS_COMMON_API
+ */
+AWS_COMMON_API
+int aws_pwrite(int fd, const void *buf, size_t count, uint64_t offset, size_t *bytes_written);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

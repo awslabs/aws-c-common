@@ -544,3 +544,37 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_pwrite(int fd, const void *buf, size_t count, uint64_t offset, size_t *bytes_written) {
+    if (fd == -1) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+
+    HANDLE os_file = (HANDLE)_get_osfhandle(fd);
+    if (os_file == INVALID_HANDLE_VALUE) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
+    }
+    DWORD bytesWritten;
+    OVERLAPPED ol = {0};
+    LARGE_INTEGER li;
+
+    /* Convert uint64_t offset to OVERLAPPED */
+    li.QuadPart = offset;
+    ol.Offset = li.LowPart;
+    ol.OffsetHigh = li.HighPart;
+
+    if (!WriteFile(os_file, buf, (DWORD)count, &bytesWritten, &ol)) {
+        int error = GetLastError();
+
+        if (error == ERROR_IO_PENDING) {
+            /* TODO: check for different errors. */
+            return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+        }
+        return aws_raise_error(AWS_ERROR_UNKNOWN);
+    }
+    *bytes_written = (size_t)bytesWritten;
+    /* TODO: verify the fd offset is not affected. */
+    /* Never call CloseHandle on the return value of _get_osfhandle */
+    return AWS_OP_SUCCESS;
+}

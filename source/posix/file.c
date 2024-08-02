@@ -309,3 +309,21 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_pwrite(int fd, const void *buf, size_t count, uint64_t offset, size_t *bytes_written) {
+    if (fd == -1) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+#ifdef AWS_OS_MACOS
+    /* MacOS doesn't have pwrite64. */
+    *bytes_written = pwrite(fd, buf, count, offset);
+#else
+    *bytes_written = pwrite64(fd, buf, count, offset);
+#endif
+    int errno_value = errno; /* Always cache errno before potential side-effect */
+    if (*bytes_written == -1) {
+        /* TODO: maybe some other default error? */
+        return aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_UNKNOWN);
+    }
+    return AWS_OP_SUCCESS;
+}
