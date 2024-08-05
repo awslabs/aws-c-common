@@ -43,7 +43,6 @@ static int s_test_environment_functions_fn(struct aws_allocator *allocator, void
 
 AWS_TEST_CASE(test_environment_functions, s_test_environment_functions_fn)
 
-
 static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
@@ -68,7 +67,6 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
     struct aws_string *empty_str = aws_string_new_from_c_str(allocator, "");
     result = aws_set_environment_value(s_test_variable, empty_str);
     ASSERT_TRUE(result == AWS_OP_SUCCESS);
-
 
     value = aws_get_env(allocator, env_name);
     ASSERT_TRUE(aws_string_compare(value, empty_str) == 0);

@@ -24,18 +24,14 @@ AWS_EXTERN_C_BEGIN
  * Not thread-safe
  */
 AWS_COMMON_API
-struct aws_string *aws_get_env(
-    struct aws_allocator *allocator,
-    const char *name);
+struct aws_string *aws_get_env(struct aws_allocator *allocator, const char *name);
 
 /*
- * Get the value of an environment variable.  If the variable is not set or is empty, the output string will be set to NULL.
- * Not thread-safe
+ * Get the value of an environment variable.  If the variable is not set or is empty, the output string will be set to
+ * NULL. Not thread-safe
  */
 AWS_COMMON_API
-struct aws_string *aws_get_env_nonempty(
-    struct aws_allocator *allocator,
-    const char *name);
+struct aws_string *aws_get_env_nonempty(struct aws_allocator *allocator, const char *name);
 
 /*
  * *DEPRECATED*

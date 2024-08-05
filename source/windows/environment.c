@@ -8,9 +8,7 @@
 
 #include <stdlib.h>
 
-struct aws_string *aws_get_env(
-    struct aws_allocator *allocator,
-    const char *name) {
+struct aws_string *aws_get_env(struct aws_allocator *allocator, const char *name) {
 
     const char *value = getenv(name);
     if (value == NULL) {
@@ -20,9 +18,7 @@ struct aws_string *aws_get_env(
     return aws_string_new_from_c_str(allocator, value);
 }
 
-struct aws_string *aws_get_env_nonempty(
-    struct aws_allocator *allocator,
-    const char *name) {
+struct aws_string *aws_get_env_nonempty(struct aws_allocator *allocator, const char *name) {
 
     const char *value = getenv(name);
     if (value == NULL || value[0] == '\0') {
