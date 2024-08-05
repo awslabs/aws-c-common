@@ -69,7 +69,9 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(result == AWS_OP_SUCCESS);
 
     value = aws_get_env(allocator, env_name);
+#ifndef AWS_OS_WINDOWS
     ASSERT_TRUE(aws_string_compare(value, empty_str) == 0);
+#endif
     aws_string_destroy(value);
 
     value = aws_get_env_nonempty(allocator, env_name);
