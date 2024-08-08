@@ -6,6 +6,8 @@
 #  DEPENDENCY_NAME Project name that should be built and installed.
 #  SOURCE_DIR Path to the project.
 #  CMAKE_ARGUMENTS Additional arguments that will be passed to cmake command.
+#
+# Set ${DEPENDENCY_NAME}-PREBUILT variable on success.
 function(prebuild_dependency)
     set(oneValueArgs DEPENDENCY_NAME SOURCE_DIR)
     set(multiValueArgs CMAKE_ARGUMENTS)
@@ -59,6 +61,8 @@ function(prebuild_dependency)
     # Make the installation visible for others.
     list(PREPEND CMAKE_PREFIX_PATH ${depInstallDir}/)
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} PARENT_SCOPE)
+
+    set(${AWS_PREBUILD_DEPENDENCY_NAME}-PREBUILT TRUE CACHE INTERNAL "Indicate that dependency is built and can be used")
 
     # Generates installation rules for the dependency project.
     # On installing targets, CMake will just copy this prebuilt version to a designated installation directory.
