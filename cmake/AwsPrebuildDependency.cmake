@@ -59,7 +59,7 @@ function(prebuild_dependency)
     endif()
 
     # Make the installation visible for others.
-    list(PREPEND CMAKE_PREFIX_PATH ${depInstallDir}/)
+    list(INSERT CMAKE_PREFIX_PATH 0 ${depInstallDir}/)
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} PARENT_SCOPE)
 
     set(${AWS_PREBUILD_DEPENDENCY_NAME}-PREBUILT TRUE CACHE INTERNAL "Indicate that dependency is built and can be used")
