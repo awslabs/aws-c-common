@@ -53,6 +53,22 @@ AWS_EXTERN_C_BEGIN
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
 #endif                              /* _MSC_VER */
 
+/* Macros to cast (if necessary) between size_t and uint64_t.
+ * On x86_64 platforms, size_t is always 64 bits.
+ * But on __MACH__, size_t's type is unsigned long, while on others it's unsigned long long.
+ * Some compilers will warn if you don't you cast between them,
+ * while other compilers (GCC with -Wuseless-cast) warn if you needlessly cast between them.
+ * So declare macros that do the right thing. */
+#ifdef __MACH__ /* do cast */
+#    define AWS_CAST_SIZE_TO_U64 (uint64_t)
+#    define AWS_CAST_SIZE_PTR_TO_U64 (uint64_t *)
+#    define AWS_CAST_U64_TO_SIZE (size_t)
+#else /* no cast required*/
+#    define AWS_CAST_SIZE_TO_U64
+#    define AWS_CAST_SIZE_PTR_TO_U64
+#    define AWS_CAST_U64_TO_SIZE
+#endif
+
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;
 }
@@ -84,9 +100,9 @@ AWS_STATIC_IMPL int aws_sub_u32_checked(uint32_t a, uint32_t b, uint32_t *r) {
  */
 AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
-    return (size_t)aws_mul_u32_saturating(a, b);
+    return aws_mul_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-    return (size_t)aws_mul_u64_saturating(a, b);
+    return AWS_CAST_SIZE_TO_U64 aws_mul_u64_saturating(a, b);
 #else
 #    error "Target not supported"
 #endif
@@ -98,9 +114,9 @@ AWS_STATIC_IMPL size_t aws_mul_size_saturating(size_t a, size_t b) {
  */
 AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
-    return aws_mul_u32_checked(a, b, (uint32_t *)r);
+    return aws_mul_u32_checked(a, b, r);
 #elif SIZE_BITS == 64
-    return aws_mul_u64_checked(a, b, (uint64_t *)r);
+    return aws_mul_u64_checked(a, b, AWS_CAST_SIZE_PTR_TO_U64 r);
 #else
 #    error "Target not supported"
 #endif
@@ -111,9 +127,9 @@ AWS_STATIC_IMPL int aws_mul_size_checked(size_t a, size_t b, size_t *r) {
  */
 AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
-    return (size_t)aws_add_u32_saturating(a, b);
+    return aws_add_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-    return (size_t)aws_add_u64_saturating(a, b);
+    return AWS_CAST_U64_TO_SIZE aws_add_u64_saturating(a, b);
 #else
 #    error "Target not supported"
 #endif
@@ -125,9 +141,9 @@ AWS_STATIC_IMPL size_t aws_add_size_saturating(size_t a, size_t b) {
  */
 AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
-    return aws_add_u32_checked(a, b, (uint32_t *)r);
+    return aws_add_u32_checked(a, b, r);
 #elif SIZE_BITS == 64
-    return aws_add_u64_checked(a, b, (uint64_t *)r);
+    return aws_add_u64_checked(a, b, AWS_CAST_SIZE_PTR_TO_U64 r);
 #else
 #    error "Target not supported"
 #endif
@@ -135,9 +151,9 @@ AWS_STATIC_IMPL int aws_add_size_checked(size_t a, size_t b, size_t *r) {
 
 AWS_STATIC_IMPL size_t aws_sub_size_saturating(size_t a, size_t b) {
 #if SIZE_BITS == 32
-    return (size_t)aws_sub_u32_saturating(a, b);
+    return aws_sub_u32_saturating(a, b);
 #elif SIZE_BITS == 64
-    return (size_t)aws_sub_u64_saturating(a, b);
+    return AWS_CAST_U64_TO_SIZE aws_sub_u64_saturating(a, b);
 #else
 #    error "Target not supported"
 #endif
@@ -145,9 +161,9 @@ AWS_STATIC_IMPL size_t aws_sub_size_saturating(size_t a, size_t b) {
 
 AWS_STATIC_IMPL int aws_sub_size_checked(size_t a, size_t b, size_t *r) {
 #if SIZE_BITS == 32
-    return aws_sub_u32_checked(a, b, (uint32_t *)r);
+    return aws_sub_u32_checked(a, b, r);
 #elif SIZE_BITS == 64
-    return aws_sub_u64_checked(a, b, (uint64_t *)r);
+    return aws_sub_u64_checked(a, b, AWS_CAST_SIZE_PTR_TO_U64 r);
 #else
 #    error "Target not supported"
 #endif
@@ -287,6 +303,10 @@ AWS_STATIC_IMPL double aws_min_double(double a, double b) {
 AWS_STATIC_IMPL double aws_max_double(double a, double b) {
     return a > b ? a : b;
 }
+
+#undef AWS_CAST_SIZE_TO_U64
+#undef AWS_CAST_SIZE_PTR_TO_U64
+#undef AWS_CAST_U64_TO_SIZE
 
 AWS_EXTERN_C_END
 
