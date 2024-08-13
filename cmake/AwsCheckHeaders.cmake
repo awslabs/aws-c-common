@@ -63,13 +63,22 @@ function(aws_check_headers_internal target std is_cxx)
         C_STANDARD 99
     )
 
-    # Ensure our headers can be included by an application with its warnings set very high
+    # Ensure our headers can be included by an application with its warnings set very high.
+    # Most compiler options are universal, but some are C++ only.
+    set(compiler_options_all "")
+    set(compiler_options_cxx_only "")
     if(MSVC)
-        # MSVC complains about windows' own header files. Use /W4 instead of /Wall 
-        target_compile_options(${HEADER_CHECKER_LIB} PRIVATE /W4 /WX)
+        # MSVC complains about windows' own header files. Use /W4 instead of /Wall
+        list(APPEND compiler_options_all /W4 /WX)
     else()
-        target_compile_options(${HEADER_CHECKER_LIB} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        list(APPEND compiler_options_all -Wall -Wextra -Wpedantic -Werror)
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            # -Wuseless-cast requested by https://github.com/awslabs/aws-c-common/issues/973
+            list(APPEND compiler_options_cxx_only -Wuseless-cast)
+        endif()
     endif()
+    target_compile_options(${HEADER_CHECKER_LIB} PRIVATE ${compiler_options_all})
 
     foreach(header IN LISTS ARGN)
         if (NOT ${header} MATCHES "\\.inl$")
@@ -78,6 +87,7 @@ function(aws_check_headers_internal target std is_cxx)
             file(RELATIVE_PATH include_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header})
             # replace non-alphanumeric characters with underscores
             string(REGEX REPLACE "[^a-zA-Z0-9]" "_" unique_token ${include_path})
+            # test compiling header from a .cpp and .c file (or just .cpp if this header IS_CXX)
             set(c_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.c")
             set(cpp_file "${HEADER_CHECKER_ROOT}/headerchecker_${unique_token}.cpp")
             # include header twice to check for include-guards
@@ -87,6 +97,11 @@ function(aws_check_headers_internal target std is_cxx)
             if (NOT is_cxx)
                 file(WRITE "${c_file}" "#include <${include_path}>\n#include <${include_path}>\nint ${unique_token}_c;\n")
                 target_sources(${HEADER_CHECKER_LIB} PUBLIC "${c_file}")
+            endif()
+
+            # for .cpp file, apply C++ only compiler options
+            if(compiler_options_cxx_only)
+                set_source_files_properties(${cpp_file} PROPERTIES COMPILE_OPTIONS ${compiler_options_cxx_only})
             endif()
         endif()
     endforeach(header)
