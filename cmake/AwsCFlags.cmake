@@ -43,6 +43,20 @@ function(aws_check_posix_lfs extra_flags variable)
     endif()
 endfunction()
 
+# This function sets common CMake policies.
+# Call this before calling add_library() or add_executable().
+function(aws_set_common_policies)
+    # Enable LTO/IPO if available in the compiler
+    if (POLICY CMP0069)
+        cmake_policy(SET CMP0069 NEW)
+    endif()
+
+    # Honor visibility properties for all target types
+    if (POLICY CMP0063)
+        cmake_policy(SET CMP0063 NEW)
+    endif()
+endfunction()
+
 # This function will set all common flags on a target
 # Options:
 #  NO_WGNU: Disable -Wgnu
@@ -231,7 +245,6 @@ function(aws_set_common_properties target)
 
         # try to check whether compiler supports LTO/IPO
         if (POLICY CMP0069)
-            cmake_policy(SET CMP0069 NEW)
             include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
             if (ipo_check_exists)
                 check_ipo_supported(RESULT ipo_supported)
@@ -257,5 +270,6 @@ function(aws_set_common_properties target)
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
-    set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+    set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden
+    set_target_properties(${target} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 endfunction()

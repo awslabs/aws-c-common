@@ -8,14 +8,6 @@ project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
-endif()
-
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
-endif()
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(AwsCheckHeaders)
@@ -189,7 +181,7 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_EXTERNAL_SRC}
         )
 
-
+aws_set_common_policies()
 add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
