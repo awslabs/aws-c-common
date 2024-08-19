@@ -8,7 +8,7 @@
 #  CMAKE_ARGUMENTS Additional arguments that will be passed to cmake command.
 #
 # Set ${DEPENDENCY_NAME}_PREBUILT variable on success.
-function(prebuild_dependency)
+function(aws_prebuild_dependency)
     set(oneValueArgs DEPENDENCY_NAME SOURCE_DIR)
     set(multiValueArgs CMAKE_ARGUMENTS)
     cmake_parse_arguments(AWS_PREBUILD "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})

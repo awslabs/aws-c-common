@@ -51,7 +51,12 @@ AWS_EXTERN_C_BEGIN
 #ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
-#endif                              /* _MSC_VER */
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    if defined(__cplusplus) && !defined(__clang__)
+#        pragma GCC diagnostic ignored "-Wuseless-cast" /* Warning is C++ only (not C), and GCC only (not clang) */
+#    endif
+#endif
 
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;
@@ -190,6 +195,8 @@ AWS_STATIC_IMPL int aws_round_up_to_power_of_two(size_t n, size_t *result) {
 
 #ifdef _MSC_VER
 #    pragma warning(pop)
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
 #endif /* _MSC_VER */
 
 AWS_STATIC_IMPL uint8_t aws_min_u8(uint8_t a, uint8_t b) {
