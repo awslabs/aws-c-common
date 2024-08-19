@@ -270,6 +270,5 @@ function(aws_set_common_properties target)
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
-    set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden
-    set_target_properties(${target} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+    set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
 endfunction()
