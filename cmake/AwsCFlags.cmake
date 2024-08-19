@@ -43,20 +43,6 @@ function(aws_check_posix_lfs extra_flags variable)
     endif()
 endfunction()
 
-# This function sets common CMake policies.
-# Call this before calling add_library() or add_executable().
-function(aws_set_common_policies)
-    # Enable LTO/IPO if available in the compiler
-    if (POLICY CMP0069)
-        cmake_policy(SET CMP0069 NEW)
-    endif()
-
-    # Honor visibility properties for all target types
-    if (POLICY CMP0063)
-        cmake_policy(SET CMP0063 NEW)
-    endif()
-endfunction()
-
 # This function will set all common flags on a target
 # Options:
 #  NO_WGNU: Disable -Wgnu
@@ -183,8 +169,7 @@ function(aws_set_common_properties target)
         # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
         # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
         if (UNIX AND NOT APPLE)
-            # If we used target_link_options() (CMake 3.13+) we could make these flags PUBLIC
-            set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
+            target_link_options(${target} PUBLIC "LINKER:--exclude-libs,libcrypto.a")
         endif()
 
     endif()

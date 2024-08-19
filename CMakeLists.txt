@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
@@ -181,7 +181,6 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_EXTERNAL_SRC}
         )
 
-aws_set_common_policies()
 add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
