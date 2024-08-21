@@ -101,7 +101,7 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     /* only bother to run this test if the platform can do a backtrace */
     void *probe_stack[1];
     if (!aws_backtrace(probe_stack, 1)) {
-        return 0;
+        return AWS_OP_SKIP;
     }
 
     test_logger_init(&s_test_logger, allocator, AWS_LL_TRACE, 0);
@@ -146,27 +146,26 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
 #if defined(DEBUG_BUILD)
-    fprintf(stderr, "---LOGS BEGIN---\n%s\n---LOGS END---\n", test_logger->log_buffer.buffer);
+    fprintf(stderr, "%s\n", test_logger->log_buffer.buffer);
     char s_alloc_1_addr[32];
     char s_alloc_2_addr[32];
     char s_alloc_3_addr[32];
     char s_alloc_4_addr[32];
 #    if defined(_MSC_VER)
-#        pragma warning(push)
 #        pragma warning(disable : 4054) /* type cast function pointer to data pointer */
+#    endif
+
     snprintf(s_alloc_1_addr, AWS_ARRAY_SIZE(s_alloc_1_addr), "0x%tx", (uintptr_t)(void *)s_alloc_1);
     snprintf(s_alloc_2_addr, AWS_ARRAY_SIZE(s_alloc_2_addr), "0x%tx", (uintptr_t)(void *)s_alloc_2);
     snprintf(s_alloc_3_addr, AWS_ARRAY_SIZE(s_alloc_3_addr), "0x%tx", (uintptr_t)(void *)s_alloc_3);
     snprintf(s_alloc_4_addr, AWS_ARRAY_SIZE(s_alloc_4_addr), "0x%tx", (uintptr_t)(void *)s_alloc_4);
-#        pragma warning(pop)
-#    endif /* defined(_MSC_VER) */
 
     const char *log_buffer = (const char *)test_logger->log_buffer.buffer;
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_1") || strstr(log_buffer, s_alloc_1_addr));
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_2") || strstr(log_buffer, s_alloc_2_addr));
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_3") || strstr(log_buffer, s_alloc_3_addr));
     ASSERT_TRUE(strstr(log_buffer, "s_alloc_4") || strstr(log_buffer, s_alloc_4_addr));
-#endif
+#endif /* DEBUG_BUILD */
 
     /* reset log */
     aws_byte_buf_reset(&test_logger->log_buffer, true);

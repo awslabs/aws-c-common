@@ -4,7 +4,6 @@
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
-include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
@@ -255,5 +254,11 @@ function(aws_set_common_properties target)
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
-    set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+
+    # Don't hide symbols in Debug builds.
+    # We do this so that backtraces are more likely to show function names.
+    # We mostly use backtraces to diagnose memory leaks.
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+    endif ()
 endfunction()
