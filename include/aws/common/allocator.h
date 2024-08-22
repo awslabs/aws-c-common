@@ -228,6 +228,21 @@ size_t aws_small_block_allocator_page_size(struct aws_allocator *sba_allocator);
 AWS_COMMON_API
 size_t aws_small_block_allocator_page_size_available(struct aws_allocator *sba_allocator);
 
+/*
+ * Create an aligned allocator with customized alignment.
+ */
+AWS_COMMON_API
+struct aws_allocator *aws_customized_aligned_allocator_new(
+    struct aws_allocator *allocator,
+    size_t customized_alignment);
+
+/*
+ * Destroys a customized aligned allocator instance and frees its memory to the parent allocator. The parent
+ * allocator will otherwise be unaffected.
+ */
+AWS_COMMON_API
+void aws_customized_aligned_allocator_destroy(struct aws_allocator *sba_allocator);
+
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
 

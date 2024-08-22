@@ -34,6 +34,11 @@ bool aws_allocator_is_valid(const struct aws_allocator *alloc) {
     return alloc && AWS_OBJECT_PTR_IS_READABLE(alloc) && alloc->mem_acquire && alloc->mem_release;
 }
 
+struct aws_aligned_allocator_impl {
+    struct aws_allocator *allocator;
+    size_t alignment_size;
+};
+
 static void *s_aligned_malloc(struct aws_allocator *allocator, size_t size) {
     (void)allocator;
     /* larger allocations should be aligned so that AVX and friends can avoid
@@ -46,9 +51,15 @@ static void *s_aligned_malloc(struct aws_allocator *allocator, size_t size) {
      * 8 byte alignment for <= page allocations on 32 bit systems
      *
      * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
-     * this size or greater that are not data buffers
+     * this size or greater that are not data buffers.
+     *
+     * Unless there is a customized alignment size.
      */
-    const size_t alignment = sizeof(void *) * (size > (size_t)PAGE_SIZE ? 8 : 2);
+    size_t alignment = sizeof(void *) * (size > (size_t)PAGE_SIZE ? 8 : 2);
+    if (allocator->impl) {
+        struct aws_aligned_allocator_impl *impl = allocator->impl;
+        alignment = impl->alignment_size;
+    }
 #if !defined(_WIN32)
     void *result = NULL;
     int err = posix_memalign(&result, alignment, size);
@@ -166,6 +177,49 @@ static struct aws_allocator aligned_allocator = {
 
 struct aws_allocator *aws_aligned_allocator(void) {
     return &aligned_allocator;
+}
+
+struct aws_allocator *aws_customized_aligned_allocator_new(
+    struct aws_allocator *allocator,
+    size_t customized_alignment) {
+    if ((customized_alignment & (customized_alignment - 1)) != 0 || customized_alignment % sizeof(void *) != 0) {
+        /**
+         * the alignment must be a power of two and a multiple of sizeof(void *)
+         */
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    struct aws_aligned_allocator_impl *aligned_alloc_impl = NULL;
+    struct aws_allocator *aligned_alloc = NULL;
+    aws_mem_acquire_many(
+        allocator,
+        2,
+        &aligned_alloc_impl,
+        sizeof(struct aws_aligned_allocator_impl),
+        &aligned_alloc,
+        sizeof(struct aws_allocator));
+
+    AWS_ZERO_STRUCT(*aligned_alloc_impl);
+    AWS_ZERO_STRUCT(*aligned_alloc);
+    /* copy the template vtable */
+    *aligned_alloc = aligned_allocator;
+    aligned_alloc->impl = aligned_alloc_impl;
+    aligned_alloc_impl->alignment_size = customized_alignment;
+    aligned_alloc_impl->allocator = allocator;
+    return aligned_alloc;
+}
+
+void aws_customized_aligned_allocator_destroy(struct aws_allocator *aligned_alloc) {
+    if (!aligned_alloc) {
+        return;
+    }
+    struct aws_aligned_allocator_impl *impl = aligned_alloc->impl;
+    if (!impl) {
+        return;
+    }
+    struct aws_allocator *allocator = impl->allocator;
+    aws_mem_release(allocator, impl);
 }
 
 void *aws_mem_acquire(struct aws_allocator *allocator, size_t size) {
