@@ -241,7 +241,7 @@ struct aws_allocator *aws_customized_aligned_allocator_new(
  * allocator will otherwise be unaffected.
  */
 AWS_COMMON_API
-void aws_customized_aligned_allocator_destroy(struct aws_allocator *sba_allocator);
+void aws_customized_aligned_allocator_destroy(struct aws_allocator *aligned_alloc);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
