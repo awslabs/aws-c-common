@@ -238,6 +238,7 @@ struct aws_allocator *aws_explicit_aligned_allocator_new(size_t alignment);
 /*
  * Destroys a customized aligned allocator instance and frees its memory.
  */
+AWS_COMMON_API
 void aws_explicit_aligned_allocator_destroy(struct aws_allocator *aligned_alloc);
 
 AWS_EXTERN_C_END
