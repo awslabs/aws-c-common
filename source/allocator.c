@@ -177,15 +177,15 @@ struct aws_allocator *aws_aligned_allocator(void) {
 }
 
 struct aws_allocator *aws_explicit_aligned_allocator_new(size_t customized_alignment) {
-    if ((customized_alignment & (customized_alignment - 1)) != 0 || customized_alignment % sizeof(void *) != 0) {
+    if (customized_alignment == 0 || (customized_alignment & (customized_alignment - 1)) != 0 ||
+        customized_alignment % sizeof(void *) != 0) {
         /**
-         * the alignment must be a power of two and a multiple of sizeof(void *)
+         * the alignment must be a power of two and a multiple of sizeof(void *) and non-zero.
          */
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
-    struct aws_allocator *aligned_alloc = NULL;
-    aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct aws_allocator));
+    struct aws_allocator *aligned_alloc = aws_mem_calloc(aws_default_allocator(), 1, sizeof(struct aws_allocator));
     *aligned_alloc = s_implicit_aligned_allocator;
     aligned_alloc->impl = (void *)customized_alignment;
     return aligned_alloc;

@@ -382,7 +382,7 @@ static int s_aligned_threaded_allocs_and_frees(struct aws_allocator *allocator, 
 }
 AWS_TEST_CASE(aligned_threaded_allocs_and_frees, s_aligned_threaded_allocs_and_frees)
 
-static int s_customized_aligned_sanitize(struct aws_allocator *allocator, void *ctx) {
+static int s_explicit_aligned_sanitize(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
 
@@ -391,6 +391,10 @@ static int s_customized_aligned_sanitize(struct aws_allocator *allocator, void *
     ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
 
     aligned_alloc = aws_explicit_aligned_allocator_new(3 * sizeof(void *));
+    ASSERT_NULL(aligned_alloc);
+    ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
+
+    aligned_alloc = aws_explicit_aligned_allocator_new(0);
     ASSERT_NULL(aligned_alloc);
     ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
 
@@ -405,9 +409,9 @@ static int s_customized_aligned_sanitize(struct aws_allocator *allocator, void *
 
     return 0;
 }
-AWS_TEST_CASE(customized_aligned_sanitize, s_customized_aligned_sanitize)
+AWS_TEST_CASE(explicit_aligned_sanitize, s_explicit_aligned_sanitize)
 
-static int s_customized_aligned_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
+static int s_explicit_aligned_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
     srand(15);
@@ -422,9 +426,9 @@ static int s_customized_aligned_threaded_reallocs(struct aws_allocator *allocato
 
     return 0;
 }
-AWS_TEST_CASE(customized_aligned_threaded_reallocs, s_customized_aligned_threaded_reallocs)
+AWS_TEST_CASE(explicit_aligned_threaded_reallocs, s_explicit_aligned_threaded_reallocs)
 
-static int s_customized_aligned_threaded_allocs_and_frees(struct aws_allocator *allocator, void *ctx) {
+static int s_explicit_aligned_threaded_allocs_and_frees(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
     srand(99);
@@ -439,4 +443,4 @@ static int s_customized_aligned_threaded_allocs_and_frees(struct aws_allocator *
 
     return 0;
 }
-AWS_TEST_CASE(customized_aligned_threaded_allocs_and_frees, s_customized_aligned_threaded_allocs_and_frees)
+AWS_TEST_CASE(explicit_aligned_threaded_allocs_and_frees, s_explicit_aligned_threaded_allocs_and_frees)
