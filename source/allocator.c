@@ -48,7 +48,7 @@ static void *s_aligned_malloc(struct aws_allocator *allocator, size_t size) {
      * We use PAGE_SIZE as the boundary because we are not aware of any allocations of
      * this size or greater that are not data buffers
      */
-    const size_t alignment = sizeof(void *) * (size > (size_t)PAGE_SIZE ? 8 : 2);
+    const size_t alignment = 512;
 #if !defined(_WIN32)
     void *result = NULL;
     int err = posix_memalign(&result, alignment, size);
