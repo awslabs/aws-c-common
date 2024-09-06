@@ -25,7 +25,6 @@ else()
     else()
         set(AWS_ARMv8_1_FLAG "-march=armv8-a+crc+crypto")
     endif()
-    message(STATUS "armv8 flag: ${AWS_ARMv8_1_FLAG}")
     set(WERROR_FLAG "-Werror")
 endif()
 
