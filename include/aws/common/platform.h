@@ -30,6 +30,7 @@
 #        define AWS_USE_SECITEM
 #    else
 #        define AWS_OS_MACOS
+#        define AWS_USE_KQUEUE
 #    endif
 #elif __linux__
 #    define AWS_OS_LINUX
