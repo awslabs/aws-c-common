@@ -20,10 +20,14 @@
 #    include "TargetConditionals.h"
 #    if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 #        define AWS_OS_IOS
+#        define AWS_USE_DISPATCH_QUEUE
+#        define AWS_USE_SECITEM
 #    elif defined(TARGET_OS_WATCH) && TARGET_OS_WATCH
 #        define AWS_OS_WATCHOS
 #    elif defined(TARGET_OS_TV) && TARGET_OS_TV
 #        define AWS_OS_TVOS
+#        define AWS_USE_DISPATCH_QUEUE
+#        define AWS_USE_SECITEM
 #    else
 #        define AWS_OS_MACOS
 #    endif
