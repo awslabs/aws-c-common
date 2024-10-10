@@ -42,6 +42,7 @@ function(aws_prebuild_dependency)
         list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
     endif()
 
+    message(STATUS "XXXXXXXXXXXX cmakeCommand ${cmakeCommand}")
     # Configure dependency project.
     execute_process(
         COMMAND ${cmakeCommand}
