@@ -24,7 +24,7 @@ function(aws_prebuild_dependency)
     set(depBinaryDir ${CMAKE_BINARY_DIR}/deps/${AWS_PREBUILD_DEPENDENCY_NAME})
     set(depInstallDir ${depBinaryDir}/install)
     file(MAKE_DIRECTORY ${depBinaryDir})
-
+    message(STATUS "XXXXXXXXXXXX depBinaryDir ${depBinaryDir}")
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
     set(cmakeCommand "${CMAKE_COMMAND}")
     list(APPEND cmakeCommand -S ${AWS_PREBUILD_SOURCE_DIR})
