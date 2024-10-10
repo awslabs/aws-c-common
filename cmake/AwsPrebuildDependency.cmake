@@ -28,6 +28,7 @@ function(aws_prebuild_dependency)
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
     set(cmakeCommand "${CMAKE_COMMAND}")
     list(APPEND cmakeCommand -S ${AWS_PREBUILD_SOURCE_DIR})
+    list(APPEND cmakeCommand -B ${depBinaryDir})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
