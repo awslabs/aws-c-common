@@ -24,12 +24,11 @@ function(aws_prebuild_dependency)
     set(depBinaryDir ${CMAKE_BINARY_DIR}/deps/${AWS_PREBUILD_DEPENDENCY_NAME})
     set(depInstallDir ${depBinaryDir}/install)
     file(MAKE_DIRECTORY ${depBinaryDir})
+
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
     set(cmakeCommand "${CMAKE_COMMAND}")
     list(APPEND cmakeCommand -S ${AWS_PREBUILD_SOURCE_DIR})
-    list(APPEND cmakeCommand -B ${depBinaryDir})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH})
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
@@ -38,6 +37,15 @@ function(aws_prebuild_dependency)
     if(AWS_PREBUILD_CMAKE_ARGUMENTS)
         list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
     endif()
+
+    # Set cmake prefix path via envrionment variable incase it's already a list.
+    # Some version of cmake will treat the values in the list as separate args.
+    if(WIN32)
+        list(JOIN CMAKE_PREFIX_PATH ";" PREFIX_PATH_ENV_VAR)
+    else()
+        list(JOIN CMAKE_PREFIX_PATH ":" PREFIX_PATH_ENV_VAR)
+    endif()
+    set(ENV{CMAKE_PREFIX_PATH} ${PREFIX_PATH_ENV_VAR})
 
     # Configure dependency project.
     execute_process(
