@@ -26,7 +26,7 @@ function(aws_prebuild_dependency)
     file(MAKE_DIRECTORY ${depBinaryDir})
     message(STATUS "XXXXXXXXXXXX depBinaryDir ${depBinaryDir}")
     message(STATUS "XXXXXXXXXXXX CMAKE_COMMAND ${CMAKE_COMMAND}")
-    list(JOIN CMAKE_PREFIX_PATH ";" PREFIX_PATH_STR)
+    list(JOIN CMAKE_PREFIX_PATH ":" PREFIX_PATH_STR)
     message(STATUS "XXXXXXXXXXXX PREFIX_PATH_STR ${PREFIX_PATH_STR}")
 
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
