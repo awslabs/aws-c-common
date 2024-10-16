@@ -28,7 +28,6 @@ function(aws_prebuild_dependency)
     # Convert prefix path from list to escaped string, to be passed on command line
     string(REPLACE ";" "\\\\;" ESCAPED_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
-
     set(cmakeCommand "${CMAKE_COMMAND}")
     list(APPEND cmakeCommand ${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
