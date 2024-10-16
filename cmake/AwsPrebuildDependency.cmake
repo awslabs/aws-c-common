@@ -25,11 +25,14 @@ function(aws_prebuild_dependency)
     set(depInstallDir ${depBinaryDir}/install)
     file(MAKE_DIRECTORY ${depBinaryDir})
 
+    # Convert prefix path from list to escaped string, to be passed on command line
+    string(REPLACE ";" "\\\\;" ESCAPED_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
-    set(cmakeCommand "COMMAND" "${CMAKE_COMMAND}")
+
+    set(cmakeCommand "${CMAKE_COMMAND}")
     list(APPEND cmakeCommand ${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
+    list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${ESCAPED_PREFIX_PATH})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH})
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
@@ -39,11 +42,13 @@ function(aws_prebuild_dependency)
         list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
     endif()
 
-    list(APPEND cmakeCommand WORKING_DIRECTORY ${depBinaryDir})
-    list(APPEND cmakeCommand RESULT_VARIABLE result)
-
     # Configure dependency project.
-    execute_process(${cmakeCommand})
+    execute_process(
+        COMMAND ${cmakeCommand}
+        WORKING_DIRECTORY ${depBinaryDir}
+        RESULT_VARIABLE result
+    )
+
     if (NOT ${result} EQUAL 0)
         message(FATAL_ERROR "Configuration failed for dependency project ${AWS_PREBUILD_DEPENDENCY_NAME}")
     endif()
