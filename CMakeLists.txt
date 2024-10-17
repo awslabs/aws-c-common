@@ -1,20 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 message(STATUS "CMake ${CMAKE_VERSION}")
-
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
-endif()
-
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
-endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
@@ -188,7 +180,6 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_ARCH_SRC}
         ${AWS_COMMON_EXTERNAL_SRC}
         )
-
 
 add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
