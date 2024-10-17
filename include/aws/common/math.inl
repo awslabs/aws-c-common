@@ -44,7 +44,7 @@ AWS_EXTERN_C_BEGIN
 #    endif /*  AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS */
 #endif     /*  defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) */
 
-#if defined(__clang__) || defined(__GNUC__)
+#if (defined(__clang__) || defined(__GNUC__)) && !defined(AWS_HAVE_MSVC_INTRINSICS_X64)
 #    include <aws/common/math.gcc_builtin.inl>
 #endif
 
