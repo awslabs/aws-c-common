@@ -350,7 +350,7 @@ static int s_default_threaded_allocs_and_frees(struct aws_allocator *allocator, 
 AWS_TEST_CASE(default_threaded_allocs_and_frees, s_default_threaded_allocs_and_frees)
 
 /*
- * No align allocator tests.
+ * aligned allocator tests.
  */
 static int s_aligned_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
@@ -381,3 +381,66 @@ static int s_aligned_threaded_allocs_and_frees(struct aws_allocator *allocator, 
     return 0;
 }
 AWS_TEST_CASE(aligned_threaded_allocs_and_frees, s_aligned_threaded_allocs_and_frees)
+
+static int s_explicit_aligned_sanitize(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(1);
+    ASSERT_NULL(aligned_alloc);
+    ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
+
+    aligned_alloc = aws_explicit_aligned_allocator_new(3 * sizeof(void *));
+    ASSERT_NULL(aligned_alloc);
+    ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
+
+    aligned_alloc = aws_explicit_aligned_allocator_new(0);
+    ASSERT_NULL(aligned_alloc);
+    ASSERT_UINT_EQUALS(aws_last_error(), AWS_ERROR_INVALID_ARGUMENT);
+
+    size_t aligned_size = 1024;
+    aligned_alloc = aws_explicit_aligned_allocator_new(aligned_size);
+    ASSERT_NOT_NULL(aligned_alloc);
+    void *test = aws_mem_acquire(aligned_alloc, sizeof(void *));
+    ASSERT_TRUE((uintptr_t)test % aligned_size == 0);
+    aws_mem_release(aligned_alloc, test);
+
+    aws_explicit_aligned_allocator_destroy(aligned_alloc);
+
+    return 0;
+}
+AWS_TEST_CASE(explicit_aligned_sanitize, s_explicit_aligned_sanitize)
+
+static int s_explicit_aligned_threaded_reallocs(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+    srand(15);
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(512);
+
+    struct aws_allocator *alloc = aws_mem_tracer_new(aligned_alloc, NULL, AWS_MEMTRACE_STACKS, 8);
+
+    s_thread_test(alloc, s_threaded_realloc_worker, alloc);
+
+    aws_mem_tracer_destroy(alloc);
+    aws_explicit_aligned_allocator_destroy(aligned_alloc);
+
+    return 0;
+}
+AWS_TEST_CASE(explicit_aligned_threaded_reallocs, s_explicit_aligned_threaded_reallocs)
+
+static int s_explicit_aligned_threaded_allocs_and_frees(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+    srand(99);
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(512);
+
+    struct aws_allocator *alloc = aws_mem_tracer_new(aligned_alloc, NULL, AWS_MEMTRACE_STACKS, 8);
+
+    s_thread_test(alloc, s_threaded_alloc_worker, alloc);
+
+    aws_mem_tracer_destroy(alloc);
+    aws_explicit_aligned_allocator_destroy(aligned_alloc);
+
+    return 0;
+}
+AWS_TEST_CASE(explicit_aligned_threaded_allocs_and_frees, s_explicit_aligned_threaded_allocs_and_frees)
