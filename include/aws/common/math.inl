@@ -13,7 +13,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-AWS_EXTERN_C_BEGIN
+
 
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
 /*
@@ -48,6 +48,8 @@ AWS_EXTERN_C_BEGIN
 #    include <aws/common/math.gcc_builtin.inl>
 #endif
 
+AWS_EXTERN_C_BEGIN
+
 #ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4127) /*Disable "conditional expression is constant" */
@@ -57,6 +59,7 @@ AWS_EXTERN_C_BEGIN
 #        pragma GCC diagnostic ignored "-Wuseless-cast" /* Warning is C++ only (not C), and GCC only (not clang) */
 #    endif
 #endif
+
 
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;
