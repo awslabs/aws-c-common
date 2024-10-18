@@ -224,11 +224,12 @@ AWS_COMMON_API int aws_utf8_decoder_update(struct aws_utf8_decoder *decoder, str
  */
 AWS_COMMON_API int aws_utf8_decoder_finalize(struct aws_utf8_decoder *decoder);
 
+AWS_EXTERN_C_END
+
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/encoding.inl>
 #endif /* AWS_NO_STATIC_IMPL */
 
-AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_ENCODING_H */
