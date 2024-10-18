@@ -13,8 +13,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-
-
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
 /*
  * GCC and clang have these super convenient overflow checking builtins...
@@ -59,7 +57,6 @@ AWS_EXTERN_C_BEGIN
 #        pragma GCC diagnostic ignored "-Wuseless-cast" /* Warning is C++ only (not C), and GCC only (not clang) */
 #    endif
 #endif
-
 
 AWS_STATIC_IMPL uint64_t aws_sub_u64_saturating(uint64_t a, uint64_t b) {
     return a <= b ? 0 : a - b;

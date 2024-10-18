@@ -149,8 +149,6 @@ int aws_translate_and_raise_io_error_or(int error_no, int fallback_aws_error_cod
 AWS_COMMON_API
 int aws_translate_and_raise_io_error(int error_no);
 
-
-
 AWS_EXTERN_C_END
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/error.inl>

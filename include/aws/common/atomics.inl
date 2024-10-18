@@ -144,5 +144,4 @@ AWS_EXTERN_C_END
 
 #include <aws/common/atomics_fallback.inl>
 
-
 #endif /* AWS_COMMON_ATOMICS_INL */

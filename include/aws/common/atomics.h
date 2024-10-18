@@ -318,7 +318,6 @@ size_t aws_atomic_fetch_xor(volatile struct aws_atomic_var *var, size_t n);
 AWS_STATIC_IMPL
 void aws_atomic_thread_fence(enum aws_memory_order order);
 
-
 AWS_EXTERN_C_END
 
 #ifndef AWS_NO_STATIC_IMPL

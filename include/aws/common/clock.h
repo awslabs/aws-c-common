@@ -60,7 +60,6 @@ AWS_EXTERN_C_END
 #    include <aws/common/clock.inl>
 #endif /* AWS_NO_STATIC_IMPL */
 
-
 AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_CLOCK_H */
