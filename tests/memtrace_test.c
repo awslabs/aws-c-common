@@ -146,7 +146,7 @@ static int s_test_memtrace_stacks(struct aws_allocator *allocator, void *ctx) {
     /* if this is not a debug build, there may not be symbols, so the test cannot
      * verify if a best effort was made */
 #if defined(DEBUG_BUILD)
-    /* fprintf(stderr, "%s\n", test_logger->log_buffer.buffer); */
+    fprintf(stderr, "%s\n", test_logger->log_buffer.buffer);
     char s_alloc_1_addr[32];
     char s_alloc_2_addr[32];
     char s_alloc_3_addr[32];
