@@ -200,11 +200,11 @@ AWS_STATIC_IMPL float aws_max_float(float a, float b);
 AWS_STATIC_IMPL double aws_min_double(double a, double b);
 AWS_STATIC_IMPL double aws_max_double(double a, double b);
 
+AWS_EXTERN_C_END
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/math.inl>
 #endif /* AWS_NO_STATIC_IMPL */
 
-AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_MATH_H */
