@@ -1,6 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
+# As of October 2024, we picked 3.9 as our version because internally we still support RHEL5 and AL2012, and CMake 3.9
+# was the latest version available on those platforms.
 cmake_minimum_required(VERSION 3.9)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
