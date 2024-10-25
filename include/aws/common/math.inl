@@ -13,8 +13,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-AWS_EXTERN_C_BEGIN
-
 #if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
 /*
  * GCC and clang have these super convenient overflow checking builtins...
@@ -47,6 +45,8 @@ AWS_EXTERN_C_BEGIN
 #if defined(__clang__) || defined(__GNUC__)
 #    include <aws/common/math.gcc_builtin.inl>
 #endif
+
+AWS_EXTERN_C_BEGIN
 
 #ifdef _MSC_VER
 #    pragma warning(push)

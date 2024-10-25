@@ -19,6 +19,7 @@ else()
     set(AWS_CLMUL_FLAG "-mpclmul")
     set(AWS_SSE4_2_FLAG "-msse4.2")
 
+    # AWS Graviton3 processors use neoverse-v1
     check_c_compiler_flag("-mtune=neoverse-v1" HAVE_MTUNE_NEOVERSE_V1)
     if (HAVE_MTUNE_NEOVERSE_V1)
         set(AWS_ARMv8_1_FLAG "-march=armv8-a+crc+crypto -mtune=neoverse-v1")
@@ -58,7 +59,7 @@ if (USE_CPU_EXTENSIONS)
             _mm256_permutevar8x32_epi32(vec, vec);
 
             return 0;
-        }"  AWS_HAVE_AVX2_INTRINSICS)          
+        }"  AWS_HAVE_AVX2_INTRINSICS)
 
     check_c_source_compiles("
         #include <immintrin.h>
