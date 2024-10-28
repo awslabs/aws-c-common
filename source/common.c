@@ -358,26 +358,33 @@ void aws_common_library_init(struct aws_allocator *allocator) {
             } else {
                 AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_available() failed to load");
             }
-
-            *(void **)(&g_numa_num_configured_nodes_ptr) = dlsym(g_libnuma_handle, "numa_num_configured_nodes");
-            if (g_numa_num_configured_nodes_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() loaded");
+            if (g_numa_available_ptr() == -1) {
+                AWS_LOGF_INFO(
+                    AWS_LS_COMMON_GENERAL,
+                    "static: numa_available() returns -1, numa functions are not available. Skip loading the other "
+                    "numa functions.");
+                AWS_FATAL_ASSERT(-1);
             } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() failed to load");
-            }
+                *(void **)(&g_numa_num_configured_nodes_ptr) = dlsym(g_libnuma_handle, "numa_num_configured_nodes");
+                if (g_numa_num_configured_nodes_ptr) {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() loaded");
+                } else {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_configured_nodes() failed to load");
+                }
 
-            *(void **)(&g_numa_num_possible_cpus_ptr) = dlsym(g_libnuma_handle, "numa_num_possible_cpus");
-            if (g_numa_num_possible_cpus_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() failed to load");
-            }
+                *(void **)(&g_numa_num_possible_cpus_ptr) = dlsym(g_libnuma_handle, "numa_num_possible_cpus");
+                if (g_numa_num_possible_cpus_ptr) {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() loaded");
+                } else {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_num_possible_cpus() failed to load");
+                }
 
-            *(void **)(&g_numa_node_of_cpu_ptr) = dlsym(g_libnuma_handle, "numa_node_of_cpu");
-            if (g_numa_node_of_cpu_ptr) {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() loaded");
-            } else {
-                AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() failed to load");
+                *(void **)(&g_numa_node_of_cpu_ptr) = dlsym(g_libnuma_handle, "numa_node_of_cpu");
+                if (g_numa_node_of_cpu_ptr) {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() loaded");
+                } else {
+                    AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: numa_node_of_cpu() failed to load");
+                }
             }
 
         } else {
