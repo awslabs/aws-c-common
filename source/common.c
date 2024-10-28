@@ -363,7 +363,6 @@ void aws_common_library_init(struct aws_allocator *allocator) {
                     AWS_LS_COMMON_GENERAL,
                     "static: numa_available() returns -1, numa functions are not available. Skip loading the other "
                     "numa functions.");
-                AWS_FATAL_ASSERT(-1);
             } else {
                 *(void **)(&g_numa_num_configured_nodes_ptr) = dlsym(g_libnuma_handle, "numa_num_configured_nodes");
                 if (g_numa_num_configured_nodes_ptr) {
