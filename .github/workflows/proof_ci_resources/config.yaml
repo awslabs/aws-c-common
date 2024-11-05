@@ -1,8 +1,8 @@
 # Use exact versions (instead of "latest") so we're not broken by surprise upgrades.
-cadical-tag: "rel-2.0.0" # tag of latest release: https://github.com/arminbiere/cadical/releases
-cbmc-version: "6.2.0" # semver of latest release: https://github.com/diffblue/cbmc/releases
-cbmc-viewer-version: "3.9" # semver of latest release: https://github.com/model-checking/cbmc-viewer/releases
-kissat-tag: "rel-4.0.0" # tag of latest release: https://github.com/arminbiere/kissat/releases
+cadical-tag: "rel-2.1.0" # tag of latest release: https://github.com/arminbiere/cadical/releases
+cbmc-version: "6.3.1" # semver of latest release: https://github.com/diffblue/cbmc/releases
+cbmc-viewer-version: "3.10" # semver of latest release: https://github.com/model-checking/cbmc-viewer/releases
+kissat-tag: "rel-4.0.1" # tag of latest release: https://github.com/arminbiere/kissat/releases
 litani-version: "1.29.0" # semver of latest release: https://github.com/awslabs/aws-build-accumulator/releases
 proofs-dir: verification/cbmc/proofs
 run-cbmc-proofs-command: ./run-cbmc-proofs.py
