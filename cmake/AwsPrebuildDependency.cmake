@@ -99,7 +99,7 @@ function(aws_get_cmd_arguments_for_prebuild_dependency)
         if ("${currentHelpString}" MATCHES "No help, variable specified on the command line.")
             if("${var}" IN_LIST variables_to_ignore)
                 # TODO Remove.
-                cmake(WARNING "Ignoring ${var}")
+                message(WARNING "Ignoring ${var}")
                 continue()
             endif()
             set(escaped_var ${${var}})
