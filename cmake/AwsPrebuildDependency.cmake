@@ -93,10 +93,15 @@ function(aws_get_cmd_arguments_for_prebuild_dependency)
 
     set(variables_to_ignore CMAKE_INSTALL_PREFIX)
 
+    # project() call hides these vars.
+    set(variables_to_always_collect CMAKE_TOOLCHAIN_FILE)
+
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
         get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-        if ("${currentHelpString}" MATCHES "No help, variable specified on the command line.")
+        message(WARNING "=== aws_get_cmd_arguments_for_prebuild_dependency: processing ${var}: ${currentHelpString}")
+        if ("${currentHelpString}" MATCHES "No help, variable specified on the command line."
+                OR "${var}" IN_LIST variables_to_always_collect)
             if("${var}" IN_LIST variables_to_ignore)
                 # TODO Remove.
                 message(WARNING "Ignoring ${var}")
