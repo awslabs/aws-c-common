@@ -13,11 +13,11 @@ function(aws_prebuild_dependency)
     set(multiValueArgs CMAKE_ARGUMENTS)
     cmake_parse_arguments(AWS_PREBUILD "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if(NOT AWS_PREBUILD_DEPENDENCY_NAME)
+    if (NOT AWS_PREBUILD_DEPENDENCY_NAME)
         message(FATAL_ERROR "Missing DEPENDENCY_NAME argument in prebuild_dependency function")
     endif()
 
-    if(NOT AWS_PREBUILD_SOURCE_DIR)
+    if (NOT AWS_PREBUILD_SOURCE_DIR)
         message(FATAL_ERROR "Missing SOURCE_DIR argument in prebuild_dependency function")
     endif()
 
@@ -54,7 +54,7 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
 
     # Append provided arguments to CMake command.
-    if(AWS_PREBUILD_CMAKE_ARGUMENTS)
+    if (AWS_PREBUILD_CMAKE_ARGUMENTS)
         list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
     endif()
 
@@ -84,6 +84,10 @@ function(aws_prebuild_dependency)
     # Make the installation visible for others.
     list(INSERT CMAKE_PREFIX_PATH 0 ${depInstallDir}/)
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} PARENT_SCOPE)
+    if (CMAKE_CROSSCOMPILING)
+        list(INSERT CMAKE_FIND_ROOT_PATH 0 ${depInstallDir})
+        set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} PARENT_SCOPE)
+    endif()
 
     set(${AWS_PREBUILD_DEPENDENCY_NAME}_PREBUILT TRUE CACHE INTERNAL "Indicate that dependency is built and can be used")
 
@@ -113,7 +117,7 @@ function(aws_get_cmd_arguments_for_prebuild_dependency AWS_CMAKE_CMD_ARGS)
     foreach(var ${vars})
         get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
         if ("${currentHelpString}" MATCHES "No help, variable specified on the command line.")
-            if("${var}" IN_LIST variablesToIgnore)
+            if ("${var}" IN_LIST variablesToIgnore)
                 continue()
             endif()
             set(escaped_var ${${var}})
