@@ -48,6 +48,11 @@ function(aws_prebuild_dependency)
     if (CMAKE_TOOLCHAIN_FILE)
         list(APPEND cmakeCommand -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
     endif()
+
+    # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
+    # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
+    list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
+
     # Append provided arguments to CMake command.
     if(AWS_PREBUILD_CMAKE_ARGUMENTS)
         list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
