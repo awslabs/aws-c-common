@@ -44,16 +44,18 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH})
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
+    list(APPEND cmakeCommand -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS})
     if (CMAKE_TOOLCHAIN_FILE)
         list(APPEND cmakeCommand -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
     endif()
+
+    message(STATUS "cmake command for dependency ${AWS_PREBUILD_DEPENDENCY_NAME}: ${cmakeCommand}")
 
     # Configure dependency project.
     execute_process(
         COMMAND ${cmakeCommand}
         WORKING_DIRECTORY ${depBinaryDir}
         RESULT_VARIABLE result
-        COMMAND_ECHO STDOUT
     )
 
     if (NOT ${result} EQUAL 0)
