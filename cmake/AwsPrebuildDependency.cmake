@@ -48,6 +48,10 @@ function(aws_prebuild_dependency)
     if (CMAKE_TOOLCHAIN_FILE)
         list(APPEND cmakeCommand -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
     endif()
+    # Append provided arguments to CMake command.
+    if(AWS_PREBUILD_CMAKE_ARGUMENTS)
+        list(APPEND cmakeCommand ${AWS_PREBUILD_CMAKE_ARGUMENTS})
+    endif()
 
     message(STATUS "cmake command for dependency ${AWS_PREBUILD_DEPENDENCY_NAME}: ${cmakeCommand}")
 
