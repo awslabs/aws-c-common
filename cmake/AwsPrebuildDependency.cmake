@@ -105,8 +105,8 @@ endfunction()
 # phrase since at least v3.0.
 # Via https://cmake.org/pipermail/cmake/2018-January/067002.html
 #
-# NOTE The project() call resets help strings for some variables (e.g. CMAKE_TOOLCHAIN_FILE). All these variables are
-# passed explicitly in aws_prebuild_dependency function.
+# NOTE The project() call resets help strings for some variables (e.g. CMAKE_TOOLCHAIN_FILE). Some of these variables,
+# that we think are important for the dependencies, are passed explicitly in aws_prebuild_dependency function.
 #
 # Populate variable referred by AWS_CMAKE_CMD_ARGS with command line variables and their values.
 function(aws_get_cmd_arguments_for_prebuild_dependency AWS_CMAKE_CMD_ARGS)
