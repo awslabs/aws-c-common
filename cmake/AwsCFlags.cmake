@@ -254,11 +254,13 @@ function(aws_set_common_properties target)
     set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
 
     # Don't hide symbols in Debug builds.
-    # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility - 
-    # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.). 
     # We do this so that backtraces are more likely to show function names.
     # We mostly use backtraces to diagnose memory leaks.
-    if ((NOT CMAKE_BUILD_TYPE STREQUAL "Debug") AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.0"))
-        set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility - 
+        # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.). 
+        if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "5.0"))
+            set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+        endif ()
     endif ()
 endfunction()
