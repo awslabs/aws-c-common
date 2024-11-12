@@ -165,9 +165,8 @@ static int s_xml_parser_siblings_with_text_test(struct aws_allocator *allocator,
 
 AWS_TEST_CASE(xml_parser_siblings_with_text, s_xml_parser_siblings_with_text_test)
 
-const char *siblings_with_empty_tag =
-    "<?xml version=\"1.0\" "
-    "encoding=\"UTF-8\"?><rootNode><child1 /><child2>TestBody2</child2></rootNode>";
+const char *siblings_with_empty_tag = "<?xml version=\"1.0\" "
+                                      "encoding=\"UTF-8\"?><rootNode><child1 /><child2>TestBody2</child2></rootNode>";
 
 static int s_xml_parser_child_empty_tag(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
@@ -186,7 +185,8 @@ static int s_xml_parser_child_empty_tag(struct aws_allocator *allocator, void *c
     const char expected_name2[] = "child2";
     const char expected_value2[] = "TestBody2";
 
-    ASSERT_BIN_ARRAYS_EQUALS(expected_name1, sizeof(expected_name1) - 1, capture.node_name1.ptr, capture.node_name1.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_name1, sizeof(expected_name1) - 1, capture.node_name1.ptr, capture.node_name1.len);
     ASSERT_PTR_EQUALS(capture.capture1.ptr, NULL);
     ASSERT_UINT_EQUALS(capture.capture1.len, 0);
 
