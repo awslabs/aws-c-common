@@ -161,8 +161,10 @@ int s_advance_to_closing_tag(
     AWS_PRECONDITION(node);
 
     if (node->is_empty) {
-        out_body->ptr = NULL;
-        out_body->len = 0;
+        if (out_body) {
+            out_body->ptr = NULL;
+            out_body->len = 0;
+        }
         return AWS_OP_SUCCESS;
     }
 
