@@ -173,6 +173,8 @@ static int s_xml_parser_child_empty_tag(struct aws_allocator *allocator, void *c
     struct sibling_text_capture capture;
     AWS_ZERO_STRUCT(capture);
 
+    capture.capture1 = aws_byte_cursor_from_c_str("random values");
+
     struct aws_xml_parser_options options = {
         .doc = aws_byte_cursor_from_c_str(siblings_with_empty_tag),
         .on_root_encountered = s_root_with_child_siblings,
