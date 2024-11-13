@@ -33,7 +33,7 @@ function(aws_prebuild_dependency)
     # Get the list of variables passed to cmake via command line.
     # Some of the variables could be missed due to how cmake determines these variables, but they'll be handled below explicitly.
     set(cmakeCmdArgs "")
-    aws_get_cmd_arguments_for_prebuild_dependency(cmakeCmdArgs)
+    aws_get_variables_for_prebuild_dependency(cmakeCmdArgs)
     list(APPEND cmakeCommand ${cmakeCmdArgs})
 
     # Specify variables that could be missed by aws_get_cmd_arguments_for_prebuild_dependency. Passing the same variable
@@ -44,11 +44,6 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH})
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
-    list(APPEND cmakeCommand -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS})
-    if (CMAKE_TOOLCHAIN_FILE)
-        list(APPEND cmakeCommand -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
-    endif()
-
     # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
     # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
     list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
@@ -59,7 +54,6 @@ function(aws_prebuild_dependency)
     endif()
 
     message(STATUS "cmake command for dependency ${AWS_PREBUILD_DEPENDENCY_NAME}: ${cmakeCommand}")
-
     # Configure dependency project.
     execute_process(
         COMMAND ${cmakeCommand}
@@ -99,33 +93,29 @@ function(aws_prebuild_dependency)
     )
 endfunction()
 
-# Get list of variables provided via command line arguments (i.e. passed as -DVARIABLE=VALUE). This function iterates
-# over all variables and determines if they're provided via command line or not by checking their help strings. CMake
-# sets help strings for variables provided via command line to the "No help, variable specified on the command line."
-# phrase since at least v3.0.
-# Via https://cmake.org/pipermail/cmake/2018-January/067002.html
-#
-# NOTE The project() call resets help strings for some variables (e.g. CMAKE_TOOLCHAIN_FILE). Some of these variables,
-# that we think are important for the dependencies, are passed explicitly in aws_prebuild_dependency function.
-#
-# Populate variable referred by AWS_CMAKE_CMD_ARGS with command line variables and their values.
-function(aws_get_cmd_arguments_for_prebuild_dependency AWS_CMAKE_CMD_ARGS)
-    set(cmdVars "")
+# Get list of optional variables that may affect build process.
+function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
+    set(variables "")
     set(variablesToIgnore CMAKE_INSTALL_PREFIX)
 
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
-        get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-        if ("${currentHelpString}" MATCHES "No help, variable specified on the command line.")
-            if ("${var}" IN_LIST variablesToIgnore)
-                continue()
-            endif()
+        message("= Checking ${var}")
+        if (var MATCHES "^(CMAKE_)?ANDROID_"
+                OR var STREQUAL "CMAKE_TOOLCHAIN_FILE"
+                OR var STREQUAL "CMAKE_SYSTEM_NAME"
+                OR var STREQUAL "CMAKE_SYSTEM_VERSION"
+                OR var STREQUAL "CMAKE_C_COMPILER"
+                OR var STREQUAL "CMAKE_CXX_COMPILER"
+                OR var STREQUAL "CMAKE_C_FLAGS"
+                OR var STREQUAL "CMAKE_MAKE_PROGRAM"
+                OR var STREQUAL "CMAKE_RUNTIME_OUTPUT_DIRECTORY"
+                OR var STREQUAL "CMAKE_LIBRARY_OUTPUT_DIRECTORY")
             set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
-            list(APPEND AWS_CMAKE_CMD_ARGS "-D${var}=${escapedVar}")
+            list(APPEND variables "-D${var}=${escapedVar}")
         endif()
     endforeach()
-    # Store cmd variables in the cache.
-    set(${AWS_CMAKE_CMD_ARGS} ${cmdVars} PARENT_SCOPE)
+    set(${AWS_CMAKE_PREBUILD_ARGS} ${variables} PARENT_SCOPE)
 endfunction()
