@@ -30,14 +30,12 @@ function(aws_prebuild_dependency)
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
     set(cmakeCommand "${CMAKE_COMMAND}")
 
-    # Get the list of variables passed to cmake via command line.
-    # Some of the variables could be missed due to how cmake determines these variables, but they'll be handled below explicitly.
-    set(cmakeCmdArgs "")
-    aws_get_variables_for_prebuild_dependency(cmakeCmdArgs)
-    list(APPEND cmakeCommand ${cmakeCmdArgs})
+    # Get the list of optional variables that may affect build process.
+    set(cmakeOptionalVariables "")
+    aws_get_variables_for_prebuild_dependency(cmakeOptionalVariables)
+    list(APPEND cmakeCommand ${cmakeOptionalVariables})
 
-    # Specify variables that could be missed by aws_get_cmd_arguments_for_prebuild_dependency. Passing the same variable
-    # twice with the same value is not an error, so no checks needed.
+    # The following variables should always be used.
     list(APPEND cmakeCommand ${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${ESCAPED_PREFIX_PATH})
@@ -45,7 +43,7 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH})
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
     # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
-    # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
+    # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM) or no make program could be found at all.
     list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
 
     # Append provided arguments to CMake command.
