@@ -96,6 +96,12 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
     set(variablesToIgnore CMAKE_INSTALL_PREFIX)
 
+    # The CMake variables below were chosen for Unix-like platforms. If you want to use the prebuild logic on other
+    # platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT).
+    if (NOT UNIX OR APPLE)
+        message(FATAL_ERROR "aws_get_variables_for_prebuild_dependency is called for unsupported platform")
+    endif()
+
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
         message("= Checking ${var}")
