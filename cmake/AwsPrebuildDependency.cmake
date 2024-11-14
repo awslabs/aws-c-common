@@ -101,8 +101,12 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
         message("= Checking ${var}")
         if (var MATCHES "^(CMAKE_)?ANDROID_"
                 OR var STREQUAL "CMAKE_TOOLCHAIN_FILE"
-                OR var STREQUAL "CMAKE_SYSTEM_NAME"
-                OR var STREQUAL "CMAKE_SYSTEM_VERSION"
+                # CMAKE_CROSSCOMPILING will be set to true by CMake if the CMAKE_SYSTEM_NAME variable has been set
+                # manually. By checking CMAKE_CROSSCOMPILING, we handle a possible case when CMAKE_SYSTEM_NAME was set
+                # automatically to the host system.
+                # CMAKE_SYSTEM_VERSION is coupled with CMAKE_SYSTEM_NAME, so apply the same logic to it.
+                OR (var STREQUAL "CMAKE_SYSTEM_NAME" AND CMAKE_CROSSCOMPILING)
+                OR (var STREQUAL "CMAKE_SYSTEM_VERSION" AND CMAKE_CROSSCOMPILING)
                 OR var STREQUAL "CMAKE_C_COMPILER"
                 OR var STREQUAL "CMAKE_CXX_COMPILER"
                 OR var STREQUAL "CMAKE_C_FLAGS"
