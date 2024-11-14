@@ -93,7 +93,7 @@ function(aws_prebuild_dependency)
     )
 endfunction()
 
-# Get list of optional or platform_specific variables that may affect build process.
+# Get list of optional or platform-specific variables that may affect build process.
 function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
     set(variablesToIgnore CMAKE_INSTALL_PREFIX)
