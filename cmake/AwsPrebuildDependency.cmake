@@ -93,33 +93,44 @@ function(aws_prebuild_dependency)
     )
 endfunction()
 
-# Get list of optional variables that may affect build process.
+# Get list of optional or platform_specific variables that may affect build process.
 function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
     set(variablesToIgnore CMAKE_INSTALL_PREFIX)
 
-    # The CMake variables below were chosen for Unix-like platforms. If you want to use the prebuild logic on other
-    # platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT).
+    # The CMake variables below were chosen for Linux, BSD, and Android platforms. If you want to use the prebuild logic
+    # on other platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT). Refer to
+    # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html to update the list of handled variables, and
+    # then you can enable a new platform here.
     if (NOT UNIX OR APPLE)
         message(FATAL_ERROR "aws_get_variables_for_prebuild_dependency is called for unsupported platform")
     endif()
 
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
-        message("= Checking ${var}")
-        if (var MATCHES "^(CMAKE_)?ANDROID_"
-                OR var STREQUAL "CMAKE_TOOLCHAIN_FILE"
-                # CMAKE_CROSSCOMPILING will be set to true by CMake if the CMAKE_SYSTEM_NAME variable has been set
-                # manually. By checking CMAKE_CROSSCOMPILING, we handle a possible case when CMAKE_SYSTEM_NAME was set
-                # automatically to the host system.
-                # CMAKE_SYSTEM_VERSION is coupled with CMAKE_SYSTEM_NAME, so apply the same logic to it.
-                OR (var STREQUAL "CMAKE_SYSTEM_NAME" AND CMAKE_CROSSCOMPILING)
-                OR (var STREQUAL "CMAKE_SYSTEM_VERSION" AND CMAKE_CROSSCOMPILING)
-                OR var STREQUAL "CMAKE_C_COMPILER"
+        # Variables in this block make sense only in cross-compiling mode. The variable list is created from the CMake
+        # documentation on toolchains: https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html
+        # NOTE: Some variables are missed here (e.g. CMAKE_SYSROOT) because they can be set via toolchain file only.
+        if (CMAKE_CROSSCOMPILING AND (
+                var STREQUAL "CMAKE_TOOLCHAIN_FILE"
+                OR var STREQUAL "CMAKE_SYSTEM_NAME"
+                OR var STREQUAL "CMAKE_SYSTEM_VERSION"
+                OR var STREQUAL "CMAKE_SYSTEM_PROCESSOR"
+                # Android-specific variables.
+                OR var MATCHES "^(CMAKE_)?ANDROID_")
+            set(escaped_var ${${var}})
+            # To store a list within another list, it needs to be escaped first.
+            string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
+            list(APPEND variables "-D${var}=${escapedVar}")
+        endif()
+
+        # Other optional variables applicable both in cross-compiling and non-cross-compiling modes.
+        if (var STREQUAL "CMAKE_C_COMPILER"
                 OR var STREQUAL "CMAKE_CXX_COMPILER"
                 OR var STREQUAL "CMAKE_C_FLAGS"
                 OR var STREQUAL "CMAKE_MAKE_PROGRAM"
                 OR var STREQUAL "CMAKE_RUNTIME_OUTPUT_DIRECTORY"
+                OR var STREQUAL "CMAKE_ARCHIVE_OUTPUT_DIRECTORY"
                 OR var STREQUAL "CMAKE_LIBRARY_OUTPUT_DIRECTORY")
             set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
@@ -127,5 +138,6 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
             list(APPEND variables "-D${var}=${escapedVar}")
         endif()
     endforeach()
+
     set(${AWS_CMAKE_PREBUILD_ARGS} ${variables} PARENT_SCOPE)
 endfunction()
