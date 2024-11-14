@@ -30,7 +30,7 @@ function(aws_prebuild_dependency)
     # For execute_process to accept a dynamically constructed command, it should be passed in a list format.
     set(cmakeCommand "${CMAKE_COMMAND}")
 
-    # Get the list of optional variables that may affect build process.
+    # Get the list of optional and platform-specific variables that may affect build process.
     set(cmakeOptionalVariables "")
     aws_get_variables_for_prebuild_dependency(cmakeOptionalVariables)
     list(APPEND cmakeCommand ${cmakeOptionalVariables})
