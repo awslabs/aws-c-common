@@ -44,7 +44,9 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
     # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
     # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM) or no make program could be found at all.
-    list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
+    if (CMAKE_GENERATOR)
+        list(APPEND cmakeCommand -G${CMAKE_GENERATOR})
+    endif()
 
     # Append provided arguments to CMake command.
     if (AWS_PREBUILD_CMAKE_ARGUMENTS)
