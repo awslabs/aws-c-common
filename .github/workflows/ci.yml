@@ -319,8 +319,8 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-      - uses: actions/checkout@v3
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+    - uses: actions/checkout@v3
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
         uses: cross-platform-actions/action@v0.20.0
         with:
           operating_system: openbsd
@@ -342,10 +342,10 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
         uses: cross-platform-actions/action@v0.20.0
         with:
           operating_system: freebsd
