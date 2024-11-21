@@ -17,7 +17,7 @@ env:
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         compiler:
@@ -57,6 +57,7 @@ jobs:
           - clang-10
           - clang-11
           - clang-15
+          - clang-17
           - gcc-4.8
           - gcc-5
           - gcc-6
@@ -96,7 +97,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build downstream -p ${{ env.PACKAGE_NAME }}
 
   clang-sanitizers:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
@@ -114,7 +115,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
 
   linux-shared-libs:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     permissions:
       id-token: write # This is required for requesting the JWT
     steps:
@@ -129,7 +130,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DBUILD_SHARED_LIBS=ON
 
   linux-no-cpu-extensions:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     permissions:
       id-token: write # This is required for requesting the JWT
     steps:
@@ -310,7 +311,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
   openbsd:
-    runs-on: ubuntu-latest  # unit tests hang on macos; use ubuntu instead
+    runs-on: ubuntu-22.04  # unit tests hang on macos; use ubuntu instead
     permissions:
       id-token: write # This is required for requesting the JWT
     steps:
@@ -333,7 +334,7 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }}
 
   freebsd:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       id-token: write # This is required for requesting the JWT
     steps:
@@ -358,7 +359,7 @@ jobs:
 
   cross_compile:
     name: Cross Compile ${{matrix.arch}}
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
@@ -378,7 +379,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --target=${{matrix.arch}}
 
   linux-debug:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     permissions:
       id-token: write # This is required for requesting the JWT
     steps:
