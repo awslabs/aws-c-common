@@ -13,7 +13,7 @@ env:
   LINUX_BASE_IMAGE: ubuntu-18-x64
   RUN: ${{ github.run_id }}-${{ github.run_number }}
   CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
-  AWS_REGION: us-east-1
+  AWS_DEFAULT_REGION: us-east-1
 
 jobs:
   linux-compat:
