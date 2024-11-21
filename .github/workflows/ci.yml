@@ -321,16 +321,16 @@ jobs:
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - uses: actions/checkout@v3
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        uses: cross-platform-actions/action@v0.20.0
-        with:
-          operating_system: openbsd
-          version: '7.2'
-          shell: bash
-          run: |
-            sudo pkg_add py3-urllib3
-            python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
-            chmod a+x builder
-            ./builder build -p ${{ env.PACKAGE_NAME }}
+      uses: cross-platform-actions/action@v0.20.0
+      with:
+        operating_system: openbsd
+        version: '7.2'
+        shell: bash
+        run: |
+          sudo pkg_add py3-urllib3
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }}
 
   freebsd:
     runs-on: ubuntu-latest
@@ -343,18 +343,18 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - uses: actions/checkout@v3
-        with:
-          submodules: true
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        uses: cross-platform-actions/action@v0.20.0
-        with:
-          operating_system: freebsd
-          version: '13.2'
-          run: |
-            sudo pkg install -y python3 devel/py-pip net/py-urllib3 cmake
-            python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
-            chmod a+x builder
-            ./builder build -p ${{ env.PACKAGE_NAME }}
+      uses: cross-platform-actions/action@v0.20.0
+      with:
+        operating_system: freebsd
+        version: '13.2'
+        run: |
+          sudo pkg install -y python3 devel/py-pip net/py-urllib3 cmake
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }}
 
   cross_compile:
     name: Cross Compile ${{matrix.arch}}
