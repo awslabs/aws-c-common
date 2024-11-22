@@ -20,10 +20,10 @@ permissions:
 
 x-step-template: &configure-aws-credentials
   - name: Configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ env.CRT_CI_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      role-to-assume: ${{ env.CRT_CI_ROLE }}
+      aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
 jobs:
   linux-compat:
