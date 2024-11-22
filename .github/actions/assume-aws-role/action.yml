@@ -8,8 +8,6 @@ name: 'Assume Role'
 description: 'Assume AWS Role to be used during workflows'
 runs:
   using: "composite"
-  permissions:
-    id-token: write # This is required for requesting the JWT
   steps:
     - name: configure AWS credentials (containers)
       uses: aws-actions/configure-aws-credentials@v4
