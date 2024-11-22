@@ -32,7 +32,7 @@ jobs:
           - rhel8-x64
           - al2-x64
     steps:
-    - uses: ./.github/actions/assume-aws-role
+    - uses: .github/actions/assume-aws-role
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
