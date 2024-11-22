@@ -18,13 +18,6 @@ env:
 permissions:
   id-token: write # This is required for requesting the JWT
 
-x-step-template: &configure-aws-credentials
-  - name: Configure AWS credentials (containers)
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      role-to-assume: ${{ env.CRT_CI_ROLE }}
-      aws-region: ${{ env.AWS_DEFAULT_REGION }}
-
 jobs:
   linux-compat:
     runs-on: ubuntu-22.04 # latest
@@ -42,7 +35,10 @@ jobs:
           - rhel8-x64
           - al2-x64
     steps:
-    - uses: *configure-aws-credentials
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
@@ -69,15 +65,11 @@ jobs:
           - gcc-8
           - gcc-11
           - gcc-13
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
@@ -87,11 +79,8 @@ jobs:
   # This should not be required because we can run into a chicken and egg problem if there is a change that needs some fix in a downstream repo.
   downstream:
     runs-on: ubuntu-22.04 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -105,11 +94,8 @@ jobs:
     strategy:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -120,11 +106,8 @@ jobs:
 
   linux-shared-libs:
     runs-on: ubuntu-22.04 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -135,11 +118,8 @@ jobs:
 
   linux-no-cpu-extensions:
     runs-on: ubuntu-22.04 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -150,11 +130,8 @@ jobs:
 
   windows:
     runs-on: windows-2022 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -168,11 +145,8 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -186,11 +160,8 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -204,11 +175,8 @@ jobs:
     strategy:
       matrix:
         arch: [x86, x64]
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -219,11 +187,8 @@ jobs:
 
   windows-shared-libs:
     runs-on: windows-2022 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -234,11 +199,8 @@ jobs:
 
   windows-no-cpu-extensions:
     runs-on: windows-2022 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -249,11 +211,8 @@ jobs:
 
   windows-app-verifier:
     runs-on: windows-2022 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -268,11 +227,8 @@ jobs:
 
   macos-x64:
     runs-on: macos-14-large # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -284,11 +240,8 @@ jobs:
 
   macos:
     runs-on: macos-14 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -300,11 +253,8 @@ jobs:
 
   macos-no-cpu-extensions:
     runs-on: macos-14 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -316,15 +266,12 @@ jobs:
 
   openbsd:
     runs-on: ubuntu-22.04  # unit tests hang on macos; use ubuntu instead
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       uses: cross-platform-actions/action@v0.20.0
       with:
@@ -339,15 +286,12 @@ jobs:
 
   freebsd:
     runs-on: ubuntu-22.04
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -367,12 +311,8 @@ jobs:
     strategy:
       matrix:
         arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
-
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -384,11 +324,8 @@ jobs:
 
   linux-debug:
     runs-on: ubuntu-22.04 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -399,11 +336,8 @@ jobs:
 
   windows-debug:
     runs-on: windows-2022 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -414,11 +348,8 @@ jobs:
 
   macos-debug:
     runs-on: macos-14 # latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
