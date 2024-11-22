@@ -31,14 +31,8 @@ jobs:
           - opensuse-leap
           - rhel8-x64
           - al2-x64
-    permissions:
-      id-token: write # This is required for requesting the JWT
     steps:
-    - name: configure AWS credentials (containers)
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ env.CRT_CI_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - uses: ./.github/actions/assume-aws-role.yml
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
