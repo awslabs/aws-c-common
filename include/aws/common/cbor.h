@@ -374,7 +374,7 @@ int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decode
  * Specifically:
  *  AWS_CBOR_TYPE_UINT - aws_cbor_decoder_pop_next_unsigned_int_val
  *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_next_negative_int_val, it represents (-1 - *out)
- *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_double_val
+ *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_float_val
  *  AWS_CBOR_TYPE_BYTES - aws_cbor_decoder_pop_next_bytes_val
  *  AWS_CBOR_TYPE_TEXT - aws_cbor_decoder_pop_next_text_val
  *
