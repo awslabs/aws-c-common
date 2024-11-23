@@ -327,7 +327,7 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
  * @brief Consume the next data item, includes all the content within the data item.
  *
  * As an example for the following cbor, this function will consume all the data
- * as it's only one cbor data item, an indefinite map with 2 key, value pair:
+ * as it's only one cbor data item, an indefinite map with 2 <key, value> pair:
  * 0xbf6346756ef563416d7421ff
  * BF           -- Start indefinite-length map
  *   63        -- First key, UTF-8 string length 3
