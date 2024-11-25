@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.72  
+  BUILDER_VERSION: v0.9.72
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
