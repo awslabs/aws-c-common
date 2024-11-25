@@ -117,10 +117,11 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
                 OR var STREQUAL "CMAKE_SYSTEM_PROCESSOR"
                 # Android-specific variables.
                 OR var MATCHES "^(CMAKE_)?ANDROID_"))
-            set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
-            list(APPEND variables "-D${var}=${escapedVar}")
+            if (escapedVar)
+                list(APPEND variables "-D${var}=${escapedVar}")
+            endif()
         endif()
 
         # Other optional variables applicable both in cross-compiling and non-cross-compiling modes.
@@ -138,10 +139,11 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
                 OR var MATCHES "^CMAKE_RUNTIME_OUTPUT_DIRECTORY"
                 OR var MATCHES "^CMAKE_ARCHIVE_OUTPUT_DIRECTORY"
                 OR var MATCHES "^CMAKE_LIBRARY_OUTPUT_DIRECTORY")
-            set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
-            list(APPEND variables "-D${var}=${escapedVar}")
+            if (escapedVar)
+                list(APPEND variables "-D${var}=${escapedVar}")
+            endif()
         endif()
     endforeach()
 
