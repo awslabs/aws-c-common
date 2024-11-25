@@ -124,13 +124,20 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
         endif()
 
         # Other optional variables applicable both in cross-compiling and non-cross-compiling modes.
+        # Refer to https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html for each variable description.
         if (var STREQUAL "CMAKE_C_COMPILER"
+                OR var MATCHES "^CMAKE_C_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
                 OR var STREQUAL "CMAKE_CXX_COMPILER"
-                OR var STREQUAL "CMAKE_C_FLAGS"
+                OR var MATCHES "^CMAKE_CXX_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
+                OR var STREQUAL "CMAKE_LINKER_TYPE"
+                OR var MATCHES "^CMAKE_EXE_LINKER_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
+                OR var MATCHES "^CMAKE_MODULE_LINKER_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
+                OR var MATCHES "^CMAKE_STATIC_LINKER_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
+                OR var MATCHES "^CMAKE_SHARED_LINKER_FLAGS(_DEBUG|_RELEASE|_RELWITHDEBINFO|_MINSIZEREL)?"
                 OR var STREQUAL "CMAKE_MAKE_PROGRAM"
-                OR var STREQUAL "CMAKE_RUNTIME_OUTPUT_DIRECTORY"
-                OR var STREQUAL "CMAKE_ARCHIVE_OUTPUT_DIRECTORY"
-                OR var STREQUAL "CMAKE_LIBRARY_OUTPUT_DIRECTORY")
+                OR var MATCHES "^CMAKE_RUNTIME_OUTPUT_DIRECTORY"
+                OR var MATCHES "^CMAKE_ARCHIVE_OUTPUT_DIRECTORY"
+                OR var MATCHES "^CMAKE_LIBRARY_OUTPUT_DIRECTORY")
             set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
