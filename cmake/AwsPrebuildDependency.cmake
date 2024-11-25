@@ -102,7 +102,7 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     # on other platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT). Refer to
     # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html to update the list of handled variables, and
     # then you can enable a new platform here.
-    if (NOT UNIX OR APPLE)
+    if ((NOT UNIX) OR APPLE)
         message(FATAL_ERROR "aws_get_variables_for_prebuild_dependency is called for unsupported platform")
     endif()
 
