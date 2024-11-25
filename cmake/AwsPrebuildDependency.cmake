@@ -96,7 +96,6 @@ endfunction()
 # Get list of optional or platform-specific variables that may affect build process.
 function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
-    set(variablesToIgnore CMAKE_INSTALL_PREFIX)
 
     # The CMake variables below were chosen for Linux, BSD, and Android platforms. If you want to use the prebuild logic
     # on other platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT). Refer to
