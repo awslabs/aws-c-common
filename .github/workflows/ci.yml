@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         compiler:
@@ -78,7 +78,7 @@ jobs:
   # Test downstream repos.
   # This should not be required because we can run into a chicken and egg problem if there is a change that needs some fix in a downstream repo.
   downstream:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -90,7 +90,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build downstream -p ${{ env.PACKAGE_NAME }}
 
   clang-sanitizers:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
@@ -105,7 +105,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
 
   linux-shared-libs:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -117,7 +117,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DBUILD_SHARED_LIBS=ON
 
   linux-no-cpu-extensions:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -265,7 +265,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DUSE_CPU_EXTENSIONS=OFF
 
   openbsd:
-    runs-on: ubuntu-22.04  # unit tests hang on macos; use ubuntu instead
+    runs-on: ubuntu-24.04  # unit tests hang on macos; use ubuntu instead
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -285,7 +285,7 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }}
 
   freebsd:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -307,7 +307,7 @@ jobs:
 
   cross_compile:
     name: Cross Compile ${{matrix.arch}}
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
@@ -323,7 +323,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --target=${{matrix.arch}}
 
   linux-debug:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
