@@ -467,6 +467,7 @@ add_test_case(xml_parser_nested_node_same_name_test)
 add_test_case(xml_parser_nested_node_deep_recursion_test)
 add_test_case(xml_parser_too_many_attributes_test)
 add_test_case(xml_parser_name_too_long_test)
+add_test_case(xml_parser_child_empty_tag)
 
 add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)
