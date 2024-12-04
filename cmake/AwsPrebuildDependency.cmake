@@ -36,6 +36,7 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand ${cmakeOptionalVariables})
 
     # The following variables should always be used.
+    list(APPEND cmakeCommand -B${depBinaryDir})
     list(APPEND cmakeCommand ${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${ESCAPED_PREFIX_PATH})
@@ -57,7 +58,6 @@ function(aws_prebuild_dependency)
     # Configure dependency project.
     execute_process(
         COMMAND ${cmakeCommand}
-        WORKING_DIRECTORY ${depBinaryDir}
         RESULT_VARIABLE result
     )
 
@@ -67,8 +67,7 @@ function(aws_prebuild_dependency)
 
     # Build and install dependency project into depInstallDir directory.
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build . --target install
-        WORKING_DIRECTORY ${depBinaryDir}
+        COMMAND ${CMAKE_COMMAND} --build ${depBinaryDir} --target install
         RESULT_VARIABLE result
     )
     if (NOT ${result} EQUAL 0)
