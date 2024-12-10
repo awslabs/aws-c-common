@@ -36,8 +36,8 @@ function(aws_prebuild_dependency)
     list(APPEND cmakeCommand ${cmakeOptionalVariables})
 
     # The following variables should always be used.
+    list(APPEND cmakeCommand -H${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -B${depBinaryDir})
-    list(APPEND cmakeCommand ${AWS_PREBUILD_SOURCE_DIR})
     list(APPEND cmakeCommand -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     list(APPEND cmakeCommand -DCMAKE_PREFIX_PATH=${ESCAPED_PREFIX_PATH})
     list(APPEND cmakeCommand -DCMAKE_INSTALL_PREFIX=${depInstallDir})
