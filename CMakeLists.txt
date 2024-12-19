@@ -278,12 +278,12 @@ else()
 endif()
 
 install(EXPORT "${PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake/${TARGET_DIR}"
+    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}/${TARGET_DIR}"
     NAMESPACE AWS::
     COMPONENT Development)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake"
+    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}"
     COMPONENT Development)
 
 list(APPEND EXPORT_MODULES
@@ -300,7 +300,7 @@ list(APPEND EXPORT_MODULES
     )
 
 install(FILES ${EXPORT_MODULES}
-        DESTINATION "${LIBRARY_DIRECTORY}/cmake"
+        DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}/modules"
         COMPONENT Development)
 
 # This should come last, to ensure all variables defined by cmake will be available for export
