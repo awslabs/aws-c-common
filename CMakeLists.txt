@@ -247,7 +247,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 
     unset(HEADER_DSTDIR)
 
-    foreach(POTENTIAL_PREFIX IN ITEMS ${GENERATED_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    foreach(POTENTIAL_PREFIX IN ITEMS "${GENERATED_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include")
         string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
         string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
         if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
@@ -261,7 +261,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
     endif()
 
     install(FILES ${HEADER_SRCPATH}
-            DESTINATION ${HEADER_DSTDIR}
+            DESTINATION "${INCLUDE_DIRECTORY}/${HEADER_DSTDIR}"
             COMPONENT Development)
 endforeach()
 
