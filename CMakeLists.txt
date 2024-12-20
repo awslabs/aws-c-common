@@ -3,7 +3,7 @@
 
 # As of October 2024, we picked 3.9 as our version because internally we still support RHEL5 and AL2012, and CMake 3.9
 # was the latest version available on those platforms.
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.9...3.31)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
