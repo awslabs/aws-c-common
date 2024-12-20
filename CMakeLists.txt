@@ -10,10 +10,6 @@ project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
-endif()
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
 include(AwsCheckHeaders)
