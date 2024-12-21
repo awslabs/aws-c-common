@@ -19,6 +19,7 @@ include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
 include(CTest)
+include(GNUInstallDirs)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -257,7 +258,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
     endif()
 
     install(FILES ${HEADER_SRCPATH}
-            DESTINATION "${INCLUDE_DIRECTORY}/${HEADER_DSTDIR}"
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${HEADER_DSTDIR}"
             COMPONENT Development)
 endforeach()
 
@@ -274,12 +275,12 @@ else()
 endif()
 
 install(EXPORT "${PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}/${TARGET_DIR}"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/${TARGET_DIR}"
     NAMESPACE AWS::
     COMPONENT Development)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     COMPONENT Development)
 
 list(APPEND EXPORT_MODULES
@@ -296,7 +297,7 @@ list(APPEND EXPORT_MODULES
     )
 
 install(FILES ${EXPORT_MODULES}
-        DESTINATION "${LIBRARY_DIRECTORY}/cmake/${PROJECT_NAME}/modules"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/modules"
         COMPONENT Development)
 
 # This should come last, to ensure all variables defined by cmake will be available for export
