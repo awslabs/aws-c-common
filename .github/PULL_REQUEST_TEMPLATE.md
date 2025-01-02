@@ -1,4 +1,4 @@
-*Issue #, if available:*
+*Issue #, and/or reason for changes (REQUIRED):*
 
 *Description of changes:*
 
