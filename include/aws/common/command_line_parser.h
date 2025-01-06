@@ -82,6 +82,11 @@ AWS_COMMON_API int aws_cli_getopt_long(
  */
 AWS_COMMON_API void aws_cli_reset_state(void);
 
+/*
+ * Returns the aws_cli_optarg variable
+ */
+AWS_COMMON_API char *aws_get_cli_optarg(void);
+
 /**
  * Dispatches the current command line arguments with a subcommand from the second input argument in argv[], if
  * dispatch table contains a command that matches the argument. When the command is dispatched, argc and argv will be

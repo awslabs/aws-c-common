@@ -15,6 +15,10 @@ bool aws_cli_on_arg = false;
 const char *aws_cli_optarg = NULL;
 const char *aws_cli_positional_arg = NULL;
 
+const char *aws_get_cli_optarg(void) {
+    return aws_cli_optarg;
+}
+
 static const struct aws_cli_option *s_find_option_from_char(
     const struct aws_cli_option *longopts,
     char search_for,
