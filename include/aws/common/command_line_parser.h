@@ -85,7 +85,7 @@ AWS_COMMON_API void aws_cli_reset_state(void);
 /*
  * Returns the aws_cli_optarg variable
  */
-AWS_COMMON_API char *aws_get_cli_optarg(void);
+AWS_COMMON_API const char *aws_get_cli_optarg(void);
 
 /**
  * Dispatches the current command line arguments with a subcommand from the second input argument in argv[], if
