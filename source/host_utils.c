@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include <aws/common/host_utils.h>
+#include <aws/common/logging.h>
 #include <aws/common/string.h>
 #include <inttypes.h>
-#include <aws/common/logging.h>
 
 #ifdef _MSC_VER /* Disable sscanf warnings on windows. */
 #    pragma warning(disable : 4204)
@@ -76,13 +76,12 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     bool is_split = aws_byte_cursor_next_split(&host, '%', &substr);
     AWS_ASSERT(is_split); /* function is guaranteed to return at least one split */
 
-    if (!is_split || substr.len < 2 || substr.len > 39 || 
-        !aws_byte_cursor_satisfies_pred(&substr, s_is_ipv6_char)) {
+    if (!is_split || substr.len < 2 || substr.len > 39 || !aws_byte_cursor_satisfies_pred(&substr, s_is_ipv6_char)) {
         return false;
     }
 
-    if ((substr.ptr[0] == ':' && substr.ptr[1] != ':') || /* no single colon at start */
-        (substr.ptr[substr.len - 1] == ':' && substr.ptr[substr.len - 2] != ':'))  { /* no single colon at end */ 
+    if ((substr.ptr[0] == ':' && substr.ptr[1] != ':') ||                           /* no single colon at start */
+        (substr.ptr[substr.len - 1] == ':' && substr.ptr[substr.len - 2] != ':')) { /* no single colon at end */
         return false;
     }
 
@@ -106,7 +105,7 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
         }
 
         if (digit_count > 4 || /* too many digits in group */
-            group_count > 8 ) { /* too many groups */
+            group_count > 8) { /* too many groups */
             return false;
         }
     }
