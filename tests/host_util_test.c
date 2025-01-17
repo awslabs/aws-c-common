@@ -50,10 +50,20 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1"), true));
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25en0"), true));
     ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8:85a3:8d3:1319:8a2e:370:7348"), true));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001::"), false));
+
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:DB8:85A3::8A2E:370:7334"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:85a3:0000:0000:8a2e:0370:7334"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:DB8:85A3::8A2E:370:7334"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("::ffff"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("::"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8:85a3:0:0:8a2e:370:7334"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("0:0:0:0:0:0:0:0"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8::"), false));
 
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370"), false));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370:"), false));
-    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001::"), false));
     ASSERT_FALSE(
         aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:0000:0000:0000:8a2e:0370:7334:8745"), false));
     ASSERT_FALSE(
@@ -68,6 +78,14 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("[fe80::1%25en0"), true));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25en0]"), true));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%25"), true));
+
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8:85a3:0000:0000:8a2e:0370:7334:1"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8:85a3:0000"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:0db8:85a3:0000:0000:8a2e:0370:7334:"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("g001:0db8:85a3:0000:0000:8a2e:0370:7334"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("2001:db8::85a3::1"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str(":2001:db8:85a3:0000:0000:8a2e:0370:7334"), false));
+    ASSERT_TRUE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("0:0:0:0:0:0:0:0"), false));
 
     return AWS_OP_SUCCESS;
 }

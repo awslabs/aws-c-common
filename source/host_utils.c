@@ -5,6 +5,7 @@
 #include <aws/common/host_utils.h>
 #include <aws/common/string.h>
 #include <inttypes.h>
+#include <aws/common/logging.h>
 
 #ifdef _MSC_VER /* Disable sscanf warnings on windows. */
 #    pragma warning(disable : 4204)
@@ -18,10 +19,6 @@
 
 static bool s_is_ipv6_char(uint8_t value) {
     return aws_isxdigit(value) || value == ':';
-}
-
-static bool s_ends_with(struct aws_byte_cursor cur, uint8_t ch) {
-    return cur.len > 0 && cur.ptr[cur.len - 1] == ch;
 }
 
 bool aws_host_utils_is_ipv4(struct aws_byte_cursor host) {
@@ -79,24 +76,39 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     bool is_split = aws_byte_cursor_next_split(&host, '%', &substr);
     AWS_ASSERT(is_split); /* function is guaranteed to return at least one split */
 
-    if (!is_split || substr.len == 0 || s_ends_with(substr, ':') ||
+    if (!is_split || substr.len < 2 || substr.len > 39 || 
         !aws_byte_cursor_satisfies_pred(&substr, s_is_ipv6_char)) {
         return false;
     }
 
-    uint8_t group_count = 0;
-    bool has_double_colon = false;
-    struct aws_byte_cursor group = {0};
-    while (aws_byte_cursor_next_split(&substr, ':', &group)) {
-        ++group_count;
+    if ((substr.ptr[0] == ':' && substr.ptr[1] != ':') || /* no single colon at start */
+        (substr.ptr[substr.len - 1] == ':' && substr.ptr[substr.len - 2] != ':'))  { /* no single colon at end */ 
+        return false;
+    }
 
-        if (group_count > 8 ||                                         /* too many groups */
-            group.len > 4 ||                                           /* too many chars in group */
-            (has_double_colon && group.len == 0 && group_count > 2)) { /* only one double colon allowed */
-            return false;
+    uint8_t group_count = 1; /* string itself is the first group and then every new : we encounter is new group */
+    uint8_t digit_count = 0;
+    bool has_double_colon = false;
+
+    for (size_t i = 0; i < substr.len; ++i) {
+        if (substr.ptr[i] == ':') {
+            ++group_count;
+            digit_count = 0;
+
+            if (i > 0 && substr.ptr[i - 1] == ':') {
+                if (has_double_colon) { /* one double colon max */
+                    return false;
+                }
+                has_double_colon = true;
+            }
+        } else {
+            ++digit_count;
         }
 
-        has_double_colon = has_double_colon || group.len == 0;
+        if (digit_count > 4 || /* too many digits in group */
+            group_count > 8 ) { /* too many groups */
+            return false;
+        }
     }
 
     /* second split is optional zone part */
@@ -110,5 +122,5 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
         }
     }
 
-    return has_double_colon ? group_count < 7 : group_count == 8;
+    return has_double_colon ? group_count <= 7 : group_count == 8;
 }
