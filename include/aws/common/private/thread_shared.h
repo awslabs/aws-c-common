@@ -37,8 +37,8 @@ AWS_COMMON_API void aws_thread_initialize_thread_management(void);
 AWS_COMMON_API size_t aws_thread_get_managed_thread_count(void);
 
 /**
- * The handler after fork in the child process.
+ * The handler before fork in the parent process.
  */
-void aws_pthread_atfork_on_fork_child(void);
+void aws_pthread_atfork_on_fork_prepare(void);
 
 #endif /* AWS_COMMON_PRIVATE_THREAD_SHARED_H */

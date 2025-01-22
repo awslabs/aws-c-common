@@ -166,16 +166,18 @@ void aws_thread_initialize_thread_management(void) {
     aws_linked_list_init(&s_pending_join_managed_threads);
 }
 
-void aws_pthread_atfork_on_fork_child(void) {
+void aws_pthread_atfork_on_fork_prepare(void) {
     /**
-     * The handler after fork in the child process.
+     * The handler before fork in the parent process.
      *
-     * Empty the s_pending_join_managed_threads, the list is created by the parent process and should not be used in
-     * child process.
+     * Clean up the s_pending_join_managed_threads now, the list is created by the parent process and should not be used
+     * in child process.
+     * Fork will copy the list, but not the real threads.
      */
     struct aws_linked_list empty;
     aws_linked_list_init(&empty);
     aws_mutex_lock(&s_managed_thread_lock);
     aws_linked_list_swap_contents(&empty, &s_pending_join_managed_threads);
     aws_mutex_unlock(&s_managed_thread_lock);
+    aws_thread_join_and_free_wrapper_list(&empty);
 }
