@@ -165,3 +165,17 @@ void aws_thread_pending_join_add(struct aws_linked_list_node *node) {
 void aws_thread_initialize_thread_management(void) {
     aws_linked_list_init(&s_pending_join_managed_threads);
 }
+
+void aws_pthread_atfork_on_fork_child(void) {
+    /**
+     * The handler after fork in the child process.
+     *
+     * Empty the s_pending_join_managed_threads, the list is created by the parent process and should not be used in
+     * child process.
+     */
+    struct aws_linked_list empty;
+    aws_linked_list_init(&empty);
+    aws_mutex_lock(&s_managed_thread_lock);
+    aws_linked_list_swap_contents(&empty, &s_pending_join_managed_threads);
+    aws_mutex_unlock(&s_managed_thread_lock);
+}
