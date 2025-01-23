@@ -13,57 +13,65 @@
 #include <stdlib.h>
 
 extern void aws_run_cpuid(uint32_t eax, uint32_t ecx, uint32_t *abcd);
+extern uint64_t aws_run_xgetbv(uint32_t xcr);
 
-typedef bool(has_feature_fn)(void);
+static bool s_cpu_features[AWS_CPU_FEATURE_COUNT];
+static bool s_cpu_features_cached;
 
-static bool s_has_clmul(void) {
+static void s_cache_cpu_features(void) {
+    /* First, find the max EAX value we can pass to CPUID without undefined behavior */
     uint32_t abcd[4];
-    uint32_t clmul_mask = 0x00000002;
-    aws_run_cpuid(1, 0, abcd);
+    aws_run_cpuid(0x0, 0x0, abcd);
+    const uint32_t max_cpuid_value = abcd[0]; /* EAX */
 
-    if ((abcd[2] & clmul_mask) != clmul_mask)
-        return false;
+#define RUN_CPUID_OR_RETURN(EAX, ECX)                                                                                  \
+    do {                                                                                                               \
+        if (max_cpuid_value < (EAX))                                                                                   \
+            return;                                                                                                    \
+        else                                                                                                           \
+            aws_run_cpuid((EAX), (ECX), abcd);                                                                         \
+    } while (0)
 
-    return true;
-}
+    /**************************************************************************
+     * CPUID(EAX=1H, ECX=0H): Processor Info and Feature Bits
+     **************************************************************************/
+    RUN_CPUID_OR_RETURN(0x1, 0x0);
+    s_cpu_features[AWS_CPU_FEATURE_CLMUL] = abcd[2] & (1 << 1);    /* ECX[bit 1] */
+    s_cpu_features[AWS_CPU_FEATURE_SSE_4_1] = abcd[2] & (1 << 19); /* ECX[bit 19] */
+    s_cpu_features[AWS_CPU_FEATURE_SSE_4_2] = abcd[2] & (1 << 20); /* ECX[bit 20] */
 
-static bool s_has_sse41(void) {
-    uint32_t abcd[4];
-    uint32_t sse41_mask = 0x00080000;
-    aws_run_cpuid(1, 0, abcd);
+    /* NOTE: Even if the AVX flag is set, it's not necessarily usable.
+     * We need to check that OSXSAVE is enabled, and check further capabilities via XGETBV.
+     * GCC had the same bug until 7.4: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85100 */
+    bool avx_usable = false;
+    bool avx512_usable = false;
+    bool feature_osxsave = abcd[2] & (1 << 27); /* ECX bit 27 */
+    if (feature_osxsave) {
+        uint64_t xcr0 = aws_run_xgetbv(0 /* 0 is _XCR_XFEATURE_ENABLED_MASK*/);
+        const uint64_t avx_mask = (1 << 1) /* SSE = XCR0[bit 1] */
+                                  | (1 << 2) /* AVX = XCR0[bit 2] */;
+        avx_usable = (xcr0 & avx_mask) == avx_mask;
 
-    if ((abcd[2] & sse41_mask) != sse41_mask)
-        return false;
-
-    return true;
-}
-
-static bool s_has_sse42(void) {
-    uint32_t abcd[4];
-    uint32_t sse42_mask = 0x00100000;
-    aws_run_cpuid(1, 0, abcd);
-
-    if ((abcd[2] & sse42_mask) != sse42_mask)
-        return false;
-
-    return true;
-}
-
-static bool s_has_avx2(void) {
-    uint32_t abcd[4];
-
-    /* Check AVX2:
-     * CPUID.(EAX=07H, ECX=0H):EBX.AVX2[bit 5]==1 */
-    uint32_t avx2_mask = (1 << 5);
-    aws_run_cpuid(7, 0, abcd);
-    if ((abcd[1] & avx2_mask) != avx2_mask) {
-        return false;
+        const uint64_t avx512_mask = (1 << 5)   /* OPMASK = XCR0[bit 5] */
+                                     | (1 << 6) /* ZMM_Hi256 = XCR0[bit 6] */
+                                     | (1 << 7) /* Hi16_ZMM = XCR0[bit 7] */
+                                     | avx_mask;
+        avx512_usable = (xcr0 & avx512_mask) == avx512_mask;
     }
 
-    /* Also check AVX:
-     * CPUID.(EAX=01H, ECX=0H):ECX.AVX[bit 28]==1
-     *
-     * NOTE: It SHOULD be impossible for a CPU to support AVX2 without supporting AVX.
+    bool feature_avx = false;
+    if (avx_usable) {
+        feature_avx = abcd[2] & (1 << 28); /* ECX bit 28 */
+    }
+
+    /***************************************************************************
+     * CPUID(EAX=7H, ECX=0H): Extended Features
+     **************************************************************************/
+    RUN_CPUID_OR_RETURN(0x7, 0x0);
+    s_cpu_features[AWS_CPU_FEATURE_BMI2] = abcd[1] & (1 << 8);        /* EBX[bit 8] */
+    s_cpu_features[AWS_CPU_FEATURE_VPCLMULQDQ] = abcd[2] & (1 << 10); /* ECX[bit 10] */
+
+    /* NOTE: It SHOULD be impossible for a CPU to support AVX2 without supporting AVX.
      * But we've received crash reports where the AVX2 feature check passed
      * and then an AVX instruction caused an "invalid instruction" crash.
      *
@@ -76,69 +84,21 @@ static bool s_has_avx2(void) {
      *
      * We don't know for sure what was up with those machines, but this extra
      * check should stop them from running our AVX/AVX2 code paths. */
-    uint32_t avx1_mask = (1 << 28);
-    aws_run_cpuid(1, 0, abcd);
-    if ((abcd[2] & avx1_mask) != avx1_mask) {
-        return false;
+    if (feature_avx) {
+        if (avx512_usable) {
+            s_cpu_features[AWS_CPU_FEATURE_AVX512] = abcd[1] & (1 << 16); /*  AVX-512 Foundation = EBX[bit 16] */
+        }
     }
-
-    return true;
 }
-
-static bool s_has_avx512(void) {
-    uint32_t abcd[4];
-
-    /* Check AVX512F:
-     * CPUID.(EAX=07H, ECX=0H):EBX.AVX512[bit 16]==1 */
-    uint32_t avx512_mask = (1 << 16);
-    aws_run_cpuid(7, 0, abcd);
-    if ((abcd[1] & avx512_mask) != avx512_mask) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool s_has_bmi2(void) {
-    uint32_t abcd[4];
-
-    /* Check BMI2:
-     * CPUID.(EAX=07H, ECX=0H):EBX.BMI2[bit 8]==1 */
-    uint32_t bmi2_mask = (1 << 8);
-    aws_run_cpuid(7, 0, abcd);
-    if ((abcd[1] & bmi2_mask) != bmi2_mask) {
-        return false;
-    }
-
-    return true;
-}
-
-static bool s_has_vpclmulqdq(void) {
-    uint32_t abcd[4];
-    /* Check VPCLMULQDQ:
-     * CPUID.(EAX=07H, ECX=0H):ECX.VPCLMULQDQ[bit 10]==1 */
-    uint32_t vpclmulqdq_mask = (1 << 10);
-    aws_run_cpuid(7, 0, abcd);
-    if ((abcd[2] & vpclmulqdq_mask) != vpclmulqdq_mask) {
-        return false;
-    }
-    return true;
-}
-
-has_feature_fn *s_check_cpu_feature[AWS_CPU_FEATURE_COUNT] = {
-    [AWS_CPU_FEATURE_CLMUL] = s_has_clmul,
-    [AWS_CPU_FEATURE_SSE_4_1] = s_has_sse41,
-    [AWS_CPU_FEATURE_SSE_4_2] = s_has_sse42,
-    [AWS_CPU_FEATURE_AVX2] = s_has_avx2,
-    [AWS_CPU_FEATURE_AVX512] = s_has_avx512,
-    [AWS_CPU_FEATURE_BMI2] = s_has_bmi2,
-    [AWS_CPU_FEATURE_VPCLMULQDQ] = s_has_vpclmulqdq,
-};
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
-    if (s_check_cpu_feature[feature_name])
-        return s_check_cpu_feature[feature_name]();
-    return false;
+    if (AWS_UNLIKELY(!s_cpu_features_cached)) {
+        s_cache_cpu_features();
+        s_cpu_features_cached = true;
+    }
+
+    AWS_ASSERT(feature_name >= 0 && feature_name < AWS_CPU_FEATURE_COUNT);
+    return s_cpu_features[feature_name];
 }
 
 #define CPUID_AVAILABLE 0
