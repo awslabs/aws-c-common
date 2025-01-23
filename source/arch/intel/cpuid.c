@@ -19,35 +19,36 @@ static bool s_cpu_features[AWS_CPU_FEATURE_COUNT];
 static bool s_cpu_features_cached;
 
 static void s_cache_cpu_features(void) {
-    /* First, find the max EAX value we can pass to CPUID without undefined behavior */
+    /***************************************************************************
+     * First, find the max EAX value we can pass to CPUID without undefined behavior
+     * https://en.wikipedia.org/w/index.php?title=CPUID&oldid=1270569388#EAX=0:_Highest_Function_Parameter_and_Manufacturer_ID
+     **************************************************************************/
     uint32_t abcd[4];
     aws_run_cpuid(0x0, 0x0, abcd);
-    const uint32_t max_cpuid_value = abcd[0]; /* EAX */
-
-#define RUN_CPUID_OR_RETURN(EAX, ECX)                                                                                  \
-    do {                                                                                                               \
-        if (max_cpuid_value < (EAX))                                                                                   \
-            return;                                                                                                    \
-        else                                                                                                           \
-            aws_run_cpuid((EAX), (ECX), abcd);                                                                         \
-    } while (0)
+    const uint32_t max_cpuid_eax_value = abcd[0]; /* max-value = EAX */
 
     /**************************************************************************
      * CPUID(EAX=1H, ECX=0H): Processor Info and Feature Bits
+     * https://en.wikipedia.org/w/index.php?title=CPUID&oldid=1270569388#EAX=1:_Processor_Info_and_Feature_Bits
      **************************************************************************/
-    RUN_CPUID_OR_RETURN(0x1, 0x0);
-    s_cpu_features[AWS_CPU_FEATURE_CLMUL] = abcd[2] & (1 << 1);    /* ECX[bit 1] */
-    s_cpu_features[AWS_CPU_FEATURE_SSE_4_1] = abcd[2] & (1 << 19); /* ECX[bit 19] */
-    s_cpu_features[AWS_CPU_FEATURE_SSE_4_2] = abcd[2] & (1 << 20); /* ECX[bit 20] */
+    if (0x1 > max_cpuid_eax_value) {
+        return;
+    }
+    aws_run_cpuid(0x1, 0x0, abcd);
+    s_cpu_features[AWS_CPU_FEATURE_CLMUL] = abcd[2] & (1 << 1);    /* pclmulqdq = ECX[bit 1] */
+    s_cpu_features[AWS_CPU_FEATURE_SSE_4_1] = abcd[2] & (1 << 19); /* sse4.1 = ECX[bit 19] */
+    s_cpu_features[AWS_CPU_FEATURE_SSE_4_2] = abcd[2] & (1 << 20); /* sse4.2 = ECX[bit 20] */
 
     /* NOTE: Even if the AVX flag is set, it's not necessarily usable.
      * We need to check that OSXSAVE is enabled, and check further capabilities via XGETBV.
      * GCC had the same bug until 7.4: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85100 */
     bool avx_usable = false;
     bool avx512_usable = false;
-    bool feature_osxsave = abcd[2] & (1 << 27); /* ECX bit 27 */
+    bool feature_osxsave = abcd[2] & (1 << 27); /* osxsave = ECX[bit 27] */
     if (feature_osxsave) {
-        uint64_t xcr0 = aws_run_xgetbv(0 /* 0 is _XCR_XFEATURE_ENABLED_MASK*/);
+        /* Check XCR0 (Extended Control Register 0) via XGETBV
+         * https://en.wikipedia.org/w/index.php?title=Control_register&oldid=1268423710#XCR0_and_XSS */
+        uint64_t xcr0 = aws_run_xgetbv(0);
         const uint64_t avx_mask = (1 << 1) /* SSE = XCR0[bit 1] */
                                   | (1 << 2) /* AVX = XCR0[bit 2] */;
         avx_usable = (xcr0 & avx_mask) == avx_mask;
@@ -61,15 +62,19 @@ static void s_cache_cpu_features(void) {
 
     bool feature_avx = false;
     if (avx_usable) {
-        feature_avx = abcd[2] & (1 << 28); /* ECX bit 28 */
+        feature_avx = abcd[2] & (1 << 28); /* avx = ECX[bit 28] */
     }
 
     /***************************************************************************
      * CPUID(EAX=7H, ECX=0H): Extended Features
+     * https://en.wikipedia.org/w/index.php?title=CPUID&oldid=1270569388#EAX=7,_ECX=0:_Extended_Features
      **************************************************************************/
-    RUN_CPUID_OR_RETURN(0x7, 0x0);
-    s_cpu_features[AWS_CPU_FEATURE_BMI2] = abcd[1] & (1 << 8);        /* EBX[bit 8] */
-    s_cpu_features[AWS_CPU_FEATURE_VPCLMULQDQ] = abcd[2] & (1 << 10); /* ECX[bit 10] */
+    if (0x7 > max_cpuid_eax_value) {
+        return;
+    }
+    aws_run_cpuid(0x7, 0x0, abcd);
+    s_cpu_features[AWS_CPU_FEATURE_BMI2] = abcd[1] & (1 << 8);        /* bmi2 = EBX[bit 8] */
+    s_cpu_features[AWS_CPU_FEATURE_VPCLMULQDQ] = abcd[2] & (1 << 10); /* vpclmulqdq = ECX[bit 10] */
 
     /* NOTE: It SHOULD be impossible for a CPU to support AVX2 without supporting AVX.
      * But we've received crash reports where the AVX2 feature check passed
@@ -92,6 +97,7 @@ static void s_cache_cpu_features(void) {
 }
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
+    /* Look up and cache all hardware features the first time this is called */
     if (AWS_UNLIKELY(!s_cpu_features_cached)) {
         s_cache_cpu_features();
         s_cpu_features_cached = true;
