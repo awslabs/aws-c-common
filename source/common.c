@@ -389,6 +389,9 @@ void aws_common_library_init(struct aws_allocator *allocator) {
         } else {
             AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: libnuma.so failed to load");
         }
+#endif
+
+#ifndef AWS_OS_WINDOWS
         if (pthread_atfork(aws_pthread_atfork_on_fork_prepare, NULL, NULL) != 0) {
             AWS_LOGF_INFO(AWS_LS_COMMON_GENERAL, "static: failed to register pthread at fork");
         }
