@@ -69,3 +69,6 @@ cmake-build*
 # CBMC files
 *.goto
 *.log
+
+# source code for system_info and other test apps
+!bin
