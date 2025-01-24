@@ -90,6 +90,9 @@ static void s_cache_cpu_features(void) {
      * We don't know for sure what was up with those machines, but this extra
      * check should stop them from running our AVX/AVX2 code paths. */
     if (feature_avx) {
+        if (avx_usable) {
+            s_cpu_features[AWS_CPU_FEATURE_AVX2] = abcd[1] & (1 << 5); /* AVX2 = EBX[bit 5] */
+        }
         if (avx512_usable) {
             s_cpu_features[AWS_CPU_FEATURE_AVX512] = abcd[1] & (1 << 16); /*  AVX-512 Foundation = EBX[bit 16] */
         }
