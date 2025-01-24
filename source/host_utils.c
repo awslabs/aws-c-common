@@ -108,7 +108,6 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
 
         if (digit_count > 4 || /* too many digits in group */
             group_count > 8) { /* too many groups */
-            AWS_LOGF_DEBUG(0, "here %d", group_count);
             return false;
         }
     }
