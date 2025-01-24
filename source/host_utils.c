@@ -65,6 +65,8 @@ static struct aws_byte_cursor s_percent_uri_enc = AWS_BYTE_CUR_INIT_FROM_STRING_
  * ipv6 can be embedded in url, in which case % must be uri encoded as %25.
  * Implementation is fairly trivial and just iterates through the string
  * keeping track of the spec above.
+ * Note: there is no single rfc for IPv6 address - base format defined in RFC 5952, 
+ * zoneId and uri extensions defined in RFC 6874 and RFC 3986
  */
 bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
     if (host.len == 0) {
@@ -99,6 +101,7 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
                     return false;
                 }
                 has_double_colon = true;
+                --group_count; /* avoid double counting groups */
             }
         } else {
             ++digit_count;
@@ -106,6 +109,7 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
 
         if (digit_count > 4 || /* too many digits in group */
             group_count > 8) { /* too many groups */
+            AWS_LOGF_DEBUG(0, "here %d", group_count);
             return false;
         }
     }
@@ -121,5 +125,5 @@ bool aws_host_utils_is_ipv6(struct aws_byte_cursor host, bool is_uri_encoded) {
         }
     }
 
-    return has_double_colon ? group_count <= 7 : group_count == 8;
+    return has_double_colon ? group_count <= 8 : group_count == 8;
 }
