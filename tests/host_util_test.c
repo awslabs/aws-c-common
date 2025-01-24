@@ -73,6 +73,8 @@ static int s_test_is_ipv6(struct aws_allocator *allocator, void *ctx) {
     ASSERT_FALSE(
         aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("z001:0db8:0000:0000:0000:8a2e:0370:7334:8745"), false));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("z001::8a2e::8745"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("1:2:3:4:5:6:7:8::"), false));
+    ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("::1:2:3:4:5:6:7:8"), false));
 
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%en0"), true));
     ASSERT_FALSE(aws_host_utils_is_ipv6(aws_byte_cursor_from_c_str("fe80::1%24en0"), true));
