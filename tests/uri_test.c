@@ -593,6 +593,19 @@ static int s_test_uri_port_too_large_parse(struct aws_allocator *allocator, void
 
 AWS_TEST_CASE(uri_port_too_large_parse, s_test_uri_port_too_large_parse);
 
+static int s_test_uri_single_colon_parse(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    const char *str_uri = ":";
+
+    struct aws_byte_cursor uri_csr = aws_byte_cursor_from_c_str(str_uri);
+    struct aws_uri uri;
+    ASSERT_SUCCESS(aws_uri_init_parse(&uri, allocator, &uri_csr));
+    aws_uri_clean_up(&uri);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(uri_single_colon_parse, s_test_uri_single_colon_parse);
+
 static int s_test_uri_builder(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     const char *str_uri =
