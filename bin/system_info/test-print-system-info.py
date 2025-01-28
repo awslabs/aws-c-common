@@ -23,16 +23,29 @@ def main():
     else:
         app = find_app(args.build_dir)
 
-    app_features_yesno: Dict[str, bool] = detect_features_from_app(app)
+    app_features_presence: Dict[str, bool] = detect_features_from_app(app)
 
     os_features_list = detect_features_from_os()
 
-    # TODO: compare app_features_yesno and os_features_list
+    for (feature, is_present) in app_features_presence.items():
+        if is_present:
+            if not feature in os_features_list:
+                exit(f"FAILED: aws-c-common thinks CPU supports '{feature}', " +
+                     "but OS doesn't seem to think so")
+        else:
+            if feature in os_features_list:
+                exit("FAILED: aws-c-common doesn't think CPU supports '{feature}', " +
+                     "but OS says it does")
+
+    print("SUCCESS: aws-c-common and OS agree on CPU features")
 
 
 def find_app(build_dir: Optional[str]) -> Path:
     if build_dir is None:
         build_dir = find_build_dir()
+    else:
+        build_dir = Path(build_dir)
+    build_dir = build_dir.absolute()
 
     app_name = 'print-sys-info'
     if os.name == 'nt':
@@ -41,7 +54,7 @@ def find_app(build_dir: Optional[str]) -> Path:
     for file in build_dir.glob(f"**/{app_name}"):
         return file
 
-    exit(f"FAILED: Can't find '{app_name}' under: {build_dir}."
+    exit(f"FAILED: Can't find '{app_name}' under: {build_dir}"
          "\nPass --build-dir to hint location.")
 
 
