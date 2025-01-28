@@ -114,6 +114,14 @@ def detect_features_from_app(app_path: Path) -> Dict[str, bool]:
             name = m.group(1)
             is_present = m.group(2) == 'true'
             features[name] = is_present
+
+    # if aws-c-common compiled with -DUSE_CPU_EXTENSIONS=OFF, skip this this test
+    for line in lines:
+        m = re.search(f"'use cpu extensions': false", line)
+        if m:
+            print("SKIP TEST: aws-c-common compiled with -DUSE_CPU_EXTENSIONS=OFF")
+            exit(0)
+
     if not features:
         raise RuntimeError("Cannot find features text in stdout ???")
 
