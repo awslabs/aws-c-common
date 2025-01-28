@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import platform
 import re
-from subprocess import run
+import subprocess
 from typing import Dict, List, Optional
 
 PARSER = argparse.ArgumentParser(
@@ -15,6 +15,14 @@ PARSER.add_argument("--build-dir",
                     help="Search this dir for print-sys-info app")
 
 
+FEATURE_ALIASES = {
+    'avx512': ['avx512f'],
+    'clmul': ['pclmulqdq'],
+    'crc': ['crc32'],
+    'crypto': ['aes'],
+}
+
+
 def main():
     args = PARSER.parse_args()
 
@@ -23,19 +31,26 @@ def main():
     else:
         app = find_app(args.build_dir)
 
+    # run print-sys-info. get feature names and whether it thinks they're supported
     app_features_presence: Dict[str, bool] = detect_features_from_app(app)
 
+    # get feature info from OS (i.e. read /proc/cpuinfo on linux), get back list of supported features
     os_features_list = detect_features_from_os()
 
-    for (feature, is_present) in app_features_presence.items():
-        if is_present:
-            if not feature in os_features_list:
-                exit(f"FAILED: aws-c-common thinks CPU supports '{feature}', " +
-                     "but OS doesn't seem to think so")
-        else:
-            if feature in os_features_list:
-                exit("FAILED: aws-c-common doesn't think CPU supports '{feature}', " +
-                     "but OS says it does")
+    # For each feature that print-sys-info says was (or wasn't) there,
+    # check the os_features_list and make sure it is (or isn't_ present.
+    for (feature, app_presence) in app_features_presence.items():
+        os_presence = feature in os_features_list
+        if not os_presence:
+            # sometimes a feature has a mildly different name across platforms
+            for alias in FEATURE_ALIASES.get(feature, []):
+                if alias in os_features_list:
+                    os_presence = True
+                    break
+
+        if app_presence != os_presence:
+            exit(f"FAILED: aws-c-common and OS disagree on whether CPU supports feature '{feature}'\n" +
+                 f"\taws-c-common:{app_presence} OS:{os_presence}")
 
     print("SUCCESS: aws-c-common and OS agree on CPU features")
 
@@ -44,8 +59,7 @@ def find_app(build_dir: Optional[str]) -> Path:
     if build_dir is None:
         build_dir = find_build_dir()
     else:
-        build_dir = Path(build_dir)
-    build_dir = build_dir.absolute()
+        build_dir = Path(build_dir).absolute()
 
     app_name = 'print-sys-info'
     if os.name == 'nt':
@@ -59,7 +73,7 @@ def find_app(build_dir: Optional[str]) -> Path:
 
 
 def find_build_dir() -> Path:
-    dir = Path(__file__).parent
+    dir = Path(__file__).parent.absolute()
     while dir is not None:
         for build_dir in dir.glob('build'):
             return build_dir
@@ -69,9 +83,10 @@ def find_build_dir() -> Path:
 
 
 def detect_features_from_app(app_path: Path) -> Dict[str, bool]:
-    result = run([str(app_path)],
-                 capture_output=True,
-                 text=True)
+    result = subprocess.run([str(app_path)],
+                            universal_newlines=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
     print(f"--- {app_path} ---")
     print(result.stderr)
     print(result.stdout)
@@ -116,16 +131,20 @@ def detect_features_from_os() -> List[str]:
         print(f"SKIP TEST: currently, this test only works on machines with /proc/cpuinfo")
         exit(0)
 
-    # looking for line like: flags           : fpu vme de pse ...
+    # looking for line like:
+    # flags           : fpu vme de pse ...
+    # OR
+    # features        : fp asimd evtstrm ...
     print(f"--- {cpuinfo_path} ---")
     for line in cpuinfo_text.splitlines():
+        line = line.lower()
         print(line)
-        m = re.match(r"flags\s+:(.*)", line)
+        m = re.match(r"(flags|features)\s+:(.*)", line)
         if m:
-            flags = m.group(1).split()
-            return flags
+            features = m.group(2).split()
+            return features
 
-    exit(f"FAILED: Cannot detect 'flags' in {cpuinfo_path}")
+    exit(f"FAILED: Cannot detect CPU features in {cpuinfo_path}")
 
 
 if __name__ == '__main__':

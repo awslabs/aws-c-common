@@ -46,10 +46,10 @@ int main(void) {
     fprintf(stdout, "       'arm_crypto': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_ARM_CRYPTO) ? "true" : "false");
     fprintf(stdout, "       'amd_sse4_1': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_1) ? "true" : "false");
     fprintf(stdout, "       'amd_sse4_2': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_2) ? "true" : "false");
-    fprintf(stdout, "       'amd_pclmulqdq': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_CLMUL) ? "true" : "false");
+    fprintf(stdout, "       'amd_clmul': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_CLMUL) ? "true" : "false");
     fprintf(stdout, "       'amd_vpclmulqdq': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_VPCLMULQDQ) ? "true" : "false");
     fprintf(stdout, "       'amd_avx2': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_AVX2) ? "true" : "false");
-    fprintf(stdout, "       'amd_avx512f': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_AVX512) ? "true" : "false");
+    fprintf(stdout, "       'amd_avx512': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_AVX512) ? "true" : "false");
     fprintf(stdout, "       'amd_bmi2': %s\n", aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2) ? "true" : "false");
     fprintf(stdout, "   }\n");
 
