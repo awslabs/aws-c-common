@@ -1,3 +1,6 @@
+# make installed modules (e.g. AwsCFlags.cmake) available to dependencies
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 if(WIN32 OR UNIX OR APPLE)
