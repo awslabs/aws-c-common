@@ -73,8 +73,7 @@ static void s_cache_cpu_features(void) {
         return;
     }
     aws_run_cpuid(0x7, 0x0, abcd);
-    s_cpu_features[AWS_CPU_FEATURE_BMI2] = abcd[1] & (1 << 8);        /* bmi2 = EBX[bit 8] */
-    s_cpu_features[AWS_CPU_FEATURE_VPCLMULQDQ] = abcd[2] & (1 << 10); /* vpclmulqdq = ECX[bit 10] */
+    s_cpu_features[AWS_CPU_FEATURE_BMI2] = abcd[1] & (1 << 8); /* bmi2 = EBX[bit 8] */
 
     /* NOTE: It SHOULD be impossible for a CPU to support AVX2 without supporting AVX.
      * But we've received crash reports where the AVX2 feature check passed
@@ -90,6 +89,10 @@ static void s_cache_cpu_features(void) {
      * We don't know for sure what was up with those machines, but this extra
      * check should stop them from running our AVX/AVX2 code paths. */
     if (feature_avx) {
+        if (avx_usable) {
+            s_cpu_features[AWS_CPU_FEATURE_AVX2] = abcd[1] & (1 << 5);        /* AVX2 = EBX[bit 5] */
+            s_cpu_features[AWS_CPU_FEATURE_VPCLMULQDQ] = abcd[2] & (1 << 10); /* vpclmulqdq = ECX[bit 10] */
+        }
         if (avx512_usable) {
             s_cpu_features[AWS_CPU_FEATURE_AVX512] = abcd[1] & (1 << 16); /*  AVX-512 Foundation = EBX[bit 16] */
         }
