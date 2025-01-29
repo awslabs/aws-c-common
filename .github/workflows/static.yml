@@ -4,23 +4,24 @@ on: [push]
 
 jobs:
   clang-static:
-    - name: "Check out repository"
-      uses: actions/checkout@v4
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v4
 
-    # Prepare a build
-    - name: "Prepare build"
-      run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      # Prepare a build
+      - name: "Prepare build"
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-    # Run the analysis
-    - uses: whisperity/codechecker-analysis-action@v1
-      id: codechecker
-      with:
-        logfile: ${{ github.workspace }}/compile_commands.json
+      # Run the analysis
+      - uses: whisperity/codechecker-analysis-action@v1
+        id: codechecker
+        with:
+          logfile: ${{ github.workspace }}/compile_commands.json
 
-    # Upload the results to the CI.
-    - uses: actions/upload-artifact@v2
-      with:
-        name: "CodeChecker Bug Reports"
-        path: ${{ steps.codechecker.outputs.result-html-dir }}
+      # Upload the results to the CI.
+      - uses: actions/upload-artifact@v2
+        with:
+          name: "CodeChecker Bug Reports"
+          path: ${{ steps.codechecker.outputs.result-html-dir }}
