@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.CRT_CI_ROLE }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
       - name: "Check out repository"
         uses: actions/checkout@v4
 
