@@ -14,7 +14,7 @@ jobs:
         run: |
           python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
-          ./builder clang-tidy --project=aws-c-common --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ./builder --project=aws-c-common --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
