@@ -4,6 +4,8 @@ on: [push]
 
 jobs:
   clang-static:
+    runs-on: ubuntu-24.04
+
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v4
