@@ -31,7 +31,7 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          ls build
+          ls build/aws-c-common
 
       - uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
