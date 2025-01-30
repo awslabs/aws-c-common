@@ -2,6 +2,14 @@ name: Static
 
 on: [push]
 
+env:
+  BUILDER_VERSION: v0.9.74
+  BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
+  BUILDER_SOURCE: releases
+  PACKAGE_NAME: aws-c-common
+  CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
+  AWS_DEFAULT_REGION: us-east-1
+
 jobs:
   clang-static:
     runs-on: ubuntu-24.04
@@ -12,9 +20,8 @@ jobs:
 
       - name: "Prepare build"
         run: |
-          python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
-          chmod a+x builder
-          ./builder --project=aws-c-common --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
