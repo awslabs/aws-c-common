@@ -12,8 +12,9 @@ jobs:
 
       - name: "Prepare build"
         run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('https://d19elf31gohf1l.cloudfront.net/LATEST/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder clang-tidy --project=aws-c-common --cmake-extra=-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - uses: whisperity/codechecker-analysis-action@v1
         id: codechecker
