@@ -6,9 +6,9 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.72
+  BUILDER_VERSION: ubuntu-arm
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
-  BUILDER_SOURCE: releases
+  BUILDER_SOURCE: channels
   PACKAGE_NAME: aws-c-common
   LINUX_BASE_IMAGE: ubuntu-18-x64
   RUN: ${{ github.run_id }}-${{ github.run_number }}
@@ -323,7 +323,7 @@ jobs:
     runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
-        arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
+        arch: [linux-armv6, linux-armv7, android-armv7]
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
