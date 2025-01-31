@@ -1,5 +1,6 @@
 {
     "analyze": [
-      "--file=*/aws-c-common/source/*"
+      "--file=*/aws-c-common/source/*",
+      "--ignore=*/aws-c-common/source/external/*"
     ]
   }
