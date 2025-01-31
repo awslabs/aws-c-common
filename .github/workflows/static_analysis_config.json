@@ -1,6 +1,6 @@
 {
     "analyze": [
-      "--file=source/*"
+      "--file=source/*",
       "--enable=core.DivideZero",
       "--enable=core.CallAndMessage",
       "--analyzer-config",
