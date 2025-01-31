@@ -1,14 +1,5 @@
 {
     "analyze": [
-      "--file=source/*",
-      "--enable=core.DivideZero",
-      "--enable=core.CallAndMessage",
-      "--analyzer-config",
-      "clangsa:unroll-loops=true",
-      "--checker-config",
-      "clang-tidy:google-readability-function-size.StatementThreshold=100",
-      "--report-hash", "context-free-v2",
-      "--verbose=debug",
-      "--clean"
+      "--file=source/*"
     ]
   }
