@@ -1,8 +1,9 @@
 {
-    "analyze": {
-        "skip": [
+    "analyzer": {
+      "ignore": [
         "**/aws-c-common/tests/**",
         "**/aws-c-common/source/external/**"
-        ]
+      ]
     }
 }
+  
