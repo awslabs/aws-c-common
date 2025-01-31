@@ -36,6 +36,7 @@ jobs:
         id: codechecker
         with:
           logfile: ${{ github.workspace }}/build/aws-c-common/compile_commands.json
+          config:  ${{ github.workspace }}/.github/workflows/static_analysis_config.json
 
       - uses: actions/upload-artifact@v4
         with:
