@@ -1,6 +1,8 @@
 {
-    "analyze": [
-      "--file=*/aws-c-common/source/*",
-      "--skip=-*/aws-c-common/source/external/*"
-    ]
-  }
+    "analyze": {
+        "skip": [
+        "**/aws-c-common/tests/**",
+        "**/aws-c-common/source/external/**"
+        ]
+    }
+}
