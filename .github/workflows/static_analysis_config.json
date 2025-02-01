@@ -1,9 +1,6 @@
 {
-    "analyzer": {
-      "--ignore": [
-        "**/aws-c-common/tests/**",
-        "**/aws-c-common/source/external/**"
-      ]
-    }
-}
-  
+    "analyze": [
+      "--file=*/aws-c-common/source/*",
+      "--ignore=.github/workflows/static_analysis_config.json"
+    ]
+  }

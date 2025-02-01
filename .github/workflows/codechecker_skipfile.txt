@@ -1,0 +1,1 @@
+-*/aws-c-common/source/external/*
