@@ -1,6 +1,6 @@
 {
     "analyze": [
       "--file=*/aws-c-common/source/*",
-      "--ignore=.github/workflows/static_analysis_config.json"
+      "--ignore=.github/workflows/codechecker_skipfile.txt"
     ]
   }
