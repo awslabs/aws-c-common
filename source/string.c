@@ -425,15 +425,6 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }
 
-/**
- * Creates an aws_byte_cursor from an existing string.
- * If the src is NULL, returns empty cursor
- */
-struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
-
-    return aws_byte_cursor_from_string(src);
-}
-
 struct aws_string *aws_string_clone_or_reuse(struct aws_allocator *allocator, const struct aws_string *str) {
     AWS_PRECONDITION(allocator);
     AWS_PRECONDITION(aws_string_is_valid(str));
