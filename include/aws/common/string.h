@@ -331,12 +331,6 @@ AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
 
 /**
- * Creates an aws_byte_cursor from an existing string.
- */
-AWS_COMMON_API
-struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
-
-/**
  * If the string was dynamically allocated, clones it. If the string was statically allocated (i.e. has no allocator),
  * returns the original string.
  */
