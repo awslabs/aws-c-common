@@ -325,16 +325,16 @@ bool aws_byte_buf_write_from_whole_string(
 
 /**
  * Creates an aws_byte_cursor from an existing string.
+ * If the src is NULL, it returns an empty cursor
  */
 AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
 
 /**
  * Creates an aws_byte_cursor from an existing string.
- * If the src is NULL, returns empty cursor
  */
 AWS_COMMON_API
-struct aws_byte_cursor aws_byte_cursor_from_optional_string(const struct aws_string *src);
+struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src);
 
 /**
  * If the string was dynamically allocated, clones it. If the string was statically allocated (i.e. has no allocator),

@@ -416,7 +416,12 @@ bool aws_byte_buf_write_from_whole_string(
  * Creates an aws_byte_cursor from an existing string.
  */
 struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
-    AWS_PRECONDITION(aws_string_is_valid(src));
+    if (!src) {
+        struct aws_byte_cursor cursor;
+        AWS_ZERO_STRUCT(cursor);
+        return cursor;
+    }
+
     return aws_byte_cursor_from_array(aws_string_bytes(src), src->len);
 }
 
@@ -424,12 +429,7 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
  * Creates an aws_byte_cursor from an existing string.
  * If the src is NULL, returns empty cursor
  */
-struct aws_byte_cursor aws_byte_cursor_from_optional_string(const struct aws_string *src) {
-    if (!src) {
-        struct aws_byte_cursor cursor;
-        AWS_ZERO_STRUCT(cursor);
-        return cursor;
-    }
+struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src) {
 
     return aws_byte_cursor_from_string(src);
 }
