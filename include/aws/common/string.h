@@ -333,6 +333,7 @@ struct aws_byte_cursor aws_byte_cursor_from_string(const struct aws_string *src)
  * Creates an aws_byte_cursor from an existing string.
  * If the src is NULL, returns empty cursor
  */
+AWS_COMMON_API
 struct aws_byte_cursor aws_byte_cursor_from_optional_string(const struct aws_string *src);
 
 /**
