@@ -8,6 +8,40 @@
 
 #include <stdlib.h>
 
+struct aws_string *aws_get_env(struct aws_allocator *allocator, const char *name) {
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4996)
+#endif
+    const char *value = getenv(name);
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
+
+    if (value == NULL) {
+        return NULL;
+    }
+
+    return aws_string_new_from_c_str(allocator, value);
+}
+
+struct aws_string *aws_get_env_nonempty(struct aws_allocator *allocator, const char *name) {
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4996)
+#endif
+    const char *value = getenv(name);
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
+
+    if (value == NULL || value[0] == '\0') {
+        return NULL;
+    }
+
+    return aws_string_new_from_c_str(allocator, value);
+}
+
 int aws_get_environment_value(
     struct aws_allocator *allocator,
     const struct aws_string *variable_name,
