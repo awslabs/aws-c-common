@@ -327,7 +327,7 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
  * @brief Consume the next data item, includes all the content within the data item.
  *
  * As an example for the following cbor, this function will consume all the data
- * as it's only one cbor data item, an indefinite map with 2 key, value pair:
+ * as it's only one cbor data item, an indefinite map with 2 <key, value> pair:
  * 0xbf6346756ef563416d7421ff
  * BF           -- Start indefinite-length map
  *   63        -- First key, UTF-8 string length 3
@@ -374,7 +374,7 @@ int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decode
  * Specifically:
  *  AWS_CBOR_TYPE_UINT - aws_cbor_decoder_pop_next_unsigned_int_val
  *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_next_negative_int_val, it represents (-1 - *out)
- *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_double_val
+ *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_float_val
  *  AWS_CBOR_TYPE_BYTES - aws_cbor_decoder_pop_next_bytes_val
  *  AWS_CBOR_TYPE_TEXT - aws_cbor_decoder_pop_next_text_val
  *

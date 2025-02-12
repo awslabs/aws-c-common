@@ -69,14 +69,17 @@ AWS_COMMON_API
 int aws_condition_variable_notify_all(struct aws_condition_variable *condition_variable);
 
 /**
- * Waits the calling thread on a notification from another thread.
+ * Waits the calling thread on a notification from another thread. This function must be called with the mutex locked
+ * by the calling thread otherwise the behavior is undefined. Spurious wakeups can occur and to avoid this causing
+ * any problems use the _pred version of this function.
  */
 AWS_COMMON_API
 int aws_condition_variable_wait(struct aws_condition_variable *condition_variable, struct aws_mutex *mutex);
 
 /**
  * Waits the calling thread on a notification from another thread. If predicate returns false, the wait is reentered,
- * otherwise control returns to the caller.
+ * otherwise control returns to the caller. This function must be called with the mutex locked by the calling thread
+ * otherwise the behavior is undefined.
  */
 AWS_COMMON_API
 int aws_condition_variable_wait_pred(
@@ -87,7 +90,8 @@ int aws_condition_variable_wait_pred(
 
 /**
  * Waits the calling thread on a notification from another thread. Times out after time_to_wait. time_to_wait is in
- * nanoseconds.
+ * nanoseconds. This function must be called with the mutex locked by the calling thread otherwise the behavior is
+ * undefined. Spurious wakeups can occur and to avoid this causing any problems use the _pred version of this function.
  */
 AWS_COMMON_API
 int aws_condition_variable_wait_for(
@@ -97,7 +101,8 @@ int aws_condition_variable_wait_for(
 
 /**
  * Waits the calling thread on a notification from another thread. Times out after time_to_wait. time_to_wait is in
- * nanoseconds. If predicate returns false, the wait is reentered, otherwise control returns to the caller.
+ * nanoseconds. If predicate returns false, the wait is reentered, otherwise control returns to the caller. This
+ * function must be called with the mutex locked by the calling thread otherwise the behavior is undefined.
  */
 AWS_COMMON_API
 int aws_condition_variable_wait_for_pred(
