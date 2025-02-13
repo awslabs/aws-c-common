@@ -48,13 +48,12 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
 
     const char *env_name = aws_string_c_str(s_test_variable);
     struct aws_string *value = aws_get_env(allocator, env_name);
-    ASSERT_TRUE(value == NULL);
+    ASSERT_NULL(value);
 
     value = aws_get_env_nonempty(allocator, env_name);
-    ASSERT_TRUE(value == NULL);
+    ASSERT_NULL(value);
 
-    int result = aws_set_environment_value(s_test_variable, (struct aws_string *)s_test_value);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_SUCCESS(aws_set_environment_value(s_test_variable, (struct aws_string *)s_test_value));
 
     value = aws_get_env(allocator, env_name);
     ASSERT_TRUE(aws_string_compare(value, s_test_value) == 0);
@@ -65,8 +64,7 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
     aws_string_destroy(value);
 
     struct aws_string *empty_str = aws_string_new_from_c_str(allocator, "");
-    result = aws_set_environment_value(s_test_variable, empty_str);
-    ASSERT_TRUE(result == AWS_OP_SUCCESS);
+    ASSERT_SUCCESS(aws_set_environment_value(s_test_variable, empty_str));
 
     value = aws_get_env(allocator, env_name);
 #ifndef AWS_OS_WINDOWS
@@ -75,7 +73,7 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
     aws_string_destroy(value);
 
     value = aws_get_env_nonempty(allocator, env_name);
-    ASSERT_TRUE(value == NULL);
+    ASSERT_NULL(value);
 
     aws_string_destroy(empty_str);
     return AWS_OP_SUCCESS;
