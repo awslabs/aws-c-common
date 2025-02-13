@@ -66,7 +66,7 @@ static const uint8_t BASE64_DECODING_TABLE[256] = {
 int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     AWS_ASSERT(encoded_length);
 
-    size_t temp = (to_encode_len << 1) + 1;
+    size_t temp = to_encode_len << 1;
 
     if (AWS_UNLIKELY(temp < to_encode_len)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
@@ -98,7 +98,7 @@ int aws_hex_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct 
         output->buffer[written++] = HEX_CHARS[to_encode->ptr[i] & 0x0f];
     }
 
-    output->buffer[written] = '\0';
+    AWS_ASSERT(written == encoded_len);
     output->len = encoded_len;
 
     return AWS_OP_SUCCESS;
@@ -220,7 +220,7 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 
     tmp /= 3;
     size_t overflow_check = tmp;
-    tmp = 4 * tmp + 1; /* plus one for the NULL terminator */
+    tmp = 4 * tmp;
 
     if (AWS_UNLIKELY(tmp < overflow_check)) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
@@ -266,17 +266,15 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
 }
 
 int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, struct aws_byte_buf *AWS_RESTRICT output) {
-    AWS_ASSERT(to_encode->ptr);
-    AWS_ASSERT(output->buffer);
+    AWS_ASSERT(to_encode->len == 0 || to_encode->ptr != NULL);
 
-    size_t terminated_length = 0;
     size_t encoded_length = 0;
-    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &terminated_length))) {
+    if (AWS_UNLIKELY(aws_base64_compute_encoded_len(to_encode->len, &encoded_length))) {
         return AWS_OP_ERR;
     }
 
     size_t needed_capacity = 0;
-    if (AWS_UNLIKELY(aws_add_size_checked(output->len, terminated_length, &needed_capacity))) {
+    if (AWS_UNLIKELY(aws_add_size_checked(output->len, encoded_length, &needed_capacity))) {
         return AWS_OP_ERR;
     }
 
@@ -284,16 +282,10 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    /*
-     * For convenience to standard C functions expecting a null-terminated
-     * string, the output is terminated. As the encoding itself can be used in
-     * various ways, however, its length should never account for that byte.
-     */
-    encoded_length = (terminated_length - 1);
+    AWS_ASSERT(needed_capacity == 0 || output->buffer != NULL);
 
     if (aws_common_private_has_avx2()) {
         aws_common_private_base64_encode_sse41(to_encode->ptr, output->buffer + output->len, to_encode->len);
-        output->buffer[output->len + encoded_length] = 0;
         output->len += encoded_length;
         return AWS_OP_SUCCESS;
     }
@@ -328,9 +320,6 @@ int aws_base64_encode(const struct aws_byte_cursor *AWS_RESTRICT to_encode, stru
             output->buffer[output->len + block_count * 4 - 2] = '=';
         }
     }
-
-    /* it's a string add the null terminator. */
-    output->buffer[output->len + encoded_length] = 0;
 
     output->len += encoded_length;
 
