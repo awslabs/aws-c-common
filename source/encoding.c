@@ -153,13 +153,15 @@ static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
 int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     AWS_ASSERT(decoded_len);
 
-    size_t temp = (to_decode_len + 1);
-
-    if (AWS_UNLIKELY(temp < to_decode_len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    /* For every 2 hex chars of encoded input, there will be 1 byte of decoded output.
+     * Round up, because if buffer isn't even, we'll pretend there's an extra '0' at start of buffer */
+    if (to_decode_len & 1) {
+        if (aws_add_size_checked(to_decode_len, 1, &to_decode_len)) {
+            return AWS_OP_ERR;
+        }
     }
 
-    *decoded_len = temp >> 1;
+    *decoded_len = to_decode_len >> 1;
     return AWS_OP_SUCCESS;
 }
 
@@ -217,7 +219,7 @@ int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
 
     /* Round up, because output will be padded till it's divisible by 4 */
     if ((to_encode_len % 3) != 0) {
-        num_groups_of_3 += 1;
+        num_groups_of_3 += 1; /* can't overflow, since we did division above */
     }
 
     return aws_mul_size_checked(num_groups_of_3, 4, encoded_len);
