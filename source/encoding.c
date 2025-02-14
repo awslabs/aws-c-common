@@ -212,23 +212,15 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
 int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     AWS_ASSERT(encoded_len);
 
-    size_t tmp = to_encode_len + 2;
+    /* For every 3 bytes of unencoded input, there will be 4 ascii characters of encoded output */
+    size_t num_groups_of_3 = to_encode_len / 3;
 
-    if (AWS_UNLIKELY(tmp < to_encode_len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    /* Round up, because output will be padded till it's divisible by 4 */
+    if ((to_encode_len % 3) != 0) {
+        num_groups_of_3 += 1;
     }
 
-    tmp /= 3;
-    size_t overflow_check = tmp;
-    tmp = 4 * tmp;
-
-    if (AWS_UNLIKELY(tmp < overflow_check)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
-
-    *encoded_len = tmp;
-
-    return AWS_OP_SUCCESS;
+    return aws_mul_size_checked(num_groups_of_3, 4, encoded_len);
 }
 
 int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to_decode, size_t *decoded_len) {
@@ -243,25 +235,28 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
         return AWS_OP_SUCCESS;
     }
 
+    /* Ensure it's divisible by 4 */
     if (AWS_UNLIKELY(len & 0x03)) {
         return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
     }
 
-    size_t tmp = len * 3;
+    /* For every 4 ascii characters of encoded input, there will be 3 bytes of decoded output.
+     * decoded_len = 3/4 * len       <-- note that result will be smaller then len, so overflow can be avoided
+     *             = (len / 4) * 3   <-- divide before multiply to avoid overflow
+     *             = (len >> 2) * 3  <-- we can divide via bitshift because we checked it was divisible by 4
+     */
+    size_t decoded_len_tmp = (len >> 2) * 3;
 
-    if (AWS_UNLIKELY(tmp < len)) {
-        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
-    }
-
+    /* But last two ascii chars might be padding. */
     size_t padding = 0;
-
-    if (len >= 2 && input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
+    AWS_ASSERT(len >= 4);                                 /* we checked earlier len != 0, and was divisible by 4 */
+    if (input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     } else if (input[len - 1] == '=') { /*last char is = */
         padding = 1;
     }
 
-    *decoded_len = (tmp / 4 - padding);
+    *decoded_len = decoded_len_tmp - padding;
     return AWS_OP_SUCCESS;
 }
 

@@ -586,7 +586,6 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
     (void)ctx;
 
     char test_data[] = "foobar";
-    char encoded_data[] = "Zm9vYmFy";
     /* kill off the last two bits, so the not a multiple of 4 check doesn't
      * trigger first */
     size_t overflow = (SIZE_MAX - 1) & ~0x03;
@@ -600,12 +599,8 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
         aws_base64_encode(&test_buf, &output_buf),
         "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
 
-    struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_array(encoded_data, overflow);
+    /* NOTE: decode() math can't overflow, output.len ends up smaller than input.len */
 
-    ASSERT_ERROR(
-        AWS_ERROR_OVERFLOW_DETECTED,
-        aws_base64_decode(&encoded_buf, &output_buf),
-        "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
     return 0;
 }
 
