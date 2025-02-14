@@ -66,6 +66,8 @@ static const uint8_t BASE64_DECODING_TABLE[256] = {
 int aws_hex_compute_encoded_len(size_t to_encode_len, size_t *encoded_length) {
     AWS_ASSERT(encoded_length);
 
+    /* For every byte of input, there will be 2 hex chars of encoded output */
+
     size_t temp = to_encode_len << 1;
 
     if (AWS_UNLIKELY(temp < to_encode_len)) {
@@ -153,15 +155,17 @@ static int s_hex_decode_char_to_int(char character, uint8_t *int_val) {
 int aws_hex_compute_decoded_len(size_t to_decode_len, size_t *decoded_len) {
     AWS_ASSERT(decoded_len);
 
-    /* For every 2 hex chars of encoded input, there will be 1 byte of decoded output.
-     * Round up, because if buffer isn't even, we'll pretend there's an extra '0' at start of buffer */
-    if (to_decode_len & 1) {
-        if (aws_add_size_checked(to_decode_len, 1, &to_decode_len)) {
-            return AWS_OP_ERR;
-        }
+    /* For every 2 hex chars (rounded up) of encoded input, there will be 1 byte of decoded output.
+     * Rounding is because if buffer isn't even, we'll pretend there's an extra '0' at start of buffer */
+
+    /* adding 1 before dividing by 2 is a trick to round up during division */
+    size_t temp = (to_decode_len + 1);
+
+    if (AWS_UNLIKELY(temp < to_decode_len)) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    *decoded_len = to_decode_len >> 1;
+    *decoded_len = temp >> 1;
     return AWS_OP_SUCCESS;
 }
 
@@ -214,15 +218,27 @@ int aws_hex_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, struct 
 int aws_base64_compute_encoded_len(size_t to_encode_len, size_t *encoded_len) {
     AWS_ASSERT(encoded_len);
 
-    /* For every 3 bytes of unencoded input, there will be 4 ascii characters of encoded output */
-    size_t num_groups_of_3 = to_encode_len / 3;
+    /* For every 3 bytes (rounded up) of unencoded input, there will be 4 ascii characters of encoded output.
+     * Rounding is because the output will be padded with '=' chars if necessary to make it divisible by 4. */
 
-    /* Round up, because output will be padded till it's divisible by 4 */
-    if ((to_encode_len % 3) != 0) {
-        num_groups_of_3 += 1; /* can't overflow, since we did division above */
+    /* adding 2 before dividing by 3 is a trick to round up during division */
+    size_t tmp = to_encode_len + 2;
+
+    if (AWS_UNLIKELY(tmp < to_encode_len)) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    return aws_mul_size_checked(num_groups_of_3, 4, encoded_len);
+    tmp /= 3;
+    size_t overflow_check = tmp;
+    tmp = 4 * tmp;
+
+    if (AWS_UNLIKELY(tmp < overflow_check)) {
+        return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
+    }
+
+    *encoded_len = tmp;
+
+    return AWS_OP_SUCCESS;
 }
 
 int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to_decode, size_t *decoded_len) {
@@ -237,21 +253,20 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
         return AWS_OP_SUCCESS;
     }
 
-    /* Ensure it's divisible by 4 */
+    /* ensure it's divisible by 4 */
     if (AWS_UNLIKELY(len & 0x03)) {
         return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
     }
 
-    /* For every 4 ascii characters of encoded input, there will be 3 bytes of decoded output.
+    /* For every 4 ascii characters of encoded input, there will be 3 bytes of decoded output (deal with padding later)
      * decoded_len = 3/4 * len       <-- note that result will be smaller then len, so overflow can be avoided
      *             = (len / 4) * 3   <-- divide before multiply to avoid overflow
-     *             = (len >> 2) * 3  <-- we can divide via bitshift because we checked it was divisible by 4
      */
-    size_t decoded_len_tmp = (len >> 2) * 3;
+    size_t decoded_len_tmp = (len / 4) * 3;
 
     /* But last two ascii chars might be padding. */
+    AWS_ASSERT(len >= 4); /* we checked earlier len != 0, and was divisible by 4 */
     size_t padding = 0;
-    AWS_ASSERT(len >= 4);                                 /* we checked earlier len != 0, and was divisible by 4 */
     if (input[len - 1] == '=' && input[len - 2] == '=') { /*last two chars are = */
         padding = 2;
     } else if (input[len - 1] == '=') { /*last char is = */
