@@ -973,7 +973,10 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
     ASSERT_INT_EQUALS(fseek(fp, 0L, SEEK_SET), 0);
 
     size_t read = fread(out_buf->buffer, 1, allocation_size, fp);
-    ASSERT_UINT_EQUALS(read, allocation_size);
+    /* size from doing seek-to-end is sometimes 1 byte more than what we get from read (observed on Windows) */
+    if (read < (allocation_size - 1)) {
+        ASSERT_INT_EQUALS(read, allocation_size);
+    }
     out_buf->len = read;
 
     ASSERT_INT_EQUALS(fclose(fp), 0);
