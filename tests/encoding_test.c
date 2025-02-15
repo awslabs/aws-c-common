@@ -490,8 +490,8 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     }
     struct aws_byte_cursor original_data = aws_byte_cursor_from_array(test_data, sizeof(test_data));
 
-    uint8_t test_hex[65] = {0};
-    struct aws_byte_buf hex = aws_byte_buf_from_empty_array(test_hex, sizeof(test_hex));
+    struct aws_byte_buf hex;
+    aws_byte_buf_init(&hex, allocator, 65);
 
     uint8_t test_b64[128] = {0};
     struct aws_byte_buf b64_data = aws_byte_buf_from_empty_array(test_b64, sizeof(test_b64));
@@ -499,8 +499,8 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     aws_base64_encode(&original_data, &b64_data);
     b64_data.len--;
 
-    uint8_t decoded_data[32] = {0};
-    struct aws_byte_buf decoded_buf = aws_byte_buf_from_empty_array(decoded_data, sizeof(decoded_data));
+    struct aws_byte_buf decoded_buf;
+    aws_byte_buf_init(&decoded_buf, allocator, 32);
 
     struct aws_byte_cursor b64_cur = aws_byte_cursor_from_buf(&b64_data);
     aws_base64_decode(&b64_cur, &decoded_buf);
@@ -508,7 +508,7 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     if (memcmp(decoded_buf.buffer, original_data.ptr, decoded_buf.len) != 0) {
         aws_hex_encode(&original_data, &hex);
         fprintf(stderr, "Base64 round-trip failed\n");
-        fprintf(stderr, "Original: %s\n", (char *)test_hex);
+        fprintf(stderr, "Original: " PRInSTR "\n", AWS_BYTE_BUF_PRI(hex));
         fprintf(stderr, "Base64  : ");
         for (size_t i = 0; i < sizeof(test_b64); i++) {
             if (!test_b64[i]) {
@@ -517,13 +517,15 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
             fprintf(stderr, " %c", test_b64[i]);
         }
         fprintf(stderr, "\n");
-        memset(test_hex, 0, sizeof(test_hex));
+        aws_byte_buf_reset(&hex, true /*zero-contents*/);
         struct aws_byte_cursor decoded_cur = aws_byte_cursor_from_buf(&decoded_buf);
         aws_hex_encode(&decoded_cur, &hex);
-        fprintf(stderr, "Decoded : %s\n", (char *)test_hex);
+        fprintf(stderr, "Decoded : " PRInSTR "\n", AWS_BYTE_BUF_PRI(hex));
         return 1;
     }
 
+    aws_byte_buf_clean_up(&hex);
+    aws_byte_buf_clean_up(&decoded_buf);
     return 0;
 }
 AWS_TEST_CASE(base64_encoding_test_roundtrip, s_base64_encoding_test_roundtrip)
