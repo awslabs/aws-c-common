@@ -29,5 +29,6 @@
 #cmakedefine AWS_ARCH_INTEL
 #cmakedefine AWS_ARCH_INTEL_X64
 #cmakedefine AWS_USE_CPU_EXTENSIONS
+#cmakedefine AWS_HAS_POSIX_BOOT_CLOCK
 
 #endif

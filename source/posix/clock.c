@@ -9,7 +9,9 @@
 
 static const uint64_t NS_PER_SEC = 1000000000;
 
-#if defined(CLOCK_MONOTONIC_RAW)
+#if defined(AWS_HAS_POSIX_BOOT_CLOCK)
+#    define HIGH_RES_CLOCK CLOCK_BOOTTIME
+#elif defined(CLOCK_MONOTONIC_RAW)
 #    define HIGH_RES_CLOCK CLOCK_MONOTONIC_RAW
 #else
 #    define HIGH_RES_CLOCK CLOCK_MONOTONIC
