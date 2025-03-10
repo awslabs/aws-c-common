@@ -9,6 +9,14 @@
 #include <aws/common/condition_variable.h>
 #include <aws/common/linked_list.h>
 #include <aws/common/mutex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+
+
 
 /*
  * lock guarding the unjoined thread count and pending join list
@@ -174,10 +182,67 @@ void aws_pthread_atfork_on_fork_prepare(void) {
      * in child process.
      * Fork will copy the list, but not the real threads.
      */
+
+    pid_t pid = getpid();
+    char path[128];
+    DIR *dir;
+    struct dirent *entry;
+
+    // Format the path to the task directory for this process
+    snprintf(path, sizeof(path), "/proc/%d/task", pid);
+
+    // Open the directory
+    if ((dir = opendir(path)) == NULL) {
+        perror("Failed to open task directory");
+        return;
+    }
+    pid_t tid = syscall(SYS_gettid);
+
+    printf("Current Thread ID is %d:\n", tid);
+    printf("Threads for process %d:\n", pid);
+
+    // Read each entry in the directory
+    while ((entry = readdir(dir)) != NULL) {
+        // Skip "." and ".." entries
+        if (entry->d_name[0] != '.') {
+            printf("- Thread ID: %s\n", entry->d_name);
+        }
+    }
+
+    closedir(dir);
     struct aws_linked_list empty;
     aws_linked_list_init(&empty);
     aws_mutex_lock(&s_managed_thread_lock);
     aws_linked_list_swap_contents(&empty, &s_pending_join_managed_threads);
     aws_mutex_unlock(&s_managed_thread_lock);
     aws_thread_join_and_free_wrapper_list(&empty);
+}
+void aws_pthread_atfork_after_fork_child(void) {
+    pid_t pid = getpid();
+    char path[128];
+    DIR *dir;
+    struct dirent *entry;
+
+    // Format the path to the task directory for this process
+    snprintf(path, sizeof(path), "/proc/%d/task", pid);
+
+    // Open the directory
+    if ((dir = opendir(path)) == NULL) {
+        perror("Failed to open task directory");
+        return;
+    }
+    pid_t tid = syscall(SYS_gettid);
+
+    printf("Current Thread ID CHILD is %d:\n", tid);
+    printf("Threads for process CHILD %d:\n", pid);
+
+    // Read each entry in the directory
+    while ((entry = readdir(dir)) != NULL) {
+        // Skip "." and ".." entries
+        if (entry->d_name[0] != '.') {
+            printf("- Thread ID CHILD: %s\n", entry->d_name);
+        }
+    }
+
+    closedir(dir);
 }

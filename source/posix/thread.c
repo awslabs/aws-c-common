@@ -350,6 +350,7 @@ int aws_thread_launch(
     }
 
     attr_return = pthread_create(&thread->thread_id, attributes_ptr, thread_fn, (void *)wrapper);
+    printf("Created Thread ID %d:\n", (int)thread->thread_id);
 
     if (attr_return) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_THREAD, "id=%p: pthread_create() failed with %d", (void *)thread, attr_return);
@@ -440,6 +441,7 @@ enum aws_thread_detach_state aws_thread_get_detach_state(struct aws_thread *thre
 }
 
 int aws_thread_join(struct aws_thread *thread) {
+    printf("Joining Thread ID %d:\n", (int)thread->thread_id);
     if (thread->detach_state == AWS_THREAD_JOINABLE) {
         int err_no = pthread_join(thread->thread_id, 0);
 
