@@ -131,64 +131,6 @@ if(MSVC)
     }" AWS_HAVE_MSVC_INTRINSICS_X64)
 endif()
 
-if(NOT CMAKE_CROSSCOMPILING)
-    check_c_source_runs("
-        #include <stdint.h>
-        #include <time.h>
-
-        static const uint64_t NS_PER_SEC = 1000000000;
-
-        bool get_time(uint64_t *current_time) {
-            struct timespec ts;
-            if (clock_gettime(CLOCK_BOOTTIME, &ts)) {
-                return false;
-            }
-
-            uint64_t secs = (uint64_t)ts.tv_sec;
-            uint64_t n_secs = (uint64_t)ts.tv_nsec;
-            *current_time = (secs * NS_PER_SEC) + n_secs;
-
-            return true;
-        }
-
-        int main() {
-            uint64_t start_timestap = 0;
-            if (!get_time(&start_timestap)) {
-                return -1;
-            }
-
-            return 0;
-        }" AWS_HAS_POSIX_BOOT_CLOCK)
-else()
-    check_c_source_compiles("
-        #include <stdint.h>
-        #include <time.h>
-
-        static const uint64_t NS_PER_SEC = 1000000000;
-    
-        bool get_time(uint64_t *current_time) {
-            struct timespec ts;
-            if (clock_gettime(CLOCK_BOOTTIME, &ts)) {
-                return false;
-            }
-
-            uint64_t secs = (uint64_t)ts.tv_sec;
-            uint64_t n_secs = (uint64_t)ts.tv_nsec;
-            *current_time = (secs * NS_PER_SEC) + n_secs;
-
-            return true;
-        }
-
-        int main() {
-            uint64_t start_timestap = 0;
-            if (!get_time(&start_timestap)) {
-                return -1;
-            }
-
-            return 0;
-        }" AWS_HAS_POSIX_BOOT_CLOCK)
-endif()
-
 # This does a lot to detect when intrinsics are available and has to set cflags to do so.
 # leave it in its own file for ease of managing it.
 include(AwsSIMD)
