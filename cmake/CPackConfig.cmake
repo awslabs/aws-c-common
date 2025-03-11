@@ -62,7 +62,7 @@ endif()
 # By default, we'll try to claim the cmake directory under the library directory
 # and the aws include directory. We have to share both of these
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-    /usr/${LIBRARY_DIRECTORY}/cmake
+    /usr/${CMAKE_INSTALL_LIBDIR}/cmake
     /usr/include/aws)
 
 # Include CPack, which generates the package target
