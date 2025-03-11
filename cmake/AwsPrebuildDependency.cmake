@@ -96,13 +96,12 @@ endfunction()
 function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
 
-    # The CMake variables below were chosen for Linux, BSD, and Android platforms. If you want to use the prebuild logic
-    # on other platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT). Refer to
-    # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html to update the list of handled variables, and
-    # then you can enable a new platform here.
-    #if ((NOT UNIX) OR APPLE)
-    #    message(FATAL_ERROR "aws_get_variables_for_prebuild_dependency is called for unsupported platform")
-    #endif()
+    
+    # The variables below were chosen based on readings docs and a lot of experimenting on different platforms. 
+    # Is the list of variables below exhaustive and guaranteed to cover all cases? Probably not. 
+    # So if you are here reading this, then its more than likely that some variable got missed and something
+    # is not building correctly. So don't be afraid to add more variables to the list.
+    # Refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html as a decent starting point for which variables to handle.
 
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
