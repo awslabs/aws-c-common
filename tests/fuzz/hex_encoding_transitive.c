@@ -22,7 +22,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     result = aws_hex_encode(&to_encode, &encode_output);
     AWS_ASSERT(result == AWS_OP_SUCCESS);
-    --encode_output.len; /* Remove null terminator */
 
     result = aws_hex_compute_decoded_len(encode_output.len, &output_size);
     AWS_ASSERT(result == AWS_OP_SUCCESS);
