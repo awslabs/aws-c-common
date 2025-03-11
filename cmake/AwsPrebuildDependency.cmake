@@ -97,7 +97,7 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
 
     
-    # The variables below were chosen based on readings docs and a lot of experimenting on different platforms. 
+    # The variables below were chosen based on reading docs and a lot of experimenting on different platforms. 
     # Is the list of variables below exhaustive and guaranteed to cover all cases? Probably not. 
     # So if you are here reading this, then its more than likely that some variable got missed and something
     # is not building correctly. So don't be afraid to add more variables to the list.
