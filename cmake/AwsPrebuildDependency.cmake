@@ -106,6 +106,7 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
 
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
+        message("parent vars ${var}")
         # Variables in this block make sense only in cross-compiling mode. The variable list is created from the CMake
         # documentation on toolchains: https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html
         # NOTE: Some variables are missed here (e.g. CMAKE_SYSROOT) because they can be set via toolchain file only.
