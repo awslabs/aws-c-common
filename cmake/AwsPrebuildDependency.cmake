@@ -139,7 +139,8 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
                 OR var MATCHES "^CMAKE_LIBRARY_OUTPUT_DIRECTORY"
                 OR var STREQUAL "CMAKE_OSX_ARCHITECTURES"
                 OR var STREQUAL "CMAKE_OSX_DEPLOYMENT_TARGET"
-                OR var STREQUAL "CMAKE_OSX_SYSROOT")
+                OR var STREQUAL "CMAKE_OSX_SYSROOT"
+        )
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
             if (escapedVar)
