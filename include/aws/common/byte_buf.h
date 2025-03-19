@@ -611,13 +611,13 @@ AWS_COMMON_API struct aws_byte_cursor aws_byte_cursor_from_array(const void *con
 
 /**
  * Tests if the given aws_byte_cursor has at least len bytes remaining. If so,
- * *buf is advanced by len bytes (incrementing ->ptr and decrementing ->len),
- * and an aws_byte_cursor referring to the first len bytes of the original *buf
+ * *cursor is advanced by len bytes (incrementing ->ptr and decrementing ->len),
+ * and an aws_byte_cursor referring to the first len bytes of the original *cursor
  * is returned. Otherwise, an aws_byte_cursor with ->ptr = NULL, ->len = 0 is
  * returned.
  *
  * Note that if len is above (SIZE_MAX / 2), this function will also treat it as
- * a buffer overflow, and return NULL without changing *buf.
+ * a buffer overflow, and return NULL without changing *cursor.
  */
 AWS_COMMON_API struct aws_byte_cursor aws_byte_cursor_advance(struct aws_byte_cursor *const cursor, const size_t len);
 
