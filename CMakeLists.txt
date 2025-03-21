@@ -192,10 +192,11 @@ target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 # Check public headers, to ensure they're safe for any 3rdparty to include
 set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS})
 
-# HACK: don't check rw_lock.h, which fails in esoteric circumstances (building without compiler extensions).
-# Currently, this file is only used by aws-c-*** libs, which always build with extensions.
-get_filename_component(IGNORE_HEADER "include/aws/common/rw_lock.h" ABSOLUTE)
-list(REMOVE_ITEM HEADERS_TO_CHECK ${IGNORE_HEADER})
+# HACK: don't check rw_lock.h, which can fail in esoteric circumstances
+# (building without compiler extensions, and without defining _POSIX_C_SOURCE or _XOPEN_SOURCE).
+# Currently, this file is only used by aws-c-*** libs, which are fine.
+get_filename_component(NAUGHTY_HEADER "include/aws/common/rw_lock.h" ABSOLUTE)
+list(REMOVE_ITEM HEADERS_TO_CHECK ${NAUGHTY_HEADER})
 
 aws_check_headers(${PROJECT_NAME} ${HEADERS_TO_CHECK})
 
