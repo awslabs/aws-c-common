@@ -189,7 +189,15 @@ aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
-aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS})
+# Check public headers, to ensure they're safe for any 3rdparty to include
+set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS})
+
+# HACK: don't check rw_lock.h, which fails in esoteric circumstances (building without compiler extensions).
+# Currently, this file is only used by aws-c-*** libs, which always build with extensions.
+get_filename_component(IGNORE_HEADER "include/aws/common/rw_lock.h" ABSOLUTE)
+list(REMOVE_ITEM HEADERS_TO_CHECK ${IGNORE_HEADER})
+
+aws_check_headers(${PROJECT_NAME} ${HEADERS_TO_CHECK})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
