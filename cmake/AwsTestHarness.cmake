@@ -53,7 +53,13 @@ function(generate_test_driver driver_exe_name)
 
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
-    set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99)
+    set_target_properties(${driver_exe_name} PROPERTIES
+        LINKER_LANGUAGE C
+        C_STANDARD 99
+        # Our ASSERT(...) macros rely on (widely supported) ##__VA_ARGS__ extension
+        C_EXTENSIONS ON
+    )
+
     target_compile_definitions(${driver_exe_name} PRIVATE AWS_UNSTABLE_TESTING_API=1)
     target_include_directories(${driver_exe_name} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
@@ -75,7 +81,11 @@ function(generate_cpp_test_driver driver_exe_name)
     add_executable(${driver_exe_name} ${CMAKE_CURRENT_BINARY_DIR}/test_runner.cpp ${TESTS})
     target_link_libraries(${driver_exe_name} PRIVATE ${PROJECT_NAME})
 
-    set_target_properties(${driver_exe_name} PROPERTIES LINKER_LANGUAGE CXX)
+    set_target_properties(${driver_exe_name} PROPERTIES
+        LINKER_LANGUAGE CXX
+        # Our ASSERT(...) macros rely on (widely supported) ##__VA_ARGS__ extension
+        CXX_EXTENSIONS ON
+    )
     if (MSVC)
         if(AWS_STATIC_MSVC_RUNTIME_LIBRARY OR STATIC_CRT)
             target_compile_options(${driver_exe_name} PRIVATE "/MT$<$<CONFIG:Debug>:d>")
