@@ -53,14 +53,14 @@ int do_default_log_writer_test(
     /*
      * Check that the write call was successful
      */
-    ASSERT_TRUE(result == AWS_OP_SUCCESS, "Writing operation failed");
+    ASSERTF_TRUE(result == AWS_OP_SUCCESS, "Writing operation failed");
 
     /*
      * Check the file was read successfully
      */
-    ASSERT_TRUE(
+    ASSERTF_TRUE(
         file != NULL, "Unable to open output file \"%s\" to verify contents. Error: %d", test_file_name, open_error);
-    ASSERT_TRUE(bytes_read >= 0, "Failed to read test output file \"%s\"", test_file_name);
+    ASSERTF_TRUE(bytes_read >= 0, "Failed to read test output file \"%s\"", test_file_name);
 
     /*
      * add end of string marker
@@ -70,7 +70,7 @@ int do_default_log_writer_test(
     /*
      * Check file contents
      */
-    ASSERT_TRUE(
+    ASSERTF_TRUE(
         strcmp(buffer, expected_file_content) == 0,
         "Expected log file to contain:\n\n%s\n\nbut instead it contained:\n\n%s\n",
         expected_file_content,
@@ -150,12 +150,12 @@ static int s_log_writer_bad_file_test(struct aws_allocator *allocator, void *ctx
     int result = aws_log_writer_init_file(&writer, allocator, &options);
     int aws_error = aws_last_error();
 
-    ASSERT_TRUE(result == AWS_OP_ERR, "Log file open succeeded despite an invalid file name");
+    ASSERTF_TRUE(result == AWS_OP_ERR, "Log file open succeeded despite an invalid file name");
 
 #ifdef _WIN32
-    ASSERT_TRUE(aws_error == AWS_ERROR_NO_PERMISSION, "File open error was not no permission as expected");
+    ASSERTF_TRUE(aws_error == AWS_ERROR_NO_PERMISSION, "File open error was not no permission as expected");
 #else
-    ASSERT_TRUE(aws_error == AWS_ERROR_FILE_INVALID_PATH, "File open error was not invalid path as expected");
+    ASSERTF_TRUE(aws_error == AWS_ERROR_FILE_INVALID_PATH, "File open error was not invalid path as expected");
 #endif /* _WIN32 */
 
     return AWS_OP_SUCCESS;

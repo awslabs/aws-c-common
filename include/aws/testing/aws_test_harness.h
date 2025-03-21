@@ -109,57 +109,83 @@ static int s_cunit_failure_message0(
         POSTFAIL_INTERNAL();                                                                                           \
     } while (0)
 
-#define ASSERT_TRUE(condition, ...)                                                                                    \
+#define ASSERT_TRUE(condition)                                                                                         \
     do {                                                                                                               \
         if (!(condition)) {                                                                                            \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("Expected condition to be true: " #condition);                                    \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("Expected condition to be true: " #condition);                                        \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_FALSE(condition, ...)                                                                                   \
+#define ASSERTF_TRUE(condition, ...)                                                                                   \
+    do {                                                                                                               \
+        if (!(condition)) {                                                                                            \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_FALSE(condition)                                                                                        \
     do {                                                                                                               \
         if ((condition)) {                                                                                             \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("Expected condition to be false: " #condition);                                   \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("Expected condition to be false: " #condition);                                       \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_SUCCESS(condition, ...)                                                                                 \
+#define ASSERTF_FALSE(condition, ...)                                                                                  \
+    do {                                                                                                               \
+        if ((condition)) {                                                                                             \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_SUCCESS(condition)                                                                                      \
     do {                                                                                                               \
         int assert_rv = (condition);                                                                                   \
         if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected success at %s; got return value %d with last error %d\n",                                \
-                    #condition,                                                                                        \
-                    assert_rv,                                                                                         \
-                    aws_last_error());                                                                                 \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0(                                                                                      \
+                "Expected success at %s; got return value %d with last error %d\n",                                    \
+                #condition,                                                                                            \
+                assert_rv,                                                                                             \
+                aws_last_error());                                                                                     \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_FAILS(condition, ...)                                                                                   \
+#define ASSERTF_SUCCESS(condition, ...)                                                                                \
+    do {                                                                                                               \
+        int assert_rv = (condition);                                                                                   \
+        if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_FAILS(condition)                                                                                        \
     do {                                                                                                               \
         int assert_rv = (condition);                                                                                   \
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected failure at %s; got return value %d with last error %d\n",                                \
-                    #condition,                                                                                        \
-                    assert_rv,                                                                                         \
-                    aws_last_error());                                                                                 \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0(                                                                                      \
+                "Expected failure at %s; got return value %d with last error %d\n",                                    \
+                #condition,                                                                                            \
+                assert_rv,                                                                                             \
+                aws_last_error());                                                                                     \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_ERROR(error, condition, ...)                                                                            \
+#define ASSERTF_FAILS(condition, ...)                                                                                  \
+    do {                                                                                                               \
+        int assert_rv = (condition);                                                                                   \
+        if (assert_rv != AWS_OP_ERR) {                                                                                 \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_ERROR(error, condition)                                                                                 \
     do {                                                                                                               \
         int assert_rv = (condition);                                                                                   \
         int assert_err = aws_last_error();                                                                             \
@@ -172,9 +198,7 @@ static int s_cunit_failure_message0(
                 assert_rv,                                                                                             \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s", #condition);                                                                \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s", #condition);                                                                    \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (assert_err != assert_err_expect) {                                                                         \
@@ -184,40 +208,84 @@ static int s_cunit_failure_message0(
                 FAIL_PREFIX,                                                                                           \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s", #condition);                                                                \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s", #condition);                                                                    \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_NULL(ptr, ...)                                                                                          \
+#define ASSERTF_ERROR(error, condition, ...)                                                                           \
+    do {                                                                                                               \
+        int assert_rv = (condition);                                                                                   \
+        int assert_err = aws_last_error();                                                                             \
+        int assert_err_expect = (error);                                                                               \
+        if (assert_rv != AWS_OP_ERR) {                                                                                 \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sExpected error but no error occurred; rv=%d, aws_last_error=%d (expected %d): ",                    \
+                FAIL_PREFIX,                                                                                           \
+                assert_rv,                                                                                             \
+                assert_err,                                                                                            \
+                assert_err_expect);                                                                                    \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+        if (assert_err != assert_err_expect) {                                                                         \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sIncorrect error code; aws_last_error=%d (expected %d): ",                                           \
+                FAIL_PREFIX,                                                                                           \
+                assert_err,                                                                                            \
+                assert_err_expect);                                                                                    \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_NULL(ptr)                                                                                               \
     do {                                                                                                               \
         /* XXX: Some tests use ASSERT_NULL on ints... */                                                               \
         void *assert_p = (void *)(uintptr_t)(ptr);                                                                     \
         if (assert_p) {                                                                                                \
             fprintf(AWS_TESTING_REPORT_FD, "%sExpected null but got %p: ", FAIL_PREFIX, assert_p);                     \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s", #ptr);                                                                      \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s", #ptr);                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_NOT_NULL(ptr, ...)                                                                                      \
+#define ASSERTF_NULL(ptr, ...)                                                                                         \
+    do {                                                                                                               \
+        /* XXX: Some tests use ASSERT_NULL on ints... */                                                               \
+        void *assert_p = (void *)(uintptr_t)(ptr);                                                                     \
+        if (assert_p) {                                                                                                \
+            fprintf(AWS_TESTING_REPORT_FD, "%sExpected null but got %p: ", FAIL_PREFIX, assert_p);                     \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_NOT_NULL(ptr)                                                                                           \
     do {                                                                                                               \
         /* XXX: Some tests use ASSERT_NULL on ints... */                                                               \
         void *assert_p = (void *)(uintptr_t)(ptr);                                                                     \
         if (!assert_p) {                                                                                               \
             fprintf(AWS_TESTING_REPORT_FD, "%sExpected non-null but got null: ", FAIL_PREFIX);                         \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s", #ptr);                                                                      \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s", #ptr);                                                                          \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_TYP_EQUALS(type, formatarg, expected, got, ...)                                                         \
+#define ASSERTF_NOT_NULL(ptr, ...)                                                                                     \
+    do {                                                                                                               \
+        /* XXX: Some tests use ASSERT_NULL on ints... */                                                               \
+        void *assert_p = (void *)(uintptr_t)(ptr);                                                                     \
+        if (!assert_p) {                                                                                               \
+            fprintf(AWS_TESTING_REPORT_FD, "%sExpected non-null but got null: ", FAIL_PREFIX);                         \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_TYP_EQUALS(type, formatarg, expected, got)                                                              \
     do {                                                                                                               \
         type assert_expected = (expected);                                                                             \
         type assert_actual = (got);                                                                                    \
@@ -228,41 +296,70 @@ static int s_cunit_failure_message0(
                 FAIL_PREFIX,                                                                                           \
                 assert_expected,                                                                                       \
                 assert_actual);                                                                                        \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got);                                                     \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got);                                                         \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
+#define ASSERTF_TYP_EQUALS(type, formatarg, expected, got, ...)                                                        \
+    do {                                                                                                               \
+        type assert_expected = (expected);                                                                             \
+        type assert_actual = (got);                                                                                    \
+        if (assert_expected != assert_actual) {                                                                        \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%s" formatarg " != " formatarg ": ",                                                                  \
+                FAIL_PREFIX,                                                                                           \
+                assert_expected,                                                                                       \
+                assert_actual);                                                                                        \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
 #ifdef _MSC_VER
-#    define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%lld", expected, got, __VA_ARGS__)
-#    define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%llu", expected, got, __VA_ARGS__)
+#    define ASSERT_INT_EQUALS(expected, got) ASSERT_TYP_EQUALS(intmax_t, "%lld", expected, got)
+#    define ASSERTF_INT_EQUALS(expected, got, ...) ASSERTF_TYP_EQUALS(intmax_t, "%lld", expected, got, __VA_ARGS__)
+#    define ASSERT_UINT_EQUALS(expected, got) ASSERT_TYP_EQUALS(uintmax_t, "%llu", expected, got)
+#    define ASSERTF_UINT_EQUALS(expected, got, ...) ASSERTF_TYP_EQUALS(uintmax_t, "%llu", expected, got, __VA_ARGS__)
 #else
 /* For comparing any signed integer types */
-#    define ASSERT_INT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(intmax_t, "%jd", expected, got, __VA_ARGS__)
+#    define ASSERT_INT_EQUALS(expected, got) ASSERT_TYP_EQUALS(intmax_t, "%jd", expected, got)
+#    define ASSERTF_INT_EQUALS(expected, got, ...) ASSERTF_TYP_EQUALS(intmax_t, "%jd", expected, got, __VA_ARGS__)
 /* For comparing any unsigned integer types */
-#    define ASSERT_UINT_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
+#    define ASSERT_UINT_EQUALS(expected, got) ASSERT_TYP_EQUALS(uintmax_t, "%ju", expected, got)
+#    define ASSERTF_UINT_EQUALS(expected, got, ...) ASSERTF_TYP_EQUALS(uintmax_t, "%ju", expected, got, __VA_ARGS__)
 #endif
 
-#define ASSERT_PTR_EQUALS(expected, got, ...)                                                                          \
+#define ASSERT_PTR_EQUALS(expected, got)                                                                               \
     do {                                                                                                               \
         void *assert_expected = (void *)(uintptr_t)(expected);                                                         \
         void *assert_actual = (void *)(uintptr_t)(got);                                                                \
         if (assert_expected != assert_actual) {                                                                        \
             fprintf(AWS_TESTING_REPORT_FD, "%s%p != %p: ", FAIL_PREFIX, assert_expected, assert_actual);               \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got);                                                     \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("%s != %s", #expected, #got);                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERTF_PTR_EQUALS(expected, got, ...)                                                                         \
+    do {                                                                                                               \
+        void *assert_expected = (void *)(uintptr_t)(expected);                                                         \
+        void *assert_actual = (void *)(uintptr_t)(got);                                                                \
+        if (assert_expected != assert_actual) {                                                                        \
+            fprintf(AWS_TESTING_REPORT_FD, "%s%p != %p: ", FAIL_PREFIX, assert_expected, assert_actual);               \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
 /* note that uint8_t is promoted to unsigned int in varargs, so %02x is an acceptable format string */
-#define ASSERT_BYTE_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
-#define ASSERT_HEX_EQUALS(expected, got, ...) ASSERT_TYP_EQUALS(unsigned long long, "%llX", expected, got, __VA_ARGS__)
+#define ASSERT_BYTE_HEX_EQUALS(expected, got) ASSERT_TYP_EQUALS(uint8_t, "%02X", expected, got)
+#define ASSERTF_BYTE_HEX_EQUALS(expected, got, ...) ASSERTF_TYP_EQUALS(uint8_t, "%02X", expected, got, __VA_ARGS__)
+#define ASSERT_HEX_EQUALS(expected, got) ASSERT_TYP_EQUALS(unsigned long long, "%llX", expected, got)
+#define ASSERTF_HEX_EQUALS(expected, got, ...)                                                                         \
+    ASSERTF_TYP_EQUALS(unsigned long long, "%llX", expected, got, __VA_ARGS__)
 
-#define ASSERT_STR_EQUALS(expected, got, ...)                                                                          \
+#define ASSERT_STR_EQUALS(expected, got)                                                                               \
     do {                                                                                                               \
         const char *assert_expected = (expected);                                                                      \
         const char *assert_got = (got);                                                                                \
@@ -271,14 +368,26 @@ static int s_cunit_failure_message0(
         if (strcmp(assert_expected, assert_got) != 0) {                                                                \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD, "%sExpected: \"%s\"; got: \"%s\": ", FAIL_PREFIX, assert_expected, assert_got); \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_STR_EQUALS(%s, %s)", #expected, #got);                                    \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("ASSERT_STR_EQUALS(%s, %s)", #expected, #got);                                        \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, ...)                                          \
+#define ASSERTF_STR_EQUALS(expected, got, ...)                                                                         \
+    do {                                                                                                               \
+        const char *assert_expected = (expected);                                                                      \
+        const char *assert_got = (got);                                                                                \
+        ASSERT_NOT_NULL(assert_expected);                                                                              \
+        ASSERT_NOT_NULL(assert_got);                                                                                   \
+        if (strcmp(assert_expected, assert_got) != 0) {                                                                \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD, "%sExpected: \"%s\"; got: \"%s\": ", FAIL_PREFIX, assert_expected, assert_got); \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size)                                               \
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)(expected);                                                      \
         size_t assert_ex_s = (expected_size);                                                                          \
@@ -289,10 +398,8 @@ static int s_cunit_failure_message0(
         }                                                                                                              \
         if (assert_ex_s != assert_got_s) {                                                                             \
             fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);           \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0(                                                                                      \
+                "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);               \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
@@ -312,15 +419,49 @@ static int s_cunit_failure_message0(
             } else {                                                                                                   \
                 fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
             }                                                                                                          \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);           \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0(                                                                                      \
+                "ASSERT_BIN_ARRAYS_EQUALS(%s, %s, %s, %s)", #expected, #expected_size, #got, #got_size);               \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                       \
+#define ASSERTF_BIN_ARRAYS_EQUALS(expected, expected_size, got, got_size, ...)                                         \
+    do {                                                                                                               \
+        const uint8_t *assert_ex_p = (const uint8_t *)(expected);                                                      \
+        size_t assert_ex_s = (expected_size);                                                                          \
+        const uint8_t *assert_got_p = (const uint8_t *)(got);                                                          \
+        size_t assert_got_s = (got_size);                                                                              \
+        if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
+            break;                                                                                                     \
+        }                                                                                                              \
+        if (assert_ex_s != assert_got_s) {                                                                             \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: ", FAIL_PREFIX, assert_ex_s, assert_got_s);   \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+        if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
+            if (assert_got_s <= 1024) {                                                                                \
+                for (size_t assert_i = 0; assert_i < assert_ex_s; ++assert_i) {                                        \
+                    if (assert_ex_p[assert_i] != assert_got_p[assert_i]) {                                             \
+                        fprintf(                                                                                       \
+                            AWS_TESTING_REPORT_FD,                                                                     \
+                            "%sMismatch at byte[%zu]: 0x%02X != 0x%02X: ",                                             \
+                            FAIL_PREFIX,                                                                               \
+                            assert_i,                                                                                  \
+                            assert_ex_p[assert_i],                                                                     \
+                            assert_got_p[assert_i]);                                                                   \
+                        break;                                                                                         \
+                    }                                                                                                  \
+                }                                                                                                      \
+            } else {                                                                                                   \
+                fprintf(AWS_TESTING_REPORT_FD, "%sData mismatch: ", FAIL_PREFIX);                                      \
+            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring)                                                            \
     do {                                                                                                               \
         const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
         size_t assert_ex_s = (cursor).len;                                                                             \
@@ -337,9 +478,7 @@ static int s_cunit_failure_message0(
                 FAIL_PREFIX,                                                                                           \
                 AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
                 cstring);                                                                                              \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                      \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
         if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
@@ -349,14 +488,44 @@ static int s_cunit_failure_message0(
                 FAIL_PREFIX,                                                                                           \
                 AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
                 cstring);                                                                                              \
-            if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
-                PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                  \
-            }                                                                                                          \
+            PRINT_FAIL_INTERNAL0("ASSERT_CURSOR_VALUE_STRING_EQUALS(%s, %s)", #cursor, #cstring);                      \
             POSTFAIL_INTERNAL();                                                                                       \
         }                                                                                                              \
     } while (0)
 
-#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string, ...)                                                         \
+#define ASSERTF_CURSOR_VALUE_CSTRING_EQUALS(cursor, cstring, ...)                                                      \
+    do {                                                                                                               \
+        const uint8_t *assert_ex_p = (const uint8_t *)((cursor).ptr);                                                  \
+        size_t assert_ex_s = (cursor).len;                                                                             \
+        const uint8_t *assert_got_p = (const uint8_t *)cstring;                                                        \
+        size_t assert_got_s = strlen(cstring);                                                                         \
+        if (assert_ex_s == 0 && assert_got_s == 0) {                                                                   \
+            break;                                                                                                     \
+        }                                                                                                              \
+        if (assert_ex_s != assert_got_s) {                                                                             \
+            fprintf(AWS_TESTING_REPORT_FD, "%sSize mismatch: %zu != %zu: \n", FAIL_PREFIX, assert_ex_s, assert_got_s); \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sGot: \"" PRInSTR "\"; Expected: \"%s\" \n",                                                         \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+        if (memcmp(assert_ex_p, assert_got_p, assert_got_s) != 0) {                                                    \
+            fprintf(                                                                                                   \
+                AWS_TESTING_REPORT_FD,                                                                                 \
+                "%sData mismatch; Got: \"" PRInSTR "\"; Expected: \"%s\" \n",                                          \
+                FAIL_PREFIX,                                                                                           \
+                AWS_BYTE_CURSOR_PRI(cursor),                                                                           \
+                cstring);                                                                                              \
+            PRINT_FAIL_INTERNAL0(__VA_ARGS__);                                                                         \
+            POSTFAIL_INTERNAL();                                                                                       \
+        }                                                                                                              \
+    } while (0)
+
+#define ASSERT_CURSOR_VALUE_STRING_EQUALS(cursor, string)                                                              \
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(cursor, aws_string_c_str(string));
 
 typedef int(aws_test_before_fn)(struct aws_allocator *allocator, void *ctx);

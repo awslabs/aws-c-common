@@ -41,22 +41,21 @@ static int s_test_thread_creation_join_fn(struct aws_allocator *allocator, void 
     /* Exercise the thread naming code path */
     thread_options.name = aws_byte_cursor_from_c_str("MyThreadName");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
-    ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
-    ASSERT_TRUE(
+    ASSERTF_SUCCESS(aws_thread_join(&thread), "thread join failed");
+    ASSERTF_TRUE(
         aws_thread_thread_id_equal(test_data.thread_id, aws_thread_get_id(&thread)),
         "get_thread_id should have returned the same id as the thread calling current_thread_id");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         AWS_THREAD_JOIN_COMPLETED,
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
 
     if (AWS_OP_SUCCESS == test_data.get_thread_name_error) {
-        ASSERT_CURSOR_VALUE_STRING_EQUALS(
-            aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name, "thread name equals");
+        ASSERT_CURSOR_VALUE_STRING_EQUALS(aws_byte_cursor_from_c_str("MyThreadName"), test_data.thread_name);
     } else {
         ASSERT_INT_EQUALS(test_data.get_thread_name_error, AWS_ERROR_PLATFORM_NOT_SUPPORTED);
     }
@@ -82,15 +81,15 @@ static int s_test_thread_creation_join_invalid_cpu_id_fn(struct aws_allocator *a
     /* invalid cpu_id. Ensure that the cpu_id is best-effort based. */
     thread_options.cpu_id = 512;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_thread_launch(&thread, s_thread_fn, (void *)&test_data, &thread_options), "thread creation failed");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         AWS_THREAD_JOINABLE, aws_thread_get_detach_state(&thread), "thread state should have returned JOINABLE");
-    ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
-    ASSERT_TRUE(
+    ASSERTF_SUCCESS(aws_thread_join(&thread), "thread join failed");
+    ASSERTF_TRUE(
         aws_thread_thread_id_equal(test_data.thread_id, aws_thread_get_id(&thread)),
         "get_thread_id should have returned the same id as the thread calling current_thread_id");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         AWS_THREAD_JOIN_COMPLETED,
         aws_thread_get_detach_state(&thread),
         "thread state should have returned JOIN_COMPLETED");
@@ -128,8 +127,8 @@ static int s_test_thread_atexit(struct aws_allocator *allocator, void *ctx) {
     struct aws_thread thread;
     ASSERT_SUCCESS(aws_thread_init(&thread, allocator));
 
-    ASSERT_SUCCESS(aws_thread_launch(&thread, s_thread_worker_with_atexit, NULL, 0), "thread creation failed");
-    ASSERT_SUCCESS(aws_thread_join(&thread), "thread join failed");
+    ASSERTF_SUCCESS(aws_thread_launch(&thread, s_thread_worker_with_atexit, NULL, 0), "thread creation failed");
+    ASSERTF_SUCCESS(aws_thread_join(&thread), "thread join failed");
 
     ASSERT_INT_EQUALS(2, s_atexit_call_count);
 
@@ -169,11 +168,11 @@ static int s_do_managed_thread_join_test(struct aws_allocator *allocator, size_t
     thread_options.join_strategy = AWS_TJS_MANAGED;
 
     for (size_t i = 0; i < thread_count; ++i) {
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_thread_launch(&threads[i], s_managed_thread_fn, (void *)&thread_data[i], &thread_options),
             "thread creation failed");
 
-        ASSERT_INT_EQUALS(
+        ASSERTF_INT_EQUALS(
             AWS_THREAD_MANAGED, aws_thread_get_detach_state(&threads[i]), "thread state should have returned JOINABLE");
     }
 
@@ -224,7 +223,7 @@ static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, v
     struct aws_thread_options thread_options = *aws_default_thread_options();
     thread_options.join_strategy = AWS_TJS_MANAGED;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_thread_launch(&thread, s_managed_thread_fn, (void *)&thread_data, &thread_options),
         "thread creation failed");
 

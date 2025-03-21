@@ -48,8 +48,8 @@ static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
         cursor.ptr = (uint8_t *)&cursor;                                                                               \
         cursor.len = (cursorlen);                                                                                      \
         struct aws_byte_cursor rv = advance(&cursor, (advlen));                                                        \
-        ASSERT_NULL(rv.ptr, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);                      \
-        ASSERT_UINT_EQUALS(0, rv.len, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);            \
+        ASSERTF_NULL(rv.ptr, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);                     \
+        ASSERTF_UINT_EQUALS(0, rv.len, "advance(cursorlen=%s, advlen=%s) should fail", #cursorlen, #advlen);           \
     } while (0)
 
 #define ASSERT_ADVANCE(advlen, cursorlen)                                                                              \
@@ -62,10 +62,10 @@ static int s_nospec_index_test_fn(struct aws_allocator *allocator, void *ctx) {
             abort();                                                                                                   \
         }                                                                                                              \
         struct aws_byte_cursor rv = advance(&cursor, (advlen));                                                        \
-        ASSERT_PTR_EQUALS(orig_cursor, rv.ptr, "Wrong ptr in advance(cursorlen=%s, advlen=%s)", #cursorlen, #advlen);  \
-        ASSERT_PTR_EQUALS(orig_cursor + (advlen), cursor.ptr, "Wrong new cursorptr in advance");                       \
-        ASSERT_UINT_EQUALS((advlen), rv.len, "Wrong returned length");                                                 \
-        ASSERT_UINT_EQUALS((cursorlen) - (advlen), cursor.len, "Wrong residual length");                               \
+        ASSERTF_PTR_EQUALS(orig_cursor, rv.ptr, "Wrong ptr in advance(cursorlen=%s, advlen=%s)", #cursorlen, #advlen); \
+        ASSERTF_PTR_EQUALS(orig_cursor + (advlen), cursor.ptr, "Wrong new cursorptr in advance");                      \
+        ASSERTF_UINT_EQUALS((advlen), rv.len, "Wrong returned length");                                                \
+        ASSERTF_UINT_EQUALS((cursorlen) - (advlen), cursor.len, "Wrong residual length");                              \
         free(orig_cursor);                                                                                             \
     } while (0)
 

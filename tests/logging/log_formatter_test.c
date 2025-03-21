@@ -43,7 +43,7 @@ int do_default_log_formatter_test(
     aws_string_destroy(output);
 
     /* Check that the format call was successful */
-    ASSERT_TRUE(result == AWS_OP_SUCCESS, "Formatting operation failed");
+    ASSERTF_TRUE(result == AWS_OP_SUCCESS, "Formatting operation failed");
 
     /*
      * Make sure there's an endline as the final character(s).
@@ -51,21 +51,21 @@ int do_default_log_formatter_test(
      * Otherwise our failure outputs include the endline and become confusing.
      */
     size_t line_length = strlen(buffer);
-    ASSERT_TRUE(line_length >= 2, "Log line \"%s\" is too short", buffer);
+    ASSERTF_TRUE(line_length >= 2, "Log line \"%s\" is too short", buffer);
 
-    ASSERT_TRUE(buffer[line_length - 1] == '\n', "Log line did not end with a newline");
+    ASSERTF_TRUE(buffer[line_length - 1] == '\n', "Log line did not end with a newline");
     buffer[line_length - 1] = 0;
 
     /*
      * Check that the log level appears properly
      */
     const char *log_level_start = strstr(buffer, "[");
-    ASSERT_TRUE(log_level_start != NULL, "Could not find start of log level in output line \"%s\"", buffer);
+    ASSERTF_TRUE(log_level_start != NULL, "Could not find start of log level in output line \"%s\"", buffer);
 
     const char *level_string = NULL;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_log_level_to_string(log_level, &level_string), "Failed to convert log level %d to string", (int)log_level);
-    ASSERT_TRUE(
+    ASSERTF_TRUE(
         strncmp(log_level_start + 1, level_string, strlen(level_string)) == 0,
         "Incorrect value for log level in output line \"%s\"",
         buffer);
@@ -74,11 +74,11 @@ int do_default_log_formatter_test(
      * Find the timestamp substring.
      */
     const char *time_start = strstr(log_level_start + 1, "[");
-    ASSERT_TRUE(time_start != NULL, "Could not find start of timestamp in output line \"%s\"", buffer);
+    ASSERTF_TRUE(time_start != NULL, "Could not find start of timestamp in output line \"%s\"", buffer);
     time_start += 1;
 
     const char *time_end = strstr(time_start, "]");
-    ASSERT_TRUE(time_end != NULL, "Could not find end of timestamp in output line \"%s\"", buffer);
+    ASSERTF_TRUE(time_end != NULL, "Could not find end of timestamp in output line \"%s\"", buffer);
 
     size_t time_length = time_end - time_start;
 
@@ -92,7 +92,7 @@ int do_default_log_formatter_test(
     timestamp_buffer.len = time_length;
 
     struct aws_date_time log_time;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_date_time_init_from_str(&log_time, &timestamp_buffer, date_format),
         "Could not parse timestamp value starting at \"%s\"",
         time_start);
@@ -101,28 +101,28 @@ int do_default_log_formatter_test(
      * Check that the timestamp, when converted back, is close to the current time.
      */
     time_t time_diff = aws_date_time_diff(&log_time, &test_time);
-    ASSERT_TRUE(time_diff <= 1, "Log timestamp deviated too far from test timestamp: %d seconds", (int)time_diff);
+    ASSERTF_TRUE(time_diff <= 1, "Log timestamp deviated too far from test timestamp: %d seconds", (int)time_diff);
 
     /*
      * Find the thread id substring
      */
     const char *thread_id_start = strstr(time_end + 1, "[");
-    ASSERT_TRUE(thread_id_start != NULL, "Could not find start of thread id in output line \"%s\"", buffer);
+    ASSERTF_TRUE(thread_id_start != NULL, "Could not find start of thread id in output line \"%s\"", buffer);
     thread_id_start += 1;
 
     char *thread_id_end = strstr(thread_id_start, "]");
-    ASSERT_TRUE(thread_id_end != NULL, "Could not find end of thread id in output line \"%s\"", buffer);
+    ASSERTF_TRUE(thread_id_end != NULL, "Could not find end of thread id in output line \"%s\"", buffer);
 
-    ASSERT_TRUE((thread_id_end - thread_id_start + 1) == AWS_THREAD_ID_T_REPR_BUFSZ, "Unexpected thread id length");
+    ASSERTF_TRUE((thread_id_end - thread_id_start + 1) == AWS_THREAD_ID_T_REPR_BUFSZ, "Unexpected thread id length");
     aws_thread_id_t current_thread_id = aws_thread_current_thread_id();
     char repr[AWS_THREAD_ID_T_REPR_BUFSZ];
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_thread_id_t_to_string(current_thread_id, repr, AWS_THREAD_ID_T_REPR_BUFSZ),
         "Could not convert aws_thread_id_t to string repr");
     char logged_id[AWS_THREAD_ID_T_REPR_BUFSZ];
     memcpy(logged_id, thread_id_start, AWS_THREAD_ID_T_REPR_BUFSZ - 1);
     logged_id[AWS_THREAD_ID_T_REPR_BUFSZ - 1] = '\0';
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         strncmp(repr, logged_id, AWS_THREAD_ID_T_REPR_BUFSZ),
         "Expected logged thread id to be \"%s\" but it was actually \"%s\"",
         repr,
@@ -132,11 +132,11 @@ int do_default_log_formatter_test(
      * Check that the user content is what was expected
      */
     const char *separator = strstr(thread_id_end, " - ");
-    ASSERT_TRUE(separator != NULL, "");
+    ASSERTF_TRUE(separator != NULL, "");
 
     const char *user_content = separator + 3;
     size_t expected_user_content_length = strlen(expected_user_output);
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         strncmp(user_content, expected_user_output, expected_user_content_length),
         "Expected user content \"%s\" but received \"%s\"",
         expected_user_output,

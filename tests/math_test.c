@@ -12,7 +12,7 @@
 
 #define CHECK_SAT(fn, a, b, result)                                                                                    \
     do {                                                                                                               \
-        ASSERT_UINT_EQUALS(                                                                                            \
+        ASSERTF_UINT_EQUALS(                                                                                           \
             (result),                                                                                                  \
             fn((a), (b)),                                                                                              \
             "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
@@ -20,7 +20,7 @@
             (unsigned long long)(a),                                                                                   \
             (unsigned long long)(b),                                                                                   \
             (unsigned long long)(result));                                                                             \
-        ASSERT_UINT_EQUALS(                                                                                            \
+        ASSERTF_UINT_EQUALS(                                                                                           \
             (result),                                                                                                  \
             fn((b), (a)),                                                                                              \
             "%s(0x%016llx, 0x%016llx) = 0x%016llx",                                                                    \
@@ -58,7 +58,7 @@ static int s_test_is_power_of_two_fn(struct aws_allocator *allocator, void *ctx)
         size_t result_val;                                                                                             \
         ASSERT_FALSE(aws_round_up_to_power_of_two((a), &result_val));                                                  \
         ASSERT_TRUE(aws_is_power_of_two(result_val));                                                                  \
-        ASSERT_INT_EQUALS(                                                                                             \
+        ASSERTF_INT_EQUALS(                                                                                            \
             (uint64_t)result_val,                                                                                      \
             (uint64_t)(r),                                                                                             \
             "Expected %s(%016llx) = %016llx; got %016llx",                                                             \
@@ -207,7 +207,7 @@ static int s_test_mul_size_saturating_fn(struct aws_allocator *allocator, void *
     do {                                                                                                               \
         type result_val = 0;                                                                                           \
         ASSERT_FALSE(fn((a), (b), &result_val));                                                                       \
-        ASSERT_INT_EQUALS(                                                                                             \
+        ASSERTF_INT_EQUALS(                                                                                            \
             (uint64_t)result_val,                                                                                      \
             (uint64_t)(r),                                                                                             \
             "Expected %s(%016llx, %016llx) = %016llx; got %016llx",                                                    \
@@ -403,7 +403,7 @@ static int s_test_sub_size_checked_fn(struct aws_allocator *allocator, void *ctx
     do {                                                                                                               \
         type result_val;                                                                                               \
         ASSERT_FALSE(fn(num, &result_val, __VA_ARGS__));                                                               \
-        ASSERT_INT_EQUALS(                                                                                             \
+        ASSERTF_INT_EQUALS(                                                                                            \
             (uint64_t)result_val,                                                                                      \
             (uint64_t)(r),                                                                                             \
             "From fn %s num %016llx: Expected %016llx; got %016llx",                                                   \

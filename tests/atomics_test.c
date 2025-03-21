@@ -404,7 +404,7 @@ static int t_acquire_to_release_one_direction(struct aws_allocator *allocator, v
          * If we see that flag == 2, then the data observation must be 1.
          * If flag == 0, then the data value may be anything.
          */
-        ASSERT_FALSE(a == 2, "Acquire-release ordering failed at iteration %zu", i);
+        ASSERTF_FALSE(a == 2, "Acquire-release ordering failed at iteration %zu", i);
     }
 
     free_races(allocator);
@@ -467,7 +467,7 @@ static int t_acquire_to_release_mixed(struct aws_allocator *allocator, void *ctx
          * If we see that flag == 2, then the data observation must be 1.
          * If flag == 0, then the data value may be anything.
          */
-        ASSERT_FALSE(flag_observation && !data_observation, "Acquire-release ordering failed at iteration %zu", i);
+        ASSERTF_FALSE(flag_observation && !data_observation, "Acquire-release ordering failed at iteration %zu", i);
     }
 
     free_races(allocator);

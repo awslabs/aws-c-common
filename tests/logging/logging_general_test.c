@@ -65,7 +65,7 @@ static int s_dynamic_log_level_change_test(struct aws_allocator *allocator, void
 
     /* Check the test results last */
     static const char *expected_result = "1212345123";
-    ASSERT_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
+    ASSERTF_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
 
     return 0;
 }

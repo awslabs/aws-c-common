@@ -1119,12 +1119,12 @@ static int s_test_byte_buf_empty_appends(struct aws_allocator *allocator, void *
         AWS_ZERO_STRUCT(zeroed_out);
         ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &zeroed_out));
         ASSERT_UINT_EQUALS(buffer.len, 0);
-        ASSERT_NULL(zeroed_out.ptr, 0);
+        ASSERT_NULL(zeroed_out.ptr);
         ASSERT_UINT_EQUALS(zeroed_out.len, 0);
 
         struct aws_byte_cursor empty = aws_byte_cursor_from_c_str("");
         ASSERT_SUCCESS(aws_byte_buf_append_and_update(&buffer, &empty));
-        ASSERT_NULL(empty.ptr, 0);
+        ASSERT_NULL(empty.ptr);
         ASSERT_UINT_EQUALS(empty.len, 0);
     }
 

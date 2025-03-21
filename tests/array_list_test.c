@@ -29,58 +29,58 @@ static int s_array_list_order_push_back_pop_front_fn(struct aws_allocator *alloc
     size_t list_size = 4;
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List setup should have been successful. err code %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&third), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&fourth), "List push failed with error code %d", aws_last_error());
 
-    ASSERT_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 1);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 1);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 2);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 2);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
-    ASSERT_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 3);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 3);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
-    ASSERT_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 4);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERTF_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 4);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     aws_array_list_clean_up(&list);
@@ -95,57 +95,57 @@ static int s_array_list_order_push_back_pop_back_fn(struct aws_allocator *alloca
     struct aws_array_list list;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&third), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&fourth), "List push failed with error code %d", aws_last_error());
 
-    ASSERT_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     int item = 0;
-    ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
-    ASSERT_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 4);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERTF_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 4);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
-    ASSERT_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 3);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 3);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 2);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 2);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 1);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_back(&list, (void *)&item), "List back failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_pop_back(&list), "List pop back failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 1);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     aws_array_list_clean_up(&list);
@@ -164,58 +164,58 @@ static int s_array_list_order_push_front_pop_front_fn(struct aws_allocator *allo
     size_t init_size = 2;
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, init_size, sizeof(int)),
         "List setup should have been successful. err code %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         init_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)init_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_front(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_front(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_front(&list, (void *)&third), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_front(&list, (void *)&fourth), "List push failed with error code %d", aws_last_error());
 
-    ASSERT_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(list_size, list.length, "List size should be %d.", (int)list_size);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
-    ASSERT_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 1);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERTF_INT_EQUALS(list_size - 1, list.length, "List size should be %d.", (int)list_size - 1);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
-    ASSERT_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 2);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_INT_EQUALS(list_size - 2, list.length, "List size should be %d.", (int)list_size - 2);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 3);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_INT_EQUALS(list_size - 3, list.length, "List size should be %d.", (int)list_size - 3);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 4);
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_INT_EQUALS(list_size - 4, list.length, "List size should be %d.", (int)list_size - 4);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
     aws_array_list_clean_up(&list);
@@ -249,7 +249,7 @@ static int s_array_list_pop_front_n_fn(struct aws_allocator *allocator, void *ct
 
     /* Pop last 2/2 elements. List should be empty. */
     aws_array_list_pop_front_n(&list, 2);
-    ASSERT_INT_EQUALS(0, aws_array_list_length(&list), "List should be empty after popping last 2 items");
+    ASSERTF_INT_EQUALS(0, aws_array_list_length(&list), "List should be empty after popping last 2 items");
 
     /* Put some elements into list again.
      * Popping more items than list contains should just clear the list */
@@ -347,59 +347,59 @@ static int s_array_list_exponential_mem_model_test_fn(struct aws_allocator *allo
     struct aws_array_list list;
 
     static size_t list_size = 1;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2, third = 3;
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&first), "array list push back failed with error %d", aws_last_error());
-    ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
+    ASSERTF_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&second),
         "array list push back failed with error %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size << 1,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
         (int)(list_size << 1) * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&third), "array list push back failed with error %d", aws_last_error());
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size << 2,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
         (int)(list_size << 2) * sizeof(int));
 
-    ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
+    ASSERTF_INT_EQUALS(3, list.length, "List size should be %d.", 3);
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size << 2,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
@@ -417,59 +417,59 @@ static int s_array_list_exponential_mem_model_iteration_test_fn(struct aws_alloc
     struct aws_array_list list;
 
     static size_t list_size = 1;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2, third = 3;
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "Allocated list size should be %d.", (int)list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&first, 0), "array list push back failed with error %d", aws_last_error());
     ASSERT_INT_EQUALS(list_size, list.current_size / sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&second, 1),
         "array list push back failed with error %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size << 1,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
         (int)(list_size << 1) * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&third, 2), "array list push back failed with error %d", aws_last_error());
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size << 2,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
         (int)(list_size << 2) * sizeof(int));
 
-    ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
+    ASSERTF_INT_EQUALS(3, list.length, "List size should be %d.", 3);
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_front(&list, (void *)&item), "List front failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_SUCCESS(aws_array_list_pop_front(&list), "List pop front failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(
         list_size << 2,
         list.current_size / sizeof(int),
         "Allocated list size should be %d.",
@@ -512,39 +512,39 @@ static int s_array_list_iteration_test_fn(struct aws_allocator *allocator, void 
     struct aws_array_list list;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&first, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&second, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&third, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(3, list.length, "List size should be %d.", 3);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&fourth, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(4, list.length, "List size should be %d.", 4);
+    ASSERTF_INT_EQUALS(4, list.length, "List size should be %d.", 4);
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERTF_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
 
     aws_array_list_clean_up(&list);
     return 0;
@@ -558,39 +558,39 @@ static int s_array_list_iteration_by_ptr_test_fn(struct aws_allocator *allocator
     struct aws_array_list list;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&first, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&second, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&third, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(3, list.length, "List size should be %d.", 3);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&fourth, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(4, list.length, "List size should be %d.", 4);
+    ASSERTF_INT_EQUALS(4, list.length, "List size should be %d.", 4);
 
     int *item;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_get_at_ptr(&list, (void **)&item, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, *item, "Item should have been the first item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(first, *item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at_ptr(&list, (void **)&item, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, *item, "Item should have been the second item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(second, *item, "Item should have been the second item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at_ptr(&list, (void **)&item, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, *item, "Item should have been the third item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(third, *item, "Item should have been the third item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at_ptr(&list, (void **)&item, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, *item, "Item should have been the fourth item.");
+    ASSERTF_INT_EQUALS(fourth, *item, "Item should have been the fourth item.");
 
     aws_array_list_clean_up(&list);
     return 0;
@@ -610,40 +610,40 @@ static int s_array_list_preallocated_iteration_test_fn(struct aws_allocator *all
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&first, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&second, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&third, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(3, list.length, "List size should be %d.", 3);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(3, list.length, "List size should be %d.", 3);
+    ASSERTF_SUCCESS(
         aws_array_list_set_at(&list, (void *)&fourth, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(4, list.length, "List size should be %d.", 4);
-    ASSERT_FAILS(aws_array_list_set_at(&list, (void *)&fourth, 4), "Adding element past the end should have failed");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(4, list.length, "List size should be %d.", 4);
+    ASSERTF_FAILS(aws_array_list_set_at(&list, (void *)&fourth, 4), "Adding element past the end should have failed");
+    ASSERTF_INT_EQUALS(
         AWS_ERROR_INVALID_INDEX,
         aws_last_error(),
         "Error code should have been INVALID_INDEX but was %d",
         aws_last_error());
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 2), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(third, item, "Item should have been the third item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(third, item, "Item should have been the third item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list, (void *)&item, 3), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
-    ASSERT_FAILS(aws_array_list_get_at(&list, (void *)&item, 4), "Getting an element past the end should have failed");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(fourth, item, "Item should have been the fourth item.");
+    ASSERTF_FAILS(aws_array_list_get_at(&list, (void *)&item, 4), "Getting an element past the end should have failed");
+    ASSERTF_INT_EQUALS(
         AWS_ERROR_INVALID_INDEX,
         aws_last_error(),
         "Error code should have been INVALID_INDEX but was %d",
@@ -667,14 +667,14 @@ static int s_array_list_preallocated_push_test_fn(struct aws_allocator *allocato
 
     int first = 1, second = 2, third = 3, fourth = 4;
 
-    ASSERT_INT_EQUALS(0, list.length, "List size should be 0.");
-    ASSERT_INT_EQUALS(sizeof(list_data), list.current_size, "Allocated list size should be %d.", sizeof(list_data));
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be 0.");
+    ASSERTF_INT_EQUALS(sizeof(list_data), list.current_size, "Allocated list size should be %d.", sizeof(list_data));
 
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &first), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &second), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &third), "List push failed with error code %d", aws_last_error());
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &fourth), "List push failed with error code %d", aws_last_error());
-    ASSERT_ERROR(
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &first), "List push failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &second), "List push failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &third), "List push failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &fourth), "List push failed with error code %d", aws_last_error());
+    ASSERTF_ERROR(
         AWS_ERROR_LIST_EXCEEDS_MAX_SIZE,
         aws_array_list_push_back(&list, &fourth),
         "List push past static size should have failed with AWS_ERROR_LIST_EXCEEDS_MAX_SIZE but was %d",
@@ -692,33 +692,33 @@ static int s_array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, v
     struct aws_array_list list;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(aws_array_list_push_back(&list, &second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &first), "List push failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(aws_array_list_push_back(&list, &second), "List push failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
 
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "size before shrink should be %d.", list_size * sizeof(int));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_shrink_to_fit(&list), "List shrink to fit failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
-    ASSERT_INT_EQUALS(2, list.current_size / sizeof(int), "Shrunken size should be %d.", 2 * sizeof(int));
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_INT_EQUALS(2, list.current_size / sizeof(int), "Shrunken size should be %d.", 2 * sizeof(int));
 
     int item = 0;
-    ASSERT_SUCCESS(aws_array_list_get_at(&list, &item, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_SUCCESS(aws_array_list_get_at(&list, &item, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
-    ASSERT_FAILS(aws_array_list_get_at(&list, &item, 2), "Getting an element past the end should have failed");
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_get_at(&list, &item, 0), "Array set failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(aws_array_list_get_at(&list, &item, 1), "Array set failed with error code %d", aws_last_error());
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_FAILS(aws_array_list_get_at(&list, &item, 2), "Getting an element past the end should have failed");
+    ASSERTF_INT_EQUALS(
         AWS_ERROR_INVALID_INDEX,
         aws_last_error(),
         "Error code should have been INVALID_INDEX but was %d",
@@ -743,24 +743,24 @@ static int s_array_list_shrink_to_fit_static_test_fn(struct aws_allocator *alloc
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
 
-    ASSERT_INT_EQUALS(sizeof(list_data), list.current_size, "size before shrink should be %d.", sizeof(list_data));
+    ASSERTF_INT_EQUALS(sizeof(list_data), list.current_size, "size before shrink should be %d.", sizeof(list_data));
 
-    ASSERT_FAILS(aws_array_list_shrink_to_fit(&list), "List shrink of static list should have failed.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_FAILS(aws_array_list_shrink_to_fit(&list), "List shrink of static list should have failed.");
+    ASSERTF_INT_EQUALS(
         AWS_ERROR_LIST_STATIC_MODE_CANT_SHRINK,
         aws_last_error(),
         "Error code should have been LIST_STATIC_MODE_CANT_SHRINK but was %d",
         aws_last_error());
 
-    ASSERT_PTR_EQUALS(&list_data, list.data, "The underlying allocation should not have changed");
-    ASSERT_INT_EQUALS(sizeof(list_data), list.current_size, "List size should not have been changed");
+    ASSERTF_PTR_EQUALS(&list_data, list.data, "The underlying allocation should not have changed");
+    ASSERTF_INT_EQUALS(sizeof(list_data), list.current_size, "List size should not have been changed");
 
     aws_array_list_clean_up(&list);
     return 0;
@@ -774,31 +774,32 @@ static int s_array_list_clear_test_fn(struct aws_allocator *allocator, void *ctx
     struct aws_array_list list;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list.length, "List size should be %d.", 2);
+    ASSERTF_INT_EQUALS(2, list.length, "List size should be %d.", 2);
 
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "size before clear should be %d.", list_size * sizeof(int));
 
     aws_array_list_clear(&list);
-    ASSERT_INT_EQUALS(0, list.length, "List size should be %d after clear.", 0);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(0, list.length, "List size should be %d after clear.", 0);
+    ASSERTF_INT_EQUALS(
         list_size, list.current_size / sizeof(int), "cleared size should be %d.", (int)list_size * sizeof(int));
 
     int item;
-    ASSERT_FAILS(aws_array_list_front(&list, (void *)&item), "front() after a clear on list should have been an error");
-    ASSERT_INT_EQUALS(
+    ASSERTF_FAILS(
+        aws_array_list_front(&list, (void *)&item), "front() after a clear on list should have been an error");
+    ASSERTF_INT_EQUALS(
         AWS_ERROR_LIST_EMPTY, aws_last_error(), "Error code should have been LIST_EMPTY but was %d", aws_last_error());
 
     aws_array_list_clean_up(&list);
@@ -814,35 +815,35 @@ static int s_array_list_copy_test_fn(struct aws_allocator *allocator, void *ctx)
     struct aws_array_list list_b;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list_a, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list_b, allocator, 0, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
+    ASSERTF_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
 
-    ASSERT_SUCCESS(aws_array_list_copy(&list_a, &list_b), "List copy failed with error code %d", aws_last_error());
+    ASSERTF_SUCCESS(aws_array_list_copy(&list_a, &list_b), "List copy failed with error code %d", aws_last_error());
 
     int item = 0;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list_b, (void *)&item, 0), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(first, item, "Item should have been the first item.");
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(first, item, "Item should have been the first item.");
+    ASSERTF_SUCCESS(
         aws_array_list_get_at(&list_b, (void *)&item, 1), "Array set failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(second, item, "Item should have been the second item.");
+    ASSERTF_INT_EQUALS(second, item, "Item should have been the second item.");
 
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         aws_array_list_length(&list_a), aws_array_list_length(&list_b), "list lengths should have matched.");
 
     aws_array_list_clean_up(&list_a);
@@ -882,24 +883,26 @@ static int s_array_list_swap_contents_test_fn(struct aws_allocator *allocator, v
     /* compare state after swap */
     void *a_buffer_after_swap;
     ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_a, &a_buffer_after_swap, 0));
-    ASSERT_PTR_EQUALS(b_buffer, a_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
+    ASSERTF_PTR_EQUALS(
+        b_buffer, a_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
 
     void *b_buffer_after_swap;
     ASSERT_SUCCESS(aws_array_list_get_at_ptr(&list_b, &b_buffer_after_swap, 0));
-    ASSERT_PTR_EQUALS(a_buffer, b_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
+    ASSERTF_PTR_EQUALS(
+        a_buffer, b_buffer_after_swap, "Lists A and B should have swapped buffer ownership, but did not");
 
     int item;
-    ASSERT_INT_EQUALS(2, aws_array_list_length(&list_a), "List A should have taken B's old length");
-    ASSERT_INT_EQUALS(b_capacity, aws_array_list_capacity(&list_a), "List A should have taken B's old capacity");
-    ASSERT_SUCCESS(aws_array_list_get_at(&list_a, &item, 0), "List A should have B's old first item");
-    ASSERT_INT_EQUALS(b_1, item, "List A should have B's old first item");
-    ASSERT_SUCCESS(aws_array_list_get_at(&list_a, &item, 1), "List A should have B's old second item");
-    ASSERT_INT_EQUALS(b_2, item, "List A should have B's old second item");
+    ASSERTF_INT_EQUALS(2, aws_array_list_length(&list_a), "List A should have taken B's old length");
+    ASSERTF_INT_EQUALS(b_capacity, aws_array_list_capacity(&list_a), "List A should have taken B's old capacity");
+    ASSERTF_SUCCESS(aws_array_list_get_at(&list_a, &item, 0), "List A should have B's old first item");
+    ASSERTF_INT_EQUALS(b_1, item, "List A should have B's old first item");
+    ASSERTF_SUCCESS(aws_array_list_get_at(&list_a, &item, 1), "List A should have B's old second item");
+    ASSERTF_INT_EQUALS(b_2, item, "List A should have B's old second item");
 
-    ASSERT_INT_EQUALS(1, aws_array_list_length(&list_b), "List B should have taken A's old length");
-    ASSERT_INT_EQUALS(a_capacity, aws_array_list_capacity(&list_b), "List B should have taken A's old capacity");
-    ASSERT_SUCCESS(aws_array_list_get_at(&list_b, &item, 0), "List B should have A's old first item");
-    ASSERT_INT_EQUALS(a_1, item, "List B should have A's old first item");
+    ASSERTF_INT_EQUALS(1, aws_array_list_length(&list_b), "List B should have taken A's old length");
+    ASSERTF_INT_EQUALS(a_capacity, aws_array_list_capacity(&list_b), "List B should have taken A's old capacity");
+    ASSERTF_SUCCESS(aws_array_list_get_at(&list_b, &item, 0), "List B should have A's old first item");
+    ASSERTF_INT_EQUALS(a_1, item, "List B should have A's old first item");
 
     aws_array_list_clean_up(&list_a);
     aws_array_list_clean_up(&list_b);
@@ -916,27 +919,27 @@ static int s_array_list_not_enough_space_test_fn(struct aws_allocator *allocator
     struct aws_array_list list_b;
 
     static size_t list_size = 4;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list_a, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list_b, allocator, 1, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
+    ASSERTF_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
 
-    ASSERT_SUCCESS(aws_array_list_copy(&list_a, &list_b), "Copy from list_a to list_b should have succeeded");
-    ASSERT_INT_EQUALS(list_a.length, list_b.length, "List b should have grown to the length of list a");
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_array_list_copy(&list_a, &list_b), "Copy from list_a to list_b should have succeeded");
+    ASSERTF_INT_EQUALS(list_a.length, list_b.length, "List b should have grown to the length of list a");
+    ASSERTF_INT_EQUALS(
         2 * sizeof(int),
         list_b.current_size,
         "List b should have grown to the size of the number of elements in list a");
@@ -957,7 +960,7 @@ static int s_array_list_not_enough_space_test_failure_fn(struct aws_allocator *a
 
     size_t list_size = 4;
     int static_list[1];
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list_a, allocator, list_size, sizeof(int)),
         "List initialization failed with error %d",
         aws_last_error());
@@ -967,13 +970,13 @@ static int s_array_list_not_enough_space_test_failure_fn(struct aws_allocator *a
 
     int first = 1, second = 2;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&first), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
-    ASSERT_SUCCESS(
+    ASSERTF_INT_EQUALS(1, list_a.length, "List size should be %d.", 1);
+    ASSERTF_SUCCESS(
         aws_array_list_push_back(&list_a, (void *)&second), "List push failed with error code %d", aws_last_error());
-    ASSERT_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
-    ASSERT_ERROR(
+    ASSERTF_INT_EQUALS(2, list_a.length, "List size should be %d.", 2);
+    ASSERTF_ERROR(
         AWS_ERROR_DEST_COPY_TOO_SMALL,
         aws_array_list_copy(&list_a, &list_b),
         "Copying to a static list too small should have failed with TOO_SMALL but got %d instead",
@@ -1006,12 +1009,12 @@ static int s_array_list_of_strings_sort_fn(struct aws_allocator *allocator, void
     int num_strings = AWS_ARRAY_SIZE(strings);
 
     struct aws_array_list list;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, num_strings, sizeof(const struct aws_string *)),
         "List initialization failed with error %d",
         aws_last_error());
     for (int idx = 0; idx < num_strings; ++idx) {
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_array_list_push_back(&list, (void *)(strings + idx)),
             "List push failed with error code %d",
             aws_last_error());
@@ -1024,9 +1027,9 @@ static int s_array_list_of_strings_sort_fn(struct aws_allocator *allocator, void
      */
     for (int idx = 0; idx < num_strings; ++idx) {
         const struct aws_string *str;
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_array_list_get_at(&list, (void **)&str, idx), "List get failed with error code %d", aws_last_error());
-        ASSERT_INT_EQUALS(0, aws_string_compare(str, sorted[idx]), "Strings should be equal");
+        ASSERTF_INT_EQUALS(0, aws_string_compare(str, sorted[idx]), "Strings should be equal");
     }
     aws_array_list_clean_up(&list);
     return 0;
@@ -1038,7 +1041,7 @@ static int s_array_list_empty_sort_fn(struct aws_allocator *allocator, void *ctx
     (void)ctx;
 
     struct aws_array_list list;
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_array_list_init_dynamic(&list, allocator, 5, sizeof(const struct aws_string *)),
         "List initialization failed with error %d",
         aws_last_error());

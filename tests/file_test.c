@@ -442,9 +442,9 @@ static int s_test_normalize_windows_directory_separator(struct aws_allocator *al
 AWS_TEST_CASE(test_normalize_windows_directory_separator, s_test_normalize_windows_directory_separator);
 
 static int s_check_byte_buf_from_file(const struct aws_byte_buf *buf, struct aws_byte_cursor expected_contents) {
-    ASSERT_TRUE(aws_byte_cursor_eq_byte_buf(&expected_contents, buf), "Contents should match");
-    ASSERT_TRUE(buf->capacity > buf->len, "Buffer should end with null-terminator");
-    ASSERT_UINT_EQUALS(0, buf->buffer[buf->len], "Buffer should end with null-terminator");
+    ASSERTF_TRUE(aws_byte_cursor_eq_byte_buf(&expected_contents, buf), "Contents should match");
+    ASSERTF_TRUE(buf->capacity > buf->len, "Buffer should end with null-terminator");
+    ASSERTF_UINT_EQUALS(0, buf->buffer[buf->len], "Buffer should end with null-terminator");
     return AWS_OP_SUCCESS;
 }
 
@@ -503,13 +503,13 @@ static int s_read_special_file(struct aws_allocator *allocator, const char *file
 
     struct aws_byte_buf buf;
     ASSERT_SUCCESS(aws_byte_buf_init_from_file(&buf, allocator, filename));
-    ASSERT_TRUE(buf.capacity > buf.len, "Buffer should end with null-terminator");
-    ASSERT_UINT_EQUALS(0, buf.buffer[buf.len], "Buffer should end with null-terminator");
+    ASSERTF_TRUE(buf.capacity > buf.len, "Buffer should end with null-terminator");
+    ASSERTF_UINT_EQUALS(0, buf.buffer[buf.len], "Buffer should end with null-terminator");
 
     if (strcmp("/dev/null", filename) == 0) {
-        ASSERT_UINT_EQUALS(0, buf.len, "expected /dev/null to be empty");
+        ASSERTF_UINT_EQUALS(0, buf.len, "expected /dev/null to be empty");
     } else {
-        ASSERT_TRUE(buf.len > 0, "expected special file to have data");
+        ASSERTF_TRUE(buf.len > 0, "expected special file to have data");
     }
 
     aws_byte_buf_clean_up(&buf);

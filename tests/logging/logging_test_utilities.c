@@ -35,7 +35,7 @@ int do_log_test(
     aws_logger_clean_up(&test_logger);
 
     /* Check the test results last */
-    ASSERT_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
+    ASSERTF_SUCCESS(strcmp(buffer, expected_result), "Expected \"%s\" but received \"%s\"", expected_result, buffer);
 
     return AWS_OP_SUCCESS;
 }

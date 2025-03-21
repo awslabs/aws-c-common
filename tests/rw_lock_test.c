@@ -25,11 +25,11 @@ static int s_test_rw_lock_acquire_release(struct aws_allocator *allocator, void 
     struct aws_rw_lock rw_lock;
     aws_rw_lock_init(&rw_lock);
 
-    ASSERT_SUCCESS(aws_rw_lock_wlock(&rw_lock), "rw_lock acquire should have returned success.");
-    ASSERT_SUCCESS(aws_rw_lock_wunlock(&rw_lock), "rw_lock release should have returned success.");
+    ASSERTF_SUCCESS(aws_rw_lock_wlock(&rw_lock), "rw_lock acquire should have returned success.");
+    ASSERTF_SUCCESS(aws_rw_lock_wunlock(&rw_lock), "rw_lock release should have returned success.");
 
-    ASSERT_SUCCESS(aws_rw_lock_rlock(&rw_lock), "rw_lock acquire should have returned success.");
-    ASSERT_SUCCESS(aws_rw_lock_runlock(&rw_lock), "rw_lock release should have returned success.");
+    ASSERTF_SUCCESS(aws_rw_lock_rlock(&rw_lock), "rw_lock acquire should have returned success.");
+    ASSERTF_SUCCESS(aws_rw_lock_runlock(&rw_lock), "rw_lock release should have returned success.");
 
     aws_rw_lock_clean_up(&rw_lock);
 
@@ -85,7 +85,7 @@ static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, v
 
     struct aws_thread thread;
     aws_thread_init(&thread, allocator);
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_thread_launch(&thread, s_rw_lock_thread_fn, &rw_lock_data, 0),
         "thread creation failed with error %d",
         aws_last_error());
@@ -99,10 +99,10 @@ static int s_test_rw_lock_is_actually_rw_lock(struct aws_allocator *allocator, v
         aws_rw_lock_runlock(&rw_lock_data.rw_lock);
     }
 
-    ASSERT_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
-    ASSERT_INT_EQUALS(
+    ASSERTF_SUCCESS(aws_thread_join(&thread), "Thread join failed with error code %d.", aws_last_error());
+    ASSERTF_INT_EQUALS(
         rw_lock_data.thread_fn_increments, rw_lock_data.max_counts, "Thread 2 should have written all data");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         rw_lock_data.max_counts, rw_lock_data.counter, "Both threads should have written exactly the max counts.");
 
     aws_thread_clean_up(&thread);
@@ -140,7 +140,7 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
     for (size_t i = 0; i < AWS_ARRAY_SIZE(threads); ++i) {
 
         aws_thread_init(&threads[i], allocator);
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_thread_launch(&threads[i], s_thread_reader_fn, &lock, 0),
             "thread creation failed with error %d",
             aws_last_error());
@@ -158,7 +158,7 @@ static int s_test_rw_lock_many_readers(struct aws_allocator *allocator, void *ct
 
     for (size_t i = 0; i < AWS_ARRAY_SIZE(threads); ++i) {
 
-        ASSERT_SUCCESS(aws_thread_join(&threads[i]), "Thread join failed with error code %d.", aws_last_error());
+        ASSERTF_SUCCESS(aws_thread_join(&threads[i]), "Thread join failed with error code %d.", aws_last_error());
         aws_thread_clean_up(&threads[i]);
     }
 

@@ -20,11 +20,11 @@ static int s_run_hex_encoding_test_case(
     size_t expected_len) {
     size_t output_len = 0;
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_hex_compute_encoded_len(test_str_len, &output_len),
         "compute hex encoded len failed with error %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(expected_len, output_len, "Output len on buffer should be %d", expected_len);
+    ASSERTF_INT_EQUALS(expected_len, output_len, "Output len on buffer should be %d", expected_len);
 
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_len);
 
@@ -36,40 +36,40 @@ static int s_run_hex_encoding_test_case(
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
-    ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
+    ASSERTF_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         expected, expected_len, output.buffer, output_len, "Encode output should have been {%s}", expected);
     ASSERT_INT_EQUALS(output_len, output.len);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the end of the buffer.");
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_hex_compute_decoded_len(expected_len, &output_len),
         "compute hex decoded len failed with error %d",
         aws_last_error());
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
-    ASSERT_INT_EQUALS(test_str_len, output_len, "Output len on buffer should be %d", test_str_len);
+    ASSERTF_INT_EQUALS(test_str_len, output_len, "Output len on buffer should be %d", test_str_len);
     aws_byte_buf_reset(&output, false);
 
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_len);
-    ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
+    ASSERTF_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         test_str, test_str_len, output.buffer, output_len, "Decode output should have been %s.", test_str);
     ASSERT_INT_EQUALS(output_len, output.len);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the start of the buffer.");
@@ -167,13 +167,13 @@ static int s_hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator
     struct aws_byte_cursor test_buf = aws_byte_cursor_from_c_str(test_data);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(expected));
 
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_hex_decode(&test_buf, &output_buf),
         "Hex decoding failed with "
         "error code %d",
         aws_last_error());
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         expected, sizeof(expected), output, sizeof(output), "Hex decode expected output did not match actual output");
 
     return 0;
@@ -192,12 +192,12 @@ static int s_hex_encoding_invalid_buffer_size_test_fn(struct aws_allocator *allo
     struct aws_byte_cursor test_buf = aws_byte_cursor_from_c_str(test_data);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, size_too_small);
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_SHORT_BUFFER,
         aws_hex_encode(&test_buf, &output_buf),
         "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_SHORT_BUFFER,
         aws_hex_decode(&test_buf, &output_buf),
         "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
@@ -235,7 +235,7 @@ static int s_hex_encoding_overflow_test_fn(struct aws_allocator *allocator, void
     struct aws_byte_cursor test_buf = aws_byte_cursor_from_array(test_data, overflow);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
         aws_hex_encode(&test_buf, &output_buf),
         "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
@@ -254,7 +254,7 @@ static int s_hex_encoding_invalid_string_test_fn(struct aws_allocator *allocator
     struct aws_byte_cursor bad_buf = aws_byte_cursor_from_c_str(bad_input);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_INVALID_HEX_STR,
         aws_hex_decode(&bad_buf, &output_buf),
         "An invalid string should have failed with AWS_ERROR_INVALID_HEX_STR");
@@ -276,11 +276,11 @@ static int s_run_base64_encoding_test_case(
     size_t output_len = 0;
 
     /* Part 1: encoding */
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_base64_compute_encoded_len(test_str_len, &output_len),
         "Compute base64 encoded length failed with %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(expected_len, output_len, "Output len on string should be %d", expected_len);
+    ASSERTF_INT_EQUALS(expected_len, output_len, "Output len on string should be %d", expected_len);
 
     struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_len);
 
@@ -292,15 +292,15 @@ static int s_run_base64_encoding_test_case(
 
     struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
-    ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
+    ASSERTF_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         expected, expected_len, output.buffer, output.len, "Encode output should have been {%s}", expected);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the end of the buffer.");
@@ -312,9 +312,9 @@ static int s_run_base64_encoding_test_case(
     struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_base64_encode_prefix);
     ASSERT_SUCCESS(aws_byte_buf_append(&allocation, &prefix_cursor));
 
-    ASSERT_SUCCESS(aws_base64_encode(&to_encode, &allocation), "encode call should have succeeded");
+    ASSERTF_SUCCESS(aws_base64_encode(&to_encode, &allocation), "encode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         expected,
         expected_len,
         allocation.buffer + s_base64_encode_prefix->len,
@@ -323,7 +323,7 @@ static int s_run_base64_encoding_test_case(
         expected);
 
     struct aws_byte_cursor prefix_output = {.ptr = allocation.buffer, .len = s_base64_encode_prefix->len};
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         s_base64_encode_prefix->bytes,
         s_base64_encode_prefix->len,
         allocation.buffer,
@@ -336,11 +336,11 @@ static int s_run_base64_encoding_test_case(
 
     /* Part 3: decoding */
     struct aws_byte_cursor expected_cur = aws_byte_cursor_from_array(expected, expected_len);
-    ASSERT_SUCCESS(
+    ASSERTF_SUCCESS(
         aws_base64_compute_decoded_len(&expected_cur, &output_len),
         "Compute base64 decoded length failed with %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(test_str_len, output_len, "Output len on string should be %d", test_str_len);
+    ASSERTF_INT_EQUALS(test_str_len, output_len, "Output len on string should be %d", test_str_len);
 
     ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_len + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
@@ -348,9 +348,9 @@ static int s_run_base64_encoding_test_case(
     output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
     struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_len);
-    ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
+    ASSERTF_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         test_str,
         test_str_len,
         output.buffer,
@@ -358,11 +358,11 @@ static int s_run_base64_encoding_test_case(
         "Decode output should have been {%s} (len=%zu).",
         test_str,
         test_str_len);
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the start of the buffer.");
@@ -567,14 +567,14 @@ static int s_base64_encoding_buffer_size_too_small_test_fn(struct aws_allocator 
     struct aws_byte_cursor test_buf = aws_byte_cursor_from_c_str(test_data);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, size_too_small);
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_SHORT_BUFFER,
         aws_base64_encode(&test_buf, &output_buf),
         "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
 
     struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str(encoded_data);
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_SHORT_BUFFER,
         aws_base64_decode(&encoded_buf, &output_buf),
         "Invalid buffer size should have failed with AWS_ERROR_SHORT_BUFFER");
@@ -596,7 +596,7 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
     struct aws_byte_cursor test_buf = aws_byte_cursor_from_array(test_data, overflow + 2);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
         aws_base64_encode(&test_buf, &output_buf),
         "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
@@ -620,7 +620,7 @@ static int s_base64_encoding_buffer_size_invalid_test_fn(struct aws_allocator *a
     struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_array(encoded_data, sizeof(encoded_data));
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
         "Non multiple of 4 buffer size should have failed with AWS_ERROR_INVALID_BASE64_STR");
@@ -639,7 +639,7 @@ static int s_base64_encoding_invalid_buffer_test_fn(struct aws_allocator *alloca
     struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str(encoded_data);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
         "buffer with invalid character should have failed with AWS_ERROR_INVALID_BASE64_STR");
@@ -674,7 +674,7 @@ static int s_base64_encoding_invalid_padding_test_fn(struct aws_allocator *alloc
     struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str(encoded_data);
     struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
 
-    ASSERT_ERROR(
+    ASSERTF_ERROR(
         AWS_ERROR_INVALID_BASE64_STR,
         aws_base64_decode(&encoded_buf, &output_buf),
         "buffer with invalid padding should have failed with AWS_ERROR_INVALID_BASE64_STR");
@@ -693,10 +693,10 @@ static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     aws_write_u64(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint64_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint64_t to buffer failed");
 
     uint64_t unmarshalled_value = aws_read_u64(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
     return 0;
 }
 
@@ -709,15 +709,15 @@ static int s_uint64_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint64_t test_value = 0x1020304050607080;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
-    ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
+    ASSERTF_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
 
     aws_write_u64(test_value, buffer + 1);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 1), sizeof(expected), "Uint64_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 1), sizeof(expected), "Uint64_t to buffer failed");
 
     uint64_t unmarshalled_value = aws_read_u64(buffer + 1);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     aws_mem_release(allocator, (void *)buffer);
 
@@ -735,10 +735,10 @@ static int s_uint32_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     aws_write_u32(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint32_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint32_t to buffer failed");
 
     uint32_t unmarshalled_value = aws_read_u32(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     return 0;
 }
@@ -751,15 +751,15 @@ static int s_uint32_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint32_t test_value = 0x10203040;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
-    ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
+    ASSERTF_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
 
     aws_write_u32(test_value, buffer + 5);
 
     uint8_t expected[] = {0x10, 0x20, 0x30, 0x40};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 5), sizeof(expected), "Uint32_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 5), sizeof(expected), "Uint32_t to buffer failed");
 
     uint64_t unmarshalled_value = aws_read_u32(buffer + 5);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     aws_mem_release(allocator, (void *)buffer);
 
@@ -777,10 +777,10 @@ static int s_uint24_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     aws_write_u24(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20, 0x30};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "24 bit int to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "24 bit int to buffer failed");
 
     uint32_t unmarshalled_value = aws_read_u24(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     return 0;
 }
@@ -793,14 +793,15 @@ static int s_uint24_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint32_t test_value = 0x102030;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
-    ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
+    ASSERTF_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
     aws_write_u24(test_value, buffer + 6);
 
     uint8_t expected[] = {0x10, 0x20, 0x30};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 6), sizeof(expected), "24 bit int to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(
+        expected, sizeof(expected), (buffer + 6), sizeof(expected), "24 bit int to buffer failed");
 
     uint32_t unmarshalled_value = aws_read_u24(buffer + 6);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
     aws_mem_release(allocator, (void *)buffer);
 
     return 0;
@@ -817,10 +818,10 @@ static int s_uint16_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     aws_write_u16(test_value, buffer);
 
     uint8_t expected[] = {0x10, 0x20};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
 
     uint16_t unmarshalled_value = aws_read_u16(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     return 0;
 }
@@ -833,14 +834,15 @@ static int s_uint16_buffer_non_aligned_test_fn(struct aws_allocator *allocator, 
     uint16_t test_value = 0x1020;
     uint8_t *buffer = (uint8_t *)aws_mem_acquire(allocator, 9);
 
-    ASSERT_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
+    ASSERTF_FALSE((size_t)buffer & 0x07, "Heap allocated buffer should have been 8-byte aligned.");
     aws_write_u16(test_value, buffer + 7);
 
     uint8_t expected[] = {0x10, 0x20};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), (buffer + 7), sizeof(expected), "16 bit int to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(
+        expected, sizeof(expected), (buffer + 7), sizeof(expected), "16 bit int to buffer failed");
 
     uint16_t unmarshalled_value = aws_read_u16(buffer + 7);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
     aws_mem_release(allocator, (void *)buffer);
 
     return 0;
@@ -858,10 +860,10 @@ static int s_uint16_buffer_signed_positive_test_fn(struct aws_allocator *allocat
     aws_write_u16((uint16_t)test_value, buffer);
 
     uint8_t expected[] = {0x40, 0x30};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
 
     int16_t unmarshalled_value = (int16_t)aws_read_u16(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     return 0;
 }
@@ -877,10 +879,10 @@ static int s_uint16_buffer_signed_negative_test_fn(struct aws_allocator *allocat
     aws_write_u16((uint16_t)test_value, buffer);
 
     uint8_t expected[] = {0xFF, 0xFE};
-    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
+    ASSERTF_BIN_ARRAYS_EQUALS(expected, sizeof(expected), buffer, sizeof(buffer), "Uint16_t to buffer failed");
 
     int16_t unmarshalled_value = (int16_t)aws_read_u16(buffer);
-    ASSERT_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
+    ASSERTF_INT_EQUALS(test_value, unmarshalled_value, "After unmarshalling the encoded data, it didn't match");
 
     return 0;
 }
@@ -904,11 +906,11 @@ static int s_run_hex_encoding_append_dynamic_test_case(
 
     dest.len = starting_offset;
 
-    ASSERT_SUCCESS(aws_hex_encode_append_dynamic(&to_encode, &dest), "encode call should have succeeded");
+    ASSERTF_SUCCESS(aws_hex_encode_append_dynamic(&to_encode, &dest), "encode call should have succeeded");
 
     size_t expected_size = strlen(expected);
 
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_BIN_ARRAYS_EQUALS(
         expected,
         expected_size,
         dest.buffer + starting_offset,
@@ -919,14 +921,14 @@ static int s_run_hex_encoding_append_dynamic_test_case(
     ASSERT_INT_EQUALS(output_size, dest.len - starting_offset);
 
     for (size_t i = 0; i < starting_offset; ++i) {
-        ASSERT_INT_EQUALS(
+        ASSERTF_INT_EQUALS(
             (unsigned char)*(dest.buffer + i),
             (unsigned char)0xdd,
             "Write should not have occurred before the the encoding's starting position.");
     }
 
     for (size_t i = starting_offset + output_size; i < dest.capacity; ++i) {
-        ASSERT_INT_EQUALS(
+        ASSERTF_INT_EQUALS(
             (unsigned char)*(dest.buffer + i),
             (unsigned char)0xdd,
             "Write should not have occurred after the encoding's final position.");

@@ -75,19 +75,19 @@ int test_asserts(int *index) {
 
     TEST_FAILURE(basic_fail_1) { FAIL("Failed: %d", 42); }
     TEST_FAILURE(assert_bool) { ASSERT_TRUE(0); }
-    TEST_FAILURE(assert_bool) { ASSERT_TRUE(0, "foo %d", 42); }
+    TEST_FAILURE(assert_bool) { ASSERTF_TRUE(0, "foo %d", 42); }
     TEST_FAILURE(assert_bool) { ASSERT_FALSE(1); }
-    TEST_FAILURE(assert_bool) { ASSERT_FALSE(1, "foo %d", 42); }
+    TEST_FAILURE(assert_bool) { ASSERTF_FALSE(1, "foo %d", 42); }
     TEST_SUCCESS(assert_bool) { ASSERT_TRUE(1); }
     TEST_SUCCESS(assert_bool) { ASSERT_TRUE(2); }
     TEST_SUCCESS(assert_bool) { ASSERT_FALSE(0); }
     TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS); }
-    TEST_SUCCESS(assert_success) { ASSERT_SUCCESS(AWS_OP_SUCCESS, "foo"); }
-    TEST_FAILURE(assert_success) { ASSERT_SUCCESS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
+    TEST_SUCCESS(assert_success) { ASSERTF_SUCCESS(AWS_OP_SUCCESS, "foo"); }
+    TEST_FAILURE(assert_success) { ASSERTF_SUCCESS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
 
     TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM)); }
-    TEST_SUCCESS(assert_fails) { ASSERT_FAILS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
-    TEST_FAILURE(assert_fails) { ASSERT_FAILS(AWS_OP_SUCCESS, "foo"); }
+    TEST_SUCCESS(assert_fails) { ASSERTF_FAILS(aws_raise_error(AWS_ERROR_OOM), "foo"); }
+    TEST_FAILURE(assert_fails) { ASSERTF_FAILS(AWS_OP_SUCCESS, "foo"); }
 
     TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM)); }
     TEST_SUCCESS(assert_error_side_effect) {
@@ -96,10 +96,10 @@ int test_asserts(int *index) {
     TEST_SUCCESS(assert_error_side_effect) {
         ASSERT_ERROR(AWS_ERROR_OOM, (side_effect(), aws_raise_error(AWS_ERROR_OOM)));
     }
-    TEST_SUCCESS(assert_error) { ASSERT_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM), "foo"); }
-    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, aws_raise_error(AWS_ERROR_OOM), "foo"); }
+    TEST_SUCCESS(assert_error) { ASSERTF_ERROR(AWS_ERROR_OOM, aws_raise_error(AWS_ERROR_OOM), "foo"); }
+    TEST_FAILURE(assert_error) { ASSERTF_ERROR(AWS_ERROR_CLOCK_FAILURE, aws_raise_error(AWS_ERROR_OOM), "foo"); }
     aws_raise_error(AWS_ERROR_CLOCK_FAILURE); // set last error
-    TEST_FAILURE(assert_error) { ASSERT_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo"); }
+    TEST_FAILURE(assert_error) { ASSERTF_ERROR(AWS_ERROR_CLOCK_FAILURE, AWS_OP_SUCCESS, "foo"); }
 
     TEST_SUCCESS(assert_null) { ASSERT_NULL(NULL); }
     {
@@ -111,21 +111,21 @@ int test_asserts(int *index) {
         TEST_SUCCESS(assert_null) { ASSERT_NULL(nullp2); }
         TEST_SUCCESS(assert_null_sideeffects) { ASSERT_NULL((side_effect(), nullp2)); }
     }
-    TEST_SUCCESS(assert_null) { ASSERT_NULL(0, "foo"); }
-    TEST_FAILURE(assert_null) { ASSERT_NULL("hello world", "foo"); }
+    TEST_SUCCESS(assert_null) { ASSERTF_NULL(0, "foo"); }
+    TEST_FAILURE(ASSERTF_NULL) { ASSERTF_NULL("hello world", "foo"); }
 
     TEST_SUCCESS(inteq) { ASSERT_INT_EQUALS(4321, 4321); }
-    TEST_SUCCESS(inteq) { ASSERT_INT_EQUALS(4321, 4321, "foo"); }
+    TEST_SUCCESS(inteq) { ASSERTF_INT_EQUALS(4321, 4321, "foo"); }
     TEST_SUCCESS(inteq_side_effects) {
         int increment = 4321;
-        ASSERT_INT_EQUALS(4321, increment++, "foo");
-        ASSERT_INT_EQUALS(4322, increment++, "foo");
+        ASSERTF_INT_EQUALS(4321, increment++, "foo");
+        ASSERTF_INT_EQUALS(4322, increment++, "foo");
     }
-    TEST_FAILURE(inteq_difference) { ASSERT_INT_EQUALS(0, 1, "foo"); }
+    TEST_FAILURE(inteq_difference) { ASSERTF_INT_EQUALS(0, 1, "foo"); }
 
     // UINT/PTR/BYTE_HEX/HEX are the same backend, so just test that the format string doesn't break
-    TEST_FAILURE(uinteq) { ASSERT_UINT_EQUALS(0, 1, "Foo"); }
-    TEST_FAILURE(ptreq) { ASSERT_PTR_EQUALS("x", "y", "Foo"); }
+    TEST_FAILURE(uinteq) { ASSERTF_UINT_EQUALS(0, 1, "Foo"); }
+    TEST_FAILURE(ptreq) { ASSERTF_PTR_EQUALS("x", "y", "Foo"); }
     TEST_FAILURE(bytehex) { ASSERT_BYTE_HEX_EQUALS('a', 'b'); }
     TEST_FAILURE(hex) { ASSERT_HEX_EQUALS((uint64_t)-1, 0); }
 
@@ -133,10 +133,10 @@ int test_asserts(int *index) {
     TEST_SUCCESS(streq) {
         char str_x[2] = "x";
 
-        ASSERT_STR_EQUALS("x", (side_effect(), str_x), "foo");
+        ASSERTF_STR_EQUALS("x", (side_effect(), str_x), "foo");
     }
-    TEST_FAILURE(streq) { ASSERT_STR_EQUALS("x", "xy", "bar"); }
-    TEST_FAILURE(streq) { ASSERT_STR_EQUALS("xy", "x"); }
+    TEST_FAILURE(streq) { ASSERTF_STR_EQUALS("x", "xy", "bar"); }
+    TEST_FAILURE(streq) { ASSERTF_STR_EQUALS("xy", "x"); }
 
     uint8_t bin1[] = {0, 1, 2};
     uint8_t bin2[] = {0, 1, 2};
@@ -152,11 +152,11 @@ int test_asserts(int *index) {
     }
     TEST_FAILURE(bineq_samesize) {
         uint8_t bin3[] = {0, 1, 3};
-        ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin3, 3, "foo");
+        ASSERTF_BIN_ARRAYS_EQUALS(bin1, 3, bin3, 3, "foo");
     }
     TEST_FAILURE(bineq_diffsize) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin2, 2); }
     TEST_FAILURE(bineq_diffsize) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 2, bin2, 3); }
-    TEST_SUCCESS(bineq_empty) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 0, bin2, 0, "foo"); }
+    TEST_SUCCESS(bineq_empty) { ASSERTF_BIN_ARRAYS_EQUALS(bin1, 0, bin2, 0, "foo"); }
     TEST_SUCCESS(bineq_same) { ASSERT_BIN_ARRAYS_EQUALS(bin1, 3, bin1, 3); }
 
     return NO_MORE_TESTS;

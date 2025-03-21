@@ -59,9 +59,9 @@ int do_pipeline_logger_test(
     /*
      * Check the file was read successfully
      */
-    ASSERT_TRUE(
+    ASSERTF_TRUE(
         file != NULL, "Unable to open log file \"%s\" to verify contents. Error: %d", test_file_str, open_error);
-    ASSERT_TRUE(bytes_read >= 0, "Failed to read log file \"%s\"", test_file_str);
+    ASSERTF_TRUE(bytes_read >= 0, "Failed to read log file \"%s\"", test_file_str);
 
     /*
      * add end of string marker
@@ -77,7 +77,7 @@ int do_pipeline_logger_test(
     const char *buffer_ptr = buffer;
     for (size_t i = 0; i < user_content_count; ++i) {
         buffer_ptr = strstr(buffer_ptr, expected_user_content[i]);
-        ASSERT_TRUE(
+        ASSERTF_TRUE(
             buffer_ptr != NULL,
             "Expected to find \"%s\" in log file but could not.  Content is either missing or out-of-order.",
             expected_user_content[i]);

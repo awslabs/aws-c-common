@@ -14,43 +14,43 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Test: static string creation from macro works. */
     AWS_STATIC_STRING_FROM_LITERAL(test_string_1, "foofaraw");
-    ASSERT_NULL(test_string_1->allocator, "Static string should have no allocator.");
-    ASSERT_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_NULL(test_string_1->allocator, "Static string should have no allocator.");
+    ASSERTF_INT_EQUALS(test_string_1->len, 8, "Length should have been set correctly.");
+    ASSERTF_BIN_ARRAYS_EQUALS(
         aws_string_bytes(test_string_1),
         test_string_1->len,
         "foofaraw",
         8,
         "Data bytes should have been set correctly.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         aws_string_bytes(test_string_1)[test_string_1->len], '\0', "Static string should have null byte at end.");
 
     /* Test: string creation works. */
     struct aws_string *test_string_2 = aws_string_new_from_c_str(allocator, "foofaraw");
-    ASSERT_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
-    ASSERT_PTR_EQUALS(test_string_2->allocator, allocator, "Allocator should have been set correctly.");
-    ASSERT_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_NOT_NULL(test_string_2, "Memory allocation of string should have succeeded.");
+    ASSERTF_PTR_EQUALS(test_string_2->allocator, allocator, "Allocator should have been set correctly.");
+    ASSERTF_INT_EQUALS(test_string_2->len, 8, "Length should have been set correctly.");
+    ASSERTF_BIN_ARRAYS_EQUALS(
         aws_string_bytes(test_string_2),
         test_string_2->len,
         "foofaraw",
         8,
         "Data bytes should have been set correctly.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         aws_string_bytes(test_string_2)[test_string_2->len],
         '\0',
         "String from C-string should have null byte at end.");
 
     /* Test: strings from first two tests are equal and have same hashes. */
-    ASSERT_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_TRUE(aws_string_eq(test_string_1, test_string_2), "Buffers should be equal.");
+    ASSERTF_INT_EQUALS(
         aws_hash_string(test_string_1), aws_hash_string(test_string_2), "Hash values of byte buffers should be equal.");
 
     /* Test: write from string to byte cursor works. */
     uint8_t dest[8] = {0};
     struct aws_byte_buf dest_cur = aws_byte_buf_from_empty_array(dest, sizeof(dest));
 
-    ASSERT_TRUE(
+    ASSERTF_TRUE(
         aws_byte_buf_write_from_whole_string(&dest_cur, test_string_2),
         "Write from whole string should have succeeded.");
     ASSERT_BIN_ARRAYS_EQUALS(dest, 8, "foofaraw", 8);
@@ -59,32 +59,32 @@ static int s_string_tests_fn(struct aws_allocator *allocator, void *ctx) {
     int8_t short_dest[7] = {0};
     struct aws_byte_buf short_dest_buf = aws_byte_buf_from_empty_array(short_dest, sizeof(short_dest));
 
-    ASSERT_FALSE(
+    ASSERTF_FALSE(
         aws_byte_buf_write_from_whole_string(&short_dest_buf, test_string_2),
         "Write from whole buffer should have failed.");
-    ASSERT_INT_EQUALS(short_dest_buf.len, 0, "Destination cursor length should be unchanged.");
-    ASSERT_INT_EQUALS(0, short_dest_buf.buffer[0], "Destination cursor should not have received data.");
+    ASSERTF_INT_EQUALS(short_dest_buf.len, 0, "Destination cursor length should be unchanged.");
+    ASSERTF_INT_EQUALS(0, short_dest_buf.buffer[0], "Destination cursor should not have received data.");
 
     /* Test: can duplicate both a static string and an allocated one. */
 
     struct aws_string *dup_string_1 = aws_string_new_from_string(allocator, test_string_1);
-    ASSERT_NOT_NULL(dup_string_1, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_1, dup_string_1), "Strings should be equal.");
+    ASSERTF_NOT_NULL(dup_string_1, "Memory allocation of string should have succeeded.");
+    ASSERTF_TRUE(aws_string_eq(test_string_1, dup_string_1), "Strings should be equal.");
 
     struct aws_string *dup_string_2 = aws_string_new_from_string(allocator, test_string_2);
-    ASSERT_NOT_NULL(dup_string_2, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_2, dup_string_2), "Strings should be equal.");
+    ASSERTF_NOT_NULL(dup_string_2, "Memory allocation of string should have succeeded.");
+    ASSERTF_TRUE(aws_string_eq(test_string_2, dup_string_2), "Strings should be equal.");
 
     /* Test: can clone_or_reuse both a static string and an allocated one. */
     struct aws_string *clone_string_1 = aws_string_clone_or_reuse(allocator, test_string_1);
-    ASSERT_NOT_NULL(clone_string_1, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_1, clone_string_1), "Strings should be equal.");
-    ASSERT_TRUE(test_string_1 == clone_string_1, "Static strings should be reused");
+    ASSERTF_NOT_NULL(clone_string_1, "Memory allocation of string should have succeeded.");
+    ASSERTF_TRUE(aws_string_eq(test_string_1, clone_string_1), "Strings should be equal.");
+    ASSERTF_TRUE(test_string_1 == clone_string_1, "Static strings should be reused");
 
     struct aws_string *clone_string_2 = aws_string_clone_or_reuse(allocator, test_string_2);
-    ASSERT_NOT_NULL(clone_string_2, "Memory allocation of string should have succeeded.");
-    ASSERT_TRUE(aws_string_eq(test_string_2, clone_string_2), "Strings should be equal.");
-    ASSERT_TRUE(test_string_2 != clone_string_2, "Dynamic strings should not be reused");
+    ASSERTF_NOT_NULL(clone_string_2, "Memory allocation of string should have succeeded.");
+    ASSERTF_TRUE(aws_string_eq(test_string_2, clone_string_2), "Strings should be equal.");
+    ASSERTF_TRUE(test_string_2 != clone_string_2, "Dynamic strings should not be reused");
 
     /* Test: all allocated memory is deallocated properly. */
     aws_string_destroy(test_string_2);
@@ -104,15 +104,15 @@ static int s_binary_string_test_fn(struct aws_allocator *allocator, void *ctx) {
     size_t len = sizeof(test_array);
     struct aws_string *binary_string = aws_string_new_from_array(allocator, test_array, len);
 
-    ASSERT_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
-    ASSERT_PTR_EQUALS(allocator, binary_string->allocator, "Allocator should have been set correctly.");
-    ASSERT_BIN_ARRAYS_EQUALS(
+    ASSERTF_NOT_NULL(binary_string, "Memory allocation of string should have succeeded.");
+    ASSERTF_PTR_EQUALS(allocator, binary_string->allocator, "Allocator should have been set correctly.");
+    ASSERTF_BIN_ARRAYS_EQUALS(
         test_array,
         len,
         aws_string_bytes(binary_string),
         binary_string->len,
         "Binary string bytes should be same as source array.");
-    ASSERT_INT_EQUALS(
+    ASSERTF_INT_EQUALS(
         aws_string_bytes(binary_string)[binary_string->len],
         0x00,
         "String from binary array should have null byte at end");
@@ -166,9 +166,9 @@ static int string_destroy_secure_test_fn(struct aws_allocator *allocator, void *
     struct aws_string *logorrhea = aws_string_new_from_c_str(allocator, "logorrhea");
     const uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef, 0x00, 0x86, 0x75, 0x30, 0x90};
     struct aws_string *deadbeef = aws_string_new_from_array(allocator, bytes, sizeof(bytes));
-    ASSERT_NOT_NULL(empty, "Memory allocation of string should have succeeded.");
-    ASSERT_NOT_NULL(logorrhea, "Memory allocation of string should have succeeded.");
-    ASSERT_NOT_NULL(deadbeef, "Memory allocation of string should have succeeded.");
+    ASSERTF_NOT_NULL(empty, "Memory allocation of string should have succeeded.");
+    ASSERTF_NOT_NULL(logorrhea, "Memory allocation of string should have succeeded.");
+    ASSERTF_NOT_NULL(deadbeef, "Memory allocation of string should have succeeded.");
     aws_string_destroy_secure(empty);
     aws_string_destroy_secure(logorrhea);
     aws_string_destroy_secure(deadbeef);

@@ -189,8 +189,7 @@ function(aws_set_common_properties target)
     if(NOT SET_PROPERTIES_NO_WGNU)
         check_c_compiler_flag("-Wgnu -Werror" HAS_WGNU)
         if(HAS_WGNU)
-            # -Wgnu-zero-variadic-macro-arguments results in a lot of false positives
-            list(APPEND AWS_C_FLAGS -Wgnu -Wno-gnu-zero-variadic-macro-arguments)
+            list(APPEND AWS_C_FLAGS -Wgnu)
 
             # some platforms implement htonl family of functions via GNU statement expressions (https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html)
             # which generates -Wgnu-statement-expression warning.
@@ -230,7 +229,7 @@ function(aws_set_common_properties target)
         set(_ENABLE_LTO_EXPR $<NOT:$<CONFIG:Debug>>)
 
         # try to check whether compiler supports LTO/IPO
-        include(CheckIPOSupported) 
+        include(CheckIPOSupported)
         check_ipo_supported(RESULT ipo_supported)
         if (ipo_supported)
             message(STATUS "Enabling IPO/LTO for Release builds")
@@ -257,8 +256,8 @@ function(aws_set_common_properties target)
     # We do this so that backtraces are more likely to show function names.
     # We mostly use backtraces to diagnose memory leaks.
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility - 
-        # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.). 
+        # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility -
+        # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.).
         if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0"))
             set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
         endif ()

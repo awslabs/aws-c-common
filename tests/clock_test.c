@@ -15,9 +15,9 @@ static int s_test_high_res_clock_increments(struct aws_allocator *allocator, voi
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_high_res_clock_get_ticks(&ticks), "High res get ticks failed with error %d", aws_last_error());
-        ASSERT_TRUE(
+        ASSERTF_TRUE(
             ticks >= prev,
             "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
             (long long unsigned int)prev,
@@ -36,9 +36,9 @@ static int s_test_sys_clock_increments(struct aws_allocator *allocator, void *ct
     uint64_t ticks = 0, prev = 0;
 
     for (unsigned i = 0; i < 100; ++i) {
-        ASSERT_SUCCESS(
+        ASSERTF_SUCCESS(
             aws_sys_clock_get_ticks(&ticks), "Sys clock res get ticks failed with error %d", aws_last_error());
-        ASSERT_TRUE(
+        ASSERTF_TRUE(
             ticks >= prev,
             "Next get ticks should have been greater than or equal to previous. previous %llu current %llu",
             (long long unsigned int)prev,
