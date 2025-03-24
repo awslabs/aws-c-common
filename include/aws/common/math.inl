@@ -29,22 +29,18 @@
 #    include <aws/common/math.msvc.inl>
 #elif defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
-#else
-#    ifndef AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
+#elif not defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
 /* Fall back to the pure-C implementations */
-#        include <aws/common/math.fallback.inl>
-#    else
+#    include <aws/common/math.fallback.inl>
+#elif defined(__clang__) || defined(__GNUC__)
+#    include <aws/common/math.gcc_builtin.inl>
+#else
 /*
  * We got here because we are building in C++ mode but we only support overflow extensions
  * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
  * non-inline call to the fast C intrinsics.
  */
-#    endif /*  AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS */
 #endif     /*  defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) */
-
-#if defined(__clang__) || defined(__GNUC__)
-#    include <aws/common/math.gcc_builtin.inl>
-#endif
 
 AWS_EXTERN_C_BEGIN
 
