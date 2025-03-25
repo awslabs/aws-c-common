@@ -23,12 +23,12 @@
 #    include <aws/common/math.gcc_overflow.inl>
 
 /* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
-#elif defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
+#elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_builtin.inl>
 #    include <aws/common/math.gcc_x64_asm.inl>
 
 /* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
-#elif defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__))
+#elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_arm64_asm.inl>
 #    include <aws/common/math.gcc_builtin.inl>
 
