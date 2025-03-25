@@ -13,18 +13,31 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
-#    include <aws/common/math.gcc_overflow.inl>
-#elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
-#    include <aws/common/math.gcc_x64_asm.inl>
-#elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
-#    include <aws/common/math.gcc_arm64_asm.inl>
-#elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
-#    include <aws/common/math.msvc.inl>
-#elif defined(CBMC)
+/* CBMC is its own thing */
+#if defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
+
+/* Prefer GCC-style overflow builtins if we can detect them (GCC 5 has them, but not __has_builtin) */
+#elif (defined(__has_builtin) && __has_builtin(__builtin_add_overflow)) || (defined(__GNUC__) && __GNUC__ >= 5)
+#    include <aws/common/math.gcc_builtin.inl>
+#    include <aws/common/math.gcc_overflow.inl>
+
+/* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
+#elif defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
+#    include <aws/common/math.gcc_builtin.inl>
+#    include <aws/common/math.gcc_x64_asm.inl>
+
+/* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
+#elif defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__))
+#    include <aws/common/math.gcc_arm64_asm.inl>
+#    include <aws/common/math.gcc_builtin.inl>
+
+/* On MSVC, use intrinsics (NOTE: clang-cl on Windows also defines _MSC_VER and has these) */
+#elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
+#    include <aws/common/math.msvc_x64.inl>
+
+/* Fall back to pure C implementation */
 #else
-/* Fall back to the pure-C implementations */
 #    include <aws/common/math.fallback.inl>
 #endif
 
