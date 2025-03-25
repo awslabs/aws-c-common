@@ -13,13 +13,16 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#ifndef __has_builtin
+#    define __has_builtin(x) 0
+#endif
+
 /* CBMC is its own thing */
 #if defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
 
 /* Prefer GCC-style overflow builtins */
-#elif defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) ||                                                                \
-    (defined(__has_builtin) && __has_builtin(__builtin_add_overflow))
+#elif defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) || __has_builtin(__builtin_add_overflow)
 #    include <aws/common/math.gcc_builtin.inl>
 #    include <aws/common/math.gcc_overflow.inl>
 
