@@ -12,6 +12,7 @@
  * should be considered to be an implementation detail, and can change at any
  * time.
  */
+#cmakedefine AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
 #cmakedefine AWS_HAVE_GCC_INLINE_ASM
 #cmakedefine AWS_HAVE_MSVC_INTRINSICS_X64
 #cmakedefine AWS_HAVE_POSIX_LARGE_FILE_SUPPORT

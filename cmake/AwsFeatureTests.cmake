@@ -21,6 +21,23 @@ if (USE_CPU_EXTENSIONS)
     set(AWS_USE_CPU_EXTENSIONS ON)
 endif()
 
+if(NOT CMAKE_CROSSCOMPILING)
+    check_c_source_runs("
+    #include <stdbool.h>
+    bool foo(int a, int b, int *c) {
+        return __builtin_mul_overflow(a, b, c);
+    }
+
+    int main() {
+        int out;
+        if (foo(1, 2, &out)) {
+            return 0;
+        }
+
+        return 0;
+    }" AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS)
+endif()
+
 check_c_source_compiles("
     #include <windows.h>
     #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)

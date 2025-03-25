@@ -17,8 +17,9 @@
 #if defined(CBMC)
 #    include <aws/common/math.cbmc.inl>
 
-/* Prefer GCC-style overflow builtins if we can detect them (GCC 5 has them, but not __has_builtin) */
-#elif (defined(__has_builtin) && __has_builtin(__builtin_add_overflow)) || (defined(__GNUC__) && __GNUC__ >= 5)
+/* Prefer GCC-style overflow builtins */
+#elif defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) ||                                                                \
+    (defined(__has_builtin) && __has_builtin(__builtin_add_overflow))
 #    include <aws/common/math.gcc_builtin.inl>
 #    include <aws/common/math.gcc_overflow.inl>
 
@@ -32,7 +33,7 @@
 #    include <aws/common/math.gcc_arm64_asm.inl>
 #    include <aws/common/math.gcc_builtin.inl>
 
-/* On MSVC, use intrinsics (NOTE: clang-cl on Windows also defines _MSC_VER and has these) */
+/* On MSVC, use intrinsics */
 #elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
 #    include <aws/common/math.msvc_x64.inl>
 
