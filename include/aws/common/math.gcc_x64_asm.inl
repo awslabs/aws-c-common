@@ -13,6 +13,12 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
+/* For ctz and clz functions, use builtins that are available in all supported versions of GCC. */
+#include <aws/common/math.gcc_builtin.inl>
+
+/* But for overflow functions, those builtins weren't added until GCC 5,
+ * so here are assembly versions instead... */
+
 /* clang-format off */
 
 AWS_EXTERN_C_BEGIN

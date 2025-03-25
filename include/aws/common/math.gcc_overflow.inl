@@ -13,6 +13,12 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
+/* For ctz and clz functions, use builtins that are available in all supported versions of GCC. */
+#include <aws/common/math.gcc_builtin.inl>
+
+/* But for overflow functions, those builtins weren't added until GCC 5,
+ * and this file uses them! */
+
 AWS_EXTERN_C_BEGIN
 /**
  * Multiplies a * b. If the result overflows, returns 2^64 - 1.

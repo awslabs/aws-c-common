@@ -13,6 +13,12 @@
 #include <aws/common/common.h>
 #include <aws/common/math.h>
 
+/* For ctz and clz functions, use builtins that are available in all supported versions of GCC. */
+#include <aws/common/math.gcc_builtin.inl>
+
+/* But for overflow functions, those builtins weren't added until GCC 5,
+ * so here are assembly versions instead... */
+
 /* clang-format off */
 
 AWS_EXTERN_C_BEGIN
@@ -109,7 +115,7 @@ AWS_STATIC_IMPL int aws_add_u64_checked(uint64_t a, uint64_t b, uint64_t *r) {
     uint64_t res, flag;
     __asm__("adds %x[res], %x[arga], %x[argb]\n"
             "csinv %x[flag], xzr, xzr, cc\n"
-            : /* inout: res is the result of addition; flag is -1 if carry happened */ 
+            : /* inout: res is the result of addition; flag is -1 if carry happened */
 	      [res]"=&r"(res), [flag] "=r"(flag)
             : /* in: a and b */ [arga] "r"(a), [argb] "r"(b)
             : /* clobbers: cc (cmp clobbers condition codes) */ "cc");
