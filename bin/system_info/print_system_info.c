@@ -53,6 +53,12 @@ int main(void) {
     fprintf(stdout, "       'amd_bmi2': %s\n", aws_cpu_has_feature(AWS_CPU_FEATURE_BMI2) ? "true" : "false");
     fprintf(stdout, "   }\n");
 
+#if defined(AWS_USE_CPU_EXTENSIONS)
+    fprintf(stdout, "  'use cpu extensions': true\n");
+#else
+    fprintf(stdout, "  'use cpu extensions': false\n");
+#endif
+
     fprintf(stdout, "}\n");
     aws_system_environment_release(env);
     aws_logger_clean_up(&logger);

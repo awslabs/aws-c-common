@@ -15,66 +15,62 @@
 static int s_run_hex_encoding_test_case(
     struct aws_allocator *allocator,
     const char *test_str,
-    size_t test_str_size,
+    size_t test_str_len,
     const char *expected,
-    size_t expected_size) {
-    size_t output_size = 0;
+    size_t expected_len) {
+    size_t output_len = 0;
 
     ASSERT_SUCCESS(
-        aws_hex_compute_encoded_len(test_str_size - 1, &output_size),
+        aws_hex_compute_encoded_len(test_str_len, &output_len),
         "compute hex encoded len failed with error %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(expected_size, output_size, "Output size on string should be %d", expected_size);
+    ASSERT_INT_EQUALS(expected_len, output_len, "Output len on buffer should be %d", expected_len);
 
-    struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_size - 1);
+    struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_len);
 
+    /* Create `allocation` buffer, with extra byte at start and end,
+     * so we can detect if writes go out of bounds */
     struct aws_byte_buf allocation;
-    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_len + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
-    struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
+    struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
     ASSERT_SUCCESS(aws_hex_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected,
-        expected_size,
-        output.buffer,
-        output_size,
-        "Encode output should have been {%s}, was {%s}.",
-        expected,
-        output.buffer);
-    ASSERT_INT_EQUALS(output_size, output.len);
+        expected, expected_len, output.buffer, output_len, "Encode output should have been {%s}", expected);
+    ASSERT_INT_EQUALS(output_len, output.len);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(
-        (unsigned char)*(allocation.buffer + output_size + 1),
+        (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
-        "Write should not have occurred after the start of the buffer.");
+        "Write should not have occurred after the end of the buffer.");
 
     ASSERT_SUCCESS(
-        aws_hex_compute_decoded_len(expected_size - 1, &output_size),
+        aws_hex_compute_decoded_len(expected_len, &output_len),
         "compute hex decoded len failed with error %d",
         aws_last_error());
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
-    ASSERT_INT_EQUALS(test_str_size - 1, output_size, "Output size on string should be %d", test_str_size - 1);
+    ASSERT_INT_EQUALS(test_str_len, output_len, "Output len on buffer should be %d", test_str_len);
     aws_byte_buf_reset(&output, false);
 
-    struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size - 1);
+    struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_len);
     ASSERT_SUCCESS(aws_hex_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        test_str, test_str_size - 1, output.buffer, output_size, "Decode output should have been %s.", test_str);
-    ASSERT_INT_EQUALS(output_size, output.len);
+        test_str, test_str_len, output.buffer, output_len, "Decode output should have been %s.", test_str);
+    ASSERT_INT_EQUALS(output_len, output.len);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(
-        (unsigned char)*(allocation.buffer + output_size + 1),
+        (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the start of the buffer.");
 
@@ -88,7 +84,7 @@ static int s_hex_encoding_test_case_empty(struct aws_allocator *allocator, void 
     char test_data[] = "";
     char expected[] = "";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_empty_test, s_hex_encoding_test_case_empty)
@@ -99,7 +95,7 @@ static int s_hex_encoding_test_case_f(struct aws_allocator *allocator, void *ctx
     char test_data[] = "f";
     char expected[] = "66";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_f_test, s_hex_encoding_test_case_f)
@@ -110,7 +106,7 @@ static int s_hex_encoding_test_case_fo(struct aws_allocator *allocator, void *ct
     char test_data[] = "fo";
     char expected[] = "666f";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_fo_test, s_hex_encoding_test_case_fo)
@@ -121,7 +117,7 @@ static int s_hex_encoding_test_case_foo(struct aws_allocator *allocator, void *c
     char test_data[] = "foo";
     char expected[] = "666f6f";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_foo_test, s_hex_encoding_test_case_foo)
@@ -132,7 +128,7 @@ static int s_hex_encoding_test_case_foob(struct aws_allocator *allocator, void *
     char test_data[] = "foob";
     char expected[] = "666f6f62";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_foob_test, s_hex_encoding_test_case_foob)
@@ -143,7 +139,7 @@ static int s_hex_encoding_test_case_fooba(struct aws_allocator *allocator, void 
     char test_data[] = "fooba";
     char expected[] = "666f6f6261";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_fooba_test, s_hex_encoding_test_case_fooba)
@@ -154,21 +150,10 @@ static int s_hex_encoding_test_case_foobar(struct aws_allocator *allocator, void
     char test_data[] = "foobar";
     char expected[] = "666f6f626172";
 
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected));
+    return s_run_hex_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(hex_encoding_test_case_foobar_test, s_hex_encoding_test_case_foobar)
-
-static int s_hex_encoding_append_test_case(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    char test_data[] = "foobar";
-    char expected[] = "666f6f626172";
-
-    return s_run_hex_encoding_test_case(allocator, test_data, sizeof(test_data), expected, sizeof(expected) - 1);
-}
-
-AWS_TEST_CASE(hex_encoding_append_test_case, s_hex_encoding_append_test_case)
 
 static int s_hex_encoding_test_case_missing_leading_zero_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
@@ -284,50 +269,46 @@ AWS_STATIC_STRING_FROM_LITERAL(s_base64_encode_prefix, "Prefix");
 static int s_run_base64_encoding_test_case(
     struct aws_allocator *allocator,
     const char *test_str,
-    size_t test_str_size,
+    size_t test_str_len,
     const char *expected,
-    size_t expected_size) {
-    size_t output_size = 0;
-    size_t terminated_size = (expected_size + 1);
+    size_t expected_len) {
+
+    size_t output_len = 0;
 
     /* Part 1: encoding */
     ASSERT_SUCCESS(
-        aws_base64_compute_encoded_len(test_str_size, &output_size),
+        aws_base64_compute_encoded_len(test_str_len, &output_len),
         "Compute base64 encoded length failed with %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(terminated_size, output_size, "Output size on string should be %d", terminated_size);
+    ASSERT_INT_EQUALS(expected_len, output_len, "Output len on string should be %d", expected_len);
 
-    struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_size);
+    struct aws_byte_cursor to_encode = aws_byte_cursor_from_array(test_str, test_str_len);
 
+    /* Create `allocation` buffer, with extra byte at start and end,
+     * so we can detect if writes go out of bounds */
     struct aws_byte_buf allocation;
-    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_len + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
-    struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
+    struct aws_byte_buf output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
     ASSERT_SUCCESS(aws_base64_encode(&to_encode, &output), "encode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
-        expected,
-        expected_size,
-        output.buffer,
-        output.len,
-        "Encode output should have been {%s}, was {%s}.",
-        expected,
-        output.buffer);
+        expected, expected_len, output.buffer, output.len, "Encode output should have been {%s}", expected);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(
-        (unsigned char)*(allocation.buffer + output_size + 1),
+        (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
-        "Write should not have occurred after the start of the buffer.");
+        "Write should not have occurred after the end of the buffer.");
 
     aws_byte_buf_clean_up(&allocation);
 
     /* part 2 - encoding properly appends rather than overwrites */
-    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + s_base64_encode_prefix->len));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_len + s_base64_encode_prefix->len));
     struct aws_byte_cursor prefix_cursor = aws_byte_cursor_from_string(s_base64_encode_prefix);
     ASSERT_SUCCESS(aws_byte_buf_append(&allocation, &prefix_cursor));
 
@@ -335,12 +316,11 @@ static int s_run_base64_encoding_test_case(
 
     ASSERT_BIN_ARRAYS_EQUALS(
         expected,
-        expected_size,
+        expected_len,
         allocation.buffer + s_base64_encode_prefix->len,
-        expected_size,
-        "Encode output should have been {%s}, was {%s}.",
-        expected,
-        allocation.buffer + s_base64_encode_prefix->len);
+        expected_len,
+        "Encode output should have been {%s}",
+        expected);
 
     struct aws_byte_cursor prefix_output = {.ptr = allocation.buffer, .len = s_base64_encode_prefix->len};
     ASSERT_BIN_ARRAYS_EQUALS(
@@ -355,35 +335,35 @@ static int s_run_base64_encoding_test_case(
     aws_byte_buf_clean_up(&allocation);
 
     /* Part 3: decoding */
-    struct aws_byte_cursor expected_cur = aws_byte_cursor_from_array(expected, expected_size);
+    struct aws_byte_cursor expected_cur = aws_byte_cursor_from_array(expected, expected_len);
     ASSERT_SUCCESS(
-        aws_base64_compute_decoded_len(&expected_cur, &output_size),
+        aws_base64_compute_decoded_len(&expected_cur, &output_len),
         "Compute base64 decoded length failed with %d",
         aws_last_error());
-    ASSERT_INT_EQUALS(test_str_size, output_size, "Output size on string should be %d", test_str_size);
+    ASSERT_INT_EQUALS(test_str_len, output_len, "Output len on string should be %d", test_str_len);
 
-    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_size + 2));
+    ASSERT_SUCCESS(aws_byte_buf_init(&allocation, allocator, output_len + 2));
     memset(allocation.buffer, 0xdd, allocation.capacity);
 
-    output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_size);
+    output = aws_byte_buf_from_empty_array(allocation.buffer + 1, output_len);
 
-    struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_size);
+    struct aws_byte_cursor expected_buf = aws_byte_cursor_from_array(expected, expected_len);
     ASSERT_SUCCESS(aws_base64_decode(&expected_buf, &output), "decode call should have succeeded");
 
     ASSERT_BIN_ARRAYS_EQUALS(
         test_str,
-        test_str_size,
+        test_str_len,
         output.buffer,
-        output_size,
+        output_len,
         "Decode output should have been {%s} (len=%zu).",
         test_str,
-        test_str_size);
+        test_str_len);
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer),
         (unsigned char)0xdd,
         "Write should not have occurred before the start of the buffer.");
     ASSERT_INT_EQUALS(
-        (unsigned char)*(allocation.buffer + output_size + 1),
+        (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
         "Write should not have occurred after the start of the buffer.");
 
@@ -398,7 +378,7 @@ static int s_base64_encoding_test_case_empty(struct aws_allocator *allocator, vo
     char test_data[] = "";
     char expected[] = "";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_empty_test, s_base64_encoding_test_case_empty)
@@ -409,7 +389,7 @@ static int s_base64_encoding_test_case_f(struct aws_allocator *allocator, void *
     char test_data[] = "f";
     char expected[] = "Zg==";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_f_test, s_base64_encoding_test_case_f)
@@ -420,7 +400,7 @@ static int s_base64_encoding_test_case_fo(struct aws_allocator *allocator, void 
     char test_data[] = "fo";
     char expected[] = "Zm8=";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_fo_test, s_base64_encoding_test_case_fo)
@@ -431,7 +411,7 @@ static int s_base64_encoding_test_case_foo(struct aws_allocator *allocator, void
     char test_data[] = "foo";
     char expected[] = "Zm9v";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foo_test, s_base64_encoding_test_case_foo)
@@ -442,7 +422,7 @@ static int s_base64_encoding_test_case_foob(struct aws_allocator *allocator, voi
     char test_data[] = "foob";
     char expected[] = "Zm9vYg==";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foob_test, s_base64_encoding_test_case_foob)
@@ -453,7 +433,7 @@ static int s_base64_encoding_test_case_fooba(struct aws_allocator *allocator, vo
     char test_data[] = "fooba";
     char expected[] = "Zm9vYmE=";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_fooba_test, s_base64_encoding_test_case_fooba)
@@ -464,7 +444,7 @@ static int s_base64_encoding_test_case_foobar(struct aws_allocator *allocator, v
     char test_data[] = "foobar";
     char expected[] = "Zm9vYmFy";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_foobar_test, s_base64_encoding_test_case_foobar)
@@ -476,7 +456,7 @@ static int s_base64_encoding_test_case_32bytes(struct aws_allocator *allocator, 
     char test_data[] = "this is a 32 byte long string!!!";
     char expected[] = "dGhpcyBpcyBhIDMyIGJ5dGUgbG9uZyBzdHJpbmchISE=";
 
-    return s_run_base64_encoding_test_case(allocator, test_data, sizeof(test_data) - 1, expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, test_data, strlen(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_case_32bytes_test, s_base64_encoding_test_case_32bytes)
@@ -487,8 +467,7 @@ static int s_base64_encoding_test_zeros_fn(struct aws_allocator *allocator, void
     uint8_t test_data[6] = {0};
     char expected[] = "AAAAAAAA";
 
-    return s_run_base64_encoding_test_case(
-        allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_zeros, s_base64_encoding_test_zeros_fn)
@@ -511,8 +490,8 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     }
     struct aws_byte_cursor original_data = aws_byte_cursor_from_array(test_data, sizeof(test_data));
 
-    uint8_t test_hex[65] = {0};
-    struct aws_byte_buf hex = aws_byte_buf_from_empty_array(test_hex, sizeof(test_hex));
+    struct aws_byte_buf hex;
+    aws_byte_buf_init(&hex, allocator, 65);
 
     uint8_t test_b64[128] = {0};
     struct aws_byte_buf b64_data = aws_byte_buf_from_empty_array(test_b64, sizeof(test_b64));
@@ -520,8 +499,8 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     aws_base64_encode(&original_data, &b64_data);
     b64_data.len--;
 
-    uint8_t decoded_data[32] = {0};
-    struct aws_byte_buf decoded_buf = aws_byte_buf_from_empty_array(decoded_data, sizeof(decoded_data));
+    struct aws_byte_buf decoded_buf;
+    aws_byte_buf_init(&decoded_buf, allocator, 32);
 
     struct aws_byte_cursor b64_cur = aws_byte_cursor_from_buf(&b64_data);
     aws_base64_decode(&b64_cur, &decoded_buf);
@@ -529,7 +508,7 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
     if (memcmp(decoded_buf.buffer, original_data.ptr, decoded_buf.len) != 0) {
         aws_hex_encode(&original_data, &hex);
         fprintf(stderr, "Base64 round-trip failed\n");
-        fprintf(stderr, "Original: %s\n", (char *)test_hex);
+        fprintf(stderr, "Original: " PRInSTR "\n", AWS_BYTE_BUF_PRI(hex));
         fprintf(stderr, "Base64  : ");
         for (size_t i = 0; i < sizeof(test_b64); i++) {
             if (!test_b64[i]) {
@@ -538,13 +517,15 @@ static int s_base64_encoding_test_roundtrip(struct aws_allocator *allocator, voi
             fprintf(stderr, " %c", test_b64[i]);
         }
         fprintf(stderr, "\n");
-        memset(test_hex, 0, sizeof(test_hex));
+        aws_byte_buf_reset(&hex, true /*zero-contents*/);
         struct aws_byte_cursor decoded_cur = aws_byte_cursor_from_buf(&decoded_buf);
         aws_hex_encode(&decoded_cur, &hex);
-        fprintf(stderr, "Decoded : %s\n", (char *)test_hex);
+        fprintf(stderr, "Decoded : " PRInSTR "\n", AWS_BYTE_BUF_PRI(hex));
         return 1;
     }
 
+    aws_byte_buf_clean_up(&hex);
+    aws_byte_buf_clean_up(&decoded_buf);
     return 0;
 }
 AWS_TEST_CASE(base64_encoding_test_roundtrip, s_base64_encoding_test_roundtrip)
@@ -569,8 +550,7 @@ static int s_base64_encoding_test_all_values_fn(struct aws_allocator *allocator,
                       "jY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0t"
                       "PU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+";
 
-    return s_run_base64_encoding_test_case(
-        allocator, (char *)test_data, sizeof(test_data), expected, sizeof(expected) - 1);
+    return s_run_base64_encoding_test_case(allocator, (char *)test_data, sizeof(test_data), expected, strlen(expected));
 }
 
 AWS_TEST_CASE(base64_encoding_test_all_values, s_base64_encoding_test_all_values_fn)
@@ -608,7 +588,6 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
     (void)ctx;
 
     char test_data[] = "foobar";
-    char encoded_data[] = "Zm9vYmFy";
     /* kill off the last two bits, so the not a multiple of 4 check doesn't
      * trigger first */
     size_t overflow = (SIZE_MAX - 1) & ~0x03;
@@ -622,12 +601,8 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
         aws_base64_encode(&test_buf, &output_buf),
         "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
 
-    struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_array(encoded_data, overflow);
+    /* NOTE: decode() math can't overflow, output.len ends up smaller than input.len */
 
-    ASSERT_ERROR(
-        AWS_ERROR_OVERFLOW_DETECTED,
-        aws_base64_decode(&encoded_buf, &output_buf),
-        "overflow buffer size should have failed with AWS_ERROR_OVERFLOW_DETECTED");
     return 0;
 }
 
@@ -994,47 +969,20 @@ static int read_file_contents(struct aws_byte_buf *out_buf, struct aws_allocator
     FILE *fp = aws_fopen(filename, "r");
     ASSERT_NOT_NULL(fp);
 
-    if (fp) {
-        if (fseek(fp, 0L, SEEK_END)) {
-            fclose(fp);
-            ASSERT_FALSE(true, "Failed to seek to end");
-            return AWS_OP_ERR;
-        }
+    ASSERT_INT_EQUALS(fseek(fp, 0L, SEEK_END), 0);
+    size_t allocation_size = (size_t)ftell(fp);
+    ASSERT_SUCCESS(aws_byte_buf_init(out_buf, alloc, allocation_size));
+    ASSERT_INT_EQUALS(fseek(fp, 0L, SEEK_SET), 0);
 
-        size_t allocation_size = (size_t)ftell(fp) + 1;
-        /* Tell the user that we allocate here and if success they're responsible for the free. */
-        if (aws_byte_buf_init(out_buf, alloc, allocation_size)) {
-            fclose(fp);
-            ASSERT_FALSE(true, "Failed to init buffer");
-            return AWS_OP_ERR;
-        }
-
-        /* Ensure compatibility with null-terminated APIs, but don't consider
-         * the null terminator part of the length of the payload */
-        out_buf->len = out_buf->capacity - 1;
-        out_buf->buffer[out_buf->len] = 0;
-
-        if (fseek(fp, 0L, SEEK_SET)) {
-            aws_byte_buf_clean_up(out_buf);
-            fclose(fp);
-            ASSERT_FALSE(true, "Failed to seek to start");
-            return AWS_OP_ERR;
-        }
-
-        size_t read = fread(out_buf->buffer, 1, out_buf->len, fp);
-        fclose(fp);
-        if (read < (out_buf->len - 1)) {
-            ASSERT_INT_EQUALS(read, out_buf->len);
-            aws_byte_buf_clean_up(out_buf);
-            return AWS_OP_ERR;
-        }
-
-        out_buf->len = read;
-
-        return AWS_OP_SUCCESS;
+    size_t read = fread(out_buf->buffer, 1, allocation_size, fp);
+    /* size from doing seek-to-end is sometimes 1 byte more than what we get from read (observed on Windows) */
+    if (read < (allocation_size - 1)) {
+        ASSERT_INT_EQUALS(read, allocation_size);
     }
+    out_buf->len = read;
 
-    return AWS_OP_ERR;
+    ASSERT_INT_EQUALS(fclose(fp), 0);
+    return AWS_OP_SUCCESS;
 }
 
 static int s_text_encoding_utf8(struct aws_allocator *allocator, void *ctx) {

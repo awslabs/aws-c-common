@@ -19,5 +19,9 @@
                 ["dir", "/s", "/b"]
             ]
         }
-    }
+    },
+    "test_steps": [
+        "test",
+        ["python3", "{source_dir}/bin/system_info/test-print-system-info.py", "--build-dir", "{build_dir}"]
+    ]
 }

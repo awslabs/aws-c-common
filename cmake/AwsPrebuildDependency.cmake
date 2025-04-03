@@ -96,13 +96,12 @@ endfunction()
 function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
     set(variables "")
 
-    # The CMake variables below were chosen for Linux, BSD, and Android platforms. If you want to use the prebuild logic
-    # on other platforms, the chances are you have to handle additional variables (like CMAKE_OSX_SYSROOT). Refer to
-    # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html to update the list of handled variables, and
-    # then you can enable a new platform here.
-    if ((NOT UNIX) OR APPLE)
-        message(FATAL_ERROR "aws_get_variables_for_prebuild_dependency is called for unsupported platform")
-    endif()
+    
+    # The variables below were chosen based on reading docs and a lot of experimenting on different platforms. 
+    # Is the list of variables below exhaustive and guaranteed to cover all cases? Probably not. 
+    # So if you are here reading this, then its more than likely that some variable got missed and something
+    # is not building correctly. So don't be afraid to add more variables to the list.
+    # Refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html as a decent starting point for which variables to handle.
 
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
@@ -137,7 +136,12 @@ function(aws_get_variables_for_prebuild_dependency AWS_CMAKE_PREBUILD_ARGS)
                 OR var STREQUAL "CMAKE_MAKE_PROGRAM"
                 OR var MATCHES "^CMAKE_RUNTIME_OUTPUT_DIRECTORY"
                 OR var MATCHES "^CMAKE_ARCHIVE_OUTPUT_DIRECTORY"
-                OR var MATCHES "^CMAKE_LIBRARY_OUTPUT_DIRECTORY")
+                OR var MATCHES "^CMAKE_LIBRARY_OUTPUT_DIRECTORY"
+                OR var STREQUAL "CMAKE_OSX_ARCHITECTURES"
+                OR var STREQUAL "CMAKE_OSX_DEPLOYMENT_TARGET"
+                OR var STREQUAL "CMAKE_OSX_SYSROOT"
+                OR var MATCHES "^CMAKE_GENERATOR"
+        )
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escapedVar "${${var}}")
             if (escapedVar)
