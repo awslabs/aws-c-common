@@ -414,7 +414,7 @@ It's too late to change any of this, but here's graebm's personal opinion for an
 
 IMHO it's too easy to make a mistake, and forget to `aws_raise_error()` before returning `AWS_OP_ERR`. When this happens, the user gets a nonsense value from `aws_last_error()`, and it's very hard to know what is actually failing.
 
-IMHO we should have done something like C++'s [std::expected<T,E>](https://en.cppreference.com/w/cpp/utility/expected) or Rust's [std::result<T, E>](https://doc.rust-lang.org/std/result/). If our code returned errors by value, it wouldn't have bugs where we forgot to set `aws_raise_error()`, or bugs where `aws_last_error()` was accidentally overwritten. C doesn't have generics, but you can create something like them using macros (see [future.h](https://github.com/awslabs/aws-c-io/blob/7e75f17400ca2cfdc296865b9c2b10323f49a9c5/include/aws/io/future.h#L30)), or just write:
+IMHO we should have done something like Rust's [std::result<T, E>](https://doc.rust-lang.org/std/result/), Swift's [Result<Success,Failure>](https://developer.apple.com/documentation/swift/result), and C++'s [std::expected<T,E>](https://en.cppreference.com/w/cpp/utility/expected). If we returned errors by value, we wouldn't have bugs where we forgot to set `aws_raise_error()`, or bugs where `aws_last_error()` was accidentally overwritten. C doesn't have generics, but you can create something like them using macros (see [future.h](https://github.com/awslabs/aws-c-io/blob/7e75f17400ca2cfdc296865b9c2b10323f49a9c5/include/aws/io/future.h#L30)), or just write:
 ```c
 struct aws_thing_result {
     struct aws_thing *ok;
