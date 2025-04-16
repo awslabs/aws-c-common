@@ -4,16 +4,16 @@
 
 Functions that may fail, and return a pointer, generally look like this:
 ```c
-/* Create new mything.
+/* Create a new thing.
  * Returns NULL if creation failed, use aws_last_error() to get the error code explaining why. */
-struct aws_mything *aws_mything_new(...);
+struct aws_thing *aws_thing_new(...);
 ```
 
 Functions that may fail, but don't return a pointer, generally look like this:
 ```c
-/* Return AWS_OP_SUCCESS (0) if mything successfully did something.
+/* Return AWS_OP_SUCCESS (0) if thing successfully did something.
  * Returns AWS_OP_ERR (-1) if it failed, use aws_last_error() to get the error code explaining why. */
-int aws_mything_do_something(...);
+int aws_thing_do_something(...);
 ```
 
 `aws_last_error()` returns an error code that's stored in a thread-local variable. Any function that fails will make sure to set that thread-local error code by calling `aws_raise_error(int error_code)`.
@@ -22,7 +22,7 @@ You can get strings about the error code via:
 * `aws_error_name()` returns the enum name
   * e.g. `AWS_ERROR_INVALID_ARGUMENT` -> "AWS_ERROR_INVALID_ARGUMENT"
 
-* `aws_error_str()` returns the english description
+* `aws_error_str()` returns the English description
   * e.g. `AWS_ERROR_INVALID_ARGUMENT` -> "An invalid argument was passed to a function."
 
 ### Catching Errors
@@ -30,15 +30,15 @@ You can get strings about the error code via:
 Error handling in a toy application might look like:
 ```c
 /* For functions that return a pointer, NULL means failure */
-struct aws_mything *mything = aws_mything_new(...);
-if (mything == NULL) {
+struct aws_thing *thing = aws_thing_new(...);
+if (thing == NULL) {
     int error_code = aws_last_error();
-    printf("Failed to create mything: %s\n", aws_error_str(error_code));
+    printf("Failed to create thing: %s\n", aws_error_str(error_code));
     exit(error_code);
 }
 
 /* For functions that return an int, AWS_OP_ERR means failure */
-if (aws_mything_do_something_that_may_fail(mything, ...) == AWS_OP_ERR) {
+if (aws_thing_do_something_that_may_fail(thing, ...) == AWS_OP_ERR) {
     int error_code = aws_last_error();
     printf("Failed to do something: %s\n", aws_error_str(error_code));
     exit(error_code);
@@ -47,14 +47,14 @@ if (aws_mything_do_something_that_may_fail(mything, ...) == AWS_OP_ERR) {
 /* You'll also see lots of code that doesn't explicitly compare the return value
  * against `AWS_OP_ERR` or `AWS_OP_SUCCESS`. Since AWS_OP_SUCCESS is zero,
  * it's "falsey", so the if branch is only taken on error. */
-if (aws_mything_do_something_that_may_fail(mything, ...)) {
+if (aws_thing_do_something_that_may_fail(thing, ...)) {
     int error_code = aws_last_error();
     printf("Failed to do something: %s\n", aws_error_str(error_code));
     exit(error_code);
 }
 
 /* DO NOT DO THIS */
-aws_mything_do_something_that_may_fail(mything, ...); /* BAD */
+aws_thing_do_something_that_may_fail(thing, ...); /* BAD */
 if (aws_last_error() != 0) { /* BAD */
     /* This code assumes something went wrong because the thread-local
      * error code is non-zero. BUT nobody ever bothers to clear the
@@ -73,7 +73,7 @@ When writing functions that may fail, you MUST ensure `aws_raise_error()` is cal
 
 ```c
 /* Sample for function that returns pointer type, where NULL means failure */
-struct aws_mything_new(struct aws_allocator *allocator, uint32_t num_shinies) {
+struct aws_thing *aws_thing_new(struct aws_allocator *allocator, uint32_t num_shinies) {
     if (num_shinies > AWS_NUM_SHINIES_MAX) {
         /* Set thread-local error code */
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -81,11 +81,11 @@ struct aws_mything_new(struct aws_allocator *allocator, uint32_t num_shinies) {
         return NULL;
     }
 
-    struct aws_mything *mything = aws_mem_calloc(allocator, 1, sizeof(struct aws_mything));
-    mything->num_shinies = num_shinies;
+    struct aws_thing *thing = aws_mem_calloc(allocator, 1, sizeof(struct aws_thing));
+    thing->num_shinies = num_shinies;
 
     /* Returning a valid pointer means success */
-    return mything;
+    return thing;
 }
 
 /* Sample for function that returns int, where AWS_OP_ERR(-1) means failure */
@@ -155,7 +155,7 @@ For asynchronous APIs, where results are delivered via callback, error codes are
 ```c
 void on_some_async_operation_complete(int error_code, void *user_data) {
     if (error_code != 0) {
-        printf("Operation failed: %s\n", aws_error_str(error_code);
+        printf("Operation failed: %s\n", aws_error_str(error_code));
         ...
 ```
 
@@ -173,7 +173,7 @@ Our style has evolved with time, and you'll find lots of old code violating thes
 
 Don't return `int` "just in case it might fail someday" or "for consistency with other functions".
 
-This is especially important for low level datastructure APIs, or any function that cleans up or destroys something.
+This is especially important for low-level datastructure APIs, or any function that cleans up or destroys something.
 
 Imagine there's some "clean up" function that needs to use your function, and your function returns `int`. What is that clean up function supposed to do? Try to handle the error? How? Should it stop even trying to clean up? Leak memory?
 
@@ -183,7 +183,7 @@ If your function creates some complex stateful class, that takes lots of paramet
 
 Don't write code that tries to handle Out Of Memory (OOM). `aws_mem_acquire()` and `aws_mem_calloc()` will never return `NULL`, they will simply abort if the OS fails to allocate.
 
-For the first few months of aws-c development, we tried to handle Out Of Memory. Lots of code was written that tried to deal with this; little of it was ever tested. In the end we decided it wasn't worth the effort. Swift and Rust just abort if you push into a vector and it can't expand, we should too. Now, `aws_allocator` will abort before it ever returns `NULL`.
+For the first few months of aws-c development, we tried to handle Out Of Memory. Lots of code was written that tried to deal with this; little of it was ever tested. In the end we decided it wasn't worth the effort. Swift and Rust just abort if you push into a vector and it can't expand. We should too. Now, `aws_allocator` will abort before it ever returns `NULL`.
 
 Unfortunately, after making this change we didn't go back and simplify APIs that could no longer fail, because it would be a large breaking change. So functions like `aws_hash_table_put()` return `int` but it's always `AWS_OP_SUCCESS` and you should never bother checking it. It sucks, but you just have to "know" which errors should or shouldn't be checked for. It's generally just our older datastructure APIs that suffer from this (e.g. aws_byte_buf, aws_array_list, aws_hash_table). If you initialized these with an allocator, so they can grow dynamically, then they can't fail. But if you initialized them with a fixed size, or no allocator, you should still check for errors. For pretty much all other APIs, you must still check for errors.
 
@@ -193,7 +193,7 @@ Also, we didn't proactively remove error-handling code where the errors couldn't
 
 If a function doesn't expect `NULL`, then don't try to handle `NULL`.
 
-Feel free to add `AWS_ASSERT(some_pointer);` if you want your code to be clear about it's refusal to deal with NULL.
+Feel free to add `AWS_ASSERT(some_pointer);` if you want your code to be clear about its refusal to deal with NULL.
 
 Imagine you tried to handle `NULL`, then functions then function that could be `void` now must return `int`, just in case `NULL` is passed in and they can't do anything! Now you have a function with an error code, but it can't possible fail in working code. But users wonder whether or not they should be checking for failure from this function... and maybe stop checking for errors on other functions that *can* fail randomly... if it's a mess. Also, be honest, you're never going to add tests for all that error handling code.
 
@@ -203,32 +203,32 @@ One big exception is destructors (i.e. `clean_up()`, `destroy()`, `release()`). 
 
 Here's an example, with an "init / clean_up" style struct, where any initialization step may fail, and we'd need to undo the previous steps:
 ```c
-int aws_mything_init(struct aws_mything *mything) {
+int aws_thing_init(struct aws_thing *thing) {
     /* First, zero things out, in case memory was uninitialized.
      * That way we can safely call clean_up() on each member,
      * even if we didn't fully initialize everything.*/
-    AWS_ZERO_STRUCT(*mything);
+    AWS_ZERO_STRUCT(*thing);
 
-    if (aws_complex_part_1_init(&mything->part_1) != AWS_OP_SUCCESS) {
-        /* prefer early-out patterns, vs deeply embedded if-branches */
+    if (aws_complex_part_1_init(&thing->part_1) != AWS_OP_SUCCESS) {
+        /* Prefer early-out patterns, vs deeply embedded if-branches */
         goto error;
     }
 
-    if (aws_complex_part_2_init(&mything->part_2) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_2_init(&thing->part_2) != AWS_OP_SUCCESS) {
         /* goto is fine in C */
         goto error;
     }
 
-    if (aws_complex_part_3_init(&mything->part_3) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_3_init(&thing->part_3) != AWS_OP_SUCCESS) {
         goto error;
     }
 
-    return AWS_OP_SUCCESS
+    return AWS_OP_SUCCESS;
 
 error:
     /* Just call the clean_up() function, rather than repeating
      * the code that cleans up individual members */
-    aws_mything_clean_up(mything);
+    aws_thing_clean_up(thing);
 
     /* Note: we didn't set thread-local error code before returning AWS_OP_ERR,
      * because we assume it was already set by the aws_complex_part_N_init()
@@ -236,92 +236,92 @@ error:
     return AWS_OP_ERR;
 }
 
-void aws_mything_clean_up(struct aws_mything *mything) {
+void aws_thing_clean_up(struct aws_thing *thing) {
     /* It's safe to try and clean up aws_ types, even if they were never
      * initialized. We build all our "destructors" to be idempotent
      * and safe to call on zeroed-out memory.
      * This lets us have nice clean simple clean up code like so: */
-    aws_complex_part_3_clean_up(&my_thing->part_3);
-    aws_complex_part_2_clean_up(&my_thing->part_2);
-    aws_complex_part_1_clean_up(&my_thing->part_1);
+    aws_complex_part_3_clean_up(&thing->part_3);
+    aws_complex_part_2_clean_up(&thing->part_2);
+    aws_complex_part_1_clean_up(&thing->part_1);
 
     /* Finally, zero things out so the clean_up() is idempotent */
-    AWS_ZERO_STRUCT(*mything);
+    AWS_ZERO_STRUCT(*thing);
 }
 ```
 
 And here are some ways NOT to do it:
 ```c
 /* DO NOT DO THIS (each failed step tries to clean up previous steps) */
-int aws_mything_init(struct aws_mything *mything) {
-    AWS_ZERO_STRUCT(*mything);
+int aws_thing_init(struct aws_thing *thing) {
+    AWS_ZERO_STRUCT(*thing);
 
-    if (aws_complex_part_1_init(&mything->part_1) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_1_init(&thing->part_1) != AWS_OP_SUCCESS) {
         return AWS_OP_ERR;
     }
 
-    if (aws_complex_part_2_init(&mything->part_2) != AWS_OP_SUCCESS) {
-        aws_complex_part_1_clean_up(&my_thing->part_1);
+    if (aws_complex_part_2_init(&thing->part_2) != AWS_OP_SUCCESS) {
+        aws_complex_part_1_clean_up(&thing->part_1);
         return AWS_OP_ERR;
     }
 
-    if (aws_complex_part_3_init(&mything->part_3) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_3_init(&thing->part_3) != AWS_OP_SUCCESS) {
         /* BAD: If clean up code is in so many places, and subtly different
          * each time, it's really easy to make a mistake. */
-        aws_complex_part_2_clean_up(&my_thing->part_2);
-        aws_complex_part_1_clean_up(&my_thing->part_1);
+        aws_complex_part_2_clean_up(&thing->part_2);
+        aws_complex_part_1_clean_up(&thing->part_1);
         return AWS_OP_ERR;
     }
 
-    return AWS_OP_SUCCESS
+    return AWS_OP_SUCCESS;
 }
 
 /* DO NOT DO THIS (multiple goto labels) */
-int aws_mything_init(struct aws_mything *mything) {
-    AWS_ZERO_STRUCT(*mything);
+int aws_thing_init(struct aws_thing *thing) {
+    AWS_ZERO_STRUCT(*thing);
 
-    if (aws_complex_part_1_init(&mything->part_1) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_1_init(&thing->part_1) != AWS_OP_SUCCESS) {
         return AWS_OP_ERR;
     }
 
-    if (aws_complex_part_2_init(&mything->part_2) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_2_init(&thing->part_2) != AWS_OP_SUCCESS) {
         goto clean_up_part_1;
     }
 
-    if (aws_complex_part_3_init(&mything->part_3) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_3_init(&thing->part_3) != AWS_OP_SUCCESS) {
         /* BAD: having multiple goto labels is a copy/paste bug waiting to happen */
         goto clean_up_part_2;
     }
 
-    return AWS_OP_SUCCESS
+    return AWS_OP_SUCCESS;
 
 clean_up_part_2:
     /* BAD: if you try to clean up individual parts, you repeat code that's
      * already in clean_up(). You risk bugs where someone adds a new member,
      * and forgets to clean it up from here too. */
-    aws_complex_part_2_clean_up(&my_thing->part_2);
+    aws_complex_part_2_clean_up(&thing->part_2);
 clean_up_part_1:
-    aws_complex_part_1_clean_up(&my_thing->part_1);
+    aws_complex_part_1_clean_up(&thing->part_1);
     return AWS_OP_ERR;
 }
 
 /* DO NOT DO THIS (deep if statements) */
-int aws_mything_init(struct aws_mything *mything) {
-    AWS_ZERO_STRUCT(*mything);
+int aws_thing_init(struct aws_thing *thing) {
+    AWS_ZERO_STRUCT(*thing);
 
-    if (aws_complex_part_1_init(&mything->part_1) == AWS_OP_SUCCESS) {
-        if (aws_complex_part_2_init(&mything->part_2) == AWS_OP_SUCCESS) {
-            if (aws_complex_part_3_init(&mything->part_3) == AWS_OP_SUCCESS) {
+    if (aws_complex_part_1_init(&thing->part_1) == AWS_OP_SUCCESS) {
+        if (aws_complex_part_2_init(&thing->part_2) == AWS_OP_SUCCESS) {
+            if (aws_complex_part_3_init(&thing->part_3) == AWS_OP_SUCCESS) {
                 /* BAD: You end up with most of your code indented
                  * 5+ levels deep. Adding more checks results in a
                  * huge diff as everything get indented even more.
                  * It actually doesn't look so bad in this example,
                  * but believe me it sucks in real life. */
-                return AWS_OP_SUCCESS
+                return AWS_OP_SUCCESS;
             }
-            aws_complex_part_2_clean_up(&my_thing->part_2);
+            aws_complex_part_2_clean_up(&thing->part_2);
         }
-        aws_complex_part_1_clean_up(&my_thing->part_1);
+        aws_complex_part_1_clean_up(&thing->part_1);
     }
 
     return AWS_OP_ERR;
@@ -332,8 +332,8 @@ int aws_mything_init(struct aws_mything *mything) {
 
 Here's an example that returns a pointer, and does a bit more:
 ```c
-struct aws_mything *aws_mything_new(struct aws_allocator *alloc,
-                                    const struct aws_mything_options *options) {
+struct aws_thing *aws_thing_new(struct aws_allocator *alloc,
+                                    const struct aws_thing_options *options) {
     /* DO NOT do real error-checking for NULL args, that way lies madness.
      * You MAY do these debug-only statements that kill the program */
     AWS_ASSERT(alloc);
@@ -342,7 +342,7 @@ struct aws_mything *aws_mything_new(struct aws_allocator *alloc,
     /* Before creating anything, do real error checking on values that
      * might come down from language bindings. Not NULL checks, but other
      * more subtle stuff */
-    if (options->timeout_ms > AWS_MYTHING_TIMEOUT_MS_MAX) {
+    if (options->timeout_ms > AWS_THING_TIMEOUT_MS_MAX) {
         /* Log the exact issue, since "invalid argument" is vague
          * when there are lots of arguments */
         AWS_LOGF_ERROR(..., "timeout_ms has invalid value");
@@ -353,31 +353,31 @@ struct aws_mything *aws_mything_new(struct aws_allocator *alloc,
 
     /* Use aws_mem_calloc() to get memory that's already zeroed-out. This
      * reduces bugs where you forget to initialize a member */
-    struct aws_mything *mything = aws_mem_calloc(alloc, 1, sizeof(struct aws_mything));
+    struct aws_thing *thing = aws_mem_calloc(alloc, 1, sizeof(struct aws_thing));
 
-    /* Don't need to check if mything == NULL because allocation can't fail */
+    /* Don't need to check if thing == NULL because allocation can't fail */
 
     /* Set allocator (and other things that can't possibly fail) first, so we
      * can use the destroy() function to clean up if anything else goes wrong */
-    mything->alloc = alloc;
-    mything->timeout_ms = options->timeout_ms;
+    thing->alloc = alloc;
+    thing->timeout_ms = options->timeout_ms;
 
-    if (aws_complex_part_1_init(&mything->part_1) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_1_init(&thing->part_1) != AWS_OP_SUCCESS) {
         goto error;
     }
 
-    if (aws_complex_part_2_init(&mything->part_2) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_2_init(&thing->part_2) != AWS_OP_SUCCESS) {
         goto error;
     }
 
-    if (aws_complex_part_3_init(&mything->part_3) != AWS_OP_SUCCESS) {
+    if (aws_complex_part_3_init(&thing->part_3) != AWS_OP_SUCCESS) {
         goto error;
     }
 
-    return AWS_OP_SUCCESS
+    return thing;
 
 error:
-    aws_mything_destroy(mything);
+    aws_thing_destroy(thing);
 
     /* Note: we didn't set thread-local error code before returning NULL,
      * because we assume it was already set by the aws_complex_part_N_init()
@@ -385,18 +385,18 @@ error:
     return NULL;
 }
 
-void aws_mything_destroy(struct aws_mything *mything) {
+void aws_thing_destroy(struct aws_thing *thing) {
     /* "destructor" functions are the only place we check for NULL, so user
      * can naively call it, whether or not it was successfully created */
-    if (mything == NULL) {
+    if (thing == NULL) {
         return;
     }
 
-    aws_complex_part_3_clean_up(&my_thing->part_3);
-    aws_complex_part_2_clean_up(&my_thing->part_2);
-    aws_complex_part_1_clean_up(&my_thing->part_1);
+    aws_complex_part_3_clean_up(&thing->part_3);
+    aws_complex_part_2_clean_up(&thing->part_2);
+    aws_complex_part_1_clean_up(&thing->part_1);
 
-    aws_mem_release(my_thing->alloc, my_thing);
+    aws_mem_release(thing->alloc, thing);
 }
 ```
 
@@ -416,18 +416,18 @@ IMHO it's too easy to make a mistake, and forget to `aws_raise_error()` before r
 
 IMHO we should have done something like C++'s [std::expected<T,E>](https://en.cppreference.com/w/cpp/utility/expected) or Rust's [std::result<T, E>](https://doc.rust-lang.org/std/result/). If our code returned errors by value, it wouldn't have bugs where we forgot to set `aws_raise_error()`, or bugs where `aws_last_error()` was accidentally overwritten. C doesn't have generics, but you can create something like them using macros (see [future.h](https://github.com/awslabs/aws-c-io/blob/7e75f17400ca2cfdc296865b9c2b10323f49a9c5/include/aws/io/future.h#L30)), or just write:
 ```c
-struct aws_mything_result {
-    struct aws_mything *ok;
+struct aws_thing_result {
+    struct aws_thing *ok;
     int err;
 };
 
-struct aws_mything_result aws_mything_new(...);
+struct aws_thing_result aws_thing_new(...);
 ```
 
 And functions that don't return pointers can just return the error code by value:
 ```
 /* returns AWS_OK (0) on success, or the error code */
-int aws_mything_do_something_that_may_fail(...);
+int aws_thing_do_something_that_may_fail(...);
 ```
 
 ### int error codes lose information
