@@ -2,28 +2,40 @@
 
 ## Basics
 
-Functions that may fail, and return a pointer, generally look like this:
+Every function that returns an `int` type returns either `AWS_OP_SUCCESS` (0) on success, or `AWS_OP_ERR` (-1) on failure.
+
 ```c
-/* Create a new thing.
- * Returns NULL if creation failed, use aws_last_error() to get the error code explaining why. */
+/* Example of function returning int type.
+ * Returns AWS_OP_SUCCESS (0) on success.
+ * Returns AWS_OP_ERR (-1) on failure. */
+int aws_do_something(...);
+```
+
+And every function that returns a pointer, returns `NULL` on failure.
+
+```c
+/* Example of function returning a pointer type.
+ * Returns a valid pointer on success.
+ * Returns NULL on failure. */
 struct aws_thing *aws_thing_new(...);
 ```
 
-Functions that may fail, but don't return a pointer, generally look like this:
-```c
-/* Return AWS_OP_SUCCESS (0) if thing successfully did something.
- * Returns AWS_OP_ERR (-1) if it failed, use aws_last_error() to get the error code explaining why. */
-int aws_thing_do_something(...);
-```
+After a function fails, you call `aws_last_error()` to retrieve the actual error code. You can get strings for each error code via:
+* `const char *aws_error_name(int error_code)` for the enum name
+  * e.g. `34` -> `"AWS_ERROR_INVALID_ARGUMENT"`
 
-`aws_last_error()` returns an error code that's stored in a thread-local variable. Any function that fails will make sure to set that thread-local error code by calling `aws_raise_error(int error_code)`.
+* `const char *aws_error_str(int error_code)` for the English description
+  * e.g. `34` -> `"An invalid argument was passed to a function."`
 
-You can get strings about the error code via:
-* `aws_error_name()` returns the enum name
-  * e.g. `AWS_ERROR_INVALID_ARGUMENT` -> "AWS_ERROR_INVALID_ARGUMENT"
+This error code is stored in a thread-local variable.
 
-* `aws_error_str()` returns the English description
-  * e.g. `AWS_ERROR_INVALID_ARGUMENT` -> "An invalid argument was passed to a function."
+If you're authoring a function that needs to fail, you MUST call `aws_raise_error(error_code)` to set that thread-local error code before returning `AWS_OP_ERR` or `NULL`.
+
+### Design
+
+We do error handling this way because that's how other C libs do it. For example, [fopen()](https://en.cppreference.com/w/c/io/fopen) returns a pointer and if it's `NULL` you check `errno` to find out why. This way, functions can simply return a pointer, without polluting their function signature with confusing out-params. For consistency, we had other functions use thread-local variables as well, returning `AWS_OP_ERR` (-1) instead of returning the actual error code.
+
+While this design pattern makes for graceful looking user code, it is very easy to make mistakes in implementation code, if you forget to call `aws_raise_error()` in all possible failure branches. Hence, this guide...
 
 ### Catching Errors
 
@@ -409,12 +421,6 @@ void aws_thing_destroy(struct aws_thing *thing) {
     aws_mem_release(thing->alloc, thing);
 }
 ```
-
-## Design
-
-We do error handling this way because that's how other C libs do it. For example, [fopen()](https://en.cppreference.com/w/c/io/fopen) returns a pointer and if it's `NULL` you check `errno` to find out why. This way, functions can simply return a pointer, without polluting their function signature with confusing out-params. For consistency we had other functions use thread-local variables as well, returning `AWS_OP_ERR` (-1) instead of the actual error code.
-
-While this design pattern makes for graceful looking user code, it is very easy to make mistakes in implementation code, forgetting to call `aws_raise_error()` in all possible failure branches. Hence, this guide.
 
 ## In Hindsight
 

@@ -232,7 +232,7 @@ Example:
  void aws_module_destroy(aws_module_t *module);
 
 * Avoid c-strings, and don't write code that depends on `NULL` terminators.
-    * Pass strings via `struct aws_byte_cursor`. This is a non-owning view type. Pass it by value.
+    * Pass strings via `struct aws_byte_cursor`. This is a non-owning view type. Pass it by value. Strings passed this way do not need a `NULL` terminator.
     * Only pass `const char *` when thinly wrapping an OS function that *requires* a `NULL` terminator.
     * Store const strings as `struct aws_string *`
     * Store mutable string buffers as `struct aws_byte_buf`
