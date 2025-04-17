@@ -199,6 +199,16 @@ Imagine you tried to handle `NULL`, then functions then function that could be `
 
 One big exception is destructors (i.e. `clean_up()`, `destroy()`, `release()`). We'll touch on this later, but to make error-handling code as simple as possible, we want it to be safe to call destructor functions whether or not the thing was ever successfully created.
 
+### AWS_ASSERT() vs AWS_FATAL_ASSERT() vs aws_raise_error()
+
+How do you choose when to assert, vs real error handling? Asserts will simply abort the program, so only use them for detecting internal bugs. We *never* want users from Java or Python to hit an assert. So things like validating a number's value should be real error checks, because the number might come from a Java user.
+
+`AWS_ASSERT()` does nothing in Release builds, it only checks in Debug. Use this for basic sanity checks that NULL isn't being passed into a function, or as a comment to future programmers "don't worry, this can't possibly be true right now", or to do an expensive check you don't want happening in Release builds. Note that most language bindings (e.g. _awscrt.so in aws-crt-python) are *never* built in Debug.
+
+`AWS_FATAL_ASSERT()` still runs in Release builds. Use this to catch bugs that might occur in language binding code (which is seldom built in Debug), or for internal bugs you worry are too complex to encounter in a Debug build.
+
+Use `aws_raise_error()` (real error handling) for everything else.
+
 ### init() / clean_up() example
 
 Here's an example, with an "init / clean_up" style struct, where any initialization step may fail, and we'd need to undo the previous steps:
