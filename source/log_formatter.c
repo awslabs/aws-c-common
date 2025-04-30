@@ -108,8 +108,8 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
             int timestamp_written = snprintf(
                 formatting_data->log_line_buffer + current_index,
                 fake_total_length - current_index,
-                "] [timestamp:%ld] ",
-                (long)current_time.timestamp);
+                "] [timestamp: %" PRIu16,
+                current_time.milliseconds);
             current_index = s_advance_and_clamp_index(current_index, timestamp_written, fake_total_length);
         }
     }
