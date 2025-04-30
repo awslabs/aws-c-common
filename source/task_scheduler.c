@@ -35,10 +35,11 @@ void aws_task_run(struct aws_task *task, enum aws_task_status status) {
     AWS_ASSERT(task->fn);
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_TASK_SCHEDULER,
-        "id=%p: Running %s task with %s status",
+        "id=%p: Running %s task with %s status at timestamp %" PRIu64,
         (void *)task,
         task->type_tag,
-        aws_task_status_to_c_str(status));
+        aws_task_status_to_c_str(status),
+        task->timestamp);
 
     task->abi_extension.scheduled = false;
     task->fn(task, task->arg, status);
