@@ -13,37 +13,36 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#if defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus))
-/*
- * GCC and clang have these super convenient overflow checking builtins...
- * but (in the case of GCC) they're only available when building C source.
- * We'll fall back to one of the other inlinable variants (or a non-inlined version)
- * if we are building this header on G++.
- */
+#ifndef __has_builtin
+#    define __has_builtin(x) 0
+#endif
+
+/* CBMC is its own thing */
+#if defined(CBMC)
+#    include <aws/common/math.cbmc.inl>
+
+/* Prefer GCC-style overflow builtins */
+#elif defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) || __has_builtin(__builtin_add_overflow)
+#    include <aws/common/math.gcc_builtin.inl>
 #    include <aws/common/math.gcc_overflow.inl>
+
+/* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
 #elif defined(__x86_64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
+#    include <aws/common/math.gcc_builtin.inl>
 #    include <aws/common/math.gcc_x64_asm.inl>
+
+/* Fall back on GCC-style assembly, and ancient builtins available in all versions of GCC and Clang we support */
 #elif defined(__aarch64__) && defined(AWS_HAVE_GCC_INLINE_ASM)
 #    include <aws/common/math.gcc_arm64_asm.inl>
-#elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
-#    include <aws/common/math.msvc.inl>
-#elif defined(CBMC)
-#    include <aws/common/math.cbmc.inl>
-#else
-#    ifndef AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS
-/* Fall back to the pure-C implementations */
-#        include <aws/common/math.fallback.inl>
-#    else
-/*
- * We got here because we are building in C++ mode but we only support overflow extensions
- * in C mode. Because the fallback is _slow_ (involving a division), we'd prefer to make a
- * non-inline call to the fast C intrinsics.
- */
-#    endif /*  AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS */
-#endif     /*  defined(AWS_HAVE_GCC_OVERFLOW_MATH_EXTENSIONS) && (defined(__clang__) || !defined(__cplusplus)) */
-
-#if defined(__clang__) || defined(__GNUC__)
 #    include <aws/common/math.gcc_builtin.inl>
+
+/* On MSVC, use intrinsics */
+#elif defined(AWS_HAVE_MSVC_INTRINSICS_X64)
+#    include <aws/common/math.msvc_x64.inl>
+
+/* Fall back to pure C implementation */
+#else
+#    include <aws/common/math.fallback.inl>
 #endif
 
 AWS_EXTERN_C_BEGIN

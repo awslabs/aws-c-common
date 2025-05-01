@@ -61,6 +61,9 @@ function(aws_check_headers_internal target std is_cxx)
         CXX_STANDARD ${std}
         CXX_STANDARD_REQUIRED 0
         C_STANDARD 99
+        # Forbid public headers from relying on compiler extensions
+        CXX_EXTENSIONS OFF
+        C_EXTENSIONS OFF
     )
 
     # Ensure our headers can be included by an application with its warnings set very high.
