@@ -108,6 +108,12 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
             struct aws_task *task = AWS_CONTAINER_OF(node, struct aws_task, node);
             timestamp = task->timestamp;
             has_tasks = true;
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_TASK_SCHEDULER,
+                "id=%p: Found task %s in timed_list with timestamp %" PRIu64,
+                (void *)task,
+                task->type_tag,
+                task->timestamp);
         }
 
         struct aws_task **task_ptrptr = NULL;
@@ -116,6 +122,12 @@ bool aws_task_scheduler_has_tasks(const struct aws_task_scheduler *scheduler, ui
                 timestamp = (*task_ptrptr)->timestamp;
             }
             has_tasks = true;
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_TASK_SCHEDULER,
+                "id=%p: Found task %s in timed_queue with timestamp %" PRIu64,
+                (void *)(*task_ptrptr),
+                (*task_ptrptr)->type_tag,
+                (*task_ptrptr)->timestamp);
         }
     }
 
