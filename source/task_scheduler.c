@@ -233,6 +233,12 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
                     struct aws_task *timed_queue_task;
                     aws_priority_queue_pop(&scheduler->timed_queue, &timed_queue_task);
                     aws_linked_list_push_back(&running_list, &timed_queue_task->node);
+                    AWS_LOGF_DEBUG(
+                        AWS_LS_COMMON_TASK_SCHEDULER,
+                        "id=%p: DEBUG TIME: Found task %s in timed_queue with timestamp %" PRIu64,
+                        (void *)timed_queue_task,
+                        timed_queue_task->type_tag,
+                        timed_queue_task->timestamp);
                     continue;
                 }
             }
@@ -249,6 +255,13 @@ static void s_run_all(struct aws_task_scheduler *scheduler, uint64_t current_tim
         if ((*timed_queue_task_ptrptr)->timestamp > current_time) {
             break;
         }
+
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_TASK_SCHEDULER,
+            "id=%p: DEBUG TIME: Found task %s in timed_queue with timestamp %" PRIu64,
+            (void *)*timed_queue_task_ptrptr,
+        (*timed_queue_task_ptrptr)->type_tag,
+            (*timed_queue_task_ptrptr)->timestamp);
 
         struct aws_task *next_timed_task;
         aws_priority_queue_pop(&scheduler->timed_queue, &next_timed_task);
