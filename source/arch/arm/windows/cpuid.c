@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-#include <Windows.h>
 #include <aws/common/cpuid.h>
+#include <windows.h>
 
 bool aws_cpu_has_feature(enum aws_cpu_feature_name feature_name) {
     switch (feature_name) {
