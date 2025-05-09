@@ -461,7 +461,7 @@ add_test_case(run_command_test_bad_command)
 add_test_case(cpuid_test)
 
 add_test_case(xml_parser_root_with_text) 
-add_test_case(xml_parser_malformed_test)
+add_test_case(xml_parser_malformed_end_node_character_before_start_test)
 add_test_case(xml_parser_child_with_text)
 add_test_case(xml_parser_siblings_with_text)
 add_test_case(xml_parser_preamble_and_attributes)

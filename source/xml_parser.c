@@ -295,7 +295,7 @@ int aws_xml_node_traverse(
 
         const uint8_t *end_location = memchr(parser->doc.ptr, '>', parser->doc.len);
 
-        if (!end_location) {
+        if (!end_location || next_location > end_location) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             aws_raise_error(AWS_ERROR_INVALID_XML);
             goto error;
@@ -307,12 +307,7 @@ int aws_xml_node_traverse(
             parent_closed = true;
         }
 
-        size_t node_name_len;
-        if (aws_sub_size_checked((size_t)end_location, (size_t)next_location, &node_name_len)) {
-            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-            aws_raise_error(AWS_ERROR_INVALID_XML);
-            goto error;
-        }
+        size_t node_name_len = end_location - next_location;
         aws_byte_cursor_advance(&parser->doc, end_location - parser->doc.ptr + 1);
 
         if (parent_closed) {
@@ -385,16 +380,12 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
     aws_byte_cursor_advance(&parser->doc, next_location - parser->doc.ptr);
     const uint8_t *end_location = memchr(parser->doc.ptr, '>', parser->doc.len);
 
-    if (!end_location) {
+    if (!end_location || next_location > end_location) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
         return aws_raise_error(AWS_ERROR_INVALID_XML);
     }
 
-    size_t node_name_len;
-    if (aws_sub_size_checked((size_t)end_location, (size_t)next_location, &node_name_len)) {
-        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-        return aws_raise_error(AWS_ERROR_INVALID_XML);
-    }
+    size_t node_name_len = end_location - next_location;
     aws_byte_cursor_advance(&parser->doc, end_location - parser->doc.ptr + 1);
 
     struct aws_byte_cursor node_decl_body = aws_byte_cursor_from_array(next_location + 1, node_name_len - 1);
