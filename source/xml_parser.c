@@ -374,7 +374,8 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
     const uint8_t *next_location = memchr(parser->doc.ptr, '<', parser->doc.len);
 
     if (!next_location) {
-        return parser->error;
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+        return aws_raise_error(AWS_ERROR_INVALID_XML);
     }
 
     aws_byte_cursor_advance(&parser->doc, next_location - parser->doc.ptr);
