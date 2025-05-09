@@ -232,11 +232,8 @@ int s_advance_to_closing_tag(
                     continue;
                 }
             }
-            size_t skip_len;
-            if (aws_sub_size_checked((size_t)close_find_result.ptr, (size_t)parser->doc.ptr, &skip_len)) {
-                AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
-                return aws_raise_error(AWS_ERROR_INVALID_XML);
-            }
+            size_t skip_len = close_find_result.ptr - parser->doc.ptr;
+
             aws_byte_cursor_advance(&parser->doc, skip_len + closing_cmp_buf.len);
             depth_count--;
             break;
