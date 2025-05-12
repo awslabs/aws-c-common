@@ -95,6 +95,28 @@ static int s_xml_parser_child_with_text_test(struct aws_allocator *allocator, vo
 
 AWS_TEST_CASE(xml_parser_child_with_text, s_xml_parser_child_with_text_test)
 
+const char *malformed_end_node_character_before_start =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNode>><child1>TestBody</child1></rootNode>";
+
+static int s_xml_parser_malformed_end_node_character_before_start_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct child_text_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(malformed_end_node_character_before_start),
+        .on_root_encountered = s_root_with_child,
+        .user_data = &capture,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(
+    xml_parser_malformed_end_node_character_before_start_test,
+    s_xml_parser_malformed_end_node_character_before_start_test)
+
 const char *siblings_with_text =
     "<?xml version=\"1.0\" "
     "encoding=\"UTF-8\"?><rootNode><child1>TestBody</child1><child2>TestBody2</child2></rootNode>";
