@@ -199,6 +199,8 @@ int aws_array_list_get_at(const struct aws_array_list *AWS_RESTRICT list, void *
 /**
  * Copies the memory address of the element at index to *val. If element does not exist, AWS_ERROR_INVALID_INDEX will be
  * raised.
+ * Notes: If the list is dynamic allocated the address returned is only valid until the next operation that expends the
+ * list. If the list is static allocated, the address returned is valid until the list is cleared or destroyed.
  */
 AWS_STATIC_IMPL
 int aws_array_list_get_at_ptr(const struct aws_array_list *AWS_RESTRICT list, void **val, size_t index);
