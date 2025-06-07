@@ -13,7 +13,7 @@
 #    include <stdlib.h>
 #else
 #    include <netinet/in.h>
-#endif /* _MSC_VER */
+#endif /* _WIN32 */
 
 AWS_EXTERN_C_BEGIN
 
@@ -39,7 +39,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
     uint64_t v;
     __asm__("bswap %q0" : "=r"(v) : "0"(x));
     return v;
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
     return _byteswap_uint64(x);
 #else
     uint32_t low = x & UINT32_MAX;
