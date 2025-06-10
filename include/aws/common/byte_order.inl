@@ -36,7 +36,7 @@ AWS_STATIC_IMPL uint64_t aws_hton64(uint64_t x) {
         return x;
     }
 #if (defined(__GNUC__) || defined(__clang__)) && !defined(CBMC)
-    return __builtin_bswap64(x)
+    return __builtin_bswap64(x);
 #elif defined(_MSC_VER)
     return _byteswap_uint64(x);
 #else
