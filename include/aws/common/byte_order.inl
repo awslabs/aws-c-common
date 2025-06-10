@@ -13,6 +13,7 @@
 #    include <stdlib.h>
 #else
 #    include <netinet/in.h>
+#    include <arpa/inet.h>
 #endif /* _MSC_VER */
 
 AWS_EXTERN_C_BEGIN
