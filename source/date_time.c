@@ -619,49 +619,68 @@ static inline int s_date_to_str_with_millis(
     struct aws_byte_buf *output_buf) {
     size_t original_len = output_buf->len;
 
-    /* Write the main time string first */
-    int result = s_date_to_str(tm, format_str, output_buf);
-    if (result != AWS_OP_SUCCESS) {
-        return result;
+    /* Create a temporary buffer for the formatted time */
+    struct aws_byte_buf temp_buf = {
+        .buffer = output_buf->buffer + output_buf->len,
+        .len = 0,
+        .capacity = output_buf->capacity - output_buf->len,
+        .allocator = NULL /* Not going to free this */
+    };
+
+    /* Format the date/time into the temp buffer */
+    size_t bytes_written = strftime((char *)temp_buf.buffer, temp_buf.capacity, format_str, tm);
+    if (bytes_written == 0) {
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
+    temp_buf.len = bytes_written;
 
-    /* Find where to insert the milliseconds - right before 'Z' or "GMT" */
-    size_t len = output_buf->len;
-    char *str_end = (char *)output_buf->buffer + len;
+    /* Create a cursor for the formatted string */
+    struct aws_byte_cursor temp_cursor = aws_byte_cursor_from_buf(&temp_buf);
 
-    /* Make sure we have enough space for ".XXX" + the rest of the string */
-    size_t remaining_space = output_buf->capacity - output_buf->len;
-    if (remaining_space < 5) {          /* Need at least 5 bytes for ".XXX" + null terminator */
-        output_buf->len = original_len; /* Restore original length on failure */
+    /* Need at least 4 more bytes to add '.XXX' for milliseconds */
+    if (output_buf->capacity - output_buf->len < temp_buf.len + 4) {
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    /* Find insertion point: right before Z or GMT */
-    char *insert_point = NULL;
+    /* Create a cursor for the suffix ('Z' or 'GMT') */
+    struct aws_byte_cursor suffix_cursor = aws_byte_cursor_from_c_str("Z");
+    struct aws_byte_cursor main_cursor = temp_cursor;
 
     /* Check if string ends with 'Z' */
-    if (len > 0 && *(str_end - 1) == 'Z') {
-        insert_point = str_end - 1;
+    if (temp_cursor.len > 0 && temp_cursor.ptr[temp_cursor.len - 1] == 'Z') {
+        // suffix_cursor.ptr = temp_cursor.ptr + temp_cursor.len - 1;
+        // suffix_cursor.len = 1;
+        main_cursor.len = temp_cursor.len - 1;
     }
     /* Check if string ends with "GMT" */
-    else if (len >= 3 && *(str_end - 3) == 'G' && *(str_end - 2) == 'M' && *(str_end - 1) == 'T') {
-        insert_point = str_end - 3;
+    else if (
+        temp_cursor.len >= 3 && temp_cursor.ptr[temp_cursor.len - 3] == 'G' &&
+        temp_cursor.ptr[temp_cursor.len - 2] == 'M' && temp_cursor.ptr[temp_cursor.len - 1] == 'T') {
+        // suffix_cursor.ptr = temp_cursor.ptr + temp_cursor.len - 3;
+        // suffix_cursor.len = 3;
+        main_cursor.len = temp_cursor.len - 3;
     }
-    /* If no known suffix, append to the end */
-    else {
-        insert_point = str_end;
+
+    /* Add the main part of the time string to output */
+    if (aws_byte_buf_append(output_buf, &main_cursor) != AWS_OP_SUCCESS) {
+        output_buf->len = original_len;
+        return AWS_OP_ERR;
     }
 
-    if (insert_point) {
-        /* Move the suffix (Z or GMT) to make room for milliseconds */
-        size_t suffix_len = str_end - insert_point;
-        memmove(insert_point + 4, insert_point, suffix_len);
+    /* Format and add the milliseconds part */
+    char millis_str[5]; /* .XXX\0 */
+    int millis_len = snprintf(millis_str, sizeof(millis_str), ".%03u", milliseconds);
+    struct aws_byte_cursor millis_cursor = aws_byte_cursor_from_array(millis_str, millis_len);
 
-        /* Write the milliseconds */
-        sprintf(insert_point, ".%03u", milliseconds);
+    if (aws_byte_buf_append(output_buf, &millis_cursor) != AWS_OP_SUCCESS) {
+        output_buf->len = original_len;
+        return AWS_OP_ERR;
+    }
 
-        /* Update the total length */
-        output_buf->len += 4;
+    /* Add the suffix if any */
+    if (aws_byte_buf_append(output_buf, &suffix_cursor) != AWS_OP_SUCCESS) {
+        output_buf->len = original_len;
+        return AWS_OP_ERR;
     }
 
     return AWS_OP_SUCCESS;
