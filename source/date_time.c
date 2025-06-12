@@ -612,6 +612,61 @@ static inline int s_date_to_str(const struct tm *tm, const char *format_str, str
     return AWS_OP_SUCCESS;
 }
 
+static inline int s_date_to_str_with_millis(
+    const struct tm *tm,
+    const char *format_str,
+    uint16_t milliseconds,
+    struct aws_byte_buf *output_buf) {
+    size_t original_len = output_buf->len;
+
+    /* Write the main time string first */
+    int result = s_date_to_str(tm, format_str, output_buf);
+    if (result != AWS_OP_SUCCESS) {
+        return result;
+    }
+
+    /* Find where to insert the milliseconds - right before 'Z' or "GMT" */
+    size_t len = output_buf->len;
+    char *str_end = (char *)output_buf->buffer + len;
+
+    /* Make sure we have enough space for ".XXX" + the rest of the string */
+    size_t remaining_space = output_buf->capacity - output_buf->len;
+    if (remaining_space < 5) {          /* Need at least 5 bytes for ".XXX" + null terminator */
+        output_buf->len = original_len; /* Restore original length on failure */
+        return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
+    }
+
+    /* Find insertion point: right before Z or GMT */
+    char *insert_point = NULL;
+
+    /* Check if string ends with 'Z' */
+    if (len > 0 && *(str_end - 1) == 'Z') {
+        insert_point = str_end - 1;
+    }
+    /* Check if string ends with "GMT" */
+    else if (len >= 3 && *(str_end - 3) == 'G' && *(str_end - 2) == 'M' && *(str_end - 1) == 'T') {
+        insert_point = str_end - 3;
+    }
+    /* If no known suffix, append to the end */
+    else {
+        insert_point = str_end;
+    }
+
+    if (insert_point) {
+        /* Move the suffix (Z or GMT) to make room for milliseconds */
+        size_t suffix_len = str_end - insert_point;
+        memmove(insert_point + 4, insert_point, suffix_len);
+
+        /* Write the milliseconds */
+        sprintf(insert_point, ".%03u", milliseconds);
+
+        /* Update the total length */
+        output_buf->len += 4;
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 int aws_date_time_to_local_time_str(
     const struct aws_date_time *dt,
     enum aws_date_format fmt,
@@ -641,13 +696,16 @@ int aws_date_time_to_utc_time_str(
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:
-            return s_date_to_str(&dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, output_buf);
+            return s_date_to_str_with_millis(
+                &dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, dt->milliseconds, output_buf);
 
         case AWS_DATE_FORMAT_ISO_8601:
-            return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
+            return s_date_to_str_with_millis(
+                &dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, dt->milliseconds, output_buf);
 
         case AWS_DATE_FORMAT_ISO_8601_BASIC:
-            return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_BASIC_DATE_FORMAT_STR, output_buf);
+            return s_date_to_str_with_millis(
+                &dt->gmt_time, ISO_8601_LONG_BASIC_DATE_FORMAT_STR, dt->milliseconds, output_buf);
 
         default:
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
