@@ -51,6 +51,10 @@ def main():
 
         # 4. Apply the changes from commit f005fdc06c34fdd663031661eff5c5575843e998
         run_command(
+            f"git add *", cwd=source_dir)
+        run_command(
+            f"git commit -m \"update cjson to {latest_version}\"", cwd=source_dir)
+        run_command(
             f"git cherry-pick f005fdc06c34fdd663031661eff5c5575843e998", cwd=source_dir)
 
         # 5. Update the version number in THIRD-PARTY-LICENSES.txt
