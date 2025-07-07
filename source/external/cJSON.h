@@ -20,13 +20,6 @@
   THE SOFTWARE.
 */
 
-/*
- * This file has been modified from its original version by Amazon:
- *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
- *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
- */
-/* NOLINTBEGIN */
-
 #ifndef cJSON__h
 #define cJSON__h
 
@@ -179,10 +172,8 @@ CJSON_PUBLIC(cJSON *) cJSON_GetArrayItem(const cJSON *array, int index);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string);
-#if 0 /* Amazon edit */
 /* For analysing failed parses. This returns a pointer to the parse error. You'll probably need to look a few chars back to make sense of it. Defined when cJSON_Parse() returns 0. 0 when cJSON_Parse() succeeds. */
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
-#endif /* Amazon edit */
 
 /* Check item type and return its value */
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
@@ -264,7 +255,7 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse);
 CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * const b, const cJSON_bool case_sensitive);
 
 /* Minify a strings, remove blank characters(such as ' ', '\t', '\r', '\n') from strings.
- * The input pointer json cannot point to a read-only address area, such as a string constant,
+ * The input pointer json cannot point to a read-only address area, such as a string constant, 
  * but should point to a readable and writable address area. */
 CJSON_PUBLIC(void) cJSON_Minify(char *json);
 
@@ -305,6 +296,5 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #ifdef __cplusplus
 }
 #endif
-/* Amazon edit */
-/* NOLINTEND */
+
 #endif
