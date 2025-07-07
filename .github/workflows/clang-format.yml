@@ -5,15 +5,12 @@ on: [push]
 jobs:
   clang-format:
 
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
 
     steps:
     - name: Checkout Sources
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: clang-format lint
-      uses: DoozyX/clang-format-lint-action@v0.3.1
-      with:
-        # List of extensions to check
-        extensions: c,h,inl
-        source: 'source include tests verification'
+      run: |
+        ./format-check.py

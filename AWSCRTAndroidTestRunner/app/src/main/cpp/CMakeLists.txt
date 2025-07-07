@@ -3,7 +3,7 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.9...3.31)
 
 # AWS lib
 set(path_to_common "${CMAKE_CURRENT_LIST_DIR}/../../../../..")

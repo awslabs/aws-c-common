@@ -282,8 +282,9 @@ static void s_parse_scheme(struct uri_parser *parser, struct aws_byte_cursor *st
         return;
     }
 
-    /* make sure we didn't just pick up the port by mistake */
-    if ((size_t)(location_of_colon - str->ptr) < str->len && *(location_of_colon + 1) != '/') {
+    /* Ensure location_of_colon is not the last character before checking *(location_of_colon + 1) */
+    if ((size_t)(location_of_colon - str->ptr) + 1 >= str->len || *(location_of_colon + 1) != '/') {
+        /* make sure we didn't just pick up the port by mistake */
         parser->state = ON_AUTHORITY;
         return;
     }

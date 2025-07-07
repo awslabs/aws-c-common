@@ -4,7 +4,6 @@
 include(CheckCCompilerFlag)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
-include(CMakeParseArguments) # needed for CMake v3.4 and lower
 
 option(AWS_ENABLE_LTO "Enables LTO on libraries. Ensure this is set on all consumed targets, or linking will fail" OFF)
 option(LEGACY_COMPILER_SUPPORT "This enables builds with compiler versions such as gcc 4.1.2. This is not a 'supported' feature; it's just a best effort." OFF)
@@ -173,6 +172,7 @@ function(aws_set_common_properties target)
             set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
         endif()
 
+
     endif()
 
     check_include_file(stdint.h HAS_STDINT)
@@ -230,28 +230,16 @@ function(aws_set_common_properties target)
         set(_ENABLE_LTO_EXPR $<NOT:$<CONFIG:Debug>>)
 
         # try to check whether compiler supports LTO/IPO
-        if (POLICY CMP0069)
-            cmake_policy(SET CMP0069 NEW)
-            include(CheckIPOSupported OPTIONAL RESULT_VARIABLE ipo_check_exists)
-            if (ipo_check_exists)
-                check_ipo_supported(RESULT ipo_supported)
-                if (ipo_supported)
-                    message(STATUS "Enabling IPO/LTO for Release builds")
-                else()
-                    message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
-                    set(_ENABLE_LTO_EXPR OFF)
-                endif()
-            endif()
+        include(CheckIPOSupported) 
+        check_ipo_supported(RESULT ipo_supported)
+        if (ipo_supported)
+            message(STATUS "Enabling IPO/LTO for Release builds")
+        else()
+            message(STATUS "AWS_ENABLE_LTO is enabled, but cmake/compiler does not support it, disabling")
+            set(_ENABLE_LTO_EXPR OFF)
         endif()
     else()
         set(_ENABLE_LTO_EXPR OFF)
-    endif()
-
-    if(BUILD_SHARED_LIBS)
-        if (NOT MSVC)
-            # this should only be set when building shared libs.
-            list(APPEND AWS_C_FLAGS "-fvisibility=hidden")
-        endif()
     endif()
 
     if(AWS_ENABLE_TRACING)
@@ -264,4 +252,15 @@ function(aws_set_common_properties target)
     target_compile_definitions(${target} PRIVATE ${AWS_C_DEFINES_PRIVATE} PUBLIC ${AWS_C_DEFINES_PUBLIC})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C C_STANDARD 99 C_STANDARD_REQUIRED ON)
     set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${_ENABLE_LTO_EXPR}>)
+
+    # Don't hide symbols in Debug builds.
+    # We do this so that backtraces are more likely to show function names.
+    # We mostly use backtraces to diagnose memory leaks.
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility - 
+        # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.). 
+        if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0"))
+            set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+        endif ()
+    endif ()
 endfunction()

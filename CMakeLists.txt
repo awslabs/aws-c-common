@@ -1,20 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-cmake_minimum_required(VERSION 3.0)
+# As of October 2024, we picked 3.9 as our version because internally we still support RHEL5 and AL2012, and CMake 3.9
+# was the latest version available on those platforms.
+cmake_minimum_required(VERSION 3.9...3.31)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 project(aws-c-common LANGUAGES C VERSION 0.1.0)
 
 message(STATUS "CMake ${CMAKE_VERSION}")
-
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
-endif()
-
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 OLD) # Enable options to get their values from normal variables
-endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AwsCFlags)
@@ -25,6 +19,7 @@ include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
 include(CTest)
+include(GNUInstallDirs)
 
 set(GENERATED_ROOT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_INCLUDE_DIR "${GENERATED_ROOT_DIR}/include")
@@ -53,7 +48,12 @@ file(GLOB AWS_COMMON_SRC
         )
 
 file (GLOB AWS_COMMON_EXTERNAL_SRC
-        "source/external/*.c")
+        "source/external/*.c"
+        "source/external/libcbor/*.c"
+        "source/external/libcbor/cbor/*.c"
+        "source/external/libcbor/cbor/internal/*.c"
+        )
+
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
 
@@ -152,7 +152,7 @@ if (USE_CPU_EXTENSIONS)
                 )
         endif()
     elseif (AWS_ARCH_ARM64 OR AWS_ARCH_ARM32)
-        if (WINDOWS)
+        if (WIN32)
             file(GLOB AWS_COMMON_ARCH_SRC
                 "source/arch/arm/windows/*.c"
                 )
@@ -184,13 +184,21 @@ file(GLOB COMMON_SRC
         ${AWS_COMMON_EXTERNAL_SRC}
         )
 
-
 add_library(${PROJECT_NAME} ${COMMON_SRC})
 aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
-aws_check_headers(${PROJECT_NAME} ${AWS_COMMON_HEADERS})
+# Check public headers, to ensure they're safe for any 3rdparty to include
+set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS})
+
+# HACK: don't check rw_lock.h, which can fail in esoteric circumstances
+# (building without compiler extensions, and without defining _POSIX_C_SOURCE or _XOPEN_SOURCE).
+# Currently, this file is only used by aws-c-*** libs, which are fine.
+get_filename_component(NAUGHTY_HEADER "include/aws/common/rw_lock.h" ABSOLUTE)
+list(REMOVE_ITEM HEADERS_TO_CHECK ${NAUGHTY_HEADER})
+
+aws_check_headers(${PROJECT_NAME} ${HEADERS_TO_CHECK})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
@@ -213,6 +221,10 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
+# libcbor files do includes like: #include "cbor/cbor_export.h"
+# To make these paths work, add the location we're storing them as a search path.
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/libcbor)
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
@@ -241,7 +253,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
 
     unset(HEADER_DSTDIR)
 
-    foreach(POTENTIAL_PREFIX IN ITEMS ${GENERATED_ROOT_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    foreach(POTENTIAL_PREFIX IN ITEMS "${GENERATED_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include")
         string(LENGTH ${POTENTIAL_PREFIX} _prefixlen)
         string(SUBSTRING ${HEADER_DIR} 0 ${_prefixlen} _actual_prefix)
         if(${_actual_prefix} STREQUAL ${POTENTIAL_PREFIX})
@@ -255,7 +267,7 @@ foreach(HEADER_SRCPATH IN ITEMS ${AWS_COMMON_HEADERS} ${AWS_COMMON_OS_HEADERS} $
     endif()
 
     install(FILES ${HEADER_SRCPATH}
-            DESTINATION ${HEADER_DSTDIR}
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${HEADER_DSTDIR}"
             COMPONENT Development)
 endforeach()
 
@@ -272,12 +284,12 @@ else()
 endif()
 
 install(EXPORT "${PROJECT_NAME}-targets"
-    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake/${TARGET_DIR}"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/${TARGET_DIR}"
     NAMESPACE AWS::
     COMPONENT Development)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    DESTINATION "${LIBRARY_DIRECTORY}/${PROJECT_NAME}/cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     COMPONENT Development)
 
 list(APPEND EXPORT_MODULES
@@ -294,7 +306,7 @@ list(APPEND EXPORT_MODULES
     )
 
 install(FILES ${EXPORT_MODULES}
-        DESTINATION "${LIBRARY_DIRECTORY}/cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/modules"
         COMPONENT Development)
 
 # This should come last, to ensure all variables defined by cmake will be available for export

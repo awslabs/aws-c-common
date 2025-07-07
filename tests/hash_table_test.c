@@ -991,6 +991,7 @@ static int s_test_hash_table_eq(struct aws_allocator *allocator, void *ctx) {
 struct churn_entry {
     void *key;
     int original_index;
+    int sorted_index;
     void *value;
     int is_removed;
 };
@@ -1026,7 +1027,7 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
 
     int i = 0;
     struct aws_hash_table hash_table;
-    int nentries = 2 * 512 * 1024;
+    const int nentries = 2 * 512 * 1024;
     int err_code = aws_hash_table_init(&hash_table, allocator, nentries, aws_hash_ptr, aws_ptr_eq, NULL, NULL);
 
     if (AWS_ERROR_SUCCESS != err_code) {
@@ -1035,21 +1036,19 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
 
     /* Probability that we deliberately try to overwrite.
        Note that random collisions can occur, and are not explicitly avoided. */
-    double pOverwrite = 0.05;
-    double pDelete = 0.05;
+    const double pOverwrite = 0.05;
+    const double pDelete = 0.05;
 
+    /* Create array of "entries" (actions we'll do to the hash table later) */
     struct churn_entry *entries = calloc(sizeof(*entries), nentries);
-    struct churn_entry **permuted = calloc(sizeof(*permuted), nentries);
-
     for (i = 0; i < nentries; i++) {
         struct churn_entry *e = &entries[i];
-        permuted[i] = e;
         e->original_index = i;
 
         int mode = 0; /* 0 = new entry, 1 = overwrite, 2 = delete */
 
         if (i != 0) {
-            double p = (double)rand();
+            double p = ((double)rand()) / RAND_MAX;
             if (p < pOverwrite) {
                 mode = 1;
             } else if (p < pOverwrite + pDelete) {
@@ -1059,53 +1058,94 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
 
         e->is_removed = 0;
         if (mode == 0) {
+            /* new entry: random key */
             e->key = (void *)(uintptr_t)rand();
             e->value = (void *)(uintptr_t)rand();
         } else if (mode == 1) {
+            /* overwrite entry: use same key as an earlier entry */
             e->key = entries[(size_t)rand() % i].key; /* not evenly distributed but close enough */
             e->value = (void *)(uintptr_t)rand();
         } else if (mode == 2) {
+            /* delete entry: use same key as an earlier entry */
             e->key = entries[(size_t)rand() % i].key; /* not evenly distributed but close enough */
             e->value = 0;
             e->is_removed = 1;
         }
     }
 
-    qsort(permuted, nentries, sizeof(*permuted), s_qsort_churn_entry);
+    /* Create another array with the entries sorted by key (if tied then sort by original index) */
+    struct churn_entry **sorted_entries = calloc(sizeof(*sorted_entries), nentries);
+    for (i = 0; i < nentries; i++) {
+        sorted_entries[i] = &entries[i];
+    }
+    qsort(sorted_entries, nentries, sizeof(*sorted_entries), s_qsort_churn_entry);
+    for (i = 0; i < nentries; i++) {
+        sorted_entries[i]->sorted_index = i;
+    }
 
     long start = s_timestamp();
 
+    /* Iterate over entries, calling aws_hash_table_remove() or aws_hash_table_create().
+     * Consult sorted_entries to check whether an item with that key should already be in the table or not. */
     for (i = 0; i < nentries; i++) {
         if (!(i % 100000)) {
             printf("Put progress: %d/%d\n", i, nentries);
         }
-        struct churn_entry *e = &entries[i];
+        const struct churn_entry *e = &entries[i];
+        int sorted_i = e->sorted_index;
         if (e->is_removed) {
+            /* call aws_hash_table_remove() with this entry's key... */
             int was_present;
             err_code = aws_hash_table_remove(&hash_table, e->key, NULL, &was_present);
             ASSERT_SUCCESS(err_code, "Unexpected failure removing element");
-            if (i == 0 && entries[i - 1].key == e->key && entries[i - 1].is_removed) {
-                ASSERT_INT_EQUALS(0, was_present, "Expected item to be missing");
+
+            if (sorted_i != 0 && sorted_entries[sorted_i - 1]->key == e->key) {
+                /* if an earlier entry had same key... */
+                if (sorted_entries[sorted_i - 1]->is_removed) {
+                    /* earlier entry was ALSO marked for deletion, so item should be missing now */
+                    ASSERT_INT_EQUALS(0, was_present, "Expected item to be missing");
+                } else {
+                    /* earlier entry was inserted, so item should have been present */
+                    ASSERT_INT_EQUALS(1, was_present, "Expected item to be present");
+                }
             } else {
-                ASSERT_INT_EQUALS(1, was_present, "Expected item to be present");
+                /* no earlier entry with same key, so no chance item was already there */
+                ASSERT_INT_EQUALS(0, was_present, "Expected item to be missing");
             }
         } else {
+            /* call aws_hash_table_create() with this entry's key... */
             struct aws_hash_element *pElem;
             int was_created;
             err_code = aws_hash_table_create(&hash_table, e->key, &pElem, &was_created);
             ASSERT_SUCCESS(err_code, "Unexpected failure adding element");
 
+            if (sorted_i != 0 && sorted_entries[sorted_i - 1]->key == e->key) {
+                /* if an earlier entry had same key... */
+                if (sorted_entries[sorted_i - 1]->is_removed) {
+                    /* earlier entry removed this key, so this entry should create a new one */
+                    ASSERT_INT_EQUALS(1, was_created, "Expected new item to be created");
+                } else {
+                    /* earlier entry already added this key */
+                    ASSERT_INT_EQUALS(0, was_created, "Expected item to already be present");
+                }
+            } else {
+                /* no earlier entry with same key, so no chance item was already there */
+                ASSERT_INT_EQUALS(1, was_created, "Expected new item to be created");
+            }
+
             pElem->value = e->value;
         }
     }
 
+    /* Iterate over sorted_entries. For entries with a given key, the last one
+     * reflects what should be in the hash table */
     for (i = 0; i < nentries; i++) {
         if (!(i % 100000)) {
             printf("Check progress: %d/%d\n", i, nentries);
         }
-        struct churn_entry *e = permuted[i];
+        const struct churn_entry *e = sorted_entries[i];
 
-        if (i < nentries - 1 && permuted[i + 1]->key == e->key) {
+        if (i < nentries - 1 && sorted_entries[i + 1]->key == e->key) {
             // overwritten on subsequent step
             continue;
         }
@@ -1126,7 +1166,7 @@ static int s_test_hash_churn_fn(struct aws_allocator *allocator, void *ctx) {
     long end = s_timestamp();
 
     free(entries);
-    free(permuted);
+    free(sorted_entries);
 
     printf("elapsed=%ld us\n", end - start);
     return 0;

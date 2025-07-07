@@ -83,18 +83,6 @@ static int s_cunit_failure_message0(
  * that may be returned from various tools (e.g. sanitizer). */
 #define SKIP (103)
 
-#define POSTSKIP_INTERNAL()                                                                                            \
-    do {                                                                                                               \
-        return SKIP;                                                                                                   \
-    } while (0)
-
-#define RETURN_SKIP(format, ...)                                                                                       \
-    do {                                                                                                               \
-        printf(format, ##__VA_ARGS__);                                                                                 \
-        printf("\n");                                                                                                  \
-        POSTSKIP_INTERNAL();                                                                                           \
-    } while (0)
-
 #define RETURN_SUCCESS(format, ...)                                                                                    \
     do {                                                                                                               \
         printf(format, ##__VA_ARGS__);                                                                                 \
@@ -147,7 +135,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_SUCCESS) {                                                                             \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected success at %s; got return value %d with last error 0x%04d\n",                            \
+                    "Expected success at %s; got return value %d with last error %d\n",                                \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -162,7 +150,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             if (!PRINT_FAIL_INTERNAL0(__VA_ARGS__)) {                                                                  \
                 PRINT_FAIL_INTERNAL0(                                                                                  \
-                    "Expected failure at %s; got return value %d with last error 0x%04d\n",                            \
+                    "Expected failure at %s; got return value %d with last error %d\n",                                \
                     #condition,                                                                                        \
                     assert_rv,                                                                                         \
                     aws_last_error());                                                                                 \
@@ -179,7 +167,7 @@ static int s_cunit_failure_message0(
         if (assert_rv != AWS_OP_ERR) {                                                                                 \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sExpected error but no error occurred; rv=%d, aws_last_error=%04d (expected %04d): ",                \
+                "%sExpected error but no error occurred; rv=%d, aws_last_error=%d (expected %d): ",                    \
                 FAIL_PREFIX,                                                                                           \
                 assert_rv,                                                                                             \
                 assert_err,                                                                                            \
@@ -192,7 +180,7 @@ static int s_cunit_failure_message0(
         if (assert_err != assert_err_expect) {                                                                         \
             fprintf(                                                                                                   \
                 AWS_TESTING_REPORT_FD,                                                                                 \
-                "%sIncorrect error code; aws_last_error=%04d (expected %04d): ",                                       \
+                "%sIncorrect error code; aws_last_error=%d (expected %d): ",                                           \
                 FAIL_PREFIX,                                                                                           \
                 assert_err,                                                                                            \
                 assert_err_expect);                                                                                    \
@@ -468,7 +456,7 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
         test_res |= harness->on_after(allocator, setup_res, harness->ctx);
     }
 
-    if (test_res != AWS_OP_SUCCESS && test_res != AWS_OP_SKIP) {
+    if (test_res != AWS_OP_SUCCESS) {
         goto fail;
     }
 
@@ -492,21 +480,21 @@ static inline int s_aws_run_test_case(struct aws_test_harness *harness) {
     aws_logger_set(NULL);
     aws_logger_clean_up(&err_logger);
 
-    if (test_res == AWS_OP_SUCCESS) {
-        RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
-    } else if (test_res == AWS_OP_SKIP) {
-        RETURN_SKIP("%s [ \033[32mSKIP\033[0m ]", harness->test_name);
-    }
+    RETURN_SUCCESS("%s [ \033[32mOK\033[0m ]", harness->test_name);
 
 fail:
-    PRINT_FAIL_WITHOUT_LOCATION("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    if (test_res == AWS_OP_SKIP) {
+        fprintf(AWS_TESTING_REPORT_FD, "%s [ \033[32mSKIP\033[0m ]\n", harness->test_name);
+    } else {
+        PRINT_FAIL_WITHOUT_LOCATION("%s [ \033[31mFAILED\033[0m ]", harness->test_name);
+    }
     /* Use _Exit() to terminate without cleaning up resources.
      * This prevents LeakSanitizer spam (yes, we know failing tests don't bother cleaning up).
      * It also prevents errors where threads that haven't cleaned are still using the logger declared in this fn. */
     fflush(AWS_TESTING_REPORT_FD);
     fflush(stdout);
     fflush(stderr);
-    _Exit(FAILURE);
+    _Exit(test_res == AWS_OP_SKIP ? SKIP : FAILURE);
 }
 
 /* Enables terminal escape sequences for text coloring on Windows. */

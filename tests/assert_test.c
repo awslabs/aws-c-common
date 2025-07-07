@@ -65,6 +65,7 @@ int side_effect(void) {
 }
 
 /* NOLINTNEXTLINE(readability-function-size) */
+/* clang-format off */
 int test_asserts(int *index) {
     TEST_SUCCESS(null_test) {}
     TEST_FAILURE(null_failure_test) {
@@ -160,6 +161,7 @@ int test_asserts(int *index) {
 
     return NO_MORE_TESTS;
 }
+/* clang-format on */
 
 void reset(void) {
     g_cur_testname = "UNKNOWN";
