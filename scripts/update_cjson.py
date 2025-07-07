@@ -67,6 +67,8 @@ def main():
         print(f"Updated cJSON to version {latest_version}")
 
         # 5. Apply the changes from commit f005fdc06c34fdd663031661eff5c5575843e998
+        # https://github.com/awslabs/aws-c-common/pull/1211/commits/f005fdc06c34fdd663031661eff5c5575843e998
+        # it applies the amazon edit to cJSON.h and cJSON.c
         _, returncode = run_command(
             f"git add *", cwd=source_dir, check=False)
         if returncode == 0:
