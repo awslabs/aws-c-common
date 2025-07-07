@@ -52,7 +52,7 @@ def main():
 
         # 4. Apply the changes from commit f005fdc06c34fdd663031661eff5c5575843e998
         run_command(
-            f"git add *", cwd=base_dir)
+            f"git add *", cwd=source_dir)
         run_command(
             f"git commit -m \"update cjson to {latest_version}\"", cwd=base_dir)
         run_command(
@@ -63,10 +63,10 @@ def main():
         with open(license_path, 'r') as f:
             content = f.read()
 
-        # Update the version number - using a simpler approach to avoid regex issues
-        pattern = r'\*\* cJSON; version \d+\.\d+\.\d+ -- https://github\.com/DaveGamble/cJSON'
-        replacement = f'** cJSON; version {latest_version} -- https://github.com/DaveGamble/cJSON'
-        content = content.replace(pattern.replace('\\', ''), replacement)
+        # Update the version number using regex for more accurate replacement
+        pattern = r'\*\* cJSON; version \d+\.\d+\.\d+ --'
+        replacement = f'** cJSON; version {latest_version} --'
+        content = re.sub(pattern, replacement, content)
 
         with open(license_path, 'w') as f:
             f.write(content)
