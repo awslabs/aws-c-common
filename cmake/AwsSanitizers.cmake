@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0.
 
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 
 option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" OFF)
 set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build with")
@@ -32,7 +33,16 @@ function(aws_check_sanitizer sanitizer)
 
         # Need to set this here so that the flag is passed to the linker
         set(CMAKE_REQUIRED_FLAGS ${sanitizer_test_flag})
-        check_c_compiler_flag(${sanitizer_test_flag} ${out_variable})
+        if(${CMAKE_C_COMPILER_LOADED})
+            check_c_compiler_flag(${sanitizer_test_flag} ${out_variable})
+        endif()
+        if(${CMAKE_CXX_COMPILER_LOADED})
+            check_cxx_compiler_flag(${sanitizer_test_flag} ${out_variable})
+        endif()
+
+        if(NOT ${out_variable})
+            message(STATUS "Check ${out_variable} failed")
+        endif()
     else()
         set(${out_variable} 0 PARENT_SCOPE)
     endif()
