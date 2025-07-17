@@ -96,7 +96,8 @@ int aws_format_standard_log_line(struct aws_logging_standard_formatting_data *fo
         struct aws_date_time current_time;
         aws_date_time_init_now(&current_time);
 
-        int result = aws_date_time_to_utc_time_str(&current_time, formatting_data->date_format, &timestamp_buffer);
+        int result =
+            aws_date_time_to_utc_time_str_with_ms(&current_time, formatting_data->date_format, &timestamp_buffer);
         if (result != AWS_OP_SUCCESS) {
             return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         }

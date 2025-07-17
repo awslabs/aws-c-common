@@ -715,6 +715,27 @@ int aws_date_time_to_utc_time_str(
 
     switch (fmt) {
         case AWS_DATE_FORMAT_RFC822:
+            return s_date_to_str(&dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, output_buf);
+
+        case AWS_DATE_FORMAT_ISO_8601:
+            return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_DATE_FORMAT_STR, output_buf);
+
+        case AWS_DATE_FORMAT_ISO_8601_BASIC:
+            return s_date_to_str(&dt->gmt_time, ISO_8601_LONG_BASIC_DATE_FORMAT_STR, output_buf);
+
+        default:
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+}
+
+int aws_date_time_to_utc_time_str_with_ms(
+    const struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf) {
+    AWS_ASSERT(fmt != AWS_DATE_FORMAT_AUTO_DETECT);
+
+    switch (fmt) {
+        case AWS_DATE_FORMAT_RFC822:
             return s_date_to_str_with_millis(
                 &dt->gmt_time, RFC822_DATE_FORMAT_STR_MINUS_Z, dt->milliseconds, output_buf);
 

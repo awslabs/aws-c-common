@@ -125,6 +125,16 @@ AWS_COMMON_API int aws_date_time_to_utc_time_str(
     struct aws_byte_buf *output_buf);
 
 /**
+ * With MS Copies the current time as a formatted date string in utc time into output_buf. If buffer is too small, it
+ * will return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
+ * allowed.
+ */
+AWS_COMMON_API int aws_date_time_to_utc_time_str_with_ms(
+    const struct aws_date_time *dt,
+    enum aws_date_format fmt,
+    struct aws_byte_buf *output_buf);
+
+/**
  * Copies the current time as a formatted short date string in local time into output_buf. If buffer is too small, it
  * will return AWS_OP_ERR. A good size suggestion is AWS_DATE_TIME_STR_MAX_LEN bytes. AWS_DATE_FORMAT_AUTO_DETECT is not
  * allowed.
