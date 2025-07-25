@@ -214,8 +214,8 @@ static SetThreadGroupAffinity_fn *s_SetThreadGroupAffinity;
 
 typedef BOOL WINAPI SetThreadIdealProcessorEx_fn(
     HANDLE hThread,
-    PPROCESSOR_NUMBER lpIdealProcessor,
-    PPROCESSOR_NUMBER lpPreviousIdealProcessor);
+    PROCESSOR_NUMBER lpIdealProcessor,
+    PROCESSOR_NUMBER lpPreviousIdealProcessor);
 static SetThreadIdealProcessorEx_fn *s_SetThreadIdealProcessorEx;
 
 typedef HRESULT WINAPI SetThreadDescription_fn(HANDLE hThread, PCWSTR lpThreadDescription);
