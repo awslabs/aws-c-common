@@ -438,21 +438,19 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, invalid_cbor);
     ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
-    aws_cbor_decoder_destroy(decoder);
 
     /* 2. Empty cursor */
     struct aws_byte_cursor empty = {0};
-    decoder = aws_cbor_decoder_new(allocator, empty);
+    aws_cbor_decoder_reset_src(decoder, empty);
     ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
-    aws_cbor_decoder_destroy(decoder);
 
     /* 3. Try get wrong type */
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
     uint64_t val = 1;
     aws_cbor_encoder_write_uint(encoder, val);
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
-    decoder = aws_cbor_decoder_new(allocator, final_cursor);
+    aws_cbor_decoder_reset_src(decoder, final_cursor);
     uint64_t out = 0;
     ASSERT_FAILS(aws_cbor_decoder_pop_next_array_start(decoder, &out));
     ASSERT_UINT_EQUALS(AWS_ERROR_CBOR_UNEXPECTED_TYPE, aws_last_error());
@@ -463,7 +461,6 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     ASSERT_FAILS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
     ASSERT_FAILS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
-    aws_cbor_decoder_destroy(decoder);
 
     /* 4. Consume data items with size */
     struct aws_byte_cursor val_1 = aws_byte_cursor_from_c_str("my test");
@@ -476,13 +473,13 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
     aws_cbor_encoder_write_bytes(encoder, val_1);
     final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
-    decoder = aws_cbor_decoder_new(allocator, final_cursor);
+    aws_cbor_decoder_reset_src(decoder, final_cursor);
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(AWS_CBOR_TYPE_MAP_START, out_type);
     ASSERT_SUCCESS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
-    aws_cbor_decoder_destroy(decoder);
 
+    aws_cbor_decoder_destroy(decoder);
     aws_cbor_encoder_destroy(encoder);
     aws_common_library_clean_up();
     return AWS_OP_SUCCESS;

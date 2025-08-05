@@ -95,6 +95,28 @@ static int s_xml_parser_child_with_text_test(struct aws_allocator *allocator, vo
 
 AWS_TEST_CASE(xml_parser_child_with_text, s_xml_parser_child_with_text_test)
 
+const char *malformed_end_node_character_before_start =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNode>><child1>TestBody</child1></rootNode>";
+
+static int s_xml_parser_malformed_end_node_character_before_start_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct child_text_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(malformed_end_node_character_before_start),
+        .on_root_encountered = s_root_with_child,
+        .user_data = &capture,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(
+    xml_parser_malformed_end_node_character_before_start_test,
+    s_xml_parser_malformed_end_node_character_before_start_test)
+
 const char *siblings_with_text =
     "<?xml version=\"1.0\" "
     "encoding=\"UTF-8\"?><rootNode><child1>TestBody</child1><child2>TestBody2</child2></rootNode>";
@@ -164,6 +186,42 @@ static int s_xml_parser_siblings_with_text_test(struct aws_allocator *allocator,
 }
 
 AWS_TEST_CASE(xml_parser_siblings_with_text, s_xml_parser_siblings_with_text_test)
+
+const char *siblings_with_empty_tag = "<?xml version=\"1.0\" "
+                                      "encoding=\"UTF-8\"?><rootNode><child1 /><child2>TestBody2</child2></rootNode>";
+
+static int s_xml_parser_child_empty_tag(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct sibling_text_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    capture.capture1 = aws_byte_cursor_from_c_str("random values");
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(siblings_with_empty_tag),
+        .on_root_encountered = s_root_with_child_siblings,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name1[] = "child1";
+
+    const char expected_name2[] = "child2";
+    const char expected_value2[] = "TestBody2";
+
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_name1, sizeof(expected_name1) - 1, capture.node_name1.ptr, capture.node_name1.len);
+    ASSERT_PTR_EQUALS(capture.capture1.ptr, NULL);
+    ASSERT_UINT_EQUALS(capture.capture1.len, 0);
+
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_name2, sizeof(expected_name2) - 1, capture.node_name2.ptr, capture.node_name2.len);
+    ASSERT_BIN_ARRAYS_EQUALS(expected_value2, sizeof(expected_value2) - 1, capture.capture2.ptr, capture.capture2.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_child_empty_tag, s_xml_parser_child_empty_tag)
 
 const char *preamble_and_attributes =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"

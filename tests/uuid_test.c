@@ -29,6 +29,27 @@ static int s_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
 
 AWS_TEST_CASE(uuid_string, s_uuid_string_fn)
 
+static int s_uuid_string_compact_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_uuid uuid;
+    ASSERT_SUCCESS(aws_uuid_init(&uuid));
+
+    uint8_t uuid_array[AWS_UUID_STR_COMPACT_LEN] = {0};
+    struct aws_byte_buf uuid_buf = aws_byte_buf_from_array(uuid_array, sizeof(uuid_array));
+    uuid_buf.len = 0;
+
+    ASSERT_SUCCESS(aws_uuid_to_str_compact(&uuid, &uuid_buf));
+    uint8_t zerod_buf[AWS_UUID_STR_COMPACT_LEN] = {0};
+    ASSERT_UINT_EQUALS(AWS_UUID_STR_COMPACT_LEN - 1, uuid_buf.len);
+    ASSERT_FALSE(0 == memcmp(zerod_buf, uuid_array, sizeof(uuid_array)));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(uuid_string_compact, s_uuid_string_compact_fn)
+
 static int s_prefilled_uuid_string_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
@@ -52,6 +73,29 @@ static int s_prefilled_uuid_string_fn(struct aws_allocator *allocator, void *ctx
 
 AWS_TEST_CASE(prefilled_uuid_string, s_prefilled_uuid_string_fn)
 
+static int s_prefilled_uuid_string_compact_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_uuid uuid = {
+        .uuid_data = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10},
+    };
+
+    uint8_t uuid_array[AWS_UUID_STR_COMPACT_LEN] = {0};
+    struct aws_byte_buf uuid_buf = aws_byte_buf_from_array(uuid_array, sizeof(uuid_array));
+    uuid_buf.len = 0;
+
+    ASSERT_SUCCESS(aws_uuid_to_str_compact(&uuid, &uuid_buf));
+
+    const char *expected_str = "0102030405060708090a0b0c0d0e0f10";
+    struct aws_byte_buf expected = aws_byte_buf_from_c_str(expected_str);
+    ASSERT_BIN_ARRAYS_EQUALS(expected.buffer, expected.len, uuid_buf.buffer, uuid_buf.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(prefilled_uuid_string_compact, s_prefilled_uuid_string_compact_fn)
+
 static int s_uuid_string_short_buffer_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
@@ -69,6 +113,24 @@ static int s_uuid_string_short_buffer_fn(struct aws_allocator *allocator, void *
 }
 
 AWS_TEST_CASE(uuid_string_short_buffer, s_uuid_string_short_buffer_fn)
+
+static int s_uuid_string_compact_short_buffer_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_uuid uuid;
+    ASSERT_SUCCESS(aws_uuid_init(&uuid));
+
+    uint8_t uuid_array[AWS_UUID_STR_COMPACT_LEN - 2] = {0};
+    struct aws_byte_buf uuid_buf = aws_byte_buf_from_array(uuid_array, sizeof(uuid_array));
+    uuid_buf.len = 0;
+
+    ASSERT_ERROR(AWS_ERROR_SHORT_BUFFER, aws_uuid_to_str_compact(&uuid, &uuid_buf));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(uuid_string_compact_short_buffer, s_uuid_string_compact_short_buffer_fn)
 
 static int s_uuid_string_parse_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;

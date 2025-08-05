@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import tempfile
 import shutil
@@ -93,10 +94,13 @@ try:
     subprocess.run(clone_command, shell=True, check=True)
     subprocess.run(["git", "checkout", "tags/" + args.version],
                    cwd=temp_repo_dir, check=True)
+    version_number = args.version[1:]  # Remove 'v' prefix
 
     # Create a separate folder for the copied files
+    base_dir = os.path.join(os.path.dirname(
+        __file__), "..")
     output_dir = os.path.join(
-        os.path.dirname(__file__), "..", "source", "external", "libcbor")
+        base_dir, "source", "external", "libcbor")
     shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
 
@@ -120,6 +124,21 @@ try:
     with open(os.path.join(output_dir, "cbor/configuration.h"), "w") as file:
         file.write(GENERATED_NOTES)
         file.write(CONFIGURATION_H)
+
+    # Update the version number in THIRD-PARTY-LICENSES.txt
+    license_path = os.path.join(base_dir, "THIRD-PARTY-LICENSES.txt")
+    with open(license_path, 'r') as f:
+        content = f.read()
+
+    # Update the version number using regex for more accurate replacement
+    pattern = r'\*\* libcbor; version \d+\.\d+\.\d+ --'
+    replacement = f'** libcbor; version {version_number} --'
+    content = re.sub(pattern, replacement, content)
+
+    with open(license_path, 'w') as f:
+        f.write(content)
+
+    print(f"Updated libcbor to version {version_number}")
 
 except Exception as e:
     print(f"An error occurred: {e}")

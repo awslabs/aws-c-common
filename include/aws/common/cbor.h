@@ -313,6 +313,17 @@ AWS_COMMON_API
 size_t aws_cbor_decoder_get_remaining_length(const struct aws_cbor_decoder *decoder);
 
 /**
+ * @brief  Reset the decoder source to a new src.
+ * The previous src will be discarded regardless of the unconsumed bytes.
+ * The decoder will clear its cache if any.
+ *
+ * @param decoder
+ * @param src   The src data to decode from..
+ */
+AWS_COMMON_API
+void aws_cbor_decoder_reset_src(struct aws_cbor_decoder *decoder, struct aws_byte_cursor src);
+
+/**
  * @brief Decode the next element and store it in the decoder cache if there was no element cached.
  * If there was element cached, just return the type of the cached element.
  *
@@ -327,7 +338,7 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
  * @brief Consume the next data item, includes all the content within the data item.
  *
  * As an example for the following cbor, this function will consume all the data
- * as it's only one cbor data item, an indefinite map with 2 key, value pair:
+ * as it's only one cbor data item, an indefinite map with 2 <key, value> pair:
  * 0xbf6346756ef563416d7421ff
  * BF           -- Start indefinite-length map
  *   63        -- First key, UTF-8 string length 3
@@ -374,7 +385,7 @@ int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decode
  * Specifically:
  *  AWS_CBOR_TYPE_UINT - aws_cbor_decoder_pop_next_unsigned_int_val
  *  AWS_CBOR_TYPE_NEGINT - aws_cbor_decoder_pop_next_negative_int_val, it represents (-1 - *out)
- *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_double_val
+ *  AWS_CBOR_TYPE_FLOAT - aws_cbor_decoder_pop_next_float_val
  *  AWS_CBOR_TYPE_BYTES - aws_cbor_decoder_pop_next_bytes_val
  *  AWS_CBOR_TYPE_TEXT - aws_cbor_decoder_pop_next_text_val
  *
@@ -414,9 +425,9 @@ AWS_COMMON_API
 int aws_cbor_decoder_pop_next_array_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
 
 /**
- * @brief Get the next AWS_CBOR_TYPE_MAP_START element. Only consume the AWS_CBOR_TYPE_MAP_START element and set the
- * size of array to *out_size, not the content of the map. The next *out_size pair of cbor data items as key and value
- * will be the content of the array for a valid cbor data,
+ * @brief Get the next AWS_CBOR_TYPE_MAP_START element.
+ * Only consume the AWS_CBOR_TYPE_MAP_START element and set the size of array to *out_size, not the content of the map.
+ * The next *out_size pair of cbor data items as key and value will be the content of the array for a valid cbor data,
  *
  * Notes: For indefinite-length, this function will fail with "AWS_ERROR_CBOR_UNEXPECTED_TYPE". The designed way to
  * handle indefinite-length is:
@@ -432,12 +443,12 @@ AWS_COMMON_API
 int aws_cbor_decoder_pop_next_map_start(struct aws_cbor_decoder *decoder, uint64_t *out_size);
 
 /**
- * @brief Get the next AWS_CBOR_TYPE_TAG element. Only consume the AWS_CBOR_TYPE_TAG element and set the
- * tag value to *out_tag_val, not the content of the tagged. The next cbor data item will be the content of the tagged
- * value for a valid cbor data.
+ * @brief Get the next AWS_CBOR_TYPE_TAG element.
+ * Only consume the AWS_CBOR_TYPE_TAG element and set the tag ID value to *out_tag_val, not the content of the tagged.
+ * The next cbor data item will be the content of the tagged value for a valid cbor data.
  *
  * @param decoder
- * @param out_size store the size of map if succeed.
+ * @param out_tag_val store the value of tag ID.
  * @return AWS_OP_SUCCESS successfully consumed the next element and get the result, otherwise AWS_OP_ERR.
  */
 AWS_COMMON_API

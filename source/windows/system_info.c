@@ -295,7 +295,8 @@ void aws_backtrace_print(FILE *fp, void *call_site_data) {
         AWS_LS_COMMON_GENERAL, "aws_backtrace_print: backtrace requested, but logging is unsupported on this platform");
 }
 
-void aws_backtrace_log() {
+void aws_backtrace_log(int log_level) {
+    (void)log_level;
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_GENERAL, "aws_backtrace_log: backtrace requested, but logging is unsupported on this platform");
 }
