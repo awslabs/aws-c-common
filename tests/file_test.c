@@ -671,7 +671,8 @@ static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *all
     /* Cleanup */
     s_file_path_read_from_offset_tester_cleanup(&tester);
 #else
-    struct aws_string *file_path = aws_string_new_from_c_str(allocator, "test_file_path_read_from_offset.txt");
+    struct aws_string *file_path =
+        aws_string_new_from_c_str(allocator, "test_file_path_read_from_offset_direct_io.txt");
     ASSERT_FAILS(aws_file_path_read_from_offset_direct_io(file_path, 0, 10, NULL, NULL));
     ASSERT_UINT_EQUALS(AWS_ERROR_UNSUPPORTED_OPERATION, aws_last_error());
     aws_string_destroy(file_path);

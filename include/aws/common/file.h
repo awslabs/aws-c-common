@@ -245,6 +245,7 @@ int aws_file_path_read_from_offset_direct_io(
  *
  * Returns AWS_OP_SUCCESS, or AWS_OP_ERR (after an error has been raised).
  */
+AWS_COMMON_API
 int aws_file_path_read_from_offset(
     const struct aws_string *file_path,
     uint64_t offset,

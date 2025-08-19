@@ -341,28 +341,39 @@ int aws_file_path_read_from_offset_direct_io(
     int rt_code = AWS_OP_ERR;
     int fd = open(aws_string_c_str(file_path), O_RDONLY | O_DIRECT);
     if (fd == -1) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
         AWS_LOGF_ERROR(
-            AWS_LS_COMMON_GENERAL, "Failed to open file %s for reading with O_DIRECT", aws_string_c_str(file_path));
-        aws_translate_and_raise_io_error(errno);
+            AWS_LS_COMMON_GENERAL,
+            "Failed to open file %s for reading with O_DIRECT, errno: %d",
+            aws_string_c_str(file_path),
+            errno_value);
+        aws_translate_and_raise_io_error(errno_value);
         goto cleanup;
     }
 
     /* seek to the right position and then read */
     if (lseek(fd, (off_t)offset, SEEK_SET) == -1) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL,
-            "Failed to seek to position %llu in file %s",
+            "Failed to seek to position %llu in file %s, errno: %d",
             (unsigned long long)offset,
-            aws_string_c_str(file_path));
-        aws_translate_and_raise_io_error(errno);
+            aws_string_c_str(file_path),
+            errno_value);
+        aws_translate_and_raise_io_error(errno_value);
         goto cleanup;
     }
 
     ssize_t bytes_read = read(fd, output_buf->buffer, length);
     if (bytes_read == -1) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
         AWS_LOGF_ERROR(
-            AWS_LS_COMMON_GENERAL, "Failed to read %zu bytes from file %s", length, aws_string_c_str(file_path));
-        aws_translate_and_raise_io_error(errno);
+            AWS_LS_COMMON_GENERAL,
+            "Failed to read %zu bytes from file %s, errno: %d",
+            length,
+            aws_string_c_str(file_path),
+            errno_value);
+        aws_translate_and_raise_io_error(errno_value);
         goto cleanup;
     }
 
