@@ -2,19 +2,20 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#define _GNU_SOURCE
+#if !defined(__MACH__)
+#    define _GNU_SOURCE /* NOLINT(bugprone-reserved-identifier) */
+#endif
+
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <unistd.h>
-
-#include <fcntl.h>
 #include <unistd.h>
 
 /* O_DIRECT is not available on all platforms */
@@ -326,7 +327,7 @@ int aws_file_path_read_from_offset_direct_io(
     size_t *out_actual_read) {
 
     if (O_DIRECT == 0) {
-        /* O_DIRECT is not supported from this platform */
+        /* TODO: break this up even more, O_DIRECT is only for linux, not posix. */
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on this platform");
         return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
     }
@@ -342,7 +343,7 @@ int aws_file_path_read_from_offset_direct_io(
     if (fd == -1) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL, "Failed to open file %s for reading with O_DIRECT", aws_string_c_str(file_path));
-        aws_raise_error(aws_translate_and_raise_io_error(errno));
+        aws_translate_and_raise_io_error(errno);
         goto cleanup;
     }
 
@@ -353,7 +354,7 @@ int aws_file_path_read_from_offset_direct_io(
             "Failed to seek to position %llu in file %s",
             (unsigned long long)offset,
             aws_string_c_str(file_path));
-        aws_raise_error(aws_translate_and_raise_io_error(errno));
+        aws_translate_and_raise_io_error(errno);
         goto cleanup;
     }
 
@@ -361,7 +362,7 @@ int aws_file_path_read_from_offset_direct_io(
     if (bytes_read == -1) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL, "Failed to read %zu bytes from file %s", length, aws_string_c_str(file_path));
-        aws_raise_error(aws_translate_and_raise_io_error(errno));
+        aws_translate_and_raise_io_error(errno);
         goto cleanup;
     }
 
