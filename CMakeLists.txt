@@ -56,6 +56,7 @@ file (GLOB AWS_COMMON_EXTERNAL_SRC
 
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
+option(AWS_PAGE_SIZE "Page size of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
     set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
@@ -216,6 +217,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
 if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
+endif()
+
+if (AWS_PAGE_SIZE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_PAGE_SIZE=${AWS_PAGE_SIZE})
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)

@@ -23,6 +23,20 @@ static int s_test_cpu_count_at_least_works_superficially_fn(struct aws_allocator
 
 AWS_TEST_CASE(test_cpu_count_at_least_works_superficially, s_test_cpu_count_at_least_works_superficially_fn)
 
+static int s_test_page_size_at_least_works_superficially_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    size_t page_size = aws_system_info_page_size();
+    ASSERT_TRUE(page_size > 0);
+    /* Page size should be a power of 2 */
+    ASSERT_TRUE((page_size & (page_size - 1)) == 0);
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_page_size_at_least_works_superficially, s_test_page_size_at_least_works_superficially_fn)
+
 #if defined(_WIN32)
 #    include <io.h>
 #    define DIRSEP "\\"
