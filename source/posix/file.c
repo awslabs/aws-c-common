@@ -325,6 +325,16 @@ int aws_file_path_read_from_offset_direct_io(
     size_t max_read_length,
     struct aws_byte_buf *output_buf,
     size_t *out_actual_read) {
+#ifdef __FreeBSD__
+    (void)file_path;
+    (void)offset;
+    (void)max_read_length;
+    (void)output_buf;
+    (void)out_actual_read;
+    /* TODO: it's crashing on FreeBSD, but it should not. Fix it. */
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on FreeBSD");
+    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+#endif
 
     if (O_DIRECT == 0) {
         /* TODO: break this up even more, O_DIRECT is only for linux, not posix. */

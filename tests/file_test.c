@@ -600,7 +600,7 @@ static void s_file_path_read_from_offset_tester_cleanup(struct aws_file_path_rea
 static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-#ifdef AWS_OS_LINUX
+#if defined(__linux__) && !defined(__FreeBSD__)
     struct aws_file_path_read_from_offset_tester tester;
     char file_path[] = "test_file_path_read_from_offset_direct_io.txt";
 
@@ -647,11 +647,9 @@ static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *all
     }
 
     aws_byte_buf_clean_up(&output_buf);
-#    ifdef __FreeBSD__
 
     /* Cleanup */
     s_file_path_read_from_offset_tester_cleanup(&tester);
-#    else
 
     /* Test 3: Test unaligned offset - should fail with AWS_ERROR_INVALID_ARGUMENT */
     ASSERT_SUCCESS(aws_byte_buf_init(&output_buf, tester.aligned_allocator, page_size));
@@ -675,7 +673,6 @@ static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *all
 
     /* Cleanup */
     s_file_path_read_from_offset_tester_cleanup(&tester);
-#    endif
 #else
     struct aws_string *file_path =
         aws_string_new_from_c_str(allocator, "test_file_path_read_from_offset_direct_io.txt");
