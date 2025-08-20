@@ -213,6 +213,7 @@ int aws_file_get_length(FILE *file, int64_t *length);
  * Using direct IO to bypass the OS cache. Helpful when the disk I/O outperform the kernel cache.
  * If O_DIRECT is not supported, returns AWS_ERROR_UNSUPPORTED_OPERATION.
  * Notes:
+ * - ONLY supports linux for now and raise AWS_ERROR_UNSUPPORTED_OPERATION on all other platforms (eg: FreeBSD).
  * - check the NOTES for O_DIRECT in https://man7.org/linux/man-pages/man2/openat.2.html
  * - The offset, length and output_buf->buffer all need to be aligned with the page size. Otherwise,
  *  AWS_ERROR_INVALID_ARGUMENT will be raised.

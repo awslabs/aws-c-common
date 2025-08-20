@@ -544,19 +544,3 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     return AWS_OP_SUCCESS;
 }
-
-int aws_file_path_read_from_offset_direct_io(
-    const struct aws_string *file_path,
-    uint64_t offset,
-    size_t max_read_length,
-    struct aws_byte_buf *output_buf,
-    size_t *out_actual_read) {
-    /* TODO: support it. */
-    (void)file_path;
-    (void)offset;
-    (void)max_read_length;
-    (void)output_buf;
-    (void)out_actual_read;
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on windows yet");
-    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
-}
