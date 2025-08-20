@@ -600,7 +600,7 @@ static void s_file_path_read_from_offset_tester_cleanup(struct aws_file_path_rea
 static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-#if defined(__linux__) && !defined(__FreeBSD__)
+#if defined(__linux__)
     struct aws_file_path_read_from_offset_tester tester;
     char file_path[] = "test_file_path_read_from_offset_direct_io.txt";
 
