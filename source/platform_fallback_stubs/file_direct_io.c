@@ -18,7 +18,7 @@ int aws_file_path_read_from_offset_direct_io(
     (void)max_read_length;
     (void)output_buf;
     (void)out_actual_read;
-    /* TODO: it's crashing on FreeBSD, but it should not. Fix it. */
-    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on FreeBSD");
+    /* TODO: Support it cross different platforms. */
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Direct file IO is not supported yet on platforms other than linux.");
     return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
 }
