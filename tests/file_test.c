@@ -648,9 +648,6 @@ static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *all
 
     aws_byte_buf_clean_up(&output_buf);
 
-    /* Cleanup */
-    s_file_path_read_from_offset_tester_cleanup(&tester);
-
     /* Test 3: Test unaligned offset - should fail with AWS_ERROR_INVALID_ARGUMENT */
     ASSERT_SUCCESS(aws_byte_buf_init(&output_buf, tester.aligned_allocator, page_size));
 
