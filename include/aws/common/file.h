@@ -254,6 +254,19 @@ int aws_file_path_read_from_offset(
     struct aws_byte_buf *output_buf,
     size_t *out_actual_read);
 
+/*
+ * The function serve the same purpose as `aws_file_path_read_from_offset_direct_io`.
+ * Please use `aws_file_path_read_from_offset_direct_io` directly.
+ */
+AWS_COMMON_API
+int aws_file_path_read_from_offset_direct_io_with_chunk_size(
+    const struct aws_string *file_path,
+    uint64_t offset,
+    size_t max_read_length,
+    size_t max_chunk_size,
+    struct aws_byte_buf *output_buf,
+    size_t *out_actual_read);
+
 AWS_EXTERN_C_END AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */

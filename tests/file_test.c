@@ -2,6 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+
 #include <aws/common/allocator.h>
 #include <aws/common/device_random.h>
 #include <aws/common/file.h>
@@ -800,3 +801,97 @@ static int s_test_file_path_read_from_offset(struct aws_allocator *allocator, vo
 }
 
 AWS_TEST_CASE(test_file_path_read_from_offset, s_test_file_path_read_from_offset)
+
+static int s_test_file_path_read_from_offset_direct_io_chunking(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+#if defined(__linux__)
+    struct aws_file_path_read_from_offset_tester tester;
+    char file_path[] = "test_direct_io_chunking.txt";
+    /* Instead of creating a 2GiB file to test, we use the separate API that allows us to pass in the chunk size. */
+    size_t chunk_size = 8192;
+    size_t page_size = aws_system_info_page_size();
+    size_t file_size = chunk_size * 2 + page_size; /* Ensure it's larger than chunk size */
+
+    ASSERT_SUCCESS(s_file_path_read_from_offset_tester_init(&tester, allocator, file_path, file_size));
+
+    /* Test 1: Read exactly chunk_size bytes - should not trigger chunking */
+    struct aws_byte_buf output_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&output_buf, tester.aligned_allocator, chunk_size));
+
+    size_t actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io_with_chunk_size(
+        tester.file_path, 0, chunk_size, chunk_size, &output_buf, &actual_read));
+
+    ASSERT_UINT_EQUALS(chunk_size, actual_read);
+    ASSERT_UINT_EQUALS(chunk_size, output_buf.len);
+
+    /* Verify the content matches our expected pattern */
+    struct aws_byte_cursor expected_pattern = aws_byte_cursor_from_c_str("0123456789abcdef");
+    for (size_t i = 0; i < chunk_size; i++) {
+        size_t pattern_index = i % expected_pattern.len;
+        ASSERT_UINT_EQUALS(expected_pattern.ptr[pattern_index], output_buf.buffer[i]);
+    }
+
+    aws_byte_buf_clean_up(&output_buf);
+
+    /* Test 2: Read more than chunk_size bytes - should trigger chunking */
+    size_t large_read_size = chunk_size + page_size; /* Ensure it's page-aligned */
+    ASSERT_SUCCESS(aws_byte_buf_init(&output_buf, tester.aligned_allocator, large_read_size));
+
+    actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io_with_chunk_size(
+        tester.file_path, 0, large_read_size, chunk_size, &output_buf, &actual_read));
+
+    ASSERT_UINT_EQUALS(large_read_size, actual_read);
+    ASSERT_UINT_EQUALS(large_read_size, output_buf.len);
+
+    /* Verify the content matches our expected pattern across the entire read */
+    for (size_t i = 0; i < large_read_size; i++) {
+        size_t pattern_index = i % expected_pattern.len;
+        ASSERT_UINT_EQUALS(expected_pattern.ptr[pattern_index], output_buf.buffer[i]);
+    }
+
+    aws_byte_buf_clean_up(&output_buf);
+
+    /* Test 3: Read much more than chunk_size - multiple chunks */
+    size_t very_large_read_size = file_size; /* Ensure it's page-aligned */
+
+    ASSERT_SUCCESS(aws_byte_buf_init(&output_buf, tester.aligned_allocator, very_large_read_size));
+
+    actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io_with_chunk_size(
+        tester.file_path, 0, very_large_read_size, chunk_size, &output_buf, &actual_read));
+
+    ASSERT_UINT_EQUALS(very_large_read_size, actual_read);
+    ASSERT_UINT_EQUALS(very_large_read_size, output_buf.len);
+
+    /* Verify the content matches our expected pattern across the entire read */
+    for (size_t i = 0; i < very_large_read_size; i++) {
+        size_t pattern_index = i % expected_pattern.len;
+        ASSERT_UINT_EQUALS(expected_pattern.ptr[pattern_index], output_buf.buffer[i]);
+    }
+
+    aws_byte_buf_clean_up(&output_buf);
+
+    /* Cleanup */
+    s_file_path_read_from_offset_tester_cleanup(&tester);
+
+#else
+    /* On non-Linux platforms, the function should return AWS_ERROR_UNSUPPORTED_OPERATION */
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, "test_direct_io_chunking.txt");
+    struct aws_byte_buf dummy_buf;
+    aws_byte_buf_init(&dummy_buf, allocator, 1024);
+    size_t dummy_read = 0;
+
+    ASSERT_FAILS(aws_file_path_read_from_offset_direct_io(file_path, 0, 1024, &dummy_buf, &dummy_read));
+    ASSERT_UINT_EQUALS(AWS_ERROR_UNSUPPORTED_OPERATION, aws_last_error());
+
+    aws_byte_buf_clean_up(&dummy_buf);
+    aws_string_destroy(file_path);
+#endif
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_file_path_read_from_offset_direct_io_chunking, s_test_file_path_read_from_offset_direct_io_chunking)
