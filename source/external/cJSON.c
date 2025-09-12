@@ -20,14 +20,6 @@
   THE SOFTWARE.
 */
 
-/*
- * This file has been modified from its original version by Amazon:
- *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
- *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
- *   (3) Replace sprintf() with snprintf() to make compilers happier.
- */
-/* NOLINTBEGIN */
-
 /* cJSON */
 /* JSON parser in C. */
 
@@ -97,14 +89,12 @@ typedef struct {
     const unsigned char *json;
     size_t position;
 } error;
-#if 0 /* Amazon edit */
 static error global_error = { NULL, 0 };
 
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
 {
     return (const char*) (global_error.json + global_error.position);
 }
-#endif /* Amazon edit */
 
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
 {
@@ -127,14 +117,14 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
 }
 
 /* This is a safeguard to prevent copy-pasters from using incompatible C and header files */
-#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 7) || (CJSON_VERSION_PATCH != 18)
+#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 7) || (CJSON_VERSION_PATCH != 19)
     #error cJSON.h and cJSON.c have different versions. Make sure that both have the same.
 #endif
 
 CJSON_PUBLIC(const char*) cJSON_Version(void)
 {
     static char version[15];
-    snprintf(version, sizeof(version), "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH); /* Amazon edit */
+    sprintf(version, "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH);
 
     return version;
 }
@@ -318,9 +308,11 @@ static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_bu
 {
     double number = 0;
     unsigned char *after_end = NULL;
-    unsigned char number_c_string[64];
+    unsigned char *number_c_string;
     unsigned char decimal_point = get_decimal_point();
     size_t i = 0;
+    size_t number_string_length = 0;
+    cJSON_bool has_decimal_point = false;
 
     if ((input_buffer == NULL) || (input_buffer->content == NULL))
     {
@@ -330,7 +322,7 @@ static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_bu
     /* copy the number into a temporary buffer and replace '.' with the decimal point
      * of the current locale (for strtod)
      * This also takes care of '\0' not necessarily being available for marking the end of the input */
-    for (i = 0; (i < (sizeof(number_c_string) - 1)) && can_access_at_index(input_buffer, i); i++)
+    for (i = 0; can_access_at_index(input_buffer, i); i++)
     {
         switch (buffer_at_offset(input_buffer)[i])
         {
@@ -348,11 +340,12 @@ static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_bu
             case '-':
             case 'e':
             case 'E':
-                number_c_string[i] = buffer_at_offset(input_buffer)[i];
+                number_string_length++;
                 break;
 
             case '.':
-                number_c_string[i] = decimal_point;
+                number_string_length++;
+                has_decimal_point = true;
                 break;
 
             default:
@@ -360,11 +353,33 @@ static cJSON_bool parse_number(cJSON * const item, parse_buffer * const input_bu
         }
     }
 loop_end:
-    number_c_string[i] = '\0';
+    /* malloc for temporary buffer, add 1 for '\0' */
+    number_c_string = (unsigned char *) input_buffer->hooks.allocate(number_string_length + 1);
+    if (number_c_string == NULL)
+    {
+        return false; /* allocation failure */
+    }
+
+    memcpy(number_c_string, buffer_at_offset(input_buffer), number_string_length);
+    number_c_string[number_string_length] = '\0';
+
+    if (has_decimal_point)
+    {
+        for (i = 0; i < number_string_length; i++)
+        {
+            if (number_c_string[i] == '.')
+            {
+                /* replace '.' with the decimal point of the current locale (for strtod) */
+                number_c_string[i] = decimal_point;
+            }
+        }
+    }
 
     number = strtod((const char*)number_c_string, (char**)&after_end);
     if (number_c_string == after_end)
     {
+        /* free the temporary buffer */
+        input_buffer->hooks.deallocate(number_c_string);
         return false; /* parse_error */
     }
 
@@ -387,6 +402,8 @@ loop_end:
     item->type = cJSON_Number;
 
     input_buffer->offset += (size_t)(after_end - number_c_string);
+    /* free the temporary buffer */
+    input_buffer->hooks.deallocate(number_c_string);
     return true;
 }
 
@@ -413,6 +430,8 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
+    size_t v1_len;
+    size_t v2_len;
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
     if ((object == NULL) || !(object->type & cJSON_String) || (object->type & cJSON_IsReference))
     {
@@ -423,8 +442,17 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     {
         return NULL;
     }
-    if (strlen(valuestring) <= strlen(object->valuestring))
+
+    v1_len = strlen(valuestring);
+    v2_len = strlen(object->valuestring);
+
+    if (v1_len <= v2_len)
     {
+        /* strcpy does not handle overlapping string: [X1, X2] [Y1, Y2] => X2 < Y1 or Y2 < X1 */
+        if (!( valuestring + v1_len < object->valuestring || object->valuestring + v2_len < valuestring ))
+        {
+            return NULL;
+        }
         strcpy(object->valuestring, valuestring);
         return object->valuestring;
     }
@@ -578,22 +606,22 @@ static cJSON_bool print_number(const cJSON * const item, printbuffer * const out
     /* This checks for NaN and Infinity */
     if (isnan(d) || isinf(d))
     {
-        length = snprintf((char*)number_buffer, sizeof(number_buffer), "null"); /* Amazon edit */
+        length = sprintf((char*)number_buffer, "null");
     }
-	else if(d == (double)item->valueint)
-	{
-		length = snprintf((char*)number_buffer, sizeof(number_buffer), "%d", item->valueint); /* Amazon edit */
-	}
+    else if(d == (double)item->valueint)
+    {
+        length = sprintf((char*)number_buffer, "%d", item->valueint);
+    }
     else
     {
         /* Try 15 decimal places of precision to avoid nonsignificant nonzero digits */
-        length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.15g", d); /* Amazon edit */
+        length = sprintf((char*)number_buffer, "%1.15g", d);
 
         /* Check whether the original double can be recovered */
         if ((sscanf((char*)number_buffer, "%lg", &test) != 1) || !compare_double((double)test, d))
         {
             /* If not, print with 17 decimal places of precision */
-            length = snprintf((char*)number_buffer, sizeof(number_buffer), "%1.17g", d); /* Amazon edit */
+            length = sprintf((char*)number_buffer, "%1.17g", d);
         }
     }
 
@@ -1027,7 +1055,7 @@ static cJSON_bool print_string_ptr(const unsigned char * const input, printbuffe
                     break;
                 default:
                     /* escape and print as unicode codepoint */
-                    snprintf((char*)output_pointer, 6, "u%04x", *input_pointer); /* Amazon edit */
+                    sprintf((char*)output_pointer, "u%04x", *input_pointer);
                     output_pointer += 4;
                     break;
             }
@@ -1116,11 +1144,9 @@ CJSON_PUBLIC(cJSON *) cJSON_ParseWithLengthOpts(const char *value, size_t buffer
     parse_buffer buffer = { 0, 0, 0, 0, { 0, 0, 0 } };
     cJSON *item = NULL;
 
-#if 0 /* Amazon edit */
     /* reset error position */
     global_error.json = NULL;
     global_error.position = 0;
-#endif /* Amazon edit */
 
     if (value == NULL || 0 == buffer_length)
     {
@@ -1186,9 +1212,7 @@ fail:
             *return_parse_end = (const char*)local_error.json + local_error.position;
         }
 
-#if 0 /* Amazon edit */
         global_error = local_error;
-#endif /* Amazon edit */
     }
 
     return NULL;
@@ -2218,7 +2242,7 @@ CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * c
 
 CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *parent, cJSON * const item)
 {
-    if ((parent == NULL) || (item == NULL))
+    if ((parent == NULL) || (item == NULL) || (item != parent->child && item->prev == NULL))
     {
         return NULL;
     }
@@ -2740,7 +2764,14 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateStringArray(const char *const *strings, int co
 }
 
 /* Duplication */
+cJSON * cJSON_Duplicate_rec(const cJSON *item, size_t depth, cJSON_bool recurse);
+
 CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse)
+{
+    return cJSON_Duplicate_rec(item, 0, recurse );
+}
+
+cJSON * cJSON_Duplicate_rec(const cJSON *item, size_t depth, cJSON_bool recurse)
 {
     cJSON *newitem = NULL;
     cJSON *child = NULL;
@@ -2787,7 +2818,10 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse)
     child = item->child;
     while (child != NULL)
     {
-        newchild = cJSON_Duplicate(child, true); /* Duplicate (with recurse) each item in the ->next chain */
+        if(depth >= CJSON_CIRCULAR_LIMIT) {
+            goto fail;
+        }
+        newchild = cJSON_Duplicate_rec(child, depth + 1, true); /* Duplicate (with recurse) each item in the ->next chain */
         if (!newchild)
         {
             goto fail;
@@ -3155,5 +3189,3 @@ CJSON_PUBLIC(void) cJSON_free(void *object)
     global_hooks.deallocate(object);
     object = NULL;
 }
-/* Amazon edit */
-/* NOLINTEND */

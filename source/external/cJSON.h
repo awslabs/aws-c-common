@@ -20,13 +20,6 @@
   THE SOFTWARE.
 */
 
-/*
- * This file has been modified from its original version by Amazon:
- *   (1) Remove cJSON_GetErrorPtr and global_error as they are not thread-safe.
- *   (2) Add NOLINTBEGIN/NOLINTEND so clang-tidy ignores file.
- */
-/* NOLINTBEGIN */
-
 #ifndef cJSON__h
 #define cJSON__h
 
@@ -88,7 +81,7 @@ then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJ
 /* project version */
 #define CJSON_VERSION_MAJOR 1
 #define CJSON_VERSION_MINOR 7
-#define CJSON_VERSION_PATCH 18
+#define CJSON_VERSION_PATCH 19
 
 #include <stddef.h>
 
@@ -144,6 +137,12 @@ typedef int cJSON_bool;
 #define CJSON_NESTING_LIMIT 1000
 #endif
 
+/* Limits the length of circular references can be before cJSON rejects to parse them.
+ * This is to prevent stack overflows. */
+#ifndef CJSON_CIRCULAR_LIMIT
+#define CJSON_CIRCULAR_LIMIT 10000
+#endif
+
 /* returns the version of cJSON as a string */
 CJSON_PUBLIC(const char*) cJSON_Version(void);
 
@@ -179,10 +178,8 @@ CJSON_PUBLIC(cJSON *) cJSON_GetArrayItem(const cJSON *array, int index);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string);
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string);
-#if 0 /* Amazon edit */
 /* For analysing failed parses. This returns a pointer to the parse error. You'll probably need to look a few chars back to make sense of it. Defined when cJSON_Parse() returns 0. 0 when cJSON_Parse() succeeds. */
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
-#endif /* Amazon edit */
 
 /* Check item type and return its value */
 CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
@@ -305,6 +302,5 @@ CJSON_PUBLIC(void) cJSON_free(void *object);
 #ifdef __cplusplus
 }
 #endif
-/* Amazon edit */
-/* NOLINTEND */
+
 #endif
