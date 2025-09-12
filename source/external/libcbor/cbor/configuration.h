@@ -27,6 +27,7 @@
 /* Ignore the compiler warnings for libcbor. */
 #ifdef _MSC_VER
 #    pragma warning(disable : 4028)
+#    pragma warning(disable : 4189)
 #    pragma warning(disable : 4715)
 #    pragma warning(disable : 4232)
 #    pragma warning(disable : 4068)
