@@ -56,6 +56,7 @@ file (GLOB AWS_COMMON_EXTERNAL_SRC
 
 
 option(AWS_NUM_CPU_CORES "Number of CPU cores of the target machine. Useful when cross-compiling." 0)
+option(AWS_PAGE_SIZE "Page size of the target machine. Useful when cross-compiling." 0)
 
 if (WIN32)
     set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
@@ -67,6 +68,7 @@ if (WIN32)
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
         "source/platform_fallback_stubs/system_info.c"
+        "source/platform_fallback_stubs/file_direct_io.c"
         )
 
     if (MSVC)
@@ -109,25 +111,31 @@ else ()
         list(APPEND PLATFORM_LIBS dl Threads::Threads "-framework CoreFoundation")
         list (APPEND AWS_COMMON_OS_SRC "source/darwin/*.c") # OS specific includes
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux") # Android does not link to libpthread nor librt, so this is fine
         list(APPEND PLATFORM_LIBS dl m Threads::Threads rt)
         list (APPEND AWS_COMMON_OS_SRC "source/linux/*.c") # OS specific includes
     elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         list(APPEND PLATFORM_LIBS dl m thr execinfo)
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         list(APPEND PLATFORM_LIBS dl m Threads::Threads execinfo)
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
         list(APPEND PLATFORM_LIBS m Threads::Threads execinfo)
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND PLATFORM_LIBS log)
         file(GLOB ANDROID_SRC "source/android/*.c")
         list(APPEND AWS_COMMON_OS_SRC "${ANDROID_SRC}")
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     else()
         list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/system_info.c")
+        list (APPEND AWS_COMMON_OS_SRC "source/platform_fallback_stubs/file_direct_io.c")
     endif()
 
 endif()
@@ -216,6 +224,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
 
 if (AWS_NUM_CPU_CORES)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_NUM_CPU_CORES=${AWS_NUM_CPU_CORES})
+endif()
+
+if (AWS_PAGE_SIZE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_PAGE_SIZE=${AWS_PAGE_SIZE})
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)

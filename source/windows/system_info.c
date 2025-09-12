@@ -21,6 +21,12 @@ size_t aws_system_info_processor_count(void) {
     return info.dwNumberOfProcessors;
 }
 
+size_t aws_system_info_page_size(void) {
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+    return info.dwPageSize;
+}
+
 /* the next three functions need actual implementations before we can have proper numa alignment on windows.
  * For now leave them stubbed out. */
 uint16_t aws_get_cpu_group_count(void) {
