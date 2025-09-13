@@ -174,6 +174,7 @@ AWS_STATIC_IMPL uint32_t aws_max_u32(uint32_t a, uint32_t b);
 AWS_STATIC_IMPL int32_t aws_min_i32(int32_t a, int32_t b);
 AWS_STATIC_IMPL int32_t aws_max_i32(int32_t a, int32_t b);
 AWS_STATIC_IMPL uint64_t aws_min_u64(uint64_t a, uint64_t b);
+AWS_STATIC_IMPL uint64_t aws_min_non_0_u64(uint64_t a, uint64_t b);
 AWS_STATIC_IMPL uint64_t aws_max_u64(uint64_t a, uint64_t b);
 AWS_STATIC_IMPL int64_t aws_min_i64(int64_t a, int64_t b);
 AWS_STATIC_IMPL int64_t aws_max_i64(int64_t a, int64_t b);
