@@ -52,13 +52,6 @@ function(aws_set_thread_name_method target)
     endfunction()
 
     function(aws_set_thread_name_getter_method target)
-        if (APPLE)
-            # All Apple platforms we support have the same function, so no need for
-            # compile-time check.
-            target_compile_definitions(${target} PRIVATE -DAWS_PTHREAD_GETNAME_TAKES_3ARGS)
-            return()
-        endif()
-
         # Some platforms have 2 arg version
         check_c_source_compiles("
             ${c_source_start}
