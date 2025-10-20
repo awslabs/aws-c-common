@@ -137,20 +137,20 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     (void)allocator;
     (void)ctx;
 
-    const struct aws_string *os_string = aws_get_platform_build_os_string();
-    ASSERT_NOT_NULL(os_string);
-    ASSERT_TRUE(aws_string_is_valid(os_string));
+    struct aws_byte_cursor os_string = aws_get_platform_build_os_string();
+    ASSERT_TRUE(aws_byte_cursor_is_valid(&os_string));
+    ASSERT_TRUE(os_string.len > 0);
 
 #if defined(AWS_OS_MACOS)
-    ASSERT_TRUE(aws_string_eq_c_str(os_string, "macOS"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "macOS"));
 #elif defined(AWS_OS_APPLE)
-    ASSERT_TRUE(aws_string_eq_c_str(os_string, "iOS"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "iOS"));
 #elif defined(AWS_OS_ANDROID)
-    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Android"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Android"));
 #elif defined(_WIN32)
-    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Windows"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Windows"));
 #else
-    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Unix"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Unix"));
 #endif
 
     return 0;
