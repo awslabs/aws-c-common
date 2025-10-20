@@ -116,8 +116,12 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 
     enum aws_platform_os build_os = aws_get_platform_build_os();
 
-#if defined(AWS_OS_APPLE)
+#if defined(AWS_OS_MACOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_MAC);
+#elif defined(AWS_OS_APPLE)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_IOS);
+#elif defined(AWS_OS_ANDROID)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_ANDROID);
 #elif defined(_WIN32)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WINDOWS);
 #else
@@ -128,6 +132,31 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 }
 
 AWS_TEST_CASE(test_platform_build_os, s_test_platform_build_os_fn)
+
+static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    const struct aws_string *os_string = aws_get_platform_build_os_string();
+    ASSERT_NOT_NULL(os_string);
+    ASSERT_TRUE(aws_string_is_valid(os_string));
+
+#if defined(AWS_OS_MACOS)
+    ASSERT_TRUE(aws_string_eq_c_str(os_string, "macOS"));
+#elif defined(AWS_OS_APPLE)
+    ASSERT_TRUE(aws_string_eq_c_str(os_string, "iOS"));
+#elif defined(AWS_OS_ANDROID)
+    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Android"));
+#elif defined(_WIN32)
+    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Windows"));
+#else
+    ASSERT_TRUE(aws_string_eq_c_str(os_string, "Unix"));
+#endif
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_platform_build_os_string, s_test_platform_build_os_string_fn)
 
 static int s_test_sanity_check_numa_discovery(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;

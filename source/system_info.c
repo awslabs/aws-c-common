@@ -78,3 +78,29 @@ AWS_COMMON_API
 size_t aws_system_environment_get_cpu_group_count(const struct aws_system_environment *env) {
     return env->cpu_group_count;
 }
+
+AWS_STATIC_STRING_FROM_LITERAL(s_windows_str, "Windows");
+AWS_STATIC_STRING_FROM_LITERAL(s_macos_str, "macOS");
+AWS_STATIC_STRING_FROM_LITERAL(s_ios_str, "iOS");
+AWS_STATIC_STRING_FROM_LITERAL(s_android_str, "Android");
+AWS_STATIC_STRING_FROM_LITERAL(s_unix_str, "Unix");
+AWS_STATIC_STRING_FROM_LITERAL(s_unknown_str, "Unknown");
+
+const struct aws_string *aws_get_platform_build_os_string(void) {
+    enum aws_platform_os os = aws_get_platform_build_os();
+    switch (os) {
+        case AWS_PLATFORM_OS_WINDOWS:
+            return s_windows_str;
+        case AWS_PLATFORM_OS_MAC:
+            return s_macos_str;
+        case AWS_PLATFORM_OS_IOS:
+            return s_ios_str;
+        case AWS_PLATFORM_OS_ANDROID:
+            return s_android_str;
+        case AWS_PLATFORM_OS_UNIX:
+            return s_unix_str;
+    }
+    /* Handle invalid enum values */
+    AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "Unknown platform OS enum value: %d", (int)os);
+    return s_unknown_str;
+}
