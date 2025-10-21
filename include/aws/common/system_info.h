@@ -11,6 +11,17 @@
 
 AWS_PUSH_SANE_WARNING_LEVEL
 
+/**
+ * Platform OS enumeration and their corresponding string representations.
+ *
+ * String mappings:
+ * - AWS_PLATFORM_OS_WINDOWS → "Windows" (Microsoft Windows family)
+ * - AWS_PLATFORM_OS_MAC     → "macOS"   (Apple desktop/laptop)
+ * - AWS_PLATFORM_OS_IOS     → "iOS"     (Apple mobile platforms, covers iOS, watchOS, tvOS,
+ *                                        and other non-macOS Apple platforms)
+ * - AWS_PLATFORM_OS_ANDROID → "Android" (Google Android)
+ * - AWS_PLATFORM_OS_UNIX    → "Unix"    (Linux, BSD, other Unix-like)
+ */
 enum aws_platform_os {
     AWS_PLATFORM_OS_WINDOWS,
     AWS_PLATFORM_OS_MAC,

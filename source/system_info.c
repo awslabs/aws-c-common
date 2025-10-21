@@ -79,6 +79,16 @@ size_t aws_system_environment_get_cpu_group_count(const struct aws_system_enviro
     return env->cpu_group_count;
 }
 
+/*
+ * Platform OS string constants - these are the string representations for each supported platform. String choices
+ * follow common industry conventions:
+ * - "Windows" - Microsoft Windows family
+ * - "macOS" - Apple macOS
+ * - "iOS" - Apple iOS (or other unknown Apple platform)
+ * - "Android" - Google Android mobile OS
+ * - "Unix" - Unix-like systems (Linux, BSD, etc.)
+ * - "Unknown" - Fallback for unrecognized platforms
+ */
 AWS_STATIC_STRING_FROM_LITERAL(s_windows_str, "Windows");
 AWS_STATIC_STRING_FROM_LITERAL(s_macos_str, "macOS");
 AWS_STATIC_STRING_FROM_LITERAL(s_ios_str, "iOS");
