@@ -61,10 +61,6 @@ option(AWS_PAGE_SIZE "Page size of the target machine. Useful when cross-compili
 if (WIN32)
     set(WINDOWS_KERNEL_LIB "kernel32" CACHE STRING "The name of the kernel library to link against (default: kernel32)")
 
-    file(GLOB AWS_COMMON_OS_HEADERS
-        "include/aws/common/windows/*"
-        )
-
     file(GLOB AWS_COMMON_OS_SRC
         "source/windows/*.c"
         "source/platform_fallback_stubs/system_info.c"
