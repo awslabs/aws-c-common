@@ -142,15 +142,15 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     ASSERT_TRUE(os_string.len > 0);
 
 #if defined(AWS_OS_MACOS)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "macOS"));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "macOS"));
 #elif defined(AWS_OS_APPLE)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "iOS"));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "iOS"));
 #elif defined(AWS_OS_ANDROID)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Android"));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Android"));
 #elif defined(_WIN32)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Windows"));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Windows"));
 #else
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Unix"));
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Unix"));
 #endif
 
     return 0;
