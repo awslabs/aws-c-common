@@ -120,7 +120,7 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
             os_str = aws_byte_cursor_from_c_str("Linux");
             break;
         default:
-            os_str = aws_byte_cursor_from_string("unknown");
+            os_str = aws_byte_cursor_from_c_str("unknown");
             AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "Unknown platform OS enum value: %d", (int)os);
     }
 
