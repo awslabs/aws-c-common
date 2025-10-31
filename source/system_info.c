@@ -89,69 +89,54 @@ size_t aws_system_environment_get_cpu_group_count(const struct aws_system_enviro
  * - "Unix" - Unix-like systems (Linux, BSD, etc.)
  * - "Unknown" - Fallback for unrecognized platforms
  */
-AWS_STATIC_STRING_FROM_LITERAL(s_windows_str, "Windows");
-AWS_STATIC_STRING_FROM_LITERAL(s_macos_str, "macOS");
-AWS_STATIC_STRING_FROM_LITERAL(s_ios_str, "iOS");
-AWS_STATIC_STRING_FROM_LITERAL(s_android_str, "Android");
-AWS_STATIC_STRING_FROM_LITERAL(s_unix_str, "Unix");
-AWS_STATIC_STRING_FROM_LITERAL(s_unknown_str, "Unknown");
-
-AWS_STATIC_STRING_FROM_LITERAL(s_intel, "intel");
-AWS_STATIC_STRING_FROM_LITERAL(s_intel_64, "intel_64");
-AWS_STATIC_STRING_FROM_LITERAL(s_arm64, "arm64");
-AWS_STATIC_STRING_FROM_LITERAL(s_arm32, "arm32");
 
 static uint8_t s_platform_string_buffer[32];
-static struct aws_byte_buf s_platform_buf = {
-    .buffer = s_platform_string_buffer,
-    .capacity = sizeof(s_platform_string_buffer),
-    .len = 0,
-    .allocator = NULL
-};
+static struct aws_byte_buf s_platform_buf =
+    {.buffer = s_platform_string_buffer, .capacity = sizeof(s_platform_string_buffer), .len = 0, .allocator = NULL};
 
 struct aws_byte_cursor aws_get_platform_build_os_string(void) {
     if (s_platform_buf.len != 0) {
         return aws_byte_cursor_from_buf(&s_platform_buf);
     }
-    
+
     enum aws_platform_os os = aws_get_platform_build_os();
     struct aws_byte_cursor os_str;
     struct aws_byte_cursor arch_str;
-    
+
     switch (os) {
         case AWS_PLATFORM_OS_WINDOWS:
-            os_str = aws_byte_cursor_from_string(s_windows_str);
+            os_str = aws_byte_cursor_from_c_str("Windows");
             break;
         case AWS_PLATFORM_OS_MAC:
-            os_str = aws_byte_cursor_from_string(s_macos_str);
+            os_str = aws_byte_cursor_from_c_str("macOS");
             break;
         case AWS_PLATFORM_OS_IOS:
-            os_str = aws_byte_cursor_from_string(s_ios_str);
+            os_str = aws_byte_cursor_from_c_str("iOS");
             break;
         case AWS_PLATFORM_OS_ANDROID:
-            os_str = aws_byte_cursor_from_string(s_android_str);
+            os_str = aws_byte_cursor_from_c_str("Android");
             break;
         case AWS_PLATFORM_OS_UNIX:
-            os_str = aws_byte_cursor_from_string(s_unix_str);
+            os_str = aws_byte_cursor_from_c_str("Linux");
             break;
         default:
+            os_str = aws_byte_cursor_from_string("unknown");
             AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "Unknown platform OS enum value: %d", (int)os);
-            os_str = aws_byte_cursor_from_string(s_unknown_str);
     }
-    
+
 #ifdef AWS_ARCH_INTEL
-    arch_str = aws_byte_cursor_from_string(s_intel);
+    arch_str = aws_byte_cursor_from_c_str("intel");
 #elif defined(AWS_ARCH_INTEL_64)
-    arch_str = aws_byte_cursor_from_string(s_intel_64);
+    arch_str = aws_byte_cursor_from_c_str("intel64");
 #elif defined(AWS_ARCH_ARM64)
-    arch_str = aws_byte_cursor_from_string(s_arm64);
+    arch_str = aws_byte_cursor_from_c_str("arm64");
 #elif defined(AWS_ARCH_ARM32)
-    arch_str = aws_byte_cursor_from_string(s_arm32);
+    arch_str = aws_byte_cursor_from_c_str("arm32");
 #else
     arch_str = aws_byte_cursor_from_c_str("unknown");
     AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "Unknown platform architecture.");
 #endif
-    
+
     aws_byte_buf_reset(&s_platform_buf, false);
     aws_byte_buf_append(&s_platform_buf, &os_str);
     const struct aws_byte_cursor s_dash = aws_byte_cursor_from_c_str("_");
