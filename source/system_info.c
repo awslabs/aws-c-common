@@ -149,11 +149,13 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
     arch_str = aws_byte_cursor_from_string(s_arm32);
 #else
     arch_str = aws_byte_cursor_from_c_str("unknown");
+    AWS_LOGF_WARN(AWS_LS_COMMON_GENERAL, "Unknown platform architecture.");
 #endif
     
     aws_byte_buf_reset(&s_platform_buf, false);
     aws_byte_buf_append(&s_platform_buf, &os_str);
-    aws_byte_buf_append(&s_platform_buf, "-");
+    const struct aws_byte_cursor s_dash = aws_byte_cursor_from_c_str("_");
+    aws_byte_buf_append(&s_platform_buf, &s_dash);
     aws_byte_buf_append(&s_platform_buf, &arch_str);
 
     return aws_byte_cursor_from_buf(&s_platform_buf);
