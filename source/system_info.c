@@ -117,7 +117,7 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
             os_str = aws_byte_cursor_from_c_str("Android");
             break;
         case AWS_PLATFORM_OS_UNIX:
-            os_str = aws_byte_cursor_from_c_str("Linux");
+            os_str = aws_byte_cursor_from_c_str("Unix");
             break;
         default:
             os_str = aws_byte_cursor_from_c_str("unknown");
