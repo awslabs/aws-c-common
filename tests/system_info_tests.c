@@ -141,17 +141,18 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     ASSERT_TRUE(aws_byte_cursor_is_valid(&os_string));
     ASSERT_TRUE(os_string.len > 0);
 
+    const struct aws_byte_cursor platform_str =  aws_byte_cursor_from_c_str("macOS");
 #if defined(AWS_OS_MACOS)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "macOS"));
 #elif defined(AWS_OS_APPLE)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "iOS"));
+    platform_str =  aws_byte_cursor_from_c_str("iOS");
 #elif defined(AWS_OS_ANDROID)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Android"));
+    platform_str =  aws_byte_cursor_from_c_str("Android");
 #elif defined(_WIN32)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Windows"));
+    platform_str =  aws_byte_cursor_from_c_str("Windows");
 #else
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, "Unix"));
+    platform_str =  aws_byte_cursor_from_c_str("Unix");
 #endif
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &platform_str));
 
     return 0;
 }
