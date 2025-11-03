@@ -118,8 +118,12 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 
 #if defined(AWS_OS_MACOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_MAC);
-#elif defined(AWS_OS_APPLE)
+#elif defined(AWS_OS_IOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_IOS);
+#elif defined(AWS_OS_TVOS)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_TVOS);
+#elif defined(AWS_OS_WATCHOS)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WATCHOS);
 #elif defined(AWS_OS_ANDROID)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_ANDROID);
 #elif defined(_WIN32)
@@ -153,6 +157,10 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     expected_os = aws_byte_cursor_from_c_str("macOS-");
 #elif defined(AWS_OS_IOS)
     expected_os = aws_byte_cursor_from_c_str("iOS-");
+#elif defined(AWS_OS_TVOS)
+    expected_os = aws_byte_cursor_from_c_str("tvOS-");
+#elif defined(AWS_OS_WATCHOS)
+    expected_os = aws_byte_cursor_from_c_str("watchOS-");
 #elif defined(AWS_OS_ANDROID)
     expected_os = aws_byte_cursor_from_c_str("Android-");
 #elif defined(AWS_OS_WINDOWS)
