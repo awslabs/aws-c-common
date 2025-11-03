@@ -157,7 +157,7 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     expected_os = aws_byte_cursor_from_c_str("Android-");
 #elif defined(_WIN32)
     expected_os = aws_byte_cursor_from_c_str("Windows-");
-#else defined(_UNIX)
+#elif defined(_UNIX)
     expected_os = aws_byte_cursor_from_c_str("Unix-");
 #endif
     ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &expected_os));
