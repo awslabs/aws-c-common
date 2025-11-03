@@ -146,33 +146,36 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     struct aws_byte_cursor found_dash;
     ASSERT_SUCCESS(aws_byte_cursor_find_exact(&os_string, &dash, &found_dash));
 
+    struct aws_byte_cursor expected_os = aws_byte_cursor_from_c_str("Unknown-");
+
     /* Verify OS part */
 #if defined(AWS_OS_MACOS)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("macOS-")));
+    expected_os = aws_byte_cursor_from_c_str("macOS-");
 #elif defined(AWS_OS_APPLE)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("iOS-")));
+    expected_os = aws_byte_cursor_from_c_str("iOS-");
 #elif defined(AWS_OS_ANDROID)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Android-")));
+    expected_os = aws_byte_cursor_from_c_str("Android-");
 #elif defined(_WIN32)
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Windows-")));
-#else
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Unix-")));
+    expected_os = aws_byte_cursor_from_c_str("Windows-");
+#else defined(_UNIX)
+    expected_os = aws_byte_cursor_from_c_str("Unix-");
 #endif
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &expected_os));
 
     /* Verify architecture part exists after dash */
     size_t dash_pos = found_dash.ptr - os_string.ptr;
-    struct aws_byte_cursor arch_part = aws_byte_cursor_advance(&os_string, dash_pos + 1);
+    aws_byte_cursor_advance(&os_string, dash_pos + 1);
 
 #if defined(AWS_ARCH_INTEL)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "intel"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel"));
 #elif defined(AWS_ARCH_INTEL_64)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "intel_64"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel_64"));
 #elif defined(AWS_ARCH_ARM64)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "arm64"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm64"));
 #elif defined(AWS_ARCH_ARM32)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "arm32"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm32"));
 #else
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "unknown"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "unknown"));
 #endif
 
     return 0;
