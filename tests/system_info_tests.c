@@ -151,13 +151,13 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     /* Verify OS part */
 #if defined(AWS_OS_MACOS)
     expected_os = aws_byte_cursor_from_c_str("macOS-");
-#elif defined(AWS_OS_APPLE)
+#elif defined(AWS_OS_IOS)
     expected_os = aws_byte_cursor_from_c_str("iOS-");
 #elif defined(AWS_OS_ANDROID)
     expected_os = aws_byte_cursor_from_c_str("Android-");
-#elif defined(_WIN32)
+#elif defined(AWS_OS_WINDOWS)
     expected_os = aws_byte_cursor_from_c_str("Windows-");
-#elif defined(_UNIX)
+#else
     expected_os = aws_byte_cursor_from_c_str("Unix-");
 #endif
     ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &expected_os));
