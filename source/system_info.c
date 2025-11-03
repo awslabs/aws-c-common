@@ -139,7 +139,7 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
 
     aws_byte_buf_reset(&s_platform_buf, false);
     aws_byte_buf_append(&s_platform_buf, &os_str);
-    const struct aws_byte_cursor s_dash = aws_byte_cursor_from_c_str("_");
+    const struct aws_byte_cursor s_dash = aws_byte_cursor_from_c_str("-");
     aws_byte_buf_append(&s_platform_buf, &s_dash);
     aws_byte_buf_append(&s_platform_buf, &arch_str);
 

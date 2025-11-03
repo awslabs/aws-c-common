@@ -141,18 +141,39 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     ASSERT_TRUE(aws_byte_cursor_is_valid(&os_string));
     ASSERT_TRUE(os_string.len > 0);
 
-    struct aws_byte_cursor platform_str = aws_byte_cursor_from_c_str("macOS");
+    /* Verify OS-ARCH format */
+    struct aws_byte_cursor dash = aws_byte_cursor_from_c_str("-");
+    struct aws_byte_cursor found_dash;
+    ASSERT_SUCCESS(aws_byte_cursor_find_exact(&os_string, &dash, &found_dash));
+
+    /* Verify OS part */
 #if defined(AWS_OS_MACOS)
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("macOS-")));
 #elif defined(AWS_OS_APPLE)
-    platform_str = aws_byte_cursor_from_c_str("iOS");
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("iOS-")));
 #elif defined(AWS_OS_ANDROID)
-    platform_str = aws_byte_cursor_from_c_str("Android");
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Android-")));
 #elif defined(_WIN32)
-    platform_str = aws_byte_cursor_from_c_str("Windows");
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Windows-")));
 #else
-    platform_str = aws_byte_cursor_from_c_str("Unix");
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &aws_byte_cursor_from_c_str("Unix-")));
 #endif
-    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &platform_str));
+
+    /* Verify architecture part exists after dash */
+    size_t dash_pos = found_dash.ptr - os_string.ptr;
+    struct aws_byte_cursor arch_part = aws_byte_cursor_advance(&os_string, dash_pos + 1);
+
+#if defined(AWS_ARCH_INTEL)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "intel"));
+#elif defined(AWS_ARCH_INTEL_64)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "intel_64"));
+#elif defined(AWS_ARCH_ARM64)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "arm64"));
+#elif defined(AWS_ARCH_ARM32)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "arm32"));
+#else
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&arch_part, "unknown"));
+#endif
 
     return 0;
 }
