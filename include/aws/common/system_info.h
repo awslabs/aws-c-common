@@ -93,9 +93,9 @@ AWS_COMMON_API
 enum aws_platform_os aws_get_platform_build_os(void);
 
 /* Returns the OS and architecture this was built under as a string, with format <OS>-<ARCH>
- * 
- * Platform OS string constants - these are the string representations for each supported platform. String choices
- * follow common industry conventions:
+ *
+ * Platform OS string constants - these are the string representations for each supported platform.
+ * String choices follow common industry conventions:
  * - "Windows" - Microsoft Windows family
  * - "macOS" - Apple macOS
  * - "iOS" - Apple iOS
