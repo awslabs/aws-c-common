@@ -21,7 +21,7 @@ AWS_PUSH_SANE_WARNING_LEVEL
  * - AWS_PLATFORM_OS_TVOS    → "tvOS"       (Apple TV devices)
  * - AWS_PLATFORM_OS_WATCHOS → "watchOS"    (Apple Watch devices)
  * - AWS_PLATFORM_OS_ANDROID → "Android"    (Android)
- * - AWS_PLATFORM_OS_BSD     → "BSD"        (FreeBSD, NetBSD)
+ * - AWS_PLATFORM_OS_BSD     → "BSD"        (FreeBSD, NetBSD, openBSD)
  * - AWS_PLATFORM_OS_UNIX    → "Unix"       (Linux, other Unix-like)
  */
 enum aws_platform_os {
@@ -92,7 +92,27 @@ size_t aws_system_environment_get_cpu_group_count(const struct aws_system_enviro
 AWS_COMMON_API
 enum aws_platform_os aws_get_platform_build_os(void);
 
-/* Returns the OS this was built under as a string */
+/* Returns the OS and architecture this was built under as a string, with format <OS>-<ARCH>
+ * 
+ * Platform OS string constants - these are the string representations for each supported platform. String choices
+ * follow common industry conventions:
+ * - "Windows" - Microsoft Windows family
+ * - "macOS" - Apple macOS
+ * - "iOS" - Apple iOS
+ * - "tvOS" - Apple tvOS
+ * - "watchOS" - Apple watchOS
+ * - "Android" - Google Android mobile OS
+ * - "BSD" - BSD family (FreeBSD, NetBSD, OpenBSD)
+ * - "Unix" - Unix-like systems (Linux, unix-like etc.)
+ * - "Unknown" - Fallback for unrecognized platforms
+ *
+ * Architecture string constants:
+ * - "intel" - 32-bit Intel x86 architecture
+ * - "intel64" - 64-bit Intel x86_64 architecture
+ * - "arm32" - 32-bit ARM architecture
+ * - "arm64" - 64-bit ARM architecture
+ * - "unknown" - Fallback for unrecognized architectures
+ */
 AWS_COMMON_API
 struct aws_byte_cursor aws_get_platform_build_os_string(void);
 

@@ -79,20 +79,6 @@ size_t aws_system_environment_get_cpu_group_count(const struct aws_system_enviro
     return env->cpu_group_count;
 }
 
-/*
- * Platform OS string constants - these are the string representations for each supported platform. String choices
- * follow common industry conventions:
- * - "Windows" - Microsoft Windows family
- * - "macOS" - Apple macOS
- * - "iOS" - Apple iOS
- * - "tvOS" - Apple tvOS
- * - "watchOS" - Apple watchOS
- * - "Android" - Google Android mobile OS
- * - "BSD" - BSD family (FreeBSD, NetBSD, etc.)
- * - "Unix" - Unix-like systems (Linux, unix-like etc.)
- * - "Unknown" - Fallback for unrecognized platforms
- */
-
 static uint8_t s_platform_string_buffer[32];
 static struct aws_byte_buf s_platform_buf =
     {.buffer = s_platform_string_buffer, .capacity = sizeof(s_platform_string_buffer), .len = 0, .allocator = NULL};
