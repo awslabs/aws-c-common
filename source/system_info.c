@@ -84,9 +84,12 @@ size_t aws_system_environment_get_cpu_group_count(const struct aws_system_enviro
  * follow common industry conventions:
  * - "Windows" - Microsoft Windows family
  * - "macOS" - Apple macOS
- * - "iOS" - Apple iOS (or other unknown Apple platform)
+ * - "iOS" - Apple iOS
+ * - "tvOS" - Apple tvOS
+ * - "watchOS" - Apple watchOS
  * - "Android" - Google Android mobile OS
- * - "Unix" - Unix-like systems (Linux, BSD, etc.)
+ * - "BSD" - BSD family (FreeBSD, NetBSD, etc.)
+ * - "Unix" - Unix-like systems (Linux, unix-like etc.)
  * - "Unknown" - Fallback for unrecognized platforms
  */
 
@@ -118,8 +121,12 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
             break;
         case AWS_PLATFORM_OS_WATCHOS:
             os_str = aws_byte_cursor_from_c_str("watchOS");
+            break;
         case AWS_PLATFORM_OS_ANDROID:
             os_str = aws_byte_cursor_from_c_str("Android");
+            break;
+        case AWS_PLATFORM_OS_BSD:
+            os_str = aws_byte_cursor_from_c_str("BSD");
             break;
         case AWS_PLATFORM_OS_UNIX:
             os_str = aws_byte_cursor_from_c_str("Unix");

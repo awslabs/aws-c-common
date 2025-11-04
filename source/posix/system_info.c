@@ -468,7 +468,6 @@ void aws_backtrace_log(int log_level) {
 enum aws_platform_os aws_get_platform_build_os(void) {
 #if defined(AWS_OS_MACOS)
     return AWS_PLATFORM_OS_MAC;
-// Other Apple platforms will be reported as iOS
 #elif defined(AWS_OS_IOS)
     return AWS_PLATFORM_OS_IOS;
 #elif defined(AWS_OS_TVOS)
@@ -477,6 +476,8 @@ enum aws_platform_os aws_get_platform_build_os(void) {
     return AWS_PLATFORM_OS_WATCHOS;
 #elif defined(AWS_OS_ANDROID)
     return AWS_PLATFORM_OS_ANDROID;
+#elif defined(AWS_OS_BSD)
+    return AWS_PLATFORM_OS_BSD;
 #else
     return AWS_PLATFORM_OS_UNIX;
 #endif

@@ -128,6 +128,8 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_ANDROID);
 #elif defined(_WIN32)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WINDOWS);
+#elif defined(AWS_OS_BSD)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_BSD);
 #else
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_UNIX);
 #endif
@@ -165,6 +167,8 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     expected_os = aws_byte_cursor_from_c_str("Android-");
 #elif defined(AWS_OS_WINDOWS)
     expected_os = aws_byte_cursor_from_c_str("Windows-");
+#elif defined(AWS_OS_BSD)
+    expected_os = aws_byte_cursor_from_c_str("BSD-");
 #else
     expected_os = aws_byte_cursor_from_c_str("Unix-");
 #endif
@@ -177,7 +181,7 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
 #if defined(AWS_ARCH_INTEL)
     ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel"));
 #elif defined(AWS_ARCH_INTEL_64)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel_64"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel64"));
 #elif defined(AWS_ARCH_ARM64)
     ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm64"));
 #elif defined(AWS_ARCH_ARM32)

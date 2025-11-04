@@ -21,7 +21,8 @@ AWS_PUSH_SANE_WARNING_LEVEL
  * - AWS_PLATFORM_OS_TVOS    → "tvOS"       (Apple TV devices)
  * - AWS_PLATFORM_OS_WATCHOS → "watchOS"    (Apple Watch devices)
  * - AWS_PLATFORM_OS_ANDROID → "Android"    (Android)
- * - AWS_PLATFORM_OS_UNIX    → "Unix"       (Linux, BSD, other Unix-like)
+ * - AWS_PLATFORM_OS_BSD     → "BSD"        (FreeBSD, NetBSD)
+ * - AWS_PLATFORM_OS_UNIX    → "Unix"       (Linux, other Unix-like)
  */
 enum aws_platform_os {
     AWS_PLATFORM_OS_WINDOWS,
@@ -30,6 +31,7 @@ enum aws_platform_os {
     AWS_PLATFORM_OS_TVOS,
     AWS_PLATFORM_OS_WATCHOS,
     AWS_PLATFORM_OS_ANDROID,
+    AWS_PLATFORM_OS_BSD,
     AWS_PLATFORM_OS_UNIX,
 };
 
