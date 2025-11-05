@@ -107,8 +107,8 @@ enum aws_platform_os aws_get_platform_build_os(void);
  * - "Unknown" - Fallback for unrecognized platforms
  *
  * Architecture string constants:
- * - "intel" - 32-bit Intel x86 architecture
- * - "intel64" - 64-bit Intel x86_64 architecture
+ * - "x86_32" - 32-bit Intel x86 architecture
+ * - "x86_64" - 64-bit Intel x86_64 architecture
  * - "arm32" - 32-bit ARM architecture
  * - "arm64" - 64-bit ARM architecture
  * - "unknown" - Fallback for unrecognized architectures

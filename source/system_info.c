@@ -123,9 +123,9 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
     }
 
 #ifdef AWS_ARCH_INTEL
-    arch_str = aws_byte_cursor_from_c_str("intel");
+    arch_str = aws_byte_cursor_from_c_str("x86_32");
 #elif defined(AWS_ARCH_INTEL_64)
-    arch_str = aws_byte_cursor_from_c_str("intel64");
+    arch_str = aws_byte_cursor_from_c_str("x86_64");
 #elif defined(AWS_ARCH_ARM64)
     arch_str = aws_byte_cursor_from_c_str("arm64");
 #elif defined(AWS_ARCH_ARM32)

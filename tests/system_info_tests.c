@@ -179,9 +179,9 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     aws_byte_cursor_advance(&os_string, dash_pos + 1);
 
 #if defined(AWS_ARCH_INTEL)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "x86_32"));
 #elif defined(AWS_ARCH_INTEL_64)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "intel64"));
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "x86_64"));
 #elif defined(AWS_ARCH_ARM64)
     ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm64"));
 #elif defined(AWS_ARCH_ARM32)
