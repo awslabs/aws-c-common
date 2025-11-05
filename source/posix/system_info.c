@@ -472,8 +472,6 @@ enum aws_platform_os aws_get_platform_build_os(void) {
     return AWS_PLATFORM_OS_IOS;
 #elif defined(AWS_OS_TVOS)
     return AWS_PLATFORM_OS_TVOS;
-#elif defined(AWS_OS_WATCHOS)
-    return AWS_PLATFORM_OS_WATCHOS;
 #elif defined(AWS_OS_ANDROID)
     return AWS_PLATFORM_OS_ANDROID;
 #elif defined(AWS_OS_BSD)

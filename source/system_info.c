@@ -105,9 +105,6 @@ struct aws_byte_cursor aws_get_platform_build_os_string(void) {
         case AWS_PLATFORM_OS_TVOS:
             os_str = aws_byte_cursor_from_c_str("tvOS");
             break;
-        case AWS_PLATFORM_OS_WATCHOS:
-            os_str = aws_byte_cursor_from_c_str("watchOS");
-            break;
         case AWS_PLATFORM_OS_ANDROID:
             os_str = aws_byte_cursor_from_c_str("Android");
             break;

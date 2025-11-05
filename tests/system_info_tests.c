@@ -122,8 +122,6 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_IOS);
 #elif defined(AWS_OS_TVOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_TVOS);
-#elif defined(AWS_OS_WATCHOS)
-    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WATCHOS);
 #elif defined(AWS_OS_ANDROID)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_ANDROID);
 #elif defined(_WIN32)
