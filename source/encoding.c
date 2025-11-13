@@ -38,6 +38,7 @@ static inline void aws_common_private_base64_encode_sse41(
     (void)in;
     (void)out;
     (void)len;
+    (void)url_safe_encoding;
     AWS_ASSERT(false);
 }
 static inline bool aws_common_private_has_avx2(void) {

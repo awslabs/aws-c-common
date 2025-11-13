@@ -703,7 +703,7 @@ static int s_base64_encoding_buffer_size_overflow_test_fn(struct aws_allocator *
     (void)ctx;
 
     char test_data[] = "foobar";
-    /* kill off the last two bits, so the not a multiple of 4 check doesn't 
+    /* kill off the last two bits, so the not a multiple of 4 check doesn't
      * trigger first */
     size_t overflow = (SIZE_MAX - 1) & ~0x03;
     uint8_t output[] = {0, 0};
