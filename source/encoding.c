@@ -337,7 +337,12 @@ static int s_base64_encode(
 
     AWS_ASSERT(needed_capacity == 0 || output->buffer != NULL);
 
-    if (aws_common_private_has_avx2()) {
+    /*
+     * Note: avx2 impl currently does not support url base64 (no padding -> output not divisible by 4 -> it writes out
+     * of bounds). Just use software version for now (since need for base64 url is small) instead of hacking together
+     * half hearted avx2 impl.
+     */
+    if (!do_url_safe_encoding && aws_common_private_has_avx2()) {
         aws_common_private_base64_encode_sse41(
             to_encode->ptr, output->buffer + output->len, to_encode->len, do_url_safe_encoding);
         output->len += encoded_length;

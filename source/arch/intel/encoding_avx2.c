@@ -52,28 +52,19 @@ static inline __m256i translate_exact(__m256i in, uint8_t match, uint8_t decode)
  * on decode failure, returns false, else returns true on success.
  */
 static inline bool decode_vec(__m256i *in) {
-    __m256i tmp1, tmp2, tmp3, tmp4, tmp5;
+    __m256i tmp1, tmp2, tmp3;
 
     /*
      * Base64 decoding table, see RFC4648
      *
      * Note that we use multiple vector registers to try to allow the CPU to
-     * parallelize the merging ORs
+     * paralellize the merging ORs
      */
     tmp1 = translate_range(*in, 'A', 'Z', 0 + 1);
     tmp2 = translate_range(*in, 'a', 'z', 26 + 1);
     tmp3 = translate_range(*in, '0', '9', 52 + 1);
-    // Handle both '+' and '-' for value 62
-    tmp4 = translate_exact(*in, '+', 62 + 1);
-    tmp4 = _mm256_or_si256(tmp4, translate_exact(*in, '-', 62 + 1));
-
-    // Handle both '/' and '_' for value 63
-    tmp5 = translate_exact(*in, '/', 63 + 1);
-    tmp5 = _mm256_or_si256(tmp5, translate_exact(*in, '_', 63 + 1));
-
-    // Combine all results
-    tmp1 = _mm256_or_si256(tmp1, tmp4);
-    tmp2 = _mm256_or_si256(tmp2, tmp5);
+    tmp1 = _mm256_or_si256(tmp1, translate_exact(*in, '+', 62 + 1));
+    tmp2 = _mm256_or_si256(tmp2, translate_exact(*in, '/', 63 + 1));
     tmp3 = _mm256_or_si256(tmp3, _mm256_or_si256(tmp1, tmp2));
 
     /*
@@ -273,28 +264,11 @@ static inline __m256i encode_chars(__m256i in) {
     return _mm256_or_si256(tmp3, _mm256_or_si256(tmp1, tmp2));
 }
 
-static inline __m256i encode_chars_url_safe(__m256i in) {
-    __m256i tmp1, tmp2, tmp3;
-
-    /*
-     * Base64 URL encoding table, see RFC4648
-     *
-     * We again use fan-in for the ORs here.
-     */
-    tmp1 = translate_range(in, 0, 25, 'A');
-    tmp2 = translate_range(in, 26, 26 + 25, 'a');
-    tmp3 = translate_range(in, 52, 61, '0');
-    tmp1 = _mm256_or_si256(tmp1, translate_exact(in, 62, '-'));
-    tmp2 = _mm256_or_si256(tmp2, translate_exact(in, 63, '_'));
-
-    return _mm256_or_si256(tmp3, _mm256_or_si256(tmp1, tmp2));
-}
-
 /*
  * Input: A 256-bit vector, interpreted as 24 bytes (LSB) plus 8 bytes of high-byte padding
  * Output: A 256-bit vector of base64 characters
  */
-static inline __m256i encode_stride(__m256i vec, bool url_safe) {
+static inline __m256i encode_stride(__m256i vec) {
     /*
      * First, since byte-shuffle operations operate within 128-bit subvectors, swap around the dwords
      * to balance the amount of actual data between 128-bit subvectors.
@@ -355,14 +329,10 @@ static inline __m256i encode_stride(__m256i vec, bool url_safe) {
     vec = _mm256_or_si256(_mm256_or_si256(digit0, digit1), _mm256_or_si256(digit2, digit3));
 
     /* Finally translate to the base64 character set */
-    return url_safe ? encode_chars(vec) : encode_chars_url_safe(vec);
+    return encode_chars(vec);
 }
 
-void aws_common_private_base64_encode_sse41(
-    const uint8_t *input,
-    uint8_t *output,
-    size_t inlen,
-    bool url_safe_encoding) {
+void aws_common_private_base64_encode_sse41(const uint8_t *input, uint8_t *output, size_t inlen) {
     __m256i instride, outstride;
 
     while (inlen >= 32) {
@@ -372,7 +342,7 @@ void aws_common_private_base64_encode_sse41(
          * of unreadable pages, so we use bounce buffers below.
          */
         instride = _mm256_loadu_si256((__m256i const *)input);
-        outstride = encode_stride(instride, url_safe_encoding);
+        outstride = encode_stride(instride);
         _mm256_storeu_si256((__m256i *)output, outstride);
 
         input += 24;
@@ -391,10 +361,10 @@ void aws_common_private_base64_encode_sse41(
         memset(&instride, 0, sizeof(instride));
         memcpy(&instride, input, stridelen);
 
-        outstride = encode_stride(instride, url_safe_encoding);
+        outstride = encode_stride(instride);
         memcpy(output, &outstride, outlen);
 
-        if (!url_safe_encoding && inlen < 24) {
+        if (inlen < 24) {
             if (inlen % 3 >= 1) {
                 /* AA== or AAA= */
                 output[outlen - 1] = '=';
