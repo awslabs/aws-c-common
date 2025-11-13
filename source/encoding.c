@@ -418,7 +418,14 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
         return aws_raise_error(AWS_ERROR_SHORT_BUFFER);
     }
 
-    if (aws_common_private_has_avx2()) {
+    /*
+     * Note: avx2 version relies on input being padded to 4 byte boundary.
+     * Regular base64 is always padded to 4, but for url variant padding is skipped.
+     * Fall back to software version for inputs that are not divisible by 4 cleanly (aka base64 url),
+     * as those are a corner case and we dont need them as often.
+     * Reconsider, writing intrinsic version is usage becomes more widespread.
+     */
+    if ((to_decode->len % 4 == 0) && aws_common_private_has_avx2()) {
         size_t result = aws_common_private_base64_decode_sse41(to_decode->ptr, output->buffer, to_decode->len);
         if (result == SIZE_MAX) {
             return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
