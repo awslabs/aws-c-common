@@ -357,7 +357,7 @@ static int s_base64_encode(
 
     const uint8_t *encoding_table = do_url_safe_encoding ? BASE64_URL_ENCODING_TABLE : BASE64_ENCODING_TABLE;
 
-    for (size_t i = 0; i < to_encode->len; i += 3) {
+    for (size_t i = 0; i < buffer_length; i += 3) {
         uint32_t block = to_encode->ptr[i];
 
         block <<= 8;
@@ -366,7 +366,7 @@ static int s_base64_encode(
         }
 
         block <<= 8;
-        if (AWS_LIKELY(i + 2 < to_encode->len)) {
+        if (AWS_LIKELY(i + 2 < buffer_length)) {
             block = block | to_encode->ptr[i + 2];
         }
 
@@ -374,7 +374,7 @@ static int s_base64_encode(
         output->buffer[str_index++] = encoding_table[(block >> 12) & 0x3F];
         if (AWS_LIKELY(i + 1 < buffer_length)) {
             output->buffer[str_index++] = encoding_table[(block >> 6) & 0x3F];
-            if (AWS_LIKELY(i + 2 < to_encode->len)) {
+            if (AWS_LIKELY(i + 2 < buffer_length)) {
                 output->buffer[str_index++] = encoding_table[block & 0x3F];
             }
         }
