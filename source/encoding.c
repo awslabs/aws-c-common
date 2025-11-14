@@ -279,6 +279,7 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
     AWS_ASSERT(to_decode);
     AWS_ASSERT(decoded_len);
 
+    /* strip padding */
     struct aws_byte_cursor trimmed = aws_byte_cursor_right_trim_pred(to_decode, s_ispadding);
 
     const size_t len = trimmed.len;
@@ -293,10 +294,7 @@ int aws_base64_compute_decoded_len(const struct aws_byte_cursor *AWS_RESTRICT to
         return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
     }
 
-    /* For every 4 ascii characters of encoded input, there will be 3 bytes of decoded output (deal with padding later)
-     * decoded_len = 3/4 * len       <-- note that result will be smaller then len, so overflow can be avoided
-     *             = (len / 4) * 3   <-- divide before multiply to avoid overflow
-     */
+    /* For every 4 ascii characters of encoded input, there will be 3 bytes of decoded output. */
     size_t decoded_len_tmp = 0;
 
     if (aws_mul_size_checked(len, 3, &decoded_len_tmp)) {
