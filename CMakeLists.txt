@@ -95,7 +95,7 @@ else ()
 
         if (NOT ANDROID AND NOT CMAKE_THREAD_LIBS_INIT)
             check_symbol_exists(pthread_mutexattr_init "<pthread.h>" HAVE_PTHREAD_MUTEXATTR_INIT)
-            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT)
+            if (NOT HAVE_PTHREAD_MUTEXATTR_INIT AND NOT QNX)
                 # fsanitize=... results in GLIBC library to provide some pthread APIs but not all
                 list(APPEND PLATFORM_LIBS pthread)
             endif()
@@ -206,7 +206,7 @@ aws_check_headers(${PROJECT_NAME} ${HEADERS_TO_CHECK})
 
 #apple source already includes the definitions we want, and setting this posix source
 #version causes it to revert to an older version. So don't turn it on there, we don't need it.
-if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD|OpenBSD)
+if (UNIX AND NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD|OpenBSD AND NOT QNX)
     #this only gets applied to aws-c-common (not its consumers).
     target_compile_definitions(${PROJECT_NAME} PRIVATE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=500)
 endif()
@@ -233,9 +233,15 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 # To make these paths work, add the location we're storing them as a search path.
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/source/external/libcbor)
+if (NOT QNX)
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+else()
+target_include_directories(${PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+endif()
 # When we install, the generated header will be at the INSTALL_INTERFACE:include location,
 # but at build time we need to explicitly include this here
 target_include_directories(${PROJECT_NAME} PUBLIC
