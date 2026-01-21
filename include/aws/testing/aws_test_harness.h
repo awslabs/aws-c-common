@@ -494,6 +494,7 @@ fail:
     fflush(AWS_TESTING_REPORT_FD);
     fflush(stdout);
     fflush(stderr);
+    aws_thread_current_sleep(1000000000);
     _Exit(test_res == AWS_OP_SKIP ? SKIP : FAILURE);
 }
 
