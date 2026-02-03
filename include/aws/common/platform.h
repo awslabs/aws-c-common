@@ -29,6 +29,8 @@
 #    endif
 #elif __linux__
 #    define AWS_OS_LINUX
+#elif _AIX
+#    define AWS_OS_AIX
 #endif
 
 #if defined(__ANDROID__)
