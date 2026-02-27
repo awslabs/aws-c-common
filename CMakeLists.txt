@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright guanlong huang, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
 # As of October 2024, we picked 3.9 as our version because internally we still support RHEL5 and AL2012, and CMake 3.9
