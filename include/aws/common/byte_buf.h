@@ -698,6 +698,16 @@ AWS_COMMON_API bool aws_byte_cursor_read_be24(struct aws_byte_cursor *cur, uint3
 AWS_COMMON_API bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var);
 
 /**
+ * Reads a signed 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var);
+
+/**
  * Reads a 64-bit value in network byte order from cur, and places it in host
  * byte order into var.
  *
