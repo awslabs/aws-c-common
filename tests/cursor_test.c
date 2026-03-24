@@ -424,7 +424,7 @@ static int s_test_byte_cursor_read_be_i32(struct aws_allocator *allocator, void 
     (void)allocator;
     (void)ctx;
 
-    int32_t test_values[] = {0, 1, -1, 42, -42, INT32_MAX, INT32_MIN, 0x7F7F7F7F, (int32_t)0xABCDABCD};
+    int32_t test_values[] = {0, 1, -1, 42, -42, INT32_MAX, INT32_MIN, 0x7F7F7F7F};
 
     for (size_t i = 0; i < AWS_ARRAY_SIZE(test_values); ++i) {
         uint8_t buf[4] = {0};
@@ -438,6 +438,21 @@ static int s_test_byte_cursor_read_be_i32(struct aws_allocator *allocator, void 
         ASSERT_UINT_EQUALS(0, cur.len);
     }
 
+    uint32_t edge_case[] = {0, UINT32_MAX, 0x80000000, 0x7FFFFFFF, 0xABCDABCD /* 2,882,400,205 */};
+    int32_t edge_case_values[] = {0, -1, INT32_MIN, INT32_MAX, -1412584499};
+
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(edge_case_values); ++i) {
+        uint8_t buf[4] = {0};
+        struct aws_byte_buf write_buf = aws_byte_buf_from_empty_array(buf, sizeof(buf));
+        ASSERT_TRUE(aws_byte_buf_write_be32(&write_buf, edge_case[i]));
+
+        struct aws_byte_cursor cur = aws_byte_cursor_from_array(buf, sizeof(buf));
+        int32_t result = 0;
+        ASSERT_TRUE(aws_byte_cursor_read_be_i32(&cur, &result));
+        ASSERT_INT_EQUALS(edge_case_values[i], result);
+        ASSERT_UINT_EQUALS(0, cur.len);
+    }
+
     /* cursor too short (3 bytes) - need 4 */
     uint8_t short_buf[3] = {0xFF, 0xFF, 0xFF};
     struct aws_byte_cursor short_cur = aws_byte_cursor_from_array(short_buf, sizeof(short_buf));
@@ -445,18 +460,6 @@ static int s_test_byte_cursor_read_be_i32(struct aws_allocator *allocator, void 
     ASSERT_FALSE(aws_byte_cursor_read_be_i32(&short_cur, &unchanged));
     ASSERT_INT_EQUALS(0, unchanged);
     ASSERT_UINT_EQUALS(3, short_cur.len);
-
-    /* cursor too long (8 bytes) - should only consume first 4 */
-    uint8_t long_buf[8] = {0};
-    struct aws_byte_buf long_write = aws_byte_buf_from_empty_array(long_buf, sizeof(long_buf));
-    ASSERT_TRUE(aws_byte_buf_write_be32(&long_write, (uint32_t)-999));
-    ASSERT_TRUE(aws_byte_buf_write_be32(&long_write, (uint32_t)0xDCBADCBA));
-
-    struct aws_byte_cursor long_cur = aws_byte_cursor_from_array(long_buf, sizeof(long_buf));
-    int32_t long_result = 0;
-    ASSERT_TRUE(aws_byte_cursor_read_be_i32(&long_cur, &long_result));
-    ASSERT_INT_EQUALS(-999, long_result);
-    ASSERT_UINT_EQUALS(4, long_cur.len);
 
     return 0;
 }
