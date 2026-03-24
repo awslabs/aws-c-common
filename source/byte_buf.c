@@ -1309,7 +1309,7 @@ bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var) {
     uint32_t uval;
     bool rv = aws_byte_cursor_read_be32(cur, &uval);
     if (AWS_LIKELY(rv)) {
-        *var = (int32_t)uval;
+        memcpy(var, &uval, sizeof(uval));
     }
     return rv;
 }
