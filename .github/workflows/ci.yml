@@ -356,7 +356,7 @@ jobs:
       id: runcmd
       with:
         arch: s390x
-        distro: ubuntu24.04
+        distro: ubuntu22.04
         install: |
           apt-get update -q -y
           apt-get -y install sudo
