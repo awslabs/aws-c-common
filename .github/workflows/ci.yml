@@ -342,3 +342,31 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --config Debug
+
+  s390x: # big-endian
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - uses: actions/checkout@v4
+    - uses: uraimo/run-on-arch-action@v3
+      name: Run commands
+      id: runcmd
+      with:
+        arch: s390x
+        distro: ubuntu22.04
+        install: |
+          apt-get update -q -y
+          apt-get -y install sudo
+          apt-get -y install cmake
+          apt-get -y install make
+          apt-get -y install g++
+          apt-get -y install python3
+          apt-get -y install git
+        run: |
+          lscpu | grep Endian
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --variant s390x --cmake-extra=-DENABLE_SANITIZERS=OFF
