@@ -1305,6 +1305,15 @@ bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
     return rv;
 }
 
+bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var) {
+    uint32_t uval;
+    bool rv = aws_byte_cursor_read_be32(cur, &uval);
+    if (AWS_LIKELY(rv)) {
+        memcpy(var, &uval, sizeof(uval));
+    }
+    return rv;
+}
+
 /**
  * Reads a 32-bit value in network byte order from cur, and places it in host
  * byte order into var.
