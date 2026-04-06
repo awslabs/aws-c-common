@@ -960,7 +960,7 @@ int aws_byte_cursor_utf8_parse_u64(struct aws_byte_cursor cursor, uint64_t *dst)
  * "0" -> 0
  * "123" -> 123
  * "00004" -> 4 // leading zeros ok
- * "-1" -> 1
+ * "-1" -> -1
  *
  * Rejects things like:
  * "1,000" // only characters 0-9 allowed
