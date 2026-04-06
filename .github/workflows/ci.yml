@@ -35,7 +35,7 @@ jobs:
           - rhel8-x64
           - al2-x64
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -65,7 +65,7 @@ jobs:
           - gcc-11
           - gcc-13
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -79,7 +79,7 @@ jobs:
   downstream:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -94,7 +94,7 @@ jobs:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -106,7 +106,7 @@ jobs:
   linux-shared-libs:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -118,7 +118,7 @@ jobs:
   linux-no-cpu-extensions:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -130,7 +130,7 @@ jobs:
   windows:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -145,7 +145,7 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -160,7 +160,7 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -172,7 +172,7 @@ jobs:
   windows-shared-libs:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -184,7 +184,7 @@ jobs:
   windows-no-cpu-extensions:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -196,7 +196,7 @@ jobs:
   windows-app-verifier:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -212,7 +212,7 @@ jobs:
   macos-x64:
     runs-on: macos-14-large # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -225,7 +225,7 @@ jobs:
   macos:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -238,7 +238,7 @@ jobs:
   macos-no-cpu-extensions:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -251,7 +251,7 @@ jobs:
   openbsd:
     runs-on: ubuntu-24.04  # unit tests hang on macos; use ubuntu instead
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -271,7 +271,7 @@ jobs:
   freebsd:
     runs-on: ubuntu-24.04
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -296,7 +296,7 @@ jobs:
       matrix:
         arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -309,7 +309,7 @@ jobs:
   linux-debug:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -321,7 +321,7 @@ jobs:
   windows-debug:
     runs-on: windows-2022 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -333,7 +333,7 @@ jobs:
   macos-debug:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -346,7 +346,7 @@ jobs:
   s390x: # big-endian
     runs-on: ubuntu-24.04
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
