@@ -1745,23 +1745,13 @@ int aws_byte_cursor_utf8_parse_i64(struct aws_byte_cursor cursor, int64_t *dst) 
         return AWS_OP_ERR;
     }
 
-    if (u64 == 0) {
-        *dst = 0;
-        return AWS_OP_SUCCESS;
-    }
-
-    if (u64 > (uint64_t)INT64_MAX + 1) {
+    /* Note: corner cases for negative value is one higher then positive */
+    uint64_t max_allowed = is_neg ? (uint64_t)INT64_MAX + 1 : (uint64_t)INT64_MAX;
+    if (u64 > max_allowed) {
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    if (is_neg) {
-        if (u64 == (uint64_t)INT64_MAX + 1) {
-            *dst = INT64_MIN; // Special case: -9223372036854775808
-            return AWS_OP_SUCCESS;
-        }
-        *dst = -(int64_t)u64;
-    }
-
+    *dst = is_neg ? -(int64_t)u64 : (int64_t)u64;
     return AWS_OP_SUCCESS;
 }
 

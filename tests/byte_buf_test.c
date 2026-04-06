@@ -1382,21 +1382,21 @@ static int s_byte_cursor_utf8_parse_i64(struct aws_allocator *allocator, void *c
 
     /* max value */
     ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9223372036854775807"), &val));
-    ASSERT_UINT_EQUALS(INT64_MAX, val);
+    ASSERT_INT_EQUALS(INT64_MAX, val);
 
     /* min value */
     ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("-9223372036854775808"), &val));
-    ASSERT_UINT_EQUALS(INT64_MAX, val);
+    ASSERT_INT_EQUALS(INT64_MIN, val);
 
     /* leading zeros should have no effect */
     ASSERT_SUCCESS(
-        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("00000000000018446744073709551615"), &val));
-    ASSERT_UINT_EQUALS(UINT64_MAX, val);
+        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0000000000009223372036854775807"), &val));
+    ASSERT_INT_EQUALS(INT64_MAX, val);
 
     /* one bigger than max */
     ASSERT_ERROR(
         AWS_ERROR_OVERFLOW_DETECTED,
-        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9223372036854775807"), &val));
+        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9223372036854775808"), &val));
 
     /* one less than max */
     ASSERT_ERROR(
