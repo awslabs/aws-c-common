@@ -1741,7 +1741,7 @@ int aws_byte_cursor_utf8_parse_i64(struct aws_byte_cursor cursor, int64_t *dst) 
     }
 
     uint64_t u64 = 0;
-    if (aws_byte_cursor_utf8_parse_u64(cursor, u64)) {
+    if (aws_byte_cursor_utf8_parse_u64(cursor, &u64)) {
         return AWS_OP_ERR;
     }
 
