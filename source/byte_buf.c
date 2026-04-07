@@ -236,7 +236,7 @@ bool aws_byte_cursor_next_split_multi(
         /* This is not the first run.
          * Advance substr past the previous split. */
         const uint8_t *input_end = input_str->ptr + input_str->len;
-        substr->ptr += substr->len + 1;
+        substr->ptr += substr->len + split_on.len;
 
         /* Note that it's ok if substr->ptr == input_end, this happens in the
          * final valid split of an input_str that ends with the split_on character:
@@ -253,7 +253,7 @@ bool aws_byte_cursor_next_split_multi(
 
     /* substr is now remainder of string, search for next split */
     struct aws_byte_cursor found_cur = {0};
-    if (aws_byte_cursor_find_exact(substr, &split_on, &found_cur)) {
+    if (!aws_byte_cursor_find_exact(substr, &split_on, &found_cur)) {
 
         /* Character found, update string length. */
         substr->len = found_cur.ptr - substr->ptr;
