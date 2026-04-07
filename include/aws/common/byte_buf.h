@@ -953,6 +953,27 @@ AWS_COMMON_API
 int aws_byte_cursor_utf8_parse_u64(struct aws_byte_cursor cursor, uint64_t *dst);
 
 /**
+ * Read entire cursor as ASCII/UTF-8 signed base-10 number.
+ * Stricter than strtoll(), which allows whitespace and inputs that start with "0x"
+ *
+ * Examples:
+ * "0" -> 0
+ * "123" -> 123
+ * "00004" -> 4 // leading zeros ok
+ * "-1" -> -1
+ *
+ * Rejects things like:
+ * "1,000" // only characters 0-9 allowed
+ * "" // blank string not allowed
+ * " 0 " // whitespace not allowed
+ * "0x0" // hex not allowed
+ * "FF" // hex not allowed
+ * "999999999999999999999999999999999999999999" // larger than max i64
+ */
+AWS_COMMON_API
+int aws_byte_cursor_utf8_parse_i64(struct aws_byte_cursor cursor, int64_t *dst);
+
+/**
  * Read entire cursor as ASCII/UTF-8 unsigned base-16 number with NO "0x" prefix.
  *
  * Examples:

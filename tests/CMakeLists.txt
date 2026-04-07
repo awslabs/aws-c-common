@@ -305,6 +305,7 @@ add_test_case(test_isdigit)
 add_test_case(test_isxdigit)
 add_test_case(test_isspace)
 add_test_case(test_byte_cursor_utf8_parse_u64)
+add_test_case(test_byte_cursor_utf8_parse_i64)
 add_test_case(test_byte_cursor_utf8_parse_u64_hex)
 
 add_test_case(byte_swap_test)
