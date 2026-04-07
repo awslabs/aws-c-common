@@ -199,7 +199,7 @@ bool aws_byte_cursor_next_split(
     char split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr) {
 
-    struct aws_byte_cursor cur = {.ptr = &split_on, .len = 1};
+    struct aws_byte_cursor cur = {.ptr = (uint8_t *)&split_on, .len = 1};
     return aws_byte_cursor_next_split_multi(input_str, cur, substr);
 }
 
