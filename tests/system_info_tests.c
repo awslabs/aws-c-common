@@ -118,12 +118,16 @@ static int s_test_platform_build_os_fn(struct aws_allocator *allocator, void *ct
 
 #if defined(AWS_OS_MACOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_MAC);
-#elif defined(AWS_OS_APPLE)
+#elif defined(AWS_OS_IOS)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_IOS);
+#elif defined(AWS_OS_TVOS)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_TVOS);
 #elif defined(AWS_OS_ANDROID)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_ANDROID);
 #elif defined(_WIN32)
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_WINDOWS);
+#elif defined(AWS_OS_BSD)
+    ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_BSD);
 #else
     ASSERT_INT_EQUALS(build_os, AWS_PLATFORM_OS_UNIX);
 #endif
@@ -141,16 +145,47 @@ static int s_test_platform_build_os_string_fn(struct aws_allocator *allocator, v
     ASSERT_TRUE(aws_byte_cursor_is_valid(&os_string));
     ASSERT_TRUE(os_string.len > 0);
 
+    /* Verify OS-ARCH format */
+    struct aws_byte_cursor dash = aws_byte_cursor_from_c_str("-");
+    struct aws_byte_cursor found_dash;
+    ASSERT_SUCCESS(aws_byte_cursor_find_exact(&os_string, &dash, &found_dash));
+
+    struct aws_byte_cursor expected_os = aws_byte_cursor_from_c_str("Unknown-");
+
+    /* Verify OS part */
 #if defined(AWS_OS_MACOS)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "macOS"));
-#elif defined(AWS_OS_APPLE)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "iOS"));
+    expected_os = aws_byte_cursor_from_c_str("macOS-");
+#elif defined(AWS_OS_IOS)
+    expected_os = aws_byte_cursor_from_c_str("iOS-");
+#elif defined(AWS_OS_TVOS)
+    expected_os = aws_byte_cursor_from_c_str("tvOS-");
+#elif defined(AWS_OS_WATCHOS)
+    expected_os = aws_byte_cursor_from_c_str("watchOS-");
 #elif defined(AWS_OS_ANDROID)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Android"));
-#elif defined(_WIN32)
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Windows"));
+    expected_os = aws_byte_cursor_from_c_str("Android-");
+#elif defined(AWS_OS_WINDOWS)
+    expected_os = aws_byte_cursor_from_c_str("Windows-");
+#elif defined(AWS_OS_BSD)
+    expected_os = aws_byte_cursor_from_c_str("BSD-");
 #else
-    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "Unix"));
+    expected_os = aws_byte_cursor_from_c_str("Unix-");
+#endif
+    ASSERT_TRUE(aws_byte_cursor_starts_with(&os_string, &expected_os));
+
+    /* Verify architecture part exists after dash */
+    size_t dash_pos = found_dash.ptr - os_string.ptr;
+    aws_byte_cursor_advance(&os_string, dash_pos + 1);
+
+#if defined(AWS_ARCH_INTEL)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "x86_32"));
+#elif defined(AWS_ARCH_INTEL_64)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "x86_64"));
+#elif defined(AWS_ARCH_ARM64)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm64"));
+#elif defined(AWS_ARCH_ARM32)
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "arm32"));
+#else
+    ASSERT_TRUE(aws_byte_cursor_eq_c_str(&os_string, "unknown"));
 #endif
 
     return 0;
