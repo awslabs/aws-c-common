@@ -274,6 +274,17 @@ bool aws_byte_cursor_next_split(
     struct aws_byte_cursor *AWS_RESTRICT substr);
 
 /**
+ * same as aws_byte_cursor_next_split, but splits on a cursor instead of a single char.
+ * ex. can split on delims like "--" or "<<".
+ * Note: splits on the whole split_on cursor, it does not treat split_on as array of different chars to split on
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_next_split_on_cursor(
+    const struct aws_byte_cursor *AWS_RESTRICT input_str,
+    struct aws_byte_cursor split_on,
+    struct aws_byte_cursor *AWS_RESTRICT substr);
+
+/**
  * No copies, no buffer allocations. Fills in output with a list of
  * aws_byte_cursor instances where buffer is an offset into the input_str and
  * len is the length of that string in the original buffer.

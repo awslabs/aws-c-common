@@ -255,9 +255,9 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.25.0
+      uses: cross-platform-actions/action@v0.32.0
       with:
         operating_system: openbsd
         version: '7.5'
@@ -275,11 +275,11 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.25.0
+      uses: cross-platform-actions/action@v0.32.0
       with:
         operating_system: freebsd
         version: '14.1'
@@ -350,7 +350,7 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: uraimo/run-on-arch-action@v3
       name: Run commands
       id: runcmd
