@@ -48,7 +48,7 @@ int aws_run_command(
     AWS_FATAL_ASSERT(options);
     AWS_FATAL_ASSERT(result);
 
-    FILE *output_stream;
+    FILE *output_stream = NULL;
     char output_buffer[MAX_BUFFER_SIZE];
     struct aws_byte_buf result_buffer;
     int ret = AWS_OP_ERR;
@@ -71,11 +71,6 @@ int aws_run_command(
                 }
             }
         }
-#    if defined(AWS_OS_WINDOWS)
-        result->ret_code = _pclose(output_stream);
-#    else
-        result->ret_code = pclose(output_stream);
-#    endif
     }
 
     struct aws_byte_cursor trim_cursor = aws_byte_cursor_from_buf(&result_buffer);
@@ -89,6 +84,13 @@ int aws_run_command(
     ret = AWS_OP_SUCCESS;
 
 on_finish:
+    if (output_stream) {
+#    if defined(AWS_OS_WINDOWS)
+        _pclose(output_stream);
+#    else
+        pclose(output_stream);
+#    endif
+    }
     aws_byte_buf_clean_up_secure(&result_buffer);
     return ret;
 }
