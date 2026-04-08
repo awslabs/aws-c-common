@@ -279,7 +279,7 @@ bool aws_byte_cursor_next_split(
  * Note: splits on the whole split_on cursor, it does not treat split_on as array of different chars to split on
  */
 AWS_COMMON_API
-bool aws_byte_cursor_next_split_multi(
+bool aws_byte_cursor_next_split_on_cursor(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     struct aws_byte_cursor split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr);

@@ -200,10 +200,10 @@ bool aws_byte_cursor_next_split(
     struct aws_byte_cursor *AWS_RESTRICT substr) {
 
     struct aws_byte_cursor cur = {.ptr = (uint8_t *)&split_on, .len = 1};
-    return aws_byte_cursor_next_split_multi(input_str, cur, substr);
+    return aws_byte_cursor_next_split_on_cursor(input_str, cur, substr);
 }
 
-bool aws_byte_cursor_next_split_multi(
+bool aws_byte_cursor_next_split_on_cursor(
     const struct aws_byte_cursor *AWS_RESTRICT input_str,
     struct aws_byte_cursor split_on,
     struct aws_byte_cursor *AWS_RESTRICT substr) {

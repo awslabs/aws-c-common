@@ -337,41 +337,41 @@ static int s_test_byte_cursor_next_split_multi(struct aws_allocator *allocator, 
 
     struct aws_byte_cursor to_split1 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("test-a--testb--testc--a");
     struct aws_byte_cursor result1 = {0};
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "test-a");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "testb");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "testc");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "a");
 
-    ASSERT_FALSE(aws_byte_cursor_next_split_multi(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
+    ASSERT_FALSE(aws_byte_cursor_next_split_on_cursor(&to_split1, aws_byte_cursor_from_c_str("--"), &result1));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result1, "");
 
     struct aws_byte_cursor to_split2 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("");
     struct aws_byte_cursor result2 = {0};
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split2, aws_byte_cursor_from_c_str("--"), &result2));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split2, aws_byte_cursor_from_c_str("--"), &result2));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result2, "");
 
-    ASSERT_FALSE(aws_byte_cursor_next_split_multi(&to_split2, aws_byte_cursor_from_c_str("--"), &result2));
+    ASSERT_FALSE(aws_byte_cursor_next_split_on_cursor(&to_split2, aws_byte_cursor_from_c_str("--"), &result2));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result2, "");
 
     struct aws_byte_cursor to_split3 = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("----");
     struct aws_byte_cursor result3 = {0};
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
-    ASSERT_TRUE(aws_byte_cursor_next_split_multi(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
+    ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
-    ASSERT_FALSE(aws_byte_cursor_next_split_multi(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
+    ASSERT_FALSE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
     return 0;
