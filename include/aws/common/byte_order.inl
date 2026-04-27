@@ -126,7 +126,7 @@ AWS_STATIC_IMPL uint32_t aws_ntoh32(uint32_t x) {
  */
 AWS_STATIC_IMPL uint32_t aws_letoh32(uint32_t x) {
 #ifdef _WIN32
-    AWS_FATAL_ASSERT(aws_is_big_endian());
+    AWS_FATAL_ASSERT(!aws_is_big_endian());
     return x;
 #elif (defined(__GNUC__) || defined(__clang__))
     return aws_is_big_endian() ? __builtin_bswap32(x) : x;
@@ -178,7 +178,7 @@ AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
  */
 AWS_STATIC_IMPL uint16_t aws_letoh16(uint16_t x) {
 #ifdef _WIN32
-    AWS_FATAL_ASSERT(aws_is_big_endian());
+    AWS_FATAL_ASSERT(!aws_is_big_endian());
     return x;
 #elif (defined(__GNUC__) || defined(__clang__))
     return aws_is_big_endian() ? __builtin_bswap16(x) : x;
