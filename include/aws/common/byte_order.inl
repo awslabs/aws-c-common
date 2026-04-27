@@ -174,7 +174,7 @@ AWS_STATIC_IMPL uint16_t aws_ntoh16(uint16_t x) {
 }
 
 /**
- * Convert 16 bit integer from network to host byte order.
+ * Convert 16 bit integer from little endian to host byte order.
  */
 AWS_STATIC_IMPL uint16_t aws_letoh16(uint16_t x) {
 #ifdef _WIN32

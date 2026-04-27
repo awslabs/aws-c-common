@@ -739,7 +739,7 @@ AWS_COMMON_API bool aws_byte_cursor_read_le32(struct aws_byte_cursor *cur, uint3
 AWS_COMMON_API bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var);
 
 /**
- * Reads a signed 32-bit value in network byte order from cur, and places it in host
+ * Reads a signed 32-bit value in little-endian order from cur, and places it in host
  * byte order into var.
  *
  * On success, returns true and updates the cursor pointer/length accordingly.
