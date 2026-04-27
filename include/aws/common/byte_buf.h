@@ -688,6 +688,16 @@ AWS_COMMON_API bool aws_byte_cursor_read_u8(struct aws_byte_cursor *AWS_RESTRICT
 AWS_COMMON_API bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var);
 
 /**
+ * Reads a 16-bit value in little-endian byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_le16(struct aws_byte_cursor *cur, uint16_t *var);
+
+/**
  * Reads an unsigned 24-bit value (3 bytes) in network byte order from cur,
  * and places it in host byte order into 32-bit var.
  * Ex: if cur's next 3 bytes are {0xAA, 0xBB, 0xCC}, then var becomes 0x00AABBCC.
@@ -709,6 +719,16 @@ AWS_COMMON_API bool aws_byte_cursor_read_be24(struct aws_byte_cursor *cur, uint3
 AWS_COMMON_API bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var);
 
 /**
+ * Reads a 32-bit value in little endian byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_le32(struct aws_byte_cursor *cur, uint32_t *var);
+
+/**
  * Reads a signed 32-bit value in network byte order from cur, and places it in host
  * byte order into var.
  *
@@ -717,6 +737,16 @@ AWS_COMMON_API bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint3
  * cursor unchanged.
  */
 AWS_COMMON_API bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var);
+
+/**
+ * Reads a signed 32-bit value in network byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+AWS_COMMON_API bool aws_byte_cursor_read_le_i32(struct aws_byte_cursor *cur, int32_t *var);
 
 /**
  * Reads a 64-bit value in network byte order from cur, and places it in host
