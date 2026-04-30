@@ -493,3 +493,126 @@ static int s_xml_parser_name_too_long_test(struct aws_allocator *allocator, void
 }
 
 AWS_TEST_CASE(xml_parser_name_too_long_test, s_xml_parser_name_too_long_test)
+
+static int s_xml_parser_unescape_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    static const size_t num_cases = 5;
+
+    struct aws_byte_cursor input[num_cases] = {
+        aws_byte_cursor_from_c_str("Au revoir, Shoshanna!"),
+        aws_byte_cursor_from_c_str("quote1 &quot; quote2 &#34; quote3 &#x22; "
+                                   "gt1 &gt; gt2 &#62; gt3 &#x3E; "
+                                   "lt1 &lt; lt2 &#60; lt3 &#x3C; "
+                                   "apos1 &apos; apos2 &#39; apos3 &#x27; "
+                                   "amp1 &amp; amp2 &#38; amp3 &#x26;"),
+        aws_byte_cursor_from_c_str("Say &apos;what&apos; again; Say &apos;what&apos; again..."),
+        aws_byte_cursor_from_c_str("Hello &#x1F600;"),
+        aws_byte_cursor_from_c_str("Hello &#&#128512;")};
+
+    struct aws_byte_cursor expected[num_cases] = {
+        aws_byte_cursor_from_c_str("Au revoir, Shoshanna!"),
+        aws_byte_cursor_from_c_str("quote1 \" quote2 \" quote3 \" "
+                                   "gt1 > gt2 > gt3 > "
+                                   "lt1 < lt2 < lt3 < "
+                                   "apos1 ' apos2 ' apos3 ' "
+                                   "amp1 & amp2 & amp3 &"),
+        aws_byte_cursor_from_c_str("Say 'what' again; Say 'what' again..."),
+        aws_byte_cursor_from_c_str("Hello \xF0\x9F\x98\x80"),
+        aws_byte_cursor_from_c_str("Hello \xF0\x9F\x98\x80")};
+
+    for (size_t i = 0; i < num_cases; ++i) {
+        struct aws_byte_buf out;
+        aws_byte_buf_init(&out, allocator, 30);
+
+        ASSERT_SUCCESS(aws_byte_buf_append_unescaped_xml(allocator, input[i], &out));
+
+        ASSERT_BIN_ARRAYS_EQUALS(out.buffer, out.len, expected[i].ptr, expected[i].len);
+
+        aws_byte_buf_clean_up(&out);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(xml_parser_unescape_test, s_xml_parser_unescape_test)
+
+static int s_xml_parser_unescape_error_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    static const size_t num_cases = 7;
+
+    struct aws_byte_cursor input[num_cases] = {
+        aws_byte_cursor_from_c_str("aaa &bbb c"),
+        aws_byte_cursor_from_c_str("aaa &&quot; c"),
+        aws_byte_cursor_from_c_str("aaa &quot123; c"),
+        aws_byte_cursor_from_c_str("aaa &#; c"),
+        aws_byte_cursor_from_c_str("aaa &#x; c"),
+        aws_byte_cursor_from_c_str("aaa &#123456789987654321; c"),
+        aws_byte_cursor_from_c_str("aaa &#x123456789987654321abcdef; c"),
+    };
+
+    for (size_t i = 0; i < num_cases; ++i) {
+        struct aws_byte_buf out;
+        aws_byte_buf_init(&out, allocator, 30);
+
+        ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_byte_buf_append_unescaped_xml(allocator, input[i], &out));
+
+        aws_byte_buf_clean_up(&out);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(xml_parser_unescape_error_test, s_xml_parser_unescape_error_test)
+
+const char *child_with_text_escaped =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNode><child1>&quot;TestBody&quot;</child1></rootNode>";
+
+struct child_text_buf_capture {
+    struct aws_allocator *allocator;
+    struct aws_byte_buf capture_buf;
+    struct aws_byte_cursor node_name;
+};
+
+int s_child_with_text_root_node_escaped(struct aws_xml_node *node, void *user_data) {
+    struct child_text_buf_capture *capture = user_data;
+    if (aws_xml_node_as_body_unescaped(capture->allocator, node, &capture->capture_buf)) {
+        return AWS_OP_ERR;
+    }
+    capture->node_name = aws_xml_node_get_name(node);
+
+    return AWS_OP_SUCCESS;
+}
+
+int s_root_with_child_escaped(struct aws_xml_node *node, void *user_data) {
+    if (aws_xml_node_traverse(node, s_child_with_text_root_node_escaped, user_data)) {
+        return AWS_OP_ERR;
+    }
+    return AWS_OP_SUCCESS;
+}
+
+static int s_xml_parser_child_with_text_escaped_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct child_text_buf_capture capture;
+    AWS_ZERO_STRUCT(capture);
+    aws_byte_buf_init(&capture.capture_buf, allocator, 30);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(child_with_text_escaped),
+        .on_root_encountered = s_root_with_child_escaped,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name[] = "child1";
+    const char expected_value[] = "\"TestBody\"";
+
+    ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.node_name.ptr, capture.node_name.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_value, sizeof(expected_value) - 1, capture.capture_buf.buffer, capture.capture_buf.len);
+
+    aws_byte_buf_clean_up(&capture.capture_buf);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_child_with_text_escaped, s_xml_parser_child_with_text_escaped_test)
