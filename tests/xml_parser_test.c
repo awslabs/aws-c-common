@@ -497,7 +497,7 @@ AWS_TEST_CASE(xml_parser_name_too_long_test, s_xml_parser_name_too_long_test)
 static int s_xml_parser_unescape_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    static const size_t num_cases = 5;
+    enum { num_cases = 5 };
 
     struct aws_byte_cursor input[num_cases] = {
         aws_byte_cursor_from_c_str("Au revoir, Shoshanna!"),
@@ -539,7 +539,7 @@ AWS_TEST_CASE(xml_parser_unescape_test, s_xml_parser_unescape_test)
 static int s_xml_parser_unescape_error_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    static const size_t num_cases = 7;
+    enum { num_cases = 7 };
 
     struct aws_byte_cursor input[num_cases] = {
         aws_byte_cursor_from_c_str("aaa &bbb c"),
