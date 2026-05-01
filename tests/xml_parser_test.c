@@ -508,7 +508,7 @@ static int s_xml_parser_unescape_test(struct aws_allocator *allocator, void *ctx
                                    "amp1 &amp; amp2 &#38; amp3 &#x26;"),
         aws_byte_cursor_from_c_str("Say &apos;what&apos; again; Say &apos;what&apos; again..."),
         aws_byte_cursor_from_c_str("Hello &#x1F600;"),
-        aws_byte_cursor_from_c_str("Hello &#&#128512;")};
+        aws_byte_cursor_from_c_str("Hello &#128512;")};
 
     struct aws_byte_cursor expected[num_cases] = {
         aws_byte_cursor_from_c_str("Au revoir, Shoshanna!"),
