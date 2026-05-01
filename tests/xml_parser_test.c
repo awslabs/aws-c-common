@@ -594,6 +594,7 @@ static int s_xml_parser_child_with_text_escaped_test(struct aws_allocator *alloc
     (void)ctx;
     struct child_text_buf_capture capture;
     AWS_ZERO_STRUCT(capture);
+    capture.allocator = allocator;
     aws_byte_buf_init(&capture.capture_buf, allocator, 30);
 
     struct aws_xml_parser_options options = {
