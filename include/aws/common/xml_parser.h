@@ -108,7 +108,7 @@ struct aws_xml_attribute aws_xml_node_get_attribute(const struct aws_xml_node *n
 AWS_COMMON_API
 int aws_byte_buf_append_unescaped_xml(
     struct aws_allocator *allocator,
-    struct aws_byte_cursor xml,
+    struct aws_byte_cursor data,
     struct aws_byte_buf *out);
 
 AWS_EXTERN_C_END
