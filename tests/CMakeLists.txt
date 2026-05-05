@@ -516,6 +516,7 @@ add_test_case(test_byte_buf_init_from_file)
 add_test_case(test_file_path_read_from_offset_direct_io)
 add_test_case(test_file_path_read_from_offset)
 add_test_case(test_file_path_read_from_offset_direct_io_chunking)
+add_test_case(test_file_path_write_to_offset_direct_io)
 
 add_test_case(test_json_parse_from_string)
 add_test_case(test_json_parse_to_string)

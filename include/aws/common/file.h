@@ -267,6 +267,34 @@ int aws_file_path_read_from_offset_direct_io_with_chunk_size(
     struct aws_byte_buf *output_buf,
     size_t *out_actual_read);
 
+/*
+ * Write to a file using DIRECT I/O at the given offset.
+ * Using direct IO to bypass the OS cache. Helpful when the disk I/O outperform the kernel cache.
+ * If O_DIRECT is not supported, returns AWS_ERROR_UNSUPPORTED_OPERATION.
+ *
+ * The file is created if it does not exist (mode 0644).
+ *
+ * For aligned writes (offset and length both aligned to page size), O_DIRECT is used for the
+ * entire write. For unaligned trailing writes (e.g. the last chunk of a file), the function
+ * falls back to a non-O_DIRECT write for the unaligned tail portion.
+ *
+ * Notes:
+ * - ONLY supports linux for now and raises AWS_ERROR_UNSUPPORTED_OPERATION on all other platforms.
+ * - The input_buf->buffer must be aligned to the page size.
+ * - check the NOTES for O_DIRECT in https://man7.org/linux/man-pages/man2/openat.2.html
+ *
+ * @param file_path         The file path to write to.
+ * @param offset            The offset in the file to start writing at.
+ * @param input_buf         The buffer to write from (input_buf->len bytes will be written).
+ *
+ * Returns AWS_OP_SUCCESS, or AWS_OP_ERR (after an error has been raised).
+ */
+AWS_COMMON_API
+int aws_file_path_write_to_offset_direct_io(
+    const struct aws_string *file_path,
+    uint64_t offset,
+    struct aws_byte_cursor input_buf);
+
 AWS_EXTERN_C_END AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */

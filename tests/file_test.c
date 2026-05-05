@@ -895,3 +895,91 @@ static int s_test_file_path_read_from_offset_direct_io_chunking(struct aws_alloc
 }
 
 AWS_TEST_CASE(test_file_path_read_from_offset_direct_io_chunking, s_test_file_path_read_from_offset_direct_io_chunking)
+
+static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+#if defined(__linux__)
+    size_t page_size = aws_system_info_page_size();
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(page_size);
+    ASSERT_NOT_NULL(aligned_alloc);
+
+    char file_path_cstr[] = "test_file_path_write_to_offset_direct_io.txt";
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, file_path_cstr);
+
+    /* Prepare a page-aligned write buffer filled with 'A' (2 pages + partial tail) */
+    size_t aligned_write_len = page_size * 2;
+    size_t tail_len = 37; /* intentionally unaligned */
+    size_t total_len = aligned_write_len + tail_len;
+
+    struct aws_byte_buf write_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&write_buf, aligned_alloc, total_len));
+    memset(write_buf.buffer, 'A', aligned_write_len);
+    memset(write_buf.buffer + aligned_write_len, 'B', tail_len);
+    write_buf.len = total_len;
+
+    /* Test 1: Write full content (aligned pages + unaligned tail) at offset 0 */
+    struct aws_byte_cursor write_cursor = aws_byte_cursor_from_buf(&write_buf);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, 0, write_cursor));
+
+    /* Read back and verify */
+    struct aws_byte_buf read_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&read_buf, aligned_alloc, total_len));
+    size_t actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io(file_path, 0, aligned_write_len, &read_buf, &actual_read));
+    ASSERT_UINT_EQUALS(aligned_write_len, actual_read);
+    for (size_t i = 0; i < aligned_write_len; i++) {
+        ASSERT_UINT_EQUALS('A', read_buf.buffer[i]);
+    }
+    aws_byte_buf_clean_up(&read_buf);
+
+    /* Verify the tail by reading the whole file with normal fopen */
+    FILE *verify_file = aws_fopen(file_path_cstr, "rb");
+    ASSERT_NOT_NULL(verify_file);
+    uint8_t verify_buf[128];
+    /* Seek to where the tail starts */
+    ASSERT_SUCCESS(aws_fseek(verify_file, (int64_t)aligned_write_len, SEEK_SET));
+    size_t tail_read = fread(verify_buf, 1, tail_len, verify_file);
+    ASSERT_UINT_EQUALS(tail_len, tail_read);
+    for (size_t i = 0; i < tail_len; i++) {
+        ASSERT_UINT_EQUALS('B', verify_buf[i]);
+    }
+    fclose(verify_file);
+
+    /* Test 2: Write at a page-aligned offset (overwrite second page with 'C') */
+    struct aws_byte_buf overwrite_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&overwrite_buf, aligned_alloc, page_size));
+    memset(overwrite_buf.buffer, 'C', page_size);
+    overwrite_buf.len = page_size;
+    struct aws_byte_cursor overwrite_cursor = aws_byte_cursor_from_buf(&overwrite_buf);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, (uint64_t)page_size, overwrite_cursor));
+
+    /* Read back second page and verify it's all 'C' */
+    aws_byte_buf_reset(&overwrite_buf, false);
+    actual_read = 0;
+    ASSERT_SUCCESS(
+        aws_file_path_read_from_offset_direct_io(file_path, (uint64_t)page_size, page_size, &overwrite_buf, &actual_read));
+    ASSERT_UINT_EQUALS(page_size, actual_read);
+    for (size_t i = 0; i < page_size; i++) {
+        ASSERT_UINT_EQUALS('C', overwrite_buf.buffer[i]);
+    }
+    aws_byte_buf_clean_up(&overwrite_buf);
+
+    /* Cleanup */
+    aws_byte_buf_clean_up(&write_buf);
+    remove(file_path_cstr);
+    aws_string_destroy(file_path);
+    aws_explicit_aligned_allocator_destroy(aligned_alloc);
+#else
+    (void)allocator;
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, "dummy.txt");
+    struct aws_byte_cursor empty = {.ptr = NULL, .len = 0};
+    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(file_path, 0, empty));
+    ASSERT_UINT_EQUALS(AWS_ERROR_UNSUPPORTED_OPERATION, aws_last_error());
+    aws_string_destroy(file_path);
+#endif
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_file_path_write_to_offset_direct_io, s_test_file_path_write_to_offset_direct_io)
