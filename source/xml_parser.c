@@ -421,12 +421,12 @@ int s_node_next_sibling(struct aws_xml_parser *parser) {
 }
 
 /*
-* Takes xml encoded string and pushes unescaped string to the out buffer.
-* Note: xml allows escaping chars as follows:
-* - &name; with 5 possible values corresponding to <, >, &, " and '
-* - &#n; where n is a codepoint representing anyunicode character. (codepoint can start with x to indicate its a hex codepoint)
-* Unescaped result will always be either the same length (nothing to unescape) or shorter.
-*/
+ * Takes xml encoded string and pushes unescaped string to the out buffer.
+ * Note: xml allows escaping chars as follows:
+ * - &name; with 5 possible values corresponding to <, >, &, " and '
+ * - &#n; where n is a codepoint representing anyunicode character. (codepoint can start with x to indicate its a hex
+ * codepoint) Unescaped result will always be either the same length (nothing to unescape) or shorter.
+ */
 static int s_build_unescaped_buffer(struct aws_byte_cursor data, struct aws_byte_buf *out) {
     bool first_split = true;
 
