@@ -143,19 +143,19 @@ int aws_file_path_read_from_offset_direct_io(
 int aws_file_path_write_to_offset_direct_io(
     const struct aws_string *file_path,
     uint64_t offset,
-    struct aws_byte_cursor input_buf) {
+    struct aws_byte_cursor data) {
 
     if (O_DIRECT == 0) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on this platform");
         return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
     }
 
-    if (input_buf.len == 0) {
+    if (data.len == 0) {
         return AWS_OP_SUCCESS;
     }
 
     int rt_code = AWS_OP_ERR;
-    int fd = open(aws_string_c_str(file_path), O_WRONLY | O_CREAT | O_DIRECT, 0644);
+    int fd = open(aws_string_c_str(file_path), O_WRONLY | O_DIRECT);
     if (fd == -1) {
         int errno_value = errno;
         AWS_LOGF_ERROR(
@@ -180,14 +180,23 @@ int aws_file_path_write_to_offset_direct_io(
     }
 
     size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
-    size_t aligned_len = input_buf.len & ~(page_size - 1); /* round down to page boundary */
-    size_t tail_len = input_buf.len - aligned_len;
 
-    /* Write the aligned portion with O_DIRECT */
+    /* Require length to be page-aligned — caller handles unaligned final writes */
+    if (data.len % page_size != 0) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "aws_file_path_write_to_offset_direct_io: data.len %zu is not aligned to page size %zu",
+            data.len,
+            page_size);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        goto cleanup;
+    }
+
+    /* Write with O_DIRECT */
     size_t total_written = 0;
-    while (total_written < aligned_len) {
-        size_t chunk_size = aws_min_size(aligned_len - total_written, AWS_FILE_MAX_READ_CHUNK);
-        ssize_t written = write(fd, input_buf.ptr + total_written, chunk_size);
+    while (total_written < data.len) {
+        size_t chunk_size = aws_min_size(data.len - total_written, AWS_FILE_MAX_READ_CHUNK);
+        ssize_t written = write(fd, data.ptr + total_written, chunk_size);
         if (written == -1) {
             int errno_value = errno;
             AWS_LOGF_ERROR(
@@ -200,38 +209,6 @@ int aws_file_path_write_to_offset_direct_io(
             goto cleanup;
         }
         total_written += (size_t)written;
-    }
-
-    /* Write the unaligned tail without O_DIRECT */
-    if (tail_len > 0) {
-        int flags = fcntl(fd, F_GETFL);
-        if (flags == -1 || fcntl(fd, F_SETFL, flags & ~O_DIRECT) == -1) {
-            int errno_value = errno;
-            AWS_LOGF_ERROR(
-                AWS_LS_COMMON_GENERAL,
-                "Failed to drop O_DIRECT for tail write on file %s, errno: %d",
-                aws_string_c_str(file_path),
-                errno_value);
-            aws_translate_and_raise_io_error(errno_value);
-            goto cleanup;
-        }
-
-        size_t tail_written = 0;
-        while (tail_written < tail_len) {
-            ssize_t written = write(fd, input_buf.ptr + aligned_len + tail_written, tail_len - tail_written);
-            if (written == -1) {
-                int errno_value = errno;
-                AWS_LOGF_ERROR(
-                    AWS_LS_COMMON_GENERAL,
-                    "Failed to write %zu tail bytes to file %s, errno: %d",
-                    tail_len - tail_written,
-                    aws_string_c_str(file_path),
-                    errno_value);
-                aws_translate_and_raise_io_error(errno_value);
-                goto cleanup;
-            }
-            tail_written += (size_t)written;
-        }
     }
 
     rt_code = AWS_OP_SUCCESS;
