@@ -258,6 +258,7 @@ bool aws_byte_cursor_next_split_on_cursor(
         /* Character found, update string length. */
         substr->len = found_cur.ptr - substr->ptr;
     } else {
+        /* match not found. do not leak error. */
         aws_restore_error(err);
     }
 
