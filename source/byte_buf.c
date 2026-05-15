@@ -255,9 +255,10 @@ bool aws_byte_cursor_next_split_on_cursor(
     /* substr is now remainder of string, search for next split */
     struct aws_byte_cursor found_cur = {0};
     if (!aws_byte_cursor_find_exact(substr, &split_on, &found_cur)) {
-        aws_restore_error(err);
         /* Character found, update string length. */
         substr->len = found_cur.ptr - substr->ptr;
+    } else {
+        aws_restore_error(err);
     }
 
     AWS_POSTCONDITION(aws_byte_cursor_is_valid(substr));
