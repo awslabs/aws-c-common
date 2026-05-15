@@ -371,10 +371,11 @@ static int s_test_byte_cursor_next_split_multi(struct aws_allocator *allocator, 
     ASSERT_TRUE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
+    int err = aws_last_error();
     ASSERT_FALSE(aws_byte_cursor_next_split_on_cursor(&to_split3, aws_byte_cursor_from_c_str("--"), &result3));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(result3, "");
 
-    ASSERT_INT_EQUALS(aws_last_error(), 0);
+    ASSERT_INT_EQUALS(aws_last_error(), err);
 
     return 0;
 }
