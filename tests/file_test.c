@@ -975,7 +975,7 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
     aws_string_destroy(nonexistent);
 
     /* Test 5: Mixed O_DIRECT + buffered writes at non-overlapping offsets, verify all data correct.
-     * Simulates the download pattern: O_DIRECT for aligned parts, buffered pwrite for last part tail. */
+     * Simulates the download pattern: O_DIRECT for aligned parts, buffered write for last part tail. */
     remove(file_path_cstr);
     f = aws_fopen(file_path_cstr, "wb");
     ASSERT_NOT_NULL(f);
@@ -992,7 +992,7 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
     memset(write_buf.buffer, 'F', page_size);
     ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, (uint64_t)(page_size * 2), write_cursor));
 
-    /* Write unaligned tail (37 bytes of 'G') at offset page_size*3 using buffered pwrite */
+    /* Write unaligned tail (37 bytes of 'G') at offset page_size*3 using buffered write */
     size_t tail_len = 37;
     uint8_t tail_data[37];
     memset(tail_data, 'G', tail_len);
