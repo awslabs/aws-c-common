@@ -998,8 +998,9 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
     memset(tail_data, 'G', tail_len);
     int fd = open(file_path_cstr, O_WRONLY);
     ASSERT_TRUE(fd >= 0);
-    ssize_t pw = pwrite(fd, tail_data, tail_len, (off_t)(page_size * 3));
-    ASSERT_INT_EQUALS((int)tail_len, (int)pw);
+    ASSERT_TRUE(lseek(fd, (off_t)(page_size * 3), SEEK_SET) != -1);
+    ssize_t written = write(fd, tail_data, tail_len);
+    ASSERT_INT_EQUALS((int)tail_len, (int)written);
     close(fd);
 
     /* Read entire file back and verify all regions */
