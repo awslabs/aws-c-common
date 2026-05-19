@@ -485,3 +485,67 @@ CBOR_TEST_CASE(cbor_decode_error_handling_test) {
     aws_common_library_clean_up();
     return AWS_OP_SUCCESS;
 }
+
+CBOR_TEST_CASE(cbor_decode_resource_limit_container_size_test) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    /* Encode an array header declaring 10001 elements (exceeds the 10000 limit) */
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
+    aws_cbor_encoder_write_array_start(encoder, 10001);
+    struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
+
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, cursor);
+    uint64_t out_size = 0;
+    ASSERT_FAILS(aws_cbor_decoder_pop_next_array_start(decoder, &out_size));
+    ASSERT_INT_EQUALS(AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED, aws_last_error());
+
+    /* Same for map */
+    aws_cbor_encoder_reset(encoder);
+    aws_cbor_encoder_write_map_start(encoder, 10001);
+    cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    aws_cbor_decoder_reset_src(decoder, cursor);
+    ASSERT_FAILS(aws_cbor_decoder_pop_next_map_start(decoder, &out_size));
+    ASSERT_INT_EQUALS(AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED, aws_last_error());
+
+    /* Verify 10000 is still accepted */
+    aws_cbor_encoder_reset(encoder);
+    aws_cbor_encoder_write_array_start(encoder, 10000);
+    cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    aws_cbor_decoder_reset_src(decoder, cursor);
+    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_array_start(decoder, &out_size));
+    ASSERT_UINT_EQUALS(10000, out_size);
+
+    aws_cbor_decoder_destroy(decoder);
+    aws_cbor_encoder_destroy(encoder);
+    aws_common_library_clean_up();
+    return AWS_OP_SUCCESS;
+}
+
+CBOR_TEST_CASE(cbor_decode_resource_limit_depth_test) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    /* Build 129 nested arrays of length 1: 0x81 repeated 129 times, then 0x01.
+     * This requires depth 130 which exceeds the limit of 128. */
+    uint8_t data[130];
+    memset(data, 0x81, 129); /* array of 1 element, 129 times */
+    data[129] = 0x01;        /* innermost value: uint 1 */
+    struct aws_byte_cursor cursor = aws_byte_cursor_from_array(data, sizeof(data));
+
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, cursor);
+    ASSERT_FAILS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
+    ASSERT_INT_EQUALS(AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED, aws_last_error());
+
+    /* Verify 127 nested arrays + 1 uint (128 total calls, max depth = 128) is accepted */
+    uint8_t ok_data[128];
+    memset(ok_data, 0x81, 127); /* 127 arrays of 1 element */
+    ok_data[127] = 0x01;        /* innermost value: uint 1 */
+    cursor = aws_byte_cursor_from_array(ok_data, sizeof(ok_data));
+    aws_cbor_decoder_reset_src(decoder, cursor);
+    ASSERT_SUCCESS(aws_cbor_decoder_consume_next_whole_data_item(decoder));
+
+    aws_cbor_decoder_destroy(decoder);
+    aws_common_library_clean_up();
+    return AWS_OP_SUCCESS;
+}
