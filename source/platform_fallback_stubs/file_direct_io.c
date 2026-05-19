@@ -33,3 +33,7 @@ int aws_file_path_write_to_offset_direct_io(
     AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Direct file IO is not supported yet on platforms other than linux.");
     return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
 }
+
+bool aws_file_direct_io_is_supported(void) {
+    return false;
+}

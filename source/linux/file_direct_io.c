@@ -218,3 +218,10 @@ cleanup:
     }
     return rt_code;
 }
+
+bool aws_file_direct_io_is_supported(void) {
+    /* O_DIRECT may be defined as 0 in some Linux build environments (e.g. glibc that doesn't
+     * expose it). When that's the case, opening with O_DIRECT is a no-op and direct I/O is
+     * not actually available. */
+    return O_DIRECT != 0;
+}

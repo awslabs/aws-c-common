@@ -295,6 +295,19 @@ int aws_file_path_write_to_offset_direct_io(
     uint64_t offset,
     struct aws_byte_cursor data);
 
+/**
+ * Returns true if direct I/O (O_DIRECT) is supported on the current platform.
+ *
+ * Currently only Linux supports direct I/O. On unsupported platforms,
+ * aws_file_path_read_from_offset_direct_io() and aws_file_path_write_to_offset_direct_io()
+ * will raise AWS_ERROR_UNSUPPORTED_OPERATION.
+ *
+ * Use this to check at init time whether direct I/O is viable, rather than calling the
+ * read/write functions and handling the error reactively.
+ */
+AWS_COMMON_API
+bool aws_file_direct_io_is_supported(void);
+
 AWS_EXTERN_C_END AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */
