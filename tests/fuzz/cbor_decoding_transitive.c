@@ -46,11 +46,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_text_val(decoder, &cbor_data.str_val) == AWS_OP_SUCCESS);
                 break;
             case AWS_CBOR_TYPE_ARRAY_START:
-                AWS_FATAL_ASSERT(
-                    aws_cbor_decoder_pop_next_array_start(decoder, &cbor_data.array_start) == AWS_OP_SUCCESS);
+                if (aws_cbor_decoder_pop_next_array_start(decoder, &cbor_data.array_start) != AWS_OP_SUCCESS) {
+                    AWS_FATAL_ASSERT(aws_last_error() == AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED);
+                    goto done;
+                }
                 break;
             case AWS_CBOR_TYPE_MAP_START:
-                AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_map_start(decoder, &cbor_data.map_start) == AWS_OP_SUCCESS);
+                if (aws_cbor_decoder_pop_next_map_start(decoder, &cbor_data.map_start) != AWS_OP_SUCCESS) {
+                    AWS_FATAL_ASSERT(aws_last_error() == AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED);
+                    goto done;
+                }
                 break;
             case AWS_CBOR_TYPE_TAG:
                 AWS_FATAL_ASSERT(aws_cbor_decoder_pop_next_tag_val(decoder, &cbor_data.tag_val) == AWS_OP_SUCCESS);
@@ -76,6 +81,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 break;
         }
     }
+done:
     aws_cbor_decoder_destroy(decoder);
 
     atexit(aws_common_library_clean_up);
