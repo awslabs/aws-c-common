@@ -326,10 +326,11 @@ CBOR_TEST_CASE(cbor_encode_decode_array_map_test) {
         ASSERT_SUCCESS(aws_cbor_decoder_pop_next_bytes_val(decoder, &result));
         ASSERT_TRUE(aws_byte_cursor_eq(&result, &values[i]));
     }
-    aws_cbor_decoder_pop_next_array_start(decoder, &element_size);
-    ASSERT_UINT_EQUALS(element_size, UINT16_MAX + 1);
-    aws_cbor_decoder_pop_next_map_start(decoder, &element_size);
-    ASSERT_UINT_EQUALS(element_size, UINT16_MAX + 1);
+    /* 65536 exceeds the decoder's max container size limit (10000) */
+    ASSERT_FAILS(aws_cbor_decoder_pop_next_array_start(decoder, &element_size));
+    ASSERT_INT_EQUALS(AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED, aws_last_error());
+    /* Decoder is now in error state, reset to continue */
+    aws_cbor_decoder_reset_src(decoder, (struct aws_byte_cursor){0});
 
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
