@@ -626,66 +626,49 @@ int aws_cbor_decoder_peek_type(struct aws_cbor_decoder *decoder, enum aws_cbor_t
 
 int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decoder) {
     if (decoder->error_code) {
-        /* Error happened during decoding */
         return aws_raise_error(decoder->error_code);
     }
 
-    if (decoder->current_depth >= s_cbor_max_nesting_depth) {
+    if (++decoder->current_depth > s_cbor_max_nesting_depth) {
+        --decoder->current_depth;
         AWS_LOGF_ERROR(AWS_LS_COMMON_CBOR, "Nesting depth exceeds maximum allowed %zu.", s_cbor_max_nesting_depth);
         decoder->error_code = AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED;
         return aws_raise_error(AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED);
     }
 
     if (decoder->cached_context.type == AWS_CBOR_TYPE_UNKNOWN) {
-        /* There was no cache, decode the next item */
         if (s_cbor_decode_next_element(decoder)) {
-            return AWS_OP_ERR;
+            goto error;
         }
     }
     switch (decoder->cached_context.type) {
         case AWS_CBOR_TYPE_TAG:
-            /* Read the next data item */
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
-            ++decoder->current_depth;
             if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
-                --decoder->current_depth;
-                return AWS_OP_ERR;
+                goto error;
             }
-            --decoder->current_depth;
             break;
         case AWS_CBOR_TYPE_MAP_START: {
             uint64_t num_map_item = decoder->cached_context.u.map_start;
-            /* Reset type */
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
-            ++decoder->current_depth;
             for (uint64_t i = 0; i < num_map_item; i++) {
-                /* Key */
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
-                    --decoder->current_depth;
-                    return AWS_OP_ERR;
+                    goto error;
                 }
-                /* Value */
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
-                    --decoder->current_depth;
-                    return AWS_OP_ERR;
+                    goto error;
                 }
             }
-            --decoder->current_depth;
             break;
         }
         case AWS_CBOR_TYPE_ARRAY_START: {
             uint64_t num_array_item = decoder->cached_context.u.array_start;
-            /* Reset type */
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
-            ++decoder->current_depth;
             for (uint64_t i = 0; i < num_array_item; i++) {
-                /* item */
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
-                    --decoder->current_depth;
-                    return AWS_OP_ERR;
+                    goto error;
                 }
             }
-            --decoder->current_depth;
             break;
         }
         case AWS_CBOR_TYPE_INDEF_BYTES_START:
@@ -693,23 +676,18 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
         case AWS_CBOR_TYPE_INDEF_ARRAY_START:
         case AWS_CBOR_TYPE_INDEF_MAP_START: {
             enum aws_cbor_type next_type;
-            /* Reset the cache for the tag val */
             decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
             if (aws_cbor_decoder_peek_type(decoder, &next_type)) {
-                return AWS_OP_ERR;
+                goto error;
             }
-            ++decoder->current_depth;
             while (next_type != AWS_CBOR_TYPE_BREAK) {
                 if (aws_cbor_decoder_consume_next_whole_data_item(decoder)) {
-                    --decoder->current_depth;
-                    return AWS_OP_ERR;
+                    goto error;
                 }
                 if (aws_cbor_decoder_peek_type(decoder, &next_type)) {
-                    --decoder->current_depth;
-                    return AWS_OP_ERR;
+                    goto error;
                 }
             }
-            --decoder->current_depth;
             break;
         }
 
@@ -717,9 +695,13 @@ int aws_cbor_decoder_consume_next_whole_data_item(struct aws_cbor_decoder *decod
             break;
     }
 
-    /* Done, just reset the cache */
     decoder->cached_context.type = AWS_CBOR_TYPE_UNKNOWN;
+    --decoder->current_depth;
     return AWS_OP_SUCCESS;
+
+error:
+    --decoder->current_depth;
+    return AWS_OP_ERR;
 }
 
 int aws_cbor_decoder_consume_next_single_element(struct aws_cbor_decoder *decoder) {
