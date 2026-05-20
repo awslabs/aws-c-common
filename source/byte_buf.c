@@ -1265,6 +1265,27 @@ bool aws_byte_cursor_read_be16(struct aws_byte_cursor *cur, uint16_t *var) {
 }
 
 /**
+ * Reads a 16-bit value in little endian byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_le16(struct aws_byte_cursor *cur, uint16_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, 2);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_letoh16(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
+/**
  * Reads an unsigned 24-bit value (3 bytes) in network byte order from cur,
  * and places it in host byte order into 32-bit var.
  * Ex: if cur's next 3 bytes are {0xAA, 0xBB, 0xCC}, then var becomes 0x00AABBCC.
@@ -1314,9 +1335,39 @@ bool aws_byte_cursor_read_be32(struct aws_byte_cursor *cur, uint32_t *var) {
     return rv;
 }
 
+/**
+ * Reads a 32-bit value in little endian byte order from cur, and places it in host
+ * byte order into var.
+ *
+ * On success, returns true and updates the cursor pointer/length accordingly.
+ * If there is insufficient space in the cursor, returns false, leaving the
+ * cursor unchanged.
+ */
+bool aws_byte_cursor_read_le32(struct aws_byte_cursor *cur, uint32_t *var) {
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(cur));
+    AWS_PRECONDITION(AWS_OBJECT_PTR_IS_WRITABLE(var));
+    bool rv = aws_byte_cursor_read(cur, var, 4);
+
+    if (AWS_LIKELY(rv)) {
+        *var = aws_letoh32(*var);
+    }
+
+    AWS_POSTCONDITION(aws_byte_cursor_is_valid(cur));
+    return rv;
+}
+
 bool aws_byte_cursor_read_be_i32(struct aws_byte_cursor *cur, int32_t *var) {
     uint32_t uval;
     bool rv = aws_byte_cursor_read_be32(cur, &uval);
+    if (AWS_LIKELY(rv)) {
+        memcpy(var, &uval, sizeof(uval));
+    }
+    return rv;
+}
+
+bool aws_byte_cursor_read_le_i32(struct aws_byte_cursor *cur, int32_t *var) {
+    uint32_t uval;
+    bool rv = aws_byte_cursor_read_le32(cur, &uval);
     if (AWS_LIKELY(rv)) {
         memcpy(var, &uval, sizeof(uval));
     }
