@@ -2,6 +2,9 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+
+// For timegm() on glibc/musl
+#define _DEFAULT_SOURCE
 #include <aws/common/time.h>
 
 #if defined(__ANDROID__) && !defined(__LP64__)
@@ -58,11 +61,6 @@ time_t aws_timegm(struct tm *const t) {
 }
 
 #else
-
-#    ifndef __APPLE__
-/* glibc.... you disappoint me.. */
-extern time_t timegm(struct tm *);
-#    endif
 
 time_t aws_timegm(struct tm *const t) {
     return timegm(t);
