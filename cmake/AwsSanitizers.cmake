@@ -4,6 +4,7 @@
 include(CheckCCompilerFlag)
 
 option(ENABLE_SANITIZERS "Enable sanitizers in debug builds" OFF)
+option(ENABLE_SANITIZER_RECOVERY "Enable sanitizer recovery mode" OFF)
 set(SANITIZERS "address;undefined" CACHE STRING "List of sanitizers to build with")
 
 # This function checks if a sanitizer is available
@@ -69,6 +70,15 @@ function(aws_add_sanitizers target)
     if(PRESENT_SANITIZERS)
         target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
         target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+
+        if(NOT ENABLE_SANITIZER_RECOVERY)
+            # Disable error recovery mode for sanitizers when the compiler supports it.
+            set(sanitizer_flag "-fno-sanitize-recover=all")
+            check_c_compiler_flag(${sanitizer_flag} HAS_NO_SANITIZE_RECOVER_ALL)
+            if(HAS_NO_SANITIZE_RECOVER_ALL)
+                target_compile_options(${target} PRIVATE ${sanitizer_flag})
+            endif()
+        endif()
 
         string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
         set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
