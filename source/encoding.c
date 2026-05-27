@@ -440,10 +440,7 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
     }
 
     int64_t block_count = (int64_t)(to_decode->len + 3) / 4;
-    if (block_count == 0) {
-        output->len = 0;
-        return AWS_OP_SUCCESS;
-    }
+
     size_t remainder = to_decode->len % 4;
     size_t string_index = 0;
     uint8_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
@@ -502,7 +499,7 @@ int aws_base64_decode(const struct aws_byte_cursor *AWS_RESTRICT to_decode, stru
     output->len = decoded_length;
 
     /* Sanity check: bytes written must match the precomputed decoded length */
-    if ((size_t)buffer_index != decoded_length) {
+    if (buffer_index >= 0 && (size_t)buffer_index != decoded_length) {
         output->len = 0;
         return aws_raise_error(AWS_ERROR_INVALID_BASE64_STR);
     }
