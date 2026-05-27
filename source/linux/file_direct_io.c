@@ -139,3 +139,89 @@ int aws_file_path_read_from_offset_direct_io(
     return aws_file_path_read_from_offset_direct_io_with_chunk_size(
         file_path, offset, max_read_length, AWS_FILE_MAX_READ_CHUNK, output_buf, out_actual_read);
 }
+
+int aws_file_path_write_to_offset_direct_io(
+    const struct aws_string *file_path,
+    uint64_t offset,
+    struct aws_byte_cursor data) {
+
+    if (O_DIRECT == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on this platform");
+        return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+    }
+
+    if (data.len == 0) {
+        return AWS_OP_SUCCESS;
+    }
+
+    int rt_code = AWS_OP_ERR;
+    int fd = open(aws_string_c_str(file_path), O_WRONLY | O_DIRECT);
+    if (fd == -1) {
+        int errno_value = errno;
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "Failed to open file %s for writing with O_DIRECT, errno: %d",
+            aws_string_c_str(file_path),
+            errno_value);
+        aws_translate_and_raise_io_error(errno_value);
+        goto cleanup;
+    }
+
+    if (lseek(fd, (off_t)offset, SEEK_SET) == -1) {
+        int errno_value = errno;
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "Failed to seek to position %llu in file %s, errno: %d",
+            (unsigned long long)offset,
+            aws_string_c_str(file_path),
+            errno_value);
+        aws_translate_and_raise_io_error(errno_value);
+        goto cleanup;
+    }
+
+    size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
+
+    /* Require length to be page-aligned — caller handles unaligned final writes */
+    if (data.len % page_size != 0) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "aws_file_path_write_to_offset_direct_io: data.len %zu is not aligned to page size %zu",
+            data.len,
+            page_size);
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        goto cleanup;
+    }
+
+    /* Write with O_DIRECT */
+    size_t total_written = 0;
+    while (total_written < data.len) {
+        size_t chunk_size = aws_min_size(data.len - total_written, AWS_FILE_MAX_READ_CHUNK);
+        ssize_t written = write(fd, data.ptr + total_written, chunk_size);
+        if (written == -1) {
+            int errno_value = errno;
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_GENERAL,
+                "Failed to write %zu bytes to file %s with O_DIRECT, errno: %d",
+                chunk_size,
+                aws_string_c_str(file_path),
+                errno_value);
+            aws_translate_and_raise_io_error(errno_value);
+            goto cleanup;
+        }
+        total_written += (size_t)written;
+    }
+
+    rt_code = AWS_OP_SUCCESS;
+cleanup:
+    if (fd != -1) {
+        close(fd);
+    }
+    return rt_code;
+}
+
+bool aws_file_direct_io_is_supported(void) {
+    /* O_DIRECT may be defined as 0 in some Linux build environments (e.g. glibc that doesn't
+     * expose it). When that's the case, opening with O_DIRECT is a no-op and direct I/O is
+     * not actually available. */
+    return O_DIRECT != 0;
+}

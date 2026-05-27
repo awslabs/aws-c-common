@@ -12,6 +12,9 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <fcntl.h>
+#ifdef __linux__
+#    include <unistd.h>
+#endif
 
 static int s_aws_fopen_test_helper(char *file_path, char *content) {
     char read_result[100];
@@ -895,3 +898,148 @@ static int s_test_file_path_read_from_offset_direct_io_chunking(struct aws_alloc
 }
 
 AWS_TEST_CASE(test_file_path_read_from_offset_direct_io_chunking, s_test_file_path_read_from_offset_direct_io_chunking)
+
+static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+#if defined(__linux__)
+    size_t page_size = aws_system_info_page_size();
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(page_size);
+    ASSERT_NOT_NULL(aligned_alloc);
+
+    char file_path_cstr[] = "test_file_path_write_to_offset_direct_io.txt";
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, file_path_cstr);
+
+    /* Create the file first (function requires it to exist) */
+    FILE *f = aws_fopen(file_path_cstr, "wb");
+    ASSERT_NOT_NULL(f);
+    fclose(f);
+
+    /* Test 1: Write 2 aligned pages of 'A' at offset 0 */
+    size_t two_pages = page_size * 2;
+    struct aws_byte_buf write_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&write_buf, aligned_alloc, two_pages));
+    memset(write_buf.buffer, 'A', two_pages);
+    write_buf.len = two_pages;
+    struct aws_byte_cursor write_cursor = aws_byte_cursor_from_buf(&write_buf);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, 0, write_cursor));
+
+    /* Read back and verify */
+    struct aws_byte_buf read_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&read_buf, aligned_alloc, two_pages));
+    size_t actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io(file_path, 0, two_pages, &read_buf, &actual_read));
+    ASSERT_UINT_EQUALS(two_pages, actual_read);
+    for (size_t i = 0; i < two_pages; i++) {
+        ASSERT_UINT_EQUALS('A', read_buf.buffer[i]);
+    }
+    aws_byte_buf_clean_up(&read_buf);
+
+    /* Test 2: Write 1 page of 'C' at page-aligned offset (second page) */
+    struct aws_byte_buf overwrite_buf;
+    ASSERT_SUCCESS(aws_byte_buf_init(&overwrite_buf, aligned_alloc, page_size));
+    memset(overwrite_buf.buffer, 'C', page_size);
+    overwrite_buf.len = page_size;
+    struct aws_byte_cursor overwrite_cursor = aws_byte_cursor_from_buf(&overwrite_buf);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, (uint64_t)page_size, overwrite_cursor));
+
+    /* Read back and verify first page still 'A', second page now 'C' */
+    ASSERT_SUCCESS(aws_byte_buf_init(&read_buf, aligned_alloc, two_pages));
+    actual_read = 0;
+    ASSERT_SUCCESS(aws_file_path_read_from_offset_direct_io(file_path, 0, two_pages, &read_buf, &actual_read));
+    ASSERT_UINT_EQUALS(two_pages, actual_read);
+    for (size_t i = 0; i < page_size; i++) {
+        ASSERT_UINT_EQUALS('A', read_buf.buffer[i]);
+    }
+    for (size_t i = page_size; i < two_pages; i++) {
+        ASSERT_UINT_EQUALS('C', read_buf.buffer[i]);
+    }
+    aws_byte_buf_clean_up(&read_buf);
+    aws_byte_buf_clean_up(&overwrite_buf);
+
+    /* Test 3: Unaligned length MUST fail */
+    struct aws_byte_buf unaligned_buf;
+    size_t unaligned_len = page_size + 37;
+    ASSERT_SUCCESS(aws_byte_buf_init(&unaligned_buf, aligned_alloc, unaligned_len));
+    memset(unaligned_buf.buffer, 'X', unaligned_len);
+    unaligned_buf.len = unaligned_len;
+    struct aws_byte_cursor unaligned_cursor = aws_byte_cursor_from_buf(&unaligned_buf);
+    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(file_path, 0, unaligned_cursor));
+    ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_ARGUMENT, aws_last_error());
+    aws_byte_buf_clean_up(&unaligned_buf);
+
+    /* Test 4: File does not exist MUST fail */
+    struct aws_string *nonexistent = aws_string_new_from_c_str(allocator, "nonexistent_direct_io_file.txt");
+    struct aws_byte_cursor one_page_cursor = {.ptr = write_buf.buffer, .len = page_size};
+    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(nonexistent, 0, one_page_cursor));
+    aws_string_destroy(nonexistent);
+
+    /* Test 5: Mixed O_DIRECT + buffered writes at non-overlapping offsets, verify all data correct.
+     * Simulates the download pattern: O_DIRECT for aligned parts, buffered write for last part tail. */
+    remove(file_path_cstr);
+    f = aws_fopen(file_path_cstr, "wb");
+    ASSERT_NOT_NULL(f);
+    fclose(f);
+
+    /* Write 3 pages with O_DIRECT: page 0='D', page 1='E', page 2='F' */
+    memset(write_buf.buffer, 'D', page_size);
+    write_cursor = (struct aws_byte_cursor){.ptr = write_buf.buffer, .len = page_size};
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, 0, write_cursor));
+
+    memset(write_buf.buffer, 'E', page_size);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, (uint64_t)page_size, write_cursor));
+
+    memset(write_buf.buffer, 'F', page_size);
+    ASSERT_SUCCESS(aws_file_path_write_to_offset_direct_io(file_path, (uint64_t)(page_size * 2), write_cursor));
+
+    /* Write unaligned tail (37 bytes of 'G') at offset page_size*3 using buffered write */
+    size_t tail_len = 37;
+    uint8_t tail_data[37];
+    memset(tail_data, 'G', tail_len);
+    int fd = open(file_path_cstr, O_WRONLY);
+    ASSERT_TRUE(fd >= 0);
+    ASSERT_TRUE(lseek(fd, (off_t)(page_size * 3), SEEK_SET) != -1);
+    ssize_t written = write(fd, tail_data, tail_len);
+    ASSERT_INT_EQUALS((int)tail_len, (int)written);
+    close(fd);
+
+    /* Read entire file back and verify all regions */
+    size_t total_size = page_size * 3 + tail_len;
+    FILE *verify_file = aws_fopen(file_path_cstr, "rb");
+    ASSERT_NOT_NULL(verify_file);
+    uint8_t *verify_buf = aws_mem_calloc(allocator, 1, total_size);
+    ASSERT_UINT_EQUALS(total_size, fread(verify_buf, 1, total_size, verify_file));
+    fclose(verify_file);
+
+    for (size_t i = 0; i < page_size; i++) {
+        ASSERT_UINT_EQUALS('D', verify_buf[i]);
+    }
+    for (size_t i = page_size; i < page_size * 2; i++) {
+        ASSERT_UINT_EQUALS('E', verify_buf[i]);
+    }
+    for (size_t i = page_size * 2; i < page_size * 3; i++) {
+        ASSERT_UINT_EQUALS('F', verify_buf[i]);
+    }
+    for (size_t i = page_size * 3; i < total_size; i++) {
+        ASSERT_UINT_EQUALS('G', verify_buf[i]);
+    }
+    aws_mem_release(allocator, verify_buf);
+
+    /* Cleanup */
+    aws_byte_buf_clean_up(&write_buf);
+    remove(file_path_cstr);
+    aws_string_destroy(file_path);
+    aws_explicit_aligned_allocator_destroy(aligned_alloc);
+#else
+    (void)allocator;
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, "dummy.txt");
+    struct aws_byte_cursor empty = {.ptr = NULL, .len = 0};
+    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(file_path, 0, empty));
+    ASSERT_UINT_EQUALS(AWS_ERROR_UNSUPPORTED_OPERATION, aws_last_error());
+    aws_string_destroy(file_path);
+#endif
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_file_path_write_to_offset_direct_io, s_test_file_path_write_to_offset_direct_io)
