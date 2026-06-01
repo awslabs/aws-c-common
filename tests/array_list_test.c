@@ -1056,3 +1056,54 @@ static int s_array_list_empty_sort_fn(struct aws_allocator *allocator, void *ctx
 }
 
 AWS_TEST_CASE(array_list_empty_sort, s_array_list_empty_sort_fn)
+
+static int s_array_list_shuffle_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_array_list list;
+    const size_t count = 20;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, allocator, count, sizeof(uint32_t)));
+
+    for (uint32_t i = 0; i < count; ++i) {
+        ASSERT_SUCCESS(aws_array_list_push_back(&list, &i));
+    }
+
+    ASSERT_SUCCESS(aws_array_list_shuffle(&list));
+
+    /* Verify it's a valid permutation: all values 0..count-1 present exactly once */
+    bool seen[20] = {false};
+    bool is_sequential = true;
+    for (size_t i = 0; i < count; ++i) {
+        uint32_t val = 0;
+        aws_array_list_get_at(&list, &val, i);
+        ASSERT_TRUE(val < count);
+        ASSERT_FALSE(seen[val]);
+        seen[val] = true;
+        if (val != (uint32_t)i) {
+            is_sequential = false;
+        }
+    }
+    /* With 20 elements, probability of identity permutation is 1/20! ~ 0 */
+    ASSERT_FALSE(is_sequential);
+
+    aws_array_list_clean_up(&list);
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(array_list_shuffle, s_array_list_shuffle_fn)
+
+static int s_array_list_shuffle_empty_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    struct aws_array_list list;
+    ASSERT_SUCCESS(aws_array_list_init_dynamic(&list, allocator, 0, sizeof(uint32_t)));
+    ASSERT_SUCCESS(aws_array_list_shuffle(&list));
+
+    uint32_t val = 42;
+    ASSERT_SUCCESS(aws_array_list_push_back(&list, &val));
+    ASSERT_SUCCESS(aws_array_list_shuffle(&list));
+    uint32_t result = 0;
+    aws_array_list_get_at(&list, &result, 0);
+    ASSERT_UINT_EQUALS(42, result);
+
+    aws_array_list_clean_up(&list);
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(array_list_shuffle_empty, s_array_list_shuffle_empty_fn)

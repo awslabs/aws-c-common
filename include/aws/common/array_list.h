@@ -231,6 +231,14 @@ void aws_array_list_swap(struct aws_array_list *AWS_RESTRICT list, size_t a, siz
 AWS_COMMON_API
 void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_list_comparator_fn *compare_fn);
 
+/**
+ * Randomly shuffles the elements of the array list in place using the Fisher-Yates algorithm.
+ * Uses aws_device_random for cryptographic-quality randomness.
+ * Returns AWS_OP_SUCCESS, or an error code if the random source is unavailable.
+ */
+AWS_COMMON_API
+int aws_array_list_shuffle(struct aws_array_list *AWS_RESTRICT list);
+
 AWS_EXTERN_C_END
 #ifndef AWS_NO_STATIC_IMPL
 #    include <aws/common/array_list.inl>

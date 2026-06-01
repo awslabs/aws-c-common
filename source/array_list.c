@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/array_list.h>
+#include <aws/common/device_random.h>
 #include <aws/common/private/array_list.h>
 
 #include <stdlib.h> /* qsort */
@@ -216,4 +217,22 @@ void aws_array_list_sort(struct aws_array_list *AWS_RESTRICT list, aws_array_lis
         qsort(list->data, aws_array_list_length(list), list->item_size, compare_fn);
     }
     AWS_POSTCONDITION(aws_array_list_is_valid(list));
+}
+
+int aws_array_list_shuffle(struct aws_array_list *AWS_RESTRICT list) {
+    AWS_PRECONDITION(aws_array_list_is_valid(list));
+    size_t len = aws_array_list_length(list);
+    if (len <= 1) {
+        return AWS_OP_SUCCESS;
+    }
+    for (size_t i = len - 1; i > 0; --i) {
+        uint64_t rand_val = 0;
+        if (aws_device_random_u64(&rand_val)) {
+            return aws_raise_error(aws_last_error());
+        }
+        size_t j = (size_t)(rand_val % (i + 1));
+        aws_array_list_swap(list, i, j);
+    }
+    AWS_POSTCONDITION(aws_array_list_is_valid(list));
+    return AWS_OP_SUCCESS;
 }
