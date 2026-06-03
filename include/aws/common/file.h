@@ -279,8 +279,8 @@ int aws_file_path_read_from_offset_direct_io_with_chunk_size(
  *
  * Notes:
  * - ONLY supports linux for now and raises AWS_ERROR_UNSUPPORTED_OPERATION on all other platforms.
- * - The offset, data.len, and data.ptr all need to be aligned with the page size. Otherwise,
- *   AWS_ERROR_INVALID_ARGUMENT will be raised.
+ * - The offset, data.len, and data.ptr all need to be aligned with the page size (a multiple of page size).
+ *      Otherwise, AWS_ERROR_INVALID_ARGUMENT will be raised.
  * - check the NOTES for O_DIRECT in https://man7.org/linux/man-pages/man2/openat.2.html
  *
  * @param file_path         The file path to write to.

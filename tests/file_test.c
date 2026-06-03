@@ -12,9 +12,6 @@
 #include <aws/testing/aws_test_harness.h>
 
 #include <fcntl.h>
-#ifdef __linux__
-#    include <unistd.h>
-#endif
 
 static int s_aws_fopen_test_helper(char *file_path, char *content) {
     char read_result[100];
@@ -604,7 +601,7 @@ static void s_file_path_read_from_offset_tester_cleanup(struct aws_file_path_rea
 static int s_test_file_path_read_from_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-#if defined(__linux__)
+#if defined(AWS_OS_LINUX)
     struct aws_file_path_read_from_offset_tester tester;
     char file_path[] = "test_file_path_read_from_offset_direct_io.txt";
 
@@ -808,7 +805,7 @@ AWS_TEST_CASE(test_file_path_read_from_offset, s_test_file_path_read_from_offset
 static int s_test_file_path_read_from_offset_direct_io_chunking(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-#if defined(__linux__)
+#if defined(AWS_OS_LINUX)
     struct aws_file_path_read_from_offset_tester tester;
     char file_path[] = "test_direct_io_chunking.txt";
     /* Instead of creating a 2GiB file to test, we use the separate API that allows us to pass in the chunk size. */
@@ -902,7 +899,7 @@ AWS_TEST_CASE(test_file_path_read_from_offset_direct_io_chunking, s_test_file_pa
 static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-#if defined(__linux__)
+#if defined(AWS_OS_LINUX)
     size_t page_size = aws_system_info_page_size();
     struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(page_size);
     ASSERT_NOT_NULL(aligned_alloc);

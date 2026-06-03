@@ -179,19 +179,6 @@ int aws_file_path_write_to_offset_direct_io(
         goto cleanup;
     }
 
-    size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
-
-    /* Require length to be page-aligned — caller handles unaligned final writes */
-    if (data.len % page_size != 0) {
-        AWS_LOGF_ERROR(
-            AWS_LS_COMMON_GENERAL,
-            "aws_file_path_write_to_offset_direct_io: data.len %zu is not aligned to page size %zu",
-            data.len,
-            page_size);
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        goto cleanup;
-    }
-
     /* Write with O_DIRECT */
     size_t total_written = 0;
     while (total_written < data.len) {
