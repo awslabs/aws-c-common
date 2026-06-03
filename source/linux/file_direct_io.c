@@ -60,12 +60,12 @@ int aws_file_path_read_from_offset_direct_io_with_chunk_size(
      * pointer, and transfer length. Misaligned I/Os can either fail with EINVAL or silently
      * fall back to buffered I/O depending on the filesystem and kernel version. We enforce
      * alignment here to guarantee consistent, predictable behavior. */
-    if (offset % page_size != 0 || (uintptr_t)(output_buf->buffer + output_buf->len) % page_size != 0 ||
-        length % page_size != 0) {
+    /* Length is not forced for the case of reading last part to end of stream cannot align. */
+    if (offset % page_size != 0 || (uintptr_t)(output_buf->buffer + output_buf->len) % page_size != 0) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL,
             "aws_file_path_read_from_offset_direct_io: offset %" PRIu64
-            ", buffer pointer %p, and length %zu must all be aligned to page size %zu",
+            ", buffer pointer %p must all be aligned to page size %zu",
             offset,
             (void *)(output_buf->buffer + output_buf->len),
             length,

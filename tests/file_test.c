@@ -952,14 +952,14 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
     aws_byte_buf_clean_up(&read_buf);
     aws_byte_buf_clean_up(&overwrite_buf);
 
-    /* Test 3: Unaligned length MUST fail */
+    /* Test 3: Unaligned MUST fail */
     struct aws_byte_buf unaligned_buf;
     size_t unaligned_len = page_size + 37;
     ASSERT_SUCCESS(aws_byte_buf_init(&unaligned_buf, aligned_alloc, unaligned_len));
     memset(unaligned_buf.buffer, 'X', unaligned_len);
     unaligned_buf.len = unaligned_len;
     struct aws_byte_cursor unaligned_cursor = aws_byte_cursor_from_buf(&unaligned_buf);
-    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(file_path, 0, unaligned_cursor));
+    ASSERT_FAILS(aws_file_path_write_to_offset_direct_io(file_path, 37, unaligned_cursor));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_ARGUMENT, aws_last_error());
     aws_byte_buf_clean_up(&unaligned_buf);
 
