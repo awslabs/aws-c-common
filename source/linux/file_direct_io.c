@@ -9,9 +9,11 @@
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
 #include <aws/common/string.h>
+#include <aws/common/system_info.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -50,6 +52,25 @@ int aws_file_path_read_from_offset_direct_io_with_chunk_size(
     size_t length = aws_min_size(available_len, max_read_length);
     if (length == 0) {
         return AWS_OP_SUCCESS; /* Nothing to do. */
+    }
+
+    size_t page_size = aws_system_info_page_size();
+
+    /* Per open(2), O_DIRECT may impose alignment restrictions on the file offset, buffer
+     * pointer, and transfer length. Misaligned I/Os can either fail with EINVAL or silently
+     * fall back to buffered I/O depending on the filesystem and kernel version. We enforce
+     * alignment here to guarantee consistent, predictable behavior. */
+    if (offset % page_size != 0 || (uintptr_t)(output_buf->buffer + output_buf->len) % page_size != 0 ||
+        length % page_size != 0) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "aws_file_path_read_from_offset_direct_io: offset %" PRIu64
+            ", buffer pointer %p, and length %zu must all be aligned to page size %zu",
+            offset,
+            (void *)(output_buf->buffer + output_buf->len),
+            length,
+            page_size);
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     int rt_code = AWS_OP_ERR;
@@ -152,6 +173,24 @@ int aws_file_path_write_to_offset_direct_io(
 
     if (data.len == 0) {
         return AWS_OP_SUCCESS;
+    }
+
+    size_t page_size = aws_system_info_page_size();
+
+    /* Per open(2), O_DIRECT may impose alignment restrictions on the file offset, buffer
+     * pointer, and transfer length. Misaligned I/Os can either fail with EINVAL or silently
+     * fall back to buffered I/O depending on the filesystem and kernel version. We enforce
+     * alignment here to guarantee consistent, predictable behavior. */
+    if (offset % page_size != 0 || (uintptr_t)data.ptr % page_size != 0 || data.len % page_size != 0) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "aws_file_path_write_to_offset_direct_io: offset %" PRIu64
+            ", buffer pointer %p, and data.len %zu must all be aligned to page size %zu",
+            offset,
+            (void *)data.ptr,
+            data.len,
+            page_size);
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
     int rt_code = AWS_OP_ERR;
