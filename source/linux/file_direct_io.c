@@ -68,7 +68,6 @@ int aws_file_path_read_from_offset_direct_io_with_chunk_size(
             ", buffer pointer %p must all be aligned to page size %zu",
             offset,
             (void *)(output_buf->buffer + output_buf->len),
-            length,
             page_size);
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
