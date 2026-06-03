@@ -11,8 +11,6 @@
 
 #include <aws/testing/aws_test_harness.h>
 
-#include <fcntl.h>
-
 static int s_aws_fopen_test_helper(char *file_path, char *content) {
     char read_result[100];
     AWS_ZERO_ARRAY(read_result);
@@ -993,12 +991,12 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
     size_t tail_len = 37;
     uint8_t tail_data[37];
     memset(tail_data, 'G', tail_len);
-    int fd = open(file_path_cstr, O_WRONLY);
-    ASSERT_TRUE(fd >= 0);
-    ASSERT_TRUE(lseek(fd, (off_t)(page_size * 3), SEEK_SET) != -1);
-    ssize_t written = write(fd, tail_data, tail_len);
+    FILE *tail_file = aws_fopen(file_path_cstr, "r+b");
+    ASSERT_NOT_NULL(tail_file);
+    ASSERT_TRUE(fseek(tail_file, (long)(page_size * 3), SEEK_SET) == 0);
+    size_t written = fwrite(tail_data, 1, tail_len, tail_file);
     ASSERT_INT_EQUALS((int)tail_len, (int)written);
-    close(fd);
+    fclose(tail_file);
 
     /* Read entire file back and verify all regions */
     size_t total_size = page_size * 3 + tail_len;
