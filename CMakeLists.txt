@@ -193,6 +193,14 @@ aws_set_common_properties(${PROJECT_NAME} NO_WEXTRA)
 aws_prepare_symbol_visibility_args(${PROJECT_NAME} "AWS_COMMON")
 target_compile_options(${PROJECT_NAME} PUBLIC ${PLATFORM_CFLAGS})
 
+if (NOT USE_CPU_EXTENSIONS)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DHAS_CPU_EXTENSTIONS=0)
+    message(STATUS "Adding -DHAS_CPU_EXTENSTIONS=0 to target ${PROJECT_NAME}")
+else ()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DHAS_CPU_EXTENSTIONS=1)
+    message(STATUS "Adding -DHAS_CPU_EXTENSTIONS=1 to target ${PROJECT_NAME}")
+endif ()
+
 # Check public headers, to ensure they're safe for any 3rdparty to include
 set(HEADERS_TO_CHECK ${AWS_COMMON_HEADERS})
 
