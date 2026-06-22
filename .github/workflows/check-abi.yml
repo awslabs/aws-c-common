@@ -1,0 +1,42 @@
+name: Check ABI compliance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: check-abi-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PACKAGE_NAME: aws-c-common
+  CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
+  AWS_DEFAULT_REGION: us-east-1
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  check-abi:
+    name: check-abi
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.CRT_CI_ROLE }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check ABI
+        # Pointing at the fork branch while the builder change is in review.
+        # Switch to awslabs/aws-crt-builder/.github/actions/check-abi@main once merged.
+        uses: awslabs/aws-crt-builder/.github/actions/check-abi@abi-check
+        with:
+          lib-name: ${{ env.PACKAGE_NAME }}
+          builder-version: abi-check
+          builder-source: channels
