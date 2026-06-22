@@ -569,6 +569,7 @@ add_test_case(cbor_encode_decode_indef_test)
 add_test_case(cbor_decode_error_handling_test)
 add_test_case(cbor_decode_resource_limit_container_size_test)
 add_test_case(cbor_decode_resource_limit_depth_test)
+add_test_case(cbor_decode_remaining_length_after_peek_test)
 
 generate_test_driver(${PROJECT_NAME}-tests)
 
