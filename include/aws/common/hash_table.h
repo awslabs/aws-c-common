@@ -86,8 +86,10 @@ struct aws_hash_iter {
      * Reserving extra fields for binary compatibility with future expansion of
      * iterator in case hash table implementation changes.
      */
+    /* ABI-BREAK TEST #4 (remove member): dropping unused_1 shrinks the struct
+     * and shifts unused_2; callers compiled against the old layout read the
+     * wrong offset for the trailing field. */
     int unused_0;
-    void *unused_1;
     void *unused_2;
 };
 
