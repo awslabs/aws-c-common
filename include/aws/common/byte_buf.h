@@ -34,8 +34,8 @@ AWS_PUSH_SANE_WARNING_LEVEL
  *   AWS_ERROR_INVALID_ARGUMENT when called on such a buffer.
  *
  * Callers that may receive a buffer of either kind (e.g. from a buffer
- * pool ticket) should use aws_byte_buf_append_dynamic_or_static, which
- * selects the right append path automatically.
+ * pool ticket) should use aws_byte_buf_append_auto, which selects
+ * the right append path automatically.
  */
 struct aws_byte_buf {
     /* do not reorder this, this struct lines up nicely with windows buffer structures--saving us allocations.*/
@@ -447,7 +447,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
  * into itself.
  */
 AWS_COMMON_API
-int aws_byte_buf_append_dynamic_or_static(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
+int aws_byte_buf_append_auto(struct aws_byte_buf *to, const struct aws_byte_cursor *from);
 
 /**
  * Copies `from` to `to`. If `to` is too small, the buffer will be grown appropriately and

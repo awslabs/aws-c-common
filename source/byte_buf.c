@@ -760,7 +760,7 @@ int aws_byte_buf_append_dynamic(struct aws_byte_buf *to, const struct aws_byte_c
     return s_aws_byte_buf_append_dynamic(to, from, false);
 }
 
-int aws_byte_buf_append_dynamic_or_static(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
+int aws_byte_buf_append_auto(struct aws_byte_buf *to, const struct aws_byte_cursor *from) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(to));
     AWS_PRECONDITION(aws_byte_cursor_is_valid(from));
 
