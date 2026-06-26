@@ -632,6 +632,81 @@ static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void 
 }
 AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
 
+static int s_test_byte_buf_append_dynamic_or_static(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    uint8_t src_bytes[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+    struct aws_byte_cursor src = aws_byte_cursor_from_array(src_bytes, sizeof(src_bytes));
+
+    /*
+     * Case 1: growable buffer (allocator != NULL) — append_dynamic_or_static
+     * must grow the buffer when needed, matching aws_byte_buf_append_dynamic.
+     */
+    {
+        struct aws_byte_buf growable;
+        ASSERT_SUCCESS(aws_byte_buf_init(&growable, allocator, 4));
+        ASSERT_INT_EQUALS(0, growable.len);
+        ASSERT_INT_EQUALS(4, growable.capacity);
+
+        /* Source is 8 bytes; buffer capacity is 4 — must grow. */
+        ASSERT_SUCCESS(aws_byte_buf_append_dynamic_or_static(&growable, &src));
+        ASSERT_INT_EQUALS(8, growable.len);
+        ASSERT_TRUE(growable.capacity >= 8);
+        ASSERT_BIN_ARRAYS_EQUALS(src_bytes, sizeof(src_bytes), growable.buffer, growable.len);
+
+        aws_byte_buf_clean_up(&growable);
+    }
+
+    /*
+     * Case 2: fixed-size buffer (allocator == NULL) where the source
+     * fits — append_dynamic_or_static must succeed via the static path.
+     */
+    {
+        uint8_t backing[16] = {0};
+        struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        ASSERT_PTR_EQUALS(NULL, fixed.allocator);
+
+        ASSERT_SUCCESS(aws_byte_buf_append_dynamic_or_static(&fixed, &src));
+        ASSERT_INT_EQUALS(8, fixed.len);
+        ASSERT_INT_EQUALS(16, fixed.capacity);
+        ASSERT_BIN_ARRAYS_EQUALS(src_bytes, sizeof(src_bytes), fixed.buffer, fixed.len);
+
+        /* No clean_up — fixed buffer is stack-backed. */
+    }
+
+    /*
+     * Case 3: fixed-size buffer (allocator == NULL) where the source
+     * does NOT fit — append_dynamic_or_static must fail with
+     * AWS_ERROR_DEST_COPY_TOO_SMALL (loud failure, no realloc attempt).
+     */
+    {
+        uint8_t backing[4] = {0};
+        struct aws_byte_buf too_small = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        ASSERT_PTR_EQUALS(NULL, too_small.allocator);
+
+        ASSERT_FAILS(aws_byte_buf_append_dynamic_or_static(&too_small, &src));
+        ASSERT_INT_EQUALS(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_last_error());
+        ASSERT_INT_EQUALS(0, too_small.len);
+        ASSERT_INT_EQUALS(4, too_small.capacity);
+    }
+
+    /*
+     * Case 4: empty source on a fixed-size buffer — should succeed
+     * without modifying state.
+     */
+    {
+        uint8_t backing[4] = {0};
+        struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        struct aws_byte_cursor empty_src = {.len = 0, .ptr = NULL};
+
+        ASSERT_SUCCESS(aws_byte_buf_append_dynamic_or_static(&fixed, &empty_src));
+        ASSERT_INT_EQUALS(0, fixed.len);
+    }
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_dynamic_or_static, s_test_byte_buf_append_dynamic_or_static)
+
 static uint8_t s_append_byte_array[] = {0xFF, 0xFE, 0xAB, 0x00, 0x55, 0x62};
 
 static int s_test_byte_buf_append_byte(struct aws_allocator *allocator, void *ctx) {
