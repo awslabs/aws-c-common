@@ -752,12 +752,12 @@ uint8_t aws_date_time_second(const struct aws_date_time *dt, bool local_time) {
     return (uint8_t)time->tm_sec;
 }
 
-bool aws_date_time_dst(const struct aws_date_time *dt, bool local_time) {
+bool aws_date_time_dst(const struct aws_date_time *dt, int local_time) {
     const struct tm *time = local_time ? &dt->local_time : &dt->gmt_time;
 
     return (bool)time->tm_isdst;
 }
 
-time_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b) {
-    return a->timestamp - b->timestamp;
+int32_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b) {
+    return (int32_t)(a->timestamp - b->timestamp);
 }
