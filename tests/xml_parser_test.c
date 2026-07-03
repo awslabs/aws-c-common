@@ -905,3 +905,86 @@ static int s_xml_parser_nested_same_name_large_depth_test(struct aws_allocator *
 }
 
 AWS_TEST_CASE(xml_parser_nested_same_name_large_depth_test, s_xml_parser_nested_same_name_large_depth_test)
+
+/*
+ * Verify that self-closing tags (<a/>) inside <a> do not increment depth count.
+ */
+const char *self_closing_same_name_doc = "<a><a/>inner</a>";
+
+static int s_xml_parser_self_closing_same_name_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct nested_node_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(self_closing_same_name_doc),
+        .on_root_encountered = s_nested_node,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected[] = "<a/>inner";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected) - 1, capture.node_body.ptr, capture.node_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_self_closing_same_name_test, s_xml_parser_self_closing_same_name_test)
+
+/*
+ * Verify that a close tag inside CDATA is not treated as the real close tag.
+ */
+const char *cdata_false_close_doc = "<data><![CDATA[</data>]]>real</data>";
+
+int s_cdata_false_close_root(struct aws_xml_node *node, void *user_data) {
+    struct nested_node_capture *capture = user_data;
+    return aws_xml_node_as_body(node, &capture->node_body);
+}
+
+static int s_xml_parser_cdata_false_close_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct nested_node_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(cdata_false_close_doc),
+        .on_root_encountered = s_cdata_false_close_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected[] = "<![CDATA[</data>]]>real";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected) - 1, capture.node_body.ptr, capture.node_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_cdata_false_close_test, s_xml_parser_cdata_false_close_test)
+
+/*
+ * Verify that an open tag inside a comment does not cause depth increment.
+ */
+const char *comment_false_open_doc = "<tag><!-- <tag> -->body</tag>";
+
+static int s_xml_parser_comment_false_open_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct nested_node_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(comment_false_open_doc),
+        .on_root_encountered = s_nested_node,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected[] = "<!-- <tag> -->body";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected) - 1, capture.node_body.ptr, capture.node_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_comment_false_open_test, s_xml_parser_comment_false_open_test)
