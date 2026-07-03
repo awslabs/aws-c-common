@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/xml_parser.h>
 #include <aws/common/clock.h>
+#include <aws/common/xml_parser.h>
 #include <aws/testing/aws_test_harness.h>
 
 const char *root_with_text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNode>TestBody</rootNode>";
