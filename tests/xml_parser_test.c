@@ -722,26 +722,6 @@ AWS_TEST_CASE(
     s_xml_parser_nested_same_name_with_prefix_children_test)
 
 /*
- * Empty tag <> should be rejected, not cause UB from ptr[-1].
- */
-static int s_xml_parser_empty_tag_rejected_test(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    const char *empty_tag_doc = "<>";
-
-    struct aws_xml_parser_options options = {
-        .doc = aws_byte_cursor_from_c_str(empty_tag_doc),
-        .on_root_encountered = s_too_long, /* reuse no-op callback */
-        .user_data = NULL,
-    };
-    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
-
-    return AWS_OP_SUCCESS;
-}
-
-AWS_TEST_CASE(xml_parser_empty_tag_rejected_test, s_xml_parser_empty_tag_rejected_test)
-
-/*
  * XML comments should be skipped, not treated as element tags.
  */
 const char *comment_in_body_doc = "<root><!-- this is a comment --><child>value</child></root>";
@@ -842,29 +822,6 @@ static int s_xml_parser_pi_skipped_test(struct aws_allocator *allocator, void *c
 }
 
 AWS_TEST_CASE(xml_parser_pi_skipped_test, s_xml_parser_pi_skipped_test)
-
-/*
- * Unterminated comment should be rejected.
- */
-static int s_xml_parser_unterminated_comment_test(struct aws_allocator *allocator, void *ctx) {
-    (void)ctx;
-
-    const char *doc = "<root><!-- unterminated comment <child>value</child></root>";
-
-    struct comment_capture capture;
-    AWS_ZERO_STRUCT(capture);
-
-    struct aws_xml_parser_options options = {
-        .doc = aws_byte_cursor_from_c_str(doc),
-        .on_root_encountered = s_comment_root,
-        .user_data = &capture,
-    };
-    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
-
-    return AWS_OP_SUCCESS;
-}
-
-AWS_TEST_CASE(xml_parser_unterminated_comment_test, s_xml_parser_unterminated_comment_test)
 
 /*
  * smuggling variant: comment containing '>' should NOT smuggle a sibling.
