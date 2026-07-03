@@ -502,6 +502,7 @@ add_test_case(xml_parser_comment_skipped_test)
 add_test_case(xml_parser_cdata_skipped_test)
 add_test_case(xml_parser_pi_skipped_test)
 add_test_case(xml_parser_comment_with_gt_test)
+add_test_case(xml_parser_nested_same_name_large_depth_test)
 
 add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)

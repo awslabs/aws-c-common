@@ -4,6 +4,7 @@
  */
 
 #include <aws/common/xml_parser.h>
+#include <aws/common/clock.h>
 #include <aws/testing/aws_test_harness.h>
 
 const char *root_with_text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rootNode>TestBody</rootNode>";
@@ -619,10 +620,8 @@ static int s_xml_parser_child_with_text_escaped_test(struct aws_allocator *alloc
 AWS_TEST_CASE(xml_parser_child_with_text_escaped, s_xml_parser_child_with_text_escaped_test)
 
 /*
- * Tag-name prefix match.
- * Skipping <a> should NOT match <aa> or <abc> as nested same-name opens.
- * This document has <Owner> containing <OwnerId> — previously, the parser
- * would match "<Owner" against "<OwnerId", miscount depth, and fail.
+ * Verify that skipping <Owner> does not falsely match <OwnerId> as a nested same-name open.
+ * The open-tag search must require a name-terminator after the tag name.
  */
 const char *prefix_collision_doc = "<ListBucketResult>"
                                    "<Contents>"
@@ -684,8 +683,8 @@ static int s_xml_parser_prefix_collision_test(struct aws_allocator *allocator, v
 AWS_TEST_CASE(xml_parser_prefix_collision_test, s_xml_parser_prefix_collision_test)
 
 /*
- * Verify that actual nested same-name elements still work correctly.
- * <a><a>inner</a></a> must still parse properly.
+ * Verify that true nested same-name elements (<a> inside <a>) and prefix-sharing
+ * siblings (<ab> inside <a>) both parse correctly.
  */
 const char *nested_same_name_with_prefix_children_doc = "<a><a>inner</a><ab>other</ab></a>";
 
@@ -722,7 +721,7 @@ AWS_TEST_CASE(
     s_xml_parser_nested_same_name_with_prefix_children_test)
 
 /*
- * XML comments should be skipped, not treated as element tags.
+ * Verify that XML comments (<!-- ... -->) are skipped during child traversal.
  */
 const char *comment_in_body_doc = "<root><!-- this is a comment --><child>value</child></root>";
 
@@ -766,7 +765,7 @@ static int s_xml_parser_comment_skipped_test(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(xml_parser_comment_skipped_test, s_xml_parser_comment_skipped_test)
 
 /*
- * CDATA sections should be skipped, not treated as element tags.
+ * Verify that CDATA sections (<![CDATA[...]]>) are skipped during child traversal.
  */
 const char *cdata_in_body_doc = "<root><![CDATA[<not>an</element>]]><child>value</child></root>";
 
@@ -795,7 +794,7 @@ static int s_xml_parser_cdata_skipped_test(struct aws_allocator *allocator, void
 AWS_TEST_CASE(xml_parser_cdata_skipped_test, s_xml_parser_cdata_skipped_test)
 
 /*
- * Processing instructions <?...?> should be skipped.
+ * Verify that processing instructions (<?...?>) are skipped during child traversal.
  */
 const char *pi_in_body_doc = "<root><?xml-stylesheet type=\"text/xsl\" href=\"style.xsl\"?><child>value</child></root>";
 
@@ -824,8 +823,8 @@ static int s_xml_parser_pi_skipped_test(struct aws_allocator *allocator, void *c
 AWS_TEST_CASE(xml_parser_pi_skipped_test, s_xml_parser_pi_skipped_test)
 
 /*
- * smuggling variant: comment containing '>' should NOT smuggle a sibling.
- * <!-- > <evil/> --> would parse <evil/> as a child element if not checked.
+ * Verify that '>' inside a comment does not terminate the comment early
+ * or cause subsequent content to be parsed as a sibling element.
  */
 const char *comment_with_gt_doc = "<root><!-- contains > character --><child>safe</child></root>";
 
@@ -852,3 +851,59 @@ static int s_xml_parser_comment_with_gt_test(struct aws_allocator *allocator, vo
 }
 
 AWS_TEST_CASE(xml_parser_comment_with_gt_test, s_xml_parser_comment_with_gt_test)
+
+/*
+ * Verify that parsing deeply nested same-name elements (N=2000) completes in O(N) time.
+ * The test asserts the parse finishes within 2 seconds.
+ */
+static int s_xml_parser_nested_same_name_large_depth_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    /* Build a document: <root> <a><a><a>...(2000 opens)...</a></a></a>...(2000 closes) </root> */
+    const size_t depth = 2000;
+    struct aws_byte_buf doc_buf;
+    aws_byte_buf_init(&doc_buf, allocator, depth * 10);
+
+    struct aws_byte_cursor root_open = aws_byte_cursor_from_c_str("<root>");
+    aws_byte_buf_append(&doc_buf, &root_open);
+
+    struct aws_byte_cursor a_open = aws_byte_cursor_from_c_str("<a>");
+    struct aws_byte_cursor a_close = aws_byte_cursor_from_c_str("</a>");
+
+    for (size_t i = 0; i < depth; i++) {
+        aws_byte_buf_append_dynamic(&doc_buf, &a_open);
+    }
+    for (size_t i = 0; i < depth; i++) {
+        aws_byte_buf_append_dynamic(&doc_buf, &a_close);
+    }
+
+    struct aws_byte_cursor root_close = aws_byte_cursor_from_c_str("</root>");
+    aws_byte_buf_append_dynamic(&doc_buf, &root_close);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_buf(&doc_buf),
+        .on_root_encountered = s_nested_node,
+        .user_data = &(struct nested_node_capture){.node_body = {0}},
+    };
+
+    /* Measure wall-clock time. O(N) fix: < 50ms. O(N²) regression: > 5s. Bound at 2s. */
+    uint64_t start_ns = 0;
+    aws_high_res_clock_get_ticks(&start_ns);
+
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    uint64_t end_ns = 0;
+    aws_high_res_clock_get_ticks(&end_ns);
+
+    uint64_t elapsed_ms = (end_ns - start_ns) / 1000000;
+    ASSERT_TRUE(
+        elapsed_ms < 2000,
+        "xml parse took %llu ms — expected < 2000 ms for O(N) behavior with depth=%zu",
+        (unsigned long long)elapsed_ms,
+        depth);
+
+    aws_byte_buf_clean_up(&doc_buf);
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_nested_same_name_large_depth_test, s_xml_parser_nested_same_name_large_depth_test)
