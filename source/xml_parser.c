@@ -40,6 +40,11 @@ static int s_load_node_decl(
     AWS_PRECONDITION(decl_body);
     AWS_PRECONDITION(node);
 
+    if (decl_body->len == 0) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+        return aws_raise_error(AWS_ERROR_INVALID_XML);
+    }
+
     node->is_empty = decl_body->ptr[decl_body->len - 1] == '/';
 
     struct aws_array_list splits;
@@ -159,6 +164,11 @@ clean_up:
     return parser.error;
 }
 
+/* Returns true if the byte terminates an XML element name */
+static bool s_is_name_terminator(uint8_t c) {
+    return c == ' ' || c == '>' || c == '/' || c == '\t' || c == '\r' || c == '\n';
+}
+
 int s_advance_to_closing_tag(
     struct aws_xml_parser *parser,
     struct aws_xml_node *node,
@@ -224,16 +234,37 @@ int s_advance_to_closing_tag(
         AWS_ZERO_STRUCT(open_find_result);
 
         while (parser->doc.len) {
-            if (!aws_byte_cursor_find_exact(&parser->doc, &to_find_open, &open_find_result)) {
-                if (open_find_result.ptr < close_find_result.ptr) {
+            /* Only search for opens in the region before the close tag. This avoids
+             * scanning the entire remaining document when no opens exist — turning what
+             * would be O(N²) on deeply nested same-name elements into O(N). */
+            size_t search_len = close_find_result.ptr - parser->doc.ptr;
+            if (search_len == 0) {
+                /* No room for opens before the close tag — consume it directly. */
+                aws_byte_cursor_advance(&parser->doc, closing_cmp_buf.len);
+                depth_count--;
+                break;
+            }
+            struct aws_byte_cursor open_search_region = aws_byte_cursor_from_array(parser->doc.ptr, search_len);
+
+            if (!aws_byte_cursor_find_exact(&open_search_region, &to_find_open, &open_find_result)) {
+                /* Verify the byte after the matched pattern is a name terminator.
+                 * Without this check, searching for "<a" would also match "<aa", "<abc", etc. */
+                const uint8_t *after_match = open_find_result.ptr + to_find_open.len;
+                size_t remaining = search_len - (open_find_result.ptr - parser->doc.ptr);
+                if (remaining > to_find_open.len && !s_is_name_terminator(*after_match)) {
+                    /* Not a real match — skip past it and keep searching */
                     size_t skip_len = open_find_result.ptr - parser->doc.ptr;
                     aws_byte_cursor_advance(&parser->doc, skip_len + 1);
-                    depth_count++;
                     continue;
                 }
+                size_t skip_len = open_find_result.ptr - parser->doc.ptr;
+                aws_byte_cursor_advance(&parser->doc, skip_len + 1);
+                depth_count++;
+                continue;
             }
-            size_t skip_len = close_find_result.ptr - parser->doc.ptr;
 
+            /* No more opens before the close — consume the close tag. */
+            size_t skip_len = close_find_result.ptr - parser->doc.ptr;
             aws_byte_cursor_advance(&parser->doc, skip_len + closing_cmp_buf.len);
             depth_count--;
             break;
@@ -291,6 +322,62 @@ int aws_xml_node_traverse(
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             aws_raise_error(AWS_ERROR_INVALID_XML);
             goto error;
+        }
+
+        /* Skip CDATA, comments, and processing instructions — they are not elements. */
+        size_t offset_to_open = next_location - parser->doc.ptr;
+        size_t remaining_from_open = parser->doc.len - offset_to_open;
+        if (remaining_from_open > 1 && *(next_location + 1) == '!') {
+            /* <!-- comment --> */
+            if (remaining_from_open > 3 && *(next_location + 2) == '-' && *(next_location + 3) == '-') {
+                struct aws_byte_cursor search_cur =
+                    aws_byte_cursor_from_array(next_location + 4, remaining_from_open - 4);
+                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("-->");
+                struct aws_byte_cursor found;
+                if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+                    AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+                    aws_raise_error(AWS_ERROR_INVALID_XML);
+                    goto error;
+                }
+                aws_byte_cursor_advance(&parser->doc, (found.ptr + 3) - parser->doc.ptr);
+                continue;
+            }
+            /* <![CDATA[ ... ]]> */
+            if (remaining_from_open > 9 && memcmp(next_location + 2, "[CDATA[", 7) == 0) {
+                struct aws_byte_cursor search_cur =
+                    aws_byte_cursor_from_array(next_location + 9, remaining_from_open - 9);
+                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("]]>");
+                struct aws_byte_cursor found;
+                if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+                    AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+                    aws_raise_error(AWS_ERROR_INVALID_XML);
+                    goto error;
+                }
+                aws_byte_cursor_advance(&parser->doc, (found.ptr + 3) - parser->doc.ptr);
+                continue;
+            }
+            /* Other <! declarations (e.g. <!DOCTYPE) — skip to closing > */
+            const uint8_t *decl_end = memchr(next_location + 2, '>', remaining_from_open - 2);
+            if (!decl_end) {
+                AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+                aws_raise_error(AWS_ERROR_INVALID_XML);
+                goto error;
+            }
+            aws_byte_cursor_advance(&parser->doc, (decl_end + 1) - parser->doc.ptr);
+            continue;
+        }
+        /* <?...?> processing instruction */
+        if (remaining_from_open > 1 && *(next_location + 1) == '?') {
+            struct aws_byte_cursor search_cur = aws_byte_cursor_from_array(next_location + 2, remaining_from_open - 2);
+            struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("?>");
+            struct aws_byte_cursor found;
+            if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+                AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+                aws_raise_error(AWS_ERROR_INVALID_XML);
+                goto error;
+            }
+            aws_byte_cursor_advance(&parser->doc, (found.ptr + 2) - parser->doc.ptr);
+            continue;
         }
 
         const uint8_t *end_location = memchr(parser->doc.ptr, '>', parser->doc.len);
