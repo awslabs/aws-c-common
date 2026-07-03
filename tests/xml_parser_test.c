@@ -853,19 +853,16 @@ static int s_xml_parser_comment_with_gt_test(struct aws_allocator *allocator, vo
 AWS_TEST_CASE(xml_parser_comment_with_gt_test, s_xml_parser_comment_with_gt_test)
 
 /*
- * Verify that parsing deeply nested same-name elements (N=2000) completes in O(N) time.
+ * Verify that parsing deeply nested same-name elements (N=20000) completes in O(N) time.
  * The test asserts the parse finishes within 2 seconds.
  */
 static int s_xml_parser_nested_same_name_large_depth_test(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    /* Build a document: <root> <a><a><a>...(2000 opens)...</a></a></a>...(2000 closes) </root> */
-    const size_t depth = 2000;
+    /* Build: <a><a><a>...(20000 opens)...</a></a></a>...(20000 closes) */
+    const size_t depth = 20000;
     struct aws_byte_buf doc_buf;
     aws_byte_buf_init(&doc_buf, allocator, depth * 10);
-
-    struct aws_byte_cursor root_open = aws_byte_cursor_from_c_str("<root>");
-    aws_byte_buf_append(&doc_buf, &root_open);
 
     struct aws_byte_cursor a_open = aws_byte_cursor_from_c_str("<a>");
     struct aws_byte_cursor a_close = aws_byte_cursor_from_c_str("</a>");
@@ -877,16 +874,15 @@ static int s_xml_parser_nested_same_name_large_depth_test(struct aws_allocator *
         aws_byte_buf_append_dynamic(&doc_buf, &a_close);
     }
 
-    struct aws_byte_cursor root_close = aws_byte_cursor_from_c_str("</root>");
-    aws_byte_buf_append_dynamic(&doc_buf, &root_close);
+    struct nested_node_capture capture;
+    AWS_ZERO_STRUCT(capture);
 
     struct aws_xml_parser_options options = {
         .doc = aws_byte_cursor_from_buf(&doc_buf),
         .on_root_encountered = s_nested_node,
-        .user_data = &(struct nested_node_capture){.node_body = {0}},
+        .user_data = &capture,
     };
 
-    /* Measure wall-clock time. O(N) fix: < 50ms. O(N²) regression: > 5s. Bound at 2s. */
     uint64_t start_ns = 0;
     aws_high_res_clock_get_ticks(&start_ns);
 
@@ -898,9 +894,11 @@ static int s_xml_parser_nested_same_name_large_depth_test(struct aws_allocator *
     uint64_t elapsed_ms = (end_ns - start_ns) / 1000000;
     ASSERT_TRUE(
         elapsed_ms < 2000,
-        "xml parse took %llu ms — expected < 2000 ms for O(N) behavior with depth=%zu",
+        "xml parse took %llu ms — expected < 2000 ms with depth=%zu",
         (unsigned long long)elapsed_ms,
         depth);
+
+    ASSERT_TRUE(capture.node_body.len > 0);
 
     aws_byte_buf_clean_up(&doc_buf);
     return AWS_OP_SUCCESS;
