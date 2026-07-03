@@ -617,3 +617,281 @@ static int s_xml_parser_child_with_text_escaped_test(struct aws_allocator *alloc
 }
 
 AWS_TEST_CASE(xml_parser_child_with_text_escaped, s_xml_parser_child_with_text_escaped_test)
+
+/*
+ * Tag-name prefix match.
+ * Skipping <a> should NOT match <aa> or <abc> as nested same-name opens.
+ * This document has <Owner> containing <OwnerId> — previously, the parser
+ * would match "<Owner" against "<OwnerId", miscount depth, and fail.
+ */
+const char *prefix_collision_doc = "<ListBucketResult>"
+                                   "<Contents>"
+                                   "<Owner><OwnerId>abc123</OwnerId><DisplayName>test</DisplayName></Owner>"
+                                   "<Key>file.txt</Key>"
+                                   "</Contents>"
+                                   "</ListBucketResult>";
+
+struct prefix_collision_capture {
+    struct aws_byte_cursor owner_body;
+    struct aws_byte_cursor key_body;
+};
+
+int s_prefix_collision_contents_child(struct aws_xml_node *node, void *user_data) {
+    struct prefix_collision_capture *capture = user_data;
+    struct aws_byte_cursor name = aws_xml_node_get_name(node);
+    struct aws_byte_cursor owner_name = aws_byte_cursor_from_c_str("Owner");
+    struct aws_byte_cursor key_name = aws_byte_cursor_from_c_str("Key");
+
+    if (aws_byte_cursor_eq(&name, &owner_name)) {
+        return aws_xml_node_as_body(node, &capture->owner_body);
+    } else if (aws_byte_cursor_eq(&name, &key_name)) {
+        return aws_xml_node_as_body(node, &capture->key_body);
+    }
+    return AWS_OP_SUCCESS;
+}
+
+int s_prefix_collision_contents(struct aws_xml_node *node, void *user_data) {
+    return aws_xml_node_traverse(node, s_prefix_collision_contents_child, user_data);
+}
+
+int s_prefix_collision_root(struct aws_xml_node *node, void *user_data) {
+    return aws_xml_node_traverse(node, s_prefix_collision_contents, user_data);
+}
+
+static int s_xml_parser_prefix_collision_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct prefix_collision_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(prefix_collision_doc),
+        .on_root_encountered = s_prefix_collision_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_owner[] = "<OwnerId>abc123</OwnerId><DisplayName>test</DisplayName>";
+    const char expected_key[] = "file.txt";
+
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_owner, sizeof(expected_owner) - 1, capture.owner_body.ptr, capture.owner_body.len);
+    ASSERT_BIN_ARRAYS_EQUALS(expected_key, sizeof(expected_key) - 1, capture.key_body.ptr, capture.key_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_prefix_collision_test, s_xml_parser_prefix_collision_test)
+
+/*
+ * Verify that actual nested same-name elements still work correctly.
+ * <a><a>inner</a></a> must still parse properly.
+ */
+const char *nested_same_name_with_prefix_children_doc = "<a><a>inner</a><ab>other</ab></a>";
+
+struct nested_prefix_capture {
+    struct aws_byte_cursor a_body;
+};
+
+int s_nested_prefix_root(struct aws_xml_node *node, void *user_data) {
+    struct nested_prefix_capture *capture = user_data;
+    return aws_xml_node_as_body(node, &capture->a_body);
+}
+
+static int s_xml_parser_nested_same_name_with_prefix_children_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct nested_prefix_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(nested_same_name_with_prefix_children_doc),
+        .on_root_encountered = s_nested_prefix_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected[] = "<a>inner</a><ab>other</ab>";
+    ASSERT_BIN_ARRAYS_EQUALS(expected, sizeof(expected) - 1, capture.a_body.ptr, capture.a_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(
+    xml_parser_nested_same_name_with_prefix_children_test,
+    s_xml_parser_nested_same_name_with_prefix_children_test)
+
+/*
+ * Empty tag <> should be rejected, not cause UB from ptr[-1].
+ */
+static int s_xml_parser_empty_tag_rejected_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    const char *empty_tag_doc = "<>";
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(empty_tag_doc),
+        .on_root_encountered = s_too_long, /* reuse no-op callback */
+        .user_data = NULL,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_empty_tag_rejected_test, s_xml_parser_empty_tag_rejected_test)
+
+/*
+ * XML comments should be skipped, not treated as element tags.
+ */
+const char *comment_in_body_doc = "<root><!-- this is a comment --><child>value</child></root>";
+
+struct comment_capture {
+    struct aws_byte_cursor child_body;
+    struct aws_byte_cursor child_name;
+};
+
+int s_comment_child(struct aws_xml_node *node, void *user_data) {
+    struct comment_capture *capture = user_data;
+    capture->child_name = aws_xml_node_get_name(node);
+    return aws_xml_node_as_body(node, &capture->child_body);
+}
+
+int s_comment_root(struct aws_xml_node *node, void *user_data) {
+    return aws_xml_node_traverse(node, s_comment_child, user_data);
+}
+
+static int s_xml_parser_comment_skipped_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct comment_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(comment_in_body_doc),
+        .on_root_encountered = s_comment_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name[] = "child";
+    const char expected_value[] = "value";
+    ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.child_name.ptr, capture.child_name.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_value, sizeof(expected_value) - 1, capture.child_body.ptr, capture.child_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_comment_skipped_test, s_xml_parser_comment_skipped_test)
+
+/*
+ * CDATA sections should be skipped, not treated as element tags.
+ */
+const char *cdata_in_body_doc = "<root><![CDATA[<not>an</element>]]><child>value</child></root>";
+
+static int s_xml_parser_cdata_skipped_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct comment_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(cdata_in_body_doc),
+        .on_root_encountered = s_comment_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name[] = "child";
+    const char expected_value[] = "value";
+    ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.child_name.ptr, capture.child_name.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_value, sizeof(expected_value) - 1, capture.child_body.ptr, capture.child_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_cdata_skipped_test, s_xml_parser_cdata_skipped_test)
+
+/*
+ * Processing instructions <?...?> should be skipped.
+ */
+const char *pi_in_body_doc = "<root><?xml-stylesheet type=\"text/xsl\" href=\"style.xsl\"?><child>value</child></root>";
+
+static int s_xml_parser_pi_skipped_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct comment_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(pi_in_body_doc),
+        .on_root_encountered = s_comment_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name[] = "child";
+    const char expected_value[] = "value";
+    ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.child_name.ptr, capture.child_name.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_value, sizeof(expected_value) - 1, capture.child_body.ptr, capture.child_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_pi_skipped_test, s_xml_parser_pi_skipped_test)
+
+/*
+ * Unterminated comment should be rejected.
+ */
+static int s_xml_parser_unterminated_comment_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    const char *doc = "<root><!-- unterminated comment <child>value</child></root>";
+
+    struct comment_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(doc),
+        .on_root_encountered = s_comment_root,
+        .user_data = &capture,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_unterminated_comment_test, s_xml_parser_unterminated_comment_test)
+
+/*
+ * smuggling variant: comment containing '>' should NOT smuggle a sibling.
+ * <!-- > <evil/> --> would parse <evil/> as a child element if not checked.
+ */
+const char *comment_with_gt_doc = "<root><!-- contains > character --><child>safe</child></root>";
+
+static int s_xml_parser_comment_with_gt_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct comment_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(comment_with_gt_doc),
+        .on_root_encountered = s_comment_root,
+        .user_data = &capture,
+    };
+    ASSERT_SUCCESS(aws_xml_parse(allocator, &options));
+
+    const char expected_name[] = "child";
+    const char expected_value[] = "safe";
+    ASSERT_BIN_ARRAYS_EQUALS(expected_name, sizeof(expected_name) - 1, capture.child_name.ptr, capture.child_name.len);
+    ASSERT_BIN_ARRAYS_EQUALS(
+        expected_value, sizeof(expected_value) - 1, capture.child_body.ptr, capture.child_body.len);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_comment_with_gt_test, s_xml_parser_comment_with_gt_test)
