@@ -164,10 +164,17 @@ clean_up:
     return parser.error;
 }
 
-/* Returns true if the byte terminates an XML element name */
-static bool s_is_name_terminator(uint8_t c) {
+/* Returns true if the byte can follow a tag name in a start or empty-element tag. */
+static bool s_is_tag_name_boundary(uint8_t c) {
     return c == ' ' || c == '>' || c == '/' || c == '\t' || c == '\r' || c == '\n';
 }
+
+static struct aws_byte_cursor s_comment_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<!--");
+static struct aws_byte_cursor s_cdata_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<![CDATA[");
+static struct aws_byte_cursor s_pi_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<?");
+static struct aws_byte_cursor s_comment_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("-->");
+static struct aws_byte_cursor s_cdata_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("]]>");
+static struct aws_byte_cursor s_pi_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("?>");
 
 /*
  * Find `to_find` in `input`, skipping over CDATA sections, comments, and processing
@@ -180,91 +187,75 @@ static int s_find_skipping_non_elements(
     struct aws_byte_cursor *result) {
 
     while (input.len >= to_find->len) {
-        /* Check for CDATA/comment/PI at current position */
-        if (input.len > 3 && input.ptr[0] == '<') {
-            /* <!-- comment --> */
-            if (input.len > 3 && input.ptr[1] == '!' && input.ptr[2] == '-' && input.ptr[3] == '-') {
-                struct aws_byte_cursor remainder = aws_byte_cursor_from_array(input.ptr + 4, input.len - 4);
-                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("-->");
-                struct aws_byte_cursor found;
-                if (aws_byte_cursor_find_exact(&remainder, &end_marker, &found)) {
-                    return aws_raise_error(AWS_ERROR_INVALID_XML);
-                }
-                size_t skip = (found.ptr + 3) - input.ptr;
-                aws_byte_cursor_advance(&input, skip);
-                continue;
+        /* Skip CDATA, comments, and processing instructions at the current position. */
+        if (aws_byte_cursor_starts_with(&input, &s_comment_prefix)) {
+            struct aws_byte_cursor remainder = input;
+            aws_byte_cursor_advance(&remainder, s_comment_prefix.len);
+            struct aws_byte_cursor found;
+            if (aws_byte_cursor_find_exact(&remainder, &s_comment_end, &found)) {
+                return aws_raise_error(AWS_ERROR_INVALID_XML);
             }
-            /* <![CDATA[ ... ]]> */
-            if (input.len > 9 && input.ptr[1] == '!' && memcmp(input.ptr + 2, "[CDATA[", 7) == 0) {
-                struct aws_byte_cursor remainder = aws_byte_cursor_from_array(input.ptr + 9, input.len - 9);
-                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("]]>");
-                struct aws_byte_cursor found;
-                if (aws_byte_cursor_find_exact(&remainder, &end_marker, &found)) {
-                    return aws_raise_error(AWS_ERROR_INVALID_XML);
-                }
-                size_t skip = (found.ptr + 3) - input.ptr;
-                aws_byte_cursor_advance(&input, skip);
-                continue;
+            aws_byte_cursor_advance(&input, (found.ptr + s_comment_end.len) - input.ptr);
+            continue;
+        }
+        if (aws_byte_cursor_starts_with(&input, &s_cdata_prefix)) {
+            struct aws_byte_cursor remainder = input;
+            aws_byte_cursor_advance(&remainder, s_cdata_prefix.len);
+            struct aws_byte_cursor found;
+            if (aws_byte_cursor_find_exact(&remainder, &s_cdata_end, &found)) {
+                return aws_raise_error(AWS_ERROR_INVALID_XML);
             }
-            /* <?...?> processing instruction */
-            if (input.len > 1 && input.ptr[1] == '?') {
-                struct aws_byte_cursor remainder = aws_byte_cursor_from_array(input.ptr + 2, input.len - 2);
-                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("?>");
-                struct aws_byte_cursor found;
-                if (aws_byte_cursor_find_exact(&remainder, &end_marker, &found)) {
-                    return aws_raise_error(AWS_ERROR_INVALID_XML);
-                }
-                size_t skip = (found.ptr + 2) - input.ptr;
-                aws_byte_cursor_advance(&input, skip);
-                continue;
+            aws_byte_cursor_advance(&input, (found.ptr + s_cdata_end.len) - input.ptr);
+            continue;
+        }
+        if (aws_byte_cursor_starts_with(&input, &s_pi_prefix)) {
+            struct aws_byte_cursor remainder = input;
+            aws_byte_cursor_advance(&remainder, s_pi_prefix.len);
+            struct aws_byte_cursor found;
+            if (aws_byte_cursor_find_exact(&remainder, &s_pi_end, &found)) {
+                return aws_raise_error(AWS_ERROR_INVALID_XML);
             }
+            aws_byte_cursor_advance(&input, (found.ptr + s_pi_end.len) - input.ptr);
+            continue;
         }
 
-        /* Try to find the pattern starting from current position */
+        /* Search for the pattern anywhere in the remaining input. */
         struct aws_byte_cursor find_result;
         if (!aws_byte_cursor_find_exact(&input, to_find, &find_result)) {
-            /* Verify it's not starting inside a CDATA/comment we might have missed
-             * (the pattern might not start at input.ptr but somewhere ahead) */
             if (find_result.ptr == input.ptr) {
                 *result = find_result;
                 return AWS_OP_SUCCESS;
             }
-            /* Check if there's any CDATA/comment between input.ptr and find_result.ptr */
-            struct aws_byte_cursor between = aws_byte_cursor_from_array(input.ptr, find_result.ptr - input.ptr);
-            struct aws_byte_cursor comment_start = aws_byte_cursor_from_c_str("<!--");
-            struct aws_byte_cursor cdata_start = aws_byte_cursor_from_c_str("<![CDATA[");
-            struct aws_byte_cursor pi_start = aws_byte_cursor_from_c_str("<?");
-            struct aws_byte_cursor dummy;
 
-            if (!aws_byte_cursor_find_exact(&between, &comment_start, &dummy) ||
-                !aws_byte_cursor_find_exact(&between, &cdata_start, &dummy) ||
-                !aws_byte_cursor_find_exact(&between, &pi_start, &dummy)) {
-                /* There's a CDATA/comment/PI between current pos and the match.
-                 * Advance to it and let the top of the loop skip it. */
-                size_t advance_to;
-                /* Find the earliest one */
+            /* Check if there's a CDATA/comment/PI between here and the match. */
+            struct aws_byte_cursor between = aws_byte_cursor_from_array(input.ptr, find_result.ptr - input.ptr);
+            struct aws_byte_cursor dummy;
+            if (!aws_byte_cursor_find_exact(&between, &s_comment_prefix, &dummy) ||
+                !aws_byte_cursor_find_exact(&between, &s_cdata_prefix, &dummy) ||
+                !aws_byte_cursor_find_exact(&between, &s_pi_prefix, &dummy)) {
+
+                /* Advance to the earliest non-element marker and let the loop skip it. */
                 const uint8_t *earliest = find_result.ptr;
                 struct aws_byte_cursor temp;
-                if (!aws_byte_cursor_find_exact(&between, &comment_start, &temp) && temp.ptr < earliest) {
+                if (!aws_byte_cursor_find_exact(&between, &s_comment_prefix, &temp) && temp.ptr < earliest) {
                     earliest = temp.ptr;
                 }
-                if (!aws_byte_cursor_find_exact(&between, &cdata_start, &temp) && temp.ptr < earliest) {
+                if (!aws_byte_cursor_find_exact(&between, &s_cdata_prefix, &temp) && temp.ptr < earliest) {
                     earliest = temp.ptr;
                 }
-                if (!aws_byte_cursor_find_exact(&between, &pi_start, &temp) && temp.ptr < earliest) {
+                if (!aws_byte_cursor_find_exact(&between, &s_pi_prefix, &temp) && temp.ptr < earliest) {
                     earliest = temp.ptr;
                 }
-                advance_to = earliest - input.ptr;
-                aws_byte_cursor_advance(&input, advance_to);
+                aws_byte_cursor_advance(&input, earliest - input.ptr);
                 continue;
             }
 
-            /* No CDATA/comment/PI before the match — it's a real match */
+            /* No non-element content before the match — it's valid. */
             *result = find_result;
             return AWS_OP_SUCCESS;
         }
 
-        /* Pattern not found at all */
+        /* Pattern not found at all. */
         return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
     }
 
@@ -357,8 +348,8 @@ int s_advance_to_closing_tag(
                     continue;
                 }
 
-                /* Verify the byte after the matched pattern is a name terminator. */
-                if (!s_is_name_terminator(*after_match)) {
+                /* Verify the byte after the matched pattern is a name boundary. */
+                if (!s_is_tag_name_boundary(*after_match)) {
                     /* Not a real match — skip past it and keep searching */
                     size_t skip_len = open_find_result.ptr - parser->doc.ptr;
                     aws_byte_cursor_advance(&parser->doc, skip_len + 1);
@@ -452,28 +443,26 @@ int aws_xml_node_traverse(
             if (remaining_from_open > 3 && *(next_location + 2) == '-' && *(next_location + 3) == '-') {
                 struct aws_byte_cursor search_cur =
                     aws_byte_cursor_from_array(next_location + 4, remaining_from_open - 4);
-                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("-->");
                 struct aws_byte_cursor found;
-                if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+                if (aws_byte_cursor_find_exact(&search_cur, &s_comment_end, &found)) {
                     AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
                     aws_raise_error(AWS_ERROR_INVALID_XML);
                     goto error;
                 }
-                aws_byte_cursor_advance(&parser->doc, (found.ptr + 3) - parser->doc.ptr);
+                aws_byte_cursor_advance(&parser->doc, (found.ptr + s_comment_end.len) - parser->doc.ptr);
                 continue;
             }
             /* <![CDATA[ ... ]]> */
             if (remaining_from_open > 9 && memcmp(next_location + 2, "[CDATA[", 7) == 0) {
                 struct aws_byte_cursor search_cur =
                     aws_byte_cursor_from_array(next_location + 9, remaining_from_open - 9);
-                struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("]]>");
                 struct aws_byte_cursor found;
-                if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+                if (aws_byte_cursor_find_exact(&search_cur, &s_cdata_end, &found)) {
                     AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
                     aws_raise_error(AWS_ERROR_INVALID_XML);
                     goto error;
                 }
-                aws_byte_cursor_advance(&parser->doc, (found.ptr + 3) - parser->doc.ptr);
+                aws_byte_cursor_advance(&parser->doc, (found.ptr + s_cdata_end.len) - parser->doc.ptr);
                 continue;
             }
             /* Other <! declarations (e.g. <!DOCTYPE) — skip to closing > */
@@ -489,14 +478,13 @@ int aws_xml_node_traverse(
         /* <?...?> processing instruction */
         if (remaining_from_open > 1 && *(next_location + 1) == '?') {
             struct aws_byte_cursor search_cur = aws_byte_cursor_from_array(next_location + 2, remaining_from_open - 2);
-            struct aws_byte_cursor end_marker = aws_byte_cursor_from_c_str("?>");
             struct aws_byte_cursor found;
-            if (aws_byte_cursor_find_exact(&search_cur, &end_marker, &found)) {
+            if (aws_byte_cursor_find_exact(&search_cur, &s_pi_end, &found)) {
                 AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
                 aws_raise_error(AWS_ERROR_INVALID_XML);
                 goto error;
             }
-            aws_byte_cursor_advance(&parser->doc, (found.ptr + 2) - parser->doc.ptr);
+            aws_byte_cursor_advance(&parser->doc, (found.ptr + s_pi_end.len) - parser->doc.ptr);
             continue;
         }
 
