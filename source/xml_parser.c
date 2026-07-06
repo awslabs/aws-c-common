@@ -170,15 +170,17 @@ static bool s_is_tag_name_boundary(uint8_t c) {
 }
 
 static struct aws_byte_cursor s_comment_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<!--");
-static struct aws_byte_cursor s_cdata_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<![CDATA[");
-static struct aws_byte_cursor s_pi_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<?");
 static struct aws_byte_cursor s_comment_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("-->");
+static struct aws_byte_cursor s_cdata_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<![CDATA[");
 static struct aws_byte_cursor s_cdata_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("]]>");
+static struct aws_byte_cursor s_pi_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<?");
 static struct aws_byte_cursor s_pi_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("?>");
 
 /*
  * Find `to_find` in `input`, skipping over CDATA sections, comments, and processing
- * instructions. Returns AWS_OP_SUCCESS and sets *result on match, or raises
+ * instructions. Scans the input in a single pass.
+ *
+ * Returns AWS_OP_SUCCESS and sets *result on match, or raises
  * AWS_ERROR_STRING_MATCH_NOT_FOUND / AWS_ERROR_INVALID_XML.
  */
 static int s_find_skipping_non_elements(
@@ -186,8 +188,18 @@ static int s_find_skipping_non_elements(
     const struct aws_byte_cursor *to_find,
     struct aws_byte_cursor *result) {
 
-    while (input.len >= to_find->len) {
-        /* Skip CDATA, comments, and processing instructions at the current position. */
+    while (input.len > 0) {
+        /* Find the next '<' as both to_find patterns and non-element markers start with '<'. */
+        const uint8_t *open = memchr(input.ptr, '<', input.len);
+        if (!open) {
+            /* No more '<' in input — pattern cannot be here. */
+            return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+        }
+
+        /* Advance input to the '<' we found. */
+        aws_byte_cursor_advance(&input, open - input.ptr);
+
+        /* Check if this '<' starts a non-element section we should skip. */
         if (aws_byte_cursor_starts_with(&input, &s_comment_prefix)) {
             struct aws_byte_cursor remainder = input;
             aws_byte_cursor_advance(&remainder, s_comment_prefix.len);
@@ -219,44 +231,14 @@ static int s_find_skipping_non_elements(
             continue;
         }
 
-        /* Search for the pattern anywhere in the remaining input. */
-        struct aws_byte_cursor find_result;
-        if (!aws_byte_cursor_find_exact(&input, to_find, &find_result)) {
-            if (find_result.ptr == input.ptr) {
-                *result = find_result;
-                return AWS_OP_SUCCESS;
-            }
-
-            /* Check if there's a CDATA/comment/PI between here and the match. */
-            struct aws_byte_cursor between = aws_byte_cursor_from_array(input.ptr, find_result.ptr - input.ptr);
-            struct aws_byte_cursor dummy;
-            if (!aws_byte_cursor_find_exact(&between, &s_comment_prefix, &dummy) ||
-                !aws_byte_cursor_find_exact(&between, &s_cdata_prefix, &dummy) ||
-                !aws_byte_cursor_find_exact(&between, &s_pi_prefix, &dummy)) {
-
-                /* Advance to the earliest non-element marker and let the loop skip it. */
-                const uint8_t *earliest = find_result.ptr;
-                struct aws_byte_cursor temp;
-                if (!aws_byte_cursor_find_exact(&between, &s_comment_prefix, &temp) && temp.ptr < earliest) {
-                    earliest = temp.ptr;
-                }
-                if (!aws_byte_cursor_find_exact(&between, &s_cdata_prefix, &temp) && temp.ptr < earliest) {
-                    earliest = temp.ptr;
-                }
-                if (!aws_byte_cursor_find_exact(&between, &s_pi_prefix, &temp) && temp.ptr < earliest) {
-                    earliest = temp.ptr;
-                }
-                aws_byte_cursor_advance(&input, earliest - input.ptr);
-                continue;
-            }
-
-            /* No non-element content before the match — it's valid. */
-            *result = find_result;
+        /* Not a non-element section. Check if to_find matches at this position. */
+        if (input.len >= to_find->len && aws_byte_cursor_starts_with(&input, to_find)) {
+            *result = input;
             return AWS_OP_SUCCESS;
         }
 
-        /* Pattern not found at all. */
-        return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
+        /* This '<' is not what we're looking for — skip past it and continue scanning. */
+        aws_byte_cursor_advance(&input, 1);
     }
 
     return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
