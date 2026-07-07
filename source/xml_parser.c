@@ -309,22 +309,22 @@ int s_advance_to_closing_tag(
         }
 
         /* Check for closing tag. */
-        if (parser->doc.len >= closing_cmp_buf.len && aws_byte_cursor_starts_with(&parser->doc, &to_find_close)) {
+        if (aws_byte_cursor_starts_with(&parser->doc, &to_find_close)) {
             depth--;
             if (depth == 0) {
                 size_t len = parser->doc.ptr - node->doc_at_body.ptr;
                 if (out_body) {
                     *out_body = aws_byte_cursor_from_array(node->doc_at_body.ptr, len);
                 }
-                aws_byte_cursor_advance(&parser->doc, closing_cmp_buf.len);
+                aws_byte_cursor_advance(&parser->doc, to_find_close.len);
                 return parser->error;
             }
-            aws_byte_cursor_advance(&parser->doc, closing_cmp_buf.len);
+            aws_byte_cursor_advance(&parser->doc, to_find_close.len);
             continue;
         }
 
         /* Check for opening tag with same name. */
-        if (parser->doc.len >= to_find_open.len && aws_byte_cursor_starts_with(&parser->doc, &to_find_open)) {
+        if (aws_byte_cursor_starts_with(&parser->doc, &to_find_open)) {
 
             struct aws_byte_cursor after_open = parser->doc;
             aws_byte_cursor_advance(&after_open, to_find_open.len);
