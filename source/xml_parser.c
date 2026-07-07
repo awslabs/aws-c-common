@@ -233,51 +233,6 @@ static int s_try_skip_non_element(struct aws_byte_cursor input, const uint8_t **
     return AWS_OP_ERR;
 }
 
-/*
- * Find `to_find` in `input`, skipping over CDATA sections, comments, and processing
- * instructions. Scans the input in a single pass.
- *
- * Returns AWS_OP_SUCCESS and sets *result on match, or raises
- * AWS_ERROR_STRING_MATCH_NOT_FOUND / AWS_ERROR_INVALID_XML.
- */
-static int s_find_skipping_non_elements(
-    struct aws_byte_cursor input,
-    const struct aws_byte_cursor *to_find,
-    struct aws_byte_cursor *result) {
-
-    AWS_ASSERT(to_find->len > 0 && to_find->ptr[0] == '<');
-
-    while (input.len > 0) {
-        const uint8_t *open = memchr(input.ptr, '<', input.len);
-        if (!open) {
-            return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
-        }
-        aws_byte_cursor_advance(&input, open - input.ptr);
-
-        /* Try to skip a non-element construct (comment, CDATA, PI). */
-        const uint8_t *non_element_end = NULL;
-        if (!s_try_skip_non_element(input, &non_element_end)) {
-            aws_byte_cursor_advance(&input, non_element_end - input.ptr);
-            continue;
-        }
-        /* s_try_skip_non_element returns AWS_OP_ERROR for both "not a non-element" and "unterminated".
-         * Distinguish by checking whether an error was raised. */
-        if (aws_last_error() == AWS_ERROR_INVALID_XML) {
-            return AWS_OP_ERR;
-        }
-
-        /* Not a non-element. Check if to_find matches here. */
-        if (input.len >= to_find->len && aws_byte_cursor_starts_with(&input, to_find)) {
-            *result = input;
-            return AWS_OP_SUCCESS;
-        }
-
-        aws_byte_cursor_advance(&input, 1);
-    }
-
-    return aws_raise_error(AWS_ERROR_STRING_MATCH_NOT_FOUND);
-}
-
 int s_advance_to_closing_tag(
     struct aws_xml_parser *parser,
     struct aws_xml_node *node,
