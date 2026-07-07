@@ -326,13 +326,12 @@ int s_advance_to_closing_tag(
         /* Check for opening tag with same name. */
         if (parser->doc.len >= to_find_open.len && aws_byte_cursor_starts_with(&parser->doc, &to_find_open)) {
 
-            const uint8_t *after_match = parser->doc.ptr + to_find_open.len;
-            size_t remaining_after = parser->doc.len - to_find_open.len;
+            struct aws_byte_cursor after_open = parser->doc;
+            aws_byte_cursor_advance(&after_open, to_find_open.len);
 
-            if (remaining_after > 0 && s_is_tag_name_boundary(*after_match)) {
+            if (after_open.len > 0 && s_is_tag_name_boundary(*after_open.ptr)) {
                 /* Check for self-closing tag (e.g. <a/>) — does not increment depth. */
-                struct aws_byte_cursor at_terminator = aws_byte_cursor_from_array(after_match, remaining_after);
-                if (!aws_byte_cursor_starts_with(&at_terminator, &s_self_close_suffix)) {
+                if (!aws_byte_cursor_starts_with(&after_open, &s_self_close_suffix)) {
                     depth++;
                 }
             }
