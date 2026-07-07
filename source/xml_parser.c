@@ -175,6 +175,7 @@ static struct aws_byte_cursor s_cdata_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LIT
 static struct aws_byte_cursor s_cdata_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("]]>");
 static struct aws_byte_cursor s_pi_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<?");
 static struct aws_byte_cursor s_pi_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("?>");
+static struct aws_byte_cursor s_self_close_suffix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("/>");
 
 /*
  * Find `to_find` in `input`, skipping over CDATA sections, comments, and processing
@@ -340,14 +341,13 @@ int s_advance_to_closing_tag(
 
                 /* If terminator is '/' followed by '>', this is a self-closing tag
                  * (e.g. <a/>) — skip past it without incrementing depth. */
-                if (*after_match == '/') {
-                    size_t offset_in_region = (after_match + 1) - parser->doc.ptr;
-                    if (offset_in_region < search_len && *(after_match + 1) == '>') {
-                        /* Self-closing tag — skip past it without incrementing depth */
-                        size_t skip_len = open_find_result.ptr - parser->doc.ptr;
-                        aws_byte_cursor_advance(&parser->doc, skip_len + 1);
-                        continue;
-                    }
+                /* Check for self-closing tag (e.g. <a/>) — does not increment depth. */
+                struct aws_byte_cursor at_terminator = aws_byte_cursor_from_array(
+                    after_match, (parser->doc.ptr + search_len) - after_match);
+                if (aws_byte_cursor_starts_with(&at_terminator, &s_self_close_suffix)) {
+                    size_t skip_len = open_find_result.ptr - parser->doc.ptr;
+                    aws_byte_cursor_advance(&parser->doc, skip_len + 1);
+                    continue;
                 }
 
                 size_t skip_len = open_find_result.ptr - parser->doc.ptr;
