@@ -506,6 +506,7 @@ add_test_case(xml_parser_nested_same_name_large_depth_test)
 add_test_case(xml_parser_self_closing_same_name_test)
 add_test_case(xml_parser_cdata_false_close_test)
 add_test_case(xml_parser_comment_false_open_test)
+add_test_case(xml_parser_trailing_open_bracket_test)
 
 add_test_case(test_thread_scheduler_ordering)
 add_test_case(test_thread_scheduler_happy_path_cancellation)

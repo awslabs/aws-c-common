@@ -420,6 +420,11 @@ int aws_xml_node_traverse(
         }
 
         /* parser->doc.ptr is now at '<'. Find the closing '>'. */
+        if (parser->doc.len < 2) {
+            AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
+            aws_raise_error(AWS_ERROR_INVALID_XML);
+            goto error;
+        }
         const uint8_t *end_location = memchr(parser->doc.ptr + 1, '>', parser->doc.len - 1);
 
         if (!end_location) {

@@ -986,3 +986,26 @@ static int s_xml_parser_comment_false_open_test(struct aws_allocator *allocator,
 }
 
 AWS_TEST_CASE(xml_parser_comment_false_open_test, s_xml_parser_comment_false_open_test)
+
+/*
+ * Verify that a document ending with a bare '<' does not crash (out-of-bounds read).
+ */
+static int s_xml_parser_trailing_open_bracket_test(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    const char *doc = "<a><";
+
+    struct nested_node_capture capture;
+    AWS_ZERO_STRUCT(capture);
+
+    struct aws_xml_parser_options options = {
+        .doc = aws_byte_cursor_from_c_str(doc),
+        .on_root_encountered = s_nested_node,
+        .user_data = &capture,
+    };
+    ASSERT_ERROR(AWS_ERROR_INVALID_XML, aws_xml_parse(allocator, &options));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(xml_parser_trailing_open_bracket_test, s_xml_parser_trailing_open_bracket_test)
