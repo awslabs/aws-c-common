@@ -182,55 +182,57 @@ static struct aws_byte_cursor s_closing_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_L
 
 /*
  * If `*input` points at a non-element construct (comment, CDATA, or PI), advances
- * `*input` past the construct's closing delimiter and returns true.
+ * `*input` past the construct's closing delimiter, sets `*out_skipped = true`, and
+ * returns AWS_OP_SUCCESS.
  *
- * If `*input` does not start with a non-element construct, returns false without
- * raising an error (caller should proceed with normal element handling).
+ * If `*input` does not start with a non-element construct, sets `*out_skipped = false`
+ * and returns AWS_OP_SUCCESS (caller should proceed with normal element handling).
  *
- * If the construct is unterminated (no closing delimiter found), returns false and
- * raises AWS_ERROR_INVALID_XML.
+ * If the construct is unterminated (no closing delimiter found), returns AWS_OP_ERR
+ * and raises AWS_ERROR_INVALID_XML.
  *
  * WARNING: This function assumes `*input` starts with '<'. It will not produce correct
  * results if called at an arbitrary position within a document.
  */
-static bool s_try_skip_non_element(struct aws_byte_cursor *input) {
+static int s_try_skip_non_element(struct aws_byte_cursor *input, bool *out_skipped) {
+    *out_skipped = false;
+
     if (input->len == 0 || input->ptr[0] != '<') {
-        return false;
+        return AWS_OP_SUCCESS;
     }
 
     if (aws_byte_cursor_starts_with(input, &s_comment_prefix)) {
         aws_byte_cursor_advance(input, s_comment_prefix.len);
         struct aws_byte_cursor found;
         if (aws_byte_cursor_find_exact(input, &s_comment_end, &found)) {
-            aws_raise_error(AWS_ERROR_INVALID_XML);
-            return false;
+            return aws_raise_error(AWS_ERROR_INVALID_XML);
         }
         aws_byte_cursor_advance(input, (found.ptr + s_comment_end.len) - input->ptr);
-        return true;
+        *out_skipped = true;
+        return AWS_OP_SUCCESS;
     }
     if (aws_byte_cursor_starts_with(input, &s_cdata_prefix)) {
         aws_byte_cursor_advance(input, s_cdata_prefix.len);
         struct aws_byte_cursor found;
         if (aws_byte_cursor_find_exact(input, &s_cdata_end, &found)) {
-            aws_raise_error(AWS_ERROR_INVALID_XML);
-            return false;
+            return aws_raise_error(AWS_ERROR_INVALID_XML);
         }
         aws_byte_cursor_advance(input, (found.ptr + s_cdata_end.len) - input->ptr);
-        return true;
+        *out_skipped = true;
+        return AWS_OP_SUCCESS;
     }
     if (aws_byte_cursor_starts_with(input, &s_pi_prefix)) {
         aws_byte_cursor_advance(input, s_pi_prefix.len);
         struct aws_byte_cursor found;
         if (aws_byte_cursor_find_exact(input, &s_pi_end, &found)) {
-            aws_raise_error(AWS_ERROR_INVALID_XML);
-            return false;
+            return aws_raise_error(AWS_ERROR_INVALID_XML);
         }
         aws_byte_cursor_advance(input, (found.ptr + s_pi_end.len) - input->ptr);
-        return true;
+        *out_skipped = true;
+        return AWS_OP_SUCCESS;
     }
 
-    /* Not a non-element construct. */
-    return false;
+    return AWS_OP_SUCCESS;
 }
 
 int s_advance_to_closing_tag(
@@ -295,14 +297,13 @@ int s_advance_to_closing_tag(
         aws_byte_cursor_advance(&parser->doc, open - parser->doc.ptr);
 
         /* Skip non-element constructs (comments, CDATA, PI). */
-        if (s_try_skip_non_element(&parser->doc)) {
-            continue;
-        }
-        /* s_try_skip_non_element returns false for both "not a non-element" and "unterminated construct".
-         * Only the unterminated case raises an error. Check for it here. */
-        if (aws_last_error() == AWS_ERROR_INVALID_XML) {
+        bool skipped = false;
+        if (s_try_skip_non_element(&parser->doc, &skipped)) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             return AWS_OP_ERR;
+        }
+        if (skipped) {
+            continue;
         }
 
         /* Check for closing tag. */
@@ -395,14 +396,13 @@ int aws_xml_node_traverse(
         aws_byte_cursor_advance(&parser->doc, open - parser->doc.ptr);
 
         /* Skip CDATA, comments, and processing instructions — they are not elements. */
-        if (s_try_skip_non_element(&parser->doc)) {
-            continue;
-        }
-        /* s_try_skip_non_element returns false for both "not a non-element" and "unterminated construct".
-         * Only the unterminated case raises an error. Check for it here. */
-        if (aws_last_error() == AWS_ERROR_INVALID_XML) {
+        bool skipped = false;
+        if (s_try_skip_non_element(&parser->doc, &skipped)) {
             AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
             goto error;
+        }
+        if (skipped) {
+            continue;
         }
 
         /* Handle other <! declarations (e.g. <!DOCTYPE) not covered by the helper — skip to closing >. */
