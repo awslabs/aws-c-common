@@ -199,10 +199,9 @@ static bool s_try_skip_non_element(struct aws_byte_cursor *input) {
     }
 
     if (aws_byte_cursor_starts_with(input, &s_comment_prefix)) {
-        struct aws_byte_cursor remainder = *input;
-        aws_byte_cursor_advance(&remainder, s_comment_prefix.len);
+        aws_byte_cursor_advance(input, s_comment_prefix.len);
         struct aws_byte_cursor found;
-        if (aws_byte_cursor_find_exact(&remainder, &s_comment_end, &found)) {
+        if (aws_byte_cursor_find_exact(input, &s_comment_end, &found)) {
             aws_raise_error(AWS_ERROR_INVALID_XML);
             return false;
         }
@@ -210,10 +209,9 @@ static bool s_try_skip_non_element(struct aws_byte_cursor *input) {
         return true;
     }
     if (aws_byte_cursor_starts_with(input, &s_cdata_prefix)) {
-        struct aws_byte_cursor remainder = *input;
-        aws_byte_cursor_advance(&remainder, s_cdata_prefix.len);
+        aws_byte_cursor_advance(input, s_cdata_prefix.len);
         struct aws_byte_cursor found;
-        if (aws_byte_cursor_find_exact(&remainder, &s_cdata_end, &found)) {
+        if (aws_byte_cursor_find_exact(input, &s_cdata_end, &found)) {
             aws_raise_error(AWS_ERROR_INVALID_XML);
             return false;
         }
@@ -221,10 +219,9 @@ static bool s_try_skip_non_element(struct aws_byte_cursor *input) {
         return true;
     }
     if (aws_byte_cursor_starts_with(input, &s_pi_prefix)) {
-        struct aws_byte_cursor remainder = *input;
-        aws_byte_cursor_advance(&remainder, s_pi_prefix.len);
+        aws_byte_cursor_advance(input, s_pi_prefix.len);
         struct aws_byte_cursor found;
-        if (aws_byte_cursor_find_exact(&remainder, &s_pi_end, &found)) {
+        if (aws_byte_cursor_find_exact(input, &s_pi_end, &found)) {
             aws_raise_error(AWS_ERROR_INVALID_XML);
             return false;
         }
