@@ -176,6 +176,9 @@ static struct aws_byte_cursor s_cdata_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERA
 static struct aws_byte_cursor s_pi_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<?");
 static struct aws_byte_cursor s_pi_end = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("?>");
 static struct aws_byte_cursor s_self_close_suffix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("/>");
+static struct aws_byte_cursor s_decl_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("<!");
+static struct aws_byte_cursor s_close_bracket = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL(">");
+static struct aws_byte_cursor s_closing_prefix = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("</");
 
 /*
  * If `*input` points at a non-element construct (comment, CDATA, or PI), advances
@@ -406,11 +409,9 @@ int aws_xml_node_traverse(
         }
 
         /* Handle other <! declarations (e.g. <!DOCTYPE) not covered by the helper — skip to closing >. */
-        struct aws_byte_cursor decl_prefix = aws_byte_cursor_from_c_str("<!");
-        if (aws_byte_cursor_starts_with(&parser->doc, &decl_prefix)) {
-            struct aws_byte_cursor close_bracket = aws_byte_cursor_from_c_str(">");
+        if (aws_byte_cursor_starts_with(&parser->doc, &s_decl_prefix)) {
             struct aws_byte_cursor found;
-            if (aws_byte_cursor_find_exact(&parser->doc, &close_bracket, &found)) {
+            if (aws_byte_cursor_find_exact(&parser->doc, &s_close_bracket, &found)) {
                 AWS_LOGF_ERROR(AWS_LS_COMMON_XML_PARSER, "XML document is invalid.");
                 aws_raise_error(AWS_ERROR_INVALID_XML);
                 goto error;
@@ -433,11 +434,7 @@ int aws_xml_node_traverse(
             goto error;
         }
 
-        bool parent_closed = false;
-
-        if (*(parser->doc.ptr + 1) == '/') {
-            parent_closed = true;
-        }
+        bool parent_closed = aws_byte_cursor_starts_with(&parser->doc, &s_closing_prefix);
 
         size_t node_name_len = end_location - parser->doc.ptr;
         struct aws_byte_cursor decl_body = aws_byte_cursor_from_array(parser->doc.ptr + 1, node_name_len - 1);
