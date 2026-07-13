@@ -74,6 +74,10 @@ enum aws_hash_iter_status {
     AWS_HASH_ITER_STATUS_DONE,
     AWS_HASH_ITER_STATUS_DELETE_CALLED,
     AWS_HASH_ITER_STATUS_READY_FOR_USE,
+    /* ABI-SAFE TEST #8 (append enum member): adding a new value at the end
+     * doesn't change any existing enumerator's integer value, so old callers
+     * are unaffected. */
+    AWS_HASH_ITER_STATUS_RESERVED_FUTURE_USE,
 };
 
 struct aws_hash_iter {
