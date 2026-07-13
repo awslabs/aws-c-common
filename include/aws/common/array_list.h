@@ -21,8 +21,8 @@ struct aws_array_list {
     size_t item_size;
     /* ABI-BREAK TEST #1 (add member): grows the struct and shifts the offset
      * of `data`; any caller compiled against the old layout reads the wrong
-     * field. */
-    size_t reserved_capacity;
+     * field.
+     * size_t reserved_capacity; */
     void *data;
 };
 

@@ -88,8 +88,9 @@ struct aws_hash_iter {
      */
     /* ABI-BREAK TEST #4 (remove member): dropping unused_1 shrinks the struct
      * and shifts unused_2; callers compiled against the old layout read the
-     * wrong offset for the trailing field. */
+     * wrong offset for the trailing field. (disabled, unused_1 restored below) */
     int unused_0;
+    void *unused_1;
     void *unused_2;
 };
 

@@ -53,8 +53,8 @@ enum aws_date_day_of_week {
 struct aws_date_time {
     time_t timestamp;
     /* ABI-BREAK TEST #3 (change member type): widening uint16_t -> uint64_t
-     * changes this field's size and shifts every field after it. */
-    uint64_t milliseconds;
+     * changes this field's size and shifts every field after it. (disabled) */
+    uint16_t milliseconds;
     char tz[6];
     struct tm gmt_time;
     struct tm local_time;
@@ -150,8 +150,8 @@ AWS_COMMON_API double aws_date_time_as_epoch_secs(const struct aws_date_time *dt
 /* ABI-BREAK TEST #7 (remove exported symbol): dropping AWS_COMMON_API leaves
  * the symbol hidden (default visibility is hidden), so it disappears from the
  * .so export table — old binaries linking against it fail with a missing
- * symbol. */
-uint64_t aws_date_time_as_nanos(const struct aws_date_time *dt);
+ * symbol. (disabled) */
+AWS_COMMON_API uint64_t aws_date_time_as_nanos(const struct aws_date_time *dt);
 AWS_COMMON_API uint64_t aws_date_time_as_millis(const struct aws_date_time *dt);
 AWS_COMMON_API uint16_t aws_date_time_year(const struct aws_date_time *dt, bool local_time);
 AWS_COMMON_API enum aws_date_month aws_date_time_month(const struct aws_date_time *dt, bool local_time);
@@ -161,15 +161,15 @@ AWS_COMMON_API uint8_t aws_date_time_hour(const struct aws_date_time *dt, bool l
 AWS_COMMON_API uint8_t aws_date_time_minute(const struct aws_date_time *dt, bool local_time);
 AWS_COMMON_API uint8_t aws_date_time_second(const struct aws_date_time *dt, bool local_time);
 /* ABI-BREAK TEST #6 (change parameter type): bool (1 byte) -> int (4 bytes)
- * changes the function's parameter signature and how the arg is passed. */
-AWS_COMMON_API bool aws_date_time_dst(const struct aws_date_time *dt, int local_time);
+ * changes the function's parameter signature and how the arg is passed. (disabled) */
+AWS_COMMON_API bool aws_date_time_dst(const struct aws_date_time *dt, bool local_time);
 
 /**
  * returns the difference of a and b (a - b) in seconds.
  */
 /* ABI-BREAK TEST #5 (change return type): time_t (8 bytes on this platform)
- * -> int32_t (4 bytes) changes how the caller interprets the return register. */
-AWS_COMMON_API int32_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b);
+ * -> int32_t (4 bytes) changes how the caller interprets the return register. (disabled) */
+AWS_COMMON_API time_t aws_date_time_diff(const struct aws_date_time *a, const struct aws_date_time *b);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

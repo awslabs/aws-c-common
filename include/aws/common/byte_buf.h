@@ -53,9 +53,10 @@ struct aws_byte_buf {
 struct aws_byte_cursor {
     /* ABI-BREAK TEST #2 (reorder members): swapping len/ptr keeps the struct
      * size identical but changes each field's offset, so old callers read
-     * ptr where len used to be and vice versa. */
-    uint8_t *ptr;
+     * ptr where len used to be and vice versa. (disabled, see below) */
+    /* do not reorder this, this struct lines up nicely with windows buffer structures--saving us allocations */
     size_t len;
+    uint8_t *ptr;
 };
 
 /**
