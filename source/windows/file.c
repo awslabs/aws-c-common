@@ -571,8 +571,7 @@ int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
      * Convert to nanoseconds since unix epoch (January 1, 1970 UTC).
      * The difference is 11644473600 seconds = 116444736000000000 hundred-nanos.
      */
-    uint64_t hundred_nanos =
-        ((uint64_t)last_write_time.dwHighDateTime << 32) | (uint64_t)last_write_time.dwLowDateTime;
+    uint64_t hundred_nanos = ((uint64_t)last_write_time.dwHighDateTime << 32) | (uint64_t)last_write_time.dwLowDateTime;
     uint64_t unix_hundred_nanos = hundred_nanos - (uint64_t)116444736000000000;
 
     *last_modified_ns = unix_hundred_nanos * 100;
