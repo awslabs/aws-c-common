@@ -2,6 +2,9 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+
+#define _GNU_SOURCE /* NOLINT(bugprone-reserved-identifier) */
+
 #include <aws/common/environment.h>
 #include <aws/common/file.h>
 #include <aws/common/logging.h>
@@ -326,14 +329,9 @@ int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
 #if defined(AWS_OS_APPLE)
     uint64_t secs = (uint64_t)file_stats.st_mtimespec.tv_sec;
     uint64_t nsecs = (uint64_t)file_stats.st_mtimespec.tv_nsec;
-#elif defined(AWS_HAVE_STAT_MTIM)
+#else
     uint64_t secs = (uint64_t)file_stats.st_mtim.tv_sec;
     uint64_t nsecs = (uint64_t)file_stats.st_mtim.tv_nsec;
-#else
-    /* Nanosecond-precision mtime is not available on this libc/platform; fall back to
-     * second precision. */
-    uint64_t secs = (uint64_t)file_stats.st_mtime;
-    uint64_t nsecs = 0;
 #endif
 
     *last_modified_ns = secs * (uint64_t)1000000000 + nsecs;
