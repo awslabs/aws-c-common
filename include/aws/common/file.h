@@ -311,9 +311,11 @@ bool aws_file_direct_io_is_supported(void);
 /*
  * Gets the last modification time of an open file as nanoseconds since unix epoch.
  *
- * Unix flavors use fstat with nanosecond-precision fields (st_mtim on Linux/FreeBSD,
- * st_mtimespec on Apple). Windows uses GetFileTime on the HANDLE queried from the
- * libc FILE pointer (100-nanosecond FILETIME precision).
+ * Unix flavors use fstat with nanosecond-precision fields when available (st_mtim on
+ * Linux/FreeBSD with glibc, st_mtimespec on Apple). On libc implementations where the
+ * nanosecond field is not exposed, this falls back to second precision (st_mtime) with
+ * the nanosecond component reported as 0. Windows uses GetFileTime on the HANDLE queried
+ * from the libc FILE pointer (100-nanosecond FILETIME precision).
  *
  * Platform timestamp-visibility guarantees differ:
  * - POSIX: st_mtime/st_mtim is updated by the write(2) syscall itself, so the

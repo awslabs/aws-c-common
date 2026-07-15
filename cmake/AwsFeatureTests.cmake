@@ -119,6 +119,13 @@ int main() {
     return 1;
 }" AWS_HAVE_LINUX_IF_LINK_H)
 
+check_c_source_compiles("
+#include <sys/stat.h>
+int main() {
+    struct stat s;
+    return (int)s.st_mtim.tv_nsec;
+}" AWS_HAVE_STAT_MTIM)
+
 if(MSVC)
     check_c_source_compiles("
     #include <intrin.h>
