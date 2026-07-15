@@ -308,3 +308,30 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
+
+    struct stat file_stats;
+
+    int fd = fileno(file);
+    if (fd == -1) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+
+    if (fstat(fd, &file_stats)) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
+    }
+
+#if defined(__APPLE__)
+    uint64_t secs = (uint64_t)file_stats.st_mtimespec.tv_sec;
+    uint64_t nsecs = (uint64_t)file_stats.st_mtimespec.tv_nsec;
+#else
+    uint64_t secs = (uint64_t)file_stats.st_mtim.tv_sec;
+    uint64_t nsecs = (uint64_t)file_stats.st_mtim.tv_nsec;
+#endif
+
+    *last_modified_ns = secs * (uint64_t)1000000000 + nsecs;
+
+    return AWS_OP_SUCCESS;
+}

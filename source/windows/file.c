@@ -544,3 +544,38 @@ int aws_file_get_length(FILE *file, int64_t *length) {
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
+    if (file == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+
+    int fd = _fileno(file);
+    if (fd == -1) {
+        return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+    }
+
+    HANDLE os_file = (HANDLE)_get_osfhandle(fd);
+    if (os_file == INVALID_HANDLE_VALUE) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        return aws_translate_and_raise_io_error(errno_value);
+    }
+
+    FILETIME last_write_time;
+    if (!GetFileTime(os_file, NULL /*creation*/, NULL /*access*/, &last_write_time)) {
+        return aws_raise_error(AWS_ERROR_SYS_CALL_FAILURE);
+    }
+
+    /*
+     * FILETIME is 100-nanosecond intervals since January 1, 1601 UTC.
+     * Convert to nanoseconds since unix epoch (January 1, 1970 UTC).
+     * The difference is 11644473600 seconds = 116444736000000000 hundred-nanos.
+     */
+    uint64_t hundred_nanos =
+        ((uint64_t)last_write_time.dwHighDateTime << 32) | (uint64_t)last_write_time.dwLowDateTime;
+    uint64_t unix_hundred_nanos = hundred_nanos - (uint64_t)116444736000000000;
+
+    *last_modified_ns = unix_hundred_nanos * 100;
+
+    return AWS_OP_SUCCESS;
+}

@@ -308,6 +308,35 @@ int aws_file_path_write_to_offset_direct_io(
 AWS_COMMON_API
 bool aws_file_direct_io_is_supported(void);
 
+/*
+ * Gets the last modification time of an open file as nanoseconds since unix epoch.
+ *
+ * Unix flavors use fstat with nanosecond-precision fields (st_mtim on Linux/FreeBSD,
+ * st_mtimespec on Apple). Windows uses GetFileTime on the HANDLE queried from the
+ * libc FILE pointer (100-nanosecond FILETIME precision).
+ *
+ * Platform timestamp-visibility guarantees differ:
+ * - POSIX: st_mtime/st_mtim is updated by the write(2) syscall itself, so the
+ *   timestamp is visible as soon as data has been written (no fsync required).
+ *   See inode(7): https://man7.org/linux/man-pages/man7/inode.7.html
+ *   and fsync(2): https://man7.org/linux/man-pages/man2/fsync.2.html
+ *   (fdatasync() does not need to flush st_mtime because it is already durable
+ *   in-core without a flush).
+ * - Windows: the last write time is only guaranteed to be correct once all
+ *   handles used for writing the file have been closed; it may not be visible
+ *   on a still-open write handle, and FlushFileBuffers() does not change this
+ *   guarantee. See "File Times":
+ *   https://learn.microsoft.com/en-us/windows/win32/sysinfo/file-times
+ *   ("The only guarantee about a file time stamp is that the file time is
+ *   correctly reflected when the handle that makes the change is closed.")
+ *
+ * As a result, callers on all platforms should close any handle used to write
+ * to the file before calling this function (on a new handle) to reliably
+ * observe the updated timestamp.
+ */
+AWS_COMMON_API
+int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns);
+
 AWS_EXTERN_C_END AWS_POP_SANE_WARNING_LEVEL
 
 #endif /* AWS_COMMON_FILE_H */
