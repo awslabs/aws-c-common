@@ -415,6 +415,9 @@ add_test_case(uuid_string_parse_malformed)
 
 add_test_case(test_environment_functions)
 add_test_case(test_env_functions)
+if(WIN32)
+    add_test_case(test_env_non_ascii_path)
+endif()
 
 add_test_case(short_argument_parse)
 add_test_case(long_argument_parse)
