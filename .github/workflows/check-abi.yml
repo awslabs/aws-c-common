@@ -36,7 +36,7 @@ jobs:
         # Pointing at the fork branch while the libabigail-based check is in
         # review. Switch to awslabs/aws-crt-builder/.github/actions/check-abi@main
         # once merged.
-        uses: azkrishpy/aws-crt-builder/.github/actions/check-abi@abi-gail
+        uses: awslabs/aws-crt-builder/.github/actions/check-abi@abi-gail
         with:
           lib-name: ${{ env.PACKAGE_NAME }}
           builder-version: abi-gail
