@@ -26,7 +26,7 @@ enum aws_date_format {
 };
 
 enum aws_date_month {
-    AWS_DATE_MONTH_JANUARY = 0,
+    AWS_DATE_MONTH_FIRST_MONTH = 0,
     AWS_DATE_MONTH_FEBRUARY,
     AWS_DATE_MONTH_MARCH,
     AWS_DATE_MONTH_APRIL,
