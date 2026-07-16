@@ -332,9 +332,10 @@ bool aws_file_direct_io_is_supported(void);
  *   ("The only guarantee about a file time stamp is that the file time is
  *   correctly reflected when the handle that makes the change is closed.")
  *
- * As a result, callers on all platforms should close any handle used to write
- * to the file before calling this function (on a new handle) to reliably
- * observe the updated timestamp.
+ * As a result, if a file was written to and you need to observe that write in its
+ * updated timestamp, close the write handle first, then open a new handle and call
+ * this function on that new handle. Calling this function on the (now-closed) write
+ * handle is not valid on any platform, since a closed FILE* cannot be used at all.
  */
 AWS_COMMON_API
 int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns);
