@@ -316,19 +316,15 @@ bool aws_file_direct_io_is_supported(void);
  * libc FILE pointer (100-nanosecond FILETIME precision).
  *
  * Platform timestamp-visibility guarantees differ:
- * - POSIX: st_mtime/st_mtim is updated by the write(2) syscall itself, so the
- *   timestamp is visible as soon as data has been written (no fsync required).
- *   See inode(7): https://man7.org/linux/man-pages/man7/inode.7.html
- *   and fsync(2): https://man7.org/linux/man-pages/man2/fsync.2.html
- *   (fdatasync() does not need to flush st_mtime because it is already durable
- *   in-core without a flush).
- * - Windows: the last write time is only guaranteed to be correct once all
- *   handles used for writing the file have been closed; it may not be visible
- *   on a still-open write handle, and FlushFileBuffers() does not change this
- *   guarantee. See "File Times":
+ * - POSIX: st_mtime/st_mtim is updated by write(2) itself (see inode(7):
+ *   https://man7.org/linux/man-pages/man7/inode.7.html). Callers using buffered stdio
+ *   writes must fflush() or fclose() first so write(2) actually happens; once it has,
+ *   a subsequent stat()/fstat() sees the new timestamp immediately, no fsync needed
+ *   (fsync(2) confirms fdatasync() skips flushing st_mtime for this reason:
+ *   https://man7.org/linux/man-pages/man2/fsync.2.html).
+ * - Windows: the last write time is only guaranteed correct once all write handles are
+ *   closed; FlushFileBuffers() does not help. See "File Times":
  *   https://learn.microsoft.com/en-us/windows/win32/sysinfo/file-times
- *   ("The only guarantee about a file time stamp is that the file time is
- *   correctly reflected when the handle that makes the change is closed.")
  *
  * As a result, if a file was written to and you need to observe that write in its
  * updated timestamp, close the write handle first, then open a new handle and call
