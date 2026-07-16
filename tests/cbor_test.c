@@ -549,3 +549,49 @@ CBOR_TEST_CASE(cbor_decode_resource_limit_depth_test) {
     aws_common_library_clean_up();
     return AWS_OP_SUCCESS;
 }
+
+CBOR_TEST_CASE(cbor_decode_remaining_length_after_peek_test) {
+    (void)allocator;
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
+    aws_cbor_encoder_write_uint(encoder, 42);
+    aws_cbor_encoder_write_uint(encoder, 100);
+    struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
+    size_t total_len = cursor.len;
+
+    struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, cursor);
+    ASSERT_UINT_EQUALS(total_len, aws_cbor_decoder_get_remaining_length(decoder));
+    ASSERT_UINT_EQUALS(total_len, aws_cbor_decoder_get_unconsumed_length(decoder));
+
+    /* peek_type: old API (remaining_length) DOES decrease, new API (unconsumed_length) does NOT */
+    enum aws_cbor_type out_type;
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
+    ASSERT_TRUE(aws_cbor_decoder_get_remaining_length(decoder) < total_len);
+    ASSERT_UINT_EQUALS(total_len, aws_cbor_decoder_get_unconsumed_length(decoder));
+
+    /* after pop, both decrease */
+    uint64_t val;
+    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &val));
+    ASSERT_UINT_EQUALS(42, val);
+    size_t after_first_pop = aws_cbor_decoder_get_unconsumed_length(decoder);
+    ASSERT_TRUE(after_first_pop < total_len);
+    ASSERT_UINT_EQUALS(after_first_pop, aws_cbor_decoder_get_remaining_length(decoder));
+
+    /* peek second element: unconsumed_length unchanged, remaining_length decreases */
+    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
+    ASSERT_UINT_EQUALS(after_first_pop, aws_cbor_decoder_get_unconsumed_length(decoder));
+    ASSERT_TRUE(aws_cbor_decoder_get_remaining_length(decoder) < after_first_pop);
+
+    /* pop second, both should be 0 */
+    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &val));
+    ASSERT_UINT_EQUALS(100, val);
+    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
+    ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_unconsumed_length(decoder));
+
+    aws_cbor_encoder_destroy(encoder);
+    aws_cbor_decoder_destroy(decoder);
+    aws_common_library_clean_up();
+    return AWS_OP_SUCCESS;
+}

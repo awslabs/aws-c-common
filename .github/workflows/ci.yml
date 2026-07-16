@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.92
+  BUILDER_VERSION: v0.9.96
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -251,6 +251,11 @@ jobs:
 
   openbsd:
     runs-on: ubuntu-24.04  # unit tests hang on macos; use ubuntu instead
+    strategy:
+      fail-fast: false
+      matrix:
+        # OpenBSD only supports the two most recent releases
+        version: ['7.8', '7.9']
     steps:
     - uses: aws-actions/configure-aws-credentials@v6
       with:
@@ -258,10 +263,10 @@ jobs:
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - uses: actions/checkout@v6
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.32.0
+      uses: cross-platform-actions/action@v1.3.0
       with:
         operating_system: openbsd
-        version: '7.5'
+        version: ${{ matrix.version }}
         shell: bash
         run: |
           sudo pkg_add py3-urllib3
@@ -280,7 +285,7 @@ jobs:
       with:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.32.0
+      uses: cross-platform-actions/action@v1.3.0
       with:
         operating_system: freebsd
         version: '14.1'
