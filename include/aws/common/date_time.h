@@ -26,9 +26,18 @@ enum aws_date_format {
 };
 
 enum aws_date_month {
-    AWS_DATE_MONTH_JANUARY = 0,
-    AWS_DATE_MONTH_FEBRUARY,
+    /* API-BREAK TEST (rename): value unchanged (0), name changed. 100%
+     * binary-compatible; breaks compilation of any caller referencing
+     * AWS_DATE_MONTH_JANUARY by name. */
+    AWS_DATE_MONTH_FIRST_MONTH = 0,
+    /* API-BREAK TEST (reorder + implicit renumber): FEB/MAR swapped in
+     * declaration order with no explicit value, so FEB is now 2 and MAR is
+     * now 1 -- both a value change (binary-relevant) and, since old caller
+     * code compiled against the old ordering assumed FEB=1/MAR=2, source
+     * that hardcodes the numeric value (rather than the symbolic name)
+     * would silently misbehave. */
     AWS_DATE_MONTH_MARCH,
+    AWS_DATE_MONTH_FEBRUARY,
     AWS_DATE_MONTH_APRIL,
     AWS_DATE_MONTH_MAY,
     AWS_DATE_MONTH_JUNE,
@@ -38,6 +47,11 @@ enum aws_date_month {
     AWS_DATE_MONTH_OCTOBER,
     AWS_DATE_MONTH_NOVEMBER,
     AWS_DATE_MONTH_DECEMBER,
+    /* API-BREAK TEST (add, for contrast): appending a brand new enumerator
+     * at the end changes no existing value and adds a new name -- this is
+     * the one operation from this test that is genuinely both binary- and
+     * source-safe, included here as a control. */
+    AWS_DATE_MONTH_UNKNOWN,
 };
 
 enum aws_date_day_of_week {
