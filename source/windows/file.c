@@ -570,11 +570,17 @@ int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
      * FILETIME is 100-nanosecond intervals since January 1, 1601 UTC.
      * Convert to nanoseconds since unix epoch (January 1, 1970 UTC).
      * The difference is 11644473600 seconds = 116444736000000000 hundred-nanos.
+     * See aws_sys_clock_get_ticks() in clock.c for the same conversion.
      */
-    uint64_t hundred_nanos = ((uint64_t)last_write_time.dwHighDateTime << 32) | (uint64_t)last_write_time.dwLowDateTime;
-    uint64_t unix_hundred_nanos = hundred_nanos - (uint64_t)116444736000000000;
+    ULARGE_INTEGER int_conv;
+    int_conv.LowPart = last_write_time.dwLowDateTime;
+    int_conv.HighPart = last_write_time.dwHighDateTime;
 
-    *last_modified_ns = unix_hundred_nanos * 100;
+    static const uint64_t WINDOWS_TICK = 10000000;
+    static const uint64_t EC_TO_UNIX_EPOCH = 11644473600LL;
+    static const uint64_t FILE_TIME_TO_NS = 100;
+
+    *last_modified_ns = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS;
 
     return AWS_OP_SUCCESS;
 }
