@@ -4,10 +4,12 @@
  */
 
 #include <aws/common/allocator.h>
+#include <aws/common/clock.h>
 #include <aws/common/device_random.h>
 #include <aws/common/file.h>
 #include <aws/common/string.h>
 #include <aws/common/system_info.h>
+#include <aws/common/thread.h>
 
 #include <aws/testing/aws_test_harness.h>
 
@@ -1038,3 +1040,61 @@ static int s_test_file_path_write_to_offset_direct_io(struct aws_allocator *allo
 }
 
 AWS_TEST_CASE(test_file_path_write_to_offset_direct_io, s_test_file_path_write_to_offset_direct_io)
+
+static int s_test_file_get_last_modified_epoch_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    const char *file_path_cstr = "last_modified_test.txt";
+    struct aws_string *file_path = aws_string_new_from_c_str(allocator, file_path_cstr);
+
+    /* Create a file and write something */
+    FILE *file = aws_fopen(file_path_cstr, "w");
+    ASSERT_NOT_NULL(file);
+    fprintf(file, "hello");
+    fclose(file); /* must close the write handle: on Windows the last write time is only
+                     guaranteed correct once all writing handles are closed (see doc comment
+                     on aws_file_get_last_modified_epoch) */
+
+    /* Get last modified time on a fresh handle */
+    file = aws_fopen(file_path_cstr, "r");
+    ASSERT_NOT_NULL(file);
+
+    uint64_t first_modified_ns = 0;
+    ASSERT_SUCCESS(aws_file_get_last_modified_epoch(file, &first_modified_ns));
+    fclose(file);
+
+    /* Verify it's less than current time */
+    uint64_t now_ns = 0;
+    ASSERT_SUCCESS(aws_sys_clock_get_ticks(&now_ns));
+    ASSERT_TRUE(first_modified_ns <= now_ns);
+    ASSERT_TRUE(first_modified_ns > 0);
+
+    /* Sleep to ensure filesystem timestamp advances */
+    aws_thread_current_sleep((uint64_t)1000000000); /* 1 second */
+
+    /* Modify the file */
+    file = aws_fopen(file_path_cstr, "w");
+    ASSERT_NOT_NULL(file);
+    fprintf(file, "world");
+    fclose(file); /* close write handle before re-querying, same reason as above */
+
+    /* Get last modified time again on a fresh handle */
+    file = aws_fopen(file_path_cstr, "r");
+    ASSERT_NOT_NULL(file);
+
+    uint64_t second_modified_ns = 0;
+    ASSERT_SUCCESS(aws_file_get_last_modified_epoch(file, &second_modified_ns));
+    fclose(file);
+
+    /* Second modification time must be strictly later than first */
+    ASSERT_TRUE(second_modified_ns > first_modified_ns);
+    ASSERT_TRUE(second_modified_ns > now_ns);
+
+    /* Cleanup */
+    remove(file_path_cstr);
+    aws_string_destroy(file_path);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_file_get_last_modified_epoch, s_test_file_get_last_modified_epoch_fn)
