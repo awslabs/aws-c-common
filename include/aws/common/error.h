@@ -218,11 +218,6 @@ enum aws_common_error {
     AWS_ERROR_INVALID_CBOR,
     AWS_ERROR_CBOR_UNEXPECTED_TYPE,
     AWS_ERROR_CBOR_RESOURCE_LIMIT_EXCEEDED,
-    /* ABI-SAFE TEST #8 (append enum member): error codes are consumed via
-     * switch-with-default or generic error-string lookup, so callers never
-     * exhaustively enumerate every value; appending here doesn't shift any
-     * existing enumerator's integer value and breaks nothing. */
-    AWS_ERROR_RESERVED_FUTURE_USE,
     AWS_ERROR_END_COMMON_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_C_COMMON_PACKAGE_ID)
 };
 
