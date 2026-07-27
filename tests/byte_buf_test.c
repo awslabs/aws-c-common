@@ -632,6 +632,81 @@ static int s_test_byte_buf_append_dynamic(struct aws_allocator *allocator, void 
 }
 AWS_TEST_CASE(test_byte_buf_append_dynamic, s_test_byte_buf_append_dynamic)
 
+static int s_test_byte_buf_append_auto(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    uint8_t src_bytes[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+    struct aws_byte_cursor src = aws_byte_cursor_from_array(src_bytes, sizeof(src_bytes));
+
+    /*
+     * Case 1: growable buffer (allocator != NULL) — append_auto must
+     * grow the buffer when needed, matching aws_byte_buf_append_dynamic.
+     */
+    {
+        struct aws_byte_buf growable;
+        ASSERT_SUCCESS(aws_byte_buf_init(&growable, allocator, 4));
+        ASSERT_INT_EQUALS(0, growable.len);
+        ASSERT_INT_EQUALS(4, growable.capacity);
+
+        /* Source is 8 bytes; buffer capacity is 4 — must grow. */
+        ASSERT_SUCCESS(aws_byte_buf_append_auto(&growable, &src));
+        ASSERT_INT_EQUALS(8, growable.len);
+        ASSERT_TRUE(growable.capacity >= 8);
+        ASSERT_BIN_ARRAYS_EQUALS(src_bytes, sizeof(src_bytes), growable.buffer, growable.len);
+
+        aws_byte_buf_clean_up(&growable);
+    }
+
+    /*
+     * Case 2: fixed-size buffer (allocator == NULL) where the source
+     * fits — append_auto must succeed via the static path.
+     */
+    {
+        uint8_t backing[16] = {0};
+        struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        ASSERT_PTR_EQUALS(NULL, fixed.allocator);
+
+        ASSERT_SUCCESS(aws_byte_buf_append_auto(&fixed, &src));
+        ASSERT_INT_EQUALS(8, fixed.len);
+        ASSERT_INT_EQUALS(16, fixed.capacity);
+        ASSERT_BIN_ARRAYS_EQUALS(src_bytes, sizeof(src_bytes), fixed.buffer, fixed.len);
+
+        /* No clean_up — fixed buffer is stack-backed. */
+    }
+
+    /*
+     * Case 3: fixed-size buffer (allocator == NULL) where the source
+     * does NOT fit — append_auto must fail with
+     * AWS_ERROR_DEST_COPY_TOO_SMALL (loud failure, no realloc attempt).
+     */
+    {
+        uint8_t backing[4] = {0};
+        struct aws_byte_buf too_small = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        ASSERT_PTR_EQUALS(NULL, too_small.allocator);
+
+        ASSERT_FAILS(aws_byte_buf_append_auto(&too_small, &src));
+        ASSERT_INT_EQUALS(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_last_error());
+        ASSERT_INT_EQUALS(0, too_small.len);
+        ASSERT_INT_EQUALS(4, too_small.capacity);
+    }
+
+    /*
+     * Case 4: empty source on a fixed-size buffer — should succeed
+     * without modifying state.
+     */
+    {
+        uint8_t backing[4] = {0};
+        struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(backing, sizeof(backing));
+        struct aws_byte_cursor empty_src = {.len = 0, .ptr = NULL};
+
+        ASSERT_SUCCESS(aws_byte_buf_append_auto(&fixed, &empty_src));
+        ASSERT_INT_EQUALS(0, fixed.len);
+    }
+
+    return 0;
+}
+AWS_TEST_CASE(test_byte_buf_append_auto, s_test_byte_buf_append_auto)
+
 static uint8_t s_append_byte_array[] = {0xFF, 0xFE, 0xAB, 0x00, 0x55, 0x62};
 
 static int s_test_byte_buf_append_byte(struct aws_allocator *allocator, void *ctx) {
@@ -1361,6 +1436,63 @@ static int s_byte_cursor_utf8_parse_u64(struct aws_allocator *allocator, void *c
     ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("0x0"), &val));
 
     ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_u64(aws_byte_cursor_from_c_str("FF"), &val));
+
+    return 0;
+}
+
+AWS_TEST_CASE(test_byte_cursor_utf8_parse_i64, s_byte_cursor_utf8_parse_i64);
+static int s_byte_cursor_utf8_parse_i64(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    int64_t val;
+
+    /* sanity check */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0"), &val));
+    ASSERT_INT_EQUALS(0, val);
+
+    /* every acceptable character */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9876543210"), &val));
+    ASSERT_INT_EQUALS(9876543210, val);
+
+    /* max value */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9223372036854775807"), &val));
+    ASSERT_INT_EQUALS(INT64_MAX, val);
+
+    /* min value */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("-9223372036854775808"), &val));
+    ASSERT_INT_EQUALS(INT64_MIN, val);
+
+    /* leading zeros should have no effect */
+    ASSERT_SUCCESS(aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0000000000009223372036854775807"), &val));
+    ASSERT_INT_EQUALS(INT64_MAX, val);
+
+    /* one bigger than max */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("9223372036854775808"), &val));
+
+    /* one less than max */
+    ASSERT_ERROR(
+        AWS_ERROR_OVERFLOW_DETECTED,
+        aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("-9223372036854775809"), &val));
+
+    /* whitespace is not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str(" 0"), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("- 0"), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0 "), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0 0"), &val));
+
+    /* blank strings are not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str(""), &val));
+
+    /* hex is not ok */
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("0x0"), &val));
+
+    ASSERT_ERROR(AWS_ERROR_INVALID_ARGUMENT, aws_byte_cursor_utf8_parse_i64(aws_byte_cursor_from_c_str("FF"), &val));
 
     return 0;
 }

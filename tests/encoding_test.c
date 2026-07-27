@@ -798,6 +798,53 @@ static int s_base64_encoding_invalid_padding_test_fn(struct aws_allocator *alloc
 
 AWS_TEST_CASE(base64_encoding_invalid_padding_test, s_base64_encoding_invalid_padding_test_fn)
 
+/* Regression test: interior '=' followed by non-'=' must be rejected per RFC 4648 section 4.
+ * Only the patterns "XX==" (1 byte) and "XXX=" (2 bytes) are valid padding. */
+static int s_base64_encoding_interior_padding_rejected_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    /* All of these have '=' at position 3 followed by a valid base64 char — must be rejected */
+    const char *invalid_inputs[] = {"AB=D", "AB=d", "XX=Y", "ab=+"};
+    for (size_t i = 0; i < AWS_ARRAY_SIZE(invalid_inputs); ++i) {
+        uint8_t output[16] = {0};
+        struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str(invalid_inputs[i]);
+        struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
+
+        ASSERT_ERROR(
+            AWS_ERROR_INVALID_BASE64_STR,
+            aws_base64_decode(&encoded_buf, &output_buf),
+            "input \"%s\" with interior '=' should be rejected",
+            invalid_inputs[i]);
+        ASSERT_UINT_EQUALS(0, output_buf.len, "output.len must be 0 on rejection");
+    }
+
+    /* Verify that valid padding patterns still work */
+    {
+        /* "Zg==" decodes to "f" (1 byte) */
+        uint8_t output[16] = {0};
+        struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str("Zg==");
+        struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
+        ASSERT_SUCCESS(aws_base64_decode(&encoded_buf, &output_buf));
+        ASSERT_UINT_EQUALS(1, output_buf.len);
+        ASSERT_UINT_EQUALS('f', output_buf.buffer[0]);
+    }
+    {
+        /* "Zm8=" decodes to "fo" (2 bytes) */
+        uint8_t output[16] = {0};
+        struct aws_byte_cursor encoded_buf = aws_byte_cursor_from_c_str("Zm8=");
+        struct aws_byte_buf output_buf = aws_byte_buf_from_empty_array(output, sizeof(output));
+        ASSERT_SUCCESS(aws_base64_decode(&encoded_buf, &output_buf));
+        ASSERT_UINT_EQUALS(2, output_buf.len);
+        ASSERT_UINT_EQUALS('f', output_buf.buffer[0]);
+        ASSERT_UINT_EQUALS('o', output_buf.buffer[1]);
+    }
+
+    return 0;
+}
+
+AWS_TEST_CASE(base64_encoding_interior_padding_rejected_test, s_base64_encoding_interior_padding_rejected_test_fn)
+
 /* network integer encoding tests */
 static int s_uint64_buffer_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
