@@ -24,6 +24,9 @@
 #include <aws/common/clock.h>
 #include <aws/common/command_line_parser.h>
 #include <aws/common/common.h>
+#include <aws/common/file.h>
+#include <aws/common/string.h>
+#include <aws/common/system_info.h>
 #include <aws/common/thread.h>
 
 #include <errno.h>
@@ -35,14 +38,16 @@
 #include <unistd.h>
 
 /*
- * O_DIRECT requires the file offset, the length, and the buffer address to be
- * aligned to the device's logical block size. 4096 covers 512e and 4Kn devices
- * and matches the page size on the platforms of interest.
+ * O_DIRECT alignment is the device's logical block size, and aws-c-common's own
+ * direct-I/O helper validates against the runtime page size. Discovered at
+ * startup rather than hardcoded, because a hardcoded 4096 silently produces
+ * buffers the helper rejects on a 16 KiB or 64 KiB page system (some aarch64).
  */
-#define DIRECT_IO_ALIGN 4096
+static size_t s_align = 0;
 
 struct bench_config {
     const char *path;
+    struct aws_string *path_str;
     size_t block_size;
     size_t num_threads;
     uint64_t duration_secs;
@@ -50,6 +55,13 @@ struct bench_config {
     bool no_prealloc;
     bool do_fsync;
     bool keep;
+    /*
+     * Write via aws_file_path_write_to_offset_direct_io() instead of pwrite on a
+     * long-lived fd. The helper opens and closes the file on every call, so this
+     * measures the real cost of the aws-c-s3 download write path rather than the
+     * cost of the write alone. Comparing the two isolates that per-call overhead.
+     */
+    bool use_aws_helper;
 };
 
 struct worker {
@@ -112,8 +124,8 @@ static void s_print_usage(void) {
         "OPTIONS:\n"
         "    --path <FILE>          Output file, on the filesystem under test.\n"
         "                           O_DIRECT is unsupported on tmpfs.\n"
-        "    --block-size <SIZE>    Bytes per write, multiple of %d. Accepts k/m/g\n"
-        "                           suffixes. Default 8m.\n"
+        "    --block-size <SIZE>    Bytes per write, multiple of the page size (%zu\n"
+        "                           on this host). Accepts k/m/g suffixes. Default 8m.\n"
         "    --threads <N>          Concurrent writers. The analogue of queue\n"
         "                           depth in the io_uring version. Default 1.\n"
         "    --duration <SECS>      How long to write. Default 30.\n"
@@ -125,8 +137,13 @@ static void s_print_usage(void) {
         "                           many threads are running.\n"
         "    --fsync                fsync() at the end, inside the measured window.\n"
         "    --keep                 Do not delete the output file on exit.\n"
+        "    --use-aws-helper       Write via aws_file_path_write_to_offset_direct_io()\n"
+        "                           instead of pwrite on a long-lived fd. That helper\n"
+        "                           opens and closes the file per call, so this\n"
+        "                           measures the aws-c-s3 write path including that\n"
+        "                           overhead.\n"
         "\n",
-        DIRECT_IO_ALIGN);
+        s_align);
 }
 
 /*
@@ -159,15 +176,26 @@ static void s_worker_fn(void *arg) {
             break;
         }
 
-        ssize_t written = pwrite(worker->fd, buffer, config->block_size, (off_t)offset);
-        if (written < 0) {
-            worker->error_code = errno;
-            break;
-        }
-        if ((size_t)written != config->block_size) {
-            /* Short direct write indicates device trouble; do not paper over it. */
-            worker->error_code = EIO;
-            break;
+        ssize_t written = 0;
+        if (config->use_aws_helper) {
+            /* The helper opens the file, seeks, writes, and closes on each call. */
+            struct aws_byte_cursor data = aws_byte_cursor_from_array(buffer, config->block_size);
+            if (aws_file_path_write_to_offset_direct_io(config->path_str, offset, data) != AWS_OP_SUCCESS) {
+                worker->error_code = aws_last_error() != 0 ? EIO : 0;
+                break;
+            }
+            written = (ssize_t)config->block_size;
+        } else {
+            written = pwrite(worker->fd, buffer, config->block_size, (off_t)offset);
+            if (written < 0) {
+                worker->error_code = errno;
+                break;
+            }
+            if ((size_t)written != config->block_size) {
+                /* Short direct write indicates device trouble; do not paper over it. */
+                worker->error_code = EIO;
+                break;
+            }
         }
 
         aws_atomic_fetch_add(worker->bytes_written, (size_t)written);
@@ -216,6 +244,9 @@ int main(int argc, char *argv[]) {
     struct aws_allocator *allocator = aws_default_allocator();
     aws_common_library_init(allocator);
 
+    /* Match the alignment aws-c-common's direct-I/O helper validates against. */
+    s_align = aws_system_info_page_size();
+
     struct bench_config config = {
         .path = NULL,
         .block_size = 8 * 1024 * 1024,
@@ -225,6 +256,8 @@ int main(int argc, char *argv[]) {
         .no_prealloc = false,
         .do_fsync = false,
         .keep = false,
+        .use_aws_helper = false,
+        .path_str = NULL,
     };
 
     enum {
@@ -236,6 +269,7 @@ int main(int argc, char *argv[]) {
         OPT_NO_PREALLOC = 'n',
         OPT_FSYNC = 'f',
         OPT_KEEP = 'k',
+        OPT_USE_AWS_HELPER = 'a',
         OPT_HELP = 'h',
     };
     const struct aws_cli_option options[] = {
@@ -247,12 +281,13 @@ int main(int argc, char *argv[]) {
         {.name = "no-prealloc", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .val = OPT_NO_PREALLOC},
         {.name = "fsync", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .val = OPT_FSYNC},
         {.name = "keep", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .val = OPT_KEEP},
+        {.name = "use-aws-helper", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .val = OPT_USE_AWS_HELPER},
         {.name = "help", .has_arg = AWS_CLI_OPTIONS_NO_ARGUMENT, .val = OPT_HELP},
         {NULL, 0, NULL, 0},
     };
 
     int opt = 0;
-    while ((opt = aws_cli_getopt_long(argc, argv, "p:b:t:d:m:nfkh", options, NULL)) != -1) {
+    while ((opt = aws_cli_getopt_long(argc, argv, "p:b:t:d:m:nfkah", options, NULL)) != -1) {
         switch (opt) {
             case OPT_PATH:
                 config.path = aws_cli_optarg;
@@ -278,6 +313,9 @@ int main(int argc, char *argv[]) {
             case OPT_KEEP:
                 config.keep = true;
                 break;
+            case OPT_USE_AWS_HELPER:
+                config.use_aws_helper = true;
+                break;
             case OPT_HELP:
                 s_print_usage();
                 return 0;
@@ -291,8 +329,8 @@ int main(int argc, char *argv[]) {
         s_print_usage();
         return 2;
     }
-    if (config.block_size == 0 || config.block_size % DIRECT_IO_ALIGN != 0) {
-        fprintf(stderr, "error: --block-size must be a non-zero multiple of %d\n", DIRECT_IO_ALIGN);
+    if (config.block_size == 0 || config.block_size % s_align != 0) {
+        fprintf(stderr, "error: --block-size must be a non-zero multiple of %zu\n", s_align);
         return 2;
     }
     if (config.num_threads == 0) {
@@ -313,6 +351,10 @@ int main(int argc, char *argv[]) {
     s_report_filesystem(config.path);
     printf("  block size   : %zu bytes (%.2f MiB)\n", config.block_size, config.block_size / 1048576.0);
     printf("  threads      : %zu\n", config.num_threads);
+    printf("  write via    : %s\n", config.use_aws_helper ?
+        "aws_file_path_write_to_offset_direct_io() (opens/closes per call)" :
+        "pwrite on a long-lived O_DIRECT fd");
+    printf("  page size    : %zu bytes\n", s_align);
     printf("  duration     : %" PRIu64 "s\n", config.duration_secs);
 
     /*
@@ -337,6 +379,8 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
+    config.path_str = aws_string_new_from_c_str(allocator, config.path);
+
     int direct_fd = open(config.path, O_WRONLY | O_DIRECT);
     if (direct_fd < 0) {
         fprintf(
@@ -353,7 +397,7 @@ int main(int argc, char *argv[]) {
      * Explicitly aligned allocator: O_DIRECT rejects unaligned buffer addresses,
      * and the default allocator makes no alignment guarantee beyond the type's.
      */
-    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(DIRECT_IO_ALIGN);
+    struct aws_allocator *aligned_alloc = aws_explicit_aligned_allocator_new(s_align);
     if (aligned_alloc == NULL) {
         fprintf(stderr, "error: cannot create aligned allocator\n");
         close(direct_fd);
@@ -439,6 +483,7 @@ int main(int argc, char *argv[]) {
     close(direct_fd);
     close(setup_fd);
     aws_mem_release(allocator, workers);
+    aws_string_destroy(config.path_str);
     aws_explicit_aligned_allocator_destroy(aligned_alloc);
 
     if (!config.keep) {

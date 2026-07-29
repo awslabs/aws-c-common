@@ -76,6 +76,25 @@ echo "    remaining filesystem metadata, so expect a small delta"
 run "threads=32, no fsync" --threads 32
 run "threads=32, fsync"    --threads 32 --fsync
 echo
+echo "--- D. single thread, block size ladder, aws helper ----------"
+echo "    1 thread via aws_file_path_write_to_offset_direct_io(), so the only"
+echo "    source of parallelism is however much the device overlaps a single"
+echo "    large write. Tests whether one very large write can substitute for"
+echo "    many concurrent smaller ones."
+echo "    The helper writes in one write(2) up to ~2 GiB (AWS_FILE_MAX_READ_CHUNK"
+echo "    = 0x7ffff000), so nothing here is split internally."
+echo "    Note it reopens and closes the file per call, so larger blocks also"
+echo "    amortize that per-call overhead over more bytes."
+for bs in 1m 4m 8m 16m 32m 64m 128m 256m 512m 1g; do
+    run "aws-helper t=1 bs=$bs" --threads 1 --block-size "$bs" --use-aws-helper
+done
+echo
+echo "    same ladder with pwrite on a long-lived fd, to separate the"
+echo "    block-size effect from the helper's per-call open/close"
+for bs in 1m 4m 8m 16m 32m 64m 128m 256m 512m 1g; do
+    run "pwrite     t=1 bs=$bs" --threads 1 --block-size "$bs"
+done
+echo
 echo "=============================================================="
 echo " done"
 echo "=============================================================="
