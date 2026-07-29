@@ -67,6 +67,39 @@ struct worker {
     int error_code;
 };
 
+/*
+ * Parse a byte size with an optional k/m/g suffix (binary multiples), so the
+ * CLI accepts "8m" as well as "8388608". Returns 0 on a malformed value, which
+ * callers reject.
+ */
+static uint64_t s_parse_size(const char *s) {
+    char *end = NULL;
+    unsigned long long n = strtoull(s, &end, 10);
+    if (end == s) {
+        return 0;
+    }
+    uint64_t mult = 1;
+    switch (*end) {
+        case 'k':
+        case 'K':
+            mult = 1024;
+            break;
+        case 'm':
+        case 'M':
+            mult = 1024 * 1024;
+            break;
+        case 'g':
+        case 'G':
+            mult = 1024ULL * 1024 * 1024;
+            break;
+        case '\0':
+            break;
+        default:
+            return 0;
+    }
+    return (uint64_t)n * mult;
+}
+
 static void s_print_usage(void) {
     fprintf(
         stderr,
@@ -79,11 +112,12 @@ static void s_print_usage(void) {
         "OPTIONS:\n"
         "    --path <FILE>          Output file, on the filesystem under test.\n"
         "                           O_DIRECT is unsupported on tmpfs.\n"
-        "    --block-size <BYTES>   Bytes per write, multiple of %d. Default 8388608.\n"
+        "    --block-size <SIZE>    Bytes per write, multiple of %d. Accepts k/m/g\n"
+        "                           suffixes. Default 8m.\n"
         "    --threads <N>          Concurrent writers. The analogue of queue\n"
         "                           depth in the io_uring version. Default 1.\n"
         "    --duration <SECS>      How long to write. Default 30.\n"
-        "    --max-bytes <BYTES>    Stop after this many bytes; also bounds the\n"
+        "    --max-bytes <SIZE>     Stop after this many bytes; also bounds the\n"
         "                           fallocate reservation.\n"
         "    --no-prealloc          Skip fallocate, so writes extend the file.\n"
         "                           Extending O_DIRECT writes take the inode lock\n"
@@ -224,7 +258,7 @@ int main(int argc, char *argv[]) {
                 config.path = aws_cli_optarg;
                 break;
             case OPT_BLOCK_SIZE:
-                config.block_size = (size_t)strtoull(aws_cli_optarg, NULL, 10);
+                config.block_size = (size_t)s_parse_size(aws_cli_optarg);
                 break;
             case OPT_THREADS:
                 config.num_threads = (size_t)strtoull(aws_cli_optarg, NULL, 10);
@@ -233,7 +267,7 @@ int main(int argc, char *argv[]) {
                 config.duration_secs = strtoull(aws_cli_optarg, NULL, 10);
                 break;
             case OPT_MAX_BYTES:
-                config.max_bytes = strtoull(aws_cli_optarg, NULL, 10);
+                config.max_bytes = s_parse_size(aws_cli_optarg);
                 break;
             case OPT_NO_PREALLOC:
                 config.no_prealloc = true;
