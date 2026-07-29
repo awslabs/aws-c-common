@@ -326,6 +326,11 @@ if (ALLOW_CROSS_COMPILED_TESTS OR NOT CMAKE_CROSSCOMPILING)
     if (BUILD_TESTING)
         add_subdirectory(tests)
         add_subdirectory(bin/system_info)
+        # O_DIRECT and fallocate(2) are Linux-only, so this benchmark cannot be
+        # built on the other supported platforms.
+        if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            add_subdirectory(bin/disk_write_bench)
+        endif()
     endif()
 endif()
 
