@@ -36,7 +36,7 @@ jobs:
       - name: Release
         # Pointing at the fork branch while the builder change is in review.
         # Switch to awslabs/aws-crt-builder/.github/actions/auto-release@main once merged.
-        uses: awslabs/aws-crt-builder/.github/actions/auto-release@abi-check
+        uses: awslabs/aws-crt-builder/.github/actions/auto-release@auto-tagger
         with:
           lib-name: ${{ env.PACKAGE_NAME }}
           dry-run: ${{ inputs.dry-run }}
