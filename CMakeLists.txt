@@ -11,6 +11,7 @@ project(aws-c-common LANGUAGES C VERSION 0.1.0)
 message(STATUS "CMake ${CMAKE_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(AwsGetVersion)
 include(AwsCFlags)
 include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
@@ -226,7 +227,9 @@ if (AWS_PAGE_SIZE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_PAGE_SIZE=${AWS_PAGE_SIZE})
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
+aws_get_version(AWS_C_COMMON_VERSION AWS_C_COMMON_SOVERSION)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${AWS_C_COMMON_VERSION})
+# TODO: switch to AWS_C_COMMON_SOVERSION once we reach 1.0.0
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
 # libcbor files do includes like: #include "cbor/cbor_export.h"
