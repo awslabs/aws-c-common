@@ -1,0 +1,11 @@
+name: Block needs-review merges
+
+on:
+  pull_request:
+    types: [labeled, unlabeled]
+
+jobs:
+  gate:
+    # Pointing at the fork branch while the builder change is in review.
+    # Switch to awslabs/aws-crt-builder/.github/workflows/block-needs-review-label.yml@main once merged.
+    uses: awslabs/aws-crt-builder/.github/workflows/block-needs-review-label.yml@main
