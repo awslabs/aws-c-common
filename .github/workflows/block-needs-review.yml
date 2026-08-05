@@ -2,7 +2,7 @@ name: Block needs-review merges
 
 on:
   pull_request:
-    types: [labeled, unlabeled]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   pull-requests: read
