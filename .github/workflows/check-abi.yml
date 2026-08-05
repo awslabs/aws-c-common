@@ -39,5 +39,5 @@ jobs:
         uses: awslabs/aws-crt-builder/.github/actions/check-abi@main
         with:
           lib-name: ${{ env.PACKAGE_NAME }}
-          builder-version: abi-check
-          builder-source: channels
+          builder-version: latest
+          builder-source: releases
