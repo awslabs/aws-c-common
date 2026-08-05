@@ -328,7 +328,7 @@ int aws_directory_traverse(
             aws_string_convert_from_wchar_c_str(allocator, ffd.cFileName);
         struct aws_byte_cursor name_component_multi_char = aws_byte_cursor_from_string(name_component_multi_char_str);
 
-        /* disgard . and .. */
+        /* discard . and .. */
         char *ascend_mark = "..";
         char *cd_mark = ".";
         struct aws_byte_cursor ascend_mark_cur = aws_byte_cursor_from_c_str(ascend_mark);
