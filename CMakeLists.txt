@@ -7,20 +7,27 @@ cmake_minimum_required(VERSION 3.9...3.31)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# These modules only define functions/macros, so they're safe to import before
+# project(). AwsFeatureTests runs compiler checks at include-time and needs
+# project() to have already enabled the C compiler, so it stays below with
+# CTest (whose own docs show it included after project()) and GNUInstallDirs.
 include(AwsGetVersion)
+include(AwsCFlags)
+include(AwsCheckHeaders)
+include(AwsSharedLibSetup)
+include(AwsSanitizers)
+include(AwsThreadAffinity)
+include(AwsThreadName)
+
 aws_get_version(AWS_C_COMMON_VERSION AWS_C_COMMON_SOVERSION)
 
 project(aws-c-common LANGUAGES C VERSION ${AWS_C_COMMON_VERSION})
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
-include(AwsCFlags)
-include(AwsCheckHeaders)
-include(AwsSharedLibSetup)
+# Runs check_c_source_compiles/check_c_source_runs at include-time, which need
+# project()'s C compiler already enabled -- can't move up with the others.
 include(AwsFeatureTests)
-include(AwsSanitizers)
-include(AwsThreadAffinity)
-include(AwsThreadName)
 include(CTest)
 include(GNUInstallDirs)
 
