@@ -8,12 +8,11 @@ option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile,
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # These modules only define functions/macros, so they're safe to import before
-# project(). AwsFeatureTests runs compiler checks at include-time and needs
-# project() to have already enabled the C compiler, so it stays below with
-# CTest (whose own docs show it included after project()) and GNUInstallDirs.
+# project(). AwsCheckHeaders, AwsFeatureTests, CTest, and GNUInstallDirs all
+# run code at include-time that needs project()'s compiler/languages already
+# enabled, so they stay below.
 include(AwsGetVersion)
 include(AwsCFlags)
-include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
@@ -25,6 +24,9 @@ project(aws-c-common LANGUAGES C VERSION ${AWS_C_COMMON_VERSION})
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
+# AwsCheckHeaders calls enable_language(CXX) at include-time when
+# PERFORM_HEADER_CHECK is set, which requires project() to have run first.
+include(AwsCheckHeaders)
 # Runs check_c_source_compiles/check_c_source_runs at include-time, which need
 # project()'s C compiler already enabled -- can't move up with the others.
 include(AwsFeatureTests)
