@@ -6,12 +6,14 @@
 cmake_minimum_required(VERSION 3.9...3.31)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
-project(aws-c-common LANGUAGES C VERSION 0.1.0)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(AwsGetVersion)
+aws_get_version(AWS_C_COMMON_VERSION AWS_C_COMMON_SOVERSION)
+
+project(aws-c-common LANGUAGES C VERSION ${AWS_C_COMMON_VERSION})
 
 message(STATUS "CMake ${CMAKE_VERSION}")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(AwsGetVersion)
 include(AwsCFlags)
 include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
@@ -227,7 +229,6 @@ if (AWS_PAGE_SIZE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_PAGE_SIZE=${AWS_PAGE_SIZE})
 endif()
 
-aws_get_version(AWS_C_COMMON_VERSION AWS_C_COMMON_SOVERSION)
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${AWS_C_COMMON_VERSION})
 # TODO: switch to AWS_C_COMMON_SOVERSION once we reach 1.0.0
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
