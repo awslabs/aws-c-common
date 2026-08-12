@@ -1,0 +1,12 @@
+name: Block needs-review merges
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  gate:
+    uses: awslabs/aws-crt-builder/.github/workflows/block-needs-review-label.yml@main

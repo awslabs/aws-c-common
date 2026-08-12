@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Compute and summarize the bump/version but do not commit, tag, or publish anything.'
+        required: false
+        default: 'false'
+
+env:
+  PACKAGE_NAME: aws-c-common
+  CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
+  AWS_DEFAULT_REGION: us-east-1
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.CRT_CI_ROLE }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Release
+        uses: awslabs/aws-crt-builder/.github/actions/auto-release@main
+        with:
+          lib-name: ${{ env.PACKAGE_NAME }}
+          dry-run: ${{ inputs.dry-run }}

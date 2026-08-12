@@ -6,7 +6,7 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.72
+  BUILDER_VERSION: latest
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   BUILDER_SOURCE: releases
   PACKAGE_NAME: aws-c-common
@@ -35,7 +35,7 @@ jobs:
           - rhel8-x64
           - al2-x64
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -57,6 +57,7 @@ jobs:
           - clang-11
           - clang-15
           - clang-17
+          - clang-latest
           - gcc-4.8
           - gcc-5
           - gcc-6
@@ -65,7 +66,7 @@ jobs:
           - gcc-11
           - gcc-13
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -79,7 +80,7 @@ jobs:
   downstream:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -94,7 +95,7 @@ jobs:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -106,7 +107,7 @@ jobs:
   linux-shared-libs:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -118,7 +119,7 @@ jobs:
   linux-no-cpu-extensions:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -130,7 +131,7 @@ jobs:
   windows:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -145,7 +146,7 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -160,7 +161,7 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -172,7 +173,7 @@ jobs:
   windows-shared-libs:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -184,7 +185,7 @@ jobs:
   windows-no-cpu-extensions:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -196,7 +197,7 @@ jobs:
   windows-app-verifier:
     runs-on: windows-2025 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -212,7 +213,7 @@ jobs:
   macos-x64:
     runs-on: macos-14-large # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -225,7 +226,7 @@ jobs:
   macos:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -238,7 +239,7 @@ jobs:
   macos-no-cpu-extensions:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -250,17 +251,22 @@ jobs:
 
   openbsd:
     runs-on: ubuntu-24.04  # unit tests hang on macos; use ubuntu instead
+    strategy:
+      fail-fast: false
+      matrix:
+        # OpenBSD only supports the two most recent releases
+        version: ['7.8', '7.9']
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.25.0
+      uses: cross-platform-actions/action@v1.3.0
       with:
         operating_system: openbsd
-        version: '7.5'
+        version: ${{ matrix.version }}
         shell: bash
         run: |
           sudo pkg_add py3-urllib3
@@ -271,15 +277,15 @@ jobs:
   freebsd:
     runs-on: ubuntu-24.04
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      uses: cross-platform-actions/action@v0.25.0
+      uses: cross-platform-actions/action@v1.3.0
       with:
         operating_system: freebsd
         version: '14.1'
@@ -296,7 +302,7 @@ jobs:
       matrix:
         arch: [linux-armv6, linux-armv7, linux-arm64, android-armv7]
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -309,7 +315,7 @@ jobs:
   linux-debug:
     runs-on: ubuntu-24.04 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -321,7 +327,7 @@ jobs:
   windows-debug:
     runs-on: windows-2022 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -333,7 +339,7 @@ jobs:
   macos-debug:
     runs-on: macos-14 # latest
     steps:
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
@@ -342,3 +348,31 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --config Debug
+
+  s390x: # big-endian
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - uses: actions/checkout@v6
+    - uses: uraimo/run-on-arch-action@v3
+      name: Run commands
+      id: runcmd
+      with:
+        arch: s390x
+        distro: ubuntu22.04
+        install: |
+          apt-get update -q -y
+          apt-get -y install sudo
+          apt-get -y install cmake
+          apt-get -y install make
+          apt-get -y install g++
+          apt-get -y install python3
+          apt-get -y install git
+        run: |
+          lscpu | grep Endian
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --variant s390x --cmake-extra=-DENABLE_SANITIZERS=OFF

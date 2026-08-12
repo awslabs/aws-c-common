@@ -244,7 +244,7 @@ char **aws_backtrace_addr2line(void *const *stack_frames, size_t stack_depth) {
 void aws_backtrace_print(FILE *fp, void *call_site_data) {
     struct _EXCEPTION_POINTERS *exception_pointers = call_site_data;
     if (exception_pointers) {
-        fprintf(fp, "** Exception 0x%x occured **\n", exception_pointers->ExceptionRecord->ExceptionCode);
+        fprintf(fp, "** Exception 0x%x occurred **\n", exception_pointers->ExceptionRecord->ExceptionCode);
     }
 
     if (!s_init_dbghelp()) {

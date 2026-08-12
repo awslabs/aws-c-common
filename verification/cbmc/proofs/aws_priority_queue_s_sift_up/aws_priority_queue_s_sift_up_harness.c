@@ -25,7 +25,7 @@ void aws_priority_queue_s_sift_up_harness() {
         /* Ensuring that just the root cell is correctly allocated is
          * not enough, as the swap requires that both the swapped
          * cells are correctly allocated.  Therefore, if swap is to
-         * not be overriden, I have to ensure that all of the root
+         * not be overridden, I have to ensure that all of the root
          * descendants at least are correctly allocated. For now it is
          * ensured that all of them are. */
         size_t i;
