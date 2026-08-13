@@ -6,18 +6,30 @@
 cmake_minimum_required(VERSION 3.9...3.31)
 option(ALLOW_CROSS_COMPILED_TESTS "Allow tests to be compiled via cross compile, for use with qemu" OFF)
 
-project(aws-c-common LANGUAGES C VERSION 0.1.0)
-
-message(STATUS "CMake ${CMAKE_VERSION}")
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# These modules only define functions/macros, so they're safe to import before
+# project(). AwsCheckHeaders, AwsFeatureTests, CTest, and GNUInstallDirs all
+# run code at include-time that needs project()'s compiler/languages already
+# enabled, so they stay below.
+include(AwsGetVersion)
 include(AwsCFlags)
-include(AwsCheckHeaders)
 include(AwsSharedLibSetup)
-include(AwsFeatureTests)
 include(AwsSanitizers)
 include(AwsThreadAffinity)
 include(AwsThreadName)
+
+aws_get_version(AWS_C_COMMON_VERSION AWS_C_COMMON_SOVERSION)
+
+project(aws-c-common LANGUAGES C VERSION ${AWS_C_COMMON_VERSION})
+
+message(STATUS "CMake ${CMAKE_VERSION}")
+
+# AwsCheckHeaders calls enable_language(CXX) at include-time when
+# PERFORM_HEADER_CHECK is set, which requires project() to have run first.
+include(AwsCheckHeaders)
+# Runs check_c_source_compiles/check_c_source_runs at include-time, which need
+# project()'s C compiler already enabled -- can't move up with the others.
+include(AwsFeatureTests)
 include(CTest)
 include(GNUInstallDirs)
 
@@ -226,7 +238,8 @@ if (AWS_PAGE_SIZE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DAWS_PAGE_SIZE=${AWS_PAGE_SIZE})
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${AWS_C_COMMON_VERSION})
+# TODO: switch to AWS_C_COMMON_SOVERSION once we reach 1.0.0
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 
 # libcbor files do includes like: #include "cbor/cbor_export.h"
@@ -311,6 +324,7 @@ list(APPEND EXPORT_MODULES
     "cmake/AwsFindPackage.cmake"
     "cmake/AwsFeatureTests.cmake"
     "cmake/AwsCRuntime.cmake"
+    "cmake/AwsGetVersion.cmake"
     )
 
 install(FILES ${EXPORT_MODULES}

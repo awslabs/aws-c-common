@@ -143,7 +143,7 @@ int aws_hash_table_create(
  * -DHASH_TABLE_FIND_ELEMENT_GENERATOR=the_generator_fn, where the_generator_fn has signature:
  *   the_generator_fnconst struct aws_hash_table *map, const void *key, struct aws_hash_element *p_elem).
  *
- * NOTE: If you want a version of aws_hash_table_find() that that ensures that the table actually has the found value
+ * NOTE: If you want a version of aws_hash_table_find() that ensures that the table actually has the found value
  * when find returns success, that can be found in aws_hash_table_find_override.c
  */
 #ifdef HASH_TABLE_FIND_ELEMENT_GENERATOR
