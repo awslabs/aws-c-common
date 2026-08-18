@@ -1,15 +1,15 @@
 name: Check ABI compliance
 
-# Also run on push: PRs from forks can't access CRT_CI_ROLE_ARN, so the ABI
-# check won't run on customer PRs. Pushing the same commit to a branch here
-# runs the check with the secret available.
+# Trigger on push to non-main branches only, matching ci.yml. Fork PRs can't
+# access CRT_CI_ROLE_ARN and would fail; a maintainer pushing the same commit
+# to a branch on this repo runs the check with the secret available.
 on:
   push:
-  pull_request:
-    types: [opened, synchronize, reopened]
+    branches-ignore:
+      - 'main'
 
 concurrency:
-  group: check-abi-${{ github.event.pull_request.number || github.ref }}
+  group: check-abi-${{ github.ref }}
   cancel-in-progress: true
 
 env:

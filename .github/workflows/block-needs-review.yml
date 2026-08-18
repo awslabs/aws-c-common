@@ -1,8 +1,12 @@
 name: Block needs-review merges
 
+# Trigger on push to non-main branches only, matching ci.yml. Fork PRs can't
+# access repo secrets and would fail; a maintainer pushing to a branch on this
+# repo runs the gate with secrets available.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches-ignore:
+      - 'main'
 
 permissions:
   pull-requests: read
