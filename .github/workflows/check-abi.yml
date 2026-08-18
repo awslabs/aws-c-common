@@ -1,6 +1,8 @@
 name: Check ABI compliance
 
-# Run on push too so contributors get an ABI signal before opening a public PR.
+# Also run on push: PRs from forks can't access CRT_CI_ROLE_ARN, so the ABI
+# check won't run on customer PRs. Pushing the same commit to a branch here
+# runs the check with the secret available.
 on:
   push:
   pull_request:
