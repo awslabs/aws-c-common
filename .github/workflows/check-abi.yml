@@ -1,11 +1,13 @@
 name: Check ABI compliance
 
+# Run on push too so contributors get an ABI signal before opening a public PR.
 on:
+  push:
   pull_request:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: check-abi-${{ github.event.pull_request.number }}
+  group: check-abi-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
