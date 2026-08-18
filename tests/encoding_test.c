@@ -72,7 +72,7 @@ static int s_run_hex_encoding_test_case(
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
-        "Write should not have occurred after the start of the buffer.");
+        "Write should not have occurred after the end of the buffer.");
 
     aws_byte_buf_clean_up(&allocation);
     return 0;
@@ -377,7 +377,7 @@ static int s_run_base64_encoding_test_case(
     ASSERT_INT_EQUALS(
         (unsigned char)*(allocation.buffer + output_len + 1),
         (unsigned char)0xdd,
-        "Write should not have occurred after the start of the buffer.");
+        "Write should not have occurred after the end of the buffer.");
 
     aws_byte_buf_clean_up(&allocation);
 
@@ -1084,7 +1084,7 @@ static int s_run_hex_encoding_append_dynamic_test_case(
         ASSERT_INT_EQUALS(
             (unsigned char)*(dest.buffer + i),
             (unsigned char)0xdd,
-            "Write should not have occurred before the the encoding's starting position.");
+            "Write should not have occurred before the encoding's starting position.");
     }
 
     for (size_t i = starting_offset + output_size; i < dest.capacity; ++i) {
@@ -1518,7 +1518,7 @@ static int s_text_is_valid_utf8_callback(struct aws_allocator *allocator, void *
     ASSERT_FAILS(aws_decode_utf8(aws_byte_cursor_from_buf(&all_good_text), &with_validation_callback_always_fails));
     aws_byte_buf_clean_up(&all_good_text);
 
-    /* Check the illegal test cases with always true callbck, it should still fail*/
+    /* Check the illegal test cases with always true callback, it should still fail*/
     for (size_t i = 0; i < AWS_ARRAY_SIZE(s_illegal_utf8_examples); ++i) {
         struct utf8_example example = s_illegal_utf8_examples[i];
         printf("illegal example [%zu]: %s\n", i, example.name);
