@@ -10,8 +10,8 @@ This library follows a three-part version scheme, `X.Y.Z`
 - **Y — Minor.** A moderate change, such as a significant non-breaking feature
   addition. A minor bump may also include a backwards-incompatible ABI change;
   when it does, this is noted and explained in the release notes. Minor updates
-  are generally low effort to adopt and are safe to pick up if you have good
-  test coverage.
+  are low effort to adopt: consumers need to rebuild against the new headers,
+  but source code changes are typically not required.
 - **Z — Patch.** A small change that does not break backwards compatibility. A
   patch release may warn of an upcoming breaking change. Patch updates can be
   picked up automatically.
@@ -27,5 +27,5 @@ We recommend running the latest release. Use the version parts as a guide to how
 much effort an upgrade requires:
 
 - **Major (X):** expect adoption effort; review the release notes.
-- **Minor (Y):** low effort; safe to adopt with good tests.
+- **Minor (Y):** low effort; rebuild against the new headers when the ABI changes.
 - **Patch (Z):** pick up automatically.
