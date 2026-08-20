@@ -1,5 +1,5 @@
 # Changelog
 
-## [0.14.5]
+## [1.0.0]
 
 Released.
