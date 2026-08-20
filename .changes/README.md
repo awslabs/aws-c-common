@@ -50,7 +50,7 @@ moves into `latest/<version>/` at release time.
 
 | You want | Look here |
 |---|---|
-| currently in-flight | root [`CHANGELOG.md`](../CHANGELOG.md) `[Preview]` section (source: `preview/*.json`) |
+| currently in-flight | `preview/*.json` on `main`, or the rendered view on the `docs` branch |
 | in the current minor line (`X.Y.*`) | root [`CHANGELOG.md`](../CHANGELOG.md) |
 | in a prior minor line (`A.B.*`) | `.changes/A.B.x/CHANGELOG.md` |
 | exact set for a tag | GitHub Release page for that tag |
