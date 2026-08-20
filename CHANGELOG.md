@@ -1,17 +1,12 @@
 # Changelog
 
-Changes released within the current minor version. When the next minor version
-is cut, this file is archived into [`.changes/`](.changes/README.md) and starts
-fresh.
+This file shows `[Unreleased]` and the current minor line only. Prior minor
+lines live under [`.changes/<M>.<N>.x/CHANGELOG.md`](.changes/README.md).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to the [versioning policy](VERSIONING.md).
+This file is bot-owned; do not edit it in a feature PR. Author your change as a
+fragment under [`.changes/unreleased/`](.changes/README.md) instead. This
+project adheres to the [versioning policy](VERSIONING.md).
 
 ## [Unreleased]
 
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
+_No unreleased changes._
