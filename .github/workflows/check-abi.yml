@@ -1,8 +1,6 @@
 name: Check ABI compliance
 
-# Trigger on push to non-main branches only, matching ci.yml. Fork PRs can't
-# access CRT_CI_ROLE_ARN and would fail; a maintainer pushing the same commit
-# to a branch on this repo runs the check with the secret available.
+# Trigger on any push to non-main branches.
 on:
   push:
     branches-ignore:
