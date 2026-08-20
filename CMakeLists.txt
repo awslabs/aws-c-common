@@ -239,8 +239,7 @@ if (AWS_PAGE_SIZE)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${AWS_C_COMMON_VERSION})
-# TODO: switch to AWS_C_COMMON_SOVERSION once we reach 1.0.0
-set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${AWS_C_COMMON_SOVERSION})
 
 # libcbor files do includes like: #include "cbor/cbor_export.h"
 # To make these paths work, add the location we're storing them as a search path.
