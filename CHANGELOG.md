@@ -2,4 +2,4 @@
 
 ## [1.0.0]
 
-Released.
+Official release of 1.0.0.
