@@ -27,9 +27,6 @@ moves into `latest/<version>/` at release time.
   "pr": 843,
   "type": "feat",
   "summary": "Add SSO sign-in for enterprise accounts.",
-  "impact": "minor",
-  "breaking": false,
-  "author": "azkrishpy",
   "url": "https://github.com/awslabs/aws-c-io/pull/843",
   "notes": ""
 }
@@ -40,9 +37,6 @@ moves into `latest/<version>/` at release time.
 | `pr` | PR number; also the filename |
 | `type` | `feat` \| `fix` \| `doc` \| `chore` \| `revert` |
 | `summary` | customer-facing one sentence |
-| `impact` | `major` \| `minor` \| `patch` |
-| `breaking` | `true` for API breaks |
-| `author` | PR author login, or omitted |
 | `url` | link to the PR |
 | `notes` | optional extended notes |
 
