@@ -49,8 +49,4 @@ moves into `latest/<version>/` at release time.
 | in a prior minor line (`A.B.*`) | `.changes/A.B.x/CHANGELOG.md` |
 | exact set for a tag | GitHub Release page for that tag |
 
-## Directory sort caveat
-
-Filesystem lex sort places `0.10.x/` before `0.2.x/`. The rendered
-`CHANGELOG.md` files are semver-sorted, so customers never see this — only
-`ls .changes/` looks out of order.
+> Note: filesystem lex sort places `0.10.x/` before `0.2.x/`. The rendered `CHANGELOG.md` files are semver-sorted, so only raw `ls .changes/` looks out of order.
