@@ -141,8 +141,10 @@ void aws_cbor_encoder_write_float(struct aws_cbor_encoder *encoder, double value
         aws_cbor_encoder_write_single_float(encoder, (float)value);
         return;
     }
+    /* Use INT64_MAX+1 as a threshold so it can be represented as double. */
+    double int64_overflow_threshold = 0x1p63;
     /* Conversation from int to floating-type is implementation defined if loss of precision */
-    if (value <= (double)INT64_MAX && value >= (double)INT64_MIN) {
+    if (value < int64_overflow_threshold && value >= (double)INT64_MIN) {
         /**
          * A prvalue of a floating point type can be converted to a prvalue of an integer type. The conversion
          * truncates; that is, the fractional part is discarded. The behavior is undefined if the truncated value cannot
