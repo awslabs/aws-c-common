@@ -169,7 +169,7 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
     ASSERT_TRUE(values[index++] == double_result);
-    /* 2^63 (whole number in uint64 range, encodes as uint) */
+    /* 2^63 (out of int64 range, encodes as float) */
     ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
     ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
