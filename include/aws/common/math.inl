@@ -250,6 +250,18 @@ AWS_STATIC_IMPL uint64_t aws_min_u64(uint64_t a, uint64_t b) {
     return a < b ? a : b;
 }
 
+AWS_STATIC_IMPL uint64_t aws_min_non_0_u64(uint64_t a, uint64_t b) {
+    if (a == 0) {
+        return b;
+    }
+
+    if (b == 0) {
+        return a;
+    }
+
+    return aws_min_u64(a, b);
+}
+
 AWS_STATIC_IMPL uint64_t aws_max_u64(uint64_t a, uint64_t b) {
     return a > b ? a : b;
 }
