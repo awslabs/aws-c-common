@@ -57,6 +57,21 @@ AWS_COMMON_API
 int aws_last_error(void);
 
 /*
+ *  Returns the last error on the current thread, ir AWS_ERROR_UNKNOWN if the current thread error isn't set.
+ *  Useful to ensure that an error code is not AWS_ERROR_SUCCESS in a failure path.
+ */
+AWS_COMMON_API int aws_last_error_or_unknown(void);
+
+/*
+ * Utility function that returns the passed in error code if not AWS_ERROR_SUCCESS, otherwise it returns
+ * the result of aws_last_error_or_unknown()
+ *
+ * Useful helper in situations where you get back an error code from a system and want to guarantee it's an actual
+ * error and not success.
+ */
+AWS_COMMON_API int aws_last_error_or_unknown_as_fallback(int error_code);
+
+/*
  * Returns the error str corresponding to `err`.
  */
 AWS_COMMON_API
