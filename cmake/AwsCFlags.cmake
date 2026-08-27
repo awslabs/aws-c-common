@@ -167,7 +167,9 @@ function(aws_set_common_properties target)
         # loaded at runtime which happens to use libcrypto.so from OpenSSL.
         # If the symbols from libcrypto.a aren't hidden, then SOME function calls use the libcrypto.a implementation
         # and SOME function calls use the libcrypto.so implementation, and this mismatch leads to weird crashes.
-        if (UNIX AND NOT APPLE)
+        if (CMAKE_SYSTEM_NAME STREQUAL "AIX")
+            target_link_options(${PROJECT_NAME} PRIVATE -lm -lbsd)
+        elseif (UNIX AND NOT APPLE)
             # If we used target_link_options() (CMake 3.13+) we could make these flags PUBLIC
             set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,libcrypto.a")
         endif()

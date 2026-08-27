@@ -7,6 +7,12 @@
 
 #include <time.h>
 
+/* In AIX, time.h provided NS_PER_SEC as macro, which causes compilation
+ * error, so need to undefine it.
+ */
+#if defined (AWS_OS_AIX) && defined (NS_PER_SEC)
+#undef NS_PER_SEC
+#endif
 static const uint64_t NS_PER_SEC = 1000000000;
 
 #if defined(CLOCK_BOOTTIME)
