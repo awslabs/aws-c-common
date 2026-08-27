@@ -239,11 +239,20 @@ int aws_last_error_or_unknown(void) {
     return error;
 }
 
-int aws_last_error_or_unknown_as_fallback(int error_code) {
+int aws_error_or_last_error_or_unknown(int error_code) {
     AWS_ASSERT(error_code != AWS_ERROR_SUCCESS);
 
     if (error_code == AWS_ERROR_SUCCESS) {
         return aws_last_error_or_unknown();
+    }
+
+    return error_code;
+}
+
+int aws_error_or_unknown(int error_code) {
+    AWS_ASSERT(error_code != AWS_ERROR_SUCCESS);
+    if (error_code == AWS_ERROR_SUCCESS) {
+        return AWS_ERROR_UNKNOWN;
     }
 
     return error_code;
