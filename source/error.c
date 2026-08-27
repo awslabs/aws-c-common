@@ -229,7 +229,7 @@ int aws_translate_and_raise_io_error_or(int error_no, int fallback_aws_error_cod
     }
 }
 
-int aws_last_error_or_unknown(void) {
+int aws_last_error_or_unknown_error(void) {
     int error = aws_last_error();
     AWS_ASSERT(error != AWS_ERROR_SUCCESS); /* Someone forgot to call aws_raise_error() */
     if (error == AWS_ERROR_SUCCESS) {
@@ -239,17 +239,17 @@ int aws_last_error_or_unknown(void) {
     return error;
 }
 
-int aws_error_or_last_error_or_unknown(int error_code) {
+int aws_error_or_last_error_or_unknown_error(int error_code) {
     AWS_ASSERT(error_code != AWS_ERROR_SUCCESS);
 
     if (error_code == AWS_ERROR_SUCCESS) {
-        return aws_last_error_or_unknown();
+        return aws_last_error_or_unknown_error();
     }
 
     return error_code;
 }
 
-int aws_error_or_unknown(int error_code) {
+int aws_error_or_unknown_error(int error_code) {
     AWS_ASSERT(error_code != AWS_ERROR_SUCCESS);
     if (error_code == AWS_ERROR_SUCCESS) {
         return AWS_ERROR_UNKNOWN;
