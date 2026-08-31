@@ -141,8 +141,15 @@ void aws_cbor_encoder_write_float(struct aws_cbor_encoder *encoder, double value
         aws_cbor_encoder_write_single_float(encoder, (float)value);
         return;
     }
-    /* Conversation from int to floating-type is implementation defined if loss of precision */
-    if (value <= (double)INT64_MAX && value >= (double)INT64_MIN) {
+    /* INT64_MAX is 2^63-1, which can't be represented in a double's 53-bit significand. So under the default
+     * round-to-nearest mode (double)INT64_MAX rounds up to 2^63. That makes "value <= (double)INT64_MAX" behave as
+     * "value <= 2^63", letting 2^63 sneak into the if block below and reach the (int64_t) cast, where truncating
+     * 2^63 overflows int64, which is UB and causes the wrong value to be encoded on some platforms.
+     * Using strict "< 2^63" excludes it. The lower bound needs no such handling: INT64_MIN (-2^63) is a power of two
+     * and exactly representable, so (double)INT64_MIN is exactly -2^63.
+     */
+    double int64_overflow_threshold = 0x1p63;
+    if (value < int64_overflow_threshold && value >= (double)INT64_MIN) {
         /**
          * A prvalue of a floating point type can be converted to a prvalue of an integer type. The conversion
          * truncates; that is, the fractional part is discarded. The behavior is undefined if the truncated value cannot
