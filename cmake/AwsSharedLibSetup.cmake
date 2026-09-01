@@ -1,9 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-include(GNUInstallDirs)
-
 function(aws_prepare_shared_lib_exports target)
+    # Included here, not at file scope, so this module is safe to include before project(): GNUInstallDirs needs
+    # an enabled language to pick the right libdir (e.g. "lib64" vs "lib" on 64-bit Linux).
+    include(GNUInstallDirs)
+
     if (BUILD_SHARED_LIBS)
         install(TARGETS ${target}
                 EXPORT ${target}-targets
