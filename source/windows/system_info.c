@@ -38,6 +38,10 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     return aws_system_info_processor_count();
 }
 
+int32_t aws_current_thread_cpu_group(void) {
+    return AWS_CPU_GROUP_UNKNOWN;
+}
+
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
     (void)group_idx;
 

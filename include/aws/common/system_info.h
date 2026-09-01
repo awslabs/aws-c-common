@@ -35,6 +35,9 @@ struct aws_cpu_info {
     bool suspected_hyper_thread;
 };
 
+/* Returned when a cpu group (NUMA node) cannot be determined. */
+#define AWS_CPU_GROUP_UNKNOWN (-1)
+
 struct aws_system_environment;
 
 AWS_EXTERN_C_BEGIN
@@ -117,6 +120,20 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx);
  */
 AWS_COMMON_API
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length);
+
+/**
+ * Returns the cpu group (NUMA node) the calling thread is running on right now, or
+ * AWS_CPU_GROUP_UNKNOWN when that cannot be determined.
+ *
+ * The answer is a snapshot, not a promise: unless the thread is pinned, the scheduler may move it to
+ * a cpu in a different group immediately after this returns. Callers should treat the result as a
+ * hint and have a path for AWS_CPU_GROUP_UNKNOWN.
+ *
+ * Only implemented on Linux with libnuma present. Everywhere else this returns
+ * AWS_CPU_GROUP_UNKNOWN.
+ */
+AWS_COMMON_API
+int32_t aws_current_thread_cpu_group(void);
 
 /* Returns true if a debugger is currently attached to the process. */
 AWS_COMMON_API

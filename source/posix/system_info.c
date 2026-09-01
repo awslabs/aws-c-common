@@ -3,6 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+/* sched_getcpu() is a GNU extension, so this has to land before any libc header is pulled in.
+ * Guarded away from Apple, matching source/posix/thread.c. */
+#if !defined(__MACH__)
+#    define _GNU_SOURCE /* NOLINT(bugprone-reserved-identifier) */
+#endif
+
 #include <aws/common/system_info.h>
 
 #include <aws/common/byte_buf.h>
@@ -20,6 +26,10 @@
 
 #if defined(__linux__) || defined(__unix__)
 #    include <sys/types.h>
+#endif
+
+#if defined(AWS_OS_LINUX)
+#    include <sched.h>
 #endif
 
 #include <unistd.h>
@@ -91,6 +101,31 @@ size_t aws_get_cpu_count_for_group(uint16_t group_idx) {
     }
 
     return aws_system_info_processor_count();
+}
+
+int32_t aws_current_thread_cpu_group(void) {
+#if defined(AWS_OS_LINUX)
+    /* Needs the cpu-to-node table, which only libnuma gives us. Without it there is nothing to map
+     * a cpu id onto, so report unknown rather than guessing a node. */
+    if (!g_numa_node_of_cpu_ptr) {
+        return AWS_CPU_GROUP_UNKNOWN;
+    }
+
+    /* vDSO on any kernel we care about, so this is a function call rather than a real syscall. */
+    int cpu_id = sched_getcpu();
+    if (cpu_id < 0) {
+        return AWS_CPU_GROUP_UNKNOWN;
+    }
+
+    int node = g_numa_node_of_cpu_ptr(cpu_id);
+    if (node < 0) {
+        return AWS_CPU_GROUP_UNKNOWN;
+    }
+
+    return (int32_t)node;
+#else
+    return AWS_CPU_GROUP_UNKNOWN;
+#endif
 }
 
 void aws_get_cpu_ids_for_group(uint16_t group_idx, struct aws_cpu_info *cpu_ids_array, size_t cpu_ids_array_length) {
