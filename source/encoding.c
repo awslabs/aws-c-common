@@ -314,6 +314,10 @@ static int s_base64_encode(
     struct aws_byte_buf *AWS_RESTRICT output,
     bool do_url_safe_encoding) {
 
+    if (AWS_UNLIKELY(to_encode->len == 0)) {
+        return AWS_OP_SUCCESS;
+    }
+
     size_t encoded_length = 0;
     if (do_url_safe_encoding) {
         if (AWS_UNLIKELY(aws_base64_url_compute_encoded_len(to_encode->len, &encoded_length))) {
