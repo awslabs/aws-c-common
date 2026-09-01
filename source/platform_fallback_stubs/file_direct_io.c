@@ -34,6 +34,25 @@ int aws_file_path_write_to_offset_direct_io(
     return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
 }
 
+int aws_file_open_direct_io_for_write(const struct aws_string *file_path, int *out_fd) {
+    (void)file_path;
+    (void)out_fd;
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Direct file IO is not supported yet on platforms other than linux.");
+    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+}
+
+void aws_file_close_direct_io(int fd) {
+    (void)fd;
+}
+
+int aws_file_write_to_offset_direct_io(int fd, uint64_t offset, struct aws_byte_cursor data) {
+    (void)fd;
+    (void)offset;
+    (void)data;
+    AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "Direct file IO is not supported yet on platforms other than linux.");
+    return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
+}
+
 bool aws_file_direct_io_is_supported(void) {
     return false;
 }
