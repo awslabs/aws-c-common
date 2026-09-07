@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#ifdef USE_SIMD_ENCODING
+#if defined(USE_SIMD_ENCODING) && HAS_CPU_EXTENSTIONS
 size_t aws_common_private_base64_decode_sse41(const unsigned char *in, unsigned char *out, size_t len);
 void aws_common_private_base64_encode_sse41(
     const unsigned char *in,
