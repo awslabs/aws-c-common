@@ -301,6 +301,58 @@ int aws_file_path_write_to_offset_direct_io(
 #define AWS_FILE_INVALID_FD (-1)
 
 /*
+ * Open a file for writing, producing a descriptor for aws_file_write_to_offset().
+ *
+ * A caller issuing many writes to the same file can hold one descriptor across all of them
+ * instead of paying an open/close pair per write.
+ *
+ * This is the buffered counterpart to aws_file_open_direct_io_for_write(): the descriptor goes
+ * through the OS page cache and carries no alignment requirements. Unlike that function, it is
+ * supported on every platform.
+ *
+ * The file must already exist; the caller is responsible for creating it.
+ *
+ * Notes:
+ * - Release the descriptor with aws_file_close_fd().
+ * - Opened in binary mode, so the bytes written are the bytes given.
+ *
+ * @param file_path         The file path to open.
+ * @param out_fd            Set to the open descriptor on success; left untouched on failure.
+ *
+ * Returns AWS_OP_SUCCESS, or AWS_OP_ERR (after an error has been raised).
+ */
+AWS_COMMON_API
+int aws_file_open_for_write(const struct aws_string *file_path, int *out_fd);
+
+/*
+ * Close a descriptor obtained from aws_file_open_for_write().
+ * Does nothing when passed AWS_FILE_INVALID_FD.
+ */
+AWS_COMMON_API
+void aws_file_close_fd(int fd);
+
+/*
+ * Write to an already-open descriptor at the given offset.
+ *
+ * The write carries its own offset and does not consult the descriptor's file position, so several
+ * threads may write concurrently through one descriptor as long as their ranges do not overlap.
+ * (Implemented with pwrite() on POSIX, and WriteFile() with an OVERLAPPED offset on Windows. The
+ * Windows call moves the descriptor's file position as a side effect; the offset written to is
+ * unaffected by it.)
+ *
+ * Unlike aws_file_write_to_offset_direct_io(), the offset, data.len, and data.ptr carry no
+ * alignment requirements.
+ *
+ * @param fd                A descriptor from aws_file_open_for_write().
+ * @param offset            The offset in the file to start writing at.
+ * @param data              The buffer to write from (data.len bytes will be written).
+ *
+ * Returns AWS_OP_SUCCESS, or AWS_OP_ERR (after an error has been raised).
+ */
+AWS_COMMON_API
+int aws_file_write_to_offset(int fd, uint64_t offset, struct aws_byte_cursor data);
+
+/*
  * Open a file for writing with DIRECT I/O, producing a descriptor for
  * aws_file_write_to_offset_direct_io().
  *
