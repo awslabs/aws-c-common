@@ -18,8 +18,14 @@
 #include <sys/stat.h>
 #include <windows.h>
 
-/* Largest chunk a single WriteFile() is asked to move; also keeps the cast to DWORD in range.
- * Mirrors the constant in source/posix/file.c, which runs the same loop with pwrite(). */
+/* Largest chunk a single WriteFile() is asked to move, so the cast of the remaining length to
+ * WriteFile's DWORD nNumberOfBytesToWrite parameter cannot truncate. That is the whole reason the
+ * write below loops on Windows -- a successful WriteFile on a regular file writes everything it was
+ * asked for.
+ *
+ * The value is shared with source/posix/file.c only to keep one number in play; there it caps a
+ * Linux per-call transfer limit that has no Windows equivalent. Any value at or below MAXDWORD
+ * would do here. */
 static const size_t s_file_max_write_chunk = 0x7ffff000;
 
 static bool s_is_string_empty(const struct aws_string *str) {
