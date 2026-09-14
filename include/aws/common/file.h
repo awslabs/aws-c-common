@@ -298,7 +298,7 @@ int aws_file_path_write_to_offset_direct_io(
 /*
  * Value representing "no descriptor", for use with the DIRECT I/O descriptor functions below.
  */
-#define AWS_FILE_INVALID_FD (-1)
+enum { AWS_FILE_INVALID_FD = -1 };
 
 /*
  * Open a file for writing, producing a descriptor for aws_file_write_to_offset().
@@ -321,8 +321,7 @@ int aws_file_path_write_to_offset_direct_io(
  *
  * Returns AWS_OP_SUCCESS, or AWS_OP_ERR (after an error has been raised).
  */
-AWS_COMMON_API
-int aws_file_open_for_write(const struct aws_string *file_path, int *out_fd);
+AWS_COMMON_API int aws_file_open_for_write(const struct aws_string *file_path, int *out_fd);
 
 /*
  * Close a descriptor obtained from aws_file_open_for_write().
