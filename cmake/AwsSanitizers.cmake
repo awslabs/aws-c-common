@@ -67,8 +67,17 @@ function(aws_add_sanitizers target)
     endforeach()
 
     if(PRESENT_SANITIZERS)
-        target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
-        target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
+        set(sanitizer_flags -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
+
+        # By default UBSan only prints a diagnostic and continues. Turn violations into hard failures so
+        # they surface as test errors rather than being silently recovered from.
+        if("${PRESENT_SANITIZERS}" MATCHES "undefined")
+            list(APPEND sanitizer_flags -fno-sanitize-recover=all)
+        endif()
+
+        target_compile_options(${target} PRIVATE ${sanitizer_flags})
+        string(REPLACE ";" " " sanitizer_link_flags "${sanitizer_flags}")
+        target_link_libraries(${target} PUBLIC "${sanitizer_link_flags}")
 
         string(REPLACE "," ";" PRESENT_SANITIZERS "${PRESENT_SANITIZERS}")
         set(${target}_SANITIZERS ${PRESENT_SANITIZERS} PARENT_SCOPE)
