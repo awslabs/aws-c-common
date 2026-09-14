@@ -44,6 +44,7 @@ int main(void) {
     fprintf(stdout, "       'arm_crc': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_ARM_CRC) ? "true" : "false");
     fprintf(stdout, "       'arm_pmull': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_ARM_PMULL) ? "true" : "false");
     fprintf(stdout, "       'arm_crypto': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_ARM_CRYPTO) ? "true" : "false");
+    fprintf(stdout, "       'amd_ssse3': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_SSSE_3) ? "true" : "false");
     fprintf(stdout, "       'amd_sse4_1': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_1) ? "true" : "false");
     fprintf(stdout, "       'amd_sse4_2': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_SSE_4_2) ? "true" : "false");
     fprintf(stdout, "       'amd_clmul': %s,\n", aws_cpu_has_feature(AWS_CPU_FEATURE_CLMUL) ? "true" : "false");
