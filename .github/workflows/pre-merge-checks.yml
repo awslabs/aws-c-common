@@ -1,0 +1,61 @@
+# Everything that must be true before a pull request merges.
+#
+# Replaces check-abi.yml (on: push, which a fork's push never triggers here) and
+# block-needs-review.yml (whose label gate now runs inside this workflow, in the
+# same run as the ABI check that produces the label).
+name: Pre-merge checks
+
+on:
+  # pull_request_target, not pull_request: a fork's push raises no event in the
+  # base repo (so the current `on: push` ABI workflow gives fork PRs nothing),
+  # and only a base-repo token can label a PR.
+  pull_request_target:
+    types:
+      # code, and the changelog fragment, may have changed
+      - opened
+      - reopened
+      - synchronize
+      # the only signal for a title change, and for a base-branch retarget
+      - edited
+      # skip-changelog toggled, or a maintainer clearing needs-review
+      - labeled
+      - unlabeled
+
+# Keyed on the PR number: under pull_request_target github.ref is the base
+# branch for every PR, so a github.ref group would collapse all open PRs into
+# one. Not cancel-in-progress: cancelling a run parked on a human approval
+# would discard that approval.
+concurrency:
+  group: pre-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  # Do not add an `if:` or a `needs:` here, and do not rename it. A caller job
+  # that is skipped reports its own bare name instead of the nested
+  # "<job> / <name>" contexts, so it must be structurally unskippable. All
+  # conditional logic lives in the called workflow.
+  pre-merge:
+    # A caller must declare the union of what the called jobs request: the
+    # default token is read-only and a called workflow can only downgrade.
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      checks: read
+      statuses: write
+    # TODO: pin back to @main once this workflow is on aws-crt-builder's main
+    # branch. It is not there yet, so @main would fail to resolve.
+    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@feat/pre-merge-checks
+    with:
+      # PACKAGE_NAME == repo name in every consumer. Under a PR event
+      # github.event.repository is the BASE repo, so a fork cannot influence it.
+      lib-name: ${{ github.event.repository.name }}
+      # Operand order matters: `cond && '' || 'x'` always yields 'x', because ''
+      # is falsy. The truthy branch must carry the non-empty value.
+      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'fork-review' || '' }}
+      # The changelog action is not on aws-crt-builder's main branch yet.
+      changelog-enabled: false
+    secrets:
+      # Named rather than `secrets: inherit`, which would hand the called
+      # workflow every secret this repo can see.
+      CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
