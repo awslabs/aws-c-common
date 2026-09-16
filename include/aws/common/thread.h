@@ -123,13 +123,14 @@ AWS_COMMON_API
 const struct aws_thread_options *aws_default_thread_options(void);
 
 /**
- * Overrides the default thread options used when creating threads (of particular interest, event loop threads)
+ * Overrides the default thread options used when creating threads (of particular interest, event loop threads).
+ * Since `name` is a raw char pointer, it must outlive all thread creation while active.
  *
  * Test/Debug-only.  Not thread safe.
  *
  * @param options new default thread options
  */
-AWS_COMMON_API void aws_set_default_thread_options(struct aws_thread_options *options);
+AWS_COMMON_API void aws_set_default_thread_options(const struct aws_thread_options *options);
 
 AWS_COMMON_API void aws_thread_call_once(aws_thread_once *flag, void (*call_once)(void *), void *user_data);
 
