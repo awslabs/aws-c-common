@@ -206,12 +206,6 @@ int aws_file_open_direct_io_for_write(const struct aws_string *file_path, int *o
     return AWS_OP_SUCCESS;
 }
 
-void aws_file_close_direct_io(int fd) {
-    if (fd != AWS_FILE_INVALID_FD) {
-        close(fd);
-    }
-}
-
 int aws_file_write_to_offset_direct_io(int fd, uint64_t offset, struct aws_byte_cursor data) {
     if (O_DIRECT == 0) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "O_DIRECT is not supported on this platform");
@@ -279,7 +273,7 @@ int aws_file_path_write_to_offset_direct_io(
     }
 
     int rt_code = aws_file_write_to_offset_direct_io(fd, offset, data);
-    aws_file_close_direct_io(fd);
+    aws_file_close_fd(fd);
     return rt_code;
 }
 

@@ -324,8 +324,7 @@ enum { AWS_FILE_INVALID_FD = -1 };
 AWS_COMMON_API int aws_file_open_for_write(const struct aws_string *file_path, int *out_fd);
 
 /*
- * Close a descriptor obtained from aws_file_open_for_write().
- * Does nothing when passed AWS_FILE_INVALID_FD.
+ * Close a file descriptor
  */
 AWS_COMMON_API
 void aws_file_close_fd(int fd);
@@ -362,7 +361,7 @@ int aws_file_write_to_offset(int fd, uint64_t offset, struct aws_byte_cursor dat
  *
  * Notes:
  * - ONLY supports linux for now and raises AWS_ERROR_UNSUPPORTED_OPERATION on all other platforms.
- * - Release the descriptor with aws_file_close_direct_io().
+ * - Release the descriptor with aws_file_close_fd().
  *
  * @param file_path         The file path to open.
  * @param out_fd            Set to the open descriptor on success; left untouched on failure.
@@ -371,13 +370,6 @@ int aws_file_write_to_offset(int fd, uint64_t offset, struct aws_byte_cursor dat
  */
 AWS_COMMON_API
 int aws_file_open_direct_io_for_write(const struct aws_string *file_path, int *out_fd);
-
-/*
- * Close a descriptor obtained from aws_file_open_direct_io_for_write().
- * Does nothing when passed AWS_FILE_INVALID_FD.
- */
-AWS_COMMON_API
-void aws_file_close_direct_io(int fd);
 
 /*
  * Write to an already-open DIRECT I/O descriptor at the given offset.

@@ -41,10 +41,6 @@ int aws_file_open_direct_io_for_write(const struct aws_string *file_path, int *o
     return aws_raise_error(AWS_ERROR_UNSUPPORTED_OPERATION);
 }
 
-void aws_file_close_direct_io(int fd) {
-    (void)fd;
-}
-
 int aws_file_write_to_offset_direct_io(int fd, uint64_t offset, struct aws_byte_cursor data) {
     (void)fd;
     (void)offset;
