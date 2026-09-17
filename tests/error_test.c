@@ -257,7 +257,7 @@ static int s_unknown_error_code_in_slot_test_fn(struct aws_allocator *allocator,
 
     aws_raise_error(test_error_2.error_code + 1);
     error = aws_last_error();
-    /* error code should still propogate */
+    /* error code should still propagate */
     ASSERT_INT_EQUALS(
         test_error_2.error_code + 1, error, "Expected error code %d, but was %d", test_error_2.error_code + 1, error);
 
@@ -296,7 +296,7 @@ static int s_unknown_error_code_no_slot_test_fn(struct aws_allocator *allocator,
     int non_slotted_error_code = 3000;
     aws_raise_error(non_slotted_error_code);
     error = aws_last_error();
-    /* error code should still propogate */
+    /* error code should still propagate */
     ASSERT_INT_EQUALS(
         non_slotted_error_code, error, "Expected error code %d, but was %d", non_slotted_error_code, error);
 
@@ -335,7 +335,7 @@ static int s_unknown_error_code_range_too_large_test_fn(struct aws_allocator *al
     int oor_error_code = 10001;
     aws_raise_error(oor_error_code);
     error = aws_last_error();
-    /* error code should still propogate */
+    /* error code should still propagate */
     ASSERT_INT_EQUALS(oor_error_code, error, "Expected error code %d, but was %d", oor_error_code, error);
 
     /* string should be invalid though */

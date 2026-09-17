@@ -8,7 +8,7 @@
  *
  * We override aws_array_list_swap because mem_swap makes CBMC
  * struggle (because of the many memcpys) and because the
- * array_list_get_at in before the mem_swap are unneccessary if we
+ * array_list_get_at in before the mem_swap are unnecessary if we
  * stub out mem_swap. Instead we add a havoc assumption on the two
  * swapped byted to ensure that no assertion on the values of the two
  * cells is made afterwards.

@@ -415,6 +415,7 @@ add_test_case(uuid_string_parse_malformed)
 
 add_test_case(test_environment_functions)
 add_test_case(test_env_functions)
+add_test_case(test_env_non_ascii_path)
 
 add_test_case(short_argument_parse)
 add_test_case(long_argument_parse)
@@ -534,6 +535,7 @@ add_test_case(test_file_path_read_from_offset_direct_io)
 add_test_case(test_file_path_read_from_offset)
 add_test_case(test_file_path_read_from_offset_direct_io_chunking)
 add_test_case(test_file_path_write_to_offset_direct_io)
+add_test_case(test_file_get_last_modified_epoch)
 
 add_test_case(test_json_parse_from_string)
 add_test_case(test_json_parse_to_string)

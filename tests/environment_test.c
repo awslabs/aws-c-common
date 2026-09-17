@@ -82,3 +82,33 @@ static int s_test_env_functions_fn(struct aws_allocator *allocator, void *ctx) {
 }
 
 AWS_TEST_CASE(test_env_functions, s_test_env_functions_fn)
+
+static int s_test_env_non_ascii_path_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+#ifdef AWS_OS_WINDOWS
+    /* Set a non-ASCII environment variable. The value 0xE9 is 'é' in the
+     * ANSI code page (CP-1252), simulating a Windows user whose USERPROFILE
+     * contains accented characters. */
+    AWS_STATIC_STRING_FROM_LITERAL(s_var_name, "AWS_TEST_NONASCII_VAR");
+    struct aws_string *ansi_value = aws_string_new_from_c_str(allocator, "C:\\Users\\hom\xE9");
+    aws_set_environment_value(s_var_name, ansi_value);
+    aws_string_destroy(ansi_value);
+
+    /* Read it back through aws_get_env */
+    struct aws_string *value = aws_get_env(allocator, "AWS_TEST_NONASCII_VAR");
+    ASSERT_NOT_NULL(value);
+
+    /* The value should be valid UTF-8. U+00E9 in UTF-8 is the two bytes 0xC3 0xA9. */
+    const char *expected_utf8 = "C:\\Users\\hom\xC3\xA9";
+    ASSERT_TRUE(strcmp(aws_string_c_str(value), expected_utf8) == 0);
+    aws_string_destroy(value);
+
+    /* Clean up */
+    aws_unset_environment_value(s_var_name);
+#else
+    (void)allocator;
+#endif
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(test_env_non_ascii_path, s_test_env_non_ascii_path_fn)

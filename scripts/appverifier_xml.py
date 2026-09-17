@@ -49,7 +49,7 @@ s_AppVerifier_ErrorCodeHelp = {
         "0x0B": "AppVerifier could not determine any particular type of corruption for the block. "
         "Generally means heap points to non-accessible memory area",
         "0x0C": "AppVerifier could not determine any particular type of corruption for the block. "
-        "Generally happens if during heap free operation you pass an address that poins to a non-accessible memory area. "
+        "Generally happens if during heap free operation you pass an address that points to a non-accessible memory area. "
         "Can also occur with double free situations",
         "0x0D": "Block of memory is written to after being freed",
         "0x0E": "Freed block marked as non-accessible had access attempt",
@@ -76,7 +76,7 @@ s_AppVerifier_ErrorCodeHelp = {
         "critical section has not been deleted",
         "0x202": "A heap allocation contains a critical section, the allocation is freed, and the critical section "
         "has not been deleted",
-        "0x203": "Typicaly means a critical section has been initialized more than once. May mean the critical section "
+        "0x203": "Typically means a critical section has been initialized more than once. May mean the critical section "
         "or its debug information structure has been corrupted",
         "0x204": "Memory containing a critical section was freed but the critical section has not been deleted using 'DeleteCriticalSection'",
         "0x205": "The DebugInfo field of the critical section is pointing to freed memory",
@@ -92,8 +92,8 @@ s_AppVerifier_ErrorCodeHelp = {
         "0x215": "The current thread tries to use a private lock that lives inside another DLL"
     },
     "Memory": {
-        "0x600": "AppVerifier detects a VirtualFree or a DLL unload with an invalid start adress or size of the memory allocation",
-        "0x601": "AppVerifier detects a VirtualAlloc call with an invalid start adress or size of the memory allocation",
+        "0x600": "AppVerifier detects a VirtualFree or a DLL unload with an invalid start address or size of the memory allocation",
+        "0x601": "AppVerifier detects a VirtualAlloc call with an invalid start address or size of the memory allocation",
         "0x602": "AppVerifier detects a MapViewOfFile call with an invalid base address or size of the mapping",
         "0x603": "AppVerifier detects an IsBadXXXPtr call with an invalid address for the memory buffer to be probed",
         "0x604": "AppVerifier detects an IsBadXXXPtr call for a memory allocation that is free",
@@ -107,7 +107,7 @@ s_AppVerifier_ErrorCodeHelp = {
         "0x60C": "AppVerifier detects a VirtualFree with a non-zero value for the dwSize parameter",
         "0x60D": "A DLL's entry point function is raising an exception",
         "0x60E": "A thread function is raising an exception",
-        "0x60F": "An exception occured during an IsBadXXXPtr call",
+        "0x60F": "An exception occurred during an IsBadXXXPtr call",
         "0x610": "AppVerifier detects a VirtualFree call with a NULL first parameter",
         "0x612": "AppVerifier detects a HeapFree for a block of memory that is actually part of the current thread's stack",
         "0x613": "AppVerifier detects an UnmapViewOfFile for a block of memory that is actually part of the current thread's stack",
@@ -120,13 +120,13 @@ s_AppVerifier_ErrorCodeHelp = {
         "the VirtualAlloc or VirtualAllocEx function when the region of pages was reserved",
         "0x61A": "The program is calling UnmapViewOfFile with an IpBaseAddress parameter that is not identical to the value returned"
         "by a previous call to the MapViewOfFile or MapViewOfFileEx function",
-        "0x61B": "A callback function in the threadpool thread is rasing an exception",
+        "0x61B": "A callback function in the threadpool thread is raising an exception",
         "0x61C": "The application is trying to run code from an address that is non-executable or free",
         "0x61D": "The application is created an executable heap",
         "0x61E": "The application is allocating executable memory"
     },
     "SRWLock": {
-        "0x250": "A thread tried to use SRW lock that is not initalized",
+        "0x250": "A thread tried to use SRW lock that is not initialized",
         "0x251": "The SRW lock is being re-initialized",
         "0x252": "The SRW lock is being released with a wrong release API",
         "0x253": "The SRW lock is being acquired recursively by the same thread",

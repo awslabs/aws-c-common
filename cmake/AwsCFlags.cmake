@@ -81,7 +81,7 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS /DAWS_SUPPORT_WIN7=1)
         endif()
 
-        # Set MSVC runtime libary.
+        # Set MSVC runtime library.
         # Note: there are other ways of doing this if we bump our CMake minimum to 3.14+
         # See: https://cmake.org/cmake/help/latest/policy/CMP0091.html
         if (AWS_STATIC_MSVC_RUNTIME_LIBRARY OR STATIC_CRT)
@@ -257,7 +257,7 @@ function(aws_set_common_properties target)
     # We do this so that backtraces are more likely to show function names.
     # We mostly use backtraces to diagnose memory leaks.
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # And dont hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didnt annotate visibility - 
+        # And don't hide symbols on anything pre GCC 5.0 (Visibility support was not great on older compilers and some libraries didn't annotate visibility - 
         # looking at you jni, which does not annotate on gcc less than 4.2. Mixing no annotation and hidden symbols leads to unexpected failures.). 
         if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0"))
             set_target_properties(${target} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
