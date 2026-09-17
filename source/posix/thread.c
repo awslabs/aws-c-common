@@ -404,6 +404,9 @@ cleanup:
     }
 
     if (attr_return) {
+        if (is_managed_thread) {
+            thread->detach_state = AWS_THREAD_NOT_CREATED;
+        }
         s_thread_wrapper_destroy(wrapper);
         if (options && options->cpu_id >= 0) {
             /*

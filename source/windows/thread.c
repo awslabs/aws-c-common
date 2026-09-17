@@ -278,7 +278,11 @@ int aws_thread_launch(
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
-        aws_thread_decrement_unjoined_count();
+        if (is_managed_thread) {
+            aws_thread_decrement_unjoined_count();
+            thread->detach_state = AWS_THREAD_NOT_CREATED;
+        }
+
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
