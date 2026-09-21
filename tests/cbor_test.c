@@ -72,169 +72,75 @@ CBOR_TEST_CASE(cbor_encode_decode_double_test) {
     (void)allocator;
     (void)ctx;
     aws_common_library_init(allocator);
-    enum { VALUE_NUM = 17 };
 
-    /**
-     * 1 as unsigned int, takes 1 byte
-     * -1 as negative int, takes 1 byte
-     * 1.1 double, takes 9 bytes
-     * 1.1f is float, takes 5 bytes
-     * -1.1f is float, takes 5 bytes
-     * INFINITY will be float, takes 5 bytes
-     * FLT_MAX still a float, take 5 bytes
-     * DBL_MAX will be a double takes 9 bytes
-     * DBL_MIN will be a double takes 9 bytes
-     * HUGE_VAL
-     * 2^63 is out of int64 range and encoded as a float, takes 5 bytes
-     * UINT32_MAX fits the 32-bit integer range, encoded as unsigned int, takes 5 bytes
-     * 2^32 is just past UINT32_MAX and float-representable, encoded as a float, takes 5 bytes
-     * -2^32 is the lowest value in the 32-bit integer range, encoded as negative int, takes 5 bytes
-     * -2^33 is just past -2^32 and float-representable, encoded as a float, takes 5 bytes
-     * 2^32+1 is past UINT32_MAX but not float-representable, falls back to double, takes 9 bytes
-     * -2^32-1 is below the 32-bit integer range and not float-representable, falls back to double, takes 9 bytes
-     */
-    double values[VALUE_NUM] = {
-        1.0,
-        -1.0,
-        1.1,
-        1.1f,
-        -1.1f,
-        INFINITY,
-        FLT_MAX,
-        DBL_MAX,
-        DBL_MIN,
-        HUGE_VAL,
-        0x1p63,
-        (double)UINT32_MAX,
-        0x1p32,
-        -0x1p32,
-        -0x1p33,
-        0x1p32 + 1,
-        -0x1p32 - 1,
+    struct double_test_case {
+        double value;
+        size_t expected_encoded_len;
+        enum aws_cbor_type expected_type;
+        const char *comment;
     };
-    uint64_t expected_encoded_len[VALUE_NUM] = {1, 1, 9, 5, 5, 5, 5, 9, 9, 5, 5, 5, 5, 5, 5, 9, 9};
-
-    int expected_encoded_type[VALUE_NUM] = {
-        AWS_CBOR_TYPE_UINT,
-        AWS_CBOR_TYPE_NEGINT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_UINT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_NEGINT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
-        AWS_CBOR_TYPE_FLOAT,
+    struct double_test_case cases[] = {
+        {1.0, 1, AWS_CBOR_TYPE_UINT, "1 fits an unsigned int"},
+        {-1.0, 1, AWS_CBOR_TYPE_NEGINT, "-1 fits a negative int"},
+        {1.1, 9, AWS_CBOR_TYPE_FLOAT, "1.1 is not float-representable, stays a double"},
+        {1.1f, 5, AWS_CBOR_TYPE_FLOAT, "1.1f is float-representable"},
+        {-1.1f, 5, AWS_CBOR_TYPE_FLOAT, "-1.1f is float-representable"},
+        {INFINITY, 5, AWS_CBOR_TYPE_FLOAT, "INFINITY encodes as a float"},
+        {FLT_MAX, 5, AWS_CBOR_TYPE_FLOAT, "FLT_MAX is float-representable"},
+        {DBL_MAX, 9, AWS_CBOR_TYPE_FLOAT, "DBL_MAX stays a double"},
+        {DBL_MIN, 9, AWS_CBOR_TYPE_FLOAT, "DBL_MIN stays a double"},
+        {HUGE_VAL, 5, AWS_CBOR_TYPE_FLOAT, "HUGE_VAL (infinity) encodes as a float"},
+        {0x1p63, 5, AWS_CBOR_TYPE_FLOAT, "2^63 is out of the 32-bit integer range, float-representable"},
+        {(double)UINT32_MAX, 5, AWS_CBOR_TYPE_UINT, "UINT32_MAX is the upper bound of the 32-bit integer range"},
+        {0x1p32, 5, AWS_CBOR_TYPE_FLOAT, "2^32 is just past UINT32_MAX, float-representable"},
+        {-0x1p32, 5, AWS_CBOR_TYPE_NEGINT, "-2^32 is the lowest value in the 32-bit integer range"},
+        {-0x1p33, 5, AWS_CBOR_TYPE_FLOAT, "-2^33 is just past -2^32, float-representable"},
+        {0x1p32 + 1, 9, AWS_CBOR_TYPE_FLOAT, "2^32+1 is past UINT32_MAX and not float-representable, stays a double"},
+        {-0x1p32 - 1,
+         9,
+         AWS_CBOR_TYPE_FLOAT,
+         "-2^32-1 is below the 32-bit integer range and not float-representable, stays a double"},
     };
+    size_t case_num = AWS_ARRAY_SIZE(cases);
 
     size_t encoded_len = 0;
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
-    for (size_t i = 0; i < VALUE_NUM; i++) {
-        aws_cbor_encoder_write_float(encoder, values[i]);
+    for (size_t i = 0; i < case_num; i++) {
+        aws_cbor_encoder_write_float(encoder, cases[i].value);
         struct aws_byte_cursor cursor = aws_cbor_encoder_get_encoded_data(encoder);
-        ASSERT_UINT_EQUALS(encoded_len + expected_encoded_len[i], cursor.len);
+        ASSERT_UINT_EQUALS(encoded_len + cases[i].expected_encoded_len, cursor.len, cases[i].comment);
         encoded_len = cursor.len;
     }
     struct aws_byte_cursor final_cursor = aws_cbor_encoder_get_encoded_data(encoder);
     struct aws_cbor_decoder *decoder = aws_cbor_decoder_new(allocator, final_cursor);
-    /* Unsigned int, 1 */
-    size_t index = 0;
-    uint64_t result = 0;
-    enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKNOWN;
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &result));
-    ASSERT_TRUE(values[index++] == result);
-    /* negative int, -1 */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result));
-    /* Convert the decode val to expected val. */
-    ASSERT_TRUE((-1 - values[index++]) == result);
-    /* 1.1 double */
-    double double_result = 0;
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* 1.1 float */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* -1.1 float */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* INFINITY */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* FLT_MAX */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* DBL_MAX */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* DBL_MIN */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* HUGE_VAL */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* 2^63 (out of int64 range, encodes as float) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* UINT32_MAX (upper bound of 32-bit integer range, encodes as unsigned int) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &result));
-    ASSERT_TRUE(values[index++] == result);
-    /* 2^32 (just past UINT32_MAX, encodes as float instead of a 9-byte int) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* -2^32 (lowest value of 32-bit integer range, encodes as negative int) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result));
-    /* Convert the decoded val to expected val. */
-    ASSERT_TRUE((-1 - values[index++]) == result);
-    /* -2^33 (just past -2^32, encodes as float instead of a 9-byte int) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* 2^32+1 (past UINT32_MAX, not float-representable, falls back to double) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
-    /* -2^32-1 (below 32-bit integer range, not float-representable, falls back to double) */
-    ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
-    ASSERT_UINT_EQUALS(out_type, expected_encoded_type[index]);
-    ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &double_result));
-    ASSERT_TRUE(values[index++] == double_result);
+    for (size_t i = 0; i < case_num; i++) {
+        enum aws_cbor_type out_type = AWS_CBOR_TYPE_UNKNOWN;
+        ASSERT_SUCCESS(aws_cbor_decoder_peek_type(decoder, &out_type));
+        ASSERT_UINT_EQUALS(cases[i].expected_type, out_type, "%s", cases[i].comment);
+        switch (cases[i].expected_type) {
+            case AWS_CBOR_TYPE_UINT: {
+                uint64_t result = 0;
+                ASSERT_SUCCESS(aws_cbor_decoder_pop_next_unsigned_int_val(decoder, &result));
+                ASSERT_TRUE(cases[i].value == (double)result, "%s", cases[i].comment);
+                break;
+            }
+            case AWS_CBOR_TYPE_NEGINT: {
+                uint64_t result = 0;
+                ASSERT_SUCCESS(aws_cbor_decoder_pop_next_negative_int_val(decoder, &result));
+                /* Negative int is encoded as -1 - value. */
+                ASSERT_TRUE((-1 - cases[i].value) == (double)result, "%s", cases[i].comment);
+                break;
+            }
+            case AWS_CBOR_TYPE_FLOAT: {
+                double result = 0;
+                ASSERT_SUCCESS(aws_cbor_decoder_pop_next_float_val(decoder, &result));
+                ASSERT_TRUE(cases[i].value == result, "%s", cases[i].comment);
+                break;
+            }
+            default:
+                ASSERT_TRUE(false, "unexpected cbor type for %s", cases[i].comment);
+        }
+    }
 
     ASSERT_UINT_EQUALS(0, aws_cbor_decoder_get_remaining_length(decoder));
 
