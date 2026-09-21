@@ -52,7 +52,7 @@ jobs:
       lib-name: ${{ github.event.repository.name }}
       # Operand order matters: `cond && '' || 'x'` always yields 'x', because ''
       # is falsy. The truthy branch must carry the non-empty value.
-      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'fork-review' || '' }}
+      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
       # The changelog action is not on aws-crt-builder's main branch yet.
       changelog-enabled: false
     secrets:
