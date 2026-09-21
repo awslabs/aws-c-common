@@ -1,14 +1,22 @@
 # Everything that must be true before a pull request merges.
 #
-# Replaces check-abi.yml (on: push, which a fork's push never triggers here) and
-# block-needs-review.yml (whose label gate now runs inside this workflow, in the
-# same run as the ABI check that produces the label).
+# Replaces check-abi.yml (on: push, which a fork's push never raises here) and
+# block-needs-review.yml (whose gate now runs in the same run as the ABI check
+# that produces the label -- a label applied with GITHUB_TOKEN raises no
+# `labeled` workflow run, so a standalone gate never re-ran when the verdict
+# landed).
+#
+# The jobs are defined here rather than in a reusable workflow so the check
+# names stay one segment: a job that `uses:` a reusable workflow reports as
+# "<caller job> / <callee job>", which reads as
+# "Pre-merge checks / pre-merge / ABI compatibility". All the logic lives in
+# composite actions in aws-crt-builder, so this file is scaffolding only and
+# stays identical across consumers apart from PACKAGE_NAME.
 name: Pre-merge checks
 
 on:
-  # pull_request_target, not pull_request: a fork's push raises no event in the
-  # base repo (so the current `on: push` ABI workflow gives fork PRs nothing),
-  # and only a base-repo token can label a PR.
+  # pull_request_target, not pull_request: a fork's push raises no event in this
+  # repository, and only a base-repo token can label a pull request.
   pull_request_target:
     types:
       # code, and the changelog fragment, may have changed
@@ -17,73 +25,263 @@ on:
       - synchronize
       # the only signal for a title change, and for a base-branch retarget
       - edited
-      # skip-changelog toggled, or a maintainer clearing needs-review
+      # skip-changelog toggled, or a maintainer replacing needs-review
       - labeled
       - unlabeled
 
   # TEMPORARY TEST HARNESS -- REMOVE BEFORE MERGING TO main.
-  #
-  # pull_request_target reads the workflow from the base repository's DEFAULT
-  # branch, so nothing on this branch can trigger it. pull_request reads from
-  # the merge ref, so this branch's own copy does run for a PR targeting it,
-  # which is the only way to exercise this workflow before it reaches main.
-  #
-  # Same-repo pull requests only. On a PR from a fork this event withholds
-  # secrets and gives a read-only token, so credential minting, labelling and
-  # the gate status would all fail. The fork path has to be tested through
-  # pull_request_target once this is on main.
-  #
-  # Left in place past the merge, it would also run every internal PR twice.
+  # pull_request_target reads this file from the default branch, so nothing on
+  # this branch can trigger it. pull_request reads from the merge ref.
+  # Same-repo pull requests only: a fork PR on this event gets no secrets.
   pull_request:
     branches:
-      # Scoped to this branch, so it cannot fire for PRs into main and it
-      # becomes inert the moment the branch is deleted.
       - chore/pre-merge
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - edited
-      - labeled
-      - unlabeled
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
-# Keyed on the PR number: under pull_request_target github.ref is the base
-# branch for every PR, so a github.ref group would collapse all open PRs into
-# one. Not cancel-in-progress: cancelling a run parked on a human approval
-# would discard that approval.
+env:
+  PACKAGE_NAME: aws-c-common
+  AWS_REGION: us-east-1
+  RUNS_ON: ubuntu-24.04
+  # The string to put in a branch ruleset. Not a check-run name.
+  STATUS_CONTEXT: pre-merge/gate
+
+# Keyed on the pull request number: under pull_request_target github.ref is the
+# base branch for every PR, so a github.ref group would collapse them all into
+# one. Not cancel-in-progress: cancelling a run parked on a human approval would
+# discard that approval.
 concurrency:
   group: pre-merge-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
-  # Do not add an `if:` or a `needs:` here, and do not rename it. A caller job
-  # that is skipped reports its own bare name instead of the nested
-  # "<job> / <name>" contexts, so it must be structurally unskippable. All
-  # conditional logic lives in the called workflow.
-  pre-merge:
-    # A caller must declare the union of what the called jobs request: the
-    # default token is read-only and a called workflow can only downgrade.
+  # Holds the deployment environment and nothing else, so the credential-minting
+  # job below never references an environment and its OIDC `sub` is unchanged.
+  # Future jobs hang off this same approval with `needs: approval`.
+  #
+  # This job's `if:` is the only place the "could the code have changed?"
+  # predicate is written; `abi` inherits it through `needs:`.
+  approval:
+    name: Fork approval
+    if: >-
+      contains(fromJSON('["opened","reopened","synchronize"]'), github.event.action)
+      || (github.event.action == 'edited' && github.event.changes.base != null)
+    runs-on: ubuntu-24.04
+    permissions: {}
+    # Empty means no environment and no wait. Operand order matters:
+    # `cond && '' || 'x'` always yields 'x', because '' is falsy.
+    environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
+    steps:
+      - name: Approved
+        run: echo "PR-authored code is approved to execute in this run."
+
+  abi:
+    name: ABI compatibility
+    needs: approval
+    runs-on: ubuntu-24.04
     permissions:
+      id-token: write
       contents: read
       pull-requests: write
-      id-token: write
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CRT_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Checkout the PR head
+        uses: actions/checkout@v4
+        with:
+          # head.sha, not head.ref: fork branches named `main` exist, and a bare
+          # ref resolves against the base repo. Under pull_request_target the
+          # default checkout is the base branch, which would diff main with
+          # itself and always report `patch`.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          # Required from v4 onward to check out fork PR code under
+          # pull_request_target. The approval job is what makes it acceptable.
+          # actionlint <= 1.7.12 reports this input as undefined; its bundled
+          # metadata predates actions/checkout f9e715a9 (2026-06-16).
+          allow-unsafe-pr-checkout: true
+          # This tree is bind-mounted into a container that runs PR-authored
+          # CMake; leave no usable credential in .git/config.
+          persist-credentials: false
+
+      - name: Resolve the commits to compare
+        id: refs
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin \
+            "+refs/heads/${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}"
+          # The MERGE BASE, not the tip of the base branch. Diffing against the
+          # tip attributes every change that landed on the base branch since
+          # this PR forked to the PR itself, so a branch behind its base reports
+          # a verdict for commits it never contained, and that verdict changes
+          # as unrelated pull requests merge.
+          BASE_SHA="$(git merge-base HEAD "origin/${BASE_BRANCH}")"
+          echo "Comparing ${BASE_SHA} (merge base) -> $(git rev-parse HEAD) (PR head)"
+          echo "base-sha=${BASE_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Check ABI
+        id: check
+        uses: awslabs/aws-crt-builder/.github/actions/check-abi@main
+        with:
+          lib-name: ${{ env.PACKAGE_NAME }}
+          builder-version: latest
+          builder-source: releases
+          # Passing base-ref makes the action compare exactly these two commits
+          # and skip its own labelling, which the next step does instead.
+          base-ref: ${{ steps.refs.outputs.base-sha }}
+
+      - name: Apply the verdict label
+        if: ${{ steps.check.outputs.label != '' }}
+        # TODO: pin back to @main once this action is on main.
+        uses: awslabs/aws-crt-builder/.github/actions/abi-label@feat/pre-merge-checks
+        with:
+          verdict: ${{ steps.check.outputs.label }}
+          pr: ${{ github.event.pull_request.number }}
+          repo: ${{ github.repository }}
+
+  # Deliberately not behind `approval`: holds no credentials and checks out no
+  # PR code, so a first-time fork contributor gets feedback with no maintainer
+  # click. No activity-type filter either -- the fragment, the title and the
+  # waiver label can each change independently, and the job takes seconds.
+  changelog:
+    name: Changelog entry
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # write, not read: a pull request with no fragment gets one guidance
+      # comment carrying a ready-to-paste template.
+      pull-requests: write
+    steps:
+      - name: Fetch the fragment at the PR head
+        id: fragment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # The fragment exists only on the PR branch and this job deliberately
+          # has no checkout of it. The base repo's Contents API resolves a fork
+          # head SHA, so read the blob instead -- that keeps
+          # allow-unsafe-pr-checkout confined to the ABI job.
+          DEST="${RUNNER_TEMP}/changes/preview"
+          mkdir -p "$DEST"
+          BODY="$(mktemp)"
+          if gh api "repos/${REPO}/contents/.changes/preview/${PR}.json?ref=${HEAD_SHA}" \
+               -H 'Accept: application/vnd.github.raw' > "$BODY" 2>/dev/null; then
+            cp "$BODY" "${DEST}/${PR}.json"
+            exit 0
+          fi
+          # Only a bare "Not Found" means "the ref resolved, the file is absent".
+          # Anything else is infrastructure, and reporting it as a missing
+          # fragment would waive the requirement instead of failing.
+          MSG="$(jq -r '.message // "unparsable response"' < "$BODY" 2>/dev/null || echo 'unparsable response')"
+          if [[ "$MSG" != "Not Found" ]]; then
+            echo "::error::could not read the changelog fragment at ${HEAD_SHA}: ${MSG}"
+            exit 1
+          fi
+          echo "No fragment present; the check step decides whether that matters."
+
+      # Runs before the comment, because only it can say whether a fragment was
+      # required. A chore needs none, and a title that breaks the convention has
+      # a different problem -- neither should be told to paste a template.
+      # This step does not fail the job; the last step does.
+      - name: Check the PR title and the fragment
+        id: check
+        # TODO: pin back to @main once the changelog action is on main.
+        uses: awslabs/aws-crt-builder/.github/actions/changelog@feat/pre-merge-checks
+        with:
+          mode: check
+          pr: ${{ github.event.pull_request.number }}
+          # An action input, so the script receives it as an env var. Never
+          # interpolate a PR title into a run: body.
+          title: ${{ github.event.pull_request.title }}
+          # Bots cannot be asked to retitle, and failing every dependency bump
+          # would train people to ignore the check.
+          bot-author: ${{ endsWith(github.event.pull_request.user.login, '[bot]') && github.event.pull_request.user.login || '' }}
+          changes-dir: ${{ runner.temp }}/changes
+
+      - name: Seed a fragment template
+        if: ${{ steps.check.outputs.reason == 'missing-fragment' }}
+        uses: awslabs/aws-crt-builder/.github/actions/changelog@feat/pre-merge-checks
+        with:
+          mode: seed
+          pr: ${{ github.event.pull_request.number }}
+          title: ${{ github.event.pull_request.title }}
+          url: ${{ github.event.pull_request.html_url }}
+          # Outside $RUNNER_TEMP/changes so nothing mistakes it for a fragment
+          # the author supplied.
+          out: ${{ runner.temp }}/seed-template.json
+
+      - name: Comment with the template, once per pull request
+        if: ${{ steps.check.outputs.reason == 'missing-fragment' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          TEMPLATE: ${{ runner.temp }}/seed-template.json
+        run: |
+          set -euo pipefail
+          # Keyed on a hidden marker rather than the comment text, so the wording
+          # can be revised later without the bot re-commenting on every pull
+          # request that already has one.
+          MARKER='<!-- pre-merge-checks:changelog-template -->'
+          if gh api --paginate "repos/${REPO}/issues/${PR}/comments" \
+               --jq '.[].body' | grep -qF "$MARKER"; then
+            echo "Template comment already present on #${PR}; not repeating it."
+            exit 0
+          fi
+          {
+            printf '%s\n\n' "$MARKER"
+            printf 'This pull request has no changelog entry.\n\n'
+            printf 'Add `.changes/preview/%s.json` with this content, adjusting the summary to read as a release note:\n\n' "$PR"
+            printf '```json\n'
+            cat "$TEMPLATE"
+            printf '```\n\n'
+            printf '`type` is one of `feat`, `fix`, `chore`, `revert`, and decides which section the entry lands in. '
+            printf '`notes` is optional free-form detail -- for a revert, say why.\n\n'
+            printf 'A `chore` needs no entry at all. For a CI-only or pure-infra change, apply the `skip-changelog` label instead.\n'
+          } > "${RUNNER_TEMP}/comment.md"
+          # jq builds the body so the markdown survives verbatim.
+          jq -n --rawfile body "${RUNNER_TEMP}/comment.md" '{body: $body}' \
+            | gh api --method POST "repos/${REPO}/issues/${PR}/comments" --input - >/dev/null
+          echo "Posted the changelog template comment on #${PR}."
+
+      - name: Fail if the changelog check did not pass
+        if: ${{ steps.check.outputs.rc != '0' }}
+        env:
+          REASON: ${{ steps.check.outputs.reason }}
+        run: |
+          echo "::error::changelog check failed (${REASON:-unknown}); see the step above."
+          exit 1
+
+  # The single gate, and the only job that is unconditionally reachable -- so the
+  # only one that may become a required status check.
+  gate:
+    name: Pre-merge gate
+    needs: [approval, abi, changelog]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: read
       checks: read
       statuses: write
-    # TODO: pin back to @main once this workflow is on aws-crt-builder's main
-    # branch. It is not there yet, so @main would fail to resolve.
-    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@feat/pre-merge-checks
-    with:
-      # PACKAGE_NAME == repo name in every consumer. Under a PR event
-      # github.event.repository is the BASE repo, so a fork cannot influence it.
-      lib-name: ${{ github.event.repository.name }}
-      # Operand order matters: `cond && '' || 'x'` always yields 'x', because ''
-      # is falsy. The truthy branch must carry the non-empty value.
-      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
-      # TODO: this is on for testing the changelog path. The changelog action
-      # is not on aws-crt-builder's main branch yet, so the reusable workflow
-      # pins it to a branch; both must be settled before this merges.
-      changelog-enabled: true
-    secrets:
-      # Named rather than `secrets: inherit`, which would hand the called
-      # workflow every secret this repo can see.
-      CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
+    steps:
+      - name: Decide and publish the gate status
+        # TODO: pin back to @main once this action is on main.
+        uses: awslabs/aws-crt-builder/.github/actions/pre-merge-gate@feat/pre-merge-checks
+        with:
+          needs: ${{ toJSON(needs) }}
+          abi-result: ${{ needs.abi.result }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          pr: ${{ github.event.pull_request.number }}
+          repo: ${{ github.repository }}
+          status-context: ${{ env.STATUS_CONTEXT }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
