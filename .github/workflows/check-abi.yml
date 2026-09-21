@@ -1,11 +1,13 @@
 name: Check ABI compliance
 
+# Trigger on any push to non-main branches.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches-ignore:
+      - 'main'
 
 concurrency:
-  group: check-abi-${{ github.event.pull_request.number }}
+  group: check-abi-${{ github.ref }}
   cancel-in-progress: true
 
 env:
