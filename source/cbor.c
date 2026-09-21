@@ -141,25 +141,16 @@ void aws_cbor_encoder_write_float(struct aws_cbor_encoder *encoder, double value
         aws_cbor_encoder_write_single_float(encoder, (float)value);
         return;
     }
-    /* INT64_MAX is 2^63-1, which can't be represented in a double's 53-bit significand. So under the default
-     * round-to-nearest mode (double)INT64_MAX rounds up to 2^63. That makes "value <= (double)INT64_MAX" behave as
-     * "value <= 2^63", letting 2^63 sneak into the if block below and reach the (int64_t) cast, where truncating
-     * 2^63 overflows int64, which is UB and causes the wrong value to be encoded on some platforms.
-     * Using strict "< 2^63" excludes it. The lower bound needs no such handling: INT64_MIN (-2^63) is a power of two
-     * and exactly representable, so (double)INT64_MIN is exactly -2^63.
+    /*
+     * Some double values can be encoded as a 32-bit CBOR integer (no more than 5 bytes) or float (exactly 5 bytes),
+     * so try to encode as a 32-bit integer first, then as a float. Fall back to double if the value is too big for
+     * a 32-bit integer or loses precision as a float.
      */
-    double int64_overflow_threshold = 0x1p63;
-    if (value < int64_overflow_threshold && value >= (double)INT64_MIN) {
-        /**
-         * A prvalue of a floating point type can be converted to a prvalue of an integer type. The conversion
-         * truncates; that is, the fractional part is discarded. The behavior is undefined if the truncated value cannot
-         * be represented in the destination type.
-         * Check against the INT64 range to avoid undefined behavior
-         *
-         * Comparing against INT64_MAX instead of UINT64_MAX to simplify the code, which may loss the opportunity to
-         * convert the UINT64 range from double to uint64_t. However, converting double to uint64_t will not benefit the
-         * total length encoded.
-         **/
+    if (value <= (double)UINT32_MAX && value >= -((double)UINT32_MAX + 1)) {
+        /* double -> integer truncates the fractional part; comparing the result back against the original then rejects
+         * non-integral values.
+         * NOTE: It is UB if the value is out of the integer type's range, but the range check above keeps it within
+         * bounds. */
         int64_t int_value = (int64_t)value;
         if (value == (double)int_value) {
             if (int_value < 0) {
