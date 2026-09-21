@@ -21,6 +21,32 @@ on:
       - labeled
       - unlabeled
 
+  # TEMPORARY TEST HARNESS -- REMOVE BEFORE MERGING TO main.
+  #
+  # pull_request_target reads the workflow from the base repository's DEFAULT
+  # branch, so nothing on this branch can trigger it. pull_request reads from
+  # the merge ref, so this branch's own copy does run for a PR targeting it,
+  # which is the only way to exercise this workflow before it reaches main.
+  #
+  # Same-repo pull requests only. On a PR from a fork this event withholds
+  # secrets and gives a read-only token, so credential minting, labelling and
+  # the gate status would all fail. The fork path has to be tested through
+  # pull_request_target once this is on main.
+  #
+  # Left in place past the merge, it would also run every internal PR twice.
+  pull_request:
+    branches:
+      # Scoped to this branch, so it cannot fire for PRs into main and it
+      # becomes inert the moment the branch is deleted.
+      - chore/pre-merge
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - labeled
+      - unlabeled
+
 # Keyed on the PR number: under pull_request_target github.ref is the base
 # branch for every PR, so a github.ref group would collapse all open PRs into
 # one. Not cancel-in-progress: cancelling a run parked on a human approval
