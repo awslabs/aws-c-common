@@ -79,8 +79,10 @@ jobs:
       # Operand order matters: `cond && '' || 'x'` always yields 'x', because ''
       # is falsy. The truthy branch must carry the non-empty value.
       approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
-      # The changelog action is not on aws-crt-builder's main branch yet.
-      changelog-enabled: false
+      # TODO: this is on for testing the changelog path. The changelog action
+      # is not on aws-crt-builder's main branch yet, so the reusable workflow
+      # pins it to a branch; both must be settled before this merges.
+      changelog-enabled: true
     secrets:
       # Named rather than `secrets: inherit`, which would hand the called
       # workflow every secret this repo can see.
