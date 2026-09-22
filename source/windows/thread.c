@@ -119,6 +119,10 @@ const struct aws_thread_options *aws_default_thread_options(void) {
     return &s_default_options;
 }
 
+void aws_set_default_thread_options(const struct aws_thread_options *options) {
+    s_default_options = *options;
+}
+
 struct callback_fn_wrapper {
     void (*call_once)(void *);
     void *user_data;

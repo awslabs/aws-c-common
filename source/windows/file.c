@@ -9,10 +9,24 @@
 #include <aws/common/string.h>
 
 #include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
 #include <io.h>
+#include <share.h>
 #include <shlwapi.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <windows.h>
+
+/* Largest chunk a single WriteFile() is asked to move, so the cast of the remaining length to
+ * WriteFile's DWORD nNumberOfBytesToWrite parameter cannot truncate. That is the whole reason the
+ * write below loops on Windows -- a successful WriteFile on a regular file writes everything it was
+ * asked for.
+ *
+ * The value is shared with source/posix/file.c only to keep one number in play; there it caps a
+ * Linux per-call transfer limit that has no Windows equivalent. Any value at or below MAXDWORD
+ * would do here. */
+static const size_t s_file_max_write_chunk = 0x7ffff000;
 
 static bool s_is_string_empty(const struct aws_string *str) {
     return str == NULL || str->len == 0;
@@ -581,6 +595,123 @@ int aws_file_get_last_modified_epoch(FILE *file, uint64_t *last_modified_ns) {
     static const uint64_t FILE_TIME_TO_NS = 100;
 
     *last_modified_ns = (int_conv.QuadPart - (WINDOWS_TICK * EC_TO_UNIX_EPOCH)) * FILE_TIME_TO_NS;
+
+    return AWS_OP_SUCCESS;
+}
+
+int aws_file_open_for_write(const struct aws_string *file_path, int *out_fd) {
+    AWS_PRECONDITION(file_path);
+    AWS_PRECONDITION(out_fd);
+
+    struct aws_wstring *w_file_path = aws_string_convert_to_wstring(aws_default_allocator(), file_path);
+    if (w_file_path == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    /* _O_BINARY keeps the bytes verbatim: a text-mode descriptor would translate newlines and
+     * corrupt the offsets the caller is writing at. */
+    int fd = -1;
+    errno_t error = _wsopen_s(&fd, aws_wstring_c_str(w_file_path), _O_WRONLY | _O_BINARY, _SH_DENYNO, _S_IWRITE);
+    aws_wstring_destroy(w_file_path);
+
+    if (error != 0 || fd == -1) {
+        aws_translate_and_raise_io_error_or(error, AWS_ERROR_FILE_OPEN_FAILURE);
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL,
+            "Failed to open file for writing. path:'%s' errno:%d aws-error:%d(%s)",
+            aws_string_c_str(file_path),
+            error,
+            aws_last_error(),
+            aws_error_name(aws_last_error()));
+        return AWS_OP_ERR;
+    }
+
+    *out_fd = fd;
+    return AWS_OP_SUCCESS;
+}
+
+void aws_file_close_fd(int fd) {
+    if (fd != AWS_FILE_INVALID_FD) {
+        _close(fd);
+    }
+}
+
+int aws_file_write_to_offset(int fd, uint64_t offset, struct aws_byte_cursor data) {
+    if (data.len == 0) {
+        return AWS_OP_SUCCESS;
+    }
+
+    if (fd == AWS_FILE_INVALID_FD) {
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "aws_file_write_to_offset: invalid file descriptor");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    HANDLE os_file = (HANDLE)_get_osfhandle(fd);
+    if (os_file == INVALID_HANDLE_VALUE) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
+        AWS_LOGF_ERROR(AWS_LS_COMMON_GENERAL, "aws_file_write_to_offset: bad descriptor, errno: %d", errno_value);
+        return aws_translate_and_raise_io_error(errno_value);
+    }
+
+    /* This is the Windows counterpart to pwrite(): an OVERLAPPED carrying the offset makes each
+     * write positional, so one descriptor serves several threads writing disjoint ranges.
+     *
+     * The descriptor comes from _wsopen_s, so the handle is synchronous (not FILE_FLAG_OVERLAPPED).
+     * Per the WriteFile docs, for a synchronous handle with a non-NULL lpOverlapped "the write
+     * operation starts at the offset that is specified in the OVERLAPPED structure and WriteFile
+     * does not return until the write operation is complete", and the system updates the file
+     * pointer before returning. So the write is synchronous -- ERROR_IO_PENDING is reachable only
+     * for FILE_FLAG_OVERLAPPED handles -- and the shared file pointer it moves is a side effect no
+     * caller of this function reads.
+     *
+     * Do NOT reuse one OVERLAPPED across calls: each write below gets its own. */
+    size_t total_written = 0;
+    while (total_written < data.len) {
+        size_t chunk_size = aws_min_size(data.len - total_written, s_file_max_write_chunk);
+
+        ULARGE_INTEGER chunk_offset;
+        chunk_offset.QuadPart = offset + total_written;
+
+        OVERLAPPED overlapped;
+        AWS_ZERO_STRUCT(overlapped);
+        overlapped.Offset = chunk_offset.LowPart;
+        overlapped.OffsetHigh = chunk_offset.HighPart;
+
+        DWORD bytes_written = 0;
+        if (!WriteFile(os_file, data.ptr + total_written, (DWORD)chunk_size, &bytes_written, &overlapped)) {
+            int error = (int)GetLastError();
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_GENERAL,
+                "Failed to write %zu bytes at offset %" PRIu64 ", GetLastError: %d",
+                chunk_size,
+                offset + total_written,
+                error);
+            /* GetLastError() codes are not errno values, so map them here rather than handing them
+             * to aws_translate_and_raise_io_error(). Same approach as the directory helpers above. */
+            if (error == ERROR_ACCESS_DENIED) {
+                return aws_raise_error(AWS_ERROR_NO_PERMISSION);
+            }
+            if (error == ERROR_INVALID_HANDLE) {
+                return aws_raise_error(AWS_ERROR_INVALID_FILE_HANDLE);
+            }
+            if (error == ERROR_DISK_FULL || error == ERROR_HANDLE_DISK_FULL) {
+                return aws_raise_error(AWS_ERROR_NO_SPACE);
+            }
+            return aws_raise_error(AWS_ERROR_FILE_WRITE_FAILURE);
+        }
+
+        /* A zero-byte write with bytes remaining would spin forever. */
+        if (bytes_written == 0) {
+            AWS_LOGF_ERROR(
+                AWS_LS_COMMON_GENERAL,
+                "Wrote 0 of %zu bytes at offset %" PRIu64 " with no error reported",
+                chunk_size,
+                offset + total_written);
+            return aws_raise_error(AWS_ERROR_FILE_WRITE_FAILURE);
+        }
+
+        total_written += (size_t)bytes_written;
+    }
 
     return AWS_OP_SUCCESS;
 }
