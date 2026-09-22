@@ -189,6 +189,27 @@ jobs:
           fi
           echo "No fragment present; the check step decides whether that matters."
 
+      - name: List the pull request's changes under .changes/
+        id: paths
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # `status<TAB>path` for every changed path under .changes/. The check
+          # asserts a customer-visible change adds exactly one new fragment, at
+          # exactly its own path -- a fragment named for another pull request
+          # renders under that number, and one at another path renders nowhere.
+          # Documented cap: this endpoint returns at most 3000 files.
+          OUT="${RUNNER_TEMP}/changed-changes-paths.tsv"
+          gh api --paginate "repos/${REPO}/pulls/${PR}/files?per_page=100" \
+            --jq '.[] | select(.filename | startswith(".changes/"))
+                  | "\(.status)\t\(.filename)"' > "$OUT"
+          echo "file=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "Changed paths under .changes/:"
+          sed 's/^/  /' "$OUT" || true
+
       # Runs before the comment, because only it can say whether a fragment was
       # required. A chore needs none, and a title that breaks the convention has
       # a different problem -- neither should be told to paste a template.
@@ -207,6 +228,8 @@ jobs:
           # would train people to ignore the check.
           bot-author: ${{ endsWith(github.event.pull_request.user.login, '[bot]') && github.event.pull_request.user.login || '' }}
           changes-dir: ${{ runner.temp }}/changes
+          changed-paths-file: ${{ steps.paths.outputs.file }}
+          changes-prefix: .changes
 
       - name: Seed a fragment template
         if: ${{ steps.check.outputs.reason == 'missing-fragment' }}
@@ -265,7 +288,7 @@ jobs:
   # The single gate, and the only job that is unconditionally reachable -- so the
   # only one that may become a required status check.
   gate:
-    name: Pre-merge gate
+    name: Validation
     needs: [approval, abi, changelog]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
