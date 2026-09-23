@@ -1826,7 +1826,7 @@ int aws_byte_cursor_utf8_parse_i64(struct aws_byte_cursor cursor, int64_t *dst) 
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    *dst = is_neg ? -(int64_t)u64 : (int64_t)u64;
+    *dst = is_neg ? (int64_t)(0 - u64) : (int64_t)u64;
     return AWS_OP_SUCCESS;
 }
 
