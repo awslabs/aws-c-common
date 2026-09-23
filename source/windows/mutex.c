@@ -46,7 +46,7 @@ static TryAcquireSRWLockExclusive_fn *s_TryAcquireSRWLockExclusive;
 static void s_check_try_lock_function(void *user_data) {
     (void)user_data;
 
-    s_TryAcquireSRWLockExclusive = (TryAcquireSRWLockExclusive_fn *)GetProcAddress(
+    s_TryAcquireSRWLockExclusive = (TryAcquireSRWLockExclusive_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "TryAcquireSRWLockExclusive");
 }
 
