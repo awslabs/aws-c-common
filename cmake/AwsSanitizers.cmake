@@ -68,6 +68,8 @@ function(aws_add_sanitizers target)
     endforeach()
 
     if(PRESENT_SANITIZERS)
+        target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS})
+        target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
         if(NOT ENABLE_SANITIZER_RECOVERY)
             # Disable error recovery mode for sanitizers when the compiler supports it.
             set(sanitizer_flag "-fno-sanitize-recover=all")
