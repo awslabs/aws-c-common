@@ -254,7 +254,9 @@ static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, v
 
 AWS_TEST_CASE(test_managed_thread_join_timeout, s_test_managed_thread_join_timeout)
 
-static void s_thread_creation_failure_thread_fn(void *arg) {}
+static void s_thread_creation_failure_thread_fn(void *arg) {
+    (void)arg;
+}
 
 static int s_thread_creation_failure_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
