@@ -253,3 +253,28 @@ static int s_test_managed_thread_join_timeout(struct aws_allocator *allocator, v
 }
 
 AWS_TEST_CASE(test_managed_thread_join_timeout, s_test_managed_thread_join_timeout)
+
+static void s_thread_creation_failure_thread_fn(void *arg) {}
+
+static int s_thread_creation_failure_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    struct aws_thread_options default_options = *aws_default_thread_options();
+    struct aws_thread_options bad_options = default_options;
+    bad_options.stack_size = SIZE_MAX;
+
+    struct aws_thread thread;
+    aws_thread_init(&thread, allocator);
+
+    int launch_result = aws_thread_launch(&thread, s_thread_creation_failure_thread_fn, NULL, &bad_options);
+    ASSERT_FAILS(launch_result);
+
+    aws_thread_clean_up(&thread);
+
+    aws_common_library_clean_up();
+
+    return 0;
+}
+
+AWS_TEST_CASE(thread_creation_failure_test, s_thread_creation_failure_test_fn)

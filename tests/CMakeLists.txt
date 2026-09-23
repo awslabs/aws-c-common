@@ -44,6 +44,7 @@ add_test_case(thread_creation_join_invalid_cpu_id_test)
 add_test_case(thread_atexit_test)
 add_test_case(test_managed_thread_join)
 add_test_case(test_managed_thread_join_timeout)
+add_test_case(thread_creation_failure_test)
 
 add_test_case(mutex_aquire_release_test)
 add_test_case(mutex_is_actually_mutex_test)

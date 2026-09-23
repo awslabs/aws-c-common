@@ -283,6 +283,8 @@ int aws_thread_launch(
             thread->detach_state = AWS_THREAD_NOT_CREATED;
         }
 
+        aws_mem_release(thread_wrapper->allocator, thread_wrapper);
+
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 
