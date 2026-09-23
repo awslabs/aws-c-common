@@ -43,6 +43,12 @@ on:
 # all into one. Not cancel-in-progress: a label event arriving while the ABI
 # check is running would cancel the very run whose success the gate then demands,
 # leaving a pull request that only a manual re-run clears.
+#
+# Queueing still costs something, and it is the one behaviour maintainers trip
+# over: a newly queued run cancels an already-PENDING one, so several events
+# within a couple of minutes -- retitle, then label, then push -- can leave the
+# head with no successful ABI check. The gate then blocks and says so. Re-running
+# the ABI check or pushing again clears it. Space out edits on a busy PR.
 concurrency:
   group: pre-merge-${{ github.event.pull_request.number }}
   cancel-in-progress: false
