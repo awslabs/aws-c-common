@@ -4,16 +4,9 @@
 # block-needs-review.yml (whose gate now runs in the same run as the ABI check
 # that produces the label).
 #
-# This file is scaffolding only and is identical in every consumer apart from
-# `lib-name`. All logic lives in aws-crt-builder, so behaviour changes are one
-# edit there rather than a pull request per repository.
-#
-# Naming: this workflow is "Pre-merge checks", the caller job below is `upkeep`,
-# and the called workflow's jobs are `approval`, `abi-compat`, `changelog` and
-# `verdict-gate`. The merge box therefore reads
-# "Pre-merge checks / upkeep / abi-compat", and the required-check contexts --
-# the strings stored in the branch ruleset -- are "upkeep / abi-compat" and so
-# on. The called workflow's own name never appears anywhere.
+# Scaffolding only: identical in every consumer apart from `lib-name`. All logic
+# lives in aws-crt-builder, so a behaviour change is one edit there rather than a
+# pull request per repository.
 name: Pre-merge checks
 
 on:
@@ -27,14 +20,19 @@ on:
       - synchronize
       # the only signal for a title change, and for a base-branch retarget
       - edited
-      # skip-changelog toggled, or a maintainer replacing needs-review
+      # skip-changelog toggled, or a maintainer replacing needs-review. Both are
+      # load-bearing: replacing needs-review with patch or minor is the
+      # documented way to clear an accepted API break, and the gate has to
+      # re-run to see it.
       - labeled
       - unlabeled
 
   # TEMPORARY TEST HARNESS -- REMOVE BEFORE MERGING TO main.
   # pull_request_target reads this file from the default branch, so nothing on
-  # this branch can trigger it. pull_request reads from the merge ref.
-  # Same-repo pull requests only: a fork PR on this event gets no secrets.
+  # this branch can trigger it; pull_request reads from the merge ref. Note that
+  # `branches:` filters the BASE branch, not the head repository, so a fork pull
+  # request against this branch also triggers it -- and then has no secrets, so
+  # the ABI job fails at credential configuration.
   pull_request:
     branches:
       - chore/pre-merge
@@ -42,23 +40,19 @@ on:
 
 # Keyed on the pull request number: under pull_request_target github.ref is the
 # base branch for every pull request, so a github.ref group would collapse them
-# all into one. Not cancel-in-progress: cancelling a run parked on a human
-# approval would discard that approval.
+# all into one. Not cancel-in-progress: a label event arriving while the ABI
+# check is running would cancel the very run whose success the gate then demands,
+# leaving a pull request that only a manual re-run clears.
 concurrency:
   group: pre-merge-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
-  # DO NOT rename, and do not add an `if:` or a `needs:`.
-  #
-  # This job's id is the first segment of every required-check context --
-  # "upkeep / abi-compat", "upkeep / verdict-gate" -- and those strings are
-  # stored in the branch ruleset. Renaming it orphans every entry.
-  #
-  # It must also stay structurally unskippable: a skipped caller job reports its
-  # own bare name instead of the nested contexts, so any required context would
-  # sit at "Expected" forever. All conditional logic lives in the called
-  # workflow.
+  # DO NOT add an `if:` or a `needs:` here. A skipped caller job reports its own
+  # bare name instead of the nested check contexts, so anything required would
+  # sit at "Expected" forever; all conditional logic lives in the called
+  # workflow. This id is also the first segment of every nested context
+  # ("upkeep / abi-compat"), so renaming it renames all four at once.
   upkeep:
     # A caller must declare the union of what the called jobs request: the
     # default token is read-only and a called workflow can only downgrade.
@@ -74,6 +68,10 @@ jobs:
       lib-name: aws-c-common
       # Operand order matters: `cond && '' || 'x'` always yields 'x', because ''
       # is falsy. The truthy branch must carry the non-empty value.
+      #
+      # PREREQUISITE: customer-env must already exist WITH required reviewers.
+      # GitHub silently creates a referenced environment that does not exist,
+      # with no protection rules, which would run fork code unreviewed.
       approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
     secrets:
       # Named rather than `secrets: inherit`, which would hand the called
