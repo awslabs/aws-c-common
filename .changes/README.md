@@ -35,7 +35,7 @@ moves into `latest/<version>/` at release time.
 | Field | Values |
 |---|---|
 | `pr` | PR number; also the filename |
-| `type` | `feat` \| `fix` \| `doc` \| `chore` \| `revert` |
+| `type` | `feat` \| `fix` \| `chore` \| `revert`; must match the PR title's prefix |
 | `summary` | customer-facing one sentence |
 | `url` | link to the PR |
 | `notes` | optional extended notes |
@@ -44,7 +44,7 @@ moves into `latest/<version>/` at release time.
 
 | You want | Look here |
 |---|---|
-| currently in-flight | `preview/*.json` on `main`, or the rendered view on the `docs` branch |
+| currently in-flight | `preview/*.json`, and the `[Preview]` section of the root [`CHANGELOG.md`](../CHANGELOG.md) |
 | in the current minor line (`X.Y.*`) | root [`CHANGELOG.md`](../CHANGELOG.md) |
 | in a prior minor line (`A.B.*`) | `.changes/A.B.x/CHANGELOG.md` |
 | exact set for a tag | GitHub Release page for that tag |
