@@ -68,11 +68,6 @@ function(aws_add_sanitizers target)
     endforeach()
 
     if(PRESENT_SANITIZERS)
-        # -fno-sanitize-recover=all turns sanitizer diagnostics into hard failures (non-zero exit)
-        # instead of printing and continuing, so violations surface as test failures.
-        target_compile_options(${target} PRIVATE -fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS} -fno-sanitize-recover=all)
-        target_link_libraries(${target} PUBLIC "-fno-omit-frame-pointer -fsanitize=${PRESENT_SANITIZERS}")
-
         if(NOT ENABLE_SANITIZER_RECOVERY)
             # Disable error recovery mode for sanitizers when the compiler supports it.
             set(sanitizer_flag "-fno-sanitize-recover=all")
