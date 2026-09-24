@@ -542,6 +542,24 @@ AWS_COMMON_API
 bool aws_byte_cursor_eq_ignore_case(const struct aws_byte_cursor *a, const struct aws_byte_cursor *b);
 
 /**
+ * Callback variant of aws_byte_cursor_eq that takes const void * arguments.
+ * Both pointers must reference aws_byte_cursor structures.
+ * Use this where a comparison callback with a bool(const void *, const void *) signature is required; passing
+ * aws_byte_cursor_eq directly there is undefined behavior (call through incompatible function pointer).
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_eq_cb(const void *a, const void *b);
+
+/**
+ * Callback variant of aws_byte_cursor_eq_ignore_case that takes const void * arguments.
+ * Both pointers must reference aws_byte_cursor structures.
+ * Use this where a comparison callback with a bool(const void *, const void *) signature is required; passing
+ * aws_byte_cursor_eq_ignore_case directly there is undefined behavior (call through incompatible function pointer).
+ */
+AWS_COMMON_API
+bool aws_byte_cursor_eq_ignore_case_cb(const void *a, const void *b);
+
+/**
  * Compare an aws_byte_cursor and an aws_byte_buf.
  * Return whether their contents are equivalent.
  */
