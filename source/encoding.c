@@ -6,6 +6,7 @@
 #include <aws/common/encoding.h>
 
 #include <aws/common/logging.h>
+#include <aws/common/private/external_module_impl.h>
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -45,6 +46,12 @@ static inline bool aws_common_private_has_avx2(void) {
     return false;
 }
 #endif
+
+void aws_encoding_module_init(void) {
+    /* Cache the AVX2 detection result (a non-atomic global in cpuid.c) while
+     * still single-threaded, so concurrent base64 calls don't race on it. */
+    (void)aws_common_private_has_avx2();
+}
 
 static const uint8_t *HEX_CHARS = (const uint8_t *)"0123456789abcdef";
 
