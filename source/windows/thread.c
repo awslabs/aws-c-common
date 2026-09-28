@@ -167,9 +167,9 @@ static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
 static void s_check_active_processor_functions(void *user_data) {
     (void)user_data;
 
-    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)GetProcAddress(
+    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
-    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
+    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
 }
 #endif
@@ -231,13 +231,13 @@ static GetThreadDescription_fn *s_GetThreadDescription;
 static void s_check_thread_functions(void *user_data) {
     (void)user_data;
 
-    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)GetProcAddress(
+    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadGroupAffinity");
-    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
+    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
-    s_SetThreadDescription = (SetThreadDescription_fn *)GetProcAddress(
+    s_SetThreadDescription = (SetThreadDescription_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadDescription");
-    s_GetThreadDescription = (GetThreadDescription_fn *)GetProcAddress(
+    s_GetThreadDescription = (GetThreadDescription_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetThreadDescription");
 }
 
@@ -282,6 +282,8 @@ int aws_thread_launch(
             aws_thread_decrement_unjoined_count();
             thread->detach_state = AWS_THREAD_NOT_CREATED;
         }
+
+        aws_mem_release(thread_wrapper->allocator, thread_wrapper);
 
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }

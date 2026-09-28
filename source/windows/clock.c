@@ -25,7 +25,9 @@ static BOOL CALLBACK s_get_system_time_init_once(PINIT_ONCE init_once, PVOID par
     (void)context;
 
     HMODULE kernel = GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll");
-    timefunc_t *time_func = (timefunc_t *)GetProcAddress(kernel, "GetSystemTimePreciseAsFileTime");
+    /* Cast via void* : clang warns on a direct function-pointer cast from FARPROC
+     * (-Wcast-function-type-mismatch), which is fatal under AWS_WARNINGS_ARE_ERRORS. */
+    timefunc_t *time_func = (timefunc_t *)(void *)GetProcAddress(kernel, "GetSystemTimePreciseAsFileTime");
 
     if (time_func == NULL) {
         time_func = GetSystemTimeAsFileTime;

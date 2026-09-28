@@ -10,7 +10,16 @@ if (MSVC)
     set(AWS_AVX512vL_FLAG "")
     set(AWS_CLMUL_FLAG "")
     set(AWS_SSE4_2_FLAG "")
-    set(AWS_ARMv8_1_FLAG "/arch:arm8.1")
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+        # clang-cl reports as MSVC but silently ignores /arch: on ARM64 (it only
+        # implements /arch: for x86), so the crc/crypto target features never get
+        # enabled and the ARM intrinsics fail to compile. Name the features the way
+        # clang understands; /clang: forwards a GNU-style flag through the driver.
+        set(AWS_ARMv8_1_FLAG "/clang:-march=armv8-a+crc+crypto")
+    else()
+        # Documented spelling is armv8.x -- see /arch (ARM64) in the MSVC docs.
+        set(AWS_ARMv8_1_FLAG "/arch:armv8.1")
+    endif()
     set(WERROR_FLAG "")
 else()
     set(AWS_AVX2_FLAG "-mavx -mavx2")

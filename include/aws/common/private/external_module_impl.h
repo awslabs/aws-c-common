@@ -23,4 +23,11 @@ void aws_cbor_module_init(struct aws_allocator *allocator);
 
 void aws_cbor_module_cleanup(void);
 
+/**
+ * Caches the CPU feature detection used by the base64 encoder/decoder.
+ * Called from aws_common_library_init() while still single-threaded, so
+ * concurrent base64 calls don't race on the lazy detection in cpuid.c.
+ */
+void aws_encoding_module_init(void);
+
 #endif // AWS_COMMON_PRIVATE_EXTERNAL_MODULE_IMPL_H
