@@ -1,0 +1,54 @@
+# Changelog test harness. The test-main/test-docs branch pair exists only to
+# exercise the changelog action; nothing here releases or publishes anything.
+#
+# Fails PR CI if the title lacks a `<type>:` prefix, if a customer-visible
+# change has no valid fragment, or if the PR touches a fragment that is not its
+# own. A `chore` needs no fragment -- the action decides that from the title.
+
+name: Changelog Check
+on:
+  pull_request:
+    branches: [test-main]
+    # `edited` matters: it is what fires when someone retitles the PR, so a
+    # title fix re-runs this check instead of leaving a stale red X.
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  changelog-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect the changed paths
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # The action reads `status<TAB>path`, spelling the status the way the
+          # pull request files API does rather than as git's single letter.
+          git diff --name-status "$BASE_SHA...$HEAD_SHA" | awk -F'\t' 'BEGIN{OFS="\t"} {s=substr($1,1,1); n="changed"; if(s=="A")n="added"; else if(s=="M")n="modified"; else if(s=="D")n="removed"; else if(s=="R")n="renamed"; print n,$NF}' > /tmp/changed-paths.tsv
+          cat /tmp/changed-paths.tsv
+
+      - name: Assert PR title convention and fragment
+        id: changelog
+        uses: awslabs/aws-crt-builder/.github/actions/changelog@cl/6-docs
+        with:
+          mode: check
+          pr: ${{ github.event.pull_request.number }}
+          title: ${{ github.event.pull_request.title }}
+          changed-paths-file: /tmp/changed-paths.tsv
+          changes-prefix: .changes
+
+      # The action reports and does not fail: gating is the caller's decision.
+      - name: Gate on the check result
+        env:
+          RC: ${{ steps.changelog.outputs.rc }}
+          REASON: ${{ steps.changelog.outputs.reason }}
+        run: |
+          set -euo pipefail
+          echo "rc=${RC} reason=${REASON}"
+          [[ "${RC}" == "0" ]]

@@ -1,0 +1,90 @@
+# Mock release for the changelog test harness: roll the preview fragments on
+# test-main up into a release section, then replay that commit onto test-docs.
+#
+# This cuts nothing. No tag, no GitHub release, no artifact, no VERSION bump --
+# the only effect is a commit on test-main and the matching one on test-docs.
+#
+# Triggered by pushing a request branch rather than by workflow_dispatch, because
+# a dispatchable workflow has to exist on the repository's default branch and
+# this harness deliberately never lands anything on main. The request branch
+# only carries the parameters; the release itself is cut from test-main.
+
+name: Changelog Rollup
+on:
+  push:
+    branches: ['test/rollup-*']
+
+concurrency:
+  group: changelog-docs
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  rollup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checked out outside the tracked tree, so it survives the branch
+      # switches this job and the replay perform.
+      - uses: actions/checkout@v4
+        with:
+          repository: awslabs/aws-crt-builder
+          ref: cl/6-docs
+          path: .crt-builder
+
+      - name: Read the rollup request
+        id: request
+        run: |
+          set -euo pipefail
+          cat .rollup-request
+          grep -E '^(version|date|minor_prs)=' .rollup-request >> "$GITHUB_OUTPUT"
+
+      - name: Switch to test-main
+        run: |
+          set -euo pipefail
+          git fetch --force origin test-main:test-main
+          git checkout test-main
+          git log --oneline -1
+
+      - name: Roll the fragments up into a release section
+        uses: awslabs/aws-crt-builder/.github/actions/changelog@cl/6-docs
+        with:
+          mode: rollup
+          version: ${{ steps.request.outputs.version }}
+          date: ${{ steps.request.outputs.date }}
+          minor-prs: ${{ steps.request.outputs.minor_prs }}
+          docs-branch: test-docs
+
+      - name: Commit the release to test-main
+        id: commit
+        env:
+          VERSION: ${{ steps.request.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name  "aws-sdk-common-runtime-bot"
+          git config user.email "aws-sdk-common-runtime@amazon.com"
+          git add -A CHANGELOG.md .changes
+          if git diff --cached --quiet; then
+            echo "rollup changed nothing; nothing to commit"
+            echo "sha=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "Roll changelog up into ${VERSION}"
+          git push origin test-main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # A push made with this run's own token cannot trigger another workflow,
+      # so the replay that Changelog Render would have done runs here instead.
+      - name: Replay the release onto test-docs
+        if: steps.commit.outputs.sha != ''
+        env:
+          TRIGGER_SHA: ${{ steps.commit.outputs.sha }}
+          DEFAULT_BRANCH: test-main
+          DOCS_BRANCH: test-docs
+          CHANGELOG_PY: ${{ github.workspace }}/.crt-builder/.github/actions/changelog/scripts/changelog.py
+        run: bash .github/scripts/docs-replay.sh

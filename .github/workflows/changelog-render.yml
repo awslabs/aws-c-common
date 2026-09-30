@@ -1,0 +1,45 @@
+# Replay every merge on test-main onto test-docs so the docs branch mirrors it.
+# If the merge added or modified a preview fragment, also regenerate
+# CHANGELOG.md and fold it into the same docs commit -- one commit on test-docs
+# per commit on test-main. test-main stays clean of bot commits.
+#
+# Test harness: the branch pair stands in for main/docs. Nothing is released or
+# published, and the push uses the run's own token, which by design cannot
+# trigger a further workflow.
+
+name: Changelog Render
+on:
+  push:
+    branches: [test-main]
+
+concurrency:
+  group: changelog-docs
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The render script lives in aws-crt-builder, not in this repo. It is
+      # checked out outside the tracked tree so it survives the replay's
+      # branch switches.
+      - uses: actions/checkout@v4
+        with:
+          repository: awslabs/aws-crt-builder
+          ref: cl/6-docs
+          path: .crt-builder
+
+      - name: Replay the commit onto test-docs, refresh the preview
+        env:
+          TRIGGER_SHA: ${{ github.sha }}
+          DEFAULT_BRANCH: test-main
+          DOCS_BRANCH: test-docs
+          CHANGELOG_PY: ${{ github.workspace }}/.crt-builder/.github/actions/changelog/scripts/changelog.py
+        run: bash .github/scripts/docs-replay.sh
