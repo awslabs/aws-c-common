@@ -1,6 +1,0 @@
-{
-  "pr": 9007,
-  "type": "fix",
-  "summary": "Handle a zero-length input in the probe without asserting.",
-  "notes": ""
-}
