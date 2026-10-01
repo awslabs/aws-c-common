@@ -1,6 +1,0 @@
-{
-  "pr": 9002,
-  "type": "fix",
-  "summary": "Stop leaking the allocator when a probe fails to initialise.",
-  "notes": ""
-}
