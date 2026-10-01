@@ -6,6 +6,9 @@
 ### Features
 - First of two entries after the refactor. ([#9030](../../pull/9030))
 
+### Fixes
+- Second of two entries after the refactor. ([#9031](../../pull/9031))
+
 ### Reverts
 - A revert with no reason, which the render must reject. ([#9020](../../pull/9020))
 
