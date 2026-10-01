@@ -6,6 +6,9 @@
 ### Features
 - Add a second scratch probe for the changelog automation. ([#1284](../../pull/1284))
 - First of two entries landing in one push. ([#9010](../../pull/9010))
+
+### Fixes
+- Second of two entries landing in one push. ([#9011](../../pull/9011))
 <!-- /changelog:unreleased -->
 
 ## [1.1.0] — 2026-10-02
