@@ -1,0 +1,1 @@
+Scratch file for exercising the changelog automation. Not referenced by any build.
