@@ -3,7 +3,11 @@
 <!-- changelog:unreleased -->
 ## [Unreleased]
 
-_Nothing yet._
+### Reverts
+- A revert with no reason, which the render must reject. ([#9020](../../pull/9020))
+
+### Notes
+- [#9020](../../pull/9020) — Reverted because the probe it added was measuring the wrong thing.
 <!-- /changelog:unreleased -->
 
 ## [1.2.0] — 2026-10-03
