@@ -1,0 +1,15 @@
+name: Changelog Rollup
+on:
+  push:
+    branches: [test/rollup-1.3.1]
+jobs:
+  rollup:
+    permissions:
+      contents: write
+    uses: awslabs/aws-crt-builder/.github/workflows/changelog-rollup.yml@cl/7-workflows
+    with:
+      builder-ref: cl/7-workflows
+      version: 1.3.1
+      date: 2026-10-05
+      release-branch: test-main
+      docs-branch: test-docs
