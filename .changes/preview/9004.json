@@ -1,0 +1,6 @@
+{
+  "pr": 9004,
+  "type": "feat",
+  "summary": "Add an API for compact UUID-to-string conversion.",
+  "notes": "Callers that relied on the dashed form keep working; the compact form is opt-in."
+}
