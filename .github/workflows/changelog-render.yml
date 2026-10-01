@@ -4,6 +4,8 @@ on:
     branches: [test-main]
 jobs:
   render:
+    permissions:
+      contents: write
     uses: awslabs/aws-crt-builder/.github/workflows/changelog-render.yml@cl/7-workflows
     with:
       docs-branch: test-docs
