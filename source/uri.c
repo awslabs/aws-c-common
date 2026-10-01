@@ -186,6 +186,15 @@ void aws_uri_clean_up(struct aws_uri *uri) {
     AWS_ZERO_STRUCT(*uri);
 }
 
+void aws_uri_clean_up_secure(struct aws_uri *uri) {
+    if (uri->uri_str.allocator) {
+        aws_byte_buf_clean_up_secure(&uri->uri_str);
+    }
+    AWS_ZERO_STRUCT(*uri);
+}
+
+
+
 const struct aws_byte_cursor *aws_uri_scheme(const struct aws_uri *uri) {
     return &uri->scheme;
 }
