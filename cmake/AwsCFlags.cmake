@@ -58,7 +58,17 @@ function(aws_set_common_properties target)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
         endif()
 
-        list(APPEND AWS_C_FLAGS /W4 /MP)
+        list(APPEND AWS_C_FLAGS /W4)
+
+        # clang-cl targets the MSVC ABI, so CMake reports MSVC, but it is clang
+        # underneath: it ignores some MSVC-only flags and honors clang's warnings.
+        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            set(AWS_COMPILER_IS_CLANG_CL ON)
+        else()
+            # /MP (parallel compilation) is unimplemented in clang-cl, which warns
+            # once per translation unit that the argument went unused.
+            list(APPEND AWS_C_FLAGS /MP)
+        endif()
 
         if(AWS_WARNINGS_ARE_ERRORS)
             list(APPEND AWS_C_FLAGS /WX)
@@ -88,6 +98,21 @@ function(aws_set_common_properties target)
             list(APPEND AWS_C_FLAGS "/MT$<$<CONFIG:Debug>:d>")
         else()
             list(APPEND AWS_C_FLAGS "/MD$<$<CONFIG:Debug>:d>")
+        endif()
+
+        # Warning disables always go last, since clang takes the last flag that
+        # mentions a diagnostic. clang-cl maps /W4 to -Wall -Wextra, so it turns on
+        # clang warnings that real MSVC does not have, and that the /wdNNNN
+        # suppressions in our Windows sources cannot turn off.
+        if (AWS_COMPILER_IS_CLANG_CL)
+            # NO_WEXTRA has no effect above, because /W4 implies -Wextra.
+            if (SET_PROPERTIES_NO_WEXTRA)
+                list(APPEND AWS_C_FLAGS -Wno-unused-parameter -Wno-unused-variable -Wno-unused-local-typedef)
+            endif()
+            # Windows sources log DWORD/NTSTATUS with %u and %d, and compare
+            # against DWORD/NTSTATUS/AWS_ARRAY_SIZE. Same width on Windows, so
+            # these are type-name mismatches rather than real defects.
+            list(APPEND AWS_C_FLAGS -Wno-format -Wno-sign-compare)
         endif()
 
     else()

@@ -119,6 +119,10 @@ const struct aws_thread_options *aws_default_thread_options(void) {
     return &s_default_options;
 }
 
+void aws_set_default_thread_options(const struct aws_thread_options *options) {
+    s_default_options = *options;
+}
+
 struct callback_fn_wrapper {
     void (*call_once)(void *);
     void *user_data;
@@ -163,9 +167,9 @@ static GetActiveProcessorGroupCount_fn *s_GetActiveProcessorGroupCount;
 static void s_check_active_processor_functions(void *user_data) {
     (void)user_data;
 
-    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)GetProcAddress(
+    s_GetActiveProcessorGroupCount = (GetActiveProcessorGroupCount_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorGroupCount");
-    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)GetProcAddress(
+    s_GetActiveProcessorCount = (GetActiveProcessorCount_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetActiveProcessorCount");
 }
 #endif
@@ -227,13 +231,13 @@ static GetThreadDescription_fn *s_GetThreadDescription;
 static void s_check_thread_functions(void *user_data) {
     (void)user_data;
 
-    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)GetProcAddress(
+    s_SetThreadGroupAffinity = (SetThreadGroupAffinity_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadGroupAffinity");
-    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)GetProcAddress(
+    s_SetThreadIdealProcessorEx = (SetThreadIdealProcessorEx_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadIdealProcessorEx");
-    s_SetThreadDescription = (SetThreadDescription_fn *)GetProcAddress(
+    s_SetThreadDescription = (SetThreadDescription_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "SetThreadDescription");
-    s_GetThreadDescription = (GetThreadDescription_fn *)GetProcAddress(
+    s_GetThreadDescription = (GetThreadDescription_fn *)(void *)GetProcAddress(
         GetModuleHandleW(WIDEN(WINDOWS_KERNEL_LIB) L".dll"), "GetThreadDescription");
 }
 
@@ -274,7 +278,13 @@ int aws_thread_launch(
         CreateThread(0, stack_size, thread_wrapper_fn, (LPVOID)thread_wrapper, 0, &thread->thread_id);
 
     if (!thread->thread_handle) {
-        aws_thread_decrement_unjoined_count();
+        if (is_managed_thread) {
+            aws_thread_decrement_unjoined_count();
+            thread->detach_state = AWS_THREAD_NOT_CREATED;
+        }
+
+        aws_mem_release(thread_wrapper->allocator, thread_wrapper);
+
         return aws_raise_error(AWS_ERROR_THREAD_INSUFFICIENT_RESOURCE);
     }
 

@@ -29,7 +29,7 @@ jobs:
           - manylinux1-x86
           - manylinux2014-x64
           - manylinux2014-x86
-          - raspbian-bullseye
+          - raspbian-bookworm
           - fedora-34-x64
           - opensuse-leap
           - rhel8-x64

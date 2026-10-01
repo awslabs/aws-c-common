@@ -118,25 +118,25 @@ static void s_init_dbghelp_impl(void *user_data) {
         goto done;
     }
 
-    s_SymInitialize = (SymInitialize_fn *)GetProcAddress(dbghelp, "SymInitialize");
+    s_SymInitialize = (SymInitialize_fn *)(void *)GetProcAddress(dbghelp, "SymInitialize");
     if (!s_SymInitialize) {
         fprintf(stderr, "Failed to load SymInitialize from DbgHelp.dll.\n");
         goto done;
     }
 
-    s_SymSetOptions = (SymSetOptions_fn *)GetProcAddress(dbghelp, "SymSetOptions");
+    s_SymSetOptions = (SymSetOptions_fn *)(void *)GetProcAddress(dbghelp, "SymSetOptions");
     if (!s_SymSetOptions) {
         fprintf(stderr, "Failed to load SymSetOptions from DbgHelp.dll\n");
         goto done;
     }
 
-    s_SymFromAddr = (SymFromAddr_fn *)GetProcAddress(dbghelp, "SymFromAddr");
+    s_SymFromAddr = (SymFromAddr_fn *)(void *)GetProcAddress(dbghelp, "SymFromAddr");
     if (!s_SymFromAddr) {
         fprintf(stderr, "Failed to load SymFromAddr from DbgHelp.dll.\n");
         goto done;
     }
 
-    s_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
+    s_SymGetLineFromAddr = (SymGetLineFromAddr_fn *)(void *)GetProcAddress(dbghelp, SymGetLineFromAddrName);
     if (!s_SymGetLineFromAddr) {
         fprintf(stderr, "Failed to load " SymGetLineFromAddrName " from DbgHelp.dll.\n");
         goto done;
