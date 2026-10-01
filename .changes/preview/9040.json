@@ -1,0 +1,5 @@
+{
+  "pr": 9040,
+  "type": "fix",
+  "summary": "A patch-only entry, to exercise the patch path."
+}
