@@ -8,4 +8,5 @@ jobs:
       contents: write
     uses: awslabs/aws-crt-builder/.github/workflows/changelog-render.yml@cl/7-workflows
     with:
+      builder-ref: cl/7-workflows
       docs-branch: test-docs
