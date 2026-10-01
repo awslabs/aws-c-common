@@ -1,0 +1,1 @@
+Second probe for the changelog automation. Not referenced by any build.
