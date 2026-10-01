@@ -1,6 +1,0 @@
-{
-  "pr": 9006,
-  "type": "feat",
-  "summary": "Change the probe handle to an opaque struct.",
-  "notes": "Code that reached into the handle's fields must use the accessors instead."
-}
