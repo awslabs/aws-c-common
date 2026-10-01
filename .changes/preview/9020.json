@@ -2,5 +2,5 @@
   "pr": 9020,
   "type": "revert",
   "summary": "A revert with no reason, which the render must reject.",
-  "notes": ""
+  "notes": "Reverted because the probe it added was measuring the wrong thing."
 }
