@@ -3,7 +3,11 @@
 <!-- changelog:unreleased -->
 ## [Unreleased]
 
-_Nothing yet._
+### Features
+- Change the probe handle to an opaque struct. ([#9006](../../pull/9006))
+
+### Notes
+- [#9006](../../pull/9006) — Code that reached into the handle's fields must use the accessors instead.
 <!-- /changelog:unreleased -->
 
 ## [1.0.2] — 2026-10-01
