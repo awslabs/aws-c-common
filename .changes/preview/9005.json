@@ -1,0 +1,6 @@
+{
+  "pr": 9005,
+  "type": "revert",
+  "summary": "Revert the change that made the probe allocate on every call.",
+  "notes": ""
+}
