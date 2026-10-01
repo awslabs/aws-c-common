@@ -3,9 +3,13 @@
 <!-- changelog:unreleased -->
 ## [Unreleased]
 
+_Nothing yet._
+<!-- /changelog:unreleased -->
+
+## [1.3.1] — 2026-10-05
+
 ### Fixes
 - A patch-only entry, to exercise the patch path. ([#9040](../../pull/9040))
-<!-- /changelog:unreleased -->
 
 ## [1.3.0] — 2026-10-04
 
