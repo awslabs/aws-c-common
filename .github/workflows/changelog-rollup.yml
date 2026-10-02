@@ -1,0 +1,29 @@
+name: Changelog Rollup
+on:
+  push:
+    branches: [test/rollup-1.4.0]
+jobs:
+  rollup:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test-main
+          fetch-depth: 0
+      - uses: awslabs/aws-crt-builder/.github/actions/changelog@cl/7-workflows
+        with:
+          mode: rollup
+          version: 1.4.0
+          date: 2026-10-06
+          minor-prs: '1287'
+          docs-branch: test-docs
+      - name: Commit the release, as a release workflow would
+        run: |
+          set -euo pipefail
+          git config user.name "aws-sdk-common-runtime-bot"
+          git config user.email "aws-sdk-common-runtime@amazon.com"
+          git add -A CHANGELOG.md .changes
+          git commit -m "Roll the changelog up into 1.4.0"
+          git push origin HEAD:test-main
