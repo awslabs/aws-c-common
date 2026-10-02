@@ -3,7 +3,8 @@
 <!-- changelog:unreleased -->
 ## [Unreleased]
 
-_Nothing yet._
+### Fixes
+- Add a fourth scratch probe for the changelog automation. ([#1287](../../pull/1287))
 <!-- /changelog:unreleased -->
 
 ## [1.3.1] — 2026-10-05
