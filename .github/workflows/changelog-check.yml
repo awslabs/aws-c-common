@@ -5,9 +5,14 @@ on:
     types: [opened, edited, synchronize, reopened]
 jobs:
   check:
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: write
-    uses: awslabs/aws-crt-builder/.github/workflows/changelog-check.yml@cl/7-workflows
-    with:
-      builder-ref: cl/7-workflows
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: awslabs/aws-crt-builder/.github/actions/changelog@cl/7-workflows
+        with:
+          mode: check
