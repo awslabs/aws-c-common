@@ -76,6 +76,14 @@ AWS_COMMON_API int aws_uri_init_from_builder_options(
 AWS_COMMON_API void aws_uri_clean_up(struct aws_uri *uri);
 
 /**
+ * Securely cleans up a uri, zeroing the backing uri string buffer before releasing it.
+ * Use this instead of aws_uri_clean_up when the uri may contain sensitive material
+ * (for example a SigV4 presigned URL carrying X-Amz-Credential / X-Amz-Security-Token),
+ * so the contents are not left readable in freed heap memory.
+ */
+AWS_COMMON_API void aws_uri_clean_up_secure(struct aws_uri *uri);
+
+/**
  * Returns the scheme portion of the uri (e.g. http, https, ftp, ftps, etc...). If the scheme was not present
  * in the uri, the returned value will be empty. It is the users job to determine the appropriate defaults
  * if this field is empty, based on protocol, port, etc...
