@@ -2510,7 +2510,14 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         item->valuedouble = num;
 
         /* use saturation in case of overflow */
-        if (num >= INT_MAX)
+        if (isnan(num))
+        {
+            /* NaN compares false against both bounds above, so without this it
+             * would reach (int)num, and converting NaN to an integer type is
+             * undefined behaviour. */
+            item->valueint = 0;
+        }
+        else if (num >= INT_MAX)
         {
             item->valueint = INT_MAX;
         }
