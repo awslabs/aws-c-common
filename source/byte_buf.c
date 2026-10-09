@@ -1834,7 +1834,15 @@ int aws_byte_cursor_utf8_parse_i64(struct aws_byte_cursor cursor, int64_t *dst) 
         return aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
     }
 
-    *dst = is_neg ? -(int64_t)u64 : (int64_t)u64;
+    if (is_neg) {
+        /* u64 == (uint64_t)INT64_MAX + 1 is accepted above, and for that value
+         * both (int64_t)u64 and negating the result are out of range: the
+         * conversion is implementation-defined and the negation is signed
+         * overflow. INT64_MIN is the answer, so say so directly. */
+        *dst = (u64 == (uint64_t)INT64_MAX + 1) ? INT64_MIN : -(int64_t)u64;
+    } else {
+        *dst = (int64_t)u64;
+    }
     return AWS_OP_SUCCESS;
 }
 
