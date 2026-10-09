@@ -348,7 +348,10 @@ static int s_base64_encode(
      * of bounds). Just use software version for now (since need for base64 url is small) instead of hacking together
      * half hearted avx2 impl.
      */
-    if (!do_url_safe_encoding && aws_common_private_has_avx2()) {
+    /* encoded_length == 0 (an empty input) is also sent to the software path:
+     * output->buffer may legitimately be NULL when nothing is to be written,
+     * and `output->buffer + output->len` would then be NULL + 0. */
+    if (!do_url_safe_encoding && encoded_length != 0 && aws_common_private_has_avx2()) {
         aws_common_private_base64_encode_sse41(
             to_encode->ptr, output->buffer + output->len, to_encode->len, do_url_safe_encoding);
         output->len += encoded_length;
