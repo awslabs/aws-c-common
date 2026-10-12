@@ -42,7 +42,7 @@ enum aws_bus_policy {
  * It is possible to send to AWS_BUS_ADDRESS_ALL, just be aware that this will only send to listeners subscribed
  * to AWS_BUS_ADDRESS_ALL.
  */
-#define AWS_BUS_ADDRESS_ALL ((uint64_t)-1)
+#define AWS_BUS_ADDRESS_ALL ((uint64_t) - 1)
 #define AWS_BUS_ADDRESS_CLOSE 0
 
 struct aws_bus_options {
