@@ -102,9 +102,8 @@ static struct listener_list *s_bus_find_or_create_listeners(
 static void s_bus_deliver_msg_to_slot(
     struct aws_bus *bus,
     uint64_t slot,
-    uint64_t address,
     struct aws_hash_table *slots,
-    const void *payload) {
+    const struct aws_bus_listener_event *event) {
     (void)bus;
     struct listener_list *list = s_bus_find_listeners(slots, slot);
     if (!list) {
@@ -113,18 +112,14 @@ static void s_bus_deliver_msg_to_slot(
     struct aws_linked_list_node *node = aws_linked_list_begin(&list->listeners);
     for (; node != aws_linked_list_end(&list->listeners); node = aws_linked_list_next(node)) {
         struct bus_listener *listener = AWS_CONTAINER_OF(node, struct bus_listener, list_node);
-        listener->deliver(address, payload, listener->user_data);
+        listener->deliver(event, listener->user_data);
     }
 }
 
 /* common delivery logic */
-static void s_bus_deliver_msg(
-    struct aws_bus *bus,
-    uint64_t address,
-    struct aws_hash_table *slots,
-    const void *payload) {
-    s_bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, address, slots, payload);
-    s_bus_deliver_msg_to_slot(bus, address, address, slots, payload);
+static void s_bus_deliver_msg(struct aws_bus *bus, struct aws_hash_table *slots, struct aws_bus_listener_event *event) {
+    s_bus_deliver_msg_to_slot(bus, AWS_BUS_ADDRESS_ALL, slots, event);
+    s_bus_deliver_msg_to_slot(bus, event->address, slots, event);
 }
 
 /* common subscribe logic */
@@ -185,11 +180,17 @@ static void s_bus_unsubscribe(
 static void s_bus_destroy_listener_list(void *data) {
     struct listener_list *list = data;
     AWS_PRECONDITION(list->allocator);
+
+    struct aws_bus_listener_event close_event = {
+        .address = AWS_BUS_ADDRESS_CLOSE,
+        .payload = NULL,
+    };
+
     /* call all listeners with an AWS_BUS_ADDRESS_CLOSE message type to clean up */
     while (!aws_linked_list_empty(&list->listeners)) {
         struct aws_linked_list_node *back = aws_linked_list_back(&list->listeners);
         struct bus_listener *listener = AWS_CONTAINER_OF(back, struct bus_listener, list_node);
-        listener->deliver(AWS_BUS_ADDRESS_CLOSE, NULL, listener->user_data);
+        listener->deliver(&close_event, listener->user_data);
         aws_linked_list_pop_back(&list->listeners);
         aws_mem_release(list->allocator, listener);
     }
@@ -216,7 +217,13 @@ static void s_bus_sync_clean_up(struct aws_bus *bus) {
 
 static int s_bus_sync_publish(struct aws_bus *bus, const struct aws_bus_publish_options *options) {
     struct bus_sync_impl *impl = bus->impl;
-    s_bus_deliver_msg(bus, options->address, &impl->slots.table, options->payload);
+
+    struct aws_bus_listener_event event = {
+        .address = options->address,
+        .payload = options->payload,
+    };
+    s_bus_deliver_msg(bus, &impl->slots.table, &event);
+
     if (options->destructor) {
         options->destructor(options->payload);
     }
@@ -410,7 +417,12 @@ static void s_bus_async_deliver_messages(struct aws_bus *bus, struct aws_linked_
     struct aws_linked_list_node *msg_node = aws_linked_list_begin(pending_msgs);
     for (; msg_node != aws_linked_list_end(pending_msgs); msg_node = aws_linked_list_next(msg_node)) {
         struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-        s_bus_deliver_msg(bus, msg->publish_options.address, &impl->shared_state.table, msg->publish_options.payload);
+
+        struct aws_bus_listener_event event = {
+            .address = msg->publish_options.address,
+            .payload = msg->publish_options.payload,
+        };
+        s_bus_deliver_msg(bus, &impl->shared_state.table, &event);
         if (reliable) {
             s_bus_async_free_message_reliable(bus, msg);
         }

@@ -61,8 +61,20 @@ struct aws_bus_async_options {
 #define AWS_BUS_ADDRESS_ALL ((uint64_t) - 1)
 #define AWS_BUS_ADDRESS_CLOSE 0
 
+/**
+ * Encapsulates all data about an event
+ */
+struct aws_bus_listener_event {
+
+    /** Address the event was sent to */
+    uint64_t address;
+
+    /** Payload of the event */
+    const void *payload;
+};
+
 /* Signature for listener callbacks */
-typedef void(aws_bus_listener_fn)(uint64_t address, const void *payload, void *user_data);
+typedef void(aws_bus_listener_fn)(const struct aws_bus_listener_event *event, void *user_data);
 
 /* Optional callback when unsubscribe completes. Signals the listener can be safely claned up. */
 typedef void(aws_bus_listener_unsubscribe_completion_fn)(uint64_t address, void *user_data);
