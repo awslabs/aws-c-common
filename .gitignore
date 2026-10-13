@@ -37,6 +37,9 @@ _build_*
 cmake-build*
 *-build
 
+# clangd puts stuff here
+.cache
+
 # Compiled Object files
 *.slo
 *.lo

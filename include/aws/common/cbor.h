@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <aws/common/big.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
@@ -208,6 +209,32 @@ void aws_cbor_encoder_write_map_start(struct aws_cbor_encoder *encoder, size_t n
  */
 AWS_COMMON_API
 void aws_cbor_encoder_write_tag(struct aws_cbor_encoder *encoder, uint64_t tag_number);
+
+/**
+ * @brief Encode an arbitrary-precision integer, using the preferred serialization of RFC8949 section 3.4.3: a value
+ * in the range [-2^64, 2^64 - 1] is encoded as AWS_CBOR_TYPE_UINT or AWS_CBOR_TYPE_NEGINT, and anything outside it as
+ * AWS_CBOR_TAG_UNSIGNED_BIGNUM or AWS_CBOR_TAG_NEGATIVE_BIGNUM followed by the big-endian bytes of the magnitude
+ * (for a negative value `v`, the magnitude of `-1 - v`) with no leading zeros.
+ *
+ * Like the other encoder functions, this aborts if memory for the encoder buffer or a temporary cannot be allocated.
+ *
+ * @param encoder
+ * @param value value to encode.
+ */
+AWS_COMMON_API
+void aws_cbor_encoder_write_big_integer(struct aws_cbor_encoder *encoder, const struct aws_big_integer *value);
+
+/**
+ * @brief Encode an arbitrary-precision decimal as a decimal fraction (RFC8949 section 3.4.4):
+ * AWS_CBOR_TAG_DECIMAL_FRACTION followed by a 2-element array of the exponent, as AWS_CBOR_TYPE_UINT or
+ * AWS_CBOR_TYPE_NEGINT, and the mantissa, encoded as in aws_cbor_encoder_write_big_integer(). The scale of the value
+ * is preserved, 150e-2 is not reduced to 15e-1.
+ *
+ * @param encoder
+ * @param value value to encode.
+ */
+AWS_COMMON_API
+void aws_cbor_encoder_write_big_decimal(struct aws_cbor_encoder *encoder, const struct aws_big_decimal *value);
 
 /**
  * @brief Encode a simple value AWS_CBOR_TYPE_NULL
@@ -418,6 +445,50 @@ AWS_COMMON_API
 int aws_cbor_decoder_pop_next_bytes_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
 AWS_COMMON_API
 int aws_cbor_decoder_pop_next_text_val(struct aws_cbor_decoder *decoder, struct aws_byte_cursor *out);
+
+/**
+ * @brief Get the next data item as an arbitrary-precision integer. Accepts AWS_CBOR_TYPE_UINT, AWS_CBOR_TYPE_NEGINT,
+ * and AWS_CBOR_TAG_UNSIGNED_BIGNUM or AWS_CBOR_TAG_NEGATIVE_BIGNUM followed by AWS_CBOR_TYPE_BYTES. Leading zero
+ * bytes in a bignum are accepted, and bignums are accepted for values that would fit a plain integer. An indefinite
+ * length byte string is not accepted.
+ *
+ * On success *out is a new big integer, owned by the caller, allocated with the allocator of the decoder.
+ * On failure *out is untouched, and the decoder is left where it was before the call, so the caller may try a different
+ * `pop_next` on the same data item. The exception is a malformed data item, which fails the decoder as for any other
+ * `pop_next` function.
+ *
+ * Raises AWS_ERROR_CBOR_UNEXPECTED_TYPE if the next data item is not one of the above. Raises
+ * AWS_ERROR_INVALID_ARGUMENT if the value is outside the limits of aws_big_integer (see big.h). Note that a negative
+ * bignum with magnitude n = 2^32768 - 1 is rejected, because the value -1 - n is -2^32768.
+ *
+ * @param decoder
+ * @param out store the integer if succeed.
+ * @return AWS_OP_SUCCESS successfully consumed the data item and got the result, otherwise AWS_OP_ERR.
+ */
+AWS_COMMON_API
+int aws_cbor_decoder_pop_next_big_integer_val(struct aws_cbor_decoder *decoder, struct aws_big_integer **out);
+
+/**
+ * @brief Get the next data item as an arbitrary-precision decimal. Accepts a decimal fraction (RFC8949 section 3.4.4):
+ * AWS_CBOR_TAG_DECIMAL_FRACTION followed by an array of 2 elements, of definite or indefinite length. The first is the
+ * exponent, an
+ * AWS_CBOR_TYPE_UINT or AWS_CBOR_TYPE_NEGINT that must fit in an int64_t. The second is the mantissa, accepted as in
+ * aws_cbor_decoder_pop_next_big_integer_val().
+ *
+ * Ownership of the result and the state of the decoder after a failure are as for
+ * aws_cbor_decoder_pop_next_big_integer_val().
+ *
+ * Raises AWS_ERROR_CBOR_UNEXPECTED_TYPE if the data item, the exponent, or the mantissa has an unexpected type, and
+ * AWS_ERROR_INVALID_CBOR if the array doesn't have exactly 2 elements. Raises AWS_ERROR_OVERFLOW_DETECTED if the
+ * exponent doesn't fit in an int64_t. Raises AWS_ERROR_INVALID_ARGUMENT if the mantissa is outside the limits of
+ * aws_big_integer.
+ *
+ * @param decoder
+ * @param out store the decimal if succeed.
+ * @return AWS_OP_SUCCESS successfully consumed the data item and got the result, otherwise AWS_OP_ERR.
+ */
+AWS_COMMON_API
+int aws_cbor_decoder_pop_next_big_decimal_val(struct aws_cbor_decoder *decoder, struct aws_big_decimal **out);
 
 /**
  * @brief Get the next AWS_CBOR_TYPE_ARRAY_START element. Only consume the AWS_CBOR_TYPE_ARRAY_START element and set the
